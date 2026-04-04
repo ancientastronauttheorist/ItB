@@ -89,8 +89,8 @@ _REF_W = 1280
 _REF_H = 748
 # Tile (1,A) relative to window top-left (including title bar)
 # Calibrated from multiple window positions via hover verification
-_REF_ORIGIN_X = 479
-_REF_ORIGIN_Y = 549
+_REF_ORIGIN_X = 469
+_REF_ORIGIN_Y = 570
 _REF_TILE_HW = 50  # tile half-width in screen pixels
 _REF_TILE_HH = 29  # tile half-height in screen pixels
 
