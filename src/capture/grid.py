@@ -36,6 +36,19 @@ class GridConfig:
     rows: int = 8
     cols: int = 8
 
+    def scaled(self, factor: float) -> GridConfig:
+        """Return a new config with all pixel values scaled by factor."""
+        return GridConfig(
+            origin_x=self.origin_x * factor,
+            origin_y=self.origin_y * factor,
+            row_dx=self.row_dx * factor,
+            row_dy=self.row_dy * factor,
+            col_dx=self.col_dx * factor,
+            col_dy=self.col_dy * factor,
+            tile_half_width=self.tile_half_width * factor,
+            tile_half_height=self.tile_half_height * factor,
+        )
+
     def tile_to_pixel(self, row: int, col: int) -> tuple[float, float]:
         """Convert grid coordinates (row 1-8, col 1-8) to screen pixel center.
 
