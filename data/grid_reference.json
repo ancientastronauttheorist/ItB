@@ -1,0 +1,108 @@
+{
+  "game": {
+    "title": "Into the Breach",
+    "bundle_id": "subset.Into-the-Breach",
+    "version": "Steam v. 1.2.93 (3-12-2024)",
+    "steam_app_id": 590380,
+    "app_path": "/Users/aircow/Library/Application Support/Steam/steamapps/common/Into the Breach/Into the Breach.app"
+  },
+  "window": {
+    "mode": "windowed",
+    "size": [1280, 748],
+    "note": "Window size in logical points. Position varies — detect at runtime."
+  },
+  "settings": {
+    "fullscreen": false,
+    "grid_coordinates": true,
+    "disable_screen_shake": true,
+    "mute_all_audio": true,
+    "max_board_scale": "5x",
+    "frame_limit": true
+  },
+  "grid": {
+    "rows": 8,
+    "cols": 8,
+    "row_labels": ["1", "2", "3", "4", "5", "6", "7", "8"],
+    "col_labels": ["A", "B", "C", "D", "E", "F", "G", "H"],
+    "projection": "isometric",
+    "tile_diamond": {
+      "full_width_px": 100,
+      "full_height_px": 55,
+      "half_width_px": 50,
+      "half_height_px": 27.5,
+      "note": "Each tile is a diamond/rhombus shape in screen space"
+    },
+    "coordinate_system": {
+      "description": "Isometric diamond grid. Row 1 is bottom, row 8 is top. Col A(1) is left, col H(8) is right. The bottom tip of the diamond is tile (1,A). Moving +row goes upper-left, moving +col goes upper-right.",
+      "origin_tile": "(1, A)",
+      "origin_screen_px": [690, 660],
+      "row_step_px": [-50, -27.5],
+      "col_step_px": [50, -27.5],
+      "formula": "center_x = 690 + (col - row) * 50; center_y = 660 - (col + row - 2) * 27.5",
+      "note": "Screen pixel coordinates relative to screenshot image. Window position affects these — recalibrate if window moves."
+    },
+    "corners_screen_px": {
+      "tile_1A_bottom": [690, 660],
+      "tile_8A_left": [340, 467],
+      "tile_1H_right": [1040, 467],
+      "tile_8H_top": [690, 275]
+    }
+  },
+  "ui_elements": {
+    "power_grid_bar": {
+      "region": [230, 145, 420, 175],
+      "note": "Top-left area showing grid power bars"
+    },
+    "grid_defense": {
+      "region": [430, 145, 540, 175],
+      "note": "Grid defense percentage"
+    },
+    "end_turn_button": {
+      "region": [185, 195, 350, 235],
+      "note": "End Turn button"
+    },
+    "undo_move_button": {
+      "region": [360, 195, 440, 235],
+      "note": "Undo Move button"
+    },
+    "reset_turn_button": {
+      "region": [540, 150, 640, 175],
+      "note": "Reset Turn button"
+    },
+    "victory_turns": {
+      "region": [1020, 160, 1210, 190],
+      "note": "Victory in N turns counter"
+    },
+    "bonus_objectives": {
+      "region": [1020, 225, 1210, 340],
+      "note": "Bonus objectives panel"
+    },
+    "mech_portraits": {
+      "region": [185, 255, 285, 420],
+      "note": "Left sidebar with 3 mech portrait slots"
+    },
+    "selected_unit_info": {
+      "region": [185, 570, 450, 720],
+      "note": "Bottom-left unit info panel (name, portrait, weapons)"
+    },
+    "tile_info": {
+      "region": [1000, 640, 1220, 710],
+      "note": "Bottom-right tile type tooltip"
+    },
+    "attack_order_button": {
+      "region": [900, 165, 980, 200],
+      "note": "Attack Order toggle"
+    }
+  },
+  "calibration_notes": {
+    "method": "Manual hover calibration with yellow tile highlight",
+    "reference_tiles_measured": {
+      "(1,A)": [690, 665],
+      "(2,A)": [640, 635],
+      "(1,B)": [740, 635],
+      "(~8,~8)": [690, 272]
+    },
+    "tile_diamond_measured_from_zoom": "100px wide x 55px tall",
+    "accuracy": "Approximately +/- 5 pixels. Fine-tune with automated calibration script."
+  }
+}
