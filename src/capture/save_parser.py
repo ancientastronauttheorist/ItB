@@ -61,9 +61,24 @@ class Pawn:
     team_id: int  # 1=player, 2=neutral, 6=enemy
     is_mech: bool
     primary_weapon: str = ""
+    secondary_weapon: str = ""
     pilot_name: str = ""
     pilot_id: str = ""
+    pilot_skill1: int = 0
+    pilot_skill2: int = 0
     is_corpse: bool = False
+    active: bool = True          # bActive — has NOT yet acted this turn
+    # Reactor / upgrades (mechs only)
+    move_power: int = 0          # reactor investment in move speed
+    health_power: int = 0        # reactor investment in HP
+    primary_mod1: list = field(default_factory=list)   # upgrade A state
+    primary_mod2: list = field(default_factory=list)   # upgrade B state
+    primary_powered: list = field(default_factory=list) # which tiers powered
+    primary_damaged: bool = False
+    secondary_mod1: list = field(default_factory=list)
+    secondary_mod2: list = field(default_factory=list)
+    secondary_powered: list = field(default_factory=list)
+    secondary_damaged: bool = False
     # Attack intent
     target: Point | None = None      # piTarget - where they're aiming
     queued_shot: Point | None = None  # piQueuedShot - confirmed attack target
@@ -82,6 +97,22 @@ class Pawn:
         # is_corpse in save files means "has undo state", not actually dead
         return self.health > 0
 
+    @property
+    def has_acted(self) -> bool:
+        """Whether this mech has already taken its action this turn."""
+        return not self.active
+
+
+@dataclass
+class Objective:
+    """A mission objective (primary or bonus)."""
+    text: str
+    param1: str = ""
+    param2: str = ""
+    value: int = 0       # current progress
+    potential: int = 1   # max value
+    category: int = 0    # 0=primary, 1=bonus
+
 
 @dataclass
 class Tile:
@@ -97,6 +128,8 @@ class Tile:
     on_fire: bool = False
     has_pod: bool = False
     unique: str = ""  # special building ID
+    grappled: bool = False
+    grapple_targets: list = field(default_factory=list)
 
 
 @dataclass
@@ -107,10 +140,15 @@ class MissionState:
     current_turn: int = 0
     team_turn: int = 0  # 1=player, 6=enemy
     victory_turns: int = 0
+    battle_state: int = 0  # iState: 0=active combat
+    actions_taken: int = 0  # actions taken this turn
     tiles: list[Tile] = field(default_factory=list)
     pawns: list[Pawn] = field(default_factory=list)
     spawns: list[str] = field(default_factory=list)
     spawn_points: list[Point] = field(default_factory=list)
+    objectives: list[Objective] = field(default_factory=list)
+    rain: int = 0
+    rain_type: int = 0
 
     def get_tile(self, x: int, y: int) -> Tile:
         for t in self.tiles:
@@ -343,6 +381,10 @@ def extract_mission_state(
         current_turn=player_data.get('iCurrentTurn', 0),
         team_turn=player_data.get('iTeamTurn', 0),
         victory_turns=player_data.get('victory', 0),
+        battle_state=player_data.get('iState', 0),
+        actions_taken=player_data.get('actions', 0),
+        rain=map_data.get('rain', 0),
+        rain_type=map_data.get('rain_type', 0),
     )
 
     # Parse map tiles
@@ -354,6 +396,7 @@ def extract_mission_state(
             continue
 
         terrain_id = tile_data.get('terrain', 0)
+        grapple_t = tile_data.get('grapple_targets', [])
         tile = Tile(
             x=loc.x, y=loc.y,
             terrain=TERRAIN_MAP.get(terrain_id, "unknown"),
@@ -365,8 +408,13 @@ def extract_mission_state(
             on_fire=bool(tile_data.get('fire', 0)),
             has_pod=bool(tile_data.get('pod', 0)),
             unique=tile_data.get('unique', ''),
+            grappled=bool(tile_data.get('grappled', 0)),
+            grapple_targets=grapple_t if isinstance(grapple_t, list) else [],
         )
         mission.tiles.append(tile)
+
+    # Parse objectives from region data
+    # (objectives are passed separately from the caller)
 
     # Parse spawns
     spawns = map_data.get('spawns', [])
@@ -393,6 +441,11 @@ def extract_mission_state(
         if not isinstance(pilot, dict):
             pilot = {}
 
+        # Extract list fields safely
+        def _get_list(d, k):
+            v = d.get(k, [])
+            return list(v) if isinstance(v, (list, dict)) else []
+
         pawn = Pawn(
             pawn_id=pd.get('id', 0),
             type=pd.get('type', ''),
@@ -402,9 +455,25 @@ def extract_mission_state(
             team_id=pd.get('iTeamId', 0),
             is_mech=bool(pd.get('mech', False)),
             primary_weapon=pd.get('primary', ''),
+            secondary_weapon=pd.get('secondary', ''),
             pilot_name=pilot.get('name', ''),
             pilot_id=pilot.get('id', ''),
+            pilot_skill1=pilot.get('skill1', 0),
+            pilot_skill2=pilot.get('skill2', 0),
             is_corpse=bool(pd.get('is_corpse', False)),
+            active=bool(pd.get('bActive', True)),
+            # Reactor / upgrades
+            move_power=_get_list(pd, 'movePower')[0] if _get_list(pd, 'movePower') else 0,
+            health_power=_get_list(pd, 'healthPower')[0] if _get_list(pd, 'healthPower') else 0,
+            primary_mod1=_get_list(pd, 'primary_mod1'),
+            primary_mod2=_get_list(pd, 'primary_mod2'),
+            primary_powered=_get_list(pd, 'primary_power'),
+            primary_damaged=bool(pd.get('primary_damaged', False)),
+            secondary_mod1=_get_list(pd, 'secondary_mod1'),
+            secondary_mod2=_get_list(pd, 'secondary_mod2'),
+            secondary_powered=_get_list(pd, 'secondary_power'),
+            secondary_damaged=bool(pd.get('secondary_damaged', False)),
+            # Attack intents
             target=target if isinstance(target, Point) and target.x >= 0 else None,
             queued_shot=queued if isinstance(queued, Point) and queued.x >= 0 else None,
             queued_skill=pd.get('iQueuedSkill', -1),
@@ -443,7 +512,23 @@ def load_active_mission(profile: str = "Alpha") -> MissionState | None:
         if not map_data:
             continue
 
-        return extract_mission_state(player, map_data)
+        mission = extract_mission_state(player, map_data)
+
+        # Extract objectives from region
+        objectives_data = region.get('objectives', {})
+        if isinstance(objectives_data, dict):
+            for key, obj in objectives_data.items():
+                if isinstance(obj, dict):
+                    mission.objectives.append(Objective(
+                        text=obj.get('text', ''),
+                        param1=obj.get('param1', ''),
+                        param2=obj.get('param2', ''),
+                        value=obj.get('value', 0),
+                        potential=obj.get('potential', 1),
+                        category=obj.get('category', 0),
+                    ))
+
+        return mission
 
     return None
 
