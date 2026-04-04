@@ -34,25 +34,73 @@ def save_to_screen(grid: GridConfig, save_x: int, save_y: int) -> tuple[int, int
     return (int(px), int(py))
 
 
+# MCP screenshot coordinate system calibration.
+# Calibrated by zooming into row labels "1"/"8" and column labels "A"/"H"
+# in MCP screenshots and solving the isometric grid transform.
+# Verified against hover info: building (5,2) at (710,437), building (3,6) at (980,371).
+_MCP_ORIGIN_X = 858.0
+_MCP_ORIGIN_Y = 675.6
+_MCP_AX = -47.14   # save_x step (upper-left direction in screen)
+_MCP_AY = -34.29
+_MCP_BX = 43.86    # save_y step (upper-right direction in screen)
+_MCP_BY = -33.57
+
+
+def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
+    """Convert save file coordinates to MCP screenshot pixel coordinates.
+
+    This is the coordinate system used by the computer-use MCP tool.
+    Calibrated directly from visual measurements in MCP screenshots.
+    """
+    px = _MCP_ORIGIN_X + save_x * _MCP_AX + save_y * _MCP_BX
+    py = _MCP_ORIGIN_Y + save_x * _MCP_AY + save_y * _MCP_BY
+    return (int(round(px)), int(round(py)))
+
+
 class GameExecutor:
     """Executes actions on the game via mouse clicks.
 
-    This class generates click coordinates but does NOT directly call
-    the computer-use MCP tool. Instead, it produces a click sequence
-    that the main bot loop feeds to the MCP tool.
+    Generates a click/key sequence for the MCP computer-use tool.
+
+    Interaction model (verified via manual testing):
+    1. Click mech PORTRAIT on left panel to select
+    2. Click destination TILE CENTER to move
+    3. Press '1' key to arm primary weapon
+    4. Click target TILE CENTER to fire
+    5. Wait for animation
     """
 
-    def __init__(self, grid: GridConfig | None = None):
-        self.grid = grid or detect_grid()
-        if self.grid is None:
-            raise RuntimeError("Could not detect game window")
+    # Mech portrait positions in MCP screenshot coordinates.
+    # These are the left-panel portraits, top to bottom.
+    # Order matches save file: PunchMech, TankMech, ArtiMech for Rift Walkers.
+    PORTRAIT_POSITIONS = [
+        (380, 200),  # First mech portrait
+        (380, 260),  # Second mech portrait
+        (380, 310),  # Third mech portrait
+    ]
+
+    # Mech type → portrait index mapping
+    MECH_PORTRAIT = {
+        "PunchMech": 0,
+        "TankMech": 1,
+        "ArtiMech": 2,
+    }
+
+    # End Turn button in MCP screenshot coordinates
+    END_TURN_POS = (420, 143)
+
+    def __init__(self, grid=None):
+        # Grid config is kept for backward compatibility but
+        # plan_clicks_mcp uses grid_to_mcp directly.
+        self.grid = grid
 
     def plan_clicks(self, solution: Solution) -> list[dict]:
-        """Convert a solver Solution into a sequence of click commands.
+        """Convert a solver Solution into MCP click/key commands.
 
-        Returns a list of dicts, each with:
-          - "type": "click", "wait", "screenshot"
-          - "x", "y": screen coordinates (for clicks)
+        Returns a list of dicts with:
+          - "type": "click" | "key" | "wait" | "screenshot"
+          - "x", "y": MCP screenshot coordinates (for clicks)
+          - "text": key name (for key presses)
           - "duration": seconds (for waits)
           - "description": human-readable action
         """
@@ -64,141 +112,74 @@ class GameExecutor:
         # End turn
         clicks.append({"type": "wait", "duration": 0.5,
                         "description": "Pause before end turn"})
-        clicks.append(self._end_turn_click())
-        clicks.append({"type": "wait", "duration": 3.0,
+        clicks.append({
+            "type": "click",
+            "x": self.END_TURN_POS[0], "y": self.END_TURN_POS[1],
+            "description": "Click End Turn",
+        })
+        clicks.append({"type": "wait", "duration": 5.0,
                         "description": "Wait for enemy phase"})
 
         return clicks
 
     def _plan_mech_action(self, action: MechAction, index: int) -> list[dict]:
         """Plan clicks for a single mech action."""
+        import re
         clicks = []
-
-        # We need the mech's current position to click-select it.
-        # The solver stores move_to, but we need the ORIGINAL position
-        # before the move. That's in the board state, keyed by mech_uid.
-        # For now, we'll rely on the action having a description that
-        # includes the original position, or we track it separately.
-        # The simplest approach: the solver already knows the mech position.
-
-        # Step 1: Click on the mech to select it
-        # We need the mech's position BEFORE this action.
-        # In the solver, mech starts at its board position.
-        # Since we execute actions in order, after each action the mech
-        # has moved to action.move_to. So for action N, the mech is at
-        # whatever position it was before action N.
-        #
-        # For the first action of each mech, the position comes from
-        # the save file. We pass this through from the board state.
-        #
-        # For simplicity, we'll just click the move_to position
-        # (since the solver plans actions in sequence and knows positions).
-        # Actually - we need to click the mech's CURRENT position first.
-        # Let's extract it from the action description or pass it explicitly.
-
-        # Parse original position from description if available
-        # Format: "MechType, move (x1,y1)->(x2,y2), fire Weapon at (tx,ty)"
-        # or: "MechType, fire Weapon at (tx,ty)" (no move)
         desc = action.description
         moved = "move" in desc
 
-        # For now, hardcode the click sequence
-        # The game expects: click mech -> click move dest -> click weapon -> click target
+        # Step 1: Select mech via Tab key (avoids pilot popup that
+        # portrait clicks cause — the popup eats the next board click)
+        clicks.append({
+            "type": "key", "text": "tab",
+            "description": f"Tab to select next mech ({action.mech_type})",
+        })
+        clicks.append({"type": "wait", "duration": 0.5, "description": "wait"})
 
-        if moved:
-            # Click mech current position (inferred from the move description)
-            # Parse "move (x1,y1)->(x2,y2)" to get (x1,y1)
-            import re
-            m = re.search(r'move \((\d+),(\d+)\)->\((\d+),(\d+)\)', desc)
-            if m:
-                orig_x, orig_y = int(m.group(1)), int(m.group(2))
-                dest_x, dest_y = int(m.group(3)), int(m.group(4))
-            else:
-                # No move info, use move_to as both origin and dest
-                orig_x, orig_y = action.move_to
-                dest_x, dest_y = action.move_to
-
-            # Click mech to select
-            sx, sy = save_to_screen(self.grid, orig_x, orig_y)
-            clicks.append({
-                "type": "click", "x": sx, "y": sy,
-                "description": f"Select {action.mech_type} at ({orig_x},{orig_y})",
-            })
-            clicks.append({"type": "wait", "duration": 0.3, "description": "wait"})
-
-            # Click destination to move
-            dx, dy = save_to_screen(self.grid, dest_x, dest_y)
-            clicks.append({
-                "type": "click", "x": dx, "y": dy,
-                "description": f"Move to ({dest_x},{dest_y})",
-            })
-            clicks.append({"type": "wait", "duration": 0.8,
-                            "description": "Wait for move animation"})
-        else:
-            # No move, just click mech to select
-            mx, my = action.move_to
-            sx, sy = save_to_screen(self.grid, mx, my)
-            clicks.append({
-                "type": "click", "x": sx, "y": sy,
-                "description": f"Select {action.mech_type} at ({mx},{my})",
-            })
-            clicks.append({"type": "wait", "duration": 0.3, "description": "wait"})
-
-        # Step 2: Attack (if weapon specified)
+        # Step 2: Attack FIRST (before moving — fires from known position)
         if action.weapon and action.target[0] >= 0:
-            # After moving, the mech is selected and weapon options appear.
-            # In ITB, after moving the mech shows weapon targeting automatically
-            # for the primary weapon. We click the target tile.
-            #
-            # For now, assume primary weapon is auto-selected after move.
-            # TODO: handle weapon button clicks for secondary weapons.
+            # Arm the primary weapon by pressing '1'
+            clicks.append({
+                "type": "key", "text": "1",
+                "description": f"Arm {action.weapon}",
+            })
+            clicks.append({"type": "wait", "duration": 0.5, "description": "wait"})
 
-            tx, ty = save_to_screen(self.grid, action.target[0], action.target[1])
+            # Click target tile center to fire
+            tx, ty = grid_to_mcp(action.target[0], action.target[1])
             clicks.append({
                 "type": "click", "x": tx, "y": ty,
                 "description": f"Fire {action.weapon} at ({action.target[0]},{action.target[1]})",
             })
-            clicks.append({"type": "wait", "duration": 1.0,
+            clicks.append({"type": "wait", "duration": 2.0,
                             "description": "Wait for attack animation"})
-        else:
-            # No attack, just confirm move (click the mech again or wait)
-            # In ITB, if you move without attacking, you need to click
-            # "Confirm" or the end-action button
+
+        # Step 3: Move (after attacking)
+        if moved:
+            m = re.search(r'move \((\d+),(\d+)\)->\((\d+),(\d+)\)', desc)
+            if m:
+                dest_x, dest_y = int(m.group(3)), int(m.group(4))
+            else:
+                dest_x, dest_y = action.move_to
+
+            dx, dy = grid_to_mcp(dest_x, dest_y)
+            clicks.append({
+                "type": "click", "x": dx, "y": dy,
+                "description": f"Move to ({dest_x},{dest_y})",
+            })
+            clicks.append({"type": "wait", "duration": 1.0,
+                            "description": "Wait for move animation"})
+
+        # If no attack and no move, skip the mech's turn
+        if not (action.weapon and action.target[0] >= 0) and not moved:
+            clicks.append({
+                "type": "key", "text": "q",
+                "description": "Skip action",
+            })
             clicks.append({"type": "wait", "duration": 0.5, "description": "wait"})
 
         return clicks
-
-    def _end_turn_click(self) -> dict:
-        """Return click coordinates for the End Turn button.
-
-        The End Turn button is in the top-left area of the game window.
-        Position is relative to window and consistent.
-        """
-        # End Turn button center (relative position within game window)
-        # From our screenshots: approximately at window_x + 260, window_y + 145
-        # Using the grid's origin to estimate window position
-        # The grid origin (1,A) is at a known offset from the window
-        # Window is ~479px right of window left for the grid origin
-        # End Turn is ~260px right of window left, ~145px below window top
-        #
-        # More robust: End Turn button is always at approximately the same
-        # fraction of the window. For 1280x748 window:
-        # End Turn center: roughly x=260, y=145 from window top-left
-
-        # Compute from grid reference
-        # Grid origin is at (grid.origin_x, grid.origin_y) on screen
-        # Grid origin is ~479px from window left, ~549px from window top
-        # So window left ≈ grid.origin_x - 479
-        # Window top ≈ grid.origin_y - 549
-        win_left = self.grid.origin_x - 479
-        win_top = self.grid.origin_y - 549
-
-        btn_x = int(win_left + 340)
-        btn_y = int(win_top + 145)
-        return {
-            "type": "click", "x": btn_x, "y": btn_y,
-            "description": "Click End Turn",
-        }
 
     def print_plan(self, solution: Solution) -> None:
         """Print the click plan for debugging."""
@@ -207,6 +188,8 @@ class GameExecutor:
         for i, c in enumerate(clicks):
             if c["type"] == "click":
                 print(f"  {i+1}. CLICK ({c['x']}, {c['y']}) — {c['description']}")
+            elif c["type"] == "key":
+                print(f"  {i+1}. KEY '{c['text']}' — {c['description']}")
             elif c["type"] == "wait":
                 print(f"  {i+1}. WAIT {c['duration']}s — {c['description']}")
             elif c["type"] == "screenshot":
