@@ -89,17 +89,25 @@ _REF_W = 1280
 _REF_H = 748
 # Tile (1,A) relative to window top-left (including title bar)
 # Calibrated from multiple window positions via hover verification
-_REF_ORIGIN_X = 469
-_REF_ORIGIN_Y = 570
-_REF_TILE_HW = 50  # tile half-width in screen pixels
-_REF_TILE_HH = 29  # tile half-height in screen pixels
+# Solved from 3 reference points: Point(0,0) at (850,626),
+# Point(4,5)/rubble at (805,423), Point(6,3)/forest at (650,370).
+# The isometric axes are NOT standard 2:1 ratio.
+_REF_ORIGIN_X = 464   # 850 - window_x (386)
+_REF_ORIGIN_Y = 570   # 626 - window_y (56)
+# Tile step per save_x increment: screen (-48.06, -37.28)
+_REF_AX = -48.06
+_REF_AY = -37.28
+# Tile step per save_y increment: screen (29.44, -10.78)
+_REF_BX = 29.44
+_REF_BY = -10.78
 
 
 def grid_from_window(win: WindowInfo) -> GridConfig:
     """Create a GridConfig calibrated to the current window position.
 
-    The grid position scales proportionally with window size, and
-    the origin shifts with the window position.
+    The grid uses a non-standard isometric projection where the two
+    axes have different angles. The transform was solved empirically
+    from 3 reference points.
 
     Args:
         win: Current game window bounds.
@@ -115,19 +123,17 @@ def grid_from_window(win: WindowInfo) -> GridConfig:
     origin_x = win.x + _REF_ORIGIN_X * sx
     origin_y = win.y + _REF_ORIGIN_Y * sy
 
-    # Tile dimensions scale with window
-    hw = _REF_TILE_HW * sx
-    hh = _REF_TILE_HH * sy
-
+    # The isometric axes: save_x step and save_y step
+    # These are NOT symmetric — the game uses a non-standard projection
     return GridConfig(
         origin_x=origin_x,
         origin_y=origin_y,
-        row_dx=-hw,
-        row_dy=-hh,
-        col_dx=hw,
-        col_dy=-hh,
-        tile_half_width=hw,
-        tile_half_height=hh,
+        row_dx=_REF_AX * sx,   # save_x step (upper-left direction)
+        row_dy=_REF_AY * sy,
+        col_dx=_REF_BX * sx,   # save_y step (upper-right direction)
+        col_dy=_REF_BY * sy,
+        tile_half_width=abs(_REF_AX) * sx,
+        tile_half_height=abs(_REF_AY) * sy,
     )
 
 

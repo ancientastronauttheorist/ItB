@@ -23,12 +23,14 @@ from src.solver.solver import MechAction, Solution
 def save_to_screen(grid: GridConfig, save_x: int, save_y: int) -> tuple[int, int]:
     """Convert save file coordinates (0-7) to screen pixel coordinates.
 
-    Save file: Point(x, y) where x=col(0-7), y=row(0-7)
-    Grid config: tile_to_pixel(row=1-8, col=1-8)
+    Uses the grid's row/col steps directly as save_x/save_y axis vectors.
+    The grid origin corresponds to save Point(0, 0).
+
+    grid.row_dx/row_dy = screen step per save_x increment
+    grid.col_dx/col_dy = screen step per save_y increment
     """
-    row = save_y + 1  # 0-indexed -> 1-indexed
-    col = save_x + 1
-    px, py = grid.tile_to_pixel(row, col)
+    px = grid.origin_x + save_x * grid.row_dx + save_y * grid.col_dx
+    py = grid.origin_y + save_x * grid.row_dy + save_y * grid.col_dy
     return (int(px), int(py))
 
 
