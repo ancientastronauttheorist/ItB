@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from src.model.board import Board, Unit, TERRAIN_DEADLY_GROUND
 from src.model.weapons import get_weapon_def, WeaponDef
 from src.solver.movement import (
-    DIRS, DIR_NAMES, direction_between, opposite_dir, push_destination,
+    DIRS, DIR_NAMES, direction_between, opposite_dir,
     get_adjacent,
 )
 
@@ -33,7 +33,13 @@ class ActionResult:
 
 def apply_damage(board: Board, x: int, y: int, damage: int,
                  result: ActionResult, source: str = "") -> None:
-    """Apply damage to whatever is at (x, y)."""
+    """Apply damage to whatever is at (x, y).
+
+    Args:
+        source: "bump" for push/bump damage (ignores Armor and ACID),
+                "fire" for fire damage (ignores Armor and ACID),
+                "" for normal weapon damage (reduced by Armor, doubled by ACID).
+    """
     if not board.in_bounds(x, y):
         return
 
@@ -42,8 +48,11 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
 
     if unit and damage > 0:
         actual = damage
-        if unit.armor:
-            actual = max(0, damage - 1)
+        # Bump and fire damage ignore Armor and ACID
+        if source not in ("bump", "fire"):
+            if unit.armor:
+                actual = max(0, damage - 1)
+            # TODO: if unit has ACID, actual *= 2
         unit.hp -= actual
 
         if unit.is_enemy:
@@ -69,35 +78,87 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
 
 def apply_push(board: Board, x: int, y: int, direction: int,
                result: ActionResult) -> None:
-    """Push unit at (x, y) in the given direction."""
+    """Push unit at (x, y) one tile in the given direction.
+
+    Game rules for push:
+    - If destination is empty ground: unit moves there
+    - If destination is deadly terrain (water/chasm/lava): unit moves there
+      and dies (non-flying ground units). Flying units survive water/chasm.
+    - If destination is blocked (edge, mountain, building, or another unit):
+      the pushed unit takes 1 bump damage and does NOT move.
+      If blocked by another unit, BOTH units take 1 bump damage.
+    - Bump damage ignores Armor and ACID (source="bump").
+    - Mountains take 1 damage when bumped into (2 HP, becomes rubble at 0).
+    - Buildings do NOT take damage from push collisions.
+    - There is NO chain pushing: A pushed into B = collision, B stays.
+    """
     unit = board.unit_at(x, y)
     if unit is None:
         return
     if not unit.pushable and not unit.is_mech:
-        return  # non-pushable non-mech (e.g., Psions)
-    # Mechs are massive but still pushable by other mechs' weapons
+        return  # non-pushable non-mech units are immune to push
 
-    dest = push_destination(x, y, direction, board)
-    if dest is None:
-        # Bump damage: pushed into obstacle = 1 damage to the pushed unit
+    dx, dy = DIRS[direction]
+    nx, ny = x + dx, y + dy
+
+    # Blocked by map edge
+    if not board.in_bounds(nx, ny):
         apply_damage(board, x, y, 1, result, "bump")
-        result.events.append(f"Bump: {unit.type} at ({x},{y}) blocked dir={DIR_NAMES[direction]}")
+        result.events.append(
+            f"Bump: {unit.type} at ({x},{y}) blocked by edge"
+        )
         return
 
-    nx, ny = dest
-    unit.x, unit.y = nx, ny
-    tile = board.tile(nx, ny)
+    tile_dest = board.tile(nx, ny)
 
-    # Check deadly terrain
-    if tile.terrain in TERRAIN_DEADLY_GROUND and not unit.flying:
+    # Blocked by mountain — pushed unit takes bump, mountain takes 1 damage
+    if tile_dest.terrain == "mountain":
+        apply_damage(board, x, y, 1, result, "bump")
+        tile_dest.building_hp = getattr(tile_dest, 'building_hp', 2)
+        if tile_dest.building_hp > 0:
+            tile_dest.building_hp -= 1
+        if tile_dest.building_hp <= 0:
+            tile_dest.terrain = "rubble"
+            result.events.append(f"Mountain destroyed at ({nx},{ny})")
+        result.events.append(
+            f"Bump: {unit.type} at ({x},{y}) blocked by mountain"
+        )
+        return
+
+    # Blocked by building — pushed unit takes bump, building is NOT damaged
+    if tile_dest.terrain == "building" and tile_dest.building_hp > 0:
+        apply_damage(board, x, y, 1, result, "bump")
+        result.events.append(
+            f"Bump: {unit.type} at ({x},{y}) blocked by building"
+        )
+        return
+
+    # Blocked by another unit — BOTH take 1 bump damage, neither moves
+    blocker = board.unit_at(nx, ny)
+    if blocker is not None:
+        apply_damage(board, x, y, 1, result, "bump")
+        apply_damage(board, nx, ny, 1, result, "bump")
+        result.events.append(
+            f"Bump: {unit.type} at ({x},{y}) collided with "
+            f"{blocker.type} at ({nx},{ny})"
+        )
+        return
+
+    # Destination is clear — move the unit
+    unit.x, unit.y = nx, ny
+
+    # Check deadly terrain after moving
+    if tile_dest.terrain in TERRAIN_DEADLY_GROUND and not unit.flying:
         unit.hp = 0
         if unit.is_enemy:
             result.enemies_killed += 1
-            result.events.append(f"{unit.type} pushed into {tile.terrain} at ({nx},{ny})")
         elif unit.is_player:
             result.mechs_killed += 1
-
-    result.events.append(f"Pushed {unit.type} ({x},{y})->({nx},{ny})")
+        result.events.append(
+            f"{unit.type} pushed into {tile_dest.terrain} at ({nx},{ny})"
+        )
+    else:
+        result.events.append(f"Pushed {unit.type} ({x},{y})->({nx},{ny})")
 
 
 def simulate_weapon(

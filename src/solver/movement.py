@@ -106,27 +106,30 @@ def opposite_dir(d: int) -> int:
 
 
 def push_destination(x: int, y: int, direction: int, board: Board) -> tuple[int, int] | None:
-    """Compute where a unit ends up after being pushed in a direction.
+    """Predict where a unit ends up after being pushed in a direction.
 
-    Returns (new_x, new_y) or None if push is blocked (edge/mountain).
-    The unit may die if pushed into water/chasm/lava.
+    Returns (new_x, new_y) if the push succeeds (unit moves), or None if
+    the push is blocked (edge, mountain, building, or another unit).
+
+    Note: In Into the Breach, there is NO chain pushing. If destination
+    is occupied by any unit, the push is blocked (bump damage to both).
+    The unit may die if pushed into deadly terrain (water/chasm/lava).
     """
     dx, dy = DIRS[direction]
     nx, ny = x + dx, y + dy
 
     if not board.in_bounds(nx, ny):
-        return None  # pushed off edge = blocked
+        return None  # blocked by map edge
 
     tile = board.tile(nx, ny)
     if tile.terrain == "mountain":
-        return None  # mountains block push
+        return None  # blocked by mountain
 
-    # Buildings block push (unit bumps into building)
     if tile.terrain == "building" and tile.building_hp > 0:
-        return None
+        return None  # blocked by building
 
-    # Another unit blocks push (bump)
+    # Any unit blocks the push (no chain pushing)
     if board.unit_at(nx, ny) is not None:
-        return None
+        return None  # blocked by unit — both take bump
 
     return (nx, ny)
