@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-04-05T02:05:55.134732",
+  "label": "integration_test",
+  "turn": 3,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Train_Damaged",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion1",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

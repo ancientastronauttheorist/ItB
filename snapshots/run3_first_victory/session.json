@@ -1,0 +1,118 @@
+{
+  "run_id": "20260405_172150",
+  "squad": "Rift Walkers",
+  "achievement_targets": [
+    "Island Secure"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "current_turn": 4,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          4,
+          4
+        ],
+        "weapon": "Prime_Punchmech",
+        "target": [
+          4,
+          5
+        ],
+        "description": "PunchMech, fire Titan Fist at (4,5)"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          2,
+          4
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          3,
+          4
+        ],
+        "description": "TankMech, fire Taurus Cannon at (3,4)"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          5,
+          4
+        ],
+        "description": "ArtiMech, move (2,2)->(3,4), fire Artemis Artillery at (5,4)"
+      }
+    ],
+    "score": 167735.0,
+    "turn": 4
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-05T17:25:20.358864",
+      "turn": 1,
+      "label": "solve",
+      "score": 104470.0,
+      "actions": [
+        "PunchMech, move (2,3)->(4,3), fire Titan Fist at (4,4)",
+        "TankMech, move (2,4)->(4,5), fire Taurus Cannon at (4,6)",
+        "ArtiMech, move (2,2)->(3,2), fire Artemis Artillery at (3,5)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T17:27:33.125541",
+      "turn": 2,
+      "label": "solve",
+      "score": 99330.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at (3,3)",
+        "TankMech, move (2,4)->(4,3), fire Taurus Cannon at (5,3)",
+        "ArtiMech, move (2,2)->(3,4), fire Artemis Artillery at (1,4)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T17:30:18.840046",
+      "turn": 3,
+      "label": "solve",
+      "score": 171570.0,
+      "actions": [
+        "PunchMech, move (4,4)->(3,5), fire Titan Fist at (3,4)",
+        "TankMech, move (2,4)->(4,3), fire Taurus Cannon at (4,2)",
+        "ArtiMech, fire Artemis Artillery at (2,5)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T17:32:32.118766",
+      "turn": 4,
+      "label": "solve",
+      "score": 167735.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at (4,5)",
+        "TankMech, fire Taurus Cannon at (3,4)",
+        "ArtiMech, move (2,2)->(3,4), fire Artemis Artillery at (5,4)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T17:34:31.570435",
+      "turn": 4,
+      "label": "note",
+      "message": "FIRST MISSION VICTORY! Region Secured at Turn 4 with grid power 2/7. Volatile Vek bonus completed. 135 civilians saved. Ralph Karlsson KIA. Solver v2 (enemy attack simulation + grid power multiplier + body-blocking + push direction scoring) successfully protected buildings through all 4 turns."
+    }
+  ]
+}

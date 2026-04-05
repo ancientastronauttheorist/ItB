@@ -1,0 +1,79 @@
+{
+  "run_id": "20260405_020531",
+  "squad": "Rift Walkers",
+  "achievement_targets": [
+    "Island Secure"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "current_turn": 0,
+  "phase": "between_missions",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          4,
+          4
+        ],
+        "weapon": "Prime_Punchmech",
+        "target": [
+          4,
+          5
+        ],
+        "description": "PunchMech, fire Titan Fist at (4,5)"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          2,
+          3
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          2,
+          4
+        ],
+        "description": "TankMech, move (3,4)->(2,3), fire Taurus Cannon at (2,4)"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          6,
+          4
+        ],
+        "description": "ArtiMech, move (3,5)->(3,4), fire Artemis Artillery at (6,4)"
+      }
+    ],
+    "score": 57415.0,
+    "turn": 3
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-05T02:05:47.958249",
+      "turn": 0,
+      "label": "solve",
+      "score": 57415.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at (4,5)",
+        "TankMech, move (3,4)->(2,3), fire Taurus Cannon at (2,4)",
+        "ArtiMech, move (3,5)->(3,4), fire Artemis Artillery at (6,4)"
+      ]
+    }
+  ]
+}

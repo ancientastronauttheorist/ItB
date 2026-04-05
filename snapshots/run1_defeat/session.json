@@ -1,0 +1,131 @@
+{
+  "run_id": "20260405_143604",
+  "squad": "Rift Walkers",
+  "achievement_targets": [
+    "Island Secure"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "current_turn": 3,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          5,
+          2
+        ],
+        "weapon": "Prime_Punchmech",
+        "target": [
+          5,
+          3
+        ],
+        "description": "PunchMech, move (3,1)->(5,2), fire Titan Fist at (5,3)"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          3,
+          2
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          4,
+          2
+        ],
+        "description": "TankMech, move (3,3)->(3,2), fire Taurus Cannon at (4,2)"
+      }
+    ],
+    "score": 88270.0,
+    "turn": 3
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-05T15:16:44.044104",
+      "turn": 1,
+      "label": "solve",
+      "score": 103860.0,
+      "actions": [
+        "PunchMech, move (3,1)->(4,1), fire Titan Fist at (4,2)",
+        "TankMech, fire Taurus Cannon at (4,3)",
+        "ArtiMech, move (3,2)->(1,3), fire Artemis Artillery at (4,3)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T15:19:11.692396",
+      "turn": 1,
+      "label": "solve",
+      "score": 103860.0,
+      "actions": [
+        "PunchMech, move (3,1)->(4,1), fire Titan Fist at (4,2)",
+        "TankMech, fire Taurus Cannon at (4,3)",
+        "ArtiMech, move (3,2)->(1,3), fire Artemis Artillery at (4,3)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T15:43:19.431790",
+      "turn": 1,
+      "label": "solve",
+      "score": 103860.0,
+      "actions": [
+        "PunchMech, move (3,1)->(4,1), fire Titan Fist at (4,2)",
+        "TankMech, fire Taurus Cannon at (4,3)",
+        "ArtiMech, move (3,2)->(1,3), fire Artemis Artillery at (4,3)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T16:01:16.205094",
+      "turn": 1,
+      "label": "solve",
+      "score": 103860.0,
+      "actions": [
+        "PunchMech, move (3,1)->(4,1), fire Titan Fist at (4,2)",
+        "TankMech, fire Taurus Cannon at (4,3)",
+        "ArtiMech, move (3,2)->(1,3), fire Artemis Artillery at (4,3)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T16:07:48.514407",
+      "turn": 1,
+      "label": "note",
+      "message": "CRITICAL FINDING: saveData.lua only updates at turn boundaries, NOT per-mech-action. Visual confirms PunchMech fired Titan Fist and moved. bActive does NOT change until End Turn is pressed. Per-mech verify must use visual/screenshot confirmation, not save file."
+    },
+    {
+      "timestamp": "2026-04-05T16:18:18.554978",
+      "turn": 2,
+      "label": "solve",
+      "score": 98170.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at (4,1)",
+        "TankMech, fire Taurus Cannon at (4,3)",
+        "ArtiMech, fire Artemis Artillery at (5,2)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T16:20:22.922642",
+      "turn": 3,
+      "label": "solve",
+      "score": 88270.0,
+      "actions": [
+        "PunchMech, move (3,1)->(5,2), fire Titan Fist at (5,3)",
+        "TankMech, move (3,3)->(3,2), fire Taurus Cannon at (4,2)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-05T16:22:09.863897",
+      "turn": 3,
+      "label": "note",
+      "message": "RUN LOST at Turn 3. Grid power hit 0. 3 buildings threatened, only 2 mechs (ArtiMech destroyed Turn 2). Solver tried to move PunchMech to building tile (5,2) \u2014 invalid move. Buildings at (3,4), (3,5), (3,6) were not protected. Post-mortem: solver needs better threat prioritization with fewer mechs. Also lost Volatile Vek bonus objective."
+    }
+  ]
+}
