@@ -9,63 +9,154 @@ executing non-consecutively with verify steps between mechs.
 
 Coordinate systems:
   - Save file coordinates: (0-7, 0-7) — from saveData.lua
-  - MCP screenshot coordinates: pixel positions in MCP screenshots
-  - Use grid_to_mcp() to convert between them
+  - MCP screenshot coordinates: = Quartz logical screen coordinates
+  - grid_to_mcp() auto-detects the game window via Quartz and computes
+    the correct MCP coordinates dynamically. No hardcoded offsets.
 """
 
 from __future__ import annotations
 
 from src.solver.solver import MechAction, Solution
 from src.model.board import Board
+from src.capture.detect_grid import detect_grid, find_game_window, grid_from_window
 
 
-# --- Coordinate Conversion ---
+# --- Dynamic Coordinate Detection ---
 
-# MCP screenshot coordinate system calibration.
-# Calibrated by zooming into row labels "1"/"8" and column labels "A"/"H"
-# in MCP screenshots and solving the isometric grid transform.
-# Verified against hover info: building (5,2) at (710,437), building (3,6) at (980,371).
-_MCP_ORIGIN_X = 858.0
-_MCP_ORIGIN_Y = 675.6
-_MCP_AX = -47.14   # save_x step (upper-left direction in screen)
-_MCP_AY = -34.29
-_MCP_BX = 43.86    # save_y step (upper-right direction in screen)
-_MCP_BY = -33.57
+# Cached grid config and window info — invalidated by recalibrate()
+_cached_grid = None
+_cached_window = None
+
+
+def _get_grid():
+    """Get cached GridConfig, detecting game window if needed."""
+    global _cached_grid
+    if _cached_grid is None:
+        _cached_grid = detect_grid()
+        if _cached_grid is None:
+            raise RuntimeError(
+                "Game window not found — is Into the Breach running and visible?"
+            )
+    return _cached_grid
+
+
+def _get_window():
+    """Get cached WindowInfo, detecting game window if needed."""
+    global _cached_window
+    if _cached_window is None:
+        _cached_window = find_game_window()
+        if _cached_window is None:
+            raise RuntimeError(
+                "Game window not found — is Into the Breach running and visible?"
+            )
+    return _cached_window
 
 
 def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
-    """Convert save file coordinates to MCP screenshot pixel coordinates.
+    """Convert save file coordinates to MCP screenshot coordinates.
 
-    This is the coordinate system used by the computer-use MCP tool.
-    Calibrated directly from visual measurements in MCP screenshots.
+    Uses the game's isometric projection formula:
+      mcp_x = OX + STEP_X * (save_x - save_y)
+      mcp_y = OY + STEP_Y * (save_x + save_y)
+
+    The origin (OX, OY) is computed from the game window position
+    (auto-detected via Quartz). STEP_X and STEP_Y are the half-tile
+    dimensions in MCP pixel space, derived from the window size.
+
+    Verified against 4 known tile positions (Coal Plant, 2 Scorpions,
+    Volatile Vek) — all matched exactly.
     """
-    px = _MCP_ORIGIN_X + save_x * _MCP_AX + save_y * _MCP_BX
-    py = _MCP_ORIGIN_Y + save_x * _MCP_AY + save_y * _MCP_BY
+    win = _get_window()
+
+    # The game's internal isometric formula (from grid_reference.json):
+    #   game_x = 690 + (col - row) * 50      (at 1280x748 window)
+    #   game_y = 660 - (col + row - 2) * 27.5
+    # where row = save_x + 1, col = save_y + 1
+    #
+    # Simplifies to:
+    #   game_x = 690 + (save_y - save_x) * 50
+    #   game_y = 660 - (save_x + save_y) * 27.5
+    #
+    # The MCP coordinate is: win_pos + game_coord * (mcp_window_size / game_size)
+    # But empirically, the scale factor from game coords to MCP coords
+    # was measured as: step_x = 42 pixels per (save_y - save_x) unit
+    #                  step_y = 25 pixels per (save_x + save_y) unit
+    #
+    # These scale factors are proportional to window size:
+    #   step_x = 42 * (win.width / 1280)
+    #   step_y = 25 * (win.height / 748)
+    #
+    # The origin (where save_x == save_y, sum == 0, i.e. tile 0,0) was
+    # measured at MCP x=556 with window at x=0, width=1280. That's
+    # game_x=690 scaled: 556 = win.x + 690 * (win.width / 1280) * scale_factor
+    # Empirically: OX = win.x + 556 (at width 1280)
+    #              OY = win.y + 138 (at height 748)
+
+    sx = win.width / 1280.0
+    sy = win.height / 748.0
+
+    # Origin in MCP coords (tile 0,0 center, adjusted for window position)
+    ox = win.x + 556 * sx
+    oy = win.y + 138 * sy
+
+    # Isometric step sizes in MCP pixels
+    step_x = 42.0 * sx   # per (save_x - save_y) unit
+    step_y = 25.0 * sy   # per (save_x + save_y) unit
+
+    px = ox + step_x * (save_x - save_y)
+    py = oy + step_y * (save_x + save_y)
+
     return (int(round(px)), int(round(py)))
 
 
-# --- Portrait Positions ---
+def recalibrate():
+    """Force re-detection of game window position.
 
-# Mech portrait Y positions in MCP screenshot coordinates (left panel).
-# These are consistent across all squads — always 3 portraits, top to bottom.
-PORTRAIT_X = 380
-PORTRAIT_Y = [200, 260, 310]
+    Call this when the window may have moved (e.g., at the start of each turn).
+    The next grid_to_mcp() call will re-detect the window.
+    """
+    global _cached_grid, _cached_window
+    _cached_grid = None
+    _cached_window = None
 
-# End Turn button in MCP screenshot coordinates
-END_TURN_POS = (420, 143)
 
-# Board center for dismissing popups
-BOARD_CENTER = (700, 400)
+# --- Window-Relative UI Positions ---
 
+# These are pixel offsets from the game window's top-left corner.
+# They're constant within the game regardless of window position.
+# Calibrated for 1280x748 window at Max Board Scale 5x.
+_UI_PORTRAIT_X = 50
+_UI_PORTRAIT_Y = [135, 195, 245]  # Top, middle, bottom mech portraits
+_UI_END_TURN = (95, 78)
+_UI_BOARD_CENTER = (500, 350)
+
+
+def _portrait_pos(index: int) -> tuple[int, int]:
+    """Get MCP coordinates for a mech portrait (0, 1, or 2)."""
+    win = _get_window()
+    return (win.x + _UI_PORTRAIT_X, win.y + _UI_PORTRAIT_Y[index])
+
+
+def _end_turn_pos() -> tuple[int, int]:
+    """Get MCP coordinates for the End Turn button."""
+    win = _get_window()
+    return (win.x + _UI_END_TURN[0], win.y + _UI_END_TURN[1])
+
+
+def _board_center() -> tuple[int, int]:
+    """Get MCP coordinates for the board center (for dismissing popups)."""
+    win = _get_window()
+    return (win.x + _UI_BOARD_CENTER[0], win.y + _UI_BOARD_CENTER[1])
+
+
+# --- Mech Portrait Mapping ---
 
 def get_mech_portraits(board: Board) -> dict[str, int]:
     """Build mech_type → portrait_index mapping from board state.
 
     Mechs appear in portrait order (top to bottom) matching their
-    order in the save file's pawn list. This function returns the
-    mapping so plan_single_mech can click the right portrait.
+    order in the save file's pawn list (by UID).
     """
-    # Mechs are ordered by UID (save file order = portrait order)
     mechs = sorted(
         [u for u in board.units if u.is_mech and u.hp > 0],
         key=lambda u: u.uid
@@ -74,15 +165,10 @@ def get_mech_portraits(board: Board) -> dict[str, int]:
 
 
 def _get_weapon_key(action: MechAction, board: Board) -> str:
-    """Return '1' for primary weapon, '2' for secondary.
-
-    Looks up which weapon the solver chose and compares it to
-    the mech's primary vs secondary weapon assignment.
-    """
+    """Return '1' for primary weapon, '2' for secondary."""
     if not action.weapon:
         return "1"
 
-    # Find the mech in the board to check its weapons
     mech = None
     for u in board.units:
         if u.uid == action.mech_uid:
@@ -90,7 +176,7 @@ def _get_weapon_key(action: MechAction, board: Board) -> str:
             break
 
     if mech is None:
-        return "1"  # fallback
+        return "1"
 
     if mech.weapon2 and action.weapon == mech.weapon2:
         return "2"
@@ -108,21 +194,16 @@ def plan_single_mech(action: MechAction, portrait_index: int,
 
     Portrait click shows a pilot popup — we dismiss it by clicking
     the board, then re-click the portrait to select the mech.
-
-    Args:
-        action: The solver's MechAction for this mech.
-        portrait_index: Which portrait to click (0, 1, or 2).
-        board: Board state, used for primary/secondary weapon detection.
-
-    Returns:
-        List of click/key/wait commands for MCP execution.
     """
     clicks = []
 
+    # Get UI positions (window-relative, auto-detected)
+    px, py = _portrait_pos(portrait_index)
+    bx, by = _board_center()
+
     # Step 1: Click portrait to select mech
     clicks.append({
-        "type": "click",
-        "x": PORTRAIT_X, "y": PORTRAIT_Y[portrait_index],
+        "type": "click", "x": px, "y": py,
         "description": f"Click portrait to select {action.mech_type}",
     })
     clicks.append({"type": "wait", "duration": 0.3,
@@ -130,8 +211,7 @@ def plan_single_mech(action: MechAction, portrait_index: int,
 
     # Step 2: Click board center to dismiss pilot popup
     clicks.append({
-        "type": "click",
-        "x": BOARD_CENTER[0], "y": BOARD_CENTER[1],
+        "type": "click", "x": bx, "y": by,
         "description": "Dismiss pilot popup",
     })
     clicks.append({"type": "wait", "duration": 0.3,
@@ -139,8 +219,7 @@ def plan_single_mech(action: MechAction, portrait_index: int,
 
     # Step 3: Re-click portrait (now selects mech properly)
     clicks.append({
-        "type": "click",
-        "x": PORTRAIT_X, "y": PORTRAIT_Y[portrait_index],
+        "type": "click", "x": px, "y": py,
         "description": f"Re-select {action.mech_type}",
     })
     clicks.append({"type": "wait", "duration": 0.5,
@@ -168,8 +247,6 @@ def plan_single_mech(action: MechAction, portrait_index: int,
     # Step 5: Move (after attacking)
     has_move = action.move_to and action.move_to != (-1, -1)
     if has_move:
-        # Check if the mech is actually moving somewhere different
-        # (The solver includes move_to even when staying in place)
         mech = None
         if board:
             mech = next((u for u in board.units if u.uid == action.mech_uid), None)
@@ -184,7 +261,7 @@ def plan_single_mech(action: MechAction, portrait_index: int,
             clicks.append({"type": "wait", "duration": 1.0,
                             "description": "Wait for move animation"})
 
-    # If no attack and no move, skip (press 'q' to deselect)
+    # If no attack and no move, skip
     if not has_attack and not has_move:
         clicks.append({
             "type": "key", "text": "q",
@@ -198,11 +275,11 @@ def plan_single_mech(action: MechAction, portrait_index: int,
 
 def plan_end_turn() -> list[dict]:
     """Plan clicks for the End Turn button."""
+    ex, ey = _end_turn_pos()
     return [
         {"type": "wait", "duration": 0.5,
          "description": "Pause before end turn"},
-        {"type": "click",
-         "x": END_TURN_POS[0], "y": END_TURN_POS[1],
+        {"type": "click", "x": ex, "y": ey,
          "description": "Click End Turn"},
     ]
 
@@ -210,21 +287,13 @@ def plan_end_turn() -> list[dict]:
 # --- Backward-Compatible Full-Solution Planning ---
 
 class GameExecutor:
-    """Executes actions on the game via mouse clicks.
-
-    Generates a click/key sequence for the MCP computer-use tool.
-    Kept for backward compatibility with main.py.
-    """
+    """Backward-compatible executor for main.py."""
 
     def __init__(self, board: Board = None):
         self.board = board
 
     def plan_clicks(self, solution: Solution) -> list[dict]:
-        """Convert a solver Solution into MCP click/key commands.
-
-        Backward-compatible: plans all mechs + end turn as one sequence.
-        For the game loop, use plan_single_mech() + plan_end_turn() instead.
-        """
+        """Convert a Solution into MCP click/key commands."""
         clicks = []
         portraits = get_mech_portraits(self.board) if self.board else {}
 
@@ -235,7 +304,6 @@ class GameExecutor:
         clicks.extend(plan_end_turn())
         clicks.append({"type": "wait", "duration": 5.0,
                         "description": "Wait for enemy phase"})
-
         return clicks
 
     def print_plan(self, solution: Solution) -> None:

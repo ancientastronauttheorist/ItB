@@ -30,7 +30,9 @@ from src.control.executor import (
     plan_end_turn,
     get_mech_portraits,
     grid_to_mcp,
+    recalibrate,
 )
+from src.capture.detect_grid import find_game_window, grid_from_window
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
 
@@ -57,6 +59,9 @@ def cmd_read(profile: str = "Alpha") -> dict:
 
     Returns a dict with phase, board info, and mech status.
     """
+    # Invalidate cached window position so next click uses fresh detection
+    recalibrate()
+
     session = _load_session()
 
     # Detect phase from saveData.lua ONLY (no undoSave fallback)
@@ -634,6 +639,55 @@ def cmd_log(message: str) -> dict:
 
 
 # --- Helpers ---
+
+
+def cmd_calibrate() -> dict:
+    """Print detected window position, grid config, and sample tile positions.
+
+    Diagnostic command to verify the coordinate system is correct.
+    """
+    recalibrate()
+
+    win = find_game_window()
+    if win is None:
+        result = {"error": "Game window not found. Is Into the Breach running?"}
+        _print_result(result)
+        return result
+
+    grid = grid_from_window(win)
+
+    result = {
+        "window": {
+            "x": win.x, "y": win.y,
+            "width": win.width, "height": win.height,
+        },
+        "grid_origin": {
+            "x": round(grid.origin_x, 1),
+            "y": round(grid.origin_y, 1),
+        },
+        "row_step": [round(grid.row_dx, 2), round(grid.row_dy, 2)],
+        "col_step": [round(grid.col_dx, 2), round(grid.col_dy, 2)],
+    }
+
+    print(f"\n=== CALIBRATION ===")
+    print(f"Window: x={win.x} y={win.y} w={win.width} h={win.height}")
+    print(f"Grid origin (tile 1,1): ({grid.origin_x:.1f}, {grid.origin_y:.1f})")
+    print(f"Row step (save_x): ({grid.row_dx:.2f}, {grid.row_dy:.2f})")
+    print(f"Col step (save_y): ({grid.col_dx:.2f}, {grid.col_dy:.2f})")
+
+    print(f"\nSample tile positions (MCP coords):")
+    for sx, sy in [(0,0), (3,1), (4,2), (4,3), (7,7)]:
+        px, py = grid.tile_to_pixel(sx + 1, sy + 1)
+        print(f"  save({sx},{sy}) -> MCP ({px:.0f}, {py:.0f})")
+
+    print(f"\nUI positions:")
+    print(f"  End Turn: ({win.x + 95}, {win.y + 78})")
+    print(f"  Portrait 0: ({win.x + 50}, {win.y + 135})")
+    print(f"  Portrait 1: ({win.x + 50}, {win.y + 195})")
+    print(f"  Portrait 2: ({win.x + 50}, {win.y + 245})")
+
+    _print_result(result)
+    return result
 
 
 def _print_result(result: dict):

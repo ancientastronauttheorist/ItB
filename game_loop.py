@@ -43,6 +43,7 @@ from src.loop.commands import (
     cmd_new_run,
     cmd_snapshot,
     cmd_log,
+    cmd_calibrate,
 )
 
 
@@ -97,6 +98,9 @@ def main():
     p_log = sub.add_parser("log", help="Append to decision log")
     p_log.add_argument("message", nargs="+", help="Log message")
 
+    # calibrate
+    sub.add_parser("calibrate", help="Show detected window position and grid coordinates")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -121,6 +125,8 @@ def main():
         cmd_snapshot(args.label, profile=args.profile)
     elif args.command == "log":
         cmd_log(" ".join(args.message))
+    elif args.command == "calibrate":
+        cmd_calibrate()
 
 
 if __name__ == "__main__":
