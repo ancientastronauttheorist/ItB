@@ -1,0 +1,3 @@
+ITB do we have the repair mechanic built into the solver?
+
+can the hook-in see the air strike tiles?
