@@ -483,6 +483,47 @@ def extract_mission_state(
     return mission
 
 
+def detect_game_phase(profile: str = "Alpha") -> str:
+    """Detect current game phase from saveData.lua ONLY.
+
+    Reads ONLY saveData.lua (never undoSave.lua) to avoid stale battle
+    data from a previous turn or mission polluting phase detection.
+
+    Returns one of:
+    - "combat_player"    — active mission, player's turn (iTeamTurn=1)
+    - "combat_enemy"     — active mission, enemy's turn (iTeamTurn=6)
+    - "mission_ending"   — battle exists but iState != 0 (mission complete/ending)
+    - "between_missions" — no active battle region (could be map/shop/island select)
+    - "no_save"          — saveData.lua doesn't exist
+    """
+    save_path = SAVE_DIR / f"profile_{profile}" / "saveData.lua"
+    if not save_path.exists():
+        return "no_save"
+
+    data = parse_save_file(save_path)
+    region_data = data.get('RegionData', {})
+    battle_region = region_data.get('iBattleRegion', -1)
+
+    if battle_region < 0:
+        return "between_missions"
+
+    # Has active battle region — check its state
+    region_key = f'region{battle_region}'
+    region = region_data.get(region_key, {})
+    player = region.get('player', {})
+
+    # iState: 0 = active combat, other values = mission ending/complete
+    battle_state = player.get('iState', -1)
+    if battle_state != 0:
+        return "mission_ending"
+
+    # Active combat — check whose turn
+    team_turn = player.get('iTeamTurn', 1)
+    if team_turn == 6:
+        return "combat_enemy"
+    return "combat_player"
+
+
 def load_active_mission(profile: str = "Alpha") -> MissionState | None:
     """Load the active mission state from save files.
 

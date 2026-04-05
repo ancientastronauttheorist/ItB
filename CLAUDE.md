@@ -13,213 +13,31 @@ Build an autonomous bot that earns all 70 achievements in Into the Breach using 
 
 ## Architecture Overview
 
-The system has 4 layers:
+The system has 5 layers:
 
-### Layer 1: Screen Capture & State Extraction
-- Take screenshots of the game window
-- Parse the 8x8 grid to identify: terrain type per tile (ground, water, mountain, chasm, forest, sand, ice, lava), occupants (mech type, Vek type, building), HP values, status effects (fire, smoke, acid, frozen, shield), enemy attack telegraphs (direction + damage), emerging Vek indicators (ground cracks), grid power bar (top-left), turn number, objective status
-- The game has clean pixel art at fixed resolution with distinct sprites per unit type — template matching or simple CV should work well
-- Run the game in windowed mode at a fixed resolution for consistent pixel offsets
-- Consider using a sprite atlas approach: screenshot every unique tile state once, then do normalized cross-correlation matching per tile cell
+### Layer 0: Game Loop
+
+`game_loop.py` CLI + `src/loop/` (session.py, logger.py, commands.py). Claude is the control loop; Python tools are stateless. Session management, phase detection, command dispatch, decision logging.
+
+### Layer 1: State Extraction
+
+Primary: save file parser (`src/capture/save_parser.py`) reads the game's Lua save files directly. Fallback: CV pipeline (`src/vision/`) for screens the save file cannot distinguish (shop, reward selection, menus).
 
 ### Layer 2: Game State Model
-- Python dataclasses representing the full board state
-- Tile grid (8x8), each tile with terrain, occupant (Pawn with type/team/hp/status), building status
-- Global state: grid power, turn count, mech weapons/abilities, objectives
-- Enemy intents: which tiles are threatened, damage amount, push directions
-- This model is the single source of truth the solver operates on
 
-### Layer 3: The Solver (Search Engine)
-- Given a board state with known enemy intents, find the optimal sequence of 3 mech actions (move + weapon per mech, order matters)
-- Approach: constraint-based threat response → bounded search → evaluation
+`src/model/` — Board, Unit, WeaponDef dataclasses. The Board is built from parsed save data and is the single source of truth the solver operates on.
 
-**Constraint filtering (Phase 1):**
-- Identify which buildings are threatened
-- For each threat, enumerate neutralization options: kill the Vek, push it (so attack misses), block with mech body, shield the building
-- This dramatically prunes the search space
+### Layer 3: Solver
 
-**Search (Phase 2):**
-- Among threat-response combinations, search for the action sequence maximizing an evaluation function
-- Depth is always exactly 3 (one action per mech) — the branching is in move destinations × weapon targets × mech ordering
-- Beam search with aggressive pruning of clearly bad moves
-
-**Evaluation function (Phase 3):**
-```
-score = (
-    buildings_saved * 10000        # existential priority
-    + grid_power_preserved * 5000
-    + vek_killed * 500
-    + emerging_vek_blocked * 400
-    + bonus_objectives * 300
-    + positional_score * 10        # mech centrality, coverage
-    - mech_damage_taken * 100
-    - pilot_death_risk * 200
-    + achievement_objective * 2000  # injected by achievement planner
-)
-```
-
-**Multi-turn lookahead (Phase 4, later):**
-- After choosing moves, simulate the enemy phase (deterministic — they do what they telegraphed)
-- Simulate spawns from visible ground cracks
-- Evaluate resulting position for next turn
-- 2-3 turns of lookahead with beam search
+`src/solver/` — Constraint-based threat response followed by bounded search. Given a board with known enemy intents, finds the optimal sequence of mech actions. Evaluation function uses configurable `EvalWeights` so achievement targeting can bias scoring without changing the search logic.
 
 ### Layer 4: Achievement Strategist
-- Operates above the solver as a strategic planner
-- Reads current achievement target and modifies the solver's evaluation weights
-- For example, targeting "Unwitting Allies" (4 enemies die from enemy fire): reward pushing Vek into each other's attack lines instead of killing them directly
-- Some achievements require run-level planning (squad selection, island order, shop decisions)
-- Some achievements are cumulative across runs and will happen naturally
 
-## Achievement Data
+`src/strategy/` — Selects which `EvalWeights` to inject into the solver based on the current achievement target. Manages run-level configuration: squad selection, island order, shop priorities, pilot choices.
 
-9 of 70 already completed (✓). Remaining 61 sorted by global unlock % (easiest first):
+### Execution Model: Claude as Controller
 
-### Tier 1: Green Zone (>40% global unlock — should happen naturally with competent play)
-- [ ] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
-- [ ] Field Promotion (73.2%) — Have a Pilot reach maximum level
-- [ ] Friends in High Places (49.8%) — Spend 50 Reputation across all games [cumulative]
-- [ ] Come Together (44.7%) — Unlock 6 additional Pilots [cumulative]
-- [ ] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
-- [ ] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
-
-### Tier 2: Yellow Zone (20-40% — requires specific squad play or setup)
-- [x] ~~Sustainable Energy (39.1%)~~
-- [ ] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
-- [ ] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
-- [ ] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
-- [ ] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
-- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
-- [ ] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
-- [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]
-- [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
-- [ ] Mass Displacement (23.0%) — Push 3 enemies with single attack [Steel Judoka]
-- [ ] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
-- [ ] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
-- [ ] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times [cumulative]
-- [ ] There is No Try (20.2%) — Finish 3 islands without failing an objective
-
-### Tier 3: Orange Zone (10-20% — deliberate setup needed)
-- [ ] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative]
-- [ ] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative]
-- [ ] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
-- [ ] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths]
-- [ ] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
-- [ ] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths]
-- [ ] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
-- [ ] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs]
-- [ ] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
-- [ ] Untouchable (14.5%) — Finish island without Mech Damage
-- [ ] Unwitting Allies (14.2%) — 4 enemies die from enemy fire [Steel Judoka]
-- [ ] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg]
-- [ ] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs]
-- [ ] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod)
-- [ ] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad
-- [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
-- [ ] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad]
-- [ ] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle [Steel Judoka]
-
-### Tier 4: Red Zone (<10% — hardest achievements, endgame goals)
-- [ ] Class Specialist (9.8%) — Beat game with 3 Mechs from same class in Custom
-- [ ] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
-- [ ] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs]
-- [ ] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random]
-- [ ] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
-- [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
-- [ ] Hard Victory (9.0%) — Beat game on Hard
-- [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
-- [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
-- [ ] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm]
-- [ ] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom
-- [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
-- [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
-- [ ] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters]
-- [ ] Chronophobia (6.7%) — 3 islands, destroy every Time Pod
-- [ ] Spider Breeding (6.7%) — Spawn 15 Arachnoids in one Island [Arachnophile]
-- [ ] Let's Walk (5.8%) — Control Shot move enemies 120 spaces in one game [Mist Eaters]
-- [ ] Hold the Door (5.4%) — Block 30 Emerging Vek by end of Island 2 [Bombermechs]
-- [ ] Core of the Earth (5.2%) — Drop 10 Enemies into pits on one Island [Cataclysm]
-- [ ] No Survivors (5.1%) — 7 units die in single turn [Bombermechs]
-- [ ] Working Together (5.0%) — Area Shift 4 units at once [Arachnophile]
-- [ ] Efficient Explosives (4.8%) — Kill 3 Enemies with 1 Ricochet Rocket [Arachnophile]
-- [ ] Boosted (4.6%) — Boost 8 Mechs in one mission [Heat Sinkers]
-- [ ] Feed the Flame (4.5%) — Light 3 Enemies on fire with single attack [Heat Sinkers]
-- [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
-- [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
-
-### Already Completed (confirmed from Steam profile)
-- [x] Watery Grave (68.1%)
-- [x] Emerging Technologies (63.6%)
-- [x] Perfect Island (61.3%)
-- [x] Victory (50.1%)
-- [x] The Defenders (49.8%)
-- [x] Immovable Objects (41.7%)
-- [x] Sustainable Energy (39.1%)
-- [x] Plus 2 more not visible in screenshot (likely Island Secure and Field Promotion — verify with user)
-
-## Development Phases
-
-### Phase 1: Game Window Detection & Screenshot Pipeline
-- Detect the Into the Breach game window on macOS
-- Take reliable screenshots at consistent intervals
-- Determine the game's grid coordinates and pixel offsets
-- Verify we can capture the game in windowed mode at a known resolution
-- **Deliverable:** A script that captures the game screen and highlights the detected 8x8 grid overlay
-
-### Phase 2: Tile State Extraction (Core CV)
-- Build a sprite atlas by capturing reference images for each tile type
-- Implement per-tile classification: terrain, occupant, status effects
-- Parse HP numbers (small pixel font, few possibilities — template match)
-- Parse the grid power bar
-- Parse enemy attack telegraph arrows (direction + damage indicators)
-- Parse emerging Vek indicators (ground cracks)
-- **Deliverable:** A full board state JSON dump from any in-game screenshot, validated by visual overlay
-
-### Phase 3: Single-Turn Solver (No Lookahead)
-- Implement the game state model in Python
-- Implement threat identification from enemy telegraphs
-- Implement threat neutralization enumeration (kill, push, block, shield)
-- Implement the constraint-based search
-- Implement the evaluation function
-- Test against saved screenshots — can it find the move that saves all buildings?
-- **Deliverable:** Given a board state, output the optimal 3-mech action sequence
-
-### Phase 4: Mouse Control & Execution Loop
-- Map grid coordinates to screen pixels for click targets
-- Implement mech selection (click mech), movement (click destination), weapon firing (click weapon icon, click target)
-- Handle the end-turn button
-- Build the full turn loop: screenshot → extract state → solve → execute clicks → wait for animations → repeat
-- **Deliverable:** Bot plays a full mission autonomously
-
-### Phase 5: Full Run Automation
-- Handle menus: squad selection, island selection, mission selection
-- Handle shop/upgrade screens between islands (buy weapons, cores, grid repair)
-- Handle pilot management
-- Handle the end-of-run screen and starting new runs
-- **Deliverable:** Bot plays full runs from main menu to victory/defeat, then starts another
-
-### Phase 6: Multi-Turn Lookahead
-- Implement forward simulation of enemy attacks and spawns
-- Add 2-3 turn lookahead with beam search
-- Tune evaluation weights
-- **Deliverable:** Measurably better play (fewer buildings lost per run)
-
-### Phase 7: Achievement Hunter
-- Implement achievement-specific objective injection
-- Build the achievement strategist that modifies evaluation weights per target
-- Start with easy achievements (Tier 1 green zone) to validate the system
-- Progress through tiers, using each achievement as a test of increasing bot sophistication
-- Track completion via Steam API: GET https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?appid=590380&key=API_KEY&steamid=STEAM64_ID
-- **Deliverable:** Systematic achievement completion, tracked and verified
-
-## Technical Notes
-
-- **Game resolution:** Run in windowed mode at a consistent resolution. The 8x8 grid will be at fixed pixel positions. Identify these once and hardcode the offsets.
-- **Animation timing:** After executing moves, the game plays attack animations. Wait for animations to complete before taking the next screenshot. A simple approach: take screenshots repeatedly until the board state stops changing.
-- **Turn structure:** Player moves all 3 mechs → enemy attacks (pre-telegraphed) → new enemies spawn → new enemies telegraph → next player turn.
-- **Grid Defense RNG:** Buildings have a % chance to resist damage. The solver should assume buildings never resist (pessimistic) and treat resistance as a bonus.
-- **The Reset Turn button:** The game allows undoing your entire turn once. The bot could use this to try multiple approaches per turn, but for simplicity start without it.
-- **Save/Load:** The game auto-saves. If the bot needs to retry a scenario, it can force-quit and reload.
+Claude operates as the outer control loop. Each Python CLI command (`game_loop.py read`, `solve`, `execute`, `verify`) is a stateless tool that reads state, computes, outputs, and exits. Claude calls these tools in sequence, interprets their output, executes mouse/keyboard actions via MCP, and decides what to do next. This inverts the traditional bot architecture: instead of a Python process driving the game, Claude drives the game and uses Python for computation. The session file (`sessions/active_session.json`) persists state between CLI calls.
 
 ## Core Game Rules (Solver-Critical)
 
@@ -250,6 +68,111 @@ These rules directly affect solver correctness. Always apply them.
 
 **Repair action:** Any mech can repair instead of attacking. Heals 1 HP, removes Fire and ACID. Cannot repair if smoked.
 
+Extended rules: see `data/ref_game_mechanics.md`.
+
+## Operational Rules
+
+1. Always verify save file state after each mech execution.
+2. Never execute mech N+1 before verifying mech N succeeded.
+3. Click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
+4. After every failed run, analyze the critical turn. Save snapshot first.
+5. Select mechs by clicking their PORTRAIT, then clicking board to dismiss popup, then re-clicking portrait. Do NOT rely on Tab for non-consecutive execution.
+6. Priority order — buildings > threats > kills > spawns.
+7. Save file is the source of truth. Re-parse after every action.
+8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
+9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
+10. Always use grid_to_mcp() for coordinates. NEVER use Quartz/detect_grid coords with MCP tools (MCP uses ~1.21x scale factor).
+11. Arm weapons via keyboard: '1' for primary, '2' for secondary. Check which weapon the solver chose before pressing.
+12. NEVER press Space (triggers End Turn dialog unexpectedly).
+13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
+14. Solver blind spots (temporary, until implemented): No repair action. No environment hazard awareness (air strikes, tidal waves, lightning). Check for these visually and override solver if needed.
+15. On recovery from crash/timeout, ALWAYS start with cmd_read + cmd_solve. Never resume a previous solution — the board may have changed.
+
+## Phase Protocols
+
+### COMBAT_PLAYER_TURN
+
+The main loop. Execute every turn in this exact sequence:
+
+1. `game_loop.py read` — Confirm phase is COMBAT_PLAYER_TURN. Review board state, threats, active mechs.
+2. `game_loop.py solve` — Get solution (N actions for N active mechs). If empty solution (timeout): take screenshot, play manually.
+3. For each action i in 0..N-1:
+   a. `game_loop.py execute i` — Get click plan for this mech.
+   b. Execute clicks via computer-use MCP.
+   c. Wait 2-3 seconds for animation.
+   d. `game_loop.py verify` — Confirm mech acted (retries up to 5x at 1.5s intervals).
+      - PASS: continue to next mech.
+      - FAIL: retry execute once. If still fails, screenshot + diagnose.
+4. `game_loop.py end_turn` — Click End Turn, wait for animations (minimum 6s).
+5. `game_loop.py read` — Check new phase:
+   - COMBAT_PLAYER_TURN: next turn, go to step 2.
+   - MISSION_ENDING / BETWEEN_MISSIONS: mission over, go to MISSION_END.
+   - COMBAT_ENEMY_TURN: still animating, wait and re-read.
+
+### MISSION_END
+
+1. Take screenshot to identify reward screen.
+2. Navigate reward selection via clicks.
+3. `game_loop.py snapshot "mission_N"` — Save state for analysis.
+4. Check if island complete. Proceed to ISLAND_MAP or ISLAND_COMPLETE.
+
+### ISLAND_MAP
+
+1. `game_loop.py read` — Review island state.
+2. Choose next mission (prioritize bonus objectives for achievement targets).
+3. Navigate to mission via clicks.
+4. Transition to COMBAT_PLAYER_TURN.
+
+### SHOP
+
+1. Take screenshot — save file does not distinguish shop from map.
+2. Buy grid power repairs first, then weapons/cores per strategy.
+3. Navigate via clicks.
+4. Transition to ISLAND_MAP for next island.
+
+### RUN_END
+
+1. `game_loop.py snapshot "run_end"` — Save final state.
+2. If defeat: analyze critical turns from decision log (Rule 4).
+3. Check achievement progress.
+4. Start new run with next achievement target.
+
+### ERROR_RECOVERY
+
+- **Unexpected screen:** Take screenshot, log to decision log, diagnose visually.
+- **Save file not updating:** Retry verify up to 5x with 1.5s delay (7.5s max).
+- **Grid power = 0:** Log game over, snapshot, analyze.
+- **Crash/timeout:** Start fresh with `cmd_read` + `cmd_solve` (Rule 15). Never resume old solution.
+
+## Game Loop Command Reference
+
+All commands are subcommands of `game_loop.py`. Each is stateless: read state, compute, output, exit.
+
+**State Reading:**
+- `read` — Parse save file, detect phase, dump board state + threats + active mechs.
+- `verify [index]` — Re-parse save, confirm mech acted. Retries up to 5x at 1.5s.
+- `status` — Quick summary: turn, grid power, mech HP, threats, objectives.
+
+**Combat:**
+- `solve` — Run solver, store solution in session, output action sequence.
+- `execute <index>` — Output click plan for action N from the active solution. Does NOT click.
+- `end_turn` — Output click plan for End Turn button.
+
+**Run Management:**
+- `new_run <squad> [--achieve X Y]` — Initialize new session with squad and achievement targets.
+- `snapshot <label>` — Save current state for regression testing.
+- `log <message>` — Append Claude's reasoning to the decision log.
+
+## Achievement Context
+
+9/70 complete, 61 remaining across 4 difficulty tiers (Green >40%, Yellow 20-40%, Orange 10-20%, Red <10%).
+
+- Squad-specific achievements require specific squads — check `data/ref_achievement_strategies.md` for setup.
+- Cumulative achievements (reputation, civilians, pilot reuse) accrue across runs.
+- Achievement strategies modify solver weights via `EvalWeights` in `src/solver/evaluate.py`.
+- Detailed metadata: `data/achievements_detailed.json`.
+- Full achievement checklist with tiers: `TODO.md`.
+
 ## Knowledge Base
 
 Compiled reference files in `data/` — read the relevant file when you need detailed game data:
@@ -279,38 +202,52 @@ Curated JSON data in `data/` — structured, verified game data (machine-readabl
 Raw wiki data in `data/wiki_raw/*.json` (135 files) for individual unit deep-dives.
 
 ## File Structure
+
 ```
 itb-bot/
-├── CLAUDE.md              # This file
+├── CLAUDE.md              # This file — operational manual
+├── TODO.md                # Development roadmap + achievement checklist
+├── game_loop.py           # CLI entry point — dispatches to src/loop/
 ├── src/
+│   ├── loop/              # Game loop modules
+│   │   ├── session.py     # RunSession state, file-locked persistence
+│   │   ├── logger.py      # Append-only markdown decision log
+│   │   └── commands.py    # All CLI subcommand implementations
 │   ├── capture/           # Screenshot and window detection
+│   │   └── save_parser.py # Lua save file parser + phase detection
 │   ├── vision/            # Tile extraction, sprite matching, state parsing
-│   ├── model/             # Game state dataclasses
+│   ├── model/             # Game state dataclasses (Board, Unit, WeaponDef)
 │   ├── solver/            # Threat analysis, search, evaluation
+│   │   └── evaluate.py    # EvalWeights for configurable scoring
 │   ├── control/           # Mouse/keyboard execution
+│   │   └── executor.py    # Per-mech click planning, portrait selection
 │   ├── strategy/          # Achievement planner, run-level decisions
-│   └── main.py            # Main bot loop
+│   └── main.py            # Legacy entry point (backward compat)
+├── sessions/              # Session JSON files (active_session.json)
+├── logs/                  # Decision logs (one markdown file per run)
+├── snapshots/             # Saved states for regression testing
 ├── assets/
 │   ├── sprites/           # Reference sprite atlas
 │   └── screenshots/       # Saved screenshots for testing
 ├── tests/                 # Unit tests for solver, state extraction
 └── data/
-    ├── ref_squads_and_mechs.md      # Compiled squad/mech/weapon reference (human-readable)
-    ├── ref_vek_bestiary.md          # Compiled Vek bestiary (human-readable)
-    ├── ref_pilots.md                # Compiled pilot reference (human-readable)
-    ├── ref_game_mechanics.md        # Compiled game rules reference (human-readable)
-    ├── ref_achievement_strategies.md # Per-achievement bot strategies (human-readable)
-    ├── squads.json                  # Curated squad data (machine-readable)
-    ├── vek.json                     # Curated Vek data (machine-readable)
-    ├── pilots.json                  # Curated pilot data (machine-readable)
-    ├── mechanics.json               # Curated game mechanics (machine-readable)
-    ├── terrain_status_mechanics.json # Extended terrain/status rules (machine-readable)
-    ├── islands.json                 # Island structure/environments (machine-readable)
-    ├── achievements_detailed.json   # All 70 achievements with metadata (machine-readable)
-    ├── grid_reference.json          # Game window/grid pixel coordinates
-    ├── board_state_test.json        # Test board state for solver dev
-    └── wiki_raw/                    # 135 raw wiki JSON files
+    ├── ref_squads_and_mechs.md
+    ├── ref_vek_bestiary.md
+    ├── ref_pilots.md
+    ├── ref_game_mechanics.md
+    ├── ref_achievement_strategies.md
+    ├── squads.json
+    ├── vek.json
+    ├── pilots.json
+    ├── mechanics.json
+    ├── terrain_status_mechanics.json
+    ├── islands.json
+    ├── achievements_detailed.json
+    ├── grid_reference.json
+    ├── board_state_test.json
+    └── wiki_raw/              # 135 raw wiki JSON files
 ```
 
 ## Current Status
-Phase 4 proof-of-concept complete (MCP mouse/keyboard control). Into the Breach is installed via Steam. Knowledge base compiled from wiki data.
+
+Phase 4 complete. Game loop CLI implemented. Claude-as-the-loop architecture operational.

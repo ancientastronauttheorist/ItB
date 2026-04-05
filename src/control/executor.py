@@ -1,38 +1,25 @@
 """Execute solver actions by clicking on the game.
 
-Translates MechAction sequences into mouse clicks:
-1. Click mech to select
-2. Click destination to move
-3. Click weapon, then click target
-4. Wait for animations
-5. Click End Turn when done
+Translates MechAction sequences into mouse clicks for the MCP
+computer-use tool. Supports per-mech execution with verification
+gaps between each mech (Claude-as-the-loop pattern).
 
-Uses the computer-use MCP tool for mouse control and screenshots.
+Mech selection uses portrait clicks (not Tab) for reliability when
+executing non-consecutively with verify steps between mechs.
+
+Coordinate systems:
+  - Save file coordinates: (0-7, 0-7) — from saveData.lua
+  - MCP screenshot coordinates: pixel positions in MCP screenshots
+  - Use grid_to_mcp() to convert between them
 """
 
 from __future__ import annotations
 
-import time
-import subprocess
-from pathlib import Path
-from src.capture.grid import GridConfig
-from src.capture.detect_grid import detect_grid
 from src.solver.solver import MechAction, Solution
+from src.model.board import Board
 
 
-def save_to_screen(grid: GridConfig, save_x: int, save_y: int) -> tuple[int, int]:
-    """Convert save file coordinates (0-7) to screen pixel coordinates.
-
-    Uses the grid's row/col steps directly as save_x/save_y axis vectors.
-    The grid origin corresponds to save Point(0, 0).
-
-    grid.row_dx/row_dy = screen step per save_x increment
-    grid.col_dx/col_dy = screen step per save_y increment
-    """
-    px = grid.origin_x + save_x * grid.row_dx + save_y * grid.col_dx
-    py = grid.origin_y + save_x * grid.row_dy + save_y * grid.col_dy
-    return (int(px), int(py))
-
+# --- Coordinate Conversion ---
 
 # MCP screenshot coordinate system calibration.
 # Calibrated by zooming into row labels "1"/"8" and column labels "A"/"H"
@@ -57,127 +44,197 @@ def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
     return (int(round(px)), int(round(py)))
 
 
-class GameExecutor:
-    """Executes actions on the game via mouse clicks.
+# --- Portrait Positions ---
 
-    Generates a click/key sequence for the MCP computer-use tool.
+# Mech portrait Y positions in MCP screenshot coordinates (left panel).
+# These are consistent across all squads — always 3 portraits, top to bottom.
+PORTRAIT_X = 380
+PORTRAIT_Y = [200, 260, 310]
 
-    Interaction model (verified via manual testing):
-    1. Click mech PORTRAIT on left panel to select
-    2. Click destination TILE CENTER to move
-    3. Press '1' key to arm primary weapon
-    4. Click target TILE CENTER to fire
-    5. Wait for animation
+# End Turn button in MCP screenshot coordinates
+END_TURN_POS = (420, 143)
+
+# Board center for dismissing popups
+BOARD_CENTER = (700, 400)
+
+
+def get_mech_portraits(board: Board) -> dict[str, int]:
+    """Build mech_type → portrait_index mapping from board state.
+
+    Mechs appear in portrait order (top to bottom) matching their
+    order in the save file's pawn list. This function returns the
+    mapping so plan_single_mech can click the right portrait.
     """
+    # Mechs are ordered by UID (save file order = portrait order)
+    mechs = sorted(
+        [u for u in board.units if u.is_mech and u.hp > 0],
+        key=lambda u: u.uid
+    )
+    return {m.type: i for i, m in enumerate(mechs)}
 
-    # Mech portrait positions in MCP screenshot coordinates.
-    # These are the left-panel portraits, top to bottom.
-    # Order matches save file: PunchMech, TankMech, ArtiMech for Rift Walkers.
-    PORTRAIT_POSITIONS = [
-        (380, 200),  # First mech portrait
-        (380, 260),  # Second mech portrait
-        (380, 310),  # Third mech portrait
-    ]
 
-    # Mech type → portrait index mapping
-    MECH_PORTRAIT = {
-        "PunchMech": 0,
-        "TankMech": 1,
-        "ArtiMech": 2,
-    }
+def _get_weapon_key(action: MechAction, board: Board) -> str:
+    """Return '1' for primary weapon, '2' for secondary.
 
-    # End Turn button in MCP screenshot coordinates
-    END_TURN_POS = (420, 143)
+    Looks up which weapon the solver chose and compares it to
+    the mech's primary vs secondary weapon assignment.
+    """
+    if not action.weapon:
+        return "1"
 
-    def __init__(self, grid=None):
-        # Grid config is kept for backward compatibility but
-        # plan_clicks_mcp uses grid_to_mcp directly.
-        self.grid = grid
+    # Find the mech in the board to check its weapons
+    mech = None
+    for u in board.units:
+        if u.uid == action.mech_uid:
+            mech = u
+            break
 
-    def plan_clicks(self, solution: Solution) -> list[dict]:
-        """Convert a solver Solution into MCP click/key commands.
+    if mech is None:
+        return "1"  # fallback
 
-        Returns a list of dicts with:
-          - "type": "click" | "key" | "wait" | "screenshot"
-          - "x", "y": MCP screenshot coordinates (for clicks)
-          - "text": key name (for key presses)
-          - "duration": seconds (for waits)
-          - "description": human-readable action
-        """
-        clicks = []
+    if mech.weapon2 and action.weapon == mech.weapon2:
+        return "2"
+    return "1"
 
-        for i, action in enumerate(solution.actions):
-            clicks.extend(self._plan_mech_action(action, i))
 
-        # End turn
+# --- Per-Mech Click Planning ---
+
+def plan_single_mech(action: MechAction, portrait_index: int,
+                     board: Board = None) -> list[dict]:
+    """Plan clicks for ONE mech action.
+
+    Uses portrait clicks for reliable mech selection (not Tab,
+    which is unreliable with verify gaps between executions).
+
+    Portrait click shows a pilot popup — we dismiss it by clicking
+    the board, then re-click the portrait to select the mech.
+
+    Args:
+        action: The solver's MechAction for this mech.
+        portrait_index: Which portrait to click (0, 1, or 2).
+        board: Board state, used for primary/secondary weapon detection.
+
+    Returns:
+        List of click/key/wait commands for MCP execution.
+    """
+    clicks = []
+
+    # Step 1: Click portrait to select mech
+    clicks.append({
+        "type": "click",
+        "x": PORTRAIT_X, "y": PORTRAIT_Y[portrait_index],
+        "description": f"Click portrait to select {action.mech_type}",
+    })
+    clicks.append({"type": "wait", "duration": 0.3,
+                    "description": "Wait for portrait response"})
+
+    # Step 2: Click board center to dismiss pilot popup
+    clicks.append({
+        "type": "click",
+        "x": BOARD_CENTER[0], "y": BOARD_CENTER[1],
+        "description": "Dismiss pilot popup",
+    })
+    clicks.append({"type": "wait", "duration": 0.3,
+                    "description": "Wait for popup dismiss"})
+
+    # Step 3: Re-click portrait (now selects mech properly)
+    clicks.append({
+        "type": "click",
+        "x": PORTRAIT_X, "y": PORTRAIT_Y[portrait_index],
+        "description": f"Re-select {action.mech_type}",
+    })
+    clicks.append({"type": "wait", "duration": 0.5,
+                    "description": "Wait for mech selection"})
+
+    # Step 4: Attack (before moving — fires from current known position)
+    has_attack = action.weapon and action.target[0] >= 0
+    if has_attack:
+        weapon_key = _get_weapon_key(action, board) if board else "1"
+        clicks.append({
+            "type": "key", "text": weapon_key,
+            "description": f"Arm {action.weapon} (key '{weapon_key}')",
+        })
         clicks.append({"type": "wait", "duration": 0.5,
-                        "description": "Pause before end turn"})
+                        "description": "Wait for weapon arm"})
+
+        tx, ty = grid_to_mcp(action.target[0], action.target[1])
         clicks.append({
-            "type": "click",
-            "x": self.END_TURN_POS[0], "y": self.END_TURN_POS[1],
-            "description": "Click End Turn",
+            "type": "click", "x": tx, "y": ty,
+            "description": f"Fire {action.weapon} at ({action.target[0]},{action.target[1]})",
         })
-        clicks.append({"type": "wait", "duration": 5.0,
-                        "description": "Wait for enemy phase"})
+        clicks.append({"type": "wait", "duration": 2.0,
+                        "description": "Wait for attack animation"})
 
-        return clicks
+    # Step 5: Move (after attacking)
+    has_move = action.move_to and action.move_to != (-1, -1)
+    if has_move:
+        # Check if the mech is actually moving somewhere different
+        # (The solver includes move_to even when staying in place)
+        mech = None
+        if board:
+            mech = next((u for u in board.units if u.uid == action.mech_uid), None)
+        current_pos = (mech.x, mech.y) if mech else None
 
-    def _plan_mech_action(self, action: MechAction, index: int) -> list[dict]:
-        """Plan clicks for a single mech action."""
-        import re
-        clicks = []
-        desc = action.description
-        moved = "move" in desc
-
-        # Step 1: Select mech via Tab key (avoids pilot popup that
-        # portrait clicks cause — the popup eats the next board click)
-        clicks.append({
-            "type": "key", "text": "tab",
-            "description": f"Tab to select next mech ({action.mech_type})",
-        })
-        clicks.append({"type": "wait", "duration": 0.5, "description": "wait"})
-
-        # Step 2: Attack FIRST (before moving — fires from known position)
-        if action.weapon and action.target[0] >= 0:
-            # Arm the primary weapon by pressing '1'
-            clicks.append({
-                "type": "key", "text": "1",
-                "description": f"Arm {action.weapon}",
-            })
-            clicks.append({"type": "wait", "duration": 0.5, "description": "wait"})
-
-            # Click target tile center to fire
-            tx, ty = grid_to_mcp(action.target[0], action.target[1])
-            clicks.append({
-                "type": "click", "x": tx, "y": ty,
-                "description": f"Fire {action.weapon} at ({action.target[0]},{action.target[1]})",
-            })
-            clicks.append({"type": "wait", "duration": 2.0,
-                            "description": "Wait for attack animation"})
-
-        # Step 3: Move (after attacking)
-        if moved:
-            m = re.search(r'move \((\d+),(\d+)\)->\((\d+),(\d+)\)', desc)
-            if m:
-                dest_x, dest_y = int(m.group(3)), int(m.group(4))
-            else:
-                dest_x, dest_y = action.move_to
-
-            dx, dy = grid_to_mcp(dest_x, dest_y)
+        if current_pos is None or action.move_to != current_pos:
+            dx, dy = grid_to_mcp(action.move_to[0], action.move_to[1])
             clicks.append({
                 "type": "click", "x": dx, "y": dy,
-                "description": f"Move to ({dest_x},{dest_y})",
+                "description": f"Move to ({action.move_to[0]},{action.move_to[1]})",
             })
             clicks.append({"type": "wait", "duration": 1.0,
                             "description": "Wait for move animation"})
 
-        # If no attack and no move, skip the mech's turn
-        if not (action.weapon and action.target[0] >= 0) and not moved:
-            clicks.append({
-                "type": "key", "text": "q",
-                "description": "Skip action",
-            })
-            clicks.append({"type": "wait", "duration": 0.5, "description": "wait"})
+    # If no attack and no move, skip (press 'q' to deselect)
+    if not has_attack and not has_move:
+        clicks.append({
+            "type": "key", "text": "q",
+            "description": "Skip action (no attack or move)",
+        })
+        clicks.append({"type": "wait", "duration": 0.3,
+                        "description": "Wait for skip"})
+
+    return clicks
+
+
+def plan_end_turn() -> list[dict]:
+    """Plan clicks for the End Turn button."""
+    return [
+        {"type": "wait", "duration": 0.5,
+         "description": "Pause before end turn"},
+        {"type": "click",
+         "x": END_TURN_POS[0], "y": END_TURN_POS[1],
+         "description": "Click End Turn"},
+    ]
+
+
+# --- Backward-Compatible Full-Solution Planning ---
+
+class GameExecutor:
+    """Executes actions on the game via mouse clicks.
+
+    Generates a click/key sequence for the MCP computer-use tool.
+    Kept for backward compatibility with main.py.
+    """
+
+    def __init__(self, board: Board = None):
+        self.board = board
+
+    def plan_clicks(self, solution: Solution) -> list[dict]:
+        """Convert a solver Solution into MCP click/key commands.
+
+        Backward-compatible: plans all mechs + end turn as one sequence.
+        For the game loop, use plan_single_mech() + plan_end_turn() instead.
+        """
+        clicks = []
+        portraits = get_mech_portraits(self.board) if self.board else {}
+
+        for i, action in enumerate(solution.actions):
+            idx = portraits.get(action.mech_type, i)
+            clicks.extend(plan_single_mech(action, idx, self.board))
+
+        clicks.extend(plan_end_turn())
+        clicks.append({"type": "wait", "duration": 5.0,
+                        "description": "Wait for enemy phase"})
 
         return clicks
 
@@ -187,10 +244,8 @@ class GameExecutor:
         print(f"\n=== CLICK PLAN ({len(clicks)} steps) ===")
         for i, c in enumerate(clicks):
             if c["type"] == "click":
-                print(f"  {i+1}. CLICK ({c['x']}, {c['y']}) — {c['description']}")
+                print(f"  {i+1}. CLICK ({c['x']}, {c['y']}) -- {c['description']}")
             elif c["type"] == "key":
-                print(f"  {i+1}. KEY '{c['text']}' — {c['description']}")
+                print(f"  {i+1}. KEY '{c['text']}' -- {c['description']}")
             elif c["type"] == "wait":
-                print(f"  {i+1}. WAIT {c['duration']}s — {c['description']}")
-            elif c["type"] == "screenshot":
-                print(f"  {i+1}. SCREENSHOT — {c['description']}")
+                print(f"  {i+1}. WAIT {c['duration']}s -- {c['description']}")
