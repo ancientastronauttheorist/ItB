@@ -1,0 +1,1047 @@
+{
+  "squads": [
+    {
+      "name": "Rift Walkers",
+      "id": "rift_walkers",
+      "unlock": "Starting squad",
+      "unlock_cost": 0,
+      "achievements": ["Watery Grave", "Ramming Speed", "Island Secure"],
+      "description": "The default starting squad with balanced, straightforward mechs.",
+      "mechs": [
+        {
+          "name": "Combat Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Titan Fist",
+            "type": "melee",
+            "damage": 2,
+            "range": "adjacent_single",
+            "targeting": "Single adjacent tile",
+            "effects": ["push"],
+            "description": "Punches an adjacent tile, dealing damage and pushing the target.",
+            "upgrades": [
+              {"name": "Dash", "cost": 2, "effect": "Dash through tiles before punching (Dash Punch). Can kill enemies in path via collision."},
+              {"name": "+2 Damage", "cost": 3, "effect": "Increases damage from 2 to 4"}
+            ]
+          }
+        },
+        {
+          "name": "Cannon Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Taurus Cannon",
+            "type": "ranged",
+            "damage": 1,
+            "range": "projectile_straight",
+            "targeting": "Fires projectile in a straight line, hits first target",
+            "effects": ["push"],
+            "description": "Shoots a pushing projectile that deals damage and pushes the target backward.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage from 1 to 2"},
+              {"name": "+1 Damage", "cost": 3, "effect": "Increases damage from 2 to 3"}
+            ]
+          }
+        },
+        {
+          "name": "Artillery Mech",
+          "class": "Ranged",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Artemis Artillery",
+            "type": "artillery",
+            "damage": 1,
+            "range": "artillery_single",
+            "targeting": "Lobs a projectile over terrain to target tile, pushes adjacent tiles",
+            "effects": ["push_adjacent"],
+            "description": "Artillery shot that damages target and pushes all adjacent tiles.",
+            "upgrades": [
+              {"name": "Buildings Immune", "cost": 1, "effect": "This weapon will not damage Grid Buildings"},
+              {"name": "+2 Damage", "cost": 3, "effect": "Increases damage from 1 to 3"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rusting Hulks",
+      "id": "rusting_hulks",
+      "unlock": "2 coins",
+      "unlock_cost": 2,
+      "achievements": ["Overpowered", "Stormy Weather", "Perfect Battle"],
+      "description": "Smoke-based squad. Jet Mech creates smoke, Storm Generator damages enemies in smoke.",
+      "mechs": [
+        {
+          "name": "Jet Mech",
+          "class": "Brute",
+          "hp": 2,
+          "movement": 4,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Aerial Bombs",
+            "type": "dash_attack",
+            "damage": 1,
+            "range": "line_fly",
+            "targeting": "Flies over a tile, damaging it and creating smoke on it",
+            "effects": ["smoke"],
+            "description": "Flies to target tile, damaging and smoking the tile you fly over.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 1, "effect": "Increases damage to 2"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3"}
+            ]
+          }
+        },
+        {
+          "name": "Rocket Mech",
+          "class": "Ranged",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Rocket Artillery",
+            "type": "artillery",
+            "damage": 2,
+            "range": "artillery_single",
+            "targeting": "Artillery shot that hits target and creates smoke behind the target",
+            "effects": ["smoke_behind"],
+            "description": "Fires a rocket that damages target and creates a smoke cloud behind it.",
+            "upgrades": [
+              {"name": "+2 Damage", "cost": 3, "effect": "Increases damage to 4"}
+            ]
+          },
+          "passive": {
+            "name": "Storm Generator",
+            "effect": "All enemies in Smoke take 1 damage at the end of enemy turn",
+            "cost": 0,
+            "description": "Passive ability that damages all enemies standing in smoke tiles."
+          }
+        },
+        {
+          "name": "Pulse Mech",
+          "class": "Science",
+          "hp": 3,
+          "movement": 4,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Repulse",
+            "type": "special",
+            "damage": 0,
+            "range": "self_adjacent",
+            "targeting": "Pushes all adjacent tiles away from the mech",
+            "effects": ["push_all_adjacent", "shield_self"],
+            "description": "Pushes all adjacent tiles and shields self.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 1 damage to all pushed tiles"},
+              {"name": "Shield Ally", "cost": 1, "effect": "Shields an adjacent ally instead of self"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Zenith Guard",
+      "id": "zenith_guard",
+      "unlock": "2 coins",
+      "unlock_cost": 2,
+      "achievements": ["Get Over Here", "Glittering C-Beam", "Shield Mastery"],
+      "description": "Laser/shield squad. High damage laser, charge attack, and shield/pull support.",
+      "mechs": [
+        {
+          "name": "Laser Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Burst Beam",
+            "type": "beam",
+            "damage": 3,
+            "range": "line_pierce",
+            "targeting": "Piercing beam in a straight line. 3 damage at point blank, decreasing by 1 per tile (3-2-1-0).",
+            "effects": ["pierce"],
+            "description": "Fires a piercing laser that hits all units in a line. Damage decreases with range.",
+            "upgrades": [
+              {"name": "Buildings Immune", "cost": 1, "effect": "Beam does not damage buildings"},
+              {"name": "+2 Damage", "cost": 3, "effect": "Increases to 5-4-3-2-1-0"}
+            ]
+          }
+        },
+        {
+          "name": "Charge Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Ramming Engines",
+            "type": "dash_melee",
+            "damage": 2,
+            "range": "line_dash",
+            "targeting": "Charges in a straight line, dealing damage and pushing the first target hit",
+            "effects": ["push", "self_damage_1"],
+            "description": "Dashes forward, damaging target and pushing it. Takes 1 self-damage on hit.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 1, "effect": "Increases damage to 3"},
+              {"name": "Ally Immune", "cost": 2, "effect": "Does not damage allied units"}
+            ]
+          }
+        },
+        {
+          "name": "Defense Mech",
+          "class": "Science",
+          "hp": 2,
+          "movement": 4,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Attraction Pulse",
+            "type": "pull",
+            "damage": 0,
+            "range": "projectile_straight",
+            "targeting": "Fires projectile in a straight line, pulls target toward the mech",
+            "effects": ["pull"],
+            "description": "Pulls a target unit toward the mech. Can kill enemies by pulling them into the mech.",
+            "upgrades": [
+              {"name": "Shield", "cost": 1, "effect": "Shields target tile before pulling"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 1 damage to pulled target"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blitzkrieg",
+      "id": "blitzkrieg",
+      "unlock": "2 coins",
+      "unlock_cost": 2,
+      "achievements": ["Chain Attack", "Lightning War", "Hold the Line"],
+      "description": "Lightning chain and crowd control. Chains damage between adjacent units, grapples, and places boulders.",
+      "mechs": [
+        {
+          "name": "Lightning Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Electric Whip",
+            "type": "chain",
+            "damage": 2,
+            "range": "adjacent_chain",
+            "targeting": "Hits adjacent tile and chains through all connected units/objects (friends and foes). Chains through boulders.",
+            "effects": ["chain"],
+            "description": "Electric attack that chains through all adjacent connected units.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 1, "effect": "Increases chain damage to 3"},
+              {"name": "Building Immune", "cost": 3, "effect": "Chain does not damage buildings"}
+            ]
+          }
+        },
+        {
+          "name": "Hook Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": true,
+          "weapon": {
+            "name": "Grappling Hook",
+            "type": "pull",
+            "damage": 0,
+            "range": "projectile_straight",
+            "targeting": "Fires hook in straight line, pulls target adjacent to mech",
+            "effects": ["pull"],
+            "description": "Pulls a target to a tile adjacent to the mech.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 1 damage to target"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 2 total damage to target"}
+            ]
+          }
+        },
+        {
+          "name": "Boulder Mech",
+          "class": "Ranged",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Rock Accelerator",
+            "type": "artillery",
+            "damage": 2,
+            "range": "artillery_single",
+            "targeting": "Launches a boulder that damages target and pushes adjacent tiles. Boulder persists as a blocking object.",
+            "effects": ["push_adjacent", "create_boulder"],
+            "description": "Throws a boulder that deals damage and creates a persistent rock on the tile.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 1, "effect": "Increases damage to 3"},
+              {"name": "Pre-placed", "cost": 1, "effect": "Spawn a boulder near your deployment zone at battle start"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Steel Judoka",
+      "id": "steel_judoka",
+      "unlock": "2 coins",
+      "unlock_cost": 2,
+      "achievements": ["Unbreakable", "Unwitting Allies", "Mass Displacement"],
+      "description": "Displacement squad. Throws, pushes, and pulls enemies into each other's attack lines.",
+      "passive": {
+        "name": "Vek Hormones",
+        "effect": "Enemies will attack other enemies if able. Flipped Vek target other Vek instead of buildings/mechs.",
+        "cost": 0
+      },
+      "mechs": [
+        {
+          "name": "Judo Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 4,
+          "flying": false,
+          "armor": true,
+          "weapon": {
+            "name": "Vice Fist",
+            "type": "melee",
+            "damage": 0,
+            "range": "adjacent_single",
+            "targeting": "Grabs adjacent unit and throws it 2 tiles over the mech to the opposite side",
+            "effects": ["throw"],
+            "description": "Throws an adjacent enemy to the opposite side. Requires open space behind mech.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 1 damage when thrown"},
+              {"name": "Ally Immune", "cost": 1, "effect": "Does not damage allied units"}
+            ]
+          }
+        },
+        {
+          "name": "Siege Mech",
+          "class": "Ranged",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Cluster Artillery",
+            "type": "artillery",
+            "damage": 1,
+            "range": "artillery_area",
+            "targeting": "Hits target tile plus 4 adjacent tiles (cross pattern) for 1 damage each",
+            "effects": ["area_damage"],
+            "description": "Artillery that damages a cross-shaped area around the target.",
+            "upgrades": [
+              {"name": "Buildings Immune", "cost": 1, "effect": "Does not damage buildings"},
+              {"name": "+1 Damage", "cost": 3, "effect": "Increases to 2 damage per tile"}
+            ]
+          }
+        },
+        {
+          "name": "Gravity Mech",
+          "class": "Science",
+          "hp": 3,
+          "movement": 4,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Grav Well",
+            "type": "artillery",
+            "damage": 0,
+            "range": "artillery_single",
+            "targeting": "Artillery weapon that pulls its target towards the mech",
+            "effects": ["pull"],
+            "description": "Pulls target unit towards the Gravity Mech. Can pull enemies into water/chasms or into each other for bump damage.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 1 damage to the target"},
+              {"name": "Push", "cost": 1, "effect": "Pushes target one tile instead of pulling"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flame Behemoths",
+      "id": "flame_behemoths",
+      "unlock": "3 coins",
+      "unlock_cost": 3,
+      "achievements": ["Quantum Entanglement", "Scorched Earth", "This is Fine"],
+      "description": "Fire-based squad. Sets tiles and enemies on fire for damage over time.",
+      "mechs": [
+        {
+          "name": "Flame Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Flamethrower",
+            "type": "ranged",
+            "damage": 0,
+            "range": "line_short",
+            "targeting": "Hits tiles in front of mech (1-3 tiles depending on upgrades), setting them on fire. Pushes targets.",
+            "effects": ["fire", "push"],
+            "description": "Sets target tiles on fire and pushes. +2 bonus damage to already-burning targets.",
+            "upgrades": [
+              {"name": "+1 Range", "cost": 1, "effect": "Extends flame range by 1 tile"},
+              {"name": "+1 Range", "cost": 1, "effect": "Extends flame range by another tile"}
+            ]
+          }
+        },
+        {
+          "name": "Meteor Mech",
+          "class": "Ranged",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Vulcan Artillery",
+            "type": "artillery",
+            "damage": 1,
+            "range": "artillery_area",
+            "targeting": "Hits target and sets surrounding tiles on fire",
+            "effects": ["fire_adjacent"],
+            "description": "Artillery that damages target and sets surrounding tiles on fire.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 2"},
+              {"name": "Backburn", "cost": 1, "effect": "Creates fire behind the mech when firing"}
+            ]
+          }
+        },
+        {
+          "name": "Swap Mech",
+          "class": "Science",
+          "hp": 2,
+          "movement": 4,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Teleporter",
+            "type": "teleport",
+            "damage": 0,
+            "range": "teleport",
+            "targeting": "Swaps positions of the mech and a target unit within range (2-4 tiles depending on upgrades)",
+            "effects": ["swap_position"],
+            "description": "Teleports target unit, swapping its position with the mech.",
+            "upgrades": [
+              {"name": "+1 Range", "cost": 1, "effect": "Increases teleport range by 1"},
+              {"name": "+1 Range", "cost": 1, "effect": "Increases teleport range by another 1"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Frozen Titans",
+      "id": "frozen_titans",
+      "unlock": "3 coins",
+      "unlock_cost": 3,
+      "achievements": ["Cryo Expert", "Trick Shot", "Pacifist"],
+      "description": "Ice-based squad. Freezes enemies and redirects attacks with dual-directional cannon.",
+      "mechs": [
+        {
+          "name": "Aegis Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 4,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Spartan Shield",
+            "type": "melee",
+            "damage": 2,
+            "range": "adjacent_single",
+            "targeting": "Hits adjacent tile, pushing target. Can generate shield.",
+            "effects": ["push"],
+            "description": "Melee attack that damages and pushes. High base damage.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3"},
+              {"name": "Shield", "cost": 1, "effect": "Shields self on attack"}
+            ]
+          }
+        },
+        {
+          "name": "Mirror Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Janus Cannon",
+            "type": "dual_ranged",
+            "damage": 1,
+            "range": "line_both_directions",
+            "targeting": "Fires in BOTH directions simultaneously (front and back). Hits all units in both lines.",
+            "effects": ["dual_direction"],
+            "description": "Shoots in two opposite directions, hitting all targets in both lines.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 2 in both directions"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3 in both directions"}
+            ]
+          }
+        },
+        {
+          "name": "Ice Mech",
+          "class": "Ranged",
+          "hp": 2,
+          "movement": 3,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Cryo-Launcher",
+            "type": "artillery",
+            "damage": 0,
+            "range": "artillery_single",
+            "targeting": "Freezes the target tile and the mech itself",
+            "effects": ["freeze_target", "freeze_self"],
+            "description": "Fires a cryo projectile that freezes the target. Also freezes the Ice Mech.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 1 damage to target before freezing"},
+              {"name": "No Self-Freeze", "cost": 3, "effect": "Mech no longer freezes itself"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hazardous Mechs",
+      "id": "hazardous_mechs",
+      "unlock": "3 coins",
+      "unlock_cost": 3,
+      "achievements": ["Healing", "Immortal", "Overkill"],
+      "description": "Self-damaging squad with high damage output and healing mechanics.",
+      "mechs": [
+        {
+          "name": "Leap Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 4,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Hydraulic Legs",
+            "type": "leap",
+            "damage": 1,
+            "range": "leap_area",
+            "targeting": "Leaps to target tile, damaging adjacent tiles on landing. Self-damage.",
+            "effects": ["area_damage", "self_damage_1"],
+            "description": "Jumps to a tile, dealing damage to all adjacent tiles. Takes 1 self-damage.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 2"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3"}
+            ]
+          }
+        },
+        {
+          "name": "Unstable Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Unstable Cannon",
+            "type": "ranged",
+            "damage": 1,
+            "range": "projectile_straight",
+            "targeting": "Fires a high-damage projectile. Self-damage on fire.",
+            "effects": ["self_damage_1"],
+            "description": "High-damage cannon that damages self when firing.",
+            "upgrades": [
+              {"name": "+2 Damage", "cost": 1, "effect": "Increases damage to 3"},
+              {"name": "+2 Damage", "cost": 3, "effect": "Increases damage to 5"}
+            ]
+          }
+        },
+        {
+          "name": "Nano Mech",
+          "class": "Science",
+          "hp": 2,
+          "movement": 4,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Viscera Nanobots",
+            "type": "special",
+            "damage": 0,
+            "range": "artillery_single",
+            "targeting": "Targets single unit. Deals damage to target and heals the mech if target dies.",
+            "effects": ["heal_on_kill"],
+            "description": "Nanobots that damage target. Killing blow heals the Nano Mech.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 1, "effect": "Increases damage to 1"},
+              {"name": "Heal on Kill", "cost": 3, "effect": "Heals ALL mechs when getting a kill"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bombermechs",
+      "id": "bombermechs",
+      "unlock": "Advanced Edition, coins",
+      "unlock_cost": 3,
+      "achievements": ["Powered Blast", "Hold the Door", "No Survivors"],
+      "description": "AE squad. Spawns explosive bomblings that detonate on Vek. Pierce Mech shoots through units.",
+      "mechs": [
+        {
+          "name": "Pierce Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 4,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Piercing Shot",
+            "type": "ranged",
+            "damage": 1,
+            "range": "line_pierce",
+            "targeting": "Fires a piercing projectile through all units in a line",
+            "effects": ["pierce"],
+            "description": "Shoots through all units in a line, damaging each.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 2"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3"}
+            ]
+          }
+        },
+        {
+          "name": "Bombling Mech",
+          "class": "Ranged",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Bomb Dispenser",
+            "type": "artillery",
+            "damage": 0,
+            "range": "artillery_single",
+            "targeting": "Deploys a Bombling unit that walks toward nearest Vek and detonates",
+            "effects": ["spawn_bombling"],
+            "description": "Spawns a Bombling that autonomously moves toward and detonates on enemies.",
+            "upgrades": [
+              {"name": "+1 Bombling", "cost": 3, "effect": "Spawns 2 Bomblings instead of 1"},
+              {"name": "+1 Damage", "cost": 1, "effect": "Bomblings deal more damage on detonation"}
+            ]
+          }
+        },
+        {
+          "name": "Exchange Mech",
+          "class": "Science",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Exchange Device",
+            "type": "teleport",
+            "damage": 0,
+            "range": "artillery_single",
+            "targeting": "Swaps the positions of two units",
+            "effects": ["swap_units"],
+            "description": "Swaps positions of two target units. Versatile repositioning tool.",
+            "upgrades": [
+              {"name": "+1 Range", "cost": 1, "effect": "Increases swap range"},
+              {"name": "Shield", "cost": 2, "effect": "Shields swapped units"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arachnophiles",
+      "id": "arachnophiles",
+      "unlock": "Advanced Edition, coins",
+      "unlock_cost": 3,
+      "achievements": ["Spider Breeding", "Working Together", "Efficient Explosives"],
+      "description": "AE squad. Creates allied Arachnoid units from killed Vek. Ricochet rocket and area slide.",
+      "mechs": [
+        {
+          "name": "Bulk Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Ricochet Rocket",
+            "type": "ranged",
+            "damage": 1,
+            "range": "projectile_bounce",
+            "targeting": "Fires a projectile that bounces off the first target, continuing in a line to hit additional targets",
+            "effects": ["ricochet", "push"],
+            "description": "Rocket that bounces off first target and continues hitting others in the line.",
+            "upgrades": [
+              {"name": "+2 Damage", "cost": 3, "effect": "Increases damage to 3"},
+              {"name": "Buildings Immune", "cost": 1, "effect": "Does not damage buildings"}
+            ]
+          }
+        },
+        {
+          "name": "Arachnoid Mech",
+          "class": "Ranged",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Arachnoid Injector",
+            "type": "artillery",
+            "damage": 1,
+            "range": "artillery_single",
+            "targeting": "Artillery shot that creates an allied Arachnoid unit when it kills an enemy",
+            "effects": ["spawn_arachnoid_on_kill"],
+            "description": "Kills create allied Arachnoid units that damage and push enemies.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 1, "effect": "Increases damage to 2"},
+              {"name": "A.C.I.D.", "cost": 2, "effect": "Applies A.C.I.D. to target"}
+            ]
+          }
+        },
+        {
+          "name": "Slide Mech",
+          "class": "Science",
+          "hp": 2,
+          "movement": 4,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Area Shift",
+            "type": "special",
+            "damage": 0,
+            "range": "adjacent_single",
+            "targeting": "Pushes self and all surrounding units 1 tile in the chosen direction",
+            "effects": ["mass_push"],
+            "description": "Slides the mech and all adjacent units one tile in the same direction.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals 1 damage to displaced units"},
+              {"name": "Shield Self", "cost": 1, "effect": "Shields the Slide Mech"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mist Eaters",
+      "id": "mist_eaters",
+      "unlock": "Advanced Edition, coins",
+      "unlock_cost": 3,
+      "achievements": ["Stay With Me!", "Let's Walk", "On the Backburner"],
+      "description": "AE squad. Heals from smoke/clouds. Control Shot repositions enemies, Reverse Thrusters dash-damages.",
+      "mechs": [
+        {
+          "name": "Thruster Mech",
+          "class": "Brute",
+          "hp": 3,
+          "movement": 4,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Reverse Thrusters",
+            "type": "dash_melee",
+            "damage": 2,
+            "range": "line_dash",
+            "targeting": "Dashes forward, dealing damage and pushing targets. Also damages tiles behind the mech.",
+            "effects": ["push", "back_damage"],
+            "description": "Charges forward, damaging in front and behind with thrusters.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3"},
+              {"name": "+1 Back Damage", "cost": 1, "effect": "Increases rear thruster damage"}
+            ]
+          }
+        },
+        {
+          "name": "Smog Mech",
+          "class": "Ranged",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Smog Blast",
+            "type": "artillery",
+            "damage": 1,
+            "range": "artillery_area",
+            "targeting": "Fires an artillery shot that damages and creates smoke tiles",
+            "effects": ["fire_damage", "smoke"],
+            "description": "Artillery that damages target and creates smoke clouds for mist eating.",
+            "upgrades": [
+              {"name": "+1 Smoke", "cost": 2, "effect": "Creates additional smoke tiles"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage"}
+            ]
+          },
+          "passive": {
+            "name": "Nanofilter Mending",
+            "effect": "Mechs heal 1 HP when entering or starting turn in smoke/cloud tiles",
+            "cost": 0,
+            "description": "Squad passive: mechs recover health from smoke."
+          }
+        },
+        {
+          "name": "Control Mech",
+          "class": "Science",
+          "hp": 2,
+          "movement": 4,
+          "flying": true,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Control Shot",
+            "type": "ranged",
+            "damage": 0,
+            "range": "projectile_straight",
+            "targeting": "Hits target and forces it to move in a direction of your choosing",
+            "effects": ["forced_move"],
+            "description": "Forces target to walk in a specified direction. Versatile repositioning.",
+            "upgrades": [
+              {"name": "+1 Range", "cost": 1, "effect": "Target walks 1 additional tile"},
+              {"name": "+1 Range", "cost": 1, "effect": "Target walks 2 additional tiles"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Heat Sinkers",
+      "id": "heat_sinkers",
+      "unlock": "Advanced Edition, coins",
+      "unlock_cost": 3,
+      "achievements": ["Boosted", "Feed the Flame", "Maximum Firepower"],
+      "description": "AE squad. Uses fire and Boost mechanic. Mechs gain Boost from fire tiles for +1 damage.",
+      "mechs": [
+        {
+          "name": "Dispersal Mech",
+          "class": "Prime",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Heat Converter",
+            "type": "melee",
+            "damage": 2,
+            "range": "adjacent_single",
+            "targeting": "Melee attack that deals damage. Consumes fire on mech's tile for extra effect.",
+            "effects": ["push", "consumes_fire"],
+            "description": "Punches adjacent target. Absorbs fire for Boost bonus.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3"},
+              {"name": "Fire Trail", "cost": 1, "effect": "Leaves fire on tiles moved through"}
+            ]
+          }
+        },
+        {
+          "name": "Quick-Fire Mech",
+          "class": "Brute",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Quick-Fire Rockets",
+            "type": "ranged",
+            "damage": 2,
+            "range": "projectile_straight",
+            "targeting": "Fires rockets at all enemies in a line. Hits multiple targets.",
+            "effects": ["multi_target"],
+            "description": "Rockets that hit all targets in a straight line. Very high damage with Boost.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 3"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 4"}
+            ]
+          }
+        },
+        {
+          "name": "Napalm Mech",
+          "class": "Science",
+          "hp": 2,
+          "movement": 4,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Napalm Launcher",
+            "type": "artillery",
+            "damage": 0,
+            "range": "artillery_line",
+            "targeting": "Sets a line of tiles on fire",
+            "effects": ["fire_line"],
+            "description": "Creates a line of fire tiles, setting enemies and terrain ablaze.",
+            "upgrades": [
+              {"name": "+1 Range", "cost": 1, "effect": "Increases fire line length"},
+              {"name": "+1 Damage", "cost": 2, "effect": "Deals damage to units on fire tiles"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cataclysm",
+      "id": "cataclysm",
+      "unlock": "Advanced Edition, coins",
+      "unlock_cost": 3,
+      "achievements": ["Unstable Ground", "Core of the Earth", "Miner Inconvenience"],
+      "description": "AE squad. Creates pits/chasms, destroys terrain. Pitcher throws enemies, Drill creates cracks, Triptych makes pits.",
+      "mechs": [
+        {
+          "name": "Pitcher Mech",
+          "class": "Prime",
+          "hp": 4,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Giant Arm",
+            "type": "melee_throw",
+            "damage": 1,
+            "range": "adjacent_throw",
+            "targeting": "Grabs adjacent unit and throws it several tiles in a direction",
+            "effects": ["throw"],
+            "description": "Picks up and throws adjacent unit, dealing damage on landing.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases throw damage to 2"},
+              {"name": "+1 Range", "cost": 1, "effect": "Throws target farther"}
+            ]
+          }
+        },
+        {
+          "name": "Triptych Mech",
+          "class": "Ranged",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Triptych Strike",
+            "type": "artillery",
+            "damage": 1,
+            "range": "artillery_multi",
+            "targeting": "Hits 3 tiles in a pattern. Creates pits/chasms on empty tiles, damages units.",
+            "effects": ["create_pit"],
+            "description": "Strikes multiple tiles, cracking terrain into pits that kill ground units.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 2, "effect": "Increases damage to 2"},
+              {"name": "+1 Tile", "cost": 1, "effect": "Hits additional tiles"}
+            ]
+          }
+        },
+        {
+          "name": "Drill Mech",
+          "class": "Science",
+          "hp": 3,
+          "movement": 4,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Seismic Drill",
+            "type": "melee",
+            "damage": 1,
+            "range": "adjacent_single",
+            "targeting": "Drills adjacent tile, cracking surrounding ground on kills",
+            "effects": ["crack_on_kill"],
+            "description": "Melee attack that cracks adjacent tiles when killing the target.",
+            "upgrades": [
+              {"name": "+1 Damage", "cost": 1, "effect": "Increases damage to 2"},
+              {"name": "Crack Range", "cost": 1, "effect": "Cracks larger area on kill"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Secret Squad",
+      "id": "secret_squad",
+      "unlock": "Complete all other achievements",
+      "unlock_cost": 0,
+      "achievements": [],
+      "description": "Secret squad unlocked by completing all achievements. Contains unique Techno-Vek mechs.",
+      "mechs": [
+        {
+          "name": "Techno-Beetle",
+          "class": "Cyborg",
+          "hp": 3,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Ramming Speed",
+            "type": "dash_melee",
+            "damage": 2,
+            "range": "line_dash",
+            "targeting": "Charges forward, damaging and pushing the first target",
+            "effects": ["push"],
+            "description": "Dash attack similar to Beetle charge.",
+            "upgrades": []
+          }
+        },
+        {
+          "name": "Techno-Hornet",
+          "class": "Cyborg",
+          "hp": 2,
+          "movement": 4,
+          "flying": true,
+          "armor": false,
+          "weapon": {
+            "name": "Stinger",
+            "type": "melee",
+            "damage": 1,
+            "range": "adjacent_single",
+            "targeting": "Stabs an adjacent tile",
+            "effects": [],
+            "description": "Fast flying melee attack.",
+            "upgrades": []
+          }
+        },
+        {
+          "name": "Techno-Scarab",
+          "class": "Cyborg",
+          "hp": 2,
+          "movement": 3,
+          "flying": false,
+          "armor": false,
+          "weapon": {
+            "name": "Accelerating Thorax",
+            "type": "artillery",
+            "damage": 1,
+            "range": "artillery_single",
+            "targeting": "Fires an arcing projectile at a single tile",
+            "effects": [],
+            "description": "Artillery attack.",
+            "upgrades": []
+          }
+        }
+      ]
+    }
+  ],
+  "mech_classes": {
+    "Prime": "Close-range fighters. Can use Prime-class weapons without power penalty.",
+    "Brute": "Durable fighters with charge/push mechanics. Can use Brute-class weapons without penalty.",
+    "Ranged": "Artillery and ranged attackers. Can use Ranged-class weapons without penalty.",
+    "Science": "Support mechs with utility abilities. Can use Science-class weapons without penalty."
+  },
+  "class_weapon_penalty": "Using a weapon from a different class costs +1 reactor core.",
+  "notes": {
+    "reactor_cores": "Each mech can install up to 9 reactor cores. Cores power weapons, upgrades, and passives.",
+    "mech_repair": "Any mech can repair for 1 HP instead of attacking. Removes Fire, Frozen, A.C.I.D.",
+    "custom_squads": "Players can mix any 3 unlocked mechs into a custom squad.",
+    "weapon_swapping": "Found weapons can replace starting weapons. Class matters for power cost."
+  }
+}

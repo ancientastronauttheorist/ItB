@@ -1,0 +1,594 @@
+{
+  "vek": {
+    "description": "The Vek are giant insect-like monsters that are the primary antagonists. They come in regular and Alpha variants.",
+    "alpha_rules": "Alpha Vek have higher HP, higher damage, and sometimes additional attack effects. They replace regular Vek as the game progresses or on higher difficulties.",
+    "categories": [
+      {
+        "name": "Firefly",
+        "type": "ranged",
+        "regular": {
+          "hp": 3,
+          "movement": 2,
+          "damage": 1,
+          "attack": "Launches a volatile mass of goo at a single tile in a straight line",
+          "pattern": "projectile_straight",
+          "effects": []
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 2,
+          "damage": 3,
+          "attack": "Launches a larger mass of goo dealing heavy damage",
+          "effects": []
+        },
+        "notes": "Basic ranged Vek. Common early-game enemy."
+      },
+      {
+        "name": "Hornet",
+        "type": "melee",
+        "regular": {
+          "hp": 2,
+          "movement": 5,
+          "damage": 1,
+          "attack": "Stabs single adjacent tile",
+          "pattern": "melee_single",
+          "effects": [],
+          "abilities": ["flying"]
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 5,
+          "damage": 2,
+          "attack": "Stabs 2 tiles in front of the unit",
+          "pattern": "melee_line_2",
+          "effects": []
+        },
+        "notes": "Fast flying melee unit. Cannot be drowned in water or pushed into chasms due to flying."
+      },
+      {
+        "name": "Scarab",
+        "type": "artillery",
+        "regular": {
+          "hp": 2,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Lobs an artillery shot at a single tile for 1 damage (5 tile range)",
+          "pattern": "artillery_single",
+          "effects": []
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Lobs a powerful artillery shot at a single tile for 3 damage (5 tile range)",
+          "effects": []
+        },
+        "notes": "Artillery Vek. Can shoot over obstacles. Weak but annoying."
+      },
+      {
+        "name": "Leaper",
+        "type": "melee",
+        "regular": {
+          "hp": 1,
+          "movement": 4,
+          "damage": 3,
+          "attack": "Leaps to destination avoiding obstacles. Webs an adjacent target, then stabs it for 3 damage during enemy turn.",
+          "pattern": "leap_melee",
+          "effects": ["web"],
+          "abilities": ["leap"]
+        },
+        "alpha": {
+          "hp": 3,
+          "movement": 4,
+          "damage": 5,
+          "attack": "Leaps to destination. Webs an adjacent target, then stabs it for 5 damage during enemy turn.",
+          "effects": ["web"]
+        },
+        "notes": "Extremely dangerous despite low HP. Webs prevent mech movement. Kill on sight. Cannot spawn alongside Scorpions."
+      },
+      {
+        "name": "Scorpion",
+        "type": "melee",
+        "regular": {
+          "hp": 3,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Webs an adjacent target, preparing to stab it for 1 damage.",
+          "pattern": "melee_single",
+          "effects": ["web"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Webs an adjacent target, preparing to stab it for 3 damage.",
+          "effects": ["web"]
+        },
+        "notes": "Dangerous melee Vek that restricts movement with webs. Cannot spawn alongside Leapers."
+      },
+      {
+        "name": "Centipede",
+        "type": "ranged",
+        "regular": {
+          "hp": 3,
+          "movement": 2,
+          "damage": 1,
+          "attack": "Shoots goo that damages target and applies A.C.I.D.",
+          "pattern": "projectile_straight",
+          "effects": ["acid"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 2,
+          "damage": 2,
+          "attack": "Shoots goo dealing more damage, applying A.C.I.D. to nearby tiles",
+          "effects": ["acid", "acid_aoe"]
+        },
+        "notes": "Applies A.C.I.D. which doubles subsequent weapon damage. Very dangerous combined with other Vek."
+      },
+      {
+        "name": "Spider",
+        "type": "support",
+        "regular": {
+          "hp": 2,
+          "movement": 2,
+          "damage": 0,
+          "attack": "Does not attack directly. Throws a Spiderling Egg onto any tile in its row/column. Egg webs adjacent units and hatches into a Spiderling next turn.",
+          "pattern": "artillery_line",
+          "effects": ["spawn_spiderling", "web_adjacent"]
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 2,
+          "damage": 0,
+          "attack": "Throws eggs that spawn stronger Spiderlings",
+          "effects": ["spawn_spiderling", "web_adjacent"]
+        },
+        "spiderling": {
+          "hp": 1,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Melee stab",
+          "notes": "Weak but adds to enemy count. Good for chain/arachnoid combos."
+        },
+        "notes": "Rare support Vek. Priority target — eggs multiply the enemy count rapidly."
+      },
+      {
+        "name": "Beetle",
+        "type": "melee_charge",
+        "regular": {
+          "hp": 4,
+          "movement": 2,
+          "damage": 1,
+          "attack": "Charges forward in a straight line, damaging and pushing the first target",
+          "pattern": "charge_straight",
+          "effects": ["push"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 2,
+          "damage": 3,
+          "attack": "Heavier charge dealing major damage with push",
+          "effects": ["push"]
+        },
+        "notes": "Tanky charger. Push to redirect charge direction. Dies in water despite high HP."
+      },
+      {
+        "name": "Blobber",
+        "type": "artillery",
+        "regular": {
+          "hp": 3,
+          "movement": 2,
+          "damage": 1,
+          "attack": "Launches a blob to target tile. Blob damages all adjacent tiles next turn.",
+          "pattern": "artillery_delayed_aoe",
+          "effects": ["delayed_aoe"]
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 2,
+          "damage": 3,
+          "attack": "Throws an Alpha Blob with larger explosion damage",
+          "effects": ["delayed_aoe"]
+        },
+        "blob": {
+          "hp": 1,
+          "description": "Lands on target tile. Next turn, explodes dealing damage to all 4 adjacent tiles. Can be pushed or killed before detonation."
+        },
+        "notes": "Delayed damage dealer. Blobs can be pushed away or destroyed before they explode."
+      },
+      {
+        "name": "Digger",
+        "type": "melee",
+        "regular": {
+          "hp": 2,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Creates a defensive rock wall, then attacks adjacent tiles",
+          "pattern": "melee_aoe",
+          "effects": ["create_rock"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 3,
+          "damage": 2,
+          "attack": "Creates rock wall and attacks with more damage",
+          "effects": ["create_rock"]
+        },
+        "notes": "Creates terrain obstacles. Rock walls can block your movement but also block Vek charges."
+      },
+      {
+        "name": "Burrower",
+        "type": "melee",
+        "regular": {
+          "hp": 3,
+          "movement": 4,
+          "damage": 1,
+          "attack": "Slams against 3 tiles in a row, hitting each. Retreats underground after taking damage.",
+          "pattern": "melee_line_3",
+          "effects": ["burrow_on_damage"],
+          "abilities": ["burrowing", "immovable"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 4,
+          "damage": 2,
+          "attack": "Heavier slam on 3 tiles",
+          "effects": ["burrow_on_damage"]
+        },
+        "notes": "Cannot be pushed or moved. Retreats underground when damaged (extinguishes fire). Very annoying."
+      },
+      {
+        "name": "Moth",
+        "type": "artillery",
+        "regular": {
+          "hp": 3,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Launches an artillery attack for 1 damage, pushing shooter and target.",
+          "pattern": "artillery_self_push",
+          "effects": ["self_push_back", "push_target"],
+          "abilities": ["flying"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Launches an artillery attack for 3 damage, pushing shooter and target.",
+          "effects": ["self_push_back", "push_target"]
+        },
+        "notes": "Advanced Edition flying artillery. Self-push can cause collateral damage to units behind it. Cannot be drowned."
+      },
+      {
+        "name": "Bouncer",
+        "type": "melee",
+        "regular": {
+          "hp": 3,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Deals 1 damage to the target then bounces backwards.",
+          "pattern": "melee_self_push",
+          "effects": ["self_push_back"]
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Deals 3 damage to the target then bounces backwards.",
+          "effects": ["self_push_back"]
+        },
+        "notes": "Advanced Edition Vek. Flipping doesn't redirect damage. Self-push causes additional collateral."
+      },
+      {
+        "name": "Bot",
+        "type": "varies",
+        "regular": {
+          "hp": 1,
+          "movement": 3,
+          "damage": 2,
+          "attack": "High-tech weapons causing fire and large-area damage",
+          "pattern": "varies",
+          "effects": ["fire"]
+        },
+        "alpha": {
+          "hp": 1,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Upgraded weapons",
+          "effects": ["fire"]
+        },
+        "notes": "Not actually Vek — sentient AI robots from Pinnacle Island. 1 HP but dangerous attacks."
+      },
+      {
+        "name": "Crab",
+        "type": "artillery",
+        "regular": {
+          "hp": 3,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Launches artillery attack on 2 tiles for 1 damage (5 tile range).",
+          "pattern": "artillery_double",
+          "effects": []
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 3,
+          "damage": 2,
+          "attack": "Launches artillery attack on 2 tiles for 2 damage (5 tile range).",
+          "effects": []
+        },
+        "notes": "Base game artillery Vek. Hits 2 tiles simultaneously."
+      },
+      {
+        "name": "Volatile Vek",
+        "type": "special",
+        "regular": {
+          "hp": 1,
+          "movement": 0,
+          "damage": 0,
+          "attack": "Explodes on death, dealing damage to adjacent tiles. Does not move or attack on its own.",
+          "pattern": "explosion_adjacent",
+          "effects": ["explode_on_death"]
+        },
+        "notes": "Stationary explosive Vek. Can be pushed into enemies or buildings. Explodes when killed or bumped."
+      },
+      {
+        "name": "Gastropod",
+        "type": "ranged",
+        "edition": "advanced",
+        "regular": {
+          "hp": 3,
+          "movement": 2,
+          "damage": 1,
+          "attack": "Grapple for 1 damage, pulling the Vek towards the target.",
+          "pattern": "ranged_pull",
+          "effects": ["pull_self"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 2,
+          "damage": 2,
+          "attack": "Grapple for 2 damage, pulling the Vek towards the target.",
+          "effects": ["pull_self"]
+        },
+        "notes": "Advanced Edition. Pulls itself towards target after attacking. Unique pull-self mechanic."
+      },
+      {
+        "name": "Mosquito",
+        "type": "melee",
+        "edition": "advanced",
+        "regular": {
+          "hp": 2,
+          "movement": 4,
+          "damage": 1,
+          "attack": "Smokes the target, preparing to whip it for 1 damage.",
+          "pattern": "melee_smoke",
+          "effects": ["smoke"],
+          "abilities": ["flying"]
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 4,
+          "damage": 2,
+          "attack": "Smokes the target, preparing to whip it for 2 damage.",
+          "effects": ["smoke"]
+        },
+        "notes": "Advanced Edition flying melee. Applies smoke to target before attacking, cancelling mech attacks."
+      },
+      {
+        "name": "Plasmodia",
+        "type": "artillery",
+        "edition": "advanced",
+        "regular": {
+          "hp": 3,
+          "movement": 2,
+          "damage": 0,
+          "attack": "Launches a short-lived Spore that explodes next turn, dealing damage to adjacent tiles.",
+          "pattern": "artillery_delayed",
+          "effects": ["spawn_spore"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 2,
+          "damage": 0,
+          "attack": "Launches a more powerful Spore.",
+          "effects": ["spawn_spore"]
+        },
+        "notes": "Advanced Edition. Spawns Spore minions that explode next turn. Similar to Blobber but with different mechanics."
+      },
+      {
+        "name": "Starfish",
+        "type": "melee",
+        "edition": "advanced",
+        "regular": {
+          "hp": 2,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Deals 1 damage to four diagonal tiles.",
+          "pattern": "diagonal_4",
+          "effects": []
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 3,
+          "damage": 2,
+          "attack": "Deals 2 damage to four diagonal tiles.",
+          "effects": []
+        },
+        "notes": "Advanced Edition. Unique diagonal attack pattern — hits the 4 oblique tiles instead of cardinal."
+      },
+      {
+        "name": "Tumblebug",
+        "type": "melee",
+        "edition": "advanced",
+        "regular": {
+          "hp": 3,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Creates an explosive boulder, preparing to destroy it next turn by attacking it for 1 damage.",
+          "pattern": "melee_boulder",
+          "effects": ["create_boulder"]
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 3,
+          "damage": 2,
+          "attack": "Creates an explosive boulder and attacks it for 2 damage.",
+          "effects": ["create_boulder"]
+        },
+        "notes": "Advanced Edition. Creates and detonates boulders. Boulder explosions can damage buildings."
+      }
+    ]
+  },
+  "psions": {
+    "description": "Psions are special support Vek that provide global buffs to all other Vek on the map. They do not attack directly but move around the battlefield. Killing a Psion removes its buff.",
+    "types": [
+      {
+        "name": "Soldier Psion",
+        "hp": 2,
+        "movement": 2,
+        "effect": "+1 HP to all other Vek while alive",
+        "priority": "medium",
+        "notes": "Makes all Vek harder to kill. Kill early if possible."
+      },
+      {
+        "name": "Blood Psion",
+        "hp": 2,
+        "movement": 2,
+        "effect": "All Vek regenerate 1 HP per turn",
+        "priority": "high",
+        "notes": "Counters chip damage strategies. Must kill quickly or enemies heal faster than you damage."
+      },
+      {
+        "name": "Shell Psion",
+        "hp": 2,
+        "movement": 2,
+        "effect": "All Vek gain Armored (take 1 less damage from attacks)",
+        "priority": "high",
+        "notes": "Drastically reduces damage output. Priority target. A.C.I.D. counters armor."
+      },
+      {
+        "name": "Blast Psion",
+        "hp": 2,
+        "movement": 2,
+        "effect": "All Vek explode on death, dealing 1 damage to adjacent tiles",
+        "priority": "medium",
+        "notes": "Can chain-kill weakened Vek near each other. Dangerous near buildings."
+      },
+      {
+        "name": "Smoldering Psion",
+        "hp": 2,
+        "movement": 2,
+        "effect": "All other Vek are protected from fire and leave fire on tiles when killed.",
+        "priority": "low",
+        "notes": "Advanced Edition. Counters fire-based squads entirely. Kill to re-enable fire strategies."
+      },
+      {
+        "name": "Arachnid Psion",
+        "hp": 2,
+        "movement": 2,
+        "effect": "All Vek spawn a Spiderling on death",
+        "priority": "medium",
+        "notes": "Advanced Edition. Every kill creates a Spiderling. Can overwhelm with numbers."
+      },
+      {
+        "name": "Raging Psion",
+        "hp": 2,
+        "movement": 2,
+        "effect": "All Vek gain Boosted (+1 damage on next attack)",
+        "priority": "high",
+        "notes": "Advanced Edition. Significantly increases threat level. +1 damage across all Vek is devastating."
+      },
+      {
+        "name": "Psion Tyrant",
+        "hp": 2,
+        "movement": 2,
+        "effect": "All player mechs take 1 damage at the end of every enemy turn",
+        "priority": "critical",
+        "notes": "Appears in the final battle. Constant drain on mech HP."
+      }
+    ]
+  },
+  "bosses": {
+    "description": "Boss/Leader Vek appear at the end of each island as the final battle's primary threat. They have higher HP, stronger attacks, and special properties.",
+    "types": [
+      {
+        "name": "Beetle Leader",
+        "hp": 6,
+        "movement": 3,
+        "damage": 3,
+        "attack": "Charges dealing heavy damage, sets every tile in its path on fire",
+        "effects": ["fire_trail"],
+        "notes": "Very tanky. Fire trail creates persistent hazard."
+      },
+      {
+        "name": "Firefly Leader",
+        "hp": 6,
+        "movement": 3,
+        "damage": 4,
+        "attack": "Launches goo projectiles in TWO directions simultaneously",
+        "effects": ["dual_shot"],
+        "notes": "Double-shot makes it hard to block both attacks."
+      },
+      {
+        "name": "Hornet Leader",
+        "hp": 6,
+        "movement": 3,
+        "damage": 2,
+        "attack": "Stabs three tiles in a row, can fly",
+        "effects": [],
+        "abilities": ["flying"],
+        "notes": "Flying boss. Wide attack pattern. Cannot be drowned."
+      },
+      {
+        "name": "Scorpion Leader",
+        "hp": 7,
+        "movement": 3,
+        "damage": 2,
+        "attack": "Webs all adjacent targets, then damages all adjacent tiles",
+        "effects": ["web_all_adjacent"],
+        "notes": "Highest HP boss. Webs restrict your mechs. Keep distance."
+      },
+      {
+        "name": "Spider Leader",
+        "hp": 6,
+        "movement": 2,
+        "damage": 0,
+        "attack": "Spawns multiple Spiderlings. Webs extensive area.",
+        "effects": ["mass_spawn", "mass_web"],
+        "notes": "Spawns many Spiderlings. Good for achievements requiring kills (chain attack, etc)."
+      },
+      {
+        "name": "Psion Abomination",
+        "hp": 5,
+        "movement": 3,
+        "damage": 0,
+        "attack": "Does not attack directly. All other Vek gain +1 HP, Regeneration, and explode on death.",
+        "effects": ["soldier_psion", "blood_psion", "blast_psion"],
+        "notes": "Triple Psion effect boss. All Vek gain +1 HP, regenerate, AND explode. Nightmarish if not killed fast."
+      },
+      {
+        "name": "Large Goo",
+        "hp": 3,
+        "movement": 3,
+        "damage": 4,
+        "attack": "Attempts to squish an adjacent tile, dealing 4 damage. Splits into Medium Goo on death.",
+        "effects": ["split_on_death"],
+        "notes": "Splits into 2 Medium Goo (2 HP) on death, which split into Small Goo (1 HP). Total of 7 units if fully split."
+      }
+    ]
+  },
+  "spawning": {
+    "description": "New Vek emerge from underground through spawn points visible as ground cracks.",
+    "rules": [
+      "Emerging Vek are telegraphed by visible ground cracks on tiles",
+      "Vek emerge at the END of the enemy turn, after attacks resolve",
+      "Blocking a spawn point (standing on it with a mech, unit, or boulder) prevents emergence and deals 1 damage to the blocked Vek",
+      "A blocked spawn does NOT kill the Vek — the spawn point persists until the Vek emerges or the battle ends",
+      "Frozen units on spawn points also block emergence",
+      "Emerging Vek on acid tiles gain A.C.I.D. status",
+      "Emerging Vek on fire tiles catch fire (exception: Burrowers lose fire underground)",
+      "Number of spawns increases in later turns and on higher difficulties"
+    ]
+  }
+}

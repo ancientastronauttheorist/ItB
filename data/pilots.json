@@ -1,0 +1,234 @@
+{
+  "pilot_system": {
+    "description": "Pilots are characters that operate mechs. Each pilot has a unique passive ability. Pilots gain XP from kills and level up to unlock additional perks.",
+    "xp_thresholds": {
+      "level_1": 25,
+      "level_2": 75,
+      "max_level": 2,
+      "notes": "Level 1 at 25 cumulative XP. Level 2 at 75 cumulative XP (50 more after level 1)."
+    },
+    "xp_per_kill": "Equal to the killed Vek's max HP (e.g., killing a 3 HP Firefly = 3 XP). Environmental/indirect kills split XP among all pilots. Excess XP after leveling is wasted.",
+    "leveling": "At each level, the pilot is offered a choice of 2 random perks from the available pool. The chosen perk is permanent.",
+    "time_travel": "One surviving pilot can be sent back in time at the end of a run, retaining their XP and perks for the next run. Failed pilots appear as 0 XP recruits in future runs.",
+    "death": "If a pilot's mech is destroyed, the pilot dies permanently (unless the mech is restored by end of battle)."
+  },
+  "available_perks": [
+    {"name": "+2 Mech HP", "description": "Mech HP increased by 2"},
+    {"name": "+1 Mech Move", "description": "Mech movement increased by 1"},
+    {"name": "+3 Grid DEF", "description": "Grid Defense increased by 3%"},
+    {"name": "+1 Mech Reactor", "description": "Mech reactor cores increased by 1"},
+    {"name": "Opener", "description": "+2 Move and Boosted on first turn of each mission"},
+    {"name": "Finisher", "description": "+2 Move and Boosted on last turn of each mission"},
+    {"name": "Popular Hero", "description": "Pilot sells for 4 extra reputation when dismissed"},
+    {"name": "Thick Skin", "description": "Immune to Fire and A.C.I.D. effects"},
+    {"name": "Skilled", "description": "+1 Move and +2 HP"},
+    {"name": "Invulnerable", "description": "Pilot does not die when mech is destroyed"},
+    {"name": "Adrenaline", "description": "+1 Move per Vek killed in battle (cumulative)"},
+    {"name": "Masochist", "description": "+2 Move when not at full HP"},
+    {"name": "Technician", "description": "Heal 1 HP at start of each round"},
+    {"name": "Conservative", "description": "Limited-use weapons gain +1 charge"}
+  ],
+  "perk_restrictions": {
+    "Mafan": "Cannot learn +2 Mech HP, Masochist, or Technician",
+    "Ariadne": "Cannot learn Conservative",
+    "Cyborg_pilots": "Cannot learn Conservative"
+  },
+  "pilots": {
+    "base_game": [
+      {
+        "name": "Ralph Karlsson",
+        "id": "pilot_original",
+        "ability": "Experienced",
+        "ability_description": "Gain +2 bonus XP per kill",
+        "unlock": "Starting pilot (always available)",
+        "source": "base",
+        "notes": "Best pilot for leveling up quickly. Great for 'Field Promotion' achievement."
+      },
+      {
+        "name": "Lily Reed",
+        "id": "pilot_youth",
+        "ability": "Impulsive",
+        "ability_description": "Gain +3 Move on first turn of every mission",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Excellent for positioning on turn 1. Great on slow mechs."
+      },
+      {
+        "name": "Bethany Jones",
+        "id": "pilot_genius",
+        "ability": "Starting Shield",
+        "ability_description": "Mech starts every mission with a Shield",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Top-tier pilot. Shield blocks first hit and prevents status effects. Essential for Ice Mech (prevents self-freeze from Cryo-Launcher)."
+      },
+      {
+        "name": "Silica",
+        "id": "pilot_miner",
+        "ability": "Double Shot",
+        "ability_description": "Mech can act twice if it does not move",
+        "power_cost": 2,
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Extremely powerful. Double attack without moving. Costs 2 reactor power. Best on high-damage ranged mechs or Lightning Mech."
+      },
+      {
+        "name": "Prospero",
+        "id": "pilot_recycler",
+        "ability": "Flying",
+        "ability_description": "Mech gains Flying",
+        "power_cost": 1,
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Grants flying to any mech. Costs 1 reactor power. Avoids water/lava/chasm deaths. Great on melee mechs for positioning."
+      },
+      {
+        "name": "Archimedes",
+        "id": "pilot_aquatic",
+        "ability": "Fire-and-Forget",
+        "ability_description": "Mech can move again after shooting (full movement distance)",
+        "power_cost": 1,
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Shoot then reposition with full movement. Costs 1 reactor power. Great for hit-and-run tactics. A Sentient AI from Pinnacle."
+      },
+      {
+        "name": "Harold Schmidt",
+        "id": "pilot_repairman",
+        "ability": "Frenzied Repair",
+        "ability_description": "Push adjacent tiles when repairing",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Turns repair into a push ability. Good on tanky mechs that repair often."
+      },
+      {
+        "name": "Isaac Jones",
+        "id": "pilot_medic",
+        "ability": "Temporal Reset",
+        "ability_description": "Gain 1 extra 'Reset Turn' every battle",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Doubles your reset turns per battle (2 instead of 1). Excellent safety net."
+      },
+      {
+        "name": "Chen Rong",
+        "id": "pilot_leader",
+        "ability": "Sidestep",
+        "ability_description": "After attacking, gain 1 free tile movement in any direction",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Reposition 1 tile after attacking. Useful for getting out of danger zones."
+      },
+      {
+        "name": "Camila Vera",
+        "id": "pilot_soldier",
+        "ability": "Evasion",
+        "ability_description": "Mech unaffected by Webbing and Smoke",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Immune to web (can always move) and smoke (can always attack). Counters Scorpions and Spiders."
+      },
+      {
+        "name": "Abe Isamu",
+        "id": "pilot_assassin",
+        "ability": "Armored",
+        "ability_description": "Mech gains Armored (reduce all damage by 1, minimum 1)",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Reduces all damage by 1. Essential for 'Unbreakable' achievement. Great on frontline mechs."
+      },
+      {
+        "name": "Henry Kwan",
+        "id": "pilot_hotshot",
+        "ability": "Maneuverable",
+        "ability_description": "Mech can move through enemy units",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Phase through enemies. Great for positioning melee attacks from unexpected angles."
+      },
+      {
+        "name": "Gana",
+        "id": "pilot_warrior",
+        "ability": "Preemptive Strike",
+        "ability_description": "Deploy anywhere on the map, damaging adjacent enemies for 1 damage",
+        "power_cost": 1,
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "base",
+        "notes": "Deploy anywhere + AoE damage at mission start. Costs 1 reactor power. Powerful opener."
+      }
+    ],
+    "secret_pilots": [
+      {
+        "name": "Kazaaakpleth",
+        "id": "pilot_mantis",
+        "ability": "Mantis",
+        "ability_description": "2 damage melee attack replaces Repair ability",
+        "unlock": "Find in a special Time Pod encounter (FTL crossover)",
+        "source": "secret_ftl",
+        "notes": "FTL Mantis. Cannot repair — instead does 2 melee damage. High risk, high reward."
+      },
+      {
+        "name": "Mafan",
+        "id": "pilot_zoltan",
+        "ability": "Zoltan",
+        "ability_description": "+1 Reactor Core. Reduce Mech HP to 1. Gain Shield every turn.",
+        "unlock": "Find in a special Time Pod encounter (FTL crossover)",
+        "source": "secret_ftl",
+        "notes": "FTL Zoltan. Mech has only 1 HP but regenerating shield each turn. +1 reactor core. Excellent on Ice Mech."
+      },
+      {
+        "name": "Ariadne",
+        "id": "pilot_rock",
+        "ability": "Rockman",
+        "ability_description": "+3 Health and immune to Fire",
+        "unlock": "Find in a special Time Pod encounter (FTL crossover)",
+        "source": "secret_ftl",
+        "notes": "FTL Rockman. Massive HP boost and fire immunity. Best on self-damaging mechs."
+      }
+    ],
+    "advanced_edition_pilots": [
+      {
+        "name": "Kai Miller",
+        "id": "pilot_arrogant",
+        "ability": "Arrogant Boost",
+        "ability_description": "Mech is Boosted (+1 damage) if at full health, otherwise -1 Move",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "advanced_edition",
+        "notes": "High risk/reward. +1 damage while undamaged, -1 move when hurt."
+      },
+      {
+        "name": "Rosie Rivets",
+        "id": "pilot_caretaker",
+        "ability": "Reassuring Hand",
+        "ability_description": "After moving, repair adjacent mechs for 1 HP",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "advanced_edition",
+        "notes": "Mobile healer. Heals adjacent allies by moving near them."
+      },
+      {
+        "name": "Morgan Lejeune",
+        "id": "pilot_chemical",
+        "ability": "Field Research",
+        "ability_description": "Mech gains Boosted on kill",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "advanced_edition",
+        "notes": "Snowball pilot. Each kill grants Boost for next attack."
+      },
+      {
+        "name": "Adam",
+        "id": "pilot_delusional",
+        "ability": "Chosen One",
+        "ability_description": "On Reset Turn, gain Shield and +2 Move",
+        "unlock": "Found in Time Pod or Perfect Island reward",
+        "source": "advanced_edition",
+        "notes": "Makes reset turns more powerful with shield + movement."
+      }
+    ]
+  },
+  "ftl_pilot_encounter": {
+    "description": "FTL crossover pilots are found via special encounters during missions.",
+    "trigger": "Look for damaged Mountain or Ice tiles that are faintly glowing at mission start. Destroy the tile to reveal a special Beacon.",
+    "process": "Move a mech onto the Beacon tile to recover a special Time Pod. Protect the pod until end of mission.",
+    "achievement": "'Distant Friends' achievement."
+  }
+}

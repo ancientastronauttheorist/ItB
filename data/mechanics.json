@@ -1,0 +1,321 @@
+{
+  "terrain": {
+    "types": [
+      {
+        "name": "Ground",
+        "traversable": true,
+        "effects": "Default terrain. No special effects.",
+        "notes": "Most common tile type."
+      },
+      {
+        "name": "Water",
+        "traversable": false,
+        "effects": "Ground units pushed into water are killed instantly. Flying units survive. Removes Fire status from units. Freezing water creates Ice tiles.",
+        "notes": "One of the most powerful environmental kills. Push Vek into water whenever possible. Mechs cannot enter water tiles (except flying mechs which hover over)."
+      },
+      {
+        "name": "Mountain",
+        "traversable": false,
+        "effects": "Impassable obstacle. Blocks movement and projectiles. Cannot be destroyed by normal attacks. Some weapons can destroy mountains.",
+        "notes": "Block line-of-sight for ranged attacks. Can be used as cover. Cataclysm squad can destroy them."
+      },
+      {
+        "name": "Building",
+        "traversable": false,
+        "effects": "Civilian structures tied to Grid Power. Damage to buildings reduces Grid Power. Buildings have a Grid Defense % chance to resist damage.",
+        "notes": "Protecting buildings is the primary objective. Each building lost reduces Grid Power. At 0 Grid Power, game over."
+      },
+      {
+        "name": "Forest",
+        "traversable": true,
+        "effects": "Taking fire damage or being set on fire converts to a Fire tile. Units on forest tiles when fire starts catch fire. Fire spreads.",
+        "notes": "Can be strategically set on fire to create persistent damage zones. Good for Flame Behemoths."
+      },
+      {
+        "name": "Sand",
+        "traversable": true,
+        "effects": "When hit by any attack, converts to Smoke tile. Smoke prevents attacks and repairs.",
+        "notes": "Found on R.S.T. island. Useful for creating smoke to cancel enemy attacks."
+      },
+      {
+        "name": "Ice",
+        "traversable": true,
+        "effects": "When damaged, cracks. Second hit destroys, creating Water tile. Units on cracked ice when it breaks fall into water (killed if ground unit).",
+        "notes": "Found on Pinnacle island. Two-step destruction: intact -> cracked -> water."
+      },
+      {
+        "name": "Lava",
+        "traversable": true,
+        "effects": "Ground units take 1 fire damage and catch fire when entering or ending turn on lava. Flying units unaffected. Does not extinguish — permanent hazard.",
+        "notes": "Appears on Volcanic Hive (final mission). Treat like fire tiles. Push enemies into lava."
+      },
+      {
+        "name": "Chasm",
+        "traversable": false,
+        "effects": "Any non-flying unit pushed into a chasm dies instantly. Frozen flying units pushed into chasms also die (they can't fly while frozen).",
+        "notes": "Instant kill like water. Found on R.S.T. island and created by Cataclysm squad."
+      },
+      {
+        "name": "Conveyor Belt",
+        "traversable": true,
+        "effects": "At end of turn, all units on conveyor belt tiles are pushed 1 tile in the belt's direction.",
+        "notes": "Found on Detritus island. Can push mechs, Vek, and objects. Plan positioning around belt direction."
+      },
+      {
+        "name": "A.C.I.D. Pool",
+        "traversable": true,
+        "effects": "Units entering or spawning on A.C.I.D. pool tiles gain A.C.I.D. status (double damage from weapons).",
+        "notes": "Found on Detritus island. Push enemies into pools to apply A.C.I.D., then hit them for double damage."
+      },
+      {
+        "name": "Teleporter Pad",
+        "traversable": true,
+        "effects": "Teleporter pads come in pairs. Units pushed onto one pad are teleported to the other pad.",
+        "notes": "Found on Pinnacle island. Can teleport Vek to unexpected positions. Use for creative kills."
+      },
+      {
+        "name": "Fire Tile",
+        "traversable": true,
+        "effects": "Units entering or ending turn on fire tiles take 1 damage and catch fire. Persists until extinguished by smoke, ice, or water.",
+        "notes": "Created by fire attacks, burning forests, and some environmental effects."
+      },
+      {
+        "name": "Smoke Tile",
+        "traversable": true,
+        "effects": "Units in smoke cannot attack or repair. Cancels enemy attacks even after the enemy moves out of smoke. Extinguishes fire tiles.",
+        "notes": "Key mechanic for Rusting Hulks. Smoke interrupts ALL enemy actions for the turn."
+      },
+      {
+        "name": "Cracked Ground",
+        "traversable": true,
+        "effects": "Indicates a Vek will emerge from this tile at end of turn. Can be blocked by placing a unit on it.",
+        "notes": "Visible as cracks/dirt patterns. Block by standing on tile to prevent emergence."
+      }
+    ]
+  },
+  "status_effects": [
+    {
+      "name": "Fire",
+      "visual": "Flames on unit",
+      "effect": "Unit takes 1 damage at the START of each turn. Persists until removed.",
+      "applied_by": "Fire attacks, fire tiles, burning forests, lava",
+      "removed_by": "Repairing, entering water, entering smoke, being frozen then unfrozen",
+      "interactions": [
+        "Shield blocks fire application but does not prevent existing fire damage",
+        "Fire melts ice tiles instantly",
+        "Frozen units hit by fire unfreeze AND catch fire simultaneously",
+        "Trains, buildings, and Renfield Bombs are fire-immune",
+        "Burrowers lose fire when they burrow underground"
+      ]
+    },
+    {
+      "name": "Frozen",
+      "visual": "Ice encasing unit",
+      "effect": "Unit cannot move, attack, or take actions. Any damage to a frozen unit is negated but unfreezes it. Frozen units on water create ice tiles instead of drowning.",
+      "applied_by": "Cryo-Launcher, ice attacks, environmental ice effects",
+      "removed_by": "Taking any damage (damage is negated), repairing (uses action to break free)",
+      "interactions": [
+        "Frozen flying units are grounded — can fall into water/chasms and die",
+        "Frozen enemies cannot attack (cancels their telegraphed attack)",
+        "Frozen units on spawn points block emergence",
+        "Ice Mech freezes itself when using Cryo-Launcher (unless shielded)",
+        "Shield prevents freezing",
+        "Frozen units pushed into water stay on ice (water freezes under them)"
+      ]
+    },
+    {
+      "name": "Shield",
+      "visual": "Glowing energy barrier",
+      "effect": "Blocks the next instance of damage AND prevents application of negative status effects (Fire, Frozen, A.C.I.D., Web). Consumed on first hit.",
+      "applied_by": "Defense Mech shield, Bethany Jones ability, Mafan (Zoltan) ability, some upgrades",
+      "removed_by": "Taking direct damage (shield absorbs the hit and breaks)",
+      "interactions": [
+        "Shields do NOT remove existing status effects — only prevent new ones",
+        "Shields prevent Fire damage from fire tiles",
+        "Shields prevent A.C.I.D. application",
+        "Shields prevent Freezing",
+        "Shields on buildings protect them from one attack",
+        "Multiple shields do not stack — a unit either has shield or doesn't"
+      ]
+    },
+    {
+      "name": "Smoke",
+      "visual": "Smoke cloud on tile",
+      "effect": "Units in smoke cannot attack or repair. Enemy attacks are cancelled for the entire turn even if enemy moves out of smoke.",
+      "applied_by": "Smoke attacks, sand tiles being hit, Storm Generator, various weapons",
+      "removed_by": "Smoke dissipates after the turn it was applied (lasts 1 full turn cycle)",
+      "interactions": [
+        "Smoke extinguishes fire tiles when applied",
+        "Smoke extinguishes burning units",
+        "Storm Generator (Rusting Hulks passive) deals 1 damage to all enemies in smoke",
+        "Camila Vera is immune to smoke effects",
+        "Smoke prevents satellite launches on Pinnacle",
+        "Even if an enemy is pushed OUT of smoke after being smoked, its attack is still cancelled for that turn"
+      ]
+    },
+    {
+      "name": "A.C.I.D.",
+      "visual": "Green acid dripping on unit",
+      "effect": "Weapon damage against this unit is DOUBLED. Natural Armor is disabled.",
+      "applied_by": "Centipede attacks, A.C.I.D. pool tiles, some weapons",
+      "removed_by": "Repairing",
+      "interactions": [
+        "Stacks with damage bonuses from other sources",
+        "Nullifies Shell Psion's armor buff",
+        "Kills of A.C.I.D.-affected units leave acid tiles behind",
+        "Flying units avoid A.C.I.D. pool tile effects",
+        "Shield prevents A.C.I.D. application",
+        "Essential for 'Overkill' achievement (8 damage to single unit)"
+      ]
+    },
+    {
+      "name": "Webbed",
+      "visual": "Web strands on unit",
+      "effect": "Unit cannot move but CAN still attack and use abilities.",
+      "applied_by": "Leaper landing, Scorpion attacks, Spider egg hatching",
+      "removed_by": "Does not expire naturally — lasts until freed. Freed by: repair, or killing the source",
+      "interactions": [
+        "Camila Vera is immune to webbing",
+        "Shield prevents web application",
+        "Webbed mechs can still attack and use weapons — only movement is restricted",
+        "Webbed Vek can still attack from current position"
+      ]
+    },
+    {
+      "name": "Boosted",
+      "visual": "Upward arrow/energy glow",
+      "effect": "Unit's next attack deals +1 damage. Consumed on any ability use (including non-damaging abilities and repair). Boosted repair heals 2 HP instead of 1.",
+      "applied_by": "Raging Psion, Morgan Lejeune kills, Kai Miller full HP, stepping on fire (Heat Sinkers), some weapons",
+      "removed_by": "Using any ability (consumed on use)",
+      "interactions": [
+        "Affects ALL targets of an attack, including self-damage",
+        "Consumed even by non-damaging abilities like shields or teleports",
+        "Boosted repair heals 2 instead of 1",
+        "Can be very dangerous on Vek with area attacks"
+      ]
+    },
+    {
+      "name": "Armored",
+      "visual": "Armor plates on unit",
+      "effect": "Reduces all incoming damage by 1 (minimum 1 damage). Does not reduce self-damage.",
+      "applied_by": "Abe Isamu ability, Shell Psion buff, Hook Mech natural armor, Judo Mech natural armor",
+      "removed_by": "Shell Psion death (removes Psion-granted armor), A.C.I.D. (disables armor)",
+      "interactions": [
+        "Minimum 1 damage still applies — armor doesn't negate 1-damage attacks",
+        "A.C.I.D. completely disables armor",
+        "Does not reduce self-damage from weapons like Charge Mech or Leap Mech",
+        "Self-damage is mitigated by armor (actually Abe's armor does reduce some self-damage)"
+      ]
+    }
+  ],
+  "damage_system": {
+    "basic_rules": [
+      "Damage is applied immediately when an attack resolves",
+      "All player attacks resolve simultaneously when 'End Turn' is pressed",
+      "Then all enemy attacks resolve in order",
+      "Then environmental effects resolve",
+      "Then spawns emerge",
+      "Push/pull happens simultaneously with damage",
+      "Units pushed into walls or other units take 1 bump damage",
+      "Units pushed into water/chasms die (unless flying or frozen-on-water)"
+    ],
+    "push_mechanics": {
+      "description": "Many attacks push targets. Push interactions are critical.",
+      "rules": [
+        "Push moves target 1 tile in the specified direction",
+        "If target cannot move (wall, mountain, edge of map, another unit), target takes 1 bump damage instead",
+        "If two units collide from a push, BOTH take 1 bump damage",
+        "Pushing into water kills ground units instantly",
+        "Pushing into chasms kills non-flying units instantly",
+        "Pushing into fire tiles sets unit on fire",
+        "Pushing onto conveyor belts: conveyor effect applies at end of turn",
+        "Pushing frozen flying units into water/chasms kills them (frozen = grounded)"
+      ]
+    },
+    "grid_power": {
+      "description": "Grid Power represents the overall power grid of the civilian buildings. At 0, game over.",
+      "max_power": 7,
+      "starting_power": "Varies by difficulty. Typically 6-7.",
+      "losing_power": "Each building destroyed reduces Grid Power by 1",
+      "grid_defense": "Buildings have a % chance (starts ~15%) to resist damage. Can be increased by pilot perks.",
+      "gaining_power": "Grid Power can be restored via: mission rewards, reputation purchases at the shop, some pilot abilities",
+      "game_over": "If Grid Power reaches 0, the timeline is lost. One pilot can be sent back."
+    }
+  },
+  "turn_structure": {
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Player Planning Phase",
+        "description": "View all enemy telegraphed attacks. Plan and queue mech actions (move + attack for each mech). Order matters — some actions create openings for others."
+      },
+      {
+        "phase": 2,
+        "name": "Player Action Resolution",
+        "description": "All queued mech actions execute. Damage, pushes, and effects resolve. Fire/status effects from player weapons apply."
+      },
+      {
+        "phase": 3,
+        "name": "Environmental Effects",
+        "description": "Fire damage ticks (1 damage to burning units). Conveyor belts move units. Environmental hazards trigger (tidal waves, air strikes, lightning, etc). A.C.I.D. damage applies."
+      },
+      {
+        "phase": 4,
+        "name": "Enemy Attack Phase",
+        "description": "All surviving Vek execute their telegraphed attacks. Attacks happen in a fixed order. Killed/frozen/smoked Vek do not attack."
+      },
+      {
+        "phase": 5,
+        "name": "Spawn Phase",
+        "description": "New Vek emerge from ground crack tiles. Blocked spawns deal 1 damage to the Vek instead. New Vek telegraph their attacks for next turn."
+      }
+    ],
+    "important_notes": [
+      "Fire damage from being on fire happens BEFORE enemy attacks — can kill a Vek before it attacks",
+      "Environmental effects (tidal waves, air strikes) happen BEFORE enemy attacks",
+      "Smoke cancels enemy attacks for the ENTIRE turn, even if enemy moves out of smoke",
+      "Blocked spawns damage but don't kill the Vek — it will try again next turn",
+      "The player always acts first, giving perfect information advantage"
+    ]
+  },
+  "difficulty": {
+    "easy": {
+      "grid_power_start": 7,
+      "alpha_chance": "Low",
+      "enemy_count": "Fewer enemies per battle",
+      "civilians_per_building": 500,
+      "notes": "Recommended for learning. All achievements except 'Hard Victory' can be earned on Easy."
+    },
+    "normal": {
+      "grid_power_start": 6,
+      "alpha_chance": "Moderate",
+      "enemy_count": "Standard enemy count",
+      "civilians_per_building": 1000,
+      "notes": "Default difficulty. Good balance of challenge and achievement hunting."
+    },
+    "hard": {
+      "grid_power_start": 6,
+      "alpha_chance": "High — more Alphas spawn",
+      "enemy_count": "More enemies per battle, more spawns",
+      "civilians_per_building": 1500,
+      "notes": "Required for 'Hard Victory' achievement. Significantly harder."
+    },
+    "unfair": {
+      "grid_power_start": 5,
+      "alpha_chance": "Very High",
+      "enemy_count": "Maximum enemies",
+      "civilians_per_building": 2000,
+      "notes": "Advanced Edition difficulty. Extremely challenging. No specific achievements require Unfair."
+    }
+  },
+  "advanced_edition_mechanics": {
+    "bosses": "AE adds Boss Vek encounters at the end of each island. Bosses have unique mechanics and high HP.",
+    "unfair_difficulty": "New maximum difficulty level with more enemies, more Alphas, and less starting grid power.",
+    "new_psions": "Added Arachnid Psion (spawn spiderlings on death) and Raging Psion (all Vek boosted).",
+    "boost_mechanic": "New status effect. +1 damage on next ability use. Central to Heat Sinkers squad.",
+    "new_vek": "Added Bouncer and Moth Vek types.",
+    "new_squads": "Added 5 new squads: Bombermechs, Arachnophiles, Mist Eaters, Heat Sinkers, Cataclysm.",
+    "new_pilots": "Added 4 new pilots: Kai Miller, Rosie Rivets, Morgan Lejeune, Adam.",
+    "new_weapons": "Additional purchasable weapons available in shops."
+  }
+}
