@@ -17,155 +17,379 @@
     {
       "name": "Archive, Inc.",
       "id": "archive",
+      "ceo": "Dewey Alms",
+      "environment": "Temperate",
       "theme": "Natural/historical — recreates Old Earth ecosystems",
-      "description": "Archive Inc. recreates Old Earth as it was before the oceans rose. Features diverse natural terrain including forests, mountains, and water bodies.",
-      "unique_terrain": ["Water (abundant)", "Forests", "Mountains", "Dams"],
-      "environmental_hazards": [
+      "description": "Archive Inc. recreates Old Earth as it was before the oceans rose and nearly wiped out humanity. Features diverse natural terrain including forests, mountains, and water bodies.",
+      "unique_terrain": ["Water (abundant)", "Forests", "Mountains"],
+      "environmental_conditions": [
+        {
+          "name": "Air Support",
+          "effect": "During the player turn a cross-shaped section of the map is marked for bombing. Before enemies attack, a group of Bombers fly in and bomb all marked tiles, instantly killing anything caught in the attack.",
+          "timing": "Telegraphed during player turn, executes before enemy attacks"
+        },
         {
           "name": "Tidal Waves",
-          "effect": "Periodically floods tiles from one edge of the map, converting them to water. Kills ground units on affected tiles.",
-          "timing": "Triggers every few turns from a specified map edge"
+          "effect": "During the environment step the edge of the map becomes water tiles, drowning any Vek standing on them.",
+          "timing": "Triggers during environment step",
+          "restrictions": "Cannot appear with any double-reputation objectives. Makes the mission last 4 turns instead of 5."
         },
         {
-          "name": "Air Strikes",
-          "effect": "NPC artillery strikes telegraphed tiles for damage",
-          "timing": "Telegraphed 1 turn in advance like Vek attacks"
+          "name": "Mines",
+          "effect": "At the start of the mission the ground is littered with mines that instantly kill anything that steps on them.",
+          "timing": "Present from mission start, triggered on contact",
+          "restrictions": "Blast Psion and Tumblebugs of any variant are not allowed to spawn if this condition is present."
         },
         {
-          "name": "Dam",
-          "effect": "Destructible structure. When destroyed, floods tiles behind it with water.",
-          "timing": "Player-triggered by attacking the dam"
+          "name": "Bad Repairs (Advanced Edition)",
+          "effect": "All Mechs start the mission with 1 health.",
+          "timing": "Mission start",
+          "restrictions": "Always paired with the Use 3 Repair Platforms objective."
+        }
+      ],
+      "mission_objectives": [
+        {
+          "name": "Defend the Artillery Support",
+          "reputation": 1,
+          "description": "An ally and player-controllable Artillery Support is present at the start of the mission. It has 2 HP, 1 movement, and attacks by targeting two tiles with artillery range."
+        },
+        {
+          "name": "Destroy the Dam",
+          "reputation": 1,
+          "description": "A two-tile wide Old Earth Dam sits near a cluster of mountains. Destroying it converts a wide line of tiles into water, obstructing Vek movement."
+        },
+        {
+          "name": "Defend the Train",
+          "reputation": 2,
+          "description": "A two-tile long Supply Train named Ol' Horace moves from one end of the map to another. If the train collides with anything or is damaged, it becomes a damaged train and one reputation point is lost. Damage it again and the train is destroyed entirely, yielding no reputation. Lasts 4 turns instead of 5. Also present on R.S.T. Corporation and Detritus Disposal."
+        },
+        {
+          "name": "Defend the Satellite Launches",
+          "reputation": 2,
+          "description": "Two stationary satellites with 2 HP each sit at random locations on the map. Every second player turn, one of them will prepare to launch, earning 1 reputation point and destroying anything next to it. 1 reputation for each satellite."
+        },
+        {
+          "name": "Defend the Tank",
+          "reputation": 2,
+          "description": "Two inactive light tanks sit at random locations of the map. These light tanks have 1 HP and can only push enemies. On the second-to-last turn each tank will activate if they survive. 1 reputation for each tank."
+        },
+        {
+          "name": "Defend the Armored Train (Advanced Edition)",
+          "reputation": 2,
+          "description": "Same conditions as the normal train mission except that Ol' Horace is armored and instantly kills anything it rams into without taking damage (unless it is a Mech). Exclusive to this island. Lasts 4 turns instead of 5."
+        },
+        {
+          "name": "Use 3 Repair Platforms (Advanced Edition)",
+          "reputation": 1,
+          "description": "Mechs or ally units must use at least 3 repair platforms scattered across the map, which disappear and instantly restore units back to full health. Vek are also capable of using them. Always paired with the Bad Repairs environmental condition."
+        },
+        {
+          "name": "End with 8 spaces on fire (Advanced Edition)",
+          "reputation": 2,
+          "description": "The map has a massive amount of forest tiles. 1 reputation is awarded for partial completion of burning at least 4 tiles."
         }
       ],
       "common_vek": ["Firefly", "Beetle", "Hornet", "Leaper", "Scarab"],
       "boss": "Varies — one of the Leader Vek types",
-      "reputation_missions": "2-star and 1-star missions available. Higher star = more bonus objectives.",
-      "notes": "Good starting island. Tidal waves and water provide easy environmental kills."
+      "notes": "Good starting island. Tidal waves and water provide easy environmental kills. Always available at the start of a new save file."
     },
     {
       "name": "R.S.T. Corporation",
       "id": "rst",
+      "ceo": "Jessica Kern",
+      "environment": "Desert",
       "theme": "Desert/terraforming — hostile environment specialists",
       "description": "R.S.T. Corporation are terraforming specialists who turned the environment against the Vek. Desert terrain with sand, chasms, and extreme weather.",
       "unique_terrain": ["Sand tiles", "Chasms", "Lightning rods"],
-      "environmental_hazards": [
+      "environmental_conditions": [
         {
-          "name": "Lightning Storms",
-          "effect": "Lightning strikes random tiles, dealing damage to units on them",
+          "name": "Lightning Strikes",
+          "effect": "4 tiles in the battlefield are randomly targeted by lightning strikes each turn. Lightning strikes will instantly kill any unit that gets hit by them.",
           "timing": "Random each turn, telegraphed"
         },
         {
-          "name": "Sand Storms",
-          "effect": "Creates smoke on sand tiles when attacked",
-          "timing": "Reactive — triggers when sand tiles are hit"
+          "name": "Sandstorm (Advanced Edition)",
+          "effect": "A row of smoke kicks up every turn from the edge of the map.",
+          "timing": "Every turn from map edge",
+          "restrictions": "Missions last 4 turns under this condition."
         },
         {
-          "name": "Chasms",
-          "effect": "Natural pits that instantly kill non-flying units pushed in",
-          "timing": "Permanent terrain feature"
+          "name": "Cataclysm",
+          "effect": "A row of chasms sprouts from one edge of the map and slowly consumes the land.",
+          "timing": "Progressive each turn",
+          "restrictions": "Missions last 4 turns under this condition."
         },
         {
-          "name": "Air Strikes",
-          "effect": "Terraformer artillery bombards specific tiles",
-          "timing": "Telegraphed"
+          "name": "Seismic Activity",
+          "effect": "Each turn a set of 3 ground tiles become chasms during the enemy turn.",
+          "timing": "Each enemy turn"
+        },
+        {
+          "name": "Erosion Points",
+          "effect": "The map has several chasms where Hornets and their alphas emerge. This can result in a mission having two non-psion species of flying Vek, which is usually disallowed.",
+          "timing": "Present from mission start"
+        },
+        {
+          "name": "Windstorm (Advanced Edition)",
+          "effect": "Two rows will be pushed by one tile in a single direction each turn.",
+          "timing": "Each turn"
+        },
+        {
+          "name": "Evacuated Buildings (Advanced Edition)",
+          "effect": "Two grid buildings away from each other are replaced with trap buildings that have 2 HP. They can be detonated at will to destroy all units next to them without depleting the grid or hitting other grid buildings.",
+          "timing": "Present from mission start"
+        }
+      ],
+      "mission_objectives": [
+        {
+          "name": "Defend the Earth Mover",
+          "reputation": 1,
+          "description": "An Earth Mover situated around the middle of the map periodically creates more ground in a line. The map will have many chasms when starting."
+        },
+        {
+          "name": "Defend the Terraformer",
+          "reputation": 2,
+          "description": "A Terraformer is situated around the centre of the map and can convert 6 tiles in front of it into desert, killing anything standing in the way. There are 20 tiles of grassland surrounding it which requires 4 turns to fully remove. 1 reputation for the Terraformer, 1 reputation for terraforming the grassland back to desert."
+        },
+        {
+          "name": "Destroy 2 Mountains",
+          "reputation": 1,
+          "description": "Some mountains start off cracked at the start of the mission."
+        },
+        {
+          "name": "Protect the Renfield Bombs",
+          "reputation": 2,
+          "description": "Two prototype Renfield Bombs appear on the map and will explode to deal 1 damage to surrounding tiles when they are destroyed. 1 reputation for each bomb."
+        },
+        {
+          "name": "Defend the Train",
+          "reputation": 2,
+          "description": "A two-tile long maglev moves from one end of the map to another. If the train collides with anything or is damaged, it becomes a damaged train and one reputation point is lost. Damage it again and the train is destroyed entirely, yielding no reputation. Lasts 4 turns instead of 5. Also present on Archive, Inc. and Detritus Disposal."
+        },
+        {
+          "name": "Defend Solar Farms",
+          "type": "grid_power",
+          "reward": "2 Grid Power",
+          "description": "Two Solar Farms must be protected, earning 1 power for each one that survives."
         }
       ],
       "common_vek": ["Firefly", "Scorpion", "Centipede", "Blobber", "Digger"],
       "boss": "Varies",
-      "notes": "Chasms provide instant kills. Sand creates useful smoke. Lightning adds chaos."
+      "notes": "Chasms provide instant kills. Lightning strikes are instant kills. Sand and storms add tactical options."
     },
     {
       "name": "Pinnacle Robotics",
       "id": "pinnacle",
+      "ceo": "Zenith",
+      "environment": "Frozen",
       "theme": "Ice/technology — fighting Vek AND rogue AI",
-      "description": "Pinnacle Robotics fights on two fronts: Vek and their own sentient weapons (Bots). Features ice terrain and high-tech hazards.",
-      "unique_terrain": ["Ice tiles", "Teleporter pads", "Satellite launch pads"],
-      "environmental_hazards": [
+      "description": "Pinnacle Robotics fights on two fronts: Vek and their own sentient weapons (Bots). Features ice terrain and high-tech hazards. Led by CEO Zenith.",
+      "unique_terrain": ["Ice tiles", "Satellite launch pads"],
+      "environmental_conditions": [
+        {
+          "name": "Ice Storm",
+          "effect": "Cryo-nanites freeze 3x3 patches of tiles at the environment step of the enemy turn.",
+          "timing": "Environment step of enemy turn"
+        },
+        {
+          "name": "Cryo-Mines",
+          "effect": "Cryo-mines are spread across the map, freezing anything that comes in contact.",
+          "timing": "Permanent until triggered"
+        },
+        {
+          "name": "Thawing enemies",
+          "effect": "Instead of Vek spawn points, all hostiles start frozen and a select few are thawed out at the start of each turn. Can have 'Kill all enemies before they retreat' or another objective.",
+          "timing": "Each turn start"
+        },
         {
           "name": "Rogue Bots",
           "effect": "Sentient AI enemies that fight alongside Vek. 1 HP but dangerous attacks with fire.",
           "timing": "Present throughout missions on Pinnacle"
+        }
+      ],
+      "mission_objectives": [
+        {
+          "name": "Break 5 buildings out of ice",
+          "reputation": 1,
+          "description": "All buildings are encased in ice at the beginning of the mission."
         },
         {
-          "name": "Satellite Launches",
-          "effect": "Satellite on launchpad fires when conditions are met, dealing damage in area",
-          "timing": "Protect the satellite — it helps you. Smoke on pad prevents launch."
+          "name": "Freeze and defend both robots",
+          "reputation": 2,
+          "description": "Two hostile Sentient Weapons are present at the start of the mission, along with an ice tank. Reputation is only awarded for frozen robots. 1 reputation for each frozen robot."
         },
         {
-          "name": "Freeze Mines",
-          "effect": "Mines on tiles that freeze units stepping on them",
-          "timing": "Permanent until triggered"
+          "name": "Defend both Mine-Bots",
+          "reputation": 2,
+          "description": "Two ally Mine-Bots start near the enemy spawns at the start of the battle, and lay Cryo-Mines before moving. 1 reputation for each surviving robot."
         },
         {
-          "name": "Teleporters",
-          "effect": "Paired pads that teleport units pushed onto them to the partner pad",
-          "timing": "Permanent terrain feature"
+          "name": "Defend both robot factories",
+          "reputation": 2,
+          "description": "Two Robot Factories take the place of grid buildings in this mission. Each turn, one of them spits out a random inactive sentient weapon that activates on the next turn. Robot Factories are considered grid buildings instead of units. 1 reputation for each factory."
+        },
+        {
+          "name": "Destroy the Bot Leader",
+          "reputation": 1,
+          "description": "Always takes place along with Protect the Corporate Tower. Alternative to the Hive Leader fight. Pinnacle Island is the only island where the Bot Leader can be fought."
+        },
+        {
+          "name": "Kill all enemies before they retreat",
+          "reputation": 1,
+          "description": "Enemies will start frozen and slowly thaw out turn by turn."
+        },
+        {
+          "name": "Destroy all Boom Bots (Advanced Edition)",
+          "reputation": 2,
+          "description": "4 Boom Bots, 2 of which are frozen, are present at the start of the mission. They have Explosive Decay. Partial completion of destroying at least 2 bots rewards 1 reputation."
+        },
+        {
+          "name": "Destroy the Hacking Facility + Protect the Cannon Bot (Advanced Edition)",
+          "reputation": 2,
+          "description": "A shielded Cannon-Bot and Hacking Facility spawn at the beginning of the game. When the hacking facility is destroyed, the Cannon-Bot becomes friendly. 1 reputation each."
+        },
+        {
+          "name": "Destroy the Shield Generator (Advanced Edition)",
+          "reputation": 1,
+          "description": "A Shield Generator makes all starting and newly-spawned units begin with a shield, including buildings. Destroying the generator removes all active shields."
         }
       ],
       "common_vek": ["Hornet", "Beetle", "Bot", "Spider", "Burrower"],
-      "boss": "Varies",
-      "notes": "Bots add complexity. Ice tiles can be cracked into water for kills. Teleporters enable creative positioning."
+      "boss": "Varies (Bot Leader unique to Pinnacle)",
+      "notes": "Bots add complexity. Ice tiles can be cracked into water for kills. No teleporters on this island — those belong to Detritus."
     },
     {
       "name": "Detritus Disposal",
       "id": "detritus",
+      "ceo": "Vikram Singh",
+      "environment": "Industrial",
       "theme": "Industrial/waste — recycling and A.C.I.D.",
-      "description": "Detritus tech breaks down matter into base elements. Factory-cities devoted to waste removal. A.C.I.D. everywhere.",
-      "unique_terrain": ["A.C.I.D. pools", "Conveyor belts", "Waste disposal vents"],
-      "environmental_hazards": [
-        {
-          "name": "A.C.I.D. Pools",
-          "effect": "Tiles that apply A.C.I.D. status to any unit entering them (doubles damage taken)",
-          "timing": "Permanent terrain"
-        },
+      "description": "Detritus tech breaks down matter into base elements. Factory-cities devoted to waste removal. A.C.I.D. everywhere. Led by Vikram Singh.",
+      "unique_terrain": ["A.C.I.D. pools", "Conveyor belts", "Teleporter pads"],
+      "environmental_conditions": [
         {
           "name": "Conveyor Belts",
-          "effect": "Move all units on them 1 tile in belt direction at end of turn",
-          "timing": "Every turn end"
+          "effect": "Conveyor Belts move any unit on them according to the belt's direction during the environment turn.",
+          "timing": "Every environment turn",
+          "restrictions": "If Advanced Objectives are turned on, the Destroy 2 Vek Egg Sacks objective cannot appear with Conveyor Belts."
         },
         {
-          "name": "Earth Movers",
-          "effect": "Large NPC vehicles that move across the map, pushing/destroying things in their path",
-          "timing": "Move each turn"
+          "name": "Teleporters",
+          "effect": "Two pairs of teleporters, one blue and one red, are placed at random positions on the map. Ending a unit's movement on the teleporter teleports it to the tile of the same color.",
+          "timing": "Triggered when a unit ends movement on a pad"
         },
         {
-          "name": "A.C.I.D. Launcher",
-          "effect": "NPC artillery that shoots A.C.I.D. at targeted tiles",
-          "timing": "Telegraphed"
+          "name": "A.C.I.D. Lakes",
+          "effect": "On some missions Vek spawn by jumping out of A.C.I.D. tiles. They do not land on any Time Pods and come out acidified.",
+          "timing": "During Vek spawn phase"
+        }
+      ],
+      "mission_objectives": [
+        {
+          "name": "Defend the Train",
+          "reputation": 2,
+          "description": "A two-tile long train moves from one end of the map to another. If the train collides with anything or is damaged, it becomes a damaged train and one reputation point is lost. Damage it again and the train is destroyed entirely, yielding no reputation. Lasts 4 turns instead of 5. Also present on Archive, Inc. and R.S.T. Corporation."
+        },
+        {
+          "name": "Defend the Disposal Unit + Destroy all mountains",
+          "reputation": 2,
+          "description": "A Disposal Unit sits in a distant spot on the map which launches a cross-shaped puddle of insta-killing A.C.I.D. There are mountains arranged so that two or three uses of the unit destroys all of them. 1 reputation each."
+        },
+        {
+          "name": "Destroy the A.C.I.D Vats",
+          "reputation": 2,
+          "description": "Two A.C.I.D Vats sit on set locations on the map, each with 2 HP. Destroying a Vat converts the tile it sits on into an A.C.I.D tile. 1 reputation per Vat."
+        },
+        {
+          "name": "Kill 4 enemies inflicted with A.C.I.D.",
+          "reputation": 2,
+          "description": "Reputation is only awarded if the goal is completely fulfilled. An unupgraded A.C.I.D Tank is available. It has only 1 HP and cannot push."
+        },
+        {
+          "name": "Destroy the A.C.I.D Storm Controller (Advanced Edition)",
+          "reputation": 1,
+          "description": "An A.C.I.D Storm Controller with 3 HP is present at the start of the mission. While it is active all units are acidified. A.C.I.D is not immediately removed once the controller is destroyed."
+        },
+        {
+          "name": "Use the Detritus Contraption four times (Advanced Edition)",
+          "reputation": 2,
+          "description": "The Detritus Contraption has two weapons, each usable a maximum of two times. Both weapons affect all units on the map. The first weapon shields all units, and the second weapon hits all units for 1 damage. 1 Reputation is awarded if the Contraption is used at least twice."
+        },
+        {
+          "name": "Protect the VIPs (Advanced Edition)",
+          "reputation": 2,
+          "description": "Two Jeeps start off close to the frontline and must be protected. These Jeeps can hit the gas and move out of the way, but only twice before their fuel runs out. They can use this ability to move out of webs. 1 reputation for each VIP."
+        },
+        {
+          "name": "Protect both Power Plants",
+          "type": "grid_power",
+          "reward": "2 Grid Power",
+          "description": "Two Power Plants are present instead of one."
         }
       ],
       "common_vek": ["Centipede", "Blobber", "Moth", "Beetle", "Digger"],
       "boss": "Varies",
-      "notes": "A.C.I.D. pools enable massive damage combos. Conveyor belts add positioning complexity. Good for 'Overkill' achievement."
+      "notes": "A.C.I.D. pools enable massive damage combos. Conveyor belts add positioning complexity. Teleporters enable creative positioning. Good for 'Overkill' achievement."
     },
     {
       "name": "Volcanic Hive",
       "id": "volcanic_hive",
       "theme": "Final mission — volcanic underground lair",
-      "description": "The final battle takes place in the Volcanic Hive, the source of the Vek. Two-phase mission.",
-      "unique_terrain": ["Lava tiles", "Mountains/Stalagmites"],
+      "description": "The final battle takes place in the Volcanic Hive, the source of the Vek. Two-phase mission. Becomes accessible after the second island is complete.",
+      "unique_terrain": ["Lava tiles", "Mountains/Stalagmites", "Power Pylons"],
+      "psion": "Psion Tyrant (spawns on this island)",
+      "allowed_vek": ["Firefly", "Hornet", "Scarab", "Scorpion", "Crab", "Beetle", "Digger", "Blobber"],
+      "allowed_vek_notes": "No Advanced Edition Vek can spawn on this island (even if Advanced Enemies are on), except for Vek Leaders in a 3 or 4 island Unfair difficulty playthrough. Scorpions limited to one on Easy/Normal/Hard, two on Unfair.",
       "phases": {
         "phase_1": {
           "name": "Surface Battle",
-          "description": "Fight on the volcanic surface. No grid buildings to protect.",
-          "special": "Super Volcano in corner alternates between Lava Flow (converts tiles to lava) and Volcanic Projectiles (instant kill + fire on impact tile).",
+          "description": "Fight on the volcanic surface. Power Pylons deployed by CEO Kern of R.S.T. Corporation before battle begins. Power Pylons provide Grid Power and are tactically equivalent to Civilian Buildings, except that damaging them does not deduct from your score.",
+          "power_pylons": true,
+          "special": "Super Volcano in corner alternates between Lava Flow (converts tiles to lava) and Volcanic Projectiles (instant kill + fire on impact tile). Neither variant targets tiles occupied by Power Pylons.",
           "turns": 5,
-          "objective": "Survive 5 turns"
+          "objective": "Survive 5 turns",
+          "bosses": {
+            "hard": "1 Vek leader present",
+            "unfair_3_4_island": "2 Vek leaders present",
+            "possible_bosses": ["Firefly Leader", "Hornet Leader", "Scorpion Leader"]
+          }
         },
         "phase_2": {
           "name": "Underground Battle",
-          "description": "Fight underground in the Vek hive. Protect the Renfield Bomb.",
-          "special": "Renfield Bomb deploys in center. Has 4 HP. If destroyed, replacement deploys after 2-turn penalty. Must survive until bomb arms.",
+          "description": "Fight underground in the heart of the Volcanic Hive. Squad and Renfield Bomb automatically deployed in a fixed 2x2 square formation spanning tiles D5 to E6. Additional Power Pylons deployed by CEO Kern as secondary objective.",
+          "power_pylons": true,
+          "renfield_bomb": {
+            "hp": 4,
+            "does_not_explode_on_destruction": true,
+            "replacement": "If destroyed, a replacement is deployed mid-turn. 2 turns are added to the victory turn timer. Replacement can be deployed to any ground or lava tile (excluding mech-occupied tiles and tiles marked for environmental destruction). Inflicts Kill damage on any Vek it lands on. If deployed on lava tile, the tile is converted to ground."
+          },
+          "caverns": {
+            "description": "Environmental effect called Caverns alternates between Falling Rocks and Tentacles. Both inflict Kill damage and can alter map tiles. Neither variant can directly attack Power Pylon tiles or the tile occupied by the Renfield Bomb (at the time the attack is telegraphed).",
+            "pattern": "Falling Rocks Random -> Tentacles Aimed -> Falling Rocks Area -> Tentacle Area",
+            "falling_rocks": "Convert lava tiles back to normally-functioning ground tiles, including allowing Vek spawns. Small-scale variant randomly chooses 3-4 scattered tiles. Wide-area effect partially blankets a 3x3-tile grid. Neither variant affects the extreme outer perimeter of tiles.",
+            "tentacles": "Convert ground tiles to lava. Wide-area effect cuts a jagged one-tile-wide swatch across the entire map. Small-scale version is targeted — always aims for the precise tiles your mechs occupy (even if disabled). Can extend to the very outer perimeter."
+          },
           "turns": 5,
           "objective": "Protect Renfield Bomb for 5 turns until it detonates, destroying the hive.",
+          "bosses": {
+            "all_difficulties": "1 Vek leader always present",
+            "unfair_3_4_island": "2 Vek leaders present",
+            "possible_bosses": ["Firefly Leader", "Hornet Leader", "Beetle Leader"]
+          },
           "notes": [
-            "Renfield Bomb is immune to fire",
-            "If bomb is destroyed, replacement deploys but victory timer extends by 2 turns",
-            "Psion Tyrant appears here (1 damage to all mechs per turn)",
-            "Mountains appear as stalagmites — can block movement",
-            "Lava tiles are permanent hazards",
-            "Disabled mechs are restored between Phase 1 and Phase 2"
+            "Renfield Bomb has 4 HP and does not explode if destroyed (unlike R.S.T. prototypes)",
+            "If bomb is destroyed, replacement deploys mid-turn and victory timer extends by 2 turns",
+            "Vek do not emerge from spawn points if the bomb survived the Vek attack phase during the final turn",
+            "Mountains appear as stalagmites",
+            "Lava tiles are permanent hazards unless converted by Falling Rocks"
           ]
+        },
+        "between_phases": {
+          "disabled_mechs_restored": true,
+          "dead_pilots_stay_dead": true,
+          "dead_pilot_replacement": "Replaced with A.I. pilots, unless they had the Invulnerable Skill",
+          "limited_use_items_restored": true,
+          "notes": "Second phase deployment is counted as a separate second mission for restoring limited-use items/weapons and disabled mechs."
         }
       }
     }
@@ -197,10 +421,38 @@
       ]
     },
     "time_pods": {
-      "description": "Random special objective. A Time Pod appears on the map.",
-      "reward": "Always gives a Reactor Core. Chance of weapon, passive, or pilot.",
-      "protection": "Must either collect it with a mech or protect it until end of mission.",
-      "notes": "Required for 'Loot Boxes!' and 'Distant Friends' achievements."
+      "description": "Time Pods appear during missions, dropping onto random tiles from the future.",
+      "distribution": {
+        "islands_1_2": "Always 1 Time Pod per island",
+        "islands_3_4": "Always 2 Time Pods per island"
+      },
+      "strange_pods": {
+        "description": "A Strange Pod has a 15% chance of replacing a Time Pod on islands 2, 3, or 4."
+      },
+      "reward": "Always grants a Reactor Core. May also contain a Pilot, Weapon, or Passive equipment.",
+      "protection": "Must either collect it with a mech or protect it until end of mission. Allied units (such as the Renfield Bomb) can also collect a pod if pushed or walked onto it.",
+      "restrictions": "Pods cannot appear in missions with the 'Protect the Corporate Tower' objective.",
+      "destruction_methods": [
+        "Vek ending their turn on the pod's tile",
+        "Vek dying on the pod's tile",
+        "Direct Mech or Vek attack damage",
+        "Piercing/beam weapons (projectile weapons pass safely over)",
+        "Setting the tile on fire (even without dealing damage)",
+        "Tidal waves/flooding (including broken Old Earth Dam)",
+        "Tile converted to chasm",
+        "Cracking the tile (e.g. Drill Mech)",
+        "A.C.I.D. pool left behind by a killed acidified unit dying on the tile"
+      ],
+      "safe_interactions": [
+        "Smoke does not destroy the pod",
+        "Ice Storms do not destroy the pod",
+        "Vek running over the pod without stopping on it",
+        "Beetle Vek attack passing over the pod",
+        "Projectile weapons passing over the pod",
+        "Pod cannot be frozen"
+      ],
+      "perfect_island_note": "Rescuing the Pod counts towards clearing an Island perfectly. A destroyed pod counts as a failed objective.",
+      "notes": "Required for 'Loot Boxes!' and 'Distant Friends' achievements. Pod typically drops on the half of the map closest to where the Vek spawn."
     }
   },
   "shop": {
@@ -209,13 +461,14 @@
       {"type": "Weapon", "cost": "1-3 Reputation", "description": "Random weapon to equip on a mech"},
       {"type": "Pilot", "cost": "1 Reputation", "description": "Random pilot to recruit"},
       {"type": "Grid Power", "cost": "1 Reputation per power", "description": "Restore 1 Grid Power"},
-      {"type": "Reactor Core", "cost": "1 Reputation per core", "description": "Add reactor core to a mech"}
+      {"type": "Reactor Core", "cost": "3 Reputation", "description": "Add reactor core to a mech (available after boss mission)"}
     ],
-    "notes": "Shop inventory is random. Prioritize Grid Power if low, then Reactor Cores for key upgrades."
+    "notes": "Shop inventory is random. Prioritize Grid Power if low, then Reactor Cores for key upgrades. Reactor Cores cost 3 reputation specifically after boss missions."
   },
   "perfect_island": {
     "description": "Complete an island with all bonus objectives fulfilled and no battles lost.",
     "reward_choices": ["New pilot", "New weapon/passive", "+2 Grid Power"],
+    "time_pod_requirement": "Time Pod objectives count toward perfect island status. A destroyed pod counts as a failed objective.",
     "notes": "Required for 'Perfect Strategy' achievement (10 perfect islands across all games)."
   }
 }

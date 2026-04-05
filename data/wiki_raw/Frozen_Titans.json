@@ -1,0 +1,50 @@
+{
+  "name": "Frozen_Titans",
+  "url": "https://intothebreach.fandom.com/wiki/Frozen_Titans",
+  "infobox": {
+    "_title": "Frozen Titans"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Aegis Mech",
+          "Class": "Prime",
+          "Health": "3",
+          "Move speed": "4",
+          "Default loadout": "Spartan Shield(Prime)EffectBash the enemy, flipping its attack direction.(2 damage)Upgrade IGain Shield ()Gain a Shield when bashing.Upgrade II+1 Damage ()Increases damage by 1.",
+          "Special": "Spartan Shield(Prime)"
+        },
+        {
+          "Name": "Mirror Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Janus Cannon(Brute)EffectFire two projectiles in opposite directions.(1 damage)Upgrade I+1 Damage ()Increases damage by 1.Upgrade II+1 Damage ()Increases damage by 1.",
+          "Special": "Janus Cannon(Brute)"
+        },
+        {
+          "Name": "Ice Mech",
+          "Class": "Ranged",
+          "Health": "2",
+          "Move speed": "3",
+          "Default loadout": "Cryo-Launcher(Ranged)Effect ()Freeze yourself and the target.",
+          "Special": "Cryo-Launcher(Ranged)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheFrozen Titansis one of theSquadsfromInto The Breach. They consist of theAegis Mech,Mirror MechandIce Mechand are unlockable for 3 coins.\nAs their name suggests, the main gimmick of the Frozen Titans is having the ability to freeze enemies using the Ice Mech'sCryo-Launcher. This must be used effectively to neutralise threats that the other two mechs' very low damage cannot cover.",
+    "Strategies": "  - In general, try to turn the Ice Mech's self-freeze drawback into an advantage. Position the mech to block Vek attacks or emerging Vek, so that it both prevents the damage and cracks the freeze.\n  - Get the Aegis Mech's shield upgrade as soon as possible. Gaining a shield after every attack gives the mech a huge advantage and allows you to use it to block Vek emergence, deal risk-free knockback damage, and protect buildings from the Janus Cannon's reverse fire without expending the Ice Mech's action.\n  - The Mirror Mech's attack can be positioned so that it unfreezes the Ice Mech and attacks a target simultaneously.\n  - The best objectives to take with the Frozen Titans are defensive focused ones, such as Defend the Train and Do not Kill theVolatile Vek. Freezing the train not only serves as a shield but also prevents the train from moving and ramming into obstacles without failing the objective. The Volatile Vek can be frozen and ignored.Conversely, the worst objective is getting 7 kills, as the squad has very little starting firepower to do so and will end up with lots of grid damage. The Cryo-Launcher actively inhibits achieving this objective.If advanced missions are on, missions that involve getting 4/5/6 or fewer kills (difficulty dependent) are the best as the Cryo-Launcher can just freeze Vek without killing.\n  - This squad has very limited knockback ability. Investing in a weapon likeBoostersadds a lot of flexibility.\n  - Satellites won't launch if they're frozen, which will fail the objective even if defended successfully; they must launch to earn reputation.\n  - Any flying unit (Vek or Mech) getting frozen above a chasm will fall and die.\n  - Shielded mechs do not get frozen, even from the Cryo-Launcher. This means thatMafanon the Ice Mech is the best starting pilot for this squad, withBethany JonesorAdamas alternatives if no secret pilots have been unlocked.Pilots with shields are also valuable to find, as they can be placed on the Mirror Mech if one of them is already piloting the Ice Mech. Combined with the Aegis Mech's shield upgrade, the entire team can be shielded and immune to freezing, which is particularly powerful with theIce Generator. Taking advantage of this combination requires a degree of luck though, as the pilots and equipment have to be found during a given playthrough.\n  - Other valuable pilots to look for include:Kazaaakpleth: Adds more killing power to the squad and gives more options for pushing. Can use their Mantis Slash even while frozen.Harold Schmidtcan be used alternatively but without damage.Rosie Rivets: Automatically frees a frozen mech when repairing on movement. Useful for reviving a downed Mafan-piloted mech.Silica: Double shots with Mirror Mech's Janus Cannon can provide a lot of much needed damage output. Can also work on the Ice Mech to shoot and then repair the freeze.Henry KwanandProspero: valuable for the Aegis and Mirror Mech to help them move past frozen enemies."
+  },
+  "full_text": "Frozen Titans\n“\nThe Cryo Launcher is an excellent tool in the fight against the Vek, but it takes an experienced Pilot to master.\n„\nThe\nFrozen Titans\nis one of the\nSquads\nfrom\nInto The Breach\n. They consist of the\nAegis Mech\n,\nMirror Mech\nand\nIce Mech\nand are unlockable for 3 coins.\nAs their name suggests, the main gimmick of the Frozen Titans is having the ability to freeze enemies using the Ice Mech's\nCryo-Launcher\n. This must be used effectively to neutralise threats that the other two mechs' very low damage cannot cover.\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nAegis Mech\nPrime\n3\n4\nSpartan Shield\n(\nPrime\n)\nEffect\nBash the enemy, flipping its attack direction.\n(2 damage)\nUpgrade I\nGain Shield (\n)\nGain a Shield when bashing.\nUpgrade II\n+1 Damage (\n)\nIncreases damage by 1.\nMirror Mech\nBrute\n3\n3\nJanus Cannon\n(\nBrute\n)\nEffect\nFire two projectiles in opposite directions.\n(1 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases damage by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases damage by 1.\nIce Mech\nRanged\n2\n3\nCryo-Launcher\n(\nRanged\n)\nEffect (\n)\nFreeze yourself and the target.\nFlying\n: Flying units can move over any terrain tile.\nAchievements\n[\n]\nCryo Expert\nShoot the Cryo-Launcher 4 times in a single battle\nTrick Shot\nKill 3 enemies with a single attack of the Janus Cannon\nPacifist\nKill fewer than 3 enemies in a single battle\nStrategies\n[\n]\nIn general, try to turn the Ice Mech's self-freeze drawback into an advantage. Position the mech to block Vek attacks or emerging Vek, so that it both prevents the damage and cracks the freeze.\nGet the Aegis Mech's shield upgrade as soon as possible. Gaining a shield after every attack gives the mech a huge advantage and allows you to use it to block Vek emergence, deal risk-free knockback damage, and protect buildings from the Janus Cannon's reverse fire without expending the Ice Mech's action.\nThe Mirror Mech's attack can be positioned so that it unfreezes the Ice Mech and attacks a target simultaneously.\nThe best objectives to take with the Frozen Titans are defensive focused ones, such as Defend the Train and Do not Kill the\nVolatile Vek\n. Freezing the train not only serves as a shield but also prevents the train from moving and ramming into obstacles without failing the objective. The Volatile Vek can be frozen and ignored.\nConversely, the worst objective is getting 7 kills, as the squad has very little starting firepower to do so and will end up with lots of grid damage. The Cryo-Launcher actively inhibits achieving this objective.\nIf advanced missions are on, missions that involve getting 4/5/6 or fewer kills (difficulty dependent) are the best as the Cryo-Launcher can just freeze Vek without killing.\nThis squad has very limited knockback ability. Investing in a weapon like\nBoosters\nadds a lot of flexibility.\nSatellites won't launch if they're frozen, which will fail the objective even if defended successfully; they must launch to earn reputation.\nAny flying unit (Vek or Mech) getting frozen above a chasm will fall and die.\nShielded mechs do not get frozen, even from the Cryo-Launcher. This means that\nMafan\non the Ice Mech is the best starting pilot for this squad, with\nBethany Jones\nor\nAdam\nas alternatives if no secret pilots have been unlocked.\nPilots with shields are also valuable to find, as they can be placed on the Mirror Mech if one of them is already piloting the Ice Mech. Combined with the Aegis Mech's shield upgrade, the entire team can be shielded and immune to freezing, which is particularly powerful with the\nIce Generator\n. Taking advantage of this combination requires a degree of luck though, as the pilots and equipment have to be found during a given playthrough.\nOther valuable pilots to look for include:\nKazaaakpleth\n: Adds more killing power to the squad and gives more options for pushing. Can use their Mantis Slash even while frozen.\nHarold Schmidt\ncan be used alternatively but without damage.\nRosie Rivets\n: Automatically frees a frozen mech when repairing on movement. Useful for reviving a downed Mafan-piloted mech.\nSilica\n: Double shots with Mirror Mech's Janus Cannon can provide a lot of much needed damage output. Can also work on the Ice Mech to shoot and then repair the freeze.\nHenry Kwan\nand\nProspero\n: valuable for the Aegis and Mirror Mech to help them move past frozen enemies.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

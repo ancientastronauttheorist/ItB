@@ -1,0 +1,51 @@
+{
+  "name": "Blitzkrieg",
+  "url": "https://intothebreach.fandom.com/wiki/Blitzkrieg",
+  "infobox": {
+    "_title": "Blitzkrieg"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Lightning Mech",
+          "Class": "Prime",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Electric Whip(Prime)Effect ()Chain damage through adjacent targets.(2 damage)Upgrade IBuilding Chain ()Chain through Grid Buildings without causing damage.Upgrade II+1 Damage ()Deals +1 damage to all affected tiles.",
+          "Special": "Electric Whip(Prime)"
+        },
+        {
+          "Name": "Hook Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Grappling Hook(Brute)EffectUse a grapple to pull Mech towards objects, or units to the Mech.Upgrade IShield Ally ()If used on an ally unit it gives them a Shield.",
+          "Special": "Grappling Hook(Brute)"
+        },
+        {
+          "Name": "Boulder Mech",
+          "Class": "Ranged",
+          "Health": "2",
+          "Move speed": "3",
+          "Default loadout": "Rock Accelerator(Ranged)EffectLaunch a rock at a tile, pushing adjacent tiles.(2 damage)Upgrade I+1 Damage ()Increases damage by 1.",
+          "Special": "Rock Accelerator(Ranged)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheBlitzkriegis one of the baseSquadsfromInto The Breach, consisting of theLightning Mech,Hook MechandBoulder Mech. They are unlockable for 3 coins.\nBlitzkrieg primarily relies on the Lightning Mech's extremely powerful Electric Whip, which can chain damage to targets and wipe out many enemies in a single attack. However, the whip is as dangerous to the enemy as it is to both your own mechs and mission objectives, meaning that the Hook and Boulder mechs are vital to position everything so that you deal the least collateral damage.",
+    "Strategies": "  - There are often times where the Electric Whip must be chained with your own mechs to ensure the greatest damage; do not hesitate to do so if it can prevent grid damage and does not kill a pilot. This is dangerous early on when the Boulder Mech has only 2 HP and will be instantly killed by the whip, meaning that only the Hook Mech can serve as chain damage fodder until reactor cores are obtained.\n  - Remember that mission objectives, deploys, and ally units are also damaged by Electric Whip. The best missions to take are those without any entity objectives, such as killing a number of enemies or not taking grid damage.\n  - The boulders launched by the Boulder Mech are key for positioning, as they can block emerging Vek, be used for chaining the Electric Whip, block projectiles and push enemies. Never use the Boulder Mech for lightning fodder unless it has more than 2 HP.\n  - If Advanced Equipment is active,Networked Shieldingis the best passive for the Blitzkrieg as it lets you freely zap through your own mechs with no reprocussions whatsoever.\n  - With Advanced Enemies active, avoid islands that haveTumblebugspresent; their exploding boulders make it extremely difficult for Electric Whip to be used safely. Obtaining secondary weapons that can freeze or shield buildings before taking a Tumblebug island is greatly recommended.\n  - Blitzkrieg benefits greatly from the following pilots:Silica: Allows the Lightning Mech to fire twice per turn, making it extremely devastating in the late-game.Chen RongandArchimedes: Lets the Hook Mech move to safety after pulling a Vek into a chain.Kai MillerandMorgan Lejeune: Allows the Lightning Mech to deal 3 damage early on, although it will make the Hook Mech take 2 damage when chained.Mafan: Allows immediate access to the Building Chain upgrade piloting the Lightning Mech.Harold SchmidtandKazaaakpleth: gives the Hook Mech an additional option to push enemies away.",
+    "Trivia": "  - The name \"Blitzkrieg\" is German for lightning warfare, hence the squad's focus on the Lightning Mech as well as the Lightning War achievement."
+  },
+  "full_text": "Blitzkrieg\n\"R.S.T. engineers designed this Squad around the mass destruction capabilities of harnessed lightning.\"\nThe\nBlitzkrieg\nis one of the base\nSquads\nfrom\nInto The Breach\n, consisting of the\nLightning Mech\n,\nHook Mech\nand\nBoulder Mech\n. They are unlockable for 3 coins.\nBlitzkrieg primarily relies on the Lightning Mech's extremely powerful Electric Whip, which can chain damage to targets and wipe out many enemies in a single attack. However, the whip is as dangerous to the enemy as it is to both your own mechs and mission objectives, meaning that the Hook and Boulder mechs are vital to position everything so that you deal the least collateral damage.\nContents\n1\nDescription\n2\nMechs\n3\nAchievements\n4\nStrategies\n5\nTrivia\nDescription\n[\n]\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nLightning Mech\nPrime\n3\n3\nElectric Whip\n(\nPrime\n)\nEffect (\n)\nChain damage through adjacent targets.\n(2 damage)\nUpgrade I\nBuilding Chain (\n)\nChain through Grid Buildings without causing damage.\nUpgrade II\n+1 Damage (\n)\nDeals +1 damage to all affected tiles.\nHook Mech\nBrute\n3\n3\nGrappling Hook\n(\nBrute\n)\nEffect\nUse a grapple to pull Mech towards objects, or units to the Mech.\nUpgrade I\nShield Ally (\n)\nIf used on an ally unit it gives them a Shield.\nNatural Armor\n: Weapon damage to this unit is reduced by 1. All other damage (Push, Blocking, Fire, etc.) is unaffected.\nBoulder Mech\nRanged\n2\n3\nRock Accelerator\n(\nRanged\n)\nEffect\nLaunch a rock at a tile, pushing adjacent tiles.\n(2 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases damage by 1.\nAchievements\n[\n]\nChain Attack\nHave the Chain Whip attack chain through 10 tiles\nLightning War\nFinish the first 2 Corporate Islands in under 30 minutes\nHold the Line\nBlock 4 emerging Vek in a single turn\nStrategies\n[\n]\nThere are often times where the Electric Whip must be chained with your own mechs to ensure the greatest damage; do not hesitate to do so if it can prevent grid damage and does not kill a pilot. This is dangerous early on when the Boulder Mech has only 2 HP and will be instantly killed by the whip, meaning that only the Hook Mech can serve as chain damage fodder until reactor cores are obtained.\nRemember that mission objectives, deploys, and ally units are also damaged by Electric Whip. The best missions to take are those without any entity objectives, such as killing a number of enemies or not taking grid damage.\nThe boulders launched by the Boulder Mech are key for positioning, as they can block emerging Vek, be used for chaining the Electric Whip, block projectiles and push enemies. Never use the Boulder Mech for lightning fodder unless it has more than 2 HP.\nIf Advanced Equipment is active,\nNetworked Shielding\nis the best passive for the Blitzkrieg as it lets you freely zap through your own mechs with no reprocussions whatsoever.\nWith Advanced Enemies active, avoid islands that have\nTumblebugs\npresent; their exploding boulders make it extremely difficult for Electric Whip to be used safely. Obtaining secondary weapons that can freeze or shield buildings before taking a Tumblebug island is greatly recommended.\nBlitzkrieg benefits greatly from the following pilots:\nSilica\n: Allows the Lightning Mech to fire twice per turn, making it extremely devastating in the late-game.\nChen Rong\nand\nArchimedes\n: Lets the Hook Mech move to safety after pulling a Vek into a chain.\nKai Miller\nand\nMorgan Lejeune\n: Allows the Lightning Mech to deal 3 damage early on, although it will make the Hook Mech take 2 damage when chained.\nMafan\n: Allows immediate access to the Building Chain upgrade piloting the Lightning Mech.\nHarold Schmidt\nand\nKazaaakpleth\n: gives the Hook Mech an additional option to push enemies away.\nTrivia\n[\n]\nThe name \"Blitzkrieg\" is German for lightning warfare, hence the squad's focus on the Lightning Mech as well as the Lightning War achievement.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

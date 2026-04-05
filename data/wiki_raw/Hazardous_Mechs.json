@@ -1,0 +1,50 @@
+{
+  "name": "Hazardous_Mechs",
+  "url": "https://intothebreach.fandom.com/wiki/Hazardous_Mechs",
+  "infobox": {
+    "_title": "Hazardous Mechs"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Leap Mech",
+          "Class": "Prime",
+          "Health": "3",
+          "Move speed": "4",
+          "Default loadout": "Hydraulic Legs(Prime)EffectLeap to a tile, damaging self and adjacent tiles.(1 self, 1 damage)Upgrade I+1 Damage Each ()Increases damage to self and targets by 1.Upgrade II+1 Damage ()Increases damage to targets by 1.",
+          "Special": "Hydraulic Legs(Prime)"
+        },
+        {
+          "Name": "Unstable Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Unstable Cannon(Brute)EffectPowerful projectile that causes damage to shooter as well as target.(1 self, 2 damage)Upgrade I+1 Damage Each ()Increases damage to self and target by 1.Upgrade II+1 Damage ()Increases target damage by 1.",
+          "Special": "Unstable Cannon(Brute)"
+        },
+        {
+          "Name": "Nano Mech",
+          "Class": "Science",
+          "Health": "2",
+          "Move speed": "4",
+          "Default loadout": "A.C.I.D. Projector(Science)EffectFire a projectile that applies A.C.I.D. and pushes.Viscera Nanobots(Passive)EffectMechs heal 1 damage when they deal a killing blow.Upgrade I+1 Heal ()Increase healing to 2.",
+          "Special": "A.C.I.D. Projector(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheHazardous Mechsare one of theSquadsfromInto The Breach. They consist of theLeap Mech,Unstable MechandNano Mechand are unlockable for 4 coins.\nThis squad has obscene damaging abilities as the Leap and Unstable mechs both have powerful pushing weapons. However, everything comes with the price of dealing self-damage, relying on the Nano Mech'sA.C.I.D. Projectorand its signature passiveViscera Nanobotsto stay fighting.",
+    "Strategies": "  - Keep your Nano Mech alive at all times, and your other two mechs are virtually immortal. Viscera Nanobots will heal a mech even if its health would be reduced to zero or lower, includingSelf-Destruct. This ability doesn't account for negative numbers, so if your mech's health has been reduced to a negative number, the game will just treat mech's HP as 0 and heal the according amount of HP.For example, if your Unstable Mech has 1HP, has Upgrade I powered and kills two enemies in one attack, it will have 2HP after the attack resolution.\n  - The A.C.I.D projector is key to killing high-health targets such as theFireflywith the Unstable Mech.\n  - All of this squad's weapons push enemies, so beware of inside corners, particularly where one of the obstacles is a city or allied unit, and either occupy them with your own mechs or prevent enemies from moving into them.\n  - Get the +1 Heal upgrade on Viscera Nanobots first before any other damage upgrades.\n  - If Advanced Equipment is enabled,Networked Shieldingfully negates any self-damage and voids the purpose of Viscera Nanobots.\n  - Recommended starting pilots include:Mafancan use the Zoltan Shield each turn to absorb self-damage, and can use the included reactor core to immediately power +1 damage each.Abe Isamuprevents the initial 1 point of self damage from Hydraulic Legs and Unstable Cannon, allowing you to get their +1 damage each upgrades early.To a lesser extent,Ariadne's +3HP can tank the self-damage and can also get the +1 damage each upgrades early, provided she gets kill-shots to auto-repair some of the lost HP.\n  - Other pilots to look out for include:Any pilot withConservativeif you have Self-Destruct.Chen RongandArchimedes: Lets you move one of your mechs after attacking, which is important as the Leap Mech likes to enter into enemy fire. Also helps the Nano Mech escape trouble.Silica: Lets the Leap Mech hop twice before actually moving.Morgan Lejeune: Lets you keep the boost in case Viscera Nanobots does not fully heal, which is often the case after getting health upgrades.Rosie Rivets: can pilot the Nano Mech and be positioned to repair and revive the other two mechs, decreasing the squad's reliance on Viscera Nanobots."
+  },
+  "full_text": "Hazardous Mechs\n“\nThese Mechs have spectacular damage output but rely on nanobots feeding off dead Vek to stay alive.\n„\nThe\nHazardous Mechs\nare one of the\nSquads\nfrom\nInto The Breach\n. They consist of the\nLeap Mech\n,\nUnstable Mech\nand\nNano Mech\nand are unlockable for 4 coins.\nThis squad has obscene damaging abilities as the Leap and Unstable mechs both have powerful pushing weapons. However, everything comes with the price of dealing self-damage, relying on the Nano Mech's\nA.C.I.D. Projector\nand its signature passive\nViscera Nanobots\nto stay fighting.\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nLeap Mech\nPrime\n3\n4\nHydraulic Legs\n(\nPrime\n)\nEffect\nLeap to a tile, damaging self and adjacent tiles.\n(1 self, 1 damage)\nUpgrade I\n+1 Damage Each (\n)\nIncreases damage to self and targets by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases damage to targets by 1.\nUnstable Mech\nBrute\n3\n3\nUnstable Cannon\n(\nBrute\n)\nEffect\nPowerful projectile that causes damage to shooter as well as target.\n(1 self, 2 damage)\nUpgrade I\n+1 Damage Each (\n)\nIncreases damage to self and target by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases target damage by 1.\nNano Mech\nScience\n2\n4\nA.C.I.D. Projector\n(\nScience\n)\nEffect\nFire a projectile that applies A.C.I.D. and pushes.\nViscera Nanobots\n(\nPassive\n)\nEffect\nMechs heal 1 damage when they deal a killing blow.\nUpgrade I\n+1 Heal (\n)\nIncrease healing to 2.\nFlying\n: Flying units can move over any terrain tile.\nAchievements\n[\n]\nHealing\nHeal 10 Mech Health in a single battle.\nImmortal\nFinish 4 Corporate Islands without a Mech being destroyed at the end of a battle.\nOverkill\nDeal 8 damage to a unit with a single attack.\nStrategies\n[\n]\nKeep your Nano Mech alive at all times, and your other two mechs are virtually immortal. Viscera Nanobots will heal a mech even if its health would be reduced to zero or lower, including\nSelf-Destruct\n. This ability doesn't account for negative numbers, so if your mech's health has been reduced to a negative number, the game will just treat mech's HP as 0 and heal the according amount of HP.\nFor example, if your Unstable Mech has 1HP, has Upgrade I powered and kills two enemies in one attack, it will have 2HP after the attack resolution.\nThe A.C.I.D projector is key to killing high-health targets such as the\nFirefly\nwith the Unstable Mech.\nAll of this squad's weapons push enemies, so beware of inside corners, particularly where one of the obstacles is a city or allied unit, and either occupy them with your own mechs or prevent enemies from moving into them.\nGet the +1 Heal upgrade on Viscera Nanobots first before any other damage upgrades.\nIf Advanced Equipment is enabled,\nNetworked Shielding\nfully negates any self-damage and voids the purpose of Viscera Nanobots.\nRecommended starting pilots include:\nMafan\ncan use the Zoltan Shield each turn to absorb self-damage, and can use the included reactor core to immediately power +1 damage each.\nAbe Isamu\nprevents the initial 1 point of self damage from Hydraulic Legs and Unstable Cannon, allowing you to get their +1 damage each upgrades early.\nTo a lesser extent,\nAriadne\n's +3HP can tank the self-damage and can also get the +1 damage each upgrades early, provided she gets kill-shots to auto-repair some of the lost HP.\nOther pilots to look out for include:\nAny pilot with\nConservative\nif you have Self-Destruct.\nChen Rong\nand\nArchimedes\n: Lets you move one of your mechs after attacking, which is important as the Leap Mech likes to enter into enemy fire. Also helps the Nano Mech escape trouble.\nSilica\n: Lets the Leap Mech hop twice before actually moving.\nMorgan Lejeune\n: Lets you keep the boost in case Viscera Nanobots does not fully heal, which is often the case after getting health upgrades.\nRosie Rivets\n: can pilot the Nano Mech and be positioned to repair and revive the other two mechs, decreasing the squad's reliance on Viscera Nanobots.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

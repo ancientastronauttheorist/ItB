@@ -1,0 +1,808 @@
+{
+  "name": "Vek",
+  "url": "https://intothebreach.fandom.com/wiki/Vek",
+  "infobox": {
+    "_title": "Vek"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Health",
+        "Move",
+        "Category",
+        "Skills and abilities",
+        "Special",
+        "Portrait"
+      ],
+      "rows": [
+        {
+          "Name": "Firefly",
+          "Health": "3",
+          "Move": "2",
+          "Category": "Common",
+          "Skills and abilities": "Accelerating Thorax(Enemy)EffectLaunch a volatile mass of goo dealing 1 damage.",
+          "Special": "Accelerating Thorax(Enemy)",
+          "Portrait": "EffectLaunch a volatile mass of goo dealing 1 damage."
+        },
+        {
+          "Name": "Alpha Firefly",
+          "Health": "5",
+          "Move": "2",
+          "Category": "Common",
+          "Skills and abilities": "Enhanced Thorax(Enemy)EffectLaunch a volatile mass of goo dealing 3 damage.",
+          "Special": "Enhanced Thorax(Enemy)",
+          "Portrait": "EffectLaunch a volatile mass of goo dealing 3 damage."
+        },
+        {
+          "Name": "Hornet",
+          "Health": "2",
+          "Move": "5",
+          "Category": "Common",
+          "Skills and abilities": "Stinger(Enemy)EffectStab the target for 1 damage.",
+          "Special": "Stinger(Enemy)",
+          "Portrait": "EffectStab the target for 1 damage."
+        },
+        {
+          "Name": "Alpha Hornet",
+          "Health": "4",
+          "Move": "5",
+          "Category": "Common",
+          "Skills and abilities": "Launching Stinger(Enemy)EffectStab 2 tiles in front of the unit for 2 damage.",
+          "Special": "Launching Stinger(Enemy)",
+          "Portrait": "EffectStab 2 tiles in front of the unit for 2 damage."
+        },
+        {
+          "Name": "Leaper",
+          "Health": "1",
+          "Move": "4",
+          "Category": "Common",
+          "Skills and abilities": "Fangs(Enemy)EffectWeb a target, preparing to stab it for 3 damage.",
+          "Special": "Fangs(Enemy)",
+          "Portrait": "EffectWeb a target, preparing to stab it for 3 damage."
+        },
+        {
+          "Name": "Alpha Leaper",
+          "Health": "3",
+          "Move": "4",
+          "Category": "Common",
+          "Skills and abilities": "Sharpened Fangs(Enemy)EffectWeb a target, preparing to stab it for 5 damage.",
+          "Special": "Sharpened Fangs(Enemy)",
+          "Portrait": "EffectWeb a target, preparing to stab it for 5 damage."
+        },
+        {
+          "Name": "Scarab",
+          "Health": "2",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Spitting Glands(Enemy)EffectLob an artillery shot at a single tile for 1 damage (5 tile range).",
+          "Special": "Spitting Glands(Enemy)",
+          "Portrait": "EffectLob an artillery shot at a single tile for 1 damage (5 tile range)."
+        },
+        {
+          "Name": "Alpha Scarab",
+          "Health": "4",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Spitting Glands(Enemy)EffectLob a powerful artillery shot at a single tile for 3 damage (5 tile range).",
+          "Special": "Spitting Glands(Enemy)",
+          "Portrait": "EffectLob a powerful artillery shot at a single tile for 3 damage (5 tile range)."
+        },
+        {
+          "Name": "Scorpion",
+          "Health": "3",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Stinging Spinneret(Enemy)EffectWeb an adjacent target, preparing to stab it for 1 damage.",
+          "Special": "Stinging Spinneret(Enemy)",
+          "Portrait": "EffectWeb an adjacent target, preparing to stab it for 1 damage."
+        },
+        {
+          "Name": "Alpha Scorpion",
+          "Health": "5",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Goring Spinneret(Enemy)EffectWeb an adjacent target, preparing to stab it for 3 damage.",
+          "Special": "Goring Spinneret(Enemy)",
+          "Portrait": "EffectWeb an adjacent target, preparing to stab it for 3 damage."
+        },
+        {
+          "Name": "Volatile Vek",
+          "Health": "4",
+          "Move": "3",
+          "Category": "Objective",
+          "Skills and abilities": "Stinging Spinneret(Enemy)EffectWeb an adjacent target, preparing to stab it for 1 damage.",
+          "Special": "Stinging Spinneret(Enemy)",
+          "Portrait": "EffectWeb an adjacent target, preparing to stab it for 1 damage."
+        },
+        {
+          "Name": "Beetle",
+          "Health": "4",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Pincers(Enemy)EffectCharge forward to deal 1 damage and push the target.",
+          "Special": "Pincers(Enemy)",
+          "Portrait": "EffectCharge forward to deal 1 damage and push the target."
+        },
+        {
+          "Name": "Alpha Beetle",
+          "Health": "5",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Sharpened Pincers(Enemy)EffectCharge forward to deal 3 damage and push the target.",
+          "Special": "Sharpened Pincers(Enemy)",
+          "Portrait": "EffectCharge forward to deal 3 damage and push the target."
+        },
+        {
+          "Name": "Blobber",
+          "Health": "3",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Unstable Growths(Enemy)EffectThrow a stickyblobthat will explode.",
+          "Special": "Unstable Growths(Enemy)",
+          "Portrait": "EffectThrow a stickyblobthat will explode."
+        },
+        {
+          "Name": "Alpha Blobber",
+          "Health": "4",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Volatile Growths(Enemy)EffectThrow amassive blobthat will explode.",
+          "Special": "Volatile Growths(Enemy)",
+          "Portrait": "EffectThrow amassive blobthat will explode."
+        },
+        {
+          "Name": "Burrower",
+          "Health": "3",
+          "Move": "4",
+          "Category": "Rare",
+          "Skills and abilities": "Spiked Carapace(Enemy)EffectSlam against 3 tiles in a row, hitting each for 1 damage.",
+          "Special": "Spiked Carapace(Enemy)",
+          "Portrait": "EffectSlam against 3 tiles in a row, hitting each for 1 damage."
+        },
+        {
+          "Name": "Alpha Burrower",
+          "Health": "5",
+          "Move": "4",
+          "Category": "Rare",
+          "Skills and abilities": "Bladed Carapace(Enemy)EffectSlam against 3 tiles in a row, hitting each for 2 damage.",
+          "Special": "Bladed Carapace(Enemy)",
+          "Portrait": "EffectSlam against 3 tiles in a row, hitting each for 2 damage."
+        },
+        {
+          "Name": "Centipede",
+          "Health": "3",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Acidic Vomit(Enemy)EffectLaunch a volatile mass of goo, dealing 1 damage and applying A.C.I.D. on nearby units.",
+          "Special": "Acidic Vomit(Enemy)",
+          "Portrait": "EffectLaunch a volatile mass of goo, dealing 1 damage and applying A.C.I.D. on nearby units."
+        },
+        {
+          "Name": "Alpha Centipede",
+          "Health": "5",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Corrosive Vomit(Enemy)EffectLaunch a volatile mass of goo,  dealing 2 damage and applying A.C.I.D. on nearby units.",
+          "Special": "Corrosive Vomit(Enemy)",
+          "Portrait": "EffectLaunch a volatile mass of goo,  dealing 2 damage and applying A.C.I.D. on nearby units."
+        },
+        {
+          "Name": "Crab",
+          "Health": "3",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Explosive Expulsions(Enemy)EffectLaunch artillery attack on 2 tiles for 1 damage (5 tile range).",
+          "Special": "Explosive Expulsions(Enemy)",
+          "Portrait": "EffectLaunch artillery attack on 2 tiles for 1 damage (5 tile range)."
+        },
+        {
+          "Name": "Alpha Crab",
+          "Health": "5",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Explosive Expulsions(Enemy)EffectLaunch artillery attack on 2 tiles for 3 damage (5 tile range).",
+          "Special": "Explosive Expulsions(Enemy)",
+          "Portrait": "EffectLaunch artillery attack on 2 tiles for 3 damage (5 tile range)."
+        },
+        {
+          "Name": "Digger",
+          "Health": "2",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Digging Tusks(Enemy)EffectCreate a defensive rock wall before attacking adjacent tiles for 1 damage.",
+          "Special": "Digging Tusks(Enemy)",
+          "Portrait": "EffectCreate a defensive rock wall before attacking adjacent tiles for 1 damage."
+        },
+        {
+          "Name": "Alpha Digger",
+          "Health": "4",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Digging Tusks(Enemy)EffectCreate a defensive rock wall before attacking adjacent tiles for 2 damage.",
+          "Special": "Digging Tusks(Enemy)",
+          "Portrait": "EffectCreate a defensive rock wall before attacking adjacent tiles for 2 damage."
+        },
+        {
+          "Name": "Spider",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Tiny Offspring(Enemy)EffectThrow a sticky egg that hatches into aSpiderling.",
+          "Special": "Tiny Offspring(Enemy)",
+          "Portrait": "EffectThrow a sticky egg that hatches into aSpiderling."
+        },
+        {
+          "Name": "Alpha Spider",
+          "Health": "4",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Large Offspring(Enemy)EffectThrow a sticky egg that hatches into aSpiderling.",
+          "Special": "Large Offspring(Enemy)",
+          "Portrait": "EffectThrow a sticky egg that hatches into aSpiderling."
+        },
+        {
+          "Name": "Blast Psion",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Explosive Decay(Enemy)EffectAll other Vek will explode on death, dealing 1 damage to adjacent tiles.",
+          "Special": "Explosive Decay(Enemy)",
+          "Portrait": "EffectAll other Vek will explode on death, dealing 1 damage to adjacent tiles."
+        },
+        {
+          "Name": "Blood Psion",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Regeneration(Enemy)EffectAll other Vek heal 1 at the start of their turn.",
+          "Special": "Regeneration(Enemy)",
+          "Portrait": "EffectAll other Vek heal 1 at the start of their turn."
+        },
+        {
+          "Name": "Shell Psion",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Hardened Carapace(Enemy)EffectAll other Vek have incoming weapon damage reduced by 1.",
+          "Special": "Hardened Carapace(Enemy)",
+          "Portrait": "EffectAll other Vek have incoming weapon damage reduced by 1."
+        },
+        {
+          "Name": "Soldier Psion",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Invigorating Spores(Enemy)EffectAll other Vek receive +1 HP as long as the Psion is living.",
+          "Special": "Invigorating Spores(Enemy)",
+          "Portrait": "EffectAll other Vek receive +1 HP as long as the Psion is living."
+        },
+        {
+          "Name": "Psion Tyrant",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Hive Targeting(Enemy)EffectAll player units take 1 damage at the end of every turn.",
+          "Special": "Hive Targeting(Enemy)",
+          "Portrait": "EffectAll player units take 1 damage at the end of every turn."
+        },
+        {
+          "Name": "Bouncer",
+          "Health": "3",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Energized Horns(Enemy)EffectDeal 1 damage to the target then bounce backwards.",
+          "Special": "Energized Horns(Enemy)",
+          "Portrait": "EffectDeal 1 damage to the target then bounce backwards."
+        },
+        {
+          "Name": "Alpha Bouncer",
+          "Health": "4",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Powered Horns(Enemy)EffectDeal 3 damage to the target then bounce backwards.",
+          "Special": "Powered Horns(Enemy)",
+          "Portrait": "EffectDeal 3 damage to the target then bounce backwards."
+        },
+        {
+          "Name": "Gastropod",
+          "Health": "3",
+          "Move": "2",
+          "Category": "Common",
+          "Skills and abilities": "Hooked Proboscis(Enemy)EffectGrapple for 1 damage, pulling the Vek towards objects or units to the Vek.",
+          "Special": "Hooked Proboscis(Enemy)",
+          "Portrait": "EffectGrapple for 1 damage, pulling the Vek towards objects or units to the Vek."
+        },
+        {
+          "Name": "Alpha Gastropod",
+          "Health": "4",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Barbed Proboscis(Enemy)EffectGrapple for 3 damage, pulling the Vek towards objects or units to the Vek.",
+          "Special": "Barbed Proboscis(Enemy)",
+          "Portrait": "EffectGrapple for 3 damage, pulling the Vek towards objects or units to the Vek."
+        },
+        {
+          "Name": "Mosquito",
+          "Health": "2",
+          "Move": "4",
+          "Category": "Common",
+          "Skills and abilities": "Smoked Tentacles(Enemy)EffectSmoke the target, preparing to whip it for 1 damage.",
+          "Special": "Smoked Tentacles(Enemy)",
+          "Portrait": "EffectSmoke the target, preparing to whip it for 1 damage."
+        },
+        {
+          "Name": "Alpha Mosquito",
+          "Health": "4",
+          "Move": "4",
+          "Category": "Common",
+          "Skills and abilities": "Storm Tentacles(Enemy)EffectSmoke the target, preparing to whip it for 3 damage.",
+          "Special": "Storm Tentacles(Enemy)",
+          "Portrait": "EffectSmoke the target, preparing to whip it for 3 damage."
+        },
+        {
+          "Name": "Moth",
+          "Health": "3",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Repulsive Pellets(Enemy)EffectLaunch an artillery attack for 1 damage, pushing shooter and target.",
+          "Special": "Repulsive Pellets(Enemy)",
+          "Portrait": "EffectLaunch an artillery attack for 1 damage, pushing shooter and target."
+        },
+        {
+          "Name": "Alpha Moth",
+          "Health": "5",
+          "Move": "3",
+          "Category": "Common",
+          "Skills and abilities": "Repugnant Pellets(Enemy)EffectLaunch an artillery attack for 3 damage, pushing shooter and target.",
+          "Special": "Repugnant Pellets(Enemy)",
+          "Portrait": "EffectLaunch an artillery attack for 3 damage, pushing shooter and target."
+        },
+        {
+          "Name": "Plasmodia",
+          "Health": "3",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Splitting Spores(Enemy)EffectLaunch a short-livedSpore.",
+          "Special": "Splitting Spores(Enemy)",
+          "Portrait": "EffectLaunch a short-livedSpore."
+        },
+        {
+          "Name": "Alpha Plasmodia",
+          "Health": "5",
+          "Move": "2",
+          "Category": "Rare",
+          "Skills and abilities": "Spawning Spores(Enemy)EffectLaunch a short-livedAlpha Spore.",
+          "Special": "Spawning Spores(Enemy)",
+          "Portrait": "EffectLaunch a short-livedAlpha Spore."
+        },
+        {
+          "Name": "Starfish",
+          "Health": "2",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Brittle Appendages(Enemy)EffectDeal 1 damage to four oblique tiles.",
+          "Special": "Brittle Appendages(Enemy)",
+          "Portrait": "EffectDeal 1 damage to four oblique tiles."
+        },
+        {
+          "Name": "Alpha Starfish",
+          "Health": "4",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Lacerated Appendages(Enemy)EffectDeal 2 damage to four oblique tiles.",
+          "Special": "Lacerated Appendages(Enemy)",
+          "Portrait": "EffectDeal 2 damage to four oblique tiles."
+        },
+        {
+          "Name": "Tumblebug",
+          "Health": "3",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Explosive Prize(Enemy)EffectCreate an explosive boulder, preparing to destroy it next turn by attacking it for 1 damage.",
+          "Special": "Explosive Prize(Enemy)",
+          "Portrait": "EffectCreate an explosive boulder, preparing to destroy it next turn by attacking it for 1 damage."
+        },
+        {
+          "Name": "Alpha Tumblebug",
+          "Health": "5",
+          "Move": "3",
+          "Category": "Rare",
+          "Skills and abilities": "Explosive Prize(Enemy)EffectCreate an explosive boulder, preparing to destroy it next turn by attacking it for 3 damage.",
+          "Special": "Explosive Prize(Enemy)",
+          "Portrait": "EffectCreate an explosive boulder, preparing to destroy it next turn by attacking it for 3 damage."
+        },
+        {
+          "Name": "Arachnid Psion",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Arachnid Host(Enemy)EffectAll other Vek will spawn aSpiderling Eggon death.",
+          "Special": "Arachnid Host(Enemy)",
+          "Portrait": "EffectAll other Vek will spawn aSpiderling Eggon death."
+        },
+        {
+          "Name": "Raging Psion",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Raging Hormones(Enemy)EffectAll other Vek areBoosted, providing +1 damage to attacks.",
+          "Special": "Raging Hormones(Enemy)",
+          "Portrait": "EffectAll other Vek areBoosted, providing +1 damage to attacks."
+        },
+        {
+          "Name": "Smoldering Psion",
+          "Health": "2",
+          "Move": "2",
+          "Category": "Psion",
+          "Skills and abilities": "Burning Carapace(Enemy)EffectAll other Vek are protected fromFireand leave Fire on death.",
+          "Special": "Burning Carapace(Enemy)",
+          "Portrait": "EffectAll other Vek are protected fromFireand leave Fire on death."
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Health",
+        "Move",
+        "Skills and abilities",
+        "Special",
+        "Portrait"
+      ],
+      "rows": [
+        {
+          "Name": "Beetle Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Flaming Abdomen(Enemy)EffectCharge, dealing 3 damage and pushing target, and light every tile in the path on Fire.",
+          "Special": "Flaming Abdomen(Enemy)",
+          "Portrait": "EffectCharge, dealing 3 damage and pushing target, and light every tile in the path on Fire."
+        },
+        {
+          "Name": "Firefly Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Burning Thorax(Enemy)EffectLaunch goo projectiles in two directions, dealing 4 damage with each.",
+          "Special": "Burning Thorax(Enemy)",
+          "Portrait": "EffectLaunch goo projectiles in two directions, dealing 4 damage with each."
+        },
+        {
+          "Name": "Large Goo",
+          "Health": "3",
+          "Move": "3",
+          "Skills and abilities": "Goo Attack(Enemy)EffectAttempt to squish the adjacent tile, dealing 4 damage.",
+          "Special": "Goo Attack(Enemy)",
+          "Portrait": "EffectAttempt to squish the adjacent tile, dealing 4 damage."
+        },
+        {
+          "Name": "Medium Goo",
+          "Health": "2",
+          "Move": "3",
+          "Skills and abilities": "Goo Attack(Enemy)EffectAttempt to squish the adjacent tile, dealing 4 damage.",
+          "Special": "Goo Attack(Enemy)",
+          "Portrait": "EffectAttempt to squish the adjacent tile, dealing 4 damage."
+        },
+        {
+          "Name": "Small Goo",
+          "Health": "1",
+          "Move": "3",
+          "Skills and abilities": "Goo Attack(Enemy)EffectAttempt to squish the adjacent tile, dealing 4 damage.",
+          "Special": "Goo Attack(Enemy)",
+          "Portrait": "EffectAttempt to squish the adjacent tile, dealing 4 damage."
+        },
+        {
+          "Name": "Hornet Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Super Stinger(Enemy)EffectStab three tiles in a row for 2 damage each.",
+          "Special": "Super Stinger(Enemy)",
+          "Portrait": "EffectStab three tiles in a row for 2 damage each."
+        },
+        {
+          "Name": "Psion Abomination",
+          "Health": "5",
+          "Move": "3",
+          "Skills and abilities": "Overpowered(Enemy)EffectAll other Vek gain +1 HP, Regeneration, and explode on death.",
+          "Special": "Overpowered(Enemy)",
+          "Portrait": "EffectAll other Vek gain +1 HP, Regeneration, and explode on death."
+        },
+        {
+          "Name": "Scorpion Leader",
+          "Health": "7",
+          "Move": "3",
+          "Skills and abilities": "Massive Spinneret(Enemy)EffectWeb all targets, preparing to deal 2 damage to adjacent tiles.",
+          "Special": "Massive Spinneret(Enemy)",
+          "Portrait": "EffectWeb all targets, preparing to deal 2 damage to adjacent tiles."
+        },
+        {
+          "Name": "Spider Leader",
+          "Health": "6",
+          "Move": "2",
+          "Skills and abilities": "Plentiful Offspring(Enemy)EffectThrow out 2-3Spiderling eggs.",
+          "Special": "Plentiful Offspring(Enemy)",
+          "Portrait": "EffectThrow out 2-3Spiderling eggs."
+        },
+        {
+          "Name": "Blobber Leader",
+          "Health": "5",
+          "Move": "2",
+          "Skills and abilities": "Eruptive Growths(Enemy)EffectThrow asticky blobthat will explode.",
+          "Special": "Eruptive Growths(Enemy)",
+          "Portrait": "EffectThrow asticky blobthat will explode."
+        },
+        {
+          "Name": "Bouncer Leader",
+          "Health": "4",
+          "Move": "3",
+          "Skills and abilities": "Sweeping Horns(Enemy)EffectDeal 2 damage to and push three tiles then bounce backwards.",
+          "Special": "Sweeping Horns(Enemy)",
+          "Portrait": "EffectDeal 2 damage to and push three tiles then bounce backwards."
+        },
+        {
+          "Name": "Centipede Leader",
+          "Health": "7",
+          "Move": "3",
+          "Skills and abilities": "Caustic Vomit(Enemy)EffectLaunch a volatile mass of goo for 3 damage, applying A.C.I.D. on nearby units and all tiles it passes through.",
+          "Special": "Caustic Vomit(Enemy)",
+          "Portrait": "EffectLaunch a volatile mass of goo for 3 damage, applying A.C.I.D. on nearby units and all tiles it passes through."
+        },
+        {
+          "Name": "Crab Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Raining Expulsions(Enemy)EffectLaunch 2 damage artillery attack that also deals 1 damage to every tile in its path.",
+          "Special": "Raining Expulsions(Enemy)",
+          "Portrait": "EffectLaunch 2 damage artillery attack that also deals 1 damage to every tile in its path."
+        },
+        {
+          "Name": "Gastropod Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Flaming Proboscis(Enemy)EffectGrapple for 3 damage, pulling the Vek towards objects or units to the Vek. Nearby tiles erupt in flames.",
+          "Special": "Flaming Proboscis(Enemy)",
+          "Portrait": "EffectGrapple for 3 damage, pulling the Vek towards objects or units to the Vek. Nearby tiles erupt in flames."
+        },
+        {
+          "Name": "Mosquito Leader",
+          "Health": "5",
+          "Move": "4",
+          "Skills and abilities": "Cloudburst Tentacles(Enemy)EffectSmoke and Web the target, preparing to whip it with a devastating attack. Kills target.",
+          "Special": "Cloudburst Tentacles(Enemy)",
+          "Portrait": "EffectSmoke and Web the target, preparing to whip it with a devastating attack. Kills target."
+        },
+        {
+          "Name": "Plasmodia Leader",
+          "Health": "5",
+          "Move": "2",
+          "Skills and abilities": "Generating Spores(Enemy)EffectLaunch a short-livedVicious Spore.",
+          "Special": "Generating Spores(Enemy)",
+          "Portrait": "EffectLaunch a short-livedVicious Spore."
+        },
+        {
+          "Name": "Scarab Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Expectorating Glands(Enemy)EffectLob a 4 damage artillery shot at a single tile, pushing adjacent tiles.",
+          "Special": "Expectorating Glands(Enemy)",
+          "Portrait": "EffectLob a 4 damage artillery shot at a single tile, pushing adjacent tiles."
+        },
+        {
+          "Name": "Starfish Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Scored Appendages(Enemy)EffectDeal 3 damage to 4 oblique tiles and push 4 others.",
+          "Special": "Scored Appendages(Enemy)",
+          "Portrait": "EffectDeal 3 damage to 4 oblique tiles and push 4 others."
+        },
+        {
+          "Name": "Tumblebug Leader",
+          "Health": "6",
+          "Move": "3",
+          "Skills and abilities": "Explosive Prizes(Enemy)EffectCreate two explosive boulders, preparing to destroy one next turn by attacking it for 3 damage.",
+          "Special": "Explosive Prizes(Enemy)",
+          "Portrait": "EffectCreate two explosive boulders, preparing to destroy one next turn by attacking it for 3 damage."
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Health",
+        "Move",
+        "Skills and abilities",
+        "Special",
+        "Portrait"
+      ],
+      "rows": [
+        {
+          "Name": "Blob",
+          "Health": "1",
+          "Move": "0",
+          "Skills and abilities": "Unstable Guts(Enemy)EffectExplode, killing itself and damaging adjacent tiles for 1 damage. Kill it first to stop it.",
+          "Special": "Unstable Guts(Enemy)",
+          "Portrait": "EffectExplode, killing itself and damaging adjacent tiles for 1 damage. Kill it first to stop it."
+        },
+        {
+          "Name": "Alpha Blob",
+          "Health": "1",
+          "Move": "0",
+          "Skills and abilities": "Volatile Guts(Enemy)EffectExplode, killing itself and damaging adjacent tiles for 3 damage. Kill it first to stop it.",
+          "Special": "Volatile Guts(Enemy)",
+          "Portrait": "EffectExplode, killing itself and damaging adjacent tiles for 3 damage. Kill it first to stop it."
+        },
+        {
+          "Name": "Spiderling Egg",
+          "Health": "1",
+          "Move": "0",
+          "Skills and abilities": "Spiderling Egg(Enemy)EffectHatch into Spiderling.",
+          "Special": "Spiderling Egg(Enemy)",
+          "Portrait": "EffectHatch into Spiderling."
+        },
+        {
+          "Name": "Spiderling",
+          "Health": "1",
+          "Move": "3",
+          "Skills and abilities": "Tiny Mandibles(Enemy)EffectWeak 1 damage attack against a single adjacent target.",
+          "Special": "Tiny Mandibles(Enemy)",
+          "Portrait": "EffectWeak 1 damage attack against a single adjacent target."
+        },
+        {
+          "Name": "Spore",
+          "Health": "1",
+          "Move": "0",
+          "Skills and abilities": "Scarred Secretion(Enemy)EffectSacrifice self to launch a projectile that deals 1 damage to and pushes the target.",
+          "Special": "Scarred Secretion(Enemy)",
+          "Portrait": "EffectSacrifice self to launch a projectile that deals 1 damage to and pushes the target."
+        },
+        {
+          "Name": "Alpha Spore",
+          "Health": "1",
+          "Move": "0",
+          "Skills and abilities": "Hemorrhaged Secretion(Enemy)EffectSacrifice self to launch a projectile that deals 3 damage to and pushes the target.",
+          "Special": "Hemorrhaged Secretion(Enemy)",
+          "Portrait": "EffectSacrifice self to launch a projectile that deals 3 damage to and pushes the target."
+        },
+        {
+          "Name": "Vicious Spore",
+          "Health": "2",
+          "Move": "0",
+          "Skills and abilities": "Extravasating Secretion(Enemy)EffectSacrifice self to launch a projectile that deals 2 damage to and pushes the target.",
+          "Special": "Extravasating Secretion(Enemy)",
+          "Portrait": "EffectSacrifice self to launch a projectile that deals 2 damage to and pushes the target."
+        },
+        {
+          "Name": "Blob Leader",
+          "Health": "2",
+          "Move": "0",
+          "Skills and abilities": "Eruptive Guts(Enemy)EffectExplode, dealing 1 damage to itself and 2 damage to adjacent tiles. Kill it first to stop it.",
+          "Special": "Eruptive Guts(Enemy)",
+          "Portrait": "EffectExplode, dealing 1 damage to itself and 2 damage to adjacent tiles. Kill it first to stop it."
+        }
+      ]
+    },
+    {
+      "headers": [
+        "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader",
+        "v·d·eVek",
+        "",
+        "Vek",
+        "Beetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile Vek",
+        "",
+        "Vek (Advanced Edition)",
+        "Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•Tumblebug",
+        "",
+        "Alpha Vek",
+        "Alpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha Spider",
+        "",
+        "Alpha Vek (Advanced Edition)",
+        "Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha Tumblebug",
+        "",
+        "Vek Psions",
+        "Blast Psion•Blood Psion•Shell Psion•Soldier Psion",
+        "",
+        "Vek Psions (Advanced Edition)",
+        "Arachnid Psion•Raging Psion•Smoldering Psion",
+        "",
+        "Vek Minions",
+        "Blob•Alpha Blob•Spiderling Egg•Spiderling•Alpha Spiderling",
+        "",
+        "Vek Minions (Advanced Edition)",
+        "Spore•Alpha Spore•Vicious Spore•Blob Leader",
+        "",
+        "Vek Leaders",
+        "Beetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider Leader",
+        "",
+        "Vek Leaders (Advanced Edition)",
+        "Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader"
+      ],
+      "rows": [
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek",
+          "v·d·eVek": "Beetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile Vek"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek (Advanced Edition)",
+          "v·d·eVek": "Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•Tumblebug"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Alpha Vek",
+          "v·d·eVek": "Alpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha Spider"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Alpha Vek (Advanced Edition)",
+          "v·d·eVek": "Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha Tumblebug"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Psions",
+          "v·d·eVek": "Blast Psion•Blood Psion•Shell Psion•Soldier Psion"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Psions (Advanced Edition)",
+          "v·d·eVek": "Arachnid Psion•Raging Psion•Smoldering Psion"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Minions",
+          "v·d·eVek": "Blob•Alpha Blob•Spiderling Egg•Spiderling•Alpha Spiderling"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Minions (Advanced Edition)",
+          "v·d·eVek": "Spore•Alpha Spore•Vicious Spore•Blob Leader"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Leaders",
+          "v·d·eVek": "Beetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider Leader"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Leaders (Advanced Edition)",
+          "v·d·eVek": "Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "v·d·eVek"
+      ],
+      "rows": [
+        {
+          "v·d·eVek": "Vek"
+        },
+        {
+          "v·d·eVek": "Vek (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Alpha Vek"
+        },
+        {
+          "v·d·eVek": "Alpha Vek (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Vek Psions"
+        },
+        {
+          "v·d·eVek": "Vek Psions (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Vek Minions"
+        },
+        {
+          "v·d·eVek": "Vek Minions (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Vek Leaders"
+        },
+        {
+          "v·d·eVek": "Vek Leaders (Advanced Edition)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Gameplay": "The main goal of Into the Breach is to make sure that the Vek do not destroy all of the grid power. Each island has a set variety of Vek that can spawn, one of which is a Psion, a supporting unit that grants a passive bonus to others. They emerge from the ground on certain tiles, which can be intercepted at the cost of 1 health during the enemy turn.\nBefore the player turn any active Vek will move to a certain tile and prepare to attack it, aiming for either a mech, building or objective. These attacks are executed during the enemy turn unless they are cancelled or the Vek is killed beforehand.\nVek are divided into five main groups:\n  - CommonVek are those that can spawn on any island and make up most of the spawns on a mission. All of them have a soft limit on spawns per mission that can be bypassed if the spawning algorithm needs to.\n  - RareVek are those whose attacks are more unique than common ones and do not appear on early islands.\n  - Psions, which provide passive bonuses to other Vek when spawned. Note that the Psion itself does not benefit from the passive bonus.\n  - MinorVek, which are spawned by other Vek, are typically very weak, and bypass the spawning algorithm. They are not worth any experience and are not affected by Psion bonuses.\n  - HiveLeaders, bosses found on the final mission of each island, theVolcanic Hiveand normal missions on the fourth island in Unfair difficulty.\nRare Vek and Psions have a hard limit on spawns that cannot be bypassed, with Psions in particular being able to spawn only once per mission. Each island has three species of common Vek that can spawn as well as one type of psion, with rare species appearing the further you are in a run.\nAlpha Vek are upgraded versions of Vek with higher health and stronger attack, spawning in place of any Vek that has one while contributing to the same spawn limit. They will appear more depending on a timeline's progression and difficulty.[1]",
+    "Description": "Vek appear mainly insectoid in nature and behavior, forming a hive and reproducing viaeggs. Exceptions among them includegoo-like lifeformsor species resembling Earth sealife (such as the jellyfish-like Psions, and a variety of Vek introduced inAdvanced Edition).\nThe Vek's origin and motives are left unexplained. However, their psionic powers and ability tohijack technologyhints that they are more than mere rampaging beasts.",
+    "Vek Minions": "Enemies listed under this section are not affected by Vek Psion bonuses.",
+    "Trivia": "  - The code associated with each mission in the game shows no indication that the same Vek will appear on any given mission. Instead, it appears that the Vek are randomly chosen from the island's pool each time the player enters a mission.\n  - Unimplemented sprites exist for leader versions of the Burrower, Leaper, Digger and Moth:",
+    "See Also": "  - Sentient Weapons,the rogue technology hijacked by the Vek onPinnacle Robotics."
+  },
+  "full_text": "Vek\nThe\nVek\nare the main enemies encountered in\nInto The Breach\n.\nContents\n1\nGameplay\n2\nDescription\n3\nList of Vek\n4\nVek Leaders\n5\nVek Minions\n6\nTrivia\n7\nSee Also\n8\nReferences\nGameplay\n[\n]\nThe main goal of Into the Breach is to make sure that the Vek do not destroy all of the grid power. Each island has a set variety of Vek that can spawn, one of which is a Psion, a supporting unit that grants a passive bonus to others. They emerge from the ground on certain tiles, which can be intercepted at the cost of 1 health during the enemy turn.\nBefore the player turn any active Vek will move to a certain tile and prepare to attack it, aiming for either a mech, building or objective. These attacks are executed during the enemy turn unless they are cancelled or the Vek is killed beforehand.\nVek are divided into five main groups:\nCommon\nVek are those that can spawn on any island and make up most of the spawns on a mission. All of them have a soft limit on spawns per mission that can be bypassed if the spawning algorithm needs to.\nRare\nVek are those whose attacks are more unique than common ones and do not appear on early islands.\nPsions\n, which provide passive bonuses to other Vek when spawned. Note that the Psion itself does not benefit from the passive bonus.\nMinor\nVek, which are spawned by other Vek, are typically very weak, and bypass the spawning algorithm. They are not worth any experience and are not affected by Psion bonuses.\nHive\nLeaders\n, bosses found on the final mission of each island, the\nVolcanic Hive\nand normal missions on the fourth island in Unfair difficulty.\nRare Vek and Psions have a hard limit on spawns that cannot be bypassed, with Psions in particular being able to spawn only once per mission. Each island has three species of common Vek that can spawn as well as one type of psion, with rare species appearing the further you are in a run.\nAlpha Vek are upgraded versions of Vek with higher health and stronger attack, spawning in place of any Vek that has one while contributing to the same spawn limit. They will appear more depending on a timeline's progression and difficulty.\n[\n1\n]\nDescription\n[\n]\nVek appear mainly insectoid in nature and behavior, forming a hive and reproducing via\neggs\n. Exceptions among them include\ngoo-like lifeforms\nor species resembling Earth sealife (such as the jellyfish-like Psions, and a variety of Vek introduced in\nAdvanced Edition\n).\nThe Vek's origin and motives are left unexplained. However, their psionic powers and ability to\nhijack technology\nhints that they are more than mere rampaging beasts.\nList of Vek\n[\n]\nName\nHealth\nMove\nCategory\nSkills and abilities\nSpecial\nPortrait\nFirefly\n3\n2\nCommon\nAccelerating Thorax\n(\nEnemy\n)\nEffect\nLaunch a volatile mass of goo dealing 1 damage.\nAlpha Firefly\n5\n2\nCommon\nEnhanced Thorax\n(\nEnemy\n)\nEffect\nLaunch a volatile mass of goo dealing 3 damage.\nHornet\n2\n5\nCommon\nStinger\n(\nEnemy\n)\nEffect\nStab the target for 1 damage.\nFlying\n: Flying units can move over any terrain tile.\nAlpha Hornet\n4\n5\nCommon\nLaunching Stinger\n(\nEnemy\n)\nEffect\nStab 2 tiles in front of the unit for 2 damage.\nFlying\n: Flying units can move over any terrain tile.\nLeaper\n1\n4\nCommon\nFangs\n(\nEnemy\n)\nEffect\nWeb a target, preparing to stab it for 3 damage.\nAlpha Leaper\n3\n4\nCommon\nSharpened Fangs\n(\nEnemy\n)\nEffect\nWeb a target, preparing to stab it for 5 damage.\nScarab\n2\n3\nCommon\nSpitting Glands\n(\nEnemy\n)\nEffect\nLob an artillery shot at a single tile for 1 damage (5 tile range).\nAlpha Scarab\n4\n3\nCommon\nSpitting Glands\n(\nEnemy\n)\nEffect\nLob a powerful artillery shot at a single tile for 3 damage (5 tile range).\nScorpion\n3\n3\nCommon\nStinging Spinneret\n(\nEnemy\n)\nEffect\nWeb an adjacent target, preparing to stab it for 1 damage.\nAlpha Scorpion\n5\n3\nCommon\nGoring Spinneret\n(\nEnemy\n)\nEffect\nWeb an adjacent target, preparing to stab it for 3 damage.\nVolatile Vek\n4\n3\nObjective\nStinging Spinneret\n(\nEnemy\n)\nEffect\nWeb an adjacent target, preparing to stab it for 1 damage.\nExplosive Decay\n: Explodes on death, dealing 1 damage to adjacent tiles.\nBeetle\n4\n2\nRare\nPincers\n(\nEnemy\n)\nEffect\nCharge forward to deal 1 damage and push the target.\nAlpha Beetle\n5\n2\nRare\nSharpened Pincers\n(\nEnemy\n)\nEffect\nCharge forward to deal 3 damage and push the target.\nBlobber\n3\n2\nRare\nUnstable Growths\n(\nEnemy\n)\nEffect\nThrow a sticky\nblob\nthat will explode.\nAlpha Blobber\n4\n2\nRare\nVolatile Growths\n(\nEnemy\n)\nEffect\nThrow a\nmassive blob\nthat will explode.\nBurrower\n3\n4\nRare\nSpiked Carapace\n(\nEnemy\n)\nEffect\nSlam against 3 tiles in a row, hitting each for 1 damage.\nBurrower\n: This Vek will hide underground after taking one or more damage.\nStable\n: Cannot be moved by any weapon effect (Push, Teleport, etc.).\nAlpha Burrower\n5\n4\nRare\nBladed Carapace\n(\nEnemy\n)\nEffect\nSlam against 3 tiles in a row, hitting each for 2 damage.\nBurrower\n: This Vek will hide underground after taking one or more damage.\nStable\n: Cannot be moved by any weapon effect (Push, Teleport, etc.).\nCentipede\n3\n2\nRare\nAcidic Vomit\n(\nEnemy\n)\nEffect\nLaunch a vo"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Aegis_Mech",
+  "url": "https://intothebreach.fandom.com/wiki/Aegis_Mech",
+  "infobox": {
+    "_title": "Aegis Mech",
+    "Class": "Prime",
+    "Health": "3",
+    "Move": "4",
+    "Systems": "Spartan Shield(Prime)EffectBash the enemy, flipping its attack direction.(2 damage)Upgrade IGain Shield ()Gain a Shield when bashing.Upgrade II+1 Damage ()Increases damage by 1."
+  },
+  "tables": [],
+  "sections": {
+    "Team": "The mech is available as part of theFrozen Titanssquad.",
+    "Strategy": "The Aegis Mech is one of the few Prime Mechs that starts with 4 move points, and its sturdy 3HP lets it effectively move through the front lines. Its default weaponSpartan Shieldallows the Aegis Mech to redirect an enemy's attack in the opposite direction, which is helpful in resolving situations where multiple buildings in a row or column would otherwise be at risk.\nWhile not a high-damage dealing weapon, Spartan Shield does have relatively cheap upgrades. TheGain Shieldupgrade is self explanatory and the bigger priority to power, letting it use the shield to sit on a spawn point, take bump damage (from theMirror Mechpushing an enemy into it for e.g.) or body block damage if needed.\nDespite this, it is not very effective at resolving targets that move themselves with their attacks, such asMothsandBouncers, and it struggles with enemies that hit in multiple directions, such as theFirefly Leader; while the shield will keep the Aegis Mech safe, all these enemies can still damage the grid even when hit by it. Thus, it is recommended to look for another weapon that offers displacement."
+  },
+  "full_text": "Aegis Mech\nDetails\nClass\nPrime\nHealth\n3\nMove\n4\nSystems\nSpartan Shield\n(\nPrime\n)\nEffect\nBash the enemy, flipping its attack direction.\n(2 damage)\nUpgrade I\nGain Shield (\n)\nGain a Shield when bashing.\nUpgrade II\n+1 Damage (\n)\nIncreases damage by 1.\nAegis Mech\nis a Prime-class\nmech\nin\nInto the Breach\n.\nTeam\n[\n]\nThe mech is available as part of the\nFrozen Titans\nsquad.\nStrategy\n[\n]\nThe Aegis Mech is one of the few Prime Mechs that starts with 4 move points, and its sturdy 3HP lets it effectively move through the front lines. Its default weapon\nSpartan Shield\nallows the Aegis Mech to redirect an enemy's attack in the opposite direction, which is helpful in resolving situations where multiple buildings in a row or column would otherwise be at risk.\nWhile not a high-damage dealing weapon, Spartan Shield does have relatively cheap upgrades. The\nGain Shield\nupgrade is self explanatory and the bigger priority to power, letting it use the shield to sit on a spawn point, take bump damage (from the\nMirror Mech\npushing an enemy into it for e.g.) or body block damage if needed.\nDespite this, it is not very effective at resolving targets that move themselves with their attacks, such as\nMoths\nand\nBouncers\n, and it struggles with enemies that hit in multiple directions, such as the\nFirefly Leader\n; while the shield will keep the Aegis Mech safe, all these enemies can still damage the grid even when hit by it. Thus, it is recommended to look for another weapon that offers displacement."
+}

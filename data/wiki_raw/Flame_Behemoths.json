@@ -1,0 +1,50 @@
+{
+  "name": "Flame_Behemoths",
+  "url": "https://intothebreach.fandom.com/wiki/Flame_Behemoths",
+  "infobox": {
+    "_title": "Flame Behemoths"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Flame Mech",
+          "Class": "Prime",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Flame Thrower(Prime)EffectPush target tile and light tiles on Fire. Damage units already on Fire.(if target on fire, 2 damage)Upgrade I+1 Range ()Extends flamethrower range by 1 tile.Upgrade II+1 Range ()Extends flamethrower range by 1 tile.Flame Shielding(Passive)EffectAll Mechs are immune to Fire.",
+          "Special": "Flame Thrower(Prime)"
+        },
+        {
+          "Name": "Meteor Mech",
+          "Class": "Ranged",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Vulcan Artillery(Ranged)EffectLight the target on Fire and push adjacent tiles.Upgrade IBackburn ()Light the tile behind the Mech on Fire.Upgrade II+2 Damage ()Adds 2 damage to targeted tiles.",
+          "Special": "Vulcan Artillery(Ranged)"
+        },
+        {
+          "Name": "Swap Mech",
+          "Class": "Science",
+          "Health": "2",
+          "Move speed": "4",
+          "Default loadout": "Teleporter(Science)EffectSwap places with a nearby tile.Upgrade I+1 Range ()Extends range of the swap by 1 tile.Upgrade II+2 Range ()Extends range of the swap by 2 tiles.",
+          "Special": "Teleporter(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheFlame Behemothsis one of theSquadsfromInto The Breach. They consist of theFlame Mech,Meteor MechandSwap Mechand are unlockable for 3 coins.\nAs their name suggests, the Flame Behemoths focus on fire to attack, which can melt away small Vek to make up for having very little direct damage early on. Having more enemies on fire is essential as it allows the Flame Mech to deal heavy damage.",
+    "Strategies": "  - Ignite tiles that vek are emerging from and they will be on fire once they appear.\n  - Prioritize movement and additional range upgrades for both the Swap Mech and the Flame Mech first, as they greatly improve the Flame Behemoths ability to reposition enemies. The Meteor Mech already excels at this from the start, and can remain un-upgraded for the majority of the run.\n  - Fire won't damage buildings, so you can freely target them with the Meteor Mech to push vek away from them, or shoot through buildings with the Flamethrower (once its range is upgraded) to hit and push Vek behind them. Not that this is not viable once the Meteor Mech's+2 Damageupgrade is obtained.\n  - Fire does not damage buildings, trains, or the bombs, but does damage other items with hit points you are supposed to protect that are not immune to Fire; such as the Disposal Unit, Terraformer, Earth Mover, etc.\n  - Enemies that are on fire take damage before they perform an action, so the Flame Thrower and Vulcan Artillery can effectively do one immediate damage even without upgrades.\n  - Vek that aren't already burning won't deliberately stand in fire, so you can protect structures from melee Vek by igniting the tiles around the structure.\n  - Use the Swap Mech to drop land enemies into water/lava; or to pull guarding targets next to deployable tanks.\n  - Destroy the Dammissions are tricky until you power up the Vulcan artillery. It can't be set on fire, so none of your attacks can damage it. Look for opportunities to push Vek into the dam or redirect their attacks toward it. Consider avoiding this mission entirely if lacking alternative weapons.\n  - Vek that are at 1 HP and die to fire damage at the start of the enemy turn still contribute towards the maximum enemy count at one time on a mission.\n  - Ice onPinnacle Roboticsinstantly breaks when attacked by the Flamethrower or Vulcan Artillery, which is key to disposing of Alphas.\n  - Be careful if you have Advanced Enemies on, as there is the possibility of encountering theSmoldering Psion, which silences the entire squad's firepower.\n  - If you have Advanced Equipment enabled, the passiveVoid Shockeris particularly powerful when combined with Fire damage, essentially wearing burning enemies down by 2 HP per turn when they fail to damage any buildings or units with their attacks.\n  - While it looks enticing to obtain,Heat Enginesis a near-worthless ability as the Flamethrower can only damage burning enemies - the only benefit is that it deals three damage and the downside of eating up your own fire tiles outweighs this.\n  - Some pilots work very well with this squad:Kazaaakplethas a starting pilot not only grants the Swap Mech attacking power but is also the only way of directly destroying the Dam.Chen RongandArchimedeshelp the Swap Mech survive after using its ability.Mafanon the Swap Mech or Flame Mech immediately increases their range with his included Reactor Core."
+  },
+  "full_text": "Flame Behemoths\n“\nInvincible to flames, these Mechs aim to burn any threat to ashes.\n„\nThe\nFlame Behemoths\nis one of the\nSquads\nfrom\nInto The Breach\n. They consist of the\nFlame Mech\n,\nMeteor Mech\nand\nSwap Mech\nand are unlockable for 3 coins.\nAs their name suggests, the Flame Behemoths focus on fire to attack, which can melt away small Vek to make up for having very little direct damage early on. Having more enemies on fire is essential as it allows the Flame Mech to deal heavy damage.\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nFlame Mech\nPrime\n3\n3\nFlame Thrower\n(\nPrime\n)\nEffect\nPush target tile and light tiles on Fire. Damage units already on Fire.\n(if target on fire, 2 damage)\nUpgrade I\n+1 Range (\n)\nExtends flamethrower range by 1 tile.\nUpgrade II\n+1 Range (\n)\nExtends flamethrower range by 1 tile.\nFlame Shielding\n(\nPassive\n)\nEffect\nAll Mechs are immune to Fire.\nMeteor Mech\nRanged\n3\n3\nVulcan Artillery\n(\nRanged\n)\nEffect\nLight the target on Fire and push adjacent tiles.\nUpgrade I\nBackburn (\n)\nLight the tile behind the Mech on Fire.\nUpgrade II\n+2 Damage (\n)\nAdds 2 damage to targeted tiles.\nSwap Mech\nScience\n2\n4\nTeleporter\n(\nScience\n)\nEffect\nSwap places with a nearby tile.\nUpgrade I\n+1 Range (\n)\nExtends range of the swap by 1 tile.\nUpgrade II\n+2 Range (\n)\nExtends range of the swap by 2 tiles.\nFlying\n: Flying units can move over any terrain tile.\nAchievements\n[\n]\nQuantum Entanglement\nTeleport a unit 4 tiles away\nScorched Earth\nEnd a battle with 12 tiles on Fire\nThis is Fine\nHave 5 enemies on Fire simultaneously\nStrategies\n[\n]\nIgnite tiles that vek are emerging from and they will be on fire once they appear.\nPrioritize movement and additional range upgrades for both the Swap Mech and the Flame Mech first, as they greatly improve the Flame Behemoths ability to reposition enemies. The Meteor Mech already excels at this from the start, and can remain un-upgraded for the majority of the run.\nFire won't damage buildings, so you can freely target them with the Meteor Mech to push vek away from them, or shoot through buildings with the Flamethrower (once its range is upgraded) to hit and push Vek behind them. Not that this is not viable once the Meteor Mech's\n+2 Damage\nupgrade is obtained.\nFire does not damage buildings, trains, or the bombs, but does damage other items with hit points you are supposed to protect that are not immune to Fire; such as the Disposal Unit, Terraformer, Earth Mover, etc.\nEnemies that are on fire take damage before they perform an action, so the Flame Thrower and Vulcan Artillery can effectively do one immediate damage even without upgrades.\nVek that aren't already burning won't deliberately stand in fire, so you can protect structures from melee Vek by igniting the tiles around the structure.\nUse the Swap Mech to drop land enemies into water/lava; or to pull guarding targets next to deployable tanks.\nDestroy the Dam\nmissions are tricky until you power up the Vulcan artillery. It can't be set on fire, so none of your attacks can damage it. Look for opportunities to push Vek into the dam or redirect their attacks toward it. Consider avoiding this mission entirely if lacking alternative weapons.\nVek that are at 1 HP and die to fire damage at the start of the enemy turn still contribute towards the maximum enemy count at one time on a mission.\nIce on\nPinnacle Robotics\ninstantly breaks when attacked by the Flamethrower or Vulcan Artillery, which is key to disposing of Alphas.\nBe careful if you have Advanced Enemies on, as there is the possibility of encountering the\nSmoldering Psion\n, which silences the entire squad's firepower.\nIf you have Advanced Equipment enabled, the passive\nVoid Shocker\nis particularly powerful when combined with Fire damage, essentially wearing burning enemies down by 2 HP per turn when they fail to damage any buildings or units with their attacks.\nWhile it looks enticing to obtain,\nHeat Engines\nis a near-worthless ability as the Flamethrower can only damage burning enemies - the only benefit is that it deals three damage and the downside of eating up your own fire tiles outweighs this.\nSome pilots work very well with this squad:\nKazaaakpleth\nas a starting pilot not only grants the Swap Mech attacking power but is also the only way of directly destroying the Dam.\nChen Rong\nand\nArchimedes\nhelp the Swap Mech survive after using its ability.\nMafan\non the Swap Mech or Flame Mech immediately increases their range with his included Reactor Core.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

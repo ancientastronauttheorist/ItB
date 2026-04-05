@@ -1,0 +1,50 @@
+{
+  "name": "Arachnophiles",
+  "url": "https://intothebreach.fandom.com/wiki/Arachnophiles",
+  "infobox": {
+    "_title": "Arachnophiles"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Bulk Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Ricochet Rocket(Brute)EffectBounce a projectile off one target to hit another (pushes each target).(1 damage)Upgrade I+1 Damage ()+1 damage to both targets.Upgrade IIAlly Immune ()Friendly Units will not take damage from this attack.",
+          "Special": "Ricochet Rocket(Brute)"
+        },
+        {
+          "Name": "Arachnoid Mech",
+          "Class": "Ranged",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Arachnoid Injector(Ranged)EffectDamage target, creating a friendly robot spider on kill.(1 damage)Upgrade I+1 Damage ()Increases the artillery attack damage by 1.Upgrade IIAcidic ()Adds Acid to the attack of the Arachnoid.",
+          "Special": "Arachnoid Injector(Ranged)"
+        },
+        {
+          "Name": "Slide Mech",
+          "Class": "Science",
+          "Health": "2",
+          "Move speed": "4",
+          "Default loadout": "Area Shift(Science)EffectPush self and all adjacent tiles.Upgrade IShield self ()Shield the user when activated.Upgrade IIShield Ally ()Shield any Ally units affected by this skill.",
+          "Special": "Area Shift(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheArachnophilesare one of theSquadsfromInto The Breachadded in the Advanced Edition. They consist of theBulk Mech,Arachnoid MechandSlide Mechand are unlockable with four coins.\nArachnophiles rely on the Arachnoid Mech's Arachnoid Injector, an artillery weapon which creates an Arachnoid when killing an enemy. Arachnoids offer an extra layer of strategy to the squad as they can sacrifice themselves to damage and push enemies, allowing them to steamroll missions if they can be consistently spawned.",
+    "Strategies": "  - The Bulk Mech's ricochets are capable of dealing damage to multiple targets, both directly and through knock damage. The Slide Mech can be used to set up good ricochets.\n  - These ricochets often leave some targets at low health, which the Arachnoid Mech can take advantage of to score kills and spawn arachnoids. The arachnoids themselves can finish off low health targets as well.\n  - Unlike theBombermechs' bombs, Arachnoids are not temporary units and should be saved for later turns if they are not needed. They are best used to get kills and handle threats that the mechs aren't capable of handling.\n  - While arachnoids can block spawns, they tend to be a little more valuable than a single spawn block. Given that newly spawned Vek will often target them and that they block enemy movement, their presence alone can help control the board; it's generally better to let things spawn and use the additional action granted by the arachnoids only when necessary.\n  - Pick an island withLeapersfirst or choosePinnacle Roboticsas your first island. Leapers translate to a free Arachnoid and any Pinnacle mission where the bots are free to destroy also grants spiders, letting you steamroll missions without much issues.\n  - You can create Arachnoids from almost any unit, even other Arachnoids (but not from other Mechs). This can help your bots get into some really hard-to-reach places.\n  - Certain pilots work well in this squad:Kazaaakpleth: Grants the Slide Mech a decent attack which lets it become more useful early-game.Kai MillerandMorgan Lejeune: Boosting the Arachnoid Mech saves having to invest two cores into a damage upgrade, letting you insta-kill psions and generate spiders. Kai on the bulk mech also increases its firepower significantly but is vulnerable to losing the boost.Silica: Lets the Arachnoid Mech shoot twice, using the Slide Mech to make up for not moving."
+  },
+  "full_text": "Arachnophiles\n“\nResearch has shown that the remains of defeated Vek can be used to power smaller, but no less deadly Mechs\n„\nThe\nArachnophiles\nare one of the\nSquads\nfrom\nInto The Breach\nadded in the Advanced Edition. They consist of the\nBulk Mech\n,\nArachnoid Mech\nand\nSlide Mech\nand are unlockable with four coins.\nArachnophiles rely on the Arachnoid Mech's Arachnoid Injector, an artillery weapon which creates an Arachnoid when killing an enemy. Arachnoids offer an extra layer of strategy to the squad as they can sacrifice themselves to damage and push enemies, allowing them to steamroll missions if they can be consistently spawned.\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nBulk Mech\nBrute\n3\n3\nRicochet Rocket\n(\nBrute\n)\nEffect\nBounce a projectile off one target to hit another (pushes each target).\n(1 damage)\nUpgrade I\n+1 Damage (\n)\n+1 damage to both targets.\nUpgrade II\nAlly Immune (\n)\nFriendly Units will not take damage from this attack.\nArachnoid Mech\nRanged\n3\n3\nArachnoid Injector\n(\nRanged\n)\nEffect\nDamage target, creating a friendly robot spider on kill.\n(1 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases the artillery attack damage by 1.\nUpgrade II\nAcidic (\n)\nAdds Acid to the attack of the Arachnoid.\nSlide Mech\nScience\n2\n4\nArea Shift\n(\nScience\n)\nEffect\nPush self and all adjacent tiles.\nUpgrade I\nShield self (\n)\nShield the user when activated.\nUpgrade II\nShield Ally (\n)\nShield any Ally units affected by this skill.\nSquad Achievements\n[\n]\nSpider Breeding\nSpawn 15 Arachnoids in one Island.\nWorking Together\nArea Shift 4 units at once.\nEfficient Explosives\nKill 3 Enemies with 1 shot of the Ricochet Rocket.\nStrategies\n[\n]\nThe Bulk Mech's ricochets are capable of dealing damage to multiple targets, both directly and through knock damage. The Slide Mech can be used to set up good ricochets.\nThese ricochets often leave some targets at low health, which the Arachnoid Mech can take advantage of to score kills and spawn arachnoids. The arachnoids themselves can finish off low health targets as well.\nUnlike the\nBombermechs\n' bombs, Arachnoids are not temporary units and should be saved for later turns if they are not needed. They are best used to get kills and handle threats that the mechs aren't capable of handling.\nWhile arachnoids can block spawns, they tend to be a little more valuable than a single spawn block. Given that newly spawned Vek will often target them and that they block enemy movement, their presence alone can help control the board; it's generally better to let things spawn and use the additional action granted by the arachnoids only when necessary.\nPick an island with\nLeapers\nfirst or choose\nPinnacle Robotics\nas your first island. Leapers translate to a free Arachnoid and any Pinnacle mission where the bots are free to destroy also grants spiders, letting you steamroll missions without much issues.\nYou can create Arachnoids from almost any unit, even other Arachnoids (but not from other Mechs). This can help your bots get into some really hard-to-reach places.\nCertain pilots work well in this squad:\nKazaaakpleth\n: Grants the Slide Mech a decent attack which lets it become more useful early-game.\nKai Miller\nand\nMorgan Lejeune\n: Boosting the Arachnoid Mech saves having to invest two cores into a damage upgrade, letting you insta-kill psions and generate spiders. Kai on the bulk mech also increases its firepower significantly but is vulnerable to losing the boost.\nSilica\n: Lets the Arachnoid Mech shoot twice, using the Slide Mech to make up for not moving.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

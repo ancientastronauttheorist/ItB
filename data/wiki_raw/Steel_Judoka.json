@@ -1,0 +1,51 @@
+{
+  "name": "Steel_Judoka",
+  "url": "https://intothebreach.fandom.com/wiki/Steel_Judoka",
+  "infobox": {
+    "_title": "Steel Judoka"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Judo Mech",
+          "Class": "Prime",
+          "Health": "3",
+          "Move speed": "4",
+          "Default loadout": "Vice Fist(Prime)EffectGrab a unit and toss it behind you.(1 damage)Upgrade IAlly Immune ()Deals no damage to allies.Upgrade II+2 Damage ()Increases damage by 2.",
+          "Special": "Vice Fist(Prime)"
+        },
+        {
+          "Name": "Siege Mech",
+          "Class": "Ranged",
+          "Health": "2",
+          "Move speed": "3",
+          "Default loadout": "Cluster Artillery(Ranged)EffectProtect a tile by damaging and pushing adjacent tiles.(1 damage)Upgrade IBuildings Immune ()This attack will no longer damage Grid Buildings.Upgrade II+1 Damage ()Increases damage to adjacent tiles by 1.",
+          "Special": "Cluster Artillery(Ranged)"
+        },
+        {
+          "Name": "Gravity Mech",
+          "Class": "Science",
+          "Health": "3",
+          "Move speed": "4",
+          "Default loadout": "Grav Well(Science)EffectArtillery weapon that pulls its target towards you.Vek Hormones(Passive)EffectEnemies do +1 Damage against other enemies.Upgrade I+1 Damage ()Increases damage by 1.Upgrade II+1 Damage ()Increases damage by 1.",
+          "Special": "Grav Well(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheSteel Judokais one of theSquadsfromInto The Breach, unlockable for 3 coins. They consist of theJudo Mech,Siege MechandGravity Mech.\nRather than relying on high damage from mechs the Steel Judoka has little offensive power, relying instead on using positional weapons, pulling and pushing to make the Vek target each other. This is essential for dealing with enemies asVek Hormonesare immediately active.",
+    "Strategies": "  - Since you will mostly rely on Vek damage to kill enemies, constantly check the Attack Order. In addition, look for Vek like theFireflyorGastropod, as they can easily target other Vek with their attacks and prevent two enemies from damaging the grid by being intercepted.\n  - Prioritize upgrading +1 damage on Vek Hormones and Buildings Immune on the Cluster Artillery - both upgrades take advantage of the squad's strength in turning enemy fire against them.\n  - Because the Judo Mech has armor, you can still hit it with the cluster artillery without taking damage.\n  - Look for an enemy two spaces away from a deadly tile -- vice fist can throw them into it.\n  - You can use the repositioning abilities of the squad in succession: first place two enemies adjacent to each other, then get bonus damage on knockback.\n  - Be wary of taking on an island if it hasBurrowersandAlpha Burrowers; since these enemies are stable, they cannot be targetted by Vice Fist nor pulled by Grav Well, which makes them particularly difficult to deal with multiples using the Steel Judoka's default weaponry. Ensure you have some other weapon or ability with the Judo Mech at least to deal direct damage to them first.\n  - Many pilots can synergize with this squad:Henry KwanandProsperocan more easily get into position to throw enemies by moving through obstacles. Prospero can also let the Judo Mech throw Vek on a ledge into insta-kill tiles.Harold Schmidtgives a free additional \"weapon\" to knockback enemies.Kazaaakplethon the Judo Mech allows it to attack directly in front, significantly boosting its power.Chen RongorArchimedescan get the Judo Mech out of a bad spot after attacking, compensating for the limited choices of tiles to attack from.Kai Milleron the Siege Mech can make the killing of Vek faster, especially as she will raise the maximum damage of Cluster Artillery to an impressive 3 points.",
+    "Trivia": "  - The Vek Hormones passive equipped with the Gravity Mech also increases the damage done byrobotic enemies, despite not being classified as Vek nor affected by Psions."
+  },
+  "full_text": "Steel Judoka\n“\nThese Mechs specialize in positional manipulation to turn the Vek against each other.\n„\nThe\nSteel Judoka\nis one of the\nSquads\nfrom\nInto The Breach\n, unlockable for 3 coins. They consist of the\nJudo Mech\n,\nSiege Mech\nand\nGravity Mech\n.\nRather than relying on high damage from mechs the Steel Judoka has little offensive power, relying instead on using positional weapons, pulling and pushing to make the Vek target each other. This is essential for dealing with enemies as\nVek Hormones\nare immediately active.\nContents\n1\nMechs\n2\nAchievements\n3\nStrategies\n4\nTrivia\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nJudo Mech\nPrime\n3\n4\nVice Fist\n(\nPrime\n)\nEffect\nGrab a unit and toss it behind you.\n(1 damage)\nUpgrade I\nAlly Immune (\n)\nDeals no damage to allies.\nUpgrade II\n+2 Damage (\n)\nIncreases damage by 2.\nNatural Armor\n: Weapon damage to this unit is reduced by 1. All other damage (Push, Blocking, Fire, etc.) is unaffected.\nSiege Mech\nRanged\n2\n3\nCluster Artillery\n(\nRanged\n)\nEffect\nProtect a tile by damaging and pushing adjacent tiles.\n(1 damage)\nUpgrade I\nBuildings Immune (\n)\nThis attack will no longer damage Grid Buildings.\nUpgrade II\n+1 Damage (\n)\nIncreases damage to adjacent tiles by 1.\nGravity Mech\nScience\n3\n4\nGrav Well\n(\nScience\n)\nEffect\nArtillery weapon that pulls its target towards you.\nVek Hormones\n(\nPassive\n)\nEffect\nEnemies do +1 Damage against other enemies.\nUpgrade I\n+1 Damage (\n)\nIncreases damage by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases damage by 1.\nAchievements\n[\n]\nUnbreakable\nHave Mech Armor absorb 5 damage in a single battle\nUnwitting Allies\nHave 4 enemies die from enemy fire in a single battle\nMass Displacement\nPush 3 enemies with a single attack\nStrategies\n[\n]\nSince you will mostly rely on Vek damage to kill enemies, constantly check the Attack Order. In addition, look for Vek like the\nFirefly\nor\nGastropod\n, as they can easily target other Vek with their attacks and prevent two enemies from damaging the grid by being intercepted.\nPrioritize upgrading +1 damage on Vek Hormones and Buildings Immune on the Cluster Artillery - both upgrades take advantage of the squad's strength in turning enemy fire against them.\nBecause the Judo Mech has armor, you can still hit it with the cluster artillery without taking damage.\nLook for an enemy two spaces away from a deadly tile -- vice fist can throw them into it.\nYou can use the repositioning abilities of the squad in succession: first place two enemies adjacent to each other, then get bonus damage on knockback.\nBe wary of taking on an island if it has\nBurrowers\nand\nAlpha Burrowers\n; since these enemies are stable, they cannot be targetted by Vice Fist nor pulled by Grav Well, which makes them particularly difficult to deal with multiples using the Steel Judoka's default weaponry. Ensure you have some other weapon or ability with the Judo Mech at least to deal direct damage to them first.\nMany pilots can synergize with this squad:\nHenry Kwan\nand\nProspero\ncan more easily get into position to throw enemies by moving through obstacles. Prospero can also let the Judo Mech throw Vek on a ledge into insta-kill tiles.\nHarold Schmidt\ngives a free additional \"weapon\" to knockback enemies.\nKazaaakpleth\non the Judo Mech allows it to attack directly in front, significantly boosting its power.\nChen Rong\nor\nArchimedes\ncan get the Judo Mech out of a bad spot after attacking, compensating for the limited choices of tiles to attack from.\nKai Miller\non the Siege Mech can make the killing of Vek faster, especially as she will raise the maximum damage of Cluster Artillery to an impressive 3 points.\nTrivia\n[\n]\nThe Vek Hormones passive equipped with the Gravity Mech also increases the damage done by\nrobotic enemies\n, despite not being classified as Vek nor affected by Psions.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

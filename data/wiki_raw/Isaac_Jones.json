@@ -1,0 +1,719 @@
+{
+  "name": "Isaac_Jones",
+  "url": "https://intothebreach.fandom.com/wiki/Isaac_Jones",
+  "infobox": {
+    "_title": "Isaac Jones",
+    "Nickname": "The Medic",
+    "Special": "Temporal Reset:\tGain 1 extraReset Turnevery battle.",
+    "Corporation": "Pinnacle Robotics"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Category",
+        "Event",
+        "Description",
+        "Content"
+      ],
+      "rows": [
+        {
+          "Category": "Game States",
+          "Event": "Gamestart",
+          "Description": "This happens at the start of a new game",
+          "Content": "\"S-s-so many deaths, and I'm b-b-back as if nothing happened... w-w-will there ever be an end to this?\"\"S-s-same islands as before - and the s-s-same war. Isn't it madness to keep r-r-repeating one's actions?\"\"P-P-Pardon my stutter, it's a side effect of my research. W-would it be possible to reserve some lab s-s-space?\"\"B-B-Back again... is it p-p-possible we're perpetuating this war? Even creating n-n-new timelines?\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Found",
+          "Description": "Happens on the island screen after finding the FTL pilot in a pod.",
+          "Content": "\"I... th-th-think the craft and pilot are alien! C-can't seem to t-t-translate its language, though.\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Start",
+          "Description": "Happens after you start a new game with an FTL pilot. Only needed for Recruits",
+          "Content": ""
+        },
+        {
+          "Category": "*",
+          "Event": "Gamestart_PostVictory",
+          "Description": "Start of new game after winning",
+          "Content": "\"I...Why, I'm speaking normally. Is this the result of the last breach? Or the fact we won?\"\"Pardon my stutter... wait. My voice, it's normal. Um... ahem. Can I speak to someone in charge?\"\"I... I hope to one day travel to a timeline already freed of the Vek. It seems it is not this time.\"\"M-my stutter... it faded for a bit. I wonder why? Was it the because we defeated the Vek in the last timeline?\"\"Islands... Pinnacle, R.S.T.... Archive... this is #self_full, Doctor #self_full. I... I can help you against the Vek.\"\"Island citizens... I come from a timeline where the Vek were beaten - and carry research concerning the breach.\"\"I hope the tachyon emissions from the Renfield bomb didn't carry Vek residue into other timelines. If it did...\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Revived",
+          "Description": "If this unit is dead, but gets repaired",
+          "Content": "\"What... wh-what happened?\"\"D-Did... did I die?\"\"Was I resuscitated... or w-w-was this a temporal reset?\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Main",
+          "Description": "If this unit dies.",
+          "Content": "\"Aiighh!\"\"No, n-n-not... aigghhh!\"\"Not now! N-not n-!\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response",
+          "Description": "If another unit dies.Use #main to say the dying unit's name.",
+          "Content": "\"#main_full! N-N-Not you, too...\"\"#main_full, you will be remembered.\"\"When w-w-will all this fighting end?\"\"This w-w-war is madness.\"\"My god... the Mech isn't moving. And no life s-s-signs from the cockpit.\"\"D-Did #main_full have any f-f-family? In this timeline, I m-m-mean.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response_AI",
+          "Description": "If another Mech dies but it doesn't have a pilot to die.",
+          "Content": "\"At l-l-least it didn't have a human pilot... s-sorry, that was rude of me.\"\"That... c-c-could have been me.\"\"The next one that falls c-c-could be me.\"\"I... c-c-could be next.\""
+        },
+        {
+          "Category": "*",
+          "Event": "TimeTravel_Win",
+          "Description": "Last thing pilot says before time traveling after a victory.",
+          "Content": "\"I... I wish you all luck, both you who remain in this timeline... and any who continue traveling.\"\"I... I suppose H.G. Wells is smiling at me now.\"\"I... I will carry what I learned to the next timeline.\"\"Why... my stutter seems to have gone. Now why would th-\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Start",
+          "Description": "Right when you lose",
+          "Content": "\"Power Grid's d-d-down. We've f-failed... again...\"\"The P-P-Power Grid - it's c-c-collapsed!\"\"The Grid's f-f-failed... we... we've just lost, haven't we?\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Response",
+          "Description": "Response to above",
+          "Content": "\"We d-d-did all we could... prepare for t-t-temporal breach.\"\"I h-had thought this time... this timeline would be different. T-t-time to leave.\"\"I h-had thought we could win here... initiating b-breach p-protocols.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "UI Barks",
+          "Event": "Upgrade_PowerWeapon",
+          "Description": "Turn on a new weapon.",
+          "Content": "\"W-wait... how do you work this thing again?\"\"What d-d-does this d-do now?\"\"I'm n-not entirely c-comfortable with this.\"\"My s-strengths lie in the lab, not live w-w-weapon tests.\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_NoWeapon",
+          "Description": "If you have no weapon powered. This plays every time you remove all weapons from the Pilot.",
+          "Content": "\"Am I... am I b-being removed from th-the fighting?\"\"If I h-have to go into battle, I'll need... well, s-s-something.\"\"Has m-my request for lab d-duty been approved?\"\"Has my t-t-transfer to the science division b-been approved, then?\"\"Does this m-m-mean I've been reassigned to lab work?\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_PowerGeneric",
+          "Description": "Diverting reactor power to either Health or Move (basic Mech stats, not a weapon).",
+          "Content": "\"I w-wonder if this will even matter.\"\"W-W-Will more power really help?\"\"Do y-you think this will make a difference?\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mid- Battle",
+          "Event": "MissionStart",
+          "Description": "Generic mission start",
+          "Content": "\"Here we go... th-th-this time I can do this.\"\"I'll n-n-never get used to this.\"\"Deployed... uh, assessing th-threats... acquiring t-t-targets.\"\"Uh, this is P-P-Pilot #self_full... r-reporting in.\"\"N-N-Now or never.\"\"Can't b-b-believe I'm on the front lines... s-surely they c-could have found someone else?\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_ResetTurn",
+          "Description": "Triggers after a turn reset",
+          "Content": "\"Temporal reset... s-s-successful.\"\"Recalibrating tachyon anchor... d-d-done.\"\"Reset c-complete. Please, we need to more careful!\"\"This isn't what m-my research was meant for...\"\"We... we need to be c-c-careful with these localized breaches.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Dead",
+          "Description": "Generic mission end where enemies are all killed",
+          "Content": "\"I-I-Is it over? Are there any left...?\"\"Did... d-d-did we wipe them out?\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Retreat",
+          "Description": "Generic mission end when enemies retreat",
+          "Content": "\"Are... are th-they retreating? Wh-Why... we won!\"\"Did... did w-we drive them off?\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Start",
+          "Description": "Plays at the start of the final mission",
+          "Content": "\"I-Is this the end?\"\"This island... it... it d-doesn't look safe?\"\"H-How are we s-supposed to get off this island once we're done?\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_StartResponse",
+          "Description": "Incoming power pylons",
+          "Content": "\"D-D-Detecting p-pylon b-being deployed to our location.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallStart",
+          "Description": "Plays at the start of the ground falling in the final mission",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallResponse",
+          "Description": "Plays once the ground shakes",
+          "Content": "\"The island! It's t-tearing itself apart!\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Pylons",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Bomb",
+          "Description": "What's the plan?",
+          "Content": "\"We're inside the hive... but... h-how can we d-destroy something this size?\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombResponse",
+          "Description": "Before dropping the bomb",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_CaveStart",
+          "Description": "Plays at the start of the final cave section (after MissionFinal_BombResponse)",
+          "Content": "\"We need to protect that b-bomb... don't let the Vek destroy it, or the w-war's lost!\""
+        },
+        {
+          "Category": "*",
+          "Event": "MissionFinal_BombDestroyed",
+          "Description": "When the bomb is destroyed, another one is dropped and the battle length is extended.",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombArmed",
+          "Description": "",
+          "Content": "\"I'm p-picking up a rise in tachyons... the bomb, it's activated!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PodIncoming",
+          "Description": "Pod is about to fall",
+          "Content": "\"Time P-P-Pod is on approach. I h-h-hope it survives the landing...\"\"P-Picking up a Time Pod... falling f-fast.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodResponse",
+          "Description": "Response to above",
+          "Content": "\"C-c-can we get to the Pod before the enemy does?\"\"W-W-We should be careful of f-f-firing weapons near the Pod. W-w-we might damage it.\"\"S-S-Should I recover it? Or... can s-someone else get to it?\"\"Be careful of that Pod... we d-don't know where it's been... or w-when.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodCollected_Self",
+          "Description": "Pod collected (by the pilot talking)",
+          "Content": "\"I m-m-managed to save it!\"\"The Pod... it's s-s-safe! For now.\"\"I have the Pod - it's still safely s-s-sealed.\"\"Recovered the P-P-Pod. It l-l-looks intact.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodDestroyed_Obs",
+          "Description": "Pod destroyed (by anyone, including Vek, except the speaker)",
+          "Content": "\"The Pod... it's d-d-destroyed.\"\"If only that P-Pod had landed somewhere s-s-safer.\"\"Do... do you think s-s-someone was in there?\"\"I'm not p-p-picking up any life signs from the Pod wreckage...\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Mountain",
+          "Description": "Secret object was inside a mountainOnly needs 1 line per Pilot",
+          "Content": "\"P-P-Picking up a signal from the remains of that mountain.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Ice",
+          "Description": "Secret object was under water after destroying iceOnly needs 1 line per Pilot",
+          "Content": "\"P-P-Picking up a signal beneath the ice.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceUsed",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"How s-s-strange... this s-s-seems to have activated s-some sort of beacon.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_Arriving",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"P-Picking up an incoming craft! I-I-It's emitting a s-s-signal like the beacon did.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Detected",
+          "Description": "Emerges are queued.",
+          "Content": "\"They just keep c-c-coming... how fast do they breed?\"\"M-More Vek are t-tunneling to the surface!\"\"M-More Vek are about to s-surface!\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Success",
+          "Description": "Vek Emerges",
+          "Content": "\"They've r-r-reached the surface!\"\"More Vek have s-s-surfaced!\"\"Oh n-no! The Vek... they've s-s-surfaced!\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedMech",
+          "Description": "Mech blocks Emerging Vek",
+          "Content": "\"The Vek's right b-b-beneath me!\"\"I-I can't hold this Vek for long!\"\"The Vek's trying to s-surface beneath me!\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedVek",
+          "Description": "Vek Block Emerging Vek",
+          "Content": "\"The Vek d-d-don't seem to coordinate their actions.\"\"The Vek r-r-reflexes don't s-s-seem to adapt to field conditions.\"\"The V-V-Vek seem to work at cross-purposes to each other.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mech State",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_LowHealth",
+          "Description": "Mech has 1 hp.",
+          "Content": "\"C-C-Can't take m-m-much more of this!\"\"My Mech wasn't d-d-designed to take this much damage!\"\"M-My #self_mech has t-t-taken heavy damage!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Webbed",
+          "Description": "Mech is webbed",
+          "Content": "\"C-c-can't move!\"\"I'm c-c-covered in webs!\"\"It's g-got me! My Mech c-c-can't break free!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Shielded",
+          "Description": "Mech is shielded",
+          "Content": "\"Shield should p-p-protect me... for now.\"\"H-H-Hope I don't need this shield, but I welcome it n-nonetheless.\"\"W-W-Wish we could establish a shield over every b-b-building on the island.\"\"If only s-s-shields could auto-restore their integrity after a d-d-disruption...\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Repaired",
+          "Description": "Mech uses repair.",
+          "Content": "\"That h-h-helped a bit.\"\"This Mech's systems were difficult to figure out... b-but it's fixed.\"\"These repairs should b-b-buy my Mech some time.\"\"I didn't have t-time to check the r-repairs, but it'll h-have to do.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Self",
+          "Description": "Pilot levels up (not necessarily max rank)",
+          "Content": "\"...D-D-Does this p-p-promotion mean m-m-more combat missions?\"\"A p-p-promotion? But... I d-d-don't want to get better at killing Vek.\"\"A p-p-promotion? But... I-I-I'm a scientist. I never intended to be a s-s-soldier.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Obs",
+          "Description": "Pilot is observed to level up",
+          "Content": "\"You've d-d-definitely improved since the w-war began.\"\"You're d-d-doing much better than I. S-Soon you won't need me in the fight.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_ShieldDown",
+          "Description": "Mech's shield is removed",
+          "Content": "\"Sh-Sh-Shield down!\"\"I've lost m-my shield!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Damage Done",
+          "Event": "",
+          "Description": "Damage commentary comes in three flavors:\"SELF\" : The Mech did themselves\n\"OBS\" : The Mech (or CEO) observed another Mech do it\n\"VEK\" : A Vek did it, and a CEO or Mech is commenting on that",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Drown",
+          "Description": "Vek drowns (from anyone / any cause)",
+          "Content": "\"The Vek is dropping off m-m-my radar.\"\"The Vek's in the water... and f-f-falling fast.\"\"One insect, washed away.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Fall",
+          "Description": "Vek falls down a hole (from anyone / any cause)",
+          "Content": "\"The g-g-ground swallowed it!\"\"It w-won't survive that fall...\"\"It... it's a l-long w-way down.\"\"If only we c-c-could drive more of them into the fissures...\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Smoke",
+          "Description": "Vek is put in smoke (from anyone / any cause)",
+          "Content": "\"The cloud s-s-seems to be d-d-disorienting the Vek...\"\"The c-cloud is, uh... clouding... er, c-c-confusing... the Vek's senses...\"\"The V-V-Vek seems to be s-slowing in the smoke, as if c-c-confused.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Frozen",
+          "Description": "Vek is frozen (from any cause except Snow Storm and Freeze Mine)",
+          "Content": "\"I... I b- believe the c-c-cold has slowed its metabolism.\"\"Vek life s-s-signs are slowing - it's alive... b-b-but unable to move.\"\"Its m-m-metabolic readings are slowing. I... I think it's trapped.\"\"W-W-Will that ice be able to h-h-hold it...?\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Self",
+          "Description": "",
+          "Content": "\"The Vek... it's... d-d-dead.\"\"I... k-k-killed it.\"\"I w-w-wish there was some other way to deal with the Vek, but...\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Obs",
+          "Description": "",
+          "Content": "\"The c-c-creature is dead.\"\"The Vek... you k-k-killed it.\"\"I w-w-wish we could find s-s-some other way to deal with the Vek, but...\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Vek",
+          "Description": "",
+          "Content": "\"Why w-w-would they hurt each other?\"\"They s-s-seem to take too long to adapt to changing c-conditions.\"\"They d-d-don't seem able to adapt to changing battlefield c-conditions.\"\"I d-don't think that was intentional... they're j-j-just too s-s-slow to react.\"\"It's like the Vek n-n-nervous system lags behind their r-receptors.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Self",
+          "Description": "",
+          "Content": "\"D-D-Did... did I do that?\"\"I killed them? B-Both of them?\"\"I killed them b-both?\"\"I... I d-d-didn't think that would work on them.\"\"I... d-d-didn't think, I just... acted.\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Obs",
+          "Description": "",
+          "Content": "\"You killed them b-b-both?\"\"I... I'm impressed.\"\"Maybe we h-h-have a chance yet...\"\"This b-b-battle's not over...\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Vek",
+          "Description": "",
+          "Content": "\"Why w-w-would they hurt each other?\"\"They s-s-seem to take too long to adapt to changing c-conditions.\"\"They d-d-don't seem able to adapt to changing battlefield c-conditions.\"\"I d-don't think that was intentional... they're j-j-just too s-s-slow to react.\"\"It's like the Vek n-n-nervous system lags behind their r-receptors.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Self",
+          "Description": "Note that because a destroyed mountain (and building) can then be moved through, some lines reflect the fact the player can now move into these tiles.",
+          "Content": "\"I... have d-d-destroyed one of the mountains.\"\"That w-w-was me - I destroyed it.\""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Obs",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Vek",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PowerCritical",
+          "Description": "",
+          "Content": "\"The Grid's in th-the red! We n-n-need to do something!\"\"Grid's about t-t-to fail! What are w-w-we going to do?\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Self",
+          "Description": "",
+          "Content": "\"I c-c-can't believe I just did that...\"\"I... I wanted to use my research to p-p-protect people, not...\"\"I have broken my oath.\"\"If only we c-c-could have evacuated the area first...\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Obs",
+          "Description": "",
+          "Content": "\"No! All th-th-those innocent people...\"\"Why... w-w-as letting them die n-n-necessary...?\"\"If only we c-c-could have evacuated the area first...\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Vek",
+          "Description": "",
+          "Content": "\"No! All th-th-those innocent people...\"\"If only we c-c-could have evacuated the area first...\"\"Th-they didn't deserve that... n-n-none of them did!\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Resisted",
+          "Description": "Building resists damage, currently anyone can comment but I can change this to _Obs/_Self/_Vek if we think it's worth it.",
+          "Content": "\"...Such a r-r-relief.\"\"Finally, some luck for a c-c-change.\"\"Countless people c-c-could have died...\"\"We're putting so many p-p-people at risk...\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mission Specific",
+          "Event": "Mission_Train_TrainStopped",
+          "Description": "",
+          "Content": "\"The train d-doesn't look completely d-damaged. Maybe the #corp can repair it?\"\"The train's d-d-damage isn't extensive, b-b-but it won't be moving for a while.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Train_TrainDestroyed",
+          "Description": "",
+          "Content": "\"I d-d-don't think anything could repair that train now.\"\"Not even a f-f-full #corp engineering team could repair that train.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Block_Reminder",
+          "Description": "Remind player to block emerging Vek",
+          "Content": "\"Um... shouldn't we be s-s-topping the Vek from emerging?\"\"S-should we f-f-focus on the Vek emergence points?\"\"I h-hope we c-can stop the Vek from emerging...\""
+        },
+        {
+          "Category": "Archive Inc",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Airstrike_Incoming",
+          "Description": "",
+          "Content": "\"I'm p-p-picking up an incoming fighter... one of ours.\"\"I h-h-have what looks like a jet on s-s-sensors... and an old one, at that.\"\"I b-b-believe Archive is sending air support.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_Activated",
+          "Description": "Both tanks survived to activation",
+          "Content": "\"G-G-Getting a 'ready' signal from those t-t-two Archive tanks.\"\"Those t-t-tanks are c-charged and r-ready.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_PartialActivated",
+          "Description": "Only one tank survived to activation",
+          "Content": "\"G-G-Getting the ready signal from the r-r-remaining tank.\"\"The s-s-surviving tank is charged and ready.\"\"W-Would you look at that! That l-l-last tank activated after all.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Dam_Reminder",
+          "Description": "Remind player to destroy the Dam",
+          "Content": "\"Um... w-what about the d-dam?\"\"Sh-Should I be the one to d-d-destroy the d-dam?\"\"Can our M-Mechs even t-take down that dam?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Dam_Destroyed",
+          "Description": "After the completed animation of the dam drowning things",
+          "Content": "\"This sh-sh-should put a s-s-stop to the Vek's tunneling efforts.\"\"This'll s-s-stop the Vek burrowers... but n-n-not the fliers.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Destroyed",
+          "Description": "Triggers only when the first satellite is destroyed",
+          "Content": "\"We've lost one of the s-s-satellites!\"\"The s-s-satellite! It's destroyed!\"\"Satellite's g-gone! Wh-What do we do now?\"\"W-We still have the other r-rocket, right?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Imminent",
+          "Description": "Triggers when the Satellite queues its launch (the turn before it actually launches) -- It can trigger for either satellite, or both, it's randomized.",
+          "Content": "\"R-R-Rocket's almost about to launch...\"\"R-R-Rocket's about to launch... g-get clear of the pad while you c-can!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Launch",
+          "Description": "Triggers when the satellite actually takes off, can trigger for either or both",
+          "Content": "\"It launched... the r-r-rocket actually l-l-launched!\"\"W-W-Would you look at that - it's in th-the air!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Mines_Vek",
+          "Description": "Vek Killed by Mine",
+          "Content": "\"It was killed b-b-by the mine.\"\"The m-mine went off... the Vek d-didn't even see it...\"\"The Vek... it d-didn't even know it was there...\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "RST",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Destroyed",
+          "Description": "If the terraformer is destroyed",
+          "Content": "\"We've lost the t-t-terraformer!\"\"The terraformer's g-gone! Wh-What do we do n-now?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Attacks",
+          "Description": "After the player uses the terraformer (not necessarily the first, random chance)This will obey the same rules as other barks, where something like a pilot death will take priority.",
+          "Content": "\"The terraformer... just... d-d-dissolved the terrain.\"\"The terraformer... just... w-wiped away the g-ground.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Cataclysm_Falling",
+          "Description": "Triggers when ground is falling during either RST mission with falling ground",
+          "Content": "\"S-S-Seismic readings are off th-the scale!\"\"Are these q-q-quakes... n-n-normal on R.S.T.?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Lightning_Strike_Vek",
+          "Description": "If lightning hits a Vek",
+          "Content": "\"The V-Vek do not seem immune t-t-to electrical d-d-discharges.\"\"It s-seems the Vek's c-carapace isn't insulated...\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Solar_Destroyed",
+          "Description": "Solar panel destroyed",
+          "Content": "\"The f-farm... it's gone!\"\"The f-farm! It's d-d-destroyed!\"\"The f-farm is g-gone! Wh-What do we do n-now?\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Force_Reminder",
+          "Description": "Remind player to destroy the mountains",
+          "Content": "\"Um... w-what about the m-mountains?\"\"S-should I handle destroying the m-mountains?\"\"Are our Mechs able to t-take down those m-mountains?\""
+        },
+        {
+          "Category": "Pinnacle",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Freeze_Mines_Vek",
+          "Description": "Vek Frozen by Mine. This takes priority over all other Freeze conditions.",
+          "Content": "\"The cryo-mine... it s-s-stopped the Vek!\"\"Vek life signs are s-s-slowing - it's t-t-trapped.\"\"The Vek hit by the c-cryo-mine... its metabolic readings are s-s-slowing!\"\"The cryo-mine w-w-worked... but will the ice hold it...?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Destroyed",
+          "Description": "Bot Factory destroyed",
+          "Content": "\"All that r-r-research... all th-th-those robots... lost.\"\"Were we... weren't we s-s-supposed to p-p-protect the factory?\"\"C-C-Could we have used that factory to fix the robots?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Spawning",
+          "Description": "Bot Factory spawning",
+          "Content": "\"M-M-More robots... and their p-p-programming's still erratic.\"\"M-M-More robots... try to avoid d-destroying them!\"\"Those robots from the factory... they'll activate s-s-soon!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Reactivation_Thawed",
+          "Description": "A selection of enemies on the map are freed from ice (might be bots)",
+          "Content": "\"W-Was afraid th-the ice w-w-wouldn't hold them!\"\"The fr-frozen enemies - they b-b-broke free!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenVek",
+          "Description": "Snowstorm freezes Vek",
+          "Content": "\"Vek seem unable to c-c-cope with extreme cold... or water...\"\"R-R-Registering faint life signs from the frozen Vek... but it can't m-m-move.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenMech",
+          "Description": "Snowstorm freezes speaking Mech—This takes priority if Vek are frozen as well",
+          "Content": "\"The storm... it's... it's freezing m-my systems!\"\"This #self_mech isn't equipped for t-t-temperature extremes!\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Self",
+          "Description": "Player kills a hostile Bot",
+          "Content": "\"I... d-d-didn't want to destroy the robot, but...\"\"If w-w-we only had time to run a d-diagnostic on these robots first...\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Obs",
+          "Description": "Player is observed to kill a hostile Bot",
+          "Content": "\"If we can spare the r-r-robots... Zenith w-would want that.\"\"Each r-robot is like killing one of Zenith's family...\""
+        },
+        {
+          "Category": "Detritus",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Destroyed",
+          "Description": "Player was supposed to defend the Disposal unit and it was destroyed—Shooter could be anyone",
+          "Content": "\"D-D-Disposal unit's been destroyed!\"\"D-D-Disposal unit's g-gone! Wh-What do we do now?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Activated",
+          "Description": "Player uses Disposal Unit—mass damage",
+          "Content": "\"D-Disposal unit's r-releasing enough chemicals to poison the oceans.\"\"I h-h-hope Detritus shields its drainage... h-h-hate for those nanites to reach the ocean.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Barrels_Destroyed",
+          "Description": "A.C.I.D. barrel destroyed (as per mission objectives) -- shooter unclear",
+          "Content": "\"V-Vat's releasing the A.C.I.D. into the ground - sh-should hit the Vek hives soon.\"\"V-Vat's destroyed - ch-ch-chemicals should drown the Vek below... I hope.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Power_Destroyed",
+          "Description": "Power plant is destroyed",
+          "Content": "\"P-P-Power plant's been destroyed!\"\"We've lost the power plant!\"\"With the plant gone... we'll n-n-need to begin p-p-power rationing...\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Teleporter_Mech",
+          "Description": "Mech teleports (self)",
+          "Content": "\"Teleport complete... and my voice. It's... steady.\"\"Recalibrating coordinates... wait, is that my voice?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Belt_Mech",
+          "Description": "Mech moves on conveyor (self) (does not hit anything, no damage, etc.)",
+          "Content": "\"Uh... is it s-s-safe to m-m-move on this?\"\"B-B-Better get off before it dumps me in an A.C.I.D. vat.\""
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Location": "Isaac Jones can be acquired by completing islands.",
+    "Background": "Isaac has seen too many timelines collapse, and seen too many permutations for how things can go wrong - his high intelligence actually works against him, rather than make him more confident because he can imagine all the ways things can go wrong (think Chidi Anagonye in The Good Place). He feels ill-suited for being a soldier.\nWhile he andBethanyare technically brother and sister, there hasn't been a timeline where they both were alive to realize this (either Bethany dies at a young age, or Isaac dies - only one of them could be saved in the womb b/c of a chronic medical condition their parents had). He respects machines and sees them as equals due to being raised on Pinnacle (he has faith in Zenith, perhaps too much as he feels she's too intelligent to do anything wrong).\nIsaac is as much of a genius as his sister, although self-doubt weakens him. He has considerable knowledge of aeronautics, physics, gravitation theory and manipulation, and a number of other fields. It is likely Isaac could master any science he chose to, his only block is his own perceived limitations.",
+    "Personality": "Paranoid & pessimistic. Generally a good person but not handling all the stress well, and his attitude can sometimes be demoralizing - he's suspicious of his own successes and victories. Definitely a \"this timeline's already half-lost\" kind of guy. Stutters because of temporal research studies... it's caused a nervous system problem in his speech patterns.",
+    "Strategy": "Having an additionalReset Turncan be quite invaluable in rectifying a mistake or experimenting with options. However, veteran players will not normally have to use this feature, at which point Isaac Jones is less relevant.\nThere are situational uses where an additionalReset Turnability is useful to strategy. All buildings have a shared chance to resist damage based on yourGrid Defense, determined by a hidden random number that is generated and seeded at the start of each timeline.[1]While this value is hidden from the player and resisting damage is most useful on the Vek's move when it is too late to Reset, you can check if a resist will trigger on your turn from:\n  - intentionally targeting your own buildings\n  - pushing an opponent/object into a building\n  - anExplosive decayactor exploding on death\nNote that this value carries over to subsequent maps in the same timeline until a building gets hit. The player can continue hitting buildings, making note of which attacks were resisted, and reset; after the reset, the exact same resist order will play out as buildings get damaged. Increasing Grid Defensecanchange the outcome if the resist value is higher than the seeded number; in other words, a resist can still be possible with the same seed later in the run, when Grid Defense percentage is increased.[2]Essentially, Isaac Jones additional Reset Turn makes this strategy less risky, though it still relies on luck to successfully manipulate the number to the players favor; see \"Fish for Resists\" for more information.\nWith theAdvanced Edition, the additional Reset Turn can benefit the pilotAdamby allowing an additional activation of his Chosen One ability per battle. However, this combo requires finding at least one of those pilots per playthrough."
+  },
+  "full_text": "Isaac Jones\nNickname\nThe Medic\nSpecial\nTemporal Reset:\tGain 1 extra\nReset Turn\nevery battle.\nCorporation\nPinnacle Robotics\nIsaac Jones\nis a\npilot\nin\nInto the Breach\n.\nContents\n1\nLocation\n2\nBackground\n3\nPersonality\n4\nStrategy\n5\nDialogue\n6\nReferences\nLocation\n[\n]\nIsaac Jones can be acquired by completing islands.\nBackground\n[\n]\nIsaac has seen too many timelines collapse, and seen too many permutations for how things can go wrong - his high intelligence actually works against him, rather than make him more confident because he can imagine all the ways things can go wrong (think Chidi Anagonye in The Good Place). He feels ill-suited for being a soldier.\nWhile he and\nBethany\nare technically brother and sister, there hasn't been a timeline where they both were alive to realize this (either Bethany dies at a young age, or Isaac dies - only one of them could be saved in the womb b/c of a chronic medical condition their parents had). He respects machines and sees them as equals due to being raised on Pinnacle (he has faith in Zenith, perhaps too much as he feels she's too intelligent to do anything wrong).\nIsaac is as much of a genius as his sister, although self-doubt weakens him. He has considerable knowledge of aeronautics, physics, gravitation theory and manipulation, and a number of other fields. It is likely Isaac could master any science he chose to, his only block is his own perceived limitations.\nPersonality\n[\n]\nParanoid & pessimistic. Generally a good person but not handling all the stress well, and his attitude can sometimes be demoralizing - he's suspicious of his own successes and victories. Definitely a \"this timeline's already half-lost\" kind of guy. Stutters because of temporal research studies... it's caused a nervous system problem in his speech patterns.\nStrategy\n[\n]\nHaving an additional\nReset Turn\ncan be quite invaluable in rectifying a mistake or experimenting with options. However, veteran players will not normally have to use this feature, at which point Isaac Jones is less relevant.\nThere are situational uses where an additional\nReset Turn\nability is useful to strategy. All buildings have a shared chance to resist damage based on your\nGrid Defense\n, determined by a hidden random number that is generated and seeded at the start of each timeline.\n[\n1\n]\nWhile this value is hidden from the player and resisting damage is most useful on the Vek's move when it is too late to Reset, you can check if a resist will trigger on your turn from:\nintentionally targeting your own buildings\npushing an opponent/object into a building\nan\nExplosive decay\nactor exploding on death\nNote that this value carries over to subsequent maps in the same timeline until a building gets hit. The player can continue hitting buildings, making note of which attacks were resisted, and reset; after the reset, the exact same resist order will play out as buildings get damaged. Increasing Grid Defense\ncan\nchange the outcome if the resist value is higher than the seeded number; in other words, a resist can still be possible with the same seed later in the run, when Grid Defense percentage is increased.\n[\n2\n]\nEssentially, Isaac Jones additional Reset Turn makes this strategy less risky, though it still relies on luck to successfully manipulate the number to the players favor; see \"\nFish for Resists\n\" for more information.\nWith the\nAdvanced Edition\n, the additional Reset Turn can benefit the pilot\nAdam\nby allowing an additional activation of his Chosen One ability per battle. However, this combo requires finding at least one of those pilots per playthrough.\nDialogue\n[\n]\nCategory\nEvent\nDescription\nContent\nGame States\nGamestart\nThis happens at the start of a new game\n\"S-s-so many deaths, and I'm b-b-back as if nothing happened... w-w-will there ever be an end to this?\"\n\"S-s-same islands as before - and the s-s-same war. Isn't it madness to keep r-r-repeating one's actions?\"\n\"P-P-Pardon my stutter, it's a side effect of my research. W-would it be possible to reserve some lab s-s-space?\"\n\"B-B-Back again... is it p-p-possible we're perpetuating this war? Even creating n-n-new timelines?\"\nFTL_Found\nHappens on the island screen after finding the FTL pilot in a pod.\n\"I... th-th-think the craft and pilot are alien! C-can't seem to t-t-translate its language, though.\"\nFTL_Start\nHappens after you start a new game with an FTL pilot. Only needed for Recruits\n*\nGamestart_PostVictory\nStart of new game after winning\n\"I...Why, I'm speaking normally. Is this the result of the last breach? Or the fact we won?\"\n\"Pardon my stutter... wait. My voice, it's normal. Um... ahem. Can I speak to someone in charge?\"\n\"I... I hope to one day travel to a timeline already freed of the Vek. It seems it is not this time.\"\n\"M-my stutter... it faded for a bit. I wonder why? Was it the because we defeated the Vek in the last timeline?\"\n\"Islands... Pinnacle, R.S.T.... Archive... this is #self_full, Doctor #self_full. I... I can help you against the Vek.\"\n\"Island citizens..."
+}

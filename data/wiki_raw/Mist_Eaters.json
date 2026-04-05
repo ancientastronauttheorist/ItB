@@ -1,0 +1,51 @@
+{
+  "name": "Mist_Eaters",
+  "url": "https://intothebreach.fandom.com/wiki/Mist_Eaters",
+  "infobox": {
+    "_title": "Mist Eaters"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Thruster Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "4",
+          "Default loadout": "Reverse Thrusters(Brute)EffectSmoke and deal damage to a tile while dashing away. (Damage increases the further the Mech dashes away. Starts with 2-tile range.)(1 self, 1-2 damage)Upgrade I+1 Range ()Increases the max distance and damage by 1.Upgrade II+1 Range ()Increases the max distance and damage by 1.",
+          "Special": "Reverse Thrusters(Brute)"
+        },
+        {
+          "Name": "Smog Mech",
+          "Class": "Ranged",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Smoldering Shells(Ranged)Effect ()Damage and apply Fire to a tile while adding Smoke to adjacent tiles.(1 damage)Upgrade IMore Smoke ()Adds Smoke to more tiles.Upgrade II+2 Damage ()Increases the center tile damage by 2.Nanofilter Mending(Passive)EffectStanding on Smoke repairs Mechs and removes Smoke.",
+          "Special": "Smoldering Shells(Ranged)"
+        },
+        {
+          "Name": "Control Mech",
+          "Class": "Science",
+          "Health": "2",
+          "Move speed": "4",
+          "Default loadout": "Control Shot(Science)EffectTemporarily control a unit, moving it a short distance. (Starts with 2-tile distance)Upgrade I+1 Move ()Targeted unit can more one extra tile.Upgrade II+1 Move ()Targeted unit can more one extra tile.",
+          "Special": "Control Shot(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheMist Eatersare one of theSquadsfromInto The Breachadded in the Advanced Edition. They consist of theThruster Mech,Smog MechandControl Mechand are unlockable for 4 coins.\nMuch like theRusting Hulks, the Mist Eaters have a large number of smoke-dispensing tools that work to their advantage. Rather than making the smoke a Vek hazard it is instead used as a healing source with the passiveNanofilter Mendingweapon, consuming the smoke tile in the process so that the mechs can still attack.",
+    "Strategies": "  - The Thruster and Smog Mechs can easily nullify enemy attacks, especially if the Smog Mech's Smoldering Shells has more smoke.\n  - The Thruster Mech is the most important damage source for the Mist Eaters but is very weak against groups or in enclosed spaces. Make sure it has lots of row and column space so the Reverse Thrusters can inflict the most damage.\n  - Nanofilter Mending is capable of reviving disabled mechs, giving the squad very high survivability. Using mechs to block attacks from damaging the grid of objectives often and rely on heals to keep your pilots alive.\n  - The Control Mech is one of the best science mechs as its Vek movement lets them tear each other apart, reliably neutralising two threats with one action. Getting the first movement upgrade on the Control Shot is vital and make sure that the second island hasLeapersso that they instantly kill any normal Vek.Control Shot can also move other allied units that can move regularly, including mechs, robots and tanks. This can be situationally helpful in moving webbed allies to safety.Control Shot cannot move enemies or allies without movement; this includes theEarth Mover,Blobs,Spiderling EggsandBoulders.\n  - Smoke is extremely well-suited for missions that involve avoiding kills, but the squad's overall damage output can be a little low due to a lack of AoE damage and pushes. Missions that involve killing a lot of enemies can be challenging.\n  - While the large amount of smoke generation suggests thatCamila Verais the best pilot for this squad, all mechs will remove smoke and only lets her provide web immunity. The Mist Eaters work well with other pilots:Chen RongandArchimedes: Lets the Control Mech maneuver out of danger after moving.Mafan: Grants the Control Mech +1 Movement on its Control Shot instantly.KazaaakplethandHarold Schmidt: Grants some form of push to the squad.Henry KwanandProspero: For more versatile positioning of the Smog Mech.",
+    "Trivia": "  - The Mist Eaters are the only squad in the game that have two flying mechs."
+  },
+  "full_text": "Mist Eaters\n“\nAirborne particles provide the material necessary for nano-bots to repair these Mechs.\n„\nThe\nMist Eaters\nare one of the\nSquads\nfrom\nInto The Breach\nadded in the Advanced Edition. They consist of the\nThruster Mech\n,\nSmog Mech\nand\nControl Mech\nand are unlockable for 4 coins.\nMuch like the\nRusting Hulks\n, the Mist Eaters have a large number of smoke-dispensing tools that work to their advantage. Rather than making the smoke a Vek hazard it is instead used as a healing source with the passive\nNanofilter Mending\nweapon, consuming the smoke tile in the process so that the mechs can still attack.\nContents\n1\nMechs\n2\nSquad Achievements\n3\nStrategies\n4\nTrivia\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nThruster Mech\nBrute\n3\n4\nReverse Thrusters\n(\nBrute\n)\nEffect\nSmoke and deal damage to a tile while dashing away. (Damage increases the further the Mech dashes away. Starts with 2-tile range.)\n(1 self, 1-2 damage)\nUpgrade I\n+1 Range (\n)\nIncreases the max distance and damage by 1.\nUpgrade II\n+1 Range (\n)\nIncreases the max distance and damage by 1.\nFlying\n: Flying units can move over any terrain tile.\nSmog Mech\nRanged\n3\n3\nSmoldering Shells\n(\nRanged\n)\nEffect (\n)\nDamage and apply Fire to a tile while adding Smoke to adjacent tiles.\n(1 damage)\nUpgrade I\nMore Smoke (\n)\nAdds Smoke to more tiles.\nUpgrade II\n+2 Damage (\n)\nIncreases the center tile damage by 2.\nNanofilter Mending\n(\nPassive\n)\nEffect\nStanding on Smoke repairs Mechs and removes Smoke.\nControl Mech\nScience\n2\n4\nControl Shot\n(\nScience\n)\nEffect\nTemporarily control a unit, moving it a short distance. (Starts with 2-tile distance)\nUpgrade I\n+1 Move (\n)\nTargeted unit can more one extra tile.\nUpgrade II\n+1 Move (\n)\nTargeted unit can more one extra tile.\nFlying\n: Flying units can move over any terrain tile.\nSquad Achievements\n[\n]\nStay With Me!\nHeal 12 damage over the course of a single Island.\nLet's Walk\nMove Enemies with Control Shot 120 spaces in one game.\nOn the Backburner\nDo 4 damage with the Reverse Thrusters.\nStrategies\n[\n]\nThe Thruster and Smog Mechs can easily nullify enemy attacks, especially if the Smog Mech's Smoldering Shells has more smoke.\nThe Thruster Mech is the most important damage source for the Mist Eaters but is very weak against groups or in enclosed spaces. Make sure it has lots of row and column space so the Reverse Thrusters can inflict the most damage.\nNanofilter Mending is capable of reviving disabled mechs, giving the squad very high survivability. Using mechs to block attacks from damaging the grid of objectives often and rely on heals to keep your pilots alive.\nThe Control Mech is one of the best science mechs as its Vek movement lets them tear each other apart, reliably neutralising two threats with one action. Getting the first movement upgrade on the Control Shot is vital and make sure that the second island has\nLeapers\nso that they instantly kill any normal Vek.\nControl Shot can also move other allied units that can move regularly, including mechs, robots and tanks. This can be situationally helpful in moving webbed allies to safety.\nControl Shot cannot move enemies or allies without movement; this includes the\nEarth Mover\n,\nBlobs\n,\nSpiderling Eggs\nand\nBoulders\n.\nSmoke is extremely well-suited for missions that involve avoiding kills, but the squad's overall damage output can be a little low due to a lack of AoE damage and pushes. Missions that involve killing a lot of enemies can be challenging.\nWhile the large amount of smoke generation suggests that\nCamila Vera\nis the best pilot for this squad, all mechs will remove smoke and only lets her provide web immunity. The Mist Eaters work well with other pilots:\nChen Rong\nand\nArchimedes\n: Lets the Control Mech maneuver out of danger after moving.\nMafan\n: Grants the Control Mech +1 Movement on its Control Shot instantly.\nKazaaakpleth\nand\nHarold Schmidt\n: Grants some form of push to the squad.\nHenry Kwan\nand\nProspero\n: For more versatile positioning of the Smog Mech.\nTrivia\n[\n]\nThe Mist Eaters are the only squad in the game that have two flying mechs.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

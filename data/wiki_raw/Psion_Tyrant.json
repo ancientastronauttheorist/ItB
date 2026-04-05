@@ -1,0 +1,133 @@
+{
+  "name": "Psion_Tyrant",
+  "url": "https://intothebreach.fandom.com/wiki/Psion_Tyrant",
+  "infobox": {
+    "_title": "Psion Tyrant",
+    "Health": "2",
+    "Move": "2",
+    "Systems": "Hive Targeting(Enemy)EffectAll player units take 1 damage at the end of every turn.",
+    "Special": "Flying: Flying units can move over any terrain tile."
+  },
+  "tables": [
+    {
+      "headers": [
+        "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader",
+        "v·d·eVek",
+        "",
+        "Vek",
+        "Beetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile Vek",
+        "",
+        "Vek (Advanced Edition)",
+        "Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•Tumblebug",
+        "",
+        "Alpha Vek",
+        "Alpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha Spider",
+        "",
+        "Alpha Vek (Advanced Edition)",
+        "Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha Tumblebug",
+        "",
+        "Vek Psions",
+        "Blast Psion•Blood Psion•Shell Psion•Soldier Psion",
+        "",
+        "Vek Psions (Advanced Edition)",
+        "Arachnid Psion•Raging Psion•Smoldering Psion",
+        "",
+        "Vek Minions",
+        "Blob•Alpha Blob•Spiderling Egg•Spiderling•Alpha Spiderling",
+        "",
+        "Vek Minions (Advanced Edition)",
+        "Spore•Alpha Spore•Vicious Spore•Blob Leader",
+        "",
+        "Vek Leaders",
+        "Beetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider Leader",
+        "",
+        "Vek Leaders (Advanced Edition)",
+        "Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader"
+      ],
+      "rows": [
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek",
+          "v·d·eVek": "Beetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile Vek"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek (Advanced Edition)",
+          "v·d·eVek": "Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•Tumblebug"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Alpha Vek",
+          "v·d·eVek": "Alpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha Spider"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Alpha Vek (Advanced Edition)",
+          "v·d·eVek": "Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha Tumblebug"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Psions",
+          "v·d·eVek": "Blast Psion•Blood Psion•Shell Psion•Soldier Psion"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Psions (Advanced Edition)",
+          "v·d·eVek": "Arachnid Psion•Raging Psion•Smoldering Psion"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Minions",
+          "v·d·eVek": "Blob•Alpha Blob•Spiderling Egg•Spiderling•Alpha Spiderling"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Minions (Advanced Edition)",
+          "v·d·eVek": "Spore•Alpha Spore•Vicious Spore•Blob Leader"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Leaders",
+          "v·d·eVek": "Beetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider Leader"
+        },
+        {
+          "v·d·eVekVekBeetle•Blobber•Burrower•Centipede•Crab•Digger•Firefly•Hornet•Leaper•Scarab•Scorpion•Spider•Volatile VekVek (Advanced Edition)Bouncer•Gastropod•Mosquito•Moth•Plasmodia•Starfish•TumblebugAlpha VekAlpha Beetle•Alpha Blobber•Alpha Burrower•Alpha Centipede•Alpha Crab•Alpha Digger•Alpha Firefly•Alpha Hornet•Alpha Leaper•Alpha Scarab•Alpha Scorpion•Alpha SpiderAlpha Vek (Advanced Edition)Alpha Bouncer•Alpha Gastropod•Alpha Mosquito•Alpha Moth•Alpha Plasmodia•Alpha Starfish•Alpha TumblebugVek PsionsBlast Psion•Blood Psion•Shell Psion•Soldier PsionVek Psions (Advanced Edition)Arachnid Psion•Raging Psion•Smoldering PsionVek MinionsBlob•Alpha Blob•Spiderling Egg•Spiderling•Alpha SpiderlingVek Minions (Advanced Edition)Spore•Alpha Spore•Vicious Spore•Blob LeaderVek LeadersBeetle Leader•Firefly Leader•Hornet Leader•Large Goo(Medium Goo) (Small Goo) •Psion Abomination•Scorpion Leader•Spider LeaderVek Leaders (Advanced Edition)Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader": "Vek Leaders (Advanced Edition)",
+          "v·d·eVek": "Blobber Leader•Bouncer Leader•Centipede Leader•Crab Leader•Gastropod Leader•Mosquito Leader•Plasmodia Leader•Scarab Leader•Starfish Leader•Tumblebug Leader"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "v·d·eVek"
+      ],
+      "rows": [
+        {
+          "v·d·eVek": "Vek"
+        },
+        {
+          "v·d·eVek": "Vek (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Alpha Vek"
+        },
+        {
+          "v·d·eVek": "Alpha Vek (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Vek Psions"
+        },
+        {
+          "v·d·eVek": "Vek Psions (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Vek Minions"
+        },
+        {
+          "v·d·eVek": "Vek Minions (Advanced Edition)"
+        },
+        {
+          "v·d·eVek": "Vek Leaders"
+        },
+        {
+          "v·d·eVek": "Vek Leaders (Advanced Edition)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Description": "The Psion Tyrant does not buff Vek and instead damages all player-controlled units every turn, including theRenfield Bomband deployable tanks. It has a primarily orange body with dark purple bumps adorning its head. Psion Tyrants only spawn on theVolcanic Hiveand are capped at one spawn per \"phase\" of the final mission.\nUnder thePsionic Receiver, the Psion Tyrant also inflicts 1 damage to all Vek, the Tyrant itself included.",
+    "Strategy": "While the Tyrant Psion can be very dangerous to mechs with low health (usually artillery or science mechs), or mechs with self-damaging weapons, it's of no direct threat to the grid, or to mechs that have armor or a healthy amount of spare healthbar. If there are any spare cores leftover at the end of the game, placing them in +2 HP upgrades may help in order to assist with ignoring the Tyrant until a more convenient turn, so as to take care of more direct threats.\nThe Tyrant Psion itself is relatively weak and should be killable via collateral damage or fire. Overall it's likely better to see this Psion emerge from a spawnpoint than any other normal enemy.\nRemember to take into account that a live Tyrant Psion, on phase 2 of the final battle, will attack the Renfield bomb along with your units, so factor that into the amount of damage the bomb is \"allowed to take\". If you have any deployable tanks, it will attack those too, so upgrading them to 3HP may also help."
+  },
+  "full_text": "Psion Tyrant\nDetails\nHealth\n2\nMove\n2\nSystems\nHive Targeting\n(\nEnemy\n)\nEffect\nAll player units take 1 damage at the end of every turn.\nSpecial\nFlying\n: Flying units can move over any terrain tile.\nThe\nPsion Tyrant\nis a\nVek\npsion from\nInto The Breach\n.\nDescription\n[\n]\nThe Psion Tyrant does not buff Vek and instead damages all player-controlled units every turn, including the\nRenfield Bomb\nand deployable tanks. It has a primarily orange body with dark purple bumps adorning its head. Psion Tyrants only spawn on the\nVolcanic Hive\nand are capped at one spawn per \"phase\" of the final mission.\nUnder the\nPsionic Receiver\n, the Psion Tyrant also inflicts 1 damage to all Vek, the Tyrant itself included.\nStrategy\n[\n]\nWhile the Tyrant Psion can be very dangerous to mechs with low health (usually artillery or science mechs), or mechs with self-damaging weapons, it's of no direct threat to the grid, or to mechs that have armor or a healthy amount of spare healthbar. If there are any spare cores leftover at the end of the game, placing them in +2 HP upgrades may help in order to assist with ignoring the Tyrant until a more convenient turn, so as to take care of more direct threats.\nThe Tyrant Psion itself is relatively weak and should be killable via collateral damage or fire. Overall it's likely better to see this Psion emerge from a spawnpoint than any other normal enemy.\nRemember to take into account that a live Tyrant Psion, on phase 2 of the final battle, will attack the Renfield bomb along with your units, so factor that into the amount of damage the bomb is \"allowed to take\". If you have any deployable tanks, it will attack those too, so upgrading them to 3HP may also help.\nv\n·\nd\n·\ne\nVek\nVek\nBeetle\n•\nBlobber\n•\nBurrower\n•\nCentipede\n•\nCrab\n•\nDigger\n•\nFirefly\n•\nHornet\n•\nLeaper\n•\nScarab\n•\nScorpion\n•\nSpider\n•\nVolatile Vek\nVek (Advanced Edition)\nBouncer\n•\nGastropod\n•\nMosquito\n•\nMoth\n•\nPlasmodia\n•\nStarfish\n•\nTumblebug\nAlpha Vek\nAlpha Beetle\n•\nAlpha Blobber\n•\nAlpha Burrower\n•\nAlpha Centipede\n•\nAlpha Crab\n•\nAlpha Digger\n•\nAlpha Firefly\n•\nAlpha Hornet\n•\nAlpha Leaper\n•\nAlpha Scarab\n•\nAlpha Scorpion\n•\nAlpha Spider\nAlpha Vek (Advanced Edition)\nAlpha Bouncer\n•\nAlpha Gastropod\n•\nAlpha Mosquito\n•\nAlpha Moth\n•\nAlpha Plasmodia\n•\nAlpha Starfish\n•\nAlpha Tumblebug\nVek Psions\nBlast Psion\n•\nBlood Psion\n•\nShell Psion\n•\nSoldier Psion\nVek Psions (Advanced Edition)\nArachnid Psion\n•\nRaging Psion\n•\nSmoldering Psion\nVek Minions\nBlob\n•\nAlpha Blob\n•\nSpiderling Egg\n•\nSpiderling\n•\nAlpha Spiderling\nVek Minions (Advanced Edition)\nSpore\n•\nAlpha Spore\n•\nVicious Spore\n•\nBlob Leader\nVek Leaders\nBeetle Leader\n•\nFirefly Leader\n•\nHornet Leader\n•\nLarge Goo\n(\nMedium Goo\n) (\nSmall Goo\n) •\nPsion Abomination\n•\nScorpion Leader\n•\nSpider Leader\nVek Leaders (Advanced Edition)\nBlobber Leader\n•\nBouncer Leader\n•\nCentipede Leader\n•\nCrab Leader\n•\nGastropod Leader\n•\nMosquito Leader\n•\nPlasmodia Leader\n•\nScarab Leader\n•\nStarfish Leader\n•\nTumblebug Leader"
+}

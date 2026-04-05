@@ -1,0 +1,17 @@
+{
+  "name": "Combat_Mech",
+  "url": "https://intothebreach.fandom.com/wiki/Combat_Mech",
+  "infobox": {
+    "_title": "Combat Mech",
+    "Class": "Prime",
+    "Health": "3",
+    "Move": "3",
+    "Systems": "Titan Fist(Prime)EffectPunch an adjacent tile, damaging and pushing it.(2 damage)Upgrade IDash ()Charge any distance before punching the target.Upgrade II+2 Damage ()Increases damage by 2."
+  },
+  "tables": [],
+  "sections": {
+    "Team": "The mech is available as part of theRift Walkerssquad. It is their prime mech.",
+    "Strategy": "The Combat Mech is the Rift Walkers main damage dealer and tank, designed to reliably fight and block Vek in the front lines while being given support by artillery. It's damage output is overall high as it can deal 2-4 points of damage, depending how much it has been upgraded, along with an additional point of bump damage. The push can help other mechs get in range to hit the Vek again if it was not downed.\nIn the Rift Walkers squad, it is wise to invest in increased movement and theDashupgrade for Titan Fist first, due to the squads overall low starting mobility. However, in a custom squad, damage might be more important to prioritize first depending on the other mech. Longterm the dash ability is expendable; it can be kept if lacking another (ranged) weapon, but otherwise the two power cores can be reallocated later.\nMost pilots will work, but a notable pilot recommendation isGanato let it immediately deploy near enemy Vek."
+  },
+  "full_text": "Combat Mech\nDetails\nClass\nPrime\nHealth\n3\nMove\n3\nSystems\nTitan Fist\n(\nPrime\n)\nEffect\nPunch an adjacent tile, damaging and pushing it.\n(2 damage)\nUpgrade I\nDash (\n)\nCharge any distance before punching the target.\nUpgrade II\n+2 Damage (\n)\nIncreases damage by 2.\nCombat Mech\nis a Prime-class\nmech\nin\nInto the Breach\n.\nTeam\n[\n]\nThe mech is available as part of the\nRift Walkers\nsquad. It is their prime mech.\nStrategy\n[\n]\nThe Combat Mech is the Rift Walkers main damage dealer and tank, designed to reliably fight and block Vek in the front lines while being given support by artillery. It's damage output is overall high as it can deal 2-4 points of damage, depending how much it has been upgraded, along with an additional point of bump damage. The push can help other mechs get in range to hit the Vek again if it was not downed.\nIn the Rift Walkers squad, it is wise to invest in increased movement and the\nDash\nupgrade for Titan Fist first, due to the squads overall low starting mobility. However, in a custom squad, damage might be more important to prioritize first depending on the other mech. Longterm the dash ability is expendable; it can be kept if lacking another (ranged) weapon, but otherwise the two power cores can be reallocated later.\nMost pilots will work, but a notable pilot recommendation is\nGana\nto let it immediately deploy near enemy Vek."
+}

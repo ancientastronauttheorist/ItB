@@ -1,0 +1,719 @@
+{
+  "name": "Prospero",
+  "url": "https://intothebreach.fandom.com/wiki/Prospero",
+  "infobox": {
+    "_title": "Prospero",
+    "Nickname": "The Recycler",
+    "Special": "Flying: Mech gains Flying.Requires 1 Power.",
+    "Corporation": "Detritus Disposal"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Category",
+        "Event",
+        "Description",
+        "Content"
+      ],
+      "rows": [
+        {
+          "Category": "Game States",
+          "Event": "Gamestart",
+          "Description": "This happens at the start of a new game",
+          "Content": "\"Detecting high concentrations of carnivorous insects infesting all corporate islands. Activating Vekticide protocols.\"\"Vek parasites have infested the environmental preserves on the islands. I shall rectify this.\"\"These islands are my gardens. As I tend the gardens, Vek remains shall nourish the soil.\"\"These island biomes are threatened by Vek. I shall see to it their remains feed the soil.\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Found",
+          "Description": "Happens on the island screen after finding the FTL pilot in a pod.",
+          "Content": "\"The pilot is unaware of the damage done to the soil by their landing, but their actions seem allied with ours.\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Start",
+          "Description": "Happens after you start a new game with an FTL pilot. Only needed for Recruits",
+          "Content": ""
+        },
+        {
+          "Category": "*",
+          "Event": "Gamestart_PostVictory",
+          "Description": "Start of new game after winning",
+          "Content": "\"I shall tend to these island gardens as before until the Vek are no more.\"\"The remains of the Vek shall once again enrich the soul with their nutrients.\"\"The moment of my awakening in my origin timeline was there, on Archive. Its gardens need me again.\"\"Though forged on Detritus, Archive is my home. I will tend to it across every timeline, as before.\"\"I shall tend to this new timeline as I did the last. Perhaps when it is over, I may return to Archive's preserves and fight no more.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Revived",
+          "Description": "If this unit is dead, but gets repaired",
+          "Content": "\"My hibernation cycle has been interrupted.\"\"Have I been recycled?\"\"My life cycle has been rebooted.\"\"I awaken... again. Does the Vek infestation remain?\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Main",
+          "Description": "If this unit dies.",
+          "Content": "\"Beginning hibernation cycle.\"\"Hibernation cycle commencing.\"\"Entering self-reflective mode.\"\"All systems have completed their life cycles.\"\"A request: Do not bury me on Detritus.\"\"Recycle my components so other Mechs may continue the fight.\"\"Bury my components by my orchard on Archive.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response",
+          "Description": "If another unit dies.Use #main to say the dying unit's name.",
+          "Content": "\"My gardening tasks increase as my allies fall.\"\"May your remains feed the soil - and your Mech oxidize in the air.\"\"It is not death, #main_full, you are being recycled.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response_AI",
+          "Description": "If another Mech dies but it doesn't have a pilot to die.",
+          "Content": "\"I shall ensure your shell and components are recycled into a new Mech.\"\"Your components shall gain life in a new Mech.\"\"The Mech is but a shell, your components shall live on.\""
+        },
+        {
+          "Category": "*",
+          "Event": "TimeTravel_Win",
+          "Description": "Last thing pilot says before time traveling after a victory.",
+          "Content": "\"The Vek have been uprooted from this timeline. Now the islands may thrive.\"\"Vekticide complete. It is time for each of us to continue our cycle elsewhere.\"\"Vekticide complete. The islands are preserved, and balance restored.\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Start",
+          "Description": "Right when you lose",
+          "Content": "\"The... <warning> the... <emergency> the Grid that nourishes us is no more.\"\"The Grid has perished. Shortly, the islands will be no more.\"\"This island garden is lost. It belongs to the Vek parasites now.\"\"Vekticide has failed. Humanity are the parasites now.\"\"Our gardening has failed. Humanity's remains shall nourish the Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Response",
+          "Description": "Response to above",
+          "Content": "\"Initiating a temporal breach. Let the cycle of life and death continue.\"\"Breach initializing... farewell again, my Archive home.\"\"Another timeline is in need of Vekticide protocols. Initiating breach.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "UI Barks",
+          "Event": "Upgrade_PowerWeapon",
+          "Description": "Turn on a new weapon.",
+          "Content": "\"Is this a new gardening tool?\"\"This will enhance my Vekticide efforts.\"\"I am to balance the island ecology with this?\"\"I do not recognize this harvester configuration.\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_NoWeapon",
+          "Description": "If you have no weapon powered. This plays every time you remove all weapons from the Pilot.",
+          "Content": "\"Am I to return to my orchard on Archive?\"\"I may be of more use with gardening weaponry.\"\"I shall need a device for continuing Vekticide efforts.\"\"Accelerating the Vek cycle of life and death is impeded by a lack of weaponry.\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_PowerGeneric",
+          "Description": "Diverting reactor power to either Health or Move (basic Mech stats, not a weapon).",
+          "Content": "\"My Mech and I grow as one.\"\"As it feeds, my Mech grows strong.\"\"My Mech is nourished.\"\"The reactor nourishes my Mech's systems.\"\"This reactor shall ensure my Mech grows tall and strong.\"\"In the reactor's light, my Mech flourishes.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mid- Battle",
+          "Event": "MissionStart",
+          "Description": "Generic mission start",
+          "Content": "\"Vek parasites have infested the region. Activating Vekticide protocols.\"\"Vekticide protocols activated.\"\"Preparing recyclers to convert Vek into nutrients.\"\"Vek infestation detected in region. This garden must be sterilized.\"\"Let us use the Vek remains to nourish the soil.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_ResetTurn",
+          "Description": "Triggers after a turn reset",
+          "Content": "\"Time has been recycled.\"\"#squad have been recycled.\"\"Let us begin our Vekticide efforts anew.\"\"Localized breach may cause long-term environmental damage.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Dead",
+          "Description": "Generic mission end where enemies are all killed",
+          "Content": "\"Vekticide of region complete.\"\"Land has been cleared for planting.\"\"Nature preserve has been preserved.\"\"Vek garden pests have been eradicated.\"\"All available Vek nutrients have been distributed into the soil.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Retreat",
+          "Description": "Generic mission end when enemies retreat",
+          "Content": "\"Vekticide of region complete. Further gardening of other regions required.\"\"Nature preserve has been protected. Further gardening may be required.\"\"Vek garden pests are relocating to other regions.\"\"Nutrients of deceased Vek have been distributed into the soil.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Start",
+          "Description": "Plays at the start of the final mission",
+          "Content": "\"This island is a new biome... created by the Vek?\"\"Theory. Perhaps the Vek mean to recycle Old Earth using volcanic activity.\"\"Diverting all power to Vekticide protocols.\"\"This land mass appears to be recycling itself.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_StartResponse",
+          "Description": "Incoming power pylons",
+          "Content": "\"Pylons have begun their descent.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallStart",
+          "Description": "Plays at the start of the ground falling in the final mission",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallResponse",
+          "Description": "Plays once the ground shakes",
+          "Content": "\"New fissure detected beneath us.\"\"#squad is about to enrich the depths of this island with their nutrients.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Pylons",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Bomb",
+          "Description": "What's the plan?",
+          "Content": "\"The Vek infestation here is beyond our capabilities to exterminate.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombResponse",
+          "Description": "Before dropping the bomb",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_CaveStart",
+          "Description": "Plays at the start of the final cave section (after MissionFinal_BombResponse)",
+          "Content": "\"Do not allow the Vek to contaminate the device.\""
+        },
+        {
+          "Category": "*",
+          "Event": "MissionFinal_BombDestroyed",
+          "Description": "When the bomb is destroyed, another one is dropped and the battle length is extended.",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombArmed",
+          "Description": "",
+          "Content": "\"Bomb has awakened, signaling a drastic change in this biome.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PodIncoming",
+          "Description": "Pod is about to fall",
+          "Content": "\"A Time Pod is causing a disturbance in the atmosphere.\"\"A Time Pod is cutting its way through the clouds as it descends.\"\"A Time Pod is on approach. It may include contaminants to the soil in its wake.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodResponse",
+          "Description": "Response to above",
+          "Content": "\"That Time Pod has disturbed the soil. Shall we remove it?\"\"The soil has been contaminated by the Time Pod's impact.\"\"The Time Pod's landing has killed billions of soil-enriching bacteria.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodCollected_Self",
+          "Description": "Pod collected (by the pilot talking)",
+          "Content": "\"Time Pod has been safely extracted from habitat.\"\"Time Pod reclaimed. Its impact trench will need to be reseeded.\"\"Weeding efforts complete. One Time Pod removed.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodDestroyed_Obs",
+          "Description": "Pod destroyed (by anyone, including Vek, except the speaker)",
+          "Content": "\"Time Pod debris is now leaking into the soil.\"\"Time Pod... and potential occupant... now enrich the soil.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Mountain",
+          "Description": "Secret object was inside a mountainOnly needs 1 line per Pilot",
+          "Content": "\"Recycling the mountain has uncovered an unknown object buried within.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Ice",
+          "Description": "Secret object was under water after destroying iceOnly needs 1 line per Pilot",
+          "Content": "\"Fracturing the ice has revealed an unknown object beneath the surface.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceUsed",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"The unknown object is now broadcasting a signal.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_Arriving",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"An unknown object is descending through the atmosphere.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Detected",
+          "Description": "Emerges are queued.",
+          "Content": "\"Vek burrowing detected. Disruptions to soil catalogued.\"\"Vek subterranean disruptions increasing in magnitude. Preparing harvesting tools.\"\"Vek are tunneling up through the ground layer to reach the surface.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Success",
+          "Description": "Vek Emerges",
+          "Content": "\"I shall use all parts of these Vek in refertilizing the region.\"\"These Vek are ripe for harvest.\"\"These Vek are ready to be recycled.\"\"Vekticide protocols updated to account for new arrivals.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedMech",
+          "Description": "Mech blocks Emerging Vek",
+          "Content": "\"This Vek will remain planted in the soil.\"\"This Vek will remain in the soil until ready to be harvested.\"\"This Vek shall remain in the earth until we are ready to dispose of it.\"\"This Vek struggles, but will not escape.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedVek",
+          "Description": "Vek Block Emerging Vek",
+          "Content": "\"Vek is attempting to burrow through their own.\"\"The Vek is keeping the other Vek planted in the soil.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mech State",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_LowHealth",
+          "Description": "Mech has 1 hp.",
+          "Content": "\"The recycling of my Mech is imminent.\"\"I am about to enter hibernation mode.\"\"I may soon need to abdicate my gardening responsibilities.\"\"My Mech will soon be unable to tend this garden.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Webbed",
+          "Description": "Mech is webbed",
+          "Content": "\"This Vek has formed a cocoon around me.\"\"This Vek has cocooned me in a manner that is neither protective nor safe.\"\"The Vek has sprayed me with a biological adhesive in order to feed on me.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Shielded",
+          "Description": "Mech is shielded",
+          "Content": "\"Being confined by a shield interferes with obtaining seed samples.\"\"This shield will protect me from contaminating this habitat.\"\"I prefer this cocoon to those made by Vek webs.\"\"This shield technology would prove useful in greenhouse construction.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Repaired",
+          "Description": "Mech uses repair.",
+          "Content": "\"I have given my Mech what nourishment I can.\"\"Extinguished components uprooted. Mech reseeded with new parts.\"\"As my Mech tends to me, I tend to my Mech.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Self",
+          "Description": "Pilot levels up (not necessarily max rank)",
+          "Content": "\"I have optimized my Vekticide routines.\"\"New Vekticide protocols have finished compiling.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Obs",
+          "Description": "Pilot is observed to level up",
+          "Content": "\"#main_full has been optimized. Updating Vekticide routines.\"\"#main_full has resulted in a spike of Vekticide efficiency.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_ShieldDown",
+          "Description": "Mech's shield is removed",
+          "Content": "\"My shield has cycled back into dispersed energy.\"\"My shield has dispersed.\"\"Energy cocoon removed.\"\"Shield has dispersed. Like sparks. In a storm.\"\"Violence has shattered the tranquility of my shield.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Damage Done",
+          "Event": "",
+          "Description": "Damage commentary comes in three flavors:\"SELF\" : The Mech did themselves\n\"OBS\" : The Mech (or CEO) observed another Mech do it\n\"VEK\" : A Vek did it, and a CEO or Mech is commenting on that",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Drown",
+          "Description": "Vek drowns (from anyone / any cause)",
+          "Content": "\"That Vek's nutrients shall nourish the water.\"\"Vek has changed biomes.\"\"Vek has failed to adapt to new environmental conditions.\"\"Chance of Vek evolving gills before it drowns: 0%.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Fall",
+          "Description": "Vek falls down a hole (from anyone / any cause)",
+          "Content": "\"That Vek's nutrients shall nourish the land.\"\"Vek has failed to adapt to new environmental conditions.\"\"Vek lacks standard-issue propulsion engines.\"\"Chance of Vek evolving flight before it hits ground: 0%.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Smoke",
+          "Description": "Vek is put in smoke (from anyone / any cause)",
+          "Content": "\"The smoke is acting as a Vek repellent.\"\"Adding smoke dispersal to Vekticide routines.\"\"Particle dispersal interferes with Vek receptors.\"\"The smoke is acting as a deterrent to the Vek's aggression.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Frozen",
+          "Description": "Vek is frozen (from any cause except Snow Storm and Freeze Mine)",
+          "Content": "\"The Vek has been suspended in ice.\"\"The ice is acting as a deterrent to the Vek's aggression.\"\"The ice will suspend the Vek until its body can be recycled safely.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Self",
+          "Description": "",
+          "Content": "\"The Vek shall nourish the soil.\"\"Vek has been recycled.\"\"May the Vek nourish the soil.\"\"The Vek's essential nutrients have been dispersed.\"\"The Vek has transitioned into nutrients.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Obs",
+          "Description": "",
+          "Content": "\"The Vek shall nourish the soil.\"\"The Vek has been recycled.\"\"Make sure no part of it is wasted.\"\"Vek essential nutrients dispersed.\"\"Vek harvesting successful.\"\"The Vek has transitioned into nutrients.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Vek",
+          "Description": "",
+          "Content": "\"The Vek are accelerating their own life cycles.\"\"The Vek infestation is working against itself.\"\"The Vek are harvesting their own.\"\"The Vek are recycling the Vek.\"\"The Vek is dispersing the nutrients of the other Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Self",
+          "Description": "",
+          "Content": "\"These Vek shall nourish the soil.\"\"Vek have been recycled.\"\"Multiple Vek life cycles transitioned.\"\"May these Vek nourish the soil.\"\"Vek essential nutrients dispersed.\"\"Multiple Vek have transitioned into nutrients.\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Obs",
+          "Description": "",
+          "Content": "\"The Vek shall nourish the soil.\"\"The Vek life cycle has transitioned.\"\"Make sure no part of it is wasted.\"\"Vek essential nutrients dispersed.\"\"The Vek has transitioned into nutrients.\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Vek",
+          "Description": "",
+          "Content": "\"The Vek are accelerating their own life cycles.\"\"The Vek have started to harvest their own.\"\"The Vek is dispersing the nutrients of its own kind.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Self",
+          "Description": "Note that because a destroyed mountain (and building) can then be moved through, some lines reflect the fact the player can now move into these tiles.",
+          "Content": "\"The mountain has been dispersed.\"\"Mountain recycled. Area is now suitable for planting.\""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Obs",
+          "Description": "",
+          "Content": "\"The mountain has been dispersed.\"\"Mountain recycled. Amount of arable land in region increased.\""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Vek",
+          "Description": "",
+          "Content": "\"Vek has dispersed the mountain.\"\"Terrain has been leveled and is now suitable for planting.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PowerCritical",
+          "Description": "",
+          "Content": "\"The Grid is losing its ability to nourish us.\"\"These battlefield conditions are damaging the Grid.\"\"The Grid is unused to these battlefield conditions.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Self",
+          "Description": "",
+          "Content": "\"Human silo destroyed. Multiple lives have been recycled.\"\"The #corp civilians will nurture the soil.\"\"Human silo destroyed. Failure in Vekticide protocols logged.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Obs",
+          "Description": "",
+          "Content": "\"Human silo destroyed. Multiple lives have been recycled.\"\"The #corp civilians will nurture the soil.\"\"Human silo destroyed. Failure in Vekticide protocols logged.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Vek",
+          "Description": "",
+          "Content": "\"Human silo destroyed. Multiple lives have been recycled.\"\"Those #corp civilians will nurture the soil. The Vek will follow.\"\"Human silo destroyed. Failure in Vekticide protocols logged.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Resisted",
+          "Description": "Building resists damage, currently anyone can comment but I can change this to _Obs/_Self/_Vek if we think it's worth it.",
+          "Content": "\"Human silo has resisted the impact.\"\"Human silo still intact.\"\"Human silo intact. Nourishment to Grid uninterrupted.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mission Specific",
+          "Event": "Mission_Train_TrainStopped",
+          "Description": "",
+          "Content": "\"#corp train compromised but not destroyed.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Train_TrainDestroyed",
+          "Description": "",
+          "Content": "\"#corp train has been destroyed. Advise removing railway to create more arable land.\"\"#corp train destroyed. Advise repurposing train hull as a planter for saplings.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Block_Reminder",
+          "Description": "Remind player to block emerging Vek",
+          "Content": "\"We are required to prevent Vek from surfacing and damaging the region's topsoil.\"\"The Vek are to remain planted in the ground. We must prevent them from surfacing.\""
+        },
+        {
+          "Category": "Archive Inc",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Airstrike_Incoming",
+          "Description": "",
+          "Content": "\"Sensors detect an Archive jet flying with primitive propulsion systems.\"\"An Archive bomber is about to do considerable damage to the region's topsoil.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_Activated",
+          "Description": "Both tanks survived to activation",
+          "Content": "\"The Old Earth tanks are activated, and ready to add Vek nutrients to the soil.\"\"The Old Earth tanks are activated... and asking if our enemies are 'communists'.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_PartialActivated",
+          "Description": "Only one tank survived to activation",
+          "Content": "\"The surviving Old Earth military unit is indicating it is ready for action.\"\"The remaining Old Earth tank is activated, and ready to add Vek nutrients to the soil.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Dam_Reminder",
+          "Description": "Remind player to destroy the Dam",
+          "Content": "\"We are required to recycle the dam to irrigate the region.\"\"We have been instructed to recycle the dam to reduce Vek burrowing efforts.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Dam_Destroyed",
+          "Description": "After the completed animation of the dam drowning things",
+          "Content": "\"Dam recycled. River is now irrigating the region.\"\"Water has formed a natural barrier against Vek burrowing attempts.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Destroyed",
+          "Description": "Triggers only when the first satellite is destroyed",
+          "Content": "\"Satellite recycled. Its rocket emissions will also no longer contaminate the region.\"\"Rocket has been recycled. Detecting chemical residue bleeding into soil.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Imminent",
+          "Description": "Triggers when the Satellite queues its launch (the turn before it actually launches) -- It can trigger for either satellite, or both, it's randomized.",
+          "Content": "\"Rocket is about to leave this habitat.\"\"Short-term damage from rocket exhaust offset by long-term gain in Vekticide efforts.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Launch",
+          "Description": "Triggers when the satellite actually takes off, can trigger for either or both",
+          "Content": "\"Countless insects and plants have given their lives for this launch.\"\"Rocket has left habitat and is entering new habitat in upper atmosphere.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Mines_Vek",
+          "Description": "Vek Killed by Mine",
+          "Content": "\"Garden proximity mine has assisted in Vekticide efforts.\"\"Vek infestation countered by proximity mine.\"\"Proximity mine is assisting in Vek recycling efforts.\"\"New arable land has been cleared by proximity mine.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "RST",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Destroyed",
+          "Description": "If the terraformer is destroyed",
+          "Content": "\"Terraformer has been recycled. May it never be rebuilt.\"\"Crude, unplanned terraforming efforts have been put on hold. Indefinitely.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Attacks",
+          "Description": "After the player uses the terraformer (not necessarily the first, random chance)This will obey the same rules as other barks, where something like a pilot death will take priority.",
+          "Content": "\"Terrain has been crudely tilled.\"\"R.S.T. uses a hammer when a tractor will do.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Cataclysm_Falling",
+          "Description": "Triggers when ground is falling during either RST mission with falling ground",
+          "Content": "\"Terrain is unstable. A new geologic survey of the area will be required.\"\"These fissures will only stop ground Vek. Watch your sensors for airborne Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Lightning_Strike_Vek",
+          "Description": "If lightning hits a Vek",
+          "Content": "\"The storm has recycled the Vek.\"\"The storm has disintegrated many of the Vek's essential nutrients.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Solar_Destroyed",
+          "Description": "Solar panel destroyed",
+          "Content": "\"Solar farm recycled.\"\"Solar collection efforts have been halted.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Force_Reminder",
+          "Description": "Remind player to destroy the mountains",
+          "Content": "\"Mountains must be removed to prevent Vek hive formation.\"\"Mountains still need to be recycled.\""
+        },
+        {
+          "Category": "Pinnacle",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Freeze_Mines_Vek",
+          "Description": "Vek Frozen by Mine. This takes priority over all other Freeze conditions.",
+          "Content": "\"The cryo-mine has suspended the Vek in ice.\"\"The cryo-mine has rendered the Vek inert until we dispose of it.\"\"The cryo-mine has suspended the Vek life cycle.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Destroyed",
+          "Description": "Bot Factory destroyed",
+          "Content": "\"Robotics factory operations have been halted. Indefinitely.\"\"Malfunctioning robot construction efforts have been halted.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Spawning",
+          "Description": "Bot Factory spawning",
+          "Content": "\"Malfunctioning robotics factory has produced another malfunctioning robot.\"\"Robotics factory is continuing operations.\"\"Robotics factory is still operational.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Reactivation_Thawed",
+          "Description": "A selection of enemies on the map are freed from ice (might be bots)",
+          "Content": "\"The hostile is no longer suspended in ice.\"\"The hostile has ended its hibernation period.\"\"The ice is no longer halting enemy movement.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenVek",
+          "Description": "Snowstorm freezes Vek",
+          "Content": "\"The storm has suspended the Vek in ice.\"\"The storm is acting as a deterrent to the Vek's aggression.\"\"The storm has rendered the Vek inert until we dispose of it.\"\"The storm has suspended the Vek until it can be recycled safely.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenMech",
+          "Description": "Snowstorm freezes speaking Mech—This takes priority if Vek are frozen as well",
+          "Content": "\"My #self_mech has been suspended in ice.\"\"The storm has rendered my #self_mech inert.\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Self",
+          "Description": "Player kills a hostile Bot",
+          "Content": "\"Malfunctioning robot has been recycled.\"\"Short-term battlefield advantage offset by loss of potential long-term robot ally.\"\"Chance of reassigning damaged robot to recovery at Archive: 0%.\"\"Robot has been reduced to base components.\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Obs",
+          "Description": "Player is observed to kill a hostile Bot",
+          "Content": "\"Malfunctioning robot has been recycled.\"\"Short-term battlefield advantage offset by loss of potential long-term robot ally.\"\"Chance of reassigning damaged robot to recovery at Archive: 0%.\"\"Robot has been reduced to base components.\""
+        },
+        {
+          "Category": "Detritus",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Destroyed",
+          "Description": "Player was supposed to defend the Disposal unit and it was destroyed—Shooter could be anyone",
+          "Content": "\"Detritus toxin deployer destroyed. A.C.I.D. production halted.\"\"Detritus' poisonous chemical deployment system has been shut down.\"\"A.C.I.D. launcher recycled. As one almost recycled me before I was sold to Archive.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Activated",
+          "Description": "Player uses Disposal Unit—mass damage",
+          "Content": "\"Detritus toxin deployer has been activated. Wasteful. Inefficient.\"\"Detritus toxin deployer has released more A.C.I.D. nanites to destroy habitat.\"\"Stay clear of A.C.I.D. dispersal. Dispersal nearly ended this unit before joining Archive.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Barrels_Destroyed",
+          "Description": "A.C.I.D. barrel destroyed (as per mission objectives) -- shooter unclear",
+          "Content": "\"Detritus toxins now seeping into Vek hives.\"\"Containment vat has been cut open, and A.C.I.D. is bleeding into surrounding terrain.\"\"A.C.I.D. is being absorbed into the ground, and is eating its way toward Vek tunnels.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Power_Destroyed",
+          "Description": "Power plant is destroyed",
+          "Content": "\"Power plant has been recycled.\"\"Power plant operation cycle has halted. Indefinitely.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Teleporter_Mech",
+          "Description": "Mech teleports (self)",
+          "Content": "\"Teleport successful. Recalibrating systems.\"\"I have been recycled and reassembled.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Belt_Mech",
+          "Description": "Mech moves on conveyor (self) (does not hit anything, no damage, etc.)",
+          "Content": "\"Conveyance successful.\"\"Detritus uses these to transport waste.\""
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Location": "Prospero can be acquired by completing islands or fromTime Pods.",
+    "Background": "In its original timeline, Prospero was a recycler robot fromDetritus. Its job was to monitor region safety in Detritus disposal sites, but was severely damaged in a disposal accident (this was in the days before Vikram was CEO). The \"recycled recycler\" robot was sold at a discount to Archive as a groundskeeper for some of the nature preserves, and it seemed to take to the work, translating its knowledge of chemistry and recycling technology to help cultivate gardens (and when it wasn't able to do this, it would devour all books on botany, biology, and even spiritual books related to nurturing and growing of all life forms). It would have likely have remained a quiet hulking gardener were it not for the emergence of theVek. When the Vek erupted on Archive, the robot followed its directives to protect the nature preserves… and saw the Vek as nothing more than garden pests to be eliminated to protect the plants. When Archive was able to send reinforcements to the region, they found Prospero still quietly tending its garden, now fertilized with Vek corpses.\nMuch likeGana, Prospero is viewed with some suspicion due to the robot uprising, but like Gana, Prospero follows orders and has proven itself on many occasions. When traversing to a new timeline, Prospero seems to actively avoid returning to Detritus. The reason for this is unknown.",
+    "Personality": "Prospero has been repurposed to operate its Mech in harsh conditions. Its English is fine but isn't in love with the new \"work\" conditions.",
+    "Strategy": "Prospero's 1 point flight passive can be used to great effect in \"pull\"-based Mechs such as theHook Mechof theBlitzkriegsquad, or Mechs retrofitted with the swapTeleporterthat otherwise cannot safely hover over dangerous terrain. As the passive is not free, it's best paired with Mechs who get the most out of versatile positioning."
+  },
+  "full_text": "Prospero\nNickname\nThe Recycler\nSpecial\nFlying: Mech gains Flying.\nRequires 1 Power.\nCorporation\nDetritus Disposal\nProspero\nis a\npilot\nin\nInto the Breach\n.\nContents\n1\nLocation\n2\nBackground\n3\nPersonality\n4\nStrategy\n5\nDialogue\nLocation\n[\n]\nProspero can be acquired by completing islands or from\nTime Pods\n.\nBackground\n[\n]\nIn its original timeline, Prospero was a recycler robot from\nDetritus\n. Its job was to monitor region safety in Detritus disposal sites, but was severely damaged in a disposal accident (this was in the days before Vikram was CEO). The \"recycled recycler\" robot was sold at a discount to Archive as a groundskeeper for some of the nature preserves, and it seemed to take to the work, translating its knowledge of chemistry and recycling technology to help cultivate gardens (and when it wasn't able to do this, it would devour all books on botany, biology, and even spiritual books related to nurturing and growing of all life forms). It would have likely have remained a quiet hulking gardener were it not for the emergence of the\nVek\n. When the Vek erupted on Archive, the robot followed its directives to protect the nature preserves… and saw the Vek as nothing more than garden pests to be eliminated to protect the plants. When Archive was able to send reinforcements to the region, they found Prospero still quietly tending its garden, now fertilized with Vek corpses.\nMuch like\nGana\n, Prospero is viewed with some suspicion due to the robot uprising, but like Gana, Prospero follows orders and has proven itself on many occasions. When traversing to a new timeline, Prospero seems to actively avoid returning to Detritus. The reason for this is unknown.\nPersonality\n[\n]\nProspero has been repurposed to operate its Mech in harsh conditions. Its English is fine but isn't in love with the new \"work\" conditions.\nStrategy\n[\n]\nProspero's 1 point flight passive can be used to great effect in \"pull\"-based Mechs such as the\nHook Mech\nof the\nBlitzkrieg\nsquad, or Mechs retrofitted with the swap\nTeleporter\nthat otherwise cannot safely hover over dangerous terrain. As the passive is not free, it's best paired with Mechs who get the most out of versatile positioning.\nDialogue\n[\n]\nCategory\nEvent\nDescription\nContent\nGame States\nGamestart\nThis happens at the start of a new game\n\"Detecting high concentrations of carnivorous insects infesting all corporate islands. Activating Vekticide protocols.\"\n\"Vek parasites have infested the environmental preserves on the islands. I shall rectify this.\"\n\"These islands are my gardens. As I tend the gardens, Vek remains shall nourish the soil.\"\n\"These island biomes are threatened by Vek. I shall see to it their remains feed the soil.\"\nFTL_Found\nHappens on the island screen after finding the FTL pilot in a pod.\n\"The pilot is unaware of the damage done to the soil by their landing, but their actions seem allied with ours.\"\nFTL_Start\nHappens after you start a new game with an FTL pilot. Only needed for Recruits\n*\nGamestart_PostVictory\nStart of new game after winning\n\"I shall tend to these island gardens as before until the Vek are no more.\"\n\"The remains of the Vek shall once again enrich the soul with their nutrients.\"\n\"The moment of my awakening in my origin timeline was there, on Archive. Its gardens need me again.\"\n\"Though forged on Detritus, Archive is my home. I will tend to it across every timeline, as before.\"\n\"I shall tend to this new timeline as I did the last. Perhaps when it is over, I may return to Archive's preserves and fight no more.\"\nDeath_Revived\nIf this unit is dead, but gets repaired\n\"My hibernation cycle has been interrupted.\"\n\"Have I been recycled?\"\n\"My life cycle has been rebooted.\"\n\"I awaken... again. Does the Vek infestation remain?\"\nDeath_Main\nIf this unit dies.\n\"Beginning hibernation cycle.\"\n\"Hibernation cycle commencing.\"\n\"Entering self-reflective mode.\"\n\"All systems have completed their life cycles.\"\n\"A request: Do not bury me on Detritus.\"\n\"Recycle my components so other Mechs may continue the fight.\"\n\"Bury my components by my orchard on Archive.\"\nDeath_Response\nIf another unit dies.\nUse #main to say the dying unit's name.\n\"My gardening tasks increase as my allies fall.\"\n\"May your remains feed the soil - and your Mech oxidize in the air.\"\n\"It is not death, #main_full, you are being recycled.\"\nDeath_Response_AI\nIf another Mech dies but it doesn't have a pilot to die.\n\"I shall ensure your shell and components are recycled into a new Mech.\"\n\"Your components shall gain life in a new Mech.\"\n\"The Mech is but a shell, your components shall live on.\"\n*\nTimeTravel_Win\nLast thing pilot says before time traveling after a victory.\n\"The Vek have been uprooted from this timeline. Now the islands may thrive.\"\n\"Vekticide complete. It is time for each of us to continue our cycle elsewhere.\"\n\"Vekticide complete. The islands are preserved, and balance restored.\"\nGameover_Start\nRight when you lose\n\"The... <warning> the... <emergency> the Grid that nourishes us is no more.\"\n\"The Grid has p"
+}

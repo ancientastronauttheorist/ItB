@@ -1,0 +1,50 @@
+{
+  "name": "Rift_Walkers",
+  "url": "https://intothebreach.fandom.com/wiki/Rift_Walkers",
+  "infobox": {
+    "_title": "Rift Walkers"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Combat Mech",
+          "Class": "Prime",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Titan Fist(Prime)EffectPunch an adjacent tile, damaging and pushing it.(2 damage)Upgrade IDash ()Charge any distance before punching the target.Upgrade II+2 Damage ()Increases damage by 2.",
+          "Special": "Titan Fist(Prime)"
+        },
+        {
+          "Name": "Cannon Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Taurus Cannon(Brute)EffectFires a powerful projectile that damages and pushes its target.(1 damage)Upgrade I+1 Damage ()Increases damage by 1.Upgrade II+1 Damage ()Increases damage by 1.",
+          "Special": "Taurus Cannon(Brute)"
+        },
+        {
+          "Name": "Artillery Mech",
+          "Class": "Ranged",
+          "Health": "2",
+          "Move speed": "3",
+          "Default loadout": "Artemis Artillery(Ranged)EffectPowerful artillery strike, damaging a single tile and pushing adjacent tiles.(1 damage)Upgrade IBuildings Immune ()This attack will no longer damage Grid Buildings.Upgrade II+2 Damage ()Increases damage by 2.",
+          "Special": "Artemis Artillery(Ranged)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "Rift Walkersis one of theSquadsfromInto The Breach. They are automatically available at the start of a new game profile.",
+    "Strategies": "  - The Rift Walkers is a basic, straightforward squad who works well as an introduction, but have a surprisingly weak mid-game and their default weapon upgrades require a lot of Reactors.\n  - The squad lacks mobility, so spending Power on +1 Move or Dash or equipping mobility-oriented pilots for the Combat and Cannon Mech helps.\n  - The squad's weaponry are basic, so they can swap out weapons and pilots more freely than other squads that are more synergy-dependent.\n  - Islands with 2-HP or lower enemies are very manageable with the Rift Walkers, as their default weapons deal sufficient damage to kill two of them at a time with both direct damage and bump damage combined.\n  - Conversely, theShell PsionandBot Leaderare particularly difficult to deal with this squad until their weapons are upgraded or swapped out for other options later."
+  },
+  "full_text": "Rift Walkers\n“\nThese were the very first Mechs to fight against the Vek. They are efficient and reliable.\n„\nRift Walkers\nis one of the\nSquads\nfrom\nInto The Breach\n. They are automatically available at the start of a new game profile.\nContents\n1\nMechs\n2\nSquad Achievements\n3\nStrategies\n4\nTrivia\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nCombat Mech\nPrime\n3\n3\nTitan Fist\n(\nPrime\n)\nEffect\nPunch an adjacent tile, damaging and pushing it.\n(2 damage)\nUpgrade I\nDash (\n)\nCharge any distance before punching the target.\nUpgrade II\n+2 Damage (\n)\nIncreases damage by 2.\nCannon Mech\nBrute\n3\n3\nTaurus Cannon\n(\nBrute\n)\nEffect\nFires a powerful projectile that damages and pushes its target.\n(1 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases damage by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases damage by 1.\nArtillery Mech\nRanged\n2\n3\nArtemis Artillery\n(\nRanged\n)\nEffect\nPowerful artillery strike, damaging a single tile and pushing adjacent tiles.\n(1 damage)\nUpgrade I\nBuildings Immune (\n)\nThis attack will no longer damage Grid Buildings.\nUpgrade II\n+2 Damage (\n)\nIncreases damage by 2.\nSquad Achievements\n[\n]\nWatery Grave\nDrown 3 enemies in water in a single battle\nRamming Speed\nKill an enemy 5 or more tiles away with a Dash Punch\nIsland Secure\nComplete the first Corporate Island\nStrategies\n[\n]\nThe Rift Walkers is a basic, straightforward squad who works well as an introduction, but have a surprisingly weak mid-game and their default weapon upgrades require a lot of Reactors.\nThe squad lacks mobility, so spending Power on +1 Move or Dash or equipping mobility-oriented pilots for the Combat and Cannon Mech helps.\nThe squad's weaponry are basic, so they can swap out weapons and pilots more freely than other squads that are more synergy-dependent.\nIslands with 2-HP or lower enemies are very manageable with the Rift Walkers, as their default weapons deal sufficient damage to kill two of them at a time with both direct damage and bump damage combined.\nConversely, the\nShell Psion\nand\nBot Leader\nare particularly difficult to deal with this squad until their weapons are upgraded or swapped out for other options later.\nTrivia\n[\n]\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

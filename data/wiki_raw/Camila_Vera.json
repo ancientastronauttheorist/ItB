@@ -1,0 +1,719 @@
+{
+  "name": "Camila_Vera",
+  "url": "https://intothebreach.fandom.com/wiki/Camila_Vera",
+  "infobox": {
+    "_title": "Camila Vera",
+    "Nickname": "The Soldier",
+    "Special": "Evasion: Mech unaffected by Webbing and Smoke.",
+    "Corporation": "R.S.T. Corporation"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Category",
+        "Event",
+        "Description",
+        "Content"
+      ],
+      "rows": [
+        {
+          "Category": "Game States",
+          "Event": "Gamestart",
+          "Description": "This happens at the start of a new game",
+          "Content": "\"All right, listen up. Our primary objective is to hold these islands. We do that, we might just have a chance at winning this war.\"\"Have to learn from the mistakes I made in the last timeline... if so, then maybe R.S.T. will survive.\"\"There's R.S.T., and it looks like my foster mother is alive in this timeline... but there's no trace of me. I wonder if Kern ever knew me?\"\"First order of business. We need to roll out Mech production and prioritize weapons manufacturing... what are you all standing around for? Move!\"\"Attention, all islands - we don't have much time. I need pilots for the war ahead - either volunteers or conscripts, it doesn't matter to me.\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Found",
+          "Description": "Happens on the island screen after finding the FTL pilot in a pod.",
+          "Content": "\"Whatever this pilot is, my systems can't translate what it's saying, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Start",
+          "Description": "Happens after you start a new game with an FTL pilot. Only needed for Recruits",
+          "Content": ""
+        },
+        {
+          "Category": "*",
+          "Event": "Gamestart_PostVictory",
+          "Description": "Start of new game after winning",
+          "Content": "\"A second timeline... and another chance to save it like we did before. I can do this. WE can do this.\"\"Commander, I am Officer #self_full. I'm here from a previous timeline where we defeated the Vek. I'm here to help.\"\"Commander... it's... it's good to hear your voice again. I am Officer #self_full, and I come from a timeline where we beat the Vek. I can show you how.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Revived",
+          "Description": "If this unit is dead, but gets repaired",
+          "Content": "\"Nnh... #self_second, reporting for duty.\"\"Time for round two.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Main",
+          "Description": "If this unit dies.",
+          "Content": "\"So... this is how I die...\"\"This is #self_second, signing off.\"\"...Tell Kern I fought to the end.\"\"This is it for me - the rest of you, keep fighting!\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response",
+          "Description": "If another unit dies.Use #main to say the dying unit's name.",
+          "Content": "\"Pilot down! I want no more mistakes!\"\"Everyone, focus! We can't lose anyone else!\"\"We lost #main_second! Dammit!\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response_AI",
+          "Description": "If another Mech dies but it doesn't have a pilot to die.",
+          "Content": "\"Got a Mech down!\"\"#main_mech's down!\"\"#main_mech's out of commission!\""
+        },
+        {
+          "Category": "*",
+          "Event": "TimeTravel_Win",
+          "Description": "Last thing pilot says before time traveling after a victory.",
+          "Content": "\"It's... been an honor, commander, serving you and the #squad.\"\"May we meet again when every timeline has been saved.\"\"No goodbyes. Other timelines need us.\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Start",
+          "Description": "Right when you lose",
+          "Content": "\"Power Grid's down. Reports of Vek swarming the islands... looks like we have no choice...\"\"Grid's failed! Island's being overrun!\"\"It's just like my first timeline...I'm sorry, mother... your adopted daughter's failed you.\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Response",
+          "Description": "Response to above",
+          "Content": "\"Activate the breach! We'll have to try again!\"\"We need to evac! Activating breach now!\"\"Initiating breach protocols on my mark - now!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "UI Barks",
+          "Event": "Upgrade_PowerWeapon",
+          "Description": "Turn on a new weapon.",
+          "Content": "\"Just give me my rifle and I'll be happy.\"\"...If you think this is necessary, commander.\"\"This thing's bigger than I am.\"\"Weapon primed, commander.\"\"Weapon checks out, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_NoWeapon",
+          "Description": "If you have no weapon powered. This plays every time you remove all weapons from the Pilot.",
+          "Content": "\"Do you expect me to use my fists? ...Commander.\"\"I hope you're planning to give that back.\"\"I'll need that back - or something stronger.\"\"Are you relieving me of duty?\"\"Surely you trust me with a weapon by now.\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_PowerGeneric",
+          "Description": "Diverting reactor power to either Health or Move (basic Mech stats, not a weapon).",
+          "Content": "\"Understood.\"\"Reactor power increased.\"\"Core installed.\"\"This boost should do the job.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mid- Battle",
+          "Event": "MissionStart",
+          "Description": "Generic mission start",
+          "Content": "\"Enemies sighted. Ready on your mark, commander.\"\"#self_mech, standing by.\"\"Deployment successful. Ready when you are, commander.\"\"#self_second, reporting in.\"\"#self_second, ready to engage.\"\"Deployment successful, all systems go.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_ResetTurn",
+          "Description": "Triggers after a turn reset",
+          "Content": "\"Nnnh... localized breaches make my head hurt.\"\"Can't do that again for a while.\"\"We got a second chance, let's make it count.\"\"Localized breach successful, commander... er, this may be the first time you've heard this.\"\"Localized breach successful, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Dead",
+          "Description": "Generic mission end where enemies are all killed",
+          "Content": "\"Vek eliminated, commander.\"\"Mission was a success, commander. All Vek have been destroyed.\"\"All Vek eliminated, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Retreat",
+          "Description": "Generic mission end when enemies retreat",
+          "Content": "\"Vek have been routed, commander.\"\"Vek driven off. Ready for evac, commander.\"\"We've driven the Vek back for now. #squad, proceed to extraction zone.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Start",
+          "Description": "Plays at the start of the final mission",
+          "Content": "\"...This is for every timeline they've destroyed.\"\"We're here. The central Vek hive.\"\"Picking up tectonic activity... watch for lava, that volcano's active.\"\"Mother, I failed to save you in my first timeline... I won't fail you in this one.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_StartResponse",
+          "Description": "Incoming power pylons",
+          "Content": "\"Picking up the pylon drop on sensors.\"\"Pylons are away! Should touch down any second.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallStart",
+          "Description": "Plays at the start of the ground falling in the final mission",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallResponse",
+          "Description": "Plays once the ground shakes",
+          "Content": "\"This damn island's trying to swallow us alive!\"\"Seismic readings are off the charts!\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Pylons",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Bomb",
+          "Description": "What's the plan?",
+          "Content": "\"If we hope to destroy this hive, we'll need a lot more bombs.\"\"This hive... it's too large for us to destroy with our Mech weaponry.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombResponse",
+          "Description": "Before dropping the bomb",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_CaveStart",
+          "Description": "Plays at the start of the final cave section (after MissionFinal_BombResponse)",
+          "Content": "\"Affirmative. You heard the CEO, people, let's get this done.\""
+        },
+        {
+          "Category": "*",
+          "Event": "MissionFinal_BombDestroyed",
+          "Description": "When the bomb is destroyed, another one is dropped and the battle length is extended.",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombArmed",
+          "Description": "",
+          "Content": "\"Bomb's activated! It's about to blow!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PodIncoming",
+          "Description": "Pod is about to fall",
+          "Content": "\"Foreign object incoming!\"\"Time Pod incoming!\"\"Got a Pod drop!\""
+        },
+        {
+          "Category": "",
+          "Event": "PodResponse",
+          "Description": "Response to above",
+          "Content": "\"We need trained soldiers, not more toys to play with.\"\"Don't break formation - mission first, then we secure that payload.\"\"Focus on the mission, not the Pod.\"\"We do the job first, rescue the Pod after.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodCollected_Self",
+          "Description": "Pod collected (by the pilot talking)",
+          "Content": "\"Time Pod is in the cargo hold.\"\"Time Pod's recovered, commander.\"\"We've got the Pod locked up tight.\"\"Pod's in the clear. Let's get the rest of the job done.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodDestroyed_Obs",
+          "Description": "Pod destroyed (by anyone, including Vek, except the speaker)",
+          "Content": "\"Time Pod's destroyed, commander.\"\"Pod's lost.\"\"Negative on recovering that Pod, commander.\"\"Nothing we can do about the Pod. Take it out on the Vek!\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Mountain",
+          "Description": "Secret object was inside a mountainOnly needs 1 line per Pilot",
+          "Content": "\"...Picking up strange readings from that mountain, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Ice",
+          "Description": "Secret object was under water after destroying iceOnly needs 1 line per Pilot",
+          "Content": "\"...Picking up strange readings from under the ice, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceUsed",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"I... I think I activated some sort of beacon, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_Arriving",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"...What the hell is that?\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Detected",
+          "Description": "Emerges are queued.",
+          "Content": "\"Incoming enemy reinforcements!\"\"Got more Vek coming up from below!\"\"Vek digging to the surface!\"\"Got Vek approaching topside!\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Success",
+          "Description": "Vek Emerges",
+          "Content": "\"Great. More Vek.\"\"Let's put these Vek back in the ground.\"\"Let's send these Vek back where they came from.\"\"Vek topside, let's put them down!\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedMech",
+          "Description": "Mech blocks Emerging Vek",
+          "Content": "\"I've got this Vek pinned!\"\"I've got this Vek blocked!\"\"This Vek's covered!\"\"This Vek's not going anywhere.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedVek",
+          "Description": "Vek Block Emerging Vek",
+          "Content": "\"Let the Vek bastards get in each other's way trying to play catch up with us!\"\"That Vek's blocking the other one!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mech State",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_LowHealth",
+          "Description": "Mech has 1 hp.",
+          "Content": "\"Nnh! Taking hits here!\"\"Nnh! Down... but not out!\"\"Another hit, I'm out of the fight!\"\"Hull's taking hits!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Webbed",
+          "Description": "Mech is webbed",
+          "Content": "\"That web won't stop me, you son of a bitch.\"\"Think that web would stop me, Vek? Think again.\"\"Evasive maneuvers complete. Vek web went high and wide.\"\"This Vek webbing won't stop me. I'm clear!\"\"Evaded the Vek's web! Free and clear!\"\"Vek tried to web me, but I saw it coming a mile away.\"\"Try your webs on someone a little slower next time, Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Shielded",
+          "Description": "Mech is shielded",
+          "Content": "\"Shield up.\"\"Shield at 100%.\"\"Every little bit helps.\"\"Shield? I'll take it.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Repaired",
+          "Description": "Mech uses repair.",
+          "Content": "\"Repaired and still in the fight!\"\"My #self_mech is repaired!\"\"It's a quick fix, but it'll have to do.\"\"That'll last for now.\"\"This'll hold until we're back on the Carrier.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Self",
+          "Description": "Pilot levels up (not necessarily max rank)",
+          "Content": "\"A promotion? My foster mother would be proud.\"\"A promotion - wish my foster mother had survived to see this.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Obs",
+          "Description": "Pilot is observed to level up",
+          "Content": "\"That promotion means added responsibility. Be sure to share what you've learned with others.\"\"You're getting skilled with your Mech, Pilot #main_second - well done.\"\"Congratulations - you've earned that promotion, soldier.\"\"You've come a long way, Pilot #main_second. But we still have a long way to go.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_ShieldDown",
+          "Description": "Mech's shield is removed",
+          "Content": "\"Shield is down!\"\"Lost the shield!\"\"Shield absorbed the damage!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Damage Done",
+          "Event": "",
+          "Description": "Damage commentary comes in three flavors:\"SELF\" : The Mech did themselves\n\"OBS\" : The Mech (or CEO) observed another Mech do it\n\"VEK\" : A Vek did it, and a CEO or Mech is commenting on that",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Drown",
+          "Description": "Vek drowns (from anyone / any cause)",
+          "Content": "\"Well done, let water do the work if you can.\"\"Drowning works for ground Vek, but watch out for any fliers.\"\"Thank god we haven't encountered any amphibious Vek...\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Fall",
+          "Description": "Vek falls down a hole (from anyone / any cause)",
+          "Content": "\"Vek in the hole!\"\"Vek's off the field.\"\"Fall should kill that Vek.\"\"Used to call that an 'R.S.T. special'. Still do.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Smoke",
+          "Description": "Vek is put in smoke (from anyone / any cause)",
+          "Content": "\"Smoke can't stop me, but it can stop Vek.\"\"Have to be R.S.T.-trained like I am to fight in storms, Vek.\"\"The Vek can't maneuver in the smoke like my Mech can.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Frozen",
+          "Description": "Vek is frozen (from any cause except Snow Storm and Freeze Mine)",
+          "Content": "\"Vek's been frozen, commander.\"\"Vek's on ice.\"\"That Vek'll have trouble punching through that ice.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Self",
+          "Description": "",
+          "Content": "\"Target down.\"\"Vek's down, commander.\"\"Vek down. One by one, we'll get this done.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Obs",
+          "Description": "",
+          "Content": "\"Good kill, #main_second.\"\"Clean kill, #main_second.\"\"One less Vek to worry about...\"\"Good one, #main_second! Keep up the pressure!\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Vek",
+          "Description": "",
+          "Content": "\"One less problem to worry about, thanks to the Vek...\"\"The Vek are taking each other out!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Self",
+          "Description": "",
+          "Content": "\"Two more targets eliminated!\"\"Two Vek down!\"\"I've taken care of these two!\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Obs",
+          "Description": "",
+          "Content": "\"Good one, #main_second.\"\"Nicely done, #main_second.\"\"Way to thin the herd, #main_second.\"\"Come on, #squad, we going to let #main_second do all the work?\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Vek",
+          "Description": "",
+          "Content": "\"The Vek are clearing the board for us.\"\"A few more like that, and we can pack it up.\"\"They're turning on each other - but don't let your guard down.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Self",
+          "Description": "Note that because a destroyed mountain (and building) can then be moved through, some lines reflect the fact the player can now move into these tiles.",
+          "Content": "\"Mountain's gone.\"\"At least it gives us some space to maneuver...\""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Obs",
+          "Description": "",
+          "Content": "\"Mountain's gone.\"\"At least you gave us some space to maneuver...\""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Vek",
+          "Description": "",
+          "Content": "\"At least the Vek gave us some space to maneuver...\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PowerCritical",
+          "Description": "",
+          "Content": "\"Grid's almost gone!\"\"Protect the Grid or we're done for!\"\"Grid's critical! We lose it, this timeline's done for!\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Self",
+          "Description": "",
+          "Content": "\"I had no choice.\"\"I'll report my actions to CEO #ceo_second myself.\"\"I'll tell the #corp families myself.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Obs",
+          "Description": "",
+          "Content": "\"Don't think about the building. Keep fighting.\"\"That building... you had no choice.\"\"It's a terrible loss, but keep your head in the fight.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Vek",
+          "Description": "",
+          "Content": "\"We can't let the Vek do any more damage!\"\"I swear the Vek will answer for that.\"\"That Vek that took down the building? Mine.\"\"That Vek's going to answer for killing those people...\"\"That Vek's going to find payback's a bitch.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Resisted",
+          "Description": "Building resists damage, currently anyone can comment but I can change this to _Obs/_Self/_Vek if we think it's worth it.",
+          "Content": "\"#corp building's intact!\"\"Civilians reporting in - no casualties from the hit!\"\"#corp citizens in that building - they're safe!\"\"#corp building reporting minimal damage.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mission Specific",
+          "Event": "Mission_Train_TrainStopped",
+          "Description": "",
+          "Content": "\"Train took a hit, commander, but an engineering team could fix it.\"\"Train's off the rails, but #corp engineering can get it up and running again.\"\"Train's stopped - but not destroyed.\"\"Train's taken damage, commander, but #corp should be able to recover it.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Train_TrainDestroyed",
+          "Description": "",
+          "Content": "\"Train's destroyed, commander.\"\"Not even all of #corp's engineering teams could put that back together again.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Block_Reminder",
+          "Description": "Remind player to block emerging Vek",
+          "Content": "\"We have our orders. We need to stop the Vek from surfacing.\"\"Remember - our mission is to keep the Vek from reaching the surface.\"\"Pin the Vek down with your Mechs, don't let them surface!\""
+        },
+        {
+          "Category": "Archive Inc",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Airstrike_Incoming",
+          "Description": "",
+          "Content": "\"We've got air support incoming!\"\"Air strike incoming!\"\"The Archive pilots are beginning their bombing run - stay clear of the strike zone!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_Activated",
+          "Description": "Both tanks survived to activation",
+          "Content": "\"We've got reinforcements. Those two tanks are ready to be deployed.\"\"Those two tanks are... against all odds... ready to roll.\"\"The Archive tanks... uh, 'Mama Bear' and 'Daddy Warbucks'... are ready to fight.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_PartialActivated",
+          "Description": "Only one tank survived to activation",
+          "Content": "\"The surviving tank is ready to be deployed.\"\"The surviving tank's giving an old call sign, but... uh, 'Mama Bear' is ready to fight.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Dam_Reminder",
+          "Description": "Remind player to destroy the Dam",
+          "Content": "\"Remember - commander's orders are to take out the dam.\"\"All #squad - target the dam, we need to bring it down!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Dam_Destroyed",
+          "Description": "After the completed animation of the dam drowning things",
+          "Content": "\"Should be proud - R.S.T. terraforming rarely makes rivers.\"\"This river will make a good defensive wall against tunneling Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Destroyed",
+          "Description": "Triggers only when the first satellite is destroyed",
+          "Content": "\"First satellite's destroyed, commander.\"\"First satellite's lost, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Imminent",
+          "Description": "Triggers when the Satellite queues its launch (the turn before it actually launches) -- It can trigger for either satellite, or both, it's randomized.",
+          "Content": "\"Satellite's almost ready for launch, commander.\"\"#squad, stay clear of the launch pad or you'll be ash!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Launch",
+          "Description": "Triggers when the satellite actually takes off, can trigger for either or both",
+          "Content": "\"Satellite's in the air, commander.\"\"Launch successful, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Mines_Vek",
+          "Description": "Vek Killed by Mine",
+          "Content": "\"Proximity mine took out that Vek.\"\"Vek hit a proximity mine - that evened the odds a bit.\"\"#squad, position yourselves between the Vek and the mines, let them come to you!\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "RST",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Destroyed",
+          "Description": "If the terraformer is destroyed",
+          "Content": "\"Mother... CEO Kern in this timeline... isn't going to be happy.\"\"Terraformer's destroyed, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Attacks",
+          "Description": "After the player uses the terraformer (not necessarily the first, random chance)This will obey the same rules as other barks, where something like a pilot death will take priority.",
+          "Content": "\"Terraforming successful.\"\"Terraformer's doing its job, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Cataclysm_Falling",
+          "Description": "Triggers when ground is falling during either RST mission with falling ground",
+          "Content": "\"Registering quakes! Watch the ground!\"\"Watch for tremors! If you fall, we won't be able to rescue you!\"\"#squad! Keep an eye on your seismic sensors!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Lightning_Strike_Vek",
+          "Description": "If lightning hits a Vek",
+          "Content": "\"R.S.T. weather stations report more strikes on the way...\"\"If only R.S.T. could regain control of those stormfronts...\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Solar_Destroyed",
+          "Description": "Solar panel destroyed",
+          "Content": "\"Solar farm's destroyed, commander.\"\"Solar farm's gone. Need to do better, #self_first...\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Force_Reminder",
+          "Description": "Remind player to destroy the mountains",
+          "Content": "\"We still need to bring down those mountains. Commander's orders.\"\"All #squad - if you don't have a clear shot at the Vek, level the mountains!\"\"Remember - our mission is to take down those mountains if we can.\""
+        },
+        {
+          "Category": "Pinnacle",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Freeze_Mines_Vek",
+          "Description": "Vek Frozen by Mine. This takes priority over all other Freeze conditions.",
+          "Content": "\"Cryo-mine took it out. For now.\"\"It's been frozen by the cryo-mine - but it's still alive.\"\"#squad! Try to position yourselves between the Vek and the cryo-mines!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Destroyed",
+          "Description": "Bot Factory destroyed",
+          "Content": "\"Robotic factory's destroyed, commander.\"\"Factory's destroyed. Need to do better, #self_first...\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Spawning",
+          "Description": "Bot Factory spawning",
+          "Content": "\"Mechanized units have been deployed.\"\"Factory's deployed cannon-bots.\"\"Factory's deploying more robots, commander.\"\"Need to take those robots out before they activate!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Reactivation_Thawed",
+          "Description": "A selection of enemies on the map are freed from ice (might be bots)",
+          "Content": "\"It was only a matter of time before they broke free...\"\"Watch out, they're breaking free of the ice!\"\"Hostiles have broken out of the ice and are on the move!\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenVek",
+          "Description": "Snowstorm freezes Vek",
+          "Content": "\"Different kind of storms than at R.S.T., but still effective against the Vek.\"\"Looks like snow's as effective as R.S.T. lightning against the Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenMech",
+          "Description": "Snowstorm freezes speaking Mech—This takes priority if Vek are frozen as well",
+          "Content": "\"My Mech's freezing up!\"\"Mech controls aren't responding!\"\"Storm's locked my Mech's systems!\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Self",
+          "Description": "Player kills a hostile Bot",
+          "Content": "\"Had to destroy one of the robots, commander.\"\"One of the robots was destroyed, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Obs",
+          "Description": "Player is observed to kill a hostile Bot",
+          "Content": "\"We're supposed to try and protect the robots if we can.\"\"This is against our mission parameters.\""
+        },
+        {
+          "Category": "Detritus",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Destroyed",
+          "Description": "Player was supposed to defend the Disposal unit and it was destroyed—Shooter could be anyone",
+          "Content": "\"Detritus unit's wrecked!\"\"Detritus unit's destroyed, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Activated",
+          "Description": "Player uses Disposal Unit—mass damage",
+          "Content": "\"Detritus unit's saturated the ground, commander.\"\"Give that Detritus unit a wide berth, understand, #squad?\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Barrels_Destroyed",
+          "Description": "A.C.I.D. barrel destroyed (as per mission objectives) -- shooter unclear",
+          "Content": "\"A.C.I.D. released as ordered, commander.\"\"That A.C.I.D. bath should be a surprise for the Vek down below...\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Power_Destroyed",
+          "Description": "Power plant is destroyed",
+          "Content": "\"Power plant's lost, commander.\"\"Power plant's destroyed, commander.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Teleporter_Mech",
+          "Description": "Mech teleports (self)",
+          "Content": "\"Teleport successful, commander.\"\"Flanking maneuver complete.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Belt_Mech",
+          "Description": "Mech moves on conveyor (self) (does not hit anything, no damage, etc.)",
+          "Content": "\"I'm positioned on the conveyer.\"\"Conveyer shifting!\""
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Location": "Camila Vera can be acquired by  completing islands.",
+    "Background": "Camila is the sixth adopted daughter ofJessica Kern(who maintains an extended family of 20, none of them related by blood) from her Origin Timeline. She is an ex-cartographer and meteorological scout from R.S.T. - she was previously assigned to do field surveys and do \"terrain testing\" in areas where the corporation were testing out new terraforming weapons (she was essentially terraforming \"Q.A.\"). In this role, she became an excellent pilot (the others are dead, it's an unforgiving job) and developed a \"sixth sense\" for piloting craft in hazardous conditions and trusting her instincts to \"move\" whenever she sensed a quake or collapse in the ground was about to occur. She has since channeled this sixth sense into combat, learning to anticipate and evadeVekwebs as well as knowing how to pilot her Mech in the thickest dust storms without handicapping her combat efficiency. She was one of the first volunteers to fight the Vek in her original timeline after the death of her adopted mother, and also (she's never revealed this to anyone else) she has always had a loathing for insects, so she takes satisfaction in wiping out the giant varieties (the Vek).",
+    "Personality": "Prototypical good soldier. Treats the battle like a military war. Doesn't have time for nonsense. Wishes others were as professional. While she shares traits with Chen Rong, they occasionally (quietly) clash on military issues (she's more hands-on in the fighting, while Rong's more of a supervising officer).",
+    "Strategy": "While being impervious to webs make her a desirable front-line fighter on any loadout, her immunity to smoke gives her particularly excellent synergy with theRusting Hulks. Whereas the build-up of smoke late in a battle might otherwise hamper theJet Mech's maneuvering options, it can only work to Camila's benefit. In general, Camila is best placed in Mechs that have constrained firing angles and prefer being close to enemies, so that webbing enemies do not limit her Mech's options (and ideally, waste their action on her Mech)."
+  },
+  "full_text": "Camila Vera\nNickname\nThe Soldier\nSpecial\nEvasion: Mech unaffected by Webbing and Smoke.\nCorporation\nR.S.T. Corporation\nCamila Vera\nis a\npilot\nin\nInto the Breach\n.\nContents\n1\nLocation\n2\nBackground\n3\nPersonality\n4\nStrategy\n5\nDialogue\nLocation\n[\n]\nCamila Vera can be acquired by  completing islands.\nBackground\n[\n]\nCamila is the sixth adopted daughter of\nJessica Kern\n(who maintains an extended family of 20, none of them related by blood) from her Origin Timeline. She is an ex-cartographer and meteorological scout from R.S.T. - she was previously assigned to do field surveys and do \"terrain testing\" in areas where the corporation were testing out new terraforming weapons (she was essentially terraforming \"Q.A.\"). In this role, she became an excellent pilot (the others are dead, it's an unforgiving job) and developed a \"sixth sense\" for piloting craft in hazardous conditions and trusting her instincts to \"move\" whenever she sensed a quake or collapse in the ground was about to occur. She has since channeled this sixth sense into combat, learning to anticipate and evade\nVek\nwebs as well as knowing how to pilot her Mech in the thickest dust storms without handicapping her combat efficiency. She was one of the first volunteers to fight the Vek in her original timeline after the death of her adopted mother, and also (she's never revealed this to anyone else) she has always had a loathing for insects, so she takes satisfaction in wiping out the giant varieties (the Vek).\nPersonality\n[\n]\nPrototypical good soldier. Treats the battle like a military war. Doesn't have time for nonsense. Wishes others were as professional. While she shares traits with Chen Rong, they occasionally (quietly) clash on military issues (she's more hands-on in the fighting, while Rong's more of a supervising officer).\nStrategy\n[\n]\nWhile being impervious to webs make her a desirable front-line fighter on any loadout, her immunity to smoke gives her particularly excellent synergy with the\nRusting Hulks\n. Whereas the build-up of smoke late in a battle might otherwise hamper the\nJet Mech\n's maneuvering options, it can only work to Camila's benefit. In general, Camila is best placed in Mechs that have constrained firing angles and prefer being close to enemies, so that webbing enemies do not limit her Mech's options (and ideally, waste their action on her Mech).\nDialogue\n[\n]\nCategory\nEvent\nDescription\nContent\nGame States\nGamestart\nThis happens at the start of a new game\n\"All right, listen up. Our primary objective is to hold these islands. We do that, we might just have a chance at winning this war.\"\n\"Have to learn from the mistakes I made in the last timeline... if so, then maybe R.S.T. will survive.\"\n\"There's R.S.T., and it looks like my foster mother is alive in this timeline... but there's no trace of me. I wonder if Kern ever knew me?\"\n\"First order of business. We need to roll out Mech production and prioritize weapons manufacturing... what are you all standing around for? Move!\"\n\"Attention, all islands - we don't have much time. I need pilots for the war ahead - either volunteers or conscripts, it doesn't matter to me.\"\nFTL_Found\nHappens on the island screen after finding the FTL pilot in a pod.\n\"Whatever this pilot is, my systems can't translate what it's saying, commander.\"\nFTL_Start\nHappens after you start a new game with an FTL pilot. Only needed for Recruits\n*\nGamestart_PostVictory\nStart of new game after winning\n\"A second timeline... and another chance to save it like we did before. I can do this. WE can do this.\"\n\"Commander, I am Officer #self_full. I'm here from a previous timeline where we defeated the Vek. I'm here to help.\"\n\"Commander... it's... it's good to hear your voice again. I am Officer #self_full, and I come from a timeline where we beat the Vek. I can show you how.\"\nDeath_Revived\nIf this unit is dead, but gets repaired\n\"Nnh... #self_second, reporting for duty.\"\n\"Time for round two.\"\nDeath_Main\nIf this unit dies.\n\"So... this is how I die...\"\n\"This is #self_second, signing off.\"\n\"...Tell Kern I fought to the end.\"\n\"This is it for me - the rest of you, keep fighting!\"\nDeath_Response\nIf another unit dies.\nUse #main to say the dying unit's name.\n\"Pilot down! I want no more mistakes!\"\n\"Everyone, focus! We can't lose anyone else!\"\n\"We lost #main_second! Dammit!\"\nDeath_Response_AI\nIf another Mech dies but it doesn't have a pilot to die.\n\"Got a Mech down!\"\n\"#main_mech's down!\"\n\"#main_mech's out of commission!\"\n*\nTimeTravel_Win\nLast thing pilot says before time traveling after a victory.\n\"It's... been an honor, commander, serving you and the #squad.\"\n\"May we meet again when every timeline has been saved.\"\n\"No goodbyes. Other timelines need us.\"\nGameover_Start\nRight when you lose\n\"Power Grid's down. Reports of Vek swarming the islands... looks like we have no choice...\"\n\"Grid's failed! Island's being overrun!\"\n\"It's just like my first timeline...I'm sorry, mother... your adopted daughter's failed you.\"\nGameover_Response\nResponse to abov"
+}

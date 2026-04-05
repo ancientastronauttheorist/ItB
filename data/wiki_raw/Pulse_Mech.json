@@ -1,0 +1,17 @@
+{
+  "name": "Pulse_Mech",
+  "url": "https://intothebreach.fandom.com/wiki/Pulse_Mech",
+  "infobox": {
+    "_title": "Pulse Mech",
+    "Class": "Science",
+    "Health": "3",
+    "Move": "4",
+    "Systems": "Repulse(Science)EffectPush all adjacent tiles.Upgrade IShield Self ()Creates a personal Shield when used.Upgrade IIShield Friendly ()Shield adjacent ally or Building."
+  },
+  "tables": [],
+  "sections": {
+    "Team": "The mech is available as part of theRusting Hulkssquad.",
+    "Strategy": "The Pulse Mech's main purpose in the Rusting Hulks is to support its teammates with displacement and protection with shields, and will require Reactor Cores in order to get maximum value with its utility.\nTheShield Selfupgrade for Repulse is a good early unlock with the first reactor core, as the Pulse Mech starts with good durability and movement to not require upgrades on those immediately. The Pulse Mech activating ashieldon itself whenever it uses Repulse, even if there's no targets adjacent to push, can be used to block enemyspawnswithout taking damage, and also let it survive an otherwise fatal attacks from an Alpha enemy in the early game.\nShields are also useful in conjunction with a freezing weapon (such asIce Generator) to avoid being frozen; this can become more advantageous for the entire squad when theShield Friendlyupgrade is unlocked. The Shield Friendly upgrade will also protect adjacentbuildingswith a shield, so it's generally worth getting after the 1st island, as this upgrade can also allow the Pulse Mech to neutralize enemy attacks (such as those from artillery enemies) that would otherwise be out of its range to push.\nTo get the most out of the multi-push, pilots that offer mobility and positioning benefits are recommended to find for the Pulse Mech."
+  },
+  "full_text": "Pulse Mech\nDetails\nClass\nScience\nHealth\n3\nMove\n4\nSystems\nRepulse\n(\nScience\n)\nEffect\nPush all adjacent tiles.\nUpgrade I\nShield Self (\n)\nCreates a personal Shield when used.\nUpgrade II\nShield Friendly (\n)\nShield adjacent ally or Building.\nPulse Mech\nis a Science-class\nmech\nin\nInto the Breach\n.\nTeam\n[\n]\nThe mech is available as part of the\nRusting Hulks\nsquad.\nStrategy\n[\n]\nThe Pulse Mech's main purpose in the Rusting Hulks is to support its teammates with displacement and protection with shields, and will require Reactor Cores in order to get maximum value with its utility.\nThe\nShield Self\nupgrade for Repulse is a good early unlock with the first reactor core, as the Pulse Mech starts with good durability and movement to not require upgrades on those immediately. The Pulse Mech activating a\nshield\non itself whenever it uses Repulse, even if there's no targets adjacent to push, can be used to block enemy\nspawns\nwithout taking damage, and also let it survive an otherwise fatal attacks from an Alpha enemy in the early game.\nShields are also useful in conjunction with a freezing weapon (such as\nIce Generator\n) to avoid being frozen; this can become more advantageous for the entire squad when the\nShield Friendly\nupgrade is unlocked. The Shield Friendly upgrade will also protect adjacent\nbuildings\nwith a shield, so it's generally worth getting after the 1st island, as this upgrade can also allow the Pulse Mech to neutralize enemy attacks (such as those from artillery enemies) that would otherwise be out of its range to push.\nTo get the most out of the multi-push, pilots that offer mobility and positioning benefits are recommended to find for the Pulse Mech."
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Status_Effects",
+  "url": "https://intothebreach.fandom.com/wiki/Status_Effects",
+  "infobox": {
+    "_title": "Status Effects"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Effect",
+        "Description",
+        "Notes"
+      ],
+      "rows": [
+        {
+          "Effect": "Fire",
+          "Description": "Units on Fire take 1 damage at the start of every turn",
+          "Notes": "See related article"
+        },
+        {
+          "Effect": "Frozen",
+          "Description": "The affected unit is invincible but unable to move or attack. Any damage will free the unit",
+          "Notes": "See related article"
+        },
+        {
+          "Effect": "Corroding A.C.I.D.",
+          "Description": "Weapon damage against this unit is doubled. All other damage (Push, Blocking, Fire, etc.) is unaffected",
+          "Notes": "Caused by tiles coated in acid, as well as various weapons.A.C.I.D. does apply to self-damage from weapons likeUnstable Cannon.Also doubles the increased damage taken resulting from a Boosted attacker."
+        },
+        {
+          "Effect": "Smoke",
+          "Description": "Units in Smoke cannot attack or repair",
+          "Notes": "Can be caused by directly damaging aSand Tile(push damage won't cause Smoke).Any attacking enemy unit that ends its turn on a Smoke Tile will have its attack cancelled.Smoke does not prevent explosions,Vekspawns and death-effects like one thatArachnid Psiongrants."
+        },
+        {
+          "Effect": "Webbed",
+          "Description": "Webbed units cannot move, but they can still attack",
+          "Notes": "Webbed units will break free if they can somehowmoveaway from their current tile or their captor's attack is cancelled. Examples include pushing into an empty tile (even if captor also moves in the same direction), dashing etc.Teleporterand similar weapons do NOT remove Webbed status."
+        },
+        {
+          "Effect": "Armored",
+          "Description": "Incoming weapon damage is reduced by 1. All other damage (Push, Blocking, Fire, etc.) is unaffected",
+          "Notes": "Multiple instances of Armored on the same unit (e.g.Abe Isamupiloting aJudo Mech) are redundant."
+        },
+        {
+          "Effect": "Energy Shield",
+          "Description": "Shields block damage and any negative effects (Fire, Freezing, A.C.I.D, etc.). Only direct damage will remove the Shield.",
+          "Notes": "See related article"
+        },
+        {
+          "Effect": "Deadly Threat",
+          "Description": "The weapon or environment effect on this tile will kill any unit. Shields and Ice will not block.",
+          "Notes": ""
+        },
+        {
+          "Effect": "Stable",
+          "Description": "Cannot be moved by any weapon effect (Push, Teleport, etc.).",
+          "Notes": "Stable units can't be pushed into other units to cause Push damage, but pushing other units into them will work as expected."
+        },
+        {
+          "Effect": "Boosted",
+          "Description": "On their next action, unit's weapons will do +1 Damage or Healing.",
+          "Notes": "Boosted, just like Corroding A.C.I.D., affects self-damage.Deployable and spawned units likeLight TankorArachnoidare unaffected."
+        },
+        {
+          "Effect": "Vek Mites",
+          "Description": "Unit is infected with Vek Mites. Damage, fire, A.C.I.D., freezing, or repairing will remove them",
+          "Notes": "Only appears inKnock Mites off the Mechsmission objectives. Removing all three grants 1reputation."
+        }
+      ]
+    }
+  ],
+  "sections": {},
+  "full_text": "This article is a\nstub\n. You can help Into the Breach Wiki by\nexpanding it\n.\nThis article is a\nstub\n. You can help Into the Breach Wiki by\nexpanding it\n.\nStatus Effects\nStatus Effects\nare a variety of negative effects that can be applied to units in\nInto The Breach\n.\nDescription\n[\n]\nList Of Status Effects\n[\n]\nEffect\nDescription\nNotes\nFire\nUnits on Fire take 1 damage at the start of every turn\nSee related article\nFrozen\nThe affected unit is invincible but unable to move or attack. Any damage will free the unit\nSee related article\nCorroding A.C.I.D.\nWeapon damage against this unit is doubled. All other damage (Push, Blocking, Fire, etc.) is unaffected\nCaused by tiles coated in acid, as well as various weapons.\nA.C.I.D. does apply to self-damage from weapons like\nUnstable Cannon\n.\nAlso doubles the increased damage taken resulting from a Boosted attacker.\nSmoke\nUnits in Smoke cannot attack or repair\nCan be caused by directly damaging a\nSand Tile\n(push damage won't cause Smoke).\nAny attacking enemy unit that ends its turn on a Smoke Tile will have its attack cancelled.\nSmoke does not prevent explosions,\nVek\nspawns and death-effects like one that\nArachnid Psion\ngrants.\nWebbed\nWebbed units cannot move, but they can still attack\nWebbed units will break free if they can somehow\nmove\naway from their current tile or their captor's attack is cancelled. Examples include pushing into an empty tile (even if captor also moves in the same direction), dashing etc.\nTeleporter\nand similar weapons do NOT remove Webbed status.\nArmored\nIncoming weapon damage is reduced by 1. All other damage (Push, Blocking, Fire, etc.) is unaffected\nMultiple instances of Armored on the same unit (e.g.\nAbe Isamu\npiloting a\nJudo Mech\n) are redundant.\nEnergy Shield\nShields block damage and any negative effects (Fire, Freezing, A.C.I.D, etc.). Only direct damage will remove the Shield.\nSee related article\nDeadly Threat\nThe weapon or environment effect on this tile will kill any unit. Shields and Ice will not block.\nStable\nCannot be moved by any weapon effect (Push, Teleport, etc.).\nStable units can't be pushed into other units to cause Push damage, but pushing other units into them will work as expected.\nBoosted\nOn their next action, unit's weapons will do +1 Damage or Healing.\nBoosted, just like Corroding A.C.I.D., affects self-damage.\nDeployable and spawned units like\nLight Tank\nor\nArachnoid\nare unaffected.\nVek Mites\nUnit is infected with Vek Mites. Damage, fire, A.C.I.D., freezing, or repairing will remove them\nOnly appears in\nKnock Mites off the Mechs\nmission objectives. Removing all three grants 1\nreputation.\nMedia\n[\n]"
+}

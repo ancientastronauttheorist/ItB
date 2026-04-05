@@ -1,0 +1,1083 @@
+{
+  "name": "Weapons",
+  "url": "https://intothebreach.fandom.com/wiki/Weapons",
+  "infobox": {
+    "_title": "Weapons"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Damage",
+        "Power",
+        "Effect",
+        "Upgrade 1",
+        "Upgrade 2",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Titan Fist",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Punch an adjacent tile, damaging and pushing it.",
+          "Upgrade 1": "Dash ()Charge any distance before punching the target.",
+          "Upgrade 2": "+2 Damage ()Increases damage by 2.",
+          "Debug Name": "Prime_Punchmech"
+        },
+        {
+          "Name": "Electric Whip",
+          "Damage": "2",
+          "Power": "()",
+          "Effect": "Chain damage through adjacent targets.",
+          "Upgrade 1": "Building Chain ()Chain through Grid Buildings without causing damage.",
+          "Upgrade 2": "+1 Damage ()Deals +1 damage to all affected tiles.",
+          "Debug Name": "Prime_Lightning"
+        },
+        {
+          "Name": "Burst Beam",
+          "Damage": "3-1",
+          "Power": "Free",
+          "Effect": "Fire a piercing beam that decreases in damage the further it goes.",
+          "Upgrade 1": "Ally Immune ()Friendly units will not take damage from this attack. (Buildings will still be damaged and shields will be removed)",
+          "Upgrade 2": "+1 Damage ()Increases the starting damage by 1.",
+          "Debug Name": "Prime_Lasermech"
+        },
+        {
+          "Name": "Spartan Shield",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Bash the enemy, flipping its attack direction. (Doesn't affect multi-directional attacks)",
+          "Upgrade 1": "Gain Shield ()Gain a Shield when bashing.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Prime_ShieldBash"
+        },
+        {
+          "Name": "Rock Launcher",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Throw a rock at a chosen target. Rock remains as an obstacle.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Prime_Rockmech"
+        },
+        {
+          "Name": "Sidewinder Fist",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Punch an adjacent tile, damaging and pushing it to the left.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1. (Powering both upgrades allows you to move a square when you attack)",
+          "Debug Name": "Prime_RightHook"
+        },
+        {
+          "Name": "Rocket Fist",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Punch an adjacent tile. Upgrades to launch as a projectile.(Has knockback)",
+          "Upgrade 1": "Rocket ()Launch the fist. Pushes the Mech if target is not adjacent.",
+          "Upgrade 2": "+2 Damage ()Increases damage by 2.",
+          "Debug Name": "Prime_RocketPunch"
+        },
+        {
+          "Name": "Vice Fist",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Grab a unit and toss it behind you.(If an unit is thrown onto ACID, ACID will apply first then damage)",
+          "Upgrade 1": "Ally Immune ()Deals no damage to allies.",
+          "Upgrade 2": "+2 Damage ()Increases damage by 2.",
+          "Debug Name": "Prime_Shift"
+        },
+        {
+          "Name": "Flame Thrower",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Push target tile and light tiles on Fire. Damage units already on Fire. (Starts with 1 range.)",
+          "Upgrade 1": "+1 Range ()Extends flamethrower range by 1 tile.",
+          "Upgrade 2": "+1 Range ()Extends flamethrower range by 1 tile.",
+          "Debug Name": "Prime_Flamethrower"
+        },
+        {
+          "Name": "Explosive Vents",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Blast (and push) all adjacent tiles.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Prime_Areablast"
+        },
+        {
+          "Name": "Prime Spear",
+          "Damage": "2",
+          "Power": "()",
+          "Effect": "Stab multiple tiles and push the furthest hit tile. (Starts with 2-tile range.)",
+          "Upgrade 1": "A.C.I.D. Tip ()Adds A.C.I.D. to the furthest hit enemy.",
+          "Upgrade 2": "+1 Range ()Increases the maximum number of hit tiles by 1.",
+          "Debug Name": "Prime_Spear"
+        },
+        {
+          "Name": "Hydraulic Legs",
+          "Damage": "1(1 self)",
+          "Power": "Free",
+          "Effect": "Leap to a tile, damaging self and adjacent tiles (with push).",
+          "Upgrade 1": "+1 Damage Each ()Increases damage to self and targets by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage to targets by 1.",
+          "Debug Name": "Prime_Leap"
+        },
+        {
+          "Name": "Vortex Fist",
+          "Damage": "2(1 self)",
+          "Power": "Free",
+          "Effect": "Damage and push all adjacent tiles to the left.",
+          "Upgrade 1": "-1 Self Damage ()Reduces the damage the Mech takes when using this weapon by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage to targets by 1.",
+          "Debug Name": "Prime_SpinFist"
+        },
+        {
+          "Name": "Titanite Blade",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Swing a massive sword to damage and push 3 tiles.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+2 Damage ()Increases damage on each affected tile by 2.",
+          "Debug Name": "Prime_Sword"
+        },
+        {
+          "Name": "Mercury Fist",
+          "Damage": "4",
+          "Power": "Free",
+          "Effect": "Smash the ground, dealing huge damage and pushing adjacent tiles.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Prime_Smash"
+        },
+        {
+          "Name": "Thermal Discharger",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Damage up to two or more tiles in a line and push tiles to the left and right of damaged tiles. (Starts with 2-tile range.)",
+          "Upgrade 1": "+2 Range ()Increases the maximum Range by 2.",
+          "Upgrade 2": "Add Fire ()Adds Fire to all hit tiles.",
+          "Debug Name": "Prime_Flamespreader"
+        },
+        {
+          "Name": "The Big One",
+          "Damage": "3-1(2 self)",
+          "Power": "Free",
+          "Effect": "Fires a huge missile that damages in a large cone shape. (Deals 3 damage to target, 2 to 3 tiles behind it, and 1 to 5 tiles further behind. Has knockback.)",
+          "Upgrade 1": "-1 Self Damage ()Deals 1 less damage to the user.",
+          "Upgrade 2": "-1 Self Damage ()Deals 1 less damage to the user.",
+          "Debug Name": "Prime_WayTooBig"
+        },
+        {
+          "Name": "Prism Laser",
+          "Damage": "1-3",
+          "Power": "Free",
+          "Effect": "Laser that increases in damage for each unit that it hits.",
+          "Upgrade 1": "Ally Immune ()Friendly units will not take damage from this attack.",
+          "Upgrade 2": "No Max Damage ()Removes the upper limit on damage.",
+          "Debug Name": "Prime_PrismLaser"
+        },
+        {
+          "Name": "Hydraulic Lifter",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Throw an adjacent unit and damage it. (Starts with 2-tile range.)",
+          "Upgrade 1": "+2 Range ()Increases the range of the throw by 2.",
+          "Upgrade 2": "+2 Damage ()Increases the damage of the throw by 2.",
+          "Debug Name": "Prime_TC_Punt"
+        },
+        {
+          "Name": "Refractor Laser",
+          "Damage": "1-3",
+          "Power": "()",
+          "Effect": "A laser that can bend, dealing more damage to nearby tiles.",
+          "Upgrade 1": "Ally Immune ()Friendly units will not take damage from this attack.",
+          "Upgrade 2": "+2 Damage ()+2 maximum damage",
+          "Debug Name": "Prime_TC_BendBeam"
+        },
+        {
+          "Name": "Spring-Loaded Legs",
+          "Damage": "2",
+          "Power": "()",
+          "Effect": "Leap and attack a tile (next to your landing point), dealing damage and pushing it.",
+          "Upgrade 1": "+2 Range ()Leap up to 4 tiles away.",
+          "Upgrade 2": "+2 Damage ()Increase damage to the target by 2.",
+          "Debug Name": "Prime_TC_Feint"
+        },
+        {
+          "Name": "Fissure Fist",
+          "Damage": "3",
+          "Power": "Free",
+          "Effect": "Heavily damage a tile, cracking tiles behind the target on kill.Single-use.",
+          "Upgrade 1": "+1 Damage ()Increase damage to the target by 1.",
+          "Upgrade 2": "+1 Use ()Increases uses per battle by 1.",
+          "Debug Name": "Prime_KO_Crack"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Damage",
+        "Power",
+        "Effect",
+        "Upgrade 1",
+        "Upgrade 2",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Taurus Cannon",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Fires a powerful projectile that damages and pushes its target.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Brute_Tankmech"
+        },
+        {
+          "Name": "Aerial Bombs",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Fly over a target, dropping an explosive smoke bomb.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Range ()Allows jumping over and attacking an additional target.",
+          "Debug Name": "Brute_Jetmech"
+        },
+        {
+          "Name": "Janus Cannon",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Fire two projectiles in opposite directions (with push).",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Brute_Mirrorshot"
+        },
+        {
+          "Name": "Phase Cannon",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Shoot a projectile that phases through objects (rocks, explosive boulders, Grid Buildings,MechsandAllied UnitsexcludingOld Earth Damandmountains).",
+          "Upgrade 1": "Phase Shield ()Applies a Shield to buildings it passes through.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Brute_PhaseShot"
+        },
+        {
+          "Name": "Grappling Hook",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Use a grapple to pull Mech towards immovable objects, or units to the Mech.",
+          "Upgrade 1": "Shield Ally ()If used on an ally unit it gives them a Shield.",
+          "Upgrade 2": "",
+          "Debug Name": "Brute_Grapple"
+        },
+        {
+          "Name": "Def. Shrapnel",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Fire a non-damaging projectile that pushes tiles around the target.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Brute_Shrapnel"
+        },
+        {
+          "Name": "Rail Cannon",
+          "Damage": "0 - 2",
+          "Power": "Free",
+          "Effect": "Projectile that does more damage to targets that are further away.",
+          "Upgrade 1": "+1 Max Damage ()Increases max damage by 1.",
+          "Upgrade 2": "+2 Max Damage ()Increases max damage by 2.",
+          "Debug Name": "Brute_Sniper"
+        },
+        {
+          "Name": "Shock Cannon",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Fire a projectile that hits 2 tiles, pushing them in opposite directions.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Brute_Shockblast"
+        },
+        {
+          "Name": "Ramming Engines",
+          "Damage": "2(1 self)",
+          "Power": "Free",
+          "Effect": "Fly in a line and slam into the target, pushing it and hurting yourself.(The self damage is also considered as attack to terrain)",
+          "Upgrade 1": "+1 Damage Each ()Increases damage to self and target by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage to target by 1.",
+          "Debug Name": "Brute_Beetle"
+        },
+        {
+          "Name": "Unstable Cannon",
+          "Damage": "2(1 self)",
+          "Power": "Free",
+          "Effect": "Powerful projectile that causes damage to shooter as well as target (and push each).",
+          "Upgrade 1": "+1 Damage Each ()Increases damage to self and target by 1.",
+          "Upgrade 2": "+1 Damage ()Increases target damage by 1.",
+          "Debug Name": "Brute_Unstable"
+        },
+        {
+          "Name": "Heavy Rocket",
+          "Damage": "3",
+          "Power": "Free",
+          "Effect": "Fire a projectile that heavily damages a target and pushes adjacent tiles.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+2 Damage ()Increases damage by 2.",
+          "Debug Name": "Brute_Heavyrocket"
+        },
+        {
+          "Name": "Shrapnel Cannon",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Shoot a projectile that damages and pushes the targeted tile and the tiles to its left and right.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Brute_Splitshot"
+        },
+        {
+          "Name": "Astra Bombs",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Leap over any distance dropping a bomb on each tile you pass.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+2 Damage ()Increases damage to all tiles by 2.",
+          "Debug Name": "Brute_Bombrun"
+        },
+        {
+          "Name": "Hermes Engines",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Dash in a line, pushing adjacent tiles away.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Brute_Sonic"
+        },
+        {
+          "Name": "Reverse Thrusters",
+          "Damage": "1-2(1 self)",
+          "Power": "Free",
+          "Effect": "Smoke and deal damage to a tile while dashing away. (The further you dash, the more damage deals. Starts with 2-tile range.)",
+          "Upgrade 1": "+1 Range ()Increases the max distance and damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases the max distance and damage by 1.",
+          "Debug Name": "Brute_KickBack"
+        },
+        {
+          "Name": "Fracturing Shells",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Fires a projectile that explodes on contact, damaging and pushing adjacent tiles.",
+          "Upgrade 1": "+2 Damage ()Increases the damage to adjacent tiles by 2.",
+          "Upgrade 2": "Buildings Immune ()This attack will no longer damage Grid Buildings.",
+          "Debug Name": "Brute_Fracture"
+        },
+        {
+          "Name": "AP Cannon",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Fire a pushing projectile that pierces the first target and damages the second.",
+          "Upgrade 1": "+1 Damage ()Increases damage to the second hit tile by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage to the second hit tile by 1.",
+          "Debug Name": "Brute_PierceShot"
+        },
+        {
+          "Name": "Guided Missile",
+          "Damage": "2",
+          "Power": "()",
+          "Effect": "A projectile that can turn once before hitting its target.",
+          "Upgrade 1": "+1 Damage ()+1 Damage to the target.",
+          "Upgrade 2": "Smoke Line ()After turning, adds Smoke to each tile passed through.",
+          "Debug Name": "Brute_TC_GuidedMissile"
+        },
+        {
+          "Name": "Ricochet Rocket",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Bounce a projectile off one target to hit another (and push each).",
+          "Upgrade 1": "+1 Damage ()+1 damage to both targets.",
+          "Upgrade 2": "Ally Immune ()Friendly units will not take damage from this attack.",
+          "Debug Name": "Brute_TC_Ricochet"
+        },
+        {
+          "Name": "Quick-Fire Rockets",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Fire two projectiles in different directions.",
+          "Upgrade 1": "Add Push ()Will now push both targets.",
+          "Upgrade 2": "+1 Damage ()+1 damage to both targets.",
+          "Debug Name": "Brute_TC_DoubleShot"
+        },
+        {
+          "Name": "EM Railgun",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Pierce through any killed Enemies.Single-use.",
+          "Upgrade 1": "+2 Damage ()Deals 2 additional damage to all targets.",
+          "Upgrade 2": "Building Immune ()This attack will no longer damage Grid Buildings.",
+          "Debug Name": "Brute_KO_Combo"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Damage",
+        "Power",
+        "Effect",
+        "Upgrade 1",
+        "Upgrade 2",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Artemis Artillery",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Powerful artillery strike, damaging a single tile and pushing adjacent tiles.",
+          "Upgrade 1": "Buildings Immune ()This attack will no longer damage Grid Buildings.",
+          "Upgrade 2": "+2 Damage ()Increases damage by 2.",
+          "Debug Name": "Ranged_Artillerymech"
+        },
+        {
+          "Name": "Rock Accelerator",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Launch a rock at a tile, pushing tiles to the left and right.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "",
+          "Debug Name": "Ranged_Rockthrow"
+        },
+        {
+          "Name": "Cluster Artillery",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Protect a tile by damaging and pushing adjacent tiles.",
+          "Upgrade 1": "Buildings Immune ()This attack will no longer damage Grid Buildings.",
+          "Upgrade 2": "+1 Damage ()Increases damage to adjacent tiles by 1.",
+          "Debug Name": "Ranged_Defensestrike"
+        },
+        {
+          "Name": "Rocket Artillery",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Fires a pushing artillery and creates Smoke behind the shooter.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Ranged_Rocket"
+        },
+        {
+          "Name": "Vulcan Artillery",
+          "Damage": "0",
+          "Power": "Free",
+          "Effect": "Light the target on Fire and push adjacent tiles.",
+          "Upgrade 1": "Backburn ()Light the tile behind the Mech on Fire.",
+          "Upgrade 2": "+2 Damage ()Adds 2 damage to targeted tiles.",
+          "Debug Name": "Ranged_Ignite"
+        },
+        {
+          "Name": "Micro-Artillery",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Artillery with potential to launch multiple small projectiles (with push).",
+          "Upgrade 1": "+2 Tiles ()Add additional missiles to hit adjacent tiles.",
+          "Upgrade 2": "+1 Damage ()Increases damage to all tiles by 1.",
+          "Debug Name": "Ranged_ScatterShot"
+        },
+        {
+          "Name": "Aegon Mortar",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Deals damage to two tiles, pushing one forwards and one backwards.",
+          "Upgrade 1": "+1 Damage ()Increases damage to both tiles by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage to both tiles by 1.",
+          "Debug Name": "Ranged_BackShot"
+        },
+        {
+          "Name": "Cryo-Launcher",
+          "Damage": "",
+          "Power": "()",
+          "Effect": "Freeze yourself and the target.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Ranged_Ice"
+        },
+        {
+          "Name": "Smoke Mortar",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Artillery shot that applies Smoke and pushes two adjacent tiles.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Ranged_SmokeBlast"
+        },
+        {
+          "Name": "Burning Mortar",
+          "Damage": "0(1 self)",
+          "Power": "Free",
+          "Effect": "Artillery attack that sets 5 tiles on Fire.",
+          "Upgrade 1": "No Self Damage ()This attack will no longer damage the Mech that uses it.",
+          "Upgrade 2": "",
+          "Debug Name": "Ranged_Fireball"
+        },
+        {
+          "Name": "Raining Death",
+          "Damage": "2(1 self)",
+          "Power": "Free",
+          "Effect": "A dangerous projectile that damages everything it passes.",
+          "Upgrade 1": "Buildings Immune ()This attack will no longer damage Grid Buildings.",
+          "Upgrade 2": "+1 Damage Each ()Increases damage to self and targets by 1.",
+          "Debug Name": "Ranged_RainingVolley"
+        },
+        {
+          "Name": "Heavy Artillery",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Powerful attack that damages a large area.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Ranged_Wide"
+        },
+        {
+          "Name": "Gemini Missiles",
+          "Damage": "3",
+          "Power": "()",
+          "Effect": "Launch two missiles, damaging and pushing two targets.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Ranged_Dual"
+        },
+        {
+          "Name": "Tri-Rocket",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Damage and push 3 tiles in a line. (Can aim close tile.)",
+          "Upgrade 1": "+1 Damage ()Deals 1 additional damage to all targets.",
+          "Upgrade 2": "Building Immune ()This attack will no longer damage Grid Buildings.",
+          "Debug Name": "Ranged_Crack"
+        },
+        {
+          "Name": "Bomb Dispenser",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Launch a Walking Bomb. Unused bombs dismantle after the enemy turn.",
+          "Upgrade 1": "2 Bombs ()Fire a second Walking Bomb in a different direction.",
+          "Upgrade 2": "",
+          "Debug Name": "Ranged_DeployBomb"
+        },
+        {
+          "Name": "Arachnoid Injector",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Damage target, creating a friendly robot spider on kill.",
+          "Upgrade 1": "+1 Damage ()Increases the artillery attack damage by 1.",
+          "Upgrade 2": "Acidic ()Adds ACID to the attack of the Arachnoid.",
+          "Debug Name": "Ranged_Arachnoid"
+        },
+        {
+          "Name": "Smoldering Shells",
+          "Damage": "1",
+          "Power": "()",
+          "Effect": "Damage and apply Fire to a tile while adding Smoke to adjacent tiles (vertical).",
+          "Upgrade 1": "More Smoke ()Adds Smoke to more tiles (in 4 directions).",
+          "Upgrade 2": "+2 Damage ()Increases the center tile damage by 2.",
+          "Debug Name": "Ranged_SmokeFire"
+        },
+        {
+          "Name": "Rebounding Volley",
+          "Damage": "2",
+          "Power": "()",
+          "Effect": "Artillery attack that can bounce to an additional target. (Pull the first and push the second.)",
+          "Upgrade 1": "+1 Damage ()Increases the damage to both targets by 1.",
+          "Upgrade 2": "Building Immune ()This attack will no longer damage Grid Buildings.",
+          "Debug Name": "Ranged_TC_BounceShot"
+        },
+        {
+          "Name": "Quick-Fire Artillery",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Fire two artillery shots in different directions.",
+          "Upgrade 1": "Ally Immune ()Friendly units will not take damage from this attack.",
+          "Upgrade 2": "+2 Damage ()Increases damage to each hit tile by 2.",
+          "Debug Name": "Ranged_TC_DoubleArt"
+        },
+        {
+          "Name": "Cascading Resonator",
+          "Damage": "2(1 self)",
+          "Power": "Free",
+          "Effect": "Killed enemies explode; victims of splash damage also explode on death.",
+          "Upgrade 1": "+1 Damage ()Increases damage to each hit tile by 1.",
+          "Upgrade 2": "+Building Immune ()This attack will no longer damage Grid Buildings.",
+          "Debug Name": "Ranged_KO_Combo"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Damage",
+        "Power",
+        "Effect",
+        "Upgrade 1",
+        "Upgrade 2",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Attraction Pulse",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Fires a projectile, pulling target towards you 1 tile.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Science_Pullmech"
+        },
+        {
+          "Name": "Grav Well",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Artillery weapon that pulls its target towards you.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Science_Gravwell"
+        },
+        {
+          "Name": "Repulse",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Push all adjacent tiles.",
+          "Upgrade 1": "Shield Self ()Creates a personal Shield when used.",
+          "Upgrade 2": "Shield Friendly ()Shield adjacent ally or Building.",
+          "Debug Name": "Science_Repulse"
+        },
+        {
+          "Name": "Teleporter",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Swap places with a nearby tile. (Note: if you are webbed and swap places with another unit, the other unit will become webbed.)",
+          "Upgrade 1": "+1 Range ()Extends range of the swap by 1 tile.",
+          "Upgrade 2": "+2 Range ()Extends range of the swap by 2 tiles.",
+          "Debug Name": "Science_Swap"
+        },
+        {
+          "Name": "A.C.I.D. Projector",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Fire a projectile that applies A.C.I.D. and pushes.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Science_AcidShot"
+        },
+        {
+          "Name": "Confuse Shot",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Fire a projectile that flips a target's attack direction.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Science_Confuse"
+        },
+        {
+          "Name": "Smoke Pellets",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Surround yourself with Smoke to defend against nearby enemies.Single-use.",
+          "Upgrade 1": "Ally Immune ()No longer applies Smoke on self or allies.",
+          "Upgrade 2": "+1 Use ()Increases uses per battle by 1.",
+          "Debug Name": "Science_SmokeDefense"
+        },
+        {
+          "Name": "Shield Projector",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Shield tiles from damage.2 uses per battle.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "+3 Area ()Shields 3 additional tiles.",
+          "Debug Name": "Science_Shield"
+        },
+        {
+          "Name": "Fire Beam",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Fire a beam that applies Fire in a line.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "",
+          "Debug Name": "Science_FireBeam"
+        },
+        {
+          "Name": "Frost Beam",
+          "Damage": "",
+          "Power": "()",
+          "Effect": "Fire a beam that Freezes everything in a line.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "",
+          "Debug Name": "Science_FreezeBeam"
+        },
+        {
+          "Name": "Shield Array",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Apply a Shield on nearby tiles.Single-use.",
+          "Upgrade 1": "+1 Size ()Area of effect increased by 2 tiles.",
+          "Upgrade 2": "+1 Use ()Increases uses per battle by 1.",
+          "Debug Name": "Science_LocalShield"
+        },
+        {
+          "Name": "Push Beam",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Pushes all units in a line.Single-use.",
+          "Upgrade 1": "Unlimited Use ()Removes use restriction in battles.",
+          "Upgrade 2": "",
+          "Debug Name": "Science_PushBeam"
+        },
+        {
+          "Name": "Firestorm Generator",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Flaming artillery that drops fire on the way to its target (and push the target). (Starts with 2-tile range.)",
+          "Upgrade 1": "+1 Range ()Maximum range is increased by 1.",
+          "Upgrade 2": "+2 Range ()Maximum range is increased by 2.",
+          "Debug Name": "Science_RainingFire"
+        },
+        {
+          "Name": "Area Shift",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Push self and all adjacent tiles.",
+          "Upgrade 1": "Shield Self ()Shield the user when activated.",
+          "Upgrade 2": "Shield Ally ()Shield any Ally units affected by this skill.",
+          "Debug Name": "Science_MassShift"
+        },
+        {
+          "Name": "Explosive Warp",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Teleport to target and push nearby tiles away. Can also be used to push the user to the original position by teleporting to the tile right next to it.",
+          "Upgrade 1": "+2 Range ()Increases the teleport range by 2.",
+          "Upgrade 2": "+2 Range ()Increases the teleport range by 2.",
+          "Debug Name": "Science_TelePush"
+        },
+        {
+          "Name": "Shield Placer",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Shield target and push adjacent tiles away.",
+          "Upgrade 1": "+1 Range ()Can target one additional tile away.",
+          "Upgrade 2": "+1 Range ()Can target one additional tile away.(This is actually +2 range. The text is wrong in game)",
+          "Debug Name": "Science_Placer"
+        },
+        {
+          "Name": "Enrage Shot",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Force targeted unit to attack adjacent tile.",
+          "Upgrade 1": "+1 Damage ()The targeted unit does 1 extra damage with its attack.",
+          "Upgrade 2": "+1 Damage ()The targeted unit does 1 extra damage with its attack.",
+          "Debug Name": "Science_TC_Enrage"
+        },
+        {
+          "Name": "Control Shot",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Temporarily control a unit, moving it a short distance (2 tiles).",
+          "Upgrade 1": "+1 Move ()Targeted unit can move one extra tile.",
+          "Upgrade 2": "+1 Move ()Targeted unit can move one extra tile.",
+          "Debug Name": "Science_TC_Control"
+        },
+        {
+          "Name": "Force Swap",
+          "Damage": "0",
+          "Power": "()",
+          "Effect": "Force a nearby unit to swap places with any other unit.",
+          "Upgrade 1": "Heal Ally ()Swapping an ally will heal it completely.",
+          "Upgrade 2": "Hurt Enemy ()Swapping an enemy will deal 1 damage to it.",
+          "Debug Name": "Science_TC_SwapOther"
+        },
+        {
+          "Name": "Seismic Capacitor",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Damage and flip target. If target is killed, crack adjacent tiles.",
+          "Upgrade 1": "+1 Damage ()Increase damage to the target by 1.",
+          "Upgrade 2": "+1 Damage ()Increase damage to the target by 1.",
+          "Debug Name": "Science_KO_Crack"
+        },
+        {
+          "Name": "(N/A)Gravity Mirror",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Fire a gravity well in 4 directions, pushing or pulling every unit. (Only available through debug)",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Science_TC_Gravity"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Damage",
+        "Power",
+        "Effect",
+        "Upgrade 1",
+        "Upgrade 2",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Boosters",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Jump forward and push adjacent tiles away.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Boosters"
+        },
+        {
+          "Name": "Smoke Bombs",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Fly over the targets while dropping Smoke.",
+          "Upgrade 1": "+1 Range ()Increases potential movement range by 1.",
+          "Upgrade 2": "+1 Range ()Increases potential movement range by 1.",
+          "Debug Name": "Support_Smoke"
+        },
+        {
+          "Name": "Heat Converter",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Freeze the tile in front but light the tile behind on Fire in the process.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Refrigerate"
+        },
+        {
+          "Name": "Self-Destruct",
+          "Damage": "Kill",
+          "Power": "Free",
+          "Effect": "Mech explodes, killing self and anything adjacent to Mech.Single-use.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Destruct"
+        },
+        {
+          "Name": "Targeted Strike",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Call in an air strike on a single tile anywhere on the map.Single-use.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Force"
+        },
+        {
+          "Name": "Smoke Drop",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Drops Smoke on 5 tiles anywhere on the map.Single-use.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Support_SmokeDrop"
+        },
+        {
+          "Name": "Repair Drop",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Heal all player units (including disabled Mechs).Single-use.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Repair"
+        },
+        {
+          "Name": "Missile Barrage",
+          "Damage": "1",
+          "Power": "()",
+          "Effect": "Fires a missile barrage that hits every enemy on the map.Single-use.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Missiles"
+        },
+        {
+          "Name": "Wind Torrent",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Push all units in a single direction.Single-use.",
+          "Upgrade 1": "Unlimited Uses ()Removes use restriction in battles.",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Wind"
+        },
+        {
+          "Name": "Ice Generator",
+          "Damage": "",
+          "Power": "()",
+          "Effect": "Freeze yourself and nearby tiles.Single-use.",
+          "Upgrade 1": "+1 Size ()Area of effect increased by 1 tile.",
+          "Upgrade 2": "+1 Size ()Area of effect increased by 1 tile.",
+          "Debug Name": "Support_Blizzard"
+        },
+        {
+          "Name": "Mass Confusion",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Cause nearby enemies to flip their attack direction.Single-use.",
+          "Upgrade 1": "+1 Size ()Area of effect increased by 1 tile.",
+          "Upgrade 2": "+1 Use ()Increases uses per battle by 1.",
+          "Debug Name": "Support_Confuse"
+        },
+        {
+          "Name": "Grid Repulse",
+          "Damage": "",
+          "Power": "Free",
+          "Effect": "Overload the grid, causing a building to push away nearby units.",
+          "Upgrade 1": "Add Shield ()The selected building also gains a shield.",
+          "Upgrade 2": "",
+          "Debug Name": "Support_GridDefense"
+        },
+        {
+          "Name": "Grid Assault",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Overload the grid causing a building to damage and push an adjacent tile.",
+          "Upgrade 1": "+1 Damage ()Increases damage by 1.",
+          "Upgrade 2": "+1 Damage ()Increases damage by 1.",
+          "Debug Name": "Support_TC_GridAtk"
+        },
+        {
+          "Name": "Bombing Run",
+          "Damage": "2",
+          "Power": "Free",
+          "Effect": "Call in bombers, dealing damage to every tile in a row or column.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "Building Immune ()This attack will no longer damage Grid Buildings.",
+          "Debug Name": "Support_TC_Bombline"
+        },
+        {
+          "Name": "Grid Charger",
+          "Damage": "1",
+          "Power": "()",
+          "Effect": "Killing an enemy will charge the Power Grid 1 point. Single-use.",
+          "Upgrade 1": "",
+          "Upgrade 2": "",
+          "Debug Name": "Support_KO_GridCharger"
+        },
+        {
+          "Name": "Flood Drill",
+          "Damage": "",
+          "Power": "()",
+          "Effect": "Convert any liquid Tile to a Hole, spreading the liquid to adjacent tiles.Single-use.",
+          "Upgrade 1": "+1 Use ()Increases uses per battle by 1.",
+          "Upgrade 2": "",
+          "Debug Name": "Support_Waterdrill"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Power",
+        "Effect",
+        "Health",
+        "Move",
+        "Upgrade 1",
+        "Upgrade 2",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Light Tank",
+          "Power": "()",
+          "Effect": "Deploy a small tank to help in combat.Single-use.",
+          "Health": "1",
+          "Move": "3",
+          "Upgrade 1": "+2 Health ()Increases the Tank's max health to 3.",
+          "Upgrade 2": "+2 Damage ()Increases the Tank's attack damage to 2.",
+          "Debug Name": "DeploySkill_Tank"
+        },
+        {
+          "Name": "Shield-Tank",
+          "Power": "()",
+          "Effect": "Deploy a Shield-Tank that can give Shields to allies.Single-use.",
+          "Health": "1",
+          "Move": "3",
+          "Upgrade 1": "+2 Health ()Increases the Shield-Tank's max health to 3.",
+          "Upgrade 2": "Projectile ()The Shield-Tank instead fires a projectile, allowing you to Shield distant targets.",
+          "Debug Name": "DeploySkill_ShieldTankDeploySkill_SGenerator"
+        },
+        {
+          "Name": "A.C.I.D. Tank",
+          "Power": "()",
+          "Effect": "Deploy a Tank that can apply A.C.I.D. to targets.Single-use.",
+          "Health": "1",
+          "Move": "3",
+          "Upgrade 1": "+2 Health ()Increases the Tank's max health to 3.",
+          "Upgrade 2": "Push ()The tank's attack also pushes its target.",
+          "Debug Name": "DeploySkill_AcidTank"
+        },
+        {
+          "Name": "Pull-Tank",
+          "Power": "()",
+          "Effect": "Deploy a Pull-Tank that can pull targets with a projectile.Single-use.",
+          "Health": "1",
+          "Move": "3",
+          "Upgrade 1": "+2 Health ()Increases the Pull-Tank's max health to 3.",
+          "Upgrade 2": "Flying ()Gives the Pull-Tank the ability to fly.",
+          "Debug Name": "DeploySkill_PullTank"
+        },
+        {
+          "Name": "(N/A)Support IceTank",
+          "Power": "()",
+          "Effect": "Deploy an Ice-Tank to that can freeze its targets. (Only available through debug)Single-use.",
+          "Health": "3",
+          "Move": "3",
+          "Upgrade 1": "N/A ()",
+          "Upgrade 2": "N/A ()",
+          "Debug Name": "DeploySkill_IceTank"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Damage",
+        "Power",
+        "Effect",
+        "Upgrade 1",
+        "Upgrade 2",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Ramming Speed",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Dash across the map, damaging and pushing the target tile.",
+          "Upgrade 1": "Smoke Behind ()Tile behind you gains Smoke.",
+          "Upgrade 2": "+2 Damage ()Increases damage by 2.",
+          "Debug Name": "Vek_Beetle"
+        },
+        {
+          "Name": "Needle Shot",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Throw needles at the enemy, pushing the furthest hit tile. (Starts with 1-tile range.)",
+          "Upgrade 1": "Range & Damage ()Increases potential hit tiles by 1 and damage on all tiles by 1.",
+          "Upgrade 2": "Range & Damage ()Increases potential hit tiles by 1 and damage on all tiles by 1.",
+          "Debug Name": "Vek_Hornet"
+        },
+        {
+          "Name": "Explosive Goo",
+          "Damage": "1",
+          "Power": "Free",
+          "Effect": "Artillery attack that damages a tile and pushes adjacent tiles away.",
+          "Upgrade 1": "+1 Tile ()Increases area hit by 1 tile.",
+          "Upgrade 2": "+2 Damage ()Increases damage by 2.",
+          "Debug Name": "Vek_Scarab"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Description": "Each of theMechshave a Weapon equipped, and will do different things depending on how you want to use them. Note that all weapons have friendly fire ON (unless an exception is mentioned) so if you don't plan properly you can damage your own Mechs.\nMost weapons come with an upgrade or two, at the cost of additionalReactor Coreusage. Upgrades are not purchased separately from their base weapons, they are included.\nNote that powering Upgrade 1 is never a prerequisite for powering Upgrade 2.",
+    "See Also": "  - Passives"
+  },
+  "full_text": "Weapons\nThe various\nWeapons\nfrom\nInto The Breach\n.\nContents\n1\nDescription\n2\nList of weapons\n2.1\nPrime-class\n2.2\nBrute-class\n2.3\nRanged-class\n2.4\nScience-class\n2.5\nAny Class\n2.5.1\nDeployables\n2.6\nCyborg-class\n3\nSee Also\nDescription\n[\n]\nEach of the\nMechs\nhave a Weapon equipped, and will do different things depending on how you want to use them. Note that all weapons have friendly fire ON (unless an exception is mentioned) so if you don't plan properly you can damage your own Mechs.\nMost weapons come with an upgrade or two, at the cost of additional\nReactor Core\nusage. Upgrades are not purchased separately from their base weapons, they are included.\nNote that powering Upgrade 1 is never a prerequisite for powering Upgrade 2.\nList of weapons\n[\n]\nPrime-class\n[\n]\nName\nDamage\nPower\nEffect\nUpgrade 1\nUpgrade 2\nDebug Name\nTitan Fist\n2\nFree\nPunch an adjacent tile, damaging and pushing it.\nDash (\n)\nCharge any distance before punching the target.\n+2 Damage (\n)\nIncreases damage by 2.\nPrime_Punchmech\nElectric Whip\n2\n(\n)\nChain damage through adjacent targets.\nBuilding Chain (\n)\nChain through Grid Buildings without causing damage.\n+1 Damage (\n)\nDeals +1 damage to all affected tiles.\nPrime_Lightning\nBurst Beam\n3-1\nFree\nFire a piercing beam that decreases in damage the further it goes.\nAlly Immune (\n)\nFriendly units will not take damage from this attack. (Buildings will still be damaged and shields will be removed)\n+1 Damage (\n)\nIncreases the starting damage by 1.\nPrime_Lasermech\nSpartan Shield\n2\nFree\nBash the enemy, flipping its attack direction. (Doesn't affect multi-directional attacks)\nGain Shield (\n)\nGain a Shield when bashing.\n+1 Damage (\n)\nIncreases damage by 1.\nPrime_ShieldBash\nRock Launcher\n2\nFree\nThrow a rock at a chosen target. Rock remains as an obstacle.\n+1 Damage (\n)\nIncreases damage by 1.\n+1 Damage (\n)\nIncreases damage by 1.\nPrime_Rockmech\nSidewinder Fist\n2\nFree\nPunch an adjacent tile, damaging and pushing it to the left.\n+1 Damage (\n)\nIncreases damage by 1.\n+1 Damage (\n)\nIncreases damage by 1. (Powering both upgrades allows you to move a square when you attack)\nPrime_RightHook\nRocket Fist\n2\nFree\nPunch an adjacent tile. Upgrades to launch as a projectile.\n(Has knockback)\nRocket (\n)\nLaunch the fist. Pushes the Mech if target is not adjacent.\n+2 Damage (\n)\nIncreases damage by 2.\nPrime_RocketPunch\nVice Fist\n1\nFree\nGrab a unit and toss it behind you.\n(If an unit is thrown onto ACID, ACID will apply first then damage)\nAlly Immune (\n)\nDeals no damage to allies.\n+2 Damage (\n)\nIncreases damage by 2.\nPrime_Shift\nFlame Thrower\n2\nFree\nPush target tile and light tiles on Fire. Damage units already on Fire. (Starts with 1 range.)\n+1 Range (\n)\nExtends flamethrower range by 1 tile.\n+1 Range (\n)\nExtends flamethrower range by 1 tile.\nPrime_Flamethrower\nExplosive Vents\n1\nFree\nBlast (and push) all adjacent tiles.\n+1 Damage (\n)\nIncreases damage by 1.\n+1 Damage (\n)\nIncreases damage by 1.\nPrime_Areablast\nPrime Spear\n2\n(\n)\nStab multiple tiles and push the furthest hit tile. (Starts with 2-tile range.)\nA.C.I.D. Tip (\n)\nAdds A.C.I.D. to the furthest hit enemy.\n+1 Range (\n)\nIncreases the maximum number of hit tiles by 1.\nPrime_Spear\nHydraulic Legs\n1\n(1 self)\nFree\nLeap to a tile, damaging self and adjacent tiles (with push).\n+1 Damage Each (\n)\nIncreases damage to self and targets by 1.\n+1 Damage (\n)\nIncreases damage to targets by 1.\nPrime_Leap\nVortex Fist\n2\n(1 self)\nFree\nDamage and push all adjacent tiles to the left.\n-1 Self Damage (\n)\nReduces the damage the Mech takes when using this weapon by 1.\n+1 Damage (\n)\nIncreases damage to targets by 1.\nPrime_SpinFist\nTitanite Blade\n2\nFree\nSwing a massive sword to damage and push 3 tiles.\nSingle-use.\n+1 Use (\n)\nIncreases uses per battle by 1.\n+2 Damage (\n)\nIncreases damage on each affected tile by 2.\nPrime_Sword\nMercury Fist\n4\nFree\nSmash the ground, dealing huge damage and pushing adjacent tiles.\nSingle-use.\n+1 Use (\n)\nIncreases uses per battle by 1.\n+1 Damage (\n)\nIncreases damage by 1.\nPrime_Smash\nAdvanced Edition\nThermal Discharger\n1\nFree\nDamage up to two or more tiles in a line and push tiles to the left and right of damaged tiles. (Starts with 2-tile range.)\n+2 Range (\n)\nIncreases the maximum Range by 2.\nAdd Fire (\n)\nAdds Fire to all hit tiles.\nPrime_Flamespreader\nThe Big One\n3-1\n(2 self)\nFree\nFires a huge missile that damages in a large cone shape. (Deals 3 damage to target, 2 to 3 tiles behind it, and 1 to 5 tiles further behind. Has knockback.)\n-1 Self Damage (\n)\nDeals 1 less damage to the user.\n-1 Self Damage (\n)\nDeals 1 less damage to the user.\nPrime_WayTooBig\nPrism Laser\n1-3\nFree\nLaser that increases in damage for each unit that it hits.\nAlly Immune (\n)\nFriendly units will not take damage from this attack.\nNo Max Damage (\n)\nRemoves the upper limit on damage.\nPrime_PrismLaser\nHydraulic Lifter\n1\nFree\nThrow an adjacent unit and damage it. (Starts with 2-tile range.)\n+2 Range (\n)\nIncreases the range of the throw by 2.\n+2 Damage (\n)\nIncreases the damage of the throw by 2.\nPrime_TC_Punt\nRefr"
+}

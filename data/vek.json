@@ -209,7 +209,7 @@
           "effects": ["create_rock"]
         },
         "alpha": {
-          "hp": 5,
+          "hp": 4,
           "movement": 3,
           "damage": 2,
           "attack": "Creates rock wall and attacks with more damage",
@@ -239,8 +239,87 @@
         "notes": "Cannot be pushed or moved. Retreats underground when damaged (extinguishes fire). Very annoying."
       },
       {
+        "name": "Crab",
+        "type": "artillery",
+        "regular": {
+          "hp": 3,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Launches artillery attack on 2 tiles for 1 damage (5 tile range).",
+          "pattern": "artillery_double",
+          "effects": []
+        },
+        "alpha": {
+          "hp": 5,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Launches artillery attack on 2 tiles for 3 damage (5 tile range).",
+          "effects": []
+        },
+        "notes": "Base game artillery Vek. Hits 2 tiles simultaneously."
+      },
+      {
+        "name": "Volatile Vek",
+        "type": "melee",
+        "regular": {
+          "hp": 4,
+          "movement": 3,
+          "damage": 1,
+          "attack": "Webs an adjacent target, preparing to stab it for 1 damage. Identical to Scorpion but has Explosive Decay.",
+          "attack_name": "Stinging Spinneret",
+          "pattern": "melee_single",
+          "effects": ["web"],
+          "special": ["explosive_decay"]
+        },
+        "notes": "Objective-only Vek. Identical to Scorpion stats but explodes on death dealing 1 damage to adjacent tiles (Explosive Decay). Only spawns on missions requiring the player to keep it alive. Killing it forfeits reputation."
+      },
+      {
+        "name": "Gastropod",
+        "type": "ranged",
+        "edition": "advanced",
+        "regular": {
+          "hp": 3,
+          "movement": 2,
+          "damage": 1,
+          "attack": "Grapple for 1 damage, pulling the Vek towards the target.",
+          "pattern": "ranged_pull",
+          "effects": ["pull_self"]
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Grapple for 3 damage, pulling the Vek towards the target.",
+          "effects": ["pull_self"]
+        },
+        "notes": "Advanced Edition. Pulls itself towards target after attacking. Unique pull-self mechanic."
+      },
+      {
+        "name": "Mosquito",
+        "type": "melee",
+        "edition": "advanced",
+        "regular": {
+          "hp": 2,
+          "movement": 4,
+          "damage": 1,
+          "attack": "Smokes the target, preparing to whip it for 1 damage.",
+          "pattern": "melee_smoke",
+          "effects": ["smoke"],
+          "abilities": ["flying"]
+        },
+        "alpha": {
+          "hp": 4,
+          "movement": 4,
+          "damage": 3,
+          "attack": "Smokes the target, preparing to whip it for 3 damage.",
+          "effects": ["smoke"]
+        },
+        "notes": "Advanced Edition flying melee. Applies smoke to target before attacking, cancelling mech attacks."
+      },
+      {
         "name": "Moth",
         "type": "artillery",
+        "edition": "advanced",
         "regular": {
           "hp": 3,
           "movement": 3,
@@ -262,6 +341,7 @@
       {
         "name": "Bouncer",
         "type": "melee",
+        "edition": "advanced",
         "regular": {
           "hp": 3,
           "movement": 3,
@@ -278,102 +358,6 @@
           "effects": ["self_push_back"]
         },
         "notes": "Advanced Edition Vek. Flipping doesn't redirect damage. Self-push causes additional collateral."
-      },
-      {
-        "name": "Bot",
-        "type": "varies",
-        "regular": {
-          "hp": 1,
-          "movement": 3,
-          "damage": 2,
-          "attack": "High-tech weapons causing fire and large-area damage",
-          "pattern": "varies",
-          "effects": ["fire"]
-        },
-        "alpha": {
-          "hp": 1,
-          "movement": 3,
-          "damage": 3,
-          "attack": "Upgraded weapons",
-          "effects": ["fire"]
-        },
-        "notes": "Not actually Vek — sentient AI robots from Pinnacle Island. 1 HP but dangerous attacks."
-      },
-      {
-        "name": "Crab",
-        "type": "artillery",
-        "regular": {
-          "hp": 3,
-          "movement": 3,
-          "damage": 1,
-          "attack": "Launches artillery attack on 2 tiles for 1 damage (5 tile range).",
-          "pattern": "artillery_double",
-          "effects": []
-        },
-        "alpha": {
-          "hp": 5,
-          "movement": 3,
-          "damage": 2,
-          "attack": "Launches artillery attack on 2 tiles for 2 damage (5 tile range).",
-          "effects": []
-        },
-        "notes": "Base game artillery Vek. Hits 2 tiles simultaneously."
-      },
-      {
-        "name": "Volatile Vek",
-        "type": "special",
-        "regular": {
-          "hp": 1,
-          "movement": 0,
-          "damage": 0,
-          "attack": "Explodes on death, dealing damage to adjacent tiles. Does not move or attack on its own.",
-          "pattern": "explosion_adjacent",
-          "effects": ["explode_on_death"]
-        },
-        "notes": "Stationary explosive Vek. Can be pushed into enemies or buildings. Explodes when killed or bumped."
-      },
-      {
-        "name": "Gastropod",
-        "type": "ranged",
-        "edition": "advanced",
-        "regular": {
-          "hp": 3,
-          "movement": 2,
-          "damage": 1,
-          "attack": "Grapple for 1 damage, pulling the Vek towards the target.",
-          "pattern": "ranged_pull",
-          "effects": ["pull_self"]
-        },
-        "alpha": {
-          "hp": 5,
-          "movement": 2,
-          "damage": 2,
-          "attack": "Grapple for 2 damage, pulling the Vek towards the target.",
-          "effects": ["pull_self"]
-        },
-        "notes": "Advanced Edition. Pulls itself towards target after attacking. Unique pull-self mechanic."
-      },
-      {
-        "name": "Mosquito",
-        "type": "melee",
-        "edition": "advanced",
-        "regular": {
-          "hp": 2,
-          "movement": 4,
-          "damage": 1,
-          "attack": "Smokes the target, preparing to whip it for 1 damage.",
-          "pattern": "melee_smoke",
-          "effects": ["smoke"],
-          "abilities": ["flying"]
-        },
-        "alpha": {
-          "hp": 4,
-          "movement": 4,
-          "damage": 2,
-          "attack": "Smokes the target, preparing to whip it for 2 damage.",
-          "effects": ["smoke"]
-        },
-        "notes": "Advanced Edition flying melee. Applies smoke to target before attacking, cancelling mech attacks."
       },
       {
         "name": "Plasmodia",
@@ -432,22 +416,43 @@
         "alpha": {
           "hp": 5,
           "movement": 3,
-          "damage": 2,
-          "attack": "Creates an explosive boulder and attacks it for 2 damage.",
+          "damage": 3,
+          "attack": "Creates an explosive boulder and attacks it for 3 damage.",
           "effects": ["create_boulder"]
         },
         "notes": "Advanced Edition. Creates and detonates boulders. Boulder explosions can damage buildings."
+      },
+      {
+        "name": "Bot",
+        "type": "varies",
+        "regular": {
+          "hp": 1,
+          "movement": 3,
+          "damage": 2,
+          "attack": "High-tech weapons causing fire and large-area damage",
+          "pattern": "varies",
+          "effects": ["fire"]
+        },
+        "alpha": {
+          "hp": 1,
+          "movement": 3,
+          "damage": 3,
+          "attack": "Upgraded weapons",
+          "effects": ["fire"]
+        },
+        "notes": "Not actually Vek — sentient AI robots from Pinnacle Island. 1 HP but dangerous attacks."
       }
     ]
   },
   "psions": {
-    "description": "Psions are special support Vek that provide global buffs to all other Vek on the map. They do not attack directly but move around the battlefield. Killing a Psion removes its buff.",
+    "description": "Psions are special support Vek that provide global buffs to all other Vek on the map. They do not attack directly but move around the battlefield. Killing a Psion removes its buff. All Psions have the Flying trait.",
     "types": [
       {
         "name": "Soldier Psion",
         "hp": 2,
         "movement": 2,
         "effect": "+1 HP to all other Vek while alive",
+        "abilities": ["flying"],
         "priority": "medium",
         "notes": "Makes all Vek harder to kill. Kill early if possible."
       },
@@ -456,6 +461,7 @@
         "hp": 2,
         "movement": 2,
         "effect": "All Vek regenerate 1 HP per turn",
+        "abilities": ["flying"],
         "priority": "high",
         "notes": "Counters chip damage strategies. Must kill quickly or enemies heal faster than you damage."
       },
@@ -463,7 +469,8 @@
         "name": "Shell Psion",
         "hp": 2,
         "movement": 2,
-        "effect": "All Vek gain Armored (take 1 less damage from attacks)",
+        "effect": "All Vek have incoming weapon damage reduced by 1",
+        "abilities": ["flying"],
         "priority": "high",
         "notes": "Drastically reduces damage output. Priority target. A.C.I.D. counters armor."
       },
@@ -472,6 +479,7 @@
         "hp": 2,
         "movement": 2,
         "effect": "All Vek explode on death, dealing 1 damage to adjacent tiles",
+        "abilities": ["flying"],
         "priority": "medium",
         "notes": "Can chain-kill weakened Vek near each other. Dangerous near buildings."
       },
@@ -480,6 +488,7 @@
         "hp": 2,
         "movement": 2,
         "effect": "All other Vek are protected from fire and leave fire on tiles when killed.",
+        "abilities": ["flying"],
         "priority": "low",
         "notes": "Advanced Edition. Counters fire-based squads entirely. Kill to re-enable fire strategies."
       },
@@ -487,23 +496,26 @@
         "name": "Arachnid Psion",
         "hp": 2,
         "movement": 2,
-        "effect": "All Vek spawn a Spiderling on death",
+        "effect": "All Vek spawn a Spiderling Egg on death",
+        "abilities": ["flying"],
         "priority": "medium",
-        "notes": "Advanced Edition. Every kill creates a Spiderling. Can overwhelm with numbers."
+        "notes": "Advanced Edition. Every kill creates a Spiderling Egg. Can overwhelm with numbers."
       },
       {
         "name": "Raging Psion",
         "hp": 2,
         "movement": 2,
-        "effect": "All Vek gain Boosted (+1 damage on next attack)",
+        "effect": "All Vek are Boosted, providing +1 damage to attacks while the Psion is alive",
+        "abilities": ["flying"],
         "priority": "high",
-        "notes": "Advanced Edition. Significantly increases threat level. +1 damage across all Vek is devastating."
+        "notes": "Advanced Edition. Significantly increases threat level. +1 damage across all Vek is devastating. Effect is ongoing while Psion lives."
       },
       {
         "name": "Psion Tyrant",
         "hp": 2,
         "movement": 2,
         "effect": "All player mechs take 1 damage at the end of every enemy turn",
+        "abilities": ["flying"],
         "priority": "critical",
         "notes": "Appears in the final battle. Constant drain on mech HP."
       }
@@ -519,7 +531,8 @@
         "damage": 3,
         "attack": "Charges dealing heavy damage, sets every tile in its path on fire",
         "effects": ["fire_trail"],
-        "notes": "Very tanky. Fire trail creates persistent hazard."
+        "abilities": ["massive"],
+        "notes": "Very tanky. Fire trail creates persistent hazard. Massive trait lets it walk through water."
       },
       {
         "name": "Firefly Leader",
@@ -528,7 +541,8 @@
         "damage": 4,
         "attack": "Launches goo projectiles in TWO directions simultaneously",
         "effects": ["dual_shot"],
-        "notes": "Double-shot makes it hard to block both attacks."
+        "abilities": ["massive"],
+        "notes": "Double-shot makes it hard to block both attacks. Massive trait lets it walk through water."
       },
       {
         "name": "Hornet Leader",
@@ -547,16 +561,18 @@
         "damage": 2,
         "attack": "Webs all adjacent targets, then damages all adjacent tiles",
         "effects": ["web_all_adjacent"],
-        "notes": "Highest HP boss. Webs restrict your mechs. Keep distance."
+        "abilities": ["massive"],
+        "notes": "Highest HP boss. Webs restrict your mechs. Keep distance. Massive trait lets it walk through water."
       },
       {
         "name": "Spider Leader",
         "hp": 6,
         "movement": 2,
         "damage": 0,
-        "attack": "Spawns multiple Spiderlings. Webs extensive area.",
+        "attack": "Spawns multiple Spiderlings. Throws out 2-3 Spiderling eggs.",
         "effects": ["mass_spawn", "mass_web"],
-        "notes": "Spawns many Spiderlings. Good for achievements requiring kills (chain attack, etc)."
+        "abilities": ["massive", "jumper"],
+        "notes": "Spawns many Spiderlings. Good for achievements requiring kills (chain attack, etc). Jumper trait lets it leap over obstacles."
       },
       {
         "name": "Psion Abomination",
@@ -565,6 +581,7 @@
         "damage": 0,
         "attack": "Does not attack directly. All other Vek gain +1 HP, Regeneration, and explode on death.",
         "effects": ["soldier_psion", "blood_psion", "blast_psion"],
+        "abilities": ["flying"],
         "notes": "Triple Psion effect boss. All Vek gain +1 HP, regenerate, AND explode. Nightmarish if not killed fast."
       },
       {
@@ -572,9 +589,28 @@
         "hp": 3,
         "movement": 3,
         "damage": 4,
-        "attack": "Attempts to squish an adjacent tile, dealing 4 damage. Splits into Medium Goo on death.",
+        "attack": "Attempts to squish an adjacent tile, dealing 4 damage. Splits into 2 Medium Goo on death.",
         "effects": ["split_on_death"],
-        "notes": "Splits into 2 Medium Goo (2 HP) on death, which split into Small Goo (1 HP). Total of 7 units if fully split."
+        "abilities": ["massive"],
+        "notes": "Splits into 2 Medium Goo (2 HP) on death, which split into Small Goo (1 HP). Total of 7 units if fully split. Massive trait lets it walk through water."
+      },
+      {
+        "name": "Medium Goo",
+        "hp": 2,
+        "movement": 3,
+        "damage": 4,
+        "attack": "Attempts to squish an adjacent tile, dealing 4 damage. Splits into 2 Small Goo on death.",
+        "effects": ["split_on_death"],
+        "notes": "Spawned when Large Goo dies. Splits into 2 Small Goo on death."
+      },
+      {
+        "name": "Small Goo",
+        "hp": 1,
+        "movement": 3,
+        "damage": 4,
+        "attack": "Attempts to squish an adjacent tile, dealing 4 damage.",
+        "effects": [],
+        "notes": "Spawned when Medium Goo dies. Final stage of Goo split chain. Still deals 4 damage despite low HP."
       }
     ]
   },

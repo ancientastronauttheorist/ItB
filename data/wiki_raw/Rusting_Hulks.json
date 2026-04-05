@@ -1,0 +1,50 @@
+{
+  "name": "Rusting_Hulks",
+  "url": "https://intothebreach.fandom.com/wiki/Rusting_Hulks",
+  "infobox": {
+    "_title": "Rusting Hulks"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Rocket Mech",
+          "Class": "Ranged",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Rocket Artillery(Ranged)EffectFires a pushing artillery and creates Smoke behind the shooter.(2 damage)Upgrade I+1 Damage ()Increases damage by 1.Upgrade II+1 Damage ()Increases damage by 1.Storm Generator(Passive)EffectAll Smoke deals damage to enemy units every turn.(1 damage)Upgrade I+1 Damage ()Increases Smoke damage by 1.",
+          "Special": "Rocket Artillery(Ranged)"
+        },
+        {
+          "Name": "Jet Mech",
+          "Class": "Brute",
+          "Health": "2",
+          "Move speed": "4",
+          "Default loadout": "Aerial Bombs(Brute)EffectFly over a target, dropping an explosive smoke bomb.(1 damage)Upgrade I+1 Damage ()Increases damage by 1.Upgrade II+1 Range ()Allows jumping over and attacking an additional target.",
+          "Special": "Aerial Bombs(Brute)"
+        },
+        {
+          "Name": "Pulse Mech",
+          "Class": "Science",
+          "Health": "3",
+          "Move speed": "4",
+          "Default loadout": "Repulse(Science)EffectPush all adjacent tiles.Upgrade IShield Self ()Creates a personal Shield when used.Upgrade IIShield Friendly ()Shield adjacent ally or Building.",
+          "Special": "Repulse(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheRusting Hulksare one of theSquadsfromInto The Breach. They consist of theJet Mech,Rocket MechandPulse Mechand are unlockable for 2 coins.\nThe Rusting Hulks are designed to spew damaging, electrified smoke with the Jet and Rocket Mechs. This lets them easily disable attacks and inflict high damage, but hinders itself as they cannot attack in smoke.",
+    "Strategies": "  - The Rocket Mech can be moved next to a Vek and fire its rocket in the opposite direction, hitting nothing and dropping a smoke cloud on the Vek to prevent its attack.\n  - The Pulse Mech'sShield Selfupgrade is a good early unlock. The shield will active whenever Push is used even if you don't push anything. It can then be used to block damage or indefinitely block a spawn point refreshing its shield each turn.Shield Allycan be used on buildings, protecting them in advance.\n  - Upgrading the storm generator simultaneously increases the Jet and Rocket mech's damage by 1, which makes it a priority upgrade. +1 range on the Jet Mech also lets it produce more smoke and attack flexibly. Smoke damage also bypasses the armor from theShell Psion.\n  - Aerial Bomb can be used to limit the movement of the Vek, as they will avoid moving into smoke.\n  - The Rusting Hulks make it easy to deal with powerful enemies by simply negating their attacks, but smoke clouds last for the entire battle. Try not to spread smoke around carelessly, or you could run out of options later in the fight.\n  - If advanced equipment is on,Nanofilter Mendingtrivialises this squad as it lets them remove their own smoke to attack - the lost smoke tiles can be replaced by the Jet Mech orMosquitoes.\n  - Since the squad's biggest weakness is its own smoke,Camila Verais bar none the best pilot for this squad. Others to look out for include:Kazaaakpleth- Grants a decent attack on the Pulse Mech.Kai Miller- Allows the Jet Mech to immediately deal 2 damage, enough to kill off 3-health enemies on island one when accounting for electrified smoke.Ariadne- Makes the Jet Mech much more survivable."
+  },
+  "full_text": "Rusting Hulks\n“\nRST Corp. weather manipulators allow these Mechs to take advantage of smoke storms everywhere.\n„\nThe\nRusting Hulks\nare one of the\nSquads\nfrom\nInto The Breach\n. They consist of the\nJet Mech\n,\nRocket Mech\nand\nPulse Mech\nand are unlockable for 2 coins.\nThe Rusting Hulks are designed to spew damaging, electrified smoke with the Jet and Rocket Mechs. This lets them easily disable attacks and inflict high damage, but hinders itself as they cannot attack in smoke.\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nRocket Mech\nRanged\n3\n3\nRocket Artillery\n(\nRanged\n)\nEffect\nFires a pushing artillery and creates Smoke behind the shooter.\n(2 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases damage by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases damage by 1.\nStorm Generator\n(\nPassive\n)\nEffect\nAll Smoke deals damage to enemy units every turn.\n(1 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases Smoke damage by 1.\nJet Mech\nBrute\n2\n4\nAerial Bombs\n(\nBrute\n)\nEffect\nFly over a target, dropping an explosive smoke bomb.\n(1 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases damage by 1.\nUpgrade II\n+1 Range (\n)\nAllows jumping over and attacking an additional target.\nFlying\n: Flying units can move over any terrain tile.\nPulse Mech\nScience\n3\n4\nRepulse\n(\nScience\n)\nEffect\nPush all adjacent tiles.\nUpgrade I\nShield Self (\n)\nCreates a personal Shield when used.\nUpgrade II\nShield Friendly (\n)\nShield adjacent ally or Building.\nAchievements\n[\n]\nOverpowered\nOverpower your Power Grid twice by earning or buying Power when it is full\nStormy Weather\nDeal 12 damage with Electric Smoke in a single battle\nPerfect Battle\nTake no Mech or Building Damage in a single battle (Repaired damage is still damage):\nStrategies\n[\n]\nThe Rocket Mech can be moved next to a Vek and fire its rocket in the opposite direction, hitting nothing and dropping a smoke cloud on the Vek to prevent its attack.\nThe Pulse Mech's\nShield Self\nupgrade is a good early unlock. The shield will active whenever Push is used even if you don't push anything. It can then be used to block damage or indefinitely block a spawn point refreshing its shield each turn.\nShield Ally\ncan be used on buildings, protecting them in advance.\nUpgrading the storm generator simultaneously increases the Jet and Rocket mech's damage by 1, which makes it a priority upgrade. +1 range on the Jet Mech also lets it produce more smoke and attack flexibly. Smoke damage also bypasses the armor from the\nShell Psion\n.\nAerial Bomb can be used to limit the movement of the Vek, as they will avoid moving into smoke.\nThe Rusting Hulks make it easy to deal with powerful enemies by simply negating their attacks, but smoke clouds last for the entire battle. Try not to spread smoke around carelessly, or you could run out of options later in the fight.\nIf advanced equipment is on,\nNanofilter Mending\ntrivialises this squad as it lets them remove their own smoke to attack - the lost smoke tiles can be replaced by the Jet Mech or\nMosquitoes.\nSince the squad's biggest weakness is its own smoke,\nCamila Vera\nis bar none the best pilot for this squad. Others to look out for include:\nKazaaakpleth\n- Grants a decent attack on the Pulse Mech.\nKai Miller\n- Allows the Jet Mech to immediately deal 2 damage, enough to kill off 3-health enemies on island one when accounting for electrified smoke.\nAriadne\n- Makes the Jet Mech much more survivable.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

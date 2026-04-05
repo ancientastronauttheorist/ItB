@@ -15,7 +15,7 @@
     {
       "id": "water",
       "name": "Water Tile",
-      "description": "Liquid tile that drowns most ground units and prevents attacks for massive/mech units.",
+      "description": "Liquid tile that drowns non-massive non-flying ground units. Massive units (all Mechs, boss Vek) survive but are submerged.",
       "traversable_ground": false,
       "traversable_flying": true,
       "blocks_projectiles": false,
@@ -29,6 +29,7 @@
       "special_interactions": [
         "Drowns non-flying, non-massive ground units instantly when pushed in",
         "Massive units (all Mechs, boss Vek) survive but become Submerged and cannot attack",
+        "Mechs ARE Massive and CAN enter water voluntarily — they become submerged, not killed",
         "Flying units hover over water with no effect",
         "Extinguishes fire on units that enter water",
         "Freezing water turns it into an Ice Tile",
@@ -40,7 +41,7 @@
     {
       "id": "mountain",
       "name": "Mountain Tile",
-      "description": "Impassable rock formation that blocks movement and projectiles. Must be hit twice to destroy.",
+      "description": "Impassable rock formation that blocks movement and projectiles. Has 2 HP — any attack damages it.",
       "traversable_ground": false,
       "traversable_flying": false,
       "blocks_projectiles": true,
@@ -51,6 +52,7 @@
       "special_interactions": [
         "Blocks both movement and projectile line of fire",
         "Flying units cannot land on mountains but can fly over them",
+        "Any attack damages mountains — there is no 'cannot be destroyed by normal attacks' restriction",
         "Takes 2 hits to destroy regardless of damage amount per hit",
         "Instant-kill attacks destroy even undamaged mountains in one hit",
         "Pushing a unit into a mountain deals bump/collision damage to the pushed unit",
@@ -79,15 +81,15 @@
     {
       "id": "sand",
       "name": "Sand Tile",
-      "description": "Sandy terrain that turns into smoke when hit by weapon damage.",
+      "description": "Sandy terrain that turns into smoke when hit by weapon damage. Push and fire damage do NOT convert sand to smoke.",
       "traversable_ground": true,
       "traversable_flying": true,
       "blocks_projectiles": false,
       "blocks_movement": false,
       "effect_on_unit": "none",
-      "effect_when_damaged": "Turns into Smoke Tile when hit by weapon damage.",
+      "effect_when_damaged": "Turns into Smoke Tile when hit by weapon damage only.",
       "special_interactions": [
-        "Only weapon damage turns sand into smoke - push damage and fire damage do NOT cause smoke",
+        "Only weapon damage turns sand into smoke - push damage, collision damage, and fire damage do NOT cause smoke",
         "If hit with a fire attack, turns into Fire Tile instead of Smoke Tile",
         "Lightning environmental effect converts sand to smoke"
       ]
@@ -114,7 +116,7 @@
     {
       "id": "lava",
       "name": "Lava Tile",
-      "description": "Liquid tile that behaves like water but inflicts fire on surviving units.",
+      "description": "Liquid tile that behaves like water for drowning. Kills non-massive non-flying ground units. Massive units survive but are submerged and set on fire.",
       "traversable_ground": false,
       "traversable_flying": true,
       "blocks_projectiles": false,
@@ -126,7 +128,8 @@
       },
       "effect_when_damaged": "none",
       "special_interactions": [
-        "Behaves like Water for drowning purposes - kills non-flying non-massive ground units",
+        "Behaves like Water for drowning purposes - kills non-flying non-massive ground units instantly",
+        "NOT simply 'traversable with fire damage' - drowns non-massive ground units just like water",
         "Surviving units (massive/mechs) are submerged AND set on fire",
         "Flying units hover over lava safely",
         "Falling Rock environmental effect converts lava to normal ground",
@@ -136,7 +139,7 @@
     {
       "id": "chasm",
       "name": "Chasm Tile",
-      "description": "Bottomless pit that instantly destroys any non-flying unit displaced into it.",
+      "description": "Bottomless pit that instantly destroys any non-flying unit displaced into it, INCLUDING massive units.",
       "traversable_ground": false,
       "traversable_flying": true,
       "blocks_projectiles": false,
@@ -147,7 +150,7 @@
       },
       "effect_when_damaged": "none",
       "special_interactions": [
-        "Kills ALL non-flying units including massive units and boss Vek - unlike water",
+        "Kills ALL non-flying units including massive units and boss Vek - unlike water/lava where massive units survive",
         "Shields do NOT protect against chasm death (instant kill)",
         "Mechs that fall into chasms cannot be revived - no disabled mech left behind",
         "Mechs falling into chasms lose Vek Mites status",
@@ -252,15 +255,15 @@
       "traversable_flying": true,
       "blocks_projectiles": false,
       "blocks_movement": false,
-      "effect_on_unit": "Units cannot attack or repair. Clears when unit moves out of smoke.",
+      "effect_on_unit": "Units cannot attack or repair while on this tile.",
       "effect_when_damaged": "none",
       "special_interactions": [
-        "Attacking enemy units that end their turn on Smoke will have their attack cancelled",
-        "Created by damaging Sand Tiles with weapon damage, or by smoke-creating weapons",
+        "Enemy units that END their turn on a Smoke tile have their queued attack cancelled for the entire turn",
+        "Created by damaging Sand Tiles with weapon damage (not push/fire damage), or by smoke-creating weapons",
         "Units on fire that enter smoke have their fire extinguished",
         "Fire attacks on Smoke Tiles replace smoke with Fire Tile",
         "Smoke can stack with other modified tiles like A.C.I.D. Pools",
-        "Smoke does NOT prevent: explosions, Vek spawns, death-effects (like Explosive Decay from Arachnid Psion)",
+        "Smoke does NOT prevent: explosions, Vek spawns, death-effects (Explosive Decay)",
         "Camila Vera pilot grants smoke immunity to her mech",
         "Spiderling Eggs: webbing is interrupted by smoke but hatching is not"
       ]
@@ -284,14 +287,15 @@
     {
       "id": "conveyor_belt",
       "name": "Conveyor Belt",
-      "description": "Mechanical tile that pushes any unit in the marked direction at end of turn.",
+      "description": "Mechanical tile that pushes any unit in the marked direction during the environment step of the Attack Order phase.",
       "traversable_ground": true,
       "traversable_flying": true,
       "blocks_projectiles": false,
       "blocks_movement": false,
-      "effect_on_unit": "Pushes any unit (including flying units) one tile in the belt's direction at the appropriate phase.",
+      "effect_on_unit": "Pushes any unit (including flying units) one tile in the belt's direction during the environment step of the Attack Order phase.",
       "effect_when_damaged": "none",
       "special_interactions": [
+        "Conveyor belts activate during the environment step of the Attack Order phase (not at 'end of turn' generically)",
         "Flying units ARE still pushed by conveyor belts",
         "Push direction is fixed and marked on the tile visually",
         "Commonly found on Detritus Disposal island",
@@ -303,24 +307,26 @@
     {
       "id": "teleporter_pad",
       "name": "Teleporter Pad",
-      "description": "Paired pads that warp units between them. Always come in pairs.",
+      "description": "Paired pads that warp units between them. Come in two pairs (4 pads total: blue pair and red pair).",
       "traversable_ground": true,
       "traversable_flying": true,
       "blocks_projectiles": false,
       "blocks_movement": false,
-      "effect_on_unit": "End movement here to warp to the matching pad. If a unit occupies the other pad, the two units swap positions.",
+      "effect_on_unit": "End movement here OR be pushed here to warp to the matching pad. If a unit occupies the other pad, the two units swap positions.",
       "effect_when_damaged": "none",
       "special_interactions": [
         "Units voluntarily ending movement on a teleporter are warped to the paired pad",
+        "Push also triggers teleportation - units pushed onto a teleporter pad are teleported to the paired pad",
         "If the destination pad is occupied, the two units swap positions",
+        "There are two pairs of teleporters per map (4 pads total: blue pair and red pair)",
         "Teleporter does NOT remove Webbed status",
-        "Found in certain mission maps"
+        "Found in certain mission maps on Pinnacle island"
       ]
     },
     {
       "id": "spawn_tile",
       "name": "Spawn Tile",
-      "description": "Telegraphed tile where Vek will emerge next turn.",
+      "description": "Telegraphed tile where Vek will emerge next turn. Separate from Cracked Ground terrain.",
       "traversable_ground": true,
       "traversable_flying": true,
       "blocks_projectiles": false,
@@ -328,6 +334,7 @@
       "effect_on_unit": "Any unit blocking this space when Vek emerge takes 1 damage but prevents the Vek from spawning.",
       "effect_when_damaged": "none",
       "special_interactions": [
+        "This is a spawn indicator, NOT the same as Cracked Ground terrain (which becomes a Chasm when damaged)",
         "Appear on the bottom portion of the map, prioritizing columns B-G and rows 1-3",
         "Only uses corners or tiles closer to the player if no viable positions exist",
         "Can appear on most non-liquid tiles including Forest, Fire, Cracked, A.C.I.D. Pool, Sand, Smoke",
@@ -342,7 +349,7 @@
     {
       "id": "cracked_tile",
       "name": "Cracked Tile",
-      "description": "Weakened ground tile that turns into a Chasm if damaged again.",
+      "description": "Weakened ground tile that turns into a Chasm if damaged again. Separate from Vek spawn tiles.",
       "traversable_ground": true,
       "traversable_flying": true,
       "blocks_projectiles": false,
@@ -350,6 +357,7 @@
       "effect_on_unit": "none",
       "effect_when_damaged": "Turns into a Chasm Tile, destroying any non-flying unit on it.",
       "special_interactions": [
+        "This is a terrain feature, NOT the same as Vek spawn tiles (which show where Vek will emerge)",
         "Introduced/expanded in Advanced Edition via Cataclysm mechanic",
         "Can be created by certain weapons that crack tiles",
         "Any damage to the cracked tile shatters it into a chasm, killing the unit standing on it",
@@ -517,7 +525,7 @@
       "removed_by": [
         "Moving into Water (submerging extinguishes fire)",
         "Moving into a Smoke Tile",
-        "Being Frozen (but if hit by fire while frozen, unit unfreezes AND catches fire simultaneously)",
+        "Being Frozen (removes fire; but applying fire TO a frozen unit unfreezes AND catches fire simultaneously)",
         "Repairing (also extinguishes fire on the tile the unit stands on)",
         "Shield (blocks fire from being applied, but does NOT remove existing fire)"
       ],
@@ -530,7 +538,8 @@
         "A.C.I.D. does NOT double fire damage (fire is not weapon damage)",
         "Buildings are immune to fire - setting fire on a building tile does NOT damage Grid Power",
         "Enemy Vek that are not already burning will not deliberately stand on Fire Tiles",
-        "Fire can stack with A.C.I.D. on a unit simultaneously"
+        "Fire can stack with A.C.I.D. on a unit simultaneously",
+        "Applying fire to a frozen unit: the unit unfreezes AND catches fire simultaneously (directional: fire applied TO frozen)"
       ],
       "immunity_sources": [
         "Ariadne pilot",
@@ -561,8 +570,8 @@
       "removed_by": [
         "Taking any damage (damage is negated, unit is freed)",
         "Using the Repair ability (mechs only)",
-        "Fire damage (unfreezes AND catches fire simultaneously)",
-        "Moving over lava"
+        "Fire damage (unfreezes AND catches fire simultaneously — this is bi-directional with the fire interaction)",
+        "Being pushed into lava (unfreezes, and then lava rules apply — massive survive submerged + on fire, non-massive drown)"
       ],
       "special_interactions": [
         "Frozen units can still be pushed by weapons",
@@ -618,7 +627,7 @@
       "id": "acid",
       "name": "Corroding A.C.I.D.",
       "visual_indicator": "Green acid dripping on unit",
-      "effect": "Weapon damage against this unit is doubled. All other damage (Push, Blocking, Fire, etc.) is unaffected. Disables Armor.",
+      "effect": "Persistent status that doubles WEAPON damage against this unit. All other damage (Push, Blocking, Fire, etc.) is unaffected. Disables Armor.",
       "duration": "Indefinite until removed by Repairing.",
       "applied_by": [
         "A.C.I.D. Pool tiles (consumed on use)",
@@ -631,6 +640,7 @@
       ],
       "special_interactions": [
         "ONLY doubles weapon damage - push damage, collision damage, fire damage, spawn blocking damage are NOT doubled",
+        "A.C.I.D. is a persistent status effect, NOT a per-turn environmental damage effect",
         "Disables Armor trait entirely while A.C.I.D. is active",
         "A.C.I.D. DOES apply to self-damage from weapons like Unstable Cannon",
         "A.C.I.D. DOES double the bonus damage from Boosted attacker",
@@ -653,7 +663,7 @@
       "id": "smoke",
       "name": "Smoke",
       "visual_indicator": "Smoke cloud icon on unit",
-      "effect": "Unit cannot attack or repair while in smoke.",
+      "effect": "Unit cannot attack or repair while on a Smoke Tile.",
       "duration": "As long as unit remains on a Smoke Tile. Clears immediately when unit moves off.",
       "applied_by": [
         "Standing on a Smoke Tile",
@@ -665,7 +675,7 @@
         "Fire attack replacing the Smoke Tile with Fire Tile"
       ],
       "special_interactions": [
-        "Enemy units that end their turn on Smoke have their queued attack cancelled",
+        "Enemy units that END their turn on a Smoke tile have their queued attack cancelled for the entire turn",
         "Smoke does NOT prevent: explosions, Vek spawns, death-effects (Explosive Decay)",
         "Smoke extinguishes fire on units that enter smoke tiles",
         "Can stack with A.C.I.D. Pools on the same tile",
@@ -687,13 +697,15 @@
       "duration": "Until freed by specific interactions.",
       "applied_by": [
         "Spider and Alpha Spider attacks",
-        "Spiderling web attack"
+        "Spiderling web attack",
+        "Scorpion attacks"
       ],
       "removed_by": [
         "Being pushed to an empty tile (even if captor also moves in same direction)",
         "Dashing away",
         "Captor's attack being cancelled",
-        "Captor dying"
+        "Captor dying",
+        "Repairing"
       ],
       "special_interactions": [
         "Webbed units CAN still attack - only movement is restricted",
@@ -710,7 +722,8 @@
       "duration": "Consumed on next ability use (including non-damaging abilities and repairing).",
       "applied_by": [
         "Boost weapons and abilities (Advanced Edition mechanic)",
-        "Certain pilot skills"
+        "Raging Psion (all other Vek are Boosted while Psion is alive — ongoing, re-applied each turn)",
+        "Certain pilot skills (Kai Miller at full HP, Morgan Lejeune on kills)"
       ],
       "removed_by": [
         "Using any ability (consumed on use)",
@@ -730,7 +743,7 @@
       "id": "armored",
       "name": "Armored",
       "visual_indicator": "Armor icon on unit",
-      "effect": "Incoming weapon damage is reduced by 1. All other damage (Push, Blocking, Fire, etc.) is unaffected.",
+      "effect": "Incoming WEAPON damage is reduced by 1. All other damage (Push, Blocking, Fire, spawn blocking, electric smoke, etc.) is unaffected. Does NOT reduce self-damage.",
       "duration": "Permanent trait (unless disabled by A.C.I.D.).",
       "applied_by": [
         "Innate trait on certain units: Judo Mech, Hook Mech, Armored Train, Bouncer Leader",
@@ -743,6 +756,7 @@
       ],
       "special_interactions": [
         "Only reduces WEAPON damage by 1 - does not reduce push damage, collision damage, fire damage, spawn blocking, electric smoke",
+        "Does NOT reduce self-damage from weapons (Armor only reduces weapon damage from OTHER sources)",
         "Multiple instances of Armored on the same unit do NOT stack (redundant)",
         "Reduces each individual damage source by 1 (e.g., multi-hit still gets -1 per hit)",
         "Also reduces Psion Tyrant's Hive Targeted damage",
@@ -792,7 +806,7 @@
       "id": "submerged",
       "name": "Submerged",
       "visual_indicator": "Submerged icon on unit",
-      "effect": "Unit's weapons do not work. Unit is immune to fire.",
+      "effect": "Unit's weapons do not work. Unit is immune to fire while submerged in water.",
       "duration": "As long as unit remains in liquid tile.",
       "applied_by": [
         "Massive/Mech unit standing in Water Tile",
@@ -804,7 +818,8 @@
       ],
       "special_interactions": [
         "Fire immunity while submerged in water",
-        "Flying units never become submerged"
+        "Flying units never become submerged",
+        "Mechs can voluntarily enter water and become submerged (Mechs are Massive)"
       ]
     },
     {
@@ -891,6 +906,7 @@
 
   "grid_power": {
     "starting_value": 5,
+    "starting_value_note": "5 for ALL difficulties (Easy, Normal, Hard, and Unfair all start at 5 Grid Power)",
     "maximum_value": 7,
     "game_over_condition": "Grid Power reaches 0. The timeline is lost. Player may bring one surviving pilot to try again in a different timeline.",
     "persistence": "Grid Power changes persist between islands within a run.",
@@ -904,15 +920,15 @@
       "Civilian Building destroyed: lose Grid Power equal to number of buildings on that tile (1-3)",
       "Power Pylon destroyed in Volcanic Hive: lose Grid Power"
     ],
-    "unfair_note": "On Unfair difficulty, all grid health earned is doubled.",
+    "unfair_note": "On Unfair difficulty, all grid health earned (from missions, reputation, Perfect Island, Grid Charger) is doubled.",
     "grid_defense": {
       "description": "Percentage chance that a building will resist damage when hit.",
       "starting_value": "15% (0% on Unfair difficulty)",
-      "overpower_bonus": "Each Grid Power gained when already at max: +2% for first 5 points, then +1% per point, up to +25% total.",
+      "overpower_bonus": "Each Grid Power gained when already at max: +2% for first 5 points, then +1% per point, up to +25% total from overpower.",
       "pilot_bonus": "+3% per pilot with '+3 Grid DEF' skill. Max 3 pilots = +9%.",
-      "maximum_total": "49% (15% base + 25% overpower + 9% pilot). 34% on Unfair (0% base + 25% + 9%).",
-      "seeded_rng": "Resist outcomes are predetermined by the game's seeded RNG. Reset Turn does NOT change the outcome. This allows 'fishing for resists' strategy where players test a resist on one building, and if it succeeds, know a different building hit will also resist.",
-      "resist_fishing_explanation": "If a building resists during the player turn, resetting will reproduce the same resist. The source of damage and specific building hit do not affect the outcome. Players can sacrifice a building test to check if the next resist in the sequence is favorable."
+      "maximum_total": "49% (15% base + 25% overpower + 9% pilot). 34% on Unfair (0% base + 25% overpower + 9% pilot).",
+      "seeded_rng": "Resist outcomes are predetermined by the game's seeded RNG. Reset Turn does NOT change the outcome. The source of damage and specific building hit do not affect the outcome.",
+      "resist_fishing_explanation": "If a building resists during the player turn, resetting will reproduce the same resist. Players can exploit this: damage a building to test the resist, then reset and let an enemy attack a different building, knowing the resist will occur."
     }
   },
 
@@ -969,7 +985,7 @@
         "note": "Even smoke-immune enemies take electric smoke damage."
       },
       "self_damage": {
-        "description": "Some weapons deal damage to the user. Affected by A.C.I.D. and Boost.",
+        "description": "Some weapons deal damage to the user. Affected by A.C.I.D. and Boost. NOT reduced by Armor (Armor only reduces weapon damage from other sources).",
         "affected_by_armor": false,
         "affected_by_acid": true,
         "affected_by_boost": true
@@ -977,14 +993,14 @@
       "instant_kill": {
         "description": "Certain effects kill regardless of HP. Cannot be blocked by Shield, Frozen, or Armor.",
         "sources": [
-          "Chasm (non-flying units)",
+          "Chasm (non-flying units, including massive)",
           "Water/Lava/A.C.I.D. Tile (non-flying, non-massive units)",
           "Self-Destruct",
           "Satellite Rocket",
           "Supply Train ramming",
           "Old Earth Mine",
           "Mosquito Leader attack",
-          "Environmental: Air Bombing, Lightning Strike, Falling Rock, Tentacles, Volcanic Projectile"
+          "Environmental: Air Bombing (instant kill), Lightning Strike (instant kill), Falling Rock, Tentacles, Volcanic Projectile"
         ]
       }
     },
@@ -999,6 +1015,7 @@
         "If destination is lava: same as water but surviving units catch fire",
         "If destination is chasm: non-flying units die (including massive)",
         "If destination is A.C.I.D. Tile: same as water but surviving units get A.C.I.D.",
+        "If destination is teleporter pad: unit is teleported to the paired pad",
         "Stable units cannot be pushed at all",
         "Frozen units CAN be pushed",
         "Push happens before other effects resolve (e.g., forest ignition happens after push)"
@@ -1048,19 +1065,18 @@
         ]
       },
       "2_attack_order_resolution": {
-        "description": "After player ends their turn, effects resolve in a specific Attack Order. Viewable by hovering 'Attack Order' or holding Alt.",
+        "description": "After player ends their turn, effects resolve in a specific Attack Order. Viewable by hovering 'Attack Order' or holding Alt. Player attacks do NOT resolve simultaneously — they resolve in the specific order displayed.",
         "order": [
           "1. Fire damage (burning units take 1 damage - units at 1HP die before they can act)",
           "2. Healing effects (Technician, Blood Psion regeneration)",
-          "3. Environmental effects (varies: air strikes, high tide, lava flow, lightning, seismic activity, volcanic projectiles, falling rocks, tentacles, ice storms, conveyor belts)",
-          "4. Enemy Vek attacks execute (in displayed order)",
-          "5. Vek spawn (emerge from spawn tiles - blocked by any unit on the tile)",
-          "6. Psion passive effects (continuous)"
+          "3. Environmental effects and enemy attacks interleaved in a specific displayed order (e.g., air strikes, conveyor belts, high tide, lightning, etc. mixed with specific Vek attacks)",
+          "4. Vek spawn (emerge from spawn tiles - blocked by any unit on the tile)",
+          "5. Psion passive effects (continuous)"
         ],
         "notes": [
           "The exact order is displayed in-game via the Attack Order indicator",
-          "Environmental effects and enemy attacks are interleaved in a specific order each turn",
-          "Conveyor belts push during this phase",
+          "Environmental effects and enemy attacks are interleaved in a specific order each turn, NOT separate phases",
+          "Conveyor belts push during the environment step of this phase",
           "Units killed by fire before their attack turn do not get to attack"
         ]
       },
@@ -1112,6 +1128,7 @@
 
   "difficulty": {
     "easy": {
+      "grid_power_start": 5,
       "max_civilians_per_region": 500,
       "max_score_per_island": 2500,
       "perfect_4_island_score": 10000,
@@ -1123,6 +1140,7 @@
       "kill_few_objective": "Kill 4 or fewer enemies"
     },
     "normal": {
+      "grid_power_start": 5,
       "max_civilians_per_region": 1000,
       "max_score_per_island": 5000,
       "perfect_4_island_score": 20000,
@@ -1134,6 +1152,7 @@
       "kill_few_objective": "Kill 5 or fewer enemies"
     },
     "hard": {
+      "grid_power_start": 5,
       "max_civilians_per_region": 1500,
       "max_score_per_island": 7500,
       "perfect_4_island_score": 30000,
@@ -1146,6 +1165,7 @@
       "kill_few_objective": "Kill 5 or fewer enemies"
     },
     "unfair": {
+      "grid_power_start": 5,
       "max_civilians_per_region": 2000,
       "max_score_per_island": 10000,
       "perfect_4_island_score": 40000,
@@ -1168,10 +1188,10 @@
     "release_date": "July 22, 2022 (free upgrade)",
     "new_content": {
       "squads": "5 new squads with 15 new squad achievements",
-      "vek": "7 new Vek, 3 new Psions, 10 new boss battles",
+      "vek": "7 new Vek types (Bouncer, Gastropod, Moth, Plasmodia, Starfish, Tumblebug, Mosquito), 3 new Psions, 10 new boss battles",
       "missions": "12 new mission types, 3 new bonus mission goals",
-      "pilots": "4 new pilots, 10 new random pilot abilities",
-      "weapons": "39 new weapons and equipment",
+      "pilots": "4 new pilots: Kai Miller, Rosie Rivets, Morgan Lejeune, Adam. 10 new random pilot abilities.",
+      "weapons": "39 new weapons and equipment (including Grid Charger)",
       "music": "2 new music tracks by Ben Prunty",
       "languages": "7 new languages (Arabic, Thai, Swedish, Korean, Traditional Chinese, Turkish, Latin American Spanish)"
     },
@@ -1197,6 +1217,7 @@
       },
       "new_vek_types": {
         "common": ["Bouncer", "Alpha Bouncer", "Gastropod", "Alpha Gastropod", "Moth", "Alpha Moth", "Plasmodia", "Alpha Plasmodia", "Starfish", "Alpha Starfish", "Tumblebug", "Alpha Tumblebug", "Mosquito", "Alpha Mosquito"],
+        "all_7_base_types": ["Bouncer", "Gastropod", "Moth", "Plasmodia", "Starfish", "Tumblebug", "Mosquito"],
         "psions": ["Smoldering Psion", "Arachnid Psion", "Raging Psion"],
         "leaders": "10 new boss variants for the new Vek types",
         "note": "Advanced Edition Vek do NOT spawn in the Volcanic Hive final mission (only classic Vek). Exception: on Unfair 3-4 island playthroughs, one AE boss variant can appear."
@@ -1221,24 +1242,25 @@
       "hp": 2
     },
     "psion_types_summary": {
-      "blast_psion": "All Vek explode on death (Explosive Decay), dealing 1 damage to adjacent tiles",
+      "blast_psion": "All Vek gain Explosive Decay: explode on death, dealing 1 damage to adjacent tiles. This is DIFFERENT from Arachnid Psion.",
       "blood_psion": "Heals all Vek 1 HP per turn (Regeneration)",
       "shell_psion": "Grants Armored to all Vek (-1 weapon damage)",
       "soldier_psion": "Grants +1 max HP to all Vek",
       "psion_tyrant": "Deals 1 damage to all friendly (player) units every turn. Found only in Volcanic Hive.",
       "smoldering_psion": "Grants Fire immunity to all Vek (Advanced Edition)",
-      "arachnid_psion": "Grants Explosive Decay to all Vek on death (Advanced Edition)",
-      "raging_psion": "Effect varies (Advanced Edition)"
+      "arachnid_psion": "When any Vek dies, a Spiderling Egg is spawned on the tile where it died. This is DIFFERENT from Blast Psion — does NOT grant Explosive Decay. (Advanced Edition)",
+      "raging_psion": "All other Vek are Boosted (+1 damage to attacks), ongoing while Psion is alive (Advanced Edition)"
     }
   },
 
   "environmental_effects": {
-    "description": "Environmental effects are telegraphed hazards that occur during the Attack Order phase. They appear on specific tiles and resolve during the enemy turn.",
+    "description": "Environmental effects are telegraphed hazards that occur during the Attack Order phase. They appear on specific tiles and resolve interleaved with enemy attacks in the displayed order.",
     "effects": [
       {
-        "name": "Air Strike",
-        "effect": "Bombs dropped on tile, instantly killing any unit.",
-        "kill_type": "instant_kill"
+        "name": "Air Strike / Air Support (Archive)",
+        "effect": "Bombs dropped on tile, instantly killing any unit regardless of HP. Shields and Frozen do not protect.",
+        "kill_type": "instant_kill",
+        "note": "This is an instant kill, not just 'damage'."
       },
       {
         "name": "Falling Rock",
@@ -1261,9 +1283,10 @@
         "kill_type": "terrain_change"
       },
       {
-        "name": "Lightning Strike",
-        "effect": "Kills any unit on the tile. Converts Sand tiles to Smoke afterwards.",
-        "kill_type": "instant_kill"
+        "name": "Lightning Strike (R.S.T.)",
+        "effect": "Instantly kills any unit on the tile regardless of HP. Shields and Frozen do not protect. Converts Sand tiles to Smoke afterwards.",
+        "kill_type": "instant_kill",
+        "note": "This is an instant kill, not just 'damage'."
       },
       {
         "name": "Seismic Activity",
@@ -1281,6 +1304,18 @@
         "kill_type": "instant_kill"
       }
     ]
+  },
+
+  "reactor_cores": {
+    "description": "Used for upgrading Mechs. Each installed core gives 1 additional energy for stats, weapons, weapon upgrades, passives, or pilot abilities.",
+    "max_per_mech": 9,
+    "sources": [
+      "Recovering a Time Pod during a mission",
+      "Protecting a key building during a mission (bonus objective)",
+      "Spending 3 Corporate Reputation Points after protecting a Corporate H.Q."
+    ],
+    "cost_note": "Reactor Cores cost 3 Reputation (not 1). The wiki confirms: 'Spending 3 Corporate Reputation Points after protecting a Corporate H.Q.'",
+    "pilot_bonus": "Pilots can acquire the Mech Reactor skill to gain a bonus Reactor Core."
   },
 
   "vek_behavior": {

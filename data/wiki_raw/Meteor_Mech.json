@@ -1,0 +1,17 @@
+{
+  "name": "Meteor_Mech",
+  "url": "https://intothebreach.fandom.com/wiki/Meteor_Mech",
+  "infobox": {
+    "_title": "Meteor Mech",
+    "Class": "Ranged",
+    "Health": "3",
+    "Move": "3",
+    "Systems": "Vulcan Artillery(Ranged)EffectLight the target on Fire and push adjacent tiles.Upgrade IBackburn ()Light the tile behind the Mech on Fire.Upgrade II+2 Damage ()Adds 2 damage to targeted tiles."
+  },
+  "tables": [],
+  "sections": {
+    "Team": "The mech is available as part of theFlame Behemothssquad.",
+    "Strategy": "Since the Meteor Mech's Vulcan Artillery does not deal direct damage, it's possible right from the start of the timeline to target buildings, and push melee Vek away from them without damaging them; only lighting the building on fire does not do damage to it. Note that this becomes impossible if the+2 Damageupgrade is powered with 3 Reactor Cores; thus, it is an upgrade that must be carefully considered depending on the mission and other Mechs in the squad, weighing the usefulness of additional direct damage versus the utility of protecting buildings.\nIn general, the upgrades for Vulcan Artillery are not as pressing to get, especially in the Flame Behemoths where the other two Mechs want upgrades sooner. TheBackburnupgrade, while cheap at one reactor core, is also situational; for example, it can grant flexibility to deal withLeapersthat jump at the back line and web the Meteor Mech by setting them on fire, or by moving it forward to remove Smoke from a webbed ally while shooting another target on the opposite side (especially useful against theMosquito Leader). Backburn can also be a useful upgrade to set up boosts, if paired with theNapalm Mechin aCustom Squad."
+  },
+  "full_text": "Meteor Mech\nDetails\nClass\nRanged\nHealth\n3\nMove\n3\nSystems\nVulcan Artillery\n(\nRanged\n)\nEffect\nLight the target on Fire and push adjacent tiles.\nUpgrade I\nBackburn (\n)\nLight the tile behind the Mech on Fire.\nUpgrade II\n+2 Damage (\n)\nAdds 2 damage to targeted tiles.\nMeteor Mech\nis a Ranged-class\nmech\nin\nInto the Breach\n.\nTeam\n[\n]\nThe mech is available as part of the\nFlame Behemoths\nsquad.\nStrategy\n[\n]\nSince the Meteor Mech's Vulcan Artillery does not deal direct damage, it's possible right from the start of the timeline to target buildings, and push melee Vek away from them without damaging them; only lighting the building on fire does not do damage to it. Note that this becomes impossible if the\n+2 Damage\nupgrade is powered with 3 Reactor Cores; thus, it is an upgrade that must be carefully considered depending on the mission and other Mechs in the squad, weighing the usefulness of additional direct damage versus the utility of protecting buildings.\nIn general, the upgrades for Vulcan Artillery are not as pressing to get, especially in the Flame Behemoths where the other two Mechs want upgrades sooner. The\nBackburn\nupgrade, while cheap at one reactor core, is also situational; for example, it can grant flexibility to deal with\nLeapers\nthat jump at the back line and web the Meteor Mech by setting them on fire, or by moving it forward to remove Smoke from a webbed ally while shooting another target on the opposite side (especially useful against the\nMosquito Leader\n). Backburn can also be a useful upgrade to set up boosts, if paired with the\nNapalm Mech\nin a\nCustom Squad\n."
+}

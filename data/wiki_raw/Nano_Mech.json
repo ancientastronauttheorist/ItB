@@ -1,0 +1,18 @@
+{
+  "name": "Nano_Mech",
+  "url": "https://intothebreach.fandom.com/wiki/Nano_Mech",
+  "infobox": {
+    "_title": "Nano Mech",
+    "Class": "Science",
+    "Health": "2",
+    "Move": "4",
+    "Systems": "A.C.I.D. Projector(Science)EffectFire a projectile that applies A.C.I.D. and pushes.Viscera Nanobots(Passive)EffectMechs heal 1 damage when they deal a killing blow.Upgrade I+1 Heal ()Increase healing to 2.",
+    "Special": "Flying: Flying units can move over any terrain tile."
+  },
+  "tables": [],
+  "sections": {
+    "Team": "The mech is available as part of theHazardous Mechssquad.",
+    "Strategy": "Repairing mechs with theViscera Nanobotspassive happens after all damage calculations are rolled, with this value having a floor of 0 HP (i.e., can't be a negative number), so a mech that hits 0HP with a self-damage weapon that kills its target will be revived. Thus, high power secondary weapons that deal self-damage to the mech are great additions to the Hazardous Mechs; in particularSelf-Destruct, as it will revive the Mech while it instantly destroys any threats.\nThe Nano Mech's main weaponA.C.I.D. Projectoracts much like theCannon Mech's Taurus Cannon by pushing its target, difference being that it appliesA.C.I.D.on the target rather than damaging it. This is great utility to have by granting an increase in the damage output of the squad the Nano Mech is placed it.\nIf using the Nano Mech in aCustom Squad, it is best paired with Mechs that have direct damage output, so they can take advantage of the A.C.I.D. status to kill enemies without relying on powering damage upgrades quite as much. The Viscera Nanobots passive is a lot more situational on Custom Squads though, so if it's not needed, it should be sold for Reputation eventually; particularly when it makes the difference to purchase an important side weapon or an additional Reactor Core."
+  },
+  "full_text": "Nano Mech\nDetails\nClass\nScience\nHealth\n2\nMove\n4\nSystems\nA.C.I.D. Projector\n(\nScience\n)\nEffect\nFire a projectile that applies A.C.I.D. and pushes.\nViscera Nanobots\n(\nPassive\n)\nEffect\nMechs heal 1 damage when they deal a killing blow.\nUpgrade I\n+1 Heal (\n)\nIncrease healing to 2.\nSpecial\nFlying\n: Flying units can move over any terrain tile.\nNano Mech\nis a Science-class\nmech\nin\nInto the Breach\n.\nTeam\n[\n]\nThe mech is available as part of the\nHazardous Mechs\nsquad.\nStrategy\n[\n]\nRepairing mechs with the\nViscera Nanobots\npassive happens after all damage calculations are rolled, with this value having a floor of 0 HP (i.e., can't be a negative number), so a mech that hits 0HP with a self-damage weapon that kills its target will be revived. Thus, high power secondary weapons that deal self-damage to the mech are great additions to the Hazardous Mechs; in particular\nSelf-Destruct\n, as it will revive the Mech while it instantly destroys any threats.\nThe Nano Mech's main weapon\nA.C.I.D. Projector\nacts much like the\nCannon Mech\n's Taurus Cannon by pushing its target, difference being that it applies\nA.C.I.D.\non the target rather than damaging it. This is great utility to have by granting an increase in the damage output of the squad the Nano Mech is placed it.\nIf using the Nano Mech in a\nCustom Squad\n, it is best paired with Mechs that have direct damage output, so they can take advantage of the A.C.I.D. status to kill enemies without relying on powering damage upgrades quite as much. The Viscera Nanobots passive is a lot more situational on Custom Squads though, so if it's not needed, it should be sold for Reputation eventually; particularly when it makes the difference to purchase an important side weapon or an additional Reactor Core."
+}

@@ -1,0 +1,173 @@
+{
+  "name": "Squads",
+  "url": "https://intothebreach.fandom.com/wiki/Squads",
+  "infobox": null,
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Affiliation",
+        "Slot 1",
+        "Slot 2",
+        "Slot 3",
+        "Mech Color",
+        "Unlock cost"
+      ],
+      "rows": [
+        {
+          "Name": "Rift Walkers",
+          "Affiliation": "Archive, Inc. A",
+          "Slot 1": "Combat Mech",
+          "Slot 2": "Cannon Mech",
+          "Slot 3": "Artillery Mech",
+          "Mech Color": "",
+          "Unlock cost": "Default starting squad"
+        },
+        {
+          "Name": "Rusting Hulks",
+          "Affiliation": "R.S.T. Corporation A",
+          "Slot 1": "Jet Mech",
+          "Slot 2": "Rocket Mech",
+          "Slot 3": "Pulse Mech",
+          "Mech Color": "",
+          "Unlock cost": "2Coins"
+        },
+        {
+          "Name": "Zenith Guard",
+          "Affiliation": "Pinnacle Robotics A",
+          "Slot 1": "Laser Mech",
+          "Slot 2": "Charge Mech",
+          "Slot 3": "Defense Mech",
+          "Mech Color": "",
+          "Unlock cost": "2Coins"
+        },
+        {
+          "Name": "Blitzkrieg",
+          "Affiliation": "Detritus Disposal A",
+          "Slot 1": "Lightning Mech",
+          "Slot 2": "Hook Mech",
+          "Slot 3": "Boulder Mech",
+          "Mech Color": "",
+          "Unlock cost": "3Coins"
+        },
+        {
+          "Name": "Steel Judoka",
+          "Affiliation": "Archive, Inc. B",
+          "Slot 1": "Judo Mech",
+          "Slot 2": "Siege Mech",
+          "Slot 3": "Gravity Mech",
+          "Mech Color": "",
+          "Unlock cost": "3Coins"
+        },
+        {
+          "Name": "Flame Behemoths",
+          "Affiliation": "R.S.T. Corporation B",
+          "Slot 1": "Flame Mech",
+          "Slot 2": "Meteor Mech",
+          "Slot 3": "Swap Mech",
+          "Mech Color": "",
+          "Unlock cost": "3Coins"
+        },
+        {
+          "Name": "Frozen Titans",
+          "Affiliation": "Pinnacle Robotics B",
+          "Slot 1": "Aegis Mech",
+          "Slot 2": "Mirror Mech",
+          "Slot 3": "Ice Mech",
+          "Mech Color": "",
+          "Unlock cost": "3Coins"
+        },
+        {
+          "Name": "Hazardous Mechs",
+          "Affiliation": "Detritus Disposal B",
+          "Slot 1": "Leap Mech",
+          "Slot 2": "Unstable Mech",
+          "Slot 3": "Nano Mech",
+          "Mech Color": "",
+          "Unlock cost": "4Coins"
+        },
+        {
+          "Name": "Secret Squad",
+          "Affiliation": "Secret",
+          "Slot 1": "Techno-Beetle",
+          "Slot 2": "Techno-Hornet",
+          "Slot 3": "Techno-Scarab",
+          "Mech Color": "",
+          "Unlock cost": "25Coins"
+        },
+        {
+          "Name": "Custom Squad",
+          "Affiliation": "n/a",
+          "Slot 1": "Any",
+          "Slot 2": "Any",
+          "Slot 3": "Any",
+          "Mech Color": "Custom",
+          "Unlock cost": "unlock a 2nd Squad"
+        },
+        {
+          "Name": "Random Squad",
+          "Affiliation": "n/a",
+          "Slot 1": "Random",
+          "Slot 2": "Random",
+          "Slot 3": "Random",
+          "Mech Color": "Random",
+          "Unlock cost": "unlock a 2nd Squad"
+        },
+        {
+          "Name": "Bombermechs",
+          "Affiliation": "",
+          "Slot 1": "Pierce Mech",
+          "Slot 2": "Bombling Mech",
+          "Slot 3": "Exchange Mech",
+          "Mech Color": "",
+          "Unlock cost": "4Coins"
+        },
+        {
+          "Name": "Arachnophiles",
+          "Affiliation": "",
+          "Slot 1": "Bulk Mech",
+          "Slot 2": "Arachnoid Mech",
+          "Slot 3": "Slide Mech",
+          "Mech Color": "",
+          "Unlock cost": "4Coins"
+        },
+        {
+          "Name": "Mist Eaters",
+          "Affiliation": "",
+          "Slot 1": "Thruster Mech",
+          "Slot 2": "Smog Mech",
+          "Slot 3": "Control Mech",
+          "Mech Color": "",
+          "Unlock cost": "4Coins"
+        },
+        {
+          "Name": "Heat Sinkers",
+          "Affiliation": "",
+          "Slot 1": "Dispersal Mech",
+          "Slot 2": "Quick-Fire Mech",
+          "Slot 3": "Napalm Mech",
+          "Mech Color": "",
+          "Unlock cost": "4Coins"
+        },
+        {
+          "Name": "Cataclysm",
+          "Affiliation": "",
+          "Slot 1": "Pitcher Mech",
+          "Slot 2": "Triptych Mech",
+          "Slot 3": "Drill Mech",
+          "Mech Color": "",
+          "Unlock cost": "4Coins"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "SquadsinInto The Breachdetermine theMechsyou can take with you onto the battlefield.\nYou start with the Rift Walkers squad. Additional squads are unlocked by completingAchievements. Each completed achivement earns 1 coin.\nEach squad has a custom paint job. Unlocked mech colors can be applied to other squads.",
+    "Random Squads and Custom Squads": "Once a second squad is acquired, the option to create a randomized squad or a customized squad opens up.\nA Custom Squad allows for the selection of any Mechs that have been unlocked, including multiple of the same class as well as multiple of the same Mech.\nA Random Squad is created out of all the unlocked Mechs.\n  - TheBalanced Rolloption selects three unique Mechs from three of the five different classes (Prime, Brute, Ranged, Science, and Cyborg). The balanced squad won't have more than 4 weapons so this prevents the Flame Mech, Rocket Mech, Defense Mech, Gravity Mech, Nano Mech, Smog Mech, and Napalm Mech from appearing together in a balanced squad.\n  - TheChaos Rolloption has no restrictions on class, weaponry, or Mech combinations so you get a truly random squad.However, if you get duplicate Mechs with the same Passive ability, one of the duplicate Mechs will have the Passive and any power associated with it removed.",
+    "Secret Squad": "The Secret Squad becomes available after unlocking the 8 named squads. 25 Coins are required to unlock the Secret Squad.\nWith the Advance Edition release, it is no longer needed to complete all Global and Squad based achievements in order to unlock the Secret Squad. After getting all new achievements, 5 coins are left, which cannot be spent on anything.",
+    "Trivia": "  - Except for the Secret Squad, every other Squad has their own achievements to unlock, including the Random Squad and Custom Squad.\n  - An early build of the game didn't include the achievement requirements to unlock squads.\n  - The Rift Walkers were originally named the Rough Riders.",
+    "Gallery": "  - An older version of the squad loadout which hadn't yet included achievements.\n  - A look at the beta squads and the unlock requirements to open them.",
+    "See Also": "  - Mechs"
+  },
+  "full_text": "Squads\nin\nInto The Breach\ndetermine the\nMechs\nyou can take with you onto the battlefield.\nYou start with the Rift Walkers squad. Additional squads are unlocked by completing\nAchievements\n. Each completed achivement earns 1 coin.\nEach squad has a custom paint job. Unlocked mech colors can be applied to other squads.\nContents\n1\nRandom Squads and Custom Squads\n2\nSecret Squad\n3\nList of squads\n4\nTrivia\n5\nGallery\n6\nSee Also\nRandom Squads and Custom Squads\n[\n]\nOnce a second squad is acquired, the option to create a randomized squad or a customized squad opens up.\nA Custom Squad allows for the selection of any Mechs that have been unlocked, including multiple of the same class as well as multiple of the same Mech.\nA Random Squad is created out of all the unlocked Mechs.\nThe\nBalanced Roll\noption selects three unique Mechs from three of the five different classes (Prime, Brute, Ranged, Science, and Cyborg). The balanced squad won't have more than 4 weapons so this prevents the Flame Mech, Rocket Mech, Defense Mech, Gravity Mech, Nano Mech, Smog Mech, and Napalm Mech from appearing together in a balanced squad.\nThe\nChaos Roll\noption has no restrictions on class, weaponry, or Mech combinations so you get a truly random squad.\nHowever, if you get duplicate Mechs with the same Passive ability, one of the duplicate Mechs will have the Passive and any power associated with it removed.\nSecret Squad\n[\n]\nThe Secret Squad becomes available after unlocking the 8 named squads. 25 Coins are required to unlock the Secret Squad.\nWith the Advance Edition release, it is no longer needed to complete all Global and Squad based achievements in order to unlock the Secret Squad. After getting all new achievements, 5 coins are left, which cannot be spent on anything.\nList of squads\n[\n]\nName\nAffiliation\nSlot 1\nSlot 2\nSlot 3\nMech Color\nUnlock cost\nRift Walkers\nArchive, Inc. A\nCombat Mech\nCannon Mech\nArtillery Mech\nDefault starting squad\nRusting Hulks\nR.S.T. Corporation A\nJet Mech\nRocket Mech\nPulse Mech\n2\nCoins\nZenith Guard\nPinnacle Robotics A\nLaser Mech\nCharge Mech\nDefense Mech\n2\nCoins\nBlitzkrieg\nDetritus Disposal A\nLightning Mech\nHook Mech\nBoulder Mech\n3\nCoins\nSteel Judoka\nArchive, Inc. B\nJudo Mech\nSiege Mech\nGravity Mech\n3\nCoins\nFlame Behemoths\nR.S.T. Corporation B\nFlame Mech\nMeteor Mech\nSwap Mech\n3\nCoins\nFrozen Titans\nPinnacle Robotics B\nAegis Mech\nMirror Mech\nIce Mech\n3\nCoins\nHazardous Mechs\nDetritus Disposal B\nLeap Mech\nUnstable Mech\nNano Mech\n4\nCoins\nSecret Squad\nSecret\nTechno-Beetle\nTechno-Hornet\nTechno-Scarab\n25\nCoins\nCustom Squad\nn/a\nAny\nAny\nAny\nCustom\nunlock a 2nd Squad\nRandom Squad\nn/a\nRandom\nRandom\nRandom\nRandom\nunlock a 2nd Squad\nAdvanced Edition\nBombermechs\nPierce Mech\nBombling Mech\nExchange Mech\n4\nCoins\nArachnophiles\nBulk Mech\nArachnoid Mech\nSlide Mech\n4\nCoins\nMist Eaters\nThruster Mech\nSmog Mech\nControl Mech\n4\nCoins\nHeat Sinkers\nDispersal Mech\nQuick-Fire Mech\nNapalm Mech\n4\nCoins\nCataclysm\nPitcher Mech\nTriptych Mech\nDrill Mech\n4\nCoins\nTrivia\n[\n]\nExcept for the Secret Squad, every other Squad has their own achievements to unlock, including the Random Squad and Custom Squad.\nAn early build of the game didn't include the achievement requirements to unlock squads.\nThe Rift Walkers were originally named the Rough Riders.\nGallery\n[\n]\nAn older version of the squad loadout which hadn't yet included achievements.\nA look at the beta squads and the unlock requirements to open them.\nSee Also\n[\n]\nMechs\nshow\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

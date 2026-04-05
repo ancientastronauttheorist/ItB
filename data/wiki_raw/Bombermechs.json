@@ -1,0 +1,50 @@
+{
+  "name": "Bombermechs",
+  "url": "https://intothebreach.fandom.com/wiki/Bombermechs",
+  "infobox": {
+    "_title": "Bombermechs"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Pierce Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "4",
+          "Default loadout": "AP Cannon(Brute)EffectFire a pushing projectile that pierces the first target and damages the second.(2 damage)Upgrade I+1 Damage ()Increases damage to the second hit tile by 1.Upgrade II+1 Damage ()Increases damage to the second hit tile by 1.",
+          "Special": "AP Cannon(Brute)"
+        },
+        {
+          "Name": "Bombling Mech",
+          "Class": "Ranged",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Bomb Dispenser(Ranged)EffectLaunch a Walking Bomb. Unused bombs dismantle after the enemy turn.Upgrade I2 Bombs ()Fire a second Walking Bomb in a different direction.",
+          "Special": "Bomb Dispenser(Ranged)"
+        },
+        {
+          "Name": "Exchange Mech",
+          "Class": "Science",
+          "Health": "2",
+          "Move speed": "3",
+          "Default loadout": "Force Swap(Science)Effect ()Force a nearby unit to swap places with any other unit.Upgrade IHeal Ally ()Swapping an ally will heal it completely.Upgrade IIHurt Enemy ()Swapping an enemy will deal 1 damage to it.",
+          "Special": "Force Swap(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheBombermechsare one of theSquadsfromInto The Breachadded in the Advanced Edition. They consist of thePierce Mech,Bombling MechandExchange Mechand are purchasable for four coins.\nDespite their explosive nature, the Bombermechs are one of the most tactially-diverse squads due to the Exchange Mech's power and the Pierce Mech's unique damage condition. Every turn will require careful positioning of all three mechs and the Bombling Mech's spawns to maximise your productivity.",
+    "Strategies": "  - The Walking Bomb is key to everything about the Bombermechs; it can be placed in front of a Pierce Mech to make the latter deal damage, act as swap fodder for the Exchange Mech and then kill weakened enemies. Having more of them also increases your raw damage output, making the Two Bombs upgrade and obtainingSilicaa priority.\n  - The Exchange Mech's swap ability can consistently handle multiple threats by swapping them for one another. By swapping an attacking Vek with a well-positioned bombling, it can also reliably make the Vek attack each other. Additionally, if the Exchange Mech is near a ledge with aHornetor is flying usingProspero's ability, they can exchange it with a drownable enemy to instantly kill it. Switching your mech with an enemy leader into environmental damage on theVolcanic Hivecan also trivialise the final mission.Note that Force Swap cannot swap stable enemies or allies, most notablyBurrowers. Use caution when taking on an island with these enemies.\n  - The Walking Bombs can reliably block spawns as temporary unit destruction comesafterVek emerging. If the Bombling Mech has two bombs and Silica it can effectively silence the Vek for an entire mission.\n  - Look for opportunities to trigger environmental effects such as igniting forests or breaking ice tiles with the bomblings' single point of damage."
+  },
+  "full_text": "Bombermechs\n“\nWith a small army of remote explosives and flexible weapons, the tactical options are endless.\n„\nThe\nBombermechs\nare one of the\nSquads\nfrom\nInto The Breach\nadded in the Advanced Edition. They consist of the\nPierce Mech\n,\nBombling Mech\nand\nExchange Mech\nand are purchasable for four coins.\nDespite their explosive nature, the Bombermechs are one of the most tactially-diverse squads due to the Exchange Mech's power and the Pierce Mech's unique damage condition. Every turn will require careful positioning of all three mechs and the Bombling Mech's spawns to maximise your productivity.\nContents\n1\nMechs\n2\nSquad Achievements\n3\nStrategies\n4\nTrivia\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nPierce Mech\nBrute\n3\n4\nAP Cannon\n(\nBrute\n)\nEffect\nFire a pushing projectile that pierces the first target and damages the second.\n(2 damage)\nUpgrade I\n+1 Damage (\n)\nIncreases damage to the second hit tile by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases damage to the second hit tile by 1.\nBombling Mech\nRanged\n3\n3\nBomb Dispenser\n(\nRanged\n)\nEffect\nLaunch a Walking Bomb. Unused bombs dismantle after the enemy turn.\nUpgrade I\n2 Bombs (\n)\nFire a second Walking Bomb in a different direction.\nExchange Mech\nScience\n2\n3\nForce Swap\n(\nScience\n)\nEffect (\n)\nForce a nearby unit to swap places with any other unit.\nUpgrade I\nHeal Ally (\n)\nSwapping an ally will heal it completely.\nUpgrade II\nHurt Enemy (\n)\nSwapping an enemy will deal 1 damage to it.\nSquad Achievements\n[\n]\nHold the Door\nBlock 30 Emerging Vek by the end of Island 2.\nNo Survivors\nHave 7 units (any team) die in a single turn.\nPowered Blast\nPierce a Walking Bomb with the AP Cannon to kill an Enemy.\nStrategies\n[\n]\nThe Walking Bomb is key to everything about the Bombermechs; it can be placed in front of a Pierce Mech to make the latter deal damage, act as swap fodder for the Exchange Mech and then kill weakened enemies. Having more of them also increases your raw damage output, making the Two Bombs upgrade and obtaining\nSilica\na priority.\nThe Exchange Mech's swap ability can consistently handle multiple threats by swapping them for one another. By swapping an attacking Vek with a well-positioned bombling, it can also reliably make the Vek attack each other. Additionally, if the Exchange Mech is near a ledge with a\nHornet\nor is flying using\nProspero\n's ability, they can exchange it with a drownable enemy to instantly kill it. Switching your mech with an enemy leader into environmental damage on the\nVolcanic Hive\ncan also trivialise the final mission.\nNote that Force Swap cannot swap stable enemies or allies, most notably\nBurrowers\n. Use caution when taking on an island with these enemies.\nThe Walking Bombs can reliably block spawns as temporary unit destruction comes\nafter\nVek emerging. If the Bombling Mech has two bombs and Silica it can effectively silence the Vek for an entire mission.\nLook for opportunities to trigger environmental effects such as igniting forests or breaking ice tiles with the bomblings' single point of damage.\nTrivia\n[\n]\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

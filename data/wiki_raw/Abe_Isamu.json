@@ -1,0 +1,603 @@
+{
+  "name": "Abe_Isamu",
+  "url": "https://intothebreach.fandom.com/wiki/Abe_Isamu",
+  "infobox": {
+    "_title": "Abe Isamu",
+    "Nickname": "The Assassin",
+    "Special": "Armored:\tMech gains Armored.",
+    "Corporation": "R.S.T. Corporation"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Event",
+        "Description",
+        "Content"
+      ],
+      "rows": [
+        {
+          "Event": "Gamestart",
+          "Description": "This happens at the start of a new game",
+          "Content": "\"I am not here to save you. I am here to train you to save yourselves.\"\"Without determination and strength, these islands will fall again. Stand with me or stay out of my way.\"\"I am here to do what must be done. No more timelines must fall.\""
+        },
+        {
+          "Event": "FTL_Found",
+          "Description": "Happens on the island screen after finding the FTL pilot in a pod.",
+          "Content": "\"The land this pilot comes from is unknown, but not of earth.\""
+        },
+        {
+          "Event": "FTL_Start",
+          "Description": "Happens after you start a new game with an FTL pilot. Only needed for Recruits",
+          "Content": ""
+        },
+        {
+          "Event": "Gamestart_PostVictory",
+          "Description": "Start of new game after winning",
+          "Content": "\"The future repeats. And if so, victory is assured.\""
+        },
+        {
+          "Event": "Death_Revived",
+          "Description": "If this unit is dead, but gets repaired",
+          "Content": "\"I have returned, and I am ready.\""
+        },
+        {
+          "Event": "Death_Main",
+          "Description": "If this unit dies.",
+          "Content": "\"A fitting way to die.\"\"A fine death.\"\"No regrets.\""
+        },
+        {
+          "Event": "Death_Response",
+          "Description": "If another unit dies.Use #main to say the dying unit's name.",
+          "Content": "\"Fool.\"\"The price of being in harm's way.\""
+        },
+        {
+          "Event": "Death_Response_AI",
+          "Description": "If another Mech dies but it doesn't have a pilot to die.",
+          "Content": "\"Do not let it distract you.\""
+        },
+        {
+          "Event": "TimeTravel_Win",
+          "Description": "Last thing pilot says before time traveling after a victory.",
+          "Content": "\"Our war is not yet won. Keep traveling. Keep fighting.\""
+        },
+        {
+          "Event": "Gameover_Start",
+          "Description": "Right when you lose",
+          "Content": "\"Commander... what-\""
+        },
+        {
+          "Event": "Gameover_Response",
+          "Description": "Response to above",
+          "Content": "\"It is time for us to leave.\"\"This world is finished.\"\"There is nothing left for us here.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "Upgrade_PowerWeapon",
+          "Description": "Turn on a new weapon.",
+          "Content": "\"This will serve.\"\"Serviceable.\""
+        },
+        {
+          "Event": "Upgrade_NoWeapon",
+          "Description": "If you have no weapon powered. This plays every time you remove all weapons from the Pilot.",
+          "Content": "\"...Is this a test?\"\"This Mech is for battle. It must be armed.\"\"I am not such a fool as to enter battle unarmed.\""
+        },
+        {
+          "Event": "Upgrade_PowerGeneric",
+          "Description": "Diverting reactor power to either Health or Move (basic Mech stats, not a weapon).",
+          "Content": "\"...What are you doing to my Mech?\"\"A blade must be sharpened, but not enough so it will break.\"\"Unnecessary, but I will accept it.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "MissionStart",
+          "Description": "Generic mission start",
+          "Content": "\"You know what to do.\"\"The rest of you, stay out of my way.\""
+        },
+        {
+          "Event": "Mission_ResetTurn",
+          "Description": "Triggers after a turn reset",
+          "Content": "\"Let us correct our mistakes.\"\"We know our opponent's movements, now let us use it against them.\"\"No more second chances - make use of the time we have now.\""
+        },
+        {
+          "Event": "MissionEnd_Dead",
+          "Description": "Generic mission end where enemies are all killed",
+          "Content": "\"These Vek were no match for us. A shame.\"\"Thorough.\"\"The Vek are all dead. The region is secure.\"\"This battle is ours. The Vek have been slain to the last.\""
+        },
+        {
+          "Event": "MissionEnd_Retreat",
+          "Description": "Generic mission end when enemies retreat",
+          "Content": "\"The Vek flee. Cowards.\"\"They flee... but will return.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "MissionFinal_Start",
+          "Description": "Plays at the start of the final mission",
+          "Content": "\"This is the end.\"\"This will determine if this timeline has a future.\"\"This is for my family. All of them, in every timeline.\""
+        },
+        {
+          "Event": "MissionFinal_StartResponse",
+          "Description": "Incoming power pylons",
+          "Content": "\"Prepare to protect the pylons when they land.\""
+        },
+        {
+          "Event": "MissionFinal_FallStart",
+          "Description": "Plays at the start of the ground falling in the final mission",
+          "Content": ""
+        },
+        {
+          "Event": "MissionFinal_FallResponse",
+          "Description": "Plays once the ground shakes",
+          "Content": "\"This island cannot defeat us, so it tries to swallow us.\""
+        },
+        {
+          "Event": "MissionFinal_Pylons",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "MissionFinal_Bomb",
+          "Description": "What's the plan?",
+          "Content": "\"Our weapons cannot kill this hive. It is the island itself.\""
+        },
+        {
+          "Event": "MissionFinal_BombResponse",
+          "Description": "Before dropping the bomb",
+          "Content": ""
+        },
+        {
+          "Event": "MissionFinal_CaveStart",
+          "Description": "Plays at the start of the final cave section (after MissionFinal_BombResponse)",
+          "Content": "\"Defend the bomb. With your Mech. And your life.\"\"Keep the Vek from the bomb. Our lives are secondary.\""
+        },
+        {
+          "Event": "MissionFinal_BombDestroyed",
+          "Description": "When the bomb is destroyed, another one is dropped and the battle length is extended.",
+          "Content": ""
+        },
+        {
+          "Event": "MissionFinal_BombArmed",
+          "Description": "",
+          "Content": "\"The bomb is about to fulfill its purpose.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "PodIncoming",
+          "Description": "Pod is about to fall",
+          "Content": "\"Watch your head.\""
+        },
+        {
+          "Event": "PodResponse",
+          "Description": "Response to above",
+          "Content": "\"Someone else get it.\"\"If the Pod contains weapons, save them for after the battle.\"\"Retrieve the tech.\""
+        },
+        {
+          "Event": "PodCollected_Self",
+          "Description": "Pod collected (by the pilot talking)",
+          "Content": "\"I have the Pod. Focus on your opponents.\"\"The Pod is in my possession.\""
+        },
+        {
+          "Event": "PodDestroyed_Obs",
+          "Description": "Pod destroyed (by anyone, including Vek, except the speaker)",
+          "Content": "\"The Pod no longer needs our protection.\"\"The Pod has been destroyed. Focus on the Vek.\"\"The Pod was not why we were sent to this region.\""
+        },
+        {
+          "Event": "Secret_DeviceSeen_Mountain",
+          "Description": "Secret object was inside a mountainOnly needs 1 line per Pilot",
+          "Content": "\"Something was buried inside the mountain.\""
+        },
+        {
+          "Event": "Secret_DeviceSeen_Ice",
+          "Description": "Secret object was under water after destroying iceOnly needs 1 line per Pilot",
+          "Content": "\"I see something beneath the ice.\""
+        },
+        {
+          "Event": "Secret_DeviceUsed",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"The device has activated.\""
+        },
+        {
+          "Event": "Secret_Arriving",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"Something comes. But it is a craft I have never seen before.\""
+        },
+        {
+          "Event": "Emerge_Detected",
+          "Description": "Emerges are queued.",
+          "Content": "\"More Vek are emerging for us to kill.\"\"More Vek are arriving to die.\"\"Vek are surfacing to fight us on open ground. Good.\""
+        },
+        {
+          "Event": "Emerge_Success",
+          "Description": "Vek Emerges",
+          "Content": "\"Let us thin their numbers.\"\"The Vek has come to die in the light of the sun.\"\"Let the enemy come to us.\""
+        },
+        {
+          "Event": "Emerge_FailedMech",
+          "Description": "Mech blocks Emerging Vek",
+          "Content": "\"This way is closed to you, creature.\"\"I guard this bridge, Vek, and you shall not get by.\"\"You'll not get by me.\""
+        },
+        {
+          "Event": "Emerge_FailedVek",
+          "Description": "Vek Block Emerging Vek",
+          "Content": "\"We will use your numbers against you.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "Mech_LowHealth",
+          "Description": "Mech has 1 hp.",
+          "Content": "\"Nnnh!\"\"I am still combat-worthy, but barely.\"\"I have only a little strength left.\""
+        },
+        {
+          "Event": "Mech_Webbed",
+          "Description": "Mech is webbed",
+          "Content": "\"You haven't caught me, Vek. I've caught you.\"\"You will regret this.\"\"Do you think your web can hold me?\"\"This cannot hold me.\""
+        },
+        {
+          "Event": "Mech_Shielded",
+          "Description": "Mech is shielded",
+          "Content": "\"...I don't need this.\"\"Save the shield for the weak.\"\"Better off giving this shield to the civilians.\"\"This shield is unneeded. They will not hit me.\""
+        },
+        {
+          "Event": "Mech_Repaired",
+          "Description": "Mech uses repair.",
+          "Content": "\"I don't have time for this.\""
+        },
+        {
+          "Event": "Pilot_Level_Self",
+          "Description": "Pilot levels up (not necessarily max rank)",
+          "Content": "\"Medals only weigh one down.\""
+        },
+        {
+          "Event": "Pilot_Level_Obs",
+          "Description": "Pilot is observed to level up",
+          "Content": "\"Medals only weigh one down.\""
+        },
+        {
+          "Event": "Mech_ShieldDown",
+          "Description": "Mech's shield is removed",
+          "Content": "\"Useless tech...\"\"Didn't need that crutch.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "",
+          "Description": "Damage commentary comes in three flavors:\"SELF\" : The Mech did themselves\n\"OBS\" : The Mech (or CEO) observed another Mech do it\n\"VEK\" : A Vek did it, and a CEO or Mech is commenting on that",
+          "Content": ""
+        },
+        {
+          "Event": "Vek_Drown",
+          "Description": "Vek drowns (from anyone / any cause)",
+          "Content": "\"Drown along with Old Earth.\"\"It went the way of Old Earth.\"\"More merciful than the end I intended for it.\""
+        },
+        {
+          "Event": "Vek_Fall",
+          "Description": "Vek falls down a hole (from anyone / any cause)",
+          "Content": "\"More merciful than the end I intended for it.\"\"As the Vek arise, so shall they fall.\"\"And so shall the Earth you seek to conquer consume you.\""
+        },
+        {
+          "Event": "Vek_Smoke",
+          "Description": "Vek is put in smoke (from anyone / any cause)",
+          "Content": "\"It is not used to fighting blind. Let us take advantage of this.\""
+        },
+        {
+          "Event": "Vek_Frozen",
+          "Description": "Vek is frozen (from any cause except Snow Storm and Freeze Mine)",
+          "Content": ""
+        },
+        {
+          "Event": "VekKilled_Self",
+          "Description": "",
+          "Content": "\"Die.\"\"One more dead.\"\"Another for me.\""
+        },
+        {
+          "Event": "VekKilled_Obs",
+          "Description": "",
+          "Content": "\"Stay focused.\"\"Watch for others.\"\"Don't gloat, keep fighting.\""
+        },
+        {
+          "Event": "VekKilled_Vek",
+          "Description": "",
+          "Content": "\"Let them kill each other.\"\"It saved me the trouble.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "DoubleVekKill_Self",
+          "Description": "",
+          "Content": "\"Precision.\"\"Double kill.\"\"Let's see if they can match that.\""
+        },
+        {
+          "Event": "DoubleVekKill_Obs",
+          "Description": "",
+          "Content": "\"Excellent strike.\"\"Flawless.\"\"The Vek are vulnerable to such strategy.\""
+        },
+        {
+          "Event": "DoubleVekKill_Vek",
+          "Description": "",
+          "Content": "\"They kill their own kind.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "MntDestroyed_Self",
+          "Description": "Note that because a destroyed mountain (and building) can then be moved through, some lines reflect the fact the player can now move into these tiles.",
+          "Content": "\"Obstacle cleared.\""
+        },
+        {
+          "Event": "MntDestroyed_Obs",
+          "Description": "",
+          "Content": "\"Save your strength for the Vek.\""
+        },
+        {
+          "Event": "MntDestroyed_Vek",
+          "Description": "",
+          "Content": "\"If the mountain will not come to the Vek, the Vek will bring down the mountain.\"\"Nature will have its revenge.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "PowerCritical",
+          "Description": "",
+          "Content": "\"Our resolve is strong. The Grid is not.\"\"The Grid is about to fail. Shall we die with it?\"\"The Grid is bleeding out. We must protect it.\"\"Defend the Grid. If it falls, so does the world.\""
+        },
+        {
+          "Event": "Bldg_Destroyed_Self",
+          "Description": "",
+          "Content": "\"There was no choice.\"\"This is war.\"\"They did not belong on the battlefield.\"\"They remained here and put themselves at risk.\""
+        },
+        {
+          "Event": "Bldg_Destroyed_Obs",
+          "Description": "",
+          "Content": "\"The weak cannot protect the weak.\"\"Careless.\"\"You must predict your actions or others will suffer for them.\"\"Recklessness has its price.\"\"Put it from your mind. Focus on the fight.\""
+        },
+        {
+          "Event": "Bldg_Destroyed_Vek",
+          "Description": "",
+          "Content": "\"They should have evacuated weeks ago...\"\"Not everyone can be saved.\"\"A small sacrifice if we can save this timeline.\"\"They did not belong on the battlefield.\"\"They remained here and put themselves at risk.\""
+        },
+        {
+          "Event": "Bldg_Resisted",
+          "Description": "Building resists damage, currently anyone can comment but I can change this to _Obs/_Self/_Vek if we think it's worth it.",
+          "Content": "\"Resilient.\"\"It may not be so fortunate a second time.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "Mission_Train_TrainStopped",
+          "Description": "",
+          "Content": "\"The train is damaged, but may be salvaged after the battle.\""
+        },
+        {
+          "Event": "Mission_Train_TrainDestroyed",
+          "Description": "",
+          "Content": "\"Forget the train.\"\"We no longer need to protect the train.\""
+        },
+        {
+          "Event": "Mission_Block_Reminder",
+          "Description": "Remind player to block emerging Vek",
+          "Content": "\"Our orders are to block the emerging Vek.\"\"We were ordered to prevent the Vek from surfacing.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "Mission_Airstrike_Incoming",
+          "Description": "",
+          "Content": "\"Bombing run commencing.\""
+        },
+        {
+          "Event": "Mission_Tanks_Activated",
+          "Description": "Both tanks survived to activation",
+          "Content": "\"The old soldiers await orders.\"\"Make certain that those old tanks do not hit us.\""
+        },
+        {
+          "Event": "Mission_Tanks_PartialActivated",
+          "Description": "Only one tank survived to activation",
+          "Content": "\"The last old soldier is awake, and seeks to avenge its brother.\"\"Make certain that old tank does not hit us.\"\"Make sure those tanks stay out of my way.\""
+        },
+        {
+          "Event": "Mission_Dam_Reminder",
+          "Description": "Remind player to destroy the Dam",
+          "Content": "\"Destroy the dam when Vek lie in its path.\"\"Use the dam to drown the Vek.\"\"The Grid, the Vek, then the dam.\""
+        },
+        {
+          "Event": "Mission_Dam_Destroyed",
+          "Description": "After the completed animation of the dam drowning things",
+          "Content": "\"From violence, a river.\"\"A dam has become a dam of another sort - a barrier against the Vek.\""
+        },
+        {
+          "Event": "Mission_Satellite_Destroyed",
+          "Description": "Triggers only when the first satellite is destroyed",
+          "Content": "\"We no longer need to protect that rocket.\"\"Focus efforts on the second rocket.\""
+        },
+        {
+          "Event": "Mission_Satellite_Imminent",
+          "Description": "Triggers when the Satellite queues its launch (the turn before it actually launches) -- It can trigger for either satellite, or both, it's randomized.",
+          "Content": "\"Do not let the Vek near the rocket.\"\"Keep the Vek from the launchpad.\""
+        },
+        {
+          "Event": "Mission_Satellite_Launch",
+          "Description": "Triggers when the satellite actually takes off, can trigger for either or both",
+          "Content": "\"Focus on the ground, not the launch.\"\"That rocket is no longer our concern.\""
+        },
+        {
+          "Event": "Mission_Mines_Vek",
+          "Description": "Vek Killed by Mine",
+          "Content": "\"A mine is a coward's weapon, but for the Vek, it is fitting.\"\"Let them come to us.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "Mission_Terraform_Destroyed",
+          "Description": "If the terraformer is destroyed",
+          "Content": "\"The terraformer is destroyed.\"\"The terraformer no longer needs our protection.\"\"The terraformer is lost. Focus on the Vek.\""
+        },
+        {
+          "Event": "Mission_Terraform_Attacks",
+          "Description": "After the player uses the terraformer (not necessarily the first, random chance)This will obey the same rules as other barks, where something like a pilot death will take priority.",
+          "Content": "\"A scorched earth policy, then.\"\"The land will only endure so much.\""
+        },
+        {
+          "Event": "Mission_Cataclysm_Falling",
+          "Description": "Triggers when ground is falling during either RST mission with falling ground",
+          "Content": "\"Use the canyons against the enemy.\"\"Drive our enemies into the ground.\""
+        },
+        {
+          "Event": "Mission_Lightning_Strike_Vek",
+          "Description": "If lightning hits a Vek",
+          "Content": "\"Sword of heaven.\"\"Lightning purifies.\"\"May the storms rain their fury upon the Vek.\""
+        },
+        {
+          "Event": "Mission_Solar_Destroyed",
+          "Description": "Solar panel destroyed",
+          "Content": "\"The solar array is no more.\"\"The array is lost. Focus on killing Vek.\""
+        },
+        {
+          "Event": "Mission_Force_Reminder",
+          "Description": "Remind player to destroy the mountains",
+          "Content": "\"Our orders are clear. The mountains must be destroyed.\"\"If the mountains remain standing, we have not won this day.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "Mission_Freeze_Mines_Vek",
+          "Description": "Vek Frozen by Mine. This takes priority over all other Freeze conditions.",
+          "Content": "\"The Vek has ceased moving.\"\"Winter has seized the Vek.\"\"The Vek and the cold are not allies.\""
+        },
+        {
+          "Event": "Mission_Factory_Destroyed",
+          "Description": "Bot Factory destroyed",
+          "Content": "\"The factory is no more.\"\"The factory is destroyed.\""
+        },
+        {
+          "Event": "Mission_Factory_Spawning",
+          "Description": "Bot Factory spawning",
+          "Content": "\"The factory has deployed more soldiers.\"\"The factory sends more to test us.\"\"We need to kill the factory before it sends more killers for us.\""
+        },
+        {
+          "Event": "Mission_Reactivation_Thawed",
+          "Description": "A selection of enemies on the map are freed from ice (might be bots)",
+          "Content": "\"Our enemies have freed themselves.\"\"Our enemies have broken free.\"\"Our enemies are freed... and now free to die.\""
+        },
+        {
+          "Event": "Mission_SnowStorm_FrozenVek",
+          "Description": "Snowstorm freezes Vek",
+          "Content": "\"The Vek have ceased moving.\"\"Winter has seized the Vek.\"\"The Vek and the cold are not allies.\""
+        },
+        {
+          "Event": "Mission_SnowStorm_FrozenMech",
+          "Description": "Snowstorm freezes speaking Mech—This takes priority if Vek are frozen as well",
+          "Content": "\"I cannot move.\"\"Winter has me in its grip.\""
+        },
+        {
+          "Event": "BotKilled_Self",
+          "Description": "Player kills a hostile Bot",
+          "Content": "\"The machine is destroyed.\"\"The machine has been put down.\""
+        },
+        {
+          "Event": "BotKilled_Obs",
+          "Description": "Player is observed to kill a hostile Bot",
+          "Content": "\"Hostile down.\"\"Another machine has been destroyed.\"\"Another machine has been put down.\""
+        },
+        {
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Event": "Mission_Disposal_Destroyed",
+          "Description": "Player was supposed to defend the Disposal unit and it was destroyed—Shooter could be anyone",
+          "Content": "\"The disposal unit is destroyed.\"\"The disposal unit is lost. Focus on killing Vek.\""
+        },
+        {
+          "Event": "Mission_Disposal_Activated",
+          "Description": "Player uses Disposal Unit—mass damage",
+          "Content": "\"Give the launcher space to do its work.\"\"Do not let the launcher's swath of destruction distract you.\""
+        },
+        {
+          "Event": "Mission_Barrels_Destroyed",
+          "Description": "A.C.I.D. barrel destroyed (as per mission objectives) -- shooter unclear",
+          "Content": "\"The vat has been breached.\"\"The chemicals have been released into the ground.\""
+        },
+        {
+          "Event": "Mission_Power_Destroyed",
+          "Description": "Power plant is destroyed",
+          "Content": "\"The power plant is lost.\"\"The power plant is gone. Focus on killing Vek.\""
+        },
+        {
+          "Event": "Mission_Teleporter_Mech",
+          "Description": "Mech teleports (self)",
+          "Content": "\"I do not need these tricks, but I will use them.\"\"It is said teleporters steal the soul of those who pass through them.\""
+        },
+        {
+          "Event": "Mission_Belt_Mech",
+          "Description": "Mech moves on conveyor (self) (does not hit anything, no damage, etc.)",
+          "Content": "\"Using this conveyer belt is... undignified.\"\"Activating stabilizers. Adjusting for conveyer movements.\""
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Location": "Abe Isamu can be acquired through pods and by completing islands 100%.",
+    "Background": "Sometimes jokingly called \"Honest Abe\" in previous timelines, nothing could be farther from the truth. Abe served as an \"expeditor\" (assassin and \"black box\" work) during the early years of CEO Kern's rise to power, and he took on many names and identities in service to R.S.T. to handle any \"difficult issues\" that would arise that needed to be dealt with by the corporation. He is ruthless when given an objective (in this case, fighting the Vek), and served as ground support in his original timeline before stealing a Mech from a dying (?) pilot and using its breach technology to escape the timeline after the squad perished in the volcanic island. Since then, \"Abe\" has followed the orders of his first CEO Kern and is determined to keep fighting until every Vek in every timeline is defeated... a hopeless task, but \"Abe\" realizes he has little else to fight for, and even if he were to remain in a timeline he saved, he could not deal with the idea that other timelines were still in jeopardy. He has yet to encounter his duplicate, and if so, he may not recognize them due to surgery and the fluctuation of identities his job required before the Vek attack.",
+    "Personality": "Stoic, calculating, cold. Soft spoken.\nAbe seems to thrive on danger—when his Mech is down to 1 HP, his eyes come alive and a smile plays across his face.",
+    "Strategy": "With a single point of damage reduction, Abe is immune to one-damage attacks (including damage from thePsion Tyrant), making him an excellent hit sponge in the early game. Note however that Armor will not prevent spawn blocking damage, fire damage, explosive decay damage, or bump damage.\nAbe's armor additionally allows him to use self-damaging weapons (such as theCharge Mech's 'Ramming Engines') without penalty. Further, Abe's ability makes him a great candidate to pilot theBoulder Mechin theBlitzkriegsquad, as doing so allows the player to assemble longer chains along which to use theElectric Whipwith lessened risk; especially if he has gained an inherent HP bonus through leveling.\nGreat care should be taken to avoid Abe's mech from being inflicted by A.C.I.D., which otherwise disables armor until the mech is repaired.\nIn theSteel Judokasquad, he can make it significantly easier to get theUnbreakableachievement by letting him pilot theGravity Mech."
+  },
+  "full_text": "Abe Isamu\nNickname\nThe Assassin\nSpecial\nArmored:\tMech gains Armored.\nCorporation\nR.S.T. Corporation\nAbe Isamu\nis a\npilot\nin\nInto the Breach\n.\nContents\n1\nLocation\n2\nBackground\n3\nPersonality\n4\nStrategy\n5\nDialogue\nLocation\n[\n]\nAbe Isamu can be acquired through pods and by completing islands 100%.\nBackground\n[\n]\nSometimes jokingly called \"Honest Abe\" in previous timelines, nothing could be farther from the truth. Abe served as an \"expeditor\" (assassin and \"black box\" work) during the early years of CEO Kern's rise to power, and he took on many names and identities in service to R.S.T. to handle any \"difficult issues\" that would arise that needed to be dealt with by the corporation. He is ruthless when given an objective (in this case, fighting the Vek), and served as ground support in his original timeline before stealing a Mech from a dying (?) pilot and using its breach technology to escape the timeline after the squad perished in the volcanic island. Since then, \"Abe\" has followed the orders of his first CEO Kern and is determined to keep fighting until every Vek in every timeline is defeated... a hopeless task, but \"Abe\" realizes he has little else to fight for, and even if he were to remain in a timeline he saved, he could not deal with the idea that other timelines were still in jeopardy. He has yet to encounter his duplicate, and if so, he may not recognize them due to surgery and the fluctuation of identities his job required before the Vek attack.\nPersonality\n[\n]\nStoic, calculating, cold. Soft spoken.\nAbe seems to thrive on danger—when his Mech is down to 1 HP, his eyes come alive and a smile plays across his face.\nStrategy\n[\n]\nWith a single point of damage reduction, Abe is immune to one-damage attacks (including damage from the\nPsion Tyrant\n), making him an excellent hit sponge in the early game. Note however that Armor will not prevent spawn blocking damage, fire damage, explosive decay damage, or bump damage.\nAbe's armor additionally allows him to use self-damaging weapons (such as the\nCharge Mech\n's 'Ramming Engines') without penalty. Further, Abe's ability makes him a great candidate to pilot the\nBoulder Mech\nin the\nBlitzkrieg\nsquad, as doing so allows the player to assemble longer chains along which to use the\nElectric Whip\nwith lessened risk; especially if he has gained an inherent HP bonus through leveling.\nGreat care should be taken to avoid Abe's mech from being inflicted by A.C.I.D., which otherwise disables armor until the mech is repaired.\nIn the\nSteel Judoka\nsquad, he can make it significantly easier to get the\nUnbreakable\nachievement by letting him pilot the\nGravity Mech\n.\nDialogue\n[\n]\nEvent\nDescription\nContent\nGamestart\nThis happens at the start of a new game\n\"I am not here to save you. I am here to train you to save yourselves.\"\n\"Without determination and strength, these islands will fall again. Stand with me or stay out of my way.\"\n\"I am here to do what must be done. No more timelines must fall.\"\nFTL_Found\nHappens on the island screen after finding the FTL pilot in a pod.\n\"The land this pilot comes from is unknown, but not of earth.\"\nFTL_Start\nHappens after you start a new game with an FTL pilot. Only needed for Recruits\nGamestart_PostVictory\nStart of new game after winning\n\"The future repeats. And if so, victory is assured.\"\nDeath_Revived\nIf this unit is dead, but gets repaired\n\"I have returned, and I am ready.\"\nDeath_Main\nIf this unit dies.\n\"A fitting way to die.\"\n\"A fine death.\"\n\"No regrets.\"\nDeath_Response\nIf another unit dies.\nUse #main to say the dying unit's name.\n\"Fool.\"\n\"The price of being in harm's way.\"\nDeath_Response_AI\nIf another Mech dies but it doesn't have a pilot to die.\n\"Do not let it distract you.\"\nTimeTravel_Win\nLast thing pilot says before time traveling after a victory.\n\"Our war is not yet won. Keep traveling. Keep fighting.\"\nGameover_Start\nRight when you lose\n\"Commander... what-\"\nGameover_Response\nResponse to above\n\"It is time for us to leave.\"\n\"This world is finished.\"\n\"There is nothing left for us here.\"\nUpgrade_PowerWeapon\nTurn on a new weapon.\n\"This will serve.\"\n\"Serviceable.\"\nUpgrade_NoWeapon\nIf you have no weapon powered. This plays every time you remove all weapons from the Pilot.\n\"...Is this a test?\"\n\"This Mech is for battle. It must be armed.\"\n\"I am not such a fool as to enter battle unarmed.\"\nUpgrade_PowerGeneric\nDiverting reactor power to either Health or Move (basic Mech stats, not a weapon).\n\"...What are you doing to my Mech?\"\n\"A blade must be sharpened, but not enough so it will break.\"\n\"Unnecessary, but I will accept it.\"\nMissionStart\nGeneric mission start\n\"You know what to do.\"\n\"The rest of you, stay out of my way.\"\nMission_ResetTurn\nTriggers after a turn reset\n\"Let us correct our mistakes.\"\n\"We know our opponent's movements, now let us use it against them.\"\n\"No more second chances - make use of the time we have now.\"\nMissionEnd_Dead\nGeneric mission end where enemies are all killed\n\"These Vek were no match for us. A shame.\"\n\"Thorough.\"\n\"The Vek "
+}

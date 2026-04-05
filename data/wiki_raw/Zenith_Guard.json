@@ -1,0 +1,50 @@
+{
+  "name": "Zenith_Guard",
+  "url": "https://intothebreach.fandom.com/wiki/Zenith_Guard",
+  "infobox": {
+    "_title": "Zenith Guard"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Class",
+        "Health",
+        "Move speed",
+        "Default loadout",
+        "Special"
+      ],
+      "rows": [
+        {
+          "Name": "Laser Mech",
+          "Class": "Prime",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Burst Beam(Prime)EffectFire a piercing beam that decreases in damage the further it goes.(3-1 damage)Upgrade IAlly Immune ()Friendly units will not take damage from this attack.Upgrade II+1 Damage ()Increases the starting damage by 1.",
+          "Special": "Burst Beam(Prime)"
+        },
+        {
+          "Name": "Charge Mech",
+          "Class": "Brute",
+          "Health": "3",
+          "Move speed": "3",
+          "Default loadout": "Ramming Engines(Brute)EffectFly in a line and slam into the target, pushing it and hurting yourself.(1 self, 2 damage)Upgrade I+1 Damage Each ()Increases damage to self and target by 1.Upgrade II+1 Damage ()Increases damage to target by 1.",
+          "Special": "Ramming Engines(Brute)"
+        },
+        {
+          "Name": "Defense Mech",
+          "Class": "Science",
+          "Health": "2",
+          "Move speed": "4",
+          "Default loadout": "Attraction Pulse(Science)EffectPull target towards you 1 tile.Shield Projector(Science)EffectShield tiles from damage. (2 uses per battle.)Upgrade I+1 Use ()Increases uses per battle by 1.Upgrade II+3 Area ()Shields 3 additional tiles.",
+          "Special": "Attraction Pulse(Science)"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "TheZenith Guardis one of theSquadsfromInto The Breach, unlockable for 2 coins. They consist of theLaser Mech,Charge MechandDefense Mech.\nThe Zenith Guard has heavy firepower early on in the Laser Mech's Burst Beam and the Charge Mech's Ramming Engines. However, Ramming Engines' self-damage means that the Defense Mech must frequently deploy shields to prevent it from killing itself. The shields are also important for preventing collateral damage from the Burst Beam and for protecting against Vek attacks.",
+    "Strategies": "  - The Laser Mech demands open column and row space to work at its peak efficiency. If enclosed by buildings your Defense Mech must encase them in shields before you fire.\n  - The front two tiles of the burst beam will take 3 and 2 damage respectively, enough to kill all normal Vek apart from theBeetle. When upgraded the distribution becomes 4-3-2 from your mech, which can kill theAlpha Scarab,Alpha GastropodandAlpha Bouncer.\n  - The Charge Mech only inflicts self-damage if it hits anything. Using it to arrive on empty space can substitute for its low movement and lets it cross chasms.Beware of the self-damage if inflicted with A.C.I.D. or a damage Boost, as they will double the self-damage taken.\n  - Look for theForce Amppassive, as it allows the Charge Mech deal 4 damage to a Vek without any upgrades, as well as making the Defense Mech deal 2 damage when pulling into itself.\n  - Since the Charge Mech damages itself every time it attacks, it's recommended to choose one of the following Pilots to start the timeline with:Abe Isamuremoves the self-damage from the Charge Mech, and allows him to spam Ramming Engines with no drawback.Ariadneincreases the Charge Mech's health to 6 - enough to survive all 5 turns of a battle - and enables her to attack atforestswithout setting the Charge Mech on fire.Mafan's Zoltan Shield allows him to spend it using Ramming Engines every turn, provided he doesn't take damage or gets set on fire for the enemy turn. The extra reactor can also be used to immediately power Ramming Engine's damage; the increased self-damage isn't an issue since the shield absorbs it already without damaging tiles either.\n  - For pilots obtained through the run, noteworthy ones to look for include:Harold SchmidtandKazaaakplethcan give the Defense Mech a much better pushing tool in addition to its default Attraction Pulse.Kai MillerandMorgan Lejeuneboth raise the maximum damage of the Laser Mech to 5, which is enough to kill most Alphas.Silicaon the Laser Mech firing twice can eliminate any boss.Henry KwanandProsperoallow for better positioning of the Laser Mech."
+  },
+  "full_text": "Zenith Guard\n“\nDetritus' Beam technology and Pinnacle's Shield technology create a powerful combination.\n„\nThe\nZenith Guard\nis one of the\nSquads\nfrom\nInto The Breach\n, unlockable for 2 coins. They consist of the\nLaser Mech\n,\nCharge Mech\nand\nDefense Mech\n.\nThe Zenith Guard has heavy firepower early on in the Laser Mech's Burst Beam and the Charge Mech's Ramming Engines. However, Ramming Engines' self-damage means that the Defense Mech must frequently deploy shields to prevent it from killing itself. The shields are also important for preventing collateral damage from the Burst Beam and for protecting against Vek attacks.\nMechs\n[\n]\nName\nClass\nHealth\nMove speed\nDefault loadout\nSpecial\nLaser Mech\nPrime\n3\n3\nBurst Beam\n(\nPrime\n)\nEffect\nFire a piercing beam that decreases in damage the further it goes.\n(3-1 damage)\nUpgrade I\nAlly Immune (\n)\nFriendly units will not take damage from this attack.\nUpgrade II\n+1 Damage (\n)\nIncreases the starting damage by 1.\nCharge Mech\nBrute\n3\n3\nRamming Engines\n(\nBrute\n)\nEffect\nFly in a line and slam into the target, pushing it and hurting yourself.\n(1 self, 2 damage)\nUpgrade I\n+1 Damage Each (\n)\nIncreases damage to self and target by 1.\nUpgrade II\n+1 Damage (\n)\nIncreases damage to target by 1.\nDefense Mech\nScience\n2\n4\nAttraction Pulse\n(\nScience\n)\nEffect\nPull target towards you 1 tile.\nShield Projector\n(\nScience\n)\nEffect\nShield tiles from damage. (2 uses per battle.)\nUpgrade I\n+1 Use (\n)\nIncreases uses per battle by 1.\nUpgrade II\n+3 Area (\n)\nShields 3 additional tiles.\nFlying\n: Flying units can move over any terrain tile.\nAchievements\n[\n]\nGet Over Here\nKill an enemy by pulling it into yourself\nGlittering C-Beam\nHit 4 enemies with a single laser\nShield Mastery\nBlock damage with a Shield 4 times in a single battle\nStrategies\n[\n]\nThe Laser Mech demands open column and row space to work at its peak efficiency. If enclosed by buildings your Defense Mech must encase them in shields before you fire.\nThe front two tiles of the burst beam will take 3 and 2 damage respectively, enough to kill all normal Vek apart from the\nBeetle\n. When upgraded the distribution becomes 4-3-2 from your mech, which can kill the\nAlpha Scarab\n,\nAlpha Gastropod\nand\nAlpha Bouncer\n.\nThe Charge Mech only inflicts self-damage if it hits anything. Using it to arrive on empty space can substitute for its low movement and lets it cross chasms.\nBeware of the self-damage if inflicted with A.C.I.D. or a damage Boost, as they will double the self-damage taken.\nLook for the\nForce Amp\npassive, as it allows the Charge Mech deal 4 damage to a Vek without any upgrades, as well as making the Defense Mech deal 2 damage when pulling into itself.\nSince the Charge Mech damages itself every time it attacks, it's recommended to choose one of the following Pilots to start the timeline with:\nAbe Isamu\nremoves the self-damage from the Charge Mech, and allows him to spam Ramming Engines with no drawback.\nAriadne\nincreases the Charge Mech's health to 6 - enough to survive all 5 turns of a battle - and enables her to attack at\nforests\nwithout setting the Charge Mech on fire.\nMafan\n's Zoltan Shield allows him to spend it using Ramming Engines every turn, provided he doesn't take damage or gets set on fire for the enemy turn. The extra reactor can also be used to immediately power Ramming Engine's damage; the increased self-damage isn't an issue since the shield absorbs it already without damaging tiles either.\nFor pilots obtained through the run, noteworthy ones to look for include:\nHarold Schmidt\nand\nKazaaakpleth\ncan give the Defense Mech a much better pushing tool in addition to its default Attraction Pulse.\nKai Miller\nand\nMorgan Lejeune\nboth raise the maximum damage of the Laser Mech to 5, which is enough to kill most Alphas.\nSilica\non the Laser Mech firing twice can eliminate any boss.\nHenry Kwan\nand\nProspero\nallow for better positioning of the Laser Mech.\nv\n·\nd\n·\ne\nSquads\nRift Walkers\n·\nRusting Hulks\n·\nZenith Guard\n·\nBlitzkrieg\n·\nSteel Judoka\n·\nFlame Behemoths\n·\nFrozen Titans\n·\nHazardous  Mechs\n·\nBombermechs\n·\nArachnophiles\n·\nMist Eaters\n·\nHeat Sinkers\n·\nCataclysm\nSecret Squad\n·\nCustom Squad\n·\nRandom Squad"
+}

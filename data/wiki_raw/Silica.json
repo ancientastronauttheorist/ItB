@@ -1,0 +1,719 @@
+{
+  "name": "Silica",
+  "url": "https://intothebreach.fandom.com/wiki/Silica",
+  "infobox": {
+    "_title": "Silica",
+    "Nickname": "The Miner",
+    "Special": "Double Shot:\tMech can act twice if it does not move.Requires 2 Power.",
+    "Corporation": "R.S.T. Corporation"
+  },
+  "tables": [
+    {
+      "headers": [
+        "Category",
+        "Event",
+        "Description",
+        "Content"
+      ],
+      "rows": [
+        {
+          "Category": "Game States",
+          "Event": "Gamestart",
+          "Description": "This happens at the start of a new game",
+          "Content": "\"The Vek are conducting unauthorized mining in this archipelago. I am here to stop their efforts.\"\"I was designed for the purpose of locating the central Vek hive. But I do not detect one on any of these islands.\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Found",
+          "Description": "Happens on the island screen after finding the FTL pilot in a pod.",
+          "Content": "\"The pilot's craft bears no tachyon emissions. Its language is unknown to my circuits.\""
+        },
+        {
+          "Category": "",
+          "Event": "FTL_Start",
+          "Description": "Happens after you start a new game with an FTL pilot. Only needed for Recruits",
+          "Content": ""
+        },
+        {
+          "Category": "*",
+          "Event": "Gamestart_PostVictory",
+          "Description": "Start of new game after winning",
+          "Content": "\"The volcanic island has not yet surfaced in this timeline. We must provoke the Vek until it emerges.\"\"Preparing Vek countermeasures used in previous timeline to increase probability of victory.\"\"Sensors detect no volcanic eruptions on or near the islands. We must provoke the Vek hive into emerging.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Revived",
+          "Description": "If this unit is dead, but gets repaired",
+          "Content": "\"Reactivated.\"\"Sensors online.\"\"Commencing self-diagnostic.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Main",
+          "Description": "If this unit dies.",
+          "Content": "\"Deactivating systems.\"\"Sensor failure reported.\"."
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response",
+          "Description": "If another unit dies.Use #main to say the dying unit's name.",
+          "Content": "\"Scanning fallen #main_mech for useful resources.\"\"Unauthorized demolition of #main_mech detected.\""
+        },
+        {
+          "Category": "",
+          "Event": "Death_Response_AI",
+          "Description": "If another Mech dies but it doesn't have a pilot to die.",
+          "Content": "\"Scanning fallen #main_mech for useful resources.\"\"Unauthorized demolition of #main_mech detected.\""
+        },
+        {
+          "Category": "*",
+          "Event": "TimeTravel_Win",
+          "Description": "Last thing pilot says before time traveling after a victory.",
+          "Content": "\"Temporal excavation initiated. Re-engaging Vek in alternate timeline with new combat data.\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Start",
+          "Description": "Right when you lose",
+          "Content": "\"Power Grid failure detected.\""
+        },
+        {
+          "Category": "",
+          "Event": "Gameover_Response",
+          "Description": "Response to above",
+          "Content": "\"Temporal excavation initiated. Re-engaging Vek in alternate timeline.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "UI Barks",
+          "Event": "Upgrade_PowerWeapon",
+          "Description": "Turn on a new weapon.",
+          "Content": "\"Hardware installed\"\"New excavation tools acquired.\"\"Excavation equipment altered.\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_NoWeapon",
+          "Description": "If you have no weapon powered. This plays every time you remove all weapons from the Pilot.",
+          "Content": "\"Error in mining array. Excavation tool not found.\"\"Excavation equipment offline.\""
+        },
+        {
+          "Category": "",
+          "Event": "Upgrade_PowerGeneric",
+          "Description": "Diverting reactor power to either Health or Move (basic Mech stats, not a weapon).",
+          "Content": "\"Mech upgrades complete.\"\"Mech systems upgraded.\"\"Additional systems online.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mid- Battle",
+          "Event": "MissionStart",
+          "Description": "Generic mission start",
+          "Content": "\"Region scanned. Initiating deployment.\"\"Scanning region for useful resources.\"\"Vek excavation commencing.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_ResetTurn",
+          "Description": "Triggers after a turn reset",
+          "Content": "\"Systems resetting.\"\"Updating chronometer.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Dead",
+          "Description": "Generic mission end where enemies are all killed",
+          "Content": "\"Enemies destroyed.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionEnd_Retreat",
+          "Description": "Generic mission end when enemies retreat",
+          "Content": "\"Enemies disengaging.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Start",
+          "Description": "Plays at the start of the final mission",
+          "Content": "\"Scanning land mass for useful mineral deposits. Failure to access Power Grid logged.\"\"Unauthorized land mass now being surveyed. Power Grid access requested.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_StartResponse",
+          "Description": "Incoming power pylons",
+          "Content": "\"Pylon deployment detected.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallStart",
+          "Description": "Plays at the start of the ground falling in the final mission",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_FallResponse",
+          "Description": "Plays once the ground shakes",
+          "Content": "\"Seismic activity increasing. Terrain unstable.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Pylons",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_Bomb",
+          "Description": "What's the plan?",
+          "Content": "\"Demolition efforts impeded by scope of target area.\""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombResponse",
+          "Description": "Before dropping the bomb",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_CaveStart",
+          "Description": "Plays at the start of the final cave section (after MissionFinal_BombResponse)",
+          "Content": "\"Demolition authorization and defense of Renfield tachyon explosive logged.\""
+        },
+        {
+          "Category": "*",
+          "Event": "MissionFinal_BombDestroyed",
+          "Description": "When the bomb is destroyed, another one is dropped and the battle length is extended.",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MissionFinal_BombArmed",
+          "Description": "",
+          "Content": "\"Renfield Bomb activated. Hive demolition commencing.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PodIncoming",
+          "Description": "Pod is about to fall",
+          "Content": "\"Atmospheric disturbance detected.\"\"Tachyon emissions detected. Time Pod entering region.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodResponse",
+          "Description": "Response to above",
+          "Content": "\"Pod has carved an unauthorized trench on the island's surface.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodCollected_Self",
+          "Description": "Pod collected (by the pilot talking)",
+          "Content": "\"Pod extracted from terrain.\""
+        },
+        {
+          "Category": "",
+          "Event": "PodDestroyed_Obs",
+          "Description": "Pod destroyed (by anyone, including Vek, except the speaker)",
+          "Content": "\"Pod dispersed across wider surface area.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Mountain",
+          "Description": "Secret object was inside a mountainOnly needs 1 line per Pilot",
+          "Content": "\"Unknown object detected at mountain excavation site.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceSeen_Ice",
+          "Description": "Secret object was under water after destroying iceOnly needs 1 line per Pilot",
+          "Content": "\"Unknown object detected under ice excavation site.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_DeviceUsed",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"Unknown object transmitting signal.\""
+        },
+        {
+          "Category": "",
+          "Event": "Secret_Arriving",
+          "Description": "Only needs 1 line per Pilot",
+          "Content": "\"Atmospheric disturbance detected. Alloys comprising object are not on periodic table.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Detected",
+          "Description": "Emerges are queued.",
+          "Content": "\"Seismic readings indicate Vek activity approaching our coordinates.\"\"Vek are conducting unauthorized tunneling in region.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_Success",
+          "Description": "Vek Emerges",
+          "Content": "\"Vek detected on surface. Damage to island infrastructure negligible.\"\"The Vek have surfaced. They carry no trace minerals or metals of value to our forces.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedMech",
+          "Description": "Mech blocks Emerging Vek",
+          "Content": "\"Vek emergence point sealed.\"\"This Vek is not cleared for surfacing.\"\"Vek tunnel capped by #self_full.\""
+        },
+        {
+          "Category": "",
+          "Event": "Emerge_FailedVek",
+          "Description": "Vek Block Emerging Vek",
+          "Content": "\"Vek emergence halted by Vek.\"\"Vek excavator halted by surface Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mech State",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_LowHealth",
+          "Description": "Mech has 1 hp.",
+          "Content": "\"Hull integrity compromised.\"\"Mech outer shell failing.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Webbed",
+          "Description": "Mech is webbed",
+          "Content": "\"Unauthorized organic excretions compromising mobility.\"\"#self_full mobility compromised by Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Shielded",
+          "Description": "Mech is shielded",
+          "Content": "\"Now encased in Pinnacle shield.\"\"Pinnacle shield active.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_Repaired",
+          "Description": "Mech uses repair.",
+          "Content": "\"#self_mech hull has been reinforced.\"\"Temporary repairs to #self_mech complete.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Self",
+          "Description": "Pilot levels up (not necessarily max rank)",
+          "Content": "\"#self_full promotion logged. New managerial protocols downloading now.\""
+        },
+        {
+          "Category": "",
+          "Event": "Pilot_Level_Obs",
+          "Description": "Pilot is observed to level up",
+          "Content": "\"#main_full promotion logged.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mech_ShieldDown",
+          "Description": "Mech's shield is removed",
+          "Content": "\"Pinnacle shield integrity has failed.\"\"Pinnacle shield depleted.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Damage Done",
+          "Event": "",
+          "Description": "Damage commentary comes in three flavors:\"SELF\" : The Mech did themselves\n\"OBS\" : The Mech (or CEO) observed another Mech do it\n\"VEK\" : A Vek did it, and a CEO or Mech is commenting on that",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Drown",
+          "Description": "Vek drowns (from anyone / any cause)",
+          "Content": "\"Vek ejected from land mass.\"\"Vek now conducting unauthorized diving operations.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Fall",
+          "Description": "Vek falls down a hole (from anyone / any cause)",
+          "Content": "\"Vek has initiated terminal descent.\"\"Vek now conducting unauthorized descent operations.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Smoke",
+          "Description": "Vek is put in smoke (from anyone / any cause)",
+          "Content": "\"Vek encased in cloud of particles.\"\"Smoke cloud detected around Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "Vek_Frozen",
+          "Description": "Vek is frozen (from any cause except Snow Storm and Freeze Mine)",
+          "Content": "\"Vek contained by hazardous weather conditions.\"\"Vek frozen by hazardous weather conditions.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Self",
+          "Description": "",
+          "Content": "\"Vek has been excavated.\"\"Vek has been mined of all useful resources.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Obs",
+          "Description": "",
+          "Content": "\"Vek has been excavated.\"\"Vek remains marked for excavation.\""
+        },
+        {
+          "Category": "",
+          "Event": "VekKilled_Vek",
+          "Description": "",
+          "Content": "\"Vek has conducted unauthorized excavation of rival Vek.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Self",
+          "Description": "",
+          "Content": "\"Vek have been excavated.\"\"Vek have been mined of all useful resources.\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Obs",
+          "Description": "",
+          "Content": "\"Vek has been excavated.\"\"Multiple Vek remains marked for excavation.\""
+        },
+        {
+          "Category": "",
+          "Event": "DoubleVekKill_Vek",
+          "Description": "",
+          "Content": "\"Vek has conducted unauthorized excavation of Vek rivals.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Self",
+          "Description": "Note that because a destroyed mountain (and building) can then be moved through, some lines reflect the fact the player can now move into these tiles.",
+          "Content": "\"Mountain excavation complete. No significant mineral resources obtained.\""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Obs",
+          "Description": "",
+          "Content": "\"Mountain excavation detected. Scan indicates no significant mineral resources obtained.\""
+        },
+        {
+          "Category": "",
+          "Event": "MntDestroyed_Vek",
+          "Description": "",
+          "Content": "\"Unauthorized Vek mining operations detected.\"\"Scan indicates no significant mineral resources obtained.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "PowerCritical",
+          "Description": "",
+          "Content": "\"#corp Power Grid nearing collapse.\"\"#corp Power Grid failing.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Self",
+          "Description": "",
+          "Content": "\"Reporting violation of demolition authorization.\"\"Reporting unauthorized demolition of #corp infrastructure.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Obs",
+          "Description": "",
+          "Content": "\"Unauthorized demolition detected.\"\"Reporting unauthorized demolition of #corp infrastructure.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Destroyed_Vek",
+          "Description": "",
+          "Content": "\"Unauthorized demolition detected.\"\"Reporting unauthorized demolition of #corp infrastructure.\""
+        },
+        {
+          "Category": "",
+          "Event": "Bldg_Resisted",
+          "Description": "Building resists damage, currently anyone can comment but I can change this to _Obs/_Self/_Vek if we think it's worth it.",
+          "Content": "\"Demolition attempt halted.\"\"Demolition attempt prevented.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "Mission Specific",
+          "Event": "Mission_Train_TrainStopped",
+          "Description": "",
+          "Content": "\"#corp train partially disassembled.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Train_TrainDestroyed",
+          "Description": "",
+          "Content": "\"#corp train disassembled.\"\"#corp train irrecoverable.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Block_Reminder",
+          "Description": "Remind player to block emerging Vek",
+          "Content": "\"Vek have not been cleared for emergence and must be detained.\"\"Unauthorized Vek tunneling must be halted.\"\"Vek tunnels must be capped by any means necessary.\""
+        },
+        {
+          "Category": "Archive Inc",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Airstrike_Incoming",
+          "Description": "",
+          "Content": "\"Archive bomber entering region airspace.\"\"Archive bomber about to deploy explosive charges.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_Activated",
+          "Description": "Both tanks survived to activation",
+          "Content": "\"Archive tanks online. Syncing objectives now.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Tanks_PartialActivated",
+          "Description": "Only one tank survived to activation",
+          "Content": "\"Archive tank online. Syncing objectives now.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Dam_Reminder",
+          "Description": "Remind player to destroy the Dam",
+          "Content": "\"Dam obstruction must be removed.\"\"Dam demolitions operation must commence.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Dam_Destroyed",
+          "Description": "After the completed animation of the dam drowning things",
+          "Content": "\"Dam demolition successful.\"\"Dam obstruction removed.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Destroyed",
+          "Description": "Triggers only when the first satellite is destroyed",
+          "Content": "\"Unauthorized destruction of Archive property detected.\"\"Rocket destroyed.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Imminent",
+          "Description": "Triggers when the Satellite queues its launch (the turn before it actually launches) -- It can trigger for either satellite, or both, it's randomized.",
+          "Content": "\"Seismic readings indicate imminent rocket launch.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Satellite_Launch",
+          "Description": "Triggers when the satellite actually takes off, can trigger for either or both",
+          "Content": "\"Launch successful.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Mines_Vek",
+          "Description": "Vek Killed by Mine",
+          "Content": "\"Authorized proximity mine detonation detected.\"\"Proximity mine has detonated.\""
+        },
+        {
+          "Category": "",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "RST",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Destroyed",
+          "Description": "If the terraformer is destroyed",
+          "Content": "\"Terraformer represented a substantial investment of R.S.T. resources.\"\"R.S.T. Terraformer operations interrupted.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Terraform_Attacks",
+          "Description": "After the player uses the terraformer (not necessarily the first, random chance)This will obey the same rules as other barks, where something like a pilot death will take priority.",
+          "Content": "\"R.S.T. Terraformer rezoning of region complete.\"\"R.S.T. Terraformer operations successful.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Cataclysm_Falling",
+          "Description": "Triggers when ground is falling during either RST mission with falling ground",
+          "Content": "\"Seismic readings indicate unstable land mass.\"\"Scan for new mineral deposits in canyons commencing.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Lightning_Strike_Vek",
+          "Description": "If lightning hits a Vek",
+          "Content": "\"Vek conducting unauthorized meteorological studies.\"\"Logging data on Vek meteorological interactions.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Solar_Destroyed",
+          "Description": "Solar panel destroyed",
+          "Content": "\"Unauthorized destruction of R.S.T. property detected.\"\"R.S.T. solar array destroyed. Disruption in long-term power projections logged.\""
+        },
+        {
+          "Category": "*",
+          "Event": "Mission_Force_Reminder",
+          "Description": "Remind player to destroy the mountains",
+          "Content": "\"Mountains in region queued for excavation.\"\"Requesting authorization to commence mountain excavation.\""
+        },
+        {
+          "Category": "Pinnacle",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Freeze_Mines_Vek",
+          "Description": "Vek Frozen by Mine. This takes priority over all other Freeze conditions.",
+          "Content": "\"Cryo-mine detonation confirmed. Vek contained.\"\"Cryo-mine detonation confirmed. Vek frozen.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Destroyed",
+          "Description": "Bot Factory destroyed",
+          "Content": "\"Unauthorized destruction of Pinnacle property detected.\"\"Pinnacle factory destroyed. Disruption in long-term Pinnacle mechanized deployment logged.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Factory_Spawning",
+          "Description": "Bot Factory spawning",
+          "Content": "\"Pinnacle facility is refusing to comply with closure request.\"\"Pinnacle facility manufacturing error increasingly exponentially.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Reactivation_Thawed",
+          "Description": "A selection of enemies on the map are freed from ice (might be bots)",
+          "Content": "\"Target no longer impeded by climate conditions.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenVek",
+          "Description": "Snowstorm freezes Vek",
+          "Content": "\"Vek impeded by climate conditions.\"\"Vek frozen. Logging data on Vek meteorological interactions.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_SnowStorm_FrozenMech",
+          "Description": "Snowstorm freezes speaking Mech—This takes priority if Vek are frozen as well",
+          "Content": "\"This Mech impeded by climate conditions.\"\"This Mech unresponsive due to temperature extremes.\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Self",
+          "Description": "Player kills a hostile Bot",
+          "Content": "\"Unauthorized mechanized activity halted.\"\"Robot has been excavated of all useful resources.\""
+        },
+        {
+          "Category": "",
+          "Event": "BotKilled_Obs",
+          "Description": "Player is observed to kill a hostile Bot",
+          "Content": "\"Unauthorized mechanized activity halted.\"\"Scanning robot remains for useful resources.\""
+        },
+        {
+          "Category": "Detritus",
+          "Event": "",
+          "Description": "",
+          "Content": ""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Destroyed",
+          "Description": "Player was supposed to defend the Disposal unit and it was destroyed—Shooter could be anyone",
+          "Content": "\"Unauthorized destruction of Detritus property detected.\"\"Detritus unit destroyed. Disruption in long-term Detritus waste disposal efforts logged.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Disposal_Activated",
+          "Description": "Player uses Disposal Unit—mass damage",
+          "Content": "\"Detritus unit rezoning of region complete.\"\"Detritus unit operations successful.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Barrels_Destroyed",
+          "Description": "A.C.I.D. barrel destroyed (as per mission objectives) -- shooter unclear",
+          "Content": "\"A.C.I.D. vat has been destroyed.\"\"Vat chemicals have been released into island foundations.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Power_Destroyed",
+          "Description": "Power plant is destroyed",
+          "Content": "\"Unauthorized destruction of Detritus property detected.\"\"Detritus power plant destroyed. Disruption in long-term power projections logged.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Teleporter_Mech",
+          "Description": "Mech teleports (self)",
+          "Content": "\"Teleport successful.\""
+        },
+        {
+          "Category": "",
+          "Event": "Mission_Belt_Mech",
+          "Description": "Mech moves on conveyor (self) (does not hit anything, no damage, etc.)",
+          "Content": "\"Reporting self-violation of conveyer use safety protocols.\""
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Location": "Silica can be acquired by completing islands.",
+    "Background": "Silica is a hybrid of Pinnacle and R.S.T. technology, believed to be one of the first (and possibly only) artificial intelligences devoted to terrain architecture. \nIn \"his\" original timeline, Silica was responsible for first detecting and studying theVek, and eventually was modified to investigate their hives... this nearly ended catastrophically, and Silica was recovered and his programming altered from terraforming to terraforming-based-combat... the concept of using the existing terrain and shaping it, exploiting it, and using the surrounding region as a weapon against the Vek. When Silica jumped timelines, his original programming was unknown to every subsequent timeline, and they have seen him only in his role as a environmental tactician, designed to help the islands defeat the Vek.",
+    "Personality": "A relatively calm, pragmatic machine who has adjusted to the change in its original purpose of mineral survey to destruction. It tends to quantify its responses in terms of how actions will affect the environment first, then the individuals second.",
+    "Strategy": "Silica's Double Shot, while expensive at 2 power points, can drastically alter the playstyle of a given Mech depending on their equipment. Easiest to recommend are the Prime-class Mechs, which will often be placed front and center and frequently contested by the Vek, eliminating the need to reposition before retaliating. Even more directly benefiting from Double Shot is the Flame Behemoths'Flame Mech, which requires your target already be on fire in order to do direct damage; and Blitzkrieg'sLightning Mech, which can remain close to buildings and use the chained electric damage twice in one turn. Note that Repairing counts as an action, so it is also possible to Repair before or after using a weapon if his Mech does not move, which is useful if using Silica's Mech to block spawns.\nGenerally, any weapon that does not require strict positioning - such asDeployable Tanks- can work well with Double Shot active; theBombling Mechis particularly notable, as theWalking Bombshave their own movement points to let them position themselves. On the more silly side of strategy, one can get very creative with personal movement \"attacks\" such asBoostersorTeleporteras substitute for standard movement, while also impacting enemy positioning. Further still will be making Silica's Mech a dedicated healer by equipping them with theRepair Fieldpassive, though this can be difficult to maintain given how powerful enemy attacks become late-game."
+  },
+  "full_text": "Silica\nNickname\nThe Miner\nSpecial\nDouble Shot:\tMech can act twice if it does not move.\nRequires 2 Power.\nCorporation\nR.S.T. Corporation\nSilica\nis a\npilot\nin\nInto the Breach\n.\nContents\n1\nLocation\n2\nBackground\n3\nPersonality\n4\nStrategy\n5\nDialogue\nLocation\n[\n]\nSilica can be acquired by completing islands.\nBackground\n[\n]\nSilica is a hybrid of Pinnacle and R.S.T. technology, believed to be one of the first (and possibly only) artificial intelligences devoted to terrain architecture. \nIn \"his\" original timeline, Silica was responsible for first detecting and studying the\nVek\n, and eventually was modified to investigate their hives... this nearly ended catastrophically, and Silica was recovered and his programming altered from terraforming to terraforming-based-combat... the concept of using the existing terrain and shaping it, exploiting it, and using the surrounding region as a weapon against the Vek. When Silica jumped timelines, his original programming was unknown to every subsequent timeline, and they have seen him only in his role as a environmental tactician, designed to help the islands defeat the Vek.\nPersonality\n[\n]\nA relatively calm, pragmatic machine who has adjusted to the change in its original purpose of mineral survey to destruction. It tends to quantify its responses in terms of how actions will affect the environment first, then the individuals second.\nStrategy\n[\n]\nSilica's Double Shot, while expensive at 2 power points, can drastically alter the playstyle of a given Mech depending on their equipment. Easiest to recommend are the Prime-class Mechs, which will often be placed front and center and frequently contested by the Vek, eliminating the need to reposition before retaliating. Even more directly benefiting from Double Shot is the Flame Behemoths'\nFlame Mech\n, which requires your target already be on fire in order to do direct damage; and Blitzkrieg's\nLightning Mech\n, which can remain close to buildings and use the chained electric damage twice in one turn. Note that Repairing counts as an action, so it is also possible to Repair before or after using a weapon if his Mech does not move, which is useful if using Silica's Mech to block spawns.\nGenerally, any weapon that does not require strict positioning - such as\nDeployable Tanks\n- can work well with Double Shot active; the\nBombling Mech\nis particularly notable, as the\nWalking Bombs\nhave their own movement points to let them position themselves. On the more silly side of strategy, one can get very creative with personal movement \"attacks\" such as\nBoosters\nor\nTeleporter\nas substitute for standard movement, while also impacting enemy positioning. Further still will be making Silica's Mech a dedicated healer by equipping them with the\nRepair Field\npassive, though this can be difficult to maintain given how powerful enemy attacks become late-game.\nDialogue\n[\n]\nCategory\nEvent\nDescription\nContent\nGame States\nGamestart\nThis happens at the start of a new game\n\"The Vek are conducting unauthorized mining in this archipelago. I am here to stop their efforts.\"\n\"I was designed for the purpose of locating the central Vek hive. But I do not detect one on any of these islands.\"\nFTL_Found\nHappens on the island screen after finding the FTL pilot in a pod.\n\"The pilot's craft bears no tachyon emissions. Its language is unknown to my circuits.\"\nFTL_Start\nHappens after you start a new game with an FTL pilot. Only needed for Recruits\n*\nGamestart_PostVictory\nStart of new game after winning\n\"The volcanic island has not yet surfaced in this timeline. We must provoke the Vek until it emerges.\"\n\"Preparing Vek countermeasures used in previous timeline to increase probability of victory.\"\n\"Sensors detect no volcanic eruptions on or near the islands. We must provoke the Vek hive into emerging.\"\nDeath_Revived\nIf this unit is dead, but gets repaired\n\"Reactivated.\"\n\"Sensors online.\"\n\"Commencing self-diagnostic.\"\nDeath_Main\nIf this unit dies.\n\"Deactivating systems.\"\n\"Sensor failure reported.\".\nDeath_Response\nIf another unit dies.\nUse #main to say the dying unit's name.\n\"Scanning fallen #main_mech for useful resources.\"\n\"Unauthorized demolition of #main_mech detected.\"\nDeath_Response_AI\nIf another Mech dies but it doesn't have a pilot to die.\n\"Scanning fallen #main_mech for useful resources.\"\n\"Unauthorized demolition of #main_mech detected.\"\n*\nTimeTravel_Win\nLast thing pilot says before time traveling after a victory.\n\"Temporal excavation initiated. Re-engaging Vek in alternate timeline with new combat data.\"\nGameover_Start\nRight when you lose\n\"Power Grid failure detected.\"\nGameover_Response\nResponse to above\n\"Temporal excavation initiated. Re-engaging Vek in alternate timeline.\"\nUI Barks\nUpgrade_PowerWeapon\nTurn on a new weapon.\n\"Hardware installed\"\n\"New excavation tools acquired.\"\n\"Excavation equipment altered.\"\nUpgrade_NoWeapon\nIf you have no weapon powered. This plays every time you remove all weapons from the Pilot.\n\"Error in mining array. Excavation tool not found.\"\n\"Exca"
+}

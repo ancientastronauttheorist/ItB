@@ -1,0 +1,74 @@
+{
+  "name": "Mafan",
+  "url": "https://intothebreach.fandom.com/wiki/Mafan",
+  "infobox": {
+    "_title": "Mafan",
+    "Special": "Zoltan:\t+1 Reactor Core. Reduce Mech HP to 1. Gain Shield every turn."
+  },
+  "tables": [
+    {
+      "headers": [
+        "v·d·ePilotsBase GameRalph Karlsson•Harold Schmidt•Abe Isamu•Bethany Jones•Henry Kwan•Gana•Prospero•Lily Reed•Chen Rong•Camila Vera•Isaac Jones•Silica•ArchimedesSecret PilotsKazaaakpleth•Ariadne•MafanAdvanced EditionKai Miller•Rosie Rivets•Morgan Lejeune•AdamOtherArtificial Pilot•Archive Inc Pilot•RST Pilot•Pinnacle Pilot•Detritus Pilot•Cyborg Pilot",
+        "v·d·ePilots",
+        "",
+        "Base Game",
+        "Ralph Karlsson•Harold Schmidt•Abe Isamu•Bethany Jones•Henry Kwan•Gana•Prospero•Lily Reed•Chen Rong•Camila Vera•Isaac Jones•Silica•Archimedes",
+        "",
+        "Secret Pilots",
+        "Kazaaakpleth•Ariadne•Mafan",
+        "",
+        "Advanced Edition",
+        "Kai Miller•Rosie Rivets•Morgan Lejeune•Adam",
+        "",
+        "Other",
+        "Artificial Pilot•Archive Inc Pilot•RST Pilot•Pinnacle Pilot•Detritus Pilot•Cyborg Pilot"
+      ],
+      "rows": [
+        {
+          "v·d·ePilotsBase GameRalph Karlsson•Harold Schmidt•Abe Isamu•Bethany Jones•Henry Kwan•Gana•Prospero•Lily Reed•Chen Rong•Camila Vera•Isaac Jones•Silica•ArchimedesSecret PilotsKazaaakpleth•Ariadne•MafanAdvanced EditionKai Miller•Rosie Rivets•Morgan Lejeune•AdamOtherArtificial Pilot•Archive Inc Pilot•RST Pilot•Pinnacle Pilot•Detritus Pilot•Cyborg Pilot": "Base Game",
+          "v·d·ePilots": "Ralph Karlsson•Harold Schmidt•Abe Isamu•Bethany Jones•Henry Kwan•Gana•Prospero•Lily Reed•Chen Rong•Camila Vera•Isaac Jones•Silica•Archimedes"
+        },
+        {
+          "v·d·ePilotsBase GameRalph Karlsson•Harold Schmidt•Abe Isamu•Bethany Jones•Henry Kwan•Gana•Prospero•Lily Reed•Chen Rong•Camila Vera•Isaac Jones•Silica•ArchimedesSecret PilotsKazaaakpleth•Ariadne•MafanAdvanced EditionKai Miller•Rosie Rivets•Morgan Lejeune•AdamOtherArtificial Pilot•Archive Inc Pilot•RST Pilot•Pinnacle Pilot•Detritus Pilot•Cyborg Pilot": "Secret Pilots",
+          "v·d·ePilots": "Kazaaakpleth•Ariadne•Mafan"
+        },
+        {
+          "v·d·ePilotsBase GameRalph Karlsson•Harold Schmidt•Abe Isamu•Bethany Jones•Henry Kwan•Gana•Prospero•Lily Reed•Chen Rong•Camila Vera•Isaac Jones•Silica•ArchimedesSecret PilotsKazaaakpleth•Ariadne•MafanAdvanced EditionKai Miller•Rosie Rivets•Morgan Lejeune•AdamOtherArtificial Pilot•Archive Inc Pilot•RST Pilot•Pinnacle Pilot•Detritus Pilot•Cyborg Pilot": "Advanced Edition",
+          "v·d·ePilots": "Kai Miller•Rosie Rivets•Morgan Lejeune•Adam"
+        },
+        {
+          "v·d·ePilotsBase GameRalph Karlsson•Harold Schmidt•Abe Isamu•Bethany Jones•Henry Kwan•Gana•Prospero•Lily Reed•Chen Rong•Camila Vera•Isaac Jones•Silica•ArchimedesSecret PilotsKazaaakpleth•Ariadne•MafanAdvanced EditionKai Miller•Rosie Rivets•Morgan Lejeune•AdamOtherArtificial Pilot•Archive Inc Pilot•RST Pilot•Pinnacle Pilot•Detritus Pilot•Cyborg Pilot": "Other",
+          "v·d·ePilots": "Artificial Pilot•Archive Inc Pilot•RST Pilot•Pinnacle Pilot•Detritus Pilot•Cyborg Pilot"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "v·d·ePilots"
+      ],
+      "rows": [
+        {
+          "v·d·ePilots": "Base Game"
+        },
+        {
+          "v·d·ePilots": "Secret Pilots"
+        },
+        {
+          "v·d·ePilots": "Advanced Edition"
+        },
+        {
+          "v·d·ePilots": "Other"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "Location": "Mafan, along with the other secret pilotsKazaakplethandAriadne, is only obtainable in a run through the following process:\n  - Find amarked mountain or ice tile, which can be identified after entering a mission through a small glowing dot and being damaged by 1 point prematurely.\n  - Break the tile and collect the beacon by moving onto it with a mech or allied unit.\n  - After ending the turn, aStrange Podwill drop. Protecting it rewards one of the secret pilots and a reactor core.\nOnce unlocked, Mafan can be used as a starting pilot without doing the above method again.",
+    "Background": "The Zoltan are an alien race from the gameFTL: Faster than Lightby Subset Games, the same developers behindInto the Breach. Due to their alien nature, generic text is used to streamline him and other secret pilots for use in-game.\nThe Zoltan are a wise, intelligent species of energy, about to transcend to a higher \"level\" – of consciousness. They favor enlightenment above all else. They are respectful, tactful, and humble… but not pushovers if attacked. Younger members (\"children\") in the lore are said to be gaining telepathic powers.\nMafan was on a pilgrimage when the beacon summoned it. It finds the idea of the breaches to be akin to enlightenment along the lines of Groundhog Day although it finds them surprising… it considers the two week \"recycling\" of the self an opportunity to reflect on one's actions forever within an enclosed temporal loop. It considers the Vek to be an obstruction to this enlightenment, but also a necessary part of the phenomenon that keeps sparking the breaches to be made. (More specifics about the tone and intent of each of the lines below can be found in the Writing Style Guide, broken down line by line, if curious – it gives more information on how Mafan and the Zoltan might perceive certain events.)",
+    "Personality": "Mafan speaks only in ellipses and other forms of punctuation.",
+    "Strategy": "  - Mafan's ability including an extra point of reactor power speeds up the early game upgrade order, enough to get certain vital upgrades earlier such asbuildings immune. This makes him a very useful generic starting pilot for most squads and is rarely outclassed.\n  - The Zoltan shield regenerates at the start of every turn, taking one hit of any damage amount per turn (excluding lethal instakill damage). This also lets him freely block spawns without taking any actual damage, provided that he has not been hit beforehand.\n  - Because of the health reduction, setting him on fire after the Zoltan Shield has been downed is a death sentence, and should be avoided at all costs.\n  - Mafan is the best pilot to use for theIce Mech; not only does the shield prevent self-freezing, but also lets the mech gain +1 move from the extra reactor core (the only upgrade available as +2 health cannot be upgraded).",
+    "Trivia": "  - The Zoltan ability closely matches the abilities of the Zoltan in FTL.:The shield is a reference to how Zoltan ships have a bonus shield that absorbs a flat amount of damage before disappearing, although it cannot regenerate unlike in Into the Breach.The extra power core is a reference to how a Zoltan provides one point of power to the system in the room they are in on a ship.The reduction of health is a reference to how Zoltans have the lowest health out of all races in FTL.\n  - The +2 Mech Health, Skilled, Technician and Masochist skills are unobtainable by Mafan.",
+    "See Also": "  - Zoltans, the crew race fromFTL"
+  },
+  "full_text": "Mafan\nSpecial\nZoltan:\t+1 Reactor Core. Reduce Mech HP to 1. Gain Shield every turn.\nMafan\nis a secret\npilot\nin\nInto the Breach\n.\nContents\n1\nLocation\n2\nBackground\n3\nPersonality\n4\nStrategy\n5\nTrivia\n6\nSee Also\nLocation\n[\n]\nMafan\n, along with the other secret pilots\nKazaakpleth\nand\nAriadne\n, is only obtainable in a run through the following process:\nFind a\nmarked mountain or ice tile\n, which can be identified after entering a mission through a small glowing dot and being damaged by 1 point prematurely.\nBreak the tile and collect the beacon by moving onto it with a mech or allied unit.\nAfter ending the turn, a\nStrange Pod\nwill drop. Protecting it rewards one of the secret pilots and a reactor core.\nOnce unlocked, Mafan can be used as a starting pilot without doing the above method again.\nBackground\n[\n]\nThe Zoltan are an alien race from the game\nFTL: Faster than Light\nby Subset Games, the same developers behind\nInto the Breach\n. Due to their alien nature, generic text is used to streamline him and other secret pilots for use in-game.\nThe Zoltan are a wise, intelligent species of energy, about to transcend to a higher \"level\" – of consciousness. They favor enlightenment above all else. They are respectful, tactful, and humble… but not pushovers if attacked. Younger members (\"children\") in the lore are said to be gaining telepathic powers.\nMafan was on a pilgrimage when the beacon summoned it. It finds the idea of the breaches to be akin to enlightenment along the lines of Groundhog Day although it finds them surprising… it considers the two week \"recycling\" of the self an opportunity to reflect on one's actions forever within an enclosed temporal loop. It considers the Vek to be an obstruction to this enlightenment, but also a necessary part of the phenomenon that keeps sparking the breaches to be made. (More specifics about the tone and intent of each of the lines below can be found in the Writing Style Guide, broken down line by line, if curious – it gives more information on how Mafan and the Zoltan might perceive certain events.)\nPersonality\n[\n]\nMafan speaks only in ellipses and other forms of punctuation.\nStrategy\n[\n]\nMafan's ability including an extra point of reactor power speeds up the early game upgrade order, enough to get certain vital upgrades earlier such as\nbuildings immune\n. This makes him a very useful generic starting pilot for most squads and is rarely outclassed.\nThe Zoltan shield regenerates at the start of every turn, taking one hit of any damage amount per turn (excluding lethal instakill damage). This also lets him freely block spawns without taking any actual damage, provided that he has not been hit beforehand.\nBecause of the health reduction, setting him on fire after the Zoltan Shield has been downed is a death sentence, and should be avoided at all costs.\nMafan is the best pilot to use for the\nIce Mech\n; not only does the shield prevent self-freezing, but also lets the mech gain +1 move from the extra reactor core (the only upgrade available as +2 health cannot be upgraded).\nTrivia\n[\n]\nThe Zoltan ability closely matches the abilities of the Zoltan in FTL.:\nThe shield is a reference to how Zoltan ships have a bonus shield that absorbs a flat amount of damage before disappearing, although it cannot regenerate unlike in Into the Breach.\nThe extra power core is a reference to how a Zoltan provides one point of power to the system in the room they are in on a ship.\nThe reduction of health is a reference to how Zoltans have the lowest health out of all races in FTL.\nThe +2 Mech Health, Skilled, Technician and Masochist skills are unobtainable by Mafan.\nSee Also\n[\n]\nZoltans\n, the crew race from\nFTL\nv\n·\nd\n·\ne\nPilots\nBase Game\nRalph Karlsson\n•\nHarold Schmidt\n•\nAbe Isamu\n•\nBethany Jones\n•\nHenry Kwan\n•\nGana\n•\nProspero\n•\nLily Reed\n•\nChen Rong\n•\nCamila Vera\n•\nIsaac Jones\n•\nSilica\n•\nArchimedes\nSecret Pilots\nKazaaakpleth\n•\nAriadne\n•\nMafan\nAdvanced Edition\nKai Miller\n•\nRosie Rivets\n•\nMorgan Lejeune\n•\nAdam\nOther\nArtificial Pilot\n•\nArchive Inc Pilot\n•\nRST Pilot\n•\nPinnacle Pilot\n•\nDetritus Pilot\n•\nCyborg Pilot"
+}

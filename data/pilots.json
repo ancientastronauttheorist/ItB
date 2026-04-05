@@ -7,30 +7,30 @@
       "max_level": 2,
       "notes": "Level 1 at 25 cumulative XP. Level 2 at 75 cumulative XP (50 more after level 1)."
     },
-    "xp_per_kill": "Equal to the killed Vek's max HP (e.g., killing a 3 HP Firefly = 3 XP). Environmental/indirect kills split XP among all pilots. Excess XP after leveling is wasted.",
+    "xp_per_kill": "Equal to the killed Vek's max HP (e.g., killing a 2 HP Hornet = 2 XP). If a Soldier Psion is present, each Vek gains +1 HP and is worth +1 XP accordingly. Indirect/environmental kills (e.g., emerging Vek crushing another, environmental damage) distribute XP among all pilots in the squad; if there isn't enough XP to split evenly, XP is distributed to part of the squad on a rotating basis. Artificial Pilots do not gain XP. Pilots stop earning XP after 75 total XP.",
     "leveling": "At each level, the pilot is offered a choice of 2 random perks from the available pool. The chosen perk is permanent.",
     "time_travel": "One surviving pilot can be sent back in time at the end of a run, retaining their XP and perks for the next run. Failed pilots appear as 0 XP recruits in future runs.",
     "death": "If a pilot's mech is destroyed, the pilot dies permanently (unless the mech is restored by end of battle)."
   },
   "available_perks": [
-    {"name": "+2 Mech HP", "description": "Mech HP increased by 2"},
-    {"name": "+1 Mech Move", "description": "Mech movement increased by 1"},
-    {"name": "+3 Grid DEF", "description": "Grid Defense increased by 3%"},
-    {"name": "+1 Mech Reactor", "description": "Mech reactor cores increased by 1"},
-    {"name": "Opener", "description": "+2 Move and Boosted on first turn of each mission"},
-    {"name": "Finisher", "description": "+2 Move and Boosted on last turn of each mission"},
-    {"name": "Popular Hero", "description": "Pilot sells for 4 extra reputation when dismissed"},
-    {"name": "Thick Skin", "description": "Immune to Fire and A.C.I.D. effects"},
-    {"name": "Skilled", "description": "+1 Move and +2 HP"},
-    {"name": "Invulnerable", "description": "Pilot does not die when mech is destroyed"},
-    {"name": "Adrenaline", "description": "+1 Move per Vek killed in battle (cumulative)"},
-    {"name": "Masochist", "description": "+2 Move when not at full HP"},
-    {"name": "Technician", "description": "Heal 1 HP at start of each round"},
-    {"name": "Conservative", "description": "Limited-use weapons gain +1 charge"}
+    {"name": "+2 Mech HP", "description": "Piloted Mech health is increased by 2"},
+    {"name": "+1 Mech Move", "description": "Piloted Mech movement is increased by 1"},
+    {"name": "+3 Grid DEF", "description": "Grid Defense increased by 3% resist chance"},
+    {"name": "+1 Mech Reactor", "description": "Piloted Mech reactor increased by 1"},
+    {"name": "Opener", "description": "Gain Boost and +2 Move on First Turn"},
+    {"name": "Finisher", "description": "Gain Boost and +2 Move on Last Turn"},
+    {"name": "Popular Hero", "description": "Sells for 4 reputation"},
+    {"name": "Thick Skin", "description": "Immune to A.C.I.D and Fire"},
+    {"name": "Skilled", "description": "+1 Move and +2 Mech HP"},
+    {"name": "Invulnerable", "description": "Does not die when Mech is defeated"},
+    {"name": "Adrenaline", "description": "+1 Move per Vek killed in a battle"},
+    {"name": "Masochist", "description": "+2 Move when not full health"},
+    {"name": "Technician", "description": "Repair 1 HP at the start of every enemy turn"},
+    {"name": "Conservative", "description": "Limited Use weapons are given +1 use"}
   ],
   "perk_restrictions": {
-    "Mafan": "Cannot learn +2 Mech HP, Masochist, or Technician",
-    "Ariadne": "Cannot learn Conservative",
+    "Ariadne": "Cannot learn +2 Mech HP, Skilled, +1 Mech Reactor, or Conservative",
+    "Mafan": "Cannot learn +2 Mech HP, Skilled, Technician, Masochist, +1 Mech Reactor, or Conservative",
     "Cyborg_pilots": "Cannot learn Conservative"
   },
   "pilots": {
@@ -86,11 +86,11 @@
         "name": "Archimedes",
         "id": "pilot_aquatic",
         "ability": "Fire-and-Forget",
-        "ability_description": "Mech can move again after shooting (full movement distance)",
+        "ability_description": "Move again after shooting",
         "power_cost": 1,
         "unlock": "Found in Time Pod or Perfect Island reward",
         "source": "base",
-        "notes": "Shoot then reposition with full movement. Costs 1 reactor power. Great for hit-and-run tactics. A Sentient AI from Pinnacle."
+        "notes": "Shoot then reposition. Costs 1 reactor power. Great for hit-and-run tactics. A Sentient AI from Pinnacle."
       },
       {
         "name": "Harold Schmidt",
@@ -114,7 +114,7 @@
         "name": "Chen Rong",
         "id": "pilot_leader",
         "ability": "Sidestep",
-        "ability_description": "After attacking, gain 1 free tile movement in any direction",
+        "ability_description": "After attacking, gain 1 free tile movement",
         "unlock": "Found in Time Pod or Perfect Island reward",
         "source": "base",
         "notes": "Reposition 1 tile after attacking. Useful for getting out of danger zones."
@@ -132,10 +132,10 @@
         "name": "Abe Isamu",
         "id": "pilot_assassin",
         "ability": "Armored",
-        "ability_description": "Mech gains Armored (reduce all damage by 1, minimum 1)",
+        "ability_description": "Mech gains Armored",
         "unlock": "Found in Time Pod or Perfect Island reward",
         "source": "base",
-        "notes": "Reduces all damage by 1. Essential for 'Unbreakable' achievement. Great on frontline mechs."
+        "notes": "Reduces weapon damage by 1 (minimum 1). Does not prevent push, fire, bump, or spawn-blocking damage. Great on frontline mechs. Essential for 'Unbreakable' achievement."
       },
       {
         "name": "Henry Kwan",
@@ -150,7 +150,7 @@
         "name": "Gana",
         "id": "pilot_warrior",
         "ability": "Preemptive Strike",
-        "ability_description": "Deploy anywhere on the map, damaging adjacent enemies for 1 damage",
+        "ability_description": "Deploy anywhere on the map, damaging adjacent enemies",
         "power_cost": 1,
         "unlock": "Found in Time Pod or Perfect Island reward",
         "source": "base",
@@ -162,7 +162,7 @@
         "name": "Kazaaakpleth",
         "id": "pilot_mantis",
         "ability": "Mantis",
-        "ability_description": "2 damage melee attack replaces Repair ability",
+        "ability_description": "2 damage melee attack replaces Repair",
         "unlock": "Find in a special Time Pod encounter (FTL crossover)",
         "source": "secret_ftl",
         "notes": "FTL Mantis. Cannot repair — instead does 2 melee damage. High risk, high reward."
@@ -191,7 +191,7 @@
         "name": "Kai Miller",
         "id": "pilot_arrogant",
         "ability": "Arrogant Boost",
-        "ability_description": "Mech is Boosted (+1 damage) if at full health, otherwise -1 Move",
+        "ability_description": "Mech is Boosted if full health, otherwise -1 Move",
         "unlock": "Found in Time Pod or Perfect Island reward",
         "source": "advanced_edition",
         "notes": "High risk/reward. +1 damage while undamaged, -1 move when hurt."
@@ -200,7 +200,7 @@
         "name": "Rosie Rivets",
         "id": "pilot_caretaker",
         "ability": "Reassuring Hand",
-        "ability_description": "After moving, repair adjacent mechs for 1 HP",
+        "ability_description": "After Move, Repair adjacent Mechs",
         "unlock": "Found in Time Pod or Perfect Island reward",
         "source": "advanced_edition",
         "notes": "Mobile healer. Heals adjacent allies by moving near them."
@@ -223,12 +223,30 @@
         "source": "advanced_edition",
         "notes": "Makes reset turns more powerful with shield + movement."
       }
+    ],
+    "cyborg_pilots": [
+      {
+        "name": "Cyborg Pilot",
+        "id": "pilot_cyborg",
+        "ability": "Vek",
+        "ability_description": "Normal Pilots cannot be equipped. Loses 25 XP when the unit is disabled.",
+        "unlock": "Unlock the Secret Squad by completing all Achievements",
+        "source": "secret_squad",
+        "notes": "Cyborg Pilots have randomly-selected names and a portrait depending on their mech. They are both Pilot and Mech in one."
+      }
     ]
   },
   "ftl_pilot_encounter": {
-    "description": "FTL crossover pilots are found via special encounters during missions.",
-    "trigger": "Look for damaged Mountain or Ice tiles that are faintly glowing at mission start. Destroy the tile to reveal a special Beacon.",
-    "process": "Move a mech onto the Beacon tile to recover a special Time Pod. Protect the pod until end of mission.",
+    "description": "FTL crossover pilots (Kazaaakpleth, Mafan, Ariadne) are found via special encounters during missions.",
+    "trigger": "Look for marked mountain or ice tiles at mission start. These can be identified by a small glowing dot and being damaged by 1 point prematurely.",
+    "process": [
+      "Break the marked mountain or ice tile to reveal a Strange Object beacon.",
+      "Move a mech or allied unit onto the beacon tile to collect it.",
+      "After ending the turn, a Strange Pod will drop from the sky.",
+      "Protect the Strange Pod until the end of the mission."
+    ],
+    "reward": "Recovering the Strange Pod grants one of the secret pilots and a reactor core.",
+    "permanent_unlock": "Once unlocked, secret pilots become permanently available as starting pilots without repeating the encounter.",
     "achievement": "'Distant Friends' achievement."
   }
 }

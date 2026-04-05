@@ -1,0 +1,156 @@
+{
+  "name": "Pilots",
+  "url": "https://intothebreach.fandom.com/wiki/Pilots",
+  "infobox": null,
+  "tables": [
+    {
+      "headers": [
+        "Name",
+        "Corporation",
+        "Special skill",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Ralph Karlsson",
+          "Corporation": "None",
+          "Special skill": "Experienced: Gain +2 bonus XP per kill.",
+          "Debug Name": "Pilot_Original"
+        },
+        {
+          "Name": "Harold Schmidt",
+          "Corporation": "Archive, Inc.",
+          "Special skill": "Frenzied Repair: Push adjacent tiles when repairing.",
+          "Debug Name": "Pilot_Repairman"
+        },
+        {
+          "Name": "Abe Isamu",
+          "Corporation": "R.S.T. Corporation",
+          "Special skill": "Armored: Mech gainsArmored.",
+          "Debug Name": "Pilot_Assassin"
+        },
+        {
+          "Name": "Bethany Jones",
+          "Corporation": "Pinnacle Robotics",
+          "Special skill": "Starting Shield: Mech starts every mission with aShield.",
+          "Debug Name": "Pilot_Genius"
+        },
+        {
+          "Name": "Henry Kwan",
+          "Corporation": "Detritus Disposal",
+          "Special skill": "Maneuverable: Mech can move through enemy units.",
+          "Debug Name": "Pilot_Hotshot"
+        },
+        {
+          "Name": "Gana",
+          "Corporation": "Archive, Inc.",
+          "Special skill": "Preemptive Strike: Deploy anywhere on the map, damaging adjacent enemies. (1 power required)",
+          "Debug Name": "Pilot_Warrior"
+        },
+        {
+          "Name": "Prospero",
+          "Corporation": "Detritus Disposal",
+          "Special skill": "Flying: Mech gainsFlying(1 power required)",
+          "Debug Name": "Pilot_Recycler"
+        },
+        {
+          "Name": "Lily Reed",
+          "Corporation": "Archive, Inc.",
+          "Special skill": "Impulsive: Gain +3 Move on first turn of every mission.",
+          "Debug Name": "Pilot_Youth"
+        },
+        {
+          "Name": "Chen Rong",
+          "Corporation": "Detritus Disposal",
+          "Special skill": "Sidestep: After attacking, gain 1 free tile movement.",
+          "Debug Name": "Pilot_Leader"
+        },
+        {
+          "Name": "Camila Vera",
+          "Corporation": "R.S.T. Corporation",
+          "Special skill": "Evasion: Mech unaffected byWebbing and Smoke.",
+          "Debug Name": "Pilot_Soldier"
+        },
+        {
+          "Name": "Isaac Jones",
+          "Corporation": "Pinnacle Robotics",
+          "Special skill": "Temporal Reset: Gain 1 extra 'Reset Turn' every battle.",
+          "Debug Name": "Pilot_Medic"
+        },
+        {
+          "Name": "Silica",
+          "Corporation": "R.S.T. Corporation",
+          "Special skill": "Double Shot: Mech can act twice if it does not move. (2 power required)",
+          "Debug Name": "Pilot_Miner"
+        },
+        {
+          "Name": "Archimedes",
+          "Corporation": "Pinnacle Robotics",
+          "Special skill": "Fire-and-Forget: Move again after shooting. (1 power required)",
+          "Debug Name": "Pilot_Aquatic"
+        },
+        {
+          "Name": "Kai Miller",
+          "Corporation": "",
+          "Special skill": "Arrogant Boost: Mech isBoostedif full health, otherwise -1 Move.",
+          "Debug Name": "Pilot_Arrogant"
+        },
+        {
+          "Name": "Rosie Rivets",
+          "Corporation": "",
+          "Special skill": "Reassuring Hand: After Move, Repair adjacent Mechs.",
+          "Debug Name": "Pilot_Caretaker"
+        },
+        {
+          "Name": "Morgan Lejeune",
+          "Corporation": "",
+          "Special skill": "Field Research: Mech gainsBoostedon kill.",
+          "Debug Name": "Pilot_Chemical"
+        },
+        {
+          "Name": "Adam",
+          "Corporation": "",
+          "Special skill": "Chosen One: On Reset Turn, gainShieldand +2 Move.",
+          "Debug Name": "Pilot_Delusional"
+        }
+      ]
+    },
+    {
+      "headers": [
+        "Name",
+        "Special skill",
+        "Debug Name"
+      ],
+      "rows": [
+        {
+          "Name": "Kazaaakpleth",
+          "Special skill": "Mantis: 2 damage melee attack replaces Repair.",
+          "Debug Name": "Pilot_Mantis"
+        },
+        {
+          "Name": "Mafan",
+          "Special skill": "Zoltan: +1Reactor Core. Reduce Mech HP to 1. GainShieldevery turn.",
+          "Debug Name": "Pilot_Zoltan"
+        },
+        {
+          "Name": "Ariadne",
+          "Special skill": "Rockman: +3 Health and immune toFire.",
+          "Debug Name": "Pilot_Rock"
+        }
+      ]
+    }
+  ],
+  "sections": {
+    "intro": "Pilotscontrol themechs, gaining experience and valuable skills on the battlefield. Basic AI Pilots are already operating at their peak efficiency and do not gain experience in combat, making it necessary for you to find superior human Pilots, or advanced AI Pilots, to replace the basic AI. Cyborgs are both Pilot and Mech in one.\nUnless otherwise specified, pilots are obtained by completing 100% of all objectives onIslandsor collectingTime Pods.",
+    "Artificial Pilots and CorPilots": "  - The Artificial Pilot is the default mech pilot if the pilot is killed. No skills and always active without a pilot in the mech\n  - CorPilots work for the Corporations in the current timeline, never have any special skills, and the best available pair of them start every new timeline",
+    "Time Travelers": "  - Time Travelers are exceptional pilots, each with a special skill, and have jumped timelines more than once\n  - Ralph Karlsson is the first known Time TravelerKarlsson can be chosen after achieving a 100% success rate on any Island.\n  - All other Time Travelers can be unlocked by:Perfectly completing 100% of all objectives on an island and selecting a Time Traveler over a weapon or bonus grid powerBy recovering aTime Pod",
+    "Secret Pilots": "  - After breaking acertain mountain tile or ice tilea \"Strange Object\" will be found under it. If you take it, a special time pod will fall from the sky. Recover the special time pod or protect it until battle ends to rescue a secret pilot.",
+    "Cyborg Pilots": "  - Cyborg Pilots become available after unlocking theSecret Squadby completing allAchievements.\n  - All Cyborg Pilots have randomly-selected names, a portrait depending on their mech, and the same special skill:Vek : Normal Pilots cannot be equipped. Loses 25 XP when the unit is disabled.",
+    "Experience and Skills": "Pilots gain experience points (XP) when Vek are destroyed while defending a region. One XP is gained for each Vek health point (HP), so a 2 HP Vek is worth 2 XP.\nTheSoldier Psionadds 1 HP to each Vek giving an extra XP. AHornettypically has 2 HP and is worth 2 XP, but with a Soldier Psion present it has 3 HP so the Hornet would be worth 3 XP. When a Soldier Psion is killed, every Vek is reduced by 1 HP. If a Vek that has 1 HP left is destroyed due to the death of a Soldier Psion, then the extra HP is taken away before the Vek dies and no additional XP is gained. If there's a Hornet with 1 HP left and the Soldier Psion is destroyed, the Hornet is reduced from 3 HP to 2 HP, then 1 HP is taken away from the Hornet. The dead Hornet gives 2 XP.\nIf a Vek is not directly killed by a Pilot, such as when a Vek is killed by an emerging Vek or dies from environmental damage, the XP is split among all the Pilots in the squad. If there isn't enough XP to split among all the pilots, XP is distributed to just part of the squad on a rotating basis.\n  - Artificial Pilots do not gain XP.\nA Pilot sent to a new timeline, the Last Traveler, retains their XP and skills from the previous timeline. If an invulnerable pilot's mech is disabled in the final battle they will not be able to teleport away and will die at the end of the mission. Bonus skills gained via level up are completely random, but certain pilots are prevented from learning specific skills.\nNote: prior to patch 1.0.17 there was no blacklist for pilot skills, and could result in Mafan ( max HP = 1 ) having auseless bonus of +2 Mech HP.",
+    "Base Game Pilot Abilities": "Human, Advanced AI, and Cyborg Pilots automatically learn a random abilities after gaining 25 XP and another 50 XP. Pilots stop earning XP after getting a total of 75 XP. They are ordered based on their internal IDs (starting at 0 and ending at 13).\nThere are certain pilots who can not learn specific abilities, and they are noted beside the ability description in the list below.\n  - +2 Mech HP: Piloted Mech health is increased by 2.\n  - +1 Mech Move: Piloted Mech movement is increased by 1.\n  - +3 Grid DEF: Grid Defense increased by 3% resist chance.\n  - +1 Mech Reactor: Piloted Mechreactorincreased by 1.\nUnobtainable withAriadne.Unobtainable withMafan.",
+    "Advanced Edition Pilot Abilities": "These abilities can only be learnt by pilots in the current timeline if theAdvanced Content: Pilot Abilitiessetting was turned on.\nThere are certain pilots who can not learn specific skills, and they are noted beside the skill in the list below.\n  - Opener: GainBoostand +2 Move on First Turn.\n  - Finisher: GainBoostand +2 Move on Last Turn.\n  - Popular Hero: Sells for 4reputation.\n  - Thick Skin: Immune toA.C.I.DandFire.\n  - Skilled: +1 Move and +2 Mech HP.\n  - Invulnerable: Does not die when Mech is defeated.\n  - Adrenaline: +1 Move per Vek killed in a battle.\n  - Masochist: +2 Move when not full health.\n  - Technician: Repair 1HP at the start of every enemy turn.\n  - Conservative: Limited Useweaponsare given +1 use.\nUnobtainable withAriadne.Unobtainable withMafan.Unobtainable withCyborg Pilots.",
+    "Corporate CEOs": "While not Pilots, the Corporate CEOs are heavily involved with guiding theSquadsagainst the Vek.",
+    "Behind the scenes": "Gizmo, Huang, and Kirk were Pilots from pre-release versions of Into the Breach.\nPilots may also be unlocked withcheat codes.\nThere are some special skills that went unused in the game:\n  - Cauterize :Fireheals instead of damaging Mech.\n  - Frozen Stance : Stopping on any liquid tilefreezesit, making it safe to stand on.\n  - Retaliation : Deal 1 damage to adjacent enemies after surviving damage."
+  },
+  "full_text": "Pilots\ncontrol the\nmechs\n, gaining experience and valuable skills on the battlefield. Basic AI Pilots are already operating at their peak efficiency and do not gain experience in combat, making it necessary for you to find superior human Pilots, or advanced AI Pilots, to replace the basic AI. Cyborgs are both Pilot and Mech in one.\nUnless otherwise specified, pilots are obtained by completing 100% of all objectives on\nIslands\nor collecting\nTime Pods\n.\nContents\n1\nArtificial Pilots and CorPilots\n2\nTime Travelers\n3\nSecret Pilots\n4\nCyborg Pilots\n5\nExperience and Skills\n5.1\nBase Game Pilot Abilities\n5.2\nAdvanced Edition Pilot Abilities\n6\nCorporate CEOs\n7\nBehind the scenes\nArtificial Pilots and CorPilots\n[\n]\nThe Artificial Pilot is the default mech pilot if the pilot is killed. No skills and always active without a pilot in the mech\nCorPilots work for the Corporations in the current timeline, never have any special skills, and the best available pair of them start every new timeline\nAI Pilot\nArchive Inc Pilot\nRST Pilot\nPinnacle Pilot\nDetritus Pilot\nTime Travelers\n[\n]\nTime Travelers are exceptional pilots, each with a special skill, and have jumped timelines more than once\nRalph Karlsson is the first known Time Traveler\nKarlsson can be chosen after achieving a 100% success rate on any Island.\nAll other Time Travelers can be unlocked by:\nPerfectly completing 100% of all objectives on an island and selecting a Time Traveler over a weapon or bonus grid power\nBy recovering a\nTime Pod\nName\nCorporation\nSpecial skill\nDebug Name\nRalph Karlsson\nNone\nExperienced: Gain +2 bonus XP per kill.\nPilot_Original\nHarold Schmidt\nArchive, Inc.\nFrenzied Repair: Push adjacent tiles when repairing.\nPilot_Repairman\nAbe Isamu\nR.S.T. Corporation\nArmored: Mech gains\nArmored\n.\nPilot_Assassin\nBethany Jones\nPinnacle Robotics\nStarting Shield: Mech starts every mission with a\nShield\n.\nPilot_Genius\nHenry Kwan\nDetritus Disposal\nManeuverable: Mech can move through enemy units.\nPilot_Hotshot\nGana\nArchive, Inc.\nPreemptive Strike: Deploy anywhere on the map, damaging adjacent enemies. (1 power required)\nPilot_Warrior\nProspero\nDetritus Disposal\nFlying: Mech gains\nFlying\n(1 power required)\nPilot_Recycler\nLily Reed\nArchive, Inc.\nImpulsive: Gain +3 Move on first turn of every mission.\nPilot_Youth\nChen Rong\nDetritus Disposal\nSidestep: After attacking, gain 1 free tile movement.\nPilot_Leader\nCamila Vera\nR.S.T. Corporation\nEvasion: Mech unaffected by\nWebbing and Smoke\n.\nPilot_Soldier\nIsaac Jones\nPinnacle Robotics\nTemporal Reset: Gain 1 extra 'Reset Turn' every battle.\nPilot_Medic\nSilica\nR.S.T. Corporation\nDouble Shot: Mech can act twice if it does not move. (2 power required)\nPilot_Miner\nArchimedes\nPinnacle Robotics\nFire-and-Forget: Move again after shooting. (1 power required)\nPilot_Aquatic\nAdvanced Edition\nKai Miller\nArrogant Boost: Mech is\nBoosted\nif full health, otherwise -1 Move.\nPilot_Arrogant\nRosie Rivets\nReassuring Hand: After Move, Repair adjacent Mechs.\nPilot_Caretaker\nMorgan Lejeune\nField Research: Mech gains\nBoosted\non kill.\nPilot_Chemical\nAdam\nChosen One: On Reset Turn, gain\nShield\nand +2 Move.\nPilot_Delusional\nSecret Pilots\n[\n]\nAfter breaking a\ncertain mountain tile or ice tile\na \"Strange Object\" will be found under it. If you take it, a special time pod will fall from the sky. Recover the special time pod or protect it until battle ends to rescue a secret pilot.\nName\nSpecial skill\nDebug Name\nKazaaakpleth\nMantis: 2 damage melee attack replaces Repair.\nPilot_Mantis\nMafan\nZoltan: +1\nReactor Core\n. Reduce Mech HP to 1. Gain\nShield\nevery turn.\nPilot_Zoltan\nAriadne\nRockman: +3 Health and immune to\nFire\n.\nPilot_Rock\nCyborg Pilots\n[\n]\nCyborg Pilots become available after unlocking the\nSecret Squad\nby completing all\nAchievements\n.\nAll Cyborg Pilots have randomly-selected names, a portrait depending on their mech, and the same special skill:\nVek : Normal Pilots cannot be equipped. Loses 25 XP when the unit is disabled.\nCyborg Pilot\nCyborg Pilot\nCyborg Pilot\nExperience and Skills\n[\n]\nPilots gain experience points (XP) when Vek are destroyed while defending a region. One XP is gained for each Vek health point (HP), so a 2 HP Vek is worth 2 XP.\nThe\nSoldier Psion\nadds 1 HP to each Vek giving an extra XP. A\nHornet\ntypically has 2 HP and is worth 2 XP, but with a Soldier Psion present it has 3 HP so the Hornet would be worth 3 XP. When a Soldier Psion is killed, every Vek is reduced by 1 HP. If a Vek that has 1 HP left is destroyed due to the death of a Soldier Psion, then the extra HP is taken away before the Vek dies and no additional XP is gained. If there's a Hornet with 1 HP left and the Soldier Psion is destroyed, the Hornet is reduced from 3 HP to 2 HP, then 1 HP is taken away from the Hornet. The dead Hornet gives 2 XP.\nIf a Vek is not directly killed by a Pilot, such as when a Vek is killed by an emerging Vek or dies from environmental damage, the XP is split among all the Pilots in the squad. If there isn't enough XP to split among all the pilots, XP"
+}
