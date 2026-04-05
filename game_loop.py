@@ -44,6 +44,7 @@ from src.loop.commands import (
     cmd_snapshot,
     cmd_log,
     cmd_calibrate,
+    cmd_achievements,
 )
 
 
@@ -101,6 +102,9 @@ def main():
     # calibrate
     sub.add_parser("calibrate", help="Show detected window position and grid coordinates")
 
+    # achievements
+    sub.add_parser("achievements", help="Query Steam for achievement progress")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -127,6 +131,8 @@ def main():
         cmd_log(" ".join(args.message))
     elif args.command == "calibrate":
         cmd_calibrate()
+    elif args.command == "achievements":
+        cmd_achievements()
 
 
 if __name__ == "__main__":

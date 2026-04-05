@@ -641,6 +641,60 @@ def cmd_log(message: str) -> dict:
 # --- Helpers ---
 
 
+def cmd_achievements() -> dict:
+    """Query Steam for current Into the Breach achievement status."""
+    import urllib.request
+    from pathlib import Path
+
+    # Load API key and Steam ID from .env
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    env_vars = {}
+    if env_path.exists():
+        for line in env_path.read_text().splitlines():
+            if "=" in line and not line.startswith("#"):
+                k, v = line.split("=", 1)
+                env_vars[k.strip()] = v.strip()
+
+    api_key = env_vars.get("STEAM_API_KEY")
+    steam_id = env_vars.get("STEAM_ID")
+
+    if not api_key or not steam_id:
+        result = {"error": "Missing STEAM_API_KEY or STEAM_ID in .env file"}
+        _print_result(result)
+        return result
+
+    app_id = "590380"  # Into the Breach
+    url = (f"https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/"
+           f"?key={api_key}&steamid={steam_id}&appid={app_id}&l=en")
+
+    try:
+        resp = urllib.request.urlopen(url)
+        data = json.loads(resp.read())
+    except Exception as e:
+        result = {"error": f"Steam API request failed: {e}"}
+        _print_result(result)
+        return result
+
+    achievements = data.get("playerstats", {}).get("achievements", [])
+    unlocked = [a for a in achievements if a.get("achieved") == 1]
+    locked = [a for a in achievements if a.get("achieved") == 0]
+
+    result = {
+        "total": len(achievements),
+        "unlocked": len(unlocked),
+        "locked": len(locked),
+        "unlocked_list": [a.get("name", a["apiname"]) for a in unlocked],
+    }
+
+    print(f"\n=== STEAM ACHIEVEMENTS: {len(unlocked)}/{len(achievements)} ===\n")
+    for a in sorted(unlocked, key=lambda x: x.get("unlocktime", 0)):
+        print(f"  ✅ {a.get('name', a['apiname'])}")
+    print(f"\n  ❌ {len(locked)} remaining\n")
+
+    _print_result(result)
+    return result
+
+
 def cmd_calibrate() -> dict:
     """Print detected window position, grid config, and sample tile positions.
 
