@@ -68,7 +68,18 @@ def evaluate(
     w = weights or DEFAULT_WEIGHTS
     score = 0.0
 
-    # --- BUILDINGS (highest priority) ---
+    # --- GRID POWER URGENCY ---
+    # When grid power is critically low, building protection becomes
+    # exponentially more important. Every building hit could end the run.
+    grid_multiplier = 1.0
+    if board.grid_power <= 1:
+        grid_multiplier = 5.0   # one hit from game over
+    elif board.grid_power <= 2:
+        grid_multiplier = 3.0   # very critical
+    elif board.grid_power <= 3:
+        grid_multiplier = 2.0   # elevated danger
+
+    # --- BUILDINGS (highest priority, scaled by urgency) ---
     buildings_alive = 0
     total_building_hp = 0
     for x in range(8):
@@ -78,8 +89,8 @@ def evaluate(
                 buildings_alive += 1
                 total_building_hp += t.building_hp
 
-    score += buildings_alive * w.building_alive
-    score += total_building_hp * w.building_hp
+    score += buildings_alive * w.building_alive * grid_multiplier
+    score += total_building_hp * w.building_hp * grid_multiplier
 
     # --- GRID POWER ---
     score += board.grid_power * w.grid_power

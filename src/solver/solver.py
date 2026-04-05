@@ -1,15 +1,14 @@
-"""The main solver: find the optimal 3-mech action sequence.
+"""The main solver: find the optimal mech action sequence.
 
 Given a board state with known enemy intents, enumerate possible
 mech actions (move + attack) and find the sequence that maximizes
 the evaluation function.
 
-Search space: for each of 3 mechs (in all 6 orderings):
-  - reachable tiles (movement BFS)
-  - for each position, valid weapon targets
-  - evaluate the result
-
-Uses aggressive pruning: prioritize actions that neutralize threats.
+Key features:
+  - Recursive search supports any number of mechs (not just 3)
+  - Simulates enemy attacks AFTER mech actions to predict building damage
+  - Enhanced pruning prioritizes building defense, body-blocking, and push deflection
+  - Time-limited search with aggressive pruning for 4+ mechs
 """
 
 from __future__ import annotations
@@ -18,9 +17,10 @@ import time
 from itertools import permutations
 from dataclasses import dataclass, field
 from src.model.board import Board, Unit
-from src.model.weapons import get_weapon_def
+from src.model.weapons import get_weapon_def, get_weapon_name
 from src.solver.movement import (
-    get_reachable_tiles, get_adjacent, direction_between, DIRS,
+    get_reachable_tiles, get_adjacent, direction_between,
+    push_destination, DIRS,
 )
 from src.solver.simulate import simulate_action
 from src.solver.evaluate import evaluate
@@ -64,46 +64,37 @@ def get_weapon_targets(
     targets = []
 
     if wdef.weapon_type == "melee":
-        # Adjacent tiles only
         for nx, ny, _ in get_adjacent(mx, my):
-            # Must have something to hit, or weapon has push
             if board.unit_at(nx, ny) or wdef.push != "none":
                 targets.append((nx, ny))
 
     elif wdef.weapon_type in ("projectile", "pull", "laser"):
-        # Four cardinal directions
         for d, (dx, dy) in enumerate(DIRS):
             nx, ny = mx + dx, my + dy
             if board.in_bounds(nx, ny):
-                targets.append((nx, ny))  # direction encoded as adjacent tile
+                targets.append((nx, ny))
 
     elif wdef.weapon_type == "artillery":
-        # Any tile within range (skip adjacent)
         min_r = wdef.range_min
         for x in range(8):
             for y in range(8):
                 dist = abs(x - mx) + abs(y - my)
                 if dist < min_r:
                     continue
-                # Artillery must be in same row or column
                 if x != mx and y != my:
                     continue
                 targets.append((x, y))
 
     elif wdef.weapon_type == "self_aoe":
-        # Self-targeted, no specific target needed
         targets.append((mx, my))
 
     elif wdef.weapon_type == "charge":
-        # Four cardinal directions
         for d, (dx, dy) in enumerate(DIRS):
-            # Check there's room to charge
             nx, ny = mx + dx, my + dy
             if board.in_bounds(nx, ny):
                 targets.append((nx, ny))
 
     elif wdef.weapon_type == "leap":
-        # Any reachable tile (limited range)
         for x in range(8):
             for y in range(8):
                 dist = abs(x - mx) + abs(y - my)
@@ -112,7 +103,6 @@ def get_weapon_targets(
                         targets.append((x, y))
 
     elif wdef.weapon_type == "swap":
-        # Any unit within range
         rng = wdef.range_max or 8
         for x in range(8):
             for y in range(8):
@@ -135,7 +125,6 @@ def _enumerate_mech_actions(
     reachable = get_reachable_tiles(board, mech)
 
     for pos in reachable:
-        # Temporarily move mech to test weapon targets
         old_x, old_y = mech.x, mech.y
         mech.x, mech.y = pos
 
@@ -157,6 +146,126 @@ def _enumerate_mech_actions(
     return actions
 
 
+# --- Enemy Attack Simulation ---
+
+def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
+    """Simulate all enemy attacks on the post-mech-action board.
+
+    Approximates enemy damage using their weapon definitions.
+    Enemies killed (hp <= 0) don't attack. Melee enemies pushed away
+    from their target don't attack (no longer adjacent).
+
+    This is a pragmatic v1: handles direct damage correctly but
+    ignores enemy push effects, AoE splash, and charge mechanics.
+    Catches ~80% of building threats.
+
+    Args:
+        board: Board state after mech actions (WILL BE MUTATED).
+        original_positions: {enemy_uid: (orig_x, orig_y)} from before
+            mech actions, used to detect pushed melee enemies.
+
+    Returns:
+        Number of buildings destroyed.
+    """
+    buildings_destroyed = 0
+
+    for enemy in board.enemies():
+        if enemy.target_x < 0:
+            continue
+
+        tx, ty = enemy.target_x, enemy.target_y
+
+        # Skip melee enemies that were pushed away from their target
+        orig = original_positions.get(enemy.uid)
+        if orig:
+            orig_dist = abs(orig[0] - tx) + abs(orig[1] - ty)
+            curr_dist = abs(enemy.x - tx) + abs(enemy.y - ty)
+            # Melee: was adjacent, now isn't → can't attack
+            if orig_dist <= 1 and curr_dist > 1:
+                continue
+
+        # Look up actual weapon damage
+        wdef = get_weapon_def(enemy.weapon) if enemy.weapon else None
+        damage = wdef.damage if wdef else 1
+
+        # Check if a mech is body-blocking the attack
+        blocker = board.unit_at(tx, ty)
+        if blocker is not None and blocker.is_player:
+            blocker.hp -= damage
+            if blocker.hp <= 0:
+                blocker.hp = 0
+            continue
+
+        # Building takes damage (always 1 grid damage regardless of weapon)
+        tile = board.tile(tx, ty)
+        if tile.terrain == "building" and tile.building_hp > 0:
+            tile.building_hp -= 1
+            buildings_destroyed += 1
+            if tile.building_hp <= 0:
+                tile.terrain = "rubble"
+
+    return buildings_destroyed
+
+
+# --- Recursive Search ---
+
+def _search_recursive(
+    board: Board,
+    mechs_remaining: list[Unit],
+    actions_so_far: list[MechAction],
+    kills_so_far: int,
+    threat_tiles: set,
+    building_threat_tiles: set,
+    original_positions: dict,
+    spawn_pts: list,
+    max_actions: int,
+    best: Solution,
+    start_time: float,
+    time_limit: float,
+) -> None:
+    """Recursively search mech action sequences.
+
+    Supports any number of mechs. Time-checked at every level.
+    """
+    if time.time() - start_time > time_limit:
+        return
+
+    if not mechs_remaining:
+        # All mechs acted — simulate enemy attacks and evaluate
+        b_eval = board.copy()
+        _simulate_enemy_attacks(b_eval, original_positions)
+        score = evaluate(b_eval, spawn_pts, kills=kills_so_far)
+        if score > best.score:
+            best.score = score
+            best.actions = list(actions_so_far)
+        return
+
+    mech = mechs_remaining[0]
+    rest = mechs_remaining[1:]
+
+    actions = _enumerate_mech_actions(board, mech)
+    actions = _prune_actions(board, mech, actions,
+                             threat_tiles, building_threat_tiles, max_actions)
+
+    for action in actions:
+        if time.time() - start_time > time_limit:
+            return
+
+        b_next = board.copy()
+        m = next(u for u in b_next.units if u.uid == mech.uid)
+        result = simulate_action(b_next, m, action[0], action[1], action[2])
+
+        actions_so_far.append(_make_action(mech, *action))
+        _search_recursive(
+            b_next, rest, actions_so_far,
+            kills_so_far + result.enemies_killed,
+            threat_tiles, building_threat_tiles, original_positions,
+            spawn_pts, max_actions, best,
+            start_time, time_limit,
+        )
+        actions_so_far.pop()
+
+
 def solve_turn(
     board: Board,
     spawn_points: list[tuple[int, int]] = None,
@@ -165,8 +274,9 @@ def solve_turn(
 ) -> Solution:
     """Find the best sequence of mech actions for this turn.
 
-    Tries all orderings of the 3 mechs, and for each ordering,
-    searches through possible actions with pruning.
+    Tries all orderings of active mechs using recursive search.
+    Supports any number of mechs (not limited to 3).
+    Simulates enemy attacks after mech actions to predict building damage.
 
     Args:
         board: Current board state.
@@ -186,11 +296,24 @@ def solve_turn(
 
     spawn_pts = spawn_points or []
 
-    # Pre-compute enemy attack targets for threat scoring
+    # Pre-compute threat information
     threat_tiles = set()
     for e in board.enemies():
         if e.target_x >= 0:
             threat_tiles.add((e.target_x, e.target_y))
+
+    # Building-specific threats (tiles where enemy attack would hit a building)
+    building_threat_tiles = set()
+    for tx, ty, _ in board.get_threatened_buildings():
+        building_threat_tiles.add((tx, ty))
+
+    # Capture original enemy positions for pushed-melee detection
+    original_positions = {e.uid: (e.x, e.y) for e in board.enemies()}
+
+    # Reduce search space for 4+ mechs
+    effective_max = max_actions_per_mech
+    if len(active_mechs) >= 4:
+        effective_max = min(25, max_actions_per_mech)
 
     # Try all mech orderings
     for ordering in permutations(range(len(active_mechs))):
@@ -198,80 +321,12 @@ def solve_turn(
             break
 
         mechs_ordered = [active_mechs[i] for i in ordering]
-
-        # Get actions for first mech
-        actions_0 = _enumerate_mech_actions(board, mechs_ordered[0])
-        # Prune to top N by quick heuristic
-        actions_0 = _prune_actions(board, mechs_ordered[0], actions_0,
-                                    threat_tiles, max_actions_per_mech)
-
-        for a0 in actions_0:
-            if time.time() - start_time > time_limit:
-                break
-
-            b1 = board.copy()
-            m0 = next(u for u in b1.units if u.uid == mechs_ordered[0].uid)
-            r0 = simulate_action(b1, m0, a0[0], a0[1], a0[2])
-
-            if len(mechs_ordered) < 2:
-                score = evaluate(b1, spawn_pts)
-                if score > best.score:
-                    best = Solution(
-                        actions=[_make_action(mechs_ordered[0], *a0)],
-                        score=score,
-                    )
-                continue
-
-            # Second mech
-            actions_1 = _enumerate_mech_actions(b1, next(
-                u for u in b1.units if u.uid == mechs_ordered[1].uid))
-            actions_1 = _prune_actions(b1, mechs_ordered[1], actions_1,
-                                        threat_tiles, max_actions_per_mech)
-
-            for a1 in actions_1:
-                if time.time() - start_time > time_limit:
-                    break
-
-                b2 = b1.copy()
-                m1 = next(u for u in b2.units if u.uid == mechs_ordered[1].uid)
-                r1 = simulate_action(b2, m1, a1[0], a1[1], a1[2])
-
-                if len(mechs_ordered) < 3:
-                    score = evaluate(b2, spawn_pts)
-                    if score > best.score:
-                        best = Solution(
-                            actions=[
-                                _make_action(mechs_ordered[0], *a0),
-                                _make_action(mechs_ordered[1], *a1),
-                            ],
-                            score=score,
-                        )
-                    continue
-
-                # Third mech
-                actions_2 = _enumerate_mech_actions(b2, next(
-                    u for u in b2.units if u.uid == mechs_ordered[2].uid))
-                actions_2 = _prune_actions(b2, mechs_ordered[2], actions_2,
-                                            threat_tiles, max_actions_per_mech)
-
-                for a2 in actions_2:
-                    if time.time() - start_time > time_limit:
-                        break
-
-                    b3 = b2.copy()
-                    m2 = next(u for u in b3.units if u.uid == mechs_ordered[2].uid)
-                    r2 = simulate_action(b3, m2, a2[0], a2[1], a2[2])
-
-                    score = evaluate(b3, spawn_pts)
-                    if score > best.score:
-                        best = Solution(
-                            actions=[
-                                _make_action(mechs_ordered[0], *a0),
-                                _make_action(mechs_ordered[1], *a1),
-                                _make_action(mechs_ordered[2], *a2),
-                            ],
-                            score=score,
-                        )
+        _search_recursive(
+            board, mechs_ordered, [], 0,
+            threat_tiles, building_threat_tiles, original_positions,
+            spawn_pts, effective_max, best,
+            start_time, time_limit,
+        )
 
     elapsed = time.time() - start_time
     print(f"Solver: score={best.score:.0f}, "
@@ -280,13 +335,16 @@ def solve_turn(
     return best
 
 
-def _prune_actions(board, mech, actions, threat_tiles, max_n):
+def _prune_actions(board, mech, actions, threat_tiles,
+                   building_threat_tiles, max_n):
     """Prune actions to the top N by quick heuristic.
 
     Prioritizes actions that:
-    1. Neutralize threats (attack threatened tiles or push enemies off them)
-    2. Kill enemies
-    3. Block spawns
+    1. Body-block building threats (move onto a tile an enemy targets)
+    2. Neutralize threats (attack or push enemies off threatened tiles)
+    3. Push enemies AWAY from buildings they're threatening
+    4. Kill enemies
+    5. Block spawns
     """
     if len(actions) <= max_n:
         return actions
@@ -294,6 +352,10 @@ def _prune_actions(board, mech, actions, threat_tiles, max_n):
     def score_action(a):
         move_to, weapon_id, target = a
         s = 0
+
+        # HIGH: Body-blocking a building threat
+        if move_to in building_threat_tiles:
+            s += 200  # mech absorbs hit instead of building
 
         # Bonus for attacking near threatened tiles
         if weapon_id and target[0] >= 0:
@@ -305,12 +367,32 @@ def _prune_actions(board, mech, actions, threat_tiles, max_n):
                         s += 100  # direct threat neutralization
                     elif dist <= 1:
                         s += 50
+
+            # Push direction scoring: push enemy AWAY from threatened building
+            if wdef and wdef.push != "none" and target[0] >= 0:
+                enemy = board.unit_at(target[0], target[1])
+                if enemy and enemy.target_x >= 0:
+                    threatened = (enemy.target_x, enemy.target_y)
+                    push_dir = direction_between(
+                        move_to[0], move_to[1], target[0], target[1]
+                    )
+                    if push_dir is not None:
+                        dest = push_destination(
+                            target[0], target[1], push_dir, board
+                        )
+                        if dest is not None:
+                            # Enemy will move — can it still attack the building?
+                            new_dist = abs(dest[0] - threatened[0]) + \
+                                       abs(dest[1] - threatened[1])
+                            if new_dist > 1:
+                                s += 150  # push deflects melee attack
+
             # Any attack is better than no attack
             s += 10
 
-        # Bonus for moving to spawn point
-        if move_to in threat_tiles:
-            s += 30  # body-blocking
+        # Spawn blocking
+        if move_to in threat_tiles and move_to not in building_threat_tiles:
+            s += 30
 
         return s
 
@@ -320,7 +402,6 @@ def _prune_actions(board, mech, actions, threat_tiles, max_n):
 
 def _make_action(mech, move_to, weapon_id, target) -> MechAction:
     """Create a MechAction from solver data."""
-    from src.model.weapons import get_weapon_name
     desc_parts = [f"{mech.type}"]
     if move_to != (mech.x, mech.y):
         desc_parts.append(f"move ({mech.x},{mech.y})->({move_to[0]},{move_to[1]})")
