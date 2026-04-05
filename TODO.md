@@ -110,6 +110,7 @@
 - [x] Tab-based mech selection, attack-before-move sequence
 - [x] Grid-to-MCP coordinate mapping (`grid_to_mcp()`)
 - [x] Game loop with session management (`src/loop/session.py`, `src/loop/commands.py`)
+- First live turn successfully executed 2026-04-05. Coordinate calibration resolved.
 
 ### Phase 5: Full Run Automation -- NOT STARTED
 - [ ] Main menu navigation (New Game, Continue, squad select)
@@ -161,6 +162,24 @@
 - [ ] **Advanced Edition squads**: 7 AE squads only partially covered in `data/squads.json`
 
 
+## Lessons from First Live Turn (2026-04-05)
+
+First successful live combat turn executed via the game loop:
+- read → solve → execute 0/1/2 → end_turn → enemy phase → read Turn 2
+
+Key discoveries:
+1. MCP screenshot coordinates = Quartz logical coordinates (scale 1:1)
+2. The isometric formula mcp_x = OX + 42*(sx-sy), mcp_y = OY + 25*(sx+sy) gives
+   exact tile positions (verified against 4 known tiles with zero error)
+3. saveData.lua only saves at turn boundaries — bActive doesn't flip per-mech
+4. Portrait click sequence: click portrait → click board (dismiss popup) → re-click portrait
+5. Must call open_application + wait 2s before clicks to ensure game has focus
+6. Deployment zones are computed by the C++ engine at runtime (not in save/map files
+   for 85% of maps). Only 57/377 maps have explicit deployment zones.
+7. Scorpion sprites overlap adjacent tile centers — clicking tile centers can select
+   wrong unit. Use portrait clicks instead of board clicks for mech selection.
+
+
 ## Known Bugs & Limitations
 
 - [ ] **MECH_PORTRAIT Y-coordinates**: Only verified for Rift Walkers. Other squads have different portrait positions -- needs per-squad testing.
@@ -169,3 +188,7 @@
 - [ ] **Between-mission phase detection**: Reward/map/shop screens not distinguishable from save file alone. Needs screenshot-based detection.
 - [ ] **Save file update timing**: Unknown if saveData.lua updates per-mech-action or per-turn-end. Needs testing.
 - [ ] **Profile name hardcoded**: Set to "Alpha" in save_parser. Correct for this machine but not general.
+- [ ] **Save file only updates at turn boundaries**: saveData.lua does not update per-mech-action — per-mech verification via save file is impossible (must use visual confirmation).
+- [ ] **Deployment zone not in save file**: 85% of maps (320/377) have deployment zones computed by the game engine at runtime — deployment automation requires scanning for yellow arrow indicators.
+- [ ] **detect_grid.py calibration constants wrong**: The _REF_AX etc reference constants produce wrong MCP coordinates — the isometric formula from grid_reference.json (OX + 42*(sx-sy), OY + 25*(sx+sy)) works correctly instead.
+- [ ] **Portrait click coordinates need empirical values**: Portrait clicks need (win.x+65, win.y+Y) not the _UI_PORTRAIT values — discovered empirically during live testing.

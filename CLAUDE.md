@@ -39,6 +39,8 @@ Primary: save file parser (`src/capture/save_parser.py`) reads the game's Lua sa
 
 Claude operates as the outer control loop. Each Python CLI command (`game_loop.py read`, `solve`, `execute`, `verify`) is a stateless tool that reads state, computes, outputs, and exits. Claude calls these tools in sequence, interprets their output, executes mouse/keyboard actions via MCP, and decides what to do next. This inverts the traditional bot architecture: instead of a Python process driving the game, Claude drives the game and uses Python for computation. The session file (`sessions/active_session.json`) persists state between CLI calls.
 
+Grid coordinate mapping uses the game's isometric projection: mcp_x = OX + 42*(save_x - save_y), mcp_y = OY + 25*(save_x + save_y), where OX/OY are derived from the game window position (auto-detected via Quartz CGWindowListCopyWindowInfo). Step sizes scale with window dimensions.
+
 ## Core Game Rules (Solver-Critical)
 
 These rules directly affect solver correctness. Always apply them.
@@ -81,12 +83,15 @@ Extended rules: see `data/ref_game_mechanics.md`.
 7. Save file is the source of truth. Re-parse after every action.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
-10. Always use grid_to_mcp() for coordinates. NEVER use Quartz/detect_grid coords with MCP tools (MCP uses ~1.21x scale factor).
+10. Always use grid_to_mcp() for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets.
 11. Arm weapons via keyboard: '1' for primary, '2' for secondary. Check which weapon the solver chose before pressing.
 12. NEVER press Space (triggers End Turn dialog unexpectedly).
 13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
 14. Solver blind spots (temporary, until implemented): No repair action. No environment hazard awareness (air strikes, tidal waves, lightning). Check for these visually and override solver if needed.
 15. On recovery from crash/timeout, ALWAYS start with cmd_read + cmd_solve. Never resume a previous solution — the board may have changed.
+16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. bActive does NOT change until End Turn is pressed. Per-mech verification cannot use save file parsing — use visual confirmation or wait until after End Turn to verify.
+17. Portrait clicks require clicking the portrait, then clicking the board to dismiss pilot popup, then re-clicking portrait. Use coordinates (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click.
+18. During deployment phase, the save file has iState=4 and no deployment zone data for most maps. Deploy by scanning for yellow arrow indicators on valid tiles. The deployment zone is computed by the game engine at runtime.
 
 ## Phase Protocols
 
@@ -103,6 +108,7 @@ The main loop. Execute every turn in this exact sequence:
    d. `game_loop.py verify` — Confirm mech acted (retries up to 5x at 1.5s intervals).
       - PASS: continue to next mech.
       - FAIL: retry execute once. If still fails, screenshot + diagnose.
+   NOTE: Save file only updates after End Turn. Per-mech verify will always show 'still active'. Trust visual confirmation (dimmed portrait = mech acted) between individual mech actions. Only use save-file verify after end_turn.
 4. `game_loop.py end_turn` — Click End Turn, wait for animations (minimum 6s).
 5. `game_loop.py read` — Check new phase:
    - COMBAT_PLAYER_TURN: next turn, go to step 2.
