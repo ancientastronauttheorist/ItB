@@ -262,6 +262,20 @@ Compiled reference files in `data/` — read the relevant file when you need det
 | `data/ref_game_mechanics.md` | Full terrain/status/damage/push rules, turn structure, grid defense, reputation, islands | Building/debugging solver, verifying rules |
 | `data/ref_achievement_strategies.md` | Per-achievement strategy, bot approach, setup, difficulty rating | Achievement strategist, run configuration |
 
+Curated JSON data in `data/` — structured, verified game data (machine-readable for code):
+
+| File | Contents |
+|------|----------|
+| `data/squads.json` | All squads with mechs, weapons, upgrades, achievements (1092 lines) |
+| `data/vek.json` | All Vek with stats, attacks, alpha variants (630 lines) |
+| `data/pilots.json` | Pilot system, XP, all pilots with abilities (252 lines) |
+| `data/mechanics.json` | Terrain, status effects, damage rules (387 lines) |
+| `data/terrain_status_mechanics.json` | Extended terrain + status interactions (1374 lines) |
+| `data/islands.json` | Island structure, environments, missions (474 lines) |
+| `data/achievements_detailed.json` | All 70 achievements with detailed metadata (751 lines) |
+| `data/grid_reference.json` | Game window/grid pixel coordinates (108 lines) |
+| `data/board_state_test.json` | Test board state for solver development (1031 lines) |
+
 Raw wiki data in `data/wiki_raw/*.json` (135 files) for individual unit deep-dives.
 
 ## File Structure
@@ -281,11 +295,20 @@ itb-bot/
 │   └── screenshots/       # Saved screenshots for testing
 ├── tests/                 # Unit tests for solver, state extraction
 └── data/
-    ├── ref_squads_and_mechs.md      # Compiled squad/mech/weapon reference
-    ├── ref_vek_bestiary.md          # Compiled Vek bestiary
-    ├── ref_pilots.md                # Compiled pilot reference
-    ├── ref_game_mechanics.md        # Compiled game rules reference
-    ├── ref_achievement_strategies.md # Per-achievement bot strategies
+    ├── ref_squads_and_mechs.md      # Compiled squad/mech/weapon reference (human-readable)
+    ├── ref_vek_bestiary.md          # Compiled Vek bestiary (human-readable)
+    ├── ref_pilots.md                # Compiled pilot reference (human-readable)
+    ├── ref_game_mechanics.md        # Compiled game rules reference (human-readable)
+    ├── ref_achievement_strategies.md # Per-achievement bot strategies (human-readable)
+    ├── squads.json                  # Curated squad data (machine-readable)
+    ├── vek.json                     # Curated Vek data (machine-readable)
+    ├── pilots.json                  # Curated pilot data (machine-readable)
+    ├── mechanics.json               # Curated game mechanics (machine-readable)
+    ├── terrain_status_mechanics.json # Extended terrain/status rules (machine-readable)
+    ├── islands.json                 # Island structure/environments (machine-readable)
+    ├── achievements_detailed.json   # All 70 achievements with metadata (machine-readable)
+    ├── grid_reference.json          # Game window/grid pixel coordinates
+    ├── board_state_test.json        # Test board state for solver dev
     └── wiki_raw/                    # 135 raw wiki JSON files
 ```
 
