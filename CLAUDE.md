@@ -221,6 +221,49 @@ score = (
 - **The Reset Turn button:** The game allows undoing your entire turn once. The bot could use this to try multiple approaches per turn, but for simplicity start without it.
 - **Save/Load:** The game auto-saves. If the bot needs to retry a scenario, it can force-quit and reload.
 
+## Core Game Rules (Solver-Critical)
+
+These rules directly affect solver correctness. Always apply them.
+
+**Terrain kills:** Water and Chasm kill non-flying ground units. Lava kills like water but also sets flying units on Fire. Pushing enemies into these is a primary kill method.
+
+**Push mechanics:** Pushing moves a unit 1 tile in a direction. If blocked (by another unit, mountain, or edge), the pushed unit takes 1 bump damage instead of moving. Chain pushing: if A is pushed into B, B does NOT move — A takes bump damage. Push damage is NOT affected by Armor or ACID.
+
+**Damage types:**
+- Weapon damage: reduced by Armor (-1), doubled by ACID
+- Push/bump damage (1): ignores Armor and ACID
+- Fire damage (1/turn): ignores Armor and ACID
+- Blocking damage (1): when a Vek tries to emerge on an occupied tile — ignores Armor and ACID
+
+**Key status effects:**
+- Fire: 1 damage/turn start. Removed by repair, water, or freezing
+- Frozen: invincible + immobilized. Any damage frees the unit (dealing 0 damage)
+- ACID: doubles weapon damage. Persists until unit dies
+- Smoke: prevents attack AND repair. Cancels Vek attacks if on smoke tile at execution
+- Shield: blocks one instance of damage + all negative effects. Removed by direct damage
+- Armor: -1 weapon damage (minimum 0). Does NOT reduce push/fire/blocking damage
+- Webbed: cannot move, CAN still attack. Breaks if pushed away from webber
+
+**Mountains:** 2 HP obstacles. Block movement. Can be damaged/destroyed. Become rubble (ground) when destroyed.
+
+**Buildings:** 1 HP. Damage reduces Grid Power. Grid Defense % gives chance to resist (solver assumes 0%).
+
+**Repair action:** Any mech can repair instead of attacking. Heals 1 HP, removes Fire and ACID. Cannot repair if smoked.
+
+## Knowledge Base
+
+Compiled reference files in `data/` — read the relevant file when you need detailed game data:
+
+| File | Contents | Read when... |
+|------|----------|-------------|
+| `data/ref_squads_and_mechs.md` | All 13 squads, mechs (class/HP/move), weapons (damage/effect/upgrades), squad achievements, strategies | Working on specific squad, achievement planning, weapon logic |
+| `data/ref_vek_bestiary.md` | All Vek (HP/move/attack/damage), alphas, Psions, Leaders, Bosses, Bots | Building solver, vision system, threat analysis |
+| `data/ref_pilots.md` | All pilots, abilities, corporations, power costs | Pilot selection, run planning |
+| `data/ref_game_mechanics.md` | Full terrain/status/damage/push rules, turn structure, grid defense, reputation, islands | Building/debugging solver, verifying rules |
+| `data/ref_achievement_strategies.md` | Per-achievement strategy, bot approach, setup, difficulty rating | Achievement strategist, run configuration |
+
+Raw wiki data in `data/wiki_raw/*.json` (135 files) for individual unit deep-dives.
+
 ## File Structure
 ```
 itb-bot/
@@ -238,8 +281,13 @@ itb-bot/
 │   └── screenshots/       # Saved screenshots for testing
 ├── tests/                 # Unit tests for solver, state extraction
 └── data/
-    └── achievements.json  # Achievement database with completion status
+    ├── ref_squads_and_mechs.md      # Compiled squad/mech/weapon reference
+    ├── ref_vek_bestiary.md          # Compiled Vek bestiary
+    ├── ref_pilots.md                # Compiled pilot reference
+    ├── ref_game_mechanics.md        # Compiled game rules reference
+    ├── ref_achievement_strategies.md # Per-achievement bot strategies
+    └── wiki_raw/                    # 135 raw wiki JSON files
 ```
 
 ## Current Status
-Starting from scratch on macOS. Into the Breach is installed via Steam. Begin with Phase 1.
+Phase 4 proof-of-concept complete (MCP mouse/keyboard control). Into the Breach is installed via Steam. Knowledge base compiled from wiki data.
