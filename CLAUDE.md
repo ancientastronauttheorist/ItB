@@ -2,12 +2,12 @@
 
 ## Project Goal
 
-Build an autonomous bot that earns all 70 achievements in Into the Breach using Claude Code's computer use capability (screenshots + mouse/keyboard control). The game runs natively on macOS. The bot reads the screen to extract game state, reasons about optimal moves, and executes them via mouse clicks.
+Build an autonomous bot that earns all 70 achievements in Into the Breach. The game runs natively on macOS. The bot extracts game state via a Lua bridge (file-based IPC) and executes combat actions through bridge commands. Claude Code's computer use (screenshots + mouse/keyboard) handles UI navigation (menus, shop, deployment, rewards).
 
 ## Important Context
 
 - Into the Breach is a turn-based tactics game on an 8x8 grid. It is fully deterministic with perfect information — every enemy telegraphs their attacks before you move.
-- The ITB-ModLoader (Lua-based) only works on Windows. Since we're on Mac, we use **computer vision** to extract game state from screenshots and **mouse control** to execute moves. This is the correct approach for this platform.
+- The ITB-ModLoader (Lua-based) works on Mac via the game's built-in `modloader.lua`. We use a **Lua bridge** (`src/bridge/`) for direct game state extraction and command execution via file-based IPC through `/tmp/`. Mouse/keyboard control via MCP is used for UI navigation (menus, deployment, shop) that the bridge cannot handle.
 - The game is turn-based with no time pressure (except one specific achievement). The bot can take as long as it needs per turn.
 - Into the Breach is available on Steam. App ID: 590380.
 
@@ -21,11 +21,11 @@ The system has 5 layers:
 
 ### Layer 1: State Extraction
 
-Primary: save file parser (`src/capture/save_parser.py`) reads the game's Lua save files directly. Fallback: CV pipeline (`src/vision/`) for screens the save file cannot distinguish (shop, reward selection, menus).
+Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to get full game state directly from the game's Lua runtime. The game's `modloader.lua` writes JSON state dumps (`/tmp/itb_state.json`) on turn start/action complete; Python reads state and writes commands (`/tmp/itb_cmd.txt`). Provides richer data than save parsing: targeted tiles, spawning tiles, environment dangers, per-unit active status. Fallback: save file parser (`src/capture/save_parser.py`) when bridge is unavailable. CV pipeline (`src/vision/`) for screens neither can handle (shop, reward selection, menus). Architecture details: `docs/lua_bridge_architecture.md`.
 
 ### Layer 2: Game State Model
 
-`src/model/` — Board, Unit, WeaponDef dataclasses. The Board is built from parsed save data and is the single source of truth the solver operates on.
+`src/model/` — Board, Unit, WeaponDef dataclasses. The Board is built from bridge state data (or save data as fallback) and is the single source of truth the solver operates on.
 
 ### Layer 3: Solver
 
@@ -37,9 +37,9 @@ Primary: save file parser (`src/capture/save_parser.py`) reads the game's Lua sa
 
 ### Execution Model: Claude as Controller
 
-Claude operates as the outer control loop. Each Python CLI command (`game_loop.py read`, `solve`, `execute`, `verify`) is a stateless tool that reads state, computes, outputs, and exits. Claude calls these tools in sequence, interprets their output, executes mouse/keyboard actions via MCP, and decides what to do next. This inverts the traditional bot architecture: instead of a Python process driving the game, Claude drives the game and uses Python for computation. The session file (`sessions/active_session.json`) persists state between CLI calls.
+Claude operates as the outer control loop. Each Python CLI command (`game_loop.py read`, `solve`, `execute`, `verify`) is a stateless tool that reads state, computes, outputs, and exits. Claude calls these tools in sequence, interprets their output, and decides what to do next. In combat, mech actions are executed via the Lua bridge (command files). MCP mouse/keyboard is used for UI navigation (menus, deployment, shop, rewards). The session file (`sessions/active_session.json`) persists state between CLI calls.
 
-Grid coordinate mapping uses the game's isometric projection: mcp_x = OX + 42*(save_x - save_y), mcp_y = OY + 25*(save_x + save_y), where OX/OY are derived from the game window position (auto-detected via Quartz CGWindowListCopyWindowInfo). Step sizes scale with window dimensions.
+Grid coordinate mapping (used for MCP clicks during UI navigation and as bridge fallback): mcp_x = OX + 42*(save_x - save_y), mcp_y = OY + 25*(save_x + save_y), where OX/OY are derived from the game window position (auto-detected via Quartz CGWindowListCopyWindowInfo). Step sizes scale with window dimensions. Bridge commands use grid coordinates directly.
 
 ## Core Game Rules (Solver-Critical)
 
@@ -74,24 +74,24 @@ Extended rules: see `data/ref_game_mechanics.md`.
 
 ## Operational Rules
 
-1. Always verify save file state after each mech execution.
+1. Always verify state after each mech execution. Bridge provides per-action updates; save file only updates at turn boundaries.
 2. Never execute mech N+1 before verifying mech N succeeded.
-3. Click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
+3. When using MCP clicks (UI navigation, bridge fallback): click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
 4. After every failed run, analyze the critical turn. Save snapshot first.
-5. Select mechs by clicking their PORTRAIT, then clicking board to dismiss popup, then re-clicking portrait. Do NOT rely on Tab for non-consecutive execution.
+5. When using MCP (fallback): select mechs by clicking their PORTRAIT, then clicking board to dismiss popup, then re-clicking portrait. Do NOT rely on Tab for non-consecutive execution. Bridge commands target mechs by UID — no portrait clicks needed.
 6. Priority order — buildings > threats > kills > spawns.
-7. Save file is the source of truth. Re-parse after every action.
+7. Bridge state is the source of truth during combat. Re-read after every action. Fall back to save file if bridge is unavailable.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
-10. Always use grid_to_mcp() for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets.
-11. Arm weapons via keyboard: '1' for primary, '2' for secondary. Check which weapon the solver chose before pressing.
+10. For MCP clicks (UI navigation, bridge fallback): always use grid_to_mcp() for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets. Bridge commands use grid coordinates directly.
+11. When using MCP (fallback): arm weapons via keyboard: '1' for primary, '2' for secondary. Bridge commands specify the weapon directly.
 12. NEVER press Space (triggers End Turn dialog unexpectedly).
 13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
-14. Solver blind spots (temporary, until implemented): No repair action. No environment hazard awareness (air strikes, tidal waves, lightning). Check for these visually and override solver if needed.
+14. Solver blind spots (temporary, until implemented): No repair action. No environment hazard awareness (air strikes, tidal waves, lightning). The bridge provides environment_danger tiles — use these to inform manual overrides until solver integration is complete.
 15. On recovery from crash/timeout, ALWAYS start with cmd_read + cmd_solve. Never resume a previous solution — the board may have changed.
-16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. bActive does NOT change until End Turn is pressed. Per-mech verification cannot use save file parsing — use visual confirmation or wait until after End Turn to verify.
-17. Portrait clicks require clicking the portrait, then clicking the board to dismiss pilot popup, then re-clicking portrait. Use coordinates (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click.
-18. During deployment phase, the save file has iState=4 and no deployment zone data for most maps. Deploy by scanning for yellow arrow indicators on valid tiles. The deployment zone is computed by the game engine at runtime.
+16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. The Lua bridge does NOT have this limitation — it provides fresh state after each action. When bridge is active, use bridge state for per-mech verification. When using save file fallback, use visual confirmation or wait until after End Turn to verify.
+17. When using MCP (fallback): portrait clicks require clicking the portrait, then clicking the board to dismiss pilot popup, then re-clicking portrait. Use coordinates (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click. Bridge commands address mechs by UID.
+18. During deployment phase, the bridge may provide deployment zone data. If unavailable, deploy by scanning for yellow arrow indicators on valid tiles via MCP screenshots. The deployment zone is computed by the game engine at runtime.
 
 ## Phase Protocols
 
@@ -102,14 +102,13 @@ The main loop. Execute every turn in this exact sequence:
 1. `game_loop.py read` — Confirm phase is COMBAT_PLAYER_TURN. Review board state, threats, active mechs.
 2. `game_loop.py solve` — Get solution (N actions for N active mechs). If empty solution (timeout): take screenshot, play manually.
 3. For each action i in 0..N-1:
-   a. `game_loop.py execute i` — Get click plan for this mech.
-   b. Execute clicks via computer-use MCP.
-   c. Wait 2-3 seconds for animation.
-   d. `game_loop.py verify` — Confirm mech acted (retries up to 5x at 1.5s intervals).
+   a. `game_loop.py execute i` — Execute action via bridge (returns ACK). If bridge unavailable, outputs click plan for MCP.
+   b. Bridge: action already executed, wait for animation. MCP fallback: execute clicks via computer-use MCP, wait 2-3 seconds.
+   c. `game_loop.py verify` — Confirm mech acted (retries up to 5x at 1.5s intervals).
       - PASS: continue to next mech.
       - FAIL: retry execute once. If still fails, screenshot + diagnose.
-   NOTE: Save file only updates after End Turn. Per-mech verify will always show 'still active'. Trust visual confirmation (dimmed portrait = mech acted) between individual mech actions. Only use save-file verify after end_turn.
-4. `game_loop.py end_turn` — Click End Turn, wait for animations (minimum 6s).
+   NOTE: Bridge provides per-action state updates — verify via bridge after each mech. Save file fallback only updates after End Turn; in that case trust visual confirmation (dimmed portrait = mech acted) between individual mech actions.
+4. `game_loop.py end_turn` — End turn via bridge command (or click End Turn button if bridge unavailable). Wait for animations (minimum 6s).
 5. `game_loop.py read` — Check new phase:
    - COMBAT_PLAYER_TURN: next turn, go to step 2.
    - MISSION_ENDING / BETWEEN_MISSIONS: mission over, go to MISSION_END.
@@ -131,7 +130,7 @@ The main loop. Execute every turn in this exact sequence:
 
 ### SHOP
 
-1. Take screenshot — save file does not distinguish shop from map.
+1. Take screenshot — neither save file nor bridge distinguishes shop from map. Use MCP screenshots for shop navigation.
 2. Buy grid power repairs first, then weapons/cores per strategy.
 3. Navigate via clicks.
 4. Transition to ISLAND_MAP for next island.
@@ -146,7 +145,7 @@ The main loop. Execute every turn in this exact sequence:
 ### ERROR_RECOVERY
 
 - **Unexpected screen:** Take screenshot, log to decision log, diagnose visually.
-- **Save file not updating:** Retry verify up to 5x with 1.5s delay (7.5s max).
+- **State not updating:** Check bridge first (refresh_bridge_state). If bridge unavailable, retry save file verify up to 5x with 1.5s delay (7.5s max).
 - **Grid power = 0:** Log game over, snapshot, analyze.
 - **Crash/timeout:** Start fresh with `cmd_read` + `cmd_solve` (Rule 15). Never resume old solution.
 
@@ -155,14 +154,14 @@ The main loop. Execute every turn in this exact sequence:
 All commands are subcommands of `game_loop.py`. Each is stateless: read state, compute, output, exit.
 
 **State Reading:**
-- `read` — Parse save file, detect phase, dump board state + threats + active mechs.
-- `verify [index]` — Re-parse save, confirm mech acted. Retries up to 5x at 1.5s.
+- `read` — Read game state via bridge (primary) or save file (fallback). Detect phase, dump board state + threats + active mechs.
+- `verify [index]` — Re-parse save file, confirm mech acted. Retries up to 5x at 1.5s. (Note: currently save-parser-only; bridge verify not yet implemented.)
 - `status` — Quick summary: turn, grid power, mech HP, threats, objectives.
 
 **Combat:**
 - `solve` — Run solver, store solution in session, output action sequence.
-- `execute <index>` — Output click plan for action N from the active solution. Does NOT click.
-- `end_turn` — Output click plan for End Turn button.
+- `execute <index>` — Execute action N via bridge command (returns ACK). Falls back to outputting a click plan for MCP execution if bridge unavailable.
+- `end_turn` — Send END_TURN via bridge (or output click plan for End Turn button if bridge unavailable).
 
 **Run Management:**
 - `new_run <squad> [--achieve X Y]` — Initialize new session with squad and achievement targets.
@@ -219,8 +218,12 @@ itb-bot/
 │   │   ├── session.py     # RunSession state, file-locked persistence
 │   │   ├── logger.py      # Append-only markdown decision log
 │   │   └── commands.py    # All CLI subcommand implementations
+│   ├── bridge/            # Lua bridge — primary state extraction + command execution
+│   │   ├── protocol.py    # IPC protocol (read/write /tmp/ files, atomic ops)
+│   │   ├── reader.py      # Read bridge state → Board construction
+│   │   └── writer.py      # Write commands for Lua to execute
 │   ├── capture/           # Screenshot and window detection
-│   │   └── save_parser.py # Lua save file parser + phase detection
+│   │   └── save_parser.py # Lua save file parser (fallback when bridge unavailable)
 │   ├── vision/            # Tile extraction, sprite matching, state parsing
 │   ├── model/             # Game state dataclasses (Board, Unit, WeaponDef)
 │   ├── solver/            # Threat analysis, search, evaluation
@@ -235,6 +238,8 @@ itb-bot/
 ├── assets/
 │   ├── sprites/           # Reference sprite atlas
 │   └── screenshots/       # Saved screenshots for testing
+├── docs/
+│   └── lua_bridge_architecture.md  # Bridge design, protocol, IPC details
 ├── tests/                 # Unit tests for solver, state extraction
 └── data/
     ├── ref_squads_and_mechs.md
@@ -256,4 +261,4 @@ itb-bot/
 
 ## Current Status
 
-Phase 4 complete. Game loop CLI implemented. Claude-as-the-loop architecture operational.
+Phase 4 complete. Game loop CLI implemented. Lua bridge operational (file-based IPC for state extraction + command execution). Claude-as-the-loop architecture operational.
