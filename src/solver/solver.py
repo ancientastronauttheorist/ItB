@@ -141,6 +141,13 @@ def _enumerate_mech_actions(
             for target in get_weapon_targets(board, mech, mech.weapon2):
                 actions.append((pos, mech.weapon2, target))
 
+        # Option 4: repair (heal 1 HP, remove fire/acid)
+        # Only useful if damaged or has removable status; can't repair if smoked
+        tile = board.tile(pos[0], pos[1])
+        if not getattr(tile, 'smoke', False):
+            if mech.hp < mech.max_hp or mech.fire or mech.acid:
+                actions.append((pos, "_REPAIR", (pos[0], pos[1])))
+
         mech.x, mech.y = old_x, old_y
 
     return actions
@@ -482,7 +489,9 @@ def _make_action(mech, move_to, weapon_id, target) -> MechAction:
     desc_parts = [f"{mech.type}"]
     if move_to != (mech.x, mech.y):
         desc_parts.append(f"move ({mech.x},{mech.y})->({move_to[0]},{move_to[1]})")
-    if weapon_id:
+    if weapon_id == "_REPAIR":
+        desc_parts.append("repair")
+    elif weapon_id:
         wname = get_weapon_name(weapon_id)
         desc_parts.append(f"fire {wname} at ({target[0]},{target[1]})")
     return MechAction(

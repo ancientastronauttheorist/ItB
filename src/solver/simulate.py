@@ -494,6 +494,18 @@ def simulate_action(
         result.pods_collected += 1
         result.events.append(f"Collected pod at ({mech.x},{mech.y})")
 
+    # Repair action
+    if weapon_id == "_REPAIR":
+        healed = min(1, mech.max_hp - mech.hp)
+        mech.hp = min(mech.hp + 1, mech.max_hp)
+        mech.fire = False
+        mech.acid = False
+        result.events.append(
+            f"{mech.type} repaired at ({mech.x},{mech.y})"
+            f" (+{healed} HP, cleared fire/acid)")
+        mech.active = False
+        return result
+
     # Attack
     if weapon_id and target[0] >= 0:
         attack_result = simulate_weapon(board, mech, weapon_id, target[0], target[1])
