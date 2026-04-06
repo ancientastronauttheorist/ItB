@@ -75,6 +75,31 @@ local function log_bridge(msg)
 end
 
 --------------------------------------------------------------------
+-- Read piQueuedShot from save file for per-enemy target data
+--------------------------------------------------------------------
+local function _read_queued_shots()
+    local shots = {}
+    local save_path = os.getenv("HOME") ..
+        "/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    local sf = io.open(save_path, "r")
+    if not sf then return shots end
+    local content = sf:read("*a")
+    sf:close()
+
+    for block in content:gmatch('%["pawn%d+"%]%s*=%s*(%b{})') do
+        local pid = block:match('%["id"%]%s*=%s*(%d+)')
+        local qs = block:match('%["piQueuedShot"%]%s*=%s*Point%s*%(([^%)]+)%)')
+        if pid and qs then
+            local qsx, qsy = qs:match('(%-?%d+)%s*,%s*(%-?%d+)')
+            if qsx and qsy then
+                shots[tonumber(pid)] = {x = tonumber(qsx), y = tonumber(qsy)}
+            end
+        end
+    end
+    return shots
+end
+
+--------------------------------------------------------------------
 -- State serializer: Board → JSON
 --------------------------------------------------------------------
 local function dump_state()
@@ -135,6 +160,9 @@ local function dump_state()
         end
     end
 
+    -- Read queued shots from save file (for per-enemy target data)
+    local queued_shots = _read_queued_shots()
+
     -- Units (all teams)
     state.units = {}
     local all_ids = extract_table(Board:GetPawns(TEAM_ANY))
@@ -180,13 +208,28 @@ local function dump_state()
                     end
                 end
 
-                -- Queued target: use Board:IsTargeted to find which tile
-                -- this enemy targets (can't use GetQueuedTarget on Mac)
-                unit.queued_target = nil
+                -- Enemy attack data
                 if p:GetTeam() == TEAM_ENEMY then
                     local ok_sw, sw = pcall(function() return p:GetSelectedWeapon() end)
                     if ok_sw and sw and sw > 0 then
                         unit.has_queued_attack = true
+                    end
+
+                    -- Per-enemy target from save file piQueuedShot
+                    local qs = queued_shots[pid]
+                    if qs and qs.x >= 0 and qs.y >= 0 then
+                        unit.queued_target = {qs.x, qs.y}
+                    end
+
+                    -- Weapon properties from game globals
+                    local weapon_name = unit.weapons[1]
+                    if weapon_name then
+                        local wdef = _G[weapon_name]
+                        if wdef then
+                            unit.weapon_damage = wdef.Damage or 0
+                            unit.weapon_target_behind = wdef.TargetBehind or false
+                            unit.weapon_push = wdef.Push or 0
+                        end
                     end
                 end
 
@@ -194,6 +237,15 @@ local function dump_state()
             end
         end
     end
+
+    -- Attack order: enemies with queued attacks sorted by UID (ascending)
+    state.attack_order = {}
+    for _, u in ipairs(state.units) do
+        if u.team == 6 and u.has_queued_attack then
+            state.attack_order[#state.attack_order + 1] = u.uid
+        end
+    end
+    table.sort(state.attack_order)
 
     -- Targeted tiles (enemy attack indicators)
     state.targeted_tiles = {}

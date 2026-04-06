@@ -47,6 +47,12 @@ class Unit:
     # Enemy intent
     target_x: int = -1
     target_y: int = -1
+    # Enemy attack details (from bridge piQueuedShot + weapon globals)
+    queued_target_x: int = -1  # piQueuedShot direction point
+    queued_target_y: int = -1
+    weapon_damage: int = 0
+    weapon_target_behind: bool = False
+    weapon_push: int = 0
 
     @property
     def is_player(self) -> bool:
@@ -229,10 +235,10 @@ class Board:
             primary = weapons[0] if len(weapons) > 0 else ""
             secondary = weapons[1] if len(weapons) > 1 else ""
 
-            # Queued target
+            # Queued target (piQueuedShot direction point)
             qt = ud.get("queued_target")
-            target_x = qt[0] if qt else -1
-            target_y = qt[1] if qt else -1
+            qt_x = qt[0] if qt else -1
+            qt_y = qt[1] if qt else -1
 
             u = Unit(
                 uid=ud.get("uid", 0),
@@ -255,8 +261,13 @@ class Board:
                 frozen=ud.get("frozen", False),
                 fire=ud.get("fire", False),
                 web=ud.get("web", False),
-                target_x=target_x,
-                target_y=target_y,
+                target_x=qt_x,
+                target_y=qt_y,
+                queued_target_x=qt_x,
+                queued_target_y=qt_y,
+                weapon_damage=ud.get("weapon_damage", 0),
+                weapon_target_behind=ud.get("weapon_target_behind", False),
+                weapon_push=ud.get("weapon_push", 0),
             )
             board.units.append(u)
 

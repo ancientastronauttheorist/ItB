@@ -21,7 +21,7 @@ The system has 5 layers:
 
 ### Layer 1: State Extraction
 
-Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to get full game state directly from the game's Lua runtime. The game's `modloader.lua` writes JSON state dumps (`/tmp/itb_state.json`) on turn start/action complete; Python reads state and writes commands (`/tmp/itb_cmd.txt`). Provides richer data than save parsing: targeted tiles, spawning tiles, environment dangers, per-unit active status. Fallback: save file parser (`src/capture/save_parser.py`) when bridge is unavailable. CV pipeline (`src/vision/`) for screens neither can handle (shop, reward selection, menus). Architecture details: `docs/lua_bridge_architecture.md`.
+Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to get full game state directly from the game's Lua runtime. The game's `modloader.lua` writes JSON state dumps (`/tmp/itb_state.json`) on turn start/action complete; Python reads state and writes commands (`/tmp/itb_cmd.txt`). Provides richer data than save parsing: targeted tiles, spawning tiles, environment dangers, per-unit active status, **per-enemy attack data** (piQueuedShot target direction from save file, weapon damage/push/TargetBehind from game globals, attack order by ascending UID). Fallback: save file parser (`src/capture/save_parser.py`) when bridge is unavailable. CV pipeline (`src/vision/`) for screens neither can handle (shop, reward selection, menus). Architecture details: `docs/lua_bridge_architecture.md`.
 
 ### Layer 2: Game State Model
 
@@ -29,7 +29,7 @@ Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to g
 
 ### Layer 3: Solver
 
-`src/solver/` — Constraint-based threat response followed by bounded search. Given a board with known enemy intents, finds the optimal sequence of mech actions. Evaluation function uses configurable `EvalWeights` so achievement targeting can bias scoring without changing the search logic.
+`src/solver/` — Constraint-based threat response followed by bounded search. Given a board with known enemy intents, finds the optimal sequence of mech actions. Evaluation function uses configurable `EvalWeights` so achievement targeting can bias scoring without changing the search logic. Enemy attack simulation processes enemies in UID order (matching game's attack resolution), re-traces projectile paths after mech moves, handles TargetBehind (Alpha Hornet behind-hit), and applies full weapon damage to buildings.
 
 ### Layer 4: Achievement Strategist
 
@@ -40,6 +40,10 @@ Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to g
 Claude operates as the outer control loop. Each Python CLI command (`game_loop.py read`, `solve`, `execute`, `verify`) is a stateless tool that reads state, computes, outputs, and exits. Claude calls these tools in sequence, interprets their output, and decides what to do next. In combat, mech actions are executed via the Lua bridge (command files). MCP mouse/keyboard is used for UI navigation (menus, deployment, shop, rewards). The session file (`sessions/active_session.json`) persists state between CLI calls.
 
 Grid coordinate mapping (used for MCP clicks during UI navigation and as bridge fallback): mcp_x = OX + 42*(save_x - save_y), mcp_y = OY + 25*(save_x + save_y), where OX/OY are derived from the game window position (auto-detected via Quartz CGWindowListCopyWindowInfo). Step sizes scale with window dimensions. Bridge commands use grid coordinates directly.
+
+**Bridge-to-visual coordinate mapping:** The game displays Row numbers (1-8, left edge) and Column letters (A-H, right edge). Bridge (x,y) maps to visual as: **Row = 8 - x**, **Col = chr(72 - y)** (H for y=0, G for y=1, ..., A for y=7). Example: bridge (3,5) = visual C5 (TankMech). Always use visual A1-H8 notation when communicating tile positions.
+
+**Attack order:** Enemy attacks resolve sequentially in ascending UID order. The bridge provides `attack_order` as a sorted list of enemy UIDs with queued attacks. Earlier attacks mutate the board before later attacks resolve (important for chain effects).
 
 ## Core Game Rules (Solver-Critical)
 
@@ -261,4 +265,4 @@ itb-bot/
 
 ## Current Status
 
-Phase 4 complete. Game loop CLI implemented. Lua bridge operational (file-based IPC for state extraction + command execution). Claude-as-the-loop architecture operational.
+Phase 4 complete. Game loop CLI implemented. Lua bridge operational with per-enemy attack data (piQueuedShot, weapon damage, TargetBehind, attack order). Solver overhauled: proper building damage model, projectile path re-simulation, sequential enemy resolution by UID, melee TargetBehind support, friendly-fire penalties. `cmd_solve()` now uses bridge data instead of save parser. Claude-as-the-loop architecture operational.

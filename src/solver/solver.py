@@ -148,16 +148,68 @@ def _enumerate_mech_actions(
 
 # --- Enemy Attack Simulation ---
 
+def _find_projectile_target(board: Board, enemy: Unit) -> tuple[int, int]:
+    """Trace a projectile from enemy position in queued direction.
+
+    Returns (hit_x, hit_y) of first unit/mountain/building, or (-1, -1).
+    """
+    if enemy.queued_target_x < 0:
+        return -1, -1
+
+    dx = enemy.queued_target_x - enemy.x
+    dy = enemy.queued_target_y - enemy.y
+    # Normalize to unit direction
+    if dx != 0:
+        dx = 1 if dx > 0 else -1
+    if dy != 0:
+        dy = 1 if dy > 0 else -1
+
+    for i in range(1, 8):
+        nx, ny = enemy.x + dx * i, enemy.y + dy * i
+        if not board.in_bounds(nx, ny):
+            break
+        tile = board.tile(nx, ny)
+        if tile.terrain == "mountain":
+            return nx, ny
+        if tile.terrain == "building" and tile.building_hp > 0:
+            return nx, ny
+        unit = board.unit_at(nx, ny)
+        if unit is not None:
+            return nx, ny
+    return -1, -1
+
+
+def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
+    """Apply one enemy hit to a tile. Returns grid power lost."""
+    if not board.in_bounds(x, y):
+        return 0
+    grid_lost = 0
+
+    unit = board.unit_at(x, y)
+    if unit is not None and unit.is_player:
+        unit.hp -= damage
+        if unit.hp < 0:
+            unit.hp = 0
+        return 0  # mech absorbs hit, no grid damage
+
+    tile = board.tile(x, y)
+    if tile.terrain == "building" and tile.building_hp > 0:
+        actual = min(damage, tile.building_hp)
+        tile.building_hp -= actual
+        grid_lost += actual
+        if tile.building_hp <= 0:
+            tile.terrain = "rubble"
+
+    return grid_lost
+
+
 def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
     """Simulate all enemy attacks on the post-mech-action board.
 
-    Approximates enemy damage using their weapon definitions.
-    Enemies killed (hp <= 0) don't attack. Melee enemies pushed away
-    from their target don't attack (no longer adjacent).
-
-    This is a pragmatic v1: handles direct damage correctly but
-    ignores enemy push effects, AoE splash, and charge mechanics.
-    Catches ~80% of building threats.
+    Processes enemies in UID order (ascending = attack order).
+    Re-computes projectile paths on the post-mech board state.
+    Handles melee TargetBehind (Alpha Hornet behind-tile hit).
+    Skips dead enemies and melee enemies pushed out of range.
 
     Args:
         board: Board state after mech actions (WILL BE MUTATED).
@@ -169,40 +221,58 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
     """
     buildings_destroyed = 0
 
-    for enemy in board.enemies():
-        if enemy.target_x < 0:
+    # Process in UID order (ascending = game's attack order)
+    enemies = sorted(board.enemies(), key=lambda e: e.uid)
+
+    for enemy in enemies:
+        if enemy.hp <= 0:
+            continue
+        if enemy.queued_target_x < 0:
             continue
 
-        tx, ty = enemy.target_x, enemy.target_y
-
-        # Skip melee enemies that were pushed away from their target
-        orig = original_positions.get(enemy.uid)
-        if orig:
-            orig_dist = abs(orig[0] - tx) + abs(orig[1] - ty)
-            curr_dist = abs(enemy.x - tx) + abs(enemy.y - ty)
-            # Melee: was adjacent, now isn't → can't attack
-            if orig_dist <= 1 and curr_dist > 1:
-                continue
-
-        # Look up actual weapon damage
         wdef = get_weapon_def(enemy.weapon) if enemy.weapon else None
-        damage = wdef.damage if wdef else 1
+        damage = enemy.weapon_damage if enemy.weapon_damage > 0 else (
+            wdef.damage if wdef else 1)
+        weapon_type = wdef.weapon_type if wdef else "melee"
 
-        # Check if a mech is body-blocking the attack
-        blocker = board.unit_at(tx, ty)
-        if blocker is not None and blocker.is_player:
-            blocker.hp -= damage
-            if blocker.hp <= 0:
-                blocker.hp = 0
-            continue
+        if weapon_type == "projectile":
+            # Re-trace projectile path on current board state
+            tx, ty = _find_projectile_target(board, enemy)
+            if tx < 0:
+                continue
+            grid_lost = _apply_enemy_hit(board, tx, ty, damage)
+            buildings_destroyed += grid_lost
 
-        # Building takes damage (always 1 grid damage regardless of weapon)
-        tile = board.tile(tx, ty)
-        if tile.terrain == "building" and tile.building_hp > 0:
-            tile.building_hp -= 1
-            buildings_destroyed += 1
-            if tile.building_hp <= 0:
-                tile.terrain = "rubble"
+        elif weapon_type in ("melee", "charge"):
+            tx, ty = enemy.queued_target_x, enemy.queued_target_y
+
+            # Skip if pushed away from target (no longer adjacent)
+            orig = original_positions.get(enemy.uid)
+            if orig:
+                curr_dist = abs(enemy.x - tx) + abs(enemy.y - ty)
+                if curr_dist > 1:
+                    continue
+
+            # Primary hit
+            grid_lost = _apply_enemy_hit(board, tx, ty, damage)
+            buildings_destroyed += grid_lost
+
+            # TargetBehind: hit tile behind target
+            target_behind = enemy.weapon_target_behind or (
+                wdef.aoe_behind if wdef else False)
+            if target_behind:
+                dx = tx - enemy.x
+                dy = ty - enemy.y
+                bx, by = tx + dx, ty + dy
+                if board.in_bounds(bx, by):
+                    grid_lost = _apply_enemy_hit(board, bx, by, damage)
+                    buildings_destroyed += grid_lost
+
+        else:
+            # Fallback for other weapon types: use queued target directly
+            tx, ty = enemy.queued_target_x, enemy.queued_target_y
+            grid_lost = _apply_enemy_hit(board, tx, ty, damage)
+            buildings_destroyed += grid_lost
 
     return buildings_destroyed
 
@@ -290,7 +360,8 @@ def solve_turn(
     start_time = time.time()
     best = Solution()
 
-    active_mechs = [m for m in board.mechs() if m.active and m.hp > 0]
+    active_mechs = [m for m in board.mechs()
+                    if m.active and m.hp > 0 and m.is_mech]
     if not active_mechs:
         return best
 
@@ -386,6 +457,12 @@ def _prune_actions(board, mech, actions, threat_tiles,
                                        abs(dest[1] - threatened[1])
                             if new_dist > 1:
                                 s += 150  # push deflects melee attack
+
+            # PENALTY: Attacking a tile with a friendly mech
+            if target[0] >= 0:
+                friendly = board.unit_at(target[0], target[1])
+                if friendly and friendly.is_player:
+                    s -= 300  # heavy penalty for friendly fire
 
             # Any attack is better than no attack
             s += 10

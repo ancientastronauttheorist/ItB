@@ -67,13 +67,19 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                 result.events.append(f"Mech {unit.type} destroyed at ({x},{y})")
 
     if tile.terrain == "building" and tile.building_hp > 0 and damage > 0:
-        tile.building_hp -= 1
-        result.buildings_damaged += 1
+        # Buildings take full weapon damage (each HP lost = 1 grid power)
+        actual_bldg = damage if source not in ("bump",) else 1
+        old_hp = tile.building_hp
+        tile.building_hp = max(0, tile.building_hp - actual_bldg)
+        hp_lost = old_hp - tile.building_hp
+        result.buildings_damaged += hp_lost
+        result.grid_damage += hp_lost
         if tile.building_hp <= 0:
             tile.terrain = "rubble"
             result.buildings_lost += 1
-            result.grid_damage += 1
-            result.events.append(f"Building destroyed at ({x},{y})")
+            result.events.append(f"Building destroyed at ({x},{y}) ({hp_lost} grid damage)")
+        elif hp_lost > 0:
+            result.events.append(f"Building damaged at ({x},{y}) ({hp_lost} grid damage)")
 
 
 def apply_push(board: Board, x: int, y: int, direction: int,
@@ -231,6 +237,16 @@ def _sim_melee(board, attacker, wdef, tx, ty, attack_dir, result):
 
     if wdef.fire:
         board.tile(tx, ty).on_fire = True
+
+    # TargetBehind: also hit the tile behind the target (Alpha Hornet)
+    if wdef.aoe_behind and attack_dir is not None:
+        dx, dy = DIRS[attack_dir]
+        bx, by = tx + dx, ty + dy
+        if board.in_bounds(bx, by):
+            apply_damage(board, bx, by, wdef.damage, result)
+            result.events.append(
+                f"Behind-hit at ({bx},{by}) for {wdef.damage}"
+            )
 
     # Sword/spear: also hit perpendicular tiles
     if wdef.aoe_perpendicular and attack_dir is not None:

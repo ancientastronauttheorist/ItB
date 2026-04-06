@@ -241,18 +241,33 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     session = _load_session()
     logger = _get_logger(session)
 
-    state = load_game_state(profile)
-    if state is None or state.active_mission is None:
-        result = {"error": "No active mission to solve"}
-        _print_result(result)
-        return result
+    # Try bridge first (richer data: status effects, per-enemy targets)
+    board = None
+    spawns = []
+    bridge_data = None
+    current_turn = 0
+    if is_bridge_active():
+        refresh_bridge_state()
+        board, bridge_data = read_bridge_state()
+        if board is not None and bridge_data is not None:
+            spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
+            current_turn = bridge_data.get("turn", 0)
 
-    m = state.active_mission
-    board = Board.from_mission(m, state.grid_power, state.grid_power_max)
-    spawns = [(p.x, p.y) for p in m.spawn_points]
+    # Fallback to save parser
+    if board is None:
+        state = load_game_state(profile)
+        if state is None or state.active_mission is None:
+            result = {"error": "No active mission to solve"}
+            _print_result(result)
+            return result
+        m = state.active_mission
+        board = Board.from_mission(m, state.grid_power, state.grid_power_max)
+        spawns = [(p.x, p.y) for p in m.spawn_points]
+        current_turn = m.current_turn
 
     # Check for active mechs
-    active_mechs = [mech for mech in board.mechs() if mech.active and mech.hp > 0]
+    active_mechs = [mech for mech in board.mechs()
+                    if mech.active and mech.hp > 0 and mech.is_mech]
     if not active_mechs:
         result = {"error": "No active mechs — all have acted this turn"}
         _print_result(result)
@@ -288,7 +303,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             target=a.target,
             description=a.description,
         ))
-    session.set_solution(solver_actions, solution.score, m.current_turn)
+    session.set_solution(solver_actions, solution.score, current_turn)
 
     # Build result
     result = {
