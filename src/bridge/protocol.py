@@ -65,7 +65,18 @@ def read_state() -> dict | None:
 
 
 def write_command(cmd: str) -> None:
-    """Write a command to the command file (atomic via tmp+rename)."""
+    """Write a command to the command file (atomic via tmp+rename).
+
+    Clears any stale ACK file first to prevent reading the previous
+    command's response as this command's ACK (race condition fix).
+    """
+    # Clear stale ACK to prevent reading previous command's response
+    try:
+        ACK_FILE.unlink(missing_ok=True)
+    except OSError:
+        pass
+    time.sleep(0.05)  # brief settle time
+
     with open(CMD_TMP, "w") as f:
         f.write(cmd)
         f.flush()
