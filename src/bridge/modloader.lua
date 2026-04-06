@@ -226,9 +226,30 @@ local function dump_state()
         end
     end
 
-    -- Deployment zone (captured in BaseDeployment, persists until MissionEnd)
+    -- Deployment zone
     if _ITB_DEPLOY_ZONE and #_ITB_DEPLOY_ZONE > 0 then
+        -- Use captured zone from BaseDeployment (final missions / special maps)
         state.deployment_zone = _ITB_DEPLOY_ZONE
+    elseif state.phase ~= "combat_player" then
+        -- Heuristic fallback: during deployment, scan for open ground tiles
+        -- in the left portion of the board (columns 0-3), which matches the
+        -- standard deployment zone for regular missions.
+        local zone = {}
+        for y = 0, 7 do
+            for x = 0, 3 do
+                local pt = Point(x, y)
+                local terrain = Board:GetTerrain(pt)
+                if terrain == 0 then  -- ground only
+                    local pawn = Board:GetPawn(pt)
+                    if not pawn then
+                        zone[#zone + 1] = {x, y}
+                    end
+                end
+            end
+        end
+        if #zone > 0 then
+            state.deployment_zone = zone
+        end
     end
 
     write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
@@ -483,13 +504,14 @@ end
 -- BaseDeployment: capture deployment zone before engine clears it
 Mission.BaseDeployment = function(self)
     pcall(function()
+        -- Try the named zone first (works for final missions and some special maps)
         local pts = extract_table(Board:GetZone("deployment"))
         _ITB_DEPLOY_ZONE = {}
         for i, p in ipairs(pts) do
             _ITB_DEPLOY_ZONE[#_ITB_DEPLOY_ZONE + 1] = {p.x, p.y}
         end
         if #_ITB_DEPLOY_ZONE > 0 then
-            log_bridge("DEPLOY ZONE captured: " .. #_ITB_DEPLOY_ZONE .. " tiles")
+            log_bridge("DEPLOY ZONE from Board:GetZone: " .. #_ITB_DEPLOY_ZONE .. " tiles")
         end
     end)
     _orig_BaseDeployment(self)
