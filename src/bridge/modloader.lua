@@ -382,7 +382,12 @@ local function execute_command(cmd_str)
                 if m then m:SetActive(false) end
             end
         end)
-        write_ack("OK END_TURN")
+        if ok then
+            write_ack("OK END_TURN")
+        else
+            write_ack("ERROR: END_TURN failed: " .. tostring(err))
+            log_bridge("END_TURN ERROR: " .. tostring(err))
+        end
 
     elseif cmd == "LUA" then
         -- Raw Lua execution (for debugging)
@@ -412,12 +417,25 @@ local function poll_commands()
 end
 
 --------------------------------------------------------------------
--- Game hooks
+-- Game hooks (with re-execution guard)
 --------------------------------------------------------------------
-local _orig_BaseUpdate = Mission.BaseUpdate
-local _orig_NextTurn = Mission.NextTurn
-local _orig_BaseStart = Mission.BaseStart
-local _orig_MissionEnd = Mission.MissionEnd
+-- Guard: store originals in a global so reloads don't compound hooks.
+-- On first load, _ITB_BRIDGE_ORIGINALS is nil so we capture the real
+-- game functions. On subsequent loads we reuse those same originals,
+-- preventing the wrap-on-wrap stack that kills frame rate.
+if not _ITB_BRIDGE_ORIGINALS then
+    _ITB_BRIDGE_ORIGINALS = {
+        BaseUpdate = Mission.BaseUpdate,
+        NextTurn   = Mission.NextTurn,
+        BaseStart  = Mission.BaseStart,
+        MissionEnd = Mission.MissionEnd,
+    }
+end
+
+local _orig_BaseUpdate = _ITB_BRIDGE_ORIGINALS.BaseUpdate
+local _orig_NextTurn   = _ITB_BRIDGE_ORIGINALS.NextTurn
+local _orig_BaseStart  = _ITB_BRIDGE_ORIGINALS.BaseStart
+local _orig_MissionEnd = _ITB_BRIDGE_ORIGINALS.MissionEnd
 
 -- State dump interval (separate from command poll)
 local _state_dump_interval = 5  -- dump state every 5 seconds
@@ -466,7 +484,10 @@ pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
 pcall(function() os.remove(ACK_FILE) end)
 
-log_bridge("=== ITB Bot Bridge started ===")
+local _reload_count = (_ITB_BRIDGE_LOAD_COUNT or 0) + 1
+_ITB_BRIDGE_LOAD_COUNT = _reload_count
+
+log_bridge("=== ITB Bot Bridge started (load #" .. _reload_count .. ") ===")
 if ConsolePrint then
     ConsolePrint("ITB Bot Bridge loaded! IPC via /tmp/itb_*.json")
 end
