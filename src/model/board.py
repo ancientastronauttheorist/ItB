@@ -38,6 +38,12 @@ class Unit:
     weapon: str
     weapon2: str = ""
     active: bool = True  # can still act this turn
+    # Status effects (populated by bridge; inferred by save parser)
+    shield: bool = False
+    acid: bool = False
+    frozen: bool = False
+    fire: bool = False
+    web: bool = False
     # Enemy intent
     target_x: int = -1
     target_y: int = -1
@@ -177,6 +183,80 @@ class Board:
                 active=pawn.active,
                 target_x=pawn.queued_shot.x if pawn.queued_shot else -1,
                 target_y=pawn.queued_shot.y if pawn.queued_shot else -1,
+            )
+            board.units.append(u)
+
+        return board
+
+    @staticmethod
+    def from_bridge_data(data: dict) -> "Board":
+        """Construct Board from Lua bridge JSON data.
+
+        Richer than from_mission(): includes per-pawn status effects
+        (flying, shield, acid, fire, frozen, web) and per-tile status
+        (smoke, acid, frozen, cracked) directly from the game API.
+        """
+        board = Board()
+        board.grid_power = data.get("grid_power", 0)
+        board.grid_power_max = data.get("grid_power_max", 7)
+
+        # Tiles
+        for td in data.get("tiles", []):
+            x, y = td["x"], td["y"]
+            if 0 <= x < 8 and 0 <= y < 8:
+                bt = board.tile(x, y)
+                bt.terrain = td.get("terrain", "ground")
+                bt.on_fire = td.get("fire", False)
+                bt.smoke = td.get("smoke", False)
+                bt.acid = td.get("acid", False)
+                bt.frozen = td.get("frozen", False)
+                bt.has_pod = td.get("pod", False)
+                if bt.terrain == "building":
+                    bt.building_hp = td.get("building_hp", 1)
+                    bt.population = td.get("population", 1)
+
+        # Units
+        for ud in data.get("units", []):
+            x, y = ud.get("x", -1), ud.get("y", -1)
+            if x < 0:
+                continue
+
+            ptype = ud.get("type", "")
+            stats = get_pawn_stats(ptype)
+
+            # Weapons: bridge provides list, we need primary + secondary
+            weapons = ud.get("weapons", [])
+            primary = weapons[0] if len(weapons) > 0 else ""
+            secondary = weapons[1] if len(weapons) > 1 else ""
+
+            # Queued target
+            qt = ud.get("queued_target")
+            target_x = qt[0] if qt else -1
+            target_y = qt[1] if qt else -1
+
+            u = Unit(
+                uid=ud.get("uid", 0),
+                type=ptype,
+                x=x, y=y,
+                hp=ud.get("hp", 1),
+                max_hp=ud.get("max_hp", ud.get("hp", 1)),
+                team=ud.get("team", 6),
+                is_mech=ud.get("mech", False),
+                move_speed=ud.get("move", stats.move_speed),
+                flying=ud.get("flying", stats.flying),
+                massive=stats.massive,
+                armor=stats.armor,
+                pushable=stats.pushable,
+                weapon=primary,
+                weapon2=secondary,
+                active=ud.get("active", True),
+                shield=ud.get("shield", False),
+                acid=ud.get("acid", False),
+                frozen=ud.get("frozen", False),
+                fire=ud.get("fire", False),
+                web=ud.get("web", False),
+                target_x=target_x,
+                target_y=target_y,
             )
             board.units.append(u)
 

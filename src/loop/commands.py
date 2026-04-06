@@ -33,6 +33,9 @@ from src.control.executor import (
     recalibrate,
 )
 from src.capture.detect_grid import find_game_window, grid_from_window
+from src.bridge.protocol import is_bridge_active
+from src.bridge.reader import read_bridge_state
+from src.bridge.writer import execute_bridge_action, execute_bridge_end_turn
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
 
@@ -64,7 +67,72 @@ def cmd_read(profile: str = "Alpha") -> dict:
 
     session = _load_session()
 
-    # Detect phase from saveData.lua ONLY (no undoSave fallback)
+    # Try bridge first (direct Lua API access)
+    if is_bridge_active():
+        board, bridge_data = read_bridge_state()
+        if board is not None and bridge_data is not None:
+            phase = bridge_data.get("phase", "unknown")
+            old_phase = session.phase
+            session.phase = phase
+
+            result = {
+                "phase": phase,
+                "source": "bridge",
+                "turn": bridge_data.get("turn", 0),
+                "grid_power": f"{board.grid_power}/{board.grid_power_max}",
+            }
+
+            session.current_turn = bridge_data.get("turn", 0)
+
+            if phase in ("combat_player", "combat_enemy"):
+                mechs = board.mechs()
+                active_mechs = [m for m in mechs if m.active and m.hp > 0]
+                result["mechs"] = [
+                    {"type": m.type, "pos": f"({m.x},{m.y})",
+                     "hp": f"{m.hp}/{m.max_hp}",
+                     "weapon": get_weapon_name(m.weapon),
+                     "status": "READY" if m.active else "DONE"}
+                    for m in mechs
+                ]
+                result["active_mechs"] = len(active_mechs)
+
+                enemies = board.enemies()
+                result["enemies"] = [
+                    {"type": e.type, "pos": f"({e.x},{e.y})",
+                     "hp": f"{e.hp}/{e.max_hp}",
+                     "target": f" -> ({e.target_x},{e.target_y})" if e.target_x >= 0 else ""}
+                    for e in enemies
+                ]
+
+                threats = board.get_threatened_buildings()
+                result["threatened_buildings"] = len(threats)
+                if threats:
+                    result["threats"] = [
+                        f"Building ({x},{y}) by {u.type} at ({u.x},{u.y})"
+                        for x, y, u in threats
+                    ]
+
+                targeted = bridge_data.get("targeted_tiles", [])
+                result["targeted_tiles"] = len(targeted)
+                spawning = bridge_data.get("spawning_tiles", [])
+                result["spawn_points"] = len(spawning)
+
+                print(f"\n{'='*50}")
+                print(f"BOARD STATE (BRIDGE) — Turn {bridge_data.get('turn', '?')} | "
+                      f"Grid: {board.grid_power}/{board.grid_power_max} | "
+                      f"Phase: {phase}")
+                print(f"{'='*50}")
+                board.print_board()
+
+            if old_phase != phase and old_phase != "unknown":
+                logger = _get_logger(session)
+                logger.log_phase_transition(old_phase, phase)
+
+            session.save()
+            _print_result(result)
+            return result
+
+    # Fallback: detect phase from saveData.lua ONLY (no undoSave fallback)
     phase = detect_game_phase(profile)
 
     old_phase = session.phase
@@ -259,10 +327,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
 
 
 def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
-    """Plan clicks for ONE mech action (by index into active solution).
+    """Execute ONE mech action.
 
-    Does NOT execute clicks — returns the click plan for Claude
-    to execute via computer-use MCP.
+    In bridge mode: sends command directly to the game via Lua bridge.
+    In MCP mode: returns click plan for Claude to execute manually.
     """
     session = _load_session()
     logger = _get_logger(session)
@@ -278,7 +346,45 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
         _print_result(result)
         return result
 
-    # Load board for portrait mapping and weapon key detection
+    # Convert SolverAction to MechAction
+    mech_action = MechAction(
+        mech_uid=action.mech_uid,
+        mech_type=action.mech_type,
+        move_to=action.move_to,
+        weapon=action.weapon,
+        target=action.target,
+        description=action.description,
+    )
+
+    # Bridge mode: execute directly via Lua
+    if is_bridge_active():
+        logger.log_mech_action(action_index, action.description, 0)
+
+        # Load board for move detection
+        board_data, _ = read_bridge_state()
+        board = board_data
+
+        print(f"\n=== BRIDGE EXECUTE Action {action_index}: {action.description} ===")
+        try:
+            ack = execute_bridge_action(mech_action, board)
+            print(f"  ACK: {ack}")
+            session.mark_action_executed()
+            result = {
+                "action_index": action_index,
+                "mech_type": action.mech_type,
+                "description": action.description,
+                "bridge": True,
+                "ack": ack,
+            }
+        except TimeoutError as e:
+            result = {"error": str(e), "bridge": True}
+            print(f"  ERROR: {e}")
+
+        session.save()
+        _print_result(result)
+        return result
+
+    # MCP mode: return click plan
     state = load_game_state(profile)
     board = None
     portraits = {}
@@ -289,20 +395,8 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
         portraits = get_mech_portraits(board)
 
     portrait_idx = portraits.get(action.mech_type, action_index)
-
-    # Convert SolverAction to MechAction for the executor
-    mech_action = MechAction(
-        mech_uid=action.mech_uid,
-        mech_type=action.mech_type,
-        move_to=action.move_to,
-        weapon=action.weapon,
-        target=action.target,
-        description=action.description,
-    )
-
     clicks = plan_single_mech(mech_action, portrait_idx, board)
 
-    # Log
     logger.log_mech_action(action_index, action.description, len(clicks))
 
     result = {
@@ -485,16 +579,32 @@ def cmd_verify(action_index: int = -1, profile: str = "Alpha",
 
 
 def cmd_end_turn() -> dict:
-    """Plan clicks for End Turn button.
+    """End the current turn.
 
-    Returns click plan. After executing, use cmd_verify(-1) to check
-    that the turn advanced.
+    In bridge mode: sends END_TURN command directly.
+    In MCP mode: returns click plan for End Turn button.
     """
     session = _load_session()
     logger = _get_logger(session)
-
-    clicks = plan_end_turn()
     logger.log_end_turn()
+
+    # Bridge mode
+    if is_bridge_active():
+        print("\n=== BRIDGE END TURN ===")
+        try:
+            ack = execute_bridge_end_turn()
+            print(f"  ACK: {ack}")
+            result = {"bridge": True, "ack": ack}
+        except TimeoutError as e:
+            result = {"error": str(e), "bridge": True}
+            print(f"  ERROR: {e}")
+
+        session.save()
+        _print_result(result)
+        return result
+
+    # MCP mode
+    clicks = plan_end_turn()
 
     result = {
         "clicks": clicks,
