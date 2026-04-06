@@ -226,6 +226,11 @@ local function dump_state()
         end
     end
 
+    -- Deployment zone (captured in BaseDeployment, persists until MissionEnd)
+    if _ITB_DEPLOY_ZONE and #_ITB_DEPLOY_ZONE > 0 then
+        state.deployment_zone = _ITB_DEPLOY_ZONE
+    end
+
     write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
 end
 
@@ -425,17 +430,22 @@ end
 -- preventing the wrap-on-wrap stack that kills frame rate.
 if not _ITB_BRIDGE_ORIGINALS then
     _ITB_BRIDGE_ORIGINALS = {
-        BaseUpdate = Mission.BaseUpdate,
-        NextTurn   = Mission.NextTurn,
-        BaseStart  = Mission.BaseStart,
-        MissionEnd = Mission.MissionEnd,
+        BaseUpdate     = Mission.BaseUpdate,
+        NextTurn       = Mission.NextTurn,
+        BaseStart      = Mission.BaseStart,
+        MissionEnd     = Mission.MissionEnd,
+        BaseDeployment = Mission.BaseDeployment,
     }
 end
 
-local _orig_BaseUpdate = _ITB_BRIDGE_ORIGINALS.BaseUpdate
-local _orig_NextTurn   = _ITB_BRIDGE_ORIGINALS.NextTurn
-local _orig_BaseStart  = _ITB_BRIDGE_ORIGINALS.BaseStart
-local _orig_MissionEnd = _ITB_BRIDGE_ORIGINALS.MissionEnd
+local _orig_BaseUpdate     = _ITB_BRIDGE_ORIGINALS.BaseUpdate
+local _orig_NextTurn       = _ITB_BRIDGE_ORIGINALS.NextTurn
+local _orig_BaseStart      = _ITB_BRIDGE_ORIGINALS.BaseStart
+local _orig_MissionEnd     = _ITB_BRIDGE_ORIGINALS.MissionEnd
+local _orig_BaseDeployment = _ITB_BRIDGE_ORIGINALS.BaseDeployment
+
+-- Cached deployment zone (captured in BaseDeployment, cleared on MissionEnd)
+_ITB_DEPLOY_ZONE = _ITB_DEPLOY_ZONE or {}
 
 -- State dump interval (separate from command poll)
 local _state_dump_interval = 5  -- dump state every 5 seconds
@@ -470,9 +480,27 @@ Mission.BaseStart = function(self)
     log_bridge("MISSION START: " .. tostring(self.ID or self.Name or "unknown"))
 end
 
--- MissionEnd: log mission completion
+-- BaseDeployment: capture deployment zone before engine clears it
+Mission.BaseDeployment = function(self)
+    pcall(function()
+        local pts = extract_table(Board:GetZone("deployment"))
+        _ITB_DEPLOY_ZONE = {}
+        for i, p in ipairs(pts) do
+            _ITB_DEPLOY_ZONE[#_ITB_DEPLOY_ZONE + 1] = {p.x, p.y}
+        end
+        if #_ITB_DEPLOY_ZONE > 0 then
+            log_bridge("DEPLOY ZONE captured: " .. #_ITB_DEPLOY_ZONE .. " tiles")
+        end
+    end)
+    _orig_BaseDeployment(self)
+    -- Dump state so Python can see the deployment zone immediately
+    pcall(dump_state)
+end
+
+-- MissionEnd: log mission completion, clear deployment zone
 Mission.MissionEnd = function(self)
     log_bridge("MISSION END: " .. tostring(self.ID or self.Name or "unknown"))
+    _ITB_DEPLOY_ZONE = {}
     _orig_MissionEnd(self)
 end
 
