@@ -17,17 +17,40 @@ STATE_FILE = Path("/tmp/itb_state.json")
 CMD_FILE = Path("/tmp/itb_cmd.txt")
 CMD_TMP = Path("/tmp/itb_cmd.txt.tmp")
 ACK_FILE = Path("/tmp/itb_ack.txt")
+LOG_FILE = Path("/tmp/itb_bridge.log")
 
-# State file must be newer than this many seconds to be considered active
-STALENESS_THRESHOLD = 30.0
+# State file must be newer than this many seconds
+STALENESS_THRESHOLD = 300.0  # 5 minutes
 
 
 def is_bridge_active() -> bool:
-    """Check if the Lua bridge is running (state file exists and is recent)."""
+    """Check if the Lua bridge is running.
+
+    Checks two things:
+    1. Bridge log file exists (written on game startup)
+    2. State file exists (written when in a mission)
+    """
+    if not LOG_FILE.exists():
+        return False
     if not STATE_FILE.exists():
         return False
+    # State file must not be ancient (game may have closed hours ago)
     age = time.time() - STATE_FILE.stat().st_mtime
     return age < STALENESS_THRESHOLD
+
+
+def refresh_bridge_state() -> bool:
+    """Request a fresh state dump from the bridge.
+
+    Sends a no-op LUA command which triggers dump_state() as a side effect.
+    Returns True if state was refreshed.
+    """
+    write_command("LUA return 'refresh'")
+    try:
+        wait_for_ack(timeout=5.0)
+        return True
+    except TimeoutError:
+        return False
 
 
 def read_state() -> dict | None:

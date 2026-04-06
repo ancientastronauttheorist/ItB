@@ -33,7 +33,7 @@ from src.control.executor import (
     recalibrate,
 )
 from src.capture.detect_grid import find_game_window, grid_from_window
-from src.bridge.protocol import is_bridge_active
+from src.bridge.protocol import is_bridge_active, refresh_bridge_state
 from src.bridge.reader import read_bridge_state
 from src.bridge.writer import execute_bridge_action, execute_bridge_end_turn
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
@@ -69,6 +69,8 @@ def cmd_read(profile: str = "Alpha") -> dict:
 
     # Try bridge first (direct Lua API access)
     if is_bridge_active():
+        # Request fresh state dump from game
+        refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
             phase = bridge_data.get("phase", "unknown")
