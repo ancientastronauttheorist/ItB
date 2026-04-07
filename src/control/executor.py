@@ -63,45 +63,30 @@ def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
     (auto-detected via Quartz). STEP_X and STEP_Y are the half-tile
     dimensions in MCP pixel space, derived from the window size.
 
-    Verified against 4 known tile positions (Coal Plant, 2 Scorpions,
-    Volatile Vek) — all matched exactly.
+    Calibrated 2026-04-07 against all 4 grid corners (A1, A8, H1, H8)
+    with user-verified cursor placement. Max error <2px across all corners.
     """
     win = _get_window()
 
-    # The game's internal isometric formula (from grid_reference.json):
-    #   game_x = 690 + (col - row) * 50      (at 1280x748 window)
-    #   game_y = 660 - (col + row - 2) * 27.5
-    # where row = save_x + 1, col = save_y + 1
+    # Calibrated from 4 corner tiles at 1280x748 window:
+    #   H8 = save(0,0) → pixel (694, 193)  [origin]
+    #   A8 = save(0,7) → pixel (369, 436)
+    #   H1 = save(7,0) → pixel (1016, 435)
+    #   A1 = save(7,7) → pixel (694, 677)
     #
-    # Simplifies to:
-    #   game_x = 690 + (save_y - save_x) * 50
-    #   game_y = 660 - (save_x + save_y) * 27.5
-    #
-    # The MCP coordinate is: win_pos + game_coord * (mcp_window_size / game_size)
-    # But empirically, the scale factor from game coords to MCP coords
-    # was measured as: step_x = 42 pixels per (save_y - save_x) unit
-    #                  step_y = 25 pixels per (save_x + save_y) unit
-    #
-    # These scale factors are proportional to window size:
-    #   step_x = 42 * (win.width / 1280)
-    #   step_y = 25 * (win.height / 748)
-    #
-    # The origin (where save_x == save_y, sum == 0, i.e. tile 0,0) was
-    # measured at MCP x=556 with window at x=0, width=1280. That's
-    # game_x=690 scaled: 556 = win.x + 690 * (win.width / 1280) * scale_factor
-    # Empirically: OX = win.x + 556 (at width 1280)
-    #              OY = win.y + 138 (at height 748)
+    # Window-relative origin (tile 0,0 = H8): offset (494, 56) from window corner
+    # Step sizes: 46.21 px per (save_x - save_y), 34.57 px per (save_x + save_y)
 
     sx = win.width / 1280.0
     sy = win.height / 748.0
 
     # Origin in MCP coords (tile 0,0 center, adjusted for window position)
-    ox = win.x + 556 * sx
-    oy = win.y + 138 * sy
+    ox = win.x + 494 * sx
+    oy = win.y + 56 * sy
 
     # Isometric step sizes in MCP pixels
-    step_x = 42.0 * sx   # per (save_x - save_y) unit
-    step_y = 25.0 * sy   # per (save_x + save_y) unit
+    step_x = 46.21 * sx   # per (save_x - save_y) unit
+    step_y = 34.57 * sy   # per (save_x + save_y) unit
 
     px = ox + step_x * (save_x - save_y)
     py = oy + step_y * (save_x + save_y)

@@ -96,6 +96,7 @@ Extended rules: see `data/ref_game_mechanics.md`.
 16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. The Lua bridge does NOT have this limitation — it provides fresh state after each action. When bridge is active, use bridge state for per-mech verification. When using save file fallback, use visual confirmation or wait until after End Turn to verify.
 17. When using MCP (fallback): portrait clicks require clicking the portrait, then clicking the board to dismiss pilot popup, then re-clicking portrait. Use coordinates (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click. Bridge commands address mechs by UID.
 18. During deployment phase, the bridge may provide deployment zone data. If unavailable, deploy by scanning for yellow arrow indicators on valid tiles via MCP screenshots. The deployment zone is computed by the game engine at runtime.
+19. HOVER-VERIFY-CLICK — Before every MCP click: (1) mouse_move to the target, (2) screenshot to visually confirm cursor is on the intended element, (3) only then left_click. Prevents misclicks on wrong UI elements.
 
 ## Phase Protocols
 
