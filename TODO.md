@@ -141,10 +141,20 @@
 - [ ] **Mech self-repair**: Not in action enumeration. Every mech can click itself to heal 1 HP + remove fire/acid. Add to `_enumerate_mech_actions` in `src/solver/solver.py`.
 
 ### Environment Awareness
-- [ ] **Air strikes / tidal waves / lightning / earthquakes**: Some missions have environment hazards targeting specific tiles. Save parser doesn't extract this. Need to find where stored in saveData.lua, parse in `src/capture/save_parser.py`, add threatened tiles to eval.
+- [x] **Tidal waves / air strikes / lightning**: Bridge provides `environment_danger` tiles via `Board:IsEnvironmentDanger()`. Solver avoids placing mechs on them, rewards pushing enemies onto them.
+- [ ] **Conveyor belt direction**: Bridge provides tile type but NOT push direction. Need Lua-side `Board:GetConveyorDirection()` or similar. Required for Detritus Disposal island.
+- [ ] **Teleporter pad pairing**: Bridge doesn't provide which pads are linked. Need Lua-side extraction or visual detection. Required for Detritus Disposal island.
+- [ ] **Windstorm direction**: No directional data in bridge. Need Lua extraction for R.S.T. island.
+- [ ] **Volcanic Hive patterns**: Lava flow / falling rocks / tentacles follow cycles (Random → Aimed → Area). Pattern prediction needed for final mission.
+- [ ] **Cataclysm board shrinking**: Row-of-chasms advancing each turn. Already covered by `IsEnvironmentDanger()` but no prediction of next-turn danger.
 
 ### Simulation Gaps
-- [ ] **Status effects incomplete**: `src/solver/simulate.py` has TODOs at lines ~220, 255, 257 for acid, freeze, shield handling.
+- [x] **ACID damage doubling**: Weapon damage doubled, armor disabled when unit has acid.
+- [x] **Shield absorption**: Blocks one damage instance, consumed after blocking.
+- [x] **Frozen invincibility**: Any damage unfreezes dealing 0 damage. Frozen enemies can't attack. Frozen flying units are grounded.
+- [x] **Smoke attack cancellation**: Enemies on smoke tiles can't attack.
+- [x] **Fire damage per turn**: 1 damage tick before enemy attacks resolve.
+- [x] **Ice tile destruction**: Ice → cracked (1 hit) → water (2nd hit). Fire skips to water.
 - [ ] **evaluate_threats() hardcodes damage=1**: All enemies assumed to deal 1 damage. Needs actual weapon damage lookup from Vek data.
 - [ ] **get_threatened_buildings() misses AoE/charge/splash**: Only checks exact target tile. Multi-tile attacks, charge attacks, and splash damage not accounted for.
 

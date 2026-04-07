@@ -240,6 +240,13 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
     """
     buildings_destroyed = 0
 
+    # Fire damage tick: burning units take 1 damage BEFORE attacks resolve.
+    # A burning 1 HP Vek dies before it can attack. Fire ignores Armor/ACID.
+    for u in board.units:
+        if u.fire and u.hp > 0:
+            u.hp -= 1
+            # Fire does NOT damage buildings (buildings are immune to fire)
+
     # Process in UID order (ascending = game's attack order)
     enemies = sorted(board.enemies(), key=lambda e: e.uid)
 
@@ -247,6 +254,15 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
         if enemy.hp <= 0:
             continue
         if enemy.queued_target_x < 0:
+            continue
+
+        # Smoke cancels attacks: enemy on a smoke tile cannot attack
+        enemy_tile = board.tile(enemy.x, enemy.y)
+        if enemy_tile.smoke:
+            continue
+
+        # Frozen enemies cannot attack (their telegraphed attack is cancelled)
+        if enemy.frozen:
             continue
 
         wdef = get_weapon_def(enemy.weapon) if enemy.weapon else None
@@ -552,6 +568,28 @@ def _prune_actions(board, mech, actions, threat_tiles,
         # Spawn blocking
         if move_to in threat_tiles and move_to not in building_threat_tiles:
             s += 30
+
+        # ACID tile avoidance: don't move mechs onto acid tiles
+        # (acid doubles all damage taken, disables armor)
+        move_tile = board.tile(move_to[0], move_to[1])
+        if move_tile.acid and not mech.acid:
+            s -= 200  # mech will gain acid status
+
+        # Smoke: bonus for pushing enemies onto smoke tiles (cancels their attack)
+        if weapon_id and target[0] >= 0:
+            wdef_smoke = get_weapon_def(weapon_id) if weapon_id != "_REPAIR" else None
+            if wdef_smoke and wdef_smoke.push != "none":
+                enemy_s = board.unit_at(target[0], target[1])
+                if enemy_s and enemy_s.is_enemy and enemy_s.queued_target_x >= 0:
+                    push_dir_s = direction_between(
+                        move_to[0], move_to[1], target[0], target[1])
+                    if push_dir_s is not None:
+                        dest_s = push_destination(
+                            target[0], target[1], push_dir_s, board)
+                        if dest_s is not None:
+                            dest_tile = board.tile(dest_s[0], dest_s[1])
+                            if dest_tile.smoke:
+                                s += 200  # enemy attack will be cancelled
 
         # Environment danger: avoid non-flying mechs stepping on danger tiles
         if board.environment_danger and move_to in board.environment_danger:

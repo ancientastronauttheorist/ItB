@@ -47,24 +47,38 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
     tile = board.tile(x, y)
 
     if unit and damage > 0:
-        actual = damage
-        # Bump and fire damage ignore Armor and ACID
-        if source not in ("bump", "fire"):
-            if unit.armor:
-                actual = max(0, damage - 1)
-            # TODO: if unit has ACID, actual *= 2
-        unit.hp -= actual
+        # Shield blocks one damage instance (any source except chasm/deadly)
+        # and prevents negative status effects. Consumed after blocking.
+        if unit.shield:
+            unit.shield = False
+            result.events.append(f"Shield absorbed {damage} damage on {unit.type} at ({x},{y})")
+        elif unit.frozen:
+            # Frozen units are invincible: any damage unfreezes dealing 0 damage.
+            # Exception: fire unfreezes AND sets on fire (handled separately).
+            unit.frozen = False
+            result.events.append(f"Unfroze {unit.type} at ({x},{y}) (damage negated)")
+        else:
+            actual = damage
+            # Bump and fire damage ignore Armor and ACID
+            if source not in ("bump", "fire"):
+                if unit.acid:
+                    # ACID disables armor entirely and doubles weapon damage.
+                    # Also applies to self-damage from weapons (source="self").
+                    actual = damage * 2
+                elif unit.armor:
+                    actual = max(0, damage - 1)
+            unit.hp -= actual
 
-        if unit.is_enemy:
-            result.enemy_damage_dealt += actual
-            if unit.hp <= 0:
-                result.enemies_killed += 1
-                result.events.append(f"Killed {unit.type} at ({x},{y})")
-        elif unit.is_player:
-            result.mech_damage_taken += actual
-            if unit.hp <= 0:
-                result.mechs_killed += 1
-                result.events.append(f"Mech {unit.type} destroyed at ({x},{y})")
+            if unit.is_enemy:
+                result.enemy_damage_dealt += actual
+                if unit.hp <= 0:
+                    result.enemies_killed += 1
+                    result.events.append(f"Killed {unit.type} at ({x},{y})")
+            elif unit.is_player:
+                result.mech_damage_taken += actual
+                if unit.hp <= 0:
+                    result.mechs_killed += 1
+                    result.events.append(f"Mech {unit.type} destroyed at ({x},{y})")
 
     if tile.terrain == "building" and tile.building_hp > 0 and damage > 0:
         # Buildings take full weapon damage (each HP lost = 1 grid power)
@@ -80,6 +94,23 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
             result.events.append(f"Building destroyed at ({x},{y}) ({hp_lost} grid damage)")
         elif hp_lost > 0:
             result.events.append(f"Building damaged at ({x},{y}) ({hp_lost} grid damage)")
+
+    # Ice tile destruction: ice → cracked → water
+    # Fire attacks skip cracked and go straight to water.
+    if tile.terrain == "ice" and damage > 0:
+        if tile.cracked or source == "fire":
+            tile.terrain = "water"
+            tile.cracked = False
+            result.events.append(f"Ice broke into water at ({x},{y})")
+            # If there's a non-flying unit on the tile, it drowns
+            if unit and unit.hp > 0 and not unit.flying:
+                unit.hp = 0
+                if unit.is_enemy:
+                    result.enemies_killed += 1
+                    result.events.append(f"{unit.type} drowned at ({x},{y})")
+        else:
+            tile.cracked = True
+            result.events.append(f"Ice cracked at ({x},{y})")
 
 
 def apply_push(board: Board, x: int, y: int, direction: int,
@@ -154,7 +185,9 @@ def apply_push(board: Board, x: int, y: int, direction: int,
     unit.x, unit.y = nx, ny
 
     # Check deadly terrain after moving
-    if tile_dest.terrain in TERRAIN_DEADLY_GROUND and not unit.flying:
+    # Frozen flying units are grounded — they drown in water/chasm/lava
+    effectively_flying = unit.flying and not unit.frozen
+    if tile_dest.terrain in TERRAIN_DEADLY_GROUND and not effectively_flying:
         unit.hp = 0
         if unit.is_enemy:
             result.enemies_killed += 1

@@ -74,6 +74,7 @@ class BoardTile:
     smoke: bool = False
     acid: bool = False
     frozen: bool = False
+    cracked: bool = False    # ice tile that's been hit once (next hit → water)
 
 
 class Board:
@@ -218,6 +219,7 @@ class Board:
                 bt.smoke = td.get("smoke", False)
                 bt.acid = td.get("acid", False)
                 bt.frozen = td.get("frozen", False)
+                bt.cracked = td.get("cracked", False)
                 bt.has_pod = td.get("pod", False)
                 if bt.terrain == "building":
                     bt.building_hp = td.get("building_hp", 1)
