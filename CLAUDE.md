@@ -82,13 +82,13 @@ Extended rules: see `data/ref_game_mechanics.md`.
 2. Never execute mech N+1 before verifying mech N succeeded.
 3. When using MCP clicks (UI navigation, bridge fallback): click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
 4. After every failed run, analyze the critical turn. Save snapshot first.
-5. When using MCP (fallback): select mechs by clicking their PORTRAIT, then clicking board to dismiss popup, then re-clicking portrait. Do NOT rely on Tab for non-consecutive execution. Bridge commands target mechs by UID — no portrait clicks needed.
+5. Select mechs by clicking their PORTRAIT, then clicking board to dismiss popup, then re-clicking portrait. Do NOT rely on Tab for non-consecutive execution.
 6. Priority order — buildings > threats > kills > spawns.
-7. Bridge state is the source of truth during combat. Re-read after every action. Fall back to save file if bridge is unavailable.
+7. Bridge is READ-ONLY — use it for state extraction only (`game_loop.py read`/`solve`). Bridge ATTACK/MOVE/SKIP/END_TURN commands ACK but DO NOT execute in-game. All actions must be performed via MCP mouse clicks. Re-read bridge state after every action to verify.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
 10. For MCP clicks (UI navigation, bridge fallback): always use grid_to_mcp() for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets. Bridge commands use grid coordinates directly.
-11. When using MCP (fallback): arm weapons via keyboard: '1' for primary, '2' for secondary. Bridge commands specify the weapon directly.
+11. Do NOT use keyboard shortcuts or bridge commands for actions. All combat actions (move, attack, end turn) must use MCP mouse clicks only.
 12. NEVER press Space (triggers End Turn dialog unexpectedly).
 13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
 14. Solver blind spots (temporary, until implemented): No repair action. No environment hazard awareness (air strikes, tidal waves, lightning). The bridge provides environment_danger tiles — use these to inform manual overrides until solver integration is complete.

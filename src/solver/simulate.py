@@ -193,7 +193,7 @@ def simulate_weapon(
     elif wdef.weapon_type == "projectile":
         _sim_projectile(board, attacker, wdef, attack_dir, result)
     elif wdef.weapon_type == "artillery":
-        _sim_artillery(board, attacker, wdef, target_x, target_y, result)
+        _sim_artillery(board, attacker, wdef, target_x, target_y, attack_dir, result)
     elif wdef.weapon_type == "self_aoe":
         _sim_self_aoe(board, attacker, wdef, result)
     elif wdef.weapon_type in ("pull", "swap"):
@@ -318,7 +318,7 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
                 break
 
 
-def _sim_artillery(board, attacker, wdef, tx, ty, result):
+def _sim_artillery(board, attacker, wdef, tx, ty, attack_dir, result):
     """Simulate artillery weapon (arcs over obstacles, hits target area)."""
     # Center damage
     if wdef.aoe_center:
@@ -332,6 +332,13 @@ def _sim_artillery(board, attacker, wdef, tx, ty, result):
             pass  # TODO: freeze status
     if wdef.shield:
         pass  # TODO: shield status
+
+    # Behind tile damage (Old Earth Artillery: hits target + tile behind)
+    if wdef.aoe_behind and attack_dir is not None:
+        dx, dy = DIRS[attack_dir]
+        bx, by = tx + dx, ty + dy
+        if board.in_bounds(bx, by):
+            apply_damage(board, bx, by, wdef.damage, result)
 
     # Adjacent tile effects (push outward)
     if wdef.aoe_adjacent:

@@ -83,6 +83,10 @@ def get_weapon_targets(
                     continue
                 if x != mx and y != my:
                     continue
+                # Don't target friendly buildings
+                tile = board.tile(x, y)
+                if tile.terrain == "building" and tile.building_hp > 0:
+                    continue
                 targets.append((x, y))
 
     elif wdef.weapon_type == "self_aoe":

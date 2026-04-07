@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-04-07T14:20:06.818042",
+  "run_id": "20260407_011532",
+  "turn": 4,
+  "label": "solve",
+  "data": {
+    "score": 114340.0,
+    "actions": [
+      "ArchiveArtillery, fire Old Earth Artillery at (4,3)",
+      "PunchMech",
+      "TankMech, move (5,5)->(6,3), fire Taurus Cannon at (6,2)",
+      "ArtiMech, move (2,3)->(1,4), fire Artemis Artillery at (3,4)"
+    ],
+    "threats": 2,
+    "active_mechs": 4,
+    "spawn_points": []
+  }
+}

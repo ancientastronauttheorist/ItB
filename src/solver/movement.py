@@ -54,7 +54,7 @@ def get_reachable_tiles(
             if tile.terrain == "mountain":
                 continue
 
-            # Buildings block
+            # Buildings block movement
             if tile.terrain == "building" and tile.building_hp > 0:
                 continue
 
