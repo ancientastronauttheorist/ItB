@@ -397,8 +397,9 @@ def solve_turn(
     start_time = time.time()
     best = Solution()
 
+    # Include player mechs AND friendly controllable units (e.g., ArchiveArtillery)
     active_mechs = [m for m in board.mechs()
-                    if m.active and m.hp > 0 and m.is_mech]
+                    if m.active and m.hp > 0 and (m.is_mech or m.weapon)]
     if not active_mechs:
         return best
 

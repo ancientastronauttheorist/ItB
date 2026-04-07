@@ -300,9 +300,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         spawns = [(p.x, p.y) for p in m.spawn_points]
         current_turn = m.current_turn
 
-    # Check for active mechs
+    # Check for active mechs (includes friendly controllable units like ArchiveArtillery)
     active_mechs = [mech for mech in board.mechs()
-                    if mech.active and mech.hp > 0 and mech.is_mech]
+                    if mech.active and mech.hp > 0 and (mech.is_mech or mech.weapon)]
     if not active_mechs:
         result = {"error": "No active mechs — all have acted this turn"}
         _print_result(result)

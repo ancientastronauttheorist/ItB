@@ -265,6 +265,14 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_b="+2 damage (total 3)",
     ),
 
+    # --- MISSION-SPECIFIC ---
+
+    "Archive_ArtShot": WeaponDef(
+        name="Old Earth Artillery", weapon_type="artillery",
+        damage=2, push="none", range_min=2,
+        aoe_behind=True,  # hits target + tile behind in firing direction
+    ),
+
     # --- RANGED CLASS ---
 
     "Ranged_Artillerymech": WeaponDef(
