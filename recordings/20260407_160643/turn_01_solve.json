@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-04-07T16:57:36.114300",
+  "run_id": "20260407_160643",
+  "turn": 1,
+  "label": "solve",
+  "data": {
+    "score": 90620.0,
+    "actions": [
+      "TankMech, move (2,3)->(5,3)",
+      "ArtiMech, move (2,6)->(3,6), fire Artemis Artillery at (6,6)"
+    ],
+    "threats": 2,
+    "active_mechs": 2,
+    "spawn_points": [
+      [
+        5,
+        3
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        7,
+        5
+      ]
+    ]
+  }
+}
