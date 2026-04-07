@@ -286,11 +286,36 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
 
 # --- Recursive Search ---
 
+def _is_wasted_attack(weapon_id: str, result) -> bool:
+    """Check if a weapon was fired but accomplished nothing.
+
+    Returns True only when ALL of these hold:
+    - A weapon was actually fired (not move-only or repair)
+    - Zero enemies killed or damaged
+    - Zero buildings damaged
+    - Zero mech damage (from push_self, etc.)
+    - Zero pods collected or spawns blocked
+
+    This correctly returns False for AoE weapons hitting adjacent
+    units, push chains into terrain, fire/smoke placement, charge
+    repositioning, etc. — because those produce non-zero results.
+    """
+    if not weapon_id or weapon_id == "_REPAIR":
+        return False
+    return (result.enemies_killed == 0
+            and result.enemy_damage_dealt == 0
+            and result.buildings_damaged == 0
+            and result.buildings_lost == 0
+            and result.mech_damage_taken == 0
+            and result.pods_collected == 0)
+
+
 def _search_recursive(
     board: Board,
     mechs_remaining: list[Unit],
     actions_so_far: list[MechAction],
     kills_so_far: int,
+    wasted_attacks_so_far: int,
     threat_tiles: set,
     building_threat_tiles: set,
     original_positions: dict,
@@ -312,6 +337,9 @@ def _search_recursive(
         b_eval = board.copy()
         _simulate_enemy_attacks(b_eval, original_positions)
         score = evaluate(b_eval, spawn_pts, kills=kills_so_far)
+        # Tiny penalty for wasted attacks — just enough to prefer
+        # move-only over firing at empty tiles when all else is equal
+        score -= wasted_attacks_so_far * 5
         if score > best.score:
             best.score = score
             best.actions = list(actions_so_far)
@@ -332,10 +360,12 @@ def _search_recursive(
         m = next(u for u in b_next.units if u.uid == mech.uid)
         result = simulate_action(b_next, m, action[0], action[1], action[2])
 
+        wasted = 1 if _is_wasted_attack(action[1], result) else 0
         actions_so_far.append(_make_action(mech, *action))
         _search_recursive(
             b_next, rest, actions_so_far,
             kills_so_far + result.enemies_killed,
+            wasted_attacks_so_far + wasted,
             threat_tiles, building_threat_tiles, original_positions,
             spawn_pts, max_actions, best,
             start_time, time_limit,
@@ -400,7 +430,7 @@ def solve_turn(
 
         mechs_ordered = [active_mechs[i] for i in ordering]
         _search_recursive(
-            board, mechs_ordered, [], 0,
+            board, mechs_ordered, [], 0, 0,
             threat_tiles, building_threat_tiles, original_positions,
             spawn_pts, effective_max, best,
             start_time, time_limit,
@@ -471,8 +501,16 @@ def _prune_actions(board, mech, actions, threat_tiles,
                 if friendly and friendly.is_player:
                     s -= 300  # heavy penalty for friendly fire
 
-            # Any attack is better than no attack
-            s += 10
+            # Prefer attacks that target something over move-only,
+            # but don't reward attacking empty ground
+            target_unit = board.unit_at(target[0], target[1])
+            target_tile = board.tile(target[0], target[1])
+            has_target = (target_unit is not None
+                          or target_tile.terrain in ("building", "mountain"))
+            has_aoe = (wdef and (wdef.aoe_adjacent or getattr(wdef, 'aoe_perpendicular', False)
+                       or getattr(wdef, 'aoe_behind', False)))
+            if has_target or has_aoe:
+                s += 10
 
         # Spawn blocking
         if move_to in threat_tiles and move_to not in building_threat_tiles:
