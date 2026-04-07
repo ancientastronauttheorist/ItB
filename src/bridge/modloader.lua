@@ -556,14 +556,20 @@ end
 -- BaseDeployment: capture deployment zone before engine clears it
 Mission.BaseDeployment = function(self)
     pcall(function()
-        -- Try the named zone first (works for final missions and some special maps)
-        local pts = extract_table(Board:GetZone("deployment"))
+        -- Board:GetZone returns a PointList — iterate with :size()/:index()
+        local ptList = Board:GetZone("deployment")
         _ITB_DEPLOY_ZONE = {}
-        for i, p in ipairs(pts) do
-            _ITB_DEPLOY_ZONE[#_ITB_DEPLOY_ZONE + 1] = {p.x, p.y}
+        if ptList and ptList.size then
+            local n = ptList:size()
+            for i = 1, n do
+                local p = ptList:index(i)
+                _ITB_DEPLOY_ZONE[#_ITB_DEPLOY_ZONE + 1] = {p.x, p.y}
+            end
         end
         if #_ITB_DEPLOY_ZONE > 0 then
             log_bridge("DEPLOY ZONE from Board:GetZone: " .. #_ITB_DEPLOY_ZONE .. " tiles")
+        else
+            log_bridge("DEPLOY ZONE: Board:GetZone returned 0 tiles (fallback will be used)")
         end
     end)
     _orig_BaseDeployment(self)
