@@ -168,6 +168,9 @@ All commands are subcommands of `game_loop.py`. Each is stateless: read state, c
 - `execute <index>` — Execute action N via bridge command (returns ACK). Falls back to outputting a click plan for MCP execution if bridge unavailable.
 - `end_turn` — Send END_TURN via bridge (or output click plan for End Turn button if bridge unavailable).
 
+**State Recording:**
+- `read` and `solve` both auto-record full game state to `recordings/<run_id>/turn_<N>_<label>.json`. Each recording includes the complete bridge JSON (64 tiles, all units, targets, spawns) plus the solver output. Used for replay, regression testing, and solver improvement.
+
 **Run Management:**
 - `new_run <squad> [--achieve X Y]` — Initialize new session with squad and achievement targets.
 - `snapshot <label>` — Save current state for regression testing.
@@ -239,6 +242,7 @@ itb-bot/
 │   └── main.py            # Legacy entry point (backward compat)
 ├── sessions/              # Session JSON files (active_session.json)
 ├── logs/                  # Decision logs (one markdown file per run)
+├── recordings/            # Per-turn state recordings (board + solver) for replay/analysis
 ├── snapshots/             # Saved states for regression testing
 ├── assets/
 │   ├── sprites/           # Reference sprite atlas

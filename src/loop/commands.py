@@ -54,6 +54,35 @@ def _get_logger(session: RunSession) -> DecisionLog:
     return DecisionLog(run_id)
 
 
+RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
+
+
+def _record_turn_state(session: RunSession, label: str, data: dict) -> None:
+    """Record full game state to a per-run, per-turn JSON file.
+
+    Creates recordings/<run_id>/turn_<N>_<label>.json with the complete
+    bridge state and/or solver output for later replay and analysis.
+    """
+    run_id = session.run_id or "default"
+    turn = session.current_turn
+    run_dir = RECORDING_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"turn_{turn:02d}_{label}.json"
+    filepath = run_dir / filename
+
+    record = {
+        "timestamp": datetime.now().isoformat(),
+        "run_id": run_id,
+        "turn": turn,
+        "label": label,
+        "data": data,
+    }
+
+    with open(filepath, "w") as f:
+        json.dump(record, f, indent=2, default=str)
+
+
 # --- State Reading Commands ---
 
 
@@ -129,6 +158,12 @@ def cmd_read(profile: str = "Alpha") -> dict:
             if old_phase != phase and old_phase != "unknown":
                 logger = _get_logger(session)
                 logger.log_phase_transition(old_phase, phase)
+
+            # Record full state for replay/analysis
+            _record_turn_state(session, "board", {
+                "bridge_state": bridge_data,
+                "result_summary": result,
+            })
 
             session.save()
             _print_result(result)
@@ -329,6 +364,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     session.record_decision("solve", {
         "score": solution.score,
         "actions": [a.description for a in solution.actions],
+    })
+
+    # Record solver output for replay/analysis
+    _record_turn_state(session, "solve", {
+        "score": solution.score,
+        "actions": [a.description for a in solution.actions],
+        "threats": len(threats),
+        "active_mechs": len(active_mechs),
+        "spawn_points": spawns,
     })
 
     # Print
