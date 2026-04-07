@@ -82,14 +82,14 @@ Extended rules: see `data/ref_game_mechanics.md`.
 2. Never execute mech N+1 before verifying mech N succeeded.
 3. When clicking tiles: click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
 4. After every failed run, analyze the critical turn. Save snapshot first.
-5. Select mechs by clicking their PORTRAIT on the left sidebar, then clicking board to dismiss pilot popup, then re-clicking portrait. NEVER use Tab or any keyboard key.
+5. Select mechs by clicking their PORTRAIT on the left sidebar. If pilot popup appears, click the SAME portrait again to toggle it off. NEVER click the board to dismiss popups (board clicks move mechs!). NEVER use Tab or any keyboard key.
 6. Priority order — buildings > threats > kills > spawns.
 7. **ALL actions via MCP mouse clicks ONLY.** The bridge is for reading state (`game_loop.py read`/`solve`). NEVER use `game_loop.py execute` or bridge commands (MOVE, ATTACK, SKIP, END_TURN) to perform actions — even if they work, the user cannot see invisible commands. Every move, attack, and end turn must be a visible mouse click so the user can watch and verify. Re-read bridge state after every action to confirm it worked.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
 10. For MCP clicks: always use grid_to_mcp() or `tile_hover.py` for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets.
 11. **MOUSE CLICKS ONLY — no keyboard, no bridge commands.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.) or bridge execute commands. The full mouse-only sequence for each mech:
-    - **Select mech**: Click portrait on left sidebar → click board to dismiss pilot popup → re-click portrait
+    - **Select mech**: Click portrait on left sidebar → if pilot popup appears, click SAME portrait again to dismiss (NEVER click the board to dismiss — it moves the mech!)
     - **Arm weapon**: Click the weapon icon in the bottom panel (next to pilot portrait)
     - **Attack**: Click the target tile center (orange highlighted tile)
     - **Move**: Click the destination tile center (green highlighted tile)
@@ -100,9 +100,13 @@ Extended rules: see `data/ref_game_mechanics.md`.
 14. Solver handles environment hazards (tidal waves, etc.): the bridge provides `environment_danger` tiles, the solver avoids placing mechs on them and tries to push enemies onto them. `game_loop.py read` prints danger tiles. Remaining blind spots: air strikes, lightning (less common).
 15. On recovery from crash/timeout, ALWAYS start with cmd_read + cmd_solve. Never resume a previous solution — the board may have changed.
 16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. The Lua bridge does NOT have this limitation — it provides fresh state after each action. When bridge is active, use bridge state for per-mech verification. When using save file fallback, use visual confirmation or wait until after End Turn to verify.
-17. Portrait clicks require clicking the portrait, then clicking the board to dismiss pilot popup, then re-clicking portrait. Use coordinates (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click.
+17. Portrait clicks: first click shows pilot popup, second click on SAME portrait toggles it off and shows movement range. Portrait Y positions: (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click.
 18. **DEPLOYMENT**: The bridge provides `deployment_zone` data (list of valid [x,y] tiles). `game_loop.py read` prints all deploy tiles with visual notation AND exact MCP pixel coordinates. Use those MCP coords directly with `left_click` to place each mech. Deploy order: the game prompts for each mech sequentially. Click a deploy tile center → mech appears → next mech prompt. Use `tile_hover.py <TILE>` (e.g. `tile_hover.py C7`) for quick single-tile coordinate lookup.
-19. HOVER-VERIFY-CLICK — Before every MCP click: (1) mouse_move to the target, (2) screenshot to visually confirm cursor is on the intended element, (3) only then left_click. Prevents misclicks on wrong UI elements.
+19. **HOVER-VERIFY-CLICK — mandatory for EVERY click.** Never call `left_click` without this 3-step sequence:
+    1. `mouse_move` to the target coordinates
+    2. `screenshot` to visually confirm the cursor is on the correct element (read the tooltip, check the tile highlight)
+    3. Only then `left_click`
+    **NEVER click the board to "dismiss" a popup.** Clicking an arbitrary board tile will move a selected mech or trigger an action. To dismiss a pilot popup, click the same portrait again (toggles it off) or click a UI element (End Turn area, weapon panel). Board clicks are ALWAYS game actions.
 
 ## Phase Protocols
 
