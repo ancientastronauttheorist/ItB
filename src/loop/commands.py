@@ -148,12 +148,51 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 spawning = bridge_data.get("spawning_tiles", [])
                 result["spawn_points"] = len(spawning)
 
+                # Deployment zone (available on turn 0 during deployment)
+                deploy_zone = bridge_data.get("deployment_zone", [])
+                if deploy_zone:
+                    deploy_tiles = []
+                    for tile in deploy_zone:
+                        bx, by = tile[0], tile[1]
+                        visual_row = 8 - bx
+                        visual_col = chr(72 - by)
+                        mcp_x, mcp_y = grid_to_mcp(bx, by)
+                        deploy_tiles.append({
+                            "bridge": f"({bx},{by})",
+                            "visual": f"{visual_col}{visual_row}",
+                            "mcp": [mcp_x, mcp_y],
+                        })
+                    result["deployment_zone"] = deploy_tiles
+
                 print(f"\n{'='*50}")
                 print(f"BOARD STATE (BRIDGE) — Turn {bridge_data.get('turn', '?')} | "
                       f"Grid: {board.grid_power}/{board.grid_power_max} | "
                       f"Phase: {phase}")
                 print(f"{'='*50}")
                 board.print_board()
+
+                if deploy_zone:
+                    print(f"\nDEPLOYMENT ZONE ({len(deploy_tiles)} tiles):")
+                    for dt in deploy_tiles:
+                        print(f"  {dt['visual']} (bridge {dt['bridge']}) -> MCP ({dt['mcp'][0]}, {dt['mcp'][1]})")
+
+                # Environment danger tiles (tidal waves, air strikes, etc.)
+                env_danger = bridge_data.get("environment_danger", [])
+                if env_danger:
+                    danger_tiles = []
+                    for tile in env_danger:
+                        if isinstance(tile, (list, tuple)) and len(tile) >= 2:
+                            bx, by = tile[0], tile[1]
+                            visual_row = 8 - bx
+                            visual_col = chr(72 - by)
+                            danger_tiles.append({
+                                "bridge": f"({bx},{by})",
+                                "visual": f"{visual_col}{visual_row}",
+                            })
+                    result["environment_danger"] = danger_tiles
+                    print(f"\nENVIRONMENT DANGER ({len(danger_tiles)} tiles):")
+                    for dt in danger_tiles:
+                        print(f"  {dt['visual']} (bridge {dt['bridge']}) -- will flood at end of turn")
 
             if old_phase != phase and old_phase != "unknown":
                 logger = _get_logger(session)
@@ -281,12 +320,17 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     spawns = []
     bridge_data = None
     current_turn = 0
+    environment_danger = set()
     if is_bridge_active():
         refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
+            # Extract environment danger tiles (tidal waves, air strikes, etc.)
+            for dt in bridge_data.get("environment_danger", []):
+                if isinstance(dt, (list, tuple)) and len(dt) >= 2:
+                    environment_danger.add((dt[0], dt[1]))
 
     # Fallback to save parser
     if board is None:
@@ -310,7 +354,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
 
     # Run solver
     print(f"\nSolving ({len(active_mechs)} active mechs, {time_limit}s limit)...")
-    solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit)
+    if environment_danger:
+        print(f"  Environment danger: {len(environment_danger)} tiles")
+    solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
+                          environment_danger=environment_danger)
 
     if not solution.actions:
         result = {

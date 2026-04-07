@@ -36,6 +36,9 @@ class EvalWeights:
     pod_uncollected: float = -100
     pod_proximity: float = 50         # bonus for mech within 2 tiles of pod
 
+    # Environment hazard awareness
+    enemy_on_danger: float = 400      # non-flying enemy on danger tile (near-certain kill)
+
     # Achievement-specific (all default 0 — no effect in normal play)
     enemy_on_fire: float = 0          # "This is Fine", "Scorched Earth"
     enemy_pushed_into_enemy: float = 0  # "Unwitting Allies"
@@ -102,6 +105,18 @@ def evaluate(
 
     for e in board.enemies():
         score += e.hp * w.enemy_hp_remaining  # remaining HP is bad (negative weight)
+
+    # --- ENVIRONMENT DANGER ---
+    # Non-flying enemies on danger tiles will die when environment resolves
+    # (tidal wave floods, air strike lands). Treat as near-certain kills.
+    # Non-flying mechs on danger tiles is very bad (mech will die too).
+    if hasattr(board, 'environment_danger') and board.environment_danger:
+        for e in board.enemies():
+            if (e.x, e.y) in board.environment_danger and not e.flying:
+                score += w.enemy_on_danger
+        for m in board.mechs():
+            if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
+                score += w.mech_killed  # reuse mech_killed penalty (very harsh)
 
     # --- MECHS ---
     mechs = board.mechs()

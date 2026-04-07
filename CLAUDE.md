@@ -2,12 +2,12 @@
 
 ## Project Goal
 
-Build an autonomous bot that earns all 70 achievements in Into the Breach. The game runs natively on macOS. The bot extracts game state via a Lua bridge (file-based IPC) and executes combat actions through bridge commands. Claude Code's computer use (screenshots + mouse/keyboard) handles UI navigation (menus, shop, deployment, rewards).
+Build an autonomous bot that earns all 70 achievements in Into the Breach. The game runs natively on macOS. The bot extracts game state via a Lua bridge (file-based IPC). All game actions (combat, UI navigation, menus, shop, deployment, rewards) are performed exclusively via MCP mouse clicks — the user watches in real-time and needs to see every action happen visually.
 
 ## Important Context
 
 - Into the Breach is a turn-based tactics game on an 8x8 grid. It is fully deterministic with perfect information — every enemy telegraphs their attacks before you move.
-- The ITB-ModLoader (Lua-based) works on Mac via the game's built-in `modloader.lua`. We use a **Lua bridge** (`src/bridge/`) for direct game state extraction and command execution via file-based IPC through `/tmp/`. Mouse/keyboard control via MCP is used for UI navigation (menus, deployment, shop) that the bridge cannot handle.
+- The ITB-ModLoader (Lua-based) works on Mac via the game's built-in `modloader.lua`. We use a **Lua bridge** (`src/bridge/`) for **state extraction only** via file-based IPC through `/tmp/`. All actions (combat moves, attacks, end turn, UI navigation) are performed via MCP mouse clicks — never bridge commands, never keyboard shortcuts.
 - The game is turn-based with no time pressure (except one specific achievement). The bot can take as long as it needs per turn.
 - Into the Breach is available on Steam. App ID: 590380.
 
@@ -37,9 +37,9 @@ Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to g
 
 ### Execution Model: Claude as Controller
 
-Claude operates as the outer control loop. Each Python CLI command (`game_loop.py read`, `solve`, `execute`, `verify`) is a stateless tool that reads state, computes, outputs, and exits. Claude calls these tools in sequence, interprets their output, and decides what to do next. In combat, mech actions are executed via the Lua bridge (command files). MCP mouse/keyboard is used for UI navigation (menus, deployment, shop, rewards). The session file (`sessions/active_session.json`) persists state between CLI calls.
+Claude operates as the outer control loop. Python CLI commands (`game_loop.py read`, `solve`) are stateless tools that read state, compute, and output. Claude calls these tools, interprets output, and performs all game actions via MCP mouse clicks. The bridge is used ONLY for reading state — never for executing actions. The session file (`sessions/active_session.json`) persists state between CLI calls.
 
-Grid coordinate mapping (used for MCP clicks during UI navigation and as bridge fallback): mcp_x = OX + 42*(save_x - save_y), mcp_y = OY + 25*(save_x + save_y), where OX/OY are derived from the game window position (auto-detected via Quartz CGWindowListCopyWindowInfo). Step sizes scale with window dimensions. Bridge commands use grid coordinates directly.
+Grid coordinate mapping for MCP clicks: use `grid_to_mcp(bridge_x, bridge_y)` in `src/control/executor.py` or `python3 tile_hover.py <TILE>` (e.g. `tile_hover.py C5`). Both auto-detect the game window position via Quartz.
 
 **Bridge-to-visual coordinate mapping:** The game displays Row numbers (1-8, left edge) and Column letters (A-H, right edge). Bridge (x,y) maps to visual as: **Row = 8 - x**, **Col = chr(72 - y)** (H for y=0, G for y=1, ..., A for y=7). Example: bridge (3,5) = visual C5 (TankMech). Always use visual A1-H8 notation when communicating tile positions.
 
@@ -80,25 +80,47 @@ Extended rules: see `data/ref_game_mechanics.md`.
 
 1. Always verify state after each mech execution. Bridge provides per-action updates; save file only updates at turn boundaries.
 2. Never execute mech N+1 before verifying mech N succeeded.
-3. When using MCP clicks (UI navigation, bridge fallback): click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
+3. When clicking tiles: click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
 4. After every failed run, analyze the critical turn. Save snapshot first.
-5. Select mechs by clicking their PORTRAIT, then clicking board to dismiss popup, then re-clicking portrait. Do NOT rely on Tab for non-consecutive execution.
+5. Select mechs by clicking their PORTRAIT on the left sidebar, then clicking board to dismiss pilot popup, then re-clicking portrait. NEVER use Tab or any keyboard key.
 6. Priority order — buildings > threats > kills > spawns.
-7. Bridge is READ-ONLY — use it for state extraction only (`game_loop.py read`/`solve`). Bridge ATTACK/MOVE/SKIP/END_TURN commands ACK but DO NOT execute in-game. All actions must be performed via MCP mouse clicks. Re-read bridge state after every action to verify.
+7. **ALL actions via MCP mouse clicks ONLY.** The bridge is for reading state (`game_loop.py read`/`solve`). NEVER use `game_loop.py execute` or bridge commands (MOVE, ATTACK, SKIP, END_TURN) to perform actions — even if they work, the user cannot see invisible commands. Every move, attack, and end turn must be a visible mouse click so the user can watch and verify. Re-read bridge state after every action to confirm it worked.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
-10. For MCP clicks (UI navigation, bridge fallback): always use grid_to_mcp() for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets. Bridge commands use grid coordinates directly.
-11. Do NOT use keyboard shortcuts or bridge commands for actions. All combat actions (move, attack, end turn) must use MCP mouse clicks only.
-12. NEVER press Space (triggers End Turn dialog unexpectedly).
+10. For MCP clicks: always use grid_to_mcp() or `tile_hover.py` for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets.
+11. **MOUSE CLICKS ONLY — no keyboard, no bridge commands.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.) or bridge execute commands. The full mouse-only sequence for each mech:
+    - **Select mech**: Click portrait on left sidebar → click board to dismiss pilot popup → re-click portrait
+    - **Arm weapon**: Click the weapon icon in the bottom panel (next to pilot portrait)
+    - **Attack**: Click the target tile center (orange highlighted tile)
+    - **Move**: Click the destination tile center (green highlighted tile)
+    - **End turn**: Click the "End Turn" button in the top-left
+    - Attack and move can happen in either order. Use `tile_hover.py` or `grid_to_mcp()` for precise tile coordinates.
+12. NEVER press any keyboard keys during combat. No Space, no Tab, no number keys, no letter keys.
 13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
-14. Solver blind spots (temporary, until implemented): No repair action. No environment hazard awareness (air strikes, tidal waves, lightning). The bridge provides environment_danger tiles — use these to inform manual overrides until solver integration is complete.
+14. Solver handles environment hazards (tidal waves, etc.): the bridge provides `environment_danger` tiles, the solver avoids placing mechs on them and tries to push enemies onto them. `game_loop.py read` prints danger tiles. Remaining blind spots: air strikes, lightning (less common).
 15. On recovery from crash/timeout, ALWAYS start with cmd_read + cmd_solve. Never resume a previous solution — the board may have changed.
 16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. The Lua bridge does NOT have this limitation — it provides fresh state after each action. When bridge is active, use bridge state for per-mech verification. When using save file fallback, use visual confirmation or wait until after End Turn to verify.
-17. When using MCP (fallback): portrait clicks require clicking the portrait, then clicking the board to dismiss pilot popup, then re-clicking portrait. Use coordinates (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click. Bridge commands address mechs by UID.
-18. During deployment phase, the bridge may provide deployment zone data. If unavailable, deploy by scanning for yellow arrow indicators on valid tiles via MCP screenshots. The deployment zone is computed by the game engine at runtime.
+17. Portrait clicks require clicking the portrait, then clicking the board to dismiss pilot popup, then re-clicking portrait. Use coordinates (win.x+65, win.y+Y) where Y is 250/310/365 for portraits 0/1/2. Always wait 2s after open_application before first click.
+18. **DEPLOYMENT**: The bridge provides `deployment_zone` data (list of valid [x,y] tiles). `game_loop.py read` prints all deploy tiles with visual notation AND exact MCP pixel coordinates. Use those MCP coords directly with `left_click` to place each mech. Deploy order: the game prompts for each mech sequentially. Click a deploy tile center → mech appears → next mech prompt. Use `tile_hover.py <TILE>` (e.g. `tile_hover.py C7`) for quick single-tile coordinate lookup.
 19. HOVER-VERIFY-CLICK — Before every MCP click: (1) mouse_move to the target, (2) screenshot to visually confirm cursor is on the intended element, (3) only then left_click. Prevents misclicks on wrong UI elements.
 
 ## Phase Protocols
+
+### DEPLOYMENT
+
+Runs at the start of each mission (turn 0). Place all 3 mechs on valid tiles.
+
+1. `game_loop.py read` — Bridge state includes `deployment_zone` with all valid tiles. Output shows each tile's visual name (e.g. C7), bridge coords, AND MCP pixel coordinates.
+2. Choose 3 tiles from the deployment zone. Prioritize positions that:
+   - Protect buildings (adjacent to threatened buildings)
+   - Block spawn tiles
+   - Set up first-turn attacks on visible enemies
+3. For each mech (game prompts sequentially):
+   a. Click the chosen tile's MCP coordinates (from `read` output).
+   b. Wait 1s for the mech to appear.
+4. After all 3 mechs deployed, the game transitions to COMBAT_PLAYER_TURN.
+
+**Tools:** `game_loop.py read` prints deploy tiles + MCP coords. `tile_hover.py <TILE>` for quick single-tile lookup (e.g. `python3 tile_hover.py C7`).
 
 ### COMBAT_PLAYER_TURN
 
@@ -107,13 +129,13 @@ The main loop. Execute every turn in this exact sequence:
 1. `game_loop.py read` — Confirm phase is COMBAT_PLAYER_TURN. Review board state, threats, active mechs.
 2. `game_loop.py solve` — Get solution (N actions for N active mechs). If empty solution (timeout): take screenshot, play manually.
 3. For each action i in 0..N-1:
-   a. `game_loop.py execute i` — Execute action via bridge (returns ACK). If bridge unavailable, outputs click plan for MCP.
-   b. Bridge: action already executed, wait for animation. MCP fallback: execute clicks via computer-use MCP, wait 2-3 seconds.
-   c. `game_loop.py verify` — Confirm mech acted (retries up to 5x at 1.5s intervals).
+   a. Execute action via MCP mouse clicks: click portrait → dismiss popup → re-click portrait → click weapon icon → click target tile → click move tile. Use `tile_hover.py` for coordinates.
+   b. Wait 2-3 seconds for animation to complete.
+   c. `game_loop.py read` — Re-read bridge state to verify mech acted (check active=False for that mech).
       - PASS: continue to next mech.
-      - FAIL: retry execute once. If still fails, screenshot + diagnose.
-   NOTE: Bridge provides per-action state updates — verify via bridge after each mech. Save file fallback only updates after End Turn; in that case trust visual confirmation (dimmed portrait = mech acted) between individual mech actions.
-4. `game_loop.py end_turn` — End turn via bridge command (or click End Turn button if bridge unavailable). Wait for animations (minimum 6s).
+      - FAIL: retry the click sequence. If still fails, screenshot + diagnose.
+   NOTE: Verify via dimmed portrait (mech acted) or bridge state after each mech action.
+4. Click the "End Turn" button (top-left of game UI). Wait for animations (minimum 6s).
 5. `game_loop.py read` — Check new phase:
    - COMBAT_PLAYER_TURN: next turn, go to step 2.
    - MISSION_ENDING / BETWEEN_MISSIONS: mission over, go to MISSION_END.
@@ -140,6 +162,23 @@ The main loop. Execute every turn in this exact sequence:
 3. Navigate via clicks.
 4. Transition to ISLAND_MAP for next island.
 
+### ISLAND_SELECT
+
+Appears at the start of each run (world map with 4 corporate islands). **Always pick a random island** for equal coverage across runs.
+
+1. Take screenshot to identify the island selection screen.
+2. **Randomly choose** from the 4 corporate islands: Archive Inc, R.S.T. Corporation, Pinnacle Robotics, Detritus Disposal. Use `python3 -c "import random; print(random.choice(['archive','rst','pinnacle','detritus']))"` to pick.
+3. Click the chosen island on the map. Island positions (approximate screen regions):
+   - Archive Inc: upper-left area
+   - R.S.T.: lower-left area
+   - Pinnacle: upper-right area
+   - Detritus: right area
+   If positions are unclear, hover islands to read their name tooltip before clicking.
+4. Click through the CEO intro cutscene (click CONTINUE).
+5. Transition to ISLAND_MAP.
+
+**Why random:** Equal coverage of all islands ensures the bot encounters diverse environments (tidal waves, air strikes, lightning, conveyor belts) and Vek types, improving solver robustness and achievement coverage.
+
 ### RUN_END
 
 1. `game_loop.py snapshot "run_end"` — Save final state.
@@ -165,8 +204,7 @@ All commands are subcommands of `game_loop.py`. Each is stateless: read state, c
 
 **Combat:**
 - `solve` — Run solver, store solution in session, output action sequence.
-- `execute <index>` — Execute action N via bridge command (returns ACK). Falls back to outputting a click plan for MCP execution if bridge unavailable.
-- `end_turn` — Send END_TURN via bridge (or output click plan for End Turn button if bridge unavailable).
+- `execute` / `end_turn` — **DO NOT USE.** These send bridge commands. All actions must be MCP mouse clicks.
 
 **State Recording:**
 - `read` and `solve` both auto-record full game state to `recordings/<run_id>/turn_<N>_<label>.json`. Each recording includes the complete bridge JSON (64 tiles, all units, targets, spawns) plus the solver output. Used for replay, regression testing, and solver improvement.
@@ -226,7 +264,7 @@ itb-bot/
 │   │   ├── session.py     # RunSession state, file-locked persistence
 │   │   ├── logger.py      # Append-only markdown decision log
 │   │   └── commands.py    # All CLI subcommand implementations
-│   ├── bridge/            # Lua bridge — primary state extraction + command execution
+│   ├── bridge/            # Lua bridge — state extraction only (read, never execute)
 │   │   ├── protocol.py    # IPC protocol (read/write /tmp/ files, atomic ops)
 │   │   ├── reader.py      # Read bridge state → Board construction
 │   │   └── writer.py      # Write commands for Lua to execute
@@ -236,7 +274,7 @@ itb-bot/
 │   ├── model/             # Game state dataclasses (Board, Unit, WeaponDef)
 │   ├── solver/            # Threat analysis, search, evaluation
 │   │   └── evaluate.py    # EvalWeights for configurable scoring
-│   ├── control/           # Mouse/keyboard execution
+│   ├── control/           # MCP mouse click coordinate calculation
 │   │   └── executor.py    # Per-mech click planning, portrait selection
 │   ├── strategy/          # Achievement planner, run-level decisions
 │   └── main.py            # Legacy entry point (backward compat)

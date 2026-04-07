@@ -165,6 +165,13 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         )
     else:
         result.events.append(f"Pushed {unit.type} ({x},{y})->({nx},{ny})")
+        # Check environment danger: unit won't die now, but will when
+        # the environment resolves at end of turn (tidal wave, air strike)
+        if (hasattr(board, 'environment_danger') and board.environment_danger
+                and (nx, ny) in board.environment_danger and not unit.flying):
+            result.events.append(
+                f"{unit.type} on danger tile ({nx},{ny}) -- will die at end of turn"
+            )
 
 
 def simulate_weapon(

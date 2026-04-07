@@ -16,6 +16,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     - targeted_tiles: [[x,y], ...]
     - spawning_tiles: [[x,y], ...]
     - environment_danger: [[x,y], ...]
+    - deployment_zone: [[x,y], ...] (available during deployment phase, turn 0)
     - phase: "combat_player" | "combat_enemy" | "unknown"
     - turn: int
     """

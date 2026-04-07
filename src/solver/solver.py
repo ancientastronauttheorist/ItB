@@ -65,8 +65,16 @@ def get_weapon_targets(
 
     if wdef.weapon_type == "melee":
         for nx, ny, _ in get_adjacent(mx, my):
-            if board.unit_at(nx, ny) or wdef.push != "none":
+            has_unit = board.unit_at(nx, ny) is not None
+            if has_unit:
                 targets.append((nx, ny))
+            elif wdef.push != "none":
+                # Push-capable melee can target empty tiles (e.g. to push
+                # something that moves there later), but NEVER buildings —
+                # punching a building destroys it for zero benefit.
+                tile = board.tile(nx, ny)
+                if not (tile.terrain == "building" and tile.building_hp > 0):
+                    targets.append((nx, ny))
 
     elif wdef.weapon_type in ("projectile", "pull", "laser"):
         for d, (dx, dy) in enumerate(DIRS):
@@ -382,6 +390,7 @@ def solve_turn(
     spawn_points: list[tuple[int, int]] = None,
     time_limit: float = 10.0,
     max_actions_per_mech: int = 50,
+    environment_danger: set[tuple[int, int]] = None,
 ) -> Solution:
     """Find the best sequence of mech actions for this turn.
 
@@ -394,12 +403,17 @@ def solve_turn(
         spawn_points: Next turn's Vek spawn locations.
         time_limit: Maximum search time in seconds.
         max_actions_per_mech: Limit actions per mech for pruning.
+        environment_danger: Tiles that will become deadly at end of turn
+            (tidal waves, air strikes, etc.). Non-flying units here will die.
 
     Returns:
         Solution with the best action sequence found.
     """
     start_time = time.time()
     best = Solution()
+
+    # Store environment danger on board so evaluate() and _prune_actions() can use it
+    board.environment_danger = environment_danger or set()
 
     # Include player mechs AND friendly controllable units (e.g., ArchiveArtillery)
     active_mechs = [m for m in board.mechs()
@@ -415,10 +429,28 @@ def solve_turn(
         if e.target_x >= 0:
             threat_tiles.add((e.target_x, e.target_y))
 
-    # Building-specific threats (tiles where enemy attack would hit a building)
+    # Building-specific threats — compute ACTUAL impact tiles.
+    # For projectile enemies, trace the path to find the real hit
+    # (the queued target may be behind a closer building/unit).
     building_threat_tiles = set()
-    for tx, ty, _ in board.get_threatened_buildings():
-        building_threat_tiles.add((tx, ty))
+    for e in board.enemies():
+        if e.target_x < 0:
+            continue
+        wdef = get_weapon_def(e.weapon) if e.weapon else None
+        weapon_type = wdef.weapon_type if wdef else "melee"
+        if weapon_type == "projectile":
+            # Trace projectile to find actual impact tile
+            hit_x, hit_y = _find_projectile_target(board, e)
+            if hit_x >= 0:
+                t = board.tile(hit_x, hit_y)
+                if t.terrain == "building" and t.building_hp > 0:
+                    building_threat_tiles.add((hit_x, hit_y))
+        else:
+            # Melee/other: queued target is the actual hit tile
+            tx, ty = e.target_x, e.target_y
+            t = board.tile(tx, ty)
+            if t.terrain == "building" and t.building_hp > 0:
+                building_threat_tiles.add((tx, ty))
 
     # Capture original enemy positions for pushed-melee detection
     original_positions = {e.uid: (e.x, e.y) for e in board.enemies()}
@@ -520,6 +552,27 @@ def _prune_actions(board, mech, actions, threat_tiles,
         # Spawn blocking
         if move_to in threat_tiles and move_to not in building_threat_tiles:
             s += 30
+
+        # Environment danger: avoid non-flying mechs stepping on danger tiles
+        if board.environment_danger and move_to in board.environment_danger:
+            if not mech.flying:
+                s -= 300  # mech will die when environment resolves
+
+        # Environment danger: bonus for pushing non-flying enemies onto danger tiles
+        if board.environment_danger and weapon_id and target[0] >= 0:
+            wdef_env = get_weapon_def(weapon_id) if weapon_id != "_REPAIR" else None
+            if wdef_env and wdef_env.push != "none":
+                enemy = board.unit_at(target[0], target[1])
+                if enemy and enemy.is_enemy and not enemy.flying:
+                    push_dir = direction_between(
+                        move_to[0], move_to[1], target[0], target[1]
+                    )
+                    if push_dir is not None:
+                        dest = push_destination(
+                            target[0], target[1], push_dir, board
+                        )
+                        if dest is not None and dest in board.environment_danger:
+                            s += 250  # enemy will die when environment resolves
 
         return s
 

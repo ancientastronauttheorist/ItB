@@ -86,6 +86,7 @@ class Board:
         self.units: list[Unit] = []
         self.grid_power: int = 0
         self.grid_power_max: int = 7
+        self.environment_danger: set[tuple[int, int]] = set()
 
     def copy(self) -> Board:
         """Deep copy for search branching."""
@@ -94,6 +95,7 @@ class Board:
         b.units = [deepcopy(u) for u in self.units]
         b.grid_power = self.grid_power
         b.grid_power_max = self.grid_power_max
+        b.environment_danger = set(self.environment_danger)
         return b
 
     def tile(self, x: int, y: int) -> BoardTile:
@@ -220,6 +222,12 @@ class Board:
                 if bt.terrain == "building":
                     bt.building_hp = td.get("building_hp", 1)
                     bt.population = td.get("population", 1)
+
+        # Environment danger tiles (tidal waves, air strikes, etc.)
+        # These tiles will become deadly terrain at end of turn.
+        for dt in data.get("environment_danger", []):
+            if isinstance(dt, (list, tuple)) and len(dt) >= 2:
+                board.environment_danger.add((dt[0], dt[1]))
 
         # Units
         for ud in data.get("units", []):
