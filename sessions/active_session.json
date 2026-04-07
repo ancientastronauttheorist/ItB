@@ -8,41 +8,55 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "current_turn": 1,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "TankMech",
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
         "move_to": [
-          5,
-          3
+          4,
+          5
         ],
         "weapon": "",
         "target": [
           -1,
           -1
         ],
-        "description": "TankMech, move (2,3)->(5,3)"
+        "description": "PunchMech, move (4,4)->(4,5)"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          6,
+          6
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          6,
+          5
+        ],
+        "description": "TankMech, move (7,4)->(6,6), fire Taurus Cannon at (6,5)"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
           3,
-          6
+          5
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
           6,
-          6
+          5
         ],
-        "description": "ArtiMech, move (2,6)->(3,6), fire Artemis Artillery at (6,6)"
+        "description": "ArtiMech, move (2,6)->(3,5), fire Artemis Artillery at (6,5)"
       }
     ],
-    "score": 90620.0,
-    "turn": 1
+    "score": 89950.0,
+    "turn": 3
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -80,6 +94,38 @@
       "actions": [
         "TankMech, move (2,3)->(5,3)",
         "ArtiMech, move (2,6)->(3,6), fire Artemis Artillery at (6,6)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-07T17:19:08.300007",
+      "turn": 1,
+      "label": "solve",
+      "score": 90620.0,
+      "actions": [
+        "TankMech, move (2,3)->(5,3)",
+        "ArtiMech, move (2,6)->(3,6), fire Artemis Artillery at (6,6)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-07T17:27:44.741473",
+      "turn": 2,
+      "label": "solve",
+      "score": 90960.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at (5,4)",
+        "TankMech, move (5,3)->(7,4), fire Taurus Cannon at (6,4)",
+        "ArtiMech, move (2,6)->(3,5), fire Artemis Artillery at (0,5)"
+      ]
+    },
+    {
+      "timestamp": "2026-04-07T17:46:28.174526",
+      "turn": 3,
+      "label": "solve",
+      "score": 89950.0,
+      "actions": [
+        "PunchMech, move (4,4)->(4,5)",
+        "TankMech, move (7,4)->(6,6), fire Taurus Cannon at (6,5)",
+        "ArtiMech, move (2,6)->(3,5), fire Artemis Artillery at (6,5)"
       ]
     }
   ]

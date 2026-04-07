@@ -1,24 +1,11 @@
 {
-  "timestamp": "2026-04-07T17:18:54.751324",
+  "timestamp": "2026-04-07T17:46:02.214501",
   "run_id": "20260407_160643",
-  "turn": 1,
+  "turn": 3,
   "label": "board",
   "data": {
     "bridge_state": {
-      "spawning_tiles": [
-        [
-          5,
-          3
-        ],
-        [
-          7,
-          3
-        ],
-        [
-          7,
-          5
-        ]
-      ],
+      "spawning_tiles": [],
       "tiles": [
         {
           "y": 0,
@@ -119,50 +106,50 @@
         {
           "y": 2,
           "x": 0,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 2,
           "x": 1,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 2,
           "x": 2,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 2,
           "x": 3,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 2,
           "x": 4,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 2,
           "x": 5,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 2,
           "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 2,
           "x": 7,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 3,
@@ -175,44 +162,44 @@
         {
           "y": 3,
           "x": 1,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 3,
           "x": 2,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 3,
           "x": 3,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 3,
           "x": 4,
-          "terrain_id": 6,
-          "terrain": "forest"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 3,
           "x": 5,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 3,
           "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 3,
           "x": 7,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 4,
@@ -258,9 +245,10 @@
         },
         {
           "y": 4,
-          "x": 6,
-          "terrain_id": 6,
-          "terrain": "forest"
+          "terrain_id": 0,
+          "terrain": "ground",
+          "fire": true,
+          "x": 6
         },
         {
           "y": 4,
@@ -290,7 +278,7 @@
           "y": 5,
           "terrain_id": 1,
           "terrain": "building",
-          "building_hp": 1,
+          "building_hp": 0,
           "population": 1,
           "x": 3
         },
@@ -358,9 +346,10 @@
         },
         {
           "y": 6,
-          "x": 6,
-          "terrain_id": 6,
-          "terrain": "forest"
+          "terrain_id": 0,
+          "terrain": "ground",
+          "fire": true,
+          "x": 6
         },
         {
           "y": 6,
@@ -420,60 +409,43 @@
       "grid_power_max": 7,
       "phase": "combat_player",
       "grid_power": 5,
-      "turn": 1,
+      "turn": 3,
       "attack_order": [
-        392,
-        394
+        406
       ],
       "environment_danger": [
         [
-          0,
-          2
-        ],
-        [
           1,
-          2
-        ],
-        [
-          2,
-          2
-        ],
-        [
-          3,
-          2
-        ],
-        [
-          4,
-          2
-        ],
-        [
-          5,
-          2
-        ],
-        [
-          6,
-          2
-        ],
-        [
-          7,
-          2
-        ]
-      ],
-      "timestamp": 1775600334,
-      "targeted_tiles": [
-        [
-          2,
           4
         ],
         [
-          3,
+          4,
+          4
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          4
+        ]
+      ],
+      "timestamp": 1775601962,
+      "targeted_tiles": [
+        [
+          5,
           5
         ]
       ],
       "units": [
         {
           "web": false,
-          "active": false,
+          "active": true,
           "shield": false,
           "hp": 3,
           "flying": false,
@@ -496,7 +468,7 @@
           "web": false,
           "active": true,
           "shield": false,
-          "hp": 3,
+          "hp": 1,
           "flying": false,
           "team": 1,
           "max_hp": 3,
@@ -507,10 +479,10 @@
           "acid": false,
           "uid": 1,
           "type": "TankMech",
-          "x": 2,
+          "x": 7,
           "fire": false,
           "mech": true,
-          "y": 3,
+          "y": 4,
           "frozen": false
         },
         {
@@ -539,57 +511,47 @@
           "active": false,
           "shield": false,
           "hp": 2,
-          "weapon_push": 0,
-          "flying": false,
+          "flying": true,
           "team": 6,
           "max_hp": 2,
-          "move": 3,
-          "weapon_target_behind": false,
-          "queued_target": [
-            3,
-            5
-          ],
-          "has_queued_attack": true,
-          "weapons": [
-            "ScarabAtk1"
-          ],
-          "weapon_damage": 1,
+          "move": 2,
+          "weapons": [],
           "acid": false,
-          "uid": 392,
-          "type": "Scarab1",
-          "x": 6,
+          "uid": 400,
+          "type": "Jelly_Health1",
+          "x": 5,
           "fire": false,
           "mech": false,
-          "y": 5,
+          "y": 4,
           "frozen": false
         },
         {
           "web": false,
           "active": false,
           "shield": false,
-          "hp": 1,
+          "hp": 4,
           "weapon_push": 0,
           "flying": false,
           "team": 6,
-          "max_hp": 2,
-          "move": 3,
+          "max_hp": 3,
+          "move": 2,
           "weapon_target_behind": false,
           "queued_target": [
-            2,
-            4
+            5,
+            5
           ],
           "has_queued_attack": true,
           "weapons": [
-            "ScarabAtk1"
+            "FireflyAtk1"
           ],
           "weapon_damage": 1,
           "acid": false,
-          "uid": 394,
-          "type": "Scarab1",
+          "uid": 406,
+          "type": "Firefly1",
           "x": 6,
           "fire": false,
           "mech": false,
-          "y": 4,
+          "y": 5,
           "frozen": false
         }
       ]
@@ -597,7 +559,7 @@
     "result_summary": {
       "phase": "combat_player",
       "source": "bridge",
-      "turn": 1,
+      "turn": 3,
       "grid_power": "5/7",
       "mechs": [
         {
@@ -605,12 +567,12 @@
           "pos": "(4,4)",
           "hp": "3/3",
           "weapon": "Titan Fist",
-          "status": "DONE"
+          "status": "READY"
         },
         {
           "type": "TankMech",
-          "pos": "(2,3)",
-          "hp": "3/3",
+          "pos": "(7,4)",
+          "hp": "1/3",
           "weapon": "Taurus Cannon",
           "status": "READY"
         },
@@ -622,60 +584,47 @@
           "status": "READY"
         }
       ],
-      "active_mechs": 2,
+      "active_mechs": 3,
       "enemies": [
         {
-          "type": "Scarab1",
-          "pos": "(6,5)",
+          "type": "Jelly_Health1",
+          "pos": "(5,4)",
           "hp": "2/2",
-          "target": " -> (3,5)"
+          "target": ""
         },
         {
-          "type": "Scarab1",
-          "pos": "(6,4)",
-          "hp": "1/2",
-          "target": " -> (2,4)"
+          "type": "Firefly1",
+          "pos": "(6,5)",
+          "hp": "4/3",
+          "target": " -> (5,5)"
         }
       ],
-      "threatened_buildings": 2,
+      "threatened_buildings": 1,
       "threats": [
-        "Building (3,5) by Scarab1 at (6,5)",
-        "Building (2,4) by Scarab1 at (6,4)"
+        "Building (5,5) by Firefly1 at (6,5)"
       ],
-      "targeted_tiles": 2,
-      "spawn_points": 3,
+      "targeted_tiles": 1,
+      "spawn_points": 0,
       "environment_danger": [
         {
-          "bridge": "(0,2)",
-          "visual": "F8"
+          "bridge": "(1,4)",
+          "visual": "D7"
         },
         {
-          "bridge": "(1,2)",
-          "visual": "F7"
+          "bridge": "(4,4)",
+          "visual": "D4"
         },
         {
-          "bridge": "(2,2)",
-          "visual": "F6"
+          "bridge": "(5,4)",
+          "visual": "D3"
         },
         {
-          "bridge": "(3,2)",
-          "visual": "F5"
+          "bridge": "(6,4)",
+          "visual": "D2"
         },
         {
-          "bridge": "(4,2)",
-          "visual": "F4"
-        },
-        {
-          "bridge": "(5,2)",
-          "visual": "F3"
-        },
-        {
-          "bridge": "(6,2)",
-          "visual": "F2"
-        },
-        {
-          "bridge": "(7,2)",
-          "visual": "F1"
+          "bridge": "(7,4)",
+          "visual": "D1"
         }
       ]
     }
