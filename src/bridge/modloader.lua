@@ -16,8 +16,8 @@ local ACK_TMP    = "/tmp/itb_ack.tmp"
 local LOG_FILE   = "/tmp/itb_bridge.log"
 
 local TERRAIN_NAMES = {
-    [0] = "ground", [1] = "building", [2] = "rubble", [3] = "mountain",
-    [4] = "water", [5] = "lava", [6] = "forest", [7] = "sand",
+    [0] = "ground", [1] = "building", [2] = "rubble", [3] = "water",
+    [4] = "mountain", [5] = "lava", [6] = "forest", [7] = "sand",
     [8] = "ice", [9] = "chasm",
 }
 
@@ -131,6 +131,7 @@ local function dump_state()
             local tile = {
                 x = x, y = y,
                 terrain = TERRAIN_NAMES[terrain_id] or "ground",
+                terrain_id = terrain_id,
             }
 
             -- Status effects

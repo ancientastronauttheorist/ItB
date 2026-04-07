@@ -211,7 +211,12 @@ class Board:
             x, y = td["x"], td["y"]
             if 0 <= x < 8 and 0 <= y < 8:
                 bt = board.tile(x, y)
-                bt.terrain = td.get("terrain", "ground")
+                raw_terrain = td.get("terrain", "ground")
+                # Fix terrain ID swap: game uses 3=water, 4=mountain
+                # but old Lua bridge had them reversed. Correct here
+                # until the bridge Lua is reloaded with the fix.
+                _TERRAIN_FIX = {"water": "mountain", "mountain": "water"}
+                bt.terrain = _TERRAIN_FIX.get(raw_terrain, raw_terrain)
                 bt.on_fire = td.get("fire", False)
                 bt.smoke = td.get("smoke", False)
                 bt.acid = td.get("acid", False)
