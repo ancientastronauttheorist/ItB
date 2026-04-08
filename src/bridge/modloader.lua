@@ -209,6 +209,10 @@ local function dump_state()
             if terrain_id == 1 then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
                 if ok_h then tile.building_hp = hp end
+            -- Mountain data (2 = full, 1 = damaged, 0 = rubble)
+            elseif terrain_id == 4 then
+                local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
+                if ok_h then tile.building_hp = hp else tile.building_hp = 2 end
                 tile.population = 1
             end
 
