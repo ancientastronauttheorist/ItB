@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-04-08T02:29:27.636523",
+  "run_id": "20260408_002048",
+  "turn": 4,
+  "label": "solve",
+  "data": {
+    "score": 285350.0,
+    "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          4,
+          2
+        ],
+        "weapon": "Taurus Cannon",
+        "target": [
+          5,
+          2
+        ],
+        "description": "TankMech, fire Taurus Cannon at F3"
+      }
+    ],
+    "threats": 1,
+    "active_mechs": 1,
+    "spawn_points": [],
+    "search_stats": {
+      "elapsed_seconds": 0.0008401870727539062,
+      "timed_out": false,
+      "permutations_tried": 1,
+      "total_permutations": 1,
+      "active_mech_count": 1
+    },
+    "action_results": [
+      {
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 0,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
+          "Unknown weapon: Taurus Cannon"
+        ]
+      }
+    ],
+    "predicted_outcome": {
+      "buildings_alive": 5,
+      "building_hp_total": 6,
+      "grid_power": 0,
+      "enemies_alive": 4,
+      "enemy_hp_total": 12,
+      "mechs_alive": 0,
+      "mech_hp": [],
+      "buildings_destroyed_by_enemies": 4
+    },
+    "score_breakdown": {
+      "total": 309300.0,
+      "grid_multiplier": 5.0,
+      "buildings_alive": {
+        "count": 5,
+        "score": 250000.0
+      },
+      "building_hp": {
+        "total": 6,
+        "score": 60000.0
+      },
+      "grid_power": {
+        "value": 0,
+        "score": 0
+      },
+      "enemies_killed": {
+        "count": 0,
+        "score": 0
+      },
+      "enemy_hp_remaining": {
+        "total": 12,
+        "score": -600
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 0,
+        "dead": 0,
+        "total_hp": 0,
+        "score": 0.0
+      },
+      "spawns_blocked": {
+        "count": 0,
+        "score": 0
+      },
+      "pods": {
+        "uncollected": 1,
+        "proximity": 0,
+        "score": -100.0
+      }
+    }
+  }
+}

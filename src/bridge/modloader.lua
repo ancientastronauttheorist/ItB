@@ -100,6 +100,35 @@ local function _read_queued_shots()
 end
 
 --------------------------------------------------------------------
+-- Read conveyor belt data from save file
+-- Returns table: { "x,y" = direction_int } for conveyor tiles
+-- Direction: 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)
+--------------------------------------------------------------------
+local function _read_conveyor_belts()
+    local belts = {}
+    local save_path = os.getenv("HOME") ..
+        "/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    local sf = io.open(save_path, "r")
+    if not sf then return belts end
+    local content = sf:read("*a")
+    sf:close()
+
+    -- Match: ["loc"] = Point( x, y ), ... ["custom"] = "conveyorN.png"
+    -- These appear in the map_data.map array
+    for loc_x, loc_y, custom in content:gmatch(
+        '%["loc"%]%s*=%s*Point%(%s*(%d+)%s*,%s*(%d+)%s*%).-'
+        .. '%["custom"%]%s*=%s*"(conveyor%d+%.png)"'
+    ) do
+        local dir = custom:match("conveyor(%d+)")
+        if dir then
+            local key = loc_x .. "," .. loc_y
+            belts[key] = tonumber(dir)
+        end
+    end
+    return belts
+end
+
+--------------------------------------------------------------------
 -- State serializer: Board → JSON
 --------------------------------------------------------------------
 local function dump_state()
@@ -121,6 +150,9 @@ local function dump_state()
     state.grid_power = GameData and GameData.network or 0
     state.grid_power_max = GameData and GameData.networkMax or 7
     state.timestamp = os.time()
+
+    -- Read conveyor belt data from save file
+    local conveyor_belts = _read_conveyor_belts()
 
     -- Tiles (all 64)
     state.tiles = {}
@@ -145,6 +177,10 @@ local function dump_state()
             if ok_fr and frozen then tile.frozen = true end
             local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)
             if ok_cr and cracked then tile.cracked = true end
+
+            -- Conveyor belt direction (from save file)
+            local belt_dir = conveyor_belts[x .. "," .. y]
+            if belt_dir then tile.conveyor = belt_dir end
 
             -- Building data
             if terrain_id == 1 then

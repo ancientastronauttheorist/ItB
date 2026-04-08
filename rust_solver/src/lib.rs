@@ -26,7 +26,7 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
             &board,
             &spawn_points,
             time_limit,
-            50, // max_actions_per_mech
+            99999, // no pruning — Rust is fast enough to search exhaustively
             &weights,
         );
 

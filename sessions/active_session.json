@@ -8,69 +8,55 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "current_turn": 1,
+  "current_turn": 2,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 92,
-        "mech_type": "Acid_Tank",
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
         "move_to": [
           4,
-          2
+          5
         ],
-        "weapon": "Acid Tank Attack",
+        "weapon": "Titan Fist",
         "target": [
-          3,
-          2
+          4,
+          6
         ],
-        "description": "Acid_Tank, move E6\u2192F4, fire Acid Tank Attack at F5"
+        "description": "PunchMech, move D4\u2192C4, fire Titan Fist at B4"
       },
       {
         "mech_uid": 1,
         "mech_type": "TankMech",
         "move_to": [
           1,
-          4
+          1
         ],
         "weapon": "Taurus Cannon",
         "target": [
-          1,
-          5
+          2,
+          1
         ],
-        "description": "TankMech, move C5\u2192D7, fire Taurus Cannon at C7"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "PunchMech",
-        "move_to": [
-          3,
-          5
-        ],
-        "weapon": "Titan Fist",
-        "target": [
-          4,
-          5
-        ],
-        "description": "PunchMech, move D6\u2192C5, fire Titan Fist at C4"
+        "description": "TankMech, move E7\u2192G7, fire Taurus Cannon at G6"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
-          3,
-          6
+          1,
+          2
         ],
         "weapon": "Artemis Artillery",
         "target": [
-          3,
+          5,
           2
         ],
-        "description": "ArtiMech, move B7\u2192B5, fire Artemis Artillery at F5"
+        "description": "ArtiMech, move E5\u2192F7, fire Artemis Artillery at F3"
       }
     ],
-    "score": 452460.0,
-    "turn": 1
+    "score": 446695.0,
+    "turn": 2
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -124,6 +110,74 @@
         "TankMech, move C5\u2192D7, fire Taurus Cannon at C7",
         "PunchMech, move D6\u2192C5, fire Titan Fist at C4",
         "ArtiMech, move B7\u2192B5, fire Artemis Artillery at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T02:13:14.365836",
+      "turn": 2,
+      "label": "solve",
+      "score": 451345.0,
+      "actions": [
+        "PunchMech, move C5\u2192C2, fire Titan Fist at D2",
+        "TankMech, move D7\u2192E6",
+        "ArtiMech, move B5\u2192B2, fire Artemis Artillery at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T02:18:07.167388",
+      "turn": 2,
+      "label": "solve",
+      "score": 450205.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at D2",
+        "TankMech, move E6\u2192F4, fire Taurus Cannon at F3",
+        "ArtiMech, move B2\u2192D2, fire Artemis Artillery at H2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T02:24:13.911419",
+      "turn": 4,
+      "label": "solve",
+      "score": 374125.0,
+      "actions": [
+        "TankMech, move F4\u2192H3, fire Taurus Cannon at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T02:29:27.633445",
+      "turn": 4,
+      "label": "solve",
+      "score": 285350.0,
+      "actions": [
+        "TankMech, fire Taurus Cannon at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T02:39:45.479881",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission 2 (Containment Zone J) complete. Region secured but all 3 pilots KIA. Grid power critical at 1/7. Got Reactor Core from time pod. Solver fix deployed mid-mission: enemy units now correctly hard-block movement (was allowing pathing through enemies). Next: island map with 3 remaining missions on Detritus Disposal."
+    },
+    {
+      "timestamp": "2026-04-08T12:27:37.871296",
+      "turn": 1,
+      "label": "solve",
+      "score": 446370.0,
+      "actions": [
+        "TankMech, fire Taurus Cannon at D7",
+        "PunchMech, move C7\u2192C4, fire Titan Fist at B4",
+        "ArtiMech, move F7\u2192E5, fire Artemis Artillery at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T12:40:19.183854",
+      "turn": 2,
+      "label": "solve",
+      "score": 446695.0,
+      "actions": [
+        "PunchMech, move D4\u2192C4, fire Titan Fist at B4",
+        "TankMech, move E7\u2192G7, fire Taurus Cannon at G6",
+        "ArtiMech, move E5\u2192F7, fire Artemis Artillery at F3"
       ]
     }
   ]

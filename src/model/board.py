@@ -75,6 +75,7 @@ class BoardTile:
     acid: bool = False
     frozen: bool = False
     cracked: bool = False    # ice tile that's been hit once (next hit → water)
+    conveyor: int = -1       # -1 = not conveyor, 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)
 
 
 class Board:
@@ -233,6 +234,8 @@ class Board:
                 bt.frozen = td.get("frozen", False)
                 bt.cracked = td.get("cracked", False)
                 bt.has_pod = td.get("pod", False)
+                if "conveyor" in td:
+                    bt.conveyor = td["conveyor"]
                 if bt.terrain == "building":
                     bt.building_hp = td.get("building_hp", 1)
                     bt.population = td.get("population", 1)
@@ -322,6 +325,8 @@ class Board:
                     c = sym.get(t.terrain, "?")
                     if t.on_fire:
                         c = "*"
+                    elif t.conveyor >= 0:
+                        c = ["\u2192", "\u2193", "\u2190", "\u2191"][t.conveyor]  # →↓←↑
                     row.append(c)
             print(f"  {8 - x} {'  '.join(row)}")
         cols = [chr(72 - y) for y in range(8)]
