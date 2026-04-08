@@ -147,8 +147,15 @@ local function dump_state()
     end
 
     state.turn = Game and Game:GetTurnCount() or 0
-    state.grid_power = GameData and GameData.network or 0
-    state.grid_power_max = GameData and GameData.networkMax or 7
+    -- Live grid power from Game API (not stale save file GameData.network)
+    local ok_gp, gp = pcall(function() return Game:GetPower() end)
+    if ok_gp and gp then
+        state.grid_power = gp.iPower or 0
+        state.grid_power_max = gp.iMax or 7
+    else
+        state.grid_power = GameData and GameData.network or 0
+        state.grid_power_max = GameData and GameData.networkMax or 7
+    end
     state.timestamp = os.time()
 
     -- Read conveyor belt data from save file

@@ -89,6 +89,7 @@ class Board:
         self.grid_power: int = 0
         self.grid_power_max: int = 7
         self.environment_danger: set[tuple[int, int]] = set()
+        self.blast_psion_active: bool = False
 
     def copy(self) -> Board:
         """Deep copy for search branching."""
@@ -98,6 +99,7 @@ class Board:
         b.grid_power = self.grid_power
         b.grid_power_max = self.grid_power_max
         b.environment_danger = set(self.environment_danger)
+        b.blast_psion_active = self.blast_psion_active
         return b
 
     def tile(self, x: int, y: int) -> BoardTile:
@@ -295,6 +297,11 @@ class Board:
                 weapon_push=ud.get("weapon_push", 0),
             )
             board.units.append(u)
+
+        # Detect Blast Psion: if alive on board, all Vek explode on death
+        board.blast_psion_active = any(
+            u.type == "Jelly_Explode1" and u.hp > 0 for u in board.units
+        )
 
         return board
 

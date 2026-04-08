@@ -173,6 +173,7 @@ pub struct Board {
     pub grid_power: u8,
     pub grid_power_max: u8,
     pub env_danger: u64, // bitset: bit i = tile i is danger
+    pub blast_psion: bool, // Blast Psion alive: all Vek explode on death (1 dmg adjacent)
 }
 
 impl Default for Board {
@@ -184,6 +185,7 @@ impl Default for Board {
             grid_power: 7,
             grid_power_max: 7,
             env_danger: 0,
+            blast_psion: false,
         }
     }
 }

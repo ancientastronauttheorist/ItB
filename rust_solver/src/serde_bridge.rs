@@ -188,6 +188,14 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         }
     }
 
+    // Detect Blast Psion: if Jelly_Explode1 is alive, all Vek explode on death
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Explode1" && board.units[i].hp > 0 {
+            board.blast_psion = true;
+            break;
+        }
+    }
+
     Ok((board, spawn_points, danger_tiles))
 }
 

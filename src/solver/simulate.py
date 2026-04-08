@@ -31,6 +31,43 @@ class ActionResult:
     events: list[str] = field(default_factory=list)
 
 
+def _apply_death_explosion(board: Board, x: int, y: int, dead_type: str,
+                           result: ActionResult, depth: int = 0) -> None:
+    """Apply Blast Psion death explosion: 1 damage to all 4 adjacent tiles.
+
+    Triggered when an enemy Vek dies while a Blast Psion is alive on the board.
+    The Blast Psion itself does NOT explode (it grants the effect to others).
+    Chain reactions are supported with a depth limit to prevent infinite loops.
+    """
+    if depth > 8:
+        return  # safety limit for chain reactions
+
+    result.events.append(f"Death explosion at ({x},{y}) from {dead_type}")
+
+    for dx, dy in DIRS:
+        nx, ny = x + dx, y + dy
+        if not board.in_bounds(nx, ny):
+            continue
+
+        # Check for chain kills BEFORE applying damage
+        adj_unit = board.unit_at(nx, ny)
+        adj_was_alive = adj_unit and adj_unit.hp > 0 and adj_unit.is_enemy if adj_unit else False
+        adj_type = adj_unit.type if adj_unit else ""
+
+        # Explosion damage (1, treated like bump — ignores armor/acid)
+        apply_damage(board, nx, ny, 1, result, "bump")
+
+        # Chain reaction: if an enemy just died from this explosion, it also explodes
+        if adj_was_alive and adj_unit.hp <= 0:
+            # Check if blast psion is still alive (killing it stops future explosions)
+            psion_alive = any(
+                u.type == "Jelly_Explode1" and u.hp > 0
+                for u in board.units
+            )
+            if psion_alive and adj_type != "Jelly_Explode1":
+                _apply_death_explosion(board, nx, ny, adj_type, result, depth + 1)
+
+
 def apply_damage(board: Board, x: int, y: int, damage: int,
                  result: ActionResult, source: str = "") -> None:
     """Apply damage to whatever is at (x, y).
@@ -47,6 +84,7 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
     tile = board.tile(x, y)
 
     if unit and damage > 0:
+        was_alive = unit.hp > 0
         # Shield blocks one damage instance (any source except chasm/deadly)
         # and prevents negative status effects. Consumed after blocking.
         if unit.shield:
@@ -74,6 +112,10 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                 if unit.hp <= 0:
                     result.enemies_killed += 1
                     result.events.append(f"Killed {unit.type} at ({x},{y})")
+                    # Blast Psion death explosion: all Vek explode on death
+                    if (was_alive and board.blast_psion_active
+                            and unit.type != "Jelly_Explode1"):
+                        _apply_death_explosion(board, x, y, unit.type, result)
             elif unit.is_player:
                 result.mech_damage_taken += actual
                 if unit.hp <= 0:
@@ -211,6 +253,10 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         unit.hp = 0
         if unit.is_enemy:
             result.enemies_killed += 1
+            # Blast Psion: Vek dying in deadly terrain also explodes
+            if (board.blast_psion_active
+                    and unit.type != "Jelly_Explode1"):
+                _apply_death_explosion(board, nx, ny, unit.type, result)
         elif unit.is_player:
             result.mechs_killed += 1
         result.events.append(

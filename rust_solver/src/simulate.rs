@@ -8,11 +8,54 @@ use crate::board::*;
 use crate::weapons::*;
 use crate::movement::direction_between;
 
+// ── Blast Psion death explosion ──────────────────────────────────────────────
+
+/// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
+/// Called when an enemy Vek dies while Blast Psion is alive on the board.
+/// Handles chain reactions (explosion kills another Vek → another explosion).
+fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
+    if depth > 8 { return; } // safety limit for chain reactions
+
+    for &(dx, dy) in &DIRS {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if nx < 0 || nx >= 8 || ny < 0 || ny >= 8 { continue; }
+        let nx = nx as u8;
+        let ny = ny as u8;
+
+        // Pre-check: is there an alive non-Psion enemy that could chain-explode?
+        let chain_check = if board.blast_psion {
+            board.unit_at(nx, ny).and_then(|idx| {
+                let u = &board.units[idx];
+                if u.is_enemy() && u.hp > 0 && u.type_name_str() != "Jelly_Explode1" {
+                    Some(idx)
+                } else { None }
+            })
+        } else { None };
+
+        // Apply 1 bump damage (ignores armor/acid)
+        apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
+
+        // Chain reaction: if that enemy just died, it also explodes
+        if let Some(idx) = chain_check {
+            if board.units[idx].hp <= 0 {
+                // Check if Blast Psion is still alive (killing it stops future explosions)
+                let psion_alive = (0..board.unit_count as usize).any(|i| {
+                    board.units[i].type_name_str() == "Jelly_Explode1" && board.units[i].hp > 0
+                });
+                if psion_alive {
+                    apply_death_explosion(board, nx, ny, result, depth + 1);
+                }
+            }
+        }
+    }
+}
+
 // ── apply_damage ─────────────────────────────────────────────────────────────
 
-/// Apply damage to whatever is at (x, y).
-/// Source: Bump/Fire bypass armor and acid. Normal/Self respects them.
-pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
+/// Internal damage logic without death explosion processing.
+/// Used by apply_death_explosion to avoid double-triggering.
+fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
 
     // Damage unit if present
@@ -24,7 +67,6 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
             unit.set_shield(false);
         } else if unit.frozen() {
             // Frozen = invincible, damage unfreezes (0 actual damage)
-            // Fire damage unfreezes AND sets on fire (not yet implemented per Python TODO)
             unit.set_frozen(false);
         } else {
             let actual = match source {
@@ -88,6 +130,32 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
             }
         } else {
             tile.set_cracked(true);
+        }
+    }
+}
+
+/// Apply damage to whatever is at (x, y), including Blast Psion death explosions.
+/// Source: Bump/Fire bypass armor and acid. Normal/Self respects them.
+pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
+    if damage == 0 { return; }
+
+    // Pre-check: track alive non-Psion enemy for death explosion
+    let death_check = if board.blast_psion {
+        board.unit_at(x, y).and_then(|idx| {
+            let u = &board.units[idx];
+            if u.is_enemy() && u.hp > 0 && u.type_name_str() != "Jelly_Explode1" {
+                Some(idx)
+            } else { None }
+        })
+    } else { None };
+
+    // Apply core damage
+    apply_damage_core(board, x, y, damage, result, source);
+
+    // Blast Psion death explosion: if tracked enemy just died, explode
+    if let Some(idx) = death_check {
+        if board.units[idx].hp <= 0 {
+            apply_death_explosion(board, x, y, result, 0);
         }
     }
 }
@@ -167,10 +235,16 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     let dest_terrain = board.tile(nx, ny).terrain;
 
     if dest_terrain.is_deadly_ground() && !eff_flying {
+        let is_enemy = board.units[unit_idx].is_enemy();
+        let can_explode = is_enemy && board.blast_psion
+            && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
         let unit = &mut board.units[unit_idx];
         unit.hp = 0;
-        if unit.is_enemy() {
+        if is_enemy {
             result.enemies_killed += 1;
+            if can_explode {
+                apply_death_explosion(board, nx, ny, result, 0);
+            }
         } else if unit.is_player() {
             result.mechs_killed += 1;
         }
