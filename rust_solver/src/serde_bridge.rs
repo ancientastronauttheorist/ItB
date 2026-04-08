@@ -17,6 +17,8 @@ pub struct JsonInput {
     pub units: Option<Vec<JsonUnit>>,
     pub grid_power: Option<u8>,
     pub grid_power_max: Option<u8>,
+    pub turn: Option<u8>,
+    pub total_turns: Option<u8>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
 }
@@ -189,6 +191,10 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             board.add_unit(unit);
         }
     }
+
+    // Turn info
+    board.current_turn = input.turn.unwrap_or(0);
+    board.total_turns = input.total_turns.unwrap_or(5);
 
     // Detect Blast Psion: if Jelly_Explode1 is alive, all Vek explode on death
     for i in 0..board.unit_count as usize {

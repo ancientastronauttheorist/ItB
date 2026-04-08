@@ -174,6 +174,8 @@ pub struct Board {
     pub grid_power_max: u8,
     pub env_danger: u64, // bitset: bit i = tile i is danger
     pub blast_psion: bool, // Blast Psion alive: all Vek explode on death (1 dmg adjacent)
+    pub current_turn: u8,  // 0-indexed (0 = deployment, 1 = first combat turn)
+    pub total_turns: u8,   // Mission length (typically 5, train/tidal = 4)
 }
 
 impl Default for Board {
@@ -186,6 +188,8 @@ impl Default for Board {
             grid_power_max: 7,
             env_danger: 0,
             blast_psion: false,
+            current_turn: 0,
+            total_turns: 5,
         }
     }
 }

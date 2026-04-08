@@ -148,6 +148,7 @@ local function dump_state()
     end
 
     state.turn = Game and Game:GetTurnCount() or 0
+    state.total_turns = 5  -- Standard mission length (no Lua API for this; 4 for train/tidal missions)
 
     -- Read all save-file-derived data in one I/O pass (grid power, queued shots, conveyors)
     local save_data = _read_save_data()

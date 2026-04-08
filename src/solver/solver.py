@@ -372,7 +372,9 @@ def _search_recursive(
         # All mechs acted — simulate enemy attacks and evaluate
         b_eval = board.copy()
         _simulate_enemy_attacks(b_eval, original_positions)
-        score = evaluate(b_eval, spawn_pts, kills=kills_so_far)
+        score = evaluate(b_eval, spawn_pts, kills=kills_so_far,
+                         current_turn=getattr(board, '_current_turn', 0),
+                         total_turns=getattr(board, '_total_turns', 5))
         # Tiny penalty for wasted attacks — just enough to prefer
         # move-only over firing at empty tiles when all else is equal
         score -= wasted_attacks_so_far * 5
