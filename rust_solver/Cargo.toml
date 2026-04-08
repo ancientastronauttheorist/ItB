@@ -1,0 +1,20 @@
+[package]
+name = "itb-solver"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "itb_solver"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rayon = "1.10"
+bitflags = "2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

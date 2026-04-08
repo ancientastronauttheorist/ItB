@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-04-07T19:46:30.346474",
+  "run_id": "20260407_160643",
+  "turn": 2,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_damage_unexpected",
+        "tier": 1,
+        "severity": "high",
+        "details": "TankMech: predicted HP 3, actual 2 (-1)"
+      },
+      {
+        "trigger": "mech_damage_unexpected",
+        "tier": 1,
+        "severity": "high",
+        "details": "ArtiMech: predicted HP 2, actual 1 (-1)"
+      },
+      {
+        "trigger": "solver_timeout",
+        "tier": 3,
+        "severity": "medium",
+        "details": "Timed out after 15.0s, tried 1/24 permutations"
+      }
+    ],
+    "trigger_count": 3,
+    "severity_counts": {
+      "critical": 0,
+      "high": 2,
+      "medium": 1
+    }
+  }
+}

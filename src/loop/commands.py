@@ -518,12 +518,58 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         _print_result(result)
         return result
 
-    # Run solver
+    # Run solver — try Rust (fast) first, fall back to Python
     print(f"\nSolving ({len(active_mechs)} active mechs, {time_limit}s limit)...")
     if environment_danger:
         print(f"  Environment danger: {len(environment_danger)} tiles")
-    solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
-                          environment_danger=environment_danger)
+
+    solution = None
+
+    # Try Rust solver if bridge data available
+    if bridge_data is not None:
+        try:
+            import itb_solver as _rust
+            import json as _json
+            import time as _time
+            rust_start = _time.time()
+            rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
+            rust_result = _json.loads(rust_json)
+            rust_elapsed = _time.time() - rust_start
+
+            if rust_result.get("actions"):
+                # Convert Rust result to Python Solution/MechAction objects
+                from src.solver.solver import Solution, MechAction
+                rust_actions = []
+                for ra in rust_result["actions"]:
+                    rust_actions.append(MechAction(
+                        mech_uid=ra["mech_uid"],
+                        mech_type=ra["mech_type"],
+                        move_to=tuple(ra["move_to"]),
+                        weapon=ra.get("weapon", ""),
+                        target=tuple(ra["target"]),
+                        description=ra["description"],
+                    ))
+                solution = Solution(
+                    actions=rust_actions,
+                    score=rust_result["score"],
+                    elapsed_seconds=rust_elapsed,
+                    timed_out=rust_result["stats"].get("timed_out", False),
+                    permutations_tried=rust_result["stats"].get("permutations_tried", 0),
+                    total_permutations=rust_result["stats"].get("total_permutations", 0),
+                    active_mech_count=len(active_mechs),
+                )
+                print(f"  Rust solver: {rust_elapsed:.2f}s, score={solution.score:.0f}, "
+                      f"{solution.permutations_tried}/{solution.total_permutations} permutations"
+                      f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
+        except ImportError:
+            pass  # Rust solver not installed, fall back to Python
+        except Exception as e:
+            print(f"  Rust solver error: {e} — falling back to Python")
+
+    # Fall back to Python solver
+    if solution is None:
+        solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
+                              environment_danger=environment_danger)
 
     if not solution.actions:
         result = {

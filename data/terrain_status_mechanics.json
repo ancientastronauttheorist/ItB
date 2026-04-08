@@ -181,7 +181,7 @@
         "Buildings can be set on fire without taking damage",
         "Buildings can be frozen - Frozen buildings are invincible; any damage destroys the ice but not the building",
         "Buildings are immune to fire damage",
-        "Pushing a unit into a building deals bump damage to the pushed unit (building is not damaged by the push)",
+        "Pushing a unit into a building deals 1 bump damage to BOTH the pushed unit AND the building. Building damage costs grid power. (Empirically verified in v1.2.93 — wiki sources claiming buildings are immune to bump damage are incorrect.)",
         "Called 'Powered Building' on R.S.T. Corporation island",
         "Grid Defense resist mechanic uses seeded RNG - resists are predetermined and can be 'fished' via Reset Turn"
       ]
@@ -877,7 +877,7 @@
       "normal_damage": "Any damage destroys ALL buildings on the tile at once, reducing Grid Power by that amount. Tile becomes Building Rubble (ground).",
       "grid_defense": "Each hit has a percentage chance to be resisted based on Grid Defense stat. If resisted, no damage occurs.",
       "fire_damage": "Buildings are IMMUNE to fire. Fire can be set on a building tile without damaging it.",
-      "push_into_building": "Pushing a unit into a building causes bump damage to the pushed unit. The building is NOT damaged by the collision.",
+      "push_into_building": "Pushing a unit into a building deals 1 bump damage to BOTH the pushed unit AND the building. Building damage costs grid power. (Empirically verified in v1.2.93 — wiki sources claiming buildings are immune to bump damage are incorrect.)",
       "frozen_building": "Any damage breaks the ice but leaves the building unharmed. Acts as a free one-hit protection.",
       "shielded_building": "Shield absorbs one hit of damage. Auto-Shields passive grants shield after first hit."
     },
@@ -941,7 +941,7 @@
         "affected_by_boost": true
       },
       "push_collision_damage": {
-        "description": "Damage dealt when a pushed unit collides with an obstacle (wall, mountain, building, another unit). Always 1 damage to the pushed unit. If pushed into another unit, both take 1 damage.",
+        "description": "Damage dealt when a pushed unit collides with an obstacle (wall, mountain, building, another unit). Always 1 damage to the pushed unit. If pushed into another unit or building, both take 1 damage. Building bump damage costs grid power. (Empirically verified in v1.2.93.)",
         "amount": 1,
         "affected_by_armor": false,
         "affected_by_acid": false,
@@ -949,7 +949,7 @@
         "details": [
           "Pushing into map edge: 1 damage to pushed unit",
           "Pushing into mountain: 1 damage to pushed unit (mountain takes no damage)",
-          "Pushing into building: 1 damage to pushed unit (building takes no damage from collision)",
+          "Pushing into building: 1 damage to BOTH pushed unit AND building (building damage costs grid power; empirically verified in v1.2.93)",
           "Pushing into another unit: 1 damage to BOTH units",
           "Pushing into water/lava/chasm: unit enters the tile (drowns/falls/burns instead of bump)",
           "Stable units: cannot be pushed, but pushing units INTO them causes normal bump damage"
@@ -1009,7 +1009,7 @@
       "push_rules": [
         "Pushed unit moves 1 tile in the specified direction",
         "If destination is empty ground: unit moves there, no damage",
-        "If destination is occupied (unit, building, mountain): pushed unit stops, both take 1 bump damage (building/mountain take no damage but pushed unit does)",
+        "If destination is occupied (unit, building, mountain): pushed unit stops, takes 1 bump damage. If pushed into another unit or building, BOTH take 1 bump damage (building damage costs grid power; empirically verified in v1.2.93). Mountains do not take bump damage.",
         "If destination is map edge: pushed unit stops at edge, takes 1 bump damage",
         "If destination is water: non-flying non-massive units drown; massive units submerge",
         "If destination is lava: same as water but surviving units catch fire",

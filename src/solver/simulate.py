@@ -118,18 +118,27 @@ def apply_push(board: Board, x: int, y: int, direction: int,
     """Push unit at (x, y) one tile in the given direction.
 
     Game rules for push:
+    - Damage and push are SIMULTANEOUS — a unit killed by the weapon's
+      damage is still pushed (its corpse collides with obstacles).
     - If destination is empty ground: unit moves there
     - If destination is deadly terrain (water/chasm/lava): unit moves there
       and dies (non-flying ground units). Flying units survive water/chasm.
     - If destination is blocked (edge, mountain, building, or another unit):
       the pushed unit takes 1 bump damage and does NOT move.
       If blocked by another unit, BOTH units take 1 bump damage.
+    - If blocked by a building, BOTH the unit AND building take 1 bump damage.
     - Bump damage ignores Armor and ACID (source="bump").
     - Mountains take 1 damage when bumped into (2 HP, becomes rubble at 0).
-    - Buildings do NOT take damage from push collisions.
     - There is NO chain pushing: A pushed into B = collision, B stays.
     """
-    unit = board.unit_at(x, y)
+    # Use _any_ unit at this tile, including dead (hp<=0).
+    # In ITB, damage and push are simultaneous — a killed unit still
+    # gets pushed and can bump into buildings/units.
+    unit = None
+    for u in board.units:
+        if u.x == x and u.y == y:
+            unit = u
+            break
     if unit is None:
         return
     if not unit.pushable and not unit.is_mech:
@@ -162,11 +171,22 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         )
         return
 
-    # Blocked by building — pushed unit takes bump, building is NOT damaged
+    # Blocked by building — pushed unit takes bump, building ALSO takes bump damage
     if tile_dest.terrain == "building" and tile_dest.building_hp > 0:
         apply_damage(board, x, y, 1, result, "bump")
+        # Building takes bump damage too (empirically verified)
+        tile_dest.building_hp -= 1
+        if tile_dest.building_hp <= 0:
+            result.grid_damage += 1
+            result.events.append(
+                f"Bump: building at ({nx},{ny}) destroyed by collision"
+            )
+        else:
+            result.events.append(
+                f"Bump: building at ({nx},{ny}) damaged by collision"
+            )
         result.events.append(
-            f"Bump: {unit.type} at ({x},{y}) blocked by building"
+            f"Bump: {unit.type} at ({x},{y}) blocked by building at ({nx},{ny})"
         )
         return
 

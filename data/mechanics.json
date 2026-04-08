@@ -242,8 +242,8 @@
       "description": "Many attacks push targets. Push interactions are critical.",
       "rules": [
         "Push moves target 1 tile in the specified direction",
-        "If target cannot move (wall, mountain, edge of map, another unit), target takes 1 bump damage instead",
-        "If two units collide from a push, BOTH take 1 bump damage",
+        "If target cannot move (wall, mountain, edge of map, another unit, building), target takes 1 bump damage instead",
+        "If two units collide from a push, BOTH take 1 bump damage. Pushing into a building also deals 1 bump damage to the building (costs grid power). (Empirically verified in v1.2.93.)",
         "Pushing into water kills non-massive non-flying ground units instantly; massive units submerge",
         "Pushing into lava: same as water, but surviving massive units are also set on fire",
         "Pushing into chasms kills ALL non-flying units including massive",

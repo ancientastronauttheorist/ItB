@@ -76,7 +76,7 @@ Each mission consists of 4-5 turns. Each turn follows this sequence:
 - Buildings block projectile line of fire (like mountains).
 - Buildings are immune to fire damage (fire does not destroy them but can set the tile on fire).
 - Buildings can be frozen -- frozen buildings are invincible; any damage breaks the ice but not the building.
-- Pushing a unit into a building deals bump damage to the pushed unit; the building is not damaged by push collision.
+- Pushing a unit into a building deals bump damage to BOTH the pushed unit AND the building (1 damage each). Building damage costs grid power. (Empirically verified in v1.2.93 — wiki sources claiming buildings are immune are incorrect.)
 
 **Forest**
 - Catches fire when the tile itself takes weapon damage (not push/bump damage to a unit standing on it).

@@ -51,7 +51,7 @@ These rules directly affect solver correctness. Always apply them.
 
 **Terrain kills:** Water and Chasm kill non-flying ground units. Lava kills like water but also sets flying units on Fire. Pushing enemies into these is a primary kill method.
 
-**Push mechanics:** Pushing moves a unit 1 tile in a direction. If blocked (by another unit, mountain, or edge), the pushed unit takes 1 bump damage instead of moving. Chain pushing: if A is pushed into B, B does NOT move — A takes bump damage. Push damage is NOT affected by Armor or ACID.
+**Push mechanics:** Pushing moves a unit 1 tile in a direction. If blocked (by another unit, mountain, or edge), the pushed unit takes 1 bump damage instead of moving. If blocked by a building, BOTH the pushed unit AND the building take 1 bump damage (building can be destroyed, losing grid power). Chain pushing: if A is pushed into B, B does NOT move — both take bump damage. Push damage is NOT affected by Armor or ACID.
 
 **Damage types:**
 - Weapon damage: reduced by Armor (-1), doubled by ACID
@@ -90,11 +90,13 @@ Extended rules: see `data/ref_game_mechanics.md`.
 10. For MCP clicks: always use grid_to_mcp() or `tile_hover.py` for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets.
 11. **MOUSE CLICKS ONLY — no keyboard, no bridge commands.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.) or bridge execute commands. The full mouse-only sequence for each mech:
     - **Select mech**: Click the mech's tile on the board (use `tile_hover.py <TILE>` for coords)
+    - **Move**: Click the destination tile center (green highlighted tile)
     - **Arm weapon**: Click the weapon icon in the bottom panel
     - **Attack**: Click the target tile center (orange highlighted tile)
-    - **Move**: Click the destination tile center (green highlighted tile)
+    - **Disarm weapon**: Right-click anywhere to cancel weapon targeting
     - **End turn**: Click the "End Turn" button in the top-left
-    - Attack and move can happen in either order. Use `tile_hover.py` or `grid_to_mcp()` for precise tile coordinates.
+    - **Preferred order: MOVE FIRST, then arm weapon and attack.** Moving first ensures the weapon fires from the correct position. If weapon is armed accidentally, right-click to disarm.
+    - Use `tile_hover.py` or `grid_to_mcp()` for precise tile coordinates.
 12. NEVER press any keyboard keys during combat. No Space, no Tab, no number keys, no letter keys.
 13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
 14. Solver handles environment hazards (tidal waves, etc.): the bridge provides `environment_danger` tiles, the solver avoids placing mechs on them and tries to push enemies onto them. `game_loop.py read` prints danger tiles. Remaining blind spots: air strikes, lightning (less common).
@@ -133,7 +135,7 @@ The main loop. Execute every turn in this exact sequence:
 1. `game_loop.py read` — Confirm phase is COMBAT_PLAYER_TURN. Review board state, threats, active mechs.
 2. `game_loop.py solve` — Get solution (N actions for N active mechs). If empty solution (timeout): take screenshot, play manually.
 3. For each action i in 0..N-1:
-   a. Execute action via MCP mouse clicks: click mech tile on board → click weapon icon → click target tile → click move tile. Use `tile_hover.py` for coordinates.
+   a. Execute action via MCP mouse clicks: click mech tile on board → click move tile → click weapon icon → click target tile. Right-click to disarm if needed. Use `tile_hover.py` for coordinates.
    b. Wait 2-3 seconds for animation to complete.
    c. `game_loop.py read` — Re-read bridge state to verify mech acted (check active=False for that mech).
       - PASS: continue to next mech.

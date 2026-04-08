@@ -14,6 +14,7 @@ Key features:
 from __future__ import annotations
 
 import math
+import multiprocessing as mp
 import time
 from itertools import permutations
 from dataclasses import dataclass, field
@@ -408,6 +409,36 @@ def _search_recursive(
         actions_so_far.pop()
 
 
+def _solve_one_permutation(args):
+    """Worker function for parallel permutation solving.
+
+    Runs in a child process via multiprocessing. Takes all pre-computed
+    data as a single tuple (for pool.map compatibility).
+    """
+    (board, mech_uids, threat_tiles, building_threat_tiles,
+     original_positions, spawn_pts, effective_max, time_limit) = args
+
+    # Reconstruct ordered mech list from UIDs
+    active_mechs = []
+    for uid in mech_uids:
+        m = next((u for u in board.units if u.uid == uid), None)
+        if m is not None:
+            active_mechs.append(m)
+
+    best = Solution()
+    start_time = time.time()
+
+    _search_recursive(
+        board, active_mechs, [], 0, 0,
+        threat_tiles, building_threat_tiles, original_positions,
+        spawn_pts, effective_max, best,
+        start_time, time_limit,
+    )
+
+    best.elapsed_seconds = time.time() - start_time
+    return best
+
+
 def solve_turn(
     board: Board,
     spawn_points: list[tuple[int, int]] = None,
@@ -417,14 +448,15 @@ def solve_turn(
 ) -> Solution:
     """Find the best sequence of mech actions for this turn.
 
-    Tries all orderings of active mechs using recursive search.
+    Tries all orderings of active mechs using parallel recursive search.
+    Each permutation runs in its own process with the full time budget.
     Supports any number of mechs (not limited to 3).
     Simulates enemy attacks after mech actions to predict building damage.
 
     Args:
         board: Current board state.
         spawn_points: Next turn's Vek spawn locations.
-        time_limit: Maximum search time in seconds.
+        time_limit: Maximum search time in seconds (each worker gets full budget).
         max_actions_per_mech: Limit actions per mech for pruning.
         environment_danger: Tiles that will become deadly at end of turn
             (tidal waves, air strikes, etc.). Non-flying units here will die.
@@ -483,40 +515,51 @@ def solve_turn(
     if len(active_mechs) >= 4:
         effective_max = min(25, max_actions_per_mech)
 
-    # Search statistics
     total_perms = math.factorial(len(active_mechs))
-    permutations_tried = 0
-    timed_out = False
+    mech_uids = [m.uid for m in active_mechs]
 
-    # Try all mech orderings
+    # Build args for each permutation
+    worker_args = []
     for ordering in permutations(range(len(active_mechs))):
-        if time.time() - start_time > time_limit:
-            timed_out = True
-            break
+        ordered_uids = [mech_uids[i] for i in ordering]
+        worker_args.append((
+            board.copy(),
+            ordered_uids,
+            threat_tiles,
+            building_threat_tiles,
+            original_positions,
+            spawn_pts,
+            effective_max,
+            time_limit,
+        ))
 
-        permutations_tried += 1
-        mechs_ordered = [active_mechs[i] for i in ordering]
-        _search_recursive(
-            board, mechs_ordered, [], 0, 0,
-            threat_tiles, building_threat_tiles, original_positions,
-            spawn_pts, effective_max, best,
-            start_time, time_limit,
-        )
+    # Parallel solve across all permutations
+    num_workers = min(mp.cpu_count(), len(worker_args))
+    if num_workers > 1 and len(worker_args) > 1:
+        with mp.Pool(processes=num_workers) as pool:
+            results = pool.map(_solve_one_permutation, worker_args)
+    else:
+        results = [_solve_one_permutation(a) for a in worker_args]
+
+    # Pick the best result across all workers
+    for r in results:
+        if r.score > best.score:
+            best = r
 
     elapsed = time.time() - start_time
-    if elapsed >= time_limit:
-        timed_out = True
+    any_timed_out = any(r.elapsed_seconds >= time_limit * 0.95 for r in results)
 
     # Store search stats on solution
     best.elapsed_seconds = elapsed
-    best.timed_out = timed_out
-    best.permutations_tried = permutations_tried
+    best.timed_out = any_timed_out
+    best.permutations_tried = total_perms
     best.total_permutations = total_perms
     best.active_mech_count = len(active_mechs)
 
     print(f"Solver: score={best.score:.0f}, "
-          f"{len(best.actions)} actions, {elapsed:.1f}s"
-          f"{' (TIMEOUT)' if timed_out else ''}")
+          f"{len(best.actions)} actions, {elapsed:.1f}s "
+          f"({num_workers} workers, {total_perms} permutations)"
+          f"{' (some timed out)' if any_timed_out else ' (all complete)'}")
 
     return best
 
