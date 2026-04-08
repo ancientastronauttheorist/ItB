@@ -85,7 +85,9 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             if jt.x >= 8 || jt.y >= 8 { continue; }
             let tile = board.tile_mut(jt.x, jt.y);
             tile.terrain = Terrain::from_str(jt.terrain.as_deref().unwrap_or("ground"));
-            tile.building_hp = jt.building_hp.unwrap_or(0);
+            // Mountains default to 2 HP if not specified (bridge doesn't send mountain HP)
+            let default_hp = if tile.terrain == Terrain::Mountain { 2 } else { 0 };
+            tile.building_hp = jt.building_hp.unwrap_or(default_hp);
             tile.population = jt.population.unwrap_or(0);
 
             let mut flags = TileFlags::empty();

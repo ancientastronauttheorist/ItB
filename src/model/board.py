@@ -241,6 +241,9 @@ class Board:
                 if bt.terrain == "building":
                     bt.building_hp = td.get("building_hp", 1)
                     bt.population = td.get("population", 1)
+                elif bt.terrain == "mountain":
+                    # Mountains have 2 HP (bridge doesn't send mountain HP)
+                    bt.building_hp = td.get("building_hp", 2)
 
         # Environment danger tiles (tidal waves, air strikes, etc.)
         # These tiles will become deadly terrain at end of turn.
