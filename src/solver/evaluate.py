@@ -150,6 +150,146 @@ def evaluate(
     return score
 
 
+def evaluate_breakdown(
+    board: Board,
+    spawn_points: list[tuple[int, int]] = None,
+    weights: EvalWeights = None,
+    kills: int = 0,
+) -> dict:
+    """Score a board state and return per-component breakdown.
+
+    Same logic as evaluate(), but returns a dict with each scoring
+    component separated. Only call on the final solution (not during
+    search) since it builds a dict instead of a bare float.
+    """
+    w = weights or DEFAULT_WEIGHTS
+
+    # --- GRID POWER URGENCY ---
+    grid_multiplier = 1.0
+    if board.grid_power <= 1:
+        grid_multiplier = 5.0
+    elif board.grid_power <= 2:
+        grid_multiplier = 3.0
+    elif board.grid_power <= 3:
+        grid_multiplier = 2.0
+
+    # --- BUILDINGS ---
+    buildings_alive = 0
+    total_building_hp = 0
+    for x in range(8):
+        for y in range(8):
+            t = board.tile(x, y)
+            if t.terrain == "building" and t.building_hp > 0:
+                buildings_alive += 1
+                total_building_hp += t.building_hp
+
+    buildings_score = buildings_alive * w.building_alive * grid_multiplier
+    building_hp_score = total_building_hp * w.building_hp * grid_multiplier
+
+    # --- GRID POWER ---
+    grid_power_score = board.grid_power * w.grid_power
+
+    # --- ENEMIES ---
+    enemies_killed_score = kills * w.enemy_killed
+
+    enemy_hp_total = 0
+    for e in board.enemies():
+        enemy_hp_total += e.hp
+    enemy_hp_score = enemy_hp_total * w.enemy_hp_remaining
+
+    # --- ENVIRONMENT DANGER ---
+    danger_enemies_on = 0
+    danger_mechs_on = 0
+    danger_score = 0.0
+    if hasattr(board, 'environment_danger') and board.environment_danger:
+        for e in board.enemies():
+            if (e.x, e.y) in board.environment_danger and not e.flying:
+                danger_enemies_on += 1
+                danger_score += w.enemy_on_danger
+        for m in board.mechs():
+            if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
+                danger_mechs_on += 1
+                danger_score += w.mech_killed
+
+    # --- MECHS ---
+    mechs = board.mechs()
+    mechs_alive = 0
+    mechs_dead = 0
+    total_mech_hp = 0
+    mech_score = 0.0
+    for m in mechs:
+        if m.hp <= 0:
+            mechs_dead += 1
+            mech_score += w.mech_killed
+        else:
+            mechs_alive += 1
+            total_mech_hp += m.hp
+            mech_score += m.hp * w.mech_hp
+            cx = abs(m.x - 3.5)
+            cy = abs(m.y - 3.5)
+            mech_score += (cx + cy) * w.mech_centrality
+
+    # --- SPAWNS BLOCKED ---
+    spawns_blocked = 0
+    if spawn_points:
+        for sx, sy in spawn_points:
+            if board.unit_at(sx, sy) is not None:
+                spawns_blocked += 1
+    spawns_score = spawns_blocked * w.spawn_blocked
+
+    # --- PODS ---
+    pods_uncollected = 0
+    pods_proximity = 0
+    pods_score = 0.0
+    for x in range(8):
+        for y in range(8):
+            if board.tile(x, y).has_pod:
+                pods_uncollected += 1
+                pods_score += w.pod_uncollected
+                for m in mechs:
+                    dist = abs(m.x - x) + abs(m.y - y)
+                    if dist <= 2:
+                        pods_proximity += 1
+                        pods_score += w.pod_proximity
+
+    total = (buildings_score + building_hp_score + grid_power_score
+             + enemies_killed_score + enemy_hp_score + danger_score
+             + mech_score + spawns_score + pods_score)
+
+    # Sanity check: must match evaluate()
+    expected = evaluate(board, spawn_points, weights, kills)
+    assert abs(total - expected) < 0.01, (
+        f"evaluate_breakdown total {total} != evaluate() {expected}"
+    )
+
+    return {
+        "total": total,
+        "grid_multiplier": grid_multiplier,
+        "buildings_alive": {"count": buildings_alive, "score": buildings_score},
+        "building_hp": {"total": total_building_hp, "score": building_hp_score},
+        "grid_power": {"value": board.grid_power, "score": grid_power_score},
+        "enemies_killed": {"count": kills, "score": enemies_killed_score},
+        "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
+        "environment_danger": {
+            "enemies_on": danger_enemies_on,
+            "mechs_on": danger_mechs_on,
+            "score": danger_score,
+        },
+        "mechs": {
+            "alive": mechs_alive,
+            "dead": mechs_dead,
+            "total_hp": total_mech_hp,
+            "score": mech_score,
+        },
+        "spawns_blocked": {"count": spawns_blocked, "score": spawns_score},
+        "pods": {
+            "uncollected": pods_uncollected,
+            "proximity": pods_proximity,
+            "score": pods_score,
+        },
+    }
+
+
 def evaluate_threats(board: Board) -> dict:
     """Analyze what threats remain on the board.
 

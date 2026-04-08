@@ -23,7 +23,7 @@ from src.capture.save_parser import (
 )
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
-from src.solver.solver import solve_turn, MechAction
+from src.solver.solver import solve_turn, MechAction, replay_solution
 from src.solver.evaluate import evaluate_threats
 from src.control.executor import (
     plan_single_mech,
@@ -57,14 +57,19 @@ def _get_logger(session: RunSession) -> DecisionLog:
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 
 
-def _record_turn_state(session: RunSession, label: str, data: dict) -> None:
+def _record_turn_state(session: RunSession, label: str, data: dict,
+                       turn_override: int = None) -> None:
     """Record full game state to a per-run, per-turn JSON file.
 
     Creates recordings/<run_id>/turn_<N>_<label>.json with the complete
     bridge state and/or solver output for later replay and analysis.
+
+    Args:
+        turn_override: If set, use this turn number instead of session.current_turn.
+            Used for post-enemy recordings that reference the solved turn.
     """
     run_id = session.run_id or "default"
-    turn = session.current_turn
+    turn = turn_override if turn_override is not None else session.current_turn
     run_dir = RECORDING_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -81,6 +86,145 @@ def _record_turn_state(session: RunSession, label: str, data: dict) -> None:
 
     with open(filepath, "w") as f:
         json.dump(record, f, indent=2, default=str)
+
+
+# --- Post-Enemy Analysis Helpers ---
+
+
+def _capture_board_summary(board: Board) -> dict:
+    """Extract a summary of the current board state for comparison."""
+    buildings_alive = 0
+    building_hp_total = 0
+    for x in range(8):
+        for y in range(8):
+            t = board.tile(x, y)
+            if t.terrain == "building" and t.building_hp > 0:
+                buildings_alive += 1
+                building_hp_total += t.building_hp
+
+    return {
+        "buildings_alive": buildings_alive,
+        "building_hp_total": building_hp_total,
+        "grid_power": board.grid_power,
+        "enemies_alive": len(board.enemies()),
+        "enemy_hp_total": sum(e.hp for e in board.enemies()),
+        "mechs_alive": len([m for m in board.mechs() if m.hp > 0]),
+        "mech_hp": [
+            {"uid": m.uid, "type": m.type, "hp": m.hp, "max_hp": m.max_hp}
+            for m in board.mechs()
+        ],
+    }
+
+
+def _compute_deltas(predicted: dict, actual: dict) -> dict:
+    """Compare predicted vs actual board state. Negative diff = worse than predicted."""
+    deltas = {
+        "buildings_alive_diff": actual["buildings_alive"] - predicted["buildings_alive"],
+        "building_hp_diff": actual["building_hp_total"] - predicted["building_hp_total"],
+        "grid_power_diff": actual["grid_power"] - predicted["grid_power"],
+        # Enemy count diff recorded for info but NOT used for triggers
+        # (new spawns inflate actual count — that's expected, not a solver failure)
+        "enemies_alive_diff": actual["enemies_alive"] - predicted["enemies_alive"],
+    }
+
+    # Per-mech HP comparison — match by UID for precision
+    mech_deltas = []
+    pred_mechs = {m["uid"]: m for m in predicted.get("mech_hp", [])}
+    for am in actual.get("mech_hp", []):
+        pm = pred_mechs.get(am["uid"])
+        if pm:
+            mech_deltas.append({
+                "uid": am["uid"],
+                "type": am["type"],
+                "predicted_hp": pm["hp"],
+                "actual_hp": am["hp"],
+                "diff": am["hp"] - pm["hp"],
+            })
+        else:
+            # Mech in actual but not predicted (shouldn't happen normally)
+            mech_deltas.append({
+                "uid": am["uid"],
+                "type": am["type"],
+                "predicted_hp": 0,
+                "actual_hp": am["hp"],
+                "diff": am["hp"],
+            })
+    deltas["mech_hp_diff"] = mech_deltas
+
+    # Human-readable unexpected events
+    unexpected = []
+    if deltas["buildings_alive_diff"] < 0:
+        unexpected.append(
+            f"Lost {-deltas['buildings_alive_diff']} unexpected building(s)")
+    if deltas["grid_power_diff"] < 0:
+        unexpected.append(
+            f"Grid power dropped by {-deltas['grid_power_diff']} unexpectedly")
+    for md in mech_deltas:
+        if md["diff"] < 0:
+            unexpected.append(
+                f"{md['type']} took {-md['diff']} unexpected damage")
+    deltas["unexpected_events"] = unexpected
+
+    return deltas
+
+
+def _record_post_enemy(session: RunSession, board: Board,
+                       solved_turn: int) -> None:
+    """Record post-enemy board state and compare with solver predictions."""
+    from src.solver.analysis import detect_triggers
+
+    run_id = session.run_id or "default"
+    run_dir = RECORDING_DIR / run_id
+
+    # Load the solve recording from the solved turn
+    solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
+    if not solve_file.exists():
+        return
+
+    with open(solve_file) as f:
+        solve_record = json.load(f)
+
+    solve_data = solve_record.get("data", {})
+    predicted = solve_data.get("predicted_outcome")
+    if predicted is None:
+        # Old-format recording without predictions — skip comparison
+        return
+
+    # Capture actual board state
+    actual = _capture_board_summary(board)
+
+    # Compute deltas
+    deltas = _compute_deltas(predicted, actual)
+
+    # Record post-enemy state
+    _record_turn_state(session, "post_enemy", {
+        "actual_outcome": actual,
+        "predicted_outcome": predicted,
+        "deltas": deltas,
+    }, turn_override=solved_turn)
+
+    # Detect triggers
+    triggers = detect_triggers(actual, predicted, deltas, solve_data)
+    if triggers:
+        _record_turn_state(session, "triggers", {
+            "triggers": triggers,
+            "trigger_count": len(triggers),
+            "severity_counts": {
+                "critical": sum(1 for t in triggers if t["severity"] == "critical"),
+                "high": sum(1 for t in triggers if t["severity"] == "high"),
+                "medium": sum(1 for t in triggers if t["severity"] == "medium"),
+            },
+        }, turn_override=solved_turn)
+
+        # Print triggers for immediate visibility
+        print(f"\n{'='*50}")
+        print(f"TRIGGERS DETECTED ({len(triggers)}) — Turn {solved_turn}:")
+        for t in triggers:
+            print(f"  [T{t['tier']}] {t['severity'].upper()}: "
+                  f"{t['trigger']} — {t['details']}")
+        print(f"{'='*50}")
+    else:
+        print(f"\nPost-enemy analysis: no triggers (predictions matched)")
 
 
 # --- State Reading Commands ---
@@ -203,6 +347,20 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 "bridge_state": bridge_data,
                 "result_summary": result,
             })
+
+            # Post-enemy detection: if turn advanced past the solved turn,
+            # this board is the actual outcome of the previous turn's solution.
+            # NOTE: Cannot rely on actions_executed (MCP flow uses cmd_read
+            # to verify, not cmd_verify, so the counter stays at 0).
+            if (session.active_solution is not None
+                    and bridge_data.get("turn", 0) > session.active_solution.turn
+                    and phase == "combat_player"):
+                _record_post_enemy(session, board, session.active_solution.turn)
+                session.active_solution = None  # consumed — prevents re-trigger
+            elif (session.active_solution is not None
+                    and phase in ("between_missions", "mission_ending")):
+                # Mission ended — clear stale solution (no comparison possible)
+                session.active_solution = None
 
             session.save()
             _print_result(result)
@@ -413,14 +571,35 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         "actions": [a.description for a in solution.actions],
     })
 
-    # Record solver output for replay/analysis
-    _record_turn_state(session, "solve", {
+    # Replay solution for enriched recording data
+    enriched = replay_solution(board, solution, spawns)
+
+    # Record solver output for replay/analysis (enriched format)
+    solve_data = {
         "score": solution.score,
-        "actions": [a.description for a in solution.actions],
+        "actions": [{
+            "mech_uid": a.mech_uid,
+            "mech_type": a.mech_type,
+            "move_to": list(a.move_to) if a.move_to else None,
+            "weapon": a.weapon,
+            "target": list(a.target),
+            "description": a.description,
+        } for a in solution.actions],
         "threats": len(threats),
         "active_mechs": len(active_mechs),
         "spawn_points": spawns,
-    })
+        "search_stats": {
+            "elapsed_seconds": solution.elapsed_seconds,
+            "timed_out": solution.timed_out,
+            "permutations_tried": solution.permutations_tried,
+            "total_permutations": solution.total_permutations,
+            "active_mech_count": solution.active_mech_count,
+        },
+        "action_results": enriched["action_results"],
+        "predicted_outcome": enriched["predicted_outcome"],
+        "score_breakdown": enriched["score_breakdown"],
+    }
+    _record_turn_state(session, "solve", solve_data)
 
     # Print
     print(f"\n=== SOLUTION (score: {solution.score:.0f}) ===")
@@ -957,6 +1136,124 @@ def cmd_calibrate() -> dict:
     print(f"  Portrait 0: ({win.x + 50}, {win.y + 135})")
     print(f"  Portrait 1: ({win.x + 50}, {win.y + 195})")
     print(f"  Portrait 2: ({win.x + 50}, {win.y + 245})")
+
+    _print_result(result)
+    return result
+
+
+def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0) -> dict:
+    """Load a recorded board state and re-run the solver.
+
+    Reconstructs a Board from a turn_N_board.json recording, runs the
+    solver with the specified time limit, and compares the new solution
+    with the original recorded solution. Useful for testing solver
+    improvements against historical boards.
+    """
+    run_dir = RECORDING_DIR / run_id
+
+    # Load board recording
+    board_file = run_dir / f"turn_{turn:02d}_board.json"
+    if not board_file.exists():
+        result = {"error": f"No board recording: {board_file}"}
+        _print_result(result)
+        return result
+
+    with open(board_file) as f:
+        board_record = json.load(f)
+
+    bridge_data = board_record.get("data", {}).get("bridge_state")
+    if bridge_data is None:
+        result = {"error": "Recording has no bridge_state (save-parser only, not supported)"}
+        _print_result(result)
+        return result
+
+    # Reconstruct board from saved bridge data
+    board = Board.from_bridge_data(bridge_data)
+
+    # Extract spawn points and environment danger
+    spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
+    environment_danger = set()
+    for dt in bridge_data.get("environment_danger", []):
+        if isinstance(dt, (list, tuple)) and len(dt) >= 2:
+            environment_danger.add((dt[0], dt[1]))
+
+    # Run solver with (potentially longer) time limit
+    print(f"\nReplaying turn {turn} from run {run_id} "
+          f"(time limit: {time_limit}s)...")
+    solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
+                          environment_danger=environment_danger)
+
+    # Replay for enriched data
+    enriched = None
+    if solution.actions:
+        enriched = replay_solution(board, solution, spawns)
+
+    # Load original solve recording for comparison
+    solve_file = run_dir / f"turn_{turn:02d}_solve.json"
+    original_solve = None
+    if solve_file.exists():
+        with open(solve_file) as f:
+            original_solve = json.load(f).get("data", {})
+
+    # Build comparison result
+    result = {
+        "run_id": run_id,
+        "turn": turn,
+        "new_score": solution.score,
+        "new_actions": [a.description for a in solution.actions],
+        "search_stats": {
+            "elapsed_seconds": solution.elapsed_seconds,
+            "timed_out": solution.timed_out,
+            "permutations_tried": solution.permutations_tried,
+            "total_permutations": solution.total_permutations,
+        },
+    }
+
+    if enriched:
+        result["new_predicted_outcome"] = enriched["predicted_outcome"]
+        result["new_score_breakdown"] = enriched["score_breakdown"]
+
+    if original_solve:
+        orig_score = original_solve.get("score", 0)
+        result["original_score"] = orig_score
+        result["original_actions"] = [
+            a["description"] if isinstance(a, dict) else a
+            for a in original_solve.get("actions", [])
+        ]
+        result["score_diff"] = solution.score - orig_score
+
+        # Load triggers from original run
+        trigger_file = run_dir / f"turn_{turn:02d}_triggers.json"
+        if trigger_file.exists():
+            with open(trigger_file) as f:
+                orig_triggers = json.load(f).get("data", {}).get("triggers", [])
+            result["original_triggers"] = len(orig_triggers)
+
+    # Print comparison
+    print(f"\n{'='*50}")
+    print(f"REPLAY: Run {run_id}, Turn {turn}")
+    print(f"{'='*50}")
+
+    if original_solve:
+        print(f"Original score: {original_solve.get('score', '?'):.0f}")
+    print(f"New score:      {solution.score:.0f}")
+    if "score_diff" in result:
+        diff = result["score_diff"]
+        sign = "+" if diff >= 0 else ""
+        label = " (BETTER)" if diff > 0 else (" (SAME)" if diff == 0 else " (WORSE)")
+        print(f"Difference:     {sign}{diff:.0f}{label}")
+
+    print(f"\nNew actions:")
+    for i, a in enumerate(solution.actions):
+        print(f"  {i}: {a.description}")
+
+    if original_solve:
+        print(f"\nOriginal actions:")
+        for i, a in enumerate(result.get("original_actions", [])):
+            print(f"  {i}: {a}")
+
+    if result.get("original_triggers"):
+        print(f"\nOriginal run had {result['original_triggers']} trigger(s)")
 
     _print_result(result)
     return result

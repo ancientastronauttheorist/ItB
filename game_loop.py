@@ -45,6 +45,7 @@ from src.loop.commands import (
     cmd_log,
     cmd_calibrate,
     cmd_achievements,
+    cmd_replay,
 )
 
 
@@ -105,6 +106,14 @@ def main():
     # achievements
     sub.add_parser("achievements", help="Query Steam for achievement progress")
 
+    # replay
+    p_replay = sub.add_parser("replay",
+                              help="Re-run solver on a recorded board state")
+    p_replay.add_argument("run_id", help="Run ID (directory name in recordings/)")
+    p_replay.add_argument("turn", type=int, help="Turn number to replay")
+    p_replay.add_argument("--time-limit", type=float, default=30.0,
+                          help="Solver time limit (default: 30s)")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -133,6 +142,8 @@ def main():
         cmd_calibrate()
     elif args.command == "achievements":
         cmd_achievements()
+    elif args.command == "replay":
+        cmd_replay(args.run_id, args.turn, args.time_limit)
 
 
 if __name__ == "__main__":

@@ -212,6 +212,11 @@ All commands are subcommands of `game_loop.py`. Each is stateless: read state, c
 
 **State Recording:**
 - `read` and `solve` both auto-record full game state to `recordings/<run_id>/turn_<N>_<label>.json`. Each recording includes the complete bridge JSON (64 tiles, all units, targets, spawns) plus the solver output. Used for replay, regression testing, and solver improvement.
+- `read` auto-detects post-enemy turns (turn number advanced past solved turn) and records `turn_N_post_enemy.json` (predicted vs actual comparison) and `turn_N_triggers.json` (detected solver failures).
+- `solve` recordings are enriched: structured actions (uid/move/weapon/target), per-action `ActionResult`, predicted post-enemy board state, score component breakdown, and search statistics.
+
+**Analysis:**
+- `replay <run_id> <turn> [--time-limit 30]` — Reconstruct a Board from a recorded `turn_N_board.json` and re-run the solver. Compares new solution with original. Use for testing solver fixes against historical failures.
 
 **Run Management:**
 - `new_run <squad> [--achieve X Y]` — Initialize new session with squad and achievement targets.

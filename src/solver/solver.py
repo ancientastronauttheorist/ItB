@@ -13,6 +13,7 @@ Key features:
 
 from __future__ import annotations
 
+import math
 import time
 from itertools import permutations
 from dataclasses import dataclass, field
@@ -23,7 +24,7 @@ from src.solver.movement import (
     push_destination, DIRS,
 )
 from src.solver.simulate import simulate_action
-from src.solver.evaluate import evaluate
+from src.solver.evaluate import evaluate, evaluate_breakdown
 
 
 @dataclass
@@ -45,6 +46,12 @@ class Solution:
     buildings_saved: int = 0
     enemies_killed: int = 0
     mech_damage: int = 0
+    # Search statistics
+    elapsed_seconds: float = 0.0
+    timed_out: bool = False
+    permutations_tried: int = 0
+    total_permutations: int = 0
+    active_mech_count: int = 0
 
 
 def get_weapon_targets(
@@ -476,11 +483,18 @@ def solve_turn(
     if len(active_mechs) >= 4:
         effective_max = min(25, max_actions_per_mech)
 
+    # Search statistics
+    total_perms = math.factorial(len(active_mechs))
+    permutations_tried = 0
+    timed_out = False
+
     # Try all mech orderings
     for ordering in permutations(range(len(active_mechs))):
         if time.time() - start_time > time_limit:
+            timed_out = True
             break
 
+        permutations_tried += 1
         mechs_ordered = [active_mechs[i] for i in ordering]
         _search_recursive(
             board, mechs_ordered, [], 0, 0,
@@ -490,10 +504,102 @@ def solve_turn(
         )
 
     elapsed = time.time() - start_time
+    if elapsed >= time_limit:
+        timed_out = True
+
+    # Store search stats on solution
+    best.elapsed_seconds = elapsed
+    best.timed_out = timed_out
+    best.permutations_tried = permutations_tried
+    best.total_permutations = total_perms
+    best.active_mech_count = len(active_mechs)
+
     print(f"Solver: score={best.score:.0f}, "
-          f"{len(best.actions)} actions, {elapsed:.1f}s")
+          f"{len(best.actions)} actions, {elapsed:.1f}s"
+          f"{' (TIMEOUT)' if timed_out else ''}")
 
     return best
+
+
+def replay_solution(
+    board: Board,
+    solution: Solution,
+    spawn_pts: list[tuple[int, int]],
+) -> dict:
+    """Re-simulate the best solution to capture detailed per-action data.
+
+    Called ONCE after solve_turn() on the original (unmutated) board.
+    Returns enriched data: per-action ActionResult, predicted post-enemy
+    board summary, and score component breakdown.
+    """
+    b = board.copy()
+    original_positions = {e.uid: (e.x, e.y) for e in b.enemies()}
+
+    action_results = []
+    total_kills = 0
+
+    for action in solution.actions:
+        # Find mech by UID on the (progressively mutated) board copy
+        m = next((u for u in b.units if u.uid == action.mech_uid), None)
+        if m is None:
+            action_results.append({
+                "enemies_killed": 0, "enemy_damage_dealt": 0,
+                "buildings_lost": 0, "buildings_damaged": 0,
+                "mech_damage_taken": 0, "pods_collected": 0,
+                "spawns_blocked": 0, "events": [f"Mech UID {action.mech_uid} not found"],
+            })
+            continue
+
+        result = simulate_action(b, m, action.move_to, action.weapon, action.target)
+        total_kills += result.enemies_killed
+        action_results.append({
+            "enemies_killed": result.enemies_killed,
+            "enemy_damage_dealt": result.enemy_damage_dealt,
+            "buildings_lost": result.buildings_lost,
+            "buildings_damaged": result.buildings_damaged,
+            "grid_damage": result.grid_damage,
+            "mech_damage_taken": result.mech_damage_taken,
+            "mechs_killed": result.mechs_killed,
+            "pods_collected": result.pods_collected,
+            "spawns_blocked": result.spawns_blocked,
+            "events": result.events,
+        })
+
+    # Simulate enemy attacks on post-mech board
+    buildings_destroyed = _simulate_enemy_attacks(b, original_positions)
+
+    # Score breakdown on predicted post-enemy board
+    score_breakdown = evaluate_breakdown(b, spawn_pts, kills=total_kills)
+
+    # Predicted outcome summary
+    buildings_alive = 0
+    building_hp_total = 0
+    for x in range(8):
+        for y in range(8):
+            t = b.tile(x, y)
+            if t.terrain == "building" and t.building_hp > 0:
+                buildings_alive += 1
+                building_hp_total += t.building_hp
+
+    predicted_outcome = {
+        "buildings_alive": buildings_alive,
+        "building_hp_total": building_hp_total,
+        "grid_power": b.grid_power,
+        "enemies_alive": len(b.enemies()),
+        "enemy_hp_total": sum(e.hp for e in b.enemies()),
+        "mechs_alive": len([m for m in b.mechs() if m.hp > 0]),
+        "mech_hp": [
+            {"uid": m.uid, "type": m.type, "hp": m.hp, "max_hp": m.max_hp}
+            for m in b.mechs()
+        ],
+        "buildings_destroyed_by_enemies": buildings_destroyed,
+    }
+
+    return {
+        "action_results": action_results,
+        "predicted_outcome": predicted_outcome,
+        "score_breakdown": score_breakdown,
+    }
 
 
 def _prune_actions(board, mech, actions, threat_tiles,
