@@ -39,7 +39,7 @@ Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to g
 
 Claude operates as the outer control loop. Python CLI commands (`game_loop.py read`, `solve`) are stateless tools that read state, compute, and output. Claude calls these tools, interprets output, and performs all game actions via MCP mouse clicks. The bridge is used ONLY for reading state — never for executing actions. The session file (`sessions/active_session.json`) persists state between CLI calls.
 
-Grid coordinate mapping for MCP clicks: use `grid_to_mcp(bridge_x, bridge_y)` in `src/control/executor.py` or `python3 tile_hover.py <TILE>` (e.g. `tile_hover.py C5`). Both auto-detect the game window position via Quartz.
+Grid coordinate mapping for MCP clicks: use `grid_to_mcp(bridge_x, bridge_y)` in `src/control/executor.py` or `python3 tile_hover.py <TILE>` (e.g. `tile_hover.py C5`). Both auto-detect the game window position via Quartz. For island selection at run start: `python3 island_select.py`.
 
 **Bridge-to-visual coordinate mapping:** The game displays Row numbers (1-8, left edge) and Column letters (A-H, right edge). Bridge (x,y) maps to visual as: **Row = 8 - x**, **Col = chr(72 - y)** (H for y=0, G for y=1, ..., A for y=7). Example: bridge (3,5) = visual C5 (TankMech). Always use visual A1-H8 notation when communicating tile positions.
 
@@ -173,7 +173,7 @@ The main loop. Execute every turn in this exact sequence:
 Appears at the start of each run (world map with 4 corporate islands). **Always pick a random island** for equal coverage across runs.
 
 1. Take screenshot to identify the island selection screen.
-2. **Randomly choose** from the 4 corporate islands: Archive Inc, R.S.T. Corporation, Pinnacle Robotics, Detritus Disposal. Use `python3 -c "import random; print(random.choice(['archive','rst','pinnacle','detritus']))"` to pick.
+2. **Randomly choose** from the 4 corporate islands using `python3 island_select.py`. Output includes the island name, map position, terrain type, and environmental hazards.
 3. Click the chosen island on the map. Island positions (approximate screen regions):
    - Archive Inc: upper-left area
    - R.S.T.: lower-left area
@@ -270,6 +270,7 @@ itb-bot/
 ├── CLAUDE.md              # This file — operational manual
 ├── TODO.md                # Development roadmap + achievement checklist
 ├── game_loop.py           # CLI entry point — dispatches to src/loop/
+├── island_select.py       # Random island picker for equal coverage across runs
 ├── src/
 │   ├── loop/              # Game loop modules
 │   │   ├── session.py     # RunSession state, file-locked persistence
