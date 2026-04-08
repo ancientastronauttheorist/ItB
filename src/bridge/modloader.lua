@@ -79,9 +79,13 @@ end
 --------------------------------------------------------------------
 local function _read_queued_shots()
     local shots = {}
-    local save_path = os.getenv("HOME") ..
-        "/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    local sf = io.open(save_path, "r")
+    local base = os.getenv("HOME") ..
+        "/Library/Application Support/IntoTheBreach/profile_Alpha/"
+    -- Try saveData.lua first, fall back to undoSave.lua
+    local sf = io.open(base .. "saveData.lua", "r")
+    if not sf then
+        sf = io.open(base .. "undoSave.lua", "r")
+    end
     if not sf then return shots end
     local content = sf:read("*a")
     sf:close()
@@ -106,9 +110,12 @@ end
 --------------------------------------------------------------------
 local function _read_conveyor_belts()
     local belts = {}
-    local save_path = os.getenv("HOME") ..
-        "/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
-    local sf = io.open(save_path, "r")
+    local base = os.getenv("HOME") ..
+        "/Library/Application Support/IntoTheBreach/profile_Alpha/"
+    local sf = io.open(base .. "saveData.lua", "r")
+    if not sf then
+        sf = io.open(base .. "undoSave.lua", "r")
+    end
     if not sf then return belts end
     local content = sf:read("*a")
     sf:close()
