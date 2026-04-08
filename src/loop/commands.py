@@ -88,6 +88,14 @@ def _record_turn_state(session: RunSession, label: str, data: dict,
         json.dump(record, f, indent=2, default=str)
 
 
+# --- Coordinate Helpers ---
+
+
+def _bv(x: int, y: int) -> str:
+    """Bridge (x,y) to visual notation (e.g. 'C5'). Matches game board labels."""
+    return f"{chr(72 - y)}{8 - x}"
+
+
 # --- Post-Enemy Analysis Helpers ---
 
 
@@ -263,7 +271,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 mechs = board.mechs()
                 active_mechs = [m for m in mechs if m.active and m.hp > 0]
                 result["mechs"] = [
-                    {"type": m.type, "pos": f"({m.x},{m.y})",
+                    {"type": m.type, "pos": _bv(m.x, m.y),
                      "hp": f"{m.hp}/{m.max_hp}",
                      "weapon": get_weapon_name(m.weapon),
                      "status": "READY" if m.active else "DONE"}
@@ -273,9 +281,9 @@ def cmd_read(profile: str = "Alpha") -> dict:
 
                 enemies = board.enemies()
                 result["enemies"] = [
-                    {"type": e.type, "pos": f"({e.x},{e.y})",
+                    {"type": e.type, "pos": _bv(e.x, e.y),
                      "hp": f"{e.hp}/{e.max_hp}",
-                     "target": f" -> ({e.target_x},{e.target_y})" if e.target_x >= 0 else ""}
+                     "target": f" \u2192 {_bv(e.target_x, e.target_y)}" if e.target_x >= 0 else ""}
                     for e in enemies
                 ]
 
@@ -283,7 +291,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 result["threatened_buildings"] = len(threats)
                 if threats:
                     result["threats"] = [
-                        f"Building ({x},{y}) by {u.type} at ({u.x},{u.y})"
+                        f"Building {_bv(x, y)} by {u.type} at {_bv(u.x, u.y)}"
                         for x, y, u in threats
                     ]
 
@@ -403,7 +411,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
             weapon_name = get_weapon_name(mech.weapon)
             result["mechs"].append({
                 "type": mech.type,
-                "pos": f"({mech.x},{mech.y})",
+                "pos": _bv(mech.x, mech.y),
                 "hp": f"{mech.hp}/{mech.max_hp}",
                 "weapon": weapon_name,
                 "status": status,
@@ -414,10 +422,10 @@ def cmd_read(profile: str = "Alpha") -> dict:
         enemies = board.enemies()
         result["enemies"] = []
         for e in enemies:
-            target = f" -> ({e.target_x},{e.target_y})" if e.target_x >= 0 else ""
+            target = f" \u2192 {_bv(e.target_x, e.target_y)}" if e.target_x >= 0 else ""
             result["enemies"].append({
                 "type": e.type,
-                "pos": f"({e.x},{e.y})",
+                "pos": _bv(e.x, e.y),
                 "hp": f"{e.hp}/{e.max_hp}",
                 "target": target,
             })
@@ -427,7 +435,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
         result["threatened_buildings"] = len(threats)
         if threats:
             result["threats"] = [
-                f"Building ({x},{y}) by {u.type} at ({u.x},{u.y})"
+                f"Building {_bv(x, y)} by {u.type} at {_bv(u.x, u.y)}"
                 for x, y, u in threats
             ]
 

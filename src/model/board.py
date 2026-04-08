@@ -284,15 +284,22 @@ class Board:
         return board
 
     def print_board(self):
-        """ASCII board for debugging."""
+        """ASCII board with visual A1-H8 notation matching the game.
+
+        Visual mapping: Row = 8 - bridge_x, Col = chr(72 - bridge_y).
+        So the outer loop must iterate bridge_x (rows) and the inner loop
+        iterates bridge_y (columns). Row 8 at top, Col H on left.
+        """
         sym = {
             "ground": ".", "building": "B", "mountain": "M",
             "water": "~", "forest": "F", "sand": "S",
             "ice": "I", "lava": "L", "chasm": " ", "rubble": "R",
         }
-        for y in range(7, -1, -1):
+        # x=0 → Row 8 (top), x=7 → Row 1 (bottom)
+        for x in range(8):
             row = []
-            for x in range(8):
+            # y=0 → Col H (left), y=7 → Col A (right)
+            for y in range(8):
                 u = self.unit_at(x, y)
                 if u:
                     row.append("P" if u.is_player else ("E" if u.is_enemy else "N"))
@@ -302,5 +309,6 @@ class Board:
                     if t.on_fire:
                         c = "*"
                     row.append(c)
-            print(f"  {y} {'  '.join(row)}")
-        print(f"    {'  '.join(str(x) for x in range(8))}")
+            print(f"  {8 - x} {'  '.join(row)}")
+        cols = [chr(72 - y) for y in range(8)]
+        print(f"    {'  '.join(cols)}")

@@ -724,16 +724,30 @@ def _prune_actions(board, mech, actions, threat_tiles,
     return actions[:max_n]
 
 
+def _bridge_to_visual(x: int, y: int) -> str:
+    """Convert bridge (x,y) to visual notation like 'C5'.
+
+    The game board shows Row numbers 1-8 (left edge) and Column letters
+    A-H (right edge). Bridge coords map as: Col = chr(72-y), Row = 8-x.
+    """
+    col = chr(72 - y)  # H for y=0, G for y=1, ..., A for y=7
+    row = 8 - x
+    return f"{col}{row}"
+
+
 def _make_action(mech, move_to, weapon_id, target) -> MechAction:
     """Create a MechAction from solver data."""
     desc_parts = [f"{mech.type}"]
     if move_to != (mech.x, mech.y):
-        desc_parts.append(f"move ({mech.x},{mech.y})->({move_to[0]},{move_to[1]})")
+        src = _bridge_to_visual(mech.x, mech.y)
+        dst = _bridge_to_visual(move_to[0], move_to[1])
+        desc_parts.append(f"move {src}\u2192{dst}")
     if weapon_id == "_REPAIR":
         desc_parts.append("repair")
     elif weapon_id:
         wname = get_weapon_name(weapon_id)
-        desc_parts.append(f"fire {wname} at ({target[0]},{target[1]})")
+        tgt = _bridge_to_visual(target[0], target[1])
+        desc_parts.append(f"fire {wname} at {tgt}")
     return MechAction(
         mech_uid=mech.uid,
         mech_type=mech.type,
