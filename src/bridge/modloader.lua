@@ -75,53 +75,46 @@ local function log_bridge(msg)
 end
 
 --------------------------------------------------------------------
--- Read piQueuedShot from save file for per-enemy target data
+-- Read all save-file-derived data in a single I/O pass:
+-- grid power, queued shots, and conveyor belts.
+-- Reads saveData.lua (preferred) or undoSave.lua (fallback).
 --------------------------------------------------------------------
-local function _read_queued_shots()
-    local shots = {}
+local function _read_save_data()
+    local result = {
+        network = nil,
+        networkMax = nil,
+        queued_shots = {},
+        conveyor_belts = {},
+    }
     local base = os.getenv("HOME") ..
         "/Library/Application Support/IntoTheBreach/profile_Alpha/"
-    -- Try saveData.lua first, fall back to undoSave.lua
     local sf = io.open(base .. "saveData.lua", "r")
     if not sf then
         sf = io.open(base .. "undoSave.lua", "r")
     end
-    if not sf then return shots end
+    if not sf then return result end
     local content = sf:read("*a")
     sf:close()
 
+    -- Grid power (in first line of file, very cheap pattern match)
+    local net = content:match('%["network"%]%s*=%s*(%d+)')
+    if net then result.network = tonumber(net) end
+    local netMax = content:match('%["networkMax"%]%s*=%s*(%d+)')
+    if netMax then result.networkMax = tonumber(netMax) end
+
+    -- Queued shots: per-enemy piQueuedShot target data
     for block in content:gmatch('%["pawn%d+"%]%s*=%s*(%b{})') do
         local pid = block:match('%["id"%]%s*=%s*(%d+)')
         local qs = block:match('%["piQueuedShot"%]%s*=%s*Point%s*%(([^%)]+)%)')
         if pid and qs then
             local qsx, qsy = qs:match('(%-?%d+)%s*,%s*(%-?%d+)')
             if qsx and qsy then
-                shots[tonumber(pid)] = {x = tonumber(qsx), y = tonumber(qsy)}
+                result.queued_shots[tonumber(pid)] = {x = tonumber(qsx), y = tonumber(qsy)}
             end
         end
     end
-    return shots
-end
 
---------------------------------------------------------------------
--- Read conveyor belt data from save file
--- Returns table: { "x,y" = direction_int } for conveyor tiles
--- Direction: 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)
---------------------------------------------------------------------
-local function _read_conveyor_belts()
-    local belts = {}
-    local base = os.getenv("HOME") ..
-        "/Library/Application Support/IntoTheBreach/profile_Alpha/"
-    local sf = io.open(base .. "saveData.lua", "r")
-    if not sf then
-        sf = io.open(base .. "undoSave.lua", "r")
-    end
-    if not sf then return belts end
-    local content = sf:read("*a")
-    sf:close()
-
-    -- Match: ["loc"] = Point( x, y ), ... ["custom"] = "conveyorN.png"
-    -- These appear in the map_data.map array
+    -- Conveyor belts: direction from custom tile sprites
     for loc_x, loc_y, custom in content:gmatch(
         '%["loc"%]%s*=%s*Point%(%s*(%d+)%s*,%s*(%d+)%s*%).-'
         .. '%["custom"%]%s*=%s*"(conveyor%d+%.png)"'
@@ -129,10 +122,11 @@ local function _read_conveyor_belts()
         local dir = custom:match("conveyor(%d+)")
         if dir then
             local key = loc_x .. "," .. loc_y
-            belts[key] = tonumber(dir)
+            result.conveyor_belts[key] = tonumber(dir)
         end
     end
-    return belts
+
+    return result
 end
 
 --------------------------------------------------------------------
@@ -154,15 +148,19 @@ local function dump_state()
     end
 
     state.turn = Game and Game:GetTurnCount() or 0
-    -- Grid power from save data (updates at turn boundaries, stale mid-turn)
+
+    -- Read all save-file-derived data in one I/O pass (grid power, queued shots, conveyors)
+    local save_data = _read_save_data()
+
+    -- Grid power: prefer save file value (authoritative, updated at turn boundaries).
+    -- Falls back to GameData globals which may be stale at run transitions.
     -- Game:GetPower() crashes the Lua runtime so we can't use it.
-    -- The solver compensates for mid-turn building losses via grid_damage penalties.
-    state.grid_power = GameData and GameData.network or 0
-    state.grid_power_max = GameData and GameData.networkMax or 7
+    state.grid_power = save_data.network or (GameData and GameData.network) or 0
+    state.grid_power_max = save_data.networkMax or (GameData and GameData.networkMax) or 7
     state.timestamp = os.time()
 
-    -- Read conveyor belt data from save file
-    local conveyor_belts = _read_conveyor_belts()
+    -- Conveyor belts from consolidated save read
+    local conveyor_belts = save_data.conveyor_belts
 
     -- Tiles (all 64)
     state.tiles = {}
@@ -211,8 +209,8 @@ local function dump_state()
         end
     end
 
-    -- Read queued shots from save file (for per-enemy target data)
-    local queued_shots = _read_queued_shots()
+    -- Queued shots from consolidated save read
+    local queued_shots = save_data.queued_shots
 
     -- Units (all teams)
     state.units = {}
