@@ -154,24 +154,11 @@ local function dump_state()
     end
 
     state.turn = Game and Game:GetTurnCount() or 0
-    -- Grid power: try Game API with multiple field names, fall back to save file
-    local ok_gp, gp = pcall(function() return Game:GetPower() end)
-    if ok_gp and gp then
-        -- API may return table with various field names, or a plain number
-        if type(gp) == "number" then
-            state.grid_power = gp
-            state.grid_power_max = GameData and GameData.networkMax or 7
-        elseif type(gp) == "table" then
-            state.grid_power = gp.iPower or gp.current or gp.power or gp[1] or 0
-            state.grid_power_max = gp.iMax or gp.max or gp[2] or 7
-        else
-            state.grid_power = GameData and GameData.network or 0
-            state.grid_power_max = GameData and GameData.networkMax or 7
-        end
-    else
-        state.grid_power = GameData and GameData.network or 0
-        state.grid_power_max = GameData and GameData.networkMax or 7
-    end
+    -- Grid power from save data (updates at turn boundaries, stale mid-turn)
+    -- Game:GetPower() crashes the Lua runtime so we can't use it.
+    -- The solver compensates for mid-turn building losses via grid_damage penalties.
+    state.grid_power = GameData and GameData.network or 0
+    state.grid_power_max = GameData and GameData.networkMax or 7
     state.timestamp = os.time()
 
     -- Read conveyor belt data from save file
