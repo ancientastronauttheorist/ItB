@@ -174,12 +174,12 @@ Appears at the start of each run (world map with 4 corporate islands). **Always 
 
 1. Take screenshot to identify the island selection screen.
 2. **Randomly choose** from the 4 corporate islands using `python3 island_select.py`. Output includes the island name, map position, terrain type, and environmental hazards.
-3. Click the chosen island on the map. Island positions (approximate screen regions):
-   - Archive Inc: upper-left area
-   - R.S.T.: lower-left area
-   - Pinnacle: upper-right area
-   - Detritus: right area
-   If positions are unclear, hover islands to read their name tooltip before clicking.
+3. Click the chosen island on the map. Island positions (MCP pixel coordinates, verified):
+   - Archive Inc: green/forested island, upper-left ~(430, 320)
+   - R.S.T. Corporation: brown/desert island, center-left ~(560, 540)
+   - Pinnacle Robotics: white/icy island, center-right ~(850, 400)
+   - Detritus Disposal: dark/rocky island, lower-right ~(1060, 580)
+   If positions shift, hover islands to read their name tooltip before clicking.
 4. Click through the CEO intro cutscene (click CONTINUE).
 5. Transition to ISLAND_MAP.
 
