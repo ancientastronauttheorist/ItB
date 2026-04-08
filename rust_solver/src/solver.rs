@@ -195,6 +195,7 @@ fn prune_actions(
     actions: &mut Vec<Action>,
     threat_tiles: u64,       // bitset
     building_threats: u64,   // bitset
+    spawn_bits: u64,         // bitset of spawn tiles
     max_n: usize,
 ) {
     if actions.len() <= max_n { return; }
@@ -222,8 +223,22 @@ fn prune_actions(
             }
         }
 
-        // Spawn blocking
-        if threat_tiles & move_bit != 0 && building_threats & move_bit == 0 { s += 30; }
+        // Mech blocks a spawn tile by standing on it
+        if spawn_bits & move_bit != 0 { s += 80; }
+
+        // Push enemy onto a spawn tile
+        if spawn_bits != 0 && weapon_id != WId::None && weapon_id != WId::Repair && target.0 < 8 {
+            if let Some(enemy_idx) = board.unit_at(target.0, target.1) {
+                if board.units[enemy_idx].is_enemy() {
+                    if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                        if let Some(dest) = push_destination(target.0, target.1, dir, board) {
+                            let dest_bit = 1u64 << xy_to_idx(dest.0, dest.1);
+                            if spawn_bits & dest_bit != 0 { s += 60; }
+                        }
+                    }
+                }
+            }
+        }
 
         (s, i)
     }).collect();
@@ -243,6 +258,7 @@ fn search_recursive(
     kills_so_far: i32,
     threat_tiles: u64,
     building_threats: u64,
+    spawn_bits: u64,
     original_positions: &[(u8, u8); 16],
     spawn_points: &[(u8, u8)],
     max_actions: usize,
@@ -268,7 +284,7 @@ fn search_recursive(
 
     let mech_idx = mech_order[depth];
     let mut actions = enumerate_actions(board, mech_idx);
-    prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, max_actions);
+    prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, spawn_bits, max_actions);
 
     for &(move_to, weapon_id, target) in &actions {
         if Instant::now() > deadline { return; }
@@ -283,7 +299,8 @@ fn search_recursive(
             &b_next, mech_order, depth + 1,
             actions_so_far,
             kills_so_far + result.enemies_killed,
-            threat_tiles, building_threats, original_positions,
+            threat_tiles, building_threats, spawn_bits,
+            original_positions,
             spawn_points, max_actions, weights, deadline,
             best_score, best_actions,
         );
@@ -387,6 +404,12 @@ pub fn solve_turn(
     let effective_max = if n >= 4 { max_actions_per_mech.min(25) } else { max_actions_per_mech };
     let (threat_tiles, building_threats) = precompute_threats(board);
 
+    // Precompute spawn tile bitset for pruning
+    let mut spawn_bits = 0u64;
+    for &(sx, sy) in spawn_points {
+        spawn_bits |= 1u64 << xy_to_idx(sx, sy);
+    }
+
     // Original positions for pushed-melee detection
     let mut original_positions = [(0u8, 0u8); 16];
     for i in 0..board.unit_count as usize {
@@ -411,7 +434,8 @@ pub fn solve_turn(
         search_recursive(
             board, mech_order, 0,
             &mut actions_buf, 0,
-            threat_tiles, building_threats, &original_positions,
+            threat_tiles, building_threats, spawn_bits,
+            &original_positions,
             spawn_points, effective_max, weights, deadline,
             &mut best_score, &mut best_actions,
         );

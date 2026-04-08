@@ -386,7 +386,8 @@ def _search_recursive(
 
     actions = _enumerate_mech_actions(board, mech)
     actions = _prune_actions(board, mech, actions,
-                             threat_tiles, building_threat_tiles, max_actions)
+                             threat_tiles, building_threat_tiles,
+                             spawn_pts, max_actions)
 
     for action in actions:
         if time.time() - start_time > time_limit:
@@ -646,7 +647,7 @@ def replay_solution(
 
 
 def _prune_actions(board, mech, actions, threat_tiles,
-                   building_threat_tiles, max_n):
+                   building_threat_tiles, spawn_points, max_n):
     """Prune actions to the top N by quick heuristic.
 
     Prioritizes actions that:
@@ -654,8 +655,9 @@ def _prune_actions(board, mech, actions, threat_tiles,
     2. Neutralize threats (attack or push enemies off threatened tiles)
     3. Push enemies AWAY from buildings they're threatening
     4. Kill enemies
-    5. Block spawns
+    5. Block spawns (mech on spawn tile, or push enemy onto spawn tile)
     """
+    spawn_set = set(spawn_points) if spawn_points else set()
     if len(actions) <= max_n:
         return actions
 
@@ -714,9 +716,23 @@ def _prune_actions(board, mech, actions, threat_tiles,
             if has_target or has_aoe:
                 s += 10
 
-        # Spawn blocking
-        if move_to in threat_tiles and move_to not in building_threat_tiles:
-            s += 30
+        # Mech blocks a spawn tile by standing on it
+        if spawn_set and move_to in spawn_set:
+            s += 80
+
+        # Push enemy onto a spawn tile
+        if spawn_set and weapon_id and target[0] >= 0:
+            wdef_sp = get_weapon_def(weapon_id) if weapon_id != "_REPAIR" else None
+            if wdef_sp and wdef_sp.push != "none":
+                enemy_sp = board.unit_at(target[0], target[1])
+                if enemy_sp and enemy_sp.is_enemy:
+                    push_dir_sp = direction_between(
+                        move_to[0], move_to[1], target[0], target[1])
+                    if push_dir_sp is not None:
+                        dest_sp = push_destination(
+                            target[0], target[1], push_dir_sp, board)
+                        if dest_sp is not None and dest_sp in spawn_set:
+                            s += 60  # enemy on spawn blocks it too
 
         # ACID tile avoidance: don't move mechs onto acid tiles
         # (acid doubles all damage taken, disables armor)
