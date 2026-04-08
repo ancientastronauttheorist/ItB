@@ -62,11 +62,15 @@ def get_reachable_tiles(
             if not unit.flying and tile.terrain in ("water", "chasm", "lava"):
                 continue
 
-            # Other units block (can't move through them)
+            # Other units: friendly can walk through (not stop), enemies hard-block
             blocker = board.unit_at(nx, ny)
             if blocker is not None and blocker.uid != unit.uid:
-                visited[(nx, ny)] = new_cost
-                continue  # can't stop here but mark visited
+                if blocker.team == unit.team:
+                    # Friendly: can walk through but can't stop here
+                    visited[(nx, ny)] = new_cost
+                    queue.append((nx, ny, new_cost))
+                # Enemy/neutral: hard block
+                continue
 
             # Dead unit wrecks block movement and can't be passed through
             if board.wreck_at(nx, ny):

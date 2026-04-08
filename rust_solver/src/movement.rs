@@ -71,15 +71,18 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
                 continue;
             }
 
-            // Other alive units block stopping (but mark visited for pathing)
+            // Other alive units: friendly can walk through (not stop), enemies hard-block
             if let Some(blocker_idx) = board.unit_at(nx, ny) {
                 if board.units[blocker_idx].uid != uid {
-                    visited[idx] = new_cost;
-                    // Can't stop here, but continue BFS through
-                    if new_cost < speed {
-                        queue[tail] = (nx, ny, new_cost);
-                        tail += 1;
+                    if board.units[blocker_idx].team == unit.team {
+                        // Friendly: can walk through but can't stop here
+                        visited[idx] = new_cost;
+                        if new_cost < speed {
+                            queue[tail] = (nx, ny, new_cost);
+                            tail += 1;
+                        }
                     }
+                    // Enemy/neutral: hard block — don't add to queue
                     continue;
                 }
             }
@@ -227,9 +230,9 @@ mod tests {
     }
 
     #[test]
-    fn test_unit_blocks_stopping() {
+    fn test_enemy_hard_blocks() {
         let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
-        // Place a blocker at (1, 0)
+        // Place an enemy at (1, 0)
         let mut blocker = Unit::default();
         blocker.uid = 2;
         blocker.x = 1;
@@ -239,7 +242,25 @@ mod tests {
         board.add_unit(blocker);
 
         let tiles = reachable_tiles(&board, idx);
-        // Can't stop on (1,0) but can path through to (2,0)
+        // Enemy is a hard block — can't stop on or path through
+        assert!(!tiles.contains(&(1, 0)));
+        assert!(!tiles.contains(&(2, 0)));
+    }
+
+    #[test]
+    fn test_friendly_walk_through() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
+        // Place a friendly unit at (1, 0)
+        let mut friendly = Unit::default();
+        friendly.uid = 2;
+        friendly.x = 1;
+        friendly.y = 0;
+        friendly.hp = 2;
+        friendly.team = Team::Player;
+        board.add_unit(friendly);
+
+        let tiles = reachable_tiles(&board, idx);
+        // Friendly: can walk through but can't stop on their tile
         assert!(!tiles.contains(&(1, 0)));
         assert!(tiles.contains(&(2, 0)));
     }
