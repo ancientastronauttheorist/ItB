@@ -111,6 +111,16 @@ class Board:
                 return u
         return None
 
+    def wreck_at(self, x: int, y: int) -> bool:
+        """Check if a dead unit (wreck) occupies this tile.
+
+        In ITB, destroyed mechs leave wrecks that block movement.
+        """
+        for u in self.units:
+            if u.x == x and u.y == y and u.hp <= 0:
+                return True
+        return False
+
     def mechs(self) -> list[Unit]:
         return [u for u in self.units if u.is_player and u.hp > 0]
 
@@ -128,6 +138,8 @@ class Board:
             return True
         if self.unit_at(x, y) is not None:
             return True
+        if self.wreck_at(x, y):
+            return True  # dead unit wrecks block movement
         if t.terrain == "building" and t.building_hp > 0:
             return True
         return False
@@ -303,6 +315,8 @@ class Board:
                 u = self.unit_at(x, y)
                 if u:
                     row.append("P" if u.is_player else ("E" if u.is_enemy else "N"))
+                elif self.wreck_at(x, y):
+                    row.append("X")  # dead unit wreck (blocks movement)
                 else:
                     t = self.tile(x, y)
                     c = sym.get(t.terrain, "?")

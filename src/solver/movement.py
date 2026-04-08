@@ -68,6 +68,10 @@ def get_reachable_tiles(
                 visited[(nx, ny)] = new_cost
                 continue  # can't stop here but mark visited
 
+            # Dead unit wrecks block movement and can't be passed through
+            if board.wreck_at(nx, ny):
+                continue
+
             visited[(nx, ny)] = new_cost
             reachable.append((nx, ny))
             queue.append((nx, ny, new_cost))
