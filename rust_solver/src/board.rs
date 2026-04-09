@@ -28,6 +28,7 @@ pub struct Tile {
     pub building_hp: u8,
     pub population: u8,
     pub flags: TileFlags,
+    pub conveyor_dir: i8, // -1 = none, 0-3 = direction (matches DIRS)
 }
 
 impl Tile {
@@ -133,6 +134,7 @@ impl Unit {
     pub fn set_frozen(&mut self, v: bool) { self.flags.set(UnitFlags::FROZEN, v); }
     pub fn set_fire(&mut self, v: bool) { self.flags.set(UnitFlags::FIRE, v); }
     pub fn set_acid(&mut self, v: bool) { self.flags.set(UnitFlags::ACID, v); }
+    pub fn set_web(&mut self, v: bool) { self.flags.set(UnitFlags::WEB, v); }
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
@@ -175,10 +177,16 @@ pub struct Board {
     pub grid_power: u8,
     pub grid_power_max: u8,
     pub env_danger: u64, // bitset: bit i = tile i is danger
-    pub blast_psion: bool, // Blast Psion alive: all Vek explode on death (1 dmg adjacent)
-    pub armor_psion: bool, // Shell Psion alive: all Vek gain Armor (-1 weapon damage)
-    pub current_turn: u8,  // 0-indexed (0 = deployment, 1 = first combat turn)
-    pub total_turns: u8,   // Mission length (typically 5, train/tidal = 4)
+    pub blast_psion: bool,   // Blast Psion (Jelly_Explode1): all Vek explode on death
+    pub armor_psion: bool,   // Shell Psion (Jelly_Armor1): all Vek gain Armor
+    pub soldier_psion: bool, // Soldier Psion (Jelly_Health1): all Vek +1 HP
+    pub regen_psion: bool,   // Blood Psion (Jelly_Regen1): all Vek regen 1 HP/turn
+    pub tyrant_psion: bool,  // Psion Tyrant (Jelly_Lava1): 1 dmg to all player units/turn
+    pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
+    pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
+    pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
+    pub current_turn: u8,       // 0-indexed (0 = deployment, 1 = first combat turn)
+    pub total_turns: u8,        // Mission length (typically 5, train/tidal = 4)
 }
 
 impl Default for Board {
@@ -192,6 +200,12 @@ impl Default for Board {
             env_danger: 0,
             blast_psion: false,
             armor_psion: false,
+            soldier_psion: false,
+            regen_psion: false,
+            tyrant_psion: false,
+            storm_generator: false,
+            flame_shielding: false,
+            vek_hormones: false,
             current_turn: 0,
             total_turns: 5,
         }
@@ -339,7 +353,7 @@ mod tests {
 
     #[test]
     fn test_tile_size() {
-        assert_eq!(std::mem::size_of::<Tile>(), 4);
+        assert!(std::mem::size_of::<Tile>() <= 6, "Tile too large: {} bytes", std::mem::size_of::<Tile>());
     }
 
     #[test]

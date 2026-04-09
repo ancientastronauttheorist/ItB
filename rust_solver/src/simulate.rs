@@ -103,6 +103,32 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                             }
                         }
                     }
+
+                    // Soldier Psion killed: remove +1 HP from all Vek
+                    if board.soldier_psion && board.units[idx].type_name_str() == "Jelly_Health1" {
+                        board.soldier_psion = false;
+                        for j in 0..board.unit_count as usize {
+                            if board.units[j].is_enemy() && board.units[j].hp > 0
+                                && board.units[j].type_name_str() != "Jelly_Health1"
+                            {
+                                board.units[j].max_hp -= 1;
+                                board.units[j].hp -= 1;
+                                if board.units[j].hp <= 0 {
+                                    result.enemies_killed += 1;
+                                }
+                            }
+                        }
+                    }
+
+                    // Blood Psion killed: stop regen
+                    if board.regen_psion && board.units[idx].type_name_str() == "Jelly_Regen1" {
+                        board.regen_psion = false;
+                    }
+
+                    // Psion Tyrant killed: stop mech damage
+                    if board.tyrant_psion && board.units[idx].type_name_str() == "Jelly_Lava1" {
+                        board.tyrant_psion = false;
+                    }
                 }
             } else if unit.is_player() {
                 result.mech_damage_taken += actual as i32;
@@ -152,6 +178,35 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             }
         } else {
             tile.set_cracked(true);
+        }
+    }
+
+    // Forest: weapon damage ignites (NOT bump/push damage)
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Forest && source != DamageSource::Bump {
+        tile.set_on_fire(true);
+        // Tile stays Terrain::Forest with ON_FIRE flag.
+        // Unit does NOT immediately catch fire — happens at end-of-turn.
+    }
+
+    // Sand: weapon damage → smoke (fire weapon → fire tile instead)
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Sand && source == DamageSource::Weapon {
+        tile.terrain = Terrain::Ground;
+        // Note: fire_weapon flag not yet threaded; default to smoke.
+        // Correct fire-on-sand requires knowing if weapon has FIRE flag.
+        tile.set_smoke(true);
+    }
+
+    // ACID pool creation: unit with ACID dies → acid pool on tile
+    if let Some(idx) = board.any_unit_at(x, y) {
+        let unit = &board.units[idx];
+        if unit.hp <= 0 && unit.acid() {
+            let tile = board.tile_mut(x, y);
+            if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
+                tile.flags |= TileFlags::ACID;
+                tile.set_on_fire(false); // acid pool extinguishes fire
+            }
         }
     }
 }
@@ -253,6 +308,32 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     board.units[unit_idx].x = nx;
     board.units[unit_idx].y = ny;
 
+    // Fire tile: pushed unit catches fire
+    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+        board.units[unit_idx].set_fire(true);
+    }
+
+    // ACID pool: unit gains ACID, pool consumed
+    if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
+        if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+            board.units[unit_idx].set_acid(true);
+        }
+        board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
+    }
+
+    // Frozen unit on water → creates ice (unit survives)
+    let dest_terrain = board.tile(nx, ny).terrain;
+    if board.units[unit_idx].frozen() && dest_terrain == Terrain::Water {
+        board.tile_mut(nx, ny).terrain = Terrain::Ice;
+        board.tile_mut(nx, ny).set_cracked(false);
+        return; // unit survives on ice
+    }
+
+    // Frozen unit on lava → unfreeze, then lava kills non-flying
+    if board.units[unit_idx].frozen() && dest_terrain == Terrain::Lava {
+        board.units[unit_idx].set_frozen(false);
+    }
+
     // Check deadly terrain (frozen flying = grounded)
     let unit = &board.units[unit_idx];
     let eff_flying = unit.effectively_flying();
@@ -260,6 +341,7 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
 
     if dest_terrain.is_deadly_ground() && !eff_flying {
         let is_enemy = board.units[unit_idx].is_enemy();
+        let has_acid = board.units[unit_idx].acid();
         let can_explode = is_enemy && board.blast_psion
             && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
         let unit = &mut board.units[unit_idx];
@@ -271,6 +353,79 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
             }
         } else if unit.is_player() {
             result.mechs_killed += 1;
+        }
+
+        // ACID unit drowns in water → water becomes ACID tile
+        if has_acid && dest_terrain == Terrain::Water {
+            board.tile_mut(nx, ny).flags |= TileFlags::ACID;
+        }
+    }
+}
+
+// ── Weapon status effect application ────────────────────────────────────────
+
+/// Apply a weapon's status effects to a tile and its occupant.
+/// Called AFTER damage and push — if damage broke a shield, status will land.
+pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
+    // ── Tile effects ──
+    if wdef.fire() {
+        let tile = board.tile_mut(x, y);
+        tile.set_smoke(false); // fire replaces smoke
+        tile.set_on_fire(true);
+    }
+    if wdef.smoke() {
+        let tile = board.tile_mut(x, y);
+        tile.set_on_fire(false); // smoke replaces fire
+        tile.set_smoke(true);
+    }
+    if wdef.freeze() {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Water {
+            tile.terrain = Terrain::Ice;
+            tile.set_cracked(false);
+        } else if tile.terrain == Terrain::Ice && tile.cracked() {
+            tile.set_cracked(false); // restore cracked ice
+        }
+        if tile.on_fire() {
+            tile.set_on_fire(false); // freeze extinguishes fire
+        }
+    }
+
+    // ── Unit effects ──
+    if let Some(idx) = board.unit_at(x, y) {
+        let unit = &board.units[idx];
+
+        // Shield blocks negative status WITHOUT consuming the shield
+        if unit.shield() && (wdef.fire() || wdef.acid() || wdef.web() || wdef.freeze()) {
+            // Shield is a positive effect, always applies even if shield is up
+            if wdef.shield() {
+                board.units[idx].set_shield(true);
+            }
+            return;
+        }
+
+        if wdef.fire() {
+            let u = &mut board.units[idx];
+            if u.frozen() {
+                u.set_frozen(false); // fire on frozen: unfreeze AND catch fire
+            }
+            u.set_fire(true);
+        }
+        if wdef.acid() {
+            board.units[idx].set_acid(true);
+        }
+        if wdef.freeze() {
+            let u = &mut board.units[idx];
+            if u.fire() {
+                u.set_fire(false); // freeze on fire: extinguish
+            }
+            u.set_frozen(true);
+        }
+        if wdef.web() {
+            board.units[idx].set_web(true);
+        }
+        if wdef.shield() {
+            board.units[idx].set_shield(true);
         }
     }
 }
@@ -311,6 +466,14 @@ pub fn simulate_weapon(
         apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
     }
 
+    // Self-freeze (Cryo-Launcher freezes attacker)
+    if wdef.freeze() && weapon_id == WId::RangedIce {
+        let u = &board.units[attacker_idx];
+        if !u.shield() {
+            board.units[attacker_idx].set_frozen(true);
+        }
+    }
+
     // Push self backward
     if wdef.push_self() {
         if let Some(dir) = attack_dir {
@@ -328,23 +491,46 @@ pub fn simulate_weapon(
 fn sim_melee(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
 
+    // Chain weapon (Electric Whip): BFS through adjacent occupied tiles
+    if wdef.chain() {
+        let mut visited = 0u64;
+        visited |= 1u64 << xy_to_idx(tx, ty);
+        let mut queue: Vec<(u8, u8)> = vec![(tx, ty)];
+        let mut head = 0;
+        while head < queue.len() {
+            let (cx, cy) = queue[head];
+            head += 1;
+            for &(dx, dy) in &DIRS {
+                let nx = cx as i8 + dx;
+                let ny = cy as i8 + dy;
+                if !in_bounds(nx, ny) { continue; }
+                let (nxu, nyu) = (nx as u8, ny as u8);
+                let bit = 1u64 << xy_to_idx(nxu, nyu);
+                if visited & bit != 0 { continue; }
+                visited |= bit;
+                // Chain doesn't pass through buildings (no Building Chain upgrade yet)
+                if board.tile(nxu, nyu).is_building() { continue; }
+                if board.unit_at(nxu, nyu).is_some() {
+                    apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
+                    queue.push((nxu, nyu));
+                }
+            }
+        }
+    }
+
     if let Some(dir) = attack_dir {
+        // Apply weapon status BEFORE push (unit still at target tile)
+        apply_weapon_status(board, tx, ty, wdef);
+
         match wdef.push {
             PushDir::Forward => apply_push(board, tx, ty, dir, result),
             PushDir::Flip => apply_push(board, tx, ty, opposite_dir(dir), result),
             PushDir::Backward => apply_push(board, tx, ty, opposite_dir(dir), result),
             PushDir::Perpendicular => apply_push(board, tx, ty, (dir + 1) % 4, result),
             PushDir::Outward => {
-                // Ground Smash: push all adjacent outward (used with aoe_perpendicular)
-                // For the main target, push in attack direction
                 apply_push(board, tx, ty, dir, result);
             }
             _ => {}
-        }
-
-        // Fire effect on target tile
-        if wdef.fire() {
-            board.tile_mut(tx, ty).set_on_fire(true);
         }
 
         // AoE behind: hit tile behind target
@@ -408,6 +594,7 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         let hx = hit_x as u8;
         let hy = hit_y as u8;
         apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+        apply_weapon_status(board, hx, hy, wdef); // status BEFORE push (unit still here)
         match wdef.push {
             PushDir::Forward => apply_push(board, hx, hy, dir, result),
             PushDir::Backward => apply_push(board, hx, hy, opposite_dir(dir), result),
@@ -448,9 +635,8 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir
         apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
     }
 
-    if wdef.fire() {
-        board.tile_mut(tx, ty).set_on_fire(true);
-    }
+    // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
+    apply_weapon_status(board, tx, ty, wdef);
 
     // Behind tile damage (Old Earth Artillery)
     if wdef.aoe_behind() {
@@ -460,6 +646,7 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir
             let by = ty as i8 + ddy;
             if in_bounds(bx, by) {
                 apply_damage(board, bx as u8, by as u8, wdef.damage, result, DamageSource::Weapon);
+                apply_weapon_status(board, bx as u8, by as u8, wdef);
             }
         }
     }
@@ -474,6 +661,7 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir
             if wdef.push == PushDir::Outward {
                 apply_push(board, nx as u8, ny as u8, i, result);
             }
+            apply_weapon_status(board, nx as u8, ny as u8, wdef);
         }
     }
 }
@@ -491,6 +679,7 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
             PushDir::Inward => apply_push(board, nx as u8, ny as u8, opposite_dir(i), result),
             _ => {}
         }
+        apply_weapon_status(board, nx as u8, ny as u8, wdef);
     }
 }
 
@@ -562,6 +751,7 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
     // Damage hit target
     if let Some((hx, hy)) = hit {
         apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+        apply_weapon_status(board, hx, hy, wdef); // status BEFORE push
         if wdef.push == PushDir::Forward {
             apply_push(board, hx, hy, dir, result);
         }
@@ -575,6 +765,9 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty
     let old_y = board.units[attacker_idx].y;
     board.units[attacker_idx].x = tx;
     board.units[attacker_idx].y = ty;
+
+    // Apply status to landing tile (Jetmech smokes landing spot)
+    apply_weapon_status(board, tx, ty, wdef);
 
     // Damage adjacent tiles (skip source direction)
     let from_dir = direction_between(tx, ty, old_x, old_y);
@@ -642,10 +835,23 @@ pub fn simulate_action(
     board.units[mech_idx].y = move_to.1;
 
     // Collect pod
-    let tile = board.tile_mut(move_to.0, move_to.1);
-    if tile.has_pod() {
-        tile.set_has_pod(false);
-        result.pods_collected += 1;
+    {
+        let tile = board.tile_mut(move_to.0, move_to.1);
+        if tile.has_pod() {
+            tile.set_has_pod(false);
+            result.pods_collected += 1;
+        }
+    }
+
+    // ACID pool pickup: mech gains ACID, pool consumed
+    {
+        let tile = board.tile(move_to.0, move_to.1);
+        if tile.acid() && tile.terrain != Terrain::Water {
+            if !board.units[mech_idx].shield() {
+                board.units[mech_idx].set_acid(true);
+            }
+            board.tile_mut(move_to.0, move_to.1).flags.remove(TileFlags::ACID);
+        }
     }
 
     // Repair
@@ -809,5 +1015,121 @@ mod tests {
         assert_eq!(board.units[0].hp, 7); // (1,0): 10-3
         assert_eq!(board.units[1].hp, 8); // (2,0): 10-2
         assert_eq!(board.units[2].hp, 9); // (3,0): 10-1
+    }
+
+    #[test]
+    fn test_acid_projector_applies_acid() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 4);
+        // Acid Projector should apply ACID status to target
+        assert!(board.units[enemy_idx].acid(), "Enemy should have ACID after Acid Projector");
+    }
+
+    #[test]
+    fn test_cryo_launcher_freezes_target_and_self() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedIce);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIce, 3, 6);
+        assert!(board.units[enemy_idx].frozen(), "Target should be frozen");
+        assert!(board.units[mech_idx].frozen(), "Cryo-Launcher should self-freeze");
+    }
+
+    #[test]
+    fn test_shield_blocks_status_without_consuming() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+        board.units[enemy_idx].set_shield(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 4);
+        // Shield should block ACID but shield consumed by the 0-damage hit?
+        // Acid Projector does 0 damage, so shield NOT consumed. Status also blocked.
+        assert!(!board.units[enemy_idx].acid(), "Shield should block ACID status");
+        assert!(board.units[enemy_idx].shield(), "Shield should NOT be consumed by 0 damage");
+    }
+
+    #[test]
+    fn test_push_onto_fire_tile() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_on_fire(true);
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert!(board.units[idx].fire(), "Unit pushed onto fire tile should catch fire");
+    }
+
+    #[test]
+    fn test_jetmech_smokes_landing() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 3, WId::BruteJetmech);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 2, 2);
+        // Jetmech Aerial Bombs: smoke on landing tile
+        assert!(board.tile(2, 2).smoke(), "Jetmech landing tile should have smoke");
+    }
+
+    #[test]
+    fn test_freeze_water_creates_ice() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 6).terrain = Terrain::Water;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedIce);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIce, 3, 6);
+        assert_eq!(board.tile(3, 6).terrain, Terrain::Ice, "Freeze on water should create ice");
+    }
+
+    #[test]
+    fn test_forest_ignites_on_weapon_damage() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Forest;
+        add_enemy(&mut board, 1, 3, 4, 3);
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimePunchmech);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+        assert!(board.tile(3, 4).on_fire(), "Forest should ignite from weapon damage");
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Forest, "Terrain should stay Forest");
+    }
+
+    #[test]
+    fn test_sand_becomes_smoke_on_weapon_damage() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+        add_enemy(&mut board, 1, 3, 4, 3);
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimePunchmech);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+        assert!(board.tile(3, 4).smoke(), "Sand should become smoke from weapon damage");
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Sand should become ground");
+    }
+
+    #[test]
+    fn test_frozen_unit_on_water_creates_ice() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Water;
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].set_frozen(true);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        // Frozen unit on water → ice, unit survives
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ice);
+        assert!(board.units[idx].hp > 0, "Frozen unit should survive on newly-created ice");
+    }
+
+    #[test]
+    fn test_acid_unit_death_creates_pool() {
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 3, 3, 1);
+        board.units[idx].set_acid(true);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 2, &mut result, DamageSource::Weapon);
+        assert!(board.tile(3, 3).acid(), "ACID unit death should create acid pool");
     }
 }

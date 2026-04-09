@@ -114,6 +114,10 @@ local function _read_save_data()
         end
     end
 
+    -- Victory turns (mission length: usually 5, 4 for train/tidal missions)
+    local victory = content:match('%["victory"%]%s*=%s*(%d+)')
+    if victory then result.victory_turns = tonumber(victory) end
+
     -- Conveyor belts: direction from custom tile sprites
     for loc_x, loc_y, custom in content:gmatch(
         '%["loc"%]%s*=%s*Point%(%s*(%d+)%s*,%s*(%d+)%s*%).-'
@@ -148,7 +152,7 @@ local function dump_state()
     end
 
     state.turn = Game and Game:GetTurnCount() or 0
-    state.total_turns = 5  -- Standard mission length (no Lua API for this; 4 for train/tidal missions)
+    state.total_turns = 5  -- Default; overridden from save file below if available
 
     -- Read all save-file-derived data in one I/O pass (grid power, queued shots, conveyors)
     local save_data = _read_save_data()
@@ -158,6 +162,9 @@ local function dump_state()
     -- Game:GetPower() crashes the Lua runtime so we can't use it.
     state.grid_power = save_data.network or (GameData and GameData.network) or 0
     state.grid_power_max = save_data.networkMax or (GameData and GameData.networkMax) or 7
+    if save_data.victory_turns then
+        state.total_turns = save_data.victory_turns
+    end
     state.timestamp = os.time()
 
     -- Conveyor belts from consolidated save read

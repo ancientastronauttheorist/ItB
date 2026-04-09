@@ -42,6 +42,7 @@ pub struct WeaponDef {
     pub range_min: u8,
     pub range_max: u8,   // 0 = unlimited
     pub limited: u8,     // 0 = unlimited uses
+    pub path_size: u8,   // tiles hit in line (1 = default, 2 = Crab dual artillery)
     pub flags: WeaponFlags,
 }
 
@@ -71,6 +72,7 @@ const DEF: WeaponDef = WeaponDef {
     self_damage: 0,
     range_min: 1, range_max: 1,
     limited: 0,
+    path_size: 1,
     flags: WeaponFlags::AOE_CENTER, // aoe_center defaults true
 };
 
@@ -333,10 +335,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[57] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
     // 58: ScarabAtk2
     w[58] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, flags: C, ..DEF };
-    // 59: CrabAtk1
-    w[59] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
-    // 60: CrabAtk2
-    w[60] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, flags: C, ..DEF };
+    // 59: CrabAtk1 — hits 2 tiles in line
+    w[59] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, path_size: 2, flags: C, ..DEF };
+    // 60: CrabAtk2 — hits 2 tiles in line
+    w[60] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, path_size: 2, flags: C, ..DEF };
     // 61: DiggerAtk1 — self_aoe, adjacent only
     w[61] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 62: BlobberAtk1 — spawns Blob1
@@ -509,6 +511,34 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BlobAtk1 => "BlobAtk1",
         WId::Repair => "_REPAIR",
         _ => "",
+    }
+}
+
+/// Map enemy pawn type name to its weapon WId.
+/// Used by enemy attack simulation for proper weapon type dispatch.
+pub fn enemy_weapon_for_type(type_name: &str) -> WId {
+    match type_name {
+        "Scorpion1" => WId::ScorpionAtk1,
+        "Scorpion2" => WId::ScorpionAtk2,
+        "Hornet1" => WId::HornetAtk1,
+        "Hornet2" => WId::HornetAtk2,
+        "Leaper1" | "Leaper2" => WId::LeaperAtk1,
+        "Beetle1" => WId::BeetleAtk1,
+        "Beetle2" => WId::BeetleAtk2,
+        "Firefly1" => WId::FireflyAtk1,
+        "Firefly2" => WId::FireflyAtk2,
+        "Centipede1" | "Centipede2" => WId::CentipedeAtk1,
+        "Scarab1" => WId::ScarabAtk1,
+        "Scarab2" => WId::ScarabAtk2,
+        "Crab1" => WId::CrabAtk1,
+        "Crab2" => WId::CrabAtk2,
+        "Digger1" | "Digger2" => WId::DiggerAtk1,
+        "Blobber1" | "Blobber2" => WId::BlobberAtk1,
+        "Spider1" | "Spider2" => WId::SpiderAtk1,
+        "Spiderling1" | "Spiderling2" => WId::SpiderlingAtk1,
+        s if s.starts_with("BlobMini") => WId::BlobAtk1,
+        s if s.starts_with("Blob1") => WId::BlobAtk1,
+        _ => WId::None,
     }
 }
 

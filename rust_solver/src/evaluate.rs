@@ -77,17 +77,37 @@ impl Default for EvalWeights {
 /// `future_factor` (1.0 on first combat turn, 0.0 on final turn).
 /// Building and grid_power weights never scale (always critical).
 ///
+/// Snapshot of Psion state before mech actions.
+#[derive(Clone, Debug, Default)]
+pub struct PsionState {
+    pub blast: bool,
+    pub armor: bool,
+    pub soldier: bool,
+    pub regen: bool,
+    pub tyrant: bool,
+}
+
+impl PsionState {
+    pub fn capture(board: &Board) -> Self {
+        PsionState {
+            blast: board.blast_psion,
+            armor: board.armor_psion,
+            soldier: board.soldier_psion,
+            regen: board.regen_psion,
+            tyrant: board.tyrant_psion,
+        }
+    }
+}
+
 /// `kills` is passed explicitly because dead enemies are filtered from iteration.
 /// `spawn_points` are next turn's Vek spawn locations.
-/// `blast_psion_was_active` should be true if the Blast Psion was alive BEFORE
-/// mech actions but is now dead (Psion was killed this turn).
+/// `psion_before`: snapshot of Psion state before mech actions — used to detect kills.
 pub fn evaluate(
     board: &Board,
     spawn_points: &[(u8, u8)],
     weights: &EvalWeights,
     kills: i32,
-    blast_psion_was_active: bool,
-    armor_psion_was_active: bool,
+    psion_before: &PsionState,
 ) -> f64 {
     // Game over: grid power depleted — worst possible score
     if board.grid_power == 0 {
@@ -131,16 +151,21 @@ pub fn evaluate(
         }
     }
 
-    // ── Blast Psion kill bonus: SCALED by future_factor ─────────────────
-    // Killing the Psion prevents death explosions for all remaining turns.
-    // Worth more early (more future enemy deaths prevented), zero on final turn.
-    if blast_psion_was_active && !board.blast_psion {
+    // ── Psion kill bonuses: SCALED by future_factor ──────────────────────
+    if psion_before.blast && !board.blast_psion {
         score += 2000.0 * ff;
     }
-
-    // ── Shell Psion kill bonus: removing armor makes all weapons effective ──
-    if armor_psion_was_active && !board.armor_psion {
+    if psion_before.armor && !board.armor_psion {
         score += 1500.0 * ff;
+    }
+    if psion_before.soldier && !board.soldier_psion {
+        score += 1000.0 * ff;
+    }
+    if psion_before.regen && !board.regen_psion {
+        score += 1600.0 * ff;
+    }
+    if psion_before.tyrant && !board.tyrant_psion {
+        score += 2500.0 * ff;
     }
 
     // ── Environment danger: enemy scaled like kills, mech like mech_killed ─
@@ -159,6 +184,14 @@ pub fn evaluate(
         }
     }
 
+    // ── Enemies on fire: SCALED (will take 1 damage next turn) ─────────
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.is_enemy() && u.alive() && u.fire() {
+            score += scaled(100.0, ff, 0.5, 0.5); // fire = partial kill value
+        }
+    }
+
     // ── Mechs: SCALED (mech loss/HP matters less on final turn) ─────────
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
@@ -166,15 +199,18 @@ pub fn evaluate(
         if !u.is_mech() { continue; }
 
         if u.hp <= 0 {
-            // mech_killed = -8000 * (0.30 + 0.70 * ff) → final: -2400
             score += scaled(weights.mech_killed, ff, 0.30, 0.70);
         } else {
-            // mech_hp = 100 * (0.20 + 0.80 * ff) → final: 20
             score += u.hp as f64 * scaled(weights.mech_hp, ff, 0.20, 0.80);
-            // Centrality: zero on final turn (no future positioning value)
             let cx = (u.x as f64 - 3.5).abs();
             let cy = (u.y as f64 - 3.5).abs();
             score += (cx + cy) * weights.mech_centrality * ff;
+
+            // ACID tile avoidance: penalize mech on ACID pool
+            let tile = board.tile(u.x, u.y);
+            if tile.acid() && tile.terrain != Terrain::Water {
+                score += scaled(-200.0, ff, 0.50, 0.50);
+            }
         }
     }
 
@@ -210,13 +246,14 @@ pub fn evaluate(
 mod tests {
     use super::*;
 
+    fn no_psion() -> PsionState { PsionState::default() }
+
     #[test]
     fn test_empty_board_score() {
         let board = Board::default();
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, false, false);
-        // grid_power=7, no buildings, no units
-        assert!((score - 35000.0).abs() < 0.01); // 7 * 5000
+        let score = evaluate(&board, &[], &w, 0, &no_psion());
+        assert!((score - 35000.0).abs() < 0.01);
     }
 
     #[test]
@@ -225,30 +262,27 @@ mod tests {
         board.tile_mut(3, 3).terrain = Terrain::Building;
         board.tile_mut(3, 3).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, false, false);
-        // grid_power=7 (multiplier=1.0): 7*5000 + 1*10000 + 1*2000
+        let score = evaluate(&board, &[], &w, 0, &no_psion());
         assert!((score - 47000.0).abs() < 0.01);
     }
 
     #[test]
     fn test_kill_scales_with_turn() {
         let w = EvalWeights::default();
-
-        // Turn 1 of 5 (first combat): ff=1.0, kill = 500 * (0.20 + 1.60) = 900
+        let p = no_psion();
         let mut b1 = Board::default();
         b1.current_turn = 1;
         b1.total_turns = 5;
-        let s0 = evaluate(&b1, &[], &w, 0, false, false);
-        let s1 = evaluate(&b1, &[], &w, 2, false, false);
-        assert!((s1 - s0 - 1800.0).abs() < 1.0); // 2 * 900
+        let s0 = evaluate(&b1, &[], &w, 0, &p);
+        let s1 = evaluate(&b1, &[], &w, 2, &p);
+        assert!((s1 - s0 - 1800.0).abs() < 1.0);
 
-        // Final turn (turn 5): ff=0.0, kill = 500 * 0.20 = 100
         let mut b5 = Board::default();
         b5.current_turn = 5;
         b5.total_turns = 5;
-        let s0 = evaluate(&b5, &[], &w, 0, false, false);
-        let s1 = evaluate(&b5, &[], &w, 2, false, false);
-        assert!((s1 - s0 - 200.0).abs() < 1.0); // 2 * 100
+        let s0 = evaluate(&b5, &[], &w, 0, &p);
+        let s1 = evaluate(&b5, &[], &w, 2, &p);
+        assert!((s1 - s0 - 200.0).abs() < 1.0);
     }
 
     #[test]
@@ -258,8 +292,7 @@ mod tests {
         board.tile_mut(0, 0).terrain = Terrain::Building;
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, false, false);
-        // grid=1 (5x multiplier): 1*5000 + 1*10000*5 + 1*2000*5 = 5000+50000+10000 = 65000
+        let score = evaluate(&board, &[], &w, 0, &no_psion());
         assert!((score - 65000.0).abs() < 0.01);
     }
 
@@ -269,28 +302,22 @@ mod tests {
         let mut board = Board::default();
         board.current_turn = 5;
         board.total_turns = 5;
-        // Add a mech on a spawn point
         board.add_unit(Unit {
             uid: 0, x: 3, y: 3, hp: 3, max_hp: 3,
             team: Team::Player, move_speed: 3,
             flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
             ..Unit::default()
         });
-        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, false, false);
-        let without_spawn = evaluate(&board, &[], &w, 0, false, false);
-        // On final turn, spawn_blocked * ff = 400 * 0.0 = 0
+        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, &no_psion());
+        let without_spawn = evaluate(&board, &[], &w, 0, &no_psion());
         assert!((with_spawn - without_spawn).abs() < 1.0);
     }
 
     #[test]
     fn test_future_factor() {
-        // Turn 0 (deployment): ff = 1.0 (clamped, combat_turn=0)
         assert!((future_factor(0, 5) - 1.0).abs() < 0.01);
-        // Turn 1 (first combat): ff = 4/4 = 1.0
         assert!((future_factor(1, 5) - 1.0).abs() < 0.01);
-        // Turn 3 (mid): ff = 2/4 = 0.5
         assert!((future_factor(3, 5) - 0.5).abs() < 0.01);
-        // Turn 5 (final): ff = 0/4 = 0.0
         assert!((future_factor(5, 5) - 0.0).abs() < 0.01);
     }
 
@@ -300,10 +327,22 @@ mod tests {
         let mut board = Board::default();
         board.current_turn = 1;
         board.total_turns = 5;
-        // Psion was active before, now dead
-        let with_bonus = evaluate(&board, &[], &w, 0, true, false);
-        let without_bonus = evaluate(&board, &[], &w, 0, false, false);
-        // bonus = 2000 * ff = 2000 * 1.0 = 2000
+        // Blast Psion was active before, now dead
+        let p_blast = PsionState { blast: true, ..Default::default() };
+        let with_bonus = evaluate(&board, &[], &w, 0, &p_blast);
+        let without_bonus = evaluate(&board, &[], &w, 0, &no_psion());
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_tyrant_psion_kill_bonus() {
+        let w = EvalWeights::default();
+        let mut board = Board::default();
+        board.current_turn = 1;
+        board.total_turns = 5;
+        let p_tyrant = PsionState { tyrant: true, ..Default::default() };
+        let with = evaluate(&board, &[], &w, 0, &p_tyrant);
+        let without = evaluate(&board, &[], &w, 0, &no_psion());
+        assert!((with - without - 2500.0).abs() < 1.0);
     }
 }

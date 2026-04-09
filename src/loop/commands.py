@@ -575,12 +575,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                       f"{solution.permutations_tried}/{solution.total_permutations} permutations"
                       f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
         except ImportError:
-            pass  # Rust solver not installed, fall back to Python
+            print("  ERROR: Rust solver not available (itb_solver module not found)")
+            print("  Build with: cd rust_solver && maturin develop --release")
         except Exception as e:
-            print(f"  Rust solver error: {e} — falling back to Python")
+            print(f"  Rust solver error: {e}")
 
-    # Fall back to Python solver
+    # Rust solver is the only solver. If it failed, error out.
     if solution is None:
+        print("  WARNING: Falling back to Python solver (Rust solver unavailable)")
         solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
                               environment_danger=environment_danger)
 

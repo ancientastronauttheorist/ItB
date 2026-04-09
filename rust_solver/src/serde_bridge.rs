@@ -37,6 +37,7 @@ pub struct JsonTile {
     pub has_pod: Option<bool>,
     pub building_hp: Option<u8>,
     pub population: Option<u8>,
+    pub conveyor: Option<i8>,
 }
 
 #[derive(Deserialize)]
@@ -101,6 +102,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             if jt.cracked.unwrap_or(false) { flags |= TileFlags::CRACKED; }
             if jt.pod.unwrap_or(false) || jt.has_pod.unwrap_or(false) { flags |= TileFlags::HAS_POD; }
             tile.flags = flags;
+            tile.conveyor_dir = jt.conveyor.unwrap_or(-1);
         }
     }
 
@@ -217,6 +219,56 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         for i in 0..board.unit_count as usize {
             if board.units[i].is_enemy() {
                 board.units[i].flags.set(UnitFlags::ARMOR, true);
+            }
+        }
+    }
+
+    // Detect Soldier Psion (Jelly_Health1): all Vek +1 HP
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Health1" && board.units[i].hp > 0 {
+            board.soldier_psion = true;
+            break;
+        }
+    }
+    if board.soldier_psion {
+        // Bridge sends HP already buffed but max_hp as base — adjust max_hp to match
+        for i in 0..board.unit_count as usize {
+            if board.units[i].is_enemy() && board.units[i].type_name_str() != "Jelly_Health1" {
+                board.units[i].max_hp += 1;
+            }
+        }
+    }
+
+    // Detect Blood Psion (Jelly_Regen1): all Vek regen 1 HP/turn
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Regen1" && board.units[i].hp > 0 {
+            board.regen_psion = true;
+            break;
+        }
+    }
+
+    // Detect Psion Tyrant (Jelly_Lava1): 1 dmg to all player units/turn
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Lava1" && board.units[i].hp > 0 {
+            board.tyrant_psion = true;
+            break;
+        }
+    }
+
+    // Detect passive abilities from mech weapon names
+    if let Some(units) = &input.units {
+        for ju in units {
+            if ju.mech.unwrap_or(false) {
+                if let Some(weapons) = &ju.weapons {
+                    for wname in weapons {
+                        match wname.as_str() {
+                            "Passive_Electric" => board.storm_generator = true,
+                            "Passive_FlameImmune" => board.flame_shielding = true,
+                            "Passive_FriendlyFire" => board.vek_hormones = true,
+                            _ => {}
+                        }
+                    }
+                }
             }
         }
     }

@@ -12,6 +12,12 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     let unit = &board.units[unit_idx];
     let ux = unit.x;
     let uy = unit.y;
+
+    // Webbed/frozen units cannot move — only current position
+    if unit.web() || unit.frozen() {
+        return vec![(ux, uy)];
+    }
+
     let uid = unit.uid;
     let speed = unit.move_speed;
     let flying = unit.flying();
