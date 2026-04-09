@@ -330,6 +330,29 @@ local function dump_state()
         end
     end
 
+    -- Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch
+    -- Board:IsEnvironmentDanger() does NOT detect these, so we add them manually.
+    -- Only flag tiles on the turn the rocket is queued to fire (GetSelectedWeapon > 0).
+    for _, u in ipairs(state.units) do
+        if u.type and string.find(u.type, "Satellite") then
+            local ok, p = pcall(function() return Board:GetPawn(u.uid) end)
+            if ok and p then
+                local ok_sw, sw = pcall(function() return p:GetSelectedWeapon() end)
+                local queued = ok_sw and sw and sw > 0
+                if queued then
+                    u.queued_launch = true
+                    local dirs = {{-1,0},{1,0},{0,-1},{0,1}}
+                    for _, d in ipairs(dirs) do
+                        local nx, ny = u.x + d[1], u.y + d[2]
+                        if nx >= 0 and nx <= 7 and ny >= 0 and ny <= 7 then
+                            state.environment_danger[#state.environment_danger + 1] = {nx, ny}
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     -- Deployment zone (captured in BaseDeployment hook via Board:GetZone)
     if _ITB_DEPLOY_ZONE and #_ITB_DEPLOY_ZONE > 0 then
         state.deployment_zone = _ITB_DEPLOY_ZONE

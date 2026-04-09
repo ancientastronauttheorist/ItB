@@ -317,6 +317,21 @@ class Board:
                 if u.is_enemy:
                     u.armor = True
 
+        # Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch.
+        # Detect by checking if adjacent tiles appear in targeted_tiles (= rocket is
+        # queued to fire this turn). Board:IsEnvironmentDanger() misses these.
+        targeted = set()
+        for tt in data.get("targeted_tiles", []):
+            if isinstance(tt, (list, tuple)) and len(tt) >= 2:
+                targeted.add((tt[0], tt[1]))
+        for u in board.units:
+            if "Satellite" in u.type and u.hp > 0:
+                adj = [(u.x-1, u.y), (u.x+1, u.y), (u.x, u.y-1), (u.x, u.y+1)]
+                adj_on_board = [(x, y) for x, y in adj if 0 <= x < 8 and 0 <= y < 8]
+                if any(t in targeted for t in adj_on_board):
+                    for t in adj_on_board:
+                        board.environment_danger.add(t)
+
         return board
 
     def print_board(self):
