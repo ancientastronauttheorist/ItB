@@ -36,12 +36,18 @@ fn apply_enemy_hit(board: &mut Board, x: u8, y: u8, damage: u8) -> i32 {
 
 /// Trace projectile from enemy position in queued direction.
 /// Returns (hit_x, hit_y) or None.
-fn find_projectile_target(board: &Board, ex: u8, ey: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
+fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
     if qtx < 0 { return None; }
 
-    let dx = (qtx as i8 - ex as i8).signum();
-    let dy = (qty as i8 - ey as i8).signum();
+    // Compute direction from ORIGINAL position to queued target.
+    // This preserves the cardinal attack direction after pushes.
+    let dx = (qtx - orig_x as i8).signum();
+    let dy = (qty - orig_y as i8).signum();
 
+    // Must be a valid cardinal direction (exactly one axis non-zero)
+    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) { return None; }
+
+    // Trace from CURRENT position in the original direction
     for i in 1..8i8 {
         let nx = ex as i8 + dx * i;
         let ny = ey as i8 + dy * i;
@@ -119,10 +125,12 @@ pub fn simulate_enemy_attacks(
         };
         let _ = wdef;
 
+        let orig = original_positions[ei];
+
         match weapon_type {
             WeaponType::Projectile => {
-                // Re-trace projectile on current board
-                if let Some((tx, ty)) = find_projectile_target(board, ex, ey, qtx, qty) {
+                // Re-trace projectile on current board using ORIGINAL position for direction
+                if let Some((tx, ty)) = find_projectile_target(board, ex, ey, orig.0, orig.1, qtx, qty) {
                     buildings_destroyed += apply_enemy_hit(board, tx, ty, damage);
                 }
             }
@@ -131,7 +139,6 @@ pub fn simulate_enemy_attacks(
                 let ty = qty as u8;
 
                 // Skip if pushed away from target (no longer adjacent)
-                let orig = original_positions[ei];
                 let curr_dist = (ex as i32 - tx as i32).abs() + (ey as i32 - ty as i32).abs();
                 if curr_dist > 1 { continue; }
 

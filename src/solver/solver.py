@@ -175,22 +175,36 @@ def _enumerate_mech_actions(
 
 # --- Enemy Attack Simulation ---
 
-def _find_projectile_target(board: Board, enemy: Unit) -> tuple[int, int]:
+def _find_projectile_target(board: Board, enemy: Unit,
+                            orig_x: int = -1, orig_y: int = -1) -> tuple[int, int]:
     """Trace a projectile from enemy position in queued direction.
+
+    Uses the ORIGINAL position (before mech pushes) to compute the cardinal
+    attack direction, then traces from the CURRENT position. This correctly
+    handles pushed enemies: their attack direction is preserved from the
+    original position, not recomputed from the new position.
 
     Returns (hit_x, hit_y) of first unit/mountain/building, or (-1, -1).
     """
     if enemy.queued_target_x < 0:
         return -1, -1
 
-    dx = enemy.queued_target_x - enemy.x
-    dy = enemy.queued_target_y - enemy.y
+    # Compute direction from ORIGINAL position to queued target
+    ox = orig_x if orig_x >= 0 else enemy.x
+    oy = orig_y if orig_y >= 0 else enemy.y
+    dx = enemy.queued_target_x - ox
+    dy = enemy.queued_target_y - oy
     # Normalize to unit direction
     if dx != 0:
         dx = 1 if dx > 0 else -1
     if dy != 0:
         dy = 1 if dy > 0 else -1
 
+    # Must be a valid cardinal direction (exactly one axis non-zero)
+    if (dx != 0 and dy != 0) or (dx == 0 and dy == 0):
+        return -1, -1
+
+    # Trace from CURRENT position in the original direction
     for i in range(1, 8):
         nx, ny = enemy.x + dx * i, enemy.y + dy * i
         if not board.in_bounds(nx, ny):
@@ -280,7 +294,10 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
 
         if weapon_type == "projectile":
             # Re-trace projectile path on current board state
-            tx, ty = _find_projectile_target(board, enemy)
+            # Use original position to compute cardinal direction (handles pushed enemies)
+            orig = original_positions.get(enemy.uid)
+            ox, oy = (orig[0], orig[1]) if orig else (-1, -1)
+            tx, ty = _find_projectile_target(board, enemy, ox, oy)
             if tx < 0:
                 continue
             grid_lost = _apply_enemy_hit(board, tx, ty, damage)
