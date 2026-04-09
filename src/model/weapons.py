@@ -513,3 +513,26 @@ def get_weapon_name(weapon_id: str) -> str:
     """Get human-readable weapon name."""
     w = get_weapon_def(weapon_id)
     return w.name if w else weapon_id
+
+
+# Reverse lookup: display name -> internal weapon ID.
+# Built lazily on first call. Used when Rust solver output only has display names.
+_NAME_TO_ID: dict[str, str] | None = None
+
+
+def weapon_name_to_id(display_name: str) -> str:
+    """Convert a weapon display name (e.g. 'Titan Fist') to its internal ID
+    (e.g. 'Prime_Punchmech').
+
+    Falls back to the input string if no match is found.
+    Also handles 'Repair' -> '_REPAIR' mapping.
+    """
+    global _NAME_TO_ID
+    if _NAME_TO_ID is None:
+        _NAME_TO_ID = {}
+        for wid, wdef in WEAPON_DEFS.items():
+            _NAME_TO_ID[wdef.name] = wid
+        for wid, wdef in ENEMY_WEAPON_DEFS.items():
+            _NAME_TO_ID[wdef.name] = wid
+        _NAME_TO_ID["Repair"] = "_REPAIR"
+    return _NAME_TO_ID.get(display_name, display_name)

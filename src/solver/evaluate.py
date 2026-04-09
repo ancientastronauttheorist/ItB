@@ -94,6 +94,11 @@ def evaluate(
         total_turns: Mission length (typically 5).
     """
     w = weights or DEFAULT_WEIGHTS
+
+    # Game over: grid power depleted — worst possible score
+    if board.grid_power <= 0:
+        return -999999.0
+
     score = 0.0
     ff = _future_factor(current_turn, total_turns)
 

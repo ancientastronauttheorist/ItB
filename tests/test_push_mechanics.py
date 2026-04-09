@@ -126,16 +126,18 @@ class TestBumpDamage:
         assert board.tile(4, 3).terrain == "rubble"
 
     def test_bump_against_building(self):
-        """Push into building: 1 bump to pushed unit, building NOT damaged."""
+        """Push into building: BOTH take 1 bump damage (empirically verified)."""
         u = _make_unit(1, 3, 3, hp=5)
         board = _make_board_with_units(u)
         board.tile(4, 3).terrain = "building"
         board.tile(4, 3).building_hp = 2
+        board.grid_power = 7
         result = ActionResult()
         apply_push(board, 3, 3, 1, result)
         assert u.hp == 4  # bump damage
         assert u.x == 3   # didn't move
-        assert board.tile(4, 3).building_hp == 2  # building intact
+        assert board.tile(4, 3).building_hp == 1  # building takes 1 bump damage
+        assert board.grid_power == 6  # grid power decremented
 
     def test_bump_against_unit_both_take_damage(self):
         """Push A into B: BOTH take 1 bump damage, neither moves."""

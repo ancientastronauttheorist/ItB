@@ -239,6 +239,7 @@ struct JsonAction {
     mech_type: String,
     move_to: [u8; 2],
     weapon: String,
+    weapon_id: String,
     target: [u8; 2],
     description: String,
 }
@@ -258,6 +259,7 @@ pub fn solution_to_json(solution: &Solution) -> String {
             mech_type: a.mech_type.clone(),
             move_to: [a.move_to.0, a.move_to.1],
             weapon: weapon_name(a.weapon).to_string(),
+            weapon_id: wid_to_str(a.weapon).to_string(),
             target: [a.target.0, a.target.1],
             description: a.description.clone(),
         }

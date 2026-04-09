@@ -547,11 +547,18 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                 from src.solver.solver import Solution, MechAction
                 rust_actions = []
                 for ra in rust_result["actions"]:
+                    # Use weapon_id (internal ID like "Prime_Punchmech") for simulation,
+                    # not weapon (display name like "Titan Fist").
+                    # Fall back to display-name-to-ID lookup if weapon_id not present.
+                    w_id = ra.get("weapon_id", "")
+                    if not w_id:
+                        from src.model.weapons import weapon_name_to_id
+                        w_id = weapon_name_to_id(ra.get("weapon", ""))
                     rust_actions.append(MechAction(
                         mech_uid=ra["mech_uid"],
                         mech_type=ra["mech_type"],
                         move_to=tuple(ra["move_to"]),
-                        weapon=ra.get("weapon", ""),
+                        weapon=w_id,
                         target=tuple(ra["target"]),
                         description=ra["description"],
                     ))
@@ -641,7 +648,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             "mech_uid": a.mech_uid,
             "mech_type": a.mech_type,
             "move_to": list(a.move_to) if a.move_to else None,
-            "weapon": a.weapon,
+            "weapon": get_weapon_name(a.weapon) if a.weapon and a.weapon != "_REPAIR" else a.weapon,
+            "weapon_id": a.weapon,
             "target": list(a.target),
             "description": a.description,
         } for a in solution.actions],

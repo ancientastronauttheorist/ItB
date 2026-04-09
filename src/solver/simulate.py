@@ -141,6 +141,7 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
         hp_lost = old_hp - tile.building_hp
         result.buildings_damaged += hp_lost
         result.grid_damage += hp_lost
+        board.grid_power = max(0, board.grid_power - hp_lost)
         if tile.building_hp <= 0:
             tile.terrain = "rubble"
             result.buildings_lost += 1
@@ -229,6 +230,7 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         apply_damage(board, x, y, 1, result, "bump")
         # Building takes bump damage too (empirically verified)
         tile_dest.building_hp -= 1
+        board.grid_power = max(0, board.grid_power - 1)
         if tile_dest.building_hp <= 0:
             result.grid_damage += 1
             result.events.append(

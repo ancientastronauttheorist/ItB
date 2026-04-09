@@ -114,21 +114,28 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     // Damage building if present
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-        let actual_bldg = if source == DamageSource::Bump { 1 } else { damage };
-        let old_hp = tile.building_hp;
-        tile.building_hp = tile.building_hp.saturating_sub(actual_bldg);
-        let hp_lost = old_hp - tile.building_hp;
-        result.buildings_damaged += hp_lost as i32;
-        result.grid_damage += hp_lost as i32;
-        if tile.building_hp == 0 {
-            tile.terrain = Terrain::Rubble;
-            result.buildings_lost += 1;
+    let mut bldg_hp_lost: u8 = 0;
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            let actual_bldg = if source == DamageSource::Bump { 1 } else { damage };
+            let old_hp = tile.building_hp;
+            tile.building_hp = tile.building_hp.saturating_sub(actual_bldg);
+            bldg_hp_lost = old_hp - tile.building_hp;
+            result.buildings_damaged += bldg_hp_lost as i32;
+            result.grid_damage += bldg_hp_lost as i32;
+            if tile.building_hp == 0 {
+                tile.terrain = Terrain::Rubble;
+                result.buildings_lost += 1;
+            }
         }
+    }
+    if bldg_hp_lost > 0 {
+        board.grid_power = board.grid_power.saturating_sub(bldg_hp_lost);
     }
 
     // Ice: intact → cracked → water
+    let tile = board.tile_mut(x, y);
     if tile.terrain == Terrain::Ice {
         if tile.cracked() || source == DamageSource::Fire {
             tile.terrain = Terrain::Water;
@@ -225,8 +232,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
             bt.terrain = Terrain::Rubble;
             result.grid_damage += 1;
             result.buildings_lost += 1;
+            board.grid_power = board.grid_power.saturating_sub(1);
         } else {
             result.buildings_damaged += 1;
+            board.grid_power = board.grid_power.saturating_sub(1);
         }
         return;
     }

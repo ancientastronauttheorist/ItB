@@ -437,6 +437,81 @@ pub fn wid_from_str(s: &str) -> WId {
     }
 }
 
+/// Get the internal string ID for a weapon (for Python bridge interop).
+/// This is the reverse of wid_from_str() and matches the keys in Python's WEAPON_DEFS.
+pub fn wid_to_str(id: WId) -> &'static str {
+    match id {
+        WId::None => "",
+        WId::PrimePunchmech => "Prime_Punchmech",
+        WId::PrimeLightning => "Prime_Lightning",
+        WId::PrimeLasermech => "Prime_Lasermech",
+        WId::PrimeShieldBash => "Prime_ShieldBash",
+        WId::PrimeShift => "Prime_Shift",
+        WId::PrimeFlamethrower => "Prime_Flamethrower",
+        WId::PrimeAreablast => "Prime_Areablast",
+        WId::PrimeLeap => "Prime_Leap",
+        WId::PrimeSpear => "Prime_Spear",
+        WId::PrimeRockmech => "Prime_Rockmech",
+        WId::PrimeRocketPunch => "Prime_RocketPunch",
+        WId::PrimeRightHook => "Prime_RightHook",
+        WId::PrimeSpinFist => "Prime_SpinFist",
+        WId::PrimeSword => "Prime_Sword",
+        WId::PrimeSmash => "Prime_Smash",
+        WId::BruteTankmech => "Brute_Tankmech",
+        WId::BruteJetmech => "Brute_Jetmech",
+        WId::BruteMirrorshot => "Brute_Mirrorshot",
+        WId::BruteBeetle => "Brute_Beetle",
+        WId::BruteGrapple => "Brute_Grapple",
+        WId::BruteUnstable => "Brute_Unstable",
+        WId::BrutePhaseShot => "Brute_PhaseShot",
+        WId::BruteShrapnel => "Brute_Shrapnel",
+        WId::BruteHeavyrocket => "Brute_Heavyrocket",
+        WId::BruteSonic => "Brute_Sonic",
+        WId::BruteShockblast => "Brute_Shockblast",
+        WId::BruteSniper => "Brute_Sniper",
+        WId::BruteSplitshot => "Brute_Splitshot",
+        WId::BruteBombrun => "Brute_Bombrun",
+        WId::ArchiveArtShot => "Archive_ArtShot",
+        WId::RangedArtillerymech => "Ranged_Artillerymech",
+        WId::RangedRockthrow => "Ranged_Rockthrow",
+        WId::RangedDefensestrike => "Ranged_Defensestrike",
+        WId::RangedRocket => "Ranged_Rocket",
+        WId::RangedIgnite => "Ranged_Ignite",
+        WId::RangedIce => "Ranged_Ice",
+        WId::RangedScatterShot => "Ranged_ScatterShot",
+        WId::RangedBackShot => "Ranged_BackShot",
+        WId::RangedWide => "Ranged_Wide",
+        WId::SciencePullmech => "Science_Pullmech",
+        WId::ScienceGravwell => "Science_Gravwell",
+        WId::ScienceRepulse => "Science_Repulse",
+        WId::ScienceSwap => "Science_Swap",
+        WId::ScienceAcidShot => "Science_AcidShot",
+        WId::ScienceShield => "Science_Shield",
+        WId::ScienceConfuse => "Science_Confuse",
+        WId::ScorpionAtk1 => "ScorpionAtk1",
+        WId::ScorpionAtk2 => "ScorpionAtk2",
+        WId::HornetAtk1 => "HornetAtk1",
+        WId::HornetAtk2 => "HornetAtk2",
+        WId::LeaperAtk1 => "LeaperAtk1",
+        WId::BeetleAtk1 => "BeetleAtk1",
+        WId::BeetleAtk2 => "BeetleAtk2",
+        WId::FireflyAtk1 => "FireflyAtk1",
+        WId::FireflyAtk2 => "FireflyAtk2",
+        WId::CentipedeAtk1 => "CentipedeAtk1",
+        WId::ScarabAtk1 => "ScarabAtk1",
+        WId::ScarabAtk2 => "ScarabAtk2",
+        WId::CrabAtk1 => "CrabAtk1",
+        WId::CrabAtk2 => "CrabAtk2",
+        WId::DiggerAtk1 => "DiggerAtk1",
+        WId::BlobberAtk1 => "BlobberAtk1",
+        WId::SpiderAtk1 => "SpiderAtk1",
+        WId::SpiderlingAtk1 => "SpiderlingAtk1",
+        WId::BlobAtk1 => "BlobAtk1",
+        WId::Repair => "_REPAIR",
+        _ => "",
+    }
+}
+
 /// Get the display name for a weapon (for solution descriptions).
 pub fn weapon_name(id: WId) -> &'static str {
     match id {
@@ -548,6 +623,27 @@ mod tests {
         assert_eq!(wid_from_str("Prime_Punchmech"), WId::PrimePunchmech);
         assert_eq!(wid_from_str("Ranged_Artillerymech"), WId::RangedArtillerymech);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
+    }
+
+    #[test]
+    fn test_wid_to_str_roundtrip() {
+        // Every wid_from_str input should roundtrip through wid_to_str
+        let pairs = [
+            ("Prime_Punchmech", WId::PrimePunchmech),
+            ("Brute_Tankmech", WId::BruteTankmech),
+            ("Ranged_Artillerymech", WId::RangedArtillerymech),
+            ("Science_Pullmech", WId::SciencePullmech),
+            ("ScorpionAtk1", WId::ScorpionAtk1),
+            ("FireflyAtk1", WId::FireflyAtk1),
+        ];
+        for (s, wid) in pairs {
+            assert_eq!(wid_from_str(s), wid, "wid_from_str({}) failed", s);
+            assert_eq!(wid_to_str(wid), s, "wid_to_str({:?}) failed", wid);
+        }
+        // Repair maps to _REPAIR (Python convention)
+        assert_eq!(wid_to_str(WId::Repair), "_REPAIR");
+        // None maps to empty string
+        assert_eq!(wid_to_str(WId::None), "");
     }
 
     #[test]

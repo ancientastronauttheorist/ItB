@@ -89,6 +89,11 @@ pub fn evaluate(
     blast_psion_was_active: bool,
     armor_psion_was_active: bool,
 ) -> f64 {
+    // Game over: grid power depleted — worst possible score
+    if board.grid_power == 0 {
+        return -999999.0;
+    }
+
     let mut score = 0.0;
     let ff = future_factor(board.current_turn, board.total_turns);
 
