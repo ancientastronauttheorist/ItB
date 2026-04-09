@@ -204,6 +204,21 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         }
     }
 
+    // Detect Shell Psion: if Jelly_Armor1 is alive, all Vek gain Armor
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Armor1" && board.units[i].hp > 0 {
+            board.armor_psion = true;
+            break;
+        }
+    }
+    if board.armor_psion {
+        for i in 0..board.unit_count as usize {
+            if board.units[i].is_enemy() {
+                board.units[i].flags.set(UnitFlags::ARMOR, true);
+            }
+        }
+    }
+
     Ok((board, spawn_points, danger_tiles))
 }
 

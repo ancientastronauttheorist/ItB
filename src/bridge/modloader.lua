@@ -249,6 +249,8 @@ local function dump_state()
                 if ok_fr then unit.frozen = fr end
                 local ok_w, web = pcall(function() return p:IsGrappled() end)
                 if ok_w then unit.web = web end
+                local ok_ar, ar = pcall(function() return p:IsArmor() end)
+                if ok_ar and ar then unit.armor = true end
 
                 -- Weapons from type definition
                 unit.weapons = {}
@@ -328,30 +330,9 @@ local function dump_state()
         end
     end
 
-    -- Deployment zone
+    -- Deployment zone (captured in BaseDeployment hook via Board:GetZone)
     if _ITB_DEPLOY_ZONE and #_ITB_DEPLOY_ZONE > 0 then
-        -- Use captured zone from BaseDeployment (final missions / special maps)
         state.deployment_zone = _ITB_DEPLOY_ZONE
-    elseif state.phase ~= "combat_player" then
-        -- Heuristic fallback: during deployment, scan for open ground tiles
-        -- in the left portion of the board (columns 0-3), which matches the
-        -- standard deployment zone for regular missions.
-        local zone = {}
-        for y = 0, 7 do
-            for x = 0, 3 do
-                local pt = Point(x, y)
-                local terrain = Board:GetTerrain(pt)
-                if terrain == 0 then  -- ground only
-                    local pawn = Board:GetPawn(pt)
-                    if not pawn then
-                        zone[#zone + 1] = {x, y}
-                    end
-                end
-            end
-        end
-        if #zone > 0 then
-            state.deployment_zone = zone
-        end
     end
 
     write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
@@ -582,6 +563,23 @@ Mission.BaseUpdate = function(self)
         _last_poll = now
         pcall(poll_commands)
     end
+    -- If deploy zone is empty on turn 0, retry capture each update
+    if #_ITB_DEPLOY_ZONE == 0 and Game and Game:GetTurnCount() == 0 then
+        pcall(function()
+            local ptList = Board:GetZone("deployment")
+            if ptList and ptList.size then
+                local n = ptList:size()
+                if n > 0 then
+                    _ITB_DEPLOY_ZONE = {}
+                    for i = 1, n do
+                        local p = ptList:index(i)
+                        _ITB_DEPLOY_ZONE[#_ITB_DEPLOY_ZONE + 1] = {p.x, p.y}
+                    end
+                    log_bridge("DEPLOY ZONE captured in BaseUpdate: " .. n .. " tiles")
+                end
+            end
+        end)
+    end
     -- Periodically dump state so Python can detect the bridge
     if now - _last_state_dump >= _state_dump_interval then
         _last_state_dump = now
@@ -603,8 +601,10 @@ Mission.BaseStart = function(self)
     log_bridge("MISSION START: " .. tostring(self.ID or self.Name or "unknown"))
 end
 
--- BaseDeployment: capture deployment zone before engine clears it
+-- BaseDeployment: capture deployment zone AFTER engine sets it up
 Mission.BaseDeployment = function(self)
+    _orig_BaseDeployment(self)
+    -- Capture zone AFTER original runs (engine creates the zone in BaseDeployment)
     pcall(function()
         -- Board:GetZone returns a PointList — iterate with :size()/:index()
         local ptList = Board:GetZone("deployment")
@@ -619,10 +619,9 @@ Mission.BaseDeployment = function(self)
         if #_ITB_DEPLOY_ZONE > 0 then
             log_bridge("DEPLOY ZONE from Board:GetZone: " .. #_ITB_DEPLOY_ZONE .. " tiles")
         else
-            log_bridge("DEPLOY ZONE: Board:GetZone returned 0 tiles (fallback will be used)")
+            log_bridge("DEPLOY ZONE: Board:GetZone returned 0 tiles")
         end
     end)
-    _orig_BaseDeployment(self)
     -- Dump state so Python can see the deployment zone immediately
     pcall(dump_state)
 end

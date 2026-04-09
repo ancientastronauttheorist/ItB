@@ -87,6 +87,7 @@ pub fn evaluate(
     weights: &EvalWeights,
     kills: i32,
     blast_psion_was_active: bool,
+    armor_psion_was_active: bool,
 ) -> f64 {
     let mut score = 0.0;
     let ff = future_factor(board.current_turn, board.total_turns);
@@ -130,6 +131,11 @@ pub fn evaluate(
     // Worth more early (more future enemy deaths prevented), zero on final turn.
     if blast_psion_was_active && !board.blast_psion {
         score += 2000.0 * ff;
+    }
+
+    // ── Shell Psion kill bonus: removing armor makes all weapons effective ──
+    if armor_psion_was_active && !board.armor_psion {
+        score += 1500.0 * ff;
     }
 
     // ── Environment danger: enemy scaled like kills, mech like mech_killed ─
@@ -203,7 +209,7 @@ mod tests {
     fn test_empty_board_score() {
         let board = Board::default();
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, false);
+        let score = evaluate(&board, &[], &w, 0, false, false);
         // grid_power=7, no buildings, no units
         assert!((score - 35000.0).abs() < 0.01); // 7 * 5000
     }
@@ -214,7 +220,7 @@ mod tests {
         board.tile_mut(3, 3).terrain = Terrain::Building;
         board.tile_mut(3, 3).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, false);
+        let score = evaluate(&board, &[], &w, 0, false, false);
         // grid_power=7 (multiplier=1.0): 7*5000 + 1*10000 + 1*2000
         assert!((score - 47000.0).abs() < 0.01);
     }
@@ -227,16 +233,16 @@ mod tests {
         let mut b1 = Board::default();
         b1.current_turn = 1;
         b1.total_turns = 5;
-        let s0 = evaluate(&b1, &[], &w, 0, false);
-        let s1 = evaluate(&b1, &[], &w, 2, false);
+        let s0 = evaluate(&b1, &[], &w, 0, false, false);
+        let s1 = evaluate(&b1, &[], &w, 2, false, false);
         assert!((s1 - s0 - 1800.0).abs() < 1.0); // 2 * 900
 
         // Final turn (turn 5): ff=0.0, kill = 500 * 0.20 = 100
         let mut b5 = Board::default();
         b5.current_turn = 5;
         b5.total_turns = 5;
-        let s0 = evaluate(&b5, &[], &w, 0, false);
-        let s1 = evaluate(&b5, &[], &w, 2, false);
+        let s0 = evaluate(&b5, &[], &w, 0, false, false);
+        let s1 = evaluate(&b5, &[], &w, 2, false, false);
         assert!((s1 - s0 - 200.0).abs() < 1.0); // 2 * 100
     }
 
@@ -247,7 +253,7 @@ mod tests {
         board.tile_mut(0, 0).terrain = Terrain::Building;
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, false);
+        let score = evaluate(&board, &[], &w, 0, false, false);
         // grid=1 (5x multiplier): 1*5000 + 1*10000*5 + 1*2000*5 = 5000+50000+10000 = 65000
         assert!((score - 65000.0).abs() < 0.01);
     }
@@ -265,8 +271,8 @@ mod tests {
             flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
             ..Unit::default()
         });
-        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, false);
-        let without_spawn = evaluate(&board, &[], &w, 0, false);
+        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, false, false);
+        let without_spawn = evaluate(&board, &[], &w, 0, false, false);
         // On final turn, spawn_blocked * ff = 400 * 0.0 = 0
         assert!((with_spawn - without_spawn).abs() < 1.0);
     }
@@ -290,8 +296,8 @@ mod tests {
         board.current_turn = 1;
         board.total_turns = 5;
         // Psion was active before, now dead
-        let with_bonus = evaluate(&board, &[], &w, 0, true);
-        let without_bonus = evaluate(&board, &[], &w, 0, false);
+        let with_bonus = evaluate(&board, &[], &w, 0, true, false);
+        let without_bonus = evaluate(&board, &[], &w, 0, false, false);
         // bonus = 2000 * ff = 2000 * 1.0 = 2000
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
     }

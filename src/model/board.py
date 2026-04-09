@@ -90,6 +90,7 @@ class Board:
         self.grid_power_max: int = 7
         self.environment_danger: set[tuple[int, int]] = set()
         self.blast_psion_active: bool = False
+        self.armor_psion_active: bool = False
 
     def copy(self) -> Board:
         """Deep copy for search branching."""
@@ -100,6 +101,7 @@ class Board:
         b.grid_power_max = self.grid_power_max
         b.environment_danger = set(self.environment_danger)
         b.blast_psion_active = self.blast_psion_active
+        b.armor_psion_active = self.armor_psion_active
         return b
 
     def tile(self, x: int, y: int) -> BoardTile:
@@ -281,7 +283,7 @@ class Board:
                 move_speed=ud.get("move", stats.move_speed),
                 flying=ud.get("flying", stats.flying),
                 massive=stats.massive,
-                armor=stats.armor,
+                armor=ud.get("armor", stats.armor),
                 pushable=stats.pushable,
                 weapon=primary,
                 weapon2=secondary,
@@ -305,6 +307,15 @@ class Board:
         board.blast_psion_active = any(
             u.type == "Jelly_Explode1" and u.hp > 0 for u in board.units
         )
+
+        # Detect Shell Psion: if alive on board, all Vek gain Armor
+        board.armor_psion_active = any(
+            u.type == "Jelly_Armor1" and u.hp > 0 for u in board.units
+        )
+        if board.armor_psion_active:
+            for u in board.units:
+                if u.is_enemy:
+                    u.armor = True
 
         return board
 

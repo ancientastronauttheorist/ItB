@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-04-08T12:39:53.233993",
+  "timestamp": "2026-04-08T18:37:23.227075",
   "run_id": "20260408_002048",
   "turn": 1,
   "label": "triggers",
   "data": {
     "triggers": [
       {
-        "trigger": "mech_damage_unexpected",
+        "trigger": "grid_power_drop_unexpected",
         "tier": 1,
-        "severity": "high",
-        "details": "PunchMech: predicted HP 3, actual 2 (-1)"
+        "severity": "critical",
+        "details": "Predicted grid 2, actual 1 (-1)"
       },
       {
         "trigger": "grid_critical",
@@ -20,8 +20,8 @@
     ],
     "trigger_count": 2,
     "severity_counts": {
-      "critical": 0,
-      "high": 2,
+      "critical": 1,
+      "high": 1,
       "medium": 0
     }
   }

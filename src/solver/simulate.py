@@ -112,6 +112,17 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                 if unit.hp <= 0:
                     result.enemies_killed += 1
                     result.events.append(f"Killed {unit.type} at ({x},{y})")
+                    # Shell Psion killed: remove armor aura from all Vek
+                    if board.armor_psion_active and unit.type == "Jelly_Armor1":
+                        other_alive = any(
+                            u.type == "Jelly_Armor1" and u.hp > 0 and u is not unit
+                            for u in board.units
+                        )
+                        if not other_alive:
+                            board.armor_psion_active = False
+                            for other in board.units:
+                                if other.is_enemy:
+                                    other.armor = False
                     # Blast Psion death explosion: all Vek explode on death
                     if (was_alive and board.blast_psion_active
                             and unit.type != "Jelly_Explode1"):

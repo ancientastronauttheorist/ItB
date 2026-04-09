@@ -88,6 +88,21 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                 result.enemy_damage_dealt += actual as i32;
                 if unit.hp <= 0 {
                     result.enemies_killed += 1;
+                    // Shell Psion killed: remove armor aura from all Vek
+                    if board.armor_psion && board.units[idx].type_name_str() == "Jelly_Armor1" {
+                        let other_alive = (0..board.unit_count as usize)
+                            .any(|j| j != idx
+                                && board.units[j].type_name_str() == "Jelly_Armor1"
+                                && board.units[j].hp > 0);
+                        if !other_alive {
+                            board.armor_psion = false;
+                            for j in 0..board.unit_count as usize {
+                                if board.units[j].is_enemy() {
+                                    board.units[j].flags.set(UnitFlags::ARMOR, false);
+                                }
+                            }
+                        }
+                    }
                 }
             } else if unit.is_player() {
                 result.mech_damage_taken += actual as i32;

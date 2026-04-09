@@ -267,6 +267,7 @@ fn search_recursive(
     best_score: &mut f64,
     best_actions: &mut Vec<MechAction>,
     blast_psion_was_active: bool,
+    armor_psion_was_active: bool,
 ) {
     if Instant::now() > deadline { return; }
 
@@ -274,7 +275,7 @@ fn search_recursive(
         // All mechs acted — simulate enemy attacks and evaluate
         let mut b_eval = board.clone();
         simulate_enemy_attacks(&mut b_eval, original_positions);
-        let score = evaluate(&b_eval, spawn_points, weights, kills_so_far, blast_psion_was_active);
+        let score = evaluate(&b_eval, spawn_points, weights, kills_so_far, blast_psion_was_active, armor_psion_was_active);
 
         if score > *best_score {
             *best_score = score;
@@ -305,6 +306,7 @@ fn search_recursive(
             spawn_points, max_actions, weights, deadline,
             best_score, best_actions,
             blast_psion_was_active,
+            armor_psion_was_active,
         );
 
         actions_so_far.pop();
@@ -418,8 +420,9 @@ pub fn solve_turn(
         original_positions[i] = (board.units[i].x, board.units[i].y);
     }
 
-    // Track Blast Psion state before mech actions (for psion_kill_bonus)
+    // Track Psion states before mech actions (for psion kill bonuses)
     let blast_psion_was_active = board.blast_psion;
+    let armor_psion_was_active = board.armor_psion;
 
     let perms = permutations(n);
     let total_perms = perms.len();
@@ -444,6 +447,7 @@ pub fn solve_turn(
             spawn_points, effective_max, weights, deadline,
             &mut best_score, &mut best_actions,
             blast_psion_was_active,
+            armor_psion_was_active,
         );
 
         let timed_out = Instant::now() > deadline;

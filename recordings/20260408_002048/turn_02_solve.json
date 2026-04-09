@@ -1,92 +1,70 @@
 {
-  "timestamp": "2026-04-08T12:40:19.184748",
+  "timestamp": "2026-04-08T19:33:54.540238",
   "run_id": "20260408_002048",
   "turn": 2,
   "label": "solve",
   "data": {
-    "score": 446695.0,
+    "score": 376763.75,
     "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          3,
+          6
+        ],
+        "weapon": "Taurus Cannon",
+        "target": [
+          4,
+          6
+        ],
+        "description": "TankMech, fire Taurus Cannon at B4"
+      },
       {
         "mech_uid": 0,
         "mech_type": "PunchMech",
         "move_to": [
           4,
-          5
+          6
         ],
         "weapon": "Titan Fist",
         "target": [
           4,
-          6
+          5
         ],
-        "description": "PunchMech, move D4\u2192C4, fire Titan Fist at B4"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "TankMech",
-        "move_to": [
-          1,
-          1
-        ],
-        "weapon": "Taurus Cannon",
-        "target": [
-          2,
-          1
-        ],
-        "description": "TankMech, move E7\u2192G7, fire Taurus Cannon at G6"
+        "description": "PunchMech, move C6\u2192B4, fire Titan Fist at C4"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
-          1,
-          2
+          2,
+          5
         ],
         "weapon": "Artemis Artillery",
         "target": [
           5,
-          2
+          5
         ],
-        "description": "ArtiMech, move E5\u2192F7, fire Artemis Artillery at F3"
+        "description": "ArtiMech, move B6\u2192C6, fire Artemis Artillery at C3"
       }
     ],
-    "threats": 2,
+    "threats": 1,
     "active_mechs": 3,
     "spawn_points": [
-      [
-        7,
-        3
-      ],
-      [
-        6,
-        5
-      ],
       [
         7,
         5
       ]
     ],
     "search_stats": {
-      "elapsed_seconds": 0.6451668739318848,
+      "elapsed_seconds": 0.03284001350402832,
       "timed_out": false,
       "permutations_tried": 6,
       "total_permutations": 6,
       "active_mech_count": 3
     },
     "action_results": [
-      {
-        "enemies_killed": 0,
-        "enemy_damage_dealt": 0,
-        "buildings_lost": 0,
-        "buildings_damaged": 0,
-        "grid_damage": 0,
-        "mech_damage_taken": 0,
-        "mechs_killed": 0,
-        "pods_collected": 0,
-        "spawns_blocked": 0,
-        "events": [
-          "Unknown weapon: Titan Fist"
-        ]
-      },
       {
         "enemies_killed": 0,
         "enemy_damage_dealt": 0,
@@ -112,49 +90,57 @@
         "pods_collected": 0,
         "spawns_blocked": 0,
         "events": [
+          "Unknown weapon: Titan Fist"
+        ]
+      },
+      {
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 0,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
           "Unknown weapon: Artemis Artillery"
         ]
       }
     ],
     "predicted_outcome": {
-      "buildings_alive": 5,
-      "building_hp_total": 6,
+      "buildings_alive": 6,
+      "building_hp_total": 7,
       "grid_power": 1,
-      "enemies_alive": 3,
-      "enemy_hp_total": 10,
-      "mechs_alive": 3,
+      "enemies_alive": 6,
+      "enemy_hp_total": 16,
+      "mechs_alive": 2,
       "mech_hp": [
         {
           "uid": 0,
           "type": "PunchMech",
-          "hp": 2,
-          "max_hp": 3
-        },
-        {
-          "uid": 1,
-          "type": "TankMech",
           "hp": 3,
           "max_hp": 3
         },
         {
           "uid": 2,
           "type": "ArtiMech",
-          "hp": 4,
+          "hp": 2,
           "max_hp": 2
         }
       ],
-      "buildings_destroyed_by_enemies": 3
+      "buildings_destroyed_by_enemies": 1
     },
     "score_breakdown": {
-      "total": 315345.0,
+      "total": 374670.0,
       "grid_multiplier": 5.0,
       "buildings_alive": {
-        "count": 5,
-        "score": 250000.0
+        "count": 6,
+        "score": 300000.0
       },
       "building_hp": {
-        "total": 6,
-        "score": 60000.0
+        "total": 7,
+        "score": 70000.0
       },
       "grid_power": {
         "value": 1,
@@ -165,8 +151,8 @@
         "score": 0
       },
       "enemy_hp_remaining": {
-        "total": 10,
-        "score": -500
+        "total": 16,
+        "score": -800
       },
       "environment_danger": {
         "enemies_on": 0,
@@ -174,10 +160,10 @@
         "score": 0.0
       },
       "mechs": {
-        "alive": 3,
+        "alive": 2,
         "dead": 0,
-        "total_hp": 9,
-        "score": 845.0
+        "total_hp": 5,
+        "score": 470.0
       },
       "spawns_blocked": {
         "count": 0,

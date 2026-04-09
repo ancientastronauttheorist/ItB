@@ -13,49 +13,49 @@
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "PunchMech",
+        "mech_uid": 1,
+        "mech_type": "TankMech",
         "move_to": [
-          4,
-          5
+          3,
+          6
         ],
-        "weapon": "Titan Fist",
+        "weapon": "Taurus Cannon",
         "target": [
           4,
           6
         ],
-        "description": "PunchMech, move D4\u2192C4, fire Titan Fist at B4"
+        "description": "TankMech, fire Taurus Cannon at B4"
       },
       {
-        "mech_uid": 1,
-        "mech_type": "TankMech",
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
         "move_to": [
-          1,
-          1
+          4,
+          6
         ],
-        "weapon": "Taurus Cannon",
+        "weapon": "Titan Fist",
         "target": [
-          2,
-          1
+          4,
+          5
         ],
-        "description": "TankMech, move E7\u2192G7, fire Taurus Cannon at G6"
+        "description": "PunchMech, move C6\u2192B4, fire Titan Fist at C4"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
-          1,
-          2
+          2,
+          5
         ],
         "weapon": "Artemis Artillery",
         "target": [
           5,
-          2
+          5
         ],
-        "description": "ArtiMech, move E5\u2192F7, fire Artemis Artillery at F3"
+        "description": "ArtiMech, move B6\u2192C6, fire Artemis Artillery at C3"
       }
     ],
-    "score": 446695.0,
+    "score": 376763.75,
     "turn": 2
   },
   "actions_executed": 0,
@@ -178,6 +178,306 @@
         "PunchMech, move D4\u2192C4, fire Titan Fist at B4",
         "TankMech, move E7\u2192G7, fire Taurus Cannon at G6",
         "ArtiMech, move E5\u2192F7, fire Artemis Artillery at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T12:54:38.044258",
+      "turn": 1,
+      "label": "solve",
+      "score": 506155.0,
+      "actions": [
+        "TankMech, fire Taurus Cannon at E7",
+        "ArtiMech, move C7\u2192D8, fire Artemis Artillery at D3",
+        "PunchMech, move F7\u2192F4, fire Titan Fist at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T13:06:18.317128",
+      "turn": 2,
+      "label": "solve",
+      "score": 446810.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at E4",
+        "TankMech, move D7\u2192C5",
+        "ArtiMech, move D8\u2192F7, fire Artemis Artillery at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T13:33:48.457628",
+      "turn": 2,
+      "label": "solve",
+      "score": 446905.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at F3",
+        "ArtiMech, move D8\u2192B7, fire Artemis Artillery at E7",
+        "TankMech, move C7\u2192C4, fire Taurus Cannon at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T13:38:15.794389",
+      "turn": 2,
+      "label": "solve",
+      "score": 121505.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at E4",
+        "ArtiMech, move D8\u2192E7, fire Artemis Artillery at E4",
+        "TankMech, move D7\u2192C6, fire Taurus Cannon at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T13:55:28.537157",
+      "turn": 2,
+      "label": "solve",
+      "score": 109905.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at F3",
+        "ArtiMech, move D8\u2192B7, fire Artemis Artillery at E7",
+        "TankMech, move C7\u2192C4, fire Taurus Cannon at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T14:06:28.539098",
+      "turn": 3,
+      "label": "solve",
+      "score": 110255.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at E4",
+        "ArtiMech, move B7\u2192D7, fire Artemis Artillery at D3",
+        "TankMech, move C4\u2192B3, fire Taurus Cannon at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T14:25:50.956215",
+      "turn": 4,
+      "label": "solve",
+      "score": 168870.0,
+      "actions": [
+        "ArtiMech, move D7\u2192F6, fire Artemis Artillery at D6",
+        "TankMech, move C4\u2192D5, fire Taurus Cannon at D4",
+        "PunchMech, fire Titan Fist at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T14:47:29.246817",
+      "turn": 1,
+      "label": "solve",
+      "score": 169020.0,
+      "actions": [
+        "ArtiMech, move D6\u2192C6, fire Artemis Artillery at C4",
+        "TankMech, move C7\u2192C4, fire Taurus Cannon at D4",
+        "PunchMech, move D7\u2192E5, fire Titan Fist at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T14:50:55.365521",
+      "turn": 2,
+      "label": "solve",
+      "score": 170270.0,
+      "actions": [
+        "PunchMech, move E5\u2192F3, fire Titan Fist at E3",
+        "TankMech, fire Taurus Cannon at C3",
+        "ArtiMech, move C6\u2192D5, fire Artemis Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T15:17:07.350400",
+      "turn": 2,
+      "label": "solve",
+      "score": 388270.0,
+      "actions": [
+        "PunchMech, move E5\u2192F3, fire Titan Fist at E3",
+        "TankMech, fire Taurus Cannon at C3",
+        "ArtiMech, move C6\u2192D5, fire Artemis Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T15:29:35.327227",
+      "turn": 1,
+      "label": "solve",
+      "score": 526015.0,
+      "actions": [
+        "ArtiMech, move C6\u2192C3, fire Artemis Artillery at E3",
+        "TankMech, move G6\u2192G5, fire Taurus Cannon at G4",
+        "PunchMech, move E6\u2192D5, fire Titan Fist at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T15:32:16.906167",
+      "turn": 2,
+      "label": "solve",
+      "score": 525705.0,
+      "actions": [
+        "PunchMech, move D5\u2192D3, fire Titan Fist at C3",
+        "TankMech, fire Taurus Cannon at G4",
+        "ArtiMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T15:35:23.544750",
+      "turn": 3,
+      "label": "solve",
+      "score": 517215.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at D4",
+        "TankMech, move G5\u2192H3, fire Taurus Cannon at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T15:37:50.397896",
+      "turn": 4,
+      "label": "solve",
+      "score": 288775.0,
+      "actions": [
+        "TankMech, fire Taurus Cannon at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T15:59:51.154219",
+      "turn": 1,
+      "label": "solve",
+      "score": 128410.0,
+      "actions": [
+        "PunchMech, move E6\u2192G5, fire Titan Fist at G4",
+        "TankMech, move G6\u2192E6",
+        "ArtiMech, move C6\u2192C3, fire Artemis Artillery at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T16:03:20.255969",
+      "turn": 2,
+      "label": "solve",
+      "score": 123270.0,
+      "actions": [
+        "PunchMech, move G5\u2192G4, fire Titan Fist at G3",
+        "ArtiMech, move C3\u2192E4, fire Artemis Artillery at E2",
+        "TankMech, move E6\u2192C5, fire Taurus Cannon at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T16:05:12.009666",
+      "turn": 3,
+      "label": "solve",
+      "score": 123270.0,
+      "actions": [
+        "PunchMech, move G4\u2192F5, fire Titan Fist at F4",
+        "ArtiMech, fire Artemis Artillery at C4",
+        "TankMech, move C6\u2192C3, fire Taurus Cannon at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T16:06:58.820085",
+      "turn": 4,
+      "label": "solve",
+      "score": 124560.0,
+      "actions": [
+        "TankMech, repair",
+        "ArtiMech, fire Artemis Artillery at E2",
+        "PunchMech, move F5\u2192F2, fire Titan Fist at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T16:52:16.860737",
+      "turn": 4,
+      "label": "solve",
+      "score": 127885.0,
+      "actions": [
+        "PunchMech, move F5\u2192E3, fire Titan Fist at E2",
+        "TankMech, move C3\u2192E2, fire Taurus Cannon at D2",
+        "ArtiMech, move E4\u2192D4, fire Artemis Artillery at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T16:54:28.014580",
+      "turn": 4,
+      "label": "solve",
+      "score": 127885.0,
+      "actions": [
+        "PunchMech, move F5\u2192E3, fire Titan Fist at E2",
+        "TankMech, move C3\u2192E2, fire Taurus Cannon at D2",
+        "ArtiMech, move E4\u2192D4, fire Artemis Artillery at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T17:00:59.230917",
+      "turn": 1,
+      "label": "solve",
+      "score": 130275.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at D4",
+        "ArtiMech, move C7\u2192D6, fire Artemis Artillery at F6",
+        "TankMech, fire Taurus Cannon at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T17:10:53.766550",
+      "turn": 2,
+      "label": "solve",
+      "score": 125055.0,
+      "actions": [
+        "PunchMech, move D5\u2192D3, fire Titan Fist at D2",
+        "ArtiMech, move D6\u2192F6, fire Artemis Artillery at F4",
+        "TankMech, move F5\u2192D6, fire Taurus Cannon at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T17:17:36.197588",
+      "turn": 2,
+      "label": "solve",
+      "score": 116092.5,
+      "actions": [
+        "TankMech, move F5\u2192D6, fire Taurus Cannon at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T17:22:09.199932",
+      "turn": 3,
+      "label": "solve",
+      "score": 100192.5,
+      "actions": [
+        "PunchMech, move D3\u2192C3, fire Titan Fist at C2",
+        "TankMech, move D6\u2192D3, fire Taurus Cannon at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T17:28:00.101734",
+      "turn": 4,
+      "label": "solve",
+      "score": 100573.75,
+      "actions": [
+        "PunchMech, move C3\u2192D2, fire Titan Fist at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T18:23:39.370981",
+      "turn": 1,
+      "label": "solve",
+      "score": 246200.0,
+      "actions": [
+        "PunchMech, move B7\u2192C6",
+        "ArtiMech, fire Artemis Artillery at B3",
+        "TankMech, fire Taurus Cannon at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T18:38:13.855135",
+      "turn": 2,
+      "label": "solve",
+      "score": 387237.5,
+      "actions": [
+        "TankMech, fire Taurus Cannon at B4",
+        "PunchMech, move C6\u2192B4, fire Titan Fist at C4",
+        "ArtiMech, move B6\u2192A4, fire Artemis Artillery at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T19:33:54.539147",
+      "turn": 2,
+      "label": "solve",
+      "score": 376763.75,
+      "actions": [
+        "TankMech, fire Taurus Cannon at B4",
+        "PunchMech, move C6\u2192B4, fire Titan Fist at C4",
+        "ArtiMech, move B6\u2192C6, fire Artemis Artillery at C3"
       ]
     }
   ]
