@@ -531,6 +531,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             import itb_solver as _rust
             import json as _json
             import time as _time
+            # Augment unit data with pawn_stats info (ranged flag) for Rust solver
+            from src.model.pawn_stats import get_pawn_stats
+            if "units" in bridge_data:
+                for u in bridge_data["units"]:
+                    stats = get_pawn_stats(u.get("type", ""))
+                    u["ranged"] = stats.ranged
             rust_start = _time.time()
             rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
             rust_result = _json.loads(rust_json)

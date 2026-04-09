@@ -113,17 +113,12 @@ pub fn simulate_enemy_attacks(
         let qty = enemy.queued_target_y;
         let weapon_behind = enemy.weapon_target_behind;
 
-        // Determine weapon type from the weapon field
-        let enemy_weapon = enemy.weapon;
-        let wdef = weapon_def(WId::None); // default
-        let weapon_type = if enemy_weapon.0 > 0 && (enemy_weapon.0 as usize) < WEAPON_COUNT {
-            // Safety: cast the raw weapon id
-            let wid_val = enemy_weapon.0 as u8;
-            WEAPONS.get(wid_val as usize).map(|w| w.weapon_type).unwrap_or(WeaponType::Melee)
+        // Determine weapon type from the unit's ranged flag (set from pawn_stats)
+        let weapon_type = if enemy.ranged() {
+            WeaponType::Projectile
         } else {
             WeaponType::Melee
         };
-        let _ = wdef;
 
         let orig = original_positions[ei];
 

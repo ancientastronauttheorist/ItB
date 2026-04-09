@@ -102,9 +102,11 @@ VEK_STATS = {
 
 # Neutral / environmental pawns
 NEUTRAL_STATS = {
-    "Dam_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False),
-    "Train_Pawn":      PawnStats(move_speed=0, massive=True, pushable=False),
-    "ArchiveArtillery": PawnStats(move_speed=0, ranged=1),
+    "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False),
+    "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False),
+    "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False),
+    "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
+    "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
 }
 
 # Combined lookup
