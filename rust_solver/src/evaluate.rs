@@ -84,7 +84,7 @@ impl Default for EvalWeights {
             grid_power: 5000.0,
             enemy_killed: 500.0,
             enemy_hp_remaining: -50.0,
-            mech_killed: -8000.0,
+            mech_killed: -80000.0,
             mech_hp: 100.0,
             mech_centrality: -5.0,
             spawn_blocked: 400.0,
@@ -224,7 +224,8 @@ pub fn evaluate(
             if u.is_enemy() {
                 score += scaled(weights.enemy_on_danger, ff, 0.20, 1.60);
             } else if u.is_player() {
-                score += scaled(weights.mech_killed, ff, 0.30, 0.70);
+                // Dead is dead — no future_factor scaling for mech loss
+                score += weights.mech_killed;
             }
         }
     }
@@ -244,7 +245,8 @@ pub fn evaluate(
         if !u.is_mech() { continue; }
 
         if u.hp <= 0 {
-            score += scaled(weights.mech_killed, ff, 0.30, 0.70);
+            // Dead is dead — pilot loss is permanent, no future_factor scaling
+            score += weights.mech_killed;
         } else {
             score += u.hp as f64 * scaled(weights.mech_hp, ff, 0.20, 0.80);
             let cx = (u.x as f64 - 3.5).abs();

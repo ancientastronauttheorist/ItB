@@ -9,7 +9,7 @@
     "grid_power": 5000,
     "enemy_killed": 500,
     "enemy_hp_remaining": -50,
-    "mech_killed": -8000,
+    "mech_killed": -80000,
     "mech_hp": 100,
     "mech_centrality": -5,
     "spawn_blocked": 400,

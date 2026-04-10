@@ -326,13 +326,40 @@ local function dump_state()
         end
     end
 
-    -- Environment danger
+    -- Environment danger (v1 + v2). v1 = flat list of [x,y] tiles.
+    -- v2 = list of [x, y, damage, kill_int] where kill_int=1 means Deadly Threat
+    -- (instant-kill, bypasses shield/frozen/armor/ACID per ITB spec).
     state.environment_danger = {}
+    state.environment_danger_v2 = {}
+
+    -- Determine env-wide damage/kill defaults from the live mission environment.
+    -- DAMAGE_DEATH (instant-kill) covers air strike, lightning, cataclysm,
+    -- falling rock, tentacles, volcanic projectile. Tidal waves and similar
+    -- non-lethal envs don't set Damage to DAMAGE_DEATH.
+    local env_damage = 1
+    local env_kill = false
+    pcall(function()
+        local mission = GetCurrentMission and GetCurrentMission()
+        if mission and mission.LiveEnvironment and mission.LiveEnvironment.Damage then
+            if DAMAGE_DEATH ~= nil and mission.LiveEnvironment.Damage == DAMAGE_DEATH then
+                env_kill = true
+            end
+        end
+    end)
+
+    -- Helper: add a danger tile to both v1 and v2 fields.
+    local function add_danger(x, y, kill_override)
+        state.environment_danger[#state.environment_danger + 1] = {x, y}
+        local k = kill_override
+        if k == nil then k = env_kill end
+        state.environment_danger_v2[#state.environment_danger_v2 + 1] = {x, y, env_damage, k and 1 or 0}
+    end
+
     for y = 0, 7 do
         for x = 0, 7 do
             local ok, danger = pcall(function() return Board:IsEnvironmentDanger(Point(x, y)) end)
             if ok and danger then
-                state.environment_danger[#state.environment_danger + 1] = {x, y}
+                add_danger(x, y)
             end
         end
     end
@@ -340,6 +367,7 @@ local function dump_state()
     -- Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch
     -- Board:IsEnvironmentDanger() does NOT detect these, so we add them manually.
     -- Only flag tiles on the turn the rocket is queued to fire (GetSelectedWeapon > 0).
+    -- Satellite rockets are always Deadly Threat regardless of mission environment.
     for _, u in ipairs(state.units) do
         if u.type and string.find(u.type, "Satellite") then
             local ok, p = pcall(function() return Board:GetPawn(u.uid) end)
@@ -352,7 +380,7 @@ local function dump_state()
                     for _, d in ipairs(dirs) do
                         local nx, ny = u.x + d[1], u.y + d[2]
                         if nx >= 0 and nx <= 7 and ny >= 0 and ny <= 7 then
-                            state.environment_danger[#state.environment_danger + 1] = {nx, ny}
+                            add_danger(nx, ny, true)  -- always lethal
                         end
                     end
                 end

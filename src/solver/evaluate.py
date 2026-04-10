@@ -29,7 +29,7 @@ class EvalWeights:
     grid_power: float = 5000
     enemy_killed: float = 500
     enemy_hp_remaining: float = -50
-    mech_killed: float = -8000
+    mech_killed: float = -80000
     mech_hp: float = 100
     mech_centrality: float = -5      # penalizes distance from center
     spawn_blocked: float = 400
@@ -179,13 +179,13 @@ def evaluate(
                 score += _scaled(w.enemy_on_danger, ff, 0.20, 1.60)
         for m in board.mechs():
             if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
-                score += _scaled(w.mech_killed, ff, 0.30, 0.70)
+                score += w.mech_killed
 
     # --- MECHS: SCALED ---
     mechs = board.mechs()
     for m in mechs:
         if m.hp <= 0:
-            score += _scaled(w.mech_killed, ff, 0.30, 0.70)
+            score += w.mech_killed
         else:
             score += m.hp * _scaled(w.mech_hp, ff, 0.20, 0.80)
             cx = abs(m.x - 3.5)
@@ -274,7 +274,7 @@ def evaluate_breakdown(
         for m in board.mechs():
             if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
                 danger_mechs_on += 1
-                danger_score += _scaled(w.mech_killed, ff, 0.30, 0.70)
+                danger_score += w.mech_killed
 
     # --- MECHS ---
     mechs = board.mechs()
@@ -285,7 +285,7 @@ def evaluate_breakdown(
     for m in mechs:
         if m.hp <= 0:
             mechs_dead += 1
-            mech_score += _scaled(w.mech_killed, ff, 0.30, 0.70)
+            mech_score += w.mech_killed
         else:
             mechs_alive += 1
             total_mech_hp += m.hp

@@ -22,6 +22,7 @@ pub struct JsonInput {
     pub total_turns: Option<u8>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
+    pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int], ...]
     pub eval_weights: Option<EvalWeights>,
 }
 
@@ -109,7 +110,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         }
     }
 
-    // Environment danger
+    // Environment danger (legacy v1: bitset of dangerous tiles)
     let mut env_danger = 0u64;
     let mut danger_tiles = Vec::new();
     if let Some(danger) = &input.environment_danger {
@@ -120,7 +121,31 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             }
         }
     }
+
+    // Environment danger v2: per-tile {damage, kill} metadata.
+    // Each entry is [x, y, damage, kill_int] where kill_int != 0 means
+    // Deadly Threat (instant-kill, bypasses shield/frozen/armor/ACID).
+    // v2 entries implicitly populate the v1 bitset too (a v2 entry IS a danger tile).
+    // If v2 is missing entirely (older bridge), conservatively treat ALL existing
+    // env_danger tiles as lethal — over-pessimistic on tidal waves but never
+    // under-predicts air strike deaths.
+    let mut env_danger_kill = 0u64;
+    if let Some(v2) = &input.environment_danger_v2 {
+        for entry in v2 {
+            if entry.len() >= 4 && entry[0] < 8 && entry[1] < 8 {
+                let bit = 1u64 << xy_to_idx(entry[0], entry[1]);
+                env_danger |= bit;  // v2 entry is also a v1 danger tile
+                if entry[3] != 0 {
+                    env_danger_kill |= bit;
+                }
+            }
+        }
+    } else if env_danger != 0 {
+        // Backwards compat: no v2 → assume all dangers are lethal
+        env_danger_kill = env_danger;
+    }
     board.env_danger = env_danger;
+    board.env_danger_kill = env_danger_kill;
 
     // Spawn points
     let mut spawn_points = Vec::new();

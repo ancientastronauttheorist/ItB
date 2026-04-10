@@ -21,6 +21,74 @@ fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: 
     base_damage
 }
 
+/// Apply environment_danger damage to a tile.
+///
+/// `lethal=true` (Deadly Threat: air strike, lightning, cataclysm, etc.) bypasses
+/// shield, frozen, armor, and ACID — sets HP=0 outright. Buildings destroyed.
+/// Hits flying units too (air strikes drop bombs from above).
+///
+/// `lethal=false` (tidal wave, sandstorm, etc.) does 1 damage with bump-like
+/// semantics: ignored by armor/ACID, consumed by shield, skips flying units.
+/// Buildings take 1 HP.
+///
+/// Inlined unit/building handling (does not call apply_damage) so we can bypass
+/// shield/frozen for the lethal case without polluting the core damage path.
+fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut ActionResult) {
+    // Damage unit if present
+    if let Some(uidx) = board.unit_at(x, y) {
+        let unit = &mut board.units[uidx];
+        if unit.hp > 0 {
+            if lethal {
+                // Deadly Threat: bypass shield/frozen/armor/ACID, set HP=0
+                let prev_hp = unit.hp;
+                unit.hp = 0;
+                unit.set_shield(false);
+                unit.set_frozen(false);
+                if unit.is_player() {
+                    result.mechs_killed += 1;
+                    result.mech_damage_taken += prev_hp as i32;
+                } else if unit.is_enemy() {
+                    result.enemies_killed += 1;
+                    result.enemy_damage_dealt += prev_hp as i32;
+                }
+            } else if !unit.effectively_flying() {
+                // Non-lethal env (1 dmg): bump-like — consumed by shield, ignores armor/ACID
+                if unit.shield() {
+                    unit.set_shield(false);
+                } else if unit.frozen() {
+                    unit.set_frozen(false);
+                } else {
+                    unit.hp -= 1;
+                    if unit.is_player() {
+                        result.mech_damage_taken += 1;
+                        if unit.hp <= 0 { result.mechs_killed += 1; }
+                    } else if unit.is_enemy() {
+                        result.enemy_damage_dealt += 1;
+                        if unit.hp <= 0 { result.enemies_killed += 1; }
+                    }
+                }
+            }
+            // else: flying, non-lethal env doesn't hit
+        }
+    }
+
+    // Damage building if present (lethal destroys entirely, non-lethal does 1 HP)
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+        let dmg = if lethal { tile.building_hp } else { 1 };
+        let old_hp = tile.building_hp;
+        tile.building_hp = tile.building_hp.saturating_sub(dmg);
+        let lost = old_hp - tile.building_hp;
+        result.buildings_damaged += lost as i32;
+        result.grid_damage += lost as i32;
+        if tile.building_hp == 0 {
+            tile.terrain = Terrain::Rubble;
+            result.buildings_lost += 1;
+        }
+        board.grid_power = board.grid_power.saturating_sub(lost);
+    }
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
 /// Processes in UID order. Returns buildings destroyed count.
 ///
@@ -111,6 +179,18 @@ pub fn simulate_enemy_attacks(
                     u.hp += 1;
                 }
             }
+        }
+    }
+
+    // Environment danger (air strikes, lightning, tidal waves) — fires BEFORE Vek attacks
+    // per game's interleaved attack order. Env effects resolve first, killing units
+    // that were going to attack. Their queued attacks then never fire (hp <= 0 check below).
+    if board.env_danger != 0 {
+        for tile_idx in 0usize..64 {
+            if board.env_danger & (1u64 << tile_idx) == 0 { continue; }
+            let (x, y) = idx_to_xy(tile_idx);
+            let lethal = board.env_danger_kill & (1u64 << tile_idx) != 0;
+            apply_env_danger(board, x, y, lethal, &mut result);
         }
     }
 
