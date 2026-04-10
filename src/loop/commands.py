@@ -33,9 +33,12 @@ from src.control.executor import (
     recalibrate,
 )
 from src.capture.detect_grid import find_game_window, grid_from_window
-from src.bridge.protocol import is_bridge_active, refresh_bridge_state
+from src.bridge.protocol import is_bridge_active, refresh_bridge_state, BridgeError
 from src.bridge.reader import read_bridge_state
-from src.bridge.writer import execute_bridge_action, execute_bridge_end_turn
+from src.bridge.writer import (
+    execute_bridge_action, execute_bridge_end_turn,
+    deploy_mech, set_bridge_speed,
+)
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
 
@@ -212,7 +215,7 @@ def _record_post_enemy(session: RunSession, board: Board,
     }, turn_override=solved_turn)
 
     # Detect triggers
-    triggers = detect_triggers(actual, predicted, deltas, solve_data)
+    triggers = detect_triggers(actual, predicted, deltas, solve_data, board)
     if triggers:
         _record_turn_state(session, "triggers", {
             "triggers": triggers,
@@ -525,6 +528,19 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
 
     solution = None
 
+    # Load evaluation weights from active weight file
+    weight_version = "default"
+    weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
+    eval_weights_dict = None
+    if weights_path.exists():
+        try:
+            with open(weights_path) as wf:
+                weight_data = json.load(wf)
+            eval_weights_dict = weight_data.get("weights")
+            weight_version = weight_data.get("version", "unknown")
+        except (json.JSONDecodeError, IOError):
+            pass
+
     # Try Rust solver if bridge data available
     if bridge_data is not None:
         try:
@@ -537,6 +553,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                 for u in bridge_data["units"]:
                     stats = get_pawn_stats(u.get("type", ""))
                     u["ranged"] = stats.ranged
+            # Inject custom weights into bridge data for Rust solver
+            if eval_weights_dict:
+                bridge_data["eval_weights"] = eval_weights_dict
             rust_start = _time.time()
             rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
             rust_result = _json.loads(rust_json)
@@ -641,7 +660,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     })
 
     # Replay solution for enriched recording data
-    enriched = replay_solution(board, solution, spawns)
+    enriched = replay_solution(board, solution, spawns,
+                               current_turn=current_turn,
+                               total_turns=board.total_turns if hasattr(board, 'total_turns') else 5)
 
     # Record solver output for replay/analysis (enriched format)
     solve_data = {
@@ -665,6 +686,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             "total_permutations": solution.total_permutations,
             "active_mech_count": solution.active_mech_count,
         },
+        "weight_version": weight_version,
         "action_results": enriched["action_results"],
         "predicted_outcome": enriched["predicted_outcome"],
         "score_breakdown": enriched["score_breakdown"],
@@ -733,7 +755,7 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
                 "bridge": True,
                 "ack": ack,
             }
-        except TimeoutError as e:
+        except (TimeoutError, BridgeError) as e:
             result = {"error": str(e), "bridge": True}
             print(f"  ERROR: {e}")
 
@@ -952,7 +974,7 @@ def cmd_end_turn() -> dict:
             ack = execute_bridge_end_turn()
             print(f"  ACK: {ack}")
             result = {"bridge": True, "ack": ack}
-        except TimeoutError as e:
+        except (TimeoutError, BridgeError) as e:
             result = {"error": str(e), "bridge": True}
             print(f"  ERROR: {e}")
 
@@ -1327,6 +1349,236 @@ def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0) -> dict:
 
     _print_result(result)
     return result
+
+
+def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
+    """Execute a complete combat turn via bridge: read -> solve -> execute -> end turn.
+
+    Chains existing commands. All mech actions executed via bridge commands.
+    Returns dict with turn results or error.
+    """
+    if not is_bridge_active():
+        result = {"error": "Bridge not active — auto_turn requires bridge"}
+        _print_result(result)
+        return result
+
+    # 1. Read state
+    read_result = cmd_read(profile=profile)
+    phase = read_result.get("phase")
+    if phase != "combat_player":
+        result = {"error": f"Not in combat_player phase: {phase}", "phase": phase}
+        _print_result(result)
+        return result
+
+    turn = read_result.get("turn", 0)
+    print(f"\n{'='*50}")
+    print(f"AUTO TURN {turn}")
+    print(f"{'='*50}")
+
+    # 2. Solve
+    solve_result = cmd_solve(profile=profile, time_limit=time_limit)
+    if "error" in solve_result:
+        result = {"error": f"Solve: {solve_result['error']}", "turn": turn}
+        _print_result(result)
+        return result
+    if "warning" in solve_result:
+        result = {"error": "Empty solution — manual play needed", "turn": turn}
+        _print_result(result)
+        return result
+
+    num_actions = solve_result["num_actions"]
+    score = solve_result.get("score", 0)
+
+    # 3. Execute each action via bridge
+    for i in range(num_actions):
+        exec_result = cmd_execute(i, profile=profile)
+        if "error" in exec_result:
+            result = {"error": f"Action {i}: {exec_result['error']}",
+                      "turn": turn, "actions_completed": i}
+            _print_result(result)
+            return result
+
+    # 4. End turn
+    end_result = cmd_end_turn()
+    if "error" in end_result:
+        result = {"error": f"END_TURN: {end_result['error']}",
+                  "turn": turn, "actions_completed": num_actions}
+        _print_result(result)
+        return result
+
+    # 5. Post-turn state check
+    import time as _time
+    _time.sleep(1)
+    refresh_bridge_state()
+    post_board, post_data = read_bridge_state()
+    post_phase = post_data.get("phase", "unknown") if post_data else "unknown"
+    post_grid = post_board.grid_power if post_board else 0
+    post_grid_max = post_board.grid_power_max if post_board else 0
+
+    result = {
+        "status": "ok",
+        "turn": turn,
+        "actions_completed": num_actions,
+        "score": score,
+        "post_phase": post_phase,
+        "grid_power": f"{post_grid}/{post_grid_max}",
+    }
+
+    if post_board and post_board.grid_power <= 0:
+        result["game_over"] = True
+        print(f"  GAME OVER — grid power dropped to 0")
+
+    print(f"  Turn {turn} complete: {num_actions} actions, "
+          f"score={score:.0f}, grid={post_grid}/{post_grid_max}, "
+          f"next={post_phase}")
+
+    _print_result(result)
+    return result
+
+
+def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
+                     max_turns: int = 20) -> dict:
+    """Execute a complete mission via bridge: deploy -> combat turns -> mission end.
+
+    Handles deployment automatically. Loops auto_turn until mission ends
+    or game over. Falls back to Claude for reward selection, shop, etc.
+
+    Returns dict with mission results or error.
+    """
+    if not is_bridge_active():
+        result = {"error": "Bridge not active — auto_mission requires bridge"}
+        _print_result(result)
+        return result
+
+    print(f"\n{'='*50}")
+    print(f"AUTO MISSION START")
+    print(f"{'='*50}")
+
+    # Read initial state
+    refresh_bridge_state()
+    board, bridge_data = read_bridge_state()
+    if board is None or bridge_data is None:
+        result = {"error": "Failed to read bridge state"}
+        _print_result(result)
+        return result
+
+    phase = bridge_data.get("phase", "unknown")
+    turn = bridge_data.get("turn", 0)
+
+    # Handle deployment (turn 0 with deployment zone)
+    deploy_zone = bridge_data.get("deployment_zone", [])
+    if turn == 0 and deploy_zone:
+        print(f"\n--- DEPLOYMENT ({len(deploy_zone)} tiles available) ---")
+        mechs = [u for u in board.units if u.is_mech and u.hp > 0]
+        if mechs:
+            for i, mech in enumerate(mechs):
+                if i >= len(deploy_zone):
+                    print(f"  WARN: not enough deploy tiles for mech {mech.uid}")
+                    break
+                tile = deploy_zone[i]
+                dx, dy = tile[0], tile[1]
+                visual_row = 8 - dx
+                visual_col = chr(72 - dy)
+                print(f"  Deploying {mech.type} (uid={mech.uid}) "
+                      f"to {visual_col}{visual_row} ({dx},{dy})")
+                try:
+                    ack = deploy_mech(mech.uid, dx, dy)
+                    print(f"    ACK: {ack}")
+                except (TimeoutError, BridgeError) as e:
+                    result = {"error": f"Deploy failed for {mech.type}: {e}"}
+                    _print_result(result)
+                    return result
+            print(f"  All {len(mechs)} mechs deployed")
+        # Re-read state after deployment
+        import time as _time
+        _time.sleep(1)
+        refresh_bridge_state()
+        board, bridge_data = read_bridge_state()
+        if board is None:
+            result = {"error": "Failed to read state after deployment"}
+            _print_result(result)
+            return result
+
+    # Combat loop
+    turns_completed = 0
+    mission_result = {"status": "unknown"}
+
+    for t in range(max_turns):
+        # Check phase
+        refresh_bridge_state()
+        board, bridge_data = read_bridge_state()
+        if board is None:
+            result = {"error": f"Bridge read failed at turn loop {t}",
+                      "turns_completed": turns_completed}
+            _print_result(result)
+            return result
+
+        phase = bridge_data.get("phase", "unknown")
+
+        if phase == "combat_player":
+            turn_result = cmd_auto_turn(profile=profile, time_limit=time_limit)
+
+            if "error" in turn_result:
+                result = {"error": turn_result["error"],
+                          "turns_completed": turns_completed}
+                _print_result(result)
+                return result
+
+            turns_completed += 1
+
+            if turn_result.get("game_over"):
+                mission_result = {
+                    "status": "game_over",
+                    "turns_completed": turns_completed,
+                    "last_grid": turn_result.get("grid_power"),
+                }
+                break
+
+            post_phase = turn_result.get("post_phase", "unknown")
+            if post_phase in ("mission_ending", "between_missions",
+                              "unknown"):
+                # Mission may have ended — check more carefully
+                import time as _time
+                _time.sleep(2)
+                refresh_bridge_state()
+                check_board, check_data = read_bridge_state()
+                if check_data:
+                    check_phase = check_data.get("phase", "unknown")
+                    if check_phase != "combat_player":
+                        mission_result = {
+                            "status": "mission_complete",
+                            "turns_completed": turns_completed,
+                            "final_grid": turn_result.get("grid_power"),
+                        }
+                        break
+
+        elif phase == "combat_enemy":
+            # Still in enemy phase, wait
+            import time as _time
+            _time.sleep(3)
+            continue
+
+        else:
+            # Unknown phase — mission may have ended
+            mission_result = {
+                "status": "phase_exit",
+                "phase": phase,
+                "turns_completed": turns_completed,
+            }
+            break
+    else:
+        mission_result = {
+            "status": "max_turns_reached",
+            "turns_completed": turns_completed,
+        }
+
+    print(f"\n{'='*50}")
+    print(f"AUTO MISSION COMPLETE: {mission_result['status']}")
+    print(f"  Turns: {turns_completed}")
+    print(f"{'='*50}")
+
+    _print_result(mission_result)
+    return mission_result
 
 
 def _print_result(result: dict):

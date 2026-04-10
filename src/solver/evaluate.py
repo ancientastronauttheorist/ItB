@@ -21,9 +21,9 @@ class EvalWeights:
     kill enemies, keep mechs alive). Achievement strategies modify
     specific weights to incentivize achievement-specific behavior.
 
-    Example: "Scorched Earth" achievement → increase enemy_on_fire
-    Example: "Unwitting Allies" → increase enemy_pushed_into_enemy
+    Synced with Rust EvalWeights in rust_solver/src/evaluate.rs.
     """
+    # Core weights
     building_alive: float = 10000
     building_hp: float = 2000
     grid_power: float = 5000
@@ -35,16 +35,49 @@ class EvalWeights:
     spawn_blocked: float = 400
     pod_uncollected: float = -100
     pod_proximity: float = 50         # bonus for mech within 2 tiles of pod
+    enemy_on_danger: float = 400      # non-flying enemy on danger tile
 
-    # Environment hazard awareness
-    enemy_on_danger: float = 400      # non-flying enemy on danger tile (near-certain kill)
+    # Psion kill bonuses (scaled by future_factor)
+    psion_blast: float = 2000
+    psion_shell: float = 1500
+    psion_soldier: float = 1000
+    psion_blood: float = 1600
+    psion_tyrant: float = 2500
+
+    # Status effect bonuses
+    enemy_on_fire_bonus: float = 100  # enemy on fire (1 dmg/turn)
+    mech_on_acid: float = -200        # mech on ACID pool (penalty)
+
+    # Grid urgency multipliers (applied to building scores)
+    grid_urgency_critical: float = 5.0  # grid_power <= 1
+    grid_urgency_high: float = 3.0      # grid_power == 2
+    grid_urgency_medium: float = 2.0    # grid_power == 3
 
     # Achievement-specific (all default 0 — no effect in normal play)
-    enemy_on_fire: float = 0          # "This is Fine", "Scorched Earth"
-    enemy_pushed_into_enemy: float = 0  # "Unwitting Allies"
-    chain_damage: float = 0           # "Chain Attack"
-    smoke_placed: float = 0           # "Stormy Weather"
-    tiles_frozen: float = 0           # "Cryo Expert"
+    enemy_on_fire: float = 0
+    enemy_pushed_into_enemy: float = 0
+    chain_damage: float = 0
+    smoke_placed: float = 0
+    tiles_frozen: float = 0
+
+    def to_dict(self) -> dict:
+        """Serialize to dict for JSON storage and Rust solver injection."""
+        from dataclasses import asdict
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EvalWeights":
+        """Deserialize from dict, ignoring unknown keys."""
+        import dataclasses
+        field_names = {f.name for f in dataclasses.fields(cls)}
+        filtered = {k: v for k, v in d.items() if k in field_names}
+        return cls(**filtered)
+
+    def content_hash(self) -> str:
+        """Stable hash of all weight values for fast equality checking."""
+        import hashlib, json
+        data = json.dumps(self.to_dict(), sort_keys=True)
+        return hashlib.sha256(data.encode()).hexdigest()[:12]
 
 
 DEFAULT_WEIGHTS = EvalWeights()
@@ -183,14 +216,18 @@ def evaluate_breakdown(
     spawn_points: list[tuple[int, int]] = None,
     weights: EvalWeights = None,
     kills: int = 0,
+    current_turn: int = 0,
+    total_turns: int = 5,
 ) -> dict:
     """Score a board state and return per-component breakdown.
 
     Same logic as evaluate(), but returns a dict with each scoring
-    component separated. Only call on the final solution (not during
+    component separated. Uses _scaled() for turn-aware weights,
+    matching evaluate(). Only call on the final solution (not during
     search) since it builds a dict instead of a bare float.
     """
     w = weights or DEFAULT_WEIGHTS
+    ff = _future_factor(current_turn, total_turns)
 
     # --- GRID POWER URGENCY ---
     grid_multiplier = 1.0
@@ -218,12 +255,12 @@ def evaluate_breakdown(
     grid_power_score = board.grid_power * w.grid_power
 
     # --- ENEMIES ---
-    enemies_killed_score = kills * w.enemy_killed
+    enemies_killed_score = kills * _scaled(w.enemy_killed, ff, 0.20, 1.60)
 
     enemy_hp_total = 0
     for e in board.enemies():
         enemy_hp_total += e.hp
-    enemy_hp_score = enemy_hp_total * w.enemy_hp_remaining
+    enemy_hp_score = enemy_hp_total * _scaled(w.enemy_hp_remaining, ff, 0.10, 0.90)
 
     # --- ENVIRONMENT DANGER ---
     danger_enemies_on = 0
@@ -233,11 +270,11 @@ def evaluate_breakdown(
         for e in board.enemies():
             if (e.x, e.y) in board.environment_danger and not e.flying:
                 danger_enemies_on += 1
-                danger_score += w.enemy_on_danger
+                danger_score += _scaled(w.enemy_on_danger, ff, 0.20, 1.60)
         for m in board.mechs():
             if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
                 danger_mechs_on += 1
-                danger_score += w.mech_killed
+                danger_score += _scaled(w.mech_killed, ff, 0.30, 0.70)
 
     # --- MECHS ---
     mechs = board.mechs()
@@ -248,14 +285,14 @@ def evaluate_breakdown(
     for m in mechs:
         if m.hp <= 0:
             mechs_dead += 1
-            mech_score += w.mech_killed
+            mech_score += _scaled(w.mech_killed, ff, 0.30, 0.70)
         else:
             mechs_alive += 1
             total_mech_hp += m.hp
-            mech_score += m.hp * w.mech_hp
+            mech_score += m.hp * _scaled(w.mech_hp, ff, 0.20, 0.80)
             cx = abs(m.x - 3.5)
             cy = abs(m.y - 3.5)
-            mech_score += (cx + cy) * w.mech_centrality
+            mech_score += (cx + cy) * w.mech_centrality * ff
 
     # --- SPAWNS BLOCKED ---
     spawns_blocked = 0
@@ -263,7 +300,7 @@ def evaluate_breakdown(
         for sx, sy in spawn_points:
             if board.unit_at(sx, sy) is not None:
                 spawns_blocked += 1
-    spawns_score = spawns_blocked * w.spawn_blocked
+    spawns_score = spawns_blocked * w.spawn_blocked * ff
 
     # --- PODS ---
     pods_uncollected = 0

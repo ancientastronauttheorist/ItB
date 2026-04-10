@@ -46,6 +46,8 @@ from src.loop.commands import (
     cmd_calibrate,
     cmd_achievements,
     cmd_replay,
+    cmd_auto_turn,
+    cmd_auto_mission,
 )
 
 
@@ -114,6 +116,22 @@ def main():
     p_replay.add_argument("--time-limit", type=float, default=30.0,
                           help="Solver time limit (default: 30s)")
 
+    # auto_turn
+    p_auto_turn = sub.add_parser("auto_turn",
+                                 help="Execute a full combat turn via bridge")
+    p_auto_turn.add_argument("--profile", default="Alpha")
+    p_auto_turn.add_argument("--time-limit", type=float, default=10.0,
+                             help="Solver time limit (default: 10s)")
+
+    # auto_mission
+    p_auto_mission = sub.add_parser("auto_mission",
+                                    help="Execute a full mission via bridge")
+    p_auto_mission.add_argument("--profile", default="Alpha")
+    p_auto_mission.add_argument("--time-limit", type=float, default=10.0,
+                                help="Solver time limit per turn (default: 10s)")
+    p_auto_mission.add_argument("--max-turns", type=int, default=20,
+                                help="Safety limit on turns (default: 20)")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -144,6 +162,11 @@ def main():
         cmd_achievements()
     elif args.command == "replay":
         cmd_replay(args.run_id, args.turn, args.time_limit)
+    elif args.command == "auto_turn":
+        cmd_auto_turn(profile=args.profile, time_limit=args.time_limit)
+    elif args.command == "auto_mission":
+        cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
+                         max_turns=args.max_turns)
 
 
 if __name__ == "__main__":

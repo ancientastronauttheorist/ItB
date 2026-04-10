@@ -18,10 +18,8 @@ pub mod serde_bridge;
 fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> {
     // Release the GIL for the entire Rust computation
     py.allow_threads(|| {
-        let (board, spawn_points, _danger_tiles) = serde_bridge::board_from_json(json_input)
+        let (board, spawn_points, _danger_tiles, weights) = serde_bridge::board_from_json(json_input)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
-
-        let weights = evaluate::EvalWeights::default();
         let solution = solver::solve_turn(
             &board,
             &spawn_points,

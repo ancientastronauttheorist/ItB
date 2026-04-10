@@ -369,10 +369,81 @@ local function dump_state()
 end
 
 --------------------------------------------------------------------
+-- Bridge configuration
+--------------------------------------------------------------------
+local _bridge_speed = "fast"  -- "fast" or "visual"
+
+--------------------------------------------------------------------
+-- Animation/effect handling
+--------------------------------------------------------------------
+local function wait_for_board(max_wait)
+    max_wait = max_wait or 15
+    local start = os.clock()
+    while os.clock() - start < max_wait do
+        local ok, busy = pcall(function() return Board:IsBusy() end)
+        if not ok or not busy then return true end
+    end
+    log_bridge("WARN: Board still busy after " .. max_wait .. "s")
+    return false
+end
+
+--------------------------------------------------------------------
+-- Weapon skill execution: GetSkillEffect (proper) -> DamageSpace (fallback)
+--------------------------------------------------------------------
+local function execute_weapon_skill(pawn, weapon_id, tx, ty)
+    local skill = _G[weapon_id]
+    if not skill then
+        return false, "weapon " .. weapon_id .. " not found in _G"
+    end
+    local source = pawn:GetSpace()
+
+    -- Try GetSkillEffect: proper weapon with full AoE, chain, status
+    if type(skill) == "table" and skill.GetSkillEffect then
+        local ok, effect = pcall(function()
+            return skill:GetSkillEffect(source, Point(tx, ty))
+        end)
+        if ok and effect then
+            Board:AddEffect(effect)
+            log_bridge("SKILL: " .. weapon_id .. " via GetSkillEffect " ..
+                       source.x .. "," .. source.y .. " -> " .. tx .. "," .. ty)
+            return true, "skill"
+        end
+        log_bridge("WARN: GetSkillEffect failed for " .. weapon_id ..
+                   ": " .. tostring(effect))
+    end
+
+    -- Fallback: DamageSpace (single-tile, no AoE/chain/status)
+    log_bridge("FALLBACK: " .. weapon_id .. " via DamageSpace")
+    local damage = (type(skill) == "table" and skill.Damage) or 1
+    local dx = tx - source.x
+    local dy = ty - source.y
+    local push_dir = DIR_NONE
+    if     dx ==  1 and dy ==  0 then push_dir = DIR_RIGHT
+    elseif dx == -1 and dy ==  0 then push_dir = DIR_LEFT
+    elseif dx ==  0 and dy ==  1 then push_dir = DIR_UP
+    elseif dx ==  0 and dy == -1 then push_dir = DIR_DOWN
+    end
+    local has_push = (type(skill) == "table") and
+                     (skill.Push == 1 or skill.Push == true)
+    if has_push and push_dir ~= DIR_NONE then
+        Board:DamageSpace(SpaceDamage(Point(tx, ty), damage, push_dir))
+    else
+        Board:DamageSpace(SpaceDamage(Point(tx, ty), damage))
+    end
+    return true, "fallback"
+end
+
+--------------------------------------------------------------------
 -- Command executor
 --------------------------------------------------------------------
+local _cmd_seq = nil
+
 local function write_ack(msg)
-    write_atomic(ACK_FILE, ACK_TMP, msg)
+    local ack = msg
+    if _cmd_seq then
+        ack = "#" .. _cmd_seq .. " " .. msg
+    end
+    write_atomic(ACK_FILE, ACK_TMP, ack)
 end
 
 local function execute_command(cmd_str)
@@ -386,10 +457,21 @@ local function execute_command(cmd_str)
         return
     end
 
+    -- Parse optional sequence ID prefix: #NNN
+    _cmd_seq = nil
+    if parts[1]:sub(1,1) == "#" then
+        _cmd_seq = parts[1]:sub(2)
+        table.remove(parts, 1)
+        if #parts == 0 then
+            write_ack("ERROR: empty command after sequence ID")
+            return
+        end
+    end
+
     local cmd = parts[1]
 
     if cmd == "MOVE" then
-        -- MOVE uid x y
+        -- MOVE uid x y (does NOT deactivate — follow with ATTACK/REPAIR/SKIP)
         local uid = tonumber(parts[2])
         local x, y = tonumber(parts[3]), tonumber(parts[4])
         local pawn = Board:GetPawn(uid)
@@ -398,11 +480,12 @@ local function execute_command(cmd_str)
             return
         end
         local ok, err = pcall(function() pawn:Move(Point(x, y)) end)
-        if ok then
-            write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y)
-        else
+        if not ok then
             write_ack("ERROR: Move failed: " .. tostring(err))
+            return
         end
+        wait_for_board()
+        write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y)
 
     elseif cmd == "ATTACK" then
         -- ATTACK uid weapon_id target_x target_y
@@ -414,53 +497,15 @@ local function execute_command(cmd_str)
             write_ack("ERROR: pawn " .. uid .. " not found")
             return
         end
-        -- Look up weapon definition for damage value
-        local wdef = _G[weapon_id]
-        if not wdef then
-            write_ack("ERROR: weapon " .. weapon_id .. " not found")
+        local ok, method = execute_weapon_skill(pawn, weapon_id, tx, ty)
+        if not ok then
+            write_ack("ERROR: " .. method)
             return
         end
-        local damage = wdef.Damage or 1
-        local ppos = pawn:GetSpace()
-
-        -- Calculate push direction from source -> target
-        local dx = tx - ppos.x
-        local dy = ty - ppos.y
-        local push_dir = DIR_NONE
-        if     dx ==  1 and dy ==  0 then push_dir = DIR_RIGHT
-        elseif dx == -1 and dy ==  0 then push_dir = DIR_LEFT
-        elseif dx ==  0 and dy ==  1 then push_dir = DIR_UP
-        elseif dx ==  0 and dy == -1 then push_dir = DIR_DOWN
-        end
-
-        -- Check if weapon has push (most Prime/Brute weapons do)
-        local has_push = wdef.Push == 1 or wdef.Push == true
-        -- Override: known push weapons
-        if weapon_id == "Prime_Punchmech" or weapon_id == "Brute_Tankmech" then
-            has_push = true
-        end
-
-        local ok, err = pcall(function()
-            -- Apply damage to target tile
-            if has_push and push_dir ~= DIR_NONE then
-                -- DamageSpace with push direction
-                local sd = SpaceDamage(Point(tx, ty), damage, push_dir)
-                Board:DamageSpace(sd)
-
-                -- Check if push actually moved the target
-                -- DamageSpace handles push internally when iPush is set
-            else
-                -- Damage only (ranged/artillery weapons)
-                local sd = SpaceDamage(Point(tx, ty), damage)
-                Board:DamageSpace(sd)
-            end
-        end)
-
-        if ok then
-            write_ack("OK ATTACK " .. uid .. " " .. weapon_id .. " at " .. tx .. "," .. ty)
-        else
-            write_ack("ERROR: Attack failed: " .. tostring(err))
-        end
+        wait_for_board()
+        pawn:SetActive(false)
+        write_ack("OK ATTACK " .. uid .. " " .. weapon_id .. " at " ..
+                  tx .. "," .. ty .. " [" .. method .. "]")
 
     elseif cmd == "MOVE_ATTACK" then
         -- MOVE_ATTACK uid mx my weapon_id tx ty
@@ -473,66 +518,150 @@ local function execute_command(cmd_str)
             write_ack("ERROR: pawn " .. uid .. " not found")
             return
         end
-        -- Move first
         local ok1, err1 = pcall(function() pawn:Move(Point(mx, my)) end)
         if not ok1 then
             write_ack("ERROR: Move failed: " .. tostring(err1))
             return
         end
-        -- Then attack using DamageSpace (same logic as ATTACK)
-        local wdef = _G[weapon_id]
-        if not wdef then
-            write_ack("ERROR: weapon " .. weapon_id .. " not found")
+        wait_for_board()
+        local ok2, method = execute_weapon_skill(pawn, weapon_id, tx, ty)
+        if not ok2 then
+            write_ack("ERROR: " .. method)
             return
         end
-        local damage = wdef.Damage or 1
-        local dx = tx - mx
-        local dy = ty - my
-        local push_dir = DIR_NONE
-        if     dx ==  1 and dy ==  0 then push_dir = DIR_RIGHT
-        elseif dx == -1 and dy ==  0 then push_dir = DIR_LEFT
-        elseif dx ==  0 and dy ==  1 then push_dir = DIR_UP
-        elseif dx ==  0 and dy == -1 then push_dir = DIR_DOWN
-        end
-        local has_push = wdef.Push == 1 or wdef.Push == true
-        if weapon_id == "Prime_Punchmech" or weapon_id == "Brute_Tankmech" then
-            has_push = true
-        end
+        wait_for_board()
+        pawn:SetActive(false)
+        write_ack("OK MOVE_ATTACK " .. uid .. " [" .. method .. "]")
 
-        local ok2, err2 = pcall(function()
-            if has_push and push_dir ~= DIR_NONE then
-                Board:DamageSpace(SpaceDamage(Point(tx, ty), damage, push_dir))
-            else
-                Board:DamageSpace(SpaceDamage(Point(tx, ty), damage))
-            end
-        end)
-        if ok2 then
-            write_ack("OK MOVE_ATTACK " .. uid)
-        else
-            write_ack("ERROR: Attack failed: " .. tostring(err2))
+    elseif cmd == "SKIP" then
+        -- SKIP uid — mech takes no action this turn
+        local uid = tonumber(parts[2])
+        local pawn = Board:GetPawn(uid)
+        if not pawn then
+            write_ack("ERROR: pawn " .. uid .. " not found")
+            return
         end
+        pawn:SetActive(false)
+        write_ack("OK SKIP " .. uid)
+
+    elseif cmd == "REPAIR" then
+        -- REPAIR uid — mech repairs at current position
+        local uid = tonumber(parts[2])
+        local pawn = Board:GetPawn(uid)
+        if not pawn then
+            write_ack("ERROR: pawn " .. uid .. " not found")
+            return
+        end
+        local pos = pawn:GetSpace()
+        local method = "unknown"
+        local ok, err = pcall(function()
+            local repair_skill = _G["Skill_Repair"]
+            if repair_skill and repair_skill.GetSkillEffect then
+                local effect = repair_skill:GetSkillEffect(pos, pos)
+                Board:AddEffect(effect)
+                method = "skill"
+                return
+            end
+            -- Fallback: SpaceDamage with iRepair
+            local sd = SpaceDamage(pos, 0)
+            sd.iRepair = 1
+            Board:DamageSpace(sd)
+            method = "fallback"
+        end)
+        if not ok then
+            write_ack("ERROR: Repair failed: " .. tostring(err))
+            return
+        end
+        wait_for_board()
+        pawn:SetActive(false)
+        write_ack("OK REPAIR " .. uid .. " [" .. method .. "]")
+
+    elseif cmd == "DEPLOY" then
+        -- DEPLOY uid x y — place mech at tile during deployment
+        local uid = tonumber(parts[2])
+        local x, y = tonumber(parts[3]), tonumber(parts[4])
+        local pawn = Board:GetPawn(uid)
+        if not pawn then
+            write_ack("ERROR: pawn " .. uid .. " not found")
+            return
+        end
+        local ok, err = pcall(function() pawn:SetSpace(Point(x, y)) end)
+        if not ok then
+            write_ack("ERROR: Deploy failed: " .. tostring(err))
+            return
+        end
+        write_ack("OK DEPLOY " .. uid .. " at " .. x .. "," .. y)
 
     elseif cmd == "END_TURN" then
-        -- Mark all player mechs as inactive (done for this turn)
+        local method = "unknown"
         local ok, err = pcall(function()
-            local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
-            for _, mid in ipairs(mech_ids) do
-                local m = Board:GetPawn(mid)
-                if m then m:SetActive(false) end
+            if Game and Game.EndTurn then
+                Game:EndTurn()
+                method = "EndTurn"
+            elseif GetGame then
+                local g = GetGame()
+                if g and g.EndTurn then
+                    g:EndTurn()
+                    method = "GetGame"
+                else
+                    error("no EndTurn method available")
+                end
+            else
+                error("no Game/GetGame available")
             end
         end)
-        if ok then
-            write_ack("OK END_TURN")
+        if not ok then
+            -- Fallback: deactivate all player mechs
+            log_bridge("WARN: EndTurn() failed (" .. tostring(err) ..
+                       "), using SetActive fallback")
+            method = "SetActive"
+            local ok2, err2 = pcall(function()
+                local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+                for _, mid in ipairs(mech_ids) do
+                    local m = Board:GetPawn(mid)
+                    if m then m:SetActive(false) end
+                end
+            end)
+            if not ok2 then
+                write_ack("ERROR: END_TURN failed: " .. tostring(err2))
+                log_bridge("END_TURN ERROR: " .. tostring(err2))
+                return
+            end
+        end
+        wait_for_board(30)
+        local phase = "unknown"
+        if Game then
+            local ok_tt, tt = pcall(function() return Game:GetTeamTurn() end)
+            if ok_tt then
+                if tt == 1 then phase = "combat_player"
+                elseif tt == 6 then phase = "combat_enemy"
+                end
+            end
+        end
+        write_ack("OK END_TURN phase=" .. phase .. " method=" .. method)
+
+    elseif cmd == "SET_SPEED" then
+        -- SET_SPEED fast|visual
+        local mode = parts[2] or "fast"
+        if mode == "fast" or mode == "visual" then
+            _bridge_speed = mode
+            write_ack("OK SET_SPEED " .. mode)
+            return
         else
-            write_ack("ERROR: END_TURN failed: " .. tostring(err))
-            log_bridge("END_TURN ERROR: " .. tostring(err))
+            write_ack("ERROR: invalid speed: " .. mode .. " (use fast or visual)")
+            return
         end
 
     elseif cmd == "LUA" then
         -- Raw Lua execution (for debugging)
-        local lua_code = cmd_str:sub(5)
+        local lua_code = cmd_str:match("LUA%s+(.*)")
+        if not lua_code or lua_code == "" then
+            write_ack("ERROR: empty LUA command")
+            return
+        end
         local ok, result = pcall(loadstring(lua_code))
-        write_ack(ok and ("OK LUA: " .. tostring(result)) or ("ERROR LUA: " .. tostring(result)))
+        write_ack(ok and ("OK LUA: " .. tostring(result))
+                      or ("ERROR LUA: " .. tostring(result)))
 
     else
         write_ack("ERROR: unknown command: " .. cmd)

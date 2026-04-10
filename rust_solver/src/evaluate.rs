@@ -7,6 +7,7 @@
 /// Kills are worth MORE on early turns (prevent future attacks) and LESS on
 /// the final turn (no future to protect). Buildings never scale (always critical).
 
+use serde::Deserialize;
 use crate::types::*;
 use crate::board::*;
 
@@ -34,8 +35,10 @@ fn scaled(base: f64, ff: f64, floor: f64, scale: f64) -> f64 {
 
 // ── EvalWeights ──────────────────────────────────────────────────────────────
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default)]
 pub struct EvalWeights {
+    // Core weights
     pub building_alive: f64,
     pub building_hp: f64,
     pub grid_power: f64,
@@ -48,6 +51,29 @@ pub struct EvalWeights {
     pub pod_uncollected: f64,    // negative
     pub pod_proximity: f64,
     pub enemy_on_danger: f64,
+
+    // Psion kill bonuses (scaled by future_factor)
+    pub psion_blast: f64,
+    pub psion_shell: f64,
+    pub psion_soldier: f64,
+    pub psion_blood: f64,
+    pub psion_tyrant: f64,
+
+    // Status effect bonuses
+    pub enemy_on_fire_bonus: f64,    // enemy on fire (will take 1 dmg/turn)
+    pub mech_on_acid: f64,           // mech standing on ACID pool (penalty)
+
+    // Grid urgency multipliers (applied to building scores)
+    pub grid_urgency_critical: f64,  // grid_power <= 1
+    pub grid_urgency_high: f64,      // grid_power == 2
+    pub grid_urgency_medium: f64,    // grid_power == 3
+
+    // Achievement-specific (all default 0 — no effect in normal play)
+    pub enemy_on_fire: f64,
+    pub enemy_pushed_into_enemy: f64,
+    pub chain_damage: f64,
+    pub smoke_placed: f64,
+    pub tiles_frozen: f64,
 }
 
 impl Default for EvalWeights {
@@ -65,6 +91,25 @@ impl Default for EvalWeights {
             pod_uncollected: -100.0,
             pod_proximity: 50.0,
             enemy_on_danger: 400.0,
+            // Psion kill bonuses
+            psion_blast: 2000.0,
+            psion_shell: 1500.0,
+            psion_soldier: 1000.0,
+            psion_blood: 1600.0,
+            psion_tyrant: 2500.0,
+            // Status bonuses
+            enemy_on_fire_bonus: 100.0,
+            mech_on_acid: -200.0,
+            // Grid urgency
+            grid_urgency_critical: 5.0,
+            grid_urgency_high: 3.0,
+            grid_urgency_medium: 2.0,
+            // Achievement (all zero by default)
+            enemy_on_fire: 0.0,
+            enemy_pushed_into_enemy: 0.0,
+            chain_damage: 0.0,
+            smoke_placed: 0.0,
+            tiles_frozen: 0.0,
         }
     }
 }
@@ -117,11 +162,11 @@ pub fn evaluate(
     let mut score = 0.0;
     let ff = future_factor(board.current_turn, board.total_turns);
 
-    // Grid power urgency multiplier (unchanged — handles grid-level urgency)
+    // Grid power urgency multiplier (from weights)
     let grid_multiplier = match board.grid_power {
-        0..=1 => 5.0,
-        2 => 3.0,
-        3 => 2.0,
+        0..=1 => weights.grid_urgency_critical,
+        2 => weights.grid_urgency_high,
+        3 => weights.grid_urgency_medium,
         _ => 1.0,
     };
 
@@ -151,21 +196,21 @@ pub fn evaluate(
         }
     }
 
-    // ── Psion kill bonuses: SCALED by future_factor ──────────────────────
+    // ── Psion kill bonuses: SCALED by future_factor (from weights) ──────
     if psion_before.blast && !board.blast_psion {
-        score += 2000.0 * ff;
+        score += weights.psion_blast * ff;
     }
     if psion_before.armor && !board.armor_psion {
-        score += 1500.0 * ff;
+        score += weights.psion_shell * ff;
     }
     if psion_before.soldier && !board.soldier_psion {
-        score += 1000.0 * ff;
+        score += weights.psion_soldier * ff;
     }
     if psion_before.regen && !board.regen_psion {
-        score += 1600.0 * ff;
+        score += weights.psion_blood * ff;
     }
     if psion_before.tyrant && !board.tyrant_psion {
-        score += 2500.0 * ff;
+        score += weights.psion_tyrant * ff;
     }
 
     // ── Environment danger: enemy scaled like kills, mech like mech_killed ─
@@ -188,7 +233,7 @@ pub fn evaluate(
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.is_enemy() && u.alive() && u.fire() {
-            score += scaled(100.0, ff, 0.5, 0.5); // fire = partial kill value
+            score += scaled(weights.enemy_on_fire_bonus, ff, 0.5, 0.5);
         }
     }
 
@@ -209,7 +254,7 @@ pub fn evaluate(
             // ACID tile avoidance: penalize mech on ACID pool
             let tile = board.tile(u.x, u.y);
             if tile.acid() && tile.terrain != Terrain::Water {
-                score += scaled(-200.0, ff, 0.50, 0.50);
+                score += scaled(weights.mech_on_acid, ff, 0.50, 0.50);
             }
         }
     }

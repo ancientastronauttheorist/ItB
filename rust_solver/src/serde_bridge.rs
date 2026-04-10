@@ -6,6 +6,7 @@
 use serde::{Deserialize, Serialize};
 use crate::types::*;
 use crate::board::*;
+use crate::evaluate::EvalWeights;
 use crate::weapons::*;
 use crate::solver::{Solution, MechAction};
 
@@ -21,6 +22,7 @@ pub struct JsonInput {
     pub total_turns: Option<u8>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
+    pub eval_weights: Option<EvalWeights>,
 }
 
 #[derive(Deserialize)]
@@ -73,9 +75,10 @@ pub struct JsonUnit {
 
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
 
-pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>), String> {
+pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>, EvalWeights), String> {
     let input: JsonInput = serde_json::from_str(json_str)
         .map_err(|e| format!("JSON parse error: {}", e))?;
+    let weights = input.eval_weights.clone().unwrap_or_default();
 
     let mut board = Board::default();
 
@@ -273,7 +276,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         }
     }
 
-    Ok((board, spawn_points, danger_tiles))
+    Ok((board, spawn_points, danger_tiles, weights))
 }
 
 // ── Serialize Solution to JSON ───────────────────────────────────────────────

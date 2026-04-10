@@ -492,7 +492,8 @@ def solve_turn(
 
     # Include player mechs AND friendly controllable units (e.g., ArchiveArtillery)
     active_mechs = [m for m in board.mechs()
-                    if m.active and m.hp > 0 and (m.is_mech or m.weapon)]
+                    if m.active and m.hp > 0 and not m.frozen
+                    and (m.is_mech or m.weapon)]
     if not active_mechs:
         return best
 
@@ -588,6 +589,8 @@ def replay_solution(
     board: Board,
     solution: Solution,
     spawn_pts: list[tuple[int, int]],
+    current_turn: int = 0,
+    total_turns: int = 5,
 ) -> dict:
     """Re-simulate the best solution to capture detailed per-action data.
 
@@ -632,7 +635,9 @@ def replay_solution(
     buildings_destroyed = _simulate_enemy_attacks(b, original_positions)
 
     # Score breakdown on predicted post-enemy board
-    score_breakdown = evaluate_breakdown(b, spawn_pts, kills=total_kills)
+    score_breakdown = evaluate_breakdown(b, spawn_pts, kills=total_kills,
+                                         current_turn=current_turn,
+                                         total_turns=total_turns)
 
     # Predicted outcome summary
     buildings_alive = 0

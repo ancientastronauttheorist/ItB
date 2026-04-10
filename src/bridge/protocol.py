@@ -22,6 +22,14 @@ LOG_FILE = Path("/tmp/itb_bridge.log")
 # State file must be newer than this many seconds
 STALENESS_THRESHOLD = 300.0  # 5 minutes
 
+# Command sequence counter for ACK correlation
+_seq_counter = 0
+
+
+class BridgeError(Exception):
+    """Raised when the bridge returns an ERROR ACK."""
+    pass
+
 
 def is_bridge_active() -> bool:
     """Check if the Lua bridge is running.
@@ -49,7 +57,7 @@ def refresh_bridge_state() -> bool:
     try:
         wait_for_ack(timeout=5.0)
         return True
-    except TimeoutError:
+    except (TimeoutError, BridgeError):
         return False
 
 
@@ -65,11 +73,14 @@ def read_state() -> dict | None:
 
 
 def write_command(cmd: str) -> None:
-    """Write a command to the command file (atomic via tmp+rename).
+    """Write a command with sequence ID (atomic via tmp+rename).
 
+    Prepends a sequence ID (#NNN) for ACK correlation.
     Clears any stale ACK file first to prevent reading the previous
     command's response as this command's ACK (race condition fix).
     """
+    global _seq_counter
+
     # Clear stale ACK to prevent reading previous command's response
     try:
         ACK_FILE.unlink(missing_ok=True)
@@ -77,22 +88,49 @@ def write_command(cmd: str) -> None:
         pass
     time.sleep(0.05)  # brief settle time
 
+    _seq_counter += 1
+    full_cmd = f"#{_seq_counter} {cmd}"
+
     with open(CMD_TMP, "w") as f:
-        f.write(cmd)
+        f.write(full_cmd)
         f.flush()
         os.fsync(f.fileno())
     os.replace(str(CMD_TMP), str(CMD_FILE))
 
 
 def wait_for_ack(timeout: float = 10.0) -> str:
-    """Poll for acknowledgment file. Returns ack content or raises TimeoutError."""
+    """Poll for ACK file. Returns content after stripping sequence ID.
+
+    Raises TimeoutError if no ACK within timeout.
+    Raises BridgeError if ACK indicates an error.
+    """
     deadline = time.time() + timeout
     while time.time() < deadline:
         if ACK_FILE.exists():
             try:
                 content = ACK_FILE.read_text().strip()
                 ACK_FILE.unlink()
+
+                # Strip sequence ID prefix (#NNN)
+                if content.startswith("#"):
+                    space_idx = content.find(" ")
+                    if space_idx > 0:
+                        seq_str = content[1:space_idx]
+                        content = content[space_idx + 1:]
+                        # Verify sequence match (skip stale ACKs)
+                        try:
+                            if int(seq_str) != _seq_counter:
+                                continue
+                        except ValueError:
+                            pass
+
+                # Check for error
+                if content.startswith("ERROR"):
+                    raise BridgeError(content)
+
                 return content
+            except BridgeError:
+                raise
             except IOError:
                 pass
         time.sleep(0.1)

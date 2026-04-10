@@ -14,7 +14,7 @@ Switching combat execution to bridge commands would drop a turn to **10-25 secon
 
 ## Phase 0: Fix Bridge Execution Layer
 
-**Status:** NOT STARTED
+**Status:** COMPLETE
 **Why first:** Everything downstream depends on correct bridge execution. Without this, `auto_turn` produces invalid game states.
 
 ### 0A: Replace `Board:DamageSpace()` with proper weapon execution
@@ -125,7 +125,7 @@ elseif cmd == "REPAIR" then
 
 ## Phase A: Speed Layer (`auto_turn` / `auto_mission`)
 
-**Status:** NOT STARTED
+**Status:** COMPLETE
 **Depends on:** Phase 0
 **Expected speedup:** 30-100x (12-27 min/turn -> 10-25 sec/turn)
 
@@ -229,7 +229,7 @@ Rules 7, 11, 19 forbid bridge execution and mandate hover-verify-click. Add cond
 
 ## Phase B: Data Quality Fixes
 
-**Status:** PARTIALLY DONE
+**Status:** COMPLETE
 **The weapon ID bug (Unknown weapon in replay) was already fixed in commit `ddb4f88`.**
 
 ### B1: Flag pre-fix recordings as unreliable
@@ -279,7 +279,7 @@ All 4 existing runs have corrupted `action_results` and `predicted_outcome` data
 
 ## Phase C: Weight Loading Infrastructure
 
-**Status:** NOT STARTED
+**Status:** COMPLETE
 **Depends on:** None (can be developed in parallel with Phases 0/A)
 
 ### C1: Make Rust `EvalWeights` deserializable

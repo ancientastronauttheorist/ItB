@@ -1,0 +1,39 @@
+{
+  "version": "v001",
+  "parent": null,
+  "description": "Original hardcoded defaults",
+  "created": "2026-04-10",
+  "weights": {
+    "building_alive": 10000,
+    "building_hp": 2000,
+    "grid_power": 5000,
+    "enemy_killed": 500,
+    "enemy_hp_remaining": -50,
+    "mech_killed": -8000,
+    "mech_hp": 100,
+    "mech_centrality": -5,
+    "spawn_blocked": 400,
+    "pod_uncollected": -100,
+    "pod_proximity": 50,
+    "enemy_on_danger": 400,
+    "psion_blast": 2000,
+    "psion_shell": 1500,
+    "psion_soldier": 1000,
+    "psion_blood": 1600,
+    "psion_tyrant": 2500,
+    "enemy_on_fire_bonus": 100,
+    "mech_on_acid": -200,
+    "grid_urgency_critical": 5.0,
+    "grid_urgency_high": 3.0,
+    "grid_urgency_medium": 2.0,
+    "enemy_on_fire": 0,
+    "enemy_pushed_into_enemy": 0,
+    "chain_damage": 0,
+    "smoke_placed": 0,
+    "tiles_frozen": 0
+  },
+  "stats": {
+    "runs_played": 0,
+    "wins": 0
+  }
+}

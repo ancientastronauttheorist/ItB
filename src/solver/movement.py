@@ -26,6 +26,10 @@ def get_reachable_tiles(
     Returns:
         List of (x, y) coordinates the unit can reach.
     """
+    # Webbed or frozen units cannot move (stuck in place)
+    if unit.web or unit.frozen:
+        return [(unit.x, unit.y)] if include_current else []
+
     reachable = []
     if include_current:
         reachable.append((unit.x, unit.y))
