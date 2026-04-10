@@ -7,7 +7,7 @@ Build an autonomous bot that earns all 70 achievements in Into the Breach. The g
 ## Important Context
 
 - Into the Breach is a turn-based tactics game on an 8x8 grid. It is fully deterministic with perfect information — every enemy telegraphs their attacks before you move.
-- The ITB-ModLoader (Lua-based) works on Mac via the game's built-in `modloader.lua`. We use a **Lua bridge** (`src/bridge/`) for **state extraction only** via file-based IPC through `/tmp/`. All actions (combat moves, attacks, end turn, UI navigation) are performed via MCP mouse clicks — never bridge commands, never keyboard shortcuts.
+- The ITB-ModLoader (Lua-based) works on Mac via the game's built-in `modloader.lua`. We use a **Lua bridge** (`src/bridge/`) for **state extraction and action execution** via file-based IPC through `/tmp/`. Two execution modes: manual play (MCP mouse clicks for visual play) and speed mode (`auto_turn`/`auto_mission` via bridge commands, 30-100x faster for data collection).
 - The game is turn-based with no time pressure (except one specific achievement). The bot can take as long as it needs per turn.
 - Into the Breach is available on Steam. App ID: 590380.
 
@@ -37,7 +37,12 @@ Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to g
 
 ### Execution Model: Claude as Controller
 
-Claude operates as the outer control loop. Python CLI commands (`game_loop.py read`, `solve`) are stateless tools that read state, compute, and output. Claude calls these tools, interprets output, and performs all game actions via MCP mouse clicks. The bridge is used ONLY for reading state — never for executing actions. The session file (`sessions/active_session.json`) persists state between CLI calls.
+Claude operates as the outer control loop. Two execution modes:
+
+- **Manual play (MCP clicks):** Claude calls `read`/`solve`, interprets output, and performs all game actions via MCP mouse clicks. The user watches every action happen visually. Used for menus, shop, rewards, and when the user wants to observe play.
+- **Speed mode (bridge commands):** `game_loop.py auto_turn` chains read→solve→execute→end_turn via bridge commands (30-100x faster). `auto_mission` loops auto_turn from deployment through mission end. Used for data collection and rapid play. Falls back to Claude for UI screens (rewards, shop, island map).
+
+The session file (`sessions/active_session.json`) persists state between CLI calls.
 
 Grid coordinate mapping for MCP clicks: use `grid_to_mcp(bridge_x, bridge_y)` in `src/control/executor.py` or `python3 tile_hover.py <TILE>` (e.g. `tile_hover.py C5`). Both auto-detect the game window position via Quartz. For island selection at run start: `python3 island_select.py`.
 
@@ -84,11 +89,11 @@ Extended rules: see `data/ref_game_mechanics.md`.
 4. After every failed run, analyze the critical turn. Save snapshot first.
 5. Select mechs by clicking their tile on the board (use `tile_hover.py` for coords). No need to use sidebar portraits. NEVER use Tab or any keyboard key.
 6. Priority order — buildings > threats > kills > spawns.
-7. **ALL actions via MCP mouse clicks ONLY.** The bridge is for reading state (`game_loop.py read`/`solve`). NEVER use `game_loop.py execute` or bridge commands (MOVE, ATTACK, SKIP, END_TURN) to perform actions — even if they work, the user cannot see invisible commands. Every move, attack, and end turn must be a visible mouse click so the user can watch and verify. Re-read bridge state after every action to confirm it worked.
+7. **Manual play: MCP mouse clicks for all visible actions.** When Claude is the control loop (manual play), every move, attack, and end turn must be a visible mouse click so the user can watch and verify. Re-read bridge state after every action to confirm it worked. **Speed mode:** `game_loop.py auto_turn` and `auto_mission` execute actions via bridge commands internally (30-100x faster). This is allowed — the user opts in by calling these commands. Bridge commands are NEVER called directly outside of `auto_turn`/`auto_mission`.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
 10. For MCP clicks: always use grid_to_mcp() or `tile_hover.py` for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets.
-11. **MOUSE CLICKS ONLY — no keyboard, no bridge commands.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.) or bridge execute commands. The full mouse-only sequence for each mech:
+11. **Manual play: MOUSE CLICKS ONLY — no keyboard.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.). For speed mode, use `auto_turn`/`auto_mission` instead (see rule 7). The full mouse-only sequence for each mech in manual play:
     - **Select mech**: Click the mech's tile on the board (use `tile_hover.py <TILE>` for coords)
     - **Move**: Click the destination tile center (green highlighted tile)
     - **Arm weapon**: Click the weapon icon in the bottom panel
@@ -211,7 +216,7 @@ All commands are subcommands of `game_loop.py`. Each is stateless: read state, c
 
 **Combat:**
 - `solve` — Run solver, store solution in session, output action sequence.
-- `execute` / `end_turn` — **DO NOT USE.** These send bridge commands. All actions must be MCP mouse clicks.
+- `execute <index>` / `end_turn` — Execute a single mech action / end the turn via bridge commands. Used internally by `auto_turn`. In manual play, use MCP mouse clicks instead.
 
 **State Recording:**
 - `read` and `solve` both auto-record full game state to `recordings/<run_id>/turn_<N>_<label>.json`. Each recording includes the complete bridge JSON (64 tiles, all units, targets, spawns) plus the solver output. Used for replay, regression testing, and solver improvement.
@@ -220,6 +225,10 @@ All commands are subcommands of `game_loop.py`. Each is stateless: read state, c
 
 **Analysis:**
 - `replay <run_id> <turn> [--time-limit 30]` — Reconstruct a Board from a recorded `turn_N_board.json` and re-run the solver. Compares new solution with original. Use for testing solver fixes against historical failures.
+
+**Speed Mode:**
+- `auto_turn [--time-limit 10]` — Execute one combat turn via bridge: read→solve→execute all→end turn. ~10-25s per turn (30-100x faster than MCP clicks).
+- `auto_mission [--max-turns 20]` — Full mission via bridge: auto-deploy→combat loop→mission end. Falls back to Claude for reward/shop/map screens.
 
 **Run Management:**
 - `new_run <squad> [--achieve X Y]` — Initialize new session with squad and achievement targets.
@@ -277,7 +286,7 @@ itb-bot/
 │   │   ├── session.py     # RunSession state, file-locked persistence
 │   │   ├── logger.py      # Append-only markdown decision log
 │   │   └── commands.py    # All CLI subcommand implementations
-│   ├── bridge/            # Lua bridge — state extraction only (read, never execute)
+│   ├── bridge/            # Lua bridge — state extraction + action execution (via auto_turn/auto_mission)
 │   │   ├── protocol.py    # IPC protocol (read/write /tmp/ files, atomic ops)
 │   │   ├── reader.py      # Read bridge state → Board construction
 │   │   └── writer.py      # Write commands for Lua to execute
@@ -300,6 +309,7 @@ itb-bot/
 │   └── screenshots/       # Saved screenshots for testing
 ├── docs/
 │   └── lua_bridge_architecture.md  # Bridge design, protocol, IPC details
+├── weights/               # EvalWeights JSON files (active.json, versioned snapshots)
 ├── tests/                 # Unit tests for solver, state extraction
 └── data/
     ├── ref_squads_and_mechs.md
@@ -321,4 +331,4 @@ itb-bot/
 
 ## Current Status
 
-Phase 4 complete. Game loop CLI implemented. Lua bridge operational with per-enemy attack data (piQueuedShot, weapon damage, TargetBehind, attack order). Solver overhauled: proper building damage model, projectile path re-simulation, sequential enemy resolution by UID, melee TargetBehind support, friendly-fire penalties. `cmd_solve()` now uses bridge data instead of save parser. Claude-as-the-loop architecture operational.
+Game loop CLI operational in dual mode: manual play (MCP clicks) and speed mode (`auto_turn`/`auto_mission` via bridge commands, 30-100x faster). Lua bridge supports full action execution (GetSkillEffect, REPAIR, DEPLOY, SKIP, SET_SPEED) with sequence IDs and error detection. Solver uses Rust backend with configurable `EvalWeights` loaded from `weights/active.json`. Self-improvement plan Phases 0-C complete (bridge execution, speed layer, data quality, weight loading). Phases D-G (enhanced recording, failure analysis, batch validation, auto-tuning) are next. See `docs/self_improvement_plan.md` for full roadmap.

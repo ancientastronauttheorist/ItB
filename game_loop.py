@@ -48,6 +48,9 @@ from src.loop.commands import (
     cmd_replay,
     cmd_auto_turn,
     cmd_auto_mission,
+    cmd_analyze,
+    cmd_validate,
+    cmd_tune,
 )
 
 
@@ -115,6 +118,10 @@ def main():
     p_replay.add_argument("turn", type=int, help="Turn number to replay")
     p_replay.add_argument("--time-limit", type=float, default=30.0,
                           help="Solver time limit (default: 30s)")
+    p_replay.add_argument("--mission", type=int, default=None,
+                          help="Mission index (for m00_ prefixed files)")
+    p_replay.add_argument("--no-rust", action="store_true",
+                          help="Use Python solver instead of Rust")
 
     # auto_turn
     p_auto_turn = sub.add_parser("auto_turn",
@@ -131,6 +138,32 @@ def main():
                                 help="Solver time limit per turn (default: 10s)")
     p_auto_mission.add_argument("--max-turns", type=int, default=20,
                                 help="Safety limit on turns (default: 20)")
+
+    # analyze
+    p_analyze = sub.add_parser("analyze",
+                               help="Analyze failure database for patterns")
+    p_analyze.add_argument("--min-samples", type=int, default=30,
+                           help="Minimum samples for gated analysis (default: 30)")
+
+    # validate
+    p_validate = sub.add_parser("validate",
+                                help="Compare weight versions across recorded boards")
+    p_validate.add_argument("old_weights", help="Path to old weights JSON")
+    p_validate.add_argument("new_weights", help="Path to new weights JSON")
+    p_validate.add_argument("--time-limit", type=float, default=10.0,
+                            help="Solver time limit per board (default: 10s)")
+    p_validate.add_argument("--solver-version", default=None,
+                            help="Only test boards from this solver version")
+
+    # tune
+    p_tune = sub.add_parser("tune",
+                            help="Auto-tune solver weights via recorded boards")
+    p_tune.add_argument("--iterations", type=int, default=100,
+                        help="Total optimization iterations (default: 100)")
+    p_tune.add_argument("--min-boards", type=int, default=50,
+                        help="Minimum boards required (default: 50)")
+    p_tune.add_argument("--time-limit", type=float, default=5.0,
+                        help="Solver time limit per board (default: 5s)")
 
     args = parser.parse_args()
 
@@ -161,12 +194,22 @@ def main():
     elif args.command == "achievements":
         cmd_achievements()
     elif args.command == "replay":
-        cmd_replay(args.run_id, args.turn, args.time_limit)
+        cmd_replay(args.run_id, args.turn, args.time_limit, mission=args.mission,
+                   use_rust=not args.no_rust)
     elif args.command == "auto_turn":
         cmd_auto_turn(profile=args.profile, time_limit=args.time_limit)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)
+    elif args.command == "analyze":
+        cmd_analyze(min_samples=args.min_samples)
+    elif args.command == "validate":
+        cmd_validate(args.old_weights, args.new_weights,
+                     time_limit=args.time_limit,
+                     solver_version=args.solver_version)
+    elif args.command == "tune":
+        cmd_tune(iterations=args.iterations, min_boards=args.min_boards,
+                 time_limit=args.time_limit)
 
 
 if __name__ == "__main__":

@@ -153,6 +153,7 @@ class RunSession:
     current_island: str = ""
     current_mission: str = ""
     islands_completed: list[str] = field(default_factory=list)
+    mission_index: int = 0  # incremented when current_mission changes
 
     # Mission-level state
     current_turn: int = 0
@@ -206,6 +207,14 @@ class RunSession:
             return 0
         return len(self.active_solution.actions) - self.actions_executed
 
+    # --- Mission tracking ---
+
+    def advance_mission(self, mission_name: str):
+        """Update mission and increment index if mission changed."""
+        if mission_name and mission_name != self.current_mission:
+            self.current_mission = mission_name
+            self.mission_index += 1
+
     # --- Decision tracking ---
 
     def record_decision(self, label: str, data: dict):
@@ -228,6 +237,7 @@ class RunSession:
             "current_island": self.current_island,
             "current_mission": self.current_mission,
             "islands_completed": self.islands_completed,
+            "mission_index": self.mission_index,
             "current_turn": self.current_turn,
             "phase": self.phase,
             "active_solution": (
@@ -254,6 +264,7 @@ class RunSession:
             current_island=d.get("current_island", ""),
             current_mission=d.get("current_mission", ""),
             islands_completed=d.get("islands_completed", []),
+            mission_index=d.get("mission_index", 0),
             current_turn=d.get("current_turn", 0),
             phase=d.get("phase", "unknown"),
             active_solution=(
@@ -304,7 +315,8 @@ class RunSession:
     def new_run(cls, squad: str, achievements: list[str] = None,
                 difficulty: int = 0) -> RunSession:
         """Create a fresh session for a new game run."""
-        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        now = datetime.now()
+        run_id = now.strftime("%Y%m%d_%H%M%S") + f"_{now.microsecond // 1000:03d}"
         return cls(
             run_id=run_id,
             squad=squad,

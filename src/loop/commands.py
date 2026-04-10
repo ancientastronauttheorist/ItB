@@ -11,7 +11,9 @@ The decision log records every action for post-run analysis.
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -60,35 +62,218 @@ def _get_logger(session: RunSession) -> DecisionLog:
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 
 
+def _atomic_json_write(filepath: Path, data: dict) -> None:
+    """Write JSON atomically: tmp file -> fsync -> os.replace."""
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = filepath.with_suffix(f".tmp.{os.getpid()}")
+    try:
+        with open(tmp_path, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(str(tmp_path), str(filepath))
+    except Exception:
+        if tmp_path.exists():
+            tmp_path.unlink()
+        raise
+
+
+def _recording_dir(session: RunSession) -> Path:
+    """Get the recording directory for the current run."""
+    run_id = session.run_id or "default"
+    run_dir = RECORDING_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    return run_dir
+
+
 def _record_turn_state(session: RunSession, label: str, data: dict,
                        turn_override: int = None) -> None:
-    """Record full game state to a per-run, per-turn JSON file.
+    """Record full game state to a per-run, per-mission, per-turn JSON file.
 
-    Creates recordings/<run_id>/turn_<N>_<label>.json with the complete
+    Creates recordings/<run_id>/m<M>_turn_<N>_<label>.json with the complete
     bridge state and/or solver output for later replay and analysis.
 
     Args:
         turn_override: If set, use this turn number instead of session.current_turn.
             Used for post-enemy recordings that reference the solved turn.
     """
-    run_id = session.run_id or "default"
+    run_dir = _recording_dir(session)
     turn = turn_override if turn_override is not None else session.current_turn
-    run_dir = RECORDING_DIR / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
+    mi = session.mission_index
 
-    filename = f"turn_{turn:02d}_{label}.json"
+    filename = f"m{mi:02d}_turn_{turn:02d}_{label}.json"
     filepath = run_dir / filename
 
     record = {
         "timestamp": datetime.now().isoformat(),
-        "run_id": run_id,
+        "run_id": session.run_id or "default",
+        "mission_index": mi,
         "turn": turn,
         "label": label,
         "data": data,
     }
 
-    with open(filepath, "w") as f:
-        json.dump(record, f, indent=2, default=str)
+    _atomic_json_write(filepath, record)
+
+
+def _get_solver_version() -> str:
+    """Get solver version from Cargo.toml + git hash."""
+    try:
+        cargo_path = Path(__file__).parent.parent.parent / "rust_solver" / "Cargo.toml"
+        version = "unknown"
+        if cargo_path.exists():
+            for line in cargo_path.read_text().splitlines():
+                if line.strip().startswith("version"):
+                    version = line.split('"')[1]
+                    break
+        git_hash = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+            cwd=Path(__file__).parent.parent.parent
+        ).stdout.strip()
+        return f"rust-{version}-{git_hash}" if git_hash else f"rust-{version}"
+    except Exception:
+        return "unknown"
+
+
+def _get_weight_version() -> str:
+    """Get weight version from active.json."""
+    try:
+        weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
+        if weights_path.exists():
+            with open(weights_path) as f:
+                return json.load(f).get("version", "unknown")
+    except Exception:
+        pass
+    return "default"
+
+
+def _write_manifest(session: RunSession, extra: dict = None) -> None:
+    """Write or update the run manifest file."""
+    run_dir = _recording_dir(session)
+    filepath = run_dir / "manifest.json"
+
+    # Load existing manifest if present (for updates)
+    manifest = {}
+    if filepath.exists():
+        try:
+            with open(filepath) as f:
+                manifest = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # Set/update fields
+    manifest.update({
+        "run_id": session.run_id,
+        "squad": session.squad,
+        "difficulty": session.difficulty,
+        "achievement_targets": session.achievement_targets,
+        "solver_version": _get_solver_version(),
+        "weight_version": _get_weight_version(),
+        "updated": datetime.now().isoformat(),
+    })
+    manifest.setdefault("created", datetime.now().isoformat())
+    manifest.setdefault("missions", [])
+    manifest.setdefault("outcome", None)
+
+    if extra:
+        manifest.update(extra)
+
+    _atomic_json_write(filepath, manifest)
+
+
+def _capture_action_snapshot() -> dict:
+    """Capture lightweight board snapshot for per-action diff recording."""
+    refresh_bridge_state()
+    board, _ = read_bridge_state()
+    if not board:
+        return {}
+    return {
+        "mechs": [{"uid": u.uid, "pos": [u.x, u.y], "hp": u.hp,
+                    "active": getattr(u, 'active', True)}
+                   for u in board.units if u.is_mech],
+        "enemies": [{"uid": u.uid, "pos": [u.x, u.y], "hp": u.hp}
+                     for u in board.units if not u.is_mech and u.hp > 0],
+    }
+
+
+def _write_mission_summary(session: RunSession, turns_completed: int,
+                           final_grid: str = "") -> None:
+    """Aggregate turn data into a mission summary."""
+    run_dir = _recording_dir(session)
+    mi = session.mission_index
+
+    # Collect trigger data from this mission's turn files
+    trigger_files = sorted(run_dir.glob(f"m{mi:02d}_turn_*_triggers.json"))
+    total_triggers = 0
+    severity_counts = {"critical": 0, "high": 0, "medium": 0}
+    for tf in trigger_files:
+        try:
+            with open(tf) as f:
+                td = json.load(f).get("data", {})
+            total_triggers += td.get("trigger_count", 0)
+            for sev in severity_counts:
+                severity_counts[sev] += td.get("severity_counts", {}).get(sev, 0)
+        except (json.JSONDecodeError, OSError):
+            continue
+
+    summary = {
+        "mission_index": mi,
+        "mission_name": session.current_mission,
+        "turns_completed": turns_completed,
+        "final_grid": final_grid,
+        "total_triggers": total_triggers,
+        "severity_counts": severity_counts,
+        "buildings_lost": session.buildings_lost,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+    filepath = run_dir / f"m{mi:02d}_mission_summary.json"
+    _atomic_json_write(filepath, summary)
+
+    # Update manifest with mission result
+    _write_manifest(session, {
+        "missions": _load_mission_list(run_dir),
+    })
+
+
+def _load_mission_list(run_dir: Path) -> list:
+    """Load all mission summaries from a run directory."""
+    summaries = []
+    for f in sorted(run_dir.glob("m*_mission_summary.json")):
+        try:
+            with open(f) as fh:
+                summaries.append(json.load(fh))
+        except (json.JSONDecodeError, OSError):
+            continue
+    return summaries
+
+
+def _write_run_summary(session: RunSession, outcome: str) -> None:
+    """Write final run summary aggregating all missions."""
+    run_dir = _recording_dir(session)
+    missions = _load_mission_list(run_dir)
+
+    total_turns = sum(m.get("turns_completed", 0) for m in missions)
+    total_triggers = sum(m.get("total_triggers", 0) for m in missions)
+
+    summary = {
+        "run_id": session.run_id,
+        "squad": session.squad,
+        "difficulty": session.difficulty,
+        "outcome": outcome,
+        "missions_completed": len(missions),
+        "total_turns": total_turns,
+        "total_triggers": total_triggers,
+        "buildings_lost": session.buildings_lost,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+    filepath = run_dir / "run_summary.json"
+    _atomic_json_write(filepath, summary)
+
+    # Finalize manifest
+    _write_manifest(session, {"outcome": outcome})
 
 
 # --- Coordinate Helpers ---
@@ -184,11 +369,13 @@ def _record_post_enemy(session: RunSession, board: Board,
     """Record post-enemy board state and compare with solver predictions."""
     from src.solver.analysis import detect_triggers
 
-    run_id = session.run_id or "default"
-    run_dir = RECORDING_DIR / run_id
+    run_dir = _recording_dir(session)
+    mi = session.mission_index
 
-    # Load the solve recording from the solved turn
-    solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
+    # Load the solve recording from the solved turn (try new naming, fallback to old)
+    solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
+    if not solve_file.exists():
+        solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
     if not solve_file.exists():
         return
 
@@ -226,6 +413,23 @@ def _record_post_enemy(session: RunSession, board: Board,
                 "medium": sum(1 for t in triggers if t["severity"] == "medium"),
             },
         }, turn_override=solved_turn)
+
+        # Append to failure database
+        from src.solver.analysis import append_to_failure_db
+        append_to_failure_db(
+            triggers,
+            run_id=session.run_id or "default",
+            mission_index=session.mission_index,
+            turn=solved_turn,
+            context={
+                "squad": session.squad,
+                "island": session.current_island,
+                "grid_power": actual.get("grid_power"),
+                "solver_timed_out": solve_data.get("search_stats", {}).get("timed_out", False),
+                "weight_version": solve_data.get("weight_version", "unknown"),
+                "solver_version": _get_solver_version(),
+            },
+        )
 
         # Print triggers for immediate visibility
         print(f"\n{'='*50}")
@@ -1043,6 +1247,9 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
     session = RunSession.new_run(squad, achievements, difficulty)
     session.save()
 
+    # Write run manifest
+    _write_manifest(session)
+
     logger = DecisionLog(session.run_id)
     logger.log_custom("New Run", (
         f"Squad: {squad}\n"
@@ -1233,47 +1440,147 @@ def cmd_calibrate() -> dict:
     return result
 
 
-def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0) -> dict:
-    """Load a recorded board state and re-run the solver.
+def _find_board_file(run_dir: Path, turn: int, mission: int = None) -> Path | None:
+    """Find a board recording file, trying new naming then old naming."""
+    if mission is not None:
+        f = run_dir / f"m{mission:02d}_turn_{turn:02d}_board.json"
+        if f.exists():
+            return f
+    candidates = sorted(run_dir.glob(f"m*_turn_{turn:02d}_board.json"))
+    if candidates:
+        return candidates[0]
+    f = run_dir / f"turn_{turn:02d}_board.json"
+    return f if f.exists() else None
 
-    Reconstructs a Board from a turn_N_board.json recording, runs the
-    solver with the specified time limit, and compares the new solution
-    with the original recorded solution. Useful for testing solver
-    improvements against historical boards.
+
+def _load_board_from_recording(board_file: Path) -> tuple:
+    """Load bridge_data, Board, spawns, and env_danger from a board recording.
+
+    Returns (bridge_data, board, spawns, environment_danger) or raises ValueError.
     """
-    run_dir = RECORDING_DIR / run_id
-
-    # Load board recording
-    board_file = run_dir / f"turn_{turn:02d}_board.json"
-    if not board_file.exists():
-        result = {"error": f"No board recording: {board_file}"}
-        _print_result(result)
-        return result
-
     with open(board_file) as f:
         board_record = json.load(f)
 
     bridge_data = board_record.get("data", {}).get("bridge_state")
     if bridge_data is None:
-        result = {"error": "Recording has no bridge_state (save-parser only, not supported)"}
-        _print_result(result)
-        return result
+        raise ValueError("Recording has no bridge_state")
 
-    # Reconstruct board from saved bridge data
     board = Board.from_bridge_data(bridge_data)
-
-    # Extract spawn points and environment danger
     spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
     environment_danger = set()
     for dt in bridge_data.get("environment_danger", []):
         if isinstance(dt, (list, tuple)) and len(dt) >= 2:
             environment_danger.add((dt[0], dt[1]))
 
-    # Run solver with (potentially longer) time limit
+    return bridge_data, board, spawns, environment_danger
+
+
+def _solve_with_rust(bridge_data: dict, time_limit: float,
+                     weights: dict = None) -> "Solution":
+    """Run the Rust solver on bridge_data with optional custom weights.
+
+    Returns a Solution object or None if Rust solver unavailable.
+    """
+    import copy
+    from src.solver.solver import Solution, MechAction
+    from src.model.pawn_stats import get_pawn_stats
+
+    bd = copy.deepcopy(bridge_data)
+
+    # Augment unit data with ranged flag
+    if "units" in bd:
+        for u in bd["units"]:
+            stats = get_pawn_stats(u.get("type", ""))
+            u["ranged"] = stats.ranged
+
+    # Inject weights
+    if weights:
+        bd["eval_weights"] = weights
+
+    import itb_solver as _rust
+    rust_start = time.time()
+    rust_json = _rust.solve(json.dumps(bd), time_limit)
+    rust_result = json.loads(rust_json)
+    rust_elapsed = time.time() - rust_start
+
+    if not rust_result.get("actions"):
+        return Solution()
+
+    rust_actions = []
+    for ra in rust_result["actions"]:
+        w_id = ra.get("weapon_id", "")
+        if not w_id:
+            from src.model.weapons import weapon_name_to_id
+            w_id = weapon_name_to_id(ra.get("weapon", ""))
+        rust_actions.append(MechAction(
+            mech_uid=ra["mech_uid"],
+            mech_type=ra["mech_type"],
+            move_to=tuple(ra["move_to"]),
+            weapon=w_id,
+            target=tuple(ra["target"]),
+            description=ra["description"],
+        ))
+
+    return Solution(
+        actions=rust_actions,
+        score=rust_result["score"],
+        elapsed_seconds=rust_elapsed,
+        timed_out=rust_result["stats"].get("timed_out", False),
+        permutations_tried=rust_result["stats"].get("permutations_tried", 0),
+        total_permutations=rust_result["stats"].get("total_permutations", 0),
+        active_mech_count=rust_result["stats"].get("active_mech_count", 0),
+    )
+
+
+def _fixed_score(outcome: dict) -> float:
+    """Weight-independent scorer for fair comparison between weight versions.
+
+    Uses only objective game metrics, not tunable weights.
+    """
+    return (
+        outcome.get("buildings_alive", 0) * 100
+        + outcome.get("grid_power", 0) * 50
+        - outcome.get("buildings_destroyed_by_enemies", 0) * 200
+        + outcome.get("mechs_alive", 0) * 30
+    )
+
+
+def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0,
+               mission: int = None, use_rust: bool = True) -> dict:
+    """Load a recorded board state and re-run the solver.
+
+    Reconstructs a Board from a recorded board JSON and re-runs the solver.
+    Uses Rust solver by default (--no-rust for Python fallback).
+    Supports both new (m00_turn_01_board.json) and old (turn_01_board.json) naming.
+    """
+    run_dir = RECORDING_DIR / run_id
+
+    board_file = _find_board_file(run_dir, turn, mission)
+    if board_file is None:
+        result = {"error": f"No board recording for turn {turn} in {run_id}"}
+        _print_result(result)
+        return result
+
+    try:
+        bridge_data, board, spawns, environment_danger = _load_board_from_recording(board_file)
+    except (ValueError, json.JSONDecodeError) as e:
+        result = {"error": str(e)}
+        _print_result(result)
+        return result
+
     print(f"\nReplaying turn {turn} from run {run_id} "
-          f"(time limit: {time_limit}s)...")
-    solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
-                          environment_danger=environment_danger)
+          f"(time limit: {time_limit}s, solver: {'rust' if use_rust else 'python'})...")
+
+    solution = None
+    if use_rust:
+        try:
+            solution = _solve_with_rust(bridge_data, time_limit)
+        except Exception as e:
+            print(f"  Rust solver error: {e}, falling back to Python")
+
+    if solution is None:
+        solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
+                              environment_danger=environment_danger)
 
     # Replay for enriched data
     enriched = None
@@ -1389,14 +1696,58 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     num_actions = solve_result["num_actions"]
     score = solve_result.get("score", 0)
 
-    # 3. Execute each action via bridge
+    # 3. Execute each action via bridge (with per-action diff recording)
+    action_diffs = []
+    actions_list = solve_result.get("actions", [])
     for i in range(num_actions):
+        pre_state = _capture_action_snapshot()
+        t0 = time.monotonic()
         exec_result = cmd_execute(i, profile=profile)
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+
         if "error" in exec_result:
             result = {"error": f"Action {i}: {exec_result['error']}",
                       "turn": turn, "actions_completed": i}
             _print_result(result)
             return result
+
+        post_state = _capture_action_snapshot()
+        action_info = actions_list[i] if i < len(actions_list) else {}
+        action_diffs.append({
+            "action_index": i,
+            "mech_uid": action_info.get("mech_uid"),
+            "description": action_info.get("description", ""),
+            "pre_state": pre_state,
+            "post_state": post_state,
+            "wall_clock_ms": elapsed_ms,
+        })
+
+    # Record per-action diffs + check for execution failures
+    session = _load_session()
+    if action_diffs:
+        _record_turn_state(session, "action_diffs", {"diffs": action_diffs})
+
+        # Tier 2: execution failure detection
+        from src.solver.analysis import check_execution_failures, append_to_failure_db
+        exec_triggers = check_execution_failures(action_diffs)
+        if exec_triggers:
+            _record_turn_state(session, "exec_triggers", {
+                "triggers": exec_triggers,
+                "trigger_count": len(exec_triggers),
+            })
+            append_to_failure_db(
+                exec_triggers,
+                run_id=session.run_id or "default",
+                mission_index=session.mission_index,
+                turn=turn,
+                context={
+                    "squad": session.squad,
+                    "island": session.current_island,
+                    "weight_version": _get_weight_version(),
+                    "solver_version": _get_solver_version(),
+                },
+            )
+            print(f"  EXEC TRIGGERS: {len(exec_triggers)} execution failures detected")
 
     # 4. End turn
     end_result = cmd_end_turn()
@@ -1572,6 +1923,11 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
             "turns_completed": turns_completed,
         }
 
+    # Write mission summary
+    session = _load_session()
+    final_grid = mission_result.get("final_grid", mission_result.get("last_grid", ""))
+    _write_mission_summary(session, turns_completed, str(final_grid))
+
     print(f"\n{'='*50}")
     print(f"AUTO MISSION COMPLETE: {mission_result['status']}")
     print(f"  Turns: {turns_completed}")
@@ -1579,6 +1935,342 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
 
     _print_result(mission_result)
     return mission_result
+
+
+def cmd_validate(old_weights_path: str, new_weights_path: str,
+                 time_limit: float = 10.0, solver_version: str = None) -> dict:
+    """Compare two weight versions across all recorded boards.
+
+    For each board recording, runs the Rust solver with both weight sets,
+    simulates both solutions, and scores with a fixed (weight-independent)
+    scorer. Reports which version is better and applies regression gates.
+    """
+    from src.solver.solver import Solution
+
+    # Load weight files
+    old_path, new_path = Path(old_weights_path), Path(new_weights_path)
+    if not old_path.exists():
+        result = {"error": f"Old weights not found: {old_path}"}
+        _print_result(result)
+        return result
+    if not new_path.exists():
+        result = {"error": f"New weights not found: {new_path}"}
+        _print_result(result)
+        return result
+
+    with open(old_path) as f:
+        old_data = json.load(f)
+    with open(new_path) as f:
+        new_data = json.load(f)
+
+    old_weights = old_data.get("weights", {})
+    new_weights = new_data.get("weights", {})
+    old_version = old_data.get("version", "old")
+    new_version = new_data.get("version", "new")
+
+    # Find all board recordings
+    board_files = []
+    for run_dir in sorted(RECORDING_DIR.iterdir()):
+        if not run_dir.is_dir():
+            continue
+        # Check solver version filter
+        if solver_version:
+            manifest = run_dir / "manifest.json"
+            if manifest.exists():
+                try:
+                    with open(manifest) as f:
+                        m = json.load(f)
+                    if m.get("solver_version", "") != solver_version:
+                        continue
+                except (json.JSONDecodeError, OSError):
+                    pass
+        # Collect board files (new + old naming)
+        board_files.extend(sorted(run_dir.glob("m*_turn_*_board.json")))
+        board_files.extend(sorted(run_dir.glob("turn_*_board.json")))
+
+    if not board_files:
+        result = {"error": "No board recordings found"}
+        _print_result(result)
+        return result
+
+    print(f"\n{'='*50}")
+    print(f"VALIDATE: {old_version} vs {new_version}")
+    print(f"  Boards: {len(board_files)}")
+    print(f"{'='*50}")
+
+    # Test each board
+    new_better = 0
+    old_better = 0
+    ties = 0
+    errors = 0
+    critical_regressions = []
+
+    for i, bf in enumerate(board_files):
+        try:
+            bridge_data, board, spawns, _ = _load_board_from_recording(bf)
+        except Exception:
+            errors += 1
+            continue
+
+        try:
+            sol_old = _solve_with_rust(bridge_data, time_limit, weights=old_weights)
+            sol_new = _solve_with_rust(bridge_data, time_limit, weights=new_weights)
+        except Exception as e:
+            errors += 1
+            if i == 0:
+                print(f"  Rust solver error: {e}")
+            continue
+
+        # Simulate both solutions
+        outcome_old = {"buildings_alive": 0, "grid_power": 0, "mechs_alive": 0}
+        outcome_new = {"buildings_alive": 0, "grid_power": 0, "mechs_alive": 0}
+        if sol_old.actions:
+            enriched = replay_solution(board, sol_old, spawns)
+            if enriched:
+                outcome_old = enriched.get("predicted_outcome", outcome_old)
+        if sol_new.actions:
+            enriched = replay_solution(board.copy(), sol_new, spawns)
+            if enriched:
+                outcome_new = enriched.get("predicted_outcome", outcome_new)
+
+        score_old = _fixed_score(outcome_old)
+        score_new = _fixed_score(outcome_new)
+
+        if score_new > score_old:
+            new_better += 1
+        elif score_old > score_new:
+            old_better += 1
+            # Check if new version loses buildings that old saved
+            bld_old = outcome_old.get("buildings_alive", 0)
+            bld_new = outcome_new.get("buildings_alive", 0)
+            if bld_new < bld_old:
+                critical_regressions.append(str(bf.relative_to(RECORDING_DIR)))
+        else:
+            ties += 1
+
+        if (i + 1) % 10 == 0:
+            print(f"  Progress: {i+1}/{len(board_files)} boards tested")
+
+    tested = new_better + old_better + ties
+    regression_rate = old_better / tested * 100 if tested > 0 else 0
+    verdict = "PASS" if (regression_rate <= 20 and len(critical_regressions) == 0) else "FAIL"
+
+    result = {
+        "old_version": old_version,
+        "new_version": new_version,
+        "boards_tested": tested,
+        "boards_skipped": errors,
+        "new_better": new_better,
+        "old_better": old_better,
+        "ties": ties,
+        "regression_rate": round(regression_rate, 1),
+        "critical_regressions": len(critical_regressions),
+        "regression_boards": critical_regressions[:10],
+        "verdict": verdict,
+    }
+
+    print(f"\n{'='*50}")
+    print(f"RESULTS: {old_version} vs {new_version}")
+    print(f"  Boards tested: {tested} (skipped: {errors})")
+    print(f"  New better: {new_better} ({new_better*100/tested:.0f}%)" if tested else "")
+    print(f"  Old better: {old_better} ({regression_rate:.0f}%)" if tested else "")
+    print(f"  Ties:       {ties}")
+    print(f"  Critical regressions: {len(critical_regressions)}")
+    print(f"  VERDICT: {verdict}")
+    print(f"{'='*50}")
+
+    _print_result(result)
+    return result
+
+
+def cmd_tune(iterations: int = 100, min_boards: int = 50,
+             time_limit: float = 5.0) -> dict:
+    """Auto-tune solver weights by replaying recorded boards.
+
+    Uses random search + coordinate refinement to find weight values
+    that maximize the fixed (weight-independent) score across all
+    recorded board states. Saves the best weights to a new version file
+    and validates against the current weights.
+
+    Data gate: refuses to run with fewer than min_boards recordings.
+    """
+    from src.solver.tuner import tune_weights
+
+    # Collect all board files
+    board_files = []
+    for run_dir in sorted(RECORDING_DIR.iterdir()):
+        if not run_dir.is_dir():
+            continue
+        board_files.extend(sorted(run_dir.glob("m*_turn_*_board.json")))
+        board_files.extend(sorted(run_dir.glob("turn_*_board.json")))
+
+    # Data gate
+    if len(board_files) < min_boards:
+        result = {
+            "error": f"Not enough data: {len(board_files)} boards "
+                     f"(need {min_boards}). Collect more games first.",
+            "boards_found": len(board_files),
+            "min_boards": min_boards,
+        }
+        print(f"\n  DATA GATE: {len(board_files)}/{min_boards} boards. "
+              f"Need {min_boards - len(board_files)} more.")
+        _print_result(result)
+        return result
+
+    print(f"\n{'='*50}")
+    print(f"WEIGHT AUTO-TUNING")
+    print(f"  Boards: {len(board_files)}")
+    print(f"  Iterations: {iterations}")
+    print(f"  Time limit per board: {time_limit}s")
+    print(f"{'='*50}")
+
+    # Run tuning
+    t0 = time.time()
+    tune_result = tune_weights(board_files, iterations=iterations,
+                               time_limit=time_limit)
+    elapsed = time.time() - t0
+
+    improvement = tune_result["improvement"]
+    improvement_pct = tune_result["improvement_pct"]
+
+    print(f"\n{'='*50}")
+    print(f"TUNING COMPLETE ({elapsed:.0f}s)")
+    print(f"  Baseline: {tune_result['baseline_score']:.1f}")
+    print(f"  Best:     {tune_result['best_score']:.1f} "
+          f"({'+' if improvement >= 0 else ''}{improvement:.1f}, "
+          f"{improvement_pct:+.1f}%)")
+    print(f"  Tuned weights:")
+    for k, v in tune_result["tuned_params"].items():
+        print(f"    {k:20s} = {v:.1f}")
+    print(f"{'='*50}")
+
+    # Save new weights if improved
+    if improvement > 0:
+        weights_dir = Path(__file__).parent.parent.parent / "weights"
+        weights_dir.mkdir(parents=True, exist_ok=True)
+
+        # Find next version number
+        existing = sorted(weights_dir.glob("v*_*.json"))
+        next_num = 2
+        for ef in existing:
+            try:
+                num = int(ef.stem.split("_")[0][1:])
+                next_num = max(next_num, num + 1)
+            except (ValueError, IndexError):
+                pass
+
+        version = f"v{next_num:03d}"
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d")
+        new_path = weights_dir / f"{version}_{timestamp}.json"
+
+        new_weight_data = {
+            "version": version,
+            "parent": _get_weight_version(),
+            "description": f"Auto-tuned from {_get_weight_version()} "
+                           f"({improvement_pct:+.1f}% on {len(board_files)} boards)",
+            "created": datetime.now().isoformat(),
+            "weights": tune_result["best_weights"],
+            "stats": {
+                "boards_tested": len(board_files),
+                "iterations": tune_result["iterations_used"],
+                "baseline_score": tune_result["baseline_score"],
+                "tuned_score": tune_result["best_score"],
+                "improvement_pct": round(improvement_pct, 2),
+            },
+        }
+
+        _atomic_json_write(new_path, new_weight_data)
+        print(f"\n  Saved: {new_path}")
+
+        # Validate against current weights
+        old_path = weights_dir / "active.json"
+        print(f"\n  Validating {_get_weight_version()} vs {version}...")
+        val_result = cmd_validate(str(old_path), str(new_path),
+                                  time_limit=time_limit)
+
+        if val_result.get("verdict") == "PASS":
+            # Deploy as active
+            import shutil
+            shutil.copy2(new_path, old_path)
+            print(f"\n  DEPLOYED: {version} is now active!")
+        else:
+            print(f"\n  NOT DEPLOYED: validation failed "
+                  f"(regression rate {val_result.get('regression_rate', '?')}%)")
+
+        tune_result["weight_file"] = str(new_path)
+        tune_result["validation"] = val_result.get("verdict", "unknown")
+    else:
+        print(f"\n  No improvement found. Current weights are optimal "
+              f"for this data set.")
+
+    tune_result["elapsed_seconds"] = round(elapsed, 1)
+    _print_result(tune_result)
+    return tune_result
+
+
+def cmd_analyze(min_samples: int = 30) -> dict:
+    """Analyze the failure database for patterns and trends.
+
+    Reads recordings/failure_db.jsonl and reports trigger frequencies,
+    root-cause breakdowns, and gated pattern analysis.
+    """
+    from src.solver.analysis import analyze_failures
+
+    report = analyze_failures(min_samples=min_samples)
+    total = report.get("total_records", 0)
+
+    print(f"\n{'='*50}")
+    print(f"FAILURE ANALYSIS — {total} records")
+    print(f"{'='*50}")
+
+    if total == 0:
+        print("  No failure records found. Run some games first!")
+        _print_result(report)
+        return report
+
+    # By root cause
+    print(f"\nRoot Causes:")
+    for rc, count in report.get("by_root_cause", {}).items():
+        pct = count * 100 / total
+        print(f"  {rc:25s} {count:4d} ({pct:5.1f}%)")
+
+    # By severity
+    print(f"\nSeverity:")
+    for sev in ["critical", "high", "medium"]:
+        count = report.get("by_severity", {}).get(sev, 0)
+        pct = count * 100 / total
+        print(f"  {sev:25s} {count:4d} ({pct:5.1f}%)")
+
+    # By trigger type
+    print(f"\nTrigger Types:")
+    for trigger, count in report.get("by_trigger", {}).items():
+        pct = count * 100 / total
+        print(f"  {trigger:35s} {count:4d} ({pct:5.1f}%)")
+
+    # By tier
+    print(f"\nTiers:")
+    for tier, count in report.get("by_tier", {}).items():
+        pct = count * 100 / total
+        print(f"  Tier {tier:2d}                       {count:4d} ({pct:5.1f}%)")
+
+    # Gated breakdowns
+    if "by_squad" in report:
+        print(f"\nBy Squad:")
+        for squad, count in report["by_squad"].items():
+            print(f"  {squad:25s} {count:4d}")
+    elif "by_squad_note" in report:
+        print(f"\n  {report['by_squad_note']}")
+
+    if "by_turn" in report:
+        print(f"\nBy Turn:")
+        for turn, count in report["by_turn"].items():
+            print(f"  Turn {turn:2d}                       {count:4d}")
+    elif "by_turn_note" in report:
+        print(f"\n  {report['by_turn_note']}")
+
+    _print_result(report)
+    return report
 
 
 def _print_result(result: dict):
