@@ -80,9 +80,29 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId) -> Vec<(u8,
             for &(dx, dy) in &DIRS {
                 let nx = mx as i8 + dx;
                 let ny = my as i8 + dy;
-                if in_bounds(nx, ny) {
-                    targets.push((nx as u8, ny as u8));
+                if !in_bounds(nx, ny) { continue; }
+                // For projectiles: skip directions where the first obstacle is a
+                // building (no enemy in between). Shooting our own buildings is
+                // never beneficial and costs grid power.
+                if wdef.weapon_type == WeaponType::Projectile && !wdef.phase() {
+                    let mut first_is_building = false;
+                    for i in 1..8i8 {
+                        let px = mx as i8 + dx * i;
+                        let py = my as i8 + dy * i;
+                        if !in_bounds(px, py) { break; }
+                        let tile = board.tile(px as u8, py as u8);
+                        if tile.terrain == Terrain::Mountain { break; }
+                        if tile.is_building() {
+                            first_is_building = true;
+                            break;
+                        }
+                        if board.unit_at(px as u8, py as u8).is_some() {
+                            break; // unit before building — safe to fire
+                        }
+                    }
+                    if first_is_building { continue; }
                 }
+                targets.push((nx as u8, ny as u8));
             }
         }
         WeaponType::Artillery => {
@@ -157,25 +177,26 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
         // Move-only
         actions.push((pos, WId::None, (255, 255)));
 
-        // Primary weapon
-        let w1_id = WId::from_raw(unit.weapon.0);
-        if w1_id != WId::None {
-            for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id) {
-                actions.push((pos, w1_id, target));
-            }
-        }
-
-        // Secondary weapon
-        let w2_id = WId::from_raw(unit.weapon2.0);
-        if w2_id != WId::None {
-            for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id) {
-                actions.push((pos, w2_id, target));
-            }
-        }
-
-        // Repair (if damaged/on_fire/acid and not smoked)
+        // Smoke blocks ALL actions (attack + repair) — only move-only is valid
         let tile = board.tile(pos.0, pos.1);
         if !tile.smoke() {
+            // Primary weapon
+            let w1_id = WId::from_raw(unit.weapon.0);
+            if w1_id != WId::None {
+                for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id) {
+                    actions.push((pos, w1_id, target));
+                }
+            }
+
+            // Secondary weapon
+            let w2_id = WId::from_raw(unit.weapon2.0);
+            if w2_id != WId::None {
+                for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id) {
+                    actions.push((pos, w2_id, target));
+                }
+            }
+
+            // Repair (if damaged/on_fire/acid)
             if unit.hp < unit.max_hp || unit.fire() || unit.acid() {
                 actions.push((pos, WId::Repair, pos));
             }
