@@ -83,38 +83,37 @@ Extended rules: see `data/ref_game_mechanics.md`.
 
 ## Operational Rules
 
-1. Always verify state after each mech execution. Bridge provides per-action updates; save file only updates at turn boundaries.
-2. Never execute mech N+1 before verifying mech N succeeded.
-3. When clicking tiles: click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords.
+1. Always verify state after each mech action via `verify_action <i>`. Bridge provides per-action updates; save file only updates at turn boundaries.
+2. Never execute mech N+1 before `verify_action N` returns PASS (or you've consciously decided to log+continue past a desync).
+3. When clicking tiles: click TILE CENTERS, not sprites. Sprites render 100-170px above tile center in MCP coords. Use `grid_to_mcp()` or `tile_hover.py`; `click_action` does this for you internally.
 4. After every failed run, analyze the critical turn. Save snapshot first.
-5. Select mechs by clicking their tile on the board (use `tile_hover.py` for coords). No need to use sidebar portraits. NEVER use Tab or any keyboard key.
+5. Select mechs by clicking their tile on the board. No portraits, no Tab, no keyboard. `click_action` handles this internally for combat actions.
 6. Priority order — buildings > threats > kills > spawns.
-7. **Manual play: MCP mouse clicks for all visible actions.** When Claude is the control loop (manual play), every move, attack, and end turn must be a visible mouse click so the user can watch and verify. Re-read bridge state after every action to confirm it worked. **Speed mode:** `game_loop.py auto_turn` and `auto_mission` execute actions via bridge commands internally (30-100x faster). This is allowed — the user opts in by calling these commands. Bridge commands are NEVER called directly outside of `auto_turn`/`auto_mission`.
+7. **Manual play: MCP mouse clicks for all visible actions.** When Claude is the control loop, every move/attack/end-turn must be a visible mouse click so the user can watch and verify. The canonical commands for manual combat play are `click_action <i>` (emits a `computer_batch`-ready plan for one mech action) and `click_end_turn`. After dispatching the batch, run `verify_action <i>` to confirm the predicted state landed. **Speed mode:** `auto_turn` / `auto_mission` execute actions via bridge commands internally (30-100x faster). Bridge commands (`execute`, `end_turn`) are NEVER called directly outside of `auto_turn` / `auto_mission`.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
-10. For MCP clicks: always use grid_to_mcp() or `tile_hover.py` for coordinates. MCP screenshot coords = Quartz logical coords (verified). grid_to_mcp() auto-detects window position via Quartz — no hardcoded offsets.
-11. **Manual play: MOUSE CLICKS ONLY — no keyboard.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.). For speed mode, use `auto_turn`/`auto_mission` instead (see rule 7). The full mouse-only sequence for each mech in manual play:
-    - **Select mech**: Click the mech's tile on the board (use `tile_hover.py <TILE>` for coords)
-    - **Move**: Click the destination tile center (green highlighted tile)
-    - **Arm weapon**: Click the weapon icon in the bottom panel
-    - **Attack**: Click the target tile center (orange highlighted tile)
-    - **Disarm weapon**: Right-click anywhere to cancel weapon targeting
-    - **End turn**: Click the "End Turn" button in the top-left
-    - **Preferred order: MOVE FIRST, then arm weapon and attack.** Moving first ensures the weapon fires from the correct position. If weapon is armed accidentally, right-click to disarm.
-    - Use `tile_hover.py` or `grid_to_mcp()` for precise tile coordinates.
+10. For MCP clicks during deployment / UI elements: use `grid_to_mcp()` or `tile_hover.py` for coordinates. MCP screenshot coords = Quartz logical coords (verified). `grid_to_mcp()` auto-detects window position via Quartz — no hardcoded offsets. For combat tile clicks during a turn, prefer `click_action` which calls `grid_to_mcp()` internally and is calibrated <2px against all 4 corners.
+11. **Manual play: MOUSE CLICKS ONLY — no keyboard.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.). The full mouse-only flow for each mech in manual play:
+    - `python3 game_loop.py click_action <i>` — emits a `computer_batch` plan: select-tile click → optional move click → weapon-icon click → target-tile click. Dash weapons skip the move click; Repair clicks the Repair button instead of a target; passives are no-ops.
+    - Dispatch the batch via `mcp__computer-use__computer_batch`.
+    - Wait for the action animation (~3s).
+    - `python3 game_loop.py verify_action <i>` — diffs predicted vs actual board state. PASS = continue. DESYNC = log it (the failure_db record IS the useful signal) and continue unless it's `click_miss`.
+    - Repeat for each mech.
+    - `python3 game_loop.py click_end_turn` — emits a single click on the End Turn button.
+    - Dispatch, wait ~6s for the enemy phase, then `read`.
 12. NEVER press any keyboard keys during combat. No Space, no Tab, no number keys, no letter keys.
 13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
-14. Solver handles environment hazards (tidal waves, etc.): the bridge provides `environment_danger` tiles, the solver avoids placing mechs on them and tries to push enemies onto them. `game_loop.py read` prints danger tiles. Remaining blind spots: air strikes, lightning (less common).
+14. Solver handles environment hazards via `environment_danger_v2`: the bridge provides per-tile damage + kill metadata, the solver simulates the env_danger tick BEFORE Vek attacks (matching the game's interleaved attack order), and air-strike-class deadly threats bypass shield/frozen/armor/ACID. Mech placement on lethal tiles is penalized at -80000.
 15. On recovery from crash/timeout, ALWAYS start with cmd_read + cmd_solve. Never resume a previous solution — the board may have changed.
-16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. The Lua bridge does NOT have this limitation — it provides fresh state after each action. When bridge is active, use bridge state for per-mech verification. When using save file fallback, use visual confirmation or wait until after End Turn to verify.
-17. Select mechs by clicking their tile on the board, not the sidebar portraits. Portraits show pilot popups that require extra clicks to dismiss. Board-click selection is simpler and more reliable. Always wait 2s after open_application before first click.
+16. Save file (saveData.lua) only updates at TURN BOUNDARIES, not per-mech-action. The Lua bridge does NOT have this limitation. With the bridge active, `verify_action <i>` is the per-mech verification surface — it reads fresh state via `refresh_bridge_state` and diffs against the predicted snapshot the solver captured during `replay_solution`.
+17. _(merged into rule 5)_
 18. **DEPLOYMENT**: The bridge provides `deployment_zone` data (list of valid [x,y] tiles). `game_loop.py read` prints all deploy tiles with visual notation AND exact MCP pixel coordinates. Use those MCP coords directly with `left_click` to place each mech. Deploy order: the game prompts for each mech sequentially. Click a deploy tile center → mech appears → next mech prompt. Use `tile_hover.py <TILE>` (e.g. `tile_hover.py C7`) for quick single-tile coordinate lookup.
-19. **HOVER-VERIFY-CLICK — mandatory for EVERY click.** Never call `left_click` without this 3-step sequence:
-20. **ALWAYS FOLLOW THE SOLVER — never override.** The solver encodes the full game mechanics (push directions, bump damage, projectile re-aiming, terrain interactions). Claude's manual analysis of push chains and attack redirection is error-prone and wastes time. Execute exactly what `game_loop.py solve` outputs — same targets, same order. If the solver's plan looks wrong, it's almost certainly Claude's analysis that's wrong, not the solver. The only exception: if the solver returns an empty solution (timeout), play manually with screenshot-based reasoning.
+19. **HOVER-VERIFY-CLICK — required for UI elements only.** Before `left_click`-ing any UI element (End Turn button, weapon icons, Repair button, reward/shop screens, the first click after window movement):
     1. `mouse_move` to the target coordinates
     2. `screenshot` to visually confirm the cursor is on the correct element (read the tooltip, check the tile highlight)
     3. Only then `left_click`
-    **Board clicks are game actions.** Clicking a mech tile selects it. Clicking a highlighted tile executes a move/attack. Don't click random board tiles to dismiss UI — use the End Turn area or weapon panel as neutral click targets if needed.
+    NOT required for combat tile clicks computed by `grid_to_mcp()` (calibrated <2px) — `click_action` handles these directly. **Board clicks are game actions.** Clicking a mech tile selects it. Clicking a highlighted tile executes a move/attack. Don't click random board tiles to dismiss UI.
+20. **ALWAYS FOLLOW THE SOLVER — never override. Failures are data, not disasters.** The solver encodes the full game mechanics (push directions, bump damage, projectile re-aiming, terrain interactions, env_danger ordering). Claude's manual analysis of push chains and attack redirection is error-prone and wastes time. Execute exactly what `game_loop.py solve` outputs — same targets, same order. If the solver's plan looks wrong, it's almost certainly Claude's analysis that's wrong, not the solver. When `verify_action` reports a desync, the failure_db record is the useful signal — it feeds the auto-tuner. Overriding the solver suppresses the data the system needs to improve. The only exception: if the solver returns an empty solution (timeout), play manually with screenshot-based reasoning. See `feedback_trust_solver.md` for the rationale.
 
 ## Phase Protocols
 
@@ -139,17 +138,17 @@ Runs at the start of each mission (turn 0). Place all 3 mechs on valid tiles.
 The main loop. Execute every turn in this exact sequence:
 
 1. `game_loop.py read` — Confirm phase is COMBAT_PLAYER_TURN. Review board state, threats, active mechs.
-2. `game_loop.py solve` — Get solution (N actions for N active mechs). If empty solution (timeout): take screenshot, play manually.
+2. `game_loop.py solve` — Get solution (N actions for N active mechs). The solve recording now includes a per-action `predicted_states` snapshot used by `verify_action`. If empty solution (timeout): take screenshot, play manually.
 3. For each action i in 0..N-1:
-   a. Execute action via MCP mouse clicks: click mech tile on board → click move tile → click weapon icon → click target tile. Right-click to disarm if needed. Use `tile_hover.py` for coordinates.
-   b. Wait 2-3 seconds for animation to complete.
-   c. `game_loop.py read` — Re-read bridge state to verify mech acted (check active=False for that mech).
-      - PASS: continue to next mech.
-      - FAIL: retry the click sequence. If still fails, screenshot + diagnose.
-   NOTE: Verify via bridge state after each mech action.
-4. Click the "End Turn" button (top-left of game UI). Wait for animations (minimum 6s).
-5. `game_loop.py read` — Check new phase:
-   - COMBAT_PLAYER_TURN: next turn, go to step 2.
+   a. `python3 game_loop.py click_action <i>` — Read the JSON output (a `computer_batch`-ready plan). Dispatch via `mcp__computer-use__computer_batch`.
+   b. Wait ~3s for animation.
+   c. `python3 game_loop.py verify_action <i>` — diff predicted vs actual state. Read the result:
+      - **PASS**: continue to next mech.
+      - **DESYNC [click_miss]**: retry `click_action <i>` ONCE. If still failing, screenshot + log + skip the mech.
+      - **DESYNC [other category]**: log to decision log, do NOT retry, do NOT override. The desync record in failure_db is the useful signal. Continue executing the rest of the turn.
+4. `python3 game_loop.py click_end_turn` — Dispatch the batch via `computer_batch`.
+5. Wait ~6s for the enemy phase. `game_loop.py read` — Check new phase:
+   - COMBAT_PLAYER_TURN: next turn, go to step 2. `read` automatically records the previous turn's post-enemy state.
    - MISSION_ENDING / BETWEEN_MISSIONS: mission over, go to MISSION_END.
    - COMBAT_ENEMY_TURN: still animating, wait and re-read.
 
@@ -211,27 +210,33 @@ All commands are subcommands of `game_loop.py`. Each is stateless: read state, c
 
 **State Reading:**
 - `read` — Read game state via bridge (primary) or save file (fallback). Detect phase, dump board state + threats + active mechs.
-- `verify [index]` — Re-parse save file, confirm mech acted. Retries up to 5x at 1.5s. (Note: currently save-parser-only; bridge verify not yet implemented.)
+- `verify [index]` — Re-parse save file, confirm mech acted (legacy save-parser-based path; retries up to 5× at 1.5s). Superseded by `verify_action` in bridge mode.
+- `verify_action <index>` — Per-action diff: refreshes the bridge, diffs the actual state against the snapshot the solver captured for action `<index>` during `replay_solution`, classifies the diff (click_miss / death / damage_amount / push_dir / grid_power / status / terrain / tile_status / spawn / pod), and writes a desync record to `failure_db.jsonl`. Never re-solves, never overrides.
 - `status` — Quick summary: turn, grid power, mech HP, threats, objectives.
 
-**Combat:**
-- `solve` — Run solver, store solution in session, output action sequence.
-- `execute <index>` / `end_turn` — Execute a single mech action / end the turn via bridge commands. Used internally by `auto_turn`. In manual play, use MCP mouse clicks instead.
+**Combat (manual play, MCP mouse clicks):**
+- `solve` — Run solver, store solution in session, output action sequence. Solve recording includes per-action `predicted_states`.
+- `click_action <index>` — Pure planner. Emits a `computer_batch`-ready batch of `left_click` ops for ONE mech action (select-tile → optional move → weapon icon → target). Branches on weapon type: dash weapons skip the move click, Repair clicks the Repair button instead of a target, passives are no-ops.
+- `click_end_turn` — Pure planner. Emits a single click on the End Turn button.
+- `execute <index>` / `end_turn` — Bridge-mode action commands. Used internally by `auto_turn`. In manual play, use `click_action` / `click_end_turn` instead.
 
 **State Recording:**
-- `read` and `solve` both auto-record full game state to `recordings/<run_id>/turn_<N>_<label>.json`. Each recording includes the complete bridge JSON (64 tiles, all units, targets, spawns) plus the solver output. Used for replay, regression testing, and solver improvement.
-- `read` auto-detects post-enemy turns (turn number advanced past solved turn) and records `turn_N_post_enemy.json` (predicted vs actual comparison) and `turn_N_triggers.json` (detected solver failures).
-- `solve` recordings are enriched: structured actions (uid/move/weapon/target), per-action `ActionResult`, predicted post-enemy board state, score component breakdown, and search statistics.
+- `read` and `solve` both auto-record full game state to `recordings/<run_id>/m<NN>_turn_<NN>_<label>.json`. Each recording includes the complete bridge JSON (64 tiles, all units, targets, spawns) plus the solver output.
+- `read` auto-detects post-enemy turns (turn number advanced past solved turn) and records `*_post_enemy.json` (predicted vs actual comparison) and `*_triggers.json` (detected solver failures). The dedup guard prevents duplicate records when both `read` and `auto_mission`'s exit-flush try to record the same `(mission, turn)` pair.
+- `solve` recordings are enriched: structured actions (uid/move/weapon/target), per-action `ActionResult`, **per-action `predicted_states`** (input to `verify_action`), predicted post-enemy board state, score component breakdown, and search statistics.
 
 **Analysis:**
-- `replay <run_id> <turn> [--time-limit 30]` — Reconstruct a Board from a recorded `turn_N_board.json` and re-run the solver. Compares new solution with original. Use for testing solver fixes against historical failures.
+- `replay <run_id> <turn> [--time-limit 30]` — Reconstruct a Board from a recorded board JSON and re-run the solver. Compares new solution with original.
+- `analyze [--min-samples N]` — Read failure_db.jsonl and report patterns by trigger / severity / squad / island. Gates squad/island/temporal breakdowns behind sample-count minimums.
+- `validate <old.json> <new.json> [--failures-only] [--time-limit N]` — Compare two weight versions across recorded boards. Default mode replays every board and reports new_better/old_better/ties under the fixed-score scorer plus regression gates. `--failures-only` restricts to boards in failure_db (deduped by `(run_id, mission, trigger)`) and applies the stricter Fixed/Regressed/Neutral rule (Fixed = trigger no longer fires AND new_score >= old_score). Audit-tagged runs are filtered out of both modes.
+- `tune [--iterations N] [--min-boards N] [--time-limit N]` — Auto-tune solver weights. Hybrid objective: `mean_fixed_score - 100 * fired_failure_count` (λ calibrated against ~1240 typical fixed_score range so one avoided failure ≈ one building).
 
 **Speed Mode:**
 - `auto_turn [--time-limit 10]` — Execute one combat turn via bridge: read→solve→execute all→end turn. ~10-25s per turn (30-100x faster than MCP clicks).
-- `auto_mission [--max-turns 20]` — Full mission via bridge: auto-deploy→combat loop→mission end. Falls back to Claude for reward/shop/map screens.
+- `auto_mission [--max-turns 20]` — Full mission via bridge: auto-deploy→combat loop→mission end. Final turn is force-flushed to failure_db on exit. Falls back to Claude for reward/shop/map screens.
 
 **Run Management:**
-- `new_run <squad> [--achieve X Y]` — Initialize new session with squad and achievement targets.
+- `new_run <squad> [--achieve X Y] [--difficulty N] [--tags audit ...]` — Initialize new session. Use `--tags audit` for environment-audit playthroughs so the failures don't pollute the tuner training corpus.
 - `snapshot <label>` — Save current state for regression testing.
 - `log <message>` — Append Claude's reasoning to the decision log.
 
@@ -297,7 +302,8 @@ itb-bot/
 │   ├── solver/            # Threat analysis, search, evaluation
 │   │   └── evaluate.py    # EvalWeights for configurable scoring
 │   ├── control/           # MCP mouse click coordinate calculation
-│   │   └── executor.py    # Per-mech click planning, portrait selection
+│   │   └── executor.py    # Per-mech click planning (board-click selection,
+│   │                      # weapon-type classifier, no portraits, no keyboard)
 │   ├── strategy/          # Achievement planner, run-level decisions
 │   └── main.py            # Legacy entry point (backward compat)
 ├── sessions/              # Session JSON files (active_session.json)
@@ -331,4 +337,4 @@ itb-bot/
 
 ## Current Status
 
-Game loop CLI operational in dual mode: manual play (MCP clicks) and speed mode (`auto_turn`/`auto_mission` via bridge commands, 30-100x faster). Lua bridge supports full action execution (GetSkillEffect, REPAIR, DEPLOY, SKIP, SET_SPEED) with sequence IDs and error detection. Solver uses Rust backend with configurable `EvalWeights` loaded from `weights/active.json`. Self-improvement plan Phases 0-C complete (bridge execution, speed layer, data quality, weight loading). Phases D-G (enhanced recording, failure analysis, batch validation, auto-tuning) are next. See `docs/self_improvement_plan.md` for full roadmap.
+Self-correcting system overhaul Phases 0–5 complete (commits `e08b1ff`, `de54f00`, `c9817d3`, `a9d567e`, `53e1c04`, `c455dc1`). Combat play uses `click_action <i>` + `verify_action <i>` + `click_end_turn` for the canonical mouse-only flow; per-action desyncs land in `failure_db.jsonl` as data for the auto-tuner instead of triggering manual overrides. Solver simulates per-tile env_danger (lethal flag bypasses shield/frozen/armor/ACID) and weights `mech_killed` at -80000. Tuner objective is `mean_fixed_score - 100 * fired_failure_count` with audit-tagged runs filtered out. `validate --failures-only` gates new weight versions on Fixed/Regressed/Neutral counts under stricter rules. Game loop CLI still operates in dual mode: manual play (MCP clicks via `click_action` / `verify_action` / `click_end_turn`) and speed mode (`auto_turn` / `auto_mission` via bridge commands, 30–100x faster). Phase 6 (docs sync) lands as part of this commit; the live environment-audit playthrough is queued as user homework.
