@@ -1,17 +1,20 @@
 """Execute solver actions by clicking on the game.
 
-Translates MechAction sequences into mouse clicks for the MCP
-computer-use tool. Supports per-mech execution with verification
-gaps between each mech (Claude-as-the-loop pattern).
+Translates MechAction objects into mouse-only click sequences for the
+MCP ``computer_batch`` tool. The Claude-as-the-loop pattern: each call
+returns a plan, the parent process dispatches the batch, then calls
+``verify_action`` before moving to the next mech.
 
-Mech selection uses portrait clicks (not Tab) for reliability when
-executing non-consecutively with verify steps between mechs.
+Mech selection is by board click — no portraits, no keyboard. Weapon
+type is read from ``WEAPON_DEFS`` to choose the right click sequence:
+normal weapons need an explicit move click, dash/leap weapons don't,
+Repair uses its own button, passives are no-ops.
 
 Coordinate systems:
-  - Save file coordinates: (0-7, 0-7) — from saveData.lua
-  - MCP screenshot coordinates: = Quartz logical screen coordinates
-  - grid_to_mcp() auto-detects the game window via Quartz and computes
-    the correct MCP coordinates dynamically. No hardcoded offsets.
+  - Bridge coordinates: (0-7, 0-7) from the Lua bridge.
+  - MCP coordinates: Quartz logical screen pixels.
+  - ``grid_to_mcp`` auto-detects the game window and produces MCP coords
+    for any tile center, calibrated <2px against all 4 corners.
 """
 
 from __future__ import annotations
@@ -73,9 +76,6 @@ def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
     #   A8 = save(0,7) → pixel (369, 436)
     #   H1 = save(7,0) → pixel (1016, 435)
     #   A1 = save(7,7) → pixel (694, 677)
-    #
-    # Window-relative origin (tile 0,0 = H8): offset (494, 56) from window corner
-    # Step sizes: 46.21 px per (save_x - save_y), 34.57 px per (save_x + save_y)
 
     sx = win.width / 1280.0
     sy = win.height / 748.0
@@ -85,8 +85,8 @@ def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
     oy = win.y + 56 * sy
 
     # Isometric step sizes in MCP pixels
-    step_x = 46.21 * sx   # per (save_x - save_y) unit
-    step_y = 34.57 * sy   # per (save_x + save_y) unit
+    step_x = 46.21 * sx
+    step_y = 34.57 * sy
 
     px = ox + step_x * (save_x - save_y)
     py = oy + step_y * (save_x + save_y)
@@ -97,8 +97,9 @@ def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
 def recalibrate():
     """Force re-detection of game window position.
 
-    Call this when the window may have moved (e.g., at the start of each turn).
-    The next grid_to_mcp() call will re-detect the window.
+    Call this when the window may have moved (e.g., at the start of each
+    turn or before each click_action). The next grid_to_mcp() call will
+    re-detect the window.
     """
     global _cached_grid, _cached_window
     _cached_grid = None
@@ -107,166 +108,189 @@ def recalibrate():
 
 # --- Window-Relative UI Positions ---
 
-# These are pixel offsets from the game window's top-left corner.
-# They're constant within the game regardless of window position.
-# Calibrated for 1280x748 window at Max Board Scale 5x.
-_UI_PORTRAIT_X = 50
-_UI_PORTRAIT_Y = [135, 195, 245]  # Top, middle, bottom mech portraits
+# These are pixel offsets from the game window's top-left corner at
+# 1280x748 window size. _ui_pos() scales them to the live window size.
+#
+# _UI_END_TURN is calibrated and stable. The weapon slot and Repair
+# button positions are first-pass estimates based on the visible bottom
+# panel layout — verify with hover-screenshot before relying on them
+# in live play, and update here once measured.
 _UI_END_TURN = (95, 78)
-_UI_BOARD_CENTER = (500, 350)
+_UI_WEAPON_SLOT_1 = (550, 668)   # FIXME: live-calibrate primary weapon icon
+_UI_WEAPON_SLOT_2 = (614, 668)   # FIXME: live-calibrate secondary weapon icon
+_UI_REPAIR_BUTTON = (1100, 668)  # FIXME: live-calibrate Repair button
 
 
-def _portrait_pos(index: int) -> tuple[int, int]:
-    """Get MCP coordinates for a mech portrait (0, 1, or 2)."""
+def _ui_pos(offset: tuple[int, int]) -> tuple[int, int]:
+    """Scale a window-relative UI offset to MCP coordinates."""
     win = _get_window()
-    return (win.x + _UI_PORTRAIT_X, win.y + _UI_PORTRAIT_Y[index])
-
-
-def _end_turn_pos() -> tuple[int, int]:
-    """Get MCP coordinates for the End Turn button."""
-    win = _get_window()
-    return (win.x + _UI_END_TURN[0], win.y + _UI_END_TURN[1])
-
-
-def _board_center() -> tuple[int, int]:
-    """Get MCP coordinates for the board center (for dismissing popups)."""
-    win = _get_window()
-    return (win.x + _UI_BOARD_CENTER[0], win.y + _UI_BOARD_CENTER[1])
-
-
-# --- Mech Portrait Mapping ---
-
-def get_mech_portraits(board: Board) -> dict[str, int]:
-    """Build mech_type → portrait_index mapping from board state.
-
-    Mechs appear in portrait order (top to bottom) matching their
-    order in the save file's pawn list (by UID).
-    """
-    mechs = sorted(
-        [u for u in board.units if u.is_mech and u.hp > 0],
-        key=lambda u: u.uid
+    sx = win.width / 1280.0
+    sy = win.height / 748.0
+    return (
+        int(round(win.x + offset[0] * sx)),
+        int(round(win.y + offset[1] * sy)),
     )
-    return {m.type: i for i, m in enumerate(mechs)}
 
 
-def _get_weapon_key(action: MechAction, board: Board) -> str:
-    """Return '1' for primary weapon, '2' for secondary."""
-    if not action.weapon:
-        return "1"
+def _ui_weapon_slot_1() -> tuple[int, int]:
+    return _ui_pos(_UI_WEAPON_SLOT_1)
 
-    mech = None
-    for u in board.units:
-        if u.uid == action.mech_uid:
-            mech = u
-            break
 
-    if mech is None:
-        return "1"
+def _ui_weapon_slot_2() -> tuple[int, int]:
+    return _ui_pos(_UI_WEAPON_SLOT_2)
 
-    if mech.weapon2 and action.weapon == mech.weapon2:
-        return "2"
-    return "1"
+
+def _ui_repair_button() -> tuple[int, int]:
+    return _ui_pos(_UI_REPAIR_BUTTON)
+
+
+def _ui_end_turn() -> tuple[int, int]:
+    return _ui_pos(_UI_END_TURN)
+
+
+# --- Weapon-type classifier ---
+
+def classify_weapon(weapon_id: str) -> str:
+    """Map a weapon ID to a UI click flow:
+
+    - "normal":  optional move click → arm weapon → click target
+    - "dash":    arm weapon → click destination tile (no separate move)
+    - "repair":  optional move click → click Repair button (no target)
+    - "passive": no click flow at all
+    """
+    if not weapon_id:
+        return "normal"
+    if weapon_id == "_REPAIR" or weapon_id == "Repair":
+        return "repair"
+    if weapon_id.startswith("Passive_"):
+        return "passive"
+
+    # Look up the weapon definition. WEAPON_DEFS keys are internal IDs.
+    from src.model.weapons import get_weapon_def
+    wdef = get_weapon_def(weapon_id)
+    if wdef is None:
+        return "normal"
+    if wdef.weapon_type in ("charge", "leap"):
+        return "dash"
+    if wdef.weapon_type == "passive":
+        return "passive"
+    return "normal"
+
+
+def _weapon_icon_pos(weapon_id: str, mech) -> tuple[int, int]:
+    """Return MCP coords for the weapon's icon slot.
+
+    The mech object has ``weapon`` (primary) and ``weapon2`` (secondary)
+    fields. Anything that matches ``weapon2`` goes to slot 2, otherwise
+    slot 1.
+    """
+    if mech is not None and getattr(mech, "weapon2", None) and weapon_id == mech.weapon2:
+        return _ui_weapon_slot_2()
+    return _ui_weapon_slot_1()
 
 
 # --- Per-Mech Click Planning ---
 
-def plan_single_mech(action: MechAction, portrait_index: int,
-                     board: Board = None) -> list[dict]:
+def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     """Plan clicks for ONE mech action.
 
-    Uses portrait clicks for reliable mech selection (not Tab,
-    which is unreliable with verify gaps between executions).
+    Returns a list of click ops compatible with mcp computer_batch.
+    Each op is ``{"type": "left_click", "x": int, "y": int,
+    "description": str}``. Mouse only — no portraits, no keyboard.
 
-    Portrait click shows a pilot popup — we dismiss it by clicking
-    the board, then re-click the portrait to select the mech.
+    Returns an empty list if the mech can't be located on the board.
     """
-    clicks = []
+    if board is None:
+        return []
 
-    # Get UI positions (window-relative, auto-detected)
-    px, py = _portrait_pos(portrait_index)
-    bx, by = _board_center()
+    mech = next((u for u in board.units if u.uid == action.mech_uid), None)
+    if mech is None:
+        return []
 
-    # Step 1: Click portrait to select mech
-    clicks.append({
-        "type": "click", "x": px, "y": py,
-        "description": f"Click portrait to select {action.mech_type}",
-    })
-    clicks.append({"type": "wait", "duration": 0.3,
-                    "description": "Wait for portrait response"})
+    # Step 1: select the mech by clicking its current tile.
+    sx, sy = grid_to_mcp(mech.x, mech.y)
+    plan: list[dict] = [{
+        "type": "left_click",
+        "x": sx, "y": sy,
+        "description": f"Select {action.mech_type} at ({mech.x},{mech.y})",
+    }]
 
-    # Step 2: Click board center to dismiss pilot popup
-    clicks.append({
-        "type": "click", "x": bx, "y": by,
-        "description": "Dismiss pilot popup",
-    })
-    clicks.append({"type": "wait", "duration": 0.3,
-                    "description": "Wait for popup dismiss"})
+    weapon_type = classify_weapon(action.weapon)
 
-    # Step 3: Re-click portrait (now selects mech properly)
-    clicks.append({
-        "type": "click", "x": px, "y": py,
-        "description": f"Re-select {action.mech_type}",
-    })
-    clicks.append({"type": "wait", "duration": 0.5,
-                    "description": "Wait for mech selection"})
+    # Passive weapons have no clickable target — just selecting the mech
+    # is enough to "consume" the action from the Claude perspective.
+    if weapon_type == "passive":
+        return plan
 
-    # Step 4: Attack (before moving — fires from current known position)
-    has_attack = action.weapon and action.target[0] >= 0
-    if has_attack:
-        weapon_key = _get_weapon_key(action, board) if board else "1"
-        clicks.append({
-            "type": "key", "text": weapon_key,
-            "description": f"Arm {action.weapon} (key '{weapon_key}')",
-        })
-        clicks.append({"type": "wait", "duration": 0.5,
-                        "description": "Wait for weapon arm"})
-
-        tx, ty = grid_to_mcp(action.target[0], action.target[1])
-        clicks.append({
-            "type": "click", "x": tx, "y": ty,
-            "description": f"Fire {action.weapon} at ({action.target[0]},{action.target[1]})",
-        })
-        clicks.append({"type": "wait", "duration": 2.0,
-                        "description": "Wait for attack animation"})
-
-    # Step 5: Move (after attacking)
-    has_move = action.move_to and action.move_to != (-1, -1)
-    if has_move:
-        mech = None
-        if board:
-            mech = next((u for u in board.units if u.uid == action.mech_uid), None)
-        current_pos = (mech.x, mech.y) if mech else None
-
-        if current_pos is None or action.move_to != current_pos:
-            dx, dy = grid_to_mcp(action.move_to[0], action.move_to[1])
-            clicks.append({
-                "type": "click", "x": dx, "y": dy,
+    # Repair: optional move, then click the Repair button.
+    if weapon_type == "repair":
+        if action.move_to and action.move_to != (mech.x, mech.y):
+            mx, my = grid_to_mcp(action.move_to[0], action.move_to[1])
+            plan.append({
+                "type": "left_click",
+                "x": mx, "y": my,
                 "description": f"Move to ({action.move_to[0]},{action.move_to[1]})",
             })
-            clicks.append({"type": "wait", "duration": 1.0,
-                            "description": "Wait for move animation"})
-
-    # If no attack and no move, skip
-    if not has_attack and not has_move:
-        clicks.append({
-            "type": "key", "text": "q",
-            "description": "Skip action (no attack or move)",
+        rx, ry = _ui_repair_button()
+        plan.append({
+            "type": "left_click",
+            "x": rx, "y": ry,
+            "description": "Click Repair button",
         })
-        clicks.append({"type": "wait", "duration": 0.3,
-                        "description": "Wait for skip"})
+        return plan
 
-    return clicks
+    # Dash/leap weapons: arm the weapon, then click the destination.
+    # The dash IS the move — there's no separate move click.
+    if weapon_type == "dash":
+        wx, wy = _weapon_icon_pos(action.weapon, mech)
+        plan.append({
+            "type": "left_click",
+            "x": wx, "y": wy,
+            "description": f"Arm {action.weapon}",
+        })
+        if action.target and action.target[0] >= 0:
+            tx, ty = grid_to_mcp(action.target[0], action.target[1])
+            plan.append({
+                "type": "left_click",
+                "x": tx, "y": ty,
+                "description": f"Dash to ({action.target[0]},{action.target[1]})",
+            })
+        return plan
+
+    # Normal: optional move first, then arm weapon, then click target.
+    if action.move_to and action.move_to != (mech.x, mech.y):
+        mx, my = grid_to_mcp(action.move_to[0], action.move_to[1])
+        plan.append({
+            "type": "left_click",
+            "x": mx, "y": my,
+            "description": f"Move to ({action.move_to[0]},{action.move_to[1]})",
+        })
+
+    if action.weapon and action.target and action.target[0] >= 0:
+        wx, wy = _weapon_icon_pos(action.weapon, mech)
+        plan.append({
+            "type": "left_click",
+            "x": wx, "y": wy,
+            "description": f"Arm {action.weapon}",
+        })
+        tx, ty = grid_to_mcp(action.target[0], action.target[1])
+        plan.append({
+            "type": "left_click",
+            "x": tx, "y": ty,
+            "description": f"Fire at ({action.target[0]},{action.target[1]})",
+        })
+
+    return plan
 
 
 def plan_end_turn() -> list[dict]:
-    """Plan clicks for the End Turn button."""
-    ex, ey = _end_turn_pos()
-    return [
-        {"type": "wait", "duration": 0.5,
-         "description": "Pause before end turn"},
-        {"type": "click", "x": ex, "y": ey,
-         "description": "Click End Turn"},
-    ]
+    """Plan a click for the End Turn button."""
+    ex, ey = _ui_end_turn()
+    return [{
+        "type": "left_click",
+        "x": ex, "y": ey,
+        "description": "Click End Turn",
+    }]
 
 
 # --- Backward-Compatible Full-Solution Planning ---
@@ -278,17 +302,11 @@ class GameExecutor:
         self.board = board
 
     def plan_clicks(self, solution: Solution) -> list[dict]:
-        """Convert a Solution into MCP click/key commands."""
-        clicks = []
-        portraits = get_mech_portraits(self.board) if self.board else {}
-
-        for i, action in enumerate(solution.actions):
-            idx = portraits.get(action.mech_type, i)
-            clicks.extend(plan_single_mech(action, idx, self.board))
-
+        """Convert a Solution into MCP click commands."""
+        clicks: list[dict] = []
+        for action in solution.actions:
+            clicks.extend(plan_single_mech(action, self.board))
         clicks.extend(plan_end_turn())
-        clicks.append({"type": "wait", "duration": 5.0,
-                        "description": "Wait for enemy phase"})
         return clicks
 
     def print_plan(self, solution: Solution) -> None:
@@ -296,9 +314,4 @@ class GameExecutor:
         clicks = self.plan_clicks(solution)
         print(f"\n=== CLICK PLAN ({len(clicks)} steps) ===")
         for i, c in enumerate(clicks):
-            if c["type"] == "click":
-                print(f"  {i+1}. CLICK ({c['x']}, {c['y']}) -- {c['description']}")
-            elif c["type"] == "key":
-                print(f"  {i+1}. KEY '{c['text']}' -- {c['description']}")
-            elif c["type"] == "wait":
-                print(f"  {i+1}. WAIT {c['duration']}s -- {c['description']}")
+            print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")

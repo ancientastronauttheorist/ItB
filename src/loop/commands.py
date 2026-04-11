@@ -30,7 +30,6 @@ from src.solver.evaluate import evaluate_threats
 from src.control.executor import (
     plan_single_mech,
     plan_end_turn,
-    get_mech_portraits,
     grid_to_mcp,
     recalibrate,
 )
@@ -968,18 +967,24 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
         _print_result(result)
         return result
 
-    # MCP mode: return click plan
-    state = load_game_state(profile)
+    # MCP mode: return click plan. Prefer the bridge for live mech positions
+    # so the click planner can resolve the mech tile correctly even when the
+    # save file is stale; fall back to the save parser for offline replays.
     board = None
-    portraits = {}
-    if state and state.active_mission:
-        board = Board.from_mission(
-            state.active_mission, state.grid_power, state.grid_power_max
-        )
-        portraits = get_mech_portraits(board)
+    if is_bridge_active():
+        try:
+            refresh_bridge_state()
+            board, _ = read_bridge_state()
+        except Exception:
+            board = None
+    if board is None:
+        state = load_game_state(profile)
+        if state and state.active_mission:
+            board = Board.from_mission(
+                state.active_mission, state.grid_power, state.grid_power_max
+            )
 
-    portrait_idx = portraits.get(action.mech_type, action_index)
-    clicks = plan_single_mech(mech_action, portrait_idx, board)
+    clicks = plan_single_mech(mech_action, board)
 
     logger.log_mech_action(action_index, action.description, len(clicks))
 
@@ -992,12 +997,7 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
 
     print(f"\n=== EXECUTE Action {action_index}: {action.description} ===")
     for i, c in enumerate(clicks):
-        if c["type"] == "click":
-            print(f"  {i+1}. CLICK ({c['x']}, {c['y']}) -- {c['description']}")
-        elif c["type"] == "key":
-            print(f"  {i+1}. KEY '{c['text']}' -- {c['description']}")
-        elif c["type"] == "wait":
-            print(f"  {i+1}. WAIT {c['duration']}s -- {c['description']}")
+        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
 
     session.save()
     return result
@@ -1314,6 +1314,118 @@ def cmd_verify_action(action_index: int) -> dict:
         "model_gap": classification.get("model_gap", False),
     }
     print(f"VERIFY {action_index}: DESYNC ({diff.total_count()} diffs) [{cat_label}]")
+    _print_result(result)
+    return result
+
+
+def cmd_click_action(action_index: int) -> dict:
+    """Plan clicks for ONE mech action and emit a computer_batch-ready batch.
+
+    Pure planner — does not execute any clicks itself. Claude (the parent
+    process) reads the JSON output, dispatches the batch via
+    ``mcp__computer-use__computer_batch``, waits for animations, then
+    calls ``verify_action`` to confirm the predicted state landed.
+
+    The planner reads the LIVE bridge state to resolve the mech's current
+    tile, so it stays correct even if the solver's planned move_to differs
+    from where the mech actually ended up.
+    """
+    session = _load_session()
+
+    if not session.active_solution:
+        result = {"status": "ERROR", "error": "No active solution"}
+        _print_result(result)
+        return result
+
+    actions = session.active_solution.actions
+    if action_index < 0 or action_index >= len(actions):
+        result = {
+            "status": "ERROR",
+            "error": f"action_index {action_index} out of range (have {len(actions)})",
+        }
+        _print_result(result)
+        return result
+
+    action = actions[action_index]
+
+    if not is_bridge_active():
+        result = {"status": "ERROR", "error": "bridge not active — click_action requires bridge"}
+        _print_result(result)
+        return result
+
+    # Defend against window movement between actions.
+    recalibrate()
+
+    try:
+        refresh_bridge_state()
+    except (TimeoutError, BridgeError) as e:
+        result = {"status": "ERROR", "error": f"bridge refresh failed: {e}"}
+        _print_result(result)
+        return result
+
+    board, _ = read_bridge_state()
+    if board is None:
+        result = {"status": "ERROR", "error": "failed to read bridge state"}
+        _print_result(result)
+        return result
+
+    mech_action = MechAction(
+        mech_uid=action.mech_uid,
+        mech_type=action.mech_type,
+        move_to=action.move_to,
+        weapon=action.weapon,
+        target=action.target,
+        description=action.description,
+    )
+    batch = plan_single_mech(mech_action, board)
+
+    if not batch:
+        result = {
+            "status": "ERROR",
+            "error": (f"plan_single_mech returned empty batch — mech UID "
+                      f"{action.mech_uid} not on the live board"),
+        }
+        _print_result(result)
+        return result
+
+    result = {
+        "status": "PLAN",
+        "action_index": action_index,
+        "mech_type": action.mech_type,
+        "description": action.description,
+        "batch": batch,
+        "next_step": f"verify_action {action_index}",
+    }
+
+    print(f"\n=== CLICK_ACTION {action_index}: {action.description} ===")
+    for i, c in enumerate(batch):
+        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
+    print(f"Next: dispatch batch via computer_batch, then run "
+          f"`verify_action {action_index}`")
+
+    session.save()
+    _print_result(result)
+    return result
+
+
+def cmd_click_end_turn() -> dict:
+    """Emit a click plan for the End Turn button.
+
+    Pure planner. Claude dispatches the batch via computer_batch, waits
+    for the enemy phase to finish (~6s), then calls ``read`` to detect
+    the new phase.
+    """
+    recalibrate()
+    batch = plan_end_turn()
+    result = {
+        "status": "PLAN",
+        "batch": batch,
+        "next_step": "wait ~6s for enemy phase, then `read`",
+    }
+    print(f"\n=== CLICK_END_TURN ===")
+    for i, c in enumerate(batch):
+        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
+    print(f"Next: dispatch batch via computer_batch, wait ~6s, then `read`")
     _print_result(result)
     return result
 

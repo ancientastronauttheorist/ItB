@@ -39,6 +39,8 @@ from src.loop.commands import (
     cmd_execute,
     cmd_verify,
     cmd_verify_action,
+    cmd_click_action,
+    cmd_click_end_turn,
     cmd_end_turn,
     cmd_status,
     cmd_new_run,
@@ -90,6 +92,20 @@ def main():
     )
     p_verify_action.add_argument("index", type=int,
                                  help="Action index from solution")
+
+    # click_action
+    p_click_action = sub.add_parser(
+        "click_action",
+        help="Plan clicks for ONE mech action (mouse-only, computer_batch ready)",
+    )
+    p_click_action.add_argument("index", type=int,
+                                help="Action index from solution")
+
+    # click_end_turn
+    sub.add_parser(
+        "click_end_turn",
+        help="Plan clicks for the End Turn button",
+    )
 
     # end_turn
     sub.add_parser("end_turn", help="Plan clicks for End Turn")
@@ -190,6 +206,10 @@ def main():
         cmd_verify(args.index, profile=args.profile)
     elif args.command == "verify_action":
         cmd_verify_action(args.index)
+    elif args.command == "click_action":
+        cmd_click_action(args.index)
+    elif args.command == "click_end_turn":
+        cmd_click_end_turn()
     elif args.command == "end_turn":
         cmd_end_turn()
     elif args.command == "status":
