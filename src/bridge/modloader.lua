@@ -404,15 +404,38 @@ local _bridge_speed = "fast"  -- "fast" or "visual"
 --------------------------------------------------------------------
 -- Animation/effect handling
 --------------------------------------------------------------------
-local function wait_for_board(max_wait)
+-- Commands run inside a coroutine created by poll_commands() so that
+-- wait_for_board_coro / wait_until_coro can yield control back to the
+-- engine while the effect queue drains. The OLD wait_for_board() was a
+-- tight os.clock() spin inside the same Lua thread as Mission:BaseUpdate
+-- — the engine could never advance the animation queue while Lua was
+-- spinning, so Board:IsBusy() stayed true until the 15 s timeout fired.
+-- Yielding lets BaseUpdate return, the engine advance, and the next
+-- BaseUpdate tick resume the coroutine with a fresh Board state.
+
+local _running_coroutine = nil
+
+-- NOTE: os.time() (wall clock, second precision) rather than os.clock()
+-- (process CPU time). When the coroutine yields back to the engine, CPU
+-- time barely advances relative to wall time, so an os.clock()-based
+-- deadline stretches out to ~3x its nominal wall-clock length. Python's
+-- wait_for_ack uses wall clock, so the two must agree.
+local function wait_until_coro(predicate, max_wait)
     max_wait = max_wait or 15
-    local start = os.clock()
-    while os.clock() - start < max_wait do
-        local ok, busy = pcall(function() return Board:IsBusy() end)
-        if not ok or not busy then return true end
+    local start = os.time()
+    while os.time() - start < max_wait do
+        local ok, ready = pcall(predicate)
+        if not ok or ready then return true end
+        coroutine.yield()
     end
-    log_bridge("WARN: Board still busy after " .. max_wait .. "s")
+    log_bridge("WARN: wait_until_coro timed out after " .. max_wait .. "s (wall)")
     return false
+end
+
+local function wait_for_board_coro(max_wait)
+    return wait_until_coro(function()
+        return not Board:IsBusy()
+    end, max_wait)
 end
 
 --------------------------------------------------------------------
@@ -512,7 +535,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: Move failed: " .. tostring(err))
             return
         end
-        wait_for_board()
+        wait_for_board_coro()
         write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y)
 
     elseif cmd == "ATTACK" then
@@ -530,7 +553,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_board()
+        wait_for_board_coro()
         pawn:SetActive(false)
         write_ack("OK ATTACK " .. uid .. " " .. weapon_id .. " at " ..
                   tx .. "," .. ty .. " [" .. method .. "]")
@@ -551,13 +574,13 @@ local function execute_command(cmd_str)
             write_ack("ERROR: Move failed: " .. tostring(err1))
             return
         end
-        wait_for_board()
+        wait_for_board_coro()
         local ok2, method = execute_weapon_skill(pawn, weapon_id, tx, ty)
         if not ok2 then
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_board()
+        wait_for_board_coro()
         pawn:SetActive(false)
         write_ack("OK MOVE_ATTACK " .. uid .. " [" .. method .. "]")
 
@@ -600,7 +623,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: Repair failed: " .. tostring(err))
             return
         end
-        wait_for_board()
+        wait_for_board_coro()
         pawn:SetActive(false)
         write_ack("OK REPAIR " .. uid .. " [" .. method .. "]")
 
@@ -639,9 +662,15 @@ local function execute_command(cmd_str)
             end
         end)
         if not ok then
-            -- Fallback: deactivate all player mechs
+            -- Game:EndTurn() doesn't exist on this ITB build AND ITB-ModLoader
+            -- is not installed, so there's no way to actually advance the turn
+            -- from Lua alone — the engine only transitions on a real UI click
+            -- on the End Turn button. We still SetActive all player pawns so
+            -- the solver sees a consistent "no remaining actions" state, then
+            -- hand back a NEEDS_MCP_CLICK sentinel so the Python side routes
+            -- through plan_end_turn() and a computer_batch click dispatch.
             log_bridge("WARN: EndTurn() failed (" .. tostring(err) ..
-                       "), using SetActive fallback")
+                       "); SetActive only, caller must MCP-click End Turn")
             method = "SetActive"
             local ok2, err2 = pcall(function()
                 local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
@@ -655,8 +684,19 @@ local function execute_command(cmd_str)
                 log_bridge("END_TURN ERROR: " .. tostring(err2))
                 return
             end
+            write_ack("NEEDS_MCP_CLICK END_TURN method=SetActive")
+            return
         end
-        wait_for_board(30)
+        -- Game:EndTurn() branch (reserved for future ITB builds that expose
+        -- the method). Wait for the full player→enemy→player cycle.
+        local start_count = -1
+        pcall(function() start_count = Game:GetTurnCount() end)
+        wait_until_coro(function()
+            if Board:IsBusy() then return false end
+            local cur_count = -1
+            pcall(function() cur_count = Game:GetTurnCount() end)
+            return cur_count > start_count
+        end, 60)
         local phase = "unknown"
         if Game then
             local ok_tt, tt = pcall(function() return Game:GetTeamTurn() end)
@@ -700,6 +740,10 @@ local function execute_command(cmd_str)
 end
 
 local function poll_commands()
+    -- If a prior command's coroutine is still running (yielded on
+    -- wait_for_board_coro), leave the cmd file alone until it completes.
+    if _running_coroutine then return end
+
     local f = io.open(CMD_FILE, "r")
     if f then
         local cmd = f:read("*a")
@@ -707,7 +751,21 @@ local function poll_commands()
         os.remove(CMD_FILE)
         if cmd and cmd:match("%S") then
             log_bridge("CMD: " .. cmd:gsub("\n", " "))
-            execute_command(cmd:match("^%s*(.-)%s*$"))  -- trim whitespace
+            local trimmed = cmd:match("^%s*(.-)%s*$")
+            -- Wrap execute_command in a coroutine so wait_for_board_coro
+            -- can yield control back to the engine between polls.
+            _running_coroutine = coroutine.create(function()
+                execute_command(trimmed)
+            end)
+            local ok, err = coroutine.resume(_running_coroutine)
+            if not ok then
+                log_bridge("CMD CORO ERROR: " .. tostring(err))
+                write_atomic(ACK_FILE, ACK_TMP,
+                             "ERROR: coroutine failed: " .. tostring(err))
+                _running_coroutine = nil
+            elseif coroutine.status(_running_coroutine) == "dead" then
+                _running_coroutine = nil
+            end
         end
     end
 end
@@ -742,9 +800,24 @@ _ITB_DEPLOY_ZONE = _ITB_DEPLOY_ZONE or {}
 local _state_dump_interval = 5  -- dump state every 5 seconds
 local _last_state_dump = 0
 
--- BaseUpdate: poll for commands AND periodically dump state
+-- BaseUpdate: resume pending command coroutine, poll for new commands,
+-- and periodically dump state. Coroutine resume happens FIRST so that
+-- wait_for_board_coro yields get unblocked the moment the engine drains
+-- its effect queue — without this, poll_commands could race a yielded
+-- coroutine and clobber _running_coroutine.
 Mission.BaseUpdate = function(self)
     _orig_BaseUpdate(self)
+    if _running_coroutine then
+        local ok, err = coroutine.resume(_running_coroutine)
+        if not ok then
+            log_bridge("CORO RESUME ERROR: " .. tostring(err))
+            write_atomic(ACK_FILE, ACK_TMP,
+                         "ERROR: coroutine failed: " .. tostring(err))
+            _running_coroutine = nil
+        elseif coroutine.status(_running_coroutine) == "dead" then
+            _running_coroutine = nil
+        end
+    end
     local now = os.clock()
     if now - _last_poll >= _poll_interval then
         _last_poll = now

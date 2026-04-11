@@ -1459,16 +1459,39 @@ def cmd_end_turn() -> dict:
     logger = _get_logger(session)
     logger.log_end_turn()
 
-    # Bridge mode
+    # Bridge mode: the Lua END_TURN handler SetActives all player pawns for
+    # solver-state consistency but cannot actually advance the turn without
+    # ITB-ModLoader installed (no modApi, no Mission:EndTurn). It ACKs with
+    # NEEDS_MCP_CLICK and we fall through to plan_end_turn so Claude can
+    # dispatch the click via computer_batch.
     if is_bridge_active():
         print("\n=== BRIDGE END TURN ===")
         try:
             ack = execute_bridge_end_turn()
             print(f"  ACK: {ack}")
-            result = {"bridge": True, "ack": ack}
         except (TimeoutError, BridgeError) as e:
             result = {"error": str(e), "bridge": True}
             print(f"  ERROR: {e}")
+            session.save()
+            _print_result(result)
+            return result
+
+        if ack.startswith("NEEDS_MCP_CLICK"):
+            recalibrate()
+            batch = plan_end_turn()
+            result = {
+                "status": "PLAN",
+                "bridge_ack": ack,
+                "batch": batch,
+                "next_step": "dispatch batch via computer_batch, "
+                             "wait ~6s, then `read`",
+            }
+            print("  -> bridge SetActive done; emitting MCP click plan")
+            for i, c in enumerate(batch):
+                print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) "
+                      f"-- {c['description']}")
+        else:
+            result = {"bridge": True, "ack": ack}
 
         session.save()
         _print_result(result)
@@ -2046,11 +2069,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             )
             print(f"  EXEC TRIGGERS: {len(exec_triggers)} execution failures detected")
 
-    # 4. End turn
+    # 4. End turn. On this ITB build the bridge can't transition the phase
+    # itself — cmd_end_turn hands back an MCP click plan (status=PLAN) that
+    # the caller must dispatch via computer_batch before the game advances.
+    # Propagate that plan as-is so auto_turn becomes a two-step handshake:
+    # run auto_turn, dispatch the returned batch, then call read to detect
+    # the new turn.
     end_result = cmd_end_turn()
     if "error" in end_result:
         result = {"error": f"END_TURN: {end_result['error']}",
                   "turn": turn, "actions_completed": num_actions}
+        _print_result(result)
+        return result
+
+    if end_result.get("status") == "PLAN":
+        result = {
+            "status": "PLAN",
+            "turn": turn,
+            "actions_completed": num_actions,
+            "score": score,
+            "bridge_ack": end_result.get("bridge_ack"),
+            "batch": end_result["batch"],
+            "next_step": "dispatch batch via computer_batch, wait ~6s, "
+                         "then `read`",
+        }
         _print_result(result)
         return result
 
