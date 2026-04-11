@@ -120,6 +120,9 @@ def main():
     p_new.add_argument("--achieve", nargs="*", default=[],
                        help="Achievement targets")
     p_new.add_argument("--difficulty", type=int, default=0)
+    p_new.add_argument("--tags", nargs="*", default=[],
+                       help="Run classification tags (e.g. 'audit' to exclude "
+                            "from tuner training corpus)")
 
     # snapshot
     p_snap = sub.add_parser("snapshot", help="Save state for regression")
@@ -218,7 +221,7 @@ def main():
     elif args.command == "status":
         cmd_status(profile=args.profile)
     elif args.command == "new_run":
-        cmd_new_run(args.squad, args.achieve, args.difficulty)
+        cmd_new_run(args.squad, args.achieve, args.difficulty, tags=args.tags)
     elif args.command == "snapshot":
         cmd_snapshot(args.label, profile=args.profile)
     elif args.command == "log":

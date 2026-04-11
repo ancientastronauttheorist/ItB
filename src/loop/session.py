@@ -155,6 +155,10 @@ class RunSession:
     islands_completed: list[str] = field(default_factory=list)
     mission_index: int = 0  # incremented when current_mission changes
 
+    # Free-form tags for run classification (e.g. ["audit"] for env audit
+    # playthroughs that should be filtered out of the tuner training corpus).
+    tags: list[str] = field(default_factory=list)
+
     # Mission-level state
     current_turn: int = 0
     phase: str = "unknown"  # last detected phase
@@ -257,6 +261,7 @@ class RunSession:
             "turns_played": self.turns_played,
             "decisions": self.decisions,
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
+            "tags": self.tags,
         }
         return d
 
@@ -285,6 +290,7 @@ class RunSession:
             turns_played=d.get("turns_played", 0),
             decisions=d.get("decisions", []),
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
+            tags=d.get("tags", []),
         )
 
     # --- Persistence with file locking ---
@@ -321,7 +327,8 @@ class RunSession:
 
     @classmethod
     def new_run(cls, squad: str, achievements: list[str] = None,
-                difficulty: int = 0) -> RunSession:
+                difficulty: int = 0,
+                tags: list[str] = None) -> RunSession:
         """Create a fresh session for a new game run."""
         now = datetime.now()
         run_id = now.strftime("%Y%m%d_%H%M%S") + f"_{now.microsecond // 1000:03d}"
@@ -330,4 +337,5 @@ class RunSession:
             squad=squad,
             achievement_targets=achievements or [],
             difficulty=difficulty,
+            tags=tags or [],
         )

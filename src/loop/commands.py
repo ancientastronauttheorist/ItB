@@ -167,6 +167,7 @@ def _write_manifest(session: RunSession, extra: dict = None) -> None:
         "squad": session.squad,
         "difficulty": session.difficulty,
         "achievement_targets": session.achievement_targets,
+        "tags": session.tags,
         "solver_version": _get_solver_version(),
         "weight_version": _get_weight_version(),
         "updated": datetime.now().isoformat(),
@@ -440,6 +441,7 @@ def _record_post_enemy(session: RunSession, board: Board,
                 "solver_timed_out": solve_data.get("search_stats", {}).get("timed_out", False),
                 "weight_version": solve_data.get("weight_version", "unknown"),
                 "solver_version": _get_solver_version(),
+                "tags": list(session.tags),
             },
         )
 
@@ -1314,6 +1316,7 @@ def cmd_verify_action(action_index: int) -> dict:
             "model_gap": classification.get("model_gap", False),
             "weight_version": _get_weight_version(),
             "solver_version": _get_solver_version(),
+            "tags": list(session.tags),
         },
     )
 
@@ -1524,9 +1527,14 @@ def cmd_status(profile: str = "Alpha") -> dict:
 
 
 def cmd_new_run(squad: str, achievements: list[str] = None,
-                difficulty: int = 0) -> dict:
-    """Initialize a new run session."""
-    session = RunSession.new_run(squad, achievements, difficulty)
+                difficulty: int = 0, tags: list[str] = None) -> dict:
+    """Initialize a new run session.
+
+    ``tags`` flags the run for downstream filtering. Use ``["audit"]`` for
+    environment-audit playthroughs so the failures generated during the
+    audit don't pollute the tuner training corpus.
+    """
+    session = RunSession.new_run(squad, achievements, difficulty, tags=tags)
     session.save()
 
     # Write run manifest
@@ -1536,18 +1544,22 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
     logger.log_custom("New Run", (
         f"Squad: {squad}\n"
         f"Achievements: {achievements or 'none'}\n"
-        f"Difficulty: {difficulty}"
+        f"Difficulty: {difficulty}\n"
+        f"Tags: {tags or 'none'}"
     ))
 
     result = {
         "run_id": session.run_id,
         "squad": squad,
         "achievements": achievements or [],
+        "tags": tags or [],
     }
     print(f"\nNew run initialized: {session.run_id}")
     print(f"  Squad: {squad}")
     if achievements:
         print(f"  Targeting: {', '.join(achievements)}")
+    if tags:
+        print(f"  Tags: {', '.join(tags)}")
 
     _print_result(result)
     return result
@@ -2429,6 +2441,9 @@ def cmd_validate(old_weights_path: str, new_weights_path: str,
         seen_keys: set = set()
         failure_records: list = []
         for r in records:
+            # Skip audit-mode runs — same rationale as the tuner filter.
+            if "audit" in r.get("context", {}).get("tags", []):
+                continue
             key = (r.get("run_id"), r.get("mission"), r.get("trigger"))
             if key in seen_keys:
                 continue

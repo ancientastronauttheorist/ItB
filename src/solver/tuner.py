@@ -147,6 +147,11 @@ def count_fired_triggers(
     for record in failure_corpus:
         if not record.get("auto_fixable_by_tuning", False):
             continue
+        # Audit-mode runs (e.g. environment hazard verification) are
+        # excluded from the tuner training corpus — their failures don't
+        # represent normal play and would bias the optimizer.
+        if "audit" in record.get("context", {}).get("tags", []):
+            continue
 
         key = (record.get("run_id"), record.get("mission"),
                record.get("trigger"))
