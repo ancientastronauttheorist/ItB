@@ -172,6 +172,12 @@ class RunSession:
     # Decision history (append-only within a run)
     decisions: list[dict] = field(default_factory=list)
 
+    # Per-mission post-enemy recording dedup set. Each int is the
+    # ``solved_turn`` that already had ``_record_post_enemy`` fire, scoped
+    # by the current ``mission_index``. Stored as a flat ``[mi, turn]``
+    # list in JSON to round-trip cleanly through to_dict / from_dict.
+    recorded_post_enemy_turns: list[list[int]] = field(default_factory=list)
+
     # --- Solution management ---
 
     def set_solution(self, actions: list[SolverAction], score: float, turn: int):
@@ -250,6 +256,7 @@ class RunSession:
             "enemies_killed": self.enemies_killed,
             "turns_played": self.turns_played,
             "decisions": self.decisions,
+            "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
         }
         return d
 
@@ -277,6 +284,7 @@ class RunSession:
             enemies_killed=d.get("enemies_killed", 0),
             turns_played=d.get("turns_played", 0),
             decisions=d.get("decisions", []),
+            recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
         )
 
     # --- Persistence with file locking ---

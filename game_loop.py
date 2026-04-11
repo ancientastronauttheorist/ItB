@@ -179,6 +179,9 @@ def main():
                             help="Solver time limit per board (default: 10s)")
     p_validate.add_argument("--solver-version", default=None,
                             help="Only test boards from this solver version")
+    p_validate.add_argument("--failures-only", action="store_true",
+                            help="Only test boards from the failure database, "
+                                 "scored under stricter Fixed/Regressed/Neutral rules")
 
     # tune
     p_tune = sub.add_parser("tune",
@@ -237,7 +240,8 @@ def main():
     elif args.command == "validate":
         cmd_validate(args.old_weights, args.new_weights,
                      time_limit=args.time_limit,
-                     solver_version=args.solver_version)
+                     solver_version=args.solver_version,
+                     failures_only=args.failures_only)
     elif args.command == "tune":
         cmd_tune(iterations=args.iterations, min_boards=args.min_boards,
                  time_limit=args.time_limit)

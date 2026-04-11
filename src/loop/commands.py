@@ -365,11 +365,22 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
 
 def _record_post_enemy(session: RunSession, board: Board,
                        solved_turn: int) -> None:
-    """Record post-enemy board state and compare with solver predictions."""
+    """Record post-enemy board state and compare with solver predictions.
+
+    Idempotent: if ``(mission_index, solved_turn)`` is already in
+    ``session.recorded_post_enemy_turns``, returns early so the same turn
+    can't be flushed twice (e.g. once by ``cmd_read``, once by
+    ``cmd_auto_mission`` on exit).
+    """
     from src.solver.analysis import detect_triggers
 
     run_dir = _recording_dir(session)
     mi = session.mission_index
+
+    # Dedup guard.
+    key = [mi, solved_turn]
+    if key in session.recorded_post_enemy_turns:
+        return
 
     # Load the solve recording from the solved turn (try new naming, fallback to old)
     solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
@@ -377,6 +388,8 @@ def _record_post_enemy(session: RunSession, board: Board,
         solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
     if not solve_file.exists():
         return
+
+    session.recorded_post_enemy_turns.append(key)
 
     with open(solve_file) as f:
         solve_record = json.load(f)
@@ -2194,6 +2207,24 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
 
     # Write mission summary
     session = _load_session()
+
+    # Force-flush the final turn's post_enemy record. cmd_read normally
+    # triggers _record_post_enemy when it sees the turn advance, but on
+    # mission_ending / game_over the loop exits before that read fires
+    # for the last solved turn. The dedup guard inside _record_post_enemy
+    # makes the call a no-op if cmd_read already did the work.
+    if session.active_solution is not None:
+        try:
+            refresh_bridge_state()
+            final_board, _ = read_bridge_state()
+            if final_board is not None:
+                _record_post_enemy(session, final_board,
+                                   session.active_solution.turn)
+                session.active_solution = None
+                session.save()
+        except Exception as e:
+            print(f"  WARN: post-enemy flush failed: {e}")
+
     final_grid = mission_result.get("final_grid", mission_result.get("last_grid", ""))
     _write_mission_summary(session, turns_completed, str(final_grid))
 
@@ -2206,15 +2237,168 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
     return mission_result
 
 
-def cmd_validate(old_weights_path: str, new_weights_path: str,
-                 time_limit: float = 10.0, solver_version: str = None) -> dict:
-    """Compare two weight versions across all recorded boards.
+def _cmd_validate_failures_only(old_version, new_version, old_weights,
+                                new_weights, board_files, record_for_file,
+                                time_limit):
+    """Tuner-targeted validation: only the failure-corpus boards.
 
-    For each board recording, runs the Rust solver with both weight sets,
-    simulates both solutions, and scores with a fixed (weight-independent)
-    scorer. Reports which version is better and applies regression gates.
+    Per-board outcome rules:
+      Fixed     — original trigger no longer fires AND new fixed_score >= old
+      Regressed — new fixed_score < old, OR new triggers a stricter
+                  prediction failure that the old run did not
+      Neutral   — everything else
+    """
+    from src.solver.analysis import detect_triggers
+    from src.solver.solver import replay_solution
+
+    print(f"\n{'='*50}")
+    print(f"VALIDATE --failures-only: {old_version} vs {new_version}")
+    print(f"  Failure boards: {len(board_files)}")
+    print(f"{'='*50}")
+
+    fixed = 0
+    regressed = 0
+    neutral = 0
+    errors = 0
+    detail_rows: list[dict] = []
+
+    for i, bf in enumerate(board_files):
+        rec = record_for_file[str(bf)]
+        original_trigger = rec.get("trigger", "")
+
+        try:
+            bridge_data, board, spawns, _ = _load_board_from_recording(bf)
+        except Exception:
+            errors += 1
+            continue
+
+        try:
+            sol_old = _solve_with_rust(bridge_data, time_limit, weights=old_weights)
+            sol_new = _solve_with_rust(bridge_data, time_limit, weights=new_weights)
+        except Exception as e:
+            errors += 1
+            if i == 0:
+                print(f"  Rust solver error: {e}")
+            continue
+
+        # Replay both solutions and grab the score breakdown.
+        outcome_old = {"buildings_alive": 0, "grid_power": 0, "mechs_alive": 0}
+        outcome_new = {"buildings_alive": 0, "grid_power": 0, "mechs_alive": 0}
+        old_solve_data = {}
+        new_solve_data = {}
+        if sol_old.actions:
+            enriched_old = replay_solution(board.copy(), sol_old, spawns)
+            outcome_old = enriched_old.get("predicted_outcome", outcome_old)
+            old_solve_data = {
+                "actions": [{
+                    "mech_uid": a.mech_uid, "mech_type": a.mech_type,
+                    "move_to": list(a.move_to) if a.move_to else None,
+                    "weapon": a.weapon, "target": list(a.target),
+                    "description": a.description,
+                } for a in sol_old.actions],
+                "action_results": enriched_old.get("action_results", []),
+                "search_stats": {"timed_out": sol_old.timed_out},
+            }
+        if sol_new.actions:
+            enriched_new = replay_solution(board.copy(), sol_new, spawns)
+            outcome_new = enriched_new.get("predicted_outcome", outcome_new)
+            new_solve_data = {
+                "actions": [{
+                    "mech_uid": a.mech_uid, "mech_type": a.mech_type,
+                    "move_to": list(a.move_to) if a.move_to else None,
+                    "weapon": a.weapon, "target": list(a.target),
+                    "description": a.description,
+                } for a in sol_new.actions],
+                "action_results": enriched_new.get("action_results", []),
+                "search_stats": {"timed_out": sol_new.timed_out},
+            }
+
+        score_old = _fixed_score(outcome_old)
+        score_new = _fixed_score(outcome_new)
+
+        # Re-detect the trigger using the offline-replay shortcut: feed
+        # predicted = actual so only tier-3/4 triggers can fire (search /
+        # rule-violation triggers — exactly what tuning can move).
+        empty_deltas = {
+            "buildings_alive_diff": 0,
+            "grid_power_diff": 0,
+            "mech_hp_diff": [],
+        }
+        new_triggers = detect_triggers(
+            actual=outcome_new, predicted=outcome_new,
+            deltas=empty_deltas, solve_data=new_solve_data, board=board,
+        )
+        new_trigger_names = {t["trigger"] for t in new_triggers}
+
+        still_fires = original_trigger in new_trigger_names
+
+        if not still_fires and score_new >= score_old:
+            outcome_label = "fixed"
+            fixed += 1
+        elif score_new < score_old:
+            outcome_label = "regressed"
+            regressed += 1
+        else:
+            outcome_label = "neutral"
+            neutral += 1
+
+        detail_rows.append({
+            "board": str(bf.relative_to(RECORDING_DIR)),
+            "trigger": original_trigger,
+            "old_score": score_old,
+            "new_score": score_new,
+            "outcome": outcome_label,
+        })
+
+    tested = fixed + regressed + neutral
+    verdict = "PASS" if regressed == 0 and fixed > 0 else (
+        "PASS" if regressed == 0 else "FAIL"
+    )
+
+    result = {
+        "mode": "failures_only",
+        "old_version": old_version,
+        "new_version": new_version,
+        "boards_tested": tested,
+        "boards_skipped": errors,
+        "fixed": fixed,
+        "regressed": regressed,
+        "neutral": neutral,
+        "verdict": verdict,
+        "details": detail_rows[:25],  # cap printout
+    }
+
+    print(f"\n{'='*50}")
+    print(f"FAILURES-ONLY RESULTS: {old_version} vs {new_version}")
+    print(f"  Boards tested: {tested} (skipped: {errors})")
+    print(f"  Fixed:     {fixed}")
+    print(f"  Regressed: {regressed}")
+    print(f"  Neutral:   {neutral}")
+    print(f"  VERDICT:   {verdict}")
+    print(f"{'='*50}")
+
+    _print_result(result)
+    return result
+
+
+def cmd_validate(old_weights_path: str, new_weights_path: str,
+                 time_limit: float = 10.0, solver_version: str = None,
+                 failures_only: bool = False) -> dict:
+    """Compare two weight versions across recorded boards.
+
+    Default mode: runs both weight sets on every recorded board and
+    reports which version is better via the fixed (weight-independent)
+    scorer plus regression gates.
+
+    ``--failures-only``: restricts the corpus to boards referenced by
+    the failure database, deduped by ``(run_id, mission, trigger)``.
+    Reports per-failure outcomes (Fixed / Regressed / Neutral) under
+    a stricter success metric — a failure is "fixed" only if the same
+    trigger no longer fires AND the new fixed_score is >= old fixed_score
+    (so the tuner can't game it by sidestepping the situation).
     """
     from src.solver.solver import Solution
+    from src.solver.analysis import detect_triggers, load_failure_db
 
     # Load weight files
     old_path, new_path = Path(old_weights_path), Path(new_weights_path)
@@ -2236,6 +2420,46 @@ def cmd_validate(old_weights_path: str, new_weights_path: str,
     new_weights = new_data.get("weights", {})
     old_version = old_data.get("version", "old")
     new_version = new_data.get("version", "new")
+
+    # Failures-only mode: build the corpus from the failure database,
+    # deduped by (run_id, mission, trigger). Each unique key resolves
+    # to the replay_file recorded on the trigger.
+    if failures_only:
+        records = load_failure_db()
+        seen_keys: set = set()
+        failure_records: list = []
+        for r in records:
+            key = (r.get("run_id"), r.get("mission"), r.get("trigger"))
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            failure_records.append(r)
+
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        board_files = []
+        record_for_file = {}
+        for rec in failure_records:
+            replay_rel = rec.get("replay_file", "")
+            if not replay_rel:
+                continue
+            replay_path = repo_root / replay_rel
+            if not replay_path.exists():
+                continue
+            board_files.append(replay_path)
+            record_for_file[str(replay_path)] = rec
+
+        if not board_files:
+            result = {
+                "error": "No failure records resolve to existing replay files",
+                "failure_records_total": len(failure_records),
+            }
+            _print_result(result)
+            return result
+
+        return _cmd_validate_failures_only(
+            old_version, new_version, old_weights, new_weights,
+            board_files, record_for_file, time_limit,
+        )
 
     # Find all board recordings
     board_files = []

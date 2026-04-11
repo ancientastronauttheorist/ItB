@@ -274,6 +274,110 @@ def classify_root_cause(trigger: dict) -> str:
     return _TIER_TO_ROOT_CAUSE.get(trigger.get("tier", 0), "unknown")
 
 
+# Triggers that are NOT tunable via solver weights:
+# - per_action_desync: simulator model gap, not a search-space gap
+# - solver_timeout / empty_solution: search budget, not weights
+# - grid_critical / mech_destroyed: terminal strategic states; the turn
+#   that caused them is what should be tuned, not the symptom
+_TRIGGER_AUTO_FIXABLE = {
+    # Tunable
+    "self_damage_building":     True,
+    "mech_on_acid":             True,
+    "mech_on_danger":           True,
+    "building_lost_unexpected": True,
+    "mech_damage_unexpected":   True,
+    "mech_killed_unexpected":   True,
+    "grid_power_drop_unexpected": True,
+    # Not tunable
+    "per_action_desync":        False,
+    "solver_timeout":           False,
+    "empty_solution":           False,
+    "grid_critical":            False,
+    "mech_destroyed":           False,
+    "action_not_executed":      False,
+}
+
+
+def _trigger_category(trigger_name: str) -> str:
+    """Map a trigger name to a Phase 2 verify-style category for the
+    backfill migration. New per_action_desync records carry their own
+    category from the verify classifier."""
+    return {
+        "building_lost_unexpected":     "grid_power",
+        "grid_power_drop_unexpected":   "grid_power",
+        "mech_damage_unexpected":       "damage_amount",
+        "mech_killed_unexpected":       "death",
+        "mech_on_danger":               "death",
+        "mech_on_acid":                 "damage_amount",
+        "self_damage_building":         "damage_amount",
+        "grid_critical":                "strategic_decline",
+        "mech_destroyed":               "death",
+        "solver_timeout":               "search_exhaustion",
+        "empty_solution":               "search_exhaustion",
+        "action_not_executed":          "click_miss",
+    }.get(trigger_name, "unknown")
+
+
+def is_auto_fixable_by_tuning(record: dict, board=None) -> bool:
+    """Decide whether a failure record could plausibly be fixed by re-tuning weights.
+
+    Two-tier check:
+      1. If the record references a specific mech (``mech_uid``) and a board
+         is provided, run a counterfactual: was the mech free to move
+         (not webbed/frozen, move_speed > 0) AND did it have at least one
+         reachable tile that wasn't in env_danger? If yes, the solver
+         could have made a different choice under different weights.
+      2. Otherwise fall back to the per-trigger lookup table.
+
+    Per-action desyncs (model gaps) and search-budget triggers always
+    return False — re-tuning weights cannot fix a missing simulator branch
+    or a 5s timeout on a 10-mech permutation.
+    """
+    trigger = record.get("trigger", "")
+
+    # Hard exclusion list — never tunable.
+    if _TRIGGER_AUTO_FIXABLE.get(trigger) is False:
+        return False
+    if record.get("subcategory") == "model_gap_known":
+        return False
+    if record.get("context", {}).get("model_gap"):
+        return False
+
+    # Counterfactual path: only when we have a mech_uid AND a board to check.
+    mech_uid = record.get("mech_uid")
+    if mech_uid is not None and board is not None:
+        mech = next((u for u in board.units if u.uid == mech_uid), None)
+        if mech is None:
+            return False
+        if getattr(mech, "web", False) or getattr(mech, "frozen", False):
+            return False
+        move_speed = getattr(mech, "move_speed", 0) or 0
+        if move_speed <= 0:
+            return False
+        # Conservative reachability: any in-bounds tile within Manhattan
+        # distance ``move_speed`` that is not env_danger and not a
+        # blocking terrain is "safe enough" for the counterfactual.
+        env_danger = getattr(board, "environment_danger", set()) or set()
+        for dx in range(-move_speed, move_speed + 1):
+            for dy in range(-move_speed, move_speed + 1):
+                if abs(dx) + abs(dy) > move_speed:
+                    continue
+                nx, ny = mech.x + dx, mech.y + dy
+                if not (0 <= nx < 8 and 0 <= ny < 8):
+                    continue
+                if (nx, ny) in env_danger:
+                    continue
+                tile = board.tile(nx, ny)
+                if tile.terrain in ("water", "chasm", "lava", "mountain"):
+                    continue
+                return True  # found at least one safe alternative
+        return False
+
+    # Fallback: per-trigger lookup. Default to False so we don't pollute
+    # the tuner objective with records that have no clear tuning lever.
+    return _TRIGGER_AUTO_FIXABLE.get(trigger, False)
+
+
 # --- Failure database ---
 
 FAILURE_DB_PATH = Path(__file__).parent.parent.parent / "recordings" / "failure_db.jsonl"

@@ -59,11 +59,28 @@ def evaluate_weights(
     weights: dict,
     board_files: list[Path],
     time_limit: float = 5.0,
+    failure_corpus: list[dict] = None,
+    lambda_failure: float = 100.0,
 ) -> float:
     """Score a weight configuration across all boards.
 
-    For each board: Rust solver with these weights → replay_solution → fixed_score.
-    Returns mean fixed_score across all boards.
+    Hybrid objective:
+
+        objective = mean_fixed_score - lambda_failure * fired_failure_count
+
+    The mean fixed score is the headline signal — it tells the tuner
+    whether a candidate is winning the average board. The failure penalty
+    adds direct pressure to fix known failure cases without polluting
+    the per-board score.
+
+    ``lambda_failure`` is calibrated against the typical fixed-score
+    range (~1240 with 8 buildings × 100 + 7 grid × 50 + 3 mechs × 30):
+    100 means "one avoided failure ≈ one building." The plan v1's
+    λ=10000 was ~100× too high and would have crushed the base signal.
+
+    ``failure_corpus`` is an optional list of failure_db records. If
+    omitted, the function falls back to pure mean_fixed_score (preserves
+    backwards compat with the v1 tuner objective).
     """
     from src.loop.commands import (
         _load_board_from_recording, _solve_with_rust, _fixed_score,
@@ -85,15 +102,133 @@ def evaluate_weights(
                     tested += 1
                     continue
 
-            # Empty solution — score the board as-is (no improvement)
-            from src.loop.commands import _capture_board_summary
-            # Can't capture live board summary without bridge, so score 0 for empty
+            # Empty solution counts as zero fixed_score (no improvement).
             tested += 1
 
         except Exception:
             continue
 
-    return total_score / tested if tested > 0 else 0.0
+    base = total_score / tested if tested > 0 else 0.0
+
+    if not failure_corpus:
+        return base
+
+    fired = count_fired_triggers(weights, failure_corpus, time_limit)
+    return base - lambda_failure * fired
+
+
+def count_fired_triggers(
+    weights: dict,
+    failure_corpus: list[dict],
+    time_limit: float = 5.0,
+) -> int:
+    """For each unique tunable failure, replay it and count whether the
+    same trigger still fires under the candidate weights.
+
+    Dedup key: ``(run_id, mission, trigger)``. One cascade in one mission
+    counts as one data point, not five. Records flagged
+    ``auto_fixable_by_tuning == False`` are skipped (re-tuning weights
+    can't fix a model gap or a search-budget timeout).
+
+    Records that point at a missing or unreadable replay file are
+    counted as "still firing" — being unable to evaluate is no better
+    than evaluating to a failure, and we don't want the tuner to silently
+    drop hard-to-load cases.
+    """
+    from src.loop.commands import _load_board_from_recording, _solve_with_rust
+    from src.solver.solver import replay_solution
+    from src.solver.analysis import detect_triggers
+    from pathlib import Path as _Path
+
+    seen: set[tuple] = set()
+    count = 0
+    root = _Path(__file__).resolve().parent.parent.parent
+
+    for record in failure_corpus:
+        if not record.get("auto_fixable_by_tuning", False):
+            continue
+
+        key = (record.get("run_id"), record.get("mission"),
+               record.get("trigger"))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        replay_rel = record.get("replay_file", "")
+        if not replay_rel:
+            count += 1
+            continue
+        replay_path = root / replay_rel
+        if not replay_path.exists():
+            count += 1
+            continue
+
+        try:
+            bridge_data, board, spawns, _ = _load_board_from_recording(replay_path)
+        except Exception:
+            count += 1
+            continue
+
+        try:
+            solution = _solve_with_rust(bridge_data, time_limit, weights=weights)
+        except Exception:
+            count += 1
+            continue
+
+        if not solution.actions:
+            count += 1  # empty solution = still fails
+            continue
+
+        try:
+            enriched = replay_solution(board, solution, spawns)
+        except Exception:
+            count += 1
+            continue
+
+        # Build a synthetic delta+actual to feed detect_triggers, then
+        # ask whether the original trigger name re-appears.
+        predicted = enriched.get("predicted_outcome", {})
+        # We don't have a fresh actual outcome (no live game), so reuse
+        # the predicted outcome as both — this restricts re-detection to
+        # tier-3/4 triggers (search failures, rule violations) which are
+        # what the tuner can actually move. Tier-1 triggers (prediction
+        # vs actual mismatches) are inherently inert in this offline path
+        # and would never re-fire under any weight choice — that's fine,
+        # it just means tier-1 records get auto-credited as "fixed."
+        deltas = {
+            "buildings_alive_diff": 0,
+            "grid_power_diff": 0,
+            "mech_hp_diff": [],
+        }
+        action_dicts = []
+        for a in solution.actions:
+            action_dicts.append({
+                "mech_uid": a.mech_uid,
+                "mech_type": a.mech_type,
+                "move_to": list(a.move_to) if a.move_to else None,
+                "weapon": a.weapon,
+                "target": list(a.target),
+                "description": a.description,
+            })
+        solve_data = {
+            "actions": action_dicts,
+            "action_results": enriched.get("action_results", []),
+            "search_stats": {
+                "timed_out": solution.timed_out,
+                "elapsed_seconds": solution.elapsed_seconds,
+                "permutations_tried": solution.permutations_tried,
+                "total_permutations": solution.total_permutations,
+            },
+        }
+        new_triggers = detect_triggers(
+            actual=predicted, predicted=predicted,
+            deltas=deltas, solve_data=solve_data, board=board,
+        )
+        new_names = {t["trigger"] for t in new_triggers}
+        if record["trigger"] in new_names:
+            count += 1
+
+    return count
 
 
 def tune_weights(
