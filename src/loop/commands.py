@@ -1415,7 +1415,10 @@ def cmd_click_action(action_index: int) -> dict:
 
     print(f"\n=== CLICK_ACTION {action_index}: {action.description} ===")
     for i, c in enumerate(batch):
-        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
+        if c.get("type") == "wait":
+            print(f"  {i+1}. wait {c.get('duration', 0)}s -- {c.get('description', '')}")
+        else:
+            print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
     print(f"Next: dispatch batch via computer_batch, then run "
           f"`verify_action {action_index}`")
 

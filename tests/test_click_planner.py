@@ -92,59 +92,66 @@ a = mk_action(99, "PunchMech", (3, 5), "Prime_Punchmech", (4, 5))
 plan = plan_single_mech(a, b)
 check("missing mech -> empty plan", plan == [], plan)
 
+def clicks_only(plan):
+    """Strip wait ops so tests can assert on click-sequence shape."""
+    return [c for c in plan if c.get("type") == "left_click"]
+
+
 # Test 3: normal weapon flow
 mech = mk_unit(0, "PunchMech", 3, 4, weapon="Prime_Punchmech")
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (3, 5), "Prime_Punchmech", (4, 5))
 plan = plan_single_mech(a, b)
-check("normal: 4 clicks (select+move+arm+target)", len(plan) == 4, len(plan), plan)
+clicks = clicks_only(plan)
+check("normal: 4 clicks (select+move+arm+target)", len(clicks) == 4, len(clicks), plan)
 check("normal: first click selects mech tile",
-      plan[0]["x"] == grid_to_mcp(3, 4)[0] and plan[0]["y"] == grid_to_mcp(3, 4)[1])
+      clicks[0]["x"] == grid_to_mcp(3, 4)[0] and clicks[0]["y"] == grid_to_mcp(3, 4)[1])
 check("normal: second click moves to dest",
-      plan[1]["x"] == grid_to_mcp(3, 5)[0] and plan[1]["y"] == grid_to_mcp(3, 5)[1])
+      clicks[1]["x"] == grid_to_mcp(3, 5)[0] and clicks[1]["y"] == grid_to_mcp(3, 5)[1])
 check("normal: third click arms primary slot",
-      (plan[2]["x"], plan[2]["y"]) == _ui_weapon_slot_1())
+      (clicks[2]["x"], clicks[2]["y"]) == _ui_weapon_slot_1())
 check("normal: fourth click fires at target",
-      plan[3]["x"] == grid_to_mcp(4, 5)[0] and plan[3]["y"] == grid_to_mcp(4, 5)[1])
+      clicks[3]["x"] == grid_to_mcp(4, 5)[0] and clicks[3]["y"] == grid_to_mcp(4, 5)[1])
 
 # Test 4: normal weapon, no move (move_to == current pos)
 mech = mk_unit(0, "PunchMech", 3, 4, weapon="Prime_Punchmech")
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (3, 4), "Prime_Punchmech", (4, 4))
 plan = plan_single_mech(a, b)
-check("normal no-move: 3 clicks (select+arm+target)", len(plan) == 3, plan)
+check("normal no-move: 3 clicks (select+arm+target)", len(clicks_only(plan)) == 3, plan)
 
 # Test 5: dash weapon — no separate move click
 mech = mk_unit(0, "ChargeMech", 2, 2, weapon="Brute_Beetle")
 b = mk_board([mech])
 a = mk_action(0, "ChargeMech", (2, 5), "Brute_Beetle", (2, 5))
 plan = plan_single_mech(a, b)
-check("dash: 3 clicks (select+arm+target)", len(plan) == 3, plan)
+check("dash: 3 clicks (select+arm+target)", len(clicks_only(plan)) == 3, plan)
 check("dash: no move click",
-      not any("Move to" in c["description"] for c in plan), plan)
+      not any("Move to" in c.get("description", "") for c in plan), plan)
 
 # Test 6: repair with move
 mech = mk_unit(0, "PunchMech", 1, 1)
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (2, 2), "_REPAIR", (-1, -1))
 plan = plan_single_mech(a, b)
-check("repair w/ move: 3 clicks (select+move+repair)", len(plan) == 3, plan)
+clicks = clicks_only(plan)
+check("repair w/ move: 3 clicks (select+move+repair)", len(clicks) == 3, plan)
 check("repair: last click is repair button",
-      (plan[-1]["x"], plan[-1]["y"]) == _ui_repair_button())
+      (clicks[-1]["x"], clicks[-1]["y"]) == _ui_repair_button())
 
 # Test 7: repair without move
 mech = mk_unit(0, "PunchMech", 1, 1)
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (1, 1), "_REPAIR", (-1, -1))
 plan = plan_single_mech(a, b)
-check("repair no move: 2 clicks (select+repair)", len(plan) == 2, plan)
+check("repair no move: 2 clicks (select+repair)", len(clicks_only(plan)) == 2, plan)
 
 # Test 8: passive → select only
 mech = mk_unit(0, "PunchMech", 1, 1)
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (1, 1), "Passive_Electric", (-1, -1))
 plan = plan_single_mech(a, b)
-check("passive: 1 click (select only)", len(plan) == 1, plan)
+check("passive: 1 click (select only)", len(clicks_only(plan)) == 1, plan)
 
 # Test 9: secondary weapon → slot 2
 mech = mk_unit(0, "PunchMech", 3, 4,
@@ -152,7 +159,7 @@ mech = mk_unit(0, "PunchMech", 3, 4,
 b = mk_board([mech])
 a = mk_action(0, "PunchMech", (3, 4), "Brute_Tankmech", (5, 4))
 plan = plan_single_mech(a, b)
-arm_click = next(c for c in plan if "Arm" in c["description"])
+arm_click = next(c for c in plan if "Arm" in c.get("description", ""))
 check("secondary weapon → slot 2",
       (arm_click["x"], arm_click["y"]) == _ui_weapon_slot_2(), arm_click)
 

@@ -111,14 +111,13 @@ def recalibrate():
 # These are pixel offsets from the game window's top-left corner at
 # 1280x748 window size. _ui_pos() scales them to the live window size.
 #
-# _UI_END_TURN is calibrated and stable. The weapon slot and Repair
-# button positions are first-pass estimates based on the visible bottom
-# panel layout — verify with hover-screenshot before relying on them
-# in live play, and update here once measured.
+# Live-calibrated 2026-04-11 against Rift Walkers combat mech panel.
+# Slot 2 mirrors slot 1 horizontally inside the same weapon box; it
+# activates only when a mech has a second weapon (time pod upgrade).
 _UI_END_TURN = (95, 78)
-_UI_WEAPON_SLOT_1 = (550, 668)   # FIXME: live-calibrate primary weapon icon
-_UI_WEAPON_SLOT_2 = (614, 668)   # FIXME: live-calibrate secondary weapon icon
-_UI_REPAIR_BUTTON = (1100, 668)  # FIXME: live-calibrate Repair button
+_UI_WEAPON_SLOT_1 = (191, 528)
+_UI_WEAPON_SLOT_2 = (255, 528)
+_UI_REPAIR_BUTTON = (111, 528)
 
 
 def _ui_pos(offset: tuple[int, int]) -> tuple[int, int]:
@@ -191,12 +190,25 @@ def _weapon_icon_pos(weapon_id: str, mech) -> tuple[int, int]:
 
 # --- Per-Mech Click Planning ---
 
+_WAIT_AFTER_SELECT = 0.3
+_WAIT_AFTER_MOVE = 0.5
+_WAIT_AFTER_ARM = 0.3
+
+
+def _wait_op(duration: float, note: str) -> dict:
+    return {"type": "wait", "duration": duration, "description": note}
+
+
 def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     """Plan clicks for ONE mech action.
 
-    Returns a list of click ops compatible with mcp computer_batch.
-    Each op is ``{"type": "left_click", "x": int, "y": int,
-    "description": str}``. Mouse only — no portraits, no keyboard.
+    Returns a list of ops compatible with mcp computer_batch. Click ops
+    are ``{"type": "left_click", "x": int, "y": int, "description": str}``
+    and wait ops are ``{"type": "wait", "duration": float,
+    "description": str}``. Waits are inserted between clicks so the game
+    UI has time to animate the previous step (move slide, weapon arm)
+    before the next click lands — without them rapid batches eat clicks.
+    Mouse only — no portraits, no keyboard.
 
     Returns an empty list if the mech can't be located on the board.
     """
@@ -224,6 +236,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
 
     # Repair: optional move, then click the Repair button.
     if weapon_type == "repair":
+        plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
         if action.move_to and action.move_to != (mech.x, mech.y):
             mx, my = grid_to_mcp(action.move_to[0], action.move_to[1])
             plan.append({
@@ -231,6 +244,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
                 "x": mx, "y": my,
                 "description": f"Move to ({action.move_to[0]},{action.move_to[1]})",
             })
+            plan.append(_wait_op(_WAIT_AFTER_MOVE, "wait for move animation"))
         rx, ry = _ui_repair_button()
         plan.append({
             "type": "left_click",
@@ -242,6 +256,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     # Dash/leap weapons: arm the weapon, then click the destination.
     # The dash IS the move — there's no separate move click.
     if weapon_type == "dash":
+        plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
         wx, wy = _weapon_icon_pos(action.weapon, mech)
         plan.append({
             "type": "left_click",
@@ -249,6 +264,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "description": f"Arm {action.weapon}",
         })
         if action.target and action.target[0] >= 0:
+            plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for weapon arm"))
             tx, ty = grid_to_mcp(action.target[0], action.target[1])
             plan.append({
                 "type": "left_click",
@@ -258,6 +274,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
         return plan
 
     # Normal: optional move first, then arm weapon, then click target.
+    plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
     if action.move_to and action.move_to != (mech.x, mech.y):
         mx, my = grid_to_mcp(action.move_to[0], action.move_to[1])
         plan.append({
@@ -265,6 +282,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "x": mx, "y": my,
             "description": f"Move to ({action.move_to[0]},{action.move_to[1]})",
         })
+        plan.append(_wait_op(_WAIT_AFTER_MOVE, "wait for move animation"))
 
     if action.weapon and action.target and action.target[0] >= 0:
         wx, wy = _weapon_icon_pos(action.weapon, mech)
@@ -273,6 +291,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "x": wx, "y": wy,
             "description": f"Arm {action.weapon}",
         })
+        plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for weapon arm"))
         tx, ty = grid_to_mcp(action.target[0], action.target[1])
         plan.append({
             "type": "left_click",
