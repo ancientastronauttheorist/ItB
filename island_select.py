@@ -34,7 +34,7 @@ ISLANDS = {
         "mcp": (560, 540),
         "visual": "brown/desert island with hole",
         "terrain": "desert (sand, smoke, fire)",
-        "hazards": "lightning storms, air strikes, sandstorms",
+        "hazards": "lightning storms, cataclysm, sandstorms",
     },
     "pinnacle": {
         "name": "Pinnacle Robotics",
@@ -42,7 +42,7 @@ ISLANDS = {
         "mcp": (850, 400),
         "visual": "white/icy island",
         "terrain": "ice (frozen tiles, cracking ice)",
-        "hazards": "ice storms, conveyor belts, terraformer",
+        "hazards": "ice storms, cryo mines, thawing enemies",
     },
     "detritus": {
         "name": "Detritus Disposal",
@@ -50,7 +50,7 @@ ISLANDS = {
         "mcp": (1060, 580),
         "visual": "dark/rocky island with green circuits",
         "terrain": "acid (A.C.I.D. pools, conveyor belts)",
-        "hazards": "acid rain, trash compactors, conveyor belts",
+        "hazards": "conveyor belts, A.C.I.D. pools, teleporters",
     },
 }
 
