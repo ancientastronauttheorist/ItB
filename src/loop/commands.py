@@ -892,6 +892,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         },
         "weight_version": weight_version,
         "action_results": enriched["action_results"],
+        "predicted_states": enriched.get("predicted_states", []),
         "predicted_outcome": enriched["predicted_outcome"],
         "score_breakdown": enriched["score_breakdown"],
     }
@@ -1157,6 +1158,162 @@ def cmd_verify(action_index: int = -1, profile: str = "Alpha",
 
     # Should not reach here
     result = {"status": "FAIL", "error": "Verify exhausted all retries"}
+    _print_result(result)
+    return result
+
+
+def cmd_verify_action(action_index: int) -> dict:
+    """Per-action verification: diff predicted vs actual board state.
+
+    Reads the per-action snapshot the solver captured during replay_solution,
+    refreshes the bridge, and diffs the two. NEVER re-solves, NEVER overrides
+    — desyncs are written to the failure database as data for the tuner.
+
+    Returns a dict with status PASS/DESYNC/ERROR. The desync record carries
+    a top_category and (optionally) a model_gap_known subcategory so Phase 4's
+    tuner can filter pre-existing simulation gaps from tunable failures.
+    """
+    from src.solver.verify import diff_states, classify_diff
+
+    session = _load_session()
+
+    if not session.active_solution:
+        result = {"status": "ERROR", "error": "No active solution to verify against"}
+        _print_result(result)
+        return result
+
+    actions = session.active_solution.actions
+    if not actions:
+        result = {"status": "PASS", "note": "no actions to verify (empty solution)"}
+        _print_result(result)
+        return result
+
+    if action_index < 0 or action_index >= len(actions):
+        result = {
+            "status": "ERROR",
+            "error": f"action_index {action_index} out of range (have {len(actions)})",
+        }
+        _print_result(result)
+        return result
+
+    if not is_bridge_active():
+        result = {"status": "ERROR", "error": "bridge not active — verify_action requires bridge"}
+        _print_result(result)
+        return result
+
+    # Load the solve recording for the solved turn to get predicted_states.
+    run_dir = _recording_dir(session)
+    mi = session.mission_index
+    solved_turn = session.active_solution.turn
+    solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
+    if not solve_file.exists():
+        result = {
+            "status": "ERROR",
+            "error": f"solve recording missing: {solve_file.name}",
+        }
+        _print_result(result)
+        return result
+
+    try:
+        with open(solve_file) as f:
+            solve_record = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        result = {"status": "ERROR", "error": f"failed to read solve recording: {e}"}
+        _print_result(result)
+        return result
+
+    predicted_states = solve_record.get("data", {}).get("predicted_states") or []
+    if action_index >= len(predicted_states):
+        result = {
+            "status": "ERROR",
+            "error": (f"no predicted_state at index {action_index} "
+                      f"(recording has {len(predicted_states)})"),
+        }
+        _print_result(result)
+        return result
+
+    predicted = predicted_states[action_index]
+
+    # Refresh bridge and read the actual current state.
+    try:
+        refresh_bridge_state()
+    except (TimeoutError, BridgeError) as e:
+        result = {"status": "ERROR", "error": f"bridge refresh failed: {e}"}
+        _print_result(result)
+        return result
+
+    actual_board, _ = read_bridge_state()
+    if actual_board is None:
+        result = {"status": "ERROR", "error": "failed to read bridge state"}
+        _print_result(result)
+        return result
+
+    diff = diff_states(predicted, actual_board)
+
+    if diff.is_empty():
+        result = {"status": "PASS", "action_index": action_index}
+        print(f"VERIFY {action_index}: PASS")
+        _print_result(result)
+        return result
+
+    classification = classify_diff(diff, mech_uid=predicted.get("mech_uid"))
+    diff_dict = diff.to_dict()
+
+    verify_record = {
+        "action_index": action_index,
+        "mech_uid": predicted.get("mech_uid"),
+        "predicted": predicted,
+        "diff": diff_dict,
+        "classification": classification,
+    }
+    _record_turn_state(session, f"action_{action_index}_verify", verify_record,
+                       turn_override=solved_turn)
+
+    severity = "high" if classification["top_category"] in ("click_miss", "death") else "medium"
+    cat_label = classification["top_category"]
+    if classification.get("subcategory"):
+        cat_label += f" [{classification['subcategory']}]"
+
+    desync_trigger = {
+        "trigger": "per_action_desync",
+        "tier": 2,
+        "severity": severity,
+        "details": (
+            f"Action {action_index} desync: {diff.total_count()} diffs, "
+            f"top={cat_label}"
+        ),
+        "action_index": action_index,
+        "mech_uid": predicted.get("mech_uid"),
+        "category": classification["top_category"],
+        "subcategory": classification.get("subcategory"),
+        "diff": diff_dict,
+    }
+
+    from src.solver.analysis import append_to_failure_db
+    append_to_failure_db(
+        [desync_trigger],
+        run_id=session.run_id or "default",
+        mission_index=session.mission_index,
+        turn=solved_turn,
+        context={
+            "squad": session.squad,
+            "island": session.current_island,
+            "model_gap": classification.get("model_gap", False),
+            "weight_version": _get_weight_version(),
+            "solver_version": _get_solver_version(),
+        },
+    )
+
+    result = {
+        "status": "DESYNC",
+        "action_index": action_index,
+        "diff_count": diff.total_count(),
+        "category": classification["top_category"],
+        "categories": classification["categories"],
+        "subcategory": classification.get("subcategory"),
+        "model_gap": classification.get("model_gap", False),
+    }
+    print(f"VERIFY {action_index}: DESYNC ({diff.total_count()} diffs) [{cat_label}]")
     _print_result(result)
     return result
 

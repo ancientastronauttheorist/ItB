@@ -595,16 +595,20 @@ def replay_solution(
     """Re-simulate the best solution to capture detailed per-action data.
 
     Called ONCE after solve_turn() on the original (unmutated) board.
-    Returns enriched data: per-action ActionResult, predicted post-enemy
-    board summary, and score component breakdown.
+    Returns enriched data: per-action ActionResult, per-action board
+    snapshots (for the verify loop), predicted post-enemy board summary,
+    and score component breakdown.
     """
+    from src.solver.verify import snapshot_after_action
+
     b = board.copy()
     original_positions = {e.uid: (e.x, e.y) for e in b.enemies()}
 
     action_results = []
+    predicted_states = []
     total_kills = 0
 
-    for action in solution.actions:
+    for i, action in enumerate(solution.actions):
         # Find mech by UID on the (progressively mutated) board copy
         m = next((u for u in b.units if u.uid == action.mech_uid), None)
         if m is None:
@@ -613,6 +617,13 @@ def replay_solution(
                 "buildings_lost": 0, "buildings_damaged": 0,
                 "mech_damage_taken": 0, "pods_collected": 0,
                 "spawns_blocked": 0, "events": [f"Mech UID {action.mech_uid} not found"],
+            })
+            predicted_states.append({
+                "action_index": i,
+                "mech_uid": action.mech_uid,
+                "snapshot_phase": "after_mech_action",
+                "error": "mech_not_found",
+                "units": [], "tiles_changed": [], "grid_power": b.grid_power,
             })
             continue
 
@@ -630,6 +641,12 @@ def replay_solution(
             "spawns_blocked": result.spawns_blocked,
             "events": result.events,
         })
+
+        # Snapshot the board state AFTER this action's mutation completes
+        # but BEFORE the next action runs. Used by cmd_verify_action.
+        predicted_states.append(
+            snapshot_after_action(b, i, action.mech_uid, result.events)
+        )
 
     # Simulate enemy attacks on post-mech board
     buildings_destroyed = _simulate_enemy_attacks(b, original_positions)
@@ -665,6 +682,7 @@ def replay_solution(
 
     return {
         "action_results": action_results,
+        "predicted_states": predicted_states,
         "predicted_outcome": predicted_outcome,
         "score_breakdown": score_breakdown,
     }

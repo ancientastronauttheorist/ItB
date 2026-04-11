@@ -255,9 +255,22 @@ _TIER_TO_ROOT_CAUSE = {
     6: "strategic_decline",
 }
 
+# Triggers from per-action verification map to a distinct root cause:
+# the predicted state diverged from reality even though the action ran.
+_TRIGGER_TO_ROOT_CAUSE = {
+    "per_action_desync": "model_drift",
+}
+
 
 def classify_root_cause(trigger: dict) -> str:
-    """Map a trigger to its operationally distinguishable root cause."""
+    """Map a trigger to its operationally distinguishable root cause.
+
+    Trigger-name overrides take precedence over tier mapping so per-action
+    desyncs can sit in tier 2 without colliding with bridge ACK failures.
+    """
+    name = trigger.get("trigger", "")
+    if name in _TRIGGER_TO_ROOT_CAUSE:
+        return _TRIGGER_TO_ROOT_CAUSE[name]
     return _TIER_TO_ROOT_CAUSE.get(trigger.get("tier", 0), "unknown")
 
 
@@ -294,8 +307,14 @@ def append_to_failure_db(
 
     with open(FAILURE_DB_PATH, "a") as f:
         for trigger in triggers:
+            # Per-action triggers carry an action_index suffix so multiple
+            # desyncs in the same turn don't collide on the unique id.
+            action_idx = trigger.get("action_index")
+            id_suffix = trigger["trigger"]
+            if action_idx is not None:
+                id_suffix = f"{id_suffix}_a{action_idx}"
             record = {
-                "id": f"{run_id}_m{mission_index:02d}_t{turn:02d}_{trigger['trigger']}",
+                "id": f"{run_id}_m{mission_index:02d}_t{turn:02d}_{id_suffix}",
                 "timestamp": datetime.now().isoformat(),
                 "run_id": run_id,
                 "mission": mission_index,
@@ -309,6 +328,11 @@ def append_to_failure_db(
                 "solver_version": context.get("solver_version", "unknown"),
                 "replay_file": f"recordings/{run_id}/m{mission_index:02d}_turn_{turn:02d}_board.json",
             }
+            # Optional per-action fields (Phase 2 verify loop).
+            for opt in ("action_index", "mech_uid", "category",
+                        "subcategory", "diff"):
+                if opt in trigger:
+                    record[opt] = trigger[opt]
             f.write(json.dumps(record) + "\n")
             count += 1
 

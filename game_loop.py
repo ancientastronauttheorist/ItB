@@ -38,6 +38,7 @@ from src.loop.commands import (
     cmd_solve,
     cmd_execute,
     cmd_verify,
+    cmd_verify_action,
     cmd_end_turn,
     cmd_status,
     cmd_new_run,
@@ -81,6 +82,14 @@ def main():
     p_verify.add_argument("index", type=int, nargs="?", default=-1,
                           help="Action index to verify (-1 for end-turn check)")
     p_verify.add_argument("--profile", default="Alpha")
+
+    # verify_action
+    p_verify_action = sub.add_parser(
+        "verify_action",
+        help="Per-action diff: predicted vs actual board state",
+    )
+    p_verify_action.add_argument("index", type=int,
+                                 help="Action index from solution")
 
     # end_turn
     sub.add_parser("end_turn", help="Plan clicks for End Turn")
@@ -179,6 +188,8 @@ def main():
         cmd_execute(args.index, profile=args.profile)
     elif args.command == "verify":
         cmd_verify(args.index, profile=args.profile)
+    elif args.command == "verify_action":
+        cmd_verify_action(args.index)
     elif args.command == "end_turn":
         cmd_end_turn()
     elif args.command == "status":

@@ -232,6 +232,22 @@ This is embedded directly in `modloader.lua`. No external dependencies.
 | Mission ends | `iState` changes from 0 | `"mission_ending"` |
 | Between missions | Map screen detected | `"between_missions"` |
 
+### 2.3.1 On-Demand State Refresh
+
+`refresh_bridge_state()` (`src/bridge/protocol.py`) writes a no-op
+`LUA return 'refresh'` command which the bridge poller (`modloader.lua`
+poll loop) treats as a benign trigger to call `dump_game_state()` and
+rewrite `/tmp/itb_state.json`. This is the path used by:
+
+- `cmd_read` — pull a fresh dump before parsing the board.
+- `cmd_verify_action` — read the actual post-action state without
+  executing any game action, so the per-action diff loop can compare
+  it against the predicted snapshot the solver captured during
+  `replay_solution`.
+
+Refreshing is read-only on the game side (no `Board:` mutators are
+called) so it is safe to invoke between mech actions during a turn.
+
 ### 2.4 State Extraction from Lua API
 
 The game's Lua API provides direct access to everything the save parser currently
