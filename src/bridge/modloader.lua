@@ -439,49 +439,46 @@ local function wait_for_board_coro(max_wait)
 end
 
 --------------------------------------------------------------------
--- Weapon skill execution: GetSkillEffect (proper) -> DamageSpace (fallback)
+-- Weapon skill execution
 --------------------------------------------------------------------
+-- Previous versions of this helper called
+--   Board:AddEffect(skill:GetSkillEffect(source, target))
+-- which fires the SkillEffect outside any pawn ownership context and
+-- leaves the engine's effect queue in a permanently-busy state
+-- (Board:IsBusy() stays true forever). Vanilla ITB — including the
+-- game's own trailer script — exclusively uses `pawn:FireWeapon(target,
+-- slot)` to invoke a weapon: that C-side method handles ownership,
+-- animation scheduling and queue drain the way the engine expects.
+-- Slot is 1-indexed into the pawn type's SkillList; see the weapon
+-- extraction loop in dump_state() where SkillList is read in the same
+-- order.
+local function find_weapon_slot(pawn, weapon_id)
+    local ptype = pawn:GetType()
+    local pawn_def = _G[ptype]
+    if not (pawn_def and pawn_def.SkillList) then return nil end
+    for i, wname in ipairs(pawn_def.SkillList) do
+        if wname == weapon_id then return i end
+    end
+    return nil
+end
+
 local function execute_weapon_skill(pawn, weapon_id, tx, ty)
-    local skill = _G[weapon_id]
-    if not skill then
-        return false, "weapon " .. weapon_id .. " not found in _G"
+    local slot = find_weapon_slot(pawn, weapon_id)
+    if not slot then
+        return false, "weapon " .. weapon_id .. " not in pawn SkillList"
     end
     local source = pawn:GetSpace()
-
-    -- Try GetSkillEffect: proper weapon with full AoE, chain, status
-    if type(skill) == "table" and skill.GetSkillEffect then
-        local ok, effect = pcall(function()
-            return skill:GetSkillEffect(source, Point(tx, ty))
-        end)
-        if ok and effect then
-            Board:AddEffect(effect)
-            log_bridge("SKILL: " .. weapon_id .. " via GetSkillEffect " ..
-                       source.x .. "," .. source.y .. " -> " .. tx .. "," .. ty)
-            return true, "skill"
-        end
-        log_bridge("WARN: GetSkillEffect failed for " .. weapon_id ..
-                   ": " .. tostring(effect))
+    local ok, err = pcall(function()
+        pawn:FireWeapon(Point(tx, ty), slot)
+    end)
+    if not ok then
+        log_bridge("WARN: FireWeapon failed for " .. weapon_id ..
+                   " (slot " .. slot .. "): " .. tostring(err))
+        return false, "FireWeapon failed: " .. tostring(err)
     end
-
-    -- Fallback: DamageSpace (single-tile, no AoE/chain/status)
-    log_bridge("FALLBACK: " .. weapon_id .. " via DamageSpace")
-    local damage = (type(skill) == "table" and skill.Damage) or 1
-    local dx = tx - source.x
-    local dy = ty - source.y
-    local push_dir = DIR_NONE
-    if     dx ==  1 and dy ==  0 then push_dir = DIR_RIGHT
-    elseif dx == -1 and dy ==  0 then push_dir = DIR_LEFT
-    elseif dx ==  0 and dy ==  1 then push_dir = DIR_UP
-    elseif dx ==  0 and dy == -1 then push_dir = DIR_DOWN
-    end
-    local has_push = (type(skill) == "table") and
-                     (skill.Push == 1 or skill.Push == true)
-    if has_push and push_dir ~= DIR_NONE then
-        Board:DamageSpace(SpaceDamage(Point(tx, ty), damage, push_dir))
-    else
-        Board:DamageSpace(SpaceDamage(Point(tx, ty), damage))
-    end
-    return true, "fallback"
+    log_bridge("FIRE: " .. weapon_id .. " slot=" .. slot .. " " ..
+               source.x .. "," .. source.y .. " -> " .. tx .. "," .. ty)
+    return true, "FireWeapon[" .. slot .. "]"
 end
 
 --------------------------------------------------------------------
