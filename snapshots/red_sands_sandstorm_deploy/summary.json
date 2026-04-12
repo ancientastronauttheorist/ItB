@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-11T21:53:40.917052",
+  "label": "red_sands_sandstorm_deploy",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Leaper1",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 3
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-04-11T22:04:02.911747",
+  "label": "red_sands_sandstorm_turn2_smoked_mechs",
+  "turn": 2,
+  "grid_power": 3,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

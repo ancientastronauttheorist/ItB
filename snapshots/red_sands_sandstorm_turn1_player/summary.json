@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-11T22:01:28.628826",
+  "label": "red_sands_sandstorm_turn1_player",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    }
+  ]
+}
