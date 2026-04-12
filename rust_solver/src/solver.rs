@@ -212,6 +212,17 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
 
 // ── Action pruning ───────────────────────────────────────────────────────────
 
+/// Check if pushing a unit from (x,y) in `direction` would damage a building.
+/// Returns true when the push destination tile is a building (push is blocked,
+/// both the pushed unit and the building take 1 bump damage).
+fn push_hits_building(x: u8, y: u8, direction: usize, board: &Board) -> bool {
+    let (dx, dy) = DIRS[direction];
+    let nx = x as i8 + dx;
+    let ny = y as i8 + dy;
+    if !in_bounds(nx, ny) { return false; }
+    board.tile(nx as u8, ny as u8).is_building()
+}
+
 fn prune_actions(
     board: &Board,
     _mech_idx: usize,
@@ -243,6 +254,110 @@ fn prune_actions(
             // Friendly fire penalty
             if let Some(idx) = board.unit_at(target.0, target.1) {
                 if board.units[idx].is_player() { s -= 300; }
+            }
+
+            // BUILDING DAMAGE PENALTY: penalize actions that push units into buildings.
+            // When a push is blocked by a building, both the unit and building take
+            // 1 bump damage — losing grid power. Apply -300 per building at risk.
+            let wdef = weapon_def(weapon_id);
+            if wdef.push != PushDir::None {
+                match wdef.weapon_type {
+                    // Melee / Projectile / Charge / Laser: Forward push on the hit target
+                    WeaponType::Melee | WeaponType::Projectile | WeaponType::Charge | WeaponType::Laser => {
+                        if wdef.push == PushDir::Forward || wdef.push == PushDir::Backward || wdef.push == PushDir::Flip {
+                            if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                                let push_dir = match wdef.push {
+                                    PushDir::Forward => dir,
+                                    PushDir::Backward | PushDir::Flip => (dir + 2) % 4,
+                                    _ => dir,
+                                };
+                                if push_hits_building(target.0, target.1, push_dir, board) {
+                                    s -= 300;
+                                }
+                            }
+                        } else if wdef.push == PushDir::Outward {
+                            // Projectile with outward push (e.g., Grav Cannon): push target outward
+                            if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                                if push_hits_building(target.0, target.1, dir, board) {
+                                    s -= 300;
+                                }
+                            }
+                        }
+                        // Also check AoE perpendicular tiles (e.g., Janus Cannon)
+                        if wdef.aoe_perpendicular() {
+                            if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                                for &perp in &[(dir + 1) % 4, (dir + 3) % 4] {
+                                    let (pdx, pdy) = DIRS[perp];
+                                    let px = target.0 as i8 + pdx;
+                                    let py = target.1 as i8 + pdy;
+                                    if in_bounds(px, py) {
+                                        let push_d = if wdef.push == PushDir::Forward { dir } else { perp };
+                                        if push_hits_building(px as u8, py as u8, push_d, board) {
+                                            s -= 300;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Artillery: center gets pushed in attack direction (Forward) or outward;
+                    // adjacent tiles get pushed outward if aoe_adjacent
+                    WeaponType::Artillery => {
+                        // Center tile push
+                        if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                            if wdef.push == PushDir::Forward {
+                                if push_hits_building(target.0, target.1, dir, board) {
+                                    s -= 300;
+                                }
+                            }
+                        }
+                        // Adjacent tiles pushed outward
+                        if wdef.aoe_adjacent() && wdef.push == PushDir::Outward {
+                            for (d, &(dx, dy)) in DIRS.iter().enumerate() {
+                                let nx = target.0 as i8 + dx;
+                                let ny = target.1 as i8 + dy;
+                                if !in_bounds(nx, ny) { continue; }
+                                if push_hits_building(nx as u8, ny as u8, d, board) {
+                                    // Only penalize if there's actually a unit to push
+                                    if board.unit_at(nx as u8, ny as u8).is_some() {
+                                        s -= 300;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // SelfAoe (e.g., Science Mech push): pushes all 4 adjacent tiles outward
+                    WeaponType::SelfAoe => {
+                        // move_to is the mech position; adjacent tiles get pushed outward
+                        for (d, &(dx, dy)) in DIRS.iter().enumerate() {
+                            let nx = move_to.0 as i8 + dx;
+                            let ny = move_to.1 as i8 + dy;
+                            if !in_bounds(nx, ny) { continue; }
+                            let push_d = if wdef.push == PushDir::Outward { d } else { (d + 2) % 4 };
+                            if push_hits_building(nx as u8, ny as u8, push_d, board) {
+                                if board.unit_at(nx as u8, ny as u8).is_some() {
+                                    s -= 300;
+                                }
+                            }
+                        }
+                    }
+                    // Leap: lands on target, pushes adjacent outward
+                    WeaponType::Leap => {
+                        if wdef.aoe_adjacent() && wdef.push == PushDir::Outward {
+                            for (d, &(dx, dy)) in DIRS.iter().enumerate() {
+                                let nx = target.0 as i8 + dx;
+                                let ny = target.1 as i8 + dy;
+                                if !in_bounds(nx, ny) { continue; }
+                                if push_hits_building(nx as u8, ny as u8, d, board) {
+                                    if board.unit_at(nx as u8, ny as u8).is_some() {
+                                        s -= 300;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
             }
         }
 

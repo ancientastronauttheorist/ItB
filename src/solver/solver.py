@@ -700,6 +700,20 @@ def replay_solution(
     }
 
 
+def _push_hits_building(x, y, direction, board):
+    """Check if pushing a unit from (x,y) in `direction` would damage a building.
+
+    Returns True when the destination tile is a building (push is blocked,
+    both the pushed unit and the building take 1 bump damage).
+    """
+    dx, dy = DIRS[direction]
+    nx, ny = x + dx, y + dy
+    if not board.in_bounds(nx, ny):
+        return False
+    tile = board.tile(nx, ny)
+    return tile.terrain == "building" and tile.building_hp > 0
+
+
 def _prune_actions(board, mech, actions, threat_tiles,
                    building_threat_tiles, spawn_points, max_n):
     """Prune actions to the top N by quick heuristic.
@@ -769,6 +783,85 @@ def _prune_actions(board, mech, actions, threat_tiles,
                        or getattr(wdef, 'aoe_behind', False)))
             if has_target or has_aoe:
                 s += 10
+
+            # BUILDING DAMAGE PENALTY: penalize actions that push units into
+            # buildings. When a push is blocked by a building, both the unit
+            # and building take 1 bump damage -- losing grid power.
+            # Apply -300 per building at risk.
+            if wdef and wdef.push != "none":
+                wtype = wdef.weapon_type
+                if wtype in ("melee", "projectile", "charge", "laser"):
+                    # Forward/Backward/Flip push on the hit target
+                    if wdef.push in ("forward", "backward", "flip"):
+                        p_dir = direction_between(
+                            move_to[0], move_to[1], target[0], target[1])
+                        if p_dir is not None:
+                            if wdef.push in ("backward", "flip"):
+                                p_dir = (p_dir + 2) % 4
+                            if _push_hits_building(
+                                    target[0], target[1], p_dir, board):
+                                s -= 300
+                    elif wdef.push == "outward":
+                        # Outward push on the hit target (e.g., Grav Cannon)
+                        p_dir = direction_between(
+                            move_to[0], move_to[1], target[0], target[1])
+                        if p_dir is not None:
+                            if _push_hits_building(
+                                    target[0], target[1], p_dir, board):
+                                s -= 300
+                    # AoE perpendicular tiles (e.g., Janus Cannon)
+                    if wdef.aoe_perpendicular:
+                        p_dir = direction_between(
+                            move_to[0], move_to[1], target[0], target[1])
+                        if p_dir is not None:
+                            for perp in [(p_dir + 1) % 4, (p_dir + 3) % 4]:
+                                pdx, pdy = DIRS[perp]
+                                px, py = target[0] + pdx, target[1] + pdy
+                                if board.in_bounds(px, py):
+                                    push_d = (p_dir if wdef.push == "forward"
+                                              else perp)
+                                    if _push_hits_building(
+                                            px, py, push_d, board):
+                                        s -= 300
+                elif wtype == "artillery":
+                    # Center tile push
+                    if wdef.push == "forward":
+                        p_dir = direction_between(
+                            move_to[0], move_to[1], target[0], target[1])
+                        if p_dir is not None:
+                            if _push_hits_building(
+                                    target[0], target[1], p_dir, board):
+                                s -= 300
+                    # Adjacent tiles pushed outward
+                    if wdef.aoe_adjacent and wdef.push == "outward":
+                        for d, (dx, dy) in enumerate(DIRS):
+                            nx, ny = target[0] + dx, target[1] + dy
+                            if not board.in_bounds(nx, ny):
+                                continue
+                            if _push_hits_building(nx, ny, d, board):
+                                if board.unit_at(nx, ny) is not None:
+                                    s -= 300
+                elif wtype == "self_aoe":
+                    # Self AoE: pushes all 4 adjacent tiles outward
+                    for d, (dx, dy) in enumerate(DIRS):
+                        nx, ny = move_to[0] + dx, move_to[1] + dy
+                        if not board.in_bounds(nx, ny):
+                            continue
+                        push_d = (d if wdef.push == "outward"
+                                  else (d + 2) % 4)
+                        if _push_hits_building(nx, ny, push_d, board):
+                            if board.unit_at(nx, ny) is not None:
+                                s -= 300
+                elif wtype == "leap":
+                    # Leap: lands on target, pushes adjacent outward
+                    if wdef.aoe_adjacent and wdef.push == "outward":
+                        for d, (dx, dy) in enumerate(DIRS):
+                            nx, ny = target[0] + dx, target[1] + dy
+                            if not board.in_bounds(nx, ny):
+                                continue
+                            if _push_hits_building(nx, ny, d, board):
+                                if board.unit_at(nx, ny) is not None:
+                                    s -= 300
 
         # Mech blocks a spawn tile by standing on it
         if spawn_set and move_to in spawn_set:

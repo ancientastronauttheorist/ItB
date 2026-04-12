@@ -63,6 +63,7 @@ MECH_STATS = {
 
 # Vek (enemies)
 VEK_STATS = {
+    # Base game Vek
     "Scorpion1":     PawnStats(move_speed=3, ranged=0),
     "Scorpion2":     PawnStats(move_speed=3, ranged=0),
     "Firefly1":      PawnStats(move_speed=2, ranged=1),
@@ -81,21 +82,51 @@ VEK_STATS = {
     "Centipede2":    PawnStats(move_speed=2, ranged=1),
     "Digger1":       PawnStats(move_speed=3, ranged=0),
     "Digger2":       PawnStats(move_speed=3, ranged=0),
+    "Burrower1":     PawnStats(move_speed=4, ranged=0, pushable=False),
+    "Burrower2":     PawnStats(move_speed=4, ranged=0, pushable=False),
     "Spider1":       PawnStats(move_speed=2, ranged=0, pushable=False),
     "Spider2":       PawnStats(move_speed=2, ranged=0, pushable=False),
     "Blobber1":      PawnStats(move_speed=2, ranged=1, pushable=False),
     "Blobber2":      PawnStats(move_speed=2, ranged=1, pushable=False),
+    # Advanced Edition Vek
+    "Bouncer1":      PawnStats(move_speed=3, ranged=0),
+    "Bouncer2":      PawnStats(move_speed=3, ranged=0),
+    "Moth1":         PawnStats(move_speed=3, flying=True, ranged=1),
+    "Moth2":         PawnStats(move_speed=3, flying=True, ranged=1),
+    "Mosquito1":     PawnStats(move_speed=4, flying=True, ranged=0),
+    "Mosquito2":     PawnStats(move_speed=4, flying=True, ranged=0),
+    "Gastropod1":    PawnStats(move_speed=2, ranged=1),
+    "Gastropod2":    PawnStats(move_speed=3, ranged=1),
+    "Starfish1":     PawnStats(move_speed=3, ranged=0),
+    "Starfish2":     PawnStats(move_speed=3, ranged=0),
+    "Tumblebug1":    PawnStats(move_speed=3, ranged=0),
+    "Tumblebug2":    PawnStats(move_speed=3, ranged=0),
+    "Plasmodia1":    PawnStats(move_speed=2, ranged=1),
+    "Plasmodia2":    PawnStats(move_speed=2, ranged=1),
+    # Objective / special Vek
+    "GlowingScorpion": PawnStats(move_speed=3, ranged=0),
+    # Pinnacle bots
+    "Snowtank1":     PawnStats(move_speed=3, ranged=0),
+    "Snowtank2":     PawnStats(move_speed=3, ranged=0),
+    "Snowart1":      PawnStats(move_speed=3, ranged=1),
+    "Snowart2":      PawnStats(move_speed=3, ranged=1),
+    "Burnbug1":      PawnStats(move_speed=2, ranged=0),
+    "Burnbug2":      PawnStats(move_speed=2, ranged=0),
     # Psions
     "Jelly_Health1": PawnStats(move_speed=2, flying=True, leader="LEADER_HEALTH", pushable=False),
     "Jelly_Armor1":  PawnStats(move_speed=2, flying=True, leader="LEADER_ARMOR", pushable=False),
     "Jelly_Regen1":  PawnStats(move_speed=2, flying=True, leader="LEADER_REGEN", pushable=False),
     "Jelly_Explode1":PawnStats(move_speed=2, flying=True, leader="LEADER_EXPLODE", pushable=False),
     "Jelly_Lava1":   PawnStats(move_speed=2, flying=True, leader="LEADER_TENTACLE", pushable=False),
+    # Advanced Edition Psions
+    "Jelly_Boost1":  PawnStats(move_speed=2, flying=True, leader="LEADER_BOOST", pushable=False),
+    "Jelly_Fire1":   PawnStats(move_speed=2, flying=True, leader="LEADER_FIRE", pushable=False),
+    "Jelly_Spider1": PawnStats(move_speed=2, flying=True, leader="LEADER_SPIDER", pushable=False),
     # Bosses
-    "Moth1":         PawnStats(move_speed=5, flying=True, massive=True, ranged=0),
-    "Moth2":         PawnStats(move_speed=5, flying=True, massive=True, ranged=0),
+    "FireflyBoss":   PawnStats(move_speed=3, ranged=1, massive=True),
     # Minor enemies
     "Spiderling1":   PawnStats(move_speed=3, minor=True, ranged=0),
+    "Spiderling2":   PawnStats(move_speed=3, minor=True, ranged=0),
     "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),
     "ShellPsion1":   PawnStats(move_speed=2, flying=True, minor=True, leader="LEADER_TENTACLE"),
 }

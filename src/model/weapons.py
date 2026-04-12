@@ -421,7 +421,7 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
 # ============================================================
 
 ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
-    # Melee enemies
+    # ── Base Game Melee ──────────────────────────────────────────────
     "ScorpionAtk1": WeaponDef(
         name="Scorpion Strike", weapon_type="melee",
         damage=1, web=True,
@@ -442,6 +442,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Leaper Strike", weapon_type="melee",
         damage=3, web=True,
     ),
+    "LeaperAtk2": WeaponDef(
+        name="Alpha Leaper Strike", weapon_type="melee",
+        damage=5, web=True,
+    ),
     "BeetleAtk1": WeaponDef(
         name="Beetle Charge", weapon_type="charge",
         damage=1, charge=True,
@@ -450,7 +454,16 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Beetle Charge", weapon_type="charge",
         damage=3, charge=True,
     ),
-    # Ranged enemies
+    "BurrowerAtk1": WeaponDef(
+        name="Burrower Slam", weapon_type="melee",
+        damage=1, path_size=3,
+    ),
+    "BurrowerAtk2": WeaponDef(
+        name="Alpha Burrower Slam", weapon_type="melee",
+        damage=2, path_size=3,
+    ),
+
+    # ── Base Game Ranged ─────────────────────────────────────────────
     "FireflyAtk1": WeaponDef(
         name="Firefly Shot", weapon_type="projectile",
         damage=1, range_max=0,
@@ -463,7 +476,12 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Centipede Spit", weapon_type="projectile",
         damage=1, acid=True, aoe_perpendicular=True, range_max=0,
     ),
-    # Artillery enemies
+    "CentipedeAtk2": WeaponDef(
+        name="Alpha Centipede Spit", weapon_type="projectile",
+        damage=2, acid=True, aoe_perpendicular=True, range_max=0,
+    ),
+
+    # ── Base Game Artillery ──────────────────────────────────────────
     "ScarabAtk1": WeaponDef(
         name="Scarab Shot", weapon_type="artillery",
         damage=1, range_min=2,
@@ -480,17 +498,30 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Crab Artillery", weapon_type="artillery",
         damage=3, range_min=2, path_size=2,
     ),
-    # Special
+
+    # ── Base Game Special ────────────────────────────────────────────
     "DiggerAtk1": WeaponDef(
         name="Digger Smash", weapon_type="self_aoe",
         damage=1, aoe_adjacent=True, aoe_center=False,
+    ),
+    "DiggerAtk2": WeaponDef(
+        name="Alpha Digger Smash", weapon_type="self_aoe",
+        damage=2, aoe_adjacent=True, aoe_center=False,
     ),
     "BlobberAtk1": WeaponDef(
         name="Blobber Launch", weapon_type="artillery",
         damage=0, spawns="Blob1",
     ),
+    "BlobberAtk2": WeaponDef(
+        name="Alpha Blobber Launch", weapon_type="artillery",
+        damage=0, spawns="Blob2",
+    ),
     "SpiderAtk1": WeaponDef(
         name="Spider Egg", weapon_type="artillery",
+        damage=0, spawns="WebbEgg1",
+    ),
+    "SpiderAtk2": WeaponDef(
+        name="Alpha Spider Egg", weapon_type="artillery",
         damage=0, spawns="WebbEgg1",
     ),
     "SpiderlingAtk1": WeaponDef(
@@ -500,6 +531,96 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     "BlobAtk1": WeaponDef(
         name="Blob Explode", weapon_type="self_aoe",
         damage=1, aoe_adjacent=True, aoe_center=True,
+    ),
+
+    # ── Advanced Edition Melee ───────────────────────────────────────
+    "BouncerAtk1": WeaponDef(
+        name="Energized Horns", weapon_type="melee",
+        damage=1, push="forward", push_self=True,
+    ),
+    "BouncerAtk2": WeaponDef(
+        name="Alpha Energized Horns", weapon_type="melee",
+        damage=3, push="forward", push_self=True,
+    ),
+    "MosquitoAtk1": WeaponDef(
+        name="Smokescreen Whip", weapon_type="melee",
+        damage=1, smoke=True,
+    ),
+    "MosquitoAtk2": WeaponDef(
+        name="Alpha Smokescreen Whip", weapon_type="melee",
+        damage=3, smoke=True,
+    ),
+    "StarfishAtk1": WeaponDef(
+        name="Starfish Slash", weapon_type="melee",
+        damage=1,
+    ),
+    "StarfishAtk2": WeaponDef(
+        name="Alpha Starfish Slash", weapon_type="melee",
+        damage=2,
+    ),
+    "TumblebugAtk1": WeaponDef(
+        name="Tumblebug Boulder", weapon_type="melee",
+        damage=1,
+    ),
+    "TumblebugAtk2": WeaponDef(
+        name="Alpha Tumblebug Boulder", weapon_type="melee",
+        damage=3,
+    ),
+
+    # ── Advanced Edition Artillery ───────────────────────────────────
+    "MothAtk1": WeaponDef(
+        name="Repulsive Pellets", weapon_type="artillery",
+        damage=1, push="forward", push_self=True, range_min=2,
+    ),
+    "MothAtk2": WeaponDef(
+        name="Alpha Repulsive Pellets", weapon_type="artillery",
+        damage=3, push="forward", push_self=True, range_min=2,
+    ),
+    "PlasmodiaAtk1": WeaponDef(
+        name="Plasmodia Spore", weapon_type="artillery",
+        damage=0, spawns="Spore1",
+    ),
+    "PlasmodiaAtk2": WeaponDef(
+        name="Alpha Plasmodia Spore", weapon_type="artillery",
+        damage=0, spawns="Spore2",
+    ),
+
+    # ── Advanced Edition Ranged ──────────────────────────────────────
+    "GastropodAtk1": WeaponDef(
+        name="Gastropod Grapple", weapon_type="projectile",
+        damage=1, range_max=0,
+    ),
+    "GastropodAtk2": WeaponDef(
+        name="Alpha Gastropod Grapple", weapon_type="projectile",
+        damage=3, range_max=0,
+    ),
+
+    # ── Pinnacle Bots ────────────────────────────────────────────────
+    "SnowtankAtk1": WeaponDef(
+        name="Snowtank Attack", weapon_type="melee",
+        damage=1,
+    ),
+    "SnowartAtk1": WeaponDef(
+        name="Snowart Shot", weapon_type="artillery",
+        damage=1, range_min=2,
+    ),
+    "SnowartAtk2": WeaponDef(
+        name="Alpha Snowart Shot", weapon_type="artillery",
+        damage=3, range_min=2,
+    ),
+    "BurnbugAtk1": WeaponDef(
+        name="Burnbug Strike", weapon_type="melee",
+        damage=1, fire=True,
+    ),
+    "BurnbugAtk2": WeaponDef(
+        name="Alpha Burnbug Strike", weapon_type="melee",
+        damage=3, fire=True,
+    ),
+
+    # ── Bosses ───────────────────────────────────────────────────────
+    "FireflyAtkB": WeaponDef(
+        name="Firefly Boss Shot", weapon_type="projectile",
+        damage=4, range_max=0,
     ),
 }
 

@@ -155,11 +155,14 @@ def evaluate(
                 buildings_alive += 1
                 total_building_hp += t.building_hp
 
-    score += buildings_alive * w.building_alive * grid_multiplier
-    score += total_building_hp * w.building_hp * grid_multiplier
+    score += buildings_alive * w.building_alive
+    score += total_building_hp * w.building_hp
 
-    # --- GRID POWER: NO turn scaling ---
-    score += board.grid_power * w.grid_power
+    # --- GRID POWER: urgency multiplier applied here ---
+    # When grid is low, each grid point is worth more. Multiplier was
+    # previously on buildings but caused inversion (fewer buildings at
+    # critical scored higher than more buildings at normal).
+    score += board.grid_power * w.grid_power * grid_multiplier
 
     # --- ENEMIES: SCALED (kills worth more early, less on final turn) ---
     # kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
@@ -249,11 +252,11 @@ def evaluate_breakdown(
                 buildings_alive += 1
                 total_building_hp += t.building_hp
 
-    buildings_score = buildings_alive * w.building_alive * grid_multiplier
-    building_hp_score = total_building_hp * w.building_hp * grid_multiplier
+    buildings_score = buildings_alive * w.building_alive
+    building_hp_score = total_building_hp * w.building_hp
 
-    # --- GRID POWER ---
-    grid_power_score = board.grid_power * w.grid_power
+    # --- GRID POWER: urgency multiplier applied here ---
+    grid_power_score = board.grid_power * w.grid_power * grid_multiplier
 
     # --- ENEMIES ---
     enemies_killed_score = kills * _scaled(w.enemy_killed, ff, 0.20, 1.60)

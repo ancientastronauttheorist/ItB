@@ -166,25 +166,53 @@ pub enum WId {
     SpiderAtk1 = 63,
     SpiderlingAtk1 = 64,
     BlobAtk1 = 65,
+    // -- Advanced Edition Enemy Weapons --
+    BouncerAtk1 = 66,
+    BouncerAtk2 = 67,
+    MothAtk1 = 68,
+    MothAtk2 = 69,
+    MosquitoAtk1 = 70,
+    MosquitoAtk2 = 71,
+    BurnbugAtk1 = 72,
+    BurnbugAtk2 = 73,
+    SnowtankAtk1 = 74,
+    SnowartAtk1 = 75,
+    SnowartAtk2 = 76,
+    LeaperAtk2 = 77,
+    CentipedeAtk2 = 78,
+    DiggerAtk2 = 79,
+    BlobberAtk2 = 80,
+    SpiderAtk2 = 81,
+    BurrowerAtk1 = 82,
+    BurrowerAtk2 = 83,
+    GastropodAtk1 = 84,
+    GastropodAtk2 = 85,
+    StarfishAtk1 = 86,
+    StarfishAtk2 = 87,
+    TumblebugAtk1 = 88,
+    TumblebugAtk2 = 89,
+    PlasmodiaAtk1 = 90,
+    PlasmodiaAtk2 = 91,
+    FireflyAtkB = 92,
     // -- Passives (no simulation needed) --
-    PassiveElectric = 66,
-    PassiveFlameImmune = 67,
-    PassiveLeech = 68,
-    PassiveFriendlyFire = 69,
-    PassiveBoosters = 70,
-    PassiveDefenses = 71,
-    PassiveMassRepair = 72,
-    PassiveBurrows = 73,
-    PassivePsions = 74,
-    PassiveAmmo = 75,
-    PassiveHealingSmoke = 76,
-    PassiveFireBoost = 77,
-    PassiveForceAmp = 78,
+    PassiveElectric = 93,
+    PassiveFlameImmune = 94,
+    PassiveLeech = 95,
+    PassiveFriendlyFire = 96,
+    PassiveBoosters = 97,
+    PassiveDefenses = 98,
+    PassiveMassRepair = 99,
+    PassiveBurrows = 100,
+    PassivePsions = 101,
+    PassiveAmmo = 102,
+    PassiveHealingSmoke = 103,
+    PassiveFireBoost = 104,
+    PassiveForceAmp = 105,
     // Sentinel
-    Repair = 79,
+    Repair = 106,
 }
 
-pub const WEAPON_COUNT: usize = 80;
+pub const WEAPON_COUNT: usize = 107;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -350,10 +378,75 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 65: BlobAtk1 — self_aoe, center + adjacent
     w[65] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
-    // 66-78: Passive weapons — no simulation needed, all DEF
+    // -- Advanced Edition Enemy Weapons --
+    // 66: BouncerAtk1 — melee, 1 dmg, pushes target forward + pushes self backward
+    w[66] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 67: BouncerAtk2 — alpha, 3 dmg
+    w[67] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Forward,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 68: MothAtk1 — artillery, 1 dmg, pushes target + pushes self backward (flying)
+    w[68] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 69: MothAtk2 — alpha artillery, 3 dmg
+    w[69] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 70: MosquitoAtk1 — melee, 1 dmg, applies smoke (flying)
+    w[70] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1,
+        flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 71: MosquitoAtk2 — alpha melee, 3 dmg, applies smoke
+    w[71] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
+        flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 72: BurnbugAtk1 — melee, 1 dmg, sets fire
+    w[72] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 73: BurnbugAtk2 — alpha melee, 3 dmg, sets fire
+    w[73] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 74: SnowtankAtk1 — Pinnacle bot, melee, 1 dmg
+    w[74] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
+    // 75: SnowartAtk1 — Pinnacle bot, artillery, 1 dmg
+    w[75] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
+    // 76: SnowartAtk2 — Pinnacle bot, alpha artillery, 3 dmg
+    w[76] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, flags: C, ..DEF };
+    // 77: LeaperAtk2 — alpha leaper, 5 dmg, web
+    w[77] = WeaponDef { weapon_type: WeaponType::Melee, damage: 5, flags: f(WeaponFlags::WEB.bits()), ..DEF };
+    // 78: CentipedeAtk2 — alpha centipede, 2 dmg, acid + aoe_perp
+    w[78] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, range_max: 0,
+        flags: f(WeaponFlags::ACID.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
+    // 79: DiggerAtk2 — alpha digger, 2 dmg, self_aoe
+    w[79] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 2, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 80: BlobberAtk2 — alpha blobber, spawns alpha blob
+    w[80] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
+    // 81: SpiderAtk2 — alpha spider, spawns eggs
+    w[81] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
+    // 82: BurrowerAtk1 — melee, 1 dmg, hits 3 tiles in a row
+    w[82] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, path_size: 3, flags: C, ..DEF };
+    // 83: BurrowerAtk2 — alpha burrower, 2 dmg
+    w[83] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, path_size: 3, flags: C, ..DEF };
+    // 84: GastropodAtk1 — ranged pull, 1 dmg, pulls self toward target
+    w[84] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0, flags: C, ..DEF };
+    // 85: GastropodAtk2 — alpha, 3 dmg
+    w[85] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0, flags: C, ..DEF };
+    // 86: StarfishAtk1 — melee, 1 dmg (diagonal attack in-game, solver treats as melee)
+    w[86] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
+    // 87: StarfishAtk2 — alpha, 2 dmg
+    w[87] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: C, ..DEF };
+    // 88: TumblebugAtk1 — melee, 1 dmg (creates boulder + attacks it)
+    w[88] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
+    // 89: TumblebugAtk2 — alpha, 3 dmg
+    w[89] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, flags: C, ..DEF };
+    // 90: PlasmodiaAtk1 — artillery, spawns spore
+    w[90] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
+    // 91: PlasmodiaAtk2 — alpha, spawns alpha spore
+    w[91] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
+    // 92: FireflyAtkB — Firefly Boss, projectile, 4 dmg
+    w[92] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, range_max: 0, flags: C, ..DEF };
+
+    // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
-    // 79: Repair sentinel
+    // 106: Repair sentinel
     // Already DEF
 
     w
@@ -434,6 +527,33 @@ pub fn wid_from_str(s: &str) -> WId {
         "SpiderAtk1" => WId::SpiderAtk1,
         "SpiderlingAtk1" => WId::SpiderlingAtk1,
         "BlobAtk1" => WId::BlobAtk1,
+        "BouncerAtk1" => WId::BouncerAtk1,
+        "BouncerAtk2" => WId::BouncerAtk2,
+        "MothAtk1" => WId::MothAtk1,
+        "MothAtk2" => WId::MothAtk2,
+        "MosquitoAtk1" => WId::MosquitoAtk1,
+        "MosquitoAtk2" => WId::MosquitoAtk2,
+        "BurnbugAtk1" => WId::BurnbugAtk1,
+        "BurnbugAtk2" => WId::BurnbugAtk2,
+        "SnowtankAtk1" => WId::SnowtankAtk1,
+        "SnowartAtk1" => WId::SnowartAtk1,
+        "SnowartAtk2" => WId::SnowartAtk2,
+        "LeaperAtk2" => WId::LeaperAtk2,
+        "CentipedeAtk2" => WId::CentipedeAtk2,
+        "DiggerAtk2" => WId::DiggerAtk2,
+        "BlobberAtk2" => WId::BlobberAtk2,
+        "SpiderAtk2" => WId::SpiderAtk2,
+        "BurrowerAtk1" => WId::BurrowerAtk1,
+        "BurrowerAtk2" => WId::BurrowerAtk2,
+        "GastropodAtk1" => WId::GastropodAtk1,
+        "GastropodAtk2" => WId::GastropodAtk2,
+        "StarfishAtk1" => WId::StarfishAtk1,
+        "StarfishAtk2" => WId::StarfishAtk2,
+        "TumblebugAtk1" => WId::TumblebugAtk1,
+        "TumblebugAtk2" => WId::TumblebugAtk2,
+        "PlasmodiaAtk1" => WId::PlasmodiaAtk1,
+        "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
+        "FireflyAtkB" => WId::FireflyAtkB,
         "Acid_Tank_Attack" => WId::ScorpionAtk1, // Reuse melee/1dmg — NPC controllable unit
         _ => WId::None,
     }
@@ -509,6 +629,33 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::SpiderAtk1 => "SpiderAtk1",
         WId::SpiderlingAtk1 => "SpiderlingAtk1",
         WId::BlobAtk1 => "BlobAtk1",
+        WId::BouncerAtk1 => "BouncerAtk1",
+        WId::BouncerAtk2 => "BouncerAtk2",
+        WId::MothAtk1 => "MothAtk1",
+        WId::MothAtk2 => "MothAtk2",
+        WId::MosquitoAtk1 => "MosquitoAtk1",
+        WId::MosquitoAtk2 => "MosquitoAtk2",
+        WId::BurnbugAtk1 => "BurnbugAtk1",
+        WId::BurnbugAtk2 => "BurnbugAtk2",
+        WId::SnowtankAtk1 => "SnowtankAtk1",
+        WId::SnowartAtk1 => "SnowartAtk1",
+        WId::SnowartAtk2 => "SnowartAtk2",
+        WId::LeaperAtk2 => "LeaperAtk2",
+        WId::CentipedeAtk2 => "CentipedeAtk2",
+        WId::DiggerAtk2 => "DiggerAtk2",
+        WId::BlobberAtk2 => "BlobberAtk2",
+        WId::SpiderAtk2 => "SpiderAtk2",
+        WId::BurrowerAtk1 => "BurrowerAtk1",
+        WId::BurrowerAtk2 => "BurrowerAtk2",
+        WId::GastropodAtk1 => "GastropodAtk1",
+        WId::GastropodAtk2 => "GastropodAtk2",
+        WId::StarfishAtk1 => "StarfishAtk1",
+        WId::StarfishAtk2 => "StarfishAtk2",
+        WId::TumblebugAtk1 => "TumblebugAtk1",
+        WId::TumblebugAtk2 => "TumblebugAtk2",
+        WId::PlasmodiaAtk1 => "PlasmodiaAtk1",
+        WId::PlasmodiaAtk2 => "PlasmodiaAtk2",
+        WId::FireflyAtkB => "FireflyAtkB",
         WId::Repair => "_REPAIR",
         _ => "",
     }
@@ -518,26 +665,60 @@ pub fn wid_to_str(id: WId) -> &'static str {
 /// Used by enemy attack simulation for proper weapon type dispatch.
 pub fn enemy_weapon_for_type(type_name: &str) -> WId {
     match type_name {
+        // Base game Vek
         "Scorpion1" => WId::ScorpionAtk1,
         "Scorpion2" => WId::ScorpionAtk2,
         "Hornet1" => WId::HornetAtk1,
         "Hornet2" => WId::HornetAtk2,
-        "Leaper1" | "Leaper2" => WId::LeaperAtk1,
+        "Leaper1" => WId::LeaperAtk1,
+        "Leaper2" => WId::LeaperAtk2,
         "Beetle1" => WId::BeetleAtk1,
         "Beetle2" => WId::BeetleAtk2,
         "Firefly1" => WId::FireflyAtk1,
         "Firefly2" => WId::FireflyAtk2,
-        "Centipede1" | "Centipede2" => WId::CentipedeAtk1,
+        "Centipede1" => WId::CentipedeAtk1,
+        "Centipede2" => WId::CentipedeAtk2,
         "Scarab1" => WId::ScarabAtk1,
         "Scarab2" => WId::ScarabAtk2,
         "Crab1" => WId::CrabAtk1,
         "Crab2" => WId::CrabAtk2,
-        "Digger1" | "Digger2" => WId::DiggerAtk1,
-        "Blobber1" | "Blobber2" => WId::BlobberAtk1,
-        "Spider1" | "Spider2" => WId::SpiderAtk1,
+        "Digger1" => WId::DiggerAtk1,
+        "Digger2" => WId::DiggerAtk2,
+        "Blobber1" => WId::BlobberAtk1,
+        "Blobber2" => WId::BlobberAtk2,
+        "Spider1" => WId::SpiderAtk1,
+        "Spider2" => WId::SpiderAtk2,
+        "Burrower1" => WId::BurrowerAtk1,
+        "Burrower2" => WId::BurrowerAtk2,
+        // Advanced Edition Vek
+        "Bouncer1" => WId::BouncerAtk1,
+        "Bouncer2" => WId::BouncerAtk2,
+        "Moth1" => WId::MothAtk1,
+        "Moth2" => WId::MothAtk2,
+        "Mosquito1" => WId::MosquitoAtk1,
+        "Mosquito2" => WId::MosquitoAtk2,
+        "Gastropod1" => WId::GastropodAtk1,
+        "Gastropod2" => WId::GastropodAtk2,
+        "Starfish1" => WId::StarfishAtk1,
+        "Starfish2" => WId::StarfishAtk2,
+        "Tumblebug1" => WId::TumblebugAtk1,
+        "Tumblebug2" => WId::TumblebugAtk2,
+        "Plasmodia1" => WId::PlasmodiaAtk1,
+        "Plasmodia2" => WId::PlasmodiaAtk2,
+        // Pinnacle bots
+        "Snowtank1" | "Snowtank2" => WId::SnowtankAtk1,
+        "Snowart1" => WId::SnowartAtk1,
+        "Snowart2" => WId::SnowartAtk2,
+        "Burnbug1" => WId::BurnbugAtk1,
+        "Burnbug2" => WId::BurnbugAtk2,
+        // Minions
         "Spiderling1" | "Spiderling2" => WId::SpiderlingAtk1,
         s if s.starts_with("BlobMini") => WId::BlobAtk1,
         s if s.starts_with("Blob1") => WId::BlobAtk1,
+        // Objective / special Vek
+        "GlowingScorpion" => WId::ScorpionAtk1,
+        // Bosses
+        "FireflyBoss" => WId::FireflyAtkB,
         _ => WId::None,
     }
 }
@@ -592,7 +773,52 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
         WId::Repair => "Repair",
-        WId::ScorpionAtk1 => "Acid Tank Attack",  // reused for Acid_Tank_Attack
+        WId::ScorpionAtk1 => "Scorpion Strike",
+        WId::ScorpionAtk2 => "Alpha Scorpion Strike",
+        WId::HornetAtk1 => "Hornet Sting",
+        WId::HornetAtk2 => "Alpha Hornet Sting",
+        WId::LeaperAtk1 => "Leaper Strike",
+        WId::LeaperAtk2 => "Alpha Leaper Strike",
+        WId::BeetleAtk1 => "Beetle Charge",
+        WId::BeetleAtk2 => "Alpha Beetle Charge",
+        WId::FireflyAtk1 => "Firefly Shot",
+        WId::FireflyAtk2 => "Alpha Firefly Shot",
+        WId::CentipedeAtk1 => "Centipede Spit",
+        WId::CentipedeAtk2 => "Alpha Centipede Spit",
+        WId::ScarabAtk1 => "Scarab Shot",
+        WId::ScarabAtk2 => "Alpha Scarab Shot",
+        WId::CrabAtk1 => "Crab Artillery",
+        WId::CrabAtk2 => "Alpha Crab Artillery",
+        WId::DiggerAtk1 => "Digger Smash",
+        WId::DiggerAtk2 => "Alpha Digger Smash",
+        WId::BlobberAtk1 => "Blobber Launch",
+        WId::BlobberAtk2 => "Alpha Blobber Launch",
+        WId::SpiderAtk1 => "Spider Egg",
+        WId::SpiderAtk2 => "Alpha Spider Egg",
+        WId::SpiderlingAtk1 => "Spiderling Bite",
+        WId::BlobAtk1 => "Blob Explode",
+        WId::BouncerAtk1 => "Energized Horns",
+        WId::BouncerAtk2 => "Alpha Energized Horns",
+        WId::MothAtk1 => "Repulsive Pellets",
+        WId::MothAtk2 => "Alpha Repulsive Pellets",
+        WId::MosquitoAtk1 => "Smokescreen Whip",
+        WId::MosquitoAtk2 => "Alpha Smokescreen Whip",
+        WId::BurnbugAtk1 => "Burnbug Strike",
+        WId::BurnbugAtk2 => "Alpha Burnbug Strike",
+        WId::SnowtankAtk1 => "Snowtank Attack",
+        WId::SnowartAtk1 => "Snowart Shot",
+        WId::SnowartAtk2 => "Alpha Snowart Shot",
+        WId::BurrowerAtk1 => "Burrower Slam",
+        WId::BurrowerAtk2 => "Alpha Burrower Slam",
+        WId::GastropodAtk1 => "Gastropod Grapple",
+        WId::GastropodAtk2 => "Alpha Gastropod Grapple",
+        WId::StarfishAtk1 => "Starfish Slash",
+        WId::StarfishAtk2 => "Alpha Starfish Slash",
+        WId::TumblebugAtk1 => "Tumblebug Boulder",
+        WId::TumblebugAtk2 => "Alpha Tumblebug Boulder",
+        WId::PlasmodiaAtk1 => "Plasmodia Spore",
+        WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
+        WId::FireflyAtkB => "Firefly Boss Shot",
         _ => "Unknown",
     }
 }

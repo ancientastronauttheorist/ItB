@@ -172,7 +172,10 @@ pub fn evaluate(
         _ => 1.0,
     };
 
-    // ── Buildings: NO turn scaling (always critical) ────────────────────
+    // ── Buildings: NO turn scaling, NO urgency multiplier ────────────────
+    // Urgency multiplier was previously applied here but caused an inversion:
+    // 4 buildings at critical (5x) scored higher than 6 buildings at normal (1x).
+    // Now buildings always use base weight — more buildings always beats fewer.
     let mut buildings_alive = 0i32;
     let mut total_building_hp = 0i32;
     for tile in &board.tiles {
@@ -181,11 +184,13 @@ pub fn evaluate(
             total_building_hp += tile.building_hp as i32;
         }
     }
-    score += buildings_alive as f64 * weights.building_alive * grid_multiplier;
-    score += total_building_hp as f64 * weights.building_hp * grid_multiplier;
+    score += buildings_alive as f64 * weights.building_alive;
+    score += total_building_hp as f64 * weights.building_hp;
 
-    // ── Grid power: NO turn scaling ────────────────────────────────────
-    score += board.grid_power as f64 * weights.grid_power;
+    // ── Grid power: urgency multiplier applied here ───────────────────
+    // When grid is low, each grid point is worth more — this incentivizes
+    // protecting buildings at low grid without the inversion bug.
+    score += board.grid_power as f64 * weights.grid_power * grid_multiplier;
 
     // ── Enemies: SCALED (kills worth more early, less on final turn) ────
     // kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
