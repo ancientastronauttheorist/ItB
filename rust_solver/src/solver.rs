@@ -305,6 +305,22 @@ fn search_recursive(
     }
 
     let mech_idx = mech_order[depth];
+
+    // Skip dead mechs (killed by a previous action in this permutation)
+    if !board.units[mech_idx].alive() {
+        // Still recurse to the next depth so the remaining mechs can act
+        search_recursive(
+            board, mech_order, depth + 1,
+            actions_so_far, kills_so_far,
+            threat_tiles, building_threats, spawn_bits,
+            original_positions,
+            spawn_points, max_actions, weights, deadline,
+            best_score, best_actions,
+            psion_before,
+        );
+        return;
+    }
+
     let mut actions = enumerate_actions(board, mech_idx);
     prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, spawn_bits, max_actions);
 

@@ -498,6 +498,7 @@ end
 -- Slot is 1-indexed into the pawn type's SkillList; see the weapon
 -- extraction loop in dump_state() where SkillList is read in the same
 -- order.
+-- find_weapon_slot: name-based lookup kept for backward compat / diagnostics
 local function find_weapon_slot(pawn, weapon_id)
     local ptype = pawn:GetType()
     local pawn_def = _G[ptype]
@@ -508,23 +509,38 @@ local function find_weapon_slot(pawn, weapon_id)
     return nil
 end
 
-local function execute_weapon_skill(pawn, weapon_id, tx, ty)
-    local slot = find_weapon_slot(pawn, weapon_id)
-    if not slot then
-        return false, "weapon " .. weapon_id .. " not in pawn SkillList"
+-- execute_weapon_by_slot: fire weapon using a 0-based slot index from
+-- the Python side (maps to 1-indexed Lua SkillList).
+-- This avoids name-matching issues where the solver's weapon ID doesn't
+-- match the pawn type's SkillList entry (e.g. purchased / upgraded weapons,
+-- or names the Rust solver doesn't recognise → "Unknown").
+local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
+    -- weapon_slot is 0-based from Python; Lua SkillList is 1-indexed
+    local slot = weapon_slot + 1
+    local ptype = pawn:GetType()
+    local pawn_def = _G[ptype]
+    local skill_count = 0
+    if pawn_def and pawn_def.SkillList then
+        skill_count = #pawn_def.SkillList
     end
+    if skill_count == 0 or slot > skill_count then
+        return false, "weapon slot " .. weapon_slot ..
+               " out of range (pawn " .. ptype ..
+               " has " .. skill_count .. " skills)"
+    end
+    local wname = pawn_def.SkillList[slot]
     local source = pawn:GetSpace()
     local ok, err = pcall(function()
         pawn:FireWeapon(Point(tx, ty), slot)
     end)
     if not ok then
-        log_bridge("WARN: FireWeapon failed for " .. weapon_id ..
-                   " (slot " .. slot .. "): " .. tostring(err))
+        log_bridge("WARN: FireWeapon failed for slot " .. slot ..
+                   " (" .. wname .. "): " .. tostring(err))
         return false, "FireWeapon failed: " .. tostring(err)
     end
-    log_bridge("FIRE: " .. weapon_id .. " slot=" .. slot .. " " ..
+    log_bridge("FIRE: " .. wname .. " slot=" .. slot .. " " ..
                source.x .. "," .. source.y .. " -> " .. tx .. "," .. ty)
-    return true, "FireWeapon[" .. slot .. "]"
+    return true, "FireWeapon[" .. slot .. "](" .. wname .. ")"
 end
 
 --------------------------------------------------------------------
@@ -582,34 +598,44 @@ local function execute_command(cmd_str)
         write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y)
 
     elseif cmd == "ATTACK" then
-        -- ATTACK uid weapon_id target_x target_y
+        -- ATTACK uid weapon_slot target_x target_y
+        -- weapon_slot is 0-based index (0=primary, 1=secondary)
         local uid = tonumber(parts[2])
-        local weapon_id = parts[3]
+        local weapon_slot = tonumber(parts[3])
         local tx, ty = tonumber(parts[4]), tonumber(parts[5])
         local pawn = Board:GetPawn(uid)
         if not pawn then
             write_ack("ERROR: pawn " .. uid .. " not found")
             return
         end
-        local ok, method = execute_weapon_skill(pawn, weapon_id, tx, ty)
+        if weapon_slot == nil then
+            write_ack("ERROR: invalid weapon slot '" .. tostring(parts[3]) .. "'")
+            return
+        end
+        local ok, method = execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
         if not ok then
             write_ack("ERROR: " .. method)
             return
         end
         wait_for_board_coro()
         pawn:SetActive(false)
-        write_ack("OK ATTACK " .. uid .. " " .. weapon_id .. " at " ..
+        write_ack("OK ATTACK " .. uid .. " slot=" .. weapon_slot .. " at " ..
                   tx .. "," .. ty .. " [" .. method .. "]")
 
     elseif cmd == "MOVE_ATTACK" then
-        -- MOVE_ATTACK uid mx my weapon_id tx ty
+        -- MOVE_ATTACK uid mx my weapon_slot tx ty
+        -- weapon_slot is 0-based index (0=primary, 1=secondary)
         local uid = tonumber(parts[2])
         local mx, my = tonumber(parts[3]), tonumber(parts[4])
-        local weapon_id = parts[5]
+        local weapon_slot = tonumber(parts[5])
         local tx, ty = tonumber(parts[6]), tonumber(parts[7])
         local pawn = Board:GetPawn(uid)
         if not pawn then
             write_ack("ERROR: pawn " .. uid .. " not found")
+            return
+        end
+        if weapon_slot == nil then
+            write_ack("ERROR: invalid weapon slot '" .. tostring(parts[5]) .. "'")
             return
         end
         local ok1, err1 = pcall(function() pawn:Move(Point(mx, my)) end)
@@ -618,7 +644,7 @@ local function execute_command(cmd_str)
             return
         end
         wait_for_board_coro()
-        local ok2, method = execute_weapon_skill(pawn, weapon_id, tx, ty)
+        local ok2, method = execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
         if not ok2 then
             write_ack("ERROR: " .. method)
             return

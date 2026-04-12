@@ -11,6 +11,31 @@ from src.model.board import Board
 from src.bridge.protocol import write_command, wait_for_ack
 
 
+def _resolve_weapon_slot(action: MechAction, board: Board) -> int:
+    """Resolve weapon name to 0-based slot index by matching against the mech's weapons.
+
+    Returns 0 for primary weapon, 1 for secondary weapon.
+    Falls back to 0 if the weapon can't be matched (better than failing with 'Unknown').
+    """
+    mech = None
+    for u in board.units:
+        if u.uid == action.mech_uid:
+            mech = u
+            break
+
+    if mech is None:
+        return 0
+
+    if action.weapon == mech.weapon:
+        return 0
+    if action.weapon == mech.weapon2:
+        return 1
+
+    # Fallback: weapon name didn't match either slot exactly.
+    # Default to slot 0 (primary) — this is more likely correct than failing.
+    return 0
+
+
 def execute_bridge_action(action: MechAction, board: Board) -> str:
     """Execute a single mech action via the Lua bridge.
 
@@ -61,16 +86,18 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
 
     # Move + attack: single MOVE_ATTACK command (deactivates)
     if has_move and has_attack:
+        weapon_slot = _resolve_weapon_slot(action, board)
         cmd = (f"MOVE_ATTACK {action.mech_uid} "
                f"{action.move_to[0]} {action.move_to[1]} "
-               f"{action.weapon} "
+               f"{weapon_slot} "
                f"{action.target[0]} {action.target[1]}")
         write_command(cmd)
         return wait_for_ack(timeout=_ACTION_TIMEOUT)
 
     # Attack only (deactivates)
     if has_attack:
-        cmd = (f"ATTACK {action.mech_uid} {action.weapon} "
+        weapon_slot = _resolve_weapon_slot(action, board)
+        cmd = (f"ATTACK {action.mech_uid} {weapon_slot} "
                f"{action.target[0]} {action.target[1]}")
         write_command(cmd)
         return wait_for_ack(timeout=_ACTION_TIMEOUT)

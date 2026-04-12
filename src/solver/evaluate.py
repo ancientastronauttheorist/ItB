@@ -47,6 +47,7 @@ class EvalWeights:
     # Status effect bonuses
     enemy_on_fire_bonus: float = 100  # enemy on fire (1 dmg/turn)
     mech_on_acid: float = -200        # mech on ACID pool (penalty)
+    friendly_npc_killed: float = -20000  # non-mech player unit killed (penalty)
 
     # Grid urgency multipliers (applied to building scores)
     grid_urgency_critical: float = 5.0  # grid_power <= 1

@@ -62,6 +62,7 @@ pub struct EvalWeights {
     // Status effect bonuses
     pub enemy_on_fire_bonus: f64,    // enemy on fire (will take 1 dmg/turn)
     pub mech_on_acid: f64,           // mech standing on ACID pool (penalty)
+    pub friendly_npc_killed: f64,    // non-mech player unit killed (penalty)
 
     // Grid urgency multipliers (applied to building scores)
     pub grid_urgency_critical: f64,  // grid_power <= 1
@@ -100,6 +101,7 @@ impl Default for EvalWeights {
             // Status bonuses
             enemy_on_fire_bonus: 100.0,
             mech_on_acid: -200.0,
+            friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
             // Grid urgency
             grid_urgency_critical: 5.0,
             grid_urgency_high: 3.0,
@@ -242,7 +244,16 @@ pub fn evaluate(
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if !u.is_player() { continue; }
-        if !u.is_mech() { continue; }
+
+        if !u.is_mech() {
+            // Non-mech player units (ArchiveArtillery, Filler_Pawn, etc.)
+            // Killing them loses a body-blocker and often involves pushing
+            // them into buildings. Penalize to prevent sacrifice.
+            if u.hp <= 0 {
+                score += weights.friendly_npc_killed;
+            }
+            continue;
+        }
 
         if u.hp <= 0 {
             // Dead is dead — pilot loss is permanent, no future_factor scaling
