@@ -37,10 +37,10 @@ Primary: **Lua bridge** (`src/bridge/`) uses file-based IPC through `/tmp/` to g
 
 ### Execution Model: Claude as Controller
 
-Claude operates as the outer control loop. Two execution modes:
+Claude operates as the outer control loop. **Default combat mode: `auto_turn`** (bridge commands with per-sub-action verification). Claude handles deployment, menus, shop, rewards, and island navigation via MCP clicks. Combat turns use `auto_turn` which executes moves/attacks via bridge, verifies after each sub-action, re-solves on desync, and returns an End Turn click plan for Claude to dispatch.
 
-- **Manual play (MCP clicks):** Claude calls `read`/`solve`, interprets output, and performs all game actions via MCP mouse clicks. The user watches every action happen visually. Used for menus, shop, rewards, and when the user wants to observe play.
-- **Speed mode (bridge commands):** `game_loop.py auto_turn` executes sub-actions (MOVE, ATTACK) separately via bridge, verifying actual board state after each and re-solving on desync. `auto_mission` loops auto_turn from deployment through mission end. Used for data collection and rapid play. Falls back to Claude for UI screens (rewards, shop, island map).
+- **`auto_turn` (default):** `game_loop.py auto_turn` reads, solves, and executes all mech actions via bridge with per-sub-action verification. Only the End Turn button requires an MCP click. ~1-2s solve time, fully exhaustive search.
+- **Manual play fallback (MCP clicks):** `click_action`/`verify_action`/`click_end_turn` for when bridge is unavailable. Used for menus, shop, rewards, and deployment.
 
 The session file (`sessions/active_session.json`) persists state between CLI calls.
 
@@ -89,18 +89,11 @@ Extended rules: see `data/ref_game_mechanics.md`.
 4. After every failed run, analyze the critical turn. Save snapshot first.
 5. Select mechs by clicking their tile on the board. No portraits, no Tab, no keyboard. `click_action` handles this internally for combat actions.
 6. Priority order — buildings > threats > kills > spawns.
-7. **Manual play: MCP mouse clicks for all visible actions.** When Claude is the control loop, every move/attack/end-turn must be a visible mouse click so the user can watch and verify. The canonical commands for manual combat play are `click_action <i>` (emits a `computer_batch`-ready plan for one mech action) and `click_end_turn`. After dispatching the batch, run `verify_action <i>` to confirm the predicted state landed. **Speed mode:** `auto_turn` / `auto_mission` execute sub-actions via bridge commands with per-sub-action verification (MOVE → read → verify → ATTACK → read → verify, re-solving on desync). Bridge commands (`move_mech`, `attack_mech`, `skip_mech`, `repair_mech`) are used internally by `auto_turn` — NEVER called directly.
+7. **Default combat mode: `auto_turn`.** Run `python3 game_loop.py auto_turn --time-limit 10` for each combat turn. It reads, solves, executes all mech actions via bridge, and verifies after every sub-action. Returns a PLAN with an End Turn click — dispatch it via `left_click`, wait ~8s, repeat. **Manual play fallback** (`click_action`/`verify_action`/`click_end_turn`) is only for when the bridge is unavailable. Bridge commands (`move_mech`, `attack_mech`, `skip_mech`, `repair_mech`) are used internally by `auto_turn` — NEVER called directly.
 8. Never move onto ACID tiles voluntarily (doubles damage, disables armor).
 9. SELF-IMPROVEMENT — Every process error leads to an immediate CLAUDE.md update with a guard/fix to prevent recurrence. Every mistake makes the process permanently better.
 10. For MCP clicks during deployment / UI elements: use `grid_to_mcp()` or `tile_hover.py` for coordinates. MCP screenshot coords = Quartz logical coords (verified). `grid_to_mcp()` auto-detects window position via Quartz — no hardcoded offsets. For combat tile clicks during a turn, prefer `click_action` which calls `grid_to_mcp()` internally and is calibrated <2px against all 4 corners.
-11. **Manual play: MOUSE CLICKS ONLY — no keyboard.** The user watches the game and needs to see every action happen via visible cursor movement and clicks. Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.). The full mouse-only flow for each mech in manual play:
-    - `python3 game_loop.py click_action <i>` — emits a `computer_batch` plan: select-tile click → optional move click → weapon-icon click → target-tile click. Dash weapons skip the move click; Repair clicks the Repair button instead of a target; passives are no-ops.
-    - Dispatch the batch via `mcp__computer-use__computer_batch`.
-    - Wait for the action animation (~3s).
-    - `python3 game_loop.py verify_action <i>` — diffs predicted vs actual board state (uses `post_attack` snapshot from dual-snapshot format). PASS = continue. DESYNC = log it (the failure_db record IS the useful signal) and continue unless it's `click_miss`.
-    - Repeat for each mech.
-    - `python3 game_loop.py click_end_turn` — emits a single click on the End Turn button.
-    - Dispatch, wait ~6s for the enemy phase, then `read`.
+11. **No keyboard during combat.** Never use keyboard shortcuts (Tab, 1/2 for weapons, Q, Space, etc.). With `auto_turn` as default, the only MCP click needed per turn is the End Turn button (coordinates from the PLAN output). Manual play fallback uses `click_action`/`click_end_turn` for full mouse-only flow.
 12. NEVER press any keyboard keys during combat. No Space, no Tab, no number keys, no letter keys.
 13. Use ALL mech actions every turn. Even suboptimal moves beat skipping.
 14. Solver handles environment hazards via `environment_danger_v2`: the bridge provides per-tile `[x, y, damage, kill_int]` where **kill_int=1** (lethal) for hazards that kill ground units (Air Strike, Lightning, Cataclysm→chasm, Seismic→chasm, Tidal→water) and **kill_int=0** for non-lethal hazards (Wind Storm=push, Sandstorm=smoke, SnowStorm=freeze). Detection uses LiveEnvironment field signatures: `WindDir`→wind, `Row`→sandstorm, `Indices`→snow, `Locations`→lightning/airstrike, `Index`→tidal/cataclysm. Bridge also emits `env_type` string and `mission_id`. The solver simulates the env_danger tick BEFORE Vek attacks (matching the game's interleaved attack order), and lethal threats bypass shield/frozen/armor/ACID.
@@ -135,40 +128,24 @@ Runs at the start of each mission (turn 0). Place all 3 mechs on valid tiles.
 
 ### COMBAT_PLAYER_TURN
 
-The main loop. Two modes: manual play (MCP clicks, user watches) and speed mode (bridge commands, verify-after-every-sub-action).
+The main loop. **Default: `auto_turn`** (bridge commands with per-sub-action verification). Fallback: manual play (MCP clicks) when bridge is unavailable.
 
-**Manual play flow** (MCP clicks):
+**Default flow** (`auto_turn`):
 
-1. `game_loop.py read` — Confirm phase is COMBAT_PLAYER_TURN. Review board state, threats, active mechs.
-2. `game_loop.py solve` — Get solution (N actions for N active mechs). The solve recording includes dual `predicted_states` per action (`post_move` + `post_attack` snapshots). If empty solution (timeout): take screenshot, play manually.
-3. For each action i in 0..N-1:
-   a. `python3 game_loop.py click_action <i>` — Read the JSON output (a `computer_batch`-ready plan). Dispatch via `mcp__computer-use__computer_batch`.
-   b. Wait ~3s for animation.
-   c. `python3 game_loop.py verify_action <i>` — diff predicted `post_attack` vs actual state. Read the result:
-      - **PASS**: continue to next mech.
-      - **DESYNC [click_miss]**: retry `click_action <i>` ONCE. If still failing, screenshot + log + skip the mech.
-      - **DESYNC [other category]**: log to decision log, do NOT retry, do NOT override. The desync record in failure_db is the useful signal. Continue executing the rest of the turn.
-4. `python3 game_loop.py click_end_turn` — Dispatch the batch via `computer_batch`.
-5. Wait ~6s for the enemy phase. `game_loop.py read` — Check new phase:
-   - COMBAT_PLAYER_TURN: next turn, go to step 2.
-   - MISSION_ENDING / BETWEEN_MISSIONS: mission over, go to MISSION_END.
-   - COMBAT_ENEMY_TURN: still animating, wait and re-read.
+1. `python3 game_loop.py auto_turn --time-limit 10` — Reads board, solves, executes all mech actions via bridge with per-sub-action verification. For each mech: MOVE → verify → ATTACK → verify, re-solving on desync. Returns a PLAN with an End Turn click.
+2. Dispatch the End Turn click via `mcp__computer-use__left_click` at the coordinates in the PLAN batch.
+3. Wait ~8s for enemy phase animations.
+4. Repeat from step 1. Check the output:
+   - `"turn": N` with `"status": "PLAN"`: turn completed, dispatch end-turn click.
+   - `"error": "Not in combat_player phase"`: enemy phase still animating, wait and retry.
+   - `"error": "No active mechs"`: mechs already acted (stale state), take screenshot to check if mission ended.
+   - `"game_over": true`: grid power hit 0, game over.
 
-**Speed mode flow** (`auto_turn` — verify-after-every-sub-action):
+**Manual play fallback** (MCP clicks, when bridge is unavailable):
 
-`game_loop.py auto_turn` executes 6 sub-steps per turn (MOVE + ATTACK × 3 mechs):
+1. `game_loop.py read` → `game_loop.py solve` → for each action: `click_action <i>` → dispatch batch → wait → `verify_action <i>` → `click_end_turn`.
 
-1. Read board → solve all 3 actions (generates dual `post_move`/`post_attack` predicted states).
-2. For each mech action:
-   a. **MOVE**: `move_mech(uid, x, y)` via bridge → read actual state → diff against `post_move` predicted state.
-      - MATCH: proceed to attack.
-      - MISMATCH: log desync to failure_db, re-solve from actual board (mech marked `can_move=false` for attack-only).
-   b. **ATTACK**: `attack_mech(uid, slot, tx, ty)` via bridge → read actual state → diff against `post_attack` predicted state.
-      - MATCH: proceed to next mech.
-      - MISMATCH: log desync to failure_db, re-solve from actual board for remaining mechs.
-3. End turn via `click_end_turn` (MCP click required for turn transition).
-
-Re-solve uses the Rust solver with partial mech states: DONE mechs have `active=false`, MID_ACTION mechs have `can_move=false` (attack-only search).
+**Re-solve on desync:** The Rust solver re-solves from actual board state with partial mech states: DONE mechs have `active=false`, MID_ACTION mechs have `can_move=false` (attack-only search).
 
 ### MISSION_END
 
