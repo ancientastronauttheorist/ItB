@@ -29,7 +29,7 @@ class EvalWeights:
     grid_power: float = 5000
     enemy_killed: float = 500
     enemy_hp_remaining: float = -50
-    mech_killed: float = -80000
+    mech_killed: float = -150000
     mech_hp: float = 100
     mech_centrality: float = -5      # penalizes distance from center
     spawn_blocked: float = 400
@@ -129,9 +129,11 @@ def evaluate(
     """
     w = weights or DEFAULT_WEIGHTS
 
-    # Game over: grid power depleted — worst possible score
-    if board.grid_power <= 0:
-        return -999999.0
+    # Game over: grid power depleted.
+    # Graduated score: -500000 base + normal evaluation components.
+    # Keeps all game-over states strictly below any non-game-over state
+    # while letting the solver rank bad options (e.g. lose 1 vs 3 buildings).
+    game_over = board.grid_power <= 0
 
     score = 0.0
     ff = _future_factor(current_turn, total_turns)
@@ -211,6 +213,9 @@ def evaluate(
                     dist = abs(m.x - x) + abs(m.y - y)
                     if dist <= 2:
                         score += w.pod_proximity
+
+    if game_over:
+        score -= 500000.0
 
     return score
 

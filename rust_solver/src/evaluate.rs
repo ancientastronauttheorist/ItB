@@ -85,7 +85,7 @@ impl Default for EvalWeights {
             grid_power: 5000.0,
             enemy_killed: 500.0,
             enemy_hp_remaining: -50.0,
-            mech_killed: -80000.0,
+            mech_killed: -150000.0,
             mech_hp: 100.0,
             mech_centrality: -5.0,
             spawn_blocked: 400.0,
@@ -156,10 +156,12 @@ pub fn evaluate(
     kills: i32,
     psion_before: &PsionState,
 ) -> f64 {
-    // Game over: grid power depleted — worst possible score
-    if board.grid_power == 0 {
-        return -999999.0;
-    }
+    // Game over: grid power depleted.
+    // Instead of flat -999999, use -500000 + normal score so the solver
+    // can rank bad options (e.g. "lose 1 building" > "lose 3 buildings").
+    // -500000 keeps all game-over states strictly below any non-game-over
+    // (worst non-game-over is ~-275000 with 2 dead mechs at -150000 each).
+    let game_over = board.grid_power == 0;
 
     let mut score = 0.0;
     let ff = future_factor(board.current_turn, board.total_turns);
@@ -302,6 +304,10 @@ pub fn evaluate(
         }
     }
 
+    if game_over {
+        score -= 500000.0;
+    }
+
     score
 }
 
@@ -356,7 +362,8 @@ mod tests {
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
         let score = evaluate(&board, &[], &w, 0, &no_psion());
-        assert!((score - 65000.0).abs() < 0.01);
+        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000) + 1 HP(2000) = 37000
+        assert!((score - 37000.0).abs() < 0.01);
     }
 
     #[test]
