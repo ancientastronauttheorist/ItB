@@ -1,0 +1,83 @@
+{
+  "run_id": "20260411_222538_813",
+  "squad": "Rift Walkers",
+  "achievement_targets": [],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "mission_index": 0,
+  "current_turn": 1,
+  "phase": "combat_enemy",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          2,
+          2
+        ],
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          2,
+          4
+        ],
+        "description": "ArtiMech, move E6\u2192F6, fire Artemis Artillery at D6"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          1,
+          5
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          2,
+          5
+        ],
+        "description": "TankMech, move C6\u2192C7, fire Taurus Cannon at C6"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          2,
+          3
+        ],
+        "weapon": "Prime_Punchmech",
+        "target": [
+          2,
+          2
+        ],
+        "description": "PunchMech, move D6\u2192E6, fire Titan Fist at F6"
+      }
+    ],
+    "score": 223870.0,
+    "turn": 1
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-11T22:34:14.970001",
+      "turn": 0,
+      "label": "solve",
+      "score": 223870.0,
+      "actions": [
+        "ArtiMech, move E6\u2192F6, fire Artemis Artillery at D6",
+        "TankMech, move C6\u2192C7, fire Taurus Cannon at C6",
+        "PunchMech, move D6\u2192E6, fire Titan Fist at F6"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [],
+  "tags": [
+    "audit",
+    "cataclysm_hunt"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "run_id": "20260411_222538_813",
+  "squad": "Rift Walkers",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [
+    "audit",
+    "cataclysm_hunt"
+  ],
+  "solver_version": "rust-0.1.0-3bd6926",
+  "weight_version": "v001",
+  "updated": "2026-04-11T22:25:38.827171",
+  "created": "2026-04-11T22:25:38.827190",
+  "missions": [],
+  "outcome": null
+}

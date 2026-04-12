@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-11T22:41:05.151705",
+  "label": "cataclysm_success_2turns",
+  "turn": 2,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "TankMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Mosquito1",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 2
+    }
+  ]
+}

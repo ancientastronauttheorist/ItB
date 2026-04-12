@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-11T22:33:46.617116",
+  "label": "cataclysm_turn1_predeploy",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}
