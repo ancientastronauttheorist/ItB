@@ -53,7 +53,7 @@ impl Solution {
 
 // ── Weapon target enumeration ────────────────────────────────────────────────
 
-fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId) -> Vec<(u8, u8)> {
+fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: (u8, u8)) -> Vec<(u8, u8)> {
     let wdef = weapon_def(weapon_id);
     let mut targets = Vec::new();
 
@@ -96,7 +96,9 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId) -> Vec<(u8,
                             first_is_building = true;
                             break;
                         }
-                        if board.unit_at(px as u8, py as u8).is_some() {
+                        if (px as u8, py as u8) != mech_from
+                            && board.unit_at(px as u8, py as u8).is_some()
+                        {
                             break; // unit before building — safe to fire
                         }
                     }
@@ -187,7 +189,8 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
             // Primary weapon
             let w1_id = WId::from_raw(unit.weapon.0);
             if w1_id != WId::None {
-                for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id) {
+                let mech_from = (unit.x, unit.y);
+                for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id, mech_from) {
                     actions.push((pos, w1_id, target));
                 }
             }
@@ -195,7 +198,7 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
             // Secondary weapon
             let w2_id = WId::from_raw(unit.weapon2.0);
             if w2_id != WId::None {
-                for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id) {
+                for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id, (unit.x, unit.y)) {
                     actions.push((pos, w2_id, target));
                 }
             }
