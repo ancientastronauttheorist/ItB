@@ -23,13 +23,16 @@ Both sources agree on all 6 main mappings.
 
 ## M5 Sweep Plan
 
-Tracked in `memory/project_m5_env_sweep.md`. Status 2026-04-11: 1/6 confirmed (Tidal Waves on Archive Inc / Forgotten Hills).
+Tracked in `memory/project_m5_env_sweep.md`. Status 2026-04-11: 4/6 confirmed (Tidal Waves on Archive Inc / Forgotten Hills, Cataclysm on R.S.T. / Scrapyard, Lightning Storm on R.S.T. / Geothermal Station, Conveyor Belts on Detritus / Reprocessing).
 
-Optimal order for the remaining 5:
+**Architectural note surfaced by the sweep:** Env hazards come in two flavors from the bridge's perspective:
+- **Per-turn damage hazards** (Tidal Waves, Cataclysm, Lightning Storm, probably Air Strike): queue entries in `environment_danger_v2` each turn with `[x, y, damage, kills]` shape.
+- **Persistent tile effects** (Conveyor Belts, probably Sandstorm): encoded as fields on each affected tile in the raw `tiles` array (e.g. `conveyor: N` direction code). `environment_danger_v2` stays empty.
 
-1. **R.S.T. Corporation** — covers Lightning Storm, Cataclysm, Sandstorm (3 hazards). RNG per mission, may need re-rolls to surface all three in one run.
-2. **Detritus Disposal** — Conveyor Belts.
-3. **Archive Inc** (return trip) — Air Strike. Avoid the "Defend the Artillery Support" mission type: that uses a friendly NPC artillery unit, not the Air Strike env hazard, and `environment_danger_v2` stays empty.
+Optimal order for the remaining 2:
+
+1. **R.S.T. Corporation** — still need Sandstorm. May require another run re-roll. Expect smoke tiles to populate via tile metadata, not `environment_danger_v2`.
+2. **Archive Inc** (return trip) — Air Strike. Avoid the "Defend the Artillery Support" mission type: that uses a friendly NPC artillery unit, not the Air Strike env hazard, and `environment_danger_v2` stays empty.
 
 Optionally, add **Pinnacle Robotics** for Ice Storm to extend the sweep to 7 types.
 

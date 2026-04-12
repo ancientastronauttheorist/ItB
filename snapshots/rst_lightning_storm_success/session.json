@@ -1,0 +1,25 @@
+{
+  "run_id": "20260411_194813_452",
+  "squad": "Rift Walkers",
+  "achievement_targets": [],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "mission_index": 0,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": null,
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [],
+  "recorded_post_enemy_turns": [],
+  "tags": [
+    "audit",
+    "m5_env_sweep",
+    "rst3"
+  ]
+}

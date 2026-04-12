@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-11T20:00:49.804160",
+  "label": "rst_lightning_storm_success",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 3
+    }
+  ]
+}
