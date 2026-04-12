@@ -66,6 +66,9 @@ bitflags! {
         const FIRE     = 0b0010_0000_0000;
         const WEB      = 0b0100_0000_0000;
         const RANGED   = 0b1000_0000_0000;
+        /// False for MID_ACTION mechs that moved but haven't attacked yet.
+        /// Solver skips move enumeration when this is unset.
+        const CAN_MOVE = 0b0001_0000_0000_0000;
     }
 }
 
@@ -128,6 +131,7 @@ impl Unit {
     pub fn fire(&self) -> bool { self.flags.contains(UnitFlags::FIRE) }
     pub fn web(&self) -> bool { self.flags.contains(UnitFlags::WEB) }
     pub fn ranged(&self) -> bool { self.flags.contains(UnitFlags::RANGED) }
+    pub fn can_move(&self) -> bool { self.flags.contains(UnitFlags::CAN_MOVE) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }

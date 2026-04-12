@@ -599,7 +599,8 @@ def replay_solution(
     snapshots (for the verify loop), predicted post-enemy board summary,
     and score component breakdown.
     """
-    from src.solver.verify import snapshot_after_action
+    from src.solver.verify import snapshot_after_action, snapshot_after_move
+    from src.solver.simulate import simulate_move, simulate_attack
 
     b = board.copy()
     original_positions = {e.uid: (e.x, e.y) for e in b.enemies()}
@@ -609,9 +610,15 @@ def replay_solution(
     total_kills = 0
 
     for i, action in enumerate(solution.actions):
-        # Find mech by UID on the (progressively mutated) board copy
         m = next((u for u in b.units if u.uid == action.mech_uid), None)
         if m is None:
+            error_snap = {
+                "action_index": i,
+                "mech_uid": action.mech_uid,
+                "snapshot_phase": "after_mech_action",
+                "error": "mech_not_found",
+                "units": [], "tiles_changed": [], "grid_power": b.grid_power,
+            }
             action_results.append({
                 "enemies_killed": 0, "enemy_damage_dealt": 0,
                 "buildings_lost": 0, "buildings_damaged": 0,
@@ -619,34 +626,39 @@ def replay_solution(
                 "spawns_blocked": 0, "events": [f"Mech UID {action.mech_uid} not found"],
             })
             predicted_states.append({
-                "action_index": i,
-                "mech_uid": action.mech_uid,
-                "snapshot_phase": "after_mech_action",
-                "error": "mech_not_found",
-                "units": [], "tiles_changed": [], "grid_power": b.grid_power,
+                "post_move": error_snap,
+                "post_attack": error_snap,
             })
             continue
 
-        result = simulate_action(b, m, action.move_to, action.weapon, action.target)
-        total_kills += result.enemies_killed
+        # Phase 1: Move only
+        move_result = simulate_move(b, m, action.move_to)
+        post_move_snap = snapshot_after_move(b, i, action.mech_uid, move_result.events)
+
+        # Phase 2: Attack (or repair/skip)
+        attack_result = simulate_attack(b, m, action.weapon, action.target)
+        total_kills += attack_result.enemies_killed
+        all_events = move_result.events + attack_result.events
+
         action_results.append({
-            "enemies_killed": result.enemies_killed,
-            "enemy_damage_dealt": result.enemy_damage_dealt,
-            "buildings_lost": result.buildings_lost,
-            "buildings_damaged": result.buildings_damaged,
-            "grid_damage": result.grid_damage,
-            "mech_damage_taken": result.mech_damage_taken,
-            "mechs_killed": result.mechs_killed,
-            "pods_collected": result.pods_collected,
-            "spawns_blocked": result.spawns_blocked,
-            "events": result.events,
+            "enemies_killed": attack_result.enemies_killed,
+            "enemy_damage_dealt": attack_result.enemy_damage_dealt,
+            "buildings_lost": attack_result.buildings_lost,
+            "buildings_damaged": attack_result.buildings_damaged,
+            "grid_damage": attack_result.grid_damage,
+            "mech_damage_taken": attack_result.mech_damage_taken,
+            "mechs_killed": attack_result.mechs_killed,
+            "pods_collected": move_result.pods_collected,
+            "spawns_blocked": attack_result.spawns_blocked,
+            "events": all_events,
         })
 
-        # Snapshot the board state AFTER this action's mutation completes
-        # but BEFORE the next action runs. Used by cmd_verify_action.
-        predicted_states.append(
-            snapshot_after_action(b, i, action.mech_uid, result.events)
-        )
+        post_attack_snap = snapshot_after_action(b, i, action.mech_uid, all_events)
+
+        predicted_states.append({
+            "post_move": post_move_snap,
+            "post_attack": post_attack_snap,
+        })
 
     # Simulate enemy attacks on post-mech board
     buildings_destroyed = _simulate_enemy_attacks(b, original_positions)

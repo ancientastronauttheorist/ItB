@@ -598,29 +598,45 @@ def _sim_laser(board, attacker, wdef, attack_dir, result):
         dmg = max(1, dmg - 1)  # damage decreases per tile
 
 
-def simulate_action(
+def simulate_move(
     board: Board,
     mech: Unit,
     move_to: tuple[int, int],
-    weapon_id: str,
-    target: tuple[int, int],
 ) -> ActionResult:
-    """Simulate a complete mech action: move + attack.
+    """Simulate only the move phase of a mech action.
 
+    Moves the mech and collects any pod. Does NOT deactivate.
     Modifies the board in-place.
     """
-    # Move
+    result = ActionResult()
+    old_pos = (mech.x, mech.y)
     mech.x, mech.y = move_to
 
-    # Collect pod if on one
-    result = ActionResult()
     tile = board.tile(mech.x, mech.y)
     if tile.has_pod:
         tile.has_pod = False
         result.pods_collected += 1
         result.events.append(f"Collected pod at ({mech.x},{mech.y})")
 
-    # Repair action
+    if move_to != old_pos:
+        result.events.append(f"{mech.type} moved ({old_pos[0]},{old_pos[1]})->({mech.x},{mech.y})")
+
+    return result
+
+
+def simulate_attack(
+    board: Board,
+    mech: Unit,
+    weapon_id: str,
+    target: tuple[int, int],
+) -> ActionResult:
+    """Simulate only the attack phase of a mech action.
+
+    Fires the weapon (or repairs) and deactivates the mech.
+    Modifies the board in-place. Call after simulate_move.
+    """
+    result = ActionResult()
+
     if weapon_id == "_REPAIR":
         healed = min(1, mech.max_hp - mech.hp)
         mech.hp = min(mech.hp + 1, mech.max_hp)
@@ -632,10 +648,8 @@ def simulate_action(
         mech.active = False
         return result
 
-    # Attack
     if weapon_id and target[0] >= 0:
         attack_result = simulate_weapon(board, mech, weapon_id, target[0], target[1])
-        # Merge results
         result.buildings_lost += attack_result.buildings_lost
         result.buildings_damaged += attack_result.buildings_damaged
         result.grid_damage += attack_result.grid_damage
@@ -646,4 +660,31 @@ def simulate_action(
         result.events.extend(attack_result.events)
 
     mech.active = False
+    return result
+
+
+def simulate_action(
+    board: Board,
+    mech: Unit,
+    move_to: tuple[int, int],
+    weapon_id: str,
+    target: tuple[int, int],
+) -> ActionResult:
+    """Simulate a complete mech action: move + attack.
+
+    Modifies the board in-place. Wrapper around simulate_move + simulate_attack.
+    """
+    move_result = simulate_move(board, mech, move_to)
+    attack_result = simulate_attack(board, mech, weapon_id, target)
+
+    result = ActionResult()
+    result.pods_collected = move_result.pods_collected
+    result.buildings_lost = attack_result.buildings_lost
+    result.buildings_damaged = attack_result.buildings_damaged
+    result.grid_damage = attack_result.grid_damage
+    result.enemies_killed = attack_result.enemies_killed
+    result.enemy_damage_dealt = attack_result.enemy_damage_dealt
+    result.mech_damage_taken = attack_result.mech_damage_taken
+    result.mechs_killed = attack_result.mechs_killed
+    result.events = move_result.events + attack_result.events
     return result

@@ -117,6 +117,42 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
     return wait_for_ack(timeout=_ACTION_TIMEOUT)
 
 
+_ACTION_TIMEOUT = 60.0
+
+
+def move_mech(uid: int, x: int, y: int) -> str:
+    """Move a mech to (x, y) without deactivating.
+
+    The Lua MOVE handler calls pawn:Move() and waits for the board to
+    settle, but does NOT call SetActive(false). The mech remains active
+    for a subsequent attack_mech or skip_mech call.
+    """
+    write_command(f"MOVE {uid} {x} {y}")
+    return wait_for_ack(timeout=_ACTION_TIMEOUT)
+
+
+def attack_mech(uid: int, weapon_slot: int, target_x: int, target_y: int) -> str:
+    """Fire a mech's weapon at the target tile, then deactivate.
+
+    weapon_slot is 0-based (0=primary, 1=secondary).
+    The Lua ATTACK handler fires and calls SetActive(false).
+    """
+    write_command(f"ATTACK {uid} {weapon_slot} {target_x} {target_y}")
+    return wait_for_ack(timeout=_ACTION_TIMEOUT)
+
+
+def skip_mech(uid: int) -> str:
+    """Deactivate a mech without attacking (after move, or no-op)."""
+    write_command(f"SKIP {uid}")
+    return wait_for_ack(timeout=_ACTION_TIMEOUT)
+
+
+def repair_mech(uid: int) -> str:
+    """Repair a mech at its current position and deactivate."""
+    write_command(f"REPAIR {uid}")
+    return wait_for_ack(timeout=_ACTION_TIMEOUT)
+
+
 def execute_bridge_end_turn() -> str:
     """Send END_TURN command via bridge.
 

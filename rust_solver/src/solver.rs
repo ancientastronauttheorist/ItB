@@ -167,15 +167,19 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
     let unit = &board.units[mech_idx];
     let mut actions = Vec::with_capacity(100);
 
-    let positions = reachable_tiles(board, mech_idx);
+    // MID_ACTION mechs (can_move=false): already moved, only generate
+    // attack/repair options from current position.
+    let positions = if unit.can_move() {
+        reachable_tiles(board, mech_idx)
+    } else {
+        vec![(unit.x, unit.y)]
+    };
 
     for &pos in &positions {
-        let old = (unit.x, unit.y);
-
-        // Temporarily move for target enumeration
-        // (We don't actually mutate — just compute targets from pos)
-        // Move-only
-        actions.push((pos, WId::None, (255, 255)));
+        // Move-only (skip for MID_ACTION since they already moved)
+        if unit.can_move() {
+            actions.push((pos, WId::None, (255, 255)));
+        }
 
         // Smoke blocks ALL actions (attack + repair) — only move-only is valid
         let tile = board.tile(pos.0, pos.1);
@@ -201,8 +205,6 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
                 actions.push((pos, WId::Repair, pos));
             }
         }
-
-        let _ = old; // suppress unused warning
     }
 
     actions

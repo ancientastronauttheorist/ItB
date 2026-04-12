@@ -39,6 +39,7 @@ from src.bridge.reader import read_bridge_state
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
     deploy_mech, set_bridge_speed,
+    move_mech, attack_mech, skip_mech, repair_mech,
 )
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
@@ -1259,7 +1260,13 @@ def cmd_verify_action(action_index: int) -> dict:
         _print_result(result)
         return result
 
-    predicted = predicted_states[action_index]
+    predicted_entry = predicted_states[action_index]
+
+    # Support both old format (flat snapshot) and new format (post_move/post_attack).
+    if "post_attack" in predicted_entry:
+        predicted = predicted_entry["post_attack"]
+    else:
+        predicted = predicted_entry
 
     # Refresh bridge and read the actual current state.
     try:
@@ -1990,12 +1997,199 @@ def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0,
     return result
 
 
-def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
-    """Execute a complete combat turn via bridge: read -> solve -> execute -> end turn.
+def _re_solve_partial(
+    board: Board,
+    bridge_data: dict,
+    done_uids: set[int],
+    mid_action_uid: int | None,
+    time_limit: float,
+    session: RunSession,
+) -> tuple[list, list, float]:
+    """Re-solve from actual board state with partial mech states.
 
-    Chains existing commands. All mech actions executed via bridge commands.
+    Args:
+        board: The actual board from the bridge.
+        bridge_data: Raw bridge data dict (for Rust solver input).
+        done_uids: UIDs of mechs that have already completed their action.
+        mid_action_uid: UID of a mech that has moved but not attacked (or None).
+        time_limit: Solver time limit.
+        session: Session for weight loading.
+
+    Returns:
+        (actions, predicted_states, score) from the new solve.
+        actions is a list of MechAction. predicted_states is the dual-snapshot
+        list from replay_solution.
+    """
+    import json as _json
+    import time as _time
+    from src.solver.solver import Solution, MechAction as _MA, replay_solution as _replay
+    from src.model.pawn_stats import get_pawn_stats
+
+    # Mark mech states in bridge data for the Rust solver
+    if "units" in bridge_data:
+        for u in bridge_data["units"]:
+            uid = u.get("uid")
+            stats = get_pawn_stats(u.get("type", ""))
+            u["ranged"] = stats.ranged
+            if uid in done_uids:
+                u["active"] = False
+            elif uid == mid_action_uid:
+                u["active"] = True
+                u["can_move"] = False
+            # All others keep their current active/can_move state
+
+    # Load weights
+    weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
+    if weights_path.exists():
+        try:
+            with open(weights_path) as wf:
+                weight_data = _json.load(wf)
+            bridge_data["eval_weights"] = weight_data.get("weights")
+        except (ValueError, OSError):
+            pass
+
+    try:
+        import itb_solver as _rust
+        t0 = _time.time()
+        rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
+        rust_result = _json.loads(rust_json)
+        elapsed = _time.time() - t0
+
+        if rust_result.get("actions"):
+            from src.model.weapons import weapon_name_to_id
+            actions = []
+            for ra in rust_result["actions"]:
+                w_id = ra.get("weapon_id", "")
+                if not w_id:
+                    w_id = weapon_name_to_id(ra.get("weapon", ""))
+                actions.append(_MA(
+                    mech_uid=ra["mech_uid"],
+                    mech_type=ra["mech_type"],
+                    move_to=tuple(ra["move_to"]),
+                    weapon=w_id,
+                    target=tuple(ra["target"]),
+                    description=ra["description"],
+                ))
+            score = rust_result["score"]
+
+            solution = Solution(
+                actions=actions,
+                score=score,
+                elapsed_seconds=elapsed,
+                timed_out=rust_result["stats"].get("timed_out", False),
+                permutations_tried=rust_result["stats"].get("permutations_tried", 0),
+                total_permutations=rust_result["stats"].get("total_permutations", 0),
+                active_mech_count=len(actions),
+            )
+
+            spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
+            current_turn = bridge_data.get("turn", 0)
+            enriched = _replay(board, solution, spawns,
+                               current_turn=current_turn,
+                               total_turns=bridge_data.get("total_turns", 5))
+            return actions, enriched.get("predicted_states", []), score
+    except Exception as e:
+        print(f"  Re-solve error: {e}")
+
+    return [], [], float('-inf')
+
+
+def _resolve_weapon_slot_from_board(mech_uid: int, weapon_id: str, board: Board) -> int:
+    """Resolve weapon_id to 0-based slot by matching against the mech's weapons."""
+    mech = next((u for u in board.units if u.uid == mech_uid), None)
+    if mech is None:
+        return 0
+    if weapon_id == mech.weapon:
+        return 0
+    if weapon_id == mech.weapon2:
+        return 1
+    return 0
+
+
+def _log_sub_action_desync(
+    session: RunSession,
+    phase: str,
+    action_index: int,
+    mech_uid: int,
+    predicted: dict,
+    actual_board: Board,
+    diff,
+    classification: dict,
+    solved_turn: int,
+) -> None:
+    """Record a sub-action desync to the failure database."""
+    from src.solver.analysis import append_to_failure_db
+
+    diff_dict = diff.to_dict()
+    severity = "high" if classification["top_category"] in (
+        "click_miss", "mech_position_wrong", "death"
+    ) else "medium"
+    cat_label = classification["top_category"]
+    if classification.get("subcategory"):
+        cat_label += f" [{classification['subcategory']}]"
+
+    verify_record = {
+        "action_index": action_index,
+        "sub_action": phase,
+        "mech_uid": mech_uid,
+        "predicted": predicted,
+        "diff": diff_dict,
+        "classification": classification,
+    }
+    _record_turn_state(session, f"action_{action_index}_{phase}_verify",
+                       verify_record, turn_override=solved_turn)
+
+    desync_trigger = {
+        "trigger": f"per_sub_action_desync_{phase}",
+        "tier": 2,
+        "severity": severity,
+        "details": (
+            f"Action {action_index} {phase} desync: {diff.total_count()} diffs, "
+            f"top={cat_label}"
+        ),
+        "action_index": action_index,
+        "sub_action": phase,
+        "mech_uid": mech_uid,
+        "category": classification["top_category"],
+        "subcategory": classification.get("subcategory"),
+        "diff": diff_dict,
+    }
+
+    append_to_failure_db(
+        [desync_trigger],
+        run_id=session.run_id or "default",
+        mission_index=session.mission_index,
+        turn=solved_turn,
+        context={
+            "squad": session.squad,
+            "island": session.current_island,
+            "model_gap": classification.get("model_gap", False),
+            "weight_version": _get_weight_version(),
+            "solver_version": _get_solver_version(),
+            "tags": list(session.tags),
+        },
+    )
+    print(f"  DESYNC action {action_index} {phase}: "
+          f"{diff.total_count()} diffs [{cat_label}]")
+
+
+def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
+    """Execute a combat turn via bridge with per-sub-action verification.
+
+    For each mech action, executes MOVE and ATTACK as separate sub-actions,
+    reads actual board state after each, and diffs against the solver's
+    predicted state. On desync, re-solves from the actual board for the
+    remaining mechs.
+
+    Flow per mech:
+      MOVE → read → diff post_move → (re-solve on desync)
+      ATTACK → read → diff post_attack → (re-solve on desync)
+
     Returns dict with turn results or error.
     """
+    from src.solver.verify import diff_states, classify_diff
+    from src.bridge.writer import _resolve_weapon_slot
+
     if not is_bridge_active():
         result = {"error": "Bridge not active — auto_turn requires bridge"}
         _print_result(result)
@@ -2011,7 +2205,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
 
     turn = read_result.get("turn", 0)
     print(f"\n{'='*50}")
-    print(f"AUTO TURN {turn}")
+    print(f"AUTO TURN {turn} (verify-after-every-sub-action)")
     print(f"{'='*50}")
 
     # 2. Solve
@@ -2025,72 +2219,209 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         _print_result(result)
         return result
 
-    num_actions = solve_result["num_actions"]
     score = solve_result.get("score", 0)
-
-    # 3. Execute each action via bridge (with per-action diff recording)
-    action_diffs = []
-    actions_list = solve_result.get("actions", [])
-    for i in range(num_actions):
-        pre_state = _capture_action_snapshot()
-        t0 = time.monotonic()
-        exec_result = cmd_execute(i, profile=profile)
-        elapsed_ms = int((time.monotonic() - t0) * 1000)
-
-        if "error" in exec_result:
-            result = {"error": f"Action {i}: {exec_result['error']}",
-                      "turn": turn, "actions_completed": i}
-            _print_result(result)
-            return result
-
-        post_state = _capture_action_snapshot()
-        action_info = actions_list[i] if i < len(actions_list) else {}
-        action_diffs.append({
-            "action_index": i,
-            "mech_uid": action_info.get("mech_uid"),
-            "description": action_info.get("description", ""),
-            "pre_state": pre_state,
-            "post_state": post_state,
-            "wall_clock_ms": elapsed_ms,
-        })
-
-    # Record per-action diffs + check for execution failures
     session = _load_session()
-    if action_diffs:
-        _record_turn_state(session, "action_diffs", {"diffs": action_diffs})
 
-        # Tier 2: execution failure detection
-        from src.solver.analysis import check_execution_failures, append_to_failure_db
-        exec_triggers = check_execution_failures(action_diffs)
-        if exec_triggers:
-            _record_turn_state(session, "exec_triggers", {
-                "triggers": exec_triggers,
-                "trigger_count": len(exec_triggers),
-            })
-            append_to_failure_db(
-                exec_triggers,
-                run_id=session.run_id or "default",
-                mission_index=session.mission_index,
-                turn=turn,
-                context={
-                    "squad": session.squad,
-                    "island": session.current_island,
-                    "weight_version": _get_weight_version(),
-                    "solver_version": _get_solver_version(),
-                },
-            )
-            print(f"  EXEC TRIGGERS: {len(exec_triggers)} execution failures detected")
+    # Load predicted_states from the solve recording
+    run_dir = _recording_dir(session)
+    mi = session.mission_index
+    solve_file = run_dir / f"m{mi:02d}_turn_{turn:02d}_solve.json"
+    predicted_states = []
+    if solve_file.exists():
+        try:
+            with open(solve_file) as f:
+                solve_record = json.load(f)
+            predicted_states = solve_record.get("data", {}).get("predicted_states", [])
+        except (json.JSONDecodeError, OSError):
+            pass
 
-    # 4. End turn. On this ITB build the bridge can't transition the phase
-    # itself — cmd_end_turn hands back an MCP click plan (status=PLAN) that
-    # the caller must dispatch via computer_batch before the game advances.
-    # Propagate that plan as-is so auto_turn becomes a two-step handshake:
-    # run auto_turn, dispatch the returned batch, then call read to detect
-    # the new turn.
+    # Build action list from session solution
+    actions = session.active_solution.actions if session.active_solution else []
+    done_uids: set[int] = set()
+    re_solve_count = 0
+    actions_completed = 0
+
+    # 3. Execute each action with per-sub-action verification
+    action_idx = 0
+    while action_idx < len(actions):
+        action = actions[action_idx]
+        mech_uid = action.mech_uid
+        mech_action = MechAction(
+            mech_uid=action.mech_uid,
+            mech_type=action.mech_type,
+            move_to=action.move_to,
+            weapon=action.weapon,
+            target=action.target,
+            description=action.description,
+        )
+
+        print(f"\n--- Action {actions_completed}: {action.description} ---")
+
+        # Determine sub-action breakdown
+        has_move = (action.move_to and action.move_to != (-1, -1))
+        is_repair = (action.weapon == "_REPAIR")
+        has_attack = (action.weapon and action.target[0] >= 0 and not is_repair)
+
+        # Check if mech is actually moving (not staying in place)
+        if has_move:
+            refresh_bridge_state()
+            current_board, current_data = read_bridge_state()
+            if current_board:
+                mech = next((u for u in current_board.units if u.uid == mech_uid), None)
+                if mech and action.move_to == (mech.x, mech.y):
+                    has_move = False
+
+        # Get predicted states for this action
+        pred_entry = predicted_states[action_idx] if action_idx < len(predicted_states) else {}
+        pred_post_move = pred_entry.get("post_move") if isinstance(pred_entry, dict) else None
+        pred_post_attack = pred_entry.get("post_attack") if isinstance(pred_entry, dict) else pred_entry
+
+        # --- MOVE PHASE ---
+        if has_move:
+            try:
+                ack = move_mech(mech_uid, action.move_to[0], action.move_to[1])
+                print(f"  MOVE: {ack}")
+            except (TimeoutError, BridgeError) as e:
+                print(f"  MOVE ERROR: {e}")
+                result = {"error": f"Move {actions_completed}: {e}",
+                          "turn": turn, "actions_completed": actions_completed}
+                _print_result(result)
+                return result
+
+            # Read actual state after move
+            refresh_bridge_state()
+            actual_board, actual_data = read_bridge_state()
+
+            if actual_board and pred_post_move:
+                diff = diff_states(pred_post_move, actual_board)
+                if not diff.is_empty():
+                    classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
+                    _log_sub_action_desync(
+                        session, "move", actions_completed, mech_uid,
+                        pred_post_move, actual_board, diff, classification, turn,
+                    )
+                    re_solve_count += 1
+                    # Re-solve: this mech has moved but not attacked
+                    if actual_data:
+                        new_actions, new_preds, new_score = _re_solve_partial(
+                            actual_board, actual_data, done_uids,
+                            mid_action_uid=mech_uid,
+                            time_limit=time_limit, session=session,
+                        )
+                        if new_actions:
+                            print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
+                            # First action should be attack-only for mid_action mech
+                            solver_actions = []
+                            for a in new_actions:
+                                solver_actions.append(SolverAction(
+                                    mech_uid=a.mech_uid,
+                                    mech_type=a.mech_type,
+                                    move_to=a.move_to,
+                                    weapon=a.weapon,
+                                    target=a.target,
+                                    description=a.description,
+                                ))
+                            actions = solver_actions
+                            predicted_states = new_preds
+                            score = new_score
+                            action_idx = 0
+                            continue  # restart loop with new solution
+                else:
+                    print(f"  MOVE VERIFIED: PASS")
+
+        # --- ATTACK PHASE ---
+        if has_attack:
+            refresh_bridge_state()
+            current_board, _ = read_bridge_state()
+            weapon_slot = _resolve_weapon_slot(mech_action, current_board) if current_board else 0
+
+            try:
+                ack = attack_mech(mech_uid, weapon_slot, action.target[0], action.target[1])
+                print(f"  ATTACK: {ack}")
+            except (TimeoutError, BridgeError) as e:
+                print(f"  ATTACK ERROR: {e}")
+                result = {"error": f"Attack {actions_completed}: {e}",
+                          "turn": turn, "actions_completed": actions_completed}
+                _print_result(result)
+                return result
+        elif is_repair:
+            if has_move:
+                pass  # move already done above
+            try:
+                ack = repair_mech(mech_uid)
+                print(f"  REPAIR: {ack}")
+            except (TimeoutError, BridgeError) as e:
+                print(f"  REPAIR ERROR: {e}")
+                result = {"error": f"Repair {actions_completed}: {e}",
+                          "turn": turn, "actions_completed": actions_completed}
+                _print_result(result)
+                return result
+        elif not has_move:
+            try:
+                ack = skip_mech(mech_uid)
+                print(f"  SKIP: {ack}")
+            except (TimeoutError, BridgeError) as e:
+                print(f"  SKIP ERROR: {e}")
+        else:
+            # Move-only: need to deactivate via SKIP
+            try:
+                ack = skip_mech(mech_uid)
+                print(f"  SKIP (move-only): {ack}")
+            except (TimeoutError, BridgeError) as e:
+                print(f"  SKIP ERROR: {e}")
+
+        # Read actual state after attack/repair/skip
+        refresh_bridge_state()
+        actual_board, actual_data = read_bridge_state()
+
+        if actual_board and pred_post_attack:
+            diff = diff_states(pred_post_attack, actual_board)
+            if not diff.is_empty():
+                classification = classify_diff(diff, mech_uid=mech_uid, phase="attack")
+                _log_sub_action_desync(
+                    session, "attack", actions_completed, mech_uid,
+                    pred_post_attack, actual_board, diff, classification, turn,
+                )
+                re_solve_count += 1
+                # Re-solve for remaining mechs
+                done_uids.add(mech_uid)
+                remaining = len(actions) - action_idx - 1
+                if remaining > 0 and actual_data:
+                    new_actions, new_preds, new_score = _re_solve_partial(
+                        actual_board, actual_data, done_uids,
+                        mid_action_uid=None,
+                        time_limit=time_limit, session=session,
+                    )
+                    if new_actions:
+                        print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
+                        solver_actions = []
+                        for a in new_actions:
+                            solver_actions.append(SolverAction(
+                                mech_uid=a.mech_uid,
+                                mech_type=a.mech_type,
+                                move_to=a.move_to,
+                                weapon=a.weapon,
+                                target=a.target,
+                                description=a.description,
+                            ))
+                        actions = solver_actions
+                        predicted_states = new_preds
+                        score = new_score
+                        action_idx = 0
+                        actions_completed += 1
+                        continue  # restart loop with new solution
+            else:
+                print(f"  ATTACK VERIFIED: PASS")
+
+        done_uids.add(mech_uid)
+        actions_completed += 1
+        action_idx += 1
+
+    # 4. End turn
     end_result = cmd_end_turn()
     if "error" in end_result:
         result = {"error": f"END_TURN: {end_result['error']}",
-                  "turn": turn, "actions_completed": num_actions}
+                  "turn": turn, "actions_completed": actions_completed}
         _print_result(result)
         return result
 
@@ -2098,8 +2429,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         result = {
             "status": "PLAN",
             "turn": turn,
-            "actions_completed": num_actions,
+            "actions_completed": actions_completed,
             "score": score,
+            "re_solves": re_solve_count,
             "bridge_ack": end_result.get("bridge_ack"),
             "batch": end_result["batch"],
             "next_step": "dispatch batch via computer_batch, wait ~6s, "
@@ -2109,8 +2441,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         return result
 
     # 5. Post-turn state check
-    import time as _time
-    _time.sleep(1)
+    time.sleep(1)
     refresh_bridge_state()
     post_board, post_data = read_bridge_state()
     post_phase = post_data.get("phase", "unknown") if post_data else "unknown"
@@ -2120,8 +2451,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     result = {
         "status": "ok",
         "turn": turn,
-        "actions_completed": num_actions,
+        "actions_completed": actions_completed,
         "score": score,
+        "re_solves": re_solve_count,
         "post_phase": post_phase,
         "grid_power": f"{post_grid}/{post_grid_max}",
     }
@@ -2130,9 +2462,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         result["game_over"] = True
         print(f"  GAME OVER — grid power dropped to 0")
 
-    print(f"  Turn {turn} complete: {num_actions} actions, "
+    print(f"  Turn {turn} complete: {actions_completed} actions, "
           f"score={score:.0f}, grid={post_grid}/{post_grid_max}, "
-          f"next={post_phase}")
+          f"re-solves={re_solve_count}, next={post_phase}")
 
     _print_result(result)
     return result

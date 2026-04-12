@@ -72,6 +72,7 @@ pub struct JsonUnit {
     pub weapon_target_behind: Option<bool>,
     pub weapon_push: Option<u8>,
     pub ranged: Option<u8>,
+    pub can_move: Option<bool>,
 }
 
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
@@ -174,6 +175,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             if ju.pushable.unwrap_or(true) { flags |= UnitFlags::PUSHABLE; }
             if ju.ranged.unwrap_or(0) > 0 { flags |= UnitFlags::RANGED; }
             if ju.active.unwrap_or(true) { flags |= UnitFlags::ACTIVE; }
+            if ju.can_move.unwrap_or(true) { flags |= UnitFlags::CAN_MOVE; }
             if ju.shield.unwrap_or(false) { flags |= UnitFlags::SHIELD; }
             if ju.acid.unwrap_or(false) { flags |= UnitFlags::ACID; }
             if ju.frozen.unwrap_or(false) { flags |= UnitFlags::FROZEN; }

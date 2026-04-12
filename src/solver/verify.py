@@ -39,6 +39,79 @@ def parse_tiles_from_events(events: list[str]) -> list[tuple[int, int]]:
     return sorted(tiles)
 
 
+def snapshot_after_move(
+    board,
+    action_index: int,
+    mech_uid: int,
+    move_events: list[str],
+) -> dict:
+    """Capture board snapshot after only the move phase.
+
+    Lighter than snapshot_after_action — captures the mech's new position
+    and any tile effects from moving (pod collection). Used by the
+    verify-after-every-sub-action loop to check the move landed correctly
+    before proceeding to the attack phase.
+    """
+    touched: set[tuple[int, int]] = set(parse_tiles_from_events(move_events))
+
+    for u in board.units:
+        if u.uid == mech_uid:
+            touched.add((u.x, u.y))
+            break
+
+    expanded: set[tuple[int, int]] = set()
+    for tx, ty in touched:
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                nx, ny = tx + dx, ty + dy
+                if 0 <= nx < 8 and 0 <= ny < 8:
+                    expanded.add((nx, ny))
+
+    units_snapshot = []
+    for u in board.units:
+        units_snapshot.append({
+            "uid": u.uid,
+            "type": u.type,
+            "pos": [u.x, u.y],
+            "hp": u.hp,
+            "max_hp": u.max_hp,
+            "alive": u.hp > 0,
+            "active": getattr(u, "active", True),
+            "is_mech": u.is_mech,
+            "team": u.team,
+            "status": {
+                "fire": u.fire,
+                "acid": u.acid,
+                "frozen": u.frozen,
+                "shield": u.shield,
+                "web": u.web,
+            },
+        })
+
+    tiles_snapshot = []
+    for (x, y) in sorted(expanded):
+        t = board.tile(x, y)
+        tiles_snapshot.append({
+            "x": x,
+            "y": y,
+            "terrain": t.terrain,
+            "building_hp": t.building_hp,
+            "fire": t.on_fire,
+            "acid": t.acid,
+            "smoke": t.smoke,
+            "has_pod": t.has_pod,
+        })
+
+    return {
+        "action_index": action_index,
+        "mech_uid": mech_uid,
+        "snapshot_phase": "after_move",
+        "units": units_snapshot,
+        "tiles_changed": tiles_snapshot,
+        "grid_power": board.grid_power,
+    }
+
+
 def snapshot_after_action(
     board,
     action_index: int,
@@ -295,6 +368,8 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
 # Top-label priority — set by Phase 2's plan, see plan §2C.
 _CATEGORY_PRIORITY = [
     "click_miss",
+    "mech_position_wrong",
+    "move_blocked",
     "death",
     "damage_amount",
     "push_dir",
@@ -307,8 +382,14 @@ _CATEGORY_PRIORITY = [
 ]
 
 
-def classify_diff(diff: DiffResult, mech_uid: int = None) -> dict:
+def classify_diff(diff: DiffResult, mech_uid: int = None, phase: str = "action") -> dict:
     """Classify a diff into a top category, all categories, and a subcategory.
+
+    Args:
+        diff: The DiffResult to classify.
+        mech_uid: UID of the acting mech (for mech-specific classification).
+        phase: "move", "attack", or "action" (combined). Controls category
+               selection for mech position diffs.
 
     Returns a dict with:
         top_category: str — single label by priority order
@@ -324,10 +405,11 @@ def classify_diff(diff: DiffResult, mech_uid: int = None) -> dict:
         is_mech_diff = mech_uid is not None and ud["uid"] == mech_uid
 
         if f == "pos":
-            # Mech position desync = click missed (or wrong tile selected).
-            # Vek position desync = push direction mispredicted.
             if is_mech_diff or "Mech" in utype:
-                categories.add("click_miss")
+                if phase == "move":
+                    categories.add("mech_position_wrong")
+                else:
+                    categories.add("click_miss")
             else:
                 categories.add("push_dir")
         elif f == "active" and is_mech_diff:
