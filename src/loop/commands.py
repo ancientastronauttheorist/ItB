@@ -549,8 +549,9 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     for dt in deploy_tiles:
                         print(f"  {dt['visual']} (bridge {dt['bridge']}) -> MCP ({dt['mcp'][0]}, {dt['mcp'][1]})")
 
-                # Environment danger tiles (tidal waves, air strikes, etc.)
+                # Environment danger tiles
                 env_danger = bridge_data.get("environment_danger", [])
+                env_type = bridge_data.get("env_type", "unknown")
                 if env_danger:
                     danger_tiles = []
                     for tile in env_danger:
@@ -563,9 +564,20 @@ def cmd_read(profile: str = "Alpha") -> dict:
                                 "visual": f"{visual_col}{visual_row}",
                             })
                     result["environment_danger"] = danger_tiles
-                    print(f"\nENVIRONMENT DANGER ({len(danger_tiles)} tiles):")
+                    result["env_type"] = env_type
+                    _ENV_LABELS = {
+                        "wind": "PUSH (non-lethal)",
+                        "sandstorm": "SMOKE (non-lethal)",
+                        "snow": "FREEZE (non-lethal)",
+                        "lightning_or_airstrike": "LETHAL (instant-kill)",
+                        "tidal_or_cataclysm": "LETHAL (terrain conversion)",
+                        "cataclysm_or_seismic": "LETHAL (terrain→chasm)",
+                        "unknown": "LETHAL (default)",
+                    }
+                    label = _ENV_LABELS.get(env_type, "LETHAL (default)")
+                    print(f"\nENVIRONMENT DANGER ({len(danger_tiles)} tiles) — {label}:")
                     for dt in danger_tiles:
-                        print(f"  {dt['visual']} (bridge {dt['bridge']}) -- will flood at end of turn")
+                        print(f"  {dt['visual']} (bridge {dt['bridge']})")
 
             if old_phase != phase and old_phase != "unknown":
                 logger = _get_logger(session)

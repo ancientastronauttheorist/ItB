@@ -332,26 +332,64 @@ local function dump_state()
     state.environment_danger = {}
     state.environment_danger_v2 = {}
 
-    -- Determine env-wide damage/kill defaults from the live mission environment.
-    -- DAMAGE_DEATH (instant-kill) covers air strike, lightning, cataclysm,
-    -- falling rock, tentacles, volcanic projectile. Tidal waves and similar
-    -- non-lethal envs don't set Damage to DAMAGE_DEATH.
+    -- Default all env_danger tiles to lethal (kill=1). Most hazards ARE
+    -- lethal to ground units: Air Strike, Lightning, Cataclysm→chasm,
+    -- Seismic→chasm, Tidal Waves→water. Non-lethal hazards (Wind Storm,
+    -- Sandstorm, SnowStorm) detected via LiveEnvironment field signatures
+    -- and get kill=0.
     local env_damage = 1
-    local env_kill = false
+    local env_kill_default = true
+
+    -- Detect hazard type via LiveEnvironment field signatures:
+    --   WindDir       → Wind Storm (push, non-lethal)
+    --   Row           → Sandstorm (smoke, non-lethal)
+    --   Indices (only)→ SnowStorm/IceStorm (freeze, non-lethal)
+    --   Locations     → Lightning/Air Strike/Seismic (lethal)
+    --   Index (only)  → Tidal Wave/Cataclysm (lethal)
+    -- Fallback: try matching Lua class globals for Sandstorm edge case.
+    local env_type = "unknown"
     pcall(function()
         local mission = GetCurrentMission and GetCurrentMission()
-        if mission and mission.LiveEnvironment and mission.LiveEnvironment.Damage then
-            if DAMAGE_DEATH ~= nil and mission.LiveEnvironment.Damage == DAMAGE_DEATH then
-                env_kill = true
+        if mission and mission.LiveEnvironment then
+            local le = mission.LiveEnvironment
+            if le.WindDir ~= nil then
+                env_type = "wind"
+                env_kill_default = false
+            elseif le.Row ~= nil then
+                env_type = "sandstorm"
+                env_kill_default = false
+            elseif le.Indices ~= nil then
+                env_type = "snow"
+                env_kill_default = false
+            elseif le.Locations ~= nil then
+                env_type = "lightning_or_airstrike"
+            elseif le.Index ~= nil then
+                env_type = "tidal_or_cataclysm"
+            elseif le.StartEffect ~= nil then
+                env_type = "cataclysm_or_seismic"
+            end
+            -- Fallback class matching for Sandstorm (Row may be nil initially)
+            if env_type == "unknown" then
+                local cls = _G and _G["Env_Sandstorm"]
+                if cls then
+                    local mt = getmetatable(le)
+                    if mt and (mt == cls or mt.__index == cls) then
+                        env_type = "sandstorm"
+                        env_kill_default = false
+                    end
+                end
             end
         end
     end)
+    state.env_type = env_type
 
     -- Helper: add a danger tile to both v1 and v2 fields.
     local function add_danger(x, y, kill_override)
         state.environment_danger[#state.environment_danger + 1] = {x, y}
-        local k = kill_override
-        if k == nil then k = env_kill end
+        local k = env_kill_default
+        if kill_override ~= nil then
+            k = kill_override
+        end
         state.environment_danger_v2[#state.environment_danger_v2 + 1] = {x, y, env_damage, k and 1 or 0}
     end
 
@@ -392,6 +430,14 @@ local function dump_state()
     if _ITB_DEPLOY_ZONE and #_ITB_DEPLOY_ZONE > 0 then
         state.deployment_zone = _ITB_DEPLOY_ZONE
     end
+
+    -- Mission metadata for hazard classification
+    pcall(function()
+        local mission = GetCurrentMission and GetCurrentMission()
+        if mission then
+            state.mission_id = mission.ID
+        end
+    end)
 
     write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
 end
