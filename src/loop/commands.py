@@ -25,7 +25,7 @@ from src.capture.save_parser import (
 )
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
-from src.solver.solver import solve_turn, MechAction, replay_solution
+from src.solver.solver import MechAction, replay_solution
 from src.solver.evaluate import evaluate_threats
 from src.control.executor import (
     plan_single_mech,
@@ -830,11 +830,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         except Exception as e:
             print(f"  Rust solver error: {e}")
 
-    # Rust solver is the only solver. If it failed, error out.
+    # Rust solver is the only solver. If it failed, return empty solution.
     if solution is None:
-        print("  WARNING: Falling back to Python solver (Rust solver unavailable)")
-        solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
-                              environment_danger=environment_danger)
+        from src.solver.solver import Solution
+        print("  ERROR: Rust solver failed — no solution available")
+        solution = Solution()
 
     if not solution.actions:
         result = {
@@ -1915,11 +1915,12 @@ def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0,
         try:
             solution = _solve_with_rust(bridge_data, time_limit)
         except Exception as e:
-            print(f"  Rust solver error: {e}, falling back to Python")
+            print(f"  Rust solver error: {e}")
 
     if solution is None:
-        solution = solve_turn(board, spawn_points=spawns, time_limit=time_limit,
-                              environment_danger=environment_danger)
+        from src.solver.solver import Solution
+        print("  ERROR: Rust solver failed — no solution available")
+        solution = Solution()
 
     # Replay for enriched data
     enriched = None

@@ -19,7 +19,8 @@ import time
 from src.capture.save_parser import load_game_state
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
-from src.solver.solver import solve_turn
+# Python solver removed — Rust solver (itb_solver) is the only solver.
+# This legacy entry point is kept for backward compatibility.
 from src.control.executor import GameExecutor
 
 
@@ -41,7 +42,7 @@ def read_state():
 
 def solve(board, spawns):
     """Run the solver on the current board state."""
-    return solve_turn(board, spawn_points=spawns, time_limit=10.0)
+    raise RuntimeError("Python solver removed. Use game_loop.py solve (Rust solver).")
 
 
 def display_state(board):
