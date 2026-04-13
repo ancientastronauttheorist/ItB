@@ -46,7 +46,6 @@ pub struct EvalWeights {
     pub enemy_hp_remaining: f64, // negative
     pub mech_killed: f64,        // negative
     pub mech_hp: f64,
-    pub mech_centrality: f64,    // negative (penalizes distance from center)
     pub spawn_blocked: f64,
     pub pod_uncollected: f64,    // negative
     pub pod_proximity: f64,
@@ -69,6 +68,12 @@ pub struct EvalWeights {
     pub grid_urgency_high: f64,      // grid_power == 2
     pub grid_urgency_medium: f64,    // grid_power == 3
 
+    // Pro-strategy weights
+    pub threats_cleared: f64,        // reward per building threat neutralized
+    pub body_block_bonus: f64,       // reward per mech absorbing a building threat
+    pub building_coverage: f64,      // bonus per building within mech reach
+    pub uncovered_building: f64,     // penalty per building not near any mech (negative)
+
     // Achievement-specific (all default 0 — no effect in normal play)
     pub enemy_on_fire: f64,
     pub enemy_pushed_into_enemy: f64,
@@ -87,8 +92,7 @@ impl Default for EvalWeights {
             enemy_hp_remaining: -50.0,
             mech_killed: -150000.0,
             mech_hp: 100.0,
-            mech_centrality: -5.0,
-            spawn_blocked: 400.0,
+            spawn_blocked: 600.0,
             pod_uncollected: -100.0,
             pod_proximity: 50.0,
             enemy_on_danger: 400.0,
@@ -102,6 +106,11 @@ impl Default for EvalWeights {
             enemy_on_fire_bonus: 100.0,
             mech_on_acid: -200.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
+            // Pro-strategy
+            threats_cleared: 800.0,
+            body_block_bonus: 200.0,
+            building_coverage: 15.0,
+            uncovered_building: -80.0,
             // Grid urgency
             grid_urgency_critical: 5.0,
             grid_urgency_high: 3.0,
@@ -155,6 +164,7 @@ pub fn evaluate(
     weights: &EvalWeights,
     kills: i32,
     psion_before: &PsionState,
+    initial_building_threats: u64,
 ) -> f64 {
     // Game over: grid power depleted.
     // Instead of flat -999999, use -500000 + normal score so the solver
@@ -202,6 +212,30 @@ pub fn evaluate(
         if u.is_enemy() && u.alive() {
             // damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
             score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90);
+        }
+    }
+
+    // ── Threats cleared: reward neutralizing building threats ─────────
+    // Compare initial building_threats bitset against post-attack survival.
+    // Any threatened building that survived = a cleared threat (push, kill,
+    // freeze, smoke, body-block — all count).
+    if initial_building_threats != 0 {
+        let mut bits = initial_building_threats;
+        while bits != 0 {
+            let bit_idx = bits.trailing_zeros() as usize;
+            bits &= bits - 1; // clear lowest set bit
+            let (tx, ty) = idx_to_xy(bit_idx);
+            let tile = board.tile(tx, ty);
+            if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+                // Building survived — this threat was cleared
+                score += scaled(weights.threats_cleared, ff, 0.30, 0.70);
+                // Body-block bonus: mech standing on this threat tile absorbed the hit
+                if let Some(idx) = board.unit_at(tx, ty) {
+                    if board.units[idx].is_player() && board.units[idx].is_mech() {
+                        score += scaled(weights.body_block_bonus, ff, 0.20, 0.80);
+                    }
+                }
+            }
         }
     }
 
@@ -267,14 +301,44 @@ pub fn evaluate(
             score += weights.mech_killed;
         } else {
             score += u.hp as f64 * scaled(weights.mech_hp, ff, 0.20, 0.80);
-            let cx = (u.x as f64 - 3.5).abs();
-            let cy = (u.y as f64 - 3.5).abs();
-            score += (cx + cy) * weights.mech_centrality * ff;
 
             // ACID tile avoidance: penalize mech on ACID pool
             let tile = board.tile(u.x, u.y);
             if tile.acid() && tile.terrain != Terrain::Water {
                 score += scaled(weights.mech_on_acid, ff, 0.50, 0.50);
+            }
+        }
+    }
+
+    // ── Building coverage: reward mechs positioned near buildings ──────
+    // Pro strategy: distribute mechs for comprehensive coverage.
+    // For each building, check if any alive mech can reach it (within move+1).
+    // Penalize uncovered buildings — no mech nearby means no defense.
+    if ff > 0.01 {
+        let mut mech_pos: [(u8, u8, u8); 4] = [(0, 0, 0); 4]; // (x, y, move_speed)
+        let mut mc = 0usize;
+        for i in 0..board.unit_count as usize {
+            let u = &board.units[i];
+            if u.is_player() && u.is_mech() && u.alive() && mc < 4 {
+                mech_pos[mc] = (u.x, u.y, u.move_speed);
+                mc += 1;
+            }
+        }
+        for idx in 0..64 {
+            let tile = &board.tiles[idx];
+            if tile.terrain != Terrain::Building || tile.building_hp == 0 { continue; }
+            let (bx, by) = idx_to_xy(idx);
+            let mut covered = false;
+            for m in 0..mc {
+                let (mx, my, ms) = mech_pos[m];
+                let dist = (mx as i32 - bx as i32).abs() + (my as i32 - by as i32).abs();
+                if dist <= (ms as i32 + 1) {
+                    score += weights.building_coverage * ff;
+                    covered = true;
+                }
+            }
+            if !covered {
+                score += weights.uncovered_building * ff;
             }
         }
     }
@@ -321,7 +385,7 @@ mod tests {
     fn test_empty_board_score() {
         let board = Board::default();
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, &no_psion());
+        let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
         assert!((score - 35000.0).abs() < 0.01);
     }
 
@@ -331,8 +395,9 @@ mod tests {
         board.tile_mut(3, 3).terrain = Terrain::Building;
         board.tile_mut(3, 3).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, &no_psion());
-        assert!((score - 47000.0).abs() < 0.01);
+        let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
+        // 35000 grid + 10000 building + 2000 hp - 80 uncovered_building = 46920
+        assert!((score - 46920.0).abs() < 0.01);
     }
 
     #[test]
@@ -342,15 +407,15 @@ mod tests {
         let mut b1 = Board::default();
         b1.current_turn = 1;
         b1.total_turns = 5;
-        let s0 = evaluate(&b1, &[], &w, 0, &p);
-        let s1 = evaluate(&b1, &[], &w, 2, &p);
+        let s0 = evaluate(&b1, &[], &w, 0, &p, 0);
+        let s1 = evaluate(&b1, &[], &w, 2, &p, 0);
         assert!((s1 - s0 - 1800.0).abs() < 1.0);
 
         let mut b5 = Board::default();
         b5.current_turn = 5;
         b5.total_turns = 5;
-        let s0 = evaluate(&b5, &[], &w, 0, &p);
-        let s1 = evaluate(&b5, &[], &w, 2, &p);
+        let s0 = evaluate(&b5, &[], &w, 0, &p, 0);
+        let s1 = evaluate(&b5, &[], &w, 2, &p, 0);
         assert!((s1 - s0 - 200.0).abs() < 1.0);
     }
 
@@ -361,9 +426,9 @@ mod tests {
         board.tile_mut(0, 0).terrain = Terrain::Building;
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, &no_psion());
-        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000) + 1 HP(2000) = 37000
-        assert!((score - 37000.0).abs() < 0.01);
+        let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
+        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000) + 1 HP(2000) - 80 uncovered = 36920
+        assert!((score - 36920.0).abs() < 0.01);
     }
 
     #[test]
@@ -378,8 +443,8 @@ mod tests {
             flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
             ..Unit::default()
         });
-        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, &no_psion());
-        let without_spawn = evaluate(&board, &[], &w, 0, &no_psion());
+        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, &no_psion(), 0);
+        let without_spawn = evaluate(&board, &[], &w, 0, &no_psion(), 0);
         assert!((with_spawn - without_spawn).abs() < 1.0);
     }
 
@@ -399,8 +464,8 @@ mod tests {
         board.total_turns = 5;
         // Blast Psion was active before, now dead
         let p_blast = PsionState { blast: true, ..Default::default() };
-        let with_bonus = evaluate(&board, &[], &w, 0, &p_blast);
-        let without_bonus = evaluate(&board, &[], &w, 0, &no_psion());
+        let with_bonus = evaluate(&board, &[], &w, 0, &p_blast, 0);
+        let without_bonus = evaluate(&board, &[], &w, 0, &no_psion(), 0);
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
     }
 
@@ -411,8 +476,8 @@ mod tests {
         board.current_turn = 1;
         board.total_turns = 5;
         let p_tyrant = PsionState { tyrant: true, ..Default::default() };
-        let with = evaluate(&board, &[], &w, 0, &p_tyrant);
-        let without = evaluate(&board, &[], &w, 0, &no_psion());
+        let with = evaluate(&board, &[], &w, 0, &p_tyrant, 0);
+        let without = evaluate(&board, &[], &w, 0, &no_psion(), 0);
         assert!((with - without - 2500.0).abs() < 1.0);
     }
 }
