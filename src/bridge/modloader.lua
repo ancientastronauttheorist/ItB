@@ -379,6 +379,28 @@ local function dump_state()
                     end
                 end
             end
+            -- Fallback class matching for Ice/Snow Storm variants
+            if env_type == "unknown" then
+                for _, cls_name in ipairs({"Env_IceStorm", "Env_SnowStorm", "Env_Snow"}) do
+                    local cls = _G and _G[cls_name]
+                    if cls then
+                        local mt = getmetatable(le)
+                        if mt and (mt == cls or mt.__index == cls) then
+                            env_type = "snow"
+                            env_kill_default = false
+                            break
+                        end
+                    end
+                end
+            end
+            -- Diagnostic: log LiveEnvironment fields when type is still unknown
+            if env_type == "unknown" then
+                local fields = {}
+                pcall(function()
+                    for k, _ in pairs(le) do fields[#fields+1] = tostring(k) end
+                end)
+                log_bridge("[env] WARNING: unknown env_type. Fields: " .. table.concat(fields, ", "))
+            end
         end
     end)
     state.env_type = env_type
@@ -876,6 +898,11 @@ local _last_state_dump = 0
 -- coroutine and clobber _running_coroutine.
 Mission.BaseUpdate = function(self)
     _orig_BaseUpdate(self)
+    -- Heartbeat: write mtime so Python can detect stuck/dead bridge
+    pcall(function()
+        local f = io.open("/tmp/itb_bridge_heartbeat", "w")
+        if f then f:write(tostring(os.clock())); f:close() end
+    end)
     if _running_coroutine then
         local ok, err = coroutine.resume(_running_coroutine)
         if not ok then

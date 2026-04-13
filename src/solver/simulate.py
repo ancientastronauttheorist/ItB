@@ -281,8 +281,11 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         # the environment resolves at end of turn (tidal wave, air strike)
         if (hasattr(board, 'environment_danger') and board.environment_danger
                 and (nx, ny) in board.environment_danger and not unit.flying):
+            v2 = getattr(board, 'environment_danger_v2', {})
+            _, lethal = v2.get((nx, ny), (1, True))
+            severity = "LETHAL" if lethal else "non-lethal"
             result.events.append(
-                f"{unit.type} on danger tile ({nx},{ny}) -- will die at end of turn"
+                f"{unit.type} on {severity} danger tile ({nx},{ny})"
             )
 
 

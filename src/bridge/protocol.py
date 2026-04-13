@@ -18,6 +18,7 @@ CMD_FILE = Path("/tmp/itb_cmd.txt")
 CMD_TMP = Path("/tmp/itb_cmd.txt.tmp")
 ACK_FILE = Path("/tmp/itb_ack.txt")
 LOG_FILE = Path("/tmp/itb_bridge.log")
+HEARTBEAT_FILE = Path("/tmp/itb_bridge_heartbeat")
 
 # State file must be newer than this many seconds
 STALENESS_THRESHOLD = 300.0  # 5 minutes
@@ -45,6 +46,21 @@ def is_bridge_active() -> bool:
     # State file must not be ancient (game may have closed hours ago)
     age = time.time() - STATE_FILE.stat().st_mtime
     return age < STALENESS_THRESHOLD
+
+
+def is_bridge_alive(max_stale_sec: float = 5.0) -> bool:
+    """Check if the Lua bridge heartbeat is fresh (game loop is ticking).
+
+    The heartbeat file is written every BaseUpdate tick by modloader.lua.
+    If it's stale, the bridge is stuck or the game has closed.
+    """
+    try:
+        if not HEARTBEAT_FILE.exists():
+            return False
+        age = time.time() - HEARTBEAT_FILE.stat().st_mtime
+        return age < max_stale_sec
+    except OSError:
+        return False
 
 
 def refresh_bridge_state() -> bool:
@@ -101,10 +117,16 @@ def write_command(cmd: str) -> None:
 def wait_for_ack(timeout: float = 10.0) -> str:
     """Poll for ACK file. Returns content after stripping sequence ID.
 
+    Two-tier timeout: at 20s, checks the bridge heartbeat. If the heartbeat
+    is stale (Lua stopped ticking), fails fast. If fresh, keeps waiting up
+    to the full timeout (legitimate slow animations can take 30s+).
+
     Raises TimeoutError if no ACK within timeout.
     Raises BridgeError if ACK indicates an error.
     """
     deadline = time.time() + timeout
+    heartbeat_check_at = time.time() + 20.0
+    heartbeat_checked = False
     while time.time() < deadline:
         if ACK_FILE.exists():
             try:
@@ -133,8 +155,15 @@ def wait_for_ack(timeout: float = 10.0) -> str:
                 raise
             except IOError:
                 pass
+        # Two-tier: early fail if bridge heartbeat is stale
+        if not heartbeat_checked and time.time() >= heartbeat_check_at:
+            heartbeat_checked = True
+            if not is_bridge_alive(max_stale_sec=5.0):
+                raise TimeoutError(
+                    f"Bridge heartbeat stale after 20s — Lua stopped ticking"
+                )
         time.sleep(0.1)
-    raise TimeoutError(f"Bridge ACK timeout after {timeout}s")
+    raise TimeoutError(f"Bridge ACK timeout after {timeout:.0f}s")
 
 
 def wait_for_fresh_state(timeout: float = 10.0) -> dict | None:

@@ -120,6 +120,35 @@ def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
     return grid_lost
 
 
+def _simulate_env_effects(board: Board):
+    """Simulate end-of-turn environment effects on units/tiles.
+
+    Called BEFORE enemy attacks (matching the game's interleaved order).
+    Uses environment_danger_v2 for per-tile lethality and env_type for
+    effect type (freeze for snow, smoke for sandstorm, etc.).
+    """
+    v2 = getattr(board, 'environment_danger_v2', {})
+    env_type = getattr(board, 'env_type', 'unknown')
+
+    for (dx, dy), (dmg, lethal) in v2.items():
+        if not board.in_bounds(dx, dy):
+            continue
+        u = board.unit_at(dx, dy)
+
+        if lethal:
+            # Lethal env: kill ground units (bypass shield/frozen/armor)
+            if u and not u.flying:
+                u.hp = 0
+        elif env_type == "snow":
+            # Ice Storm: freeze non-flying units (shield blocks freeze)
+            if u and not u.flying and not u.shield:
+                u.frozen = True
+        elif env_type == "sandstorm":
+            # Sandstorm: add smoke to tile
+            board.tile(dx, dy).smoke = True
+        # Wind (push) is too complex to simulate here — skip
+
+
 def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
     """Simulate all enemy attacks on the post-mech-action board.
 
@@ -164,6 +193,9 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
             continue
 
         wdef = get_weapon_def(enemy.weapon) if enemy.weapon else None
+        # Shamans use support-type weapons (buff allies, no direct damage)
+        if wdef and wdef.weapon_type == "support":
+            continue
         damage = enemy.weapon_damage if enemy.weapon_damage > 0 else (
             wdef.damage if wdef else 1)
         weapon_type = wdef.weapon_type if wdef else "melee"
@@ -290,6 +322,9 @@ def replay_solution(
             "post_move": post_move_snap,
             "post_attack": post_attack_snap,
         })
+
+    # Simulate environment effects (freeze, smoke, etc.) BEFORE enemy attacks
+    _simulate_env_effects(b)
 
     # Simulate enemy attacks on post-mech board
     buildings_destroyed = _simulate_enemy_attacks(b, original_positions)

@@ -26,6 +26,7 @@
     "psion_tyrant": 2500,
     "enemy_on_fire_bonus": 100,
     "mech_on_acid": -200,
+    "mech_low_hp_risk": -2000,
     "friendly_npc_killed": -20000,
     "grid_urgency_critical": 5.0,
     "grid_urgency_high": 3.0,

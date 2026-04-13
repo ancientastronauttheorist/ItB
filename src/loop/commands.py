@@ -575,7 +575,19 @@ def cmd_read(profile: str = "Alpha") -> dict:
                         "cataclysm_or_seismic": "LETHAL (terrain→chasm)",
                         "unknown": "LETHAL (default)",
                     }
-                    label = _ENV_LABELS.get(env_type, "LETHAL (default)")
+                    # Override label from v2 kill_int if available
+                    env_v2 = bridge_data.get("environment_danger_v2", [])
+                    if env_type == "unknown" and env_v2:
+                        all_non_lethal = all(
+                            isinstance(t, (list, tuple)) and len(t) >= 4 and t[3] == 0
+                            for t in env_v2
+                        )
+                        if all_non_lethal:
+                            label = "NON-LETHAL (kill_int=0, env_type unknown)"
+                        else:
+                            label = _ENV_LABELS.get(env_type, "LETHAL (default)")
+                    else:
+                        label = _ENV_LABELS.get(env_type, "LETHAL (default)")
                     print(f"\nENVIRONMENT DANGER ({len(danger_tiles)} tiles) — {label}:")
                     for dt in danger_tiles:
                         print(f"  {dt['visual']} (bridge {dt['bridge']})")
@@ -784,6 +796,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                 for u in bridge_data["units"]:
                     stats = get_pawn_stats(u.get("type", ""))
                     u["ranged"] = stats.ranged
+                    # Clamp u8 fields to prevent Rust deserializer overflow
+                    for k in ("weapon_damage", "weapon_push", "hp", "max_hp"):
+                        if k in u and isinstance(u[k], int) and u[k] > 255:
+                            u[k] = 255
             # Inject custom weights into bridge data for Rust solver
             if eval_weights_dict:
                 bridge_data["eval_weights"] = eval_weights_dict
@@ -2032,6 +2048,10 @@ def _re_solve_partial(
             uid = u.get("uid")
             stats = get_pawn_stats(u.get("type", ""))
             u["ranged"] = stats.ranged
+            # Clamp u8 fields to prevent Rust deserializer overflow
+            for k in ("weapon_damage", "weapon_push", "hp", "max_hp"):
+                if k in u and isinstance(u[k], int) and u[k] > 255:
+                    u[k] = 255
             if uid in done_uids:
                 u["active"] = False
             elif uid == mid_action_uid:
@@ -2383,6 +2403,23 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                     session, "attack", actions_completed, mech_uid,
                     pred_post_attack, actual_board, diff, classification, turn,
                 )
+                # Skip re-solve if spawn-only on last action (new Vek emerged)
+                is_last_action = (action_idx >= len(actions) - 1)
+                spawn_new_only = (
+                    diff.unit_diffs
+                    and all(ud.get("field") == "missing_in_predicted"
+                            for ud in diff.unit_diffs)
+                    and not diff.tile_diffs
+                    and not diff.scalar_diffs
+                )
+                if spawn_new_only and is_last_action:
+                    print(f"  DESYNC action {actions_completed} attack: "
+                          f"{diff.total_count()} diffs [spawn-only on last action, skipping re-solve]")
+                    done_uids.add(mech_uid)
+                    actions_completed += 1
+                    action_idx += 1
+                    continue
+
                 re_solve_count += 1
                 # Re-solve for remaining mechs
                 done_uids.add(mech_uid)

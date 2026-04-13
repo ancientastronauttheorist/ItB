@@ -47,6 +47,7 @@ class EvalWeights:
     # Status effect bonuses
     enemy_on_fire_bonus: float = 100  # enemy on fire (1 dmg/turn)
     mech_on_acid: float = -200        # mech on ACID pool (penalty)
+    mech_low_hp_risk: float = -2000   # 1HP mech near active enemy (binary)
     friendly_npc_killed: float = -20000  # non-mech player unit killed (penalty)
 
     # Grid urgency multipliers (applied to building scores)
@@ -180,12 +181,17 @@ def evaluate(
 
     # --- ENVIRONMENT DANGER: SCALED ---
     if hasattr(board, 'environment_danger') and board.environment_danger:
+        v2 = getattr(board, 'environment_danger_v2', {})
         for e in board.enemies():
             if (e.x, e.y) in board.environment_danger and not e.flying:
                 score += _scaled(w.enemy_on_danger, ff, 0.20, 1.60)
         for m in board.mechs():
             if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
-                score += w.mech_killed
+                dmg, lethal = v2.get((m.x, m.y), (1, True))
+                if lethal or m.hp <= dmg:
+                    score += w.mech_killed
+                else:
+                    score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1
 
     # --- MECHS: SCALED ---
     mechs = board.mechs()
@@ -197,6 +203,17 @@ def evaluate(
             cx = abs(m.x - 3.5)
             cy = abs(m.y - 3.5)
             score += (cx + cy) * w.mech_centrality * ff
+            # Low-HP risk: penalize 1HP mech near active enemies
+            if m.hp == 1:
+                for e in board.enemies():
+                    if e.hp <= 0 or e.frozen or e.web:
+                        continue
+                    t = board.tile(e.x, e.y)
+                    if t.smoke:
+                        continue
+                    if abs(m.x - e.x) + abs(m.y - e.y) <= 3:
+                        score += _scaled(w.mech_low_hp_risk, ff, 0.0, 1.0)
+                        break  # binary: once per mech
 
     # --- SPAWNS BLOCKED: SCALED (zero on final turn) ---
     if spawn_points:
@@ -276,6 +293,7 @@ def evaluate_breakdown(
     danger_mechs_on = 0
     danger_score = 0.0
     if hasattr(board, 'environment_danger') and board.environment_danger:
+        v2 = getattr(board, 'environment_danger_v2', {})
         for e in board.enemies():
             if (e.x, e.y) in board.environment_danger and not e.flying:
                 danger_enemies_on += 1
@@ -283,7 +301,11 @@ def evaluate_breakdown(
         for m in board.mechs():
             if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
                 danger_mechs_on += 1
-                danger_score += w.mech_killed
+                dmg, lethal = v2.get((m.x, m.y), (1, True))
+                if lethal or m.hp <= dmg:
+                    danger_score += w.mech_killed
+                else:
+                    danger_score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1
 
     # --- MECHS ---
     mechs = board.mechs()

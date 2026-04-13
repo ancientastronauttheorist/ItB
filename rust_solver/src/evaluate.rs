@@ -61,6 +61,7 @@ pub struct EvalWeights {
     // Status effect bonuses
     pub enemy_on_fire_bonus: f64,    // enemy on fire (will take 1 dmg/turn)
     pub mech_on_acid: f64,           // mech standing on ACID pool (penalty)
+    pub mech_low_hp_risk: f64,       // 1HP mech near active enemy (binary, negative)
     pub friendly_npc_killed: f64,    // non-mech player unit killed (penalty)
 
     // Grid urgency multipliers (applied to building scores)
@@ -105,6 +106,7 @@ impl Default for EvalWeights {
             // Status bonuses
             enemy_on_fire_bonus: 100.0,
             mech_on_acid: -200.0,
+            mech_low_hp_risk: -2000.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
             // Pro-strategy
             threats_cleared: 800.0,
@@ -306,6 +308,21 @@ pub fn evaluate(
             let tile = board.tile(u.x, u.y);
             if tile.acid() && tile.terrain != Terrain::Water {
                 score += scaled(weights.mech_on_acid, ff, 0.50, 0.50);
+            }
+
+            // Low-HP risk: penalize 1HP mech near active (non-frozen/smoked) enemies
+            if u.hp == 1 {
+                let dominated = (0..board.unit_count as usize).any(|j| {
+                    let e = &board.units[j];
+                    e.is_enemy() && e.hp > 0
+                        && !e.frozen() && !e.web()
+                        && !board.tile(e.x, e.y).smoke()
+                        && ((u.x as i32 - e.x as i32).abs()
+                          + (u.y as i32 - e.y as i32).abs()) <= 3
+                });
+                if dominated {
+                    score += scaled(weights.mech_low_hp_risk, ff, 0.0, 1.0);
+                }
             }
         }
     }

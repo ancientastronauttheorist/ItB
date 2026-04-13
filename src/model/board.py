@@ -89,6 +89,9 @@ class Board:
         self.grid_power: int = 0
         self.grid_power_max: int = 7
         self.environment_danger: set[tuple[int, int]] = set()
+        self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
+        # Maps (x,y) -> (damage, is_lethal)
+        self.env_type: str = "unknown"
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
 
@@ -100,6 +103,8 @@ class Board:
         b.grid_power = self.grid_power
         b.grid_power_max = self.grid_power_max
         b.environment_danger = set(self.environment_danger)
+        b.environment_danger_v2 = dict(self.environment_danger_v2)
+        b.env_type = self.env_type
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         return b
@@ -247,11 +252,19 @@ class Board:
                     # Mountains have 2 HP (bridge doesn't send mountain HP)
                     bt.building_hp = td.get("building_hp", 2)
 
-        # Environment danger tiles (tidal waves, air strikes, etc.)
-        # These tiles will become deadly terrain at end of turn.
+        # Environment danger: v2 format has per-tile lethality [x, y, damage, kill_int]
+        board.env_type = data.get("env_type", "unknown")
+        for dt in data.get("environment_danger_v2", []):
+            if isinstance(dt, (list, tuple)) and len(dt) >= 4:
+                board.environment_danger.add((dt[0], dt[1]))
+                board.environment_danger_v2[(dt[0], dt[1])] = (dt[2], dt[3] != 0)
+        # Backwards compat: v1 entries not in v2 default to lethal
         for dt in data.get("environment_danger", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 2:
-                board.environment_danger.add((dt[0], dt[1]))
+                pos = (dt[0], dt[1])
+                board.environment_danger.add(pos)
+                if pos not in board.environment_danger_v2:
+                    board.environment_danger_v2[pos] = (1, True)
 
         # Units
         for ud in data.get("units", []):
@@ -297,7 +310,7 @@ class Board:
                 target_y=qt_y,
                 queued_target_x=qt_x,
                 queued_target_y=qt_y,
-                weapon_damage=ud.get("weapon_damage", 0),
+                weapon_damage=min(ud.get("weapon_damage", 0), 255),
                 weapon_target_behind=ud.get("weapon_target_behind", False),
                 weapon_push=ud.get("weapon_push", 0),
             )

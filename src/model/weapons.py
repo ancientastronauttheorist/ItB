@@ -622,6 +622,20 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Firefly Boss Shot", weapon_type="projectile",
         damage=4, range_max=0,
     ),
+
+    # ── Shamans (support/buff — no direct damage) ───────────────────
+    "ShamanAtk1": WeaponDef(
+        name="Shaman Buff", weapon_type="support",
+        damage=0, targets_allies=True,
+    ),
+    "ShamanAtk2": WeaponDef(
+        name="Alpha Shaman Buff", weapon_type="support",
+        damage=0, targets_allies=True,
+    ),
+    "ShamanAtkB": WeaponDef(
+        name="Shaman Boss Attack", weapon_type="support",
+        damage=0, targets_allies=True,
+    ),
 }
 
 
