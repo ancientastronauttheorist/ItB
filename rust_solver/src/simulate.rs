@@ -139,21 +139,30 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
-    // Damage building if present
+    // Acid pool creation: unit with acid dies → acid pool on tile
+    if let Some(idx) = board.unit_at(x, y) {
+        let unit = &board.units[idx];
+        if unit.hp <= 0 && unit.acid() {
+            let tile = board.tile(x, y);
+            if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
+                board.tile_mut(x, y).flags |= TileFlags::ACID;
+            }
+        }
+    }
+
+    // Damage building if present — any damage destroys ALL buildings on the tile
+    // (ITB rule: multi-building tiles are all-or-nothing, not incremental HP)
     let mut bldg_hp_lost: u8 = 0;
     {
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            let actual_bldg = if source == DamageSource::Bump { 1 } else { damage };
             let old_hp = tile.building_hp;
-            tile.building_hp = tile.building_hp.saturating_sub(actual_bldg);
-            bldg_hp_lost = old_hp - tile.building_hp;
-            result.buildings_damaged += bldg_hp_lost as i32;
-            result.grid_damage += bldg_hp_lost as i32;
-            if tile.building_hp == 0 {
-                tile.terrain = Terrain::Rubble;
-                result.buildings_lost += 1;
-            }
+            tile.building_hp = 0;
+            tile.terrain = Terrain::Rubble;
+            bldg_hp_lost = old_hp;
+            result.buildings_damaged += old_hp as i32;
+            result.grid_damage += old_hp as i32;
+            result.buildings_lost += 1;
         }
     }
     if bldg_hp_lost > 0 {
@@ -885,7 +894,14 @@ pub fn simulate_action(
         unit.hp = unit.hp.min(unit.max_hp - 1) + 1; // heal 1
         unit.set_fire(false);
         unit.set_acid(false);
+        unit.set_frozen(false);
         unit.set_active(false);
+        return result;
+    }
+
+    // Frozen mech cannot attack — only repair (handled above) is allowed
+    if board.units[mech_idx].frozen() {
+        board.units[mech_idx].set_active(false);
         return result;
     }
 

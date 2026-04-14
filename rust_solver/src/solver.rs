@@ -169,6 +169,16 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
     let unit = &board.units[mech_idx];
     let mut actions = Vec::with_capacity(100);
 
+    // Frozen mechs can ONLY repair (to break free). No movement, no attacks.
+    if unit.frozen() {
+        let pos = (unit.x, unit.y);
+        let tile = board.tile(pos.0, pos.1);
+        if !tile.smoke() {
+            actions.push((pos, WId::Repair, pos));
+        }
+        return actions;
+    }
+
     // MID_ACTION mechs (can_move=false): already moved, only generate
     // attack/repair options from current position.
     let positions = if unit.can_move() {
@@ -203,8 +213,8 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
                 }
             }
 
-            // Repair (if damaged/on_fire/acid)
-            if unit.hp < unit.max_hp || unit.fire() || unit.acid() {
+            // Repair (if damaged/on_fire/acid/frozen)
+            if unit.hp < unit.max_hp || unit.fire() || unit.acid() || unit.frozen() {
                 actions.push((pos, WId::Repair, pos));
             }
         }

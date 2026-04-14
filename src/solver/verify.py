@@ -246,8 +246,14 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             })
             continue
 
-        # Unit only in predicted: removed by the actual game (rare).
+        # Unit only in predicted: removed by the actual game.
+        # Dead enemies are expected to be absent from the bridge —
+        # the game engine removes dead Vek entirely (only mech wrecks persist).
         if au is None:
+            pu_alive = pu.get("alive", True)
+            pu_hp = pu.get("hp", 1)
+            if not pu_alive or pu_hp <= 0:
+                continue  # expected: dead enemy gone from bridge
             result.unit_diffs.append({
                 "uid": uid,
                 "type": pu.get("type"),

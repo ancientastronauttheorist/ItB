@@ -796,6 +796,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                 for u in bridge_data["units"]:
                     stats = get_pawn_stats(u.get("type", ""))
                     u["ranged"] = stats.ranged
+                    if not stats.pushable:
+                        u["pushable"] = False
                     # Clamp u8 fields to prevent Rust deserializer overflow
                     for k in ("weapon_damage", "weapon_push", "hp", "max_hp"):
                         if k in u and isinstance(u[k], int) and u[k] > 255:
@@ -1849,11 +1851,13 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
 
     bd = copy.deepcopy(bridge_data)
 
-    # Augment unit data with ranged flag
+    # Augment unit data with ranged/pushable flags
     if "units" in bd:
         for u in bd["units"]:
             stats = get_pawn_stats(u.get("type", ""))
             u["ranged"] = stats.ranged
+            if not stats.pushable:
+                u["pushable"] = False
 
     # Inject weights
     if weights:
@@ -2066,6 +2070,8 @@ def _re_solve_partial(
             uid = u.get("uid")
             stats = get_pawn_stats(u.get("type", ""))
             u["ranged"] = stats.ranged
+            if not stats.pushable:
+                u["pushable"] = False
             # Clamp u8 fields to prevent Rust deserializer overflow
             for k in ("weapon_damage", "weapon_push", "hp", "max_hp"):
                 if k in u and isinstance(u[k], int) and u[k] > 255:

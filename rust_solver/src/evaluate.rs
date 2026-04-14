@@ -74,6 +74,8 @@ pub struct EvalWeights {
     pub body_block_bonus: f64,       // reward per mech absorbing a building threat
     pub building_coverage: f64,      // bonus per building within mech reach
     pub uncovered_building: f64,     // penalty per building not near any mech (negative)
+    pub perfect_defense_bonus: f64,  // bonus when ALL building threats cleared
+    pub mech_sacrifice_at_critical: f64, // reduces mech_killed penalty at grid<=2 (positive)
 
     // Achievement-specific (all default 0 — no effect in normal play)
     pub enemy_on_fire: f64,
@@ -109,10 +111,12 @@ impl Default for EvalWeights {
             mech_low_hp_risk: -2000.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
             // Pro-strategy
-            threats_cleared: 800.0,
-            body_block_bonus: 200.0,
-            building_coverage: 15.0,
-            uncovered_building: -80.0,
+            threats_cleared: 2000.0,
+            body_block_bonus: 600.0,
+            building_coverage: 50.0,
+            uncovered_building: -500.0,
+            perfect_defense_bonus: 3000.0,
+            mech_sacrifice_at_critical: 50000.0,
             // Grid urgency
             grid_urgency_critical: 5.0,
             grid_urgency_high: 3.0,
@@ -222,6 +226,7 @@ pub fn evaluate(
     // Any threatened building that survived = a cleared threat (push, kill,
     // freeze, smoke, body-block — all count).
     if initial_building_threats != 0 {
+        let mut all_cleared = true;
         let mut bits = initial_building_threats;
         while bits != 0 {
             let bit_idx = bits.trailing_zeros() as usize;
@@ -230,14 +235,21 @@ pub fn evaluate(
             let tile = board.tile(tx, ty);
             if tile.terrain == Terrain::Building && tile.building_hp > 0 {
                 // Building survived — this threat was cleared
-                score += scaled(weights.threats_cleared, ff, 0.30, 0.70);
+                // Scale by grid_multiplier: clearing threats is worth MORE at low grid
+                score += scaled(weights.threats_cleared, ff, 0.30, 0.70) * grid_multiplier;
                 // Body-block bonus: mech standing on this threat tile absorbed the hit
                 if let Some(idx) = board.unit_at(tx, ty) {
                     if board.units[idx].is_player() && board.units[idx].is_mech() {
-                        score += scaled(weights.body_block_bonus, ff, 0.20, 0.80);
+                        score += scaled(weights.body_block_bonus, ff, 0.20, 0.80) * grid_multiplier;
                     }
                 }
+            } else {
+                all_cleared = false;
             }
+        }
+        // Perfect defense bonus: ALL initially-threatened buildings survived
+        if all_cleared {
+            score += weights.perfect_defense_bonus * grid_multiplier;
         }
     }
 
@@ -300,7 +312,13 @@ pub fn evaluate(
 
         if u.hp <= 0 {
             // Dead is dead — pilot loss is permanent, no future_factor scaling
-            score += weights.mech_killed;
+            let mut penalty = weights.mech_killed;
+            // At critical grid, reduce mech death penalty — losing a mech is
+            // preferable to losing the game from undefended buildings
+            if board.grid_power <= 2 {
+                penalty += weights.mech_sacrifice_at_critical;
+            }
+            score += penalty;
         } else {
             score += u.hp as f64 * scaled(weights.mech_hp, ff, 0.20, 0.80);
 
@@ -331,7 +349,9 @@ pub fn evaluate(
     // Pro strategy: distribute mechs for comprehensive coverage.
     // For each building, check if any alive mech can reach it (within move+1).
     // Penalize uncovered buildings — no mech nearby means no defense.
-    if ff > 0.01 {
+    // Building coverage: at low grid, ensure coverage still fires even on final turn
+    let coverage_ff = if grid_multiplier > 1.0 { ff.max(0.5) } else { ff };
+    if coverage_ff > 0.01 {
         let mut mech_pos: [(u8, u8, u8); 4] = [(0, 0, 0); 4]; // (x, y, move_speed)
         let mut mc = 0usize;
         for i in 0..board.unit_count as usize {
@@ -350,12 +370,13 @@ pub fn evaluate(
                 let (mx, my, ms) = mech_pos[m];
                 let dist = (mx as i32 - bx as i32).abs() + (my as i32 - by as i32).abs();
                 if dist <= (ms as i32 + 1) {
-                    score += weights.building_coverage * ff;
+                    score += weights.building_coverage * coverage_ff;
                     covered = true;
                 }
             }
             if !covered {
-                score += weights.uncovered_building * ff;
+                // Scale by grid_multiplier: uncovered buildings are more dangerous at low grid
+                score += weights.uncovered_building * coverage_ff * grid_multiplier;
             }
         }
     }

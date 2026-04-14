@@ -133,21 +133,22 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                     result.mechs_killed += 1
                     result.events.append(f"Mech {unit.type} destroyed at ({x},{y})")
 
+    # Acid pool creation: unit with acid dies → acid pool on tile
+    if unit and unit.hp <= 0 and getattr(unit, 'acid', False):
+        if tile.terrain not in TERRAIN_DEADLY_GROUND or tile.terrain == "water":
+            tile.acid = True
+            tile.on_fire = False
+
     if tile.terrain == "building" and tile.building_hp > 0 and damage > 0:
-        # Buildings take full weapon damage (each HP lost = 1 grid power)
-        actual_bldg = damage if source not in ("bump",) else 1
+        # Any damage destroys ALL buildings on the tile (all-or-nothing rule)
         old_hp = tile.building_hp
-        tile.building_hp = max(0, tile.building_hp - actual_bldg)
-        hp_lost = old_hp - tile.building_hp
-        result.buildings_damaged += hp_lost
-        result.grid_damage += hp_lost
-        board.grid_power = max(0, board.grid_power - hp_lost)
-        if tile.building_hp <= 0:
-            tile.terrain = "rubble"
-            result.buildings_lost += 1
-            result.events.append(f"Building destroyed at ({x},{y}) ({hp_lost} grid damage)")
-        elif hp_lost > 0:
-            result.events.append(f"Building damaged at ({x},{y}) ({hp_lost} grid damage)")
+        tile.building_hp = 0
+        tile.terrain = "rubble"
+        result.buildings_damaged += old_hp
+        result.grid_damage += old_hp
+        result.buildings_lost += 1
+        board.grid_power = max(0, board.grid_power - old_hp)
+        result.events.append(f"Building destroyed at ({x},{y}) ({old_hp} grid damage)")
 
     # Ice tile destruction: ice → cracked → water
     # Fire attacks skip cracked and go straight to water.
@@ -664,10 +665,17 @@ def simulate_attack(
         mech.hp = min(mech.hp + 1, mech.max_hp)
         mech.fire = False
         mech.acid = False
+        mech.frozen = False
         result.events.append(
             f"{mech.type} repaired at ({mech.x},{mech.y})"
-            f" (+{healed} HP, cleared fire/acid)")
+            f" (+{healed} HP, cleared fire/acid/frozen)")
         mech.active = False
+        return result
+
+    # Frozen mech cannot attack — only repair is allowed
+    if mech.frozen:
+        mech.active = False
+        result.events.append(f"{mech.type} is frozen at ({mech.x},{mech.y}), cannot attack")
         return result
 
     if weapon_id and target[0] >= 0:
