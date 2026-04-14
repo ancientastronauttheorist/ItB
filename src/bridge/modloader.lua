@@ -452,8 +452,25 @@ local function dump_state()
         end
     end
 
-    -- Deployment zone (captured in BaseDeployment hook via Board:GetZone)
-    if _ITB_DEPLOY_ZONE and #_ITB_DEPLOY_ZONE > 0 then
+    -- Deployment zone: prefer a live Board:GetZone("deployment") read on every
+    -- dump so the zone is correct even when BaseDeployment hasn't fired yet
+    -- (e.g. between missions) or has been cleared by MissionEnd. Falls back to
+    -- the cached BaseDeployment capture if the live read returns nothing.
+    pcall(function()
+        local ptList = Board and Board.GetZone and Board:GetZone("deployment")
+        if ptList and ptList.size and ptList:size() > 0 then
+            local zone = {}
+            for i = 1, ptList:size() do
+                local p = ptList:index(i)
+                zone[#zone + 1] = {p.x, p.y}
+            end
+            if #zone > 0 then
+                state.deployment_zone = zone
+                _ITB_DEPLOY_ZONE = zone  -- refresh cache for consistency
+            end
+        end
+    end)
+    if not state.deployment_zone and _ITB_DEPLOY_ZONE and #_ITB_DEPLOY_ZONE > 0 then
         state.deployment_zone = _ITB_DEPLOY_ZONE
     end
 
