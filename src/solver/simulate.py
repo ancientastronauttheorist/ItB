@@ -277,6 +277,15 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         )
     else:
         result.events.append(f"Pushed {unit.type} ({x},{y})->({nx},{ny})")
+        # Freeze mine: pushed unit gets frozen, mine consumed
+        if tile_dest.freeze_mine:
+            if not unit.shield:
+                unit.frozen = True
+                result.events.append(f"{unit.type} frozen by mine at ({nx},{ny})")
+            else:
+                unit.shield = False
+                result.events.append(f"{unit.type} shield blocked freeze mine at ({nx},{ny})")
+            tile_dest.freeze_mine = False
         # Check environment danger: unit won't die now, but will when
         # the environment resolves at end of turn (tidal wave, air strike)
         if (hasattr(board, 'environment_danger') and board.environment_danger
@@ -620,6 +629,16 @@ def simulate_move(
         tile.has_pod = False
         result.pods_collected += 1
         result.events.append(f"Collected pod at ({mech.x},{mech.y})")
+
+    # Freeze mine: freezes the mech and is consumed
+    if tile.freeze_mine and move_to != old_pos:
+        if not mech.shield:
+            mech.frozen = True
+            result.events.append(f"{mech.type} frozen by mine at ({mech.x},{mech.y})")
+        else:
+            mech.shield = False
+            result.events.append(f"{mech.type} shield blocked freeze mine at ({mech.x},{mech.y})")
+        tile.freeze_mine = False
 
     if move_to != old_pos:
         result.events.append(f"{mech.type} moved ({old_pos[0]},{old_pos[1]})->({mech.x},{mech.y})")

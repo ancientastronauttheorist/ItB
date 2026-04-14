@@ -39,6 +39,33 @@ def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
     return belts
 
 
+def _read_freeze_mines_from_save() -> set[tuple[int, int]]:
+    """Read freeze mine locations from the save file.
+
+    Fallback for when the bridge modloader hasn't been restarted.
+    Returns set of (x, y) bridge coordinates with freeze mines.
+    """
+    mines = set()
+    save_path = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    )
+    try:
+        with open(save_path) as f:
+            content = f.read()
+    except OSError:
+        return mines
+
+    # Match: ["loc"] = Point( x, y ), ... ["item"] = "Freeze_Mine"
+    pattern = re.compile(
+        r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)'
+        r'[^}]*?\["item"\]\s*=\s*"Freeze_Mine[^"]*"'
+    )
+    for m in pattern.finditer(content):
+        x, y = int(m.group(1)), int(m.group(2))
+        mines.add((x, y))
+    return mines
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -64,6 +91,18 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
             for (x, y), direction in conveyor_belts.items():
                 if 0 <= x < 8 and 0 <= y < 8:
                     board.tile(x, y).conveyor = direction
+
+        # Supplement with freeze mine data from save file
+        # (fallback until bridge modloader reports items natively)
+        has_bridge_mines = any(
+            board.tile(x, y).freeze_mine
+            for x in range(8) for y in range(8)
+        )
+        if not has_bridge_mines:
+            freeze_mines = _read_freeze_mines_from_save()
+            for (x, y) in freeze_mines:
+                if 0 <= x < 8 and 0 <= y < 8:
+                    board.tile(x, y).freeze_mine = True
 
         return board, data
     except Exception as e:

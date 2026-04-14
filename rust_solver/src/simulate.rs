@@ -359,6 +359,17 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         if has_acid && dest_terrain == Terrain::Water {
             board.tile_mut(nx, ny).flags |= TileFlags::ACID;
         }
+    } else {
+        // Unit survived the push — check for freeze mine
+        let tile = board.tile(nx, ny);
+        if tile.freeze_mine() {
+            if !board.units[unit_idx].shield() {
+                board.units[unit_idx].set_frozen(true);
+            } else {
+                board.units[unit_idx].set_shield(false);
+            }
+            board.tile_mut(nx, ny).set_freeze_mine(false);
+        }
     }
 }
 
@@ -831,6 +842,7 @@ pub fn simulate_action(
     let mut result = ActionResult::default();
 
     // Move
+    let old_pos = (board.units[mech_idx].x, board.units[mech_idx].y);
     board.units[mech_idx].x = move_to.0;
     board.units[mech_idx].y = move_to.1;
 
@@ -851,6 +863,19 @@ pub fn simulate_action(
                 board.units[mech_idx].set_acid(true);
             }
             board.tile_mut(move_to.0, move_to.1).flags.remove(TileFlags::ACID);
+        }
+    }
+
+    // Freeze mine: freezes mech on arrival, mine consumed
+    if move_to != old_pos {
+        let tile = board.tile(move_to.0, move_to.1);
+        if tile.freeze_mine() {
+            if !board.units[mech_idx].shield() {
+                board.units[mech_idx].set_frozen(true);
+            } else {
+                board.units[mech_idx].set_shield(false);
+            }
+            board.tile_mut(move_to.0, move_to.1).set_freeze_mine(false);
         }
     }
 

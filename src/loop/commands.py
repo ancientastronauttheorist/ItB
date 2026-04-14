@@ -803,6 +803,13 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             # Inject custom weights into bridge data for Rust solver
             if eval_weights_dict:
                 bridge_data["eval_weights"] = eval_weights_dict
+            # Inject freeze mine data from board into bridge data
+            # (save-file fallback until modloader reports items natively)
+            if board is not None and "tiles" in bridge_data:
+                for td in bridge_data["tiles"]:
+                    bx, by = td.get("x", -1), td.get("y", -1)
+                    if 0 <= bx < 8 and 0 <= by < 8 and board.tile(bx, by).freeze_mine:
+                        td["freeze_mine"] = True
             rust_start = _time.time()
             rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
             rust_result = _json.loads(rust_json)
@@ -1852,6 +1859,17 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
     if weights:
         bd["eval_weights"] = weights
 
+    # Inject freeze mine data from save file fallback
+    if "tiles" in bd:
+        has_mines = any(t.get("freeze_mine") for t in bd["tiles"])
+        if not has_mines:
+            from src.bridge.reader import _read_freeze_mines_from_save
+            mines = _read_freeze_mines_from_save()
+            if mines:
+                for td in bd["tiles"]:
+                    if (td.get("x", -1), td.get("y", -1)) in mines:
+                        td["freeze_mine"] = True
+
     import itb_solver as _rust
     rust_start = time.time()
     rust_json = _rust.solve(json.dumps(bd), time_limit)
@@ -2068,6 +2086,13 @@ def _re_solve_partial(
             bridge_data["eval_weights"] = weight_data.get("weights")
         except (ValueError, OSError):
             pass
+
+    # Inject freeze mine data from board into bridge data
+    if board is not None and "tiles" in bridge_data:
+        for td in bridge_data["tiles"]:
+            bx, by = td.get("x", -1), td.get("y", -1)
+            if 0 <= bx < 8 and 0 <= by < 8 and board.tile(bx, by).freeze_mine:
+                td["freeze_mine"] = True
 
     try:
         import itb_solver as _rust

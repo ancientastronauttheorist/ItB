@@ -213,6 +213,15 @@ local function dump_state()
             local ok_p, pod = pcall(function() return Board:IsPod(pt) end)
             if ok_p and pod then tile.pod = true end
 
+            -- Tile items (freeze mines, etc.)
+            local ok_i, item = pcall(function() return Board:GetItem(pt) end)
+            if ok_i and item and item ~= "" then
+                tile.item = item
+                if item == "Freeze_Mine" or item == "Freeze_Mine_Vek" then
+                    tile.freeze_mine = true
+                end
+            end
+
             state.tiles[#state.tiles + 1] = tile
         end
     end

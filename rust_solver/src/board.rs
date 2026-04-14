@@ -11,12 +11,13 @@ use crate::types::*;
 bitflags! {
     #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
     pub struct TileFlags: u8 {
-        const ON_FIRE = 0b0000_0001;
-        const SMOKE   = 0b0000_0010;
-        const ACID    = 0b0000_0100;
-        const FROZEN  = 0b0000_1000;
-        const CRACKED = 0b0001_0000;
-        const HAS_POD = 0b0010_0000;
+        const ON_FIRE     = 0b0000_0001;
+        const SMOKE       = 0b0000_0010;
+        const ACID        = 0b0000_0100;
+        const FROZEN      = 0b0000_1000;
+        const CRACKED     = 0b0001_0000;
+        const HAS_POD     = 0b0010_0000;
+        const FREEZE_MINE = 0b0100_0000;
     }
 }
 
@@ -38,11 +39,13 @@ impl Tile {
     pub fn frozen(&self) -> bool { self.flags.contains(TileFlags::FROZEN) }
     pub fn cracked(&self) -> bool { self.flags.contains(TileFlags::CRACKED) }
     pub fn has_pod(&self) -> bool { self.flags.contains(TileFlags::HAS_POD) }
+    pub fn freeze_mine(&self) -> bool { self.flags.contains(TileFlags::FREEZE_MINE) }
 
     pub fn set_on_fire(&mut self, v: bool) { self.flags.set(TileFlags::ON_FIRE, v); }
     pub fn set_smoke(&mut self, v: bool) { self.flags.set(TileFlags::SMOKE, v); }
     pub fn set_cracked(&mut self, v: bool) { self.flags.set(TileFlags::CRACKED, v); }
     pub fn set_has_pod(&mut self, v: bool) { self.flags.set(TileFlags::HAS_POD, v); }
+    pub fn set_freeze_mine(&mut self, v: bool) { self.flags.set(TileFlags::FREEZE_MINE, v); }
 
     pub fn is_building(&self) -> bool {
         self.terrain == Terrain::Building && self.building_hp > 0
