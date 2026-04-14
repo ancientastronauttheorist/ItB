@@ -276,16 +276,35 @@ pub fn simulate_enemy_attacks(
             }
 
             WeaponType::Artillery => {
+                // Artillery fires at its queued tile, with direction+range preserved
+                // from the original queue position. Compute offset from ORIGINAL to
+                // target; if the current-to-target distance is below min_range, the
+                // attacker was pushed too close and the attack can't fire at that
+                // specific tile (in the game, attack shifts to preserve range, but
+                // without knowing true origin we approximate by skipping — the shot
+                // lands on a different tile than the bridge reports anyway).
+                let dx_sign = (qtx - orig.0 as i8).signum();
+                let dy_sign = (qty - orig.1 as i8).signum();
+                // Must be cardinal (exactly one axis non-zero)
+                if (dx_sign != 0) == (dy_sign != 0) { continue; }
+
+                // Range from CURRENT position to queued target
+                let curr_range = (qtx - ex as i8).abs() + (qty - ey as i8).abs();
+
+                // If below min range, attack can't hit this tile — skip (conservative)
+                if (curr_range as u8) < wdef.range_min { continue; }
+
+                // Must still be axis-aligned with target from current position
+                if (qtx - ex as i8) != 0 && (qty - ey as i8) != 0 { continue; }
+
                 let tx = qtx as u8;
                 let ty = qty as u8;
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
 
                 if wdef.path_size > 1 {
-                    let dx = (qtx - orig.0 as i8).signum();
-                    let dy = (qty - orig.1 as i8).signum();
-                    let tx2 = tx as i8 + dx;
-                    let ty2 = ty as i8 + dy;
+                    let tx2 = tx as i8 + dx_sign;
+                    let ty2 = ty as i8 + dy_sign;
                     if in_bounds(tx2, ty2) {
                         let d2 = enemy_hit_damage(board, tx2 as u8, ty2 as u8, damage, vh);
                         apply_damage(board, tx2 as u8, ty2 as u8, d2, &mut result, DamageSource::Weapon);
