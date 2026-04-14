@@ -3398,6 +3398,12 @@ def cmd_mission_end(outcome: str, notes: str = None) -> dict:
         "manifest_updated": True,
     }
     _print_result(result)
+    print(
+        "\n[reminder] If you changed solver code this session, "
+        "run `bash scripts/regression.sh` before committing. "
+        "(The pre-commit hook will also auto-run it — install via "
+        "`bash scripts/install-hooks.sh` on a fresh checkout.)"
+    )
     return result
 
 

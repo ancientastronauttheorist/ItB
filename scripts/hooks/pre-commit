@@ -1,0 +1,78 @@
+#!/bin/bash
+# Pre-commit hook: run regression tests if solver code has changed.
+#
+# Installed via scripts/install-hooks.sh (symlinks into .git/hooks/).
+# Skips the slow regression suite when the staged diff only touches
+# recordings, logs, weights, docs, etc. — commits that can't regress
+# the solver.
+
+set -e
+
+# Files whose changes would NOT affect solver behavior (skip regression)
+SKIP_PATTERNS=(
+    "^recordings/"
+    "^logs/"
+    "^snapshots/"
+    "^prompts/"
+    "^sessions/"
+    "^CLAUDE\.md$"
+    "^README\.md$"
+    "^TODO\.md$"
+    "^data/"
+    "^docs/"
+    "\.md$"
+)
+
+# Files whose changes WOULD affect solver behavior
+TRIGGER_PATTERNS=(
+    "^rust_solver/"
+    "^src/"
+    "^tests/"
+    "^weights/"
+    "^game_loop\.py$"
+    "^scripts/"
+    "^Cargo\."
+)
+
+# Get staged files
+staged=$(git diff --cached --name-only)
+
+# If nothing staged, nothing to check
+if [ -z "$staged" ]; then
+    exit 0
+fi
+
+# Check if any staged file matches a trigger pattern
+needs_test=false
+while IFS= read -r file; do
+    for pat in "${TRIGGER_PATTERNS[@]}"; do
+        if echo "$file" | grep -qE "$pat"; then
+            needs_test=true
+            break 2
+        fi
+    done
+done <<< "$staged"
+
+if [ "$needs_test" = false ]; then
+    echo "[pre-commit] No solver code changes — skipping regression."
+    exit 0
+fi
+
+echo "[pre-commit] Solver code changed — running regression suite..."
+echo ""
+
+REPO=$(git rev-parse --show-toplevel)
+cd "$REPO"
+
+if bash scripts/regression.sh; then
+    echo ""
+    echo "[pre-commit] Regression passed ✓"
+    exit 0
+else
+    echo ""
+    echo "[pre-commit] REGRESSION FAILED ✗"
+    echo "[pre-commit] Fix the regression, or add acknowledged entries to"
+    echo "             tests/known_issues.json if they're expected."
+    echo "[pre-commit] Bypass (not recommended): git commit --no-verify"
+    exit 1
+fi
