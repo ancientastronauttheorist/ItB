@@ -6,7 +6,7 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::movement::direction_between;
+use crate::movement::{direction_between, cardinal_direction};
 
 // ── Blast Psion death explosion ──────────────────────────────────────────────
 
@@ -484,7 +484,10 @@ pub fn simulate_weapon(
 
     let ax = board.units[attacker_idx].x;
     let ay = board.units[attacker_idx].y;
-    let attack_dir = direction_between(ax, ay, target_x, target_y);
+    // Use cardinal_direction (any colinear distance) so artillery/projectile/laser/
+    // charge/pull pick up the correct attack axis even when target isn't adjacent.
+    // Melee targets ARE adjacent, so both helpers agree there.
+    let attack_dir = cardinal_direction(ax, ay, target_x, target_y);
 
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, target_x, target_y, attack_dir, &mut result),

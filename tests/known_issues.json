@@ -5,5 +5,15 @@
     "rust": ["panic", "empty_solution", "oob_action"],
     "python": ["grid_power_drop_unexpected", "mech_damage_unexpected", "self_damage_building", "building_lost_unexpected", "mech_on_danger", "grid_critical", "empty_solution"]
   },
-  "entries": []
+  "entries": [
+    {
+      "run_id": "20260411_231847_611",
+      "mission": 0,
+      "turn": 1,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Exposed by cardinal_direction fix — solver now correctly sees that Old Earth Artillery's aoe_behind destroys a friendly building at A6 when firing E6->B6. Picks this plan anyway because alternatives score lower (24/24 perms explored). Evaluator may need to raise building_lost penalty, or this is legitimately the least-bad plan given the board. Not a sim correctness bug; a value-tuning discussion.",
+      "acknowledged": "2026-04-14"
+    }
+  ]
 }

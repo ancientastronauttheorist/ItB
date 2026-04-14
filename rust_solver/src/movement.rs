@@ -142,6 +142,20 @@ pub fn direction_between(from_x: u8, from_y: u8, to_x: u8, to_y: u8) -> Option<u
     DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy)
 }
 
+/// Cardinal direction from one tile to any colinear tile (same row OR same column).
+/// Returns the unit-vector direction, regardless of distance. None if tiles are
+/// identical or not on a cardinal axis. Used for artillery / projectile / laser /
+/// charge / pull, whose targets are never adjacent but always colinear.
+pub fn cardinal_direction(from_x: u8, from_y: u8, to_x: u8, to_y: u8) -> Option<usize> {
+    let dx = to_x as i8 - from_x as i8;
+    let dy = to_y as i8 - from_y as i8;
+    if dx == 0 && dy == 0 { return None; }
+    if dx != 0 && dy != 0 { return None; }
+    let udx = dx.signum();
+    let udy = dy.signum();
+    DIRS.iter().position(|&(ddx, ddy)| ddx == udx && ddy == udy)
+}
+
 /// Predict where a unit ends up after push. None if blocked.
 /// Does NOT check for dead units (push_destination is for pruning heuristics).
 pub fn push_destination(x: u8, y: u8, direction: usize, board: &Board) -> Option<(u8, u8)> {

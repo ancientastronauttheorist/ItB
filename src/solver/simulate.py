@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from src.model.board import Board, Unit, TERRAIN_DEADLY_GROUND
 from src.model.weapons import get_weapon_def, WeaponDef
 from src.solver.movement import (
-    DIRS, DIR_NAMES, direction_between, opposite_dir,
+    DIRS, DIR_NAMES, direction_between, cardinal_direction, opposite_dir,
     get_adjacent,
 )
 
@@ -374,7 +374,9 @@ def simulate_weapon(
         return result
 
     ax, ay = attacker.x, attacker.y
-    attack_dir = direction_between(ax, ay, target_x, target_y)
+    # cardinal_direction handles any colinear distance (artillery targets are never
+    # adjacent). For melee the target IS adjacent so both helpers agree.
+    attack_dir = cardinal_direction(ax, ay, target_x, target_y)
 
     if wdef.weapon_type == "melee":
         _sim_melee(board, attacker, wdef, target_x, target_y, attack_dir, result)

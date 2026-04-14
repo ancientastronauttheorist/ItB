@@ -112,6 +112,26 @@ def direction_between(from_x: int, from_y: int, to_x: int, to_y: int) -> int | N
         return None
 
 
+def cardinal_direction(from_x: int, from_y: int, to_x: int, to_y: int) -> int | None:
+    """Cardinal direction from one tile to any colinear tile (same row or column).
+
+    Returns unit-vector direction regardless of distance. None if tiles are identical
+    or not on a cardinal axis. Used for artillery/projectile/laser/charge/pull whose
+    targets are never adjacent but always colinear.
+    """
+    dx, dy = to_x - from_x, to_y - from_y
+    if dx == 0 and dy == 0:
+        return None
+    if dx != 0 and dy != 0:
+        return None
+    udx = 0 if dx == 0 else (1 if dx > 0 else -1)
+    udy = 0 if dy == 0 else (1 if dy > 0 else -1)
+    try:
+        return DIRS.index((udx, udy))
+    except ValueError:
+        return None
+
+
 def opposite_dir(d: int) -> int:
     """Get the opposite direction (N<->S, E<->W)."""
     return (d + 2) % 4
