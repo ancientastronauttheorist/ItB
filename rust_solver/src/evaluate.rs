@@ -15,7 +15,14 @@ use crate::board::*;
 
 /// Compute future_factor: 1.0 on first combat turn, 0.0 on final turn.
 /// current_turn is 0-indexed from bridge (0 = deployment, 1 = first combat).
-fn future_factor(current_turn: u8, total_turns: u8) -> f64 {
+///
+/// `remaining_spawns` collapses the factor to 0 when no more Vek will emerge
+/// after this turn's enemy phase — this is the "victory in 1 turn" case where
+/// bridge total_turns can report more turns than the mission actually lasts.
+/// When remaining_spawns is 0 and the board has no live threats beyond the
+/// queued attacks, there is no future to prepare for.
+fn future_factor(current_turn: u8, total_turns: u8, remaining_spawns: u32) -> f64 {
+    if remaining_spawns == 0 { return 0.0; }
     if total_turns <= 1 { return 0.0; }
     // Combat turn = current_turn - 1 (turn 0 is deployment)
     // But clamp so we don't go negative
@@ -180,7 +187,7 @@ pub fn evaluate(
     let game_over = board.grid_power == 0;
 
     let mut score = 0.0;
-    let ff = future_factor(board.current_turn, board.total_turns);
+    let ff = future_factor(board.current_turn, board.total_turns, board.remaining_spawns);
 
     // Grid power urgency multiplier (from weights)
     let grid_multiplier = match board.grid_power {
@@ -490,10 +497,14 @@ mod tests {
 
     #[test]
     fn test_future_factor() {
-        assert!((future_factor(0, 5) - 1.0).abs() < 0.01);
-        assert!((future_factor(1, 5) - 1.0).abs() < 0.01);
-        assert!((future_factor(3, 5) - 0.5).abs() < 0.01);
-        assert!((future_factor(5, 5) - 0.0).abs() < 0.01);
+        let inf = u32::MAX;
+        assert!((future_factor(0, 5, inf) - 1.0).abs() < 0.01);
+        assert!((future_factor(1, 5, inf) - 1.0).abs() < 0.01);
+        assert!((future_factor(3, 5, inf) - 0.5).abs() < 0.01);
+        assert!((future_factor(5, 5, inf) - 0.0).abs() < 0.01);
+        // No more spawns → treat as final turn regardless of total_turns
+        assert!((future_factor(1, 5, 0) - 0.0).abs() < 0.01);
+        assert!((future_factor(4, 5, 0) - 0.0).abs() < 0.01);
     }
 
     #[test]

@@ -465,6 +465,34 @@ local function dump_state()
         end
     end)
 
+    -- Victory signal: count remaining queued spawns. When zero, the current
+    -- turn's enemy phase is the last action between now and victory — the
+    -- solver should treat this as the final turn (future_factor = 0).
+    -- Checks common mission spawn-queue fields across mission types.
+    pcall(function()
+        local mission = GetCurrentMission and GetCurrentMission()
+        if mission then
+            local remaining = 0
+            -- Common fields (varies by mission subclass):
+            -- .EnemyList: array of {type, turn} pairs still to spawn
+            -- .QueuedSpawns: array-ish pending emergence list
+            -- .RemainingSpawns: integer count used by some missions
+            if type(mission.EnemyList) == "table" then
+                remaining = remaining + #mission.EnemyList
+            end
+            if type(mission.QueuedSpawns) == "table" then
+                remaining = remaining + #mission.QueuedSpawns
+            end
+            if type(mission.RemainingSpawns) == "number" then
+                remaining = remaining + mission.RemainingSpawns
+            end
+            -- Also include telegraphed emergences for the turn just starting
+            -- (already in spawning_tiles), so the solver can reason:
+            -- remaining_spawns_after_this_turn = remaining - #spawning_tiles
+            state.remaining_spawns = remaining
+        end
+    end)
+
     write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
 end
 

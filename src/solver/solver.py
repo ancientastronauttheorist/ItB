@@ -269,6 +269,7 @@ def replay_solution(
     spawn_pts: list[tuple[int, int]],
     current_turn: int = 0,
     total_turns: int = 5,
+    remaining_spawns: int = 2**31 - 1,
 ) -> dict:
     """Re-simulate the best solution to capture detailed per-action data.
 
@@ -352,7 +353,8 @@ def replay_solution(
     # Score breakdown on predicted post-enemy board
     score_breakdown = evaluate_breakdown(b, spawn_pts, kills=total_kills,
                                          current_turn=current_turn,
-                                         total_turns=total_turns)
+                                         total_turns=total_turns,
+                                         remaining_spawns=remaining_spawns)
 
     # Predicted outcome summary
     buildings_alive = 0

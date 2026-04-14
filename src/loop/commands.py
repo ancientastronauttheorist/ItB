@@ -934,9 +934,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     })
 
     # Replay solution for enriched recording data
+    rem_spawns = bridge_data.get("remaining_spawns", 2**31 - 1) if bridge_data else 2**31 - 1
     enriched = replay_solution(board, solution, spawns,
                                current_turn=current_turn,
-                               total_turns=board.total_turns if hasattr(board, 'total_turns') else 5)
+                               total_turns=board.total_turns if hasattr(board, 'total_turns') else 5,
+                               remaining_spawns=rem_spawns)
 
     # Record solver output for replay/analysis (enriched format)
     solve_data = {

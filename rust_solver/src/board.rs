@@ -198,6 +198,9 @@ pub struct Board {
     pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
     pub current_turn: u8,       // 0-indexed (0 = deployment, 1 = first combat turn)
     pub total_turns: u8,        // Mission length (typically 5, train/tidal = 4)
+    pub remaining_spawns: u32,  // Queued Vek spawns still to emerge (from bridge
+                                // mission.EnemyList etc). 0 = no more reinforcements
+                                // after current turn, treat as final turn for scoring.
 }
 
 impl Default for Board {
@@ -220,6 +223,7 @@ impl Default for Board {
             vek_hormones: false,
             current_turn: 0,
             total_turns: 5,
+            remaining_spawns: u32::MAX, // Unknown → treat as "plenty of future"
         }
     }
 }

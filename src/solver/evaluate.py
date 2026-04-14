@@ -85,11 +85,17 @@ class EvalWeights:
 DEFAULT_WEIGHTS = EvalWeights()
 
 
-def _future_factor(current_turn: int, total_turns: int) -> float:
+def _future_factor(current_turn: int, total_turns: int, remaining_spawns: int = 2**31 - 1) -> float:
     """Compute future_factor: 1.0 on first combat turn, 0.0 on final turn.
 
     current_turn is 0-indexed from bridge (0 = deployment, 1 = first combat).
+
+    remaining_spawns collapses the factor to 0 when no more Vek will emerge
+    after this turn's enemy phase — the "victory in 1 turn" case where bridge
+    total_turns can exceed actual mission play length.
     """
+    if remaining_spawns == 0:
+        return 0.0
     if total_turns <= 1:
         return 0.0
     combat_turn = max(0, current_turn - 1)
@@ -112,6 +118,7 @@ def evaluate(
     soldier_psion_was_active: bool = False,
     current_turn: int = 0,
     total_turns: int = 5,
+    remaining_spawns: int = 2**31 - 1,
 ) -> float:
     """Score a board state. Higher = better for the player.
 
@@ -130,6 +137,8 @@ def evaluate(
             actions but is now dead (killed this turn).
         current_turn: 0-indexed turn number from bridge.
         total_turns: Mission length (typically 5).
+        remaining_spawns: Queued Vek spawns still to emerge. 0 = no future
+            reinforcements, treat as final turn regardless of total_turns.
     """
     w = weights or DEFAULT_WEIGHTS
 
@@ -140,7 +149,7 @@ def evaluate(
     game_over = board.grid_power <= 0
 
     score = 0.0
-    ff = _future_factor(current_turn, total_turns)
+    ff = _future_factor(current_turn, total_turns, remaining_spawns)
 
     # --- GRID POWER URGENCY (unchanged) ---
     grid_multiplier = 1.0
@@ -251,6 +260,7 @@ def evaluate_breakdown(
     kills: int = 0,
     current_turn: int = 0,
     total_turns: int = 5,
+    remaining_spawns: int = 2**31 - 1,
 ) -> dict:
     """Score a board state and return per-component breakdown.
 
@@ -260,7 +270,7 @@ def evaluate_breakdown(
     search) since it builds a dict instead of a bare float.
     """
     w = weights or DEFAULT_WEIGHTS
-    ff = _future_factor(current_turn, total_turns)
+    ff = _future_factor(current_turn, total_turns, remaining_spawns)
 
     # --- GRID POWER URGENCY ---
     grid_multiplier = 1.0

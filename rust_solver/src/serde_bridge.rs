@@ -20,6 +20,7 @@ pub struct JsonInput {
     pub grid_power_max: Option<u8>,
     pub turn: Option<u8>,
     pub total_turns: Option<u8>,
+    pub remaining_spawns: Option<u32>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int], ...]
@@ -233,6 +234,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
     // Turn info
     board.current_turn = input.turn.unwrap_or(0);
     board.total_turns = input.total_turns.unwrap_or(5);
+    board.remaining_spawns = input.remaining_spawns.unwrap_or(u32::MAX);
 
     // Detect Blast Psion: if Jelly_Explode1 is alive, all Vek explode on death
     for i in 0..board.unit_count as usize {
