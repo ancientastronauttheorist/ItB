@@ -353,7 +353,7 @@ local function dump_state()
     -- Fallback: try matching Lua class globals for Sandstorm edge case.
     local env_type = "unknown"
     pcall(function()
-        local mission = GetCurrentMission and GetCurrentMission()
+        local mission = _ITB_CURRENT_MISSION
         if mission and mission.LiveEnvironment then
             local le = mission.LiveEnvironment
             if le.WindDir ~= nil then
@@ -459,7 +459,7 @@ local function dump_state()
 
     -- Mission metadata for hazard classification
     pcall(function()
-        local mission = GetCurrentMission and GetCurrentMission()
+        local mission = _ITB_CURRENT_MISSION
         if mission then
             state.mission_id = mission.ID
         end
@@ -474,7 +474,7 @@ local function dump_state()
     --   Mission:IsFinalTurn() → Game:GetTurnCount() == self.TurnLimit - 1
     --   Mission:GetSpawnCount() returns 0 on final turn (no reinforcements)
     pcall(function()
-        local mission = GetCurrentMission and GetCurrentMission()
+        local mission = _ITB_CURRENT_MISSION
         if mission then
             if mission.TurnLimit ~= nil then
                 state.total_turns = mission.TurnLimit
@@ -915,6 +915,11 @@ local _orig_BaseDeployment = _ITB_BRIDGE_ORIGINALS.BaseDeployment
 -- Cached deployment zone (captured in BaseDeployment, cleared on MissionEnd)
 _ITB_DEPLOY_ZONE = _ITB_DEPLOY_ZONE or {}
 
+-- Cached current mission reference. Populated via Mission:BaseStart,
+-- BaseUpdate, NextTurn, and BaseDeployment hooks since the game does not
+-- expose a top-level GetCurrentMission() global. Cleared in MissionEnd.
+_ITB_CURRENT_MISSION = _ITB_CURRENT_MISSION or nil
+
 -- State dump interval (separate from command poll)
 local _state_dump_interval = 5  -- dump state every 5 seconds
 local _last_state_dump = 0
@@ -926,6 +931,8 @@ local _last_state_dump = 0
 -- coroutine and clobber _running_coroutine.
 Mission.BaseUpdate = function(self)
     _orig_BaseUpdate(self)
+    -- Cache current mission (self is the active mission inside BaseUpdate)
+    _ITB_CURRENT_MISSION = self
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
         local f = io.open("/tmp/itb_bridge_heartbeat", "w")
@@ -974,6 +981,7 @@ end
 -- NextTurn: dump state on each turn change
 Mission.NextTurn = function(self)
     _orig_NextTurn(self)
+    _ITB_CURRENT_MISSION = self
     pcall(dump_state)
     log_bridge("TURN " .. (Game and Game:GetTurnCount() or "?") .. " team=" .. (Game and Game:GetTeamTurn() or "?"))
 end
@@ -981,6 +989,7 @@ end
 -- BaseStart: dump state when mission starts (after deployment)
 Mission.BaseStart = function(self)
     _orig_BaseStart(self)
+    _ITB_CURRENT_MISSION = self
     pcall(dump_state)
     log_bridge("MISSION START: " .. tostring(self.ID or self.Name or "unknown"))
 end
@@ -988,6 +997,7 @@ end
 -- BaseDeployment: capture deployment zone AFTER engine sets it up
 Mission.BaseDeployment = function(self)
     _orig_BaseDeployment(self)
+    _ITB_CURRENT_MISSION = self
     -- Capture zone AFTER original runs (engine creates the zone in BaseDeployment)
     pcall(function()
         -- Board:GetZone returns a PointList — iterate with :size()/:index()
@@ -1014,6 +1024,7 @@ end
 Mission.MissionEnd = function(self)
     log_bridge("MISSION END: " .. tostring(self.ID or self.Name or "unknown"))
     _ITB_DEPLOY_ZONE = {}
+    _ITB_CURRENT_MISSION = nil
     _orig_MissionEnd(self)
 end
 
