@@ -162,20 +162,19 @@ _DEPLOY_BLOCKED = {"mountain", "water", "acid", "lava", "chasm", "ice"}
 def _infer_deployment_zone(board: Board) -> list[list[int, int]]:
     """Infer deployment zone from board state on turn 0.
 
-    In ITB, the deployment zone covers ground tiles in the top 3 rows
-    (visual rows 6-8 = bridge x 0-2). Tiles are excluded if they are
-    blocked terrain, buildings, occupied, have acid pools, or are
-    adjacent to water/chasm (edge tiles the game excludes).
+    Best-effort fallback when Board:GetZone("deployment") returns empty
+    (typically because phase isn't deployment yet). In ITB the zone is
+    usually the top 3 rows; Mission_Dam and a few others use rows 5-7
+    instead. Without game-API ground truth we can't tell them apart,
+    so this returns the top 3 rows (bridge x 0-2) excluding blocked
+    terrain, buildings, occupied tiles, and acid pools. Forest IS
+    deployable. Water-adjacent tiles are NOT filtered (Mission_Dam
+    explicitly allows them).
+
+    Caller MUST treat this as a hint — real source of truth is the
+    live Board:GetZone("deployment") from modloader.lua.
     """
     occupied = {(u.x, u.y) for u in board.units}
-
-    # Build set of water/chasm tiles for adjacency check
-    water_tiles = set()
-    for x in range(8):
-        for y in range(8):
-            if board.tiles[x][y].terrain in ("water", "chasm", "lava"):
-                water_tiles.add((x, y))
-
     tiles = []
     for x in range(3):  # bridge x 0-2 = visual rows 8-6
         for y in range(8):
@@ -184,14 +183,9 @@ def _infer_deployment_zone(board: Board) -> list[list[int, int]]:
                 continue
             if t.terrain == "building" and t.building_hp > 0:
                 continue
-            if t.acid:  # acid pool tiles
+            if t.acid:
                 continue
             if (x, y) in occupied:
-                continue
-            # Exclude tiles adjacent to water/chasm (game omits edge tiles)
-            adj_water = any((x+dx, y+dy) in water_tiles
-                            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)])
-            if adj_water:
                 continue
             tiles.append([x, y])
     return tiles
