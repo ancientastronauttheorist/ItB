@@ -89,6 +89,28 @@ fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut 
     }
 }
 
+/// Apply spawn blocking damage: units standing on spawn tiles take 1 damage
+/// when Vek try to emerge. Damage bypasses armor and ACID (bump-like damage)
+/// but is consumed by shield. Fires after enemy attacks, before next player turn.
+pub fn apply_spawn_blocking(
+    board: &mut Board,
+    spawn_points: &[(u8, u8)],
+) {
+    for &(sx, sy) in spawn_points {
+        if let Some(idx) = board.unit_at(sx, sy) {
+            let unit = &mut board.units[idx];
+            if unit.hp <= 0 { continue; }
+            if unit.shield() {
+                unit.set_shield(false);
+            } else if unit.frozen() {
+                unit.set_frozen(false);
+            } else {
+                unit.hp -= 1;
+            }
+        }
+    }
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
 /// Processes in UID order. Returns buildings destroyed count.
 ///

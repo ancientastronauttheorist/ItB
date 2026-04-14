@@ -425,6 +425,7 @@ fn search_recursive(
         // All mechs acted — simulate enemy attacks and evaluate
         let mut b_eval = board.clone();
         simulate_enemy_attacks(&mut b_eval, original_positions);
+        apply_spawn_blocking(&mut b_eval, spawn_points);
         let score = evaluate(&b_eval, spawn_points, weights, kills_so_far, psion_before, building_threats);
 
         if score > *best_score {
