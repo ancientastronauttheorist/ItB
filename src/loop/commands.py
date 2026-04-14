@@ -3350,6 +3350,87 @@ def cmd_analyze(min_samples: int = 30) -> dict:
     return report
 
 
+def cmd_mission_end(outcome: str, notes: str = None) -> dict:
+    """Record mission outcome on the active run.
+
+    outcome: "win" or "loss"
+    notes: optional free-text context
+
+    Writes outcome to the run manifest.json and drops a small
+    m{NN}_outcome.json pointer file in the run directory.
+    """
+    if outcome not in ("win", "loss"):
+        return {"error": f"outcome must be 'win' or 'loss', got {outcome!r}"}
+
+    session = RunSession.load()
+    if not session.run_id:
+        return {"error": "No active run. Start one with `new_run`."}
+
+    run_dir = _recording_dir(session)
+    mi = session.mission_index
+
+    # Write mission-level outcome pointer
+    outcome_data = {
+        "mission_index": mi,
+        "mission_name": session.current_mission,
+        "result": outcome,
+        "notes": notes,
+        "recorded_at": datetime.now().isoformat(),
+    }
+    outcome_path = run_dir / f"m{mi:02d}_outcome.json"
+    _atomic_json_write(outcome_path, outcome_data)
+
+    # Update manifest with run-level outcome (the LATEST mission wins in the
+    # manifest field; historical outcomes live in the per-mission files).
+    _write_manifest(session, {
+        "outcome": outcome,
+        "outcome_mission": mi,
+        "outcome_recorded_at": datetime.now().isoformat(),
+        "outcome_notes": notes,
+    })
+
+    result = {
+        "run_id": session.run_id,
+        "mission": mi,
+        "outcome": outcome,
+        "outcome_file": str(outcome_path.relative_to(
+            Path(__file__).parent.parent.parent)),
+        "manifest_updated": True,
+    }
+    _print_result(result)
+    return result
+
+
+def cmd_annotate(run_id: str, turn: int, notes: str,
+                 mission: int = 0) -> dict:
+    """Add a notes field to a recorded board JSON.
+
+    Useful for tagging "this turn exercises X bug" so future regression
+    triage has context. Edits the board recording in-place (top-level
+    `notes` key only — bridge data is left immutable).
+    """
+    board_file = (
+        RECORDING_DIR / run_id / f"m{mission:02d}_turn_{turn:02d}_board.json"
+    )
+    if not board_file.exists():
+        return {"error": f"Recording not found: {board_file}"}
+
+    with open(board_file) as f:
+        record = json.load(f)
+
+    record["notes"] = notes
+    record["annotated_at"] = datetime.now().isoformat()
+
+    _atomic_json_write(board_file, record)
+
+    result = {
+        "file": str(board_file.relative_to(Path(__file__).parent.parent.parent)),
+        "notes": notes,
+    }
+    _print_result(result)
+    return result
+
+
 def _print_result(result: dict):
     """Print result as formatted JSON to stdout."""
     # Filter out click lists for cleaner output

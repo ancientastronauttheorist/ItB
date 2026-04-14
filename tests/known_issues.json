@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "description": "Acknowledged failures for regression tests. Entries here are skipped by regression assertions. Every entry requires a reason and acknowledgement date.",
+  "trigger_vocabulary": {
+    "rust": ["panic", "empty_solution", "oob_action"],
+    "python": ["grid_power_drop_unexpected", "mech_damage_unexpected", "self_damage_building", "building_lost_unexpected", "mech_on_danger", "grid_critical", "empty_solution"]
+  },
+  "entries": []
+}

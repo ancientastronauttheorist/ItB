@@ -5,14 +5,28 @@ edition = "2021"
 
 [lib]
 name = "itb_solver"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = { version = "0.23", features = ["extension-module"] }
+pyo3 = "0.23"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rayon = "1.10"
 bitflags = "2"
+
+[features]
+default = ["extension-module"]
+# maturin builds the cdylib with the extension-module feature (Python
+# provides the interpreter symbols at import time). Cargo tests must
+# build WITHOUT this feature so they can link against libpython.
+extension-module = ["pyo3/extension-module"]
+
+[dev-dependencies]
+glob = "0.3"
+
+[[test]]
+name = "regression"
+path = "tests/regression.rs"
 
 [profile.release]
 opt-level = 3

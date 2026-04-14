@@ -54,6 +54,8 @@ from src.loop.commands import (
     cmd_analyze,
     cmd_validate,
     cmd_tune,
+    cmd_mission_end,
+    cmd_annotate,
 )
 
 
@@ -196,6 +198,21 @@ def main():
     p_tune.add_argument("--time-limit", type=float, default=5.0,
                         help="Solver time limit per board (default: 5s)")
 
+    p_mission_end = sub.add_parser("mission_end",
+                                   help="Record mission outcome (win/loss) on the active run")
+    p_mission_end.add_argument("outcome", choices=["win", "loss"],
+                               help="Mission result")
+    p_mission_end.add_argument("--notes", default=None,
+                               help="Optional free-text context")
+
+    p_annotate = sub.add_parser("annotate",
+                                help="Add a notes field to a recorded board (regression context)")
+    p_annotate.add_argument("run_id", help="Run directory name")
+    p_annotate.add_argument("turn", type=int, help="Turn number (1-indexed)")
+    p_annotate.add_argument("notes", help="Context string")
+    p_annotate.add_argument("--mission", type=int, default=0,
+                            help="Mission index (default: 0)")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -248,6 +265,10 @@ def main():
     elif args.command == "tune":
         cmd_tune(iterations=args.iterations, min_boards=args.min_boards,
                  time_limit=args.time_limit)
+    elif args.command == "mission_end":
+        cmd_mission_end(args.outcome, notes=args.notes)
+    elif args.command == "annotate":
+        cmd_annotate(args.run_id, args.turn, args.notes, mission=args.mission)
 
 
 if __name__ == "__main__":
