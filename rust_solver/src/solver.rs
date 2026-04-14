@@ -165,6 +165,66 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: 
 
 type Action = ((u8, u8), WId, (u8, u8)); // (move_to, weapon, target)
 
+/// Check if a weapon action would have any effect on the board.
+/// Returns false when firing at empty space where no unit can be hit or pushed —
+/// the solver should prefer move-only/skip in that case. Conservative: returns
+/// true when uncertain (e.g., unknown weapon types) to avoid hiding real options.
+fn weapon_action_has_effect(board: &Board, move_to: (u8, u8), weapon_id: WId, target: (u8, u8)) -> bool {
+    if weapon_id == WId::None || weapon_id == WId::Repair {
+        return true;
+    }
+    let wdef = weapon_def(weapon_id);
+    let (mx, my) = move_to;
+
+    let unit_at = |x: u8, y: u8| board.unit_at(x, y).is_some();
+    let adj_has_unit = |x: u8, y: u8| {
+        for &(dx, dy) in &DIRS {
+            let ax = x as i8 + dx;
+            let ay = y as i8 + dy;
+            if in_bounds(ax, ay) && unit_at(ax as u8, ay as u8) { return true; }
+        }
+        false
+    };
+
+    match wdef.weapon_type {
+        WeaponType::Melee => unit_at(target.0, target.1),
+        WeaponType::Projectile | WeaponType::Laser | WeaponType::Pull => {
+            // Trace from move_to toward target direction — any unit in line = effect
+            let dx = (target.0 as i8 - mx as i8).signum();
+            let dy = (target.1 as i8 - my as i8).signum();
+            if dx == 0 && dy == 0 { return false; }
+            for i in 1..8i8 {
+                let px = mx as i8 + dx * i;
+                let py = my as i8 + dy * i;
+                if !in_bounds(px, py) { break; }
+                if unit_at(px as u8, py as u8) { return true; }
+                let tile = board.tile(px as u8, py as u8);
+                if tile.terrain == Terrain::Mountain || tile.is_building() { break; }
+            }
+            false
+        }
+        WeaponType::Artillery => unit_at(target.0, target.1) || adj_has_unit(target.0, target.1),
+        WeaponType::SelfAoe => unit_at(mx, my) || adj_has_unit(mx, my),
+        WeaponType::Charge => {
+            // Charges forward until it hits something
+            let dx = (target.0 as i8 - mx as i8).signum();
+            let dy = (target.1 as i8 - my as i8).signum();
+            if dx == 0 && dy == 0 { return false; }
+            for i in 1..8i8 {
+                let px = mx as i8 + dx * i;
+                let py = my as i8 + dy * i;
+                if !in_bounds(px, py) { return false; }
+                if unit_at(px as u8, py as u8) { return true; }
+                let tile = board.tile(px as u8, py as u8);
+                if tile.terrain == Terrain::Mountain || tile.is_building() { return false; }
+            }
+            false
+        }
+        // Leap/Swap/Deploy/TwoClick: positional or utility — don't filter
+        _ => true,
+    }
+}
+
 fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
     let unit = &board.units[mech_idx];
     let mut actions = Vec::with_capacity(100);
@@ -188,20 +248,21 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
     };
 
     for &pos in &positions {
-        // Move-only (skip for MID_ACTION since they already moved)
-        if unit.can_move() {
-            actions.push((pos, WId::None, (255, 255)));
-        }
+        // Move-only / skip — always available so search can stay put.
+        // (For MID_ACTION mechs, this is the "skip attack" option.)
+        actions.push((pos, WId::None, (255, 255)));
 
         // Smoke blocks ALL actions (attack + repair) — only move-only is valid
         let tile = board.tile(pos.0, pos.1);
         if !tile.smoke() {
-            // Primary weapon
+            // Primary weapon — filter out no-op fires (empty space, nothing affected)
             let w1_id = WId::from_raw(unit.weapon.0);
             if w1_id != WId::None {
                 let mech_from = (unit.x, unit.y);
                 for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id, mech_from) {
-                    actions.push((pos, w1_id, target));
+                    if weapon_action_has_effect(board, pos, w1_id, target) {
+                        actions.push((pos, w1_id, target));
+                    }
                 }
             }
 
@@ -209,7 +270,9 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
             let w2_id = WId::from_raw(unit.weapon2.0);
             if w2_id != WId::None {
                 for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id, (unit.x, unit.y)) {
-                    actions.push((pos, w2_id, target));
+                    if weapon_action_has_effect(board, pos, w2_id, target) {
+                        actions.push((pos, w2_id, target));
+                    }
                 }
             }
 
