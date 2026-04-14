@@ -550,6 +550,21 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     for dt in deploy_tiles:
                         print(f"  {dt['visual']} (bridge {dt['bridge']}) -> MCP ({dt['mcp'][0]}, {dt['mcp'][1]})")
 
+                    # Show ranked recommendations
+                    ranked = rank_deploy_tiles(board, deploy_zone)
+                    if ranked:
+                        print(f"\nRECOMMENDED DEPLOY (ranked by enemy proximity + building cover):")
+                        for idx, (rx, ry) in enumerate(ranked):
+                            vr = 8 - rx
+                            vc = chr(72 - ry)
+                            mx, my = grid_to_mcp(rx, ry)
+                            role = ["FORWARD", "MID", "SUPPORT"][min(idx, 2)]
+                            print(f"  {idx+1}. {vc}{vr} ({role}) -> MCP ({mx}, {my})")
+                        result["recommended_deploy"] = [
+                            {"visual": f"{chr(72-ry)}{8-rx}", "mcp": list(grid_to_mcp(rx, ry))}
+                            for rx, ry in ranked
+                        ]
+
                 # Environment danger tiles
                 env_danger = bridge_data.get("environment_danger", [])
                 env_type = bridge_data.get("env_type", "unknown")
@@ -2539,6 +2554,75 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     return result
 
 
+def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
+    """Rank deployment tiles by strategic value.
+
+    Scores each tile based on:
+    - Proximity to enemies (closer = better for interception on Turn 1)
+    - Proximity to buildings (adjacent = better for protection)
+    - Forward positioning (rows 4-6 bonus — at least one mech in strike range)
+
+    Returns list of (x, y) bridge coordinates, best first.
+    Picks 3 tiles with spatial diversity (not all clustered together).
+    """
+    enemies = [u for u in board.units if u.is_enemy and u.hp > 0]
+    buildings = []
+    for x in range(8):
+        for y in range(8):
+            t = board.tiles[x][y]
+            if t.terrain == "building" and t.building_hp > 0:
+                buildings.append((x, y))
+
+    def dist(x1, y1, x2, y2):
+        return abs(x1 - x2) + abs(y1 - y2)
+
+    # Score every candidate tile
+    scored = []
+    for tile in deploy_zone:
+        tx, ty = tile[0], tile[1]
+        # Skip tiles already occupied
+        if any(u.x == tx and u.y == ty for u in board.units):
+            continue
+
+        if enemies:
+            min_e = min(dist(tx, ty, e.x, e.y) for e in enemies)
+            avg_e = sum(dist(tx, ty, e.x, e.y) for e in enemies) / len(enemies)
+        else:
+            min_e, avg_e = 8.0, 8.0
+
+        near_bldg = sum(1 for bx, by in buildings if dist(tx, ty, bx, by) <= 2)
+        visual_row = 8 - tx
+        forward = 1.0 if 4 <= visual_row <= 6 else 0.0
+
+        score = (-min_e * 3.0       # get within striking range
+                 + near_bldg * 2.0   # protect nearby buildings
+                 + forward * 5.0     # reward forward positioning
+                 - avg_e * 1.0)      # prefer overall closer to enemies
+        scored.append((score, tx, ty))
+
+    scored.sort(key=lambda s: s[0], reverse=True)
+
+    # Greedy pick with diversity: avoid clustering within 1 tile
+    selected = []
+    for score, tx, ty in scored:
+        if len(selected) >= 3:
+            break
+        too_close = any(dist(tx, ty, sx, sy) <= 1 for sx, sy in selected)
+        if too_close and len(scored) > len(selected) + 3:
+            continue
+        selected.append((tx, ty))
+
+    # Ensure at least one tile is "forward" (rows 4-6 = bridge x 2-4)
+    has_forward = any(2 <= tx <= 4 for tx, ty in selected)
+    if not has_forward and len(selected) == 3:
+        for score, tx, ty in scored:
+            if 2 <= tx <= 4 and (tx, ty) not in selected:
+                selected[-1] = (tx, ty)
+                break
+
+    return selected
+
+
 def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
                      max_turns: int = 20) -> dict:
     """Execute a complete mission via bridge: deploy -> combat turns -> mission end.
@@ -2574,12 +2658,25 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
         print(f"\n--- DEPLOYMENT ({len(deploy_zone)} tiles available) ---")
         mechs = [u for u in board.units if u.is_mech and u.hp > 0]
         if mechs:
-            for i, mech in enumerate(mechs):
-                if i >= len(deploy_zone):
-                    print(f"  WARN: not enough deploy tiles for mech {mech.uid}")
+            # Rank tiles strategically: proximity to enemies + buildings
+            ranked = rank_deploy_tiles(board, deploy_zone)
+            if not ranked:
+                ranked = [(t[0], t[1]) for t in deploy_zone[:3]]
+
+            # Assign mechs: melee (Prime) gets forward tile, artillery gets back
+            melee_types = {"PunchMech", "JudoMech", "ChargeMech",
+                           "NanoMech", "LeapMech", "GravMech",
+                           "TeleMech", "ExchangeMech"}
+            melee = [m for m in mechs if m.type in melee_types]
+            others = [m for m in mechs if m.type not in melee_types]
+            # Melee mechs first (get forward tiles), then others
+            ordered_mechs = melee + others
+
+            for i, mech in enumerate(ordered_mechs):
+                if i >= len(ranked):
+                    print(f"  WARN: not enough ranked tiles for {mech.uid}")
                     break
-                tile = deploy_zone[i]
-                dx, dy = tile[0], tile[1]
+                dx, dy = ranked[i]
                 visual_row = 8 - dx
                 visual_col = chr(72 - dy)
                 print(f"  Deploying {mech.type} (uid={mech.uid}) "
@@ -2591,7 +2688,7 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
                     result = {"error": f"Deploy failed for {mech.type}: {e}"}
                     _print_result(result)
                     return result
-            print(f"  All {len(mechs)} mechs deployed")
+            print(f"  All {len(ordered_mechs)} mechs deployed")
         # Re-read state after deployment
         import time as _time
         _time.sleep(1)
