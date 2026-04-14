@@ -146,6 +146,24 @@ def _simulate_env_effects(board: Board):
         # Wind (push) is too complex to simulate here — skip
 
 
+def _apply_spawn_blocking(board: Board, spawn_points: list) -> None:
+    """Units standing on spawn tiles take 1 damage when Vek try to emerge.
+    Bypasses armor and ACID (bump-like damage) but is consumed by shield.
+    Fires AFTER enemy attacks, BEFORE the next player turn.
+    Mirrors rust_solver/src/enemy.rs::apply_spawn_blocking.
+    """
+    for sx, sy in spawn_points:
+        unit = board.unit_at(sx, sy)
+        if unit is None or unit.hp <= 0:
+            continue
+        if unit.shield:
+            unit.shield = False
+        elif unit.frozen:
+            unit.frozen = False
+        else:
+            unit.hp -= 1
+
+
 def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
     """Simulate all enemy attacks on the post-mech-action board.
 
@@ -325,6 +343,11 @@ def replay_solution(
 
     # Simulate enemy attacks on post-mech board
     buildings_destroyed = _simulate_enemy_attacks(b, original_positions)
+
+    # Spawn-blocking damage: mechs ending on spawn tiles take 1 damage each.
+    # Matches rust_solver/src/solver.rs where apply_spawn_blocking runs after
+    # simulate_enemy_attacks during search scoring.
+    _apply_spawn_blocking(b, spawn_pts)
 
     # Score breakdown on predicted post-enemy board
     score_breakdown = evaluate_breakdown(b, spawn_pts, kills=total_kills,
