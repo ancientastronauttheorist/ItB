@@ -225,6 +225,9 @@ pub fn evaluate(
     // Compare initial building_threats bitset against post-attack survival.
     // Any threatened building that survived = a cleared threat (push, kill,
     // freeze, smoke, body-block — all count).
+    // NOTE: No grid_multiplier here — applying it caused an inversion where
+    // letting buildings die (dropping GP) gave the REMAINING cleared-threat
+    // scores a 4x boost, which made destruction score higher than defense.
     if initial_building_threats != 0 {
         let mut all_cleared = true;
         let mut bits = initial_building_threats;
@@ -235,12 +238,11 @@ pub fn evaluate(
             let tile = board.tile(tx, ty);
             if tile.terrain == Terrain::Building && tile.building_hp > 0 {
                 // Building survived — this threat was cleared
-                // Scale by grid_multiplier: clearing threats is worth MORE at low grid
-                score += scaled(weights.threats_cleared, ff, 0.30, 0.70) * grid_multiplier;
+                score += scaled(weights.threats_cleared, ff, 0.30, 0.70);
                 // Body-block bonus: mech standing on this threat tile absorbed the hit
                 if let Some(idx) = board.unit_at(tx, ty) {
                     if board.units[idx].is_player() && board.units[idx].is_mech() {
-                        score += scaled(weights.body_block_bonus, ff, 0.20, 0.80) * grid_multiplier;
+                        score += scaled(weights.body_block_bonus, ff, 0.20, 0.80);
                     }
                 }
             } else {
@@ -249,7 +251,7 @@ pub fn evaluate(
         }
         // Perfect defense bonus: ALL initially-threatened buildings survived
         if all_cleared {
-            score += weights.perfect_defense_bonus * grid_multiplier;
+            score += weights.perfect_defense_bonus;
         }
     }
 
