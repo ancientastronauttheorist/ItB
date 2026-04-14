@@ -92,17 +92,17 @@ impl Default for EvalWeights {
             building_hp: 2000.0,
             grid_power: 5000.0,
             enemy_killed: 500.0,
-            enemy_hp_remaining: -50.0,
+            enemy_hp_remaining: -100.0,
             mech_killed: -150000.0,
             mech_hp: 100.0,
-            spawn_blocked: 600.0,
+            spawn_blocked: 1000.0,
             pod_uncollected: -100.0,
             pod_proximity: 50.0,
-            enemy_on_danger: 400.0,
+            enemy_on_danger: 800.0,
             // Psion kill bonuses
             psion_blast: 2000.0,
             psion_shell: 1500.0,
-            psion_soldier: 1000.0,
+            psion_soldier: 4000.0,
             psion_blood: 1600.0,
             psion_tyrant: 2500.0,
             // Status bonuses
@@ -111,16 +111,16 @@ impl Default for EvalWeights {
             mech_low_hp_risk: -2000.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
             // Pro-strategy
-            threats_cleared: 2000.0,
-            body_block_bonus: 600.0,
+            threats_cleared: 4000.0,
+            body_block_bonus: 0.0,
             building_coverage: 50.0,
             uncovered_building: -500.0,
-            perfect_defense_bonus: 3000.0,
+            perfect_defense_bonus: 6000.0,
             mech_sacrifice_at_critical: 50000.0,
             // Grid urgency
             grid_urgency_critical: 5.0,
             grid_urgency_high: 3.0,
-            grid_urgency_medium: 2.0,
+            grid_urgency_medium: 3.0,
             // Achievement (all zero by default)
             enemy_on_fire: 0.0,
             enemy_pushed_into_enemy: 0.0,
@@ -434,8 +434,8 @@ mod tests {
         board.tile_mut(3, 3).building_hp = 1;
         let w = EvalWeights::default();
         let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
-        // 35000 grid + 10000 building + 2000 hp - 80 uncovered_building = 46920
-        assert!((score - 46920.0).abs() < 0.01);
+        // 35000 grid + 10000 building + 2000 hp - 500 uncovered_building = 46500
+        assert!((score - 46500.0).abs() < 0.01);
     }
 
     #[test]
@@ -465,8 +465,8 @@ mod tests {
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
         let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
-        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000) + 1 HP(2000) - 80 uncovered = 36920
-        assert!((score - 36920.0).abs() < 0.01);
+        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000) + 1 HP(2000) - 2500 uncovered(500*5.0) = 34500
+        assert!((score - 34500.0).abs() < 0.01);
     }
 
     #[test]

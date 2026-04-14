@@ -95,6 +95,7 @@ class Board:
         self.env_type: str = "unknown"
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
+        self.soldier_psion_active: bool = False
 
     def copy(self) -> Board:
         """Deep copy for search branching."""
@@ -108,6 +109,7 @@ class Board:
         b.env_type = self.env_type
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
+        b.soldier_psion_active = self.soldier_psion_active
         return b
 
     def tile(self, x: int, y: int) -> BoardTile:
@@ -331,6 +333,16 @@ class Board:
             for u in board.units:
                 if u.is_enemy:
                     u.armor = True
+
+        # Detect Soldier Psion: alive Jelly_Health1 buffs all Vek +1 HP
+        board.soldier_psion_active = any(
+            u.type == "Jelly_Health1" and u.hp > 0 for u in board.units
+        )
+        if board.soldier_psion_active:
+            # Bridge sends hp already buffed but max_hp as base — adjust max_hp
+            for u in board.units:
+                if u.is_enemy and u.type != "Jelly_Health1":
+                    u.max_hp += 1
 
         # Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch.
         # Detect by checking if adjacent tiles appear in targeted_tiles (= rocket is

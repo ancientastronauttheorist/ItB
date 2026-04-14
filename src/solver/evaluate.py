@@ -28,19 +28,19 @@ class EvalWeights:
     building_hp: float = 2000
     grid_power: float = 5000
     enemy_killed: float = 500
-    enemy_hp_remaining: float = -50
+    enemy_hp_remaining: float = -100
     mech_killed: float = -150000
     mech_hp: float = 100
     mech_centrality: float = -5      # penalizes distance from center
-    spawn_blocked: float = 400
+    spawn_blocked: float = 1000
     pod_uncollected: float = -100
     pod_proximity: float = 50         # bonus for mech within 2 tiles of pod
-    enemy_on_danger: float = 400      # non-flying enemy on danger tile
+    enemy_on_danger: float = 800      # non-flying enemy on danger tile
 
     # Psion kill bonuses (scaled by future_factor)
     psion_blast: float = 2000
     psion_shell: float = 1500
-    psion_soldier: float = 1000
+    psion_soldier: float = 4000
     psion_blood: float = 1600
     psion_tyrant: float = 2500
 
@@ -53,7 +53,7 @@ class EvalWeights:
     # Grid urgency multipliers (applied to building scores)
     grid_urgency_critical: float = 5.0  # grid_power <= 1
     grid_urgency_high: float = 3.0      # grid_power == 2
-    grid_urgency_medium: float = 2.0    # grid_power == 3
+    grid_urgency_medium: float = 3.0    # grid_power == 3
 
     # Achievement-specific (all default 0 — no effect in normal play)
     enemy_on_fire: float = 0
@@ -109,6 +109,7 @@ def evaluate(
     weights: EvalWeights = None,
     kills: int = 0,
     blast_psion_was_active: bool = False,
+    soldier_psion_was_active: bool = False,
     current_turn: int = 0,
     total_turns: int = 5,
 ) -> float:
@@ -124,6 +125,8 @@ def evaluate(
         weights: Evaluation weights (uses DEFAULT_WEIGHTS if None).
         kills: Number of enemies killed during simulation.
         blast_psion_was_active: True if Blast Psion was alive before mech
+            actions but is now dead (killed this turn).
+        soldier_psion_was_active: True if Soldier Psion was alive before mech
             actions but is now dead (killed this turn).
         current_turn: 0-indexed turn number from bridge.
         total_turns: Mission length (typically 5).
@@ -178,6 +181,10 @@ def evaluate(
     # --- BLAST PSION KILL BONUS: SCALED by future_factor ---
     if blast_psion_was_active and not board.blast_psion_active:
         score += 2000.0 * ff
+
+    # --- SOLDIER PSION KILL BONUS: SCALED by future_factor ---
+    if soldier_psion_was_active and not getattr(board, 'soldier_psion_active', False):
+        score += w.psion_soldier * ff
 
     # --- ENVIRONMENT DANGER: SCALED ---
     if hasattr(board, 'environment_danger') and board.environment_danger:

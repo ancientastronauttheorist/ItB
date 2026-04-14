@@ -100,8 +100,6 @@ def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
     """Apply one enemy hit to a tile. Returns grid power lost."""
     if not board.in_bounds(x, y):
         return 0
-    grid_lost = 0
-
     unit = board.unit_at(x, y)
     if unit is not None and unit.is_player:
         unit.hp -= damage
@@ -111,13 +109,12 @@ def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
 
     tile = board.tile(x, y)
     if tile.terrain == "building" and tile.building_hp > 0:
-        actual = min(damage, tile.building_hp)
-        tile.building_hp -= actual
-        grid_lost += actual
-        if tile.building_hp <= 0:
-            tile.terrain = "rubble"
-
-    return grid_lost
+        grid_lost = tile.building_hp  # ALL buildings destroyed (all-or-nothing)
+        tile.building_hp = 0
+        tile.terrain = "rubble"
+        board.grid_power = max(0, board.grid_power - grid_lost)
+        return grid_lost
+    return 0
 
 
 def _simulate_env_effects(board: Board):

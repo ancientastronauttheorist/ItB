@@ -123,6 +123,23 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                             for other in board.units:
                                 if other.is_enemy:
                                     other.armor = False
+                    # Soldier Psion killed: remove +1 HP from all Vek
+                    if board.soldier_psion_active and unit.type == "Jelly_Health1":
+                        other_alive = any(
+                            u.type == "Jelly_Health1" and u.hp > 0 and u is not unit
+                            for u in board.units
+                        )
+                        if not other_alive:
+                            board.soldier_psion_active = False
+                            for other in board.units:
+                                if other.is_enemy and other.hp > 0 and other.type != "Jelly_Health1":
+                                    other.max_hp -= 1
+                                    other.hp -= 1
+                                    if other.hp <= 0:
+                                        result.enemies_killed += 1
+                                        result.events.append(
+                                            f"{other.type} killed by Soldier Psion death"
+                                        )
                     # Blast Psion death explosion: all Vek explode on death
                     if (was_alive and board.blast_psion_active
                             and unit.type != "Jelly_Explode1"):
@@ -271,6 +288,20 @@ def apply_push(board: Board, x: int, y: int, direction: int,
             if (board.blast_psion_active
                     and unit.type != "Jelly_Explode1"):
                 _apply_death_explosion(board, nx, ny, unit.type, result)
+            # Soldier Psion pushed into deadly terrain: strip HP aura
+            if board.soldier_psion_active and unit.type == "Jelly_Health1":
+                other_alive = any(
+                    u.type == "Jelly_Health1" and u.hp > 0 and u is not unit
+                    for u in board.units
+                )
+                if not other_alive:
+                    board.soldier_psion_active = False
+                    for other in board.units:
+                        if other.is_enemy and other.hp > 0 and other.type != "Jelly_Health1":
+                            other.max_hp -= 1
+                            other.hp -= 1
+                            if other.hp <= 0:
+                                result.enemies_killed += 1
         elif unit.is_player:
             result.mechs_killed += 1
         result.events.append(
