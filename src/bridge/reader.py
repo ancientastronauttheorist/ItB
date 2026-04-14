@@ -104,7 +104,40 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                 if 0 <= x < 8 and 0 <= y < 8:
                     board.tile(x, y).freeze_mine = True
 
+        # Infer deployment zone from tile data when Lua GetZone fails
+        # (Board:GetZone("deployment") has never returned tiles on this build)
+        if data.get("turn", -1) == 0 and not data.get("deployment_zone"):
+            deploy_tiles = _infer_deployment_zone(board)
+            if deploy_tiles:
+                data["deployment_zone"] = deploy_tiles
+
         return board, data
     except Exception as e:
         print(f"Bridge reader error: {e}")
         return None, None
+
+
+# Terrain types that block deployment
+_DEPLOY_BLOCKED = {"mountain", "water", "acid", "lava", "chasm", "ice"}
+
+
+def _infer_deployment_zone(board: Board) -> list[list[int, int]]:
+    """Infer deployment zone from board state on turn 0.
+
+    In ITB, the deployment zone is ground tiles in the upper portion of the
+    map (visual rows 5-8 = bridge x 0-3) that are not occupied by units or
+    blocked by terrain. This matches the yellow-highlighted zone the game shows.
+    """
+    occupied = {(u.x, u.y) for u in board.units}
+    tiles = []
+    for x in range(4):  # bridge x 0-3 = visual rows 8-5
+        for y in range(8):
+            t = board.tiles[x][y]
+            if t.terrain in _DEPLOY_BLOCKED:
+                continue
+            if t.terrain == "building" and t.building_hp > 0:
+                continue
+            if (x, y) in occupied:
+                continue
+            tiles.append([x, y])
+    return tiles
