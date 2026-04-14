@@ -345,24 +345,37 @@ pub fn simulate_enemy_attacks(
             }
 
             WeaponType::Melee => {
-                let tx = qtx as u8;
-                let ty = qty as u8;
-
-                let curr_dist = (ex as i32 - tx as i32).abs() + (ey as i32 - ty as i32).abs();
-                if curr_dist > 1 { continue; }
-
-                let d = enemy_hit_damage(board, tx, ty, damage, vh);
-                apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
-
                 if weapon_behind {
-                    let ddx = tx as i8 - ex as i8;
-                    let ddy = ty as i8 - ey as i8;
-                    let bx = tx as i8 + ddx;
-                    let by = ty as i8 + ddy;
-                    if in_bounds(bx, by) {
-                        let d2 = enemy_hit_damage(board, bx as u8, by as u8, damage, vh);
-                        apply_damage(board, bx as u8, by as u8, d2, &mut result, DamageSource::Weapon);
+                    // Line attack (e.g., Launching Stinger): 2-tile line in the original
+                    // cardinal direction. When pushed, retrace direction from the ORIGINAL
+                    // position so the attack fires correctly from the new position.
+                    let dx = (qtx - orig.0 as i8).signum();
+                    let dy = (qty - orig.1 as i8).signum();
+                    // Must be a valid cardinal direction (exactly one axis non-zero)
+                    if (dx != 0) == (dy != 0) { continue; }
+
+                    let tx1 = ex as i8 + dx;
+                    let ty1 = ey as i8 + dy;
+                    if in_bounds(tx1, ty1) {
+                        let d = enemy_hit_damage(board, tx1 as u8, ty1 as u8, damage, vh);
+                        apply_damage(board, tx1 as u8, ty1 as u8, d, &mut result, DamageSource::Weapon);
                     }
+                    let tx2 = ex as i8 + dx * 2;
+                    let ty2 = ey as i8 + dy * 2;
+                    if in_bounds(tx2, ty2) {
+                        let d2 = enemy_hit_damage(board, tx2 as u8, ty2 as u8, damage, vh);
+                        apply_damage(board, tx2 as u8, ty2 as u8, d2, &mut result, DamageSource::Weapon);
+                    }
+                } else {
+                    // Standard single-tile melee: attack fixed queued target.
+                    // If pushed out of adjacency, attack fails (enemy can't reach).
+                    let tx = qtx as u8;
+                    let ty = qty as u8;
+                    let curr_dist = (ex as i32 - tx as i32).abs() + (ey as i32 - ty as i32).abs();
+                    if curr_dist > 1 { continue; }
+
+                    let d = enemy_hit_damage(board, tx, ty, damage, vh);
+                    apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                 }
             }
 

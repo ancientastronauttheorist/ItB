@@ -1,8 +1,8 @@
 {
-  "version": "v006",
-  "parent": "v005",
-  "description": "Raise psion_soldier/threats_cleared/perfect_defense/enemy_hp/spawn_blocked/enemy_on_danger, zero body_block_bonus, increase grid_urgency_medium",
-  "created": "2026-04-13",
+  "version": "v007",
+  "parent": "v006",
+  "description": "Bump spawn_blocked 1000→3000 — blocking spawns prevents next-turn Vek, worth more than the 1 HP of blocking damage. Outweighs mech_hp + coverage incentives to leave spawn tiles open.",
+  "created": "2026-04-14",
   "weights": {
     "building_alive": 10000,
     "building_hp": 2000,
@@ -11,7 +11,7 @@
     "enemy_hp_remaining": -100,
     "mech_killed": -150000,
     "mech_hp": 100,
-    "spawn_blocked": 1000,
+    "spawn_blocked": 3000,
     "pod_uncollected": -100,
     "pod_proximity": 50,
     "enemy_on_danger": 800,
