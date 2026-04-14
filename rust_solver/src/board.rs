@@ -18,6 +18,7 @@ bitflags! {
         const CRACKED     = 0b0001_0000;
         const HAS_POD     = 0b0010_0000;
         const FREEZE_MINE = 0b0100_0000;
+        const OLD_EARTH_MINE = 0b1000_0000;
     }
 }
 
@@ -40,12 +41,14 @@ impl Tile {
     pub fn cracked(&self) -> bool { self.flags.contains(TileFlags::CRACKED) }
     pub fn has_pod(&self) -> bool { self.flags.contains(TileFlags::HAS_POD) }
     pub fn freeze_mine(&self) -> bool { self.flags.contains(TileFlags::FREEZE_MINE) }
+    pub fn old_earth_mine(&self) -> bool { self.flags.contains(TileFlags::OLD_EARTH_MINE) }
 
     pub fn set_on_fire(&mut self, v: bool) { self.flags.set(TileFlags::ON_FIRE, v); }
     pub fn set_smoke(&mut self, v: bool) { self.flags.set(TileFlags::SMOKE, v); }
     pub fn set_cracked(&mut self, v: bool) { self.flags.set(TileFlags::CRACKED, v); }
     pub fn set_has_pod(&mut self, v: bool) { self.flags.set(TileFlags::HAS_POD, v); }
     pub fn set_freeze_mine(&mut self, v: bool) { self.flags.set(TileFlags::FREEZE_MINE, v); }
+    pub fn set_old_earth_mine(&mut self, v: bool) { self.flags.set(TileFlags::OLD_EARTH_MINE, v); }
 
     pub fn is_building(&self) -> bool {
         self.terrain == Terrain::Building && self.building_hp > 0

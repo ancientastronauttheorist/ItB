@@ -39,6 +39,7 @@ pub struct JsonTile {
     pub pod: Option<bool>,
     pub has_pod: Option<bool>,
     pub freeze_mine: Option<bool>,
+    pub old_earth_mine: Option<bool>,
     pub building_hp: Option<u8>,
     pub population: Option<u8>,
     pub conveyor: Option<i8>,
@@ -108,6 +109,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             if jt.cracked.unwrap_or(false) { flags |= TileFlags::CRACKED; }
             if jt.pod.unwrap_or(false) || jt.has_pod.unwrap_or(false) { flags |= TileFlags::HAS_POD; }
             if jt.freeze_mine.unwrap_or(false) { flags |= TileFlags::FREEZE_MINE; }
+            if jt.old_earth_mine.unwrap_or(false) { flags |= TileFlags::OLD_EARTH_MINE; }
             tile.flags = flags;
             tile.conveyor_dir = jt.conveyor.unwrap_or(-1);
         }

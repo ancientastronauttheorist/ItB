@@ -66,6 +66,33 @@ def _read_freeze_mines_from_save() -> set[tuple[int, int]]:
     return mines
 
 
+def _read_old_earth_mines_from_save() -> set[tuple[int, int]]:
+    """Read Old Earth Mine locations from the save file.
+
+    Fallback for when the bridge modloader hasn't been restarted.
+    Returns set of (x, y) bridge coordinates with old earth mines.
+    """
+    mines = set()
+    save_path = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    )
+    try:
+        with open(save_path) as f:
+            content = f.read()
+    except OSError:
+        return mines
+
+    # Match: ["loc"] = Point( x, y ), ... ["item"] = "Item_Mine"
+    pattern = re.compile(
+        r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)'
+        r'[^}]*?\["item"\]\s*=\s*"Item_Mine"'
+    )
+    for m in pattern.finditer(content):
+        x, y = int(m.group(1)), int(m.group(2))
+        mines.add((x, y))
+    return mines
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -103,6 +130,17 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
             for (x, y) in freeze_mines:
                 if 0 <= x < 8 and 0 <= y < 8:
                     board.tile(x, y).freeze_mine = True
+
+        # Supplement with old earth mine data from save file
+        has_bridge_oe_mines = any(
+            board.tile(x, y).old_earth_mine
+            for x in range(8) for y in range(8)
+        )
+        if not has_bridge_oe_mines:
+            oe_mines = _read_old_earth_mines_from_save()
+            for (x, y) in oe_mines:
+                if 0 <= x < 8 and 0 <= y < 8:
+                    board.tile(x, y).old_earth_mine = True
 
         # Infer deployment zone from tile data when Lua GetZone fails
         # (Board:GetZone("deployment") has never returned tiles on this build)

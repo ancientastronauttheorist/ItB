@@ -820,13 +820,16 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             # Inject custom weights into bridge data for Rust solver
             if eval_weights_dict:
                 bridge_data["eval_weights"] = eval_weights_dict
-            # Inject freeze mine data from board into bridge data
+            # Inject mine data from board into bridge data
             # (save-file fallback until modloader reports items natively)
             if board is not None and "tiles" in bridge_data:
                 for td in bridge_data["tiles"]:
                     bx, by = td.get("x", -1), td.get("y", -1)
-                    if 0 <= bx < 8 and 0 <= by < 8 and board.tile(bx, by).freeze_mine:
-                        td["freeze_mine"] = True
+                    if 0 <= bx < 8 and 0 <= by < 8:
+                        if board.tile(bx, by).freeze_mine:
+                            td["freeze_mine"] = True
+                        if board.tile(bx, by).old_earth_mine:
+                            td["old_earth_mine"] = True
             rust_start = _time.time()
             rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
             rust_result = _json.loads(rust_json)
@@ -1878,16 +1881,24 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
     if weights:
         bd["eval_weights"] = weights
 
-    # Inject freeze mine data from save file fallback
+    # Inject mine data from save file fallback
     if "tiles" in bd:
-        has_mines = any(t.get("freeze_mine") for t in bd["tiles"])
-        if not has_mines:
+        has_freeze = any(t.get("freeze_mine") for t in bd["tiles"])
+        if not has_freeze:
             from src.bridge.reader import _read_freeze_mines_from_save
             mines = _read_freeze_mines_from_save()
             if mines:
                 for td in bd["tiles"]:
                     if (td.get("x", -1), td.get("y", -1)) in mines:
                         td["freeze_mine"] = True
+        has_oe = any(t.get("old_earth_mine") for t in bd["tiles"])
+        if not has_oe:
+            from src.bridge.reader import _read_old_earth_mines_from_save
+            oe_mines = _read_old_earth_mines_from_save()
+            if oe_mines:
+                for td in bd["tiles"]:
+                    if (td.get("x", -1), td.get("y", -1)) in oe_mines:
+                        td["old_earth_mine"] = True
 
     import itb_solver as _rust
     rust_start = time.time()
@@ -2108,12 +2119,15 @@ def _re_solve_partial(
         except (ValueError, OSError):
             pass
 
-    # Inject freeze mine data from board into bridge data
+    # Inject mine data from board into bridge data
     if board is not None and "tiles" in bridge_data:
         for td in bridge_data["tiles"]:
             bx, by = td.get("x", -1), td.get("y", -1)
-            if 0 <= bx < 8 and 0 <= by < 8 and board.tile(bx, by).freeze_mine:
-                td["freeze_mine"] = True
+            if 0 <= bx < 8 and 0 <= by < 8:
+                if board.tile(bx, by).freeze_mine:
+                    td["freeze_mine"] = True
+                if board.tile(bx, by).old_earth_mine:
+                    td["old_earth_mine"] = True
 
     try:
         import itb_solver as _rust

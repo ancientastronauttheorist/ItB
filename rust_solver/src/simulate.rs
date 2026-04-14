@@ -369,15 +369,34 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
             board.tile_mut(nx, ny).flags |= TileFlags::ACID;
         }
     } else {
-        // Unit survived the push — check for freeze mine
+        // Unit survived the push — check for Old Earth Mine (instant kill, bypasses shield)
         let tile = board.tile(nx, ny);
-        if tile.freeze_mine() {
-            if !board.units[unit_idx].shield() {
-                board.units[unit_idx].set_frozen(true);
-            } else {
-                board.units[unit_idx].set_shield(false);
+        if tile.old_earth_mine() {
+            let is_enemy = board.units[unit_idx].is_enemy();
+            let can_explode = is_enemy && board.blast_psion
+                && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
+            board.units[unit_idx].hp = 0;
+            if is_enemy {
+                result.enemies_killed += 1;
+                if can_explode {
+                    apply_death_explosion(board, nx, ny, result, 0);
+                }
+            } else if board.units[unit_idx].is_player() {
+                result.mechs_killed += 1;
             }
-            board.tile_mut(nx, ny).set_freeze_mine(false);
+            board.tile_mut(nx, ny).set_old_earth_mine(false);
+        }
+        // Freeze mine: pushed unit gets frozen, mine consumed
+        else {
+            let tile = board.tile(nx, ny);
+            if tile.freeze_mine() {
+                if !board.units[unit_idx].shield() {
+                    board.units[unit_idx].set_frozen(true);
+                } else {
+                    board.units[unit_idx].set_shield(false);
+                }
+                board.tile_mut(nx, ny).set_freeze_mine(false);
+            }
         }
     }
 }
@@ -872,6 +891,16 @@ pub fn simulate_action(
                 board.units[mech_idx].set_acid(true);
             }
             board.tile_mut(move_to.0, move_to.1).flags.remove(TileFlags::ACID);
+        }
+    }
+
+    // Old Earth Mine: kills mech on arrival (bypasses shield), mine consumed
+    if move_to != old_pos {
+        let tile = board.tile(move_to.0, move_to.1);
+        if tile.old_earth_mine() {
+            board.units[mech_idx].hp = 0;
+            result.mechs_killed += 1;
+            board.tile_mut(move_to.0, move_to.1).set_old_earth_mine(false);
         }
     }
 

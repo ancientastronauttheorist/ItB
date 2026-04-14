@@ -77,6 +77,7 @@ class BoardTile:
     cracked: bool = False    # ice tile that's been hit once (next hit → water)
     conveyor: int = -1       # -1 = not conveyor, 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)
     freeze_mine: bool = False  # freeze mine on this tile (freezes unit that stops here)
+    old_earth_mine: bool = False  # old earth mine — kills any unit that stops here (bypasses shield)
 
 
 class Board:
@@ -247,6 +248,7 @@ class Board:
                 bt.cracked = td.get("cracked", False)
                 bt.has_pod = td.get("pod", False)
                 bt.freeze_mine = td.get("freeze_mine", False)
+                bt.old_earth_mine = td.get("old_earth_mine", False)
                 if "conveyor" in td:
                     bt.conveyor = td["conveyor"]
                 if bt.terrain == "building":

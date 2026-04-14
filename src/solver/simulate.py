@@ -309,8 +309,33 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         )
     else:
         result.events.append(f"Pushed {unit.type} ({x},{y})->({nx},{ny})")
+        # Old Earth Mine: kills any unit (bypasses shield), mine consumed
+        if tile_dest.old_earth_mine:
+            unit.hp = 0
+            tile_dest.old_earth_mine = False
+            if unit.is_enemy:
+                result.enemies_killed += 1
+                if (board.blast_psion_active
+                        and unit.type != "Jelly_Explode1"):
+                    _apply_death_explosion(board, nx, ny, unit.type, result)
+                if board.soldier_psion_active and unit.type == "Jelly_Health1":
+                    other_alive = any(
+                        u.type == "Jelly_Health1" and u.hp > 0 and u is not unit
+                        for u in board.units
+                    )
+                    if not other_alive:
+                        board.soldier_psion_active = False
+                        for other in board.units:
+                            if other.is_enemy and other.hp > 0 and other.type != "Jelly_Health1":
+                                other.max_hp -= 1
+                                other.hp -= 1
+                                if other.hp <= 0:
+                                    result.enemies_killed += 1
+            elif unit.is_player:
+                result.mechs_killed += 1
+            result.events.append(f"{unit.type} killed by Old Earth Mine at ({nx},{ny})")
         # Freeze mine: pushed unit gets frozen, mine consumed
-        if tile_dest.freeze_mine:
+        elif tile_dest.freeze_mine:
             if not unit.shield:
                 unit.frozen = True
                 result.events.append(f"{unit.type} frozen by mine at ({nx},{ny})")
@@ -661,6 +686,13 @@ def simulate_move(
         tile.has_pod = False
         result.pods_collected += 1
         result.events.append(f"Collected pod at ({mech.x},{mech.y})")
+
+    # Old Earth Mine: kills the mech (bypasses shield), mine consumed
+    if tile.old_earth_mine and move_to != old_pos:
+        mech.hp = 0
+        tile.old_earth_mine = False
+        result.mechs_killed += 1
+        result.events.append(f"{mech.type} killed by Old Earth Mine at ({mech.x},{mech.y})")
 
     # Freeze mine: freezes the mech and is consumed
     if tile.freeze_mine and move_to != old_pos:
