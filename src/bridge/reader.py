@@ -124,20 +124,36 @@ _DEPLOY_BLOCKED = {"mountain", "water", "acid", "lava", "chasm", "ice"}
 def _infer_deployment_zone(board: Board) -> list[list[int, int]]:
     """Infer deployment zone from board state on turn 0.
 
-    In ITB, the deployment zone is ground tiles in the upper portion of the
-    map (visual rows 5-8 = bridge x 0-3) that are not occupied by units or
-    blocked by terrain. This matches the yellow-highlighted zone the game shows.
+    In ITB, the deployment zone covers ground tiles in the top 3 rows
+    (visual rows 6-8 = bridge x 0-2). Tiles are excluded if they are
+    blocked terrain, buildings, occupied, have acid pools, or are
+    adjacent to water/chasm (edge tiles the game excludes).
     """
     occupied = {(u.x, u.y) for u in board.units}
+
+    # Build set of water/chasm tiles for adjacency check
+    water_tiles = set()
+    for x in range(8):
+        for y in range(8):
+            if board.tiles[x][y].terrain in ("water", "chasm", "lava"):
+                water_tiles.add((x, y))
+
     tiles = []
-    for x in range(4):  # bridge x 0-3 = visual rows 8-5
+    for x in range(3):  # bridge x 0-2 = visual rows 8-6
         for y in range(8):
             t = board.tiles[x][y]
             if t.terrain in _DEPLOY_BLOCKED:
                 continue
             if t.terrain == "building" and t.building_hp > 0:
                 continue
+            if t.acid:  # acid pool tiles
+                continue
             if (x, y) in occupied:
+                continue
+            # Exclude tiles adjacent to water/chasm (game omits edge tiles)
+            adj_water = any((x+dx, y+dy) in water_tiles
+                            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)])
+            if adj_water:
                 continue
             tiles.append([x, y])
     return tiles
