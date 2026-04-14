@@ -465,31 +465,27 @@ local function dump_state()
         end
     end)
 
-    -- Victory signal: count remaining queued spawns. When zero, the current
-    -- turn's enemy phase is the last action between now and victory — the
-    -- solver should treat this as the final turn (future_factor = 0).
-    -- Checks common mission spawn-queue fields across mission types.
+    -- Victory signal: when mission:IsFinalTurn() is true, no more Vek will
+    -- emerge after this turn's enemy phase. Solver treats this as the final
+    -- turn (future_factor = 0). Also expose mission.TurnLimit as authoritative
+    -- total_turns — this matches "Hold out for N turns" better than the
+    -- hardcoded 5 when the mission actually runs for a different length.
+    -- API reference: scripts/missions/missions.lua
+    --   Mission:IsFinalTurn() → Game:GetTurnCount() == self.TurnLimit - 1
+    --   Mission:GetSpawnCount() returns 0 on final turn (no reinforcements)
     pcall(function()
         local mission = GetCurrentMission and GetCurrentMission()
         if mission then
-            local remaining = 0
-            -- Common fields (varies by mission subclass):
-            -- .EnemyList: array of {type, turn} pairs still to spawn
-            -- .QueuedSpawns: array-ish pending emergence list
-            -- .RemainingSpawns: integer count used by some missions
-            if type(mission.EnemyList) == "table" then
-                remaining = remaining + #mission.EnemyList
+            if mission.TurnLimit ~= nil then
+                state.total_turns = mission.TurnLimit
             end
-            if type(mission.QueuedSpawns) == "table" then
-                remaining = remaining + #mission.QueuedSpawns
+            if mission.IsFinalTurn and mission:IsFinalTurn() then
+                state.remaining_spawns = 0
+            else
+                -- Not final: set a positive sentinel so future_factor uses
+                -- the normal turn-based decay instead of collapsing to 0.
+                state.remaining_spawns = 1
             end
-            if type(mission.RemainingSpawns) == "number" then
-                remaining = remaining + mission.RemainingSpawns
-            end
-            -- Also include telegraphed emergences for the turn just starting
-            -- (already in spawning_tiles), so the solver can reason:
-            -- remaining_spawns_after_this_turn = remaining - #spawning_tiles
-            state.remaining_spawns = remaining
         end
     end)
 
