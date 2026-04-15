@@ -268,8 +268,11 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         }
     }
     if board.armor_psion {
+        // Hardened Carapace: "ALL OTHER Vek have incoming weapon damage
+        // reduced by 1." Explicitly excludes the Psion itself — Titan Fist
+        // deals full damage to Jelly_Armor1.
         for i in 0..board.unit_count as usize {
-            if board.units[i].is_enemy() {
+            if board.units[i].is_enemy() && board.units[i].type_name_str() != "Jelly_Armor1" {
                 board.units[i].flags.set(UnitFlags::ARMOR, true);
             }
         }

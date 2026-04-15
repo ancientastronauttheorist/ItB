@@ -354,8 +354,10 @@ class Board:
             u.type == "Jelly_Armor1" and u.hp > 0 for u in board.units
         )
         if board.armor_psion_active:
+            # Hardened Carapace excludes the Psion itself — "all OTHER Vek
+            # have incoming weapon damage reduced by 1."
             for u in board.units:
-                if u.is_enemy:
+                if u.is_enemy and u.type != "Jelly_Armor1":
                     u.armor = True
 
         # Detect Old Earth Dam — record the primary tile (non-extra) for the
