@@ -235,6 +235,67 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             }
         }
     }
+
+    // Old Earth Dam flood: if this damage killed the last dam tile, flood
+    // the 2×7 strip behind the dam (drowns non-flying non-massive Vek).
+    // uid-independent detection — works regardless of which tile took the
+    // fatal hit. Idempotent via dam_alive gate.
+    if board.dam_alive {
+        let dam_dead = (0..board.unit_count as usize).all(|i| {
+            let u = &board.units[i];
+            u.type_name_str() != "Dam_Pawn" || u.hp <= 0
+        });
+        if dam_dead {
+            trigger_dam_flood(board, result);
+            board.dam_alive = false;
+        }
+    }
+}
+
+/// Convert a single tile to Water, drowning any non-flying non-massive unit
+/// standing on it. Idempotent: running on existing Water is a no-op.
+/// Mountains / Buildings are not flooded (game engine refuses to overwrite).
+///
+/// TODO(dam-integration): in-game, drown deaths DO trigger Blast Psion
+/// explosions. This helper uses direct `hp = 0` bypassing the explosion
+/// dispatch. Swap to a `apply_damage(..., source=Water)` routed path once
+/// the user verifies drown-credit semantics.
+pub fn flood_tile(board: &mut Board, x: u8, y: u8, _result: &mut ActionResult) {
+    if x >= 8 || y >= 8 { return; }
+    let t = board.tile(x, y);
+    if t.terrain == Terrain::Water { return; }
+    if matches!(t.terrain, Terrain::Mountain | Terrain::Building) { return; }
+
+    board.tile_mut(x, y).terrain = Terrain::Water;
+    board.tile_mut(x, y).set_cracked(false);
+
+    if let Some(idx) = board.unit_at(x, y) {
+        let u = &board.units[idx];
+        if !u.effectively_flying() && !u.massive() {
+            board.units[idx].hp = 0;
+            // No enemies_killed increment — user verifying in-game whether
+            // flood kills credit pilot XP / achievements.
+        }
+    }
+}
+
+/// Trigger the Dam_Pawn death flood. Fires exactly once when the dam
+/// transitions from alive → dead. Flood pattern from mission_dam.lua:
+/// `for y = 1,7 do for x = 0,1 do SpaceDamage(DamPos + Point(x,y)) end end`.
+fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
+    let (px, py) = match board.dam_primary {
+        Some(p) => p,
+        None => return,
+    };
+    for x_off in 0i8..=1 {
+        for y_off in 1i8..=7 {
+            let tx = px as i8 + x_off;
+            let ty = py as i8 + y_off;
+            if tx >= 0 && tx < 8 && ty >= 0 && ty < 8 {
+                flood_tile(board, tx as u8, ty as u8, result);
+            }
+        }
+    }
 }
 
 /// Apply damage to whatever is at (x, y), including Blast Psion death explosions.

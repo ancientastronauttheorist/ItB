@@ -194,6 +194,55 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
             if other is not unit and other.uid == unit.uid:
                 other.hp = unit.hp
 
+    # Old Earth Dam flood: if this damage killed the last dam tile, flood
+    # the 2×7 strip behind the dam. Idempotent via dam_alive gate.
+    if board.dam_alive:
+        dam_dead = all(
+            u.type != "Dam_Pawn" or u.hp <= 0 for u in board.units
+        )
+        if dam_dead:
+            _trigger_dam_flood(board, result)
+            board.dam_alive = False
+
+
+def _flood_tile(board: Board, x: int, y: int, result: ActionResult) -> None:
+    """Convert one tile to Water; drown non-flying non-massive units on it.
+    Idempotent on existing Water. Mountains/Buildings skip (engine-level).
+
+    TODO(dam-integration): drown kills do NOT currently trigger Blast Psion
+    explosions. In-game they do. Route through apply_damage with a water
+    source once user verifies drown-credit semantics.
+    """
+    if not board.in_bounds(x, y):
+        return
+    tile = board.tile(x, y)
+    if tile.terrain == "water":
+        return
+    if tile.terrain in ("mountain", "building"):
+        return
+    tile.terrain = "water"
+    tile.cracked = False
+
+    unit = board.unit_at(x, y)
+    if unit is not None and unit.hp > 0:
+        # Effectively flying = flying & not frozen
+        effectively_flying = unit.flying and not unit.frozen
+        if not effectively_flying and not unit.massive:
+            unit.hp = 0
+            # No enemies_killed increment — user verifying credit semantics.
+            result.events.append(f"{unit.type} drowned by dam flood at ({x},{y})")
+
+
+def _trigger_dam_flood(board: Board, result: ActionResult) -> None:
+    """Fire once when Dam_Pawn transitions alive→dead. Flood pattern from
+    mission_dam.lua: DamPos + Point(x,y) for x∈{0,1}, y∈{1..7}."""
+    if board.dam_primary is None:
+        return
+    px, py = board.dam_primary
+    for x_off in range(2):
+        for y_off in range(1, 8):
+            _flood_tile(board, px + x_off, py + y_off, result)
+
 
 def apply_push(board: Board, x: int, y: int, direction: int,
                result: ActionResult) -> None:
