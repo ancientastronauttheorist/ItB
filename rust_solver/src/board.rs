@@ -258,6 +258,15 @@ impl Board {
     }
 
     /// Find alive unit at (x, y). Returns index into units array.
+    ///
+    /// NOTE ON MULTI-TILE PAWNS (Dam_Pawn): a single pawn may appear as
+    /// multiple entries with the same `uid` at different (x,y) — one per
+    /// `ExtraSpaces` tile. This lookup correctly returns the entry at the
+    /// specific tile queried, which is what push/damage call sites want.
+    /// HP is mirrored across entries in `apply_damage_core` (simulate.rs)
+    /// so either entry reflects the pawn's real HP. Any new iteration
+    /// over `board.units` without a team/is_enemy/is_player filter should
+    /// add `!u.is_extra_tile()` if it accumulates per-pawn state.
     pub fn unit_at(&self, x: u8, y: u8) -> Option<usize> {
         for i in 0..self.unit_count as usize {
             let u = &self.units[i];

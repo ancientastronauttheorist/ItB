@@ -133,6 +133,11 @@ class Board:
         return 0 <= x < 8 and 0 <= y < 8
 
     def unit_at(self, x: int, y: int) -> Unit | None:
+        # Multi-tile pawns (Dam_Pawn ExtraSpaces): bridge emits one entry per
+        # occupied tile with shared uid. This lookup returns the entry at the
+        # specific (x,y), which is what push/damage sites want. HP is mirrored
+        # across entries in apply_damage. New unconditional `for u in board.units`
+        # loops that accumulate per-pawn state should add `not u.is_extra_tile`.
         for u in self.units:
             if u.x == x and u.y == y and u.hp > 0:
                 return u
