@@ -120,6 +120,7 @@ def evaluate(
     kills: int = 0,
     blast_psion_was_active: bool = False,
     soldier_psion_was_active: bool = False,
+    dam_was_alive: bool = False,
     current_turn: int = 0,
     total_turns: int = 5,
     remaining_spawns: int = 2**31 - 1,
@@ -198,6 +199,11 @@ def evaluate(
     # --- SOLDIER PSION KILL BONUS: SCALED by future_factor ---
     if soldier_psion_was_active and not getattr(board, 'soldier_psion_active', False):
         score += w.psion_soldier * ff
+
+    # --- OLD EARTH DAM DESTROYED: turn-aware (floor=0.10 keeps +1 Rep
+    # value on final turn; early turns get full flood-denial reward) ---
+    if dam_was_alive and not getattr(board, 'dam_alive', False):
+        score += _scaled(w.dam_destroyed, ff, 0.10, 0.90)
 
     # --- ENVIRONMENT DANGER: SCALED ---
     if hasattr(board, 'environment_danger') and board.environment_danger:

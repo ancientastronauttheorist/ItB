@@ -1,7 +1,7 @@
 {
-  "version": "v007",
-  "parent": "v006",
-  "description": "Bump spawn_blocked 1000→3000 — blocking spawns prevents next-turn Vek, worth more than the 1 HP of blocking damage. Outweighs mech_hp + coverage incentives to leave spawn tiles open.",
+  "version": "v008",
+  "parent": "v007",
+  "description": "Add dam_destroyed=8000 (Old Earth Dam bonus objective + 14-tile flood value). Turn-aware scaling in evaluator (floor 0.10 + 0.90*ff): 8000 on early turn, 800 on final turn.",
   "created": "2026-04-14",
   "weights": {
     "building_alive": 10000,
@@ -37,7 +37,8 @@
     "enemy_pushed_into_enemy": 0,
     "chain_damage": 0,
     "smoke_placed": 0,
-    "tiles_frozen": 0
+    "tiles_frozen": 0,
+    "dam_destroyed": 8000
   },
   "stats": {
     "runs_played": 0,

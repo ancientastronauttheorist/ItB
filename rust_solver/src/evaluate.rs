@@ -290,6 +290,15 @@ pub fn evaluate(
         score += weights.psion_tyrant * ff;
     }
 
+    // ── Mission bonus: Old Earth Dam destroyed ──
+    // Turn-aware (unlike building_alive): a destroyed dam is worth ~1 rep
+    // regardless of turn, but the 14-tile flood's tactical value scales with
+    // turns remaining. scaled() floor=0.10 keeps the +1 Rep base value on
+    // the final turn while giving earlier turns the full flood-denial reward.
+    if psion_before.dam && !board.dam_alive {
+        score += scaled(weights.dam_destroyed, ff, 0.10, 0.90);
+    }
+
     // ── Environment danger: enemy scaled like kills, mech like mech_killed ─
     if board.env_danger != 0 {
         for i in 0..board.unit_count as usize {
