@@ -102,11 +102,16 @@ pub fn apply_spawn_blocking(
             if unit.hp <= 0 { continue; }
             if unit.shield() {
                 unit.set_shield(false);
-            } else if unit.frozen() {
-                unit.set_frozen(false);
-            } else {
-                unit.hp -= 1;
+                continue;
             }
+            if unit.frozen() {
+                unit.set_frozen(false);
+                continue;
+            }
+            // Bump-class damage: ignores armor/ACID. Route through apply_damage
+            // so multi-tile HP mirroring + future dam-flood trigger run.
+            let mut tmp_result = ActionResult::default();
+            apply_damage(board, sx, sy, 1, &mut tmp_result, DamageSource::Bump);
         }
     }
 }

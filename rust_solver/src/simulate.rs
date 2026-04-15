@@ -218,6 +218,23 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             }
         }
     }
+
+    // Multi-tile HP sync: mirror final HP to all entries sharing this uid.
+    // Runs AFTER the body so kill-credit / Psion cleanup / explosion pre-check
+    // don't re-fire on the twin. Currently only Dam_Pawn uses ExtraSpaces, and
+    // Dam_Pawn is Team::Neutral so none of the enemy-gated side-effects would
+    // fire anyway — but keep this generic so future multi-tile pawns are safe.
+    if let Some(idx) = board.any_unit_at(x, y) {
+        let uid = board.units[idx].uid;
+        let hp = board.units[idx].hp;
+        if uid != 0 {
+            for j in 0..board.unit_count as usize {
+                if j != idx && board.units[j].uid == uid {
+                    board.units[j].hp = hp;
+                }
+            }
+        }
+    }
 }
 
 /// Apply damage to whatever is at (x, y), including Blast Psion death explosions.
@@ -730,6 +747,11 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
 fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     if wdef.weapon_type == WeaponType::Swap {
         if let Some(target_idx) = board.unit_at(tx, ty) {
+            // Stable/Massive neutrals (e.g. Dam_Pawn) are immune to swap.
+            // Mechs are always swap-eligible regardless of pushable flag.
+            if !board.units[target_idx].pushable() && !board.units[target_idx].is_mech() {
+                return;
+            }
             // Swap positions
             let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
             board.units[target_idx].x = ax;

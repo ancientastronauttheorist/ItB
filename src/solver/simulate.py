@@ -184,6 +184,16 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
             tile.cracked = True
             result.events.append(f"Ice cracked at ({x},{y})")
 
+    # Multi-tile HP sync: mirror final HP across all entries sharing a uid.
+    # Runs AFTER death side-effects so kill-credit / Psion cleanup / explosion
+    # don't re-fire on the twin. Currently only Dam_Pawn uses ExtraSpaces and
+    # it's Team::Neutral (not caught by is_enemy guards), but keep generic for
+    # future multi-tile pawns.
+    if unit is not None and unit.uid != 0:
+        for other in board.units:
+            if other is not unit and other.uid == unit.uid:
+                other.hp = unit.hp
+
 
 def apply_push(board: Board, x: int, y: int, direction: int,
                result: ActionResult) -> None:
@@ -561,6 +571,10 @@ def _sim_pull_or_swap(board, attacker, wdef, tx, ty, attack_dir, result):
     if wdef.weapon_type == "swap":
         target = board.unit_at(tx, ty)
         if target:
+            # Stable/Massive neutrals (e.g. Dam_Pawn) are immune to swap.
+            # Mechs are always swap-eligible regardless of pushable flag.
+            if not target.pushable and not target.is_mech:
+                return
             # Swap positions
             target.x, target.y, attacker.x, attacker.y = \
                 attacker.x, attacker.y, target.x, target.y
