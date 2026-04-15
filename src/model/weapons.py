@@ -622,6 +622,14 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Firefly Boss Shot", weapon_type="projectile",
         damage=4, range_max=0,
     ),
+    # Scorpion Leader: Massive Spinneret. Self-AOE — 2 dmg to all 4
+    # cardinal adjacent tiles, push outward, web each target (grapple
+    # "hold" in Lua = immobilizes until pushed away).
+    "ScorpionAtkB": WeaponDef(
+        name="Massive Spinneret", weapon_type="self_aoe",
+        damage=2, push="outward", web=True,
+        aoe_adjacent=True, aoe_center=False,
+    ),
 
     # ── Shamans (support/buff — no direct damage) ───────────────────
     "ShamanAtk1": WeaponDef(

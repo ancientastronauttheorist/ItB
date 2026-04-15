@@ -251,6 +251,23 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
                     grid_lost = _apply_enemy_hit(board, bx, by, damage)
                     buildings_destroyed += grid_lost
 
+        elif weapon_type == "self_aoe":
+            # Scorpion Leader's Massive Spinneret and similar: hit all 4
+            # cardinal adjacent tiles at enemy's CURRENT position (after push).
+            DIRS = ((0, 1), (1, 0), (0, -1), (-1, 0))
+            for dx, dy in DIRS:
+                nx, ny = enemy.x + dx, enemy.y + dy
+                if board.in_bounds(nx, ny):
+                    grid_lost = _apply_enemy_hit(board, nx, ny, damage)
+                    buildings_destroyed += grid_lost
+                    # Web the target (grapple "hold"): future work to apply
+                    # the web flag to pushed-to tile if needed. For now,
+                    # match simulate.py apply_weapon_status semantics.
+                    if wdef and getattr(wdef, 'web', False):
+                        u = board.unit_at(nx, ny)
+                        if u is not None:
+                            u.web = True
+
         else:
             # Fallback for other weapon types: use queued target directly
             tx, ty = enemy.queued_target_x, enemy.queued_target_y

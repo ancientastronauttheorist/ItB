@@ -210,9 +210,14 @@ pub enum WId {
     PassiveForceAmp = 105,
     // Sentinel
     Repair = 106,
+    // -- Boss weapons --
+    /// Scorpion Leader's "Massive Spinneret": hits all 4 cardinal adjacent
+    /// tiles for 2 damage, pushes outward, webs each target. Implemented as
+    /// SelfAoe with push=Outward + WEB flag.
+    ScorpionAtkB = 107,
 }
 
-pub const WEAPON_COUNT: usize = 107;
+pub const WEAPON_COUNT: usize = 108;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -443,6 +448,20 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 92: FireflyAtkB — Firefly Boss, projectile, 4 dmg
     w[92] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, range_max: 0, flags: C, ..DEF };
 
+    // 107: ScorpionAtkB — Scorpion Leader's Massive Spinneret.
+    // Self-AOE: 2 damage to all 4 cardinal adjacent tiles, pushes outward,
+    // webs each target. Game Lua: scripts/missions/bosses/scorpion.lua
+    // iterates DIR_START..DIR_END with AddQueuedMelee + AddGrapple "hold".
+    // Needs AOE_ADJACENT for the 4-tile hit and WEB for the grapple;
+    // f_nc() excludes the center tile (the boss itself).
+    w[107] = WeaponDef {
+        weapon_type: WeaponType::SelfAoe,
+        damage: 2,
+        push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::WEB.bits()),
+        ..DEF
+    };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -554,6 +573,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "PlasmodiaAtk1" => WId::PlasmodiaAtk1,
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
+        "ScorpionAtkB" => WId::ScorpionAtkB,
         "Acid_Tank_Attack" => WId::ScorpionAtk1, // Reuse melee/1dmg — NPC controllable unit
         _ => WId::None,
     }
@@ -656,6 +676,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PlasmodiaAtk1 => "PlasmodiaAtk1",
         WId::PlasmodiaAtk2 => "PlasmodiaAtk2",
         WId::FireflyAtkB => "FireflyAtkB",
+        WId::ScorpionAtkB => "ScorpionAtkB",
         WId::Repair => "_REPAIR",
         _ => "",
     }
@@ -719,6 +740,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "GlowingScorpion" => WId::ScorpionAtk1,
         // Bosses
         "FireflyBoss" => WId::FireflyAtkB,
+        "ScorpionBoss" => WId::ScorpionAtkB,
         _ => WId::None,
     }
 }
@@ -819,6 +841,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PlasmodiaAtk1 => "Plasmodia Spore",
         WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
         WId::FireflyAtkB => "Firefly Boss Shot",
+        WId::ScorpionAtkB => "Massive Spinneret",
         _ => "Unknown",
     }
 }

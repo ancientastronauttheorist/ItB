@@ -7,7 +7,7 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::simulate::apply_damage;
+use crate::simulate::{apply_damage, apply_push};
 
 /// Get effective damage for an enemy hit at a tile (Vek Hormones adds +1 vs other enemies).
 fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: bool) -> u8 {
@@ -357,12 +357,26 @@ pub fn simulate_enemy_attacks(
                     apply_damage(board, ex, ey, damage, &mut result, DamageSource::Weapon);
                 }
                 if wdef.aoe_adjacent() {
-                    for &(dx, dy) in &DIRS {
+                    for (i, &(dx, dy)) in DIRS.iter().enumerate() {
                         let nx = ex as i8 + dx;
                         let ny = ey as i8 + dy;
                         if in_bounds(nx, ny) {
                             let d = enemy_hit_damage(board, nx as u8, ny as u8, damage, vh);
                             apply_damage(board, nx as u8, ny as u8, d, &mut result, DamageSource::Weapon);
+                            // Push outward / inward per weapon def (Scorpion Leader's
+                            // Massive Spinneret pushes every target away from itself).
+                            match wdef.push {
+                                PushDir::Outward => apply_push(board, nx as u8, ny as u8, i, &mut result),
+                                PushDir::Inward => apply_push(board, nx as u8, ny as u8, opposite_dir(i), &mut result),
+                                _ => {}
+                            }
+                            // Status effects (WEB from Massive Spinneret, etc.):
+                            // apply to the live unit on that tile.
+                            if wdef.web() {
+                                if let Some(idx) = board.unit_at(nx as u8, ny as u8) {
+                                    board.units[idx].set_web(true);
+                                }
+                            }
                         }
                     }
                 }

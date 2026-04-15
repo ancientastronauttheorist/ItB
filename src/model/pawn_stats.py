@@ -105,6 +105,8 @@ VEK_STATS = {
     "Plasmodia2":    PawnStats(move_speed=2, ranged=1),
     # Objective / special Vek
     "GlowingScorpion": PawnStats(move_speed=3, ranged=0),
+    # Vek Bosses (Hive Leaders): Massive + water-immune per Hive Leader trait.
+    "ScorpionBoss":  PawnStats(move_speed=3, massive=True, ranged=0),
     # Pinnacle bots
     "Snowtank1":     PawnStats(move_speed=3, ranged=0),
     "Snowtank2":     PawnStats(move_speed=3, ranged=0),
