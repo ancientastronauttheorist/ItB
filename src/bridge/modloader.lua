@@ -245,6 +245,7 @@ local function dump_state()
                     mech = p:IsMech(),
                     active = p:IsActive(),
                     move = p:GetMoveSpeed(),
+                    base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed(),
                 }
 
                 -- Status effects
@@ -260,6 +261,16 @@ local function dump_state()
                 if ok_fr then unit.frozen = fr end
                 local ok_w, web = pcall(function() return p:IsGrappled() end)
                 if ok_w then unit.web = web end
+                -- Webber identification: try API methods first, fall back later (post-loop)
+                if web then
+                    for _, mname in ipairs({"GetGrappler", "GetGrappledBy", "GetGrapplerPawn", "GetPinnedBy"}) do
+                        local ok_m, src = pcall(function() return p[mname](p) end)
+                        if ok_m and src then
+                            local ok_id, sid = pcall(function() return src:GetId() end)
+                            if ok_id and sid then unit.web_source_uid = sid; break end
+                        end
+                    end
+                end
                 local ok_ar, ar = pcall(function() return p:IsArmor() end)
                 if ok_ar and ar then unit.armor = true end
 
@@ -328,6 +339,33 @@ local function dump_state()
         end
     end
     table.sort(state.attack_order)
+
+    -- Webber fallback: for any webbed unit without a known web_source_uid
+    -- (Lua API didn't expose it), pick the closest alive enemy whose primary
+    -- weapon has Web=true. ITB rule: web breaks when webber is pushed or killed,
+    -- so the solver needs to know which enemy unwebs the unit. If no webber is
+    -- found (all dead), clear the stale web flag entirely.
+    local WEB_WEAPONS = {ScorpionAtk1=true, ScorpionAtk2=true, ScorpionAtkB=true,
+                         LeaperAtk1=true, LeaperAtk2=true}
+    for _, u in ipairs(state.units) do
+        if u.web and not u.web_source_uid then
+            local best_uid, best_dist = nil, 999
+            for _, e in ipairs(state.units) do
+                if e.team == 6 and e.hp > 0 and e.weapons and e.weapons[1]
+                        and WEB_WEAPONS[e.weapons[1]] then
+                    local d = math.abs(e.x - u.x) + math.abs(e.y - u.y)
+                    if d < best_dist then best_uid, best_dist = e.uid, d end
+                end
+            end
+            if best_uid then
+                u.web_source_uid = best_uid
+            else
+                -- No webber alive: stale web. Clear it and restore base move.
+                u.web = false
+                u.move = u.base_move
+            end
+        end
+    end
 
     -- Targeted tiles (enemy attack indicators)
     state.targeted_tiles = {}

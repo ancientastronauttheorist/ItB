@@ -70,6 +70,8 @@ pub struct JsonUnit {
     pub frozen: Option<bool>,
     pub fire: Option<bool>,
     pub web: Option<bool>,
+    pub web_source_uid: Option<u16>,
+    pub base_move: Option<u8>,
     pub weapons: Option<Vec<String>>,
     pub queued_target: Option<Vec<i8>>,
     pub weapon_damage: Option<u8>,
@@ -209,6 +211,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
                 (-1, -1)
             };
 
+            let move_speed = ju.move_speed.unwrap_or(3);
             let mut unit = Unit {
                 uid: ju.uid.unwrap_or(board.unit_count as u16),
                 pawn_type: PawnType(0),
@@ -218,7 +221,8 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
                 hp,
                 max_hp: ju.max_hp.unwrap_or(hp),
                 team,
-                move_speed: ju.move_speed.unwrap_or(3),
+                move_speed,
+                base_move: ju.base_move.unwrap_or(move_speed),
                 flags,
                 weapon,
                 weapon2,
@@ -227,6 +231,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
                 weapon_damage: ju.weapon_damage.unwrap_or(0),
                 weapon_push: ju.weapon_push.unwrap_or(0),
                 weapon_target_behind: ju.weapon_target_behind.unwrap_or(false),
+                web_source_uid: ju.web_source_uid.unwrap_or(0),
             };
 
             unit.set_type_name(&ju.unit_type);

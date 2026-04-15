@@ -116,6 +116,9 @@ pub struct Unit {
     pub max_hp: i8,
     pub team: Team,
     pub move_speed: u8,
+    /// Base movement speed; used to restore move_speed when web breaks
+    /// (push/kill of webber). Defaults to move_speed when bridge omits it.
+    pub base_move: u8,
     pub flags: UnitFlags,
     pub weapon: WeaponId,
     pub weapon2: WeaponId,
@@ -125,6 +128,10 @@ pub struct Unit {
     pub weapon_damage: u8,
     pub weapon_push: u8,
     pub weapon_target_behind: bool,
+    /// UID of the enemy currently webbing this unit (0 = none/unknown).
+    /// When that enemy is pushed or killed, the web breaks and move_speed
+    /// is restored to base_move.
+    pub web_source_uid: u16,
 }
 
 impl Unit {

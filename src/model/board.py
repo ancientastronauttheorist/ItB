@@ -38,12 +38,18 @@ class Unit:
     weapon: str
     weapon2: str = ""
     active: bool = True  # can still act this turn
+    # Base movement speed (used to restore move_speed when web breaks).
+    # Defaults to move_speed if bridge omits base_move.
+    base_move: int = 0
     # Status effects (populated by bridge; inferred by save parser)
     shield: bool = False
     acid: bool = False
     frozen: bool = False
     fire: bool = False
     web: bool = False
+    # UID of the enemy currently webbing this unit. -1 = no web / unknown.
+    # When that enemy is pushed or killed, web breaks and move_speed restores.
+    web_source_uid: int = -1
     # Enemy intent
     target_x: int = -1
     target_y: int = -1
@@ -227,6 +233,7 @@ class Board:
                 team=pawn.team_id,
                 is_mech=pawn.is_mech,
                 move_speed=move,
+                base_move=stats.move_speed,
                 flying=stats.flying,
                 massive=stats.massive,
                 armor=stats.armor,
@@ -325,11 +332,13 @@ class Board:
                 weapon=primary,
                 weapon2=secondary,
                 active=ud.get("active", True),
+                base_move=ud.get("base_move", stats.move_speed),
                 shield=ud.get("shield", False),
                 acid=ud.get("acid", False),
                 frozen=ud.get("frozen", False),
                 fire=ud.get("fire", False),
                 web=ud.get("web", False),
+                web_source_uid=ud.get("web_source_uid", -1),
                 target_x=qt_x,
                 target_y=qt_y,
                 queued_target_x=qt_x,

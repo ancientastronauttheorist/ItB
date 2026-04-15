@@ -68,6 +68,22 @@ def _apply_death_explosion(board: Board, x: int, y: int, dead_type: str,
                 _apply_death_explosion(board, nx, ny, adj_type, result, depth + 1)
 
 
+def _break_web_from(board: Board, src_uid: int) -> None:
+    """Clear web on mechs whose webber has uid==src_uid.
+
+    Called when an enemy with this uid is pushed or killed — both events
+    break ITB grapple webs. Restores the unwebbed unit's move_speed to its
+    base_move so subsequent actions can move it.
+    """
+    if src_uid <= 0:
+        return
+    for u in board.units:
+        if u.web and u.web_source_uid == src_uid:
+            u.web = False
+            if u.move_speed == 0:
+                u.move_speed = u.base_move
+
+
 def apply_damage(board: Board, x: int, y: int, damage: int,
                  result: ActionResult, source: str = "") -> None:
     """Apply damage to whatever is at (x, y).
@@ -204,6 +220,10 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
             _trigger_dam_flood(board, result)
             board.dam_alive = False
 
+    # Web break: enemy webber killed → unweb any mechs they were holding.
+    if unit is not None and unit.hp <= 0 and unit.is_enemy:
+        _break_web_from(board, unit.uid)
+
 
 def _flood_tile(board: Board, x: int, y: int, result: ActionResult) -> None:
     """Convert one tile to Water; drown non-flying non-massive units on it.
@@ -335,6 +355,12 @@ def apply_push(board: Board, x: int, y: int, direction: int,
 
     # Destination is clear — move the unit
     unit.x, unit.y = nx, ny
+
+    # Web break: enemy webber pushed → unweb any mechs they were holding.
+    # Triggers regardless of whether the push subsequently kills the webber
+    # (e.g., into deadly terrain) — the position change alone breaks the grapple.
+    if unit.is_enemy:
+        _break_web_from(board, unit.uid)
 
     # Check deadly terrain after moving
     # Frozen flying units are grounded — they drown in water/chasm/lava

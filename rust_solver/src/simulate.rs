@@ -51,6 +51,23 @@ fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionRes
     }
 }
 
+// ── Web break ────────────────────────────────────────────────────────────────
+
+/// Clear the WEB flag on any unit whose web_source_uid matches `src_uid`.
+/// Restores move_speed to base_move so the unit can move this turn.
+/// Called when an enemy is pushed or killed (both events break ITB grapples).
+fn break_web_from(board: &mut Board, src_uid: u16) {
+    if src_uid == 0 { return; }
+    for i in 0..board.unit_count as usize {
+        if board.units[i].web() && board.units[i].web_source_uid == src_uid {
+            board.units[i].set_web(false);
+            if board.units[i].move_speed == 0 {
+                board.units[i].move_speed = board.units[i].base_move;
+            }
+        }
+    }
+}
+
 // ── apply_damage ─────────────────────────────────────────────────────────────
 
 /// Internal damage logic without death explosion processing.
@@ -250,6 +267,15 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             board.dam_alive = false;
         }
     }
+
+    // Web break: enemy webber killed → unweb any mechs they were holding.
+    if let Some(idx) = board.any_unit_at(x, y) {
+        let u = &board.units[idx];
+        if u.hp <= 0 && u.is_enemy() {
+            let dead_uid = u.uid;
+            break_web_from(board, dead_uid);
+        }
+    }
 }
 
 /// Convert a single tile to Water, drowning any non-flying non-massive unit
@@ -394,6 +420,14 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     // Destination clear — move the unit
     board.units[unit_idx].x = nx;
     board.units[unit_idx].y = ny;
+
+    // Web break: enemy webber pushed → unweb any mechs they were holding.
+    // Position change alone breaks the grapple (regardless of whether the
+    // push subsequently kills the webber via terrain/mine).
+    if board.units[unit_idx].is_enemy() {
+        let pushed_uid = board.units[unit_idx].uid;
+        break_web_from(board, pushed_uid);
+    }
 
     // Fire tile: pushed unit catches fire
     if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
