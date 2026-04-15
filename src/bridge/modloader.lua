@@ -297,6 +297,25 @@ local function dump_state()
                 end
 
                 state.units[#state.units + 1] = unit
+
+                -- Multi-tile pawns (Dam_Pawn ExtraSpaces): emit a separate
+                -- unit entry per extra tile. Downstream solver mirrors HP
+                -- across all entries with matching uid at damage time.
+                if pawn_def and pawn_def.ExtraSpaces then
+                    for _, offset in ipairs(pawn_def.ExtraSpaces) do
+                        local ex = sp.x + offset.x
+                        local ey = sp.y + offset.y
+                        if ex >= 0 and ex < 8 and ey >= 0 and ey < 8 then
+                            local extra = {}
+                            for k, v in pairs(unit) do extra[k] = v end
+                            extra.x = ex
+                            extra.y = ey
+                            extra.is_extra_tile = true
+                            extra.weapons = {}  -- don't double-emit attacks
+                            state.units[#state.units + 1] = extra
+                        end
+                    end
+                end
             end
         end
     end
