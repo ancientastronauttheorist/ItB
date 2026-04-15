@@ -281,35 +281,39 @@ pub fn simulate_enemy_attacks(
             }
 
             WeaponType::Artillery => {
-                // Artillery fires at its queued tile, with direction+range preserved
-                // from the original queue position. Compute offset from ORIGINAL to
-                // target; if the current-to-target distance is below min_range, the
-                // attacker was pushed too close and the attack can't fire at that
-                // specific tile (in the game, attack shifts to preserve range, but
-                // without knowing true origin we approximate by skipping — the shot
-                // lands on a different tile than the bridge reports anyway).
-                let dx_sign = (qtx - orig.0 as i8).signum();
-                let dy_sign = (qty - orig.1 as i8).signum();
-                // Must be cardinal (exactly one axis non-zero)
+                // Artillery preserves its ORIGINAL OFFSET from the attacker when
+                // the attacker is pushed. Per ITB's piQueuedShot semantics, the
+                // queued target is a direction+distance stored relative to the
+                // enemy — pushing the enemy relocates the target tile by the
+                // same delta (confirmed empirically: push Alpha Scarab D3→C3
+                // with D7 original target → new target shifts to C7).
+                //
+                // range_min guard: if the PUSHED distance is below the weapon's
+                // minimum range, attack cancels (e.g. pushed adjacent to target).
+                let offset_x = qtx - orig.0 as i8;
+                let offset_y = qty - orig.1 as i8;
+                let new_tx = ex as i8 + offset_x;
+                let new_ty = ey as i8 + offset_y;
+                if !in_bounds(new_tx, new_ty) { continue; }
+
+                // Cardinal axis required (exactly one axis non-zero) for artillery
+                // to have a direction for path_size > 1 handling.
+                let dx_sign = offset_x.signum();
+                let dy_sign = offset_y.signum();
                 if (dx_sign != 0) == (dy_sign != 0) { continue; }
 
-                // Range from CURRENT position to queued target
-                let curr_range = (qtx - ex as i8).abs() + (qty - ey as i8).abs();
-
-                // If below min range, attack can't hit this tile — skip (conservative)
+                // Min-range check against the (new) attacker→target distance.
+                let curr_range = offset_x.abs() + offset_y.abs();
                 if (curr_range as u8) < wdef.range_min { continue; }
 
-                // Must still be axis-aligned with target from current position
-                if (qtx - ex as i8) != 0 && (qty - ey as i8) != 0 { continue; }
-
-                let tx = qtx as u8;
-                let ty = qty as u8;
+                let tx = new_tx as u8;
+                let ty = new_ty as u8;
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
 
                 if wdef.path_size > 1 {
-                    let tx2 = tx as i8 + dx_sign;
-                    let ty2 = ty as i8 + dy_sign;
+                    let tx2 = new_tx + dx_sign;
+                    let ty2 = new_ty + dy_sign;
                     if in_bounds(tx2, ty2) {
                         let d2 = enemy_hit_damage(board, tx2 as u8, ty2 as u8, damage, vh);
                         apply_damage(board, tx2 as u8, ty2 as u8, d2, &mut result, DamageSource::Weapon);
