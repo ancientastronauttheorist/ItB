@@ -25,6 +25,7 @@ pub struct JsonInput {
     pub environment_danger: Option<Vec<Vec<u8>>>,
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int], ...]
     pub eval_weights: Option<EvalWeights>,
+    pub mission_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -76,6 +77,7 @@ pub struct JsonUnit {
     pub weapon_push: Option<u8>,
     pub ranged: Option<u8>,
     pub can_move: Option<bool>,
+    pub is_extra_tile: Option<bool>,
 }
 
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
@@ -181,6 +183,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             if ju.ranged.unwrap_or(0) > 0 { flags |= UnitFlags::RANGED; }
             if ju.active.unwrap_or(true) { flags |= UnitFlags::ACTIVE; }
             if ju.can_move.unwrap_or(true) { flags |= UnitFlags::CAN_MOVE; }
+            if ju.is_extra_tile.unwrap_or(false) { flags |= UnitFlags::EXTRA_TILE; }
             if ju.shield.unwrap_or(false) { flags |= UnitFlags::SHIELD; }
             if ju.acid.unwrap_or(false) { flags |= UnitFlags::ACID; }
             if ju.frozen.unwrap_or(false) { flags |= UnitFlags::FROZEN; }
@@ -235,6 +238,19 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
     board.current_turn = input.turn.unwrap_or(0);
     board.total_turns = input.total_turns.unwrap_or(5);
     board.remaining_spawns = input.remaining_spawns.unwrap_or(u32::MAX);
+    board.mission_id = input.mission_id.clone().unwrap_or_default();
+
+    // Detect Old Earth Dam: populate dam_alive + dam_primary from the primary
+    // tile entry (the one without EXTRA_TILE). Used by trigger_dam_flood at
+    // damage time. Must run AFTER unit population above so board.units is full.
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.type_name_str() == "Dam_Pawn" && u.hp > 0 && !u.is_extra_tile() {
+            board.dam_alive = true;
+            board.dam_primary = Some((u.x, u.y));
+            break;
+        }
+    }
 
     // Detect Blast Psion: if Jelly_Explode1 is alive, all Vek explode on death
     for i in 0..board.unit_count as usize {

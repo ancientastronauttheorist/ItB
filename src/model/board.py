@@ -53,6 +53,10 @@ class Unit:
     weapon_damage: int = 0
     weapon_target_behind: bool = False
     weapon_push: int = 0
+    # Multi-tile pawn duplicate (bridge emits one entry per ExtraSpace tile
+    # for Dam_Pawn). All entries share `uid`; damage to any entry mirrors
+    # HP to the rest via apply_damage.
+    is_extra_tile: bool = False
 
     @property
     def is_player(self) -> bool:
@@ -97,6 +101,12 @@ class Board:
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
         self.soldier_psion_active: bool = False
+        # Mission metadata (from bridge mission.ID, e.g. "Mission_Dam").
+        self.mission_id: str = ""
+        # Old Earth Dam state — flipped to False exactly once when the last
+        # Dam_Pawn tile dies; the transition triggers trigger_dam_flood.
+        self.dam_alive: bool = False
+        self.dam_primary: tuple[int, int] | None = None
 
     def copy(self) -> Board:
         """Deep copy for search branching."""
@@ -111,6 +121,9 @@ class Board:
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
+        b.mission_id = self.mission_id
+        b.dam_alive = self.dam_alive
+        b.dam_primary = self.dam_primary
         return b
 
     def tile(self, x: int, y: int) -> BoardTile:
@@ -319,8 +332,12 @@ class Board:
                 weapon_damage=min(ud.get("weapon_damage", 0), 255),
                 weapon_target_behind=ud.get("weapon_target_behind", False),
                 weapon_push=ud.get("weapon_push", 0),
+                is_extra_tile=ud.get("is_extra_tile", False),
             )
             board.units.append(u)
+
+        # Mission metadata — may be empty string if bridge couldn't resolve.
+        board.mission_id = data.get("mission_id", "") or ""
 
         # Detect Blast Psion: if alive on board, all Vek explode on death
         board.blast_psion_active = any(
@@ -335,6 +352,14 @@ class Board:
             for u in board.units:
                 if u.is_enemy:
                     u.armor = True
+
+        # Detect Old Earth Dam — record the primary tile (non-extra) for the
+        # 14-tile flood offset. `dam_alive` flips when the last tile dies.
+        for u in board.units:
+            if u.type == "Dam_Pawn" and u.hp > 0 and not u.is_extra_tile:
+                board.dam_alive = True
+                board.dam_primary = (u.x, u.y)
+                break
 
         # Detect Soldier Psion: alive Jelly_Health1 buffs all Vek +1 HP
         board.soldier_psion_active = any(

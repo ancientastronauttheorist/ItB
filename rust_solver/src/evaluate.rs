@@ -90,6 +90,11 @@ pub struct EvalWeights {
     pub chain_damage: f64,
     pub smoke_placed: f64,
     pub tiles_frozen: f64,
+
+    // Mission-specific bonus objectives (0 default; turn-aware via `scaled`).
+    // Old Earth Dam: +1 Rep + 14-tile flood that drowns grounded Vek for rest
+    // of mission. Active only when weights/active.json sets a non-zero value.
+    pub dam_destroyed: f64,
 }
 
 impl Default for EvalWeights {
@@ -134,6 +139,8 @@ impl Default for EvalWeights {
             chain_damage: 0.0,
             smoke_placed: 0.0,
             tiles_frozen: 0.0,
+            // Mission-specific bonuses (zero by default; set via active.json)
+            dam_destroyed: 0.0,
         }
     }
 }
@@ -154,6 +161,9 @@ pub struct PsionState {
     pub soldier: bool,
     pub regen: bool,
     pub tyrant: bool,
+    /// Not a Psion — but captured alongside Psion state for the same
+    /// before→after transition-scoring pattern used by psion_* bonuses.
+    pub dam: bool,
 }
 
 impl PsionState {
@@ -164,6 +174,7 @@ impl PsionState {
             soldier: board.soldier_psion,
             regen: board.regen_psion,
             tyrant: board.tyrant_psion,
+            dam: board.dam_alive,
         }
     }
 }

@@ -75,6 +75,10 @@ bitflags! {
         /// False for MID_ACTION mechs that moved but haven't attacked yet.
         /// Solver skips move enumeration when this is unset.
         const CAN_MOVE = 0b0001_0000_0000_0000;
+        /// Duplicate unit-entry emitted for a pawn's ExtraSpaces tile
+        /// (Dam_Pawn occupies H3+H4 as one Lua Pawn). Damage is mirrored
+        /// across all entries sharing the same uid.
+        const EXTRA_TILE = 0b0010_0000_0000_0000;
     }
 }
 
@@ -138,6 +142,7 @@ impl Unit {
     pub fn web(&self) -> bool { self.flags.contains(UnitFlags::WEB) }
     pub fn ranged(&self) -> bool { self.flags.contains(UnitFlags::RANGED) }
     pub fn can_move(&self) -> bool { self.flags.contains(UnitFlags::CAN_MOVE) }
+    pub fn is_extra_tile(&self) -> bool { self.flags.contains(UnitFlags::EXTRA_TILE) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -201,6 +206,14 @@ pub struct Board {
     pub remaining_spawns: u32,  // Queued Vek spawns still to emerge (from bridge
                                 // mission.EnemyList etc). 0 = no more reinforcements
                                 // after current turn, treat as final turn for scoring.
+    pub mission_id: String,     // Mission class name from bridge (e.g. "Mission_Dam").
+                                // Empty when the bridge couldn't resolve it.
+    pub dam_alive: bool,        // True while at least one Dam_Pawn has hp > 0. Flips
+                                // false exactly once when the last tile is destroyed —
+                                // the transition triggers trigger_dam_flood().
+    pub dam_primary: Option<(u8, u8)>, // Coords of the Dam_Pawn's primary tile (the
+                                // one WITHOUT the EXTRA_TILE flag). Used to compute
+                                // the 14-tile flood offsets.
 }
 
 impl Default for Board {
@@ -224,6 +237,9 @@ impl Default for Board {
             current_turn: 0,
             total_turns: 5,
             remaining_spawns: u32::MAX, // Unknown → treat as "plenty of future"
+            mission_id: String::new(),
+            dam_alive: false,
+            dam_primary: None,
         }
     }
 }
