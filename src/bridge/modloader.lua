@@ -271,6 +271,12 @@ local function dump_state()
                     base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed(),
                 }
 
+                -- Massive trait (walks in water, immune to drowning)
+                -- Read from pawn_def since there's no direct IsMassive() API
+                if pawn_def and pawn_def.Massive then
+                    unit.massive = true
+                end
+
                 -- Status effects
                 local ok_f, fly = pcall(function() return p:IsFlying() end)
                 if ok_f then unit.flying = fly end

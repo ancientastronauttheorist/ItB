@@ -349,13 +349,14 @@ pub fn simulate_enemy_attacks(
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
 
-                if wdef.path_size > 1 {
-                    let tx2 = new_tx + dx_sign;
-                    let ty2 = new_ty + dy_sign;
-                    if in_bounds(tx2, ty2) {
-                        let d2 = enemy_hit_damage(board, tx2 as u8, ty2 as u8, damage, vh);
-                        apply_damage(board, tx2 as u8, ty2 as u8, d2, &mut result, DamageSource::Weapon);
-                    }
+                // path_size > 1: also damage subsequent tiles in attack direction
+                // (e.g. Super Stinger's 3-tile line; Crab Artillery's 2-tile hit)
+                for i in 1..wdef.path_size as i8 {
+                    let tx_n = new_tx + dx_sign * i;
+                    let ty_n = new_ty + dy_sign * i;
+                    if !in_bounds(tx_n, ty_n) { break; }
+                    let d_n = enemy_hit_damage(board, tx_n as u8, ty_n as u8, damage, vh);
+                    apply_damage(board, tx_n as u8, ty_n as u8, d_n, &mut result, DamageSource::Weapon);
                 }
             }
 

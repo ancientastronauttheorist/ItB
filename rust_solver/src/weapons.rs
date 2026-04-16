@@ -222,9 +222,11 @@ pub enum WId {
     SnowlaserAtk1 = 109,
     /// Laser-Mech's "BKR Beam Mark II": piercing laser, 4 damage (decays to 1).
     SnowlaserAtk2 = 110,
+    /// Hornet Leader's "Super Stinger": stab three tiles in a line, 2 damage each.
+    HornetAtkB = 111,
 }
 
-pub const WEAPON_COUNT: usize = 111;
+pub const WEAPON_COUNT: usize = 112;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -476,6 +478,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[109] = WeaponDef { weapon_type: WeaponType::Laser, damage: 2, range_max: 0, flags: C, ..DEF };
     // 110: SnowlaserAtk2 — Laser-Mech's BKR Beam Mark II: piercing laser 4 dmg (decays to 1)
     w[110] = WeaponDef { weapon_type: WeaponType::Laser, damage: 4, range_max: 0, flags: C, ..DEF };
+    // 111: HornetAtkB — Hornet Leader's Super Stinger: 3 tiles in a line, 2 dmg each
+    // Modeled as Artillery with range_min=1 + path_size=3. The artillery handler
+    // damages target + path_size-1 extra tiles in attack direction, which matches
+    // the game's 3-tile line (p2, p2+dir, p2+2*dir).
+    w[111] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 1, range_max: 0, path_size: 3, flags: C, ..DEF };
 
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
@@ -546,6 +553,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "ScorpionAtk2" => WId::ScorpionAtk2,
         "HornetAtk1" => WId::HornetAtk1,
         "HornetAtk2" => WId::HornetAtk2,
+        "HornetAtkB" => WId::HornetAtkB,
         "LeaperAtk1" => WId::LeaperAtk1,
         "BeetleAtk1" => WId::BeetleAtk1,
         "BeetleAtk2" => WId::BeetleAtk2,
@@ -652,6 +660,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
         WId::HornetAtk2 => "HornetAtk2",
+        WId::HornetAtkB => "HornetAtkB",
         WId::LeaperAtk1 => "LeaperAtk1",
         WId::BeetleAtk1 => "BeetleAtk1",
         WId::BeetleAtk2 => "BeetleAtk2",
@@ -712,6 +721,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Scorpion2" => WId::ScorpionAtk2,
         "Hornet1" => WId::HornetAtk1,
         "Hornet2" => WId::HornetAtk2,
+        "HornetBoss" => WId::HornetAtkB,
         "Leaper1" => WId::LeaperAtk1,
         "Leaper2" => WId::LeaperAtk2,
         "Beetle1" => WId::BeetleAtk1,
@@ -823,6 +833,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScorpionAtk2 => "Alpha Scorpion Strike",
         WId::HornetAtk1 => "Hornet Sting",
         WId::HornetAtk2 => "Alpha Hornet Sting",
+        WId::HornetAtkB => "Super Stinger",
         WId::LeaperAtk1 => "Leaper Strike",
         WId::LeaperAtk2 => "Alpha Leaper Strike",
         WId::BeetleAtk1 => "Beetle Charge",
