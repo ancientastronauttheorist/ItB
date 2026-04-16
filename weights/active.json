@@ -39,6 +39,7 @@
     "smoke_placed": 0,
     "tiles_frozen": 0,
     "dam_destroyed": 8000,
+    "mech_self_frozen": -12000,
     "building_bump_damage": -8000,
     "bld_grid_floor": 0.6,
     "bld_grid_scale": 0.4,

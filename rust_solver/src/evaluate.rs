@@ -68,6 +68,7 @@ pub struct EvalWeights {
     // Status effect bonuses
     pub enemy_on_fire_bonus: f64,    // enemy on fire (will take 1 dmg/turn)
     pub mech_on_acid: f64,           // mech standing on ACID pool (penalty)
+    pub mech_self_frozen: f64,       // mech frozen by own move (freeze mine) — loses next turn
     pub mech_low_hp_risk: f64,       // 1HP mech near active enemy (binary, negative)
     pub friendly_npc_killed: f64,    // non-mech player unit killed (penalty)
 
@@ -132,6 +133,7 @@ impl Default for EvalWeights {
             // Status bonuses
             enemy_on_fire_bonus: 100.0,
             mech_on_acid: -200.0,
+            mech_self_frozen: -12000.0,
             mech_low_hp_risk: -2000.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
             // Pro-strategy
@@ -386,6 +388,11 @@ pub fn evaluate(
             let tile = board.tile(u.x, u.y);
             if tile.acid() && tile.terrain != Terrain::Water {
                 score += scaled(weights.mech_on_acid, ff, 0.50, 0.50);
+            }
+
+            // Frozen mech: loses entire next turn of actions
+            if u.frozen() {
+                score += scaled(weights.mech_self_frozen, ff, 0.30, 0.70);
             }
 
             // Low-HP risk: penalize 1HP mech near active (non-frozen/smoked) enemies

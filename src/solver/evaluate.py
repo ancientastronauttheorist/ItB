@@ -67,6 +67,7 @@ class EvalWeights:
     dam_destroyed: float = 0
 
     # Building protection
+    mech_self_frozen: float = -12000
     building_bump_damage: float = -8000
     bld_grid_floor: float = 0.6
     bld_grid_scale: float = 0.4
