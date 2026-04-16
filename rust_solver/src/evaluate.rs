@@ -103,6 +103,9 @@ pub struct EvalWeights {
     // Objective building bonus (Coal Plant, Power Generator, Emergency Batteries)
     pub building_objective_bonus: f64,
 
+    // Boss kill bonus (mission objective: destroy the Hornet Leader, etc.)
+    pub boss_killed_bonus: f64,
+
     // Context-aware building multiplier knobs
     pub bld_grid_floor: f64,
     pub bld_grid_scale: f64,
@@ -161,6 +164,7 @@ impl Default for EvalWeights {
             // Building protection
             building_bump_damage: -8000.0,
             building_objective_bonus: 8000.0,
+            boss_killed_bonus: 8000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
             bld_phase_floor: 1.0,
@@ -186,6 +190,7 @@ pub struct PsionState {
     pub soldier: bool,
     pub regen: bool,
     pub tyrant: bool,
+    pub boss: bool,
     /// Not a Psion — but captured alongside Psion state for the same
     /// before→after transition-scoring pattern used by psion_* bonuses.
     pub dam: bool,
@@ -199,6 +204,7 @@ impl PsionState {
             soldier: board.soldier_psion,
             regen: board.regen_psion,
             tyrant: board.tyrant_psion,
+            boss: board.boss_alive,
             dam: board.dam_alive,
         }
     }
@@ -327,6 +333,9 @@ pub fn evaluate(
     }
     if psion_before.regen && !board.regen_psion {
         score += weights.psion_blood * ff;
+    }
+    if psion_before.boss && !board.boss_alive {
+        score += weights.boss_killed_bonus * ff;
     }
     if psion_before.tyrant && !board.tyrant_psion {
         score += weights.psion_tyrant * ff;

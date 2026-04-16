@@ -322,6 +322,15 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         }
     }
 
+    // Detect any Boss-type enemy (mission objective: destroy the boss)
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.is_enemy() && u.hp > 0 && u.type_name_str().contains("Boss") {
+            board.boss_alive = true;
+            break;
+        }
+    }
+
     // Detect passive abilities from mech weapon names
     if let Some(units) = &input.units {
         for ju in units {

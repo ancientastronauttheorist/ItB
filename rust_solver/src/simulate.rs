@@ -146,6 +146,11 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     if board.tyrant_psion && board.units[idx].type_name_str() == "Jelly_Lava1" {
                         board.tyrant_psion = false;
                     }
+
+                    // Boss killed: clear flag for kill bonus in evaluate
+                    if board.boss_alive && board.units[idx].type_name_str().contains("Boss") {
+                        board.boss_alive = false;
+                    }
                 }
             } else if unit.is_player() {
                 result.mech_damage_taken += actual as i32;

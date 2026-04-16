@@ -70,6 +70,7 @@ class EvalWeights:
     mech_self_frozen: float = -12000
     building_bump_damage: float = -8000
     building_objective_bonus: float = 8000
+    boss_killed_bonus: float = 8000
     bld_grid_floor: float = 0.6
     bld_grid_scale: float = 0.4
     bld_phase_floor: float = 1.0

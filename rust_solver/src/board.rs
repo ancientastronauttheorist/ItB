@@ -206,6 +206,7 @@ pub struct Board {
     pub soldier_psion: bool, // Soldier Psion (Jelly_Health1): all Vek +1 HP
     pub regen_psion: bool,   // Blood Psion (Jelly_Regen1): all Vek regen 1 HP/turn
     pub tyrant_psion: bool,  // Psion Tyrant (Jelly_Lava1): 1 dmg to all player units/turn
+    pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
     pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
@@ -240,6 +241,7 @@ impl Default for Board {
             soldier_psion: false,
             regen_psion: false,
             tyrant_psion: false,
+            boss_alive: false,
             storm_generator: false,
             flame_shielding: false,
             vek_hormones: false,
