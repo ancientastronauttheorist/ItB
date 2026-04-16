@@ -135,6 +135,10 @@ pub enum PushDir {
     Outward = 4,
     Inward = 5,
     Flip = 6,
+    /// Throw: target is removed from front of attacker and placed on the tile
+    /// BEHIND the attacker (opposite side). Vice Fist (Prime_Shift). If the
+    /// destination tile is blocked, target stays in place and takes bump damage.
+    Throw = 7,
 }
 
 impl PushDir {
@@ -146,6 +150,7 @@ impl PushDir {
             "outward" => PushDir::Outward,
             "inward" => PushDir::Inward,
             "flip" => PushDir::Flip,
+            "throw" => PushDir::Throw,
             _ => PushDir::None,
         }
     }

@@ -245,8 +245,8 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[3] = WeaponDef { weapon_type: WeaponType::Laser, damage: 3, range_max: 0, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 4: Prime_ShieldBash — Shield Bash
     w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
-    // 5: Prime_Shift — Vice Fist
-    w[5] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Backward, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    // 5: Prime_Shift — Vice Fist (grab and toss target to tile behind attacker)
+    w[5] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Throw, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 6: Prime_Flamethrower — Flamethrower
     w[6] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     // 7: Prime_Areablast — Area Blast

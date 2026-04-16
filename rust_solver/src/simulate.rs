@@ -355,6 +355,133 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
     }
 }
 
+// ── apply_throw ──────────────────────────────────────────────────────────────
+
+/// Vice Fist: target at (tx, ty) is grabbed and tossed to the tile BEHIND the
+/// attacker at (ax, ay). The destination is the tile one step from the attacker
+/// in the direction OPPOSITE to the attack direction. If the destination is
+/// blocked (edge / mountain / building / unit), the target stays in place and
+/// takes 1 bump damage; the blocker (if a building or unit) also takes 1.
+///
+/// This is a teleport (2-tile total displacement), NOT a 1-tile push: the
+/// target jumps directly to behind-attacker without touching the attacker tile.
+pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize, result: &mut ActionResult) {
+    // Find ANY unit (including dead) at target — simultaneous damage+throw.
+    let unit_idx = match board.any_unit_at(tx, ty) {
+        Some(idx) => idx,
+        None => return,
+    };
+
+    // Non-pushable non-mechs are immune
+    if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
+        return;
+    }
+
+    // Destination = attacker position + opposite-of-attack direction
+    let opp = opposite_dir(dir);
+    let (odx, ody) = DIRS[opp];
+    let nx_i = ax as i8 + odx;
+    let ny_i = ay as i8 + ody;
+
+    // Blocked by map edge — target stays, takes bump
+    if !in_bounds(nx_i, ny_i) {
+        apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
+        return;
+    }
+
+    let nx = nx_i as u8;
+    let ny = ny_i as u8;
+
+    // Blocked by mountain — target bumps, mountain takes 1 damage
+    if board.tile(nx, ny).terrain == Terrain::Mountain {
+        apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
+        let mt = board.tile_mut(nx, ny);
+        if mt.building_hp > 0 {
+            mt.building_hp -= 1;
+        }
+        if mt.building_hp == 0 {
+            mt.terrain = Terrain::Rubble;
+        }
+        return;
+    }
+
+    // Blocked by building — both take 1 bump (building loses grid power)
+    if board.tile(nx, ny).terrain == Terrain::Building && board.tile(nx, ny).building_hp > 0 {
+        apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
+        result.buildings_bump_damaged += 1;
+        let bt = board.tile_mut(nx, ny);
+        bt.building_hp -= 1;
+        if bt.building_hp == 0 {
+            bt.terrain = Terrain::Rubble;
+            result.grid_damage += 1;
+            result.buildings_lost += 1;
+            board.grid_power = board.grid_power.saturating_sub(1);
+        } else {
+            result.buildings_damaged += 1;
+            board.grid_power = board.grid_power.saturating_sub(1);
+        }
+        return;
+    }
+
+    // Blocked by another alive unit — both take 1 bump
+    if let Some(blocker_idx) = board.unit_at(nx, ny) {
+        if blocker_idx != unit_idx {
+            apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
+            apply_damage(board, nx, ny, 1, result, DamageSource::Bump);
+            return;
+        }
+    }
+
+    // Destination clear — teleport the target there
+    board.units[unit_idx].x = nx;
+    board.units[unit_idx].y = ny;
+
+    // Web break: enemy webber moved → unweb any mechs they were holding
+    if board.units[unit_idx].is_enemy() {
+        let pushed_uid = board.units[unit_idx].uid;
+        break_web_from(board, pushed_uid);
+    }
+
+    // Fire tile: thrown unit catches fire
+    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+        board.units[unit_idx].set_fire(true);
+    }
+
+    // ACID pool: unit gains ACID, pool consumed
+    if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
+        if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+            board.units[unit_idx].set_acid(true);
+        }
+        board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
+    }
+
+    // Frozen unit on water → creates ice
+    let dest_terrain = board.tile(nx, ny).terrain;
+    if board.units[unit_idx].frozen() && dest_terrain == Terrain::Water {
+        board.tile_mut(nx, ny).terrain = Terrain::Ice;
+        board.tile_mut(nx, ny).set_cracked(false);
+        return;
+    }
+
+    // Water/lava/chasm: kills non-flying ground units (Lava also sets fire on flying)
+    if board.units[unit_idx].hp > 0 && !board.units[unit_idx].flying() {
+        match dest_terrain {
+            Terrain::Water | Terrain::Chasm => {
+                board.units[unit_idx].hp = 0;
+            }
+            Terrain::Lava => {
+                board.units[unit_idx].hp = 0;
+            }
+            _ => {}
+        }
+    } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].flying()
+        && dest_terrain == Terrain::Lava {
+        if !board.units[unit_idx].shield() {
+            board.units[unit_idx].set_fire(true);
+        }
+    }
+}
+
 // ── apply_push ───────────────────────────────────────────────────────────────
 
 /// Push unit at (x, y) in direction. Damage+push are simultaneous (dead units still push).
@@ -618,7 +745,7 @@ pub fn simulate_weapon(
     let attack_dir = cardinal_direction(ax, ay, target_x, target_y);
 
     match wdef.weapon_type {
-        WeaponType::Melee => sim_melee(board, wdef, target_x, target_y, attack_dir, &mut result),
+        WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
         WeaponType::Artillery => sim_artillery(board, wdef, target_x, target_y, attack_dir, &mut result),
         WeaponType::SelfAoe => sim_self_aoe(board, ax, ay, wdef, &mut result),
@@ -658,7 +785,7 @@ pub fn simulate_weapon(
 
 // ── Melee ────────────────────────────────────────────────────────────────────
 
-fn sim_melee(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
 
     // Chain weapon (Electric Whip): BFS through adjacent occupied tiles
@@ -700,6 +827,7 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Op
             PushDir::Outward => {
                 apply_push(board, tx, ty, dir, result);
             }
+            PushDir::Throw => apply_throw(board, ax, ay, tx, ty, dir, result),
             _ => {}
         }
 
@@ -1337,5 +1465,75 @@ mod tests {
         let mut result = ActionResult::default();
         apply_damage(&mut board, 3, 3, 2, &mut result, DamageSource::Weapon);
         assert!(board.tile(3, 3).acid(), "ACID unit death should create acid pool");
+    }
+
+    // ── Vice Fist (Prime_Shift) Throw mechanic ────────────────────────────────
+
+    #[test]
+    fn test_vice_fist_throws_to_clear_tile_behind_attacker() {
+        // JudoMech at (3,3) attacks east at Hornet at (4,3).
+        // Throw destination = (2,3), behind attacker (opposite of attack dir).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let enemy_idx = add_enemy(&mut board, 99, 4, 3, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeShift, 4, 3);
+        assert_eq!(board.units[mech_idx].x, 3, "JudoMech stays at (3,3)");
+        assert_eq!(board.units[mech_idx].y, 3);
+        assert_eq!(board.units[enemy_idx].x, 2, "Hornet thrown to (2,3) behind JudoMech");
+        assert_eq!(board.units[enemy_idx].y, 3);
+        assert_eq!(board.units[enemy_idx].hp, 1, "Hornet took 1 dmg from Vice Fist");
+    }
+
+    #[test]
+    fn test_vice_fist_blocked_by_mountain_behind() {
+        // Mountain at (2,3) blocks throw → enemy stays + bump.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Mountain;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let enemy_idx = add_enemy(&mut board, 99, 4, 3, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeShift, 4, 3);
+        assert_eq!(board.units[enemy_idx].x, 4, "Hornet stays at (4,3) — throw blocked");
+        assert_eq!(board.units[enemy_idx].hp, 1, "3 HP - 1 weapon - 1 bump = 1");
+    }
+
+    #[test]
+    fn test_vice_fist_throws_into_water_drowns() {
+        // Water at (2,3); non-flying enemy thrown there → dies.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Water;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let enemy_idx = add_enemy(&mut board, 99, 4, 3, 5);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeShift, 4, 3);
+        assert_eq!(board.units[enemy_idx].x, 2, "Enemy moved to water tile");
+        assert_eq!(board.units[enemy_idx].hp, 0, "Drowned in water (non-flying)");
+    }
+
+    #[test]
+    fn test_vice_fist_blocked_by_edge_bumps() {
+        // JudoMech at (0,3) facing east; throw destination (-1,3) is off-board.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 3, 5, WId::PrimeShift);
+        let enemy_idx = add_enemy(&mut board, 99, 1, 3, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeShift, 1, 3);
+        assert_eq!(board.units[enemy_idx].x, 1, "Stays at (1,3) — off-board edge");
+        assert_eq!(board.units[enemy_idx].hp, 1, "3 - 1 weapon - 1 bump = 1");
+    }
+
+    #[test]
+    fn test_vice_fist_blocked_by_unit_behind() {
+        // Unit already behind attacker → throw blocked, both bump.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let target_idx = add_enemy(&mut board, 99, 4, 3, 4);
+        let blocker_idx = add_enemy(&mut board, 100, 2, 3, 4);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeShift, 4, 3);
+        assert_eq!(board.units[target_idx].x, 4, "Target stays at (4,3) — blocked");
+        assert_eq!(board.units[target_idx].hp, 2, "Target: 4 - 1 weapon - 1 bump = 2");
+        assert_eq!(board.units[blocker_idx].hp, 3, "Blocker: 4 - 1 bump = 3");
     }
 }

@@ -110,7 +110,7 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     ),
     "Prime_Shift": WeaponDef(
         name="Vice Fist", weapon_type="melee",
-        damage=1, push="backward", targets_allies=True,
+        damage=1, push="throw", targets_allies=True,
         upgrade_a="no friendly damage",
         upgrade_b="+2 damage (total 3)",
     ),

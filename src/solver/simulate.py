@@ -264,6 +264,82 @@ def _trigger_dam_flood(board: Board, result: ActionResult) -> None:
             _flood_tile(board, px + x_off, py + y_off, result)
 
 
+def apply_throw(board: Board, ax: int, ay: int, tx: int, ty: int,
+                attack_dir: int, result: ActionResult) -> None:
+    """Vice Fist (Prime_Shift): grab target at (tx, ty) and toss it to the
+    tile BEHIND the attacker (attacker_pos + opposite-of-attack-direction).
+
+    Net displacement is 2 tiles (target jumps over the attacker), not a
+    1-tile push. If the destination tile is blocked (edge, mountain,
+    building, unit), the target stays in place and takes 1 bump damage;
+    blocker (if a building or unit) also takes 1.
+    """
+    unit = None
+    for u in board.units:
+        if u.x == tx and u.y == ty:
+            unit = u
+            break
+    if unit is None:
+        return
+    if not unit.pushable and not unit.is_mech:
+        return
+
+    opp = opposite_dir(attack_dir)
+    dx, dy = DIRS[opp]
+    nx, ny = ax + dx, ay + dy
+
+    # Off-board
+    if not board.in_bounds(nx, ny):
+        apply_damage(board, tx, ty, 1, result, "bump")
+        result.events.append(f"Throw blocked by edge at ({nx},{ny})")
+        return
+
+    tile_dest = board.tile(nx, ny)
+
+    # Mountain
+    if tile_dest.terrain == "mountain":
+        apply_damage(board, tx, ty, 1, result, "bump")
+        tile_dest.building_hp = getattr(tile_dest, "building_hp", 2)
+        if tile_dest.building_hp > 0:
+            tile_dest.building_hp -= 1
+        if tile_dest.building_hp <= 0:
+            tile_dest.terrain = "rubble"
+        return
+
+    # Building
+    if tile_dest.terrain == "building" and tile_dest.building_hp > 0:
+        apply_damage(board, tx, ty, 1, result, "bump")
+        tile_dest.building_hp -= 1
+        board.grid_power = max(0, board.grid_power - 1)
+        if tile_dest.building_hp <= 0:
+            result.grid_damage += 1
+        return
+
+    # Unit blocker
+    blocker = board.unit_at(nx, ny)
+    if blocker is not None:
+        apply_damage(board, tx, ty, 1, result, "bump")
+        apply_damage(board, nx, ny, 1, result, "bump")
+        return
+
+    # Destination clear — teleport
+    unit.x, unit.y = nx, ny
+    if unit.is_enemy:
+        _break_web_from(board, unit.uid)
+
+    # Apply terrain effects on landing (water/lava/chasm kill ground units)
+    effectively_flying = unit.flying and not unit.frozen
+    if tile_dest.terrain in TERRAIN_DEADLY_GROUND and not effectively_flying:
+        unit.hp = 0
+        if unit.is_enemy:
+            result.enemies_killed += 1
+        elif unit.is_player:
+            result.mechs_killed += 1
+        result.events.append(f"{unit.type} thrown into {tile_dest.terrain} at ({nx},{ny})")
+    else:
+        result.events.append(f"Threw {unit.type} ({tx},{ty})->({nx},{ny})")
+
+
 def apply_push(board: Board, x: int, y: int, direction: int,
                result: ActionResult) -> None:
     """Push unit at (x, y) one tile in the given direction.
@@ -502,9 +578,15 @@ def _sim_melee(board, attacker, wdef, tx, ty, attack_dir, result):
             # Flip reverses the unit's attack direction
             apply_push(board, tx, ty, opposite_dir(attack_dir), result)
         elif wdef.push == "backward":
-            # Vice Fist: fling target behind attacker
+            # 1-tile pull toward attacker (not Vice Fist — see "throw" below).
+            # Used by projectile pull weapons (e.g. Pull Beam).
             opp = opposite_dir(attack_dir)
             apply_push(board, tx, ty, opp, result)
+        elif wdef.push == "throw":
+            # Vice Fist (Prime_Shift): target teleports to the tile BEHIND the
+            # attacker (attacker_pos + opposite-attack-direction). If blocked,
+            # target stays and takes bump damage. Total displacement = 2 tiles.
+            apply_throw(board, attacker.x, attacker.y, tx, ty, attack_dir, result)
         elif wdef.push == "perpendicular":
             # Right Hook: push perpendicular
             perp = (attack_dir + 1) % 4
