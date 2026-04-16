@@ -1536,4 +1536,61 @@ mod tests {
         assert_eq!(board.units[target_idx].hp, 2, "Target: 4 - 1 weapon - 1 bump = 2");
         assert_eq!(board.units[blocker_idx].hp, 3, "Blocker: 4 - 1 bump = 3");
     }
+
+    // ── Cluster Artillery (Ranged_Defensestrike) ──────────────────────────────
+    // SiegeMech weapon: targets a CENTER tile (which is NOT damaged) and hits
+    // the 4 cardinal-adjacent tiles with 1 damage + push outward. Used to
+    // protect a building/objective by clearing enemies around it.
+
+    #[test]
+    fn test_cluster_artillery_no_damage_to_center() {
+        // Center has an enemy — should NOT take damage.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 2, WId::RangedDefensestrike);
+        let center_idx = add_enemy(&mut board, 99, 4, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedDefensestrike, 4, 4);
+        assert_eq!(board.units[center_idx].hp, 3, "Center tile NOT damaged");
+        assert_eq!(board.units[center_idx].x, 4, "Center NOT pushed");
+        assert_eq!(board.units[center_idx].y, 4);
+    }
+
+    #[test]
+    fn test_cluster_artillery_damages_and_pushes_adjacent() {
+        // 4 enemies adjacent to center (4,4) at N/S/E/W — each takes 1 damage
+        // and is pushed OUTWARD (away from center).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 2, WId::RangedDefensestrike);
+        let n = add_enemy(&mut board, 1, 4, 5, 3); // north of center
+        let s = add_enemy(&mut board, 2, 4, 3, 3); // south
+        let e = add_enemy(&mut board, 3, 5, 4, 3); // east
+        let w = add_enemy(&mut board, 4, 3, 4, 3); // west
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedDefensestrike, 4, 4);
+        // Each enemy: 3 - 1 (weapon) = 2 HP, then pushed 1 tile outward
+        assert_eq!(board.units[n].hp, 2);
+        assert_eq!(board.units[n].y, 6, "N enemy pushed further north (5→6)");
+        assert_eq!(board.units[s].hp, 2);
+        assert_eq!(board.units[s].y, 2, "S enemy pushed further south (3→2)");
+        assert_eq!(board.units[e].hp, 2);
+        assert_eq!(board.units[e].x, 6, "E enemy pushed east (5→6)");
+        assert_eq!(board.units[w].hp, 2);
+        assert_eq!(board.units[w].x, 2, "W enemy pushed west (3→2)");
+    }
+
+    #[test]
+    fn test_cluster_artillery_protects_building_in_center() {
+        // Building in center, enemies around it. Building should NOT take damage.
+        let mut board = make_test_board();
+        board.tile_mut(4, 4).terrain = Terrain::Building;
+        board.tile_mut(4, 4).building_hp = 1;
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 2, WId::RangedDefensestrike);
+        let attacker = add_enemy(&mut board, 1, 4, 5, 3); // adjacent to building
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedDefensestrike, 4, 4);
+        assert_eq!(board.tile(4, 4).building_hp, 1, "Building survives intact");
+        assert_eq!(board.units[attacker].hp, 2, "Adjacent enemy damaged");
+        // Adjacent enemy at (4,5) pushed north away from center → (4,6)
+        assert_eq!(board.units[attacker].y, 6, "Pushed north (away from center)");
+    }
 }
