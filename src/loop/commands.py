@@ -757,9 +757,13 @@ def _infer_webb_egg_adjacency(units: list) -> None:
             neighbor = by_pos.get((ex + dx, ey + dy))
             if neighbor is None or neighbor.get("hp", 0) <= 0:
                 continue
-            if not neighbor.get("web"):
-                neighbor["web"] = True
-                neighbor["web_source_uid"] = egg.get("uid", 0)
+            # Adjacent egg is the AUTHORITATIVE webber — override any
+            # bridge-reported web_source_uid (Lua GetGrappler returns the
+            # wrong unit when a Scorpion is nearby alongside a WebbEgg,
+            # which lets the solver "break" the web by pushing the wrong
+            # enemy and incorrectly conclude the mech can move).
+            neighbor["web"] = True
+            neighbor["web_source_uid"] = egg.get("uid", 0)
 
 
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
