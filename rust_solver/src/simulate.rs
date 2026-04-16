@@ -1593,4 +1593,101 @@ mod tests {
         // Adjacent enemy at (4,5) pushed north away from center → (4,6)
         assert_eq!(board.units[attacker].y, 6, "Pushed north (away from center)");
     }
+
+    // ── Grav Well (Science_Gravwell) ───────────────────────────────────────────
+    // Gravity Mech weapon: artillery (range ≥2) that pulls the targeted unit
+    // one tile TOWARD the attacker. No damage. Used to drag enemies into
+    // friendly attack lanes or off threatened buildings.
+
+    #[test]
+    fn test_grav_well_pulls_target_toward_attacker() {
+        // GravMech at (3,3) pulls target at (3,6) one tile south toward attacker.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceGravwell);
+        let enemy_idx = add_enemy(&mut board, 99, 3, 6, 4);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceGravwell, 3, 6);
+        assert_eq!(board.units[enemy_idx].x, 3, "Stays in column");
+        assert_eq!(board.units[enemy_idx].y, 5, "Pulled 1 tile toward attacker (6→5)");
+        assert_eq!(board.units[enemy_idx].hp, 4, "No damage from Grav Well itself");
+    }
+
+    #[test]
+    fn test_grav_well_no_pull_into_blocker() {
+        // Unit blocking the destination → both bump.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceGravwell);
+        let blocker = add_enemy(&mut board, 1, 3, 5, 3);
+        let target = add_enemy(&mut board, 2, 3, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceGravwell, 3, 6);
+        assert_eq!(board.units[target].y, 6, "Target stays — destination blocked");
+        assert_eq!(board.units[target].hp, 2, "Bump damage");
+        assert_eq!(board.units[blocker].hp, 2, "Blocker bumped too");
+    }
+
+    // ── Vek Hormones (Passive_FriendlyFire) ──────────────────────────────────
+    // GravMech passive: enemies do +1 damage to OTHER enemies (not to mechs).
+    // The board carries a vek_hormones flag set via the Lua bridge passive
+    // detection. enemy_hit_damage() bumps damage when source AND target are Vek.
+
+    fn add_enemy_with_attack(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8,
+                              weapon: WId, dmg: u8, target_x: i8, target_y: i8) -> usize {
+        board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            weapon: crate::board::WeaponId(weapon as u16),
+            weapon_damage: dmg,
+            queued_target_x: target_x,
+            queued_target_y: target_y,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        })
+    }
+
+    #[test]
+    fn test_vek_hormones_boosts_vek_vs_vek_damage() {
+        // Hornet (1 dmg) attacks an adjacent enemy. With vek_hormones the hit
+        // deals 2 damage; without it, 1. Verify by running an enemy-phase sim.
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.vek_hormones = true;
+        // Hornet at (3,3) targets enemy at (3,4) — north (DIRS index 0)
+        add_enemy_with_attack(&mut board, 1, 3, 3, 2, WId::HornetAtk1, 1, 3, 4);
+        let target = add_enemy(&mut board, 2, 3, 4, 3);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original);
+        assert_eq!(board.units[target].hp, 1,
+            "Target Vek took 2 damage (1 base + 1 hormone bonus)");
+    }
+
+    #[test]
+    fn test_vek_hormones_does_not_boost_vek_vs_mech() {
+        // Same setup but target is a mech — base damage only.
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.vek_hormones = true;
+        add_enemy_with_attack(&mut board, 1, 3, 3, 2, WId::HornetAtk1, 1, 3, 4);
+        let mech_idx = add_mech(&mut board, 99, 3, 4, 3, WId::PrimePunchmech);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original);
+        assert_eq!(board.units[mech_idx].hp, 2,
+            "Mech took base 1 damage (hormones don't boost vs mechs)");
+    }
+
+    #[test]
+    fn test_vek_hormones_off_no_boost() {
+        // Sanity: with flag OFF, vek-on-vek is just base damage.
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.vek_hormones = false;
+        add_enemy_with_attack(&mut board, 1, 3, 3, 2, WId::HornetAtk1, 1, 3, 4);
+        let target = add_enemy(&mut board, 2, 3, 4, 3);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original);
+        assert_eq!(board.units[target].hp, 2, "Base 1 damage only");
+    }
 }
