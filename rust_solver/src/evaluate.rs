@@ -568,7 +568,7 @@ mod tests {
             ..Unit::default()
         });
         let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, 0, &no_psion(), 0);
-        let without_spawn = evaluate(&board, &[], &w, 0, &no_psion(), 0);
+        let without_spawn = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
         assert!((with_spawn - without_spawn).abs() < 1.0);
     }
 
@@ -593,7 +593,7 @@ mod tests {
         // Blast Psion was active before, now dead
         let p_blast = PsionState { blast: true, ..Default::default() };
         let with_bonus = evaluate(&board, &[], &w, 0, 0, &p_blast, 0);
-        let without_bonus = evaluate(&board, &[], &w, 0, &no_psion(), 0);
+        let without_bonus = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
     }
 
@@ -605,7 +605,7 @@ mod tests {
         board.total_turns = 5;
         let p_tyrant = PsionState { tyrant: true, ..Default::default() };
         let with = evaluate(&board, &[], &w, 0, 0, &p_tyrant, 0);
-        let without = evaluate(&board, &[], &w, 0, &no_psion(), 0);
+        let without = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
         assert!((with - without - 2500.0).abs() < 1.0);
     }
 }

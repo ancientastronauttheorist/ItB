@@ -117,6 +117,29 @@ def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
     return 0
 
 
+def _apply_enemy_weapon_status(board: Board, x: int, y: int,
+                               wdef, attacker_uid: int) -> None:
+    """Apply enemy weapon status effects (acid, web) to whatever is at (x, y).
+
+    Mirrors rust_solver apply_weapon_status for the enemy-attack paths.
+    Shield blocks negative status without being consumed here — the shield
+    consumption path is in apply_damage. Enemy weapons with acid or web
+    that hit a dead unit still skip (no ghost statuses).
+    """
+    if wdef is None:
+        return
+    unit = board.unit_at(x, y)
+    if unit is None or unit.hp <= 0:
+        return
+    if unit.shield:
+        return
+    if getattr(wdef, 'acid', False):
+        unit.acid = True
+    if getattr(wdef, 'web', False):
+        unit.web = True
+        unit.web_source_uid = attacker_uid
+
+
 def _simulate_env_effects(board: Board):
     """Simulate end-of-turn environment effects on units/tiles.
 
@@ -225,6 +248,27 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
                 continue
             grid_lost = _apply_enemy_hit(board, tx, ty, damage)
             buildings_destroyed += grid_lost
+            _apply_enemy_weapon_status(board, tx, ty, wdef, enemy.uid)
+
+            # aoe_perpendicular: splash two tiles perpendicular to projectile
+            # direction (Alpha Centipede's Corrosive Vomit: 3-tile T splash,
+            # damage + ACID on each).
+            if wdef and wdef.aoe_perpendicular:
+                dx = tx - enemy.x
+                dy = ty - enemy.y
+                if dx != 0 and dy == 0:
+                    perp_offsets = ((0, 1), (0, -1))
+                elif dy != 0 and dx == 0:
+                    perp_offsets = ((1, 0), (-1, 0))
+                else:
+                    perp_offsets = ()
+                for px, py in perp_offsets:
+                    nx, ny = tx + px, ty + py
+                    if not board.in_bounds(nx, ny):
+                        continue
+                    grid_lost = _apply_enemy_hit(board, nx, ny, damage)
+                    buildings_destroyed += grid_lost
+                    _apply_enemy_weapon_status(board, nx, ny, wdef, enemy.uid)
 
         elif weapon_type in ("melee", "charge"):
             tx, ty = enemy.queued_target_x, enemy.queued_target_y
@@ -239,6 +283,7 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
             # Primary hit
             grid_lost = _apply_enemy_hit(board, tx, ty, damage)
             buildings_destroyed += grid_lost
+            _apply_enemy_weapon_status(board, tx, ty, wdef, enemy.uid)
 
             # TargetBehind: hit tile behind target
             target_behind = enemy.weapon_target_behind or (
@@ -250,6 +295,7 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
                 if board.in_bounds(bx, by):
                     grid_lost = _apply_enemy_hit(board, bx, by, damage)
                     buildings_destroyed += grid_lost
+                    _apply_enemy_weapon_status(board, bx, by, wdef, enemy.uid)
 
         elif weapon_type == "self_aoe":
             # Scorpion Leader's Massive Spinneret and similar: hit all 4

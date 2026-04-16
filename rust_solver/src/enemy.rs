@@ -7,7 +7,7 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::simulate::{apply_damage, apply_push};
+use crate::simulate::{apply_damage, apply_push, apply_weapon_status};
 
 /// Get effective damage for an enemy hit at a tile (Vek Hormones adds +1 vs other enemies).
 fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: bool) -> u8 {
@@ -243,6 +243,7 @@ pub fn simulate_enemy_attacks(
         let ey = enemy.y;
         let qtx = enemy.queued_target_x;
         let qty = enemy.queued_target_y;
+        let enemy_uid = enemy.uid;
         let orig = original_positions[ei];
 
         // Look up actual weapon type from enemy pawn type
@@ -284,6 +285,43 @@ pub fn simulate_enemy_attacks(
                             }
                         }
                         board.tile_mut(tx, ty).set_on_fire(true);
+                    }
+                    // ACID / WEB / other status effects on the primary target
+                    apply_weapon_status(board, tx, ty, wdef);
+                    if wdef.web() {
+                        if let Some(idx) = board.unit_at(tx, ty) {
+                            board.units[idx].web_source_uid = enemy_uid;
+                        }
+                    }
+
+                    // aoe_perpendicular: splash two tiles perpendicular to
+                    // projectile direction (Alpha Centipede's Corrosive Vomit:
+                    // 3-tile T splash, damage + ACID on each).
+                    if wdef.aoe_perpendicular() {
+                        let pdx = (tx as i8 - ex as i8).signum();
+                        let pdy = (ty as i8 - ey as i8).signum();
+                        let perp: &[(i8, i8)] = if pdx != 0 && pdy == 0 {
+                            &[(0, 1), (0, -1)]
+                        } else if pdy != 0 && pdx == 0 {
+                            &[(1, 0), (-1, 0)]
+                        } else {
+                            &[]
+                        };
+                        for &(px, py) in perp {
+                            let nx = tx as i8 + px;
+                            let ny = ty as i8 + py;
+                            if !in_bounds(nx, ny) { continue; }
+                            let nxu = nx as u8;
+                            let nyu = ny as u8;
+                            let d2 = enemy_hit_damage(board, nxu, nyu, damage, vh);
+                            apply_damage(board, nxu, nyu, d2, &mut result, DamageSource::Weapon);
+                            apply_weapon_status(board, nxu, nyu, wdef);
+                            if wdef.web() {
+                                if let Some(idx) = board.unit_at(nxu, nyu) {
+                                    board.units[idx].web_source_uid = enemy_uid;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -440,12 +478,24 @@ pub fn simulate_enemy_attacks(
                     if in_bounds(tx1, ty1) {
                         let d = enemy_hit_damage(board, tx1 as u8, ty1 as u8, damage, vh);
                         apply_damage(board, tx1 as u8, ty1 as u8, d, &mut result, DamageSource::Weapon);
+                        apply_weapon_status(board, tx1 as u8, ty1 as u8, wdef);
+                        if wdef.web() {
+                            if let Some(idx) = board.unit_at(tx1 as u8, ty1 as u8) {
+                                board.units[idx].web_source_uid = enemy_uid;
+                            }
+                        }
                     }
                     let tx2 = ex as i8 + dx * 2;
                     let ty2 = ey as i8 + dy * 2;
                     if in_bounds(tx2, ty2) {
                         let d2 = enemy_hit_damage(board, tx2 as u8, ty2 as u8, damage, vh);
                         apply_damage(board, tx2 as u8, ty2 as u8, d2, &mut result, DamageSource::Weapon);
+                        apply_weapon_status(board, tx2 as u8, ty2 as u8, wdef);
+                        if wdef.web() {
+                            if let Some(idx) = board.unit_at(tx2 as u8, ty2 as u8) {
+                                board.units[idx].web_source_uid = enemy_uid;
+                            }
+                        }
                     }
                 } else {
                     // Standard single-tile melee: attack fixed queued target.
@@ -457,6 +507,12 @@ pub fn simulate_enemy_attacks(
 
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    apply_weapon_status(board, tx, ty, wdef);
+                    if wdef.web() {
+                        if let Some(idx) = board.unit_at(tx, ty) {
+                            board.units[idx].web_source_uid = enemy_uid;
+                        }
+                    }
                 }
             }
 
@@ -648,5 +704,100 @@ mod tests {
         assert_eq!(enemy_weapon_for_type("BlobMini"), WId::BlobAtk1);
         assert_eq!(enemy_weapon_for_type("Crab1"), WId::CrabAtk1);
         assert_eq!(enemy_weapon_for_type("Unknown"), WId::None);
+    }
+
+    fn add_mech_unit(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        let mut unit = Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        };
+        unit.set_type_name("PunchMech");
+        board.add_unit(unit)
+    }
+
+    #[test]
+    fn test_alpha_centipede_applies_acid_to_target() {
+        let mut board = Board::default();
+        // Alpha Centipede at (0,3) firing east, target mech at (4,3).
+        // Corrosive Vomit: 2 damage + ACID.
+        let mech_idx = add_mech_unit(&mut board, 10, 4, 3, 3);
+        add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        assert_eq!(board.units[mech_idx].hp, 1, "Mech should take 2 damage from Corrosive Vomit");
+        assert!(board.units[mech_idx].acid(), "Mech should be ACID'd by Corrosive Vomit");
+    }
+
+    #[test]
+    fn test_alpha_centipede_aoe_perpendicular_splashes() {
+        let mut board = Board::default();
+        // Alpha Centipede at (0,3) firing east, target mech at (4,3).
+        // Perpendicular tiles (4,2) and (4,4) should also take 2 dmg + ACID.
+        let target_idx = add_mech_unit(&mut board, 10, 4, 3, 5);
+        let north_idx = add_mech_unit(&mut board, 11, 4, 4, 5);
+        let south_idx = add_mech_unit(&mut board, 12, 4, 2, 5);
+        add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        assert_eq!(board.units[target_idx].hp, 3, "Primary target should take 2 damage");
+        assert!(board.units[target_idx].acid(), "Primary target should be ACID'd");
+        assert_eq!(board.units[north_idx].hp, 3, "Perpendicular N tile should take 2 damage");
+        assert!(board.units[north_idx].acid(), "Perpendicular N tile should be ACID'd");
+        assert_eq!(board.units[south_idx].hp, 3, "Perpendicular S tile should take 2 damage");
+        assert!(board.units[south_idx].acid(), "Perpendicular S tile should be ACID'd");
+    }
+
+    #[test]
+    fn test_alpha_scorpion_webs_target() {
+        let mut board = Board::default();
+        // Alpha Scorpion at (3,3) adjacent to mech at (3,4). Goring Spinneret:
+        // 3 damage + WEB.
+        let mech_idx = add_mech_unit(&mut board, 10, 3, 4, 5);
+        let _scorp_idx = add_enemy_with_type(&mut board, 42, 3, 3, 5, "Scorpion2", 3, 4);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        assert_eq!(board.units[mech_idx].hp, 2, "Mech should take 3 damage from Goring Spinneret");
+        assert!(board.units[mech_idx].web(), "Mech should be webbed by Goring Spinneret");
+        assert_eq!(board.units[mech_idx].web_source_uid, 42,
+            "Web source should be Scorpion UID (for web-break on push/kill)");
+    }
+
+    #[test]
+    fn test_alpha_hornet_line_still_hits_both_tiles() {
+        // Regression: Alpha Hornet's 2-tile line attack (weapon_behind) should
+        // still damage both tiles after the fix.
+        let mut board = Board::default();
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 1;
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 1;
+        // Hornet at (2,3) firing east, queued target (3,3). weapon_target_behind=true.
+        let mut unit = Unit {
+            uid: 1, x: 2, y: 3, hp: 4, max_hp: 4,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            queued_target_x: 3,
+            queued_target_y: 3,
+            weapon_damage: 0,
+            weapon_target_behind: true,
+            ..Default::default()
+        };
+        unit.set_type_name("Hornet2");
+        board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        assert_eq!(board.tile(3, 3).building_hp, 0, "First tile destroyed");
+        assert_eq!(board.tile(4, 3).building_hp, 0, "Behind tile destroyed");
     }
 }
