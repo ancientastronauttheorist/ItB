@@ -122,12 +122,26 @@ def _apply_enemy_weapon_status(board: Board, x: int, y: int,
     """Apply enemy weapon status effects (acid, web) to whatever is at (x, y).
 
     Mirrors rust_solver apply_weapon_status for the enemy-attack paths.
-    Shield blocks negative status without being consumed here — the shield
-    consumption path is in apply_damage. Enemy weapons with acid or web
-    that hit a dead unit still skip (no ghost statuses).
+    Shield blocks the unit-side negative status without being consumed here
+    (the shield consumption path is in apply_damage). Tile-side acid still
+    lands regardless of shield — the projectile splashes on the tile even
+    if the unit is shielded.
     """
     if wdef is None:
         return
+    if not board.in_bounds(x, y):
+        return
+
+    # Tile-side: acid weapon on liquid/ground terrain creates a persistent
+    # A.C.I.D. Tile (water) or A.C.I.D. Pool (ground/rubble). Observed in
+    # game: Alpha Centipede Corrosive Vomit splash on water converts it.
+    if getattr(wdef, 'acid', False):
+        tile = board.tile(x, y)
+        if tile.terrain in ("water", "ground", "rubble"):
+            tile.acid = True
+
+    # Unit-side: ACID / WEB applied only to a living unit whose shield
+    # isn't up. Web tracks the attacker UID so web-break-on-push/kill works.
     unit = board.unit_at(x, y)
     if unit is None or unit.hp <= 0:
         return

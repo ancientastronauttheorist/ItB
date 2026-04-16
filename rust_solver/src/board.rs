@@ -45,6 +45,7 @@ impl Tile {
 
     pub fn set_on_fire(&mut self, v: bool) { self.flags.set(TileFlags::ON_FIRE, v); }
     pub fn set_smoke(&mut self, v: bool) { self.flags.set(TileFlags::SMOKE, v); }
+    pub fn set_acid(&mut self, v: bool) { self.flags.set(TileFlags::ACID, v); }
     pub fn set_cracked(&mut self, v: bool) { self.flags.set(TileFlags::CRACKED, v); }
     pub fn set_has_pod(&mut self, v: bool) { self.flags.set(TileFlags::HAS_POD, v); }
     pub fn set_freeze_mine(&mut self, v: bool) { self.flags.set(TileFlags::FREEZE_MINE, v); }

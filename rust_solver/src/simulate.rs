@@ -547,6 +547,16 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
             tile.set_on_fire(false); // freeze extinguishes fire
         }
     }
+    if wdef.acid() {
+        // Acid weapon on liquid/ground terrain creates a persistent
+        // A.C.I.D. Tile (water) or A.C.I.D. Pool (ground/rubble).
+        // Observed in game: Alpha Centipede Corrosive Vomit splash on
+        // water converts it to A.C.I.D. Tile.
+        let tile = board.tile_mut(x, y);
+        if matches!(tile.terrain, Terrain::Water | Terrain::Ground | Terrain::Rubble) {
+            tile.set_acid(true);
+        }
+    }
 
     // ── Unit effects ──
     if let Some(idx) = board.unit_at(x, y) {

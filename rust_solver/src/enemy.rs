@@ -755,6 +755,42 @@ mod tests {
     }
 
     #[test]
+    fn test_alpha_centipede_converts_water_to_acid_tile() {
+        // Alpha Centipede at (0,3) firing east, primary target (4,3).
+        // Need an obstacle at (4,3) so projectile stops there — use a mech.
+        // Perpendicular tile (4,4) is WATER — splash acid should convert it
+        // to an A.C.I.D. Tile (water + acid flag).
+        let mut board = Board::default();
+        board.tile_mut(4, 4).terrain = Terrain::Water;
+        let _mech_idx = add_mech_unit(&mut board, 10, 4, 3, 5);
+        add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        assert_eq!(board.tile(4, 4).terrain, Terrain::Water,
+            "Water tile stays water (now A.C.I.D. Tile, i.e. water + acid flag)");
+        assert!(board.tile(4, 4).acid(),
+            "Water tile hit by acid splash should become A.C.I.D. Tile");
+    }
+
+    #[test]
+    fn test_alpha_centipede_converts_ground_to_acid_pool() {
+        // Perpendicular splash on empty ground should create an acid pool.
+        // Mech at primary target stops the projectile so splash lands.
+        let mut board = Board::default();
+        board.tile_mut(4, 4).terrain = Terrain::Ground;
+        let _mech_idx = add_mech_unit(&mut board, 10, 4, 3, 5);
+        add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        assert!(board.tile(4, 4).acid(),
+            "Ground tile hit by acid splash should become A.C.I.D. Pool");
+    }
+
+    #[test]
     fn test_alpha_scorpion_webs_target() {
         let mut board = Board::default();
         // Alpha Scorpion at (3,3) adjacent to mech at (3,4). Goring Spinneret:
