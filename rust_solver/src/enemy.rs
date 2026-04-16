@@ -564,22 +564,18 @@ pub fn simulate_enemy_attacks(
 fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
     if qtx < 0 { return None; }
 
-    // Compute direction from ORIGINAL position to queued target. Game's
-    // GetDirection snaps diagonal vectors to the DOMINANT axis (ties
-    // break toward x). This matches ITB's Lua behavior: a Centipede at
-    // E8 with queued_target C7 (delta +1, +2) fires DOWN because |dy|
-    // dominates. Previous implementation rejected all diagonal inputs
-    // as invalid and skipped the attack entirely.
-    let raw_dx = qtx - orig_x as i8;
-    let raw_dy = qty - orig_y as i8;
-    if raw_dx == 0 && raw_dy == 0 { return None; }
-    let (dx, dy) = if raw_dy.abs() > raw_dx.abs() {
-        (0, raw_dy.signum())
-    } else {
-        (raw_dx.signum(), 0)
-    };
+    // Compute direction from ORIGINAL position to queued target.
+    // Preserves cardinal attack direction after mech pushes.
+    // INVARIANT: queued_target is the first tile in the attack direction
+    // from the original position (bridge normalizes piQueuedShot against
+    // piOrigin), so the delta is always a unit cardinal vector.
+    let dx = (qtx - orig_x as i8).signum();
+    let dy = (qty - orig_y as i8).signum();
 
-    // Trace from CURRENT position in the snapped direction.
+    // Must be a valid cardinal direction (exactly one axis non-zero)
+    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) { return None; }
+
+    // Trace from CURRENT position in the original direction.
     // If the projectile walks off the board without hitting anything,
     // fall back to the last valid (on-board) tile — matches the game's
     // GetProjectileEnd which steps back after going off-board.
@@ -809,22 +805,22 @@ mod tests {
     }
 
     #[test]
-    fn test_centipede_diagonal_target_snaps_to_dominant_axis() {
-        // Reproduces live observation: Alpha Centipede at E8 (0,3) with
-        // queued_target C7 (1,5) — delta (+1, +2) is NOT cardinal. Game
-        // snaps to dominant axis (+y), projectile walks until off-board,
-        // lands on A8 (last valid tile) and splashes perpendicular A7.
-        // Previously the solver rejected this attack entirely.
+    fn test_centipede_attack_lands_on_board_edge() {
+        // Reproduces live scenario: Alpha Centipede at (0, 3) = E8 with
+        // queued_target (0, 4) = D8 (first tile in +y attack direction).
+        // Projectile walks +y through empty tiles D8..B8, past the edge,
+        // falls back to A8 (last valid tile), and splashes A7 perpendicular.
+        // Previously find_projectile_target returned None when the path
+        // had no obstacle, skipping the attack entirely.
         let mut board = Board::default();
-        let mech_a8 = add_mech_unit(&mut board, 10, 0, 7, 5); // A8
-        let mech_a7 = add_mech_unit(&mut board, 11, 1, 7, 5); // A7
-        // Centipede at (0, 3) = E8, queued target (1, 5) = C7 (diagonal)
+        board.tile_mut(0, 7).terrain = Terrain::Water;  // A8 = water
+        board.tile_mut(1, 7).terrain = Terrain::Water;  // A7 = water
         let mut unit = Unit {
             uid: 1, x: 0, y: 3, hp: 5, max_hp: 5,
             team: Team::Enemy,
             flags: UnitFlags::PUSHABLE,
-            queued_target_x: 1,
-            queued_target_y: 5,
+            queued_target_x: 0,  // first tile in attack direction
+            queued_target_y: 4,  // +y from (0,3)
             weapon_damage: 0,
             ..Default::default()
         };
@@ -834,40 +830,12 @@ mod tests {
         let orig = default_orig_pos(&board);
         simulate_enemy_attacks(&mut board, &orig);
 
-        assert_eq!(board.units[mech_a8].hp, 3,
-            "A8 mech should take 2 dmg from Corrosive Vomit impact");
-        assert!(board.units[mech_a8].acid(),
-            "A8 mech should be ACID'd");
-        assert_eq!(board.units[mech_a7].hp, 3,
-            "A7 mech should take 2 dmg from perpendicular splash");
-        assert!(board.units[mech_a7].acid(),
-            "A7 mech should be ACID'd by splash");
-    }
-
-    #[test]
-    fn test_projectile_off_board_lands_on_last_valid_tile() {
-        // Enemy at (0, 0) firing east with nothing in the way. Projectile
-        // would walk to (0, 8), off-board. Per game's GetProjectileEnd,
-        // it steps back to (0, 7) — the last valid tile — and lands there.
-        let mut board = Board::default();
-        let mech_idx = add_mech_unit(&mut board, 10, 0, 7, 3);
-        let mut unit = Unit {
-            uid: 1, x: 0, y: 0, hp: 5, max_hp: 5,
-            team: Team::Enemy,
-            flags: UnitFlags::PUSHABLE,
-            queued_target_x: 0,
-            queued_target_y: 7,
-            weapon_damage: 0,
-            ..Default::default()
-        };
-        unit.set_type_name("Firefly1");
-        board.add_unit(unit);
-
-        let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
-
-        assert!(board.units[mech_idx].hp < 3,
-            "Mech at (0,7) should be hit by projectile landing at board edge");
+        // A8 (primary impact) should be an acid tile
+        assert!(board.tile(0, 7).acid(),
+            "A8 (last-valid impact) should convert to A.C.I.D. Tile");
+        // A7 (perpendicular splash) should also be an acid tile
+        assert!(board.tile(1, 7).acid(),
+            "A7 (perpendicular splash) should convert to A.C.I.D. Tile");
     }
 
     #[test]

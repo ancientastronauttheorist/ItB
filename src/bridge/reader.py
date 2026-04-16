@@ -93,6 +93,94 @@ def _read_old_earth_mines_from_save() -> set[tuple[int, int]]:
     return mines
 
 
+def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
+    """Read ``piOrigin`` per unit uid from the save file.
+
+    piQueuedShot is stored relative to piOrigin (the attacker's position
+    when the attack was queued), not the attacker's current position. If
+    the attacker moved between queueing and firing, the bridge's raw
+    queued_target (= piQueuedShot) gives a bogus non-cardinal vector from
+    the current position. Pair it with piOrigin to recover the true
+    cardinal direction: direction = piQueuedShot - piOrigin.
+
+    Returns {uid: (piOrigin_x, piOrigin_y)}.
+    """
+    origins: dict[int, tuple[int, int]] = {}
+    save_path = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    )
+    try:
+        with open(save_path) as f:
+            content = f.read()
+    except OSError:
+        return origins
+
+    # Match blocks that have iOwner + piOrigin + piQueuedShot. Filter to
+    # entries where piQueuedShot is an actual queued attack (not -1, -1).
+    pattern = re.compile(
+        r'\["iOwner"\]\s*=\s*(-?\d+),'
+        r'.*?\["piOrigin"\]\s*=\s*Point\((-?\d+)\s*,\s*(-?\d+)\)'
+        r'.*?\["piQueuedShot"\]\s*=\s*Point\((-?\d+)\s*,\s*(-?\d+)\)',
+        re.DOTALL,
+    )
+    for m in pattern.finditer(content):
+        owner = int(m.group(1))
+        ox, oy = int(m.group(2)), int(m.group(3))
+        qx, qy = int(m.group(4)), int(m.group(5))
+        if qx < 0 or qy < 0:
+            continue  # no queued shot
+        if ox < 0 or oy < 0:
+            continue
+        origins[owner] = (ox, oy)
+    return origins
+
+
+def _normalize_queued_targets(bridge_units: list) -> None:
+    """Rewrite ``queued_target`` on each unit so the solver invariant holds.
+
+    Invariant: ``queued_target - current_position`` yields a unit cardinal
+    vector. The raw bridge value is piQueuedShot, which is relative to
+    piOrigin (attacker's position when queued), not current position. If
+    the attacker moved between queueing and firing, the delta becomes
+    non-cardinal (e.g. Centipede at E8 with piQueuedShot C7 after moving
+    from D7: raw delta (+1, +2)).
+
+    For each unit with a queued_target: look up piOrigin from the save
+    file, compute direction = piQueuedShot - piOrigin, then rewrite
+    queued_target = current_position + direction. Mutates bridge_units
+    in place.
+    """
+    origins = _read_queued_origins_from_save()
+    if not origins:
+        return
+    for u in bridge_units:
+        qt = u.get("queued_target")
+        if not qt or len(qt) != 2:
+            continue
+        qx, qy = qt[0], qt[1]
+        if qx < 0 or qy < 0:
+            continue
+        uid = u.get("uid")
+        origin = origins.get(uid)
+        if origin is None:
+            continue
+        ox, oy = origin
+        # Direction from piOrigin to piQueuedShot. Expected to be a unit
+        # cardinal vector; if not, leave alone (modloader bug to fix).
+        ddx = qx - ox
+        ddy = qy - oy
+        if ddx != 0 and ddy != 0:
+            continue  # shouldn't happen per game rules
+        if ddx == 0 and ddy == 0:
+            continue  # self-target (e.g. WebbEgg hatch); leave as is
+        cx, cy = u.get("x", -1), u.get("y", -1)
+        if cx < 0 or cy < 0:
+            continue
+        # Normalize to one-step-in-direction so the solver's standard
+        # direction computation (queued_target - current_pos) works.
+        u["queued_target"] = [cx + ddx, cy + ddy]
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -107,6 +195,13 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     data = read_state()
     if data is None:
         return None, None
+
+    # Rewrite queued_target on each unit using piOrigin from the save file.
+    # Bridge modloader currently emits piQueuedShot raw, which gives a
+    # non-cardinal delta if the attacker moved after queueing. Fix before
+    # constructing the Board so downstream solvers see the right direction.
+    if "units" in data:
+        _normalize_queued_targets(data["units"])
 
     try:
         board = Board.from_bridge_data(data)
