@@ -66,6 +66,14 @@ class EvalWeights:
     # Old Earth Dam: +1 Rep + 14-tile flood. Turn-aware scaling in evaluate.
     dam_destroyed: float = 0
 
+    # Building protection
+    building_bump_damage: float = -8000
+    bld_grid_floor: float = 0.6
+    bld_grid_scale: float = 0.4
+    bld_phase_floor: float = 1.0
+    bld_phase_scale: float = 0.0
+    building_preservation_threshold: float = 0.05
+
     def to_dict(self) -> dict:
         """Serialize to dict for JSON storage and Rust solver injection."""
         from dataclasses import asdict
@@ -165,7 +173,16 @@ def evaluate(
     elif board.grid_power <= 3:
         grid_multiplier = 2.0
 
-    # --- BUILDINGS: NO turn scaling (always critical) ---
+    # --- BUILDINGS: context-aware multiplier (bld_mult) ---
+    grid_max = getattr(board, 'grid_power_max', 7) or 7
+    grid_health = board.grid_power / max(grid_max, 1)
+    mp = 0.0
+    if total_turns > 1:
+        mp = max(current_turn - 1, 0) / (total_turns - 1)
+    grid_factor = w.bld_grid_floor + w.bld_grid_scale * grid_health
+    phase_factor = w.bld_phase_floor + w.bld_phase_scale * (1.0 - mp)
+    bld_mult = grid_factor * phase_factor
+
     buildings_alive = 0
     total_building_hp = 0
     for x in range(8):
@@ -175,8 +192,8 @@ def evaluate(
                 buildings_alive += 1
                 total_building_hp += t.building_hp
 
-    score += buildings_alive * w.building_alive
-    score += total_building_hp * w.building_hp
+    score += buildings_alive * w.building_alive * bld_mult
+    score += total_building_hp * w.building_hp * bld_mult
 
     # --- GRID POWER: urgency multiplier applied here ---
     # When grid is low, each grid point is worth more. Multiplier was
@@ -291,7 +308,16 @@ def evaluate_breakdown(
     elif board.grid_power <= 3:
         grid_multiplier = 2.0
 
-    # --- BUILDINGS ---
+    # --- BUILDINGS (context-aware multiplier) ---
+    grid_max = getattr(board, 'grid_power_max', 7) or 7
+    grid_health = board.grid_power / max(grid_max, 1)
+    mp = 0.0
+    if total_turns > 1:
+        mp = max(current_turn - 1, 0) / (total_turns - 1)
+    grid_factor = w.bld_grid_floor + w.bld_grid_scale * grid_health
+    phase_factor = w.bld_phase_floor + w.bld_phase_scale * (1.0 - mp)
+    bld_mult = grid_factor * phase_factor
+
     buildings_alive = 0
     total_building_hp = 0
     for x in range(8):
@@ -301,8 +327,8 @@ def evaluate_breakdown(
                 buildings_alive += 1
                 total_building_hp += t.building_hp
 
-    buildings_score = buildings_alive * w.building_alive
-    building_hp_score = total_building_hp * w.building_hp
+    buildings_score = buildings_alive * w.building_alive * bld_mult
+    building_hp_score = total_building_hp * w.building_hp * bld_mult
 
     # --- GRID POWER: urgency multiplier applied here ---
     grid_power_score = board.grid_power * w.grid_power * grid_multiplier
@@ -385,6 +411,7 @@ def evaluate_breakdown(
     return {
         "total": total,
         "grid_multiplier": grid_multiplier,
+        "bld_mult": bld_mult,
         "buildings_alive": {"count": buildings_alive, "score": buildings_score},
         "building_hp": {"total": total_building_hp, "score": building_hp_score},
         "grid_power": {"value": board.grid_power, "score": grid_power_score},

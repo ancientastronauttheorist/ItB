@@ -1,8 +1,8 @@
 {
-  "version": "v008",
-  "parent": "v007",
-  "description": "Add dam_destroyed=8000 (Old Earth Dam bonus objective + 14-tile flood value). Turn-aware scaling in evaluator (floor 0.10 + 0.90*ff): 8000 on early turn, 800 on final turn.",
-  "created": "2026-04-14",
+  "version": "v009",
+  "parent": "v008",
+  "description": "Building protection: bump penalty (-8000), context-aware bld_mult (grid health), two-stage solver filter (5% threshold). Fixes push-into-building collateral on frozen enemies.",
+  "created": "2026-04-15",
   "weights": {
     "building_alive": 10000,
     "building_hp": 2000,
@@ -38,7 +38,13 @@
     "chain_damage": 0,
     "smoke_placed": 0,
     "tiles_frozen": 0,
-    "dam_destroyed": 8000
+    "dam_destroyed": 8000,
+    "building_bump_damage": -8000,
+    "bld_grid_floor": 0.6,
+    "bld_grid_scale": 0.4,
+    "bld_phase_floor": 1.0,
+    "bld_phase_scale": 0.0,
+    "building_preservation_threshold": 0.05
   },
   "stats": {
     "runs_played": 0,

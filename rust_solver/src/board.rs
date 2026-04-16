@@ -368,6 +368,7 @@ impl Board {
 pub struct ActionResult {
     pub buildings_lost: i32,
     pub buildings_damaged: i32,
+    pub buildings_bump_damaged: i32,
     pub grid_damage: i32,
     pub enemies_killed: i32,
     pub enemy_damage_dealt: i32,
@@ -382,6 +383,7 @@ impl ActionResult {
     pub fn merge(&mut self, other: &ActionResult) {
         self.buildings_lost += other.buildings_lost;
         self.buildings_damaged += other.buildings_damaged;
+        self.buildings_bump_damaged += other.buildings_bump_damaged;
         self.grid_damage += other.grid_damage;
         self.enemies_killed += other.enemies_killed;
         self.enemy_damage_dealt += other.enemy_damage_dealt;

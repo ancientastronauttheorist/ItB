@@ -95,6 +95,18 @@ pub struct EvalWeights {
     // Old Earth Dam: +1 Rep + 14-tile flood that drowns grounded Vek for rest
     // of mission. Active only when weights/active.json sets a non-zero value.
     pub dam_destroyed: f64,
+
+    // Building protection: penalty for push-bump collateral damage
+    pub building_bump_damage: f64,
+
+    // Context-aware building multiplier knobs
+    pub bld_grid_floor: f64,
+    pub bld_grid_scale: f64,
+    pub bld_phase_floor: f64,
+    pub bld_phase_scale: f64,
+
+    // Two-stage solver filter: prefer clean plans within this margin of best
+    pub building_preservation_threshold: f64,
 }
 
 impl Default for EvalWeights {
@@ -141,6 +153,13 @@ impl Default for EvalWeights {
             tiles_frozen: 0.0,
             // Mission-specific bonuses (zero by default; set via active.json)
             dam_destroyed: 0.0,
+            // Building protection
+            building_bump_damage: -8000.0,
+            bld_grid_floor: 0.6,
+            bld_grid_scale: 0.4,
+            bld_phase_floor: 1.0,
+            bld_phase_scale: 0.0,
+            building_preservation_threshold: 0.05,
         }
     }
 }
@@ -187,6 +206,7 @@ pub fn evaluate(
     spawn_points: &[(u8, u8)],
     weights: &EvalWeights,
     kills: i32,
+    building_bumps: i32,
     psion_before: &PsionState,
     initial_building_threats: u64,
 ) -> f64 {
@@ -208,10 +228,18 @@ pub fn evaluate(
         _ => 1.0,
     };
 
-    // ── Buildings: NO turn scaling, NO urgency multiplier ────────────────
-    // Urgency multiplier was previously applied here but caused an inversion:
-    // 4 buildings at critical (5x) scored higher than 6 buildings at normal (1x).
-    // Now buildings always use base weight — more buildings always beats fewer.
+    // ── Buildings: context-aware multiplier, NO urgency multiplier ───────
+    // bld_mult scales building value by grid health and mission phase.
+    // Goes DOWN at low grid (opposite of urgency), so more-buildings always
+    // beats fewer — avoids the old inversion bug.
+    let grid_health = board.grid_power as f64 / board.grid_power_max.max(1) as f64;
+    let mission_phase = if board.total_turns > 1 {
+        (board.current_turn.saturating_sub(1) as f64) / (board.total_turns - 1) as f64
+    } else { 0.0 };
+    let grid_factor = weights.bld_grid_floor + weights.bld_grid_scale * grid_health;
+    let phase_factor = weights.bld_phase_floor + weights.bld_phase_scale * (1.0 - mission_phase);
+    let bld_mult = grid_factor * phase_factor;
+
     let mut buildings_alive = 0i32;
     let mut total_building_hp = 0i32;
     for tile in &board.tiles {
@@ -220,8 +248,11 @@ pub fn evaluate(
             total_building_hp += tile.building_hp as i32;
         }
     }
-    score += buildings_alive as f64 * weights.building_alive;
-    score += total_building_hp as f64 * weights.building_hp;
+    score += buildings_alive as f64 * weights.building_alive * bld_mult;
+    score += total_building_hp as f64 * weights.building_hp * bld_mult;
+
+    // ── Bump penalty: extra cost for push-chain collateral to buildings ──
+    score += building_bumps as f64 * weights.building_bump_damage;
 
     // ── Grid power: urgency multiplier applied here ───────────────────
     // When grid is low, each grid point is worth more — this incentivizes
@@ -452,7 +483,7 @@ mod tests {
     fn test_empty_board_score() {
         let board = Board::default();
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
         assert!((score - 35000.0).abs() < 0.01);
     }
 
@@ -462,7 +493,7 @@ mod tests {
         board.tile_mut(3, 3).terrain = Terrain::Building;
         board.tile_mut(3, 3).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
         // 35000 grid + 10000 building + 2000 hp - 500 uncovered_building = 46500
         assert!((score - 46500.0).abs() < 0.01);
     }
@@ -474,15 +505,15 @@ mod tests {
         let mut b1 = Board::default();
         b1.current_turn = 1;
         b1.total_turns = 5;
-        let s0 = evaluate(&b1, &[], &w, 0, &p, 0);
-        let s1 = evaluate(&b1, &[], &w, 2, &p, 0);
+        let s0 = evaluate(&b1, &[], &w, 0, 0, &p, 0);
+        let s1 = evaluate(&b1, &[], &w, 2, 0, &p, 0);
         assert!((s1 - s0 - 1800.0).abs() < 1.0);
 
         let mut b5 = Board::default();
         b5.current_turn = 5;
         b5.total_turns = 5;
-        let s0 = evaluate(&b5, &[], &w, 0, &p, 0);
-        let s1 = evaluate(&b5, &[], &w, 2, &p, 0);
+        let s0 = evaluate(&b5, &[], &w, 0, 0, &p, 0);
+        let s1 = evaluate(&b5, &[], &w, 2, 0, &p, 0);
         assert!((s1 - s0 - 200.0).abs() < 1.0);
     }
 
@@ -493,9 +524,10 @@ mod tests {
         board.tile_mut(0, 0).terrain = Terrain::Building;
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, &no_psion(), 0);
-        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000) + 1 HP(2000) - 2500 uncovered(500*5.0) = 34500
-        assert!((score - 34500.0).abs() < 0.01);
+        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000*bld_mult) + 1 HP(2000*bld_mult) - 2500 uncovered(500*5.0)
+        // bld_mult = 0.6 + 0.4*(1/7) = 0.6571... → building: 6571 + 1314 = 7886, total: 25000 + 7886 - 2500 = 30386
+        assert!((score - 30386.0).abs() < 1.0);
     }
 
     #[test]
@@ -510,7 +542,7 @@ mod tests {
             flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
             ..Unit::default()
         });
-        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, &no_psion(), 0);
+        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, 0, &no_psion(), 0);
         let without_spawn = evaluate(&board, &[], &w, 0, &no_psion(), 0);
         assert!((with_spawn - without_spawn).abs() < 1.0);
     }
@@ -535,7 +567,7 @@ mod tests {
         board.total_turns = 5;
         // Blast Psion was active before, now dead
         let p_blast = PsionState { blast: true, ..Default::default() };
-        let with_bonus = evaluate(&board, &[], &w, 0, &p_blast, 0);
+        let with_bonus = evaluate(&board, &[], &w, 0, 0, &p_blast, 0);
         let without_bonus = evaluate(&board, &[], &w, 0, &no_psion(), 0);
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
     }
@@ -547,7 +579,7 @@ mod tests {
         board.current_turn = 1;
         board.total_turns = 5;
         let p_tyrant = PsionState { tyrant: true, ..Default::default() };
-        let with = evaluate(&board, &[], &w, 0, &p_tyrant, 0);
+        let with = evaluate(&board, &[], &w, 0, 0, &p_tyrant, 0);
         let without = evaluate(&board, &[], &w, 0, &no_psion(), 0);
         assert!((with - without - 2500.0).abs() < 1.0);
     }

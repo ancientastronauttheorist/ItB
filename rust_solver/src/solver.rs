@@ -470,6 +470,7 @@ fn search_recursive(
     depth: usize,
     actions_so_far: &mut Vec<MechAction>,
     kills_so_far: i32,
+    bumps_so_far: i32,
     threat_tiles: u64,
     building_threats: u64,
     spawn_bits: u64,
@@ -480,20 +481,29 @@ fn search_recursive(
     deadline: Instant,
     best_score: &mut f64,
     best_actions: &mut Vec<MechAction>,
+    best_clean_score: &mut f64,
+    best_clean_actions: &mut Vec<MechAction>,
+    initial_building_count: i32,
     psion_before: &PsionState,
 ) {
     if Instant::now() > deadline { return; }
 
     if depth >= mech_order.len() {
-        // All mechs acted — simulate enemy attacks and evaluate
+        // All mechs acted — snapshot buildings before enemy phase
         let mut b_eval = board.clone();
+        let buildings_before_enemy = count_buildings(&b_eval);
         simulate_enemy_attacks(&mut b_eval, original_positions);
         apply_spawn_blocking(&mut b_eval, spawn_points);
-        let score = evaluate(&b_eval, spawn_points, weights, kills_so_far, psion_before, building_threats);
+        let score = evaluate(&b_eval, spawn_points, weights, kills_so_far, bumps_so_far, psion_before, building_threats);
 
         if score > *best_score {
             *best_score = score;
             *best_actions = actions_so_far.clone();
+        }
+        let mech_buildings_lost = initial_building_count - buildings_before_enemy;
+        if mech_buildings_lost == 0 && score > *best_clean_score {
+            *best_clean_score = score;
+            *best_clean_actions = actions_so_far.clone();
         }
         return;
     }
@@ -505,11 +515,12 @@ fn search_recursive(
         // Still recurse to the next depth so the remaining mechs can act
         search_recursive(
             board, mech_order, depth + 1,
-            actions_so_far, kills_so_far,
+            actions_so_far, kills_so_far, bumps_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
             best_score, best_actions,
+            best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
         );
         return;
@@ -531,10 +542,12 @@ fn search_recursive(
             &b_next, mech_order, depth + 1,
             actions_so_far,
             kills_so_far + result.enemies_killed,
+            bumps_so_far + result.buildings_bump_damaged,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
             best_score, best_actions,
+            best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
         );
 
@@ -612,6 +625,16 @@ fn precompute_threats(board: &Board) -> (u64, u64) {
     (threat_tiles, building_threats)
 }
 
+fn count_buildings(board: &Board) -> i32 {
+    let mut count = 0;
+    for tile in &board.tiles {
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            count += 1;
+        }
+    }
+    count
+}
+
 // ── Main solve entry point ───────────────────────────────────────────────────
 
 pub fn solve_turn(
@@ -661,34 +684,56 @@ pub fn solve_turn(
         .map(|p| p.iter().map(|&i| active[i]).collect())
         .collect();
 
+    // Initial building count for two-stage clean-plan tracking
+    let initial_building_count = count_buildings(board);
+
     // Parallel search via rayon
-    let results: Vec<(f64, Vec<MechAction>, bool)> = perm_mapped.par_iter().map(|mech_order| {
+    let results: Vec<(f64, Vec<MechAction>, f64, Vec<MechAction>, bool)> = perm_mapped.par_iter().map(|mech_order| {
         let mut best_score = f64::NEG_INFINITY;
         let mut best_actions = Vec::new();
+        let mut best_clean_score = f64::NEG_INFINITY;
+        let mut best_clean_actions = Vec::new();
         let mut actions_buf = Vec::new();
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0,
+            &mut actions_buf, 0, 0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
             &mut best_score, &mut best_actions,
+            &mut best_clean_score, &mut best_clean_actions, initial_building_count,
             &psion_before,
         );
 
         let timed_out = Instant::now() > deadline;
-        (best_score, best_actions, timed_out)
+        (best_score, best_actions, best_clean_score, best_clean_actions, timed_out)
     }).collect();
 
-    // Find global best
+    // Find global best + global clean best
     let mut best = Solution::empty();
     let mut any_timed_out = false;
-    for (score, actions, timed_out) in results {
+    let mut global_clean_score = f64::NEG_INFINITY;
+    let mut global_clean_actions = Vec::new();
+    for (score, actions, clean_score, clean_actions, timed_out) in results {
         if timed_out { any_timed_out = true; }
         if score > best.score {
             best.score = score;
             best.actions = actions;
+        }
+        if clean_score > global_clean_score {
+            global_clean_score = clean_score;
+            global_clean_actions = clean_actions;
+        }
+    }
+
+    // Two-stage filter: prefer clean plan if within threshold of best
+    if global_clean_score > f64::NEG_INFINITY && !best.actions.is_empty() {
+        let gap = best.score - global_clean_score;
+        let threshold = (best.score.abs() * weights.building_preservation_threshold).max(500.0);
+        if gap <= threshold {
+            best.score = global_clean_score;
+            best.actions = global_clean_actions;
         }
     }
 

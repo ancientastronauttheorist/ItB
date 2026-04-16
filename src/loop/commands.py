@@ -3203,10 +3203,26 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
     print(f"  Time limit per board: {time_limit}s")
     print(f"{'='*50}")
 
+    # Load failure corpus for tuner penalty term
+    from src.solver.analysis import load_failure_db, is_auto_fixable_by_tuning
+    raw_corpus = [r for r in load_failure_db() if is_auto_fixable_by_tuning(r)]
+    seen = set()
+    deduped = []
+    for r in raw_corpus:
+        key = (r.get("run_id"), r.get("mission"), r.get("trigger"))
+        if key not in seen:
+            seen.add(key)
+            deduped.append(r)
+    failure_corpus = deduped[:20]
+    if failure_corpus:
+        print(f"  Failure corpus: {len(failure_corpus)} records "
+              f"(from {len(raw_corpus)} total)")
+
     # Run tuning
     t0 = time.time()
     tune_result = tune_weights(board_files, iterations=iterations,
-                               time_limit=time_limit)
+                               time_limit=time_limit,
+                               failure_corpus=failure_corpus)
     elapsed = time.time() - t0
 
     improvement = tune_result["improvement"]

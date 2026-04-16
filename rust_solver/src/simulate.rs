@@ -394,6 +394,7 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     // Blocked by building — BOTH take 1 bump damage (empirically verified)
     if board.tile(nx, ny).terrain == Terrain::Building && board.tile(nx, ny).building_hp > 0 {
         apply_damage(board, x, y, 1, result, DamageSource::Bump);
+        result.buildings_bump_damaged += 1;
         let bt = board.tile_mut(nx, ny);
         bt.building_hp -= 1;
         if bt.building_hp == 0 {

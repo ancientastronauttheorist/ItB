@@ -22,11 +22,14 @@ from pathlib import Path
 # The 5 most impactful weights to tune, with search ranges.
 # All other weights are held at their defaults from active.json.
 TUNABLE_WEIGHTS = {
-    "building_alive": (5000.0, 20000.0),   # default 10000
-    "enemy_killed":   (100.0, 2000.0),     # default 500
-    "spawn_blocked":  (100.0, 1500.0),     # default 400
-    "mech_hp":        (20.0, 500.0),       # default 100
-    "grid_power":     (1000.0, 15000.0),   # default 5000
+    "building_alive":      (5000.0, 20000.0),    # default 10000
+    "enemy_killed":        (100.0, 2000.0),      # default 500
+    "spawn_blocked":       (100.0, 1500.0),      # default 400
+    "mech_hp":             (20.0, 500.0),        # default 100
+    "grid_power":          (1000.0, 15000.0),    # default 5000
+    "building_bump_damage": (-15000.0, -2000.0), # default -8000
+    "bld_grid_floor":      (0.3, 0.9),           # default 0.6
+    "bld_grid_scale":      (0.0, 1.0),           # default 0.4
 }
 
 
@@ -240,6 +243,7 @@ def tune_weights(
     board_files: list[Path],
     iterations: int = 100,
     time_limit: float = 5.0,
+    failure_corpus: list[dict] = None,
 ) -> dict:
     """Find better weights via random search + coordinate refinement.
 
@@ -254,7 +258,8 @@ def tune_weights(
 
     # Evaluate baseline
     print(f"  Evaluating baseline weights on {len(board_files)} boards...")
-    baseline_score = evaluate_weights(base, board_files, time_limit)
+    baseline_score = evaluate_weights(base, board_files, time_limit,
+                                      failure_corpus=failure_corpus)
     print(f"  Baseline score: {baseline_score:.1f}")
 
     best_weights = dict(base)
@@ -267,7 +272,8 @@ def tune_weights(
 
     for i in range(1, random_iters + 1):
         candidate = _random_weights(base)
-        score = evaluate_weights(candidate, board_files, time_limit)
+        score = evaluate_weights(candidate, board_files, time_limit,
+                                failure_corpus=failure_corpus)
 
         if score > best_score:
             improvement = score - best_score
@@ -302,7 +308,8 @@ def tune_weights(
                     break
                 iter_count += 1
                 candidate = _perturb_weight(best_weights, name, factor)
-                score = evaluate_weights(candidate, board_files, time_limit)
+                score = evaluate_weights(candidate, board_files, time_limit,
+                                        failure_corpus=failure_corpus)
 
                 if score > best_score:
                     improvement = score - best_score
