@@ -96,6 +96,12 @@ pub struct EvalWeights {
     // Old Earth Dam: +1 Rep + 14-tile flood that drowns grounded Vek for rest
     // of mission. Active only when weights/active.json sets a non-zero value.
     pub dam_destroyed: f64,
+    // Partial-credit reward per HP of damage dealt to Dam_Pawn this turn.
+    // Lets the solver chip the Dam across multiple turns when it can't
+    // finish in one — dam_destroyed only fires on the alive→dead transition,
+    // so without this the solver sees no value in a 1-damage hit that
+    // doesn't kill. Positive value ≈ dam_destroyed / 2.
+    pub dam_damage_dealt: f64,
 
     // Building protection: penalty for push-bump collateral damage
     pub building_bump_damage: f64,
@@ -161,6 +167,7 @@ impl Default for EvalWeights {
             tiles_frozen: 0.0,
             // Mission-specific bonuses (zero by default; set via active.json)
             dam_destroyed: 0.0,
+            dam_damage_dealt: 0.0,
             // Building protection
             building_bump_damage: -8000.0,
             building_objective_bonus: 8000.0,
@@ -194,6 +201,10 @@ pub struct PsionState {
     /// Not a Psion — but captured alongside Psion state for the same
     /// before→after transition-scoring pattern used by psion_* bonuses.
     pub dam: bool,
+    /// Max HP across any Dam_Pawn tile at snapshot time (tiles share HP via
+    /// uid mirroring, so any alive tile's hp is the Dam's hp). Used for
+    /// partial-credit dam_damage_dealt scoring.
+    pub dam_hp: i8,
 }
 
 impl PsionState {
@@ -206,8 +217,21 @@ impl PsionState {
             tyrant: board.tyrant_psion,
             boss: board.boss_alive,
             dam: board.dam_alive,
+            dam_hp: dam_hp(board),
         }
     }
+}
+
+/// Read the current Dam HP (any Dam_Pawn tile, since HP is mirrored).
+/// Returns 0 if no Dam_Pawn is alive.
+fn dam_hp(board: &Board) -> i8 {
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.type_name_str() == "Dam_Pawn" && u.hp > 0 {
+            return u.hp;
+        }
+    }
+    0
 }
 
 /// `kills` is passed explicitly because dead enemies are filtered from iteration.
@@ -348,6 +372,18 @@ pub fn evaluate(
     // the final turn while giving earlier turns the full flood-denial reward.
     if psion_before.dam && !board.dam_alive {
         score += scaled(weights.dam_destroyed, ff, 0.10, 0.90);
+    }
+
+    // Partial-credit chip damage on the Dam (Dam still alive after turn).
+    // Without this, a 1-damage hit that doesn't kill scores 0 from dam_destroyed,
+    // so the solver never chips across turns. Only credit while Dam is still
+    // alive — the full dam_destroyed bonus covers the killing blow.
+    if psion_before.dam && board.dam_alive {
+        let hp_after = dam_hp(board);
+        let damage_dealt = (psion_before.dam_hp - hp_after).max(0) as f64;
+        if damage_dealt > 0.0 {
+            score += weights.dam_damage_dealt * damage_dealt;
+        }
     }
 
     // ── Environment danger: enemy scaled like kills, mech like mech_killed ─

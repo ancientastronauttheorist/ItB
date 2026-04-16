@@ -47,7 +47,8 @@
     "bld_grid_scale": 0.4,
     "bld_phase_floor": 1.0,
     "bld_phase_scale": 0.0,
-    "building_preservation_threshold": 0.05
+    "building_preservation_threshold": 0.05,
+    "dam_damage_dealt": 4000
   },
   "stats": {
     "runs_played": 0,
