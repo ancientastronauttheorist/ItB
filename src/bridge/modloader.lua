@@ -163,6 +163,24 @@ local function dump_state()
     -- Conveyor belts from consolidated save read
     local conveyor_belts = save_data.conveyor_belts
 
+    -- Objective building lookup: missions that set self.AssetLoc track a
+    -- "unique building" (Coal Plant, Power Generator, Emergency Batteries)
+    -- that is a bonus objective. Mark those tiles so the solver can weight
+    -- them higher.
+    local objective_key = nil
+    local objective_name = nil
+    if _ITB_CURRENT_MISSION then
+        local ok_loc, loc = pcall(function() return _ITB_CURRENT_MISSION.AssetLoc end)
+        local ok_id, aid = pcall(function() return _ITB_CURRENT_MISSION.AssetId end)
+        if ok_loc and loc and type(loc) == "userdata" then
+            local ok_xy, ox, oy = pcall(function() return loc.x, loc.y end)
+            if ok_xy and ox and oy then
+                objective_key = ox .. "," .. oy
+                if ok_id and aid then objective_name = aid end
+            end
+        end
+    end
+
     -- Tiles (all 64)
     state.tiles = {}
     for y = 0, 7 do
@@ -195,6 +213,11 @@ local function dump_state()
             if terrain_id == 1 then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
                 if ok_h then tile.building_hp = hp end
+                -- Objective building (Coal Plant / Power Generator / Batteries)
+                if objective_key and objective_key == (x .. "," .. y) then
+                    tile.unique_building = true
+                    if objective_name then tile.objective_name = objective_name end
+                end
             -- Mountain data (2 = full, 1 = damaged, 0 = rubble)
             elseif terrain_id == 4 then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)

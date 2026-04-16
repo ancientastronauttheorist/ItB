@@ -45,6 +45,7 @@ pub struct JsonTile {
     pub building_hp: Option<u8>,
     pub population: Option<u8>,
     pub conveyor: Option<i8>,
+    pub unique_building: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -117,6 +118,12 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
             if jt.old_earth_mine.unwrap_or(false) { flags |= TileFlags::OLD_EARTH_MINE; }
             tile.flags = flags;
             tile.conveyor_dir = jt.conveyor.unwrap_or(-1);
+
+            // Objective buildings (Coal Plant, Power Generator, Batteries)
+            if jt.unique_building.unwrap_or(false) {
+                let idx = (jt.x as usize) * 8 + (jt.y as usize);
+                board.unique_buildings |= 1u64 << idx;
+            }
         }
     }
 

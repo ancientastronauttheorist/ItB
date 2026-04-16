@@ -200,6 +200,7 @@ pub struct Board {
     pub grid_power_max: u8,
     pub env_danger: u64,        // bitset: bit i = tile i is danger
     pub env_danger_kill: u64,   // bitset: bit i = tile i is lethal env (Deadly Threat: air strike, lightning, etc.)
+    pub unique_buildings: u64,  // bitset: bit i = tile i is a mission objective building (Coal Plant, Power Generator, Emergency Batteries)
     pub blast_psion: bool,   // Blast Psion (Jelly_Explode1): all Vek explode on death
     pub armor_psion: bool,   // Shell Psion (Jelly_Armor1): all Vek gain Armor
     pub soldier_psion: bool, // Soldier Psion (Jelly_Health1): all Vek +1 HP
@@ -233,6 +234,7 @@ impl Default for Board {
             grid_power_max: 7,
             env_danger: 0,
             env_danger_kill: 0,
+            unique_buildings: 0,
             blast_psion: false,
             armor_psion: false,
             soldier_psion: false,

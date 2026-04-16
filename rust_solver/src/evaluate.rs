@@ -100,6 +100,9 @@ pub struct EvalWeights {
     // Building protection: penalty for push-bump collateral damage
     pub building_bump_damage: f64,
 
+    // Objective building bonus (Coal Plant, Power Generator, Emergency Batteries)
+    pub building_objective_bonus: f64,
+
     // Context-aware building multiplier knobs
     pub bld_grid_floor: f64,
     pub bld_grid_scale: f64,
@@ -157,6 +160,7 @@ impl Default for EvalWeights {
             dam_destroyed: 0.0,
             // Building protection
             building_bump_damage: -8000.0,
+            building_objective_bonus: 8000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
             bld_phase_floor: 1.0,
@@ -244,14 +248,19 @@ pub fn evaluate(
 
     let mut buildings_alive = 0i32;
     let mut total_building_hp = 0i32;
-    for tile in &board.tiles {
+    let mut objective_alive = 0i32;
+    for (idx, tile) in board.tiles.iter().enumerate() {
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
             buildings_alive += 1;
             total_building_hp += tile.building_hp as i32;
+            if (board.unique_buildings & (1u64 << idx)) != 0 {
+                objective_alive += 1;
+            }
         }
     }
     score += buildings_alive as f64 * weights.building_alive * bld_mult;
     score += total_building_hp as f64 * weights.building_hp * bld_mult;
+    score += objective_alive as f64 * weights.building_objective_bonus * bld_mult;
 
     // ── Bump penalty: extra cost for push-chain collateral to buildings ──
     score += building_bumps as f64 * weights.building_bump_damage;

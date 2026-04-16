@@ -41,6 +41,7 @@
     "dam_destroyed": 8000,
     "mech_self_frozen": -12000,
     "building_bump_damage": -8000,
+    "building_objective_bonus": 8000,
     "bld_grid_floor": 0.6,
     "bld_grid_scale": 0.4,
     "bld_phase_floor": 1.0,
