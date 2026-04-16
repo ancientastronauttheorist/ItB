@@ -76,7 +76,7 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: 
                 }
             }
         }
-        WeaponType::Projectile | WeaponType::Pull | WeaponType::Laser => {
+        WeaponType::Projectile | WeaponType::Laser => {
             for &(dx, dy) in &DIRS {
                 let nx = mx as i8 + dx;
                 let ny = my as i8 + dy;
@@ -105,6 +105,22 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: 
                     if first_is_building { continue; }
                 }
                 targets.push((nx as u8, ny as u8));
+            }
+        }
+        WeaponType::Pull => {
+            // Pull weapons fire axis-aligned like artillery. The simulate path
+            // uses cardinal_direction(attacker→target) to pick the pull axis, so
+            // the target must lie on a cardinal line. Range is [range_min, range_max]
+            // (0 means unlimited = 7).
+            let min_r = wdef.range_min.max(1);
+            let max_r = if wdef.range_max == 0 { 7 } else { wdef.range_max };
+            for &(dx, dy) in &DIRS {
+                for i in (min_r as i8)..=(max_r as i8) {
+                    let nx = mx as i8 + dx * i;
+                    let ny = my as i8 + dy * i;
+                    if !in_bounds(nx, ny) { break; }
+                    targets.push((nx as u8, ny as u8));
+                }
             }
         }
         WeaponType::Artillery => {
