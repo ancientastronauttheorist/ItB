@@ -215,9 +215,16 @@ pub enum WId {
     /// tiles for 2 damage, pushes outward, webs each target. Implemented as
     /// SelfAoe with push=Outward + WEB flag.
     ScorpionAtkB = 107,
+    // -- Pinnacle Robotics additional bot weapons --
+    /// Cannon-Mech's "Cannon 8R Mark II": projectile, 3 damage, sets target on fire.
+    SnowtankAtk2 = 108,
+    /// Laser-Bot's "BKR Beam Mark I": piercing laser, 2 damage (decays to 1).
+    SnowlaserAtk1 = 109,
+    /// Laser-Mech's "BKR Beam Mark II": piercing laser, 4 damage (decays to 1).
+    SnowlaserAtk2 = 110,
 }
 
-pub const WEAPON_COUNT: usize = 108;
+pub const WEAPON_COUNT: usize = 111;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -462,6 +469,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         ..DEF
     };
 
+    // 108: SnowtankAtk2 — Cannon-Mech's Cannon 8R Mark II: projectile 3 dmg + fire
+    w[108] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 109: SnowlaserAtk1 — Laser-Bot's BKR Beam Mark I: piercing laser 2 dmg (decays to 1)
+    w[109] = WeaponDef { weapon_type: WeaponType::Laser, damage: 2, range_max: 0, flags: C, ..DEF };
+    // 110: SnowlaserAtk2 — Laser-Mech's BKR Beam Mark II: piercing laser 4 dmg (decays to 1)
+    w[110] = WeaponDef { weapon_type: WeaponType::Laser, damage: 4, range_max: 0, flags: C, ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -555,6 +570,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "BurnbugAtk1" => WId::BurnbugAtk1,
         "BurnbugAtk2" => WId::BurnbugAtk2,
         "SnowtankAtk1" => WId::SnowtankAtk1,
+        "SnowtankAtk2" => WId::SnowtankAtk2,
+        "SnowlaserAtk1" => WId::SnowlaserAtk1,
+        "SnowlaserAtk2" => WId::SnowlaserAtk2,
         "SnowartAtk1" => WId::SnowartAtk1,
         "SnowartAtk2" => WId::SnowartAtk2,
         "LeaperAtk2" => WId::LeaperAtk2,
@@ -658,6 +676,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BurnbugAtk1 => "BurnbugAtk1",
         WId::BurnbugAtk2 => "BurnbugAtk2",
         WId::SnowtankAtk1 => "SnowtankAtk1",
+        WId::SnowtankAtk2 => "SnowtankAtk2",
+        WId::SnowlaserAtk1 => "SnowlaserAtk1",
+        WId::SnowlaserAtk2 => "SnowlaserAtk2",
         WId::SnowartAtk1 => "SnowartAtk1",
         WId::SnowartAtk2 => "SnowartAtk2",
         WId::LeaperAtk2 => "LeaperAtk2",
@@ -727,7 +748,10 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Plasmodia1" => WId::PlasmodiaAtk1,
         "Plasmodia2" => WId::PlasmodiaAtk2,
         // Pinnacle bots
-        "Snowtank1" | "Snowtank2" => WId::SnowtankAtk1,
+        "Snowtank1" => WId::SnowtankAtk1,
+        "Snowtank2" => WId::SnowtankAtk2,
+        "Snowlaser1" => WId::SnowlaserAtk1,
+        "Snowlaser2" => WId::SnowlaserAtk2,
         "Snowart1" => WId::SnowartAtk1,
         "Snowart2" => WId::SnowartAtk2,
         "Burnbug1" => WId::BurnbugAtk1,
@@ -828,6 +852,9 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BurnbugAtk1 => "Burnbug Strike",
         WId::BurnbugAtk2 => "Alpha Burnbug Strike",
         WId::SnowtankAtk1 => "Snowtank Attack",
+        WId::SnowtankAtk2 => "Cannon 8R Mark II",
+        WId::SnowlaserAtk1 => "BKR Beam Mark I",
+        WId::SnowlaserAtk2 => "BKR Beam Mark II",
         WId::SnowartAtk1 => "Snowart Shot",
         WId::SnowartAtk2 => "Alpha Snowart Shot",
         WId::BurrowerAtk1 => "Burrower Slam",

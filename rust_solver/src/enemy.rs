@@ -277,6 +277,44 @@ pub fn simulate_enemy_attacks(
                 if let Some((tx, ty)) = find_projectile_target(board, ex, ey, orig.0, orig.1, qtx, qty) {
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    if wdef.fire() {
+                        if let Some(idx) = board.unit_at(tx, ty) {
+                            if !board.units[idx].frozen() {
+                                board.units[idx].set_fire(true);
+                            }
+                        }
+                        board.tile_mut(tx, ty).set_on_fire(true);
+                    }
+                }
+            }
+
+            WeaponType::Laser => {
+                // Piercing beam: fires in cardinal direction from enemy position,
+                // damage starts at wdef.damage and decreases by 1 per tile (floor 1).
+                // Stops at mountains and buildings (after damaging them).
+                let dx = (qtx - orig.0 as i8).signum();
+                let dy = (qty - orig.1 as i8).signum();
+                if (dx != 0) != (dy != 0) {
+                    let mut dmg = wdef.damage;
+                    for i in 1..8i8 {
+                        let nx = ex as i8 + dx * i;
+                        let ny = ey as i8 + dy * i;
+                        if !in_bounds(nx, ny) { break; }
+                        let nxu = nx as u8;
+                        let nyu = ny as u8;
+                        let tile = board.tile(nxu, nyu);
+                        if tile.terrain == Terrain::Mountain {
+                            apply_damage(board, nxu, nyu, dmg, &mut result, DamageSource::Weapon);
+                            break;
+                        }
+                        if tile.is_building() {
+                            apply_damage(board, nxu, nyu, dmg, &mut result, DamageSource::Weapon);
+                            break;
+                        }
+                        let d = enemy_hit_damage(board, nxu, nyu, dmg, vh);
+                        apply_damage(board, nxu, nyu, d, &mut result, DamageSource::Weapon);
+                        dmg = dmg.saturating_sub(1).max(1);
+                    }
                 }
             }
 
