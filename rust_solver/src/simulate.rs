@@ -1181,6 +1181,15 @@ pub fn simulate_action(
         }
     }
 
+    // Fire tile: mech catches fire on arrival (if not shielded).
+    // Mirrors apply_push's fire-catch logic so move and push paths agree.
+    if move_to != old_pos {
+        let tile = board.tile(move_to.0, move_to.1);
+        if tile.on_fire() && board.units[mech_idx].hp > 0 && !board.units[mech_idx].shield() {
+            board.units[mech_idx].set_fire(true);
+        }
+    }
+
     // Repair
     if weapon_id == WId::Repair {
         let unit = &mut board.units[mech_idx];

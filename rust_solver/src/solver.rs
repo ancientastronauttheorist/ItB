@@ -65,6 +65,13 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: 
                 if !in_bounds(nx, ny) { continue; }
                 let nxu = nx as u8;
                 let nyu = ny as u8;
+                // Throw weapons (Vice Fist): the game rejects targets whose throw
+                // destination — attacker + (attacker-target) — would land off-board.
+                if wdef.push == PushDir::Throw {
+                    let throw_x = mx as i8 - dx;
+                    let throw_y = my as i8 - dy;
+                    if !in_bounds(throw_x, throw_y) { continue; }
+                }
                 let has_unit = board.unit_at(nxu, nyu).is_some();
                 if has_unit {
                     targets.push((nxu, nyu));
