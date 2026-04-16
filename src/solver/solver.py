@@ -232,10 +232,16 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
     for enemy in enemies:
         if enemy.hp <= 0:
             continue
+        # Spider/Arachnid eggs don't attack — they transform into Spiderlings
+        # on their turn. Their queued_target is their own tile (hatch marker),
+        # which would otherwise be processed as a self-hit melee attack.
+        if enemy.type.startswith("WebbEgg"):
+            continue
         if enemy.queued_target_x < 0:
             continue
 
         # Smoke cancels attacks: enemy on a smoke tile cannot attack
+        # (Eggs are Smoke-immune, but they're skipped above anyway.)
         enemy_tile = board.tile(enemy.x, enemy.y)
         if enemy_tile.smoke:
             continue

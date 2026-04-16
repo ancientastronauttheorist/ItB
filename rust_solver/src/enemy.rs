@@ -230,9 +230,14 @@ pub fn simulate_enemy_attacks(
     for &ei in &enemy_indices {
         let enemy = &board.units[ei];
         if enemy.hp <= 0 { continue; }
+        // Spider/Arachnid eggs don't attack — they hatch into Spiderlings on
+        // their turn. Their queued_target is their own tile; without this
+        // skip the egg would be processed as a self-hit melee attack.
+        if enemy.type_name_str().starts_with("WebbEgg") { continue; }
         if enemy.queued_target_x < 0 { continue; }
 
         // Smoke cancels attacks
+        // (Eggs have Smoke Immunity, but they're skipped above anyway.)
         let tile = board.tile(enemy.x, enemy.y);
         if tile.smoke() { continue; }
 
@@ -788,6 +793,22 @@ mod tests {
 
         assert!(board.tile(4, 4).acid(),
             "Ground tile hit by acid splash should become A.C.I.D. Pool");
+    }
+
+    #[test]
+    fn test_webb_egg_does_not_attack() {
+        // WebbEgg1 at (3,3) with queued_target = own tile (3,3). The egg's
+        // "action" is to hatch into a Spiderling — not an attack. Without
+        // the skip, the fallback melee path would apply 1 damage to the
+        // egg's own tile, self-destructing a 1-HP egg (phantom death).
+        let mut board = Board::default();
+        let egg_idx = add_enemy_with_type(&mut board, 1, 3, 3, 1, "WebbEgg1", 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        assert_eq!(board.units[egg_idx].hp, 1,
+            "Egg should not self-damage on its turn (hatching, not attacking)");
     }
 
     #[test]
