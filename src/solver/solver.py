@@ -60,7 +60,12 @@ def _find_projectile_target(board: Board, enemy: Unit,
     handles pushed enemies: their attack direction is preserved from the
     original position, not recomputed from the new position.
 
-    Returns (hit_x, hit_y) of first unit/mountain/building, or (-1, -1).
+    Game's GetDirection snaps diagonal vectors to the DOMINANT axis (ties
+    break toward x). If the projectile walks off the board without hitting
+    anything, fall back to the last valid tile (matches GetProjectileEnd).
+
+    Returns (hit_x, hit_y) of first unit/mountain/building or last valid
+    tile, or (-1, -1) if no attack resolves.
     """
     if enemy.queued_target_x < 0:
         return -1, -1
@@ -68,19 +73,19 @@ def _find_projectile_target(board: Board, enemy: Unit,
     # Compute direction from ORIGINAL position to queued target
     ox = orig_x if orig_x >= 0 else enemy.x
     oy = orig_y if orig_y >= 0 else enemy.y
-    dx = enemy.queued_target_x - ox
-    dy = enemy.queued_target_y - oy
-    # Normalize to unit direction
-    if dx != 0:
-        dx = 1 if dx > 0 else -1
-    if dy != 0:
-        dy = 1 if dy > 0 else -1
-
-    # Must be a valid cardinal direction (exactly one axis non-zero)
-    if (dx != 0 and dy != 0) or (dx == 0 and dy == 0):
+    raw_dx = enemy.queued_target_x - ox
+    raw_dy = enemy.queued_target_y - oy
+    if raw_dx == 0 and raw_dy == 0:
         return -1, -1
+    # Snap to dominant cardinal axis (matches ITB's GetDirection)
+    if abs(raw_dy) > abs(raw_dx):
+        dx, dy = 0, (1 if raw_dy > 0 else -1)
+    else:
+        dx, dy = (1 if raw_dx > 0 else -1), 0
 
-    # Trace from CURRENT position in the original direction
+    # Trace from CURRENT position in the snapped direction. If projectile
+    # exits the board without hitting anything, return last valid tile.
+    last_valid = (-1, -1)
     for i in range(1, 8):
         nx, ny = enemy.x + dx * i, enemy.y + dy * i
         if not board.in_bounds(nx, ny):
@@ -93,7 +98,8 @@ def _find_projectile_target(board: Board, enemy: Unit,
         unit = board.unit_at(nx, ny)
         if unit is not None:
             return nx, ny
-    return -1, -1
+        last_valid = (nx, ny)
+    return last_valid
 
 
 def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
