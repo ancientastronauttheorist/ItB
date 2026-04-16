@@ -353,6 +353,29 @@ class Board:
         # Mission metadata — may be empty string if bridge couldn't resolve.
         board.mission_id = data.get("mission_id", "") or ""
 
+        # Infer WEB status from Spider Egg adjacency.
+        # Game rule (weapons_enemy.lua SpiderAtk1:GetSkillEffect):
+        #     for dir = DIR_START, DIR_END do
+        #         ret:AddGrapple(p2, p2 + DIR_VECTORS[dir], "hold")
+        # i.e. a landed WebbEgg1 webs every unit in its 4 cardinal
+        # adjacent tiles. Bridge's p:IsGrappled() unreliably misses this
+        # (confirmed empirically: Cannon Mech shown as Webbed in-game
+        # but bridge reports web=False). Infer it here so the solver
+        # respects the movement restriction.
+        for egg in board.units:
+            if egg.type != "WebbEgg1" or egg.hp <= 0:
+                continue
+            for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+                nx, ny = egg.x + dx, egg.y + dy
+                if not board.in_bounds(nx, ny):
+                    continue
+                neighbor = board.unit_at(nx, ny)
+                if neighbor is None or neighbor.hp <= 0:
+                    continue
+                if not neighbor.web:
+                    neighbor.web = True
+                    neighbor.web_source_uid = egg.uid
+
         # Detect Blast Psion: if alive on board, all Vek explode on death
         board.blast_psion_active = any(
             u.type == "Jelly_Explode1" and u.hp > 0 for u in board.units

@@ -288,8 +288,24 @@ local function dump_state()
                 if ok_fi then unit.fire = fi end
                 local ok_fr, fr = pcall(function() return p:IsFrozen() end)
                 if ok_fr then unit.frozen = fr end
-                local ok_w, web = pcall(function() return p:IsGrappled() end)
-                if ok_w then unit.web = web end
+                -- Web/grapple detection: try multiple API method names.
+                -- IsGrappled() alone misses Spider-egg webs on mechs; probe
+                -- alternatives so either the Scorpion-grapple or the Spider-
+                -- egg web lands in unit.web.
+                local web = false
+                local web_probes = {}
+                for _, mname in ipairs({
+                    "IsGrappled", "IsWebbed", "IsWeb", "IsPinned",
+                    "IsHeld", "IsHold",
+                }) do
+                    local ok_m, v = pcall(function() return p[mname](p) end)
+                    if ok_m then
+                        web_probes[mname] = v
+                        if v == true then web = true end
+                    end
+                end
+                unit.web = web
+                unit.web_probes = web_probes  -- diagnostic; remove when verified
                 -- Webber identification: try API methods first, fall back later (post-loop)
                 if web then
                     for _, mname in ipairs({"GetGrappler", "GetGrappledBy", "GetGrapplerPawn", "GetPinnedBy"}) do

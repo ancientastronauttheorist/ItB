@@ -734,6 +734,34 @@ def cmd_read(profile: str = "Alpha") -> dict:
     return result
 
 
+def _infer_webb_egg_adjacency(units: list) -> None:
+    """Mutate ``units`` to mark WEB on any living unit cardinally adjacent
+    to a living WebbEgg1.
+
+    Bridge's ``p:IsGrappled()`` empirically misses Spider-egg webs on
+    mechs (confirmed: Cannon Mech shown Webbed in-game but bridge returned
+    web=False). Game rule from weapons_enemy.lua SpiderAtk1:
+        for dir = DIR_START, DIR_END do
+            ret:AddGrapple(p2, p2 + DIR_VECTORS[dir], "hold")
+    so infer from adjacency until the bridge probes identify the right
+    API. web_source_uid points to the egg so web-break-on-push/kill works.
+    """
+    eggs = [u for u in units
+            if u.get("type") == "WebbEgg1" and u.get("hp", 0) > 0]
+    if not eggs:
+        return
+    by_pos = {(u.get("x"), u.get("y")): u for u in units}
+    for egg in eggs:
+        ex, ey = egg.get("x"), egg.get("y")
+        for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+            neighbor = by_pos.get((ex + dx, ey + dy))
+            if neighbor is None or neighbor.get("hp", 0) <= 0:
+                continue
+            if not neighbor.get("web"):
+                neighbor["web"] = True
+                neighbor["web_source_uid"] = egg.get("uid", 0)
+
+
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     """Run solver on current board, store solution in session.
 
@@ -817,6 +845,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                     for k in ("weapon_damage", "weapon_push", "hp", "max_hp"):
                         if k in u and isinstance(u[k], int) and u[k] > 255:
                             u[k] = 255
+
+                _infer_webb_egg_adjacency(bridge_data["units"])
             # Inject custom weights into bridge data for Rust solver
             if eval_weights_dict:
                 bridge_data["eval_weights"] = eval_weights_dict
@@ -1878,6 +1908,7 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
             u["ranged"] = stats.ranged
             if not stats.pushable:
                 u["pushable"] = False
+        _infer_webb_egg_adjacency(bd["units"])
 
     # Inject weights
     if weights:
@@ -2110,6 +2141,7 @@ def _re_solve_partial(
                 u["active"] = True
                 u["can_move"] = False
             # All others keep their current active/can_move state
+        _infer_webb_egg_adjacency(bridge_data["units"])
 
     # Load weights
     weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
