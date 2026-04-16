@@ -480,6 +480,26 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
             board.units[unit_idx].set_fire(true);
         }
     }
+
+    // Old Earth Mine: instant kill on thrown unit (bypasses shield), mine consumed.
+    // Mirrors apply_push's mine handling so throw and push paths agree.
+    if board.units[unit_idx].hp > 0 {
+        let tile = board.tile(nx, ny);
+        if tile.old_earth_mine() {
+            board.units[unit_idx].hp = 0;
+            if board.units[unit_idx].is_mech() {
+                result.mechs_killed += 1;
+            }
+            board.tile_mut(nx, ny).set_old_earth_mine(false);
+        } else if tile.freeze_mine() {
+            if !board.units[unit_idx].shield() {
+                board.units[unit_idx].set_frozen(true);
+            } else {
+                board.units[unit_idx].set_shield(false);
+            }
+            board.tile_mut(nx, ny).set_freeze_mine(false);
+        }
+    }
 }
 
 // ── apply_push ───────────────────────────────────────────────────────────────
