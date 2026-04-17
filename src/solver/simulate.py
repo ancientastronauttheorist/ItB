@@ -174,6 +174,15 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                     result.mechs_killed += 1
                     result.events.append(f"Mech {unit.type} destroyed at ({x},{y})")
 
+    # Sand → smoke on weapon damage. Push/bump, fire, and self damage
+    # don't trigger (game rule, confirmed on Steam / Sand Tile wiki).
+    # Fire-flagged weapons should convert to Fire tile instead of smoke;
+    # not yet threaded through — matches current Rust fallback behaviour.
+    if tile.terrain == "sand" and damage > 0 and source not in ("bump", "fire", "self"):
+        tile.terrain = "ground"
+        tile.smoke = True
+        tile.on_fire = False
+
     # Acid pool creation: unit with acid dies → acid pool on tile
     if unit and unit.hp <= 0 and getattr(unit, 'acid', False):
         if tile.terrain not in TERRAIN_DEADLY_GROUND or tile.terrain == "water":

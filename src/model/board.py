@@ -163,6 +163,7 @@ class BoardTile:
     conveyor: int = -1       # -1 = not conveyor, 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)
     freeze_mine: bool = False  # freeze mine on this tile (freezes unit that stops here)
     old_earth_mine: bool = False  # old earth mine — kills any unit that stops here (bypasses shield)
+    unique_building: bool = False  # objective building (Coal Plant / Batteries / Generator)
 
 
 class Board:
@@ -359,6 +360,7 @@ class Board:
                 if bt.terrain == "building":
                     bt.building_hp = td.get("building_hp", 1)
                     bt.population = td.get("population", 1)
+                    bt.unique_building = td.get("unique_building", False)
                 elif bt.terrain == "mountain":
                     # Mountains have 2 HP (bridge doesn't send mountain HP)
                     bt.building_hp = td.get("building_hp", 2)

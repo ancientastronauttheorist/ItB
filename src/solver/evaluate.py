@@ -188,15 +188,22 @@ def evaluate(
 
     buildings_alive = 0
     total_building_hp = 0
+    objective_buildings_alive = 0
     for x in range(8):
         for y in range(8):
             t = board.tile(x, y)
             if t.terrain == "building" and t.building_hp > 0:
                 buildings_alive += 1
                 total_building_hp += t.building_hp
+                if t.unique_building:
+                    objective_buildings_alive += 1
 
     score += buildings_alive * w.building_alive * bld_mult
     score += total_building_hp * w.building_hp * bld_mult
+    # Objective buildings (Coal Plant / Emergency Batteries / Power Generator)
+    # grant a bonus objective reward (+1 Grid Power or +1 Rep) on survival.
+    # Add a per-surviving-objective bonus scaled by bld_mult.
+    score += objective_buildings_alive * w.building_objective_bonus * bld_mult
 
     # --- GRID POWER: urgency multiplier applied here ---
     # When grid is low, each grid point is worth more. Multiplier was
