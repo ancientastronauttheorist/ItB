@@ -159,6 +159,10 @@ def main():
     p_auto_turn.add_argument("--profile", default="Alpha")
     p_auto_turn.add_argument("--time-limit", type=float, default=10.0,
                              help="Solver time limit (default: 10s)")
+    p_auto_turn.add_argument("--no-wait", action="store_true",
+                             help="Don't poll bridge for combat_player at entry")
+    p_auto_turn.add_argument("--max-wait", type=float, default=20.0,
+                             help="Seconds to poll enemy→player transition (default: 20)")
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",
@@ -251,7 +255,8 @@ def main():
         cmd_replay(args.run_id, args.turn, args.time_limit, mission=args.mission,
                    use_rust=not args.no_rust)
     elif args.command == "auto_turn":
-        cmd_auto_turn(profile=args.profile, time_limit=args.time_limit)
+        cmd_auto_turn(profile=args.profile, time_limit=args.time_limit,
+                      wait_for_turn=not args.no_wait, max_wait=args.max_wait)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)

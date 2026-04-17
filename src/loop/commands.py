@@ -2324,7 +2324,8 @@ def _log_sub_action_desync(
           f"{diff.total_count()} diffs [{cat_label}]")
 
 
-def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
+def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
+                  wait_for_turn: bool = True, max_wait: float = 20.0) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -2336,6 +2337,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
       MOVE → read → diff post_move → (re-solve on desync)
       ATTACK → read → diff post_attack → (re-solve on desync)
 
+    When wait_for_turn=True (default), polls the bridge at entry until phase
+    becomes combat_player or max_wait seconds elapse. This folds the enemy-
+    phase wait inside one Python call so Claude doesn't burn LLM round-trips
+    on polling after each End Turn click.
+
     Returns dict with turn results or error.
     """
     from src.solver.verify import diff_states, classify_diff
@@ -2346,8 +2352,24 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         _print_result(result)
         return result
 
-    # 1. Read state
-    read_result = cmd_read(profile=profile)
+    # 1. Read state — with optional phase polling. If enemy phase is still
+    #    animating from the previous End Turn click, block here instead of
+    #    bouncing back to Claude with "Not in combat_player phase".
+    if wait_for_turn:
+        import time as _t
+        poll_start = _t.time()
+        read_result = cmd_read(profile=profile)
+        phase = read_result.get("phase")
+        while phase != "combat_player" and _t.time() - poll_start < max_wait:
+            # Terminal states — don't keep polling.
+            if read_result.get("game_over") or phase in ("mission_end", "unknown"):
+                break
+            _t.sleep(1.5)
+            read_result = cmd_read(profile=profile)
+            phase = read_result.get("phase")
+    else:
+        read_result = cmd_read(profile=profile)
+
     phase = read_result.get("phase")
     if phase != "combat_player":
         result = {"error": f"Not in combat_player phase: {phase}", "phase": phase}
