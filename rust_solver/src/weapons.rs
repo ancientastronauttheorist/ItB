@@ -337,7 +337,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 40: Science_Pullmech — Attract Shot
     w[40] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_max: 0, flags: C, ..DEF };
     // 41: Science_Gravwell — Grav Well
-    w[41] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_min: 2, flags: C, ..DEF };
+    // range_max: 0 = unlimited (Pull fires axis-aligned any distance from range_min out).
+    // Without this override, DEF's default range_max=1 makes the range (2..=1) empty
+    // and Grav Well enumerates zero targets — solver would never fire it.
+    w[41] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_min: 2, range_max: 0, flags: C, ..DEF };
     // 42: Science_Repulse — Repulse
     w[42] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 43: Science_Swap — Teleporter
