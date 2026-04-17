@@ -18,7 +18,8 @@ pub mod serde_bridge;
 fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> {
     // Release the GIL for the entire Rust computation
     py.allow_threads(|| {
-        let (board, spawn_points, _danger_tiles, weights) = serde_bridge::board_from_json(json_input)
+        let (board, spawn_points, _danger_tiles, weights, disabled_mask) =
+            serde_bridge::board_from_json(json_input)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
         let solution = solver::solve_turn(
             &board,
@@ -26,6 +27,7 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
             time_limit,
             99999, // no pruning — Rust is fast enough to search exhaustively
             &weights,
+            disabled_mask,
         );
 
         Ok(serde_bridge::solution_to_json(&solution))
@@ -46,7 +48,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::types::{Terrain, xy_to_idx};
 
     py.allow_threads(|| {
-        let (mut board, spawn_points, _danger, weights) = serde_bridge::board_from_json(bridge_json)
+        let (mut board, spawn_points, _danger, weights, _disabled_mask) =
+            serde_bridge::board_from_json(bridge_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
 
         #[derive(serde::Deserialize)]
@@ -108,7 +111,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 
         // Recompute building_threats from the ORIGINAL (pre-action) board state
         // so threats_cleared / perfect_defense_bonus kick in correctly.
-        let (mut board_orig, _, _, _) = serde_bridge::board_from_json(bridge_json)
+        let (mut board_orig, _, _, _, _) = serde_bridge::board_from_json(bridge_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
         let _ = &mut board_orig; // silence unused_mut if not mutated
         let mut building_threats = 0u64;

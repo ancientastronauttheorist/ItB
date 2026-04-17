@@ -26,6 +26,18 @@ pub struct JsonInput {
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int], ...]
     pub eval_weights: Option<EvalWeights>,
     pub mission_id: Option<String>,
+    /// Phase 1 soft-disable blocklist — weapons the Python detector has
+    /// flagged as drifting. Each entry's ``weapon_id`` becomes a bit in
+    /// the ``disabled_mask`` returned by ``board_from_json``. Other
+    /// fields (``expires_turn``, ``cause_pattern``, etc.) are tolerated
+    /// but unused here — Python enforces expiry by filtering before the
+    /// solve call.
+    pub disabled_actions: Option<Vec<JsonDisabledAction>>,
+}
+
+#[derive(Deserialize)]
+pub struct JsonDisabledAction {
+    pub weapon_id: String,
 }
 
 #[derive(Deserialize)]
@@ -86,7 +98,9 @@ pub struct JsonUnit {
 
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
 
-pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>, EvalWeights), String> {
+pub fn board_from_json(json_str: &str)
+    -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>, EvalWeights, u128), String>
+{
     let input: JsonInput = serde_json::from_str(json_str)
         .map_err(|e| format!("JSON parse error: {}", e))?;
     let weights = input.eval_weights.clone().unwrap_or_default();
@@ -352,7 +366,22 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
         }
     }
 
-    Ok((board, spawn_points, danger_tiles, weights))
+    // Build the soft-disable bitmask: 1 bit per WId variant up to 127.
+    // Python-side ``session.disabled_actions`` is the source of truth —
+    // we only consume the ``weapon_id`` string here. Unknown strings
+    // resolve to ``WId::None`` via ``wid_from_str`` and are silently
+    // ignored (a typo in a weapon id can't brick the solve).
+    let mut disabled_mask: u128 = 0;
+    if let Some(list) = &input.disabled_actions {
+        for entry in list {
+            let wid = wid_from_str(&entry.weapon_id);
+            if wid != WId::None {
+                disabled_mask |= 1u128 << (wid as u8);
+            }
+        }
+    }
+
+    Ok((board, spawn_points, danger_tiles, weights, disabled_mask))
 }
 
 // ── Serialize Solution to JSON ───────────────────────────────────────────────

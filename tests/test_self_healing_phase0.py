@@ -390,6 +390,94 @@ def test_narrator_surfaces_unknowns(capsys):
     assert "Wumpus_Alpha" in out
 
 
+# ── #P1-3 Rust soft-disable bias ─────────────────────────────────────────────
+
+
+def _rust_solve(bridge_data: dict, time_limit: float = 1.0) -> dict:
+    import itb_solver
+    return json.loads(itb_solver.solve(json.dumps(bridge_data), time_limit))
+
+
+def _two_weapon_board():
+    """Minimal board where a PunchMech has both Prime_Punchmech and
+    Ranged_Artillerymech available and an adjacent scorpion to hit.
+
+    PunchMech at (3,3), scorpion at (3,4) (directly east). Both weapons
+    can kill the scorpion on turn 1, so the solver is genuinely free to
+    choose between them — which is what we need in order to observe
+    the soft-disable bias flipping the selection.
+    """
+    return {
+        "tiles": [
+            {"x": x, "y": y, "terrain": "ground"}
+            for x in range(8) for y in range(8)
+        ],
+        "units": [
+            {
+                "uid": 0, "type": "PunchMech", "x": 3, "y": 3,
+                "hp": 3, "max_hp": 3, "team": 1, "mech": True,
+                "move": 4, "active": True,
+                "weapons": ["Prime_Punchmech", "Ranged_Artillerymech"],
+            },
+            {
+                "uid": 1, "type": "Scorpion1", "x": 3, "y": 4,
+                "hp": 1, "max_hp": 1, "team": 6, "mech": False,
+                "move": 3, "active": False,
+                "weapons": ["ScorpionAtk1"], "queued_target": [-1, -1],
+            },
+        ],
+        "grid_power": 7, "grid_power_max": 7,
+        "turn": 1, "total_turns": 5,
+        "spawning_tiles": [],
+    }
+
+
+def test_rust_solver_accepts_disabled_actions_without_crashing():
+    b = _two_weapon_board()
+    b["disabled_actions"] = [{"weapon_id": "Prime_Punchmech"}]
+    r = _rust_solve(b)
+    # Just verify the shape comes back — the next test checks behavior.
+    assert "actions" in r
+
+
+def test_rust_solver_avoids_soft_disabled_weapon():
+    """With a weapon disabled, the solver must pick a different one
+    (the bias is large enough to flip the tie when both weapons reach
+    the same outcome)."""
+    baseline = _rust_solve(_two_weapon_board())
+    chosen = next((a["weapon_id"] for a in baseline["actions"]
+                   if a["mech_uid"] == 0 and a["weapon_id"]
+                   and a["weapon_id"] != "Repair"),
+                  None)
+    if chosen is None:
+        pytest.skip("Solver didn't pick a weapon on baseline — test not useful")
+
+    b = _two_weapon_board()
+    b["disabled_actions"] = [{"weapon_id": chosen}]
+    blocked = _rust_solve(b)
+    blocked_wid = next((a["weapon_id"] for a in blocked["actions"]
+                        if a["mech_uid"] == 0), "")
+    assert blocked_wid != chosen, (
+        f"Solver ignored soft-disable: kept {chosen} even when disabled. "
+        f"baseline_score={baseline['score']} blocked_score={blocked['score']}"
+    )
+
+
+def test_rust_solver_falls_back_to_disabled_weapon_when_no_alternative():
+    """If nothing else can accomplish the task, the bias is a preference,
+    not a prohibition. This is the 'caged mech' safety valve from
+    docs/self_healing_loop_design.md §Response Tier 2."""
+    # PunchMech with ONLY Prime_Punchmech — no alternative at all.
+    board = _two_weapon_board()
+    board["units"][0]["weapons"] = ["Prime_Punchmech"]
+    board["disabled_actions"] = [{"weapon_id": "Prime_Punchmech"}]
+    r = _rust_solve(board)
+    # Solver might pick it (paying the penalty) or skip the attack —
+    # either is acceptable for the caged case. What we DON'T want is
+    # a crash or an empty action list.
+    assert "actions" in r
+
+
 # ── #P1-6 corpus replay harness ──────────────────────────────────────────────
 
 

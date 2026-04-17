@@ -887,6 +887,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                         ud.get("type", ""),
                         ud.get("pilot_level", 0),
                     )
+            # Self-healing loop Tier 2: forward the session's current
+            # blocklist so the Rust solver biases scoring away from
+            # soft-disabled weapons. Expiry was pruned at the start of
+            # cmd_auto_turn; Rust just needs the weapon_id strings.
+            if session.disabled_actions:
+                bridge_data["disabled_actions"] = list(session.disabled_actions)
             rust_start = _time.time()
             rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
             rust_result = _json.loads(rust_json)
@@ -2207,6 +2213,12 @@ def _re_solve_partial(
                 ud.get("max_hp", 0), ud.get("type", ""),
                 ud.get("pilot_level", 0),
             )
+
+    # Forward the soft-disable blocklist on re-solves too, otherwise the
+    # Rust solver could pick the disabled weapon again on the same turn
+    # the detector just flagged it.
+    if session.disabled_actions:
+        bridge_data["disabled_actions"] = list(session.disabled_actions)
 
     try:
         import itb_solver as _rust

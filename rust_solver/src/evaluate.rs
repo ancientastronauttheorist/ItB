@@ -120,6 +120,16 @@ pub struct EvalWeights {
 
     // Two-stage solver filter: prefer clean plans within this margin of best
     pub building_preservation_threshold: f64,
+
+    // Phase 1 soft-disable penalty: subtracted once per action in a
+    // candidate plan that uses a weapon in the session's disabled_actions
+    // mask. Tuned to be large enough that the solver prefers any viable
+    // alternative but small enough that a caged mech can still use the
+    // weapon if nothing else scores above -penalty. Default sized to
+    // roughly one building_alive: the solver will sacrifice a building
+    // before using a soft-disabled weapon 10+ times in one turn, but
+    // won't throw the mission for a single forced use.
+    pub soft_disabled_penalty: f64,
 }
 
 impl Default for EvalWeights {
@@ -177,6 +187,7 @@ impl Default for EvalWeights {
             bld_phase_floor: 1.0,
             bld_phase_scale: 0.0,
             building_preservation_threshold: 0.05,
+            soft_disabled_penalty: 10000.0,
         }
     }
 }

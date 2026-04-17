@@ -531,6 +531,7 @@ fn search_recursive(
     actions_so_far: &mut Vec<MechAction>,
     kills_so_far: i32,
     bumps_so_far: i32,
+    soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
     building_threats: u64,
     spawn_bits: u64,
@@ -539,6 +540,7 @@ fn search_recursive(
     max_actions: usize,
     weights: &EvalWeights,
     deadline: Instant,
+    disabled_mask: u128,
     best_score: &mut f64,
     best_actions: &mut Vec<MechAction>,
     best_clean_score: &mut f64,
@@ -554,19 +556,18 @@ fn search_recursive(
         let buildings_before_enemy = count_buildings(&b_eval);
         simulate_enemy_attacks(&mut b_eval, original_positions);
         apply_spawn_blocking(&mut b_eval, spawn_points);
-        let score = evaluate(&b_eval, spawn_points, weights, kills_so_far, bumps_so_far, psion_before, building_threats);
+        let raw = evaluate(&b_eval, spawn_points, weights, kills_so_far, bumps_so_far, psion_before, building_threats);
+        // Tier 2 soft-disable bias: penalize any candidate plan that
+        // relies on a weapon in the session's disabled_actions list.
+        // Subtracted at terminal evaluation so the search retains its
+        // normal comparisons between branches — we're biasing the
+        // objective, not pruning branches.
+        let score = raw - soft_disable_penalty_so_far;
 
 
         if score > *best_score {
             *best_score = score;
             *best_actions = actions_so_far.clone();
-            // DEBUG: log new best
-            if std::env::var("ITB_SOLVER_DEBUG").is_ok() {
-                let summary: Vec<String> = actions_so_far.iter().map(|a| {
-                    format!("{}:{:?}→{:?}@{:?}", a.mech_type, (a.move_to.0, a.move_to.1), crate::weapons::wid_to_str(a.weapon), (a.target.0, a.target.1))
-                }).collect();
-                eprintln!("NEW BEST score={:.0} actions={:?}", score, summary);
-            }
         }
         let mech_buildings_lost = initial_building_count - buildings_before_enemy;
         if mech_buildings_lost == 0 && score > *best_clean_score {
@@ -583,10 +584,11 @@ fn search_recursive(
         // Still recurse to the next depth so the remaining mechs can act
         search_recursive(
             board, mech_order, depth + 1,
-            actions_so_far, kills_so_far, bumps_so_far,
+            actions_so_far, kills_so_far, bumps_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
+            disabled_mask,
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
@@ -603,6 +605,15 @@ fn search_recursive(
         let mut b_next = board.clone(); // ~800 byte memcpy
         let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target);
 
+        // Accumulate soft-disable penalty for blocked weapons. Bit index
+        // is the u8 representation of the WId variant.
+        let wid_bit = weapon_id as u8;
+        let penalty_add = if wid_bit < 128 && (disabled_mask >> wid_bit) & 1 != 0 {
+            weights.soft_disabled_penalty
+        } else {
+            0.0
+        };
+
         let action = make_action(&board.units[mech_idx], move_to, weapon_id, target);
         actions_so_far.push(action);
 
@@ -611,9 +622,11 @@ fn search_recursive(
             actions_so_far,
             kills_so_far + result.enemies_killed,
             bumps_so_far + result.buildings_bump_damaged,
+            soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
+            disabled_mask,
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
@@ -711,6 +724,7 @@ pub fn solve_turn(
     time_limit_secs: f64,
     max_actions_per_mech: usize,
     weights: &EvalWeights,
+    disabled_mask: u128,
 ) -> Solution {
     let active: Vec<usize> = (0..board.unit_count as usize)
         .filter(|&i| {
@@ -765,10 +779,11 @@ pub fn solve_turn(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0,
+            &mut actions_buf, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
+            disabled_mask,
             &mut best_score, &mut best_actions,
             &mut best_clean_score, &mut best_clean_actions, initial_building_count,
             &psion_before,
