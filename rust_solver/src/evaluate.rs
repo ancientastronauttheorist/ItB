@@ -154,7 +154,7 @@ impl Default for EvalWeights {
             building_coverage: 50.0,
             uncovered_building: -500.0,
             perfect_defense_bonus: 6000.0,
-            mech_sacrifice_at_critical: 50000.0,
+            mech_sacrifice_at_critical: 0.0,  // was 50000; created perverse incentive to sacrifice at low grid without body-block context (2026-04-17)
             // Grid urgency
             grid_urgency_critical: 5.0,
             grid_urgency_high: 3.0,

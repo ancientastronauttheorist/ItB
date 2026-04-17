@@ -29,7 +29,7 @@
     "mech_low_hp_risk": -2000,
     "friendly_npc_killed": -20000,
     "perfect_defense_bonus": 6000,
-    "mech_sacrifice_at_critical": 50000,
+    "mech_sacrifice_at_critical": 0,
     "grid_urgency_critical": 8.0,
     "grid_urgency_high": 4.0,
     "grid_urgency_medium": 3.0,

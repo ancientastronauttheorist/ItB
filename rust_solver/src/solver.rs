@@ -560,6 +560,13 @@ fn search_recursive(
         if score > *best_score {
             *best_score = score;
             *best_actions = actions_so_far.clone();
+            // DEBUG: log new best
+            if std::env::var("ITB_SOLVER_DEBUG").is_ok() {
+                let summary: Vec<String> = actions_so_far.iter().map(|a| {
+                    format!("{}:{:?}→{:?}@{:?}", a.mech_type, (a.move_to.0, a.move_to.1), crate::weapons::wid_to_str(a.weapon), (a.target.0, a.target.1))
+                }).collect();
+                eprintln!("NEW BEST score={:.0} actions={:?}", score, summary);
+            }
         }
         let mech_buildings_lost = initial_building_count - buildings_before_enemy;
         if mech_buildings_lost == 0 && score > *best_clean_score {

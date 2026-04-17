@@ -410,6 +410,33 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
                     buildings_destroyed += grid_lost
                     _apply_enemy_weapon_status(board, bx, by, wdef, enemy.uid)
 
+        elif weapon_type == "artillery":
+            # Artillery preserves its ORIGINAL OFFSET from the attacker when
+            # the attacker is pushed. The queued target is a direction+distance
+            # stored relative to the enemy — pushing the enemy shifts the
+            # target tile by the same delta (confirmed empirically in Rust
+            # sim: push Alpha Scarab D3→C3 with D7 original target → C7).
+            orig = original_positions.get(enemy.uid)
+            ox, oy = (orig[0], orig[1]) if orig else (enemy.x, enemy.y)
+            offset_x = enemy.queued_target_x - ox
+            offset_y = enemy.queued_target_y - oy
+            tx = enemy.x + offset_x
+            ty = enemy.y + offset_y
+            if not board.in_bounds(tx, ty):
+                continue
+            # Cardinal axis required (exactly one axis non-zero)
+            dx_sign = (offset_x > 0) - (offset_x < 0)
+            dy_sign = (offset_y > 0) - (offset_y < 0)
+            if (dx_sign != 0) == (dy_sign != 0):
+                continue
+            # Min-range check against the (new) attacker→target distance.
+            curr_range = abs(offset_x) + abs(offset_y)
+            if wdef and curr_range < wdef.range_min:
+                continue
+            grid_lost = _apply_enemy_hit(board, tx, ty, damage)
+            buildings_destroyed += grid_lost
+            _apply_enemy_weapon_status(board, tx, ty, wdef, enemy.uid)
+
         elif weapon_type == "self_aoe":
             # Scorpion Leader's Massive Spinneret and similar: hit all 4
             # cardinal adjacent tiles at enemy's CURRENT position (after push).
