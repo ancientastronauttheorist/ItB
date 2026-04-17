@@ -530,6 +530,22 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 unknowns = detect_unknowns(board)
                 if unknowns["types"] or unknowns["terrain_ids"]:
                     result["unknowns"] = unknowns
+                    # Phase 2 #P2-2: enqueue each novel type / terrain for
+                    # the between-turn research processor. Dedup is per
+                    # (type, terrain_id), so re-seeing a pawn across turns
+                    # won't re-enqueue. Enqueuing itself is cheap — the
+                    # expensive Vision capture happens in #P2-3+.
+                    turn_for_queue = bridge_data.get("turn", 0)
+                    enqueued = []
+                    for t in unknowns["types"]:
+                        if session.enqueue_research(t, None, turn_for_queue):
+                            enqueued.append({"type": t, "terrain_id": None})
+                    for tid in unknowns["terrain_ids"]:
+                        if session.enqueue_research("", tid, turn_for_queue):
+                            enqueued.append({"type": "", "terrain_id": tid})
+                    if enqueued:
+                        result["research_enqueued"] = enqueued
+                        session.save()
 
                 # Deployment zone (available on turn 0 during deployment)
                 deploy_zone = bridge_data.get("deployment_zone", [])

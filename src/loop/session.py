@@ -195,6 +195,27 @@ class RunSession:
     # detector can write entries and downstream Python can read them.
     disabled_actions: list[dict] = field(default_factory=list)
 
+    # Phase 2 research queue. Populated when ``cmd_read`` sees a pawn
+    # type or terrain id outside ``data/known_types.json``. The
+    # between-turn processor pops one pending entry at a time, runs the
+    # tooltip-capture + Vision pipeline, and marks status. Entries
+    # persist across turns AND missions — the queue is a run-level TODO
+    # list; it only resets when a new run starts.
+    # Entry shape:
+    #   {
+    #     "type": str,           # unit type, "" if terrain-only
+    #     "terrain_id": str|None, # terrain id, None if unit-only
+    #     "mission_id": str,      # current_mission when first queued
+    #     "first_seen_turn": int,
+    #     "attempts": int,
+    #     "status": "pending"|"in_progress"|"done"|"failed",
+    #     "result": dict|None,    # extraction output once done
+    #   }
+    # Dedup key: ``(type, terrain_id)`` — the same unit type re-seen
+    # later in the run extends ``attempts`` / updates metadata but does
+    # not produce a second entry.
+    research_queue: list[dict] = field(default_factory=list)
+
     # --- Solution management ---
 
     def set_solution(self, actions: list[SolverAction], score: float, turn: int):
@@ -292,6 +313,83 @@ class RunSession:
         })
         return True
 
+    # --- Research queue (Phase 2) ---
+
+    def enqueue_research(
+        self,
+        type_name: str,
+        terrain_id: str | None,
+        current_turn: int,
+    ) -> bool:
+        """Add a research entry for a novel unit type or terrain id.
+
+        Deduped by ``(type, terrain_id)``. If the pair already exists,
+        the function is idempotent — it does NOT increment ``attempts``
+        (that's the processor's job after it actually tries research).
+
+        Pass ``type_name=""`` for terrain-only entries and
+        ``terrain_id=None`` for unit-only entries.
+
+        Returns True if a new entry was added, False if it was a dupe.
+        """
+        key = (type_name or "", terrain_id)
+        for e in self.research_queue:
+            if (e.get("type", ""), e.get("terrain_id")) == key:
+                return False
+        self.research_queue.append({
+            "type": type_name or "",
+            "terrain_id": terrain_id,
+            "mission_id": self.current_mission,
+            "first_seen_turn": current_turn,
+            "attempts": 0,
+            "status": "pending",
+            "result": None,
+        })
+        return True
+
+    def next_research_entry(self) -> dict | None:
+        """Return the first pending entry, or None if the queue is drained.
+
+        ``in_progress`` entries are skipped — the processor should finish
+        (or fail) them before picking the next one. That keeps any recursive
+        discovery from fanning out and tying up the research tier.
+        """
+        for e in self.research_queue:
+            if e.get("status", "pending") == "pending":
+                return e
+        return None
+
+    def mark_research(
+        self,
+        type_name: str,
+        terrain_id: str | None,
+        status: str,
+        result: dict | None = None,
+    ) -> bool:
+        """Update status / bump attempts on the matching entry.
+
+        ``status`` transitions:
+          pending → in_progress   (processor picks it up)
+          in_progress → done      (success; result captured)
+          in_progress → failed    (extraction gave up after retries)
+          in_progress → pending   (deferred — try again later)
+
+        Each transition through ``in_progress`` increments ``attempts``
+        so the processor can cap retry budget.
+
+        Returns True if the entry was found and updated.
+        """
+        key = (type_name or "", terrain_id)
+        for e in self.research_queue:
+            if (e.get("type", ""), e.get("terrain_id")) == key:
+                if status == "in_progress":
+                    e["attempts"] = e.get("attempts", 0) + 1
+                e["status"] = status
+                if result is not None:
+                    e["result"] = result
+                return True
+        return False
+
     def prune_disabled_actions(self, current_turn: int) -> int:
         """Drop entries whose ``expires_turn`` has passed. Returns drop count.
 
@@ -334,6 +432,7 @@ class RunSession:
             "tags": self.tags,
             "failure_events_this_run": self.failure_events_this_run,
             "disabled_actions": self.disabled_actions,
+            "research_queue": self.research_queue,
         }
         return d
 
@@ -363,8 +462,9 @@ class RunSession:
             decisions=d.get("decisions", []),
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             tags=d.get("tags", []),
-            failure_events_this_run=d.get("failure_events_this_run", []),
-            disabled_actions=d.get("disabled_actions", []),
+            failure_events_this_run=d.get("failure_events_this_run") or [],
+            disabled_actions=d.get("disabled_actions") or [],
+            research_queue=d.get("research_queue") or [],
         )
 
     # --- Persistence with file locking ---
