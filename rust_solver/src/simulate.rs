@@ -87,7 +87,20 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             unit.set_frozen(false);
         } else {
             let actual = match source {
-                DamageSource::Bump | DamageSource::Fire => damage as i8,
+                DamageSource::Bump => {
+                    // Force Amp (Passive_ForceAmp): Vek take +1 from bump-class
+                    // damage (push collisions AND blocking emerging Vek). The
+                    // Bot Leader is a sentient enemy and is explicitly exempt
+                    // per the wiki — gate on type name.
+                    let tname = unit.type_name_str();
+                    let is_sentient = tname == "BotBoss" || tname == "BotBoss2";
+                    if board.force_amp && unit.is_enemy() && !is_sentient {
+                        (damage + 1) as i8
+                    } else {
+                        damage as i8
+                    }
+                }
+                DamageSource::Fire => damage as i8,
                 _ => {
                     if unit.acid() {
                         (damage * 2) as i8
@@ -1897,6 +1910,89 @@ mod tests {
         let _ = simulate_weapon(&mut board, caster, WId::SupportRepair, 3, 3);
 
         assert_eq!(board.units[disabled].hp, 3, "Disabled mech revived to full HP");
+    }
+
+    // ── Force Amp (Passive_ForceAmp) ──────────────────────────────────────────
+
+    #[test]
+    fn test_force_amp_amplifies_bump_damage_to_vek() {
+        // Push a 2-HP Scorpion into a mountain: normally 1 bump damage → 1 HP.
+        // With Force Amp, 2 bump damage → 0 HP (killed).
+        let mut board = make_test_board();
+        board.force_amp = true;
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        let enemy = add_enemy(&mut board, 1, 3, 3, 2);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push N into mountain
+        assert_eq!(board.units[enemy].hp, 0, "Force Amp: 1+1=2 bump damage kills 2-HP Vek");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_force_amp_disabled_no_boost() {
+        // Sanity: without Force Amp, the same push deals the usual 1 damage.
+        let mut board = make_test_board();
+        board.force_amp = false;
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        let enemy = add_enemy(&mut board, 1, 3, 3, 2);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!(board.units[enemy].hp, 1, "No Force Amp: 1 bump damage");
+    }
+
+    #[test]
+    fn test_force_amp_does_not_amplify_mech_bump() {
+        // A mech being pushed into a mountain takes the normal 1 bump damage —
+        // Force Amp only boosts damage RECEIVED BY Vek.
+        let mut board = make_test_board();
+        board.force_amp = true;
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        let mech = add_mech(&mut board, 99, 3, 3, 3, WId::None);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!(board.units[mech].hp, 2, "Mech takes normal 1 bump, not amped");
+    }
+
+    #[test]
+    fn test_force_amp_amplifies_spawn_blocking() {
+        // Vek blocks emerging Vek on a spawn tile. Spawn-block damage routes
+        // through DamageSource::Bump; Force Amp adds +1.
+        use crate::enemy::apply_spawn_blocking;
+        let mut board = make_test_board();
+        board.force_amp = true;
+        let enemy = add_enemy(&mut board, 1, 3, 3, 2);
+        let spawn = [(3u8, 3u8)];
+
+        apply_spawn_blocking(&mut board, &spawn);
+        assert_eq!(board.units[enemy].hp, 0, "Force Amp: block-damage 1+1=2 kills 2-HP Vek");
+    }
+
+    #[test]
+    fn test_force_amp_bot_leader_exempt() {
+        // Sentient enemies (Bot Leader / BotBoss) are explicitly excluded from
+        // Force Amp's bonus per the wiki. Bumping BotBoss deals normal 1 dmg.
+        let mut board = make_test_board();
+        board.force_amp = true;
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        // Bot Leader pawn
+        let idx = board.add_unit(Unit {
+            uid: 1, x: 3, y: 3, hp: 5, max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("BotBoss");
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!(board.units[idx].hp, 4, "Bot Leader exempt: takes normal 1 bump damage");
     }
 
     #[test]

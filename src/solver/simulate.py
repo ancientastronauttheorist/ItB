@@ -121,6 +121,14 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                     actual = damage * 2
                 elif unit.armor:
                     actual = max(0, damage - 1)
+            # Force Amp (Passive_ForceAmp): Vek take +1 damage from bump-class
+            # sources (push collisions + spawn blocking). Bot Leader is exempt
+            # per wiki — gate on type name. Mechs and allies never get the
+            # bonus (gated on is_enemy).
+            if (source == "bump" and unit.is_enemy
+                    and getattr(board, "force_amp", False)
+                    and unit.type not in ("BotBoss", "BotBoss2")):
+                actual += 1
             unit.hp -= actual
 
             if unit.is_enemy:

@@ -216,6 +216,8 @@ pub struct Board {
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
     pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
+    pub force_amp: bool,        // Passive_ForceAmp: Vek take +1 from bump/spawn-block
+                                // damage. Excludes sentient enemies (Bot Leader).
     pub current_turn: u8,       // 0-indexed (0 = deployment, 1 = first combat turn)
     pub total_turns: u8,        // Mission length (typically 5, train/tidal = 4)
     pub remaining_spawns: u32,  // Queued Vek spawns still to emerge (from bridge
@@ -251,6 +253,7 @@ impl Default for Board {
             storm_generator: false,
             flame_shielding: false,
             vek_hormones: false,
+            force_amp: false,
             current_turn: 0,
             total_turns: 5,
             remaining_spawns: u32::MAX, // Unknown → treat as "plenty of future"

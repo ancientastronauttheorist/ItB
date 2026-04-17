@@ -343,6 +343,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
                             "Passive_Electric" => board.storm_generator = true,
                             "Passive_FlameImmune" => board.flame_shielding = true,
                             "Passive_FriendlyFire" => board.vek_hormones = true,
+                            "Passive_ForceAmp" => board.force_amp = true,
                             _ => {}
                         }
                     }

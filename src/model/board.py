@@ -182,6 +182,10 @@ class Board:
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
         self.soldier_psion_active: bool = False
+        # Passive_ForceAmp: any mech carrying this passive causes all Vek to
+        # take +1 damage from bump-class sources (push collisions + spawn
+        # blocking). Sentient enemies (Bot Leader) are exempt per the wiki.
+        self.force_amp: bool = False
         # Mission metadata (from bridge mission.ID, e.g. "Mission_Dam").
         self.mission_id: str = ""
         # Old Earth Dam state — flipped to False exactly once when the last
@@ -202,6 +206,7 @@ class Board:
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
+        b.force_amp = self.force_amp
         b.mission_id = self.mission_id
         b.dam_alive = self.dam_alive
         b.dam_primary = self.dam_primary
@@ -460,6 +465,17 @@ class Board:
                 # enemy and incorrectly conclude the mech can move).
                 neighbor.web = True
                 neighbor.web_source_uid = egg.uid
+
+        # Detect Passive_ForceAmp on any friendly mech — flips the board flag
+        # so bump-class damage against Vek gets +1 in apply_damage. Mirrors
+        # the Rust serde_bridge detection. Bridge emits mech weapons as a
+        # list of internal names in `unit.weapons`, so we re-scan here.
+        for ud in data.get("units", []):
+            if ud.get("mech") or ud.get("is_mech"):
+                weapons = ud.get("weapons", []) or []
+                if "Passive_ForceAmp" in weapons:
+                    board.force_amp = True
+                    break
 
         # Detect Blast Psion: if alive on board, all Vek explode on death
         board.blast_psion_active = any(
