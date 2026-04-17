@@ -182,6 +182,12 @@ class RunSession:
     # list in JSON to round-trip cleanly through to_dict / from_dict.
     recorded_post_enemy_turns: list[list[int]] = field(default_factory=list)
 
+    # Self-healing loop Phase 0 instrumentation. Each desync fired by
+    # ``cmd_auto_turn`` appends the ``fuzzy_detector.evaluate`` output here,
+    # producing an in-memory frequency window the Phase 1 detector can
+    # consume without re-reading ``failure_db.jsonl``.
+    failure_events_this_run: list[dict] = field(default_factory=list)
+
     # --- Solution management ---
 
     def set_solution(self, actions: list[SolverAction], score: float, turn: int):
@@ -262,6 +268,7 @@ class RunSession:
             "decisions": self.decisions,
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
             "tags": self.tags,
+            "failure_events_this_run": self.failure_events_this_run,
         }
         return d
 
@@ -291,6 +298,7 @@ class RunSession:
             decisions=d.get("decisions", []),
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             tags=d.get("tags", []),
+            failure_events_this_run=d.get("failure_events_this_run", []),
         )
 
     # --- Persistence with file locking ---
