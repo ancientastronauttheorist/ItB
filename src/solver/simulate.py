@@ -203,6 +203,13 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
         board.grid_power = max(0, board.grid_power - old_hp)
         result.events.append(f"Building destroyed at ({x},{y}) ({old_hp} grid damage)")
 
+    # Mountain damage: 2 HP → 1 HP → 0 (rubble). Does not affect grid_power.
+    if tile.terrain == "mountain" and tile.building_hp > 0 and damage > 0:
+        tile.building_hp = max(0, tile.building_hp - 1)
+        if tile.building_hp == 0:
+            tile.terrain = "rubble"
+            result.events.append(f"Mountain destroyed at ({x},{y})")
+
     # Ice tile destruction: ice → cracked → water
     # Fire attacks skip cracked and go straight to water.
     if tile.terrain == "ice" and damage > 0:

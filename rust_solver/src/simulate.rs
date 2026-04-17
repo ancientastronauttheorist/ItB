@@ -211,6 +211,17 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         board.grid_power = board.grid_power.saturating_sub(bldg_hp_lost);
     }
 
+    // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Mountain && tile.building_hp > 0 {
+            tile.building_hp = tile.building_hp.saturating_sub(1);
+            if tile.building_hp == 0 {
+                tile.terrain = Terrain::Rubble;
+            }
+        }
+    }
+
     // Ice: intact → cracked → water
     let tile = board.tile_mut(x, y);
     if tile.terrain == Terrain::Ice {
