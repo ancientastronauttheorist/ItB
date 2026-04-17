@@ -1,0 +1,379 @@
+{
+  "timestamp": "2026-04-11T23:41:25.481861",
+  "run_id": "20260411_233603_826",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "action_diffs",
+  "data": {
+    "diffs": [
+      {
+        "action_index": 0,
+        "mech_uid": null,
+        "description": "TankMech, fire Taurus Cannon at F3",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 2,
+              "active": true
+            },
+            {
+              "uid": 2,
+              "pos": [
+                1,
+                3
+              ],
+              "hp": 2,
+              "active": true
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 217,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 223,
+              "pos": [
+                5,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 224,
+              "pos": [
+                5,
+                2
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 215,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 2,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                1,
+                3
+              ],
+              "hp": 2,
+              "active": true
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 217,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 223,
+              "pos": [
+                5,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 215,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1
+            }
+          ]
+        },
+        "wall_clock_ms": 1300
+      },
+      {
+        "action_index": 1,
+        "mech_uid": null,
+        "description": "ArtiMech, move E7\u2192D7, fire Artemis Artillery at D5",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 2,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                1,
+                3
+              ],
+              "hp": 2,
+              "active": true
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 217,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 223,
+              "pos": [
+                5,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 215,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 2,
+              "active": true
+            },
+            {
+              "uid": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 2,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                1,
+                4
+              ],
+              "hp": 2,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 217,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 223,
+              "pos": [
+                5,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 215,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1
+            }
+          ]
+        },
+        "wall_clock_ms": 2342
+      },
+      {
+        "action_index": 2,
+        "mech_uid": null,
+        "description": "PunchMech, repair",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 2,
+              "active": true
+            },
+            {
+              "uid": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 2,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                1,
+                4
+              ],
+              "hp": 2,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 217,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 223,
+              "pos": [
+                5,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 215,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "hp": 2,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                1,
+                4
+              ],
+              "hp": 2,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 217,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 223,
+              "pos": [
+                5,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 215,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1
+            }
+          ]
+        },
+        "wall_clock_ms": 785
+      }
+    ]
+  }
+}

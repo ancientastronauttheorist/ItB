@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-11T20:06:20.501639",
+  "run_id": "20260411_194813_452",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "self_damage_building",
+        "tier": 4,
+        "severity": "critical",
+        "details": "Action 1 (TankMech) damaged 1 building HP, destroyed 0 buildings"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

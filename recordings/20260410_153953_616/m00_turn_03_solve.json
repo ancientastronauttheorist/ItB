@@ -1,0 +1,161 @@
+{
+  "timestamp": "2026-04-10T16:44:41.462563",
+  "run_id": "20260410_153953_616",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "solve",
+  "data": {
+    "score": 302202.5,
+    "actions": [
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          3,
+          2
+        ],
+        "weapon": "Artemis Artillery",
+        "weapon_id": "Ranged_Artillerymech",
+        "target": [
+          6,
+          2
+        ],
+        "description": "ArtiMech, move G7\u2192F5, fire Artemis Artillery at F2"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          5,
+          4
+        ],
+        "weapon": "Taurus Cannon",
+        "weapon_id": "Brute_Tankmech",
+        "target": [
+          5,
+          5
+        ],
+        "description": "TankMech, move D5\u2192D3, fire Taurus Cannon at C3"
+      }
+    ],
+    "threats": 0,
+    "active_mechs": 2,
+    "spawn_points": [
+      [
+        7,
+        2
+      ],
+      [
+        5,
+        4
+      ]
+    ],
+    "search_stats": {
+      "elapsed_seconds": 0.013915061950683594,
+      "timed_out": false,
+      "permutations_tried": 2,
+      "total_permutations": 2,
+      "active_mech_count": 2
+    },
+    "weight_version": "v001",
+    "action_results": [
+      {
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 3,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
+          "Killed Firefly1 at (6,4)",
+          "Death explosion at (6,4) from Firefly1",
+          "Bump: Firefly1 at (6,3) collided with Firefly1 at (6,4)",
+          "Pushed PunchMech (5,2)->(4,2)",
+          "PunchMech on danger tile (4,2) -- will die at end of turn"
+        ]
+      },
+      {
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 1,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": []
+      }
+    ],
+    "predicted_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 6,
+      "grid_power": 2,
+      "enemies_alive": 2,
+      "enemy_hp_total": 2,
+      "mechs_alive": 2,
+      "mech_hp": [
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "score_breakdown": {
+      "total": 226875.0,
+      "grid_multiplier": 3.0,
+      "buildings_alive": {
+        "count": 6,
+        "score": 180000.0
+      },
+      "building_hp": {
+        "total": 6,
+        "score": 36000.0
+      },
+      "grid_power": {
+        "value": 2,
+        "score": 10000
+      },
+      "enemies_killed": {
+        "count": 1,
+        "score": 500.0
+      },
+      "enemy_hp_remaining": {
+        "total": 2,
+        "score": -55.00000000000001
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 2,
+        "dead": 0,
+        "total_hp": 4,
+        "score": 230.00000000000003
+      },
+      "spawns_blocked": {
+        "count": 1,
+        "score": 200.0
+      },
+      "pods": {
+        "uncollected": 0,
+        "proximity": 0,
+        "score": 0.0
+      }
+    }
+  }
+}

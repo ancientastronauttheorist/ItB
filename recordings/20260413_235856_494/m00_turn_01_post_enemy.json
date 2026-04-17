@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-04-14T12:23:10.189778",
+  "run_id": "20260413_235856_494",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 9,
+      "grid_power": 5,
+      "enemies_alive": 2,
+      "enemy_hp_total": 4,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 9,
+      "grid_power": 5,
+      "enemies_alive": 0,
+      "enemy_hp_total": 0,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "predicted_hp": 3,
+          "actual_hp": 2,
+          "diff": -1
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": [
+        "PunchMech took 1 unexpected damage"
+      ]
+    }
+  }
+}

@@ -1,0 +1,315 @@
+{
+  "timestamp": "2026-04-11T16:07:23.378493",
+  "run_id": "20260411_135608_323",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "action_diffs",
+  "data": {
+    "diffs": [
+      {
+        "action_index": 0,
+        "mech_uid": null,
+        "description": "TankMech, move E6\u2192E5, fire Taurus Cannon at F5",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                2,
+                4
+              ],
+              "hp": 0,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 2,
+              "pos": [
+                3,
+                4
+              ],
+              "hp": 2,
+              "active": true
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 92,
+              "pos": [
+                3,
+                2
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 93,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 94,
+              "pos": [
+                4,
+                5
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 103,
+              "pos": [
+                5,
+                3
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 104,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 2
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                2,
+                4
+              ],
+              "hp": 0,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                3
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                3,
+                4
+              ],
+              "hp": 2,
+              "active": true
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 92,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 93,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 94,
+              "pos": [
+                4,
+                5
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 103,
+              "pos": [
+                5,
+                3
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 104,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 2
+            }
+          ]
+        },
+        "wall_clock_ms": 1292
+      },
+      {
+        "action_index": 1,
+        "mech_uid": null,
+        "description": "ArtiMech, fire Artemis Artillery at D3",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                2,
+                4
+              ],
+              "hp": 0,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                3
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                3,
+                4
+              ],
+              "hp": 2,
+              "active": true
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 92,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 93,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 94,
+              "pos": [
+                4,
+                5
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 103,
+              "pos": [
+                5,
+                3
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 104,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 2
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                2,
+                4
+              ],
+              "hp": 0,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                3
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                3,
+                4
+              ],
+              "hp": 2,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 92,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 93,
+              "pos": [
+                3,
+                5
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 94,
+              "pos": [
+                4,
+                5
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 103,
+              "pos": [
+                5,
+                2
+              ],
+              "hp": 1
+            },
+            {
+              "uid": 104,
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1
+            }
+          ]
+        },
+        "wall_clock_ms": 2441
+      }
+    ]
+  }
+}

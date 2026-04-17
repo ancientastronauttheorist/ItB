@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-11T19:38:57.716741",
+  "label": "rst2_post_lightning_point_grid1",
+  "turn": 4,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "Filler_Pawn",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PunchMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    }
+  ]
+}

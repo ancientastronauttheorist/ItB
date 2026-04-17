@@ -1,0 +1,804 @@
+{
+  "timestamp": "2026-04-13T20:44:31.683013",
+  "run_id": "20260413_192128_016",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "board",
+  "data": {
+    "bridge_state": {
+      "spawning_tiles": [
+        [
+          7,
+          3
+        ]
+      ],
+      "tiles": [
+        {
+          "y": 0,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 4,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 1
+        },
+        {
+          "y": 1,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 4,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 1,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 1,
+          "x": 6,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 1,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 1
+        },
+        {
+          "y": 2,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 4,
+          "terrain_id": 5,
+          "terrain": "lava"
+        },
+        {
+          "y": 2,
+          "x": 5,
+          "terrain_id": 5,
+          "terrain": "lava"
+        },
+        {
+          "y": 2,
+          "x": 6,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 2,
+          "x": 7,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 3,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 1,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 3,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 1
+        },
+        {
+          "y": 5,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 4,
+          "terrain_id": 5,
+          "terrain": "lava"
+        },
+        {
+          "y": 5,
+          "x": 5,
+          "terrain_id": 5,
+          "terrain": "lava"
+        },
+        {
+          "y": 5,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 1
+        },
+        {
+          "y": 6,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 4,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 6,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 6,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 1,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 7,
+          "x": 2,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 7,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 4,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 7,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 7,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        }
+      ],
+      "grid_power_max": 7,
+      "phase": "combat_player",
+      "grid_power": 3,
+      "turn": 2,
+      "env_type": "unknown",
+      "environment_danger_v2": [],
+      "environment_danger": [],
+      "attack_order": [
+        283,
+        284,
+        289,
+        290
+      ],
+      "total_turns": 2,
+      "timestamp": 1776131071,
+      "targeted_tiles": [
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "units": [
+        {
+          "web": false,
+          "active": true,
+          "shield": false,
+          "hp": 2,
+          "flying": false,
+          "team": 1,
+          "max_hp": 3,
+          "move": 3,
+          "weapons": [
+            "Prime_Punchmech"
+          ],
+          "acid": false,
+          "uid": 0,
+          "type": "PunchMech",
+          "x": 2,
+          "fire": false,
+          "mech": true,
+          "y": 2,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": true,
+          "shield": false,
+          "hp": 3,
+          "flying": false,
+          "team": 1,
+          "max_hp": 3,
+          "move": 3,
+          "weapons": [
+            "Brute_Tankmech"
+          ],
+          "acid": false,
+          "uid": 1,
+          "type": "TankMech",
+          "x": 2,
+          "fire": false,
+          "mech": true,
+          "y": 3,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": true,
+          "shield": false,
+          "hp": 2,
+          "flying": false,
+          "team": 1,
+          "max_hp": 2,
+          "move": 3,
+          "weapons": [
+            "Ranged_Artillerymech"
+          ],
+          "acid": false,
+          "uid": 2,
+          "type": "ArtiMech",
+          "x": 3,
+          "fire": false,
+          "mech": true,
+          "y": 5,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 4,
+          "weapon_push": 0,
+          "flying": true,
+          "team": 6,
+          "max_hp": 5,
+          "move": 3,
+          "weapon_target_behind": false,
+          "queued_target": [
+            2,
+            3
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "MothAtk2"
+          ],
+          "weapon_damage": 3,
+          "acid": false,
+          "uid": 283,
+          "type": "Moth2",
+          "x": 4,
+          "fire": false,
+          "mech": false,
+          "y": 3,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": true,
+          "team": 6,
+          "max_hp": 3,
+          "move": 3,
+          "weapon_target_behind": false,
+          "queued_target": [
+            1,
+            5
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "MothAtk1"
+          ],
+          "weapon_damage": 1,
+          "acid": false,
+          "uid": 284,
+          "type": "Moth1",
+          "x": 4,
+          "fire": false,
+          "mech": false,
+          "y": 5,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 2,
+          "flying": true,
+          "team": 6,
+          "max_hp": 2,
+          "move": 2,
+          "weapons": [],
+          "acid": false,
+          "uid": 285,
+          "type": "Jelly_Spider1",
+          "x": 4,
+          "fire": false,
+          "mech": false,
+          "y": 6,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "max_hp": 3,
+          "move": 4,
+          "weapon_target_behind": false,
+          "queued_target": [
+            3,
+            5
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "Burrower_Atk"
+          ],
+          "weapon_damage": 1,
+          "acid": false,
+          "uid": 289,
+          "type": "Burrower1",
+          "x": 2,
+          "fire": false,
+          "mech": false,
+          "y": 5,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": true,
+          "team": 6,
+          "max_hp": 3,
+          "move": 3,
+          "weapon_target_behind": false,
+          "queued_target": [
+            3,
+            4
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "MothAtk1"
+          ],
+          "weapon_damage": 1,
+          "acid": false,
+          "uid": 290,
+          "type": "Moth1",
+          "x": 5,
+          "fire": false,
+          "mech": false,
+          "y": 4,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 1,
+          "flying": false,
+          "team": 1,
+          "max_hp": 1,
+          "move": 0,
+          "weapons": [
+            "Deploy_TankShot"
+          ],
+          "acid": false,
+          "uid": 281,
+          "type": "Archive_Tank",
+          "x": 3,
+          "fire": false,
+          "mech": false,
+          "y": 4,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 1,
+          "flying": false,
+          "team": 1,
+          "max_hp": 1,
+          "move": 0,
+          "weapons": [
+            "Deploy_TankShot"
+          ],
+          "acid": false,
+          "uid": 282,
+          "type": "Archive_Tank",
+          "x": 3,
+          "fire": false,
+          "mech": false,
+          "y": 6,
+          "frozen": false
+        }
+      ]
+    },
+    "result_summary": {
+      "phase": "combat_player",
+      "source": "bridge",
+      "turn": 2,
+      "grid_power": "3/7",
+      "mechs": [
+        {
+          "type": "PunchMech",
+          "pos": "F6",
+          "hp": "2/3",
+          "weapon": "Titan Fist",
+          "status": "READY"
+        },
+        {
+          "type": "TankMech",
+          "pos": "E6",
+          "hp": "3/3",
+          "weapon": "Taurus Cannon",
+          "status": "READY"
+        },
+        {
+          "type": "ArtiMech",
+          "pos": "C5",
+          "hp": "2/2",
+          "weapon": "Artemis Artillery",
+          "status": "READY"
+        },
+        {
+          "type": "Archive_Tank",
+          "pos": "D5",
+          "hp": "1/1",
+          "weapon": "Deploy_TankShot",
+          "status": "DONE"
+        },
+        {
+          "type": "Archive_Tank",
+          "pos": "B5",
+          "hp": "1/1",
+          "weapon": "Deploy_TankShot",
+          "status": "DONE"
+        }
+      ],
+      "active_mechs": 3,
+      "enemies": [
+        {
+          "type": "Moth2",
+          "pos": "E4",
+          "hp": "4/5",
+          "target": " \u2192 E6"
+        },
+        {
+          "type": "Moth1",
+          "pos": "C4",
+          "hp": "3/3",
+          "target": " \u2192 C7"
+        },
+        {
+          "type": "Jelly_Spider1",
+          "pos": "B4",
+          "hp": "2/2",
+          "target": ""
+        },
+        {
+          "type": "Burrower1",
+          "pos": "C6",
+          "hp": "3/3",
+          "target": " \u2192 C5"
+        },
+        {
+          "type": "Moth1",
+          "pos": "D3",
+          "hp": "3/3",
+          "target": " \u2192 D5"
+        }
+      ],
+      "threatened_buildings": 1,
+      "threats": [
+        "Building C7 by Moth1 at C4"
+      ],
+      "targeted_tiles": 13,
+      "spawn_points": 1
+    }
+  }
+}

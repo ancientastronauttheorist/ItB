@@ -1,0 +1,118 @@
+{
+  "timestamp": "2026-04-11T19:33:27.434948",
+  "run_id": "20260411_182033_957",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 5,
+      "building_hp_total": 6,
+      "grid_power": 1,
+      "enemies_alive": 4,
+      "enemy_hp_total": 7,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 454,
+          "type": "Filler_Pawn",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 4,
+      "building_hp_total": 5,
+      "grid_power": 2,
+      "enemies_alive": 5,
+      "enemy_hp_total": 9,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 454,
+          "type": "Filler_Pawn",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 2
+    },
+    "deltas": {
+      "buildings_alive_diff": 1,
+      "building_hp_diff": 1,
+      "grid_power_diff": -1,
+      "enemies_alive_diff": -1,
+      "mech_hp_diff": [
+        {
+          "uid": 454,
+          "type": "Filler_Pawn",
+          "predicted_hp": 2,
+          "actual_hp": 1,
+          "diff": -1
+        },
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": [
+        "Grid power dropped by 1 unexpectedly",
+        "Filler_Pawn took 1 unexpected damage"
+      ]
+    }
+  }
+}

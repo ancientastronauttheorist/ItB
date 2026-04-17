@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-04-16T13:35:45.517284",
+  "label": "mission_2_win",
+  "turn": 4,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "GlowingScorpion",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Spider2",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Firefly2",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 1
+    }
+  ]
+}

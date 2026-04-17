@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-11T19:29:15.513732",
+  "run_id": "20260411_182033_957",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "building_lost_unexpected",
+        "tier": 1,
+        "severity": "critical",
+        "details": "Predicted 7 buildings, actual 6 (-1)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

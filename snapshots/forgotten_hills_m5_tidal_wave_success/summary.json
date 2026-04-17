@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-04-11T16:57:05.355321",
+  "label": "forgotten_hills_m5_tidal_wave_success",
+  "turn": 3,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

@@ -1,0 +1,197 @@
+{
+  "timestamp": "2026-04-10T14:42:44.661281",
+  "run_id": "20260410_141904_568",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "solve",
+  "data": {
+    "score": 366412.5,
+    "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          2,
+          5
+        ],
+        "weapon": "Taurus Cannon",
+        "weapon_id": "Brute_Tankmech",
+        "target": [
+          1,
+          5
+        ],
+        "description": "TankMech, move C4\u2192C6, fire Taurus Cannon at C7"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          1,
+          5
+        ],
+        "weapon": "Artemis Artillery",
+        "weapon_id": "Ranged_Artillerymech",
+        "target": [
+          5,
+          5
+        ],
+        "description": "ArtiMech, move D7\u2192C7, fire Artemis Artillery at C3"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          4,
+          3
+        ],
+        "weapon": "Titan Fist",
+        "weapon_id": "Prime_Punchmech",
+        "target": [
+          5,
+          3
+        ],
+        "description": "PunchMech, move C5\u2192E4, fire Titan Fist at E3"
+      }
+    ],
+    "threats": 2,
+    "active_mechs": 3,
+    "spawn_points": [
+      [
+        7,
+        4
+      ],
+      [
+        7,
+        5
+      ]
+    ],
+    "search_stats": {
+      "elapsed_seconds": 0.36795806884765625,
+      "timed_out": false,
+      "permutations_tried": 6,
+      "total_permutations": 6,
+      "active_mech_count": 3
+    },
+    "weight_version": "v001",
+    "action_results": [
+      {
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 1,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
+          "Killed Hornet1 at (1,5)",
+          "Pushed Hornet1 (1,5)->(0,5)"
+        ]
+      },
+      {
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 2,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
+          "Pushed Firefly1 (6,5)->(7,5)",
+          "Bump: Firefly1 at (5,4) collided with Firefly1 at (5,3)"
+        ]
+      },
+      {
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 2,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
+          "Killed Firefly1 at (5,3)",
+          "Pushed Firefly1 (5,3)->(6,3)"
+        ]
+      }
+    ],
+    "predicted_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 6,
+      "grid_power": 1,
+      "enemies_alive": 2,
+      "enemy_hp_total": 5,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "score_breakdown": {
+      "total": 366412.5,
+      "grid_multiplier": 5.0,
+      "buildings_alive": {
+        "count": 6,
+        "score": 300000.0
+      },
+      "building_hp": {
+        "total": 6,
+        "score": 60000.0
+      },
+      "grid_power": {
+        "value": 1,
+        "score": 5000
+      },
+      "enemies_killed": {
+        "count": 2,
+        "score": 1000.0
+      },
+      "enemy_hp_remaining": {
+        "total": 5,
+        "score": -137.50000000000003
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 3,
+        "dead": 0,
+        "total_hp": 7,
+        "score": 400.00000000000006
+      },
+      "spawns_blocked": {
+        "count": 1,
+        "score": 200.0
+      },
+      "pods": {
+        "uncollected": 1,
+        "proximity": 1,
+        "score": -50.0
+      }
+    }
+  }
+}

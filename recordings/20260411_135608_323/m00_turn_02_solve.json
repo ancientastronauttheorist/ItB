@@ -1,0 +1,853 @@
+{
+  "timestamp": "2026-04-11T16:07:17.254750",
+  "run_id": "20260411_135608_323",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "solve",
+  "data": {
+    "score": 355050.0,
+    "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          3,
+          3
+        ],
+        "weapon": "Taurus Cannon",
+        "weapon_id": "Brute_Tankmech",
+        "target": [
+          3,
+          2
+        ],
+        "description": "TankMech, move E6\u2192E5, fire Taurus Cannon at F5"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Artemis Artillery",
+        "weapon_id": "Ranged_Artillerymech",
+        "target": [
+          5,
+          4
+        ],
+        "description": "ArtiMech, fire Artemis Artillery at D3"
+      }
+    ],
+    "threats": 3,
+    "active_mechs": 2,
+    "spawn_points": [
+      [
+        6,
+        2
+      ]
+    ],
+    "search_stats": {
+      "elapsed_seconds": 0.004163980484008789,
+      "timed_out": false,
+      "permutations_tried": 2,
+      "total_permutations": 2,
+      "active_mech_count": 2
+    },
+    "weight_version": "v001",
+    "action_results": [
+      {
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 1,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
+          "Pushed Hornet1 (3,2)->(3,1)"
+        ]
+      },
+      {
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 1,
+        "buildings_lost": 0,
+        "buildings_damaged": 0,
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0,
+        "events": [
+          "Pushed Leaper1 (5,3)->(5,2)"
+        ]
+      }
+    ],
+    "predicted_states": [
+      {
+        "action_index": 0,
+        "mech_uid": 1,
+        "snapshot_phase": "after_mech_action",
+        "units": [
+          {
+            "uid": 0,
+            "type": "PunchMech",
+            "pos": [
+              2,
+              4
+            ],
+            "hp": 0,
+            "max_hp": 3,
+            "alive": false,
+            "active": false,
+            "is_mech": true,
+            "team": 1,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 1,
+            "type": "TankMech",
+            "pos": [
+              3,
+              3
+            ],
+            "hp": 3,
+            "max_hp": 3,
+            "alive": true,
+            "active": false,
+            "is_mech": true,
+            "team": 1,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 2,
+            "type": "ArtiMech",
+            "pos": [
+              3,
+              4
+            ],
+            "hp": 2,
+            "max_hp": 2,
+            "alive": true,
+            "active": true,
+            "is_mech": true,
+            "team": 1,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 92,
+            "type": "Hornet1",
+            "pos": [
+              3,
+              1
+            ],
+            "hp": 1,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 93,
+            "type": "Hornet1",
+            "pos": [
+              3,
+              5
+            ],
+            "hp": 2,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 94,
+            "type": "Hornet1",
+            "pos": [
+              4,
+              5
+            ],
+            "hp": 1,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 103,
+            "type": "Leaper1",
+            "pos": [
+              5,
+              3
+            ],
+            "hp": 1,
+            "max_hp": 1,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 104,
+            "type": "Jelly_Explode1",
+            "pos": [
+              5,
+              4
+            ],
+            "hp": 2,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          }
+        ],
+        "tiles_changed": [
+          {
+            "x": 2,
+            "y": 0,
+            "terrain": "water",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "terrain": "water",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "terrain": "building",
+            "building_hp": 2,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "terrain": "building",
+            "building_hp": 1,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "terrain": "building",
+            "building_hp": 2,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          }
+        ],
+        "grid_power": 2
+      },
+      {
+        "action_index": 1,
+        "mech_uid": 2,
+        "snapshot_phase": "after_mech_action",
+        "units": [
+          {
+            "uid": 0,
+            "type": "PunchMech",
+            "pos": [
+              2,
+              4
+            ],
+            "hp": 0,
+            "max_hp": 3,
+            "alive": false,
+            "active": false,
+            "is_mech": true,
+            "team": 1,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 1,
+            "type": "TankMech",
+            "pos": [
+              3,
+              3
+            ],
+            "hp": 3,
+            "max_hp": 3,
+            "alive": true,
+            "active": false,
+            "is_mech": true,
+            "team": 1,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 2,
+            "type": "ArtiMech",
+            "pos": [
+              3,
+              4
+            ],
+            "hp": 2,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": true,
+            "team": 1,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 92,
+            "type": "Hornet1",
+            "pos": [
+              3,
+              1
+            ],
+            "hp": 1,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 93,
+            "type": "Hornet1",
+            "pos": [
+              3,
+              5
+            ],
+            "hp": 2,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 94,
+            "type": "Hornet1",
+            "pos": [
+              4,
+              5
+            ],
+            "hp": 1,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 103,
+            "type": "Leaper1",
+            "pos": [
+              5,
+              2
+            ],
+            "hp": 1,
+            "max_hp": 1,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          },
+          {
+            "uid": 104,
+            "type": "Jelly_Explode1",
+            "pos": [
+              5,
+              4
+            ],
+            "hp": 1,
+            "max_hp": 2,
+            "alive": true,
+            "active": false,
+            "is_mech": false,
+            "team": 6,
+            "status": {
+              "fire": false,
+              "acid": false,
+              "frozen": false,
+              "shield": false,
+              "web": false
+            }
+          }
+        ],
+        "tiles_changed": [
+          {
+            "x": 2,
+            "y": 3,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "terrain": "rubble",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "terrain": "building",
+            "building_hp": 1,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "terrain": "building",
+            "building_hp": 2,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          },
+          {
+            "x": 6,
+            "y": 4,
+            "terrain": "ground",
+            "building_hp": 0,
+            "fire": false,
+            "acid": false,
+            "smoke": false,
+            "has_pod": false
+          }
+        ],
+        "grid_power": 2
+      }
+    ],
+    "predicted_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 8,
+      "grid_power": 2,
+      "enemies_alive": 5,
+      "enemy_hp_total": 6,
+      "mechs_alive": 2,
+      "mech_hp": [
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 1
+    },
+    "score_breakdown": {
+      "total": 268080.0,
+      "grid_multiplier": 3.0,
+      "buildings_alive": {
+        "count": 7,
+        "score": 210000.0
+      },
+      "building_hp": {
+        "total": 8,
+        "score": 48000.0
+      },
+      "grid_power": {
+        "value": 2,
+        "score": 10000
+      },
+      "enemies_killed": {
+        "count": 0,
+        "score": 0.0
+      },
+      "enemy_hp_remaining": {
+        "total": 6,
+        "score": -232.5
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 2,
+        "dead": 0,
+        "total_hp": 4,
+        "score": 312.5
+      },
+      "spawns_blocked": {
+        "count": 0,
+        "score": 0.0
+      },
+      "pods": {
+        "uncollected": 0,
+        "proximity": 0,
+        "score": 0.0
+      }
+    }
+  }
+}

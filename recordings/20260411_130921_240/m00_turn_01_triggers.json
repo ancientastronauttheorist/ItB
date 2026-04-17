@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-04-11T13:32:59.932525",
+  "run_id": "20260411_130921_240",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "grid_power_drop_unexpected",
+        "tier": 1,
+        "severity": "critical",
+        "details": "Predicted grid 2, actual 1 (-1)"
+      },
+      {
+        "trigger": "grid_critical",
+        "tier": 6,
+        "severity": "high",
+        "details": "Grid power at 1 (critical)"
+      }
+    ],
+    "trigger_count": 2,
+    "severity_counts": {
+      "critical": 1,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}

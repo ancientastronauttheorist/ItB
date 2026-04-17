@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-11T18:17:24.735894",
+  "label": "scrapyard_m5_cataclysm_success",
+  "turn": 3,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

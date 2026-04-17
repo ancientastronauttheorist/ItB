@@ -1,0 +1,16 @@
+{
+  "run_id": "20260413_224847_613",
+  "squad": "Rift Walkers",
+  "difficulty": 2,
+  "achievement_targets": [
+    "Island Secure",
+    "Ramming Speed"
+  ],
+  "tags": [],
+  "solver_version": "rust-0.1.0-d75c7d7",
+  "weight_version": "v006",
+  "updated": "2026-04-13T22:48:47.624844",
+  "created": "2026-04-13T22:48:47.624859",
+  "missions": [],
+  "outcome": null
+}

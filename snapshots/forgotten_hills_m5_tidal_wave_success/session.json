@@ -1,0 +1,151 @@
+{
+  "run_id": "20260411_162257_057",
+  "squad": "Rift Walkers",
+  "achievement_targets": [],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "mission_index": 0,
+  "current_turn": 3,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          5,
+          4
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "PunchMech"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          3,
+          5
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "TankMech"
+      }
+    ],
+    "score": -999999.0,
+    "turn": 3
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-11T16:30:11.441742",
+      "turn": 1,
+      "label": "solve",
+      "score": 307465.0,
+      "actions": [
+        "ArchiveArtillery, move F7\u2192E7",
+        "PunchMech, fire Titan Fist at C5",
+        "TankMech, move C6\u2192B7, fire Taurus Cannon at B6",
+        "ArtiMech, fire Artemis Artillery at E8"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T16:36:11.211398",
+      "turn": 2,
+      "label": "solve",
+      "score": 305295.0,
+      "actions": [
+        "ArchiveArtillery, move F7\u2192E7, fire Old Earth Artillery at E2",
+        "PunchMech, move D5\u2192D6",
+        "TankMech, move B7\u2192B6, fire Taurus Cannon at C6",
+        "ArtiMech, fire Artemis Artillery at H5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T16:41:23.779274",
+      "turn": 3,
+      "label": "solve",
+      "score": 255200.0,
+      "actions": [
+        "ArchiveArtillery, fire Old Earth Artillery at E3",
+        "PunchMech, move D6\u2192C6, repair",
+        "TankMech, move B6\u2192D6, fire Taurus Cannon at D5",
+        "ArtiMech, fire Artemis Artillery at H5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T16:43:47.931114",
+      "turn": 4,
+      "label": "solve",
+      "score": 255490.0,
+      "actions": [
+        "ArchiveArtillery, move E7\u2192D7, fire Old Earth Artillery at D4",
+        "PunchMech, fire Titan Fist at C5",
+        "ArtiMech, move E5\u2192G5, fire Artemis Artillery at G2",
+        "TankMech, move D6\u2192F7, fire Taurus Cannon at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T16:51:30.342411",
+      "turn": 1,
+      "label": "solve",
+      "score": 448545.0,
+      "actions": [
+        "PunchMech, move E5\u2192D6, fire Titan Fist at C6",
+        "TankMech, fire Taurus Cannon at D4",
+        "ArtiMech, move F5\u2192E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T16:53:55.226288",
+      "turn": 2,
+      "label": "solve",
+      "score": 445195.0,
+      "actions": [
+        "PunchMech, move D6\u2192D3, fire Titan Fist at D2",
+        "TankMech, move D5\u2192C5",
+        "ArtiMech, move E3\u2192C3, fire Artemis Artillery at C6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T16:55:47.073985",
+      "turn": 3,
+      "label": "solve",
+      "score": -999999.0,
+      "actions": [
+        "PunchMech",
+        "TankMech"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ]
+  ],
+  "tags": [
+    "audit",
+    "m5_env_sweep"
+  ]
+}

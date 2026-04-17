@@ -1,0 +1,16 @@
+{
+  "run_id": "20260413_235856_494",
+  "squad": "Rift Walkers",
+  "difficulty": 3,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-fa81108",
+  "weight_version": "v008",
+  "updated": "2026-04-14T22:09:29.360671",
+  "created": "2026-04-13T23:58:56.506420",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-14T22:09:29.343606",
+  "outcome_notes": "Archive Inc / Mission_Dam: won 4 turns, 7/7 grid, no buildings lost. Dam left at 1/2 HP \u2014 missed +1 Rep bonus objective. Dam integration (6 commits) + Shell Psion self-exclusion fix shipped mid-mission. Flood mechanic NOT empirically tested yet."
+}

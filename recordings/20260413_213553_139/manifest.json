@@ -1,0 +1,15 @@
+{
+  "run_id": "20260413_213553_139",
+  "squad": "Rift Walkers",
+  "difficulty": 2,
+  "achievement_targets": [
+    "Island Secure"
+  ],
+  "tags": [],
+  "solver_version": "rust-0.1.0-27b03c0",
+  "weight_version": "v005",
+  "updated": "2026-04-13T21:35:53.150227",
+  "created": "2026-04-13T21:35:53.150243",
+  "missions": [],
+  "outcome": null
+}

@@ -1,0 +1,115 @@
+{
+  "run_id": "20260411_180751_676",
+  "squad": "Rift Walkers",
+  "achievement_targets": [],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "mission_index": 0,
+  "current_turn": 3,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          3,
+          2
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "PunchMech"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          3,
+          6
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "TankMech"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          1,
+          4
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "ArtiMech"
+      }
+    ],
+    "score": -999999.0,
+    "turn": 3
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-11T18:13:59.016372",
+      "turn": 1,
+      "label": "solve",
+      "score": 487310.0,
+      "actions": [
+        "PunchMech, move E5\u2192F5, fire Titan Fist at F4",
+        "ArtiMech, move D6\u2192F7, fire Artemis Artillery at F4",
+        "TankMech, move D5\u2192D6, fire Taurus Cannon at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T18:15:40.179399",
+      "turn": 2,
+      "label": "solve",
+      "score": 485230.0,
+      "actions": [
+        "PunchMech, repair",
+        "ArtiMech, move F7\u2192D7, fire Artemis Artillery at D3",
+        "TankMech, move D6\u2192B5, fire Taurus Cannon at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-11T18:17:08.978882",
+      "turn": 3,
+      "label": "solve",
+      "score": -999999.0,
+      "actions": [
+        "PunchMech",
+        "TankMech",
+        "ArtiMech"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ]
+  ],
+  "tags": [
+    "audit",
+    "m5_env_sweep",
+    "rst"
+  ]
+}

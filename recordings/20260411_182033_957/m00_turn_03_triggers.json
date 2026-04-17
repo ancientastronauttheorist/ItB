@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-04-11T19:33:27.436375",
+  "run_id": "20260411_182033_957",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "grid_power_drop_unexpected",
+        "tier": 1,
+        "severity": "critical",
+        "details": "Predicted grid 2, actual 1 (-1)"
+      },
+      {
+        "trigger": "mech_damage_unexpected",
+        "tier": 1,
+        "severity": "high",
+        "details": "Filler_Pawn: predicted HP 2, actual 1 (-1)"
+      },
+      {
+        "trigger": "grid_critical",
+        "tier": 6,
+        "severity": "high",
+        "details": "Grid power at 1 (critical)"
+      }
+    ],
+    "trigger_count": 3,
+    "severity_counts": {
+      "critical": 1,
+      "high": 2,
+      "medium": 0
+    }
+  }
+}

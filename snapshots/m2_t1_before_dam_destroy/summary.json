@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-16T16:17:37.243099",
+  "label": "m2_t1_before_dam_destroy",
+  "turn": 2,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JudoMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "DStrikeMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "GravMech",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab2",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "run_id": "20260411_182033_957",
+  "squad": "Rift Walkers",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [
+    "audit",
+    "m5_env_sweep",
+    "rst2"
+  ],
+  "solver_version": "rust-0.1.0-11dbdb3",
+  "weight_version": "v001",
+  "updated": "2026-04-11T18:20:33.976536",
+  "created": "2026-04-11T18:20:33.976560",
+  "missions": [],
+  "outcome": null
+}

@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-11T20:44:55.410250",
+  "label": "archive_airstrike_success",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hornet1",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Health1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    }
+  ]
+}

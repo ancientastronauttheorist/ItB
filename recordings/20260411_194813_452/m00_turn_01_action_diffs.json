@@ -1,0 +1,371 @@
+{
+  "timestamp": "2026-04-11T20:04:33.752724",
+  "run_id": "20260411_194813_452",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "action_diffs",
+  "data": {
+    "diffs": [
+      {
+        "action_index": 0,
+        "mech_uid": null,
+        "description": "PunchMech, move G6\u2192F7, fire Titan Fist at F6",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                2,
+                1
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 2,
+              "pos": [
+                2,
+                2
+              ],
+              "hp": 2,
+              "active": true
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 578,
+              "pos": [
+                4,
+                4
+              ],
+              "hp": 3
+            },
+            {
+              "uid": 579,
+              "pos": [
+                6,
+                2
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 580,
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 3
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                1,
+                2
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 2,
+              "pos": [
+                2,
+                2
+              ],
+              "hp": 0,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 578,
+              "pos": [
+                4,
+                4
+              ],
+              "hp": 3
+            },
+            {
+              "uid": 579,
+              "pos": [
+                6,
+                2
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 580,
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 3
+            }
+          ]
+        },
+        "wall_clock_ms": 1191
+      },
+      {
+        "action_index": 1,
+        "mech_uid": null,
+        "description": "TankMech, move G5\u2192H5, fire Taurus Cannon at G5",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                1,
+                2
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                1
+              ],
+              "hp": 3,
+              "active": true
+            },
+            {
+              "uid": 2,
+              "pos": [
+                2,
+                2
+              ],
+              "hp": 0,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 578,
+              "pos": [
+                4,
+                4
+              ],
+              "hp": 3
+            },
+            {
+              "uid": 579,
+              "pos": [
+                6,
+                2
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 580,
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 3
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                1,
+                2
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                0
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                2,
+                2
+              ],
+              "hp": 0,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 578,
+              "pos": [
+                4,
+                4
+              ],
+              "hp": 3
+            },
+            {
+              "uid": 579,
+              "pos": [
+                6,
+                2
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 580,
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 3
+            }
+          ]
+        },
+        "wall_clock_ms": 1405
+      },
+      {
+        "action_index": 2,
+        "mech_uid": null,
+        "description": "ArtiMech, move F6\u2192H6, fire Artemis Artillery at H3",
+        "pre_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                1,
+                2
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                0
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                2,
+                2
+              ],
+              "hp": 0,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 578,
+              "pos": [
+                4,
+                4
+              ],
+              "hp": 3
+            },
+            {
+              "uid": 579,
+              "pos": [
+                6,
+                2
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 580,
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 3
+            }
+          ]
+        },
+        "post_state": {
+          "mechs": [
+            {
+              "uid": 0,
+              "pos": [
+                1,
+                2
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 1,
+              "pos": [
+                3,
+                0
+              ],
+              "hp": 3,
+              "active": false
+            },
+            {
+              "uid": 2,
+              "pos": [
+                2,
+                2
+              ],
+              "hp": 0,
+              "active": false
+            }
+          ],
+          "enemies": [
+            {
+              "uid": 578,
+              "pos": [
+                4,
+                4
+              ],
+              "hp": 3
+            },
+            {
+              "uid": 579,
+              "pos": [
+                6,
+                2
+              ],
+              "hp": 2
+            },
+            {
+              "uid": 580,
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 3
+            }
+          ]
+        },
+        "wall_clock_ms": 578
+      }
+    ]
+  }
+}

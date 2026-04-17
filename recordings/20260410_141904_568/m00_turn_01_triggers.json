@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-04-10T14:33:57.063072",
+  "run_id": "20260410_141904_568",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "grid_power_drop_unexpected",
+        "tier": 1,
+        "severity": "critical",
+        "details": "Predicted grid 4, actual 1 (-3)"
+      },
+      {
+        "trigger": "self_damage_building",
+        "tier": 4,
+        "severity": "critical",
+        "details": "Action 0 (TankMech) damaged 1 building HP, destroyed 0 buildings"
+      },
+      {
+        "trigger": "grid_critical",
+        "tier": 6,
+        "severity": "high",
+        "details": "Grid power at 1 (critical)"
+      }
+    ],
+    "trigger_count": 3,
+    "severity_counts": {
+      "critical": 2,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}
