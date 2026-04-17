@@ -1566,6 +1566,115 @@ mod tests {
         assert_eq!(board.units[blocker_idx].hp, 3, "Blocker: 4 - 1 bump = 3");
     }
 
+    // ── Vice Fist target-enumeration rejection ────────────────────────────────
+    // The game surfaces a "no target available" error when the throw destination
+    // is blocked, even though the sim's apply_throw fallback would resolve it as
+    // a bump. The solver must match the game and skip those targets entirely.
+
+    fn throw_targets(board: &Board, mech_pos: (u8, u8), mech_from: (u8, u8)) -> Vec<(u8, u8)> {
+        crate::solver::get_weapon_targets(board, mech_pos.0, mech_pos.1, WId::PrimeShift, mech_from)
+    }
+
+    #[test]
+    fn test_vice_fist_enum_rejects_enemy_behind() {
+        // Enemy already on the destination tile → target not offered.
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 4, 3, 3); // target east
+        let _blocker = add_enemy(&mut board, 100, 2, 3, 3); // blocker west (throw dest)
+
+        let targets = throw_targets(&board, (3, 3), (3, 3));
+        assert!(!targets.contains(&(4, 3)), "East target must be rejected — (2,3) occupied");
+    }
+
+    #[test]
+    fn test_vice_fist_enum_rejects_building_behind() {
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Building;
+        board.tile_mut(2, 3).building_hp = 1;
+        let _mech = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 4, 3, 3);
+
+        let targets = throw_targets(&board, (3, 3), (3, 3));
+        assert!(!targets.contains(&(4, 3)), "East target must be rejected — building at (2,3)");
+    }
+
+    #[test]
+    fn test_vice_fist_enum_rejects_mountain_behind() {
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Mountain;
+        let _mech = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 4, 3, 3);
+
+        let targets = throw_targets(&board, (3, 3), (3, 3));
+        assert!(!targets.contains(&(4, 3)), "East target must be rejected — mountain at (2,3)");
+    }
+
+    #[test]
+    fn test_vice_fist_enum_rejects_wreck_behind() {
+        let mut board = make_test_board();
+        // Dead unit = wreck
+        board.add_unit(Unit {
+            uid: 200, x: 2, y: 3, hp: 0, max_hp: 3,
+            team: Team::Enemy,
+            ..Default::default()
+        });
+        let _mech = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 4, 3, 3);
+
+        let targets = throw_targets(&board, (3, 3), (3, 3));
+        assert!(!targets.contains(&(4, 3)), "East target must be rejected — wreck at (2,3)");
+    }
+
+    #[test]
+    fn test_vice_fist_enum_rejects_edge_behind() {
+        // Mech at column 0 facing east → throw dest (-1, 3) off-board.
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 0, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 1, 3, 3);
+
+        let targets = throw_targets(&board, (0, 3), (0, 3));
+        assert!(!targets.contains(&(1, 3)), "East target must be rejected — off-board behind");
+    }
+
+    #[test]
+    fn test_vice_fist_enum_allows_water_behind() {
+        // Water at the destination IS a valid target — main strategic use.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Water;
+        let _mech = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 4, 3, 3);
+
+        let targets = throw_targets(&board, (3, 3), (3, 3));
+        assert!(targets.contains(&(4, 3)), "Water destination must be allowed");
+    }
+
+    #[test]
+    fn test_vice_fist_enum_allows_chasm_behind() {
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Chasm;
+        let _mech = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 4, 3, 3);
+
+        let targets = throw_targets(&board, (3, 3), (3, 3));
+        assert!(targets.contains(&(4, 3)), "Chasm destination must be allowed");
+    }
+
+    #[test]
+    fn test_vice_fist_enum_allows_destination_is_mech_from() {
+        // Mech originally at (3, 3), moves to (4, 3), attacks east at (5, 3).
+        // Throw destination = (3, 3) = mech_from. After the move executes, (3, 3)
+        // is vacated, so the throw must be allowed even though the stale board
+        // still shows the mech there.
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeShift);
+        let _target = add_enemy(&mut board, 99, 5, 3, 3);
+
+        // Simulate post-move position at (4, 3), mech_from still (3, 3).
+        let targets = throw_targets(&board, (4, 3), (3, 3));
+        assert!(targets.contains(&(5, 3)), "Throw dest == mech_from must be allowed");
+    }
+
     // ── Cluster Artillery (Ranged_Defensestrike) ──────────────────────────────
     // SiegeMech weapon: targets a CENTER tile (which is NOT damaged) and hits
     // the 4 cardinal-adjacent tiles with 1 damage + push outward. Used to

@@ -53,7 +53,7 @@ impl Solution {
 
 // ── Weapon target enumeration ────────────────────────────────────────────────
 
-fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: (u8, u8)) -> Vec<(u8, u8)> {
+pub(crate) fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: (u8, u8)) -> Vec<(u8, u8)> {
     let wdef = weapon_def(weapon_id);
     let mut targets = Vec::new();
 
@@ -65,17 +65,28 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: 
                 if !in_bounds(nx, ny) { continue; }
                 let nxu = nx as u8;
                 let nyu = ny as u8;
-                // Throw weapons (Vice Fist): the game rejects targets whose throw
-                // destination — attacker + (attacker-target) — would land off-board
-                // OR onto another mech. Mech-on-mech throw is visually unclickable
-                // in-game even though the sim would resolve it as a mutual bump.
-                // Neutral/enemy units and obstacles at destination ARE allowed.
+                // Throw weapons (Vice Fist): the game rejects the target entirely
+                // unless the throw destination — attacker + (attacker-target) — is
+                // an unoccupied tile. Any unit, mountain, building, or wreck there
+                // makes the weapon unfireable (the in-game "no target available"
+                // error). Water / chasm / lava ARE valid destinations — throwing a
+                // non-flying enemy into deadly terrain is the main use of the weapon.
+                // Exception: if the destination equals the mech's pre-move tile, the
+                // board still shows the mech there (board isn't updated during action
+                // enumeration), but that tile will be vacated once the move executes,
+                // so treat it as empty.
                 if wdef.push == PushDir::Throw {
                     let throw_x = mx as i8 - dx;
                     let throw_y = my as i8 - dy;
                     if !in_bounds(throw_x, throw_y) { continue; }
-                    if let Some(idx) = board.unit_at(throw_x as u8, throw_y as u8) {
-                        if board.units[idx].is_mech() {
+                    let txu = throw_x as u8;
+                    let tyu = throw_y as u8;
+                    if (txu, tyu) != mech_from {
+                        if board.unit_at(txu, tyu).is_some() { continue; }
+                        if board.wreck_at(txu, tyu) { continue; }
+                        let dest_tile = board.tile(txu, tyu);
+                        if dest_tile.terrain == Terrain::Mountain { continue; }
+                        if dest_tile.terrain == Terrain::Building && dest_tile.building_hp > 0 {
                             continue;
                         }
                     }
