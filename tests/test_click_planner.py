@@ -85,6 +85,8 @@ check("classify repair", classify_weapon("_REPAIR") == "repair")
 check("classify passive", classify_weapon("Passive_Electric") == "passive")
 check("classify empty -> normal", classify_weapon("") == "normal")
 check("classify unknown -> normal", classify_weapon("Bogus_Weapon") == "normal")
+check("classify heal_all (Repair Drop) -> normal",
+      classify_weapon("Support_Repair") == "normal")
 
 # Test 2: empty plan when mech not on board
 b = mk_board([])

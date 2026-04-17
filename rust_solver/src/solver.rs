@@ -197,6 +197,13 @@ pub(crate) fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, 
                 }
             }
         }
+        WeaponType::HealAll => {
+            // ZONE_ALL: click is just a fire confirmation — the effect is
+            // global. Emit the firing mech's own tile as the single target
+            // so the MCP click planner has a valid coord and the search
+            // doesn't explode into 64 identical actions.
+            targets.push((mx, my));
+        }
         _ => {} // Passive, Deploy, TwoClick
     }
 
@@ -261,6 +268,16 @@ fn weapon_action_has_effect(board: &Board, move_to: (u8, u8), weapon_id: WId, ta
                 if tile.terrain == Terrain::Mountain || tile.is_building() { return false; }
             }
             false
+        }
+        WeaponType::HealAll => {
+            // Repair Drop has an effect iff at least one TEAM_PLAYER unit
+            // would actually change: hp below max, disabled (hp<=0), or
+            // carrying fire/acid/frozen. Otherwise skip so the mech's
+            // action isn't wasted on a no-op heal.
+            board.units.iter().any(|u| {
+                u.team == Team::Player
+                    && (u.hp < u.max_hp || u.fire() || u.acid() || u.frozen())
+            })
         }
         // Leap/Swap/Deploy/TwoClick: positional or utility — don't filter
         _ => true,

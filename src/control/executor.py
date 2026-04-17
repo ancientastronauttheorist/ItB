@@ -173,6 +173,13 @@ def classify_weapon(weapon_id: str) -> str:
         return "dash"
     if wdef.weapon_type == "passive":
         return "passive"
+    if wdef.weapon_type == "heal_all":
+        # ZONE_ALL: click weapon icon, then click any tile on the board.
+        # The "normal" flow already does select → optional move → arm weapon
+        # → click target, so heal_all flows through the same path. The solver
+        # picks the firing mech's own tile as the target (see Rust
+        # get_weapon_targets WeaponType::HealAll), which is always clickable.
+        return "normal"
     return "normal"
 
 

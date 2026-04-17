@@ -228,9 +228,13 @@ pub enum WId {
     /// to target, lights every passed tile on Fire (final resting tile
     /// excluded per wiki).
     BeetleAtkB = 112,
+    // -- Any-class / support weapons --
+    /// Repair Drop: ZONE_ALL heal. Heals every TEAM_PLAYER pawn to full HP,
+    /// clears fire/acid/frozen, revives disabled mechs. Single-use.
+    SupportRepair = 113,
 }
 
-pub const WEAPON_COUNT: usize = 113;
+pub const WEAPON_COUNT: usize = 114;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -497,6 +501,22 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[112] = WeaponDef { weapon_type: WeaponType::Charge, damage: 3, push: PushDir::Forward, range_max: 0,
         flags: f(WeaponFlags::CHARGE.bits() | WeaponFlags::FIRE.bits()), ..DEF };
 
+    // 113: Support_Repair — Repair Drop (any-class, single-use). ZONE_ALL
+    // heal of every TEAM_PLAYER pawn. Sim reads weapon_type=HealAll and
+    // ignores damage/push/range. TARGETS_ALLIES flag is set so any future
+    // "skip ally targets" logic treats it like Shaman buffs rather than a
+    // hostile attack. BUILDING_DAMAGE is deliberately cleared.
+    w[113] = WeaponDef {
+        weapon_type: WeaponType::HealAll,
+        damage: 0, damage_outer: 0,
+        push: PushDir::None,
+        self_damage: 0,
+        range_min: 0, range_max: 0,
+        limited: 1,
+        path_size: 1,
+        flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
+    };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -615,6 +635,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "FireflyAtkB" => WId::FireflyAtkB,
         "ScorpionAtkB" => WId::ScorpionAtkB,
         "Acid_Tank_Attack" => WId::ScorpionAtk1, // Reuse melee/1dmg — NPC controllable unit
+        "Support_Repair" => WId::SupportRepair,
         _ => WId::None,
     }
 }
@@ -723,6 +744,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScorpionAtkB => "ScorpionAtkB",
         WId::BeetleAtkB => "BeetleAtkB",
         WId::Repair => "_REPAIR",
+        WId::SupportRepair => "Support_Repair",
         _ => "",
     }
 }
@@ -897,6 +919,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::FireflyAtkB => "Firefly Boss Shot",
         WId::ScorpionAtkB => "Massive Spinneret",
         WId::BeetleAtkB => "Flaming Abdomen",
+        WId::SupportRepair => "Repair Drop",
         _ => "Unknown",
     }
 }
@@ -987,5 +1010,17 @@ mod tests {
             assert_ne!(w.weapon_type, WeaponType::Passive,
                 "Weapon {} should not be passive (slots 66+ are passive)", i);
         }
+    }
+
+    #[test]
+    fn test_support_repair_def() {
+        let w = weapon_def(WId::SupportRepair);
+        assert_eq!(w.weapon_type, WeaponType::HealAll);
+        assert_eq!(w.damage, 0);
+        assert_eq!(w.limited, 1);
+        assert!(w.targets_allies());
+        assert_eq!(wid_from_str("Support_Repair"), WId::SupportRepair);
+        assert_eq!(wid_to_str(WId::SupportRepair), "Support_Repair");
+        assert_eq!(weapon_name(WId::SupportRepair), "Repair Drop");
     }
 }

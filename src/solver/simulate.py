@@ -555,6 +555,8 @@ def simulate_weapon(
         _sim_leap(board, attacker, wdef, target_x, target_y, result)
     elif wdef.weapon_type == "laser":
         _sim_laser(board, attacker, wdef, attack_dir, result)
+    elif wdef.weapon_type == "heal_all":
+        _sim_heal_all(board, result)
 
     # Self damage
     if wdef.self_damage > 0:
@@ -838,6 +840,27 @@ def _sim_laser(board, attacker, wdef, attack_dir, result):
 
         apply_damage(board, nx, ny, dmg, result)
         dmg = max(1, dmg - 1)  # damage decreases per tile
+
+
+def _sim_heal_all(board, result):
+    """Support_Repair (Repair Drop): heal every player-team unit to full HP,
+    clear fire/acid/frozen, revive disabled mechs (hp<=0 back to max_hp).
+    Dedupes multi-tile pawns by uid. Does not touch buildings or terrain —
+    a burning tile under a healed unit will re-ignite the unit next turn.
+    """
+    seen: set[int] = set()
+    for u in board.units:
+        if u.team != 1 or u.uid in seen:
+            continue
+        seen.add(u.uid)
+        healed_from = u.hp
+        u.hp = u.max_hp
+        u.fire = False
+        u.acid = False
+        u.frozen = False
+        result.events.append(
+            f"Repair Drop healed {u.type} uid={u.uid} ({healed_from}->{u.hp})"
+        )
 
 
 def simulate_move(

@@ -100,6 +100,10 @@ pub enum WeaponType {
     Deploy = 9,
     Passive = 10,
     TwoClick = 11,
+    /// Support_Repair (Repair Drop): ZONE_ALL targeting, heals every
+    /// TEAM_PLAYER pawn on the board to full HP, clears fire/acid/frozen,
+    /// revives disabled mechs.
+    HealAll = 12,
 }
 
 impl WeaponType {
@@ -117,6 +121,7 @@ impl WeaponType {
             "deploy" => WeaponType::Deploy,
             "passive" => WeaponType::Passive,
             "two_click" => WeaponType::TwoClick,
+            "heal_all" => WeaponType::HealAll,
             _ => WeaponType::Melee,
         }
     }

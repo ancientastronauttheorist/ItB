@@ -22,6 +22,7 @@ class WeaponType(str, Enum):
     SWAP = "swap"             # Swap positions with target
     PULL = "pull"             # Pull target toward self
     TWO_CLICK = "two_click"   # Two-step targeting
+    HEAL_ALL = "heal_all"     # Heals every player-team unit on the board
     PASSIVE = "passive"       # Always-on effect
 
 
@@ -369,6 +370,20 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Science_Confuse": WeaponDef(
         name="Confusion Ray", weapon_type="projectile",
         damage=0, push="flip", range_max=0,
+    ),
+
+    # --- ANY CLASS / SUPPORT ---
+
+    # Heals every TEAM_PLAYER pawn (mechs + allied NPCs like Train Pawn,
+    # Satellite Rocket, Acid Vat, Dam) to full HP and clears fire/acid/frozen.
+    # Revives disabled mechs from 0 HP. Does NOT damage buildings and does
+    # NOT extinguish the burning tile under a healed unit. Single-use per
+    # battle; the Lua source marks Limited=1 but the solver does not yet
+    # enforce cross-turn use counts (see the other limited=1 weapons above).
+    "Support_Repair": WeaponDef(
+        name="Repair Drop", weapon_type="heal_all",
+        damage=0, range_max=0, limited=1,
+        targets_allies=True, building_damage=False,
     ),
 
     # --- PASSIVE ABILITIES ---

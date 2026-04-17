@@ -773,6 +773,7 @@ pub fn simulate_weapon(
         WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
         WeaponType::Leap => sim_leap(board, attacker_idx, wdef, target_x, target_y, &mut result),
         WeaponType::Laser => sim_laser(board, ax, ay, wdef, attack_dir, &mut result),
+        WeaponType::HealAll => sim_heal_all(board, &mut result),
         _ => {} // Passive, Deploy, TwoClick — no simulation
     }
 
@@ -1138,6 +1139,30 @@ fn sim_laser(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Op
 
         apply_damage(board, nxu, nyu, dmg, result, DamageSource::Weapon);
         dmg = dmg.saturating_sub(1).max(1); // damage floor = 1
+    }
+}
+
+// ── Heal All (Repair Drop) ───────────────────────────────────────────────────
+
+/// Support_Repair (Repair Drop): ZONE_ALL heal. Restores every TEAM_PLAYER
+/// pawn to max_hp, clears fire/acid/frozen, revives disabled mechs (hp<=0).
+/// Multi-tile pawns (Dam_Pawn) emit one entry per occupied tile sharing a
+/// uid — dedupe by uid so we heal each pawn once. Does not touch terrain
+/// or buildings; a burning tile under a healed unit will re-ignite it at
+/// the next turn tick.
+fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
+    let mut seen: Vec<u16> = Vec::with_capacity(8);
+    for i in 0..board.units.len() {
+        let u = &board.units[i];
+        if u.team != Team::Player || seen.contains(&u.uid) {
+            continue;
+        }
+        seen.push(u.uid);
+        let u = &mut board.units[i];
+        u.hp = u.max_hp;
+        u.set_fire(false);
+        u.set_acid(false);
+        u.set_frozen(false);
     }
 }
 
@@ -1827,5 +1852,68 @@ mod tests {
 
         simulate_enemy_attacks(&mut board, &original);
         assert_eq!(board.units[target].hp, 2, "Base 1 damage only");
+    }
+
+    // ── Repair Drop (Support_Repair) ───────────────────────────────────────────
+
+    #[test]
+    fn test_support_repair_heals_damaged_mechs_and_clears_statuses() {
+        let mut board = make_test_board();
+        // Caster at full HP
+        let caster = add_mech(&mut board, 1, 3, 3, 3, WId::SupportRepair);
+        // Damaged + burning ally
+        let ally1 = add_mech(&mut board, 2, 4, 3, 3, WId::None);
+        board.units[ally1].hp = 1;
+        board.units[ally1].set_fire(true);
+        // Acid+frozen ally at full HP (still clears statuses)
+        let ally2 = add_mech(&mut board, 3, 5, 3, 3, WId::None);
+        board.units[ally2].set_acid(true);
+        board.units[ally2].set_frozen(true);
+        // Enemy — must not be touched
+        let enemy = add_enemy(&mut board, 99, 6, 3, 2);
+        board.units[enemy].set_fire(true);
+
+        let _ = simulate_weapon(&mut board, caster, WId::SupportRepair, 3, 3);
+
+        assert_eq!(board.units[ally1].hp, 3, "Damaged mech fully healed");
+        assert!(!board.units[ally1].fire(), "Fire cleared");
+        assert!(!board.units[ally2].acid(), "Acid cleared");
+        assert!(!board.units[ally2].frozen(), "Frozen cleared");
+        assert_eq!(board.units[enemy].hp, 2, "Enemy HP untouched");
+        assert!(board.units[enemy].fire(), "Enemy fire untouched");
+    }
+
+    #[test]
+    fn test_support_repair_revives_disabled_mech() {
+        // Disabled mech (hp<=0) sits as a wreck. Another mech firing Repair
+        // Drop brings it back to full HP. Matches the Steam-forum consensus
+        // that a disabled mech cannot cast it itself but CAN be revived by
+        // an ally's Repair Drop.
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 3, 3, 3, WId::SupportRepair);
+        let disabled = add_mech(&mut board, 2, 4, 3, 3, WId::None);
+        board.units[disabled].hp = 0;
+
+        let _ = simulate_weapon(&mut board, caster, WId::SupportRepair, 3, 3);
+
+        assert_eq!(board.units[disabled].hp, 3, "Disabled mech revived to full HP");
+    }
+
+    #[test]
+    fn test_support_repair_does_not_clear_terrain_fire() {
+        // A tile that's on fire stays on fire — the healed mech will re-ignite
+        // next turn when the tile tick applies. The weapon only clears unit
+        // status, never terrain.
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 3, 3, 3, WId::SupportRepair);
+        board.tile_mut(4, 3).set_on_fire(true);
+        let ally = add_mech(&mut board, 2, 4, 3, 3, WId::None);
+        board.units[ally].hp = 1;
+        board.units[ally].set_fire(true);
+
+        let _ = simulate_weapon(&mut board, caster, WId::SupportRepair, 3, 3);
+
+        assert!(!board.units[ally].fire(), "Mech fire status cleared");
+        assert!(board.tile(4, 3).on_fire(), "Burning terrain tile preserved");
     }
 }
