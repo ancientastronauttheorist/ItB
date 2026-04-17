@@ -81,6 +81,7 @@ pub struct JsonUnit {
     pub ranged: Option<u8>,
     pub can_move: Option<bool>,
     pub is_extra_tile: Option<bool>,
+    pub pilot_value: Option<f64>,
 }
 
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
@@ -239,6 +240,7 @@ pub fn board_from_json(json_str: &str) -> Result<(Board, Vec<(u8, u8)>, Vec<(u8,
                 weapon_push: ju.weapon_push.unwrap_or(0),
                 weapon_target_behind: ju.weapon_target_behind.unwrap_or(false),
                 web_source_uid: ju.web_source_uid.unwrap_or(0),
+                pilot_value: ju.pilot_value.unwrap_or(0.0) as f32,
             };
 
             unit.set_type_name(&ju.unit_type);

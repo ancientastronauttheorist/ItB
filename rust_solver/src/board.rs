@@ -133,6 +133,11 @@ pub struct Unit {
     /// When that enemy is pushed or killed, the web breaks and move_speed
     /// is restored to base_move.
     pub web_source_uid: u16,
+    /// Pilot value: multiplier on mech_killed penalty reflecting the
+    /// permanent cost of losing this mech's pilot (skills + XP). Mechs
+    /// only; enemies and neutrals stay at 0. Computed by Python's
+    /// `_compute_pilot_value` from pilot_id + current max_hp.
+    pub pilot_value: f32,
 }
 
 impl Unit {

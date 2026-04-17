@@ -85,6 +85,7 @@ local function _read_save_data()
         networkMax = nil,
         queued_shots = {},
         conveyor_belts = {},
+        pilots = {},  -- [pawn_id] = {id=..., level=..., skill1=..., skill2=...}
     }
     local base = os.getenv("HOME") ..
         "/Library/Application Support/IntoTheBreach/profile_Alpha/"
@@ -102,14 +103,36 @@ local function _read_save_data()
     local netMax = content:match('%["networkMax"%]%s*=%s*(%d+)')
     if netMax then result.networkMax = tonumber(netMax) end
 
-    -- Queued shots: per-enemy piQueuedShot target data
+    -- Queued shots + pilot data: per-pawn, in a single pass.
+    -- Save has blocks like `["pawn3"] = { ["id"] = 3, ["piQueuedShot"] =
+    -- Point(5,0), ["pilot"] = { ["id"] = "Pilot_Original", ["level"] = 2,
+    -- ["skill1"] = 0, ["skill2"] = 2, ... }, ... }`.
     for block in content:gmatch('%["pawn%d+"%]%s*=%s*(%b{})') do
         local pid = block:match('%["id"%]%s*=%s*(%d+)')
-        local qs = block:match('%["piQueuedShot"%]%s*=%s*Point%s*%(([^%)]+)%)')
-        if pid and qs then
-            local qsx, qsy = qs:match('(%-?%d+)%s*,%s*(%-?%d+)')
-            if qsx and qsy then
-                result.queued_shots[tonumber(pid)] = {x = tonumber(qsx), y = tonumber(qsy)}
+        if pid then
+            local pid_n = tonumber(pid)
+            -- Queued shot
+            local qs = block:match('%["piQueuedShot"%]%s*=%s*Point%s*%(([^%)]+)%)')
+            if qs then
+                local qsx, qsy = qs:match('(%-?%d+)%s*,%s*(%-?%d+)')
+                if qsx and qsy then
+                    result.queued_shots[pid_n] = {x = tonumber(qsx), y = tonumber(qsy)}
+                end
+            end
+            -- Pilot: nested table inside the pawn block
+            local pilot_block = block:match('%["pilot"%]%s*=%s*(%b{})')
+            if pilot_block then
+                local pilot_id = pilot_block:match('%["id"%]%s*=%s*"([^"]+)"')
+                if pilot_id then
+                    local pd = {id = pilot_id}
+                    local lvl = pilot_block:match('%["level"%]%s*=%s*(%-?%d+)')
+                    if lvl then pd.level = tonumber(lvl) end
+                    local s1 = pilot_block:match('%["skill1"%]%s*=%s*(%-?%d+)')
+                    if s1 then pd.skill1 = tonumber(s1) end
+                    local s2 = pilot_block:match('%["skill2"%]%s*=%s*(%-?%d+)')
+                    if s2 then pd.skill2 = tonumber(s2) end
+                    result.pilots[pid_n] = pd
+                end
             end
         end
     end
@@ -291,18 +314,67 @@ local function dump_state()
                 local ptype = p:GetType()
                 local pawn_def = _G[ptype]
 
+                -- max_hp: prefer pawn's live GetMaxHealth() over pawn_def.Health
+                -- because pilots can buff mech HP (e.g. +2 from a passive) and
+                -- the live value reflects that. Fall back to def base if API
+                -- unavailable. Previous code reported base HP, which was
+                -- strictly less than current HP for pilot-boosted mechs.
+                local live_max_hp = nil
+                local ok_mh, mh = pcall(function() return p:GetMaxHealth() end)
+                if ok_mh and type(mh) == "number" and mh > 0 then
+                    live_max_hp = mh
+                end
                 local unit = {
                     uid = pid,
                     type = ptype,
                     x = sp.x, y = sp.y,
                     hp = p:GetHealth(),
-                    max_hp = pawn_def and pawn_def.Health or p:GetHealth(),
+                    max_hp = live_max_hp or (pawn_def and pawn_def.Health) or p:GetHealth(),
                     team = p:GetTeam(),
                     mech = p:IsMech(),
                     active = p:IsActive(),
                     move = p:GetMoveSpeed(),
                     base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed(),
                 }
+
+                -- Pilot info (mechs only). Save-file-derived is the most
+                -- reliable source; Lua-API probes are a fallback. Save
+                -- structure is `pawnN.pilot.{id,level,skill1,skill2}` per
+                -- entry, keyed by pawn id (matches `pid` here).
+                if p:IsMech() then
+                    local pilot_id = nil
+                    local pilot_level = nil
+                    local pilot_skills = {}
+                    local save_pilot = save_data.pilots[pid]
+                    if save_pilot then
+                        pilot_id = save_pilot.id
+                        pilot_level = save_pilot.level
+                        if save_pilot.skill1 and save_pilot.skill1 ~= 0 then
+                            pilot_skills[#pilot_skills + 1] = "skill1=" .. save_pilot.skill1
+                        end
+                        if save_pilot.skill2 and save_pilot.skill2 ~= 0 then
+                            pilot_skills[#pilot_skills + 1] = "skill2=" .. save_pilot.skill2
+                        end
+                    end
+                    -- Lua API probe fallback (if save had no match)
+                    if not pilot_id then
+                        for _, mname in ipairs({"GetPilotId", "GetPilot"}) do
+                            local ok_pm, pv = pcall(function() return p[mname](p) end)
+                            if ok_pm and pv then
+                                if type(pv) == "string" and pv ~= "" then
+                                    pilot_id = pv; break
+                                elseif type(pv) == "table" and pv.id then
+                                    pilot_id = pv.id
+                                    if pv.level then pilot_level = pv.level end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    if pilot_id then unit.pilot_id = pilot_id end
+                    if pilot_level then unit.pilot_level = pilot_level end
+                    if #pilot_skills > 0 then unit.pilot_skills = pilot_skills end
+                end
 
                 -- Massive trait (walks in water, immune to drowning)
                 -- Read from pawn_def since there's no direct IsMassive() API

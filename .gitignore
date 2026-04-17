@@ -7,3 +7,4 @@ build/
 .env
 venv/
 .env
+rust_solver/target/

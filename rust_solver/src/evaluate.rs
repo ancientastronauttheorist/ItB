@@ -397,8 +397,13 @@ pub fn evaluate(
             if u.is_enemy() {
                 score += scaled(weights.enemy_on_danger, ff, 0.20, 1.60);
             } else if u.is_player() {
-                // Dead is dead — no future_factor scaling for mech loss
-                score += weights.mech_killed;
+                // Scale mech loss by future_factor + pilot_value (see the
+                // main mech-loss branch below for the rationale). Lethal
+                // environment hazards apply the same penalty as any other
+                // mech kill.
+                let base = scaled(weights.mech_killed, ff, 0.05, 0.95);
+                let pilot_penalty = weights.mech_killed * u.pilot_value as f64;
+                score += base + pilot_penalty;
             }
         }
     }
@@ -427,8 +432,18 @@ pub fn evaluate(
         }
 
         if u.hp <= 0 {
-            // Dead is dead — pilot loss is permanent, no future_factor scaling
-            let mut penalty = weights.mech_killed;
+            // Scale mech loss by future_factor: a pilot lost on the final
+            // turn can't contribute further this mission, so the penalty
+            // drops to 5% of base. Early turns still keep mechs precious
+            // (ff≈1 → full penalty). floor=0.05, scale=0.95.
+            //
+            // Pilot value adds a permanent-loss component that DOES NOT
+            // scale with ff: a veteran pilot is lost forever (no XP/skills
+            // for remaining missions) and its cost applies regardless of
+            // how many turns remain in this mission.
+            let base_penalty = scaled(weights.mech_killed, ff, 0.05, 0.95);
+            let pilot_penalty = weights.mech_killed * u.pilot_value as f64;
+            let mut penalty = base_penalty + pilot_penalty;
             // At critical grid, reduce mech death penalty — losing a mech is
             // preferable to losing the game from undefended buildings
             if board.grid_power <= 2 {

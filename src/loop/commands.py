@@ -864,6 +864,20 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                             td["freeze_mine"] = True
                         if board.tile(bx, by).old_earth_mine:
                             td["old_earth_mine"] = True
+            # Inject pilot_value per mech unit so the Rust search scores
+            # pilot loss correctly. Lua exposes pilot_id; Python computes
+            # the multiplier via _compute_pilot_value so Rust doesn't need
+            # its own lookup table.
+            from src.model.board import _compute_pilot_value as _cpv
+            for ud in bridge_data.get("units", []):
+                if ud.get("mech"):
+                    ud["pilot_value"] = _cpv(
+                        ud.get("pilot_id", ""),
+                        ud.get("pilot_skills", []),
+                        ud.get("max_hp", 0),
+                        ud.get("type", ""),
+                        ud.get("pilot_level", 0),
+                    )
             rust_start = _time.time()
             rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
             rust_result = _json.loads(rust_json)
@@ -1937,6 +1951,15 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
                     if (td.get("x", -1), td.get("y", -1)) in oe_mines:
                         td["old_earth_mine"] = True
 
+    from src.model.board import _compute_pilot_value as _cpv
+    for ud in bd.get("units", []):
+        if ud.get("mech"):
+            ud["pilot_value"] = _cpv(
+                ud.get("pilot_id", ""), ud.get("pilot_skills", []),
+                ud.get("max_hp", 0), ud.get("type", ""),
+                ud.get("pilot_level", 0),
+            )
+
     import itb_solver as _rust
     rust_start = time.time()
     rust_json = _rust.solve(json.dumps(bd), time_limit)
@@ -2166,6 +2189,15 @@ def _re_solve_partial(
                     td["freeze_mine"] = True
                 if board.tile(bx, by).old_earth_mine:
                     td["old_earth_mine"] = True
+
+    from src.model.board import _compute_pilot_value as _cpv
+    for ud in bridge_data.get("units", []):
+        if ud.get("mech"):
+            ud["pilot_value"] = _cpv(
+                ud.get("pilot_id", ""), ud.get("pilot_skills", []),
+                ud.get("max_hp", 0), ud.get("type", ""),
+                ud.get("pilot_level", 0),
+            )
 
     try:
         import itb_solver as _rust

@@ -235,7 +235,8 @@ def evaluate(
             if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
                 dmg, lethal = v2.get((m.x, m.y), (1, True))
                 if lethal or m.hp <= dmg:
-                    score += w.mech_killed
+                    score += _scaled(w.mech_killed, ff, 0.05, 0.95)
+                    score += w.mech_killed * m.pilot_value
                 else:
                     score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1
 
@@ -243,7 +244,8 @@ def evaluate(
     mechs = board.mechs()
     for m in mechs:
         if m.hp <= 0:
-            score += w.mech_killed
+            score += _scaled(w.mech_killed, ff, 0.05, 0.95)
+            score += w.mech_killed * m.pilot_value
         else:
             score += m.hp * _scaled(w.mech_hp, ff, 0.20, 0.80)
             cx = abs(m.x - 3.5)
@@ -359,7 +361,7 @@ def evaluate_breakdown(
                 danger_mechs_on += 1
                 dmg, lethal = v2.get((m.x, m.y), (1, True))
                 if lethal or m.hp <= dmg:
-                    danger_score += w.mech_killed
+                    danger_score += _scaled(w.mech_killed, ff, 0.05, 0.95)
                 else:
                     danger_score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1
 
@@ -372,7 +374,7 @@ def evaluate_breakdown(
     for m in mechs:
         if m.hp <= 0:
             mechs_dead += 1
-            mech_score += w.mech_killed
+            mech_score += _scaled(w.mech_killed, ff, 0.05, 0.95)
         else:
             mechs_alive += 1
             total_mech_hp += m.hp

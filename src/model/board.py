@@ -19,6 +19,75 @@ TERRAIN_BLOCKS_ALL = {"mountain"}  # blocks flying too (for projectiles)
 TERRAIN_DEADLY_GROUND = {"water", "chasm", "lava"}
 
 
+# Pilot value lookup: multiplier on the mech_killed penalty reflecting
+# how costly it is to lose this pilot permanently. Values are "extra
+# penalty fraction of base mech_killed" — 0.5 means +50% penalty on top
+# of the base mech_killed. Pilot IDs match the save-file format (read
+# from saveData.lua via the bridge).
+#
+# - Pilot_Mech: default AI pilot (no ability, no XP). Easily replaced → 0.
+# - Pilot_Original (Ralph Karlsson): "Reliable" ability (never stunned).
+#   Available by default, but levels up like any pilot — add XP-earned
+#   skills via level bonus below.
+# - Other named pilots: default placeholder until we tune per-pilot.
+#
+# Level adds ~0.15 per pilot level (cumulative XP → unlocked skill slots
+# → more valuable to keep alive). Max 2 skill slots in vanilla ITB so
+# level usually caps at 2.
+_PILOT_VALUE_TABLE = {
+    "Pilot_Mech": 0.0,
+    "Pilot_Original": 0.3,   # Ralph Karlsson — default corporate pilot
+    "Pilot_Detritus": 0.3,   # Charlie Ferry
+    "Pilot_Pinnacle": 0.3,   # Zera
+    "Pilot_Rst": 0.3,        # Camila Vera
+    "Pilot_Archive": 0.3,
+    "Pilot_Leader": 0.4,     # FTL-found pilot
+    "Pilot_Ralph": 0.3,      # fallback if game uses alt ID
+}
+_PILOT_VALUE_DEFAULT = 0.3  # unknown named pilot — assume some value
+_PILOT_VALUE_PER_LEVEL = 0.15  # each pilot level adds this much
+
+
+def _mech_base_hp(mech_type: str) -> int:
+    """Base HP a mech type ships with (pre-pilot, pre-upgrade). Values
+    match data/squads.json for common mechs; returns 0 for unknown so the
+    HP-boost heuristic silently no-ops rather than triggering a false
+    positive."""
+    return {
+        "JudoMech": 3, "DStrikeMech": 2, "GravMech": 3,
+        "PunchMech": 3, "TankMech": 2, "ArtiMech": 2,
+        "ChargeMech": 3, "IceMech": 2, "LeapMech": 2, "PierceMech": 2,
+        "BeamMech": 2, "FireMech": 3, "MineMech": 3,
+        "JetMech": 2, "RocketMech": 2, "PulseMech": 2, "GuardMech": 3,
+        "LaserMech": 2, "ScienceMech": 2, "CannonMech": 3, "BoulderMech": 3,
+        "SwapMech": 2, "WallMech": 2, "DamMech": 3, "ElectricMech": 2,
+        "NanoMech": 2,
+    }.get(mech_type, 0)
+
+
+def _compute_pilot_value(pilot_id: str, pilot_skills, current_max_hp: int,
+                         mech_type: str, pilot_level: int = 0) -> float:
+    """Return a multiplier on the mech_killed penalty for this unit.
+
+    Combines:
+      1. Pilot lookup table (per-pilot baseline by identity).
+      2. Pilot level — each XP-unlocked skill slot adds value (permanent
+         loss if the pilot dies).
+      3. HP-boost heuristic — current max_hp over mech base signals at
+         least one +HP skill in play (squad-wide or pilot-earned) and
+         makes the mech more survivable (more costly to lose).
+    """
+    if not pilot_id:
+        return 0.0
+    base = _PILOT_VALUE_TABLE.get(pilot_id, _PILOT_VALUE_DEFAULT)
+    level_bonus = max(0, int(pilot_level)) * _PILOT_VALUE_PER_LEVEL
+    hp_bonus = 0.0
+    mech_base = _mech_base_hp(mech_type)
+    if mech_base > 0 and current_max_hp > mech_base:
+        hp_bonus = 0.25 * (current_max_hp - mech_base)
+    return base + level_bonus + hp_bonus
+
+
 @dataclass
 class Unit:
     """A unit on the board (solver-friendly)."""
@@ -63,6 +132,12 @@ class Unit:
     # for Dam_Pawn). All entries share `uid`; damage to any entry mirrors
     # HP to the rest via apply_damage.
     is_extra_tile: bool = False
+    # Pilot info (mechs only). `pilot_id` from bridge (e.g. "Pilot_Rocks")
+    # drives the pilot_value lookup: a multiplier on the mech_killed penalty
+    # reflecting how costly it is to lose this pilot (permanent death + lost
+    # skills). Default 0.0 = no bonus (treat as AI/default pilot).
+    pilot_id: str = ""
+    pilot_value: float = 0.0
 
     @property
     def is_player(self) -> bool:
@@ -347,6 +422,12 @@ class Board:
                 weapon_target_behind=ud.get("weapon_target_behind", False),
                 weapon_push=ud.get("weapon_push", 0),
                 is_extra_tile=ud.get("is_extra_tile", False),
+                pilot_id=ud.get("pilot_id", ""),
+                pilot_value=_compute_pilot_value(
+                    ud.get("pilot_id", ""), ud.get("pilot_skills", []),
+                    ud.get("max_hp", 0), ud.get("type", ""),
+                    ud.get("pilot_level", 0),
+                ),
             )
             board.units.append(u)
 
