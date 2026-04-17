@@ -219,20 +219,36 @@ local function dump_state()
     -- Conveyor belts from consolidated save read
     local conveyor_belts = save_data.conveyor_belts
 
-    -- Objective building lookup: missions that set self.AssetLoc track a
-    -- "unique building" (Coal Plant, Power Generator, Emergency Batteries)
-    -- that is a bonus objective. Mark those tiles so the solver can weight
-    -- them higher.
-    local objective_key = nil
-    local objective_name = nil
+    -- Objective building lookup:
+    --   * Single-objective missions set self.AssetLoc (Coal Plant / Power
+    --     Generator / Emergency Batteries). AssetId names the asset.
+    --   * Mission_Critical and its subclasses (Solar / Wind / Power) set
+    --     self.Criticals = {Point, Point} — two Solar Farms / Wind Farms /
+    --     Power Plants. FlavorBase names the asset ("Mission_Solar" etc.).
+    -- Both populate the same `objective_keys` map; the solver scores each
+    -- tagged tile independently via building_objective_bonus.
+    local objective_keys = {}
     if _ITB_CURRENT_MISSION then
+        -- Single AssetLoc path
         local ok_loc, loc = pcall(function() return _ITB_CURRENT_MISSION.AssetLoc end)
         local ok_id, aid = pcall(function() return _ITB_CURRENT_MISSION.AssetId end)
         if ok_loc and loc and type(loc) == "userdata" then
             local ok_xy, ox, oy = pcall(function() return loc.x, loc.y end)
             if ok_xy and ox and oy then
-                objective_key = ox .. "," .. oy
-                if ok_id and aid then objective_name = aid end
+                objective_keys[ox .. "," .. oy] = (ok_id and aid) or true
+            end
+        end
+        -- Mission_Critical Criticals path (2 buildings)
+        local ok_c, criticals = pcall(function() return _ITB_CURRENT_MISSION.Criticals end)
+        local ok_fb, flavor = pcall(function() return _ITB_CURRENT_MISSION.FlavorBase end)
+        if ok_c and type(criticals) == "table" then
+            for _, cpt in ipairs(criticals) do
+                if type(cpt) == "userdata" then
+                    local ok_xy, cx, cy = pcall(function() return cpt.x, cpt.y end)
+                    if ok_xy and cx and cy then
+                        objective_keys[cx .. "," .. cy] = (ok_fb and flavor) or true
+                    end
+                end
             end
         end
     end
@@ -269,10 +285,15 @@ local function dump_state()
             if terrain_id == 1 then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
                 if ok_h then tile.building_hp = hp end
-                -- Objective building (Coal Plant / Power Generator / Batteries)
-                if objective_key and objective_key == (x .. "," .. y) then
+                -- Objective building (Coal Plant / Power Generator /
+                -- Batteries via AssetLoc, or Solar Farms / Wind Farms /
+                -- Power Plants via Mission_Critical.Criticals).
+                local obj_tag = objective_keys[x .. "," .. y]
+                if obj_tag then
                     tile.unique_building = true
-                    if objective_name then tile.objective_name = objective_name end
+                    if type(obj_tag) == "string" then
+                        tile.objective_name = obj_tag
+                    end
                 end
             -- Mountain data (2 = full, 1 = damaged, 0 = rubble)
             elseif terrain_id == 4 then
