@@ -66,11 +66,19 @@ fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: 
                 let nxu = nx as u8;
                 let nyu = ny as u8;
                 // Throw weapons (Vice Fist): the game rejects targets whose throw
-                // destination — attacker + (attacker-target) — would land off-board.
+                // destination — attacker + (attacker-target) — would land off-board
+                // OR onto another mech. Mech-on-mech throw is visually unclickable
+                // in-game even though the sim would resolve it as a mutual bump.
+                // Neutral/enemy units and obstacles at destination ARE allowed.
                 if wdef.push == PushDir::Throw {
                     let throw_x = mx as i8 - dx;
                     let throw_y = my as i8 - dy;
                     if !in_bounds(throw_x, throw_y) { continue; }
+                    if let Some(idx) = board.unit_at(throw_x as u8, throw_y as u8) {
+                        if board.units[idx].is_mech() {
+                            continue;
+                        }
+                    }
                 }
                 let has_unit = board.unit_at(nxu, nyu).is_some();
                 if has_unit {
@@ -518,6 +526,7 @@ fn search_recursive(
         simulate_enemy_attacks(&mut b_eval, original_positions);
         apply_spawn_blocking(&mut b_eval, spawn_points);
         let score = evaluate(&b_eval, spawn_points, weights, kills_so_far, bumps_so_far, psion_before, building_threats);
+
 
         if score > *best_score {
             *best_score = score;
