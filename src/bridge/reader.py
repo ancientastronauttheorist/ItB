@@ -257,22 +257,21 @@ _DEPLOY_BLOCKED = {"mountain", "water", "acid", "lava", "chasm", "ice"}
 def _infer_deployment_zone(board: Board) -> list[list[int, int]]:
     """Infer deployment zone from board state on turn 0.
 
-    Best-effort fallback when Board:GetZone("deployment") returns empty
-    (typically because phase isn't deployment yet). In ITB the zone is
-    usually the top 3 rows; Mission_Dam and a few others use rows 5-7
-    instead. Without game-API ground truth we can't tell them apart,
-    so this returns the top 3 rows (bridge x 0-2) excluding blocked
-    terrain, buildings, occupied tiles, and acid pools. Forest IS
-    deployable. Water-adjacent tiles are NOT filtered (Mission_Dam
-    explicitly allows them).
+    Fallback when Board:GetZone("deployment") returns empty (which is
+    what happens for every non-final mission — the engine only fills
+    that zone for special maps like mission_final.lua).
 
-    Caller MUST treat this as a hint — real source of truth is the
-    live Board:GetZone("deployment") from modloader.lua.
+    The rectangle is visual B–G × rows 5–7 (bridge x=1..3, y=1..6),
+    minus blocked terrain / buildings / occupied / acid tiles. This
+    mirrors the wiki-documented spawn rule ("Vek prioritize columns
+    B–G, rows 1–3") and matches empirical observation of the yellow
+    drop zone across missions. Edge columns A/H and rows 8/1–4 are
+    never yellow in regular missions.
     """
     occupied = {(u.x, u.y) for u in board.units}
     tiles = []
-    for x in range(3):  # bridge x 0-2 = visual rows 8-6
-        for y in range(8):
+    for x in (1, 2, 3):  # bridge x=1..3 = visual rows 7, 6, 5
+        for y in range(1, 7):  # bridge y=1..6 = visual columns G..B
             t = board.tiles[x][y]
             if t.terrain in _DEPLOY_BLOCKED:
                 continue
