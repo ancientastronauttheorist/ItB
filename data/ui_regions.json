@@ -1,0 +1,38 @@
+{
+  "_doc": "Tooltip panel pixel regions in MCP screenshot coordinate space, calibrated against the reference window below. See docs/self_healing_loop_design.md#research for the capture sequence that consumes these.",
+  "_calibrated": "2026-04-17",
+  "_build": "Into the Breach AE (Steam, macOS native, Max Board Scale 5x)",
+  "reference_window": {
+    "x": 200,
+    "y": 137,
+    "width": 1280,
+    "height": 748
+  },
+  "regions": {
+    "name_tag": {
+      "bounds": [178, 558, 410, 603],
+      "description": "Unit name + HP/move icons. Appears on selection of any mech or enemy. Smallest crop — good for Vision unit-ID.",
+      "trigger": "select"
+    },
+    "unit_status": {
+      "bounds": [178, 618, 442, 728],
+      "description": "For enemies: large portrait. For mechs: weapon rail (portrait slot + up to 2 weapon icons). Appears on selection.",
+      "trigger": "select"
+    },
+    "weapon_preview": {
+      "bounds": [480, 355, 610, 720],
+      "description": "Tall panel showing weapon name, class, description, rendered mini-board with AOE/push arrows, damage, upgrade tracks. Appears on hover over a mech weapon icon in unit_status. NOT shown for enemies on selection — enemy attack AOE is drawn directly on main board.",
+      "trigger": "hover_weapon_icon"
+    },
+    "terrain_tooltip": {
+      "bounds": [980, 635, 1225, 725],
+      "description": "Bottom-right panel. Shows terrain name + one-line effect on tile hover (empty, ground, forest, mountain, water, etc.). Also shows status effects on units at the hovered tile.",
+      "trigger": "hover_tile"
+    }
+  },
+  "neutral_hover": {
+    "coordinate": [1100, 100],
+    "description": "Dead space top-right of the window (blank area above the Bonus Objectives panel). Use as the mouse_move target before click to dismiss any residual tooltip. Avoid (1100, 680) — that spot IS the terrain_tooltip area."
+  },
+  "scaling_note": "MCP coords ~= Quartz logical screen coords. To adapt to a different window position/size, offset by (current_window.x - reference_window.x, current_window.y - reference_window.y) and scale by (current_window.width / reference_window.width, current_window.height / reference_window.height). See src/capture/detect_grid.grid_from_window for the analogous pattern used by grid_to_mcp."
+}
