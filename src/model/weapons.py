@@ -547,6 +547,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Blob Explode", weapon_type="self_aoe",
         damage=1, aoe_adjacent=True, aoe_center=True,
     ),
+    "BlobAtk2": WeaponDef(
+        name="Alpha Blob Explode", weapon_type="self_aoe",
+        damage=2, aoe_adjacent=True, aoe_center=True,
+    ),
 
     # ── Advanced Edition Melee ───────────────────────────────────────
     "BouncerAtk1": WeaponDef(

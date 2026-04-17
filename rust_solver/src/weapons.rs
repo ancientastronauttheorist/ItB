@@ -232,9 +232,13 @@ pub enum WId {
     /// Repair Drop: ZONE_ALL heal. Heals every TEAM_PLAYER pawn to full HP,
     /// clears fire/acid/frozen, revives disabled mechs. Single-use.
     SupportRepair = 113,
+    /// Alpha Blob's Unstable Guts: self_aoe, 2 damage to center + 4 cardinal adjacent.
+    /// Inner damage is DAMAGE_DEATH in-game (kills the Blob) — we represent as 2 since
+    /// Blob HP is always 1; effect is identical.
+    BlobAtk2 = 114,
 }
 
-pub const WEAPON_COUNT: usize = 114;
+pub const WEAPON_COUNT: usize = 115;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -517,6 +521,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
     };
 
+    // 114: BlobAtk2 — alpha blob explode, 2 dmg center + 4 cardinal adjacent
+    w[114] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 2, flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -636,6 +643,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "ScorpionAtkB" => WId::ScorpionAtkB,
         "Acid_Tank_Attack" => WId::ScorpionAtk1, // Reuse melee/1dmg — NPC controllable unit
         "Support_Repair" => WId::SupportRepair,
+        "BlobAtk2" => WId::BlobAtk2,
         _ => WId::None,
     }
 }
@@ -745,6 +753,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BeetleAtkB => "BeetleAtkB",
         WId::Repair => "_REPAIR",
         WId::SupportRepair => "Support_Repair",
+        WId::BlobAtk2 => "BlobAtk2",
         _ => "",
     }
 }
@@ -807,6 +816,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Spiderling1" | "Spiderling2" => WId::SpiderlingAtk1,
         s if s.starts_with("BlobMini") => WId::BlobAtk1,
         s if s.starts_with("Blob1") => WId::BlobAtk1,
+        s if s.starts_with("Blob2") => WId::BlobAtk2,
         // Objective / special Vek
         "GlowingScorpion" => WId::ScorpionAtk1,
         // Bosses
@@ -892,6 +902,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::SpiderAtk2 => "Alpha Spider Egg",
         WId::SpiderlingAtk1 => "Spiderling Bite",
         WId::BlobAtk1 => "Blob Explode",
+        WId::BlobAtk2 => "Alpha Blob Explode",
         WId::BouncerAtk1 => "Energized Horns",
         WId::BouncerAtk2 => "Alpha Energized Horns",
         WId::MothAtk1 => "Repulsive Pellets",

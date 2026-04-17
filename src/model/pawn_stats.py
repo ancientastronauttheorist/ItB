@@ -86,8 +86,8 @@ VEK_STATS = {
     "Burrower2":     PawnStats(move_speed=4, ranged=0, pushable=False),
     "Spider1":       PawnStats(move_speed=2, ranged=0, pushable=False),
     "Spider2":       PawnStats(move_speed=2, ranged=0, pushable=False),
-    "Blobber1":      PawnStats(move_speed=2, ranged=1, pushable=False),
-    "Blobber2":      PawnStats(move_speed=2, ranged=1, pushable=False),
+    "Blobber1":      PawnStats(move_speed=2, ranged=1),
+    "Blobber2":      PawnStats(move_speed=2, ranged=1),
     # Advanced Edition Vek
     "Bouncer1":      PawnStats(move_speed=3, ranged=0),
     "Bouncer2":      PawnStats(move_speed=3, ranged=0),
@@ -130,7 +130,9 @@ VEK_STATS = {
     # Minor enemies
     "Spiderling1":   PawnStats(move_speed=3, minor=True, ranged=0),
     "Spiderling2":   PawnStats(move_speed=3, minor=True, ranged=0),
-    "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),
+    "Blob1":         PawnStats(move_speed=0, minor=True, ranged=0),
+    "Blob2":         PawnStats(move_speed=0, minor=True, ranged=0),
+    "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),  # legacy alias
     "ShellPsion1":   PawnStats(move_speed=2, flying=True, minor=True, leader="LEADER_TENTACLE"),
 }
 
