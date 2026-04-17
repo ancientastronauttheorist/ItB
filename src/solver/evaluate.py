@@ -235,14 +235,25 @@ def evaluate(
             if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
                 dmg, lethal = v2.get((m.x, m.y), (1, True))
                 if lethal or m.hp <= dmg:
-                    score += _scaled(w.mech_killed, ff, 0.05, 0.95)
-                    score += w.mech_killed * m.pilot_value
+                    if m.is_mech:
+                        score += _scaled(w.mech_killed, ff, 0.05, 0.95)
+                        score += w.mech_killed * m.pilot_value
+                    else:
+                        score += w.friendly_npc_killed
                 else:
                     score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1
 
-    # --- MECHS: SCALED ---
-    mechs = board.mechs()
-    for m in mechs:
+    # --- MECHS + FRIENDLY NPCs: SCALED ---
+    # board.mechs() returns all player-team units (is_player) including
+    # non-mech NPCs like Filler_Pawn and Train_Pawn. Mirrors Rust evaluate:
+    # real mechs get the full mech_killed penalty + pilot_value, NPCs get
+    # the smaller friendly_npc_killed penalty (no pilot_value).
+    for m in board.mechs():
+        if not m.is_mech:
+            # Non-mech player unit (Filler_Pawn, ArchiveArtillery, etc.)
+            if m.hp <= 0:
+                score += w.friendly_npc_killed
+            continue
         if m.hp <= 0:
             score += _scaled(w.mech_killed, ff, 0.05, 0.95)
             score += w.mech_killed * m.pilot_value
