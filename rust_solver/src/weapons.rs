@@ -224,9 +224,13 @@ pub enum WId {
     SnowlaserAtk2 = 110,
     /// Hornet Leader's "Super Stinger": stab three tiles in a line, 2 damage each.
     HornetAtkB = 111,
+    /// Beetle Leader's "Flaming Abdomen": charges in a line, 3 damage + push
+    /// to target, lights every passed tile on Fire (final resting tile
+    /// excluded per wiki).
+    BeetleAtkB = 112,
 }
 
-pub const WEAPON_COUNT: usize = 112;
+pub const WEAPON_COUNT: usize = 113;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -486,6 +490,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // damages target + path_size-1 extra tiles in attack direction, which matches
     // the game's 3-tile line (p2, p2+dir, p2+2*dir).
     w[111] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 1, range_max: 0, path_size: 3, flags: C, ..DEF };
+    // 112: BeetleAtkB — Beetle Leader's Flaming Abdomen: charges in a line,
+    // 3 damage + forward push on target, sets every passed tile on fire
+    // (final resting tile excluded). Charge handler reads CHARGE + FIRE
+    // flags + push=Forward to apply these three effects.
+    w[112] = WeaponDef { weapon_type: WeaponType::Charge, damage: 3, push: PushDir::Forward, range_max: 0,
+        flags: f(WeaponFlags::CHARGE.bits() | WeaponFlags::FIRE.bits()), ..DEF };
 
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
@@ -557,6 +567,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "HornetAtk1" => WId::HornetAtk1,
         "HornetAtk2" => WId::HornetAtk2,
         "HornetAtkB" => WId::HornetAtkB,
+        "BeetleAtkB" => WId::BeetleAtkB,
         "LeaperAtk1" => WId::LeaperAtk1,
         "BeetleAtk1" => WId::BeetleAtk1,
         "BeetleAtk2" => WId::BeetleAtk2,
@@ -710,6 +721,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PlasmodiaAtk2 => "PlasmodiaAtk2",
         WId::FireflyAtkB => "FireflyAtkB",
         WId::ScorpionAtkB => "ScorpionAtkB",
+        WId::BeetleAtkB => "BeetleAtkB",
         WId::Repair => "_REPAIR",
         _ => "",
     }
@@ -778,6 +790,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         // Bosses
         "FireflyBoss" => WId::FireflyAtkB,
         "ScorpionBoss" => WId::ScorpionAtkB,
+        "BeetleBoss" => WId::BeetleAtkB,
         _ => WId::None,
     }
 }
@@ -883,6 +896,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
         WId::FireflyAtkB => "Firefly Boss Shot",
         WId::ScorpionAtkB => "Massive Spinneret",
+        WId::BeetleAtkB => "Flaming Abdomen",
         _ => "Unknown",
     }
 }

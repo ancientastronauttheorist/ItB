@@ -630,6 +630,13 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=2, push="outward", web=True,
         aoe_adjacent=True, aoe_center=False,
     ),
+    # Beetle Leader: Flaming Abdomen. Charges in a line, 3 damage +
+    # forward push to target, lights every passed tile on Fire
+    # (final resting tile excluded per wiki).
+    "BeetleAtkB": WeaponDef(
+        name="Flaming Abdomen", weapon_type="charge",
+        damage=3, push="forward", fire=True, charge=True,
+    ),
 
     # ── Shamans (support/buff — no direct damage) ───────────────────
     "ShamanAtk1": WeaponDef(

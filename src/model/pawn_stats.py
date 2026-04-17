@@ -126,6 +126,7 @@ VEK_STATS = {
     "Jelly_Spider1": PawnStats(move_speed=2, flying=True, leader="LEADER_SPIDER", pushable=False),
     # Bosses
     "FireflyBoss":   PawnStats(move_speed=3, ranged=1, massive=True),
+    "BeetleBoss":    PawnStats(move_speed=3, ranged=0, massive=True),
     # Minor enemies
     "Spiderling1":   PawnStats(move_speed=3, minor=True, ranged=0),
     "Spiderling2":   PawnStats(move_speed=3, minor=True, ranged=0),

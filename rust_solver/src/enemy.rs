@@ -411,6 +411,7 @@ pub fn simulate_enemy_attacks(
                 // Must be valid cardinal direction
                 if (dx != 0) != (dy != 0) {
                     let mut hit: Option<(u8, u8)> = None;
+                    let mut hit_i: i8 = 0;
                     for i in 1..8i8 {
                         let nx = ex as i8 + dx * i;
                         let ny = ey as i8 + dy * i;
@@ -419,21 +420,55 @@ pub fn simulate_enemy_attacks(
                         let nyu = ny as u8;
 
                         let tile = board.tile(nxu, nyu);
-                        if tile.terrain == Terrain::Mountain { break; }
+                        if tile.terrain == Terrain::Mountain {
+                            hit = Some((nxu, nyu));
+                            hit_i = i;
+                            break;
+                        }
                         if tile.terrain.is_deadly_ground() { break; }
                         if tile.is_building() {
                             hit = Some((nxu, nyu));
+                            hit_i = i;
                             break;
                         }
                         if board.unit_at(nxu, nyu).is_some() {
                             hit = Some((nxu, nyu));
+                            hit_i = i;
                             break;
                         }
                     }
 
                     if let Some((hx, hy)) = hit {
+                        // Flaming Abdomen: fire on every PASSED tile (i=1..hit_i-1)
+                        // EXCLUDING the final resting tile (i=hit_i-1). So fire
+                        // on tiles i=1..=(hit_i-2).
+                        if wdef.fire() {
+                            for i in 1..=(hit_i - 2) {
+                                let fx = (ex as i8 + dx * i) as u8;
+                                let fy = (ey as i8 + dy * i) as u8;
+                                board.tile_mut(fx, fy).set_on_fire(true);
+                                if let Some(idx) = board.unit_at(fx, fy) {
+                                    if !board.units[idx].frozen() {
+                                        board.units[idx].set_fire(true);
+                                    }
+                                }
+                            }
+                        }
+
                         let d = enemy_hit_damage(board, hx, hy, damage, vh);
                         apply_damage(board, hx, hy, d, &mut result, DamageSource::Weapon);
+
+                        // Forward push: pushes target in charge direction.
+                        if wdef.push == PushDir::Forward {
+                            let push_dir_idx: usize = match (dx, dy) {
+                                (0, 1) => 0,
+                                (1, 0) => 1,
+                                (0, -1) => 2,
+                                (-1, 0) => 3,
+                                _ => 0,
+                            };
+                            apply_push(board, hx, hy, push_dir_idx, &mut result);
+                        }
                     }
                 }
             }
@@ -554,9 +589,85 @@ pub fn simulate_enemy_attacks(
         }
     }
 
+    // Train_Pawn end-of-enemy-phase advance: moves 2 tiles forward along its
+    // rail (direction = primary_tile - extra_tile). If either destination
+    // tile is blocked (mountain, building, any non-train unit, or a wreck),
+    // the train is destroyed (both tiles hp = 0 → friendly_npc_killed fires
+    // twice in evaluate). If destinations are off-board, treat as surviving
+    // (train has reached the far edge). Skip if train was already killed by
+    // enemy attacks above.
+    simulate_train_advance(board);
+
     // Count buildings destroyed from result
     buildings_destroyed += result.grid_damage;
     buildings_destroyed
+}
+
+/// Advance the Supply Train 2 tiles forward. Called at end of enemy phase.
+///
+/// Direction is inferred from the two tile entries sharing uid: forward =
+/// primary - extra (extra_tile is the caboose, primary is the locomotive).
+/// Train is destroyed if either entered tile is blocked by a mountain,
+/// building, or a non-train unit (including mechs and wrecks). Off-board
+/// destinations count as reaching the exit — train stays alive at its
+/// current position (not advanced off the board). Called once per turn.
+pub fn simulate_train_advance(board: &mut Board) {
+    let mut primary: Option<usize> = None;
+    let mut extra: Option<usize> = None;
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.type_name_str() != "Train_Pawn" || u.hp <= 0 { continue; }
+        if u.is_extra_tile() { extra = Some(i); } else { primary = Some(i); }
+    }
+    let (p, e) = match (primary, extra) {
+        (Some(p), Some(e)) => (p, e),
+        _ => return,
+    };
+
+    let (px, py) = (board.units[p].x as i8, board.units[p].y as i8);
+    let (ex, ey) = (board.units[e].x as i8, board.units[e].y as i8);
+    let dx = px - ex;
+    let dy = py - ey;
+    // Must be unit-length cardinal (sanity check).
+    if dx.abs() + dy.abs() != 1 { return; }
+
+    // The extra tile moves into (px+dx, py+dy) — that space is already train
+    // body (primary's old position). The primary tile passes through
+    // (px+dx, py+dy) on its way to (px+2dx, py+2dy). We must check BOTH new
+    // tiles the train enters that weren't already train body:
+    //   - (px+dx, py+dy): primary's intermediate step (extra's final pos)
+    //   - (px+2dx, py+2dy): primary's final pos
+    let steps = [(px + dx, py + dy), (px + 2 * dx, py + 2 * dy)];
+    for (nx, ny) in steps.iter() {
+        if *nx < 0 || *nx >= 8 || *ny < 0 || *ny >= 8 {
+            // Off-board: train has reached the exit. Leave hp alive, don't
+            // advance — subsequent turns won't find the train to re-advance
+            // because its position is still valid on-board this turn.
+            return;
+        }
+        let (nxu, nyu) = (*nx as u8, *ny as u8);
+        let t = board.tile(nxu, nyu);
+        if t.terrain == Terrain::Mountain || t.terrain == Terrain::Building {
+            board.units[p].hp = 0;
+            board.units[e].hp = 0;
+            return;
+        }
+        if let Some(idx) = board.any_unit_at(nxu, nyu) {
+            // Allow only the train itself (shouldn't happen for new tiles
+            // but guard defensively). Any other unit or wreck blocks.
+            if board.units[idx].type_name_str() != "Train_Pawn" {
+                board.units[p].hp = 0;
+                board.units[e].hp = 0;
+                return;
+            }
+        }
+    }
+
+    // Path clear — advance both tiles 2 forward.
+    board.units[p].x = (px + 2 * dx) as u8;
+    board.units[p].y = (py + 2 * dy) as u8;
+    board.units[e].x = (ex + 2 * dx) as u8;
+    board.units[e].y = (ey + 2 * dy) as u8;
 }
 
 /// Trace projectile from enemy position in queued direction.
@@ -730,6 +841,163 @@ mod tests {
         };
         unit.set_type_name("PunchMech");
         board.add_unit(unit)
+    }
+
+    fn add_train(board: &mut Board, px: u8, py: u8, ex: u8, ey: u8) -> (usize, usize) {
+        let mut primary = Unit {
+            uid: 2524, x: px, y: py, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::default(),
+            ..Default::default()
+        };
+        primary.set_type_name("Train_Pawn");
+        let p = board.add_unit(primary);
+
+        let mut extra = Unit {
+            uid: 2524, x: ex, y: ey, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::EXTRA_TILE,
+            ..Default::default()
+        };
+        extra.set_type_name("Train_Pawn");
+        let e = board.add_unit(extra);
+        (p, e)
+    }
+
+    #[test]
+    fn test_train_advances_on_clear_path() {
+        // Train at (4,7)+(4,6), forward direction (0,-1). Advances to (4,5)+(4,4).
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        simulate_train_advance(&mut board);
+        assert_eq!(board.units[p].hp, 1, "primary survives");
+        assert_eq!(board.units[e].hp, 1, "extra survives");
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 4), "primary advanced 2 forward");
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 5), "extra advanced 2 forward");
+    }
+
+    #[test]
+    fn test_train_dies_when_blocked_by_mountain() {
+        // Train at (4,6)+(4,7) facing y-1. Mountain at (4,5) blocks first step.
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        board.tile_mut(4, 5).terrain = Terrain::Mountain;
+        simulate_train_advance(&mut board);
+        assert_eq!(board.units[p].hp, 0, "primary dies");
+        assert_eq!(board.units[e].hp, 0, "extra dies");
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 6), "positions not advanced on death");
+    }
+
+    #[test]
+    fn test_train_dies_when_blocked_by_vek() {
+        // Vek at (4,4) blocks second step.
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        add_enemy_with_type(&mut board, 100, 4, 4, 2, "Scarab1", -1, -1);
+        simulate_train_advance(&mut board);
+        assert_eq!(board.units[p].hp, 0);
+        assert_eq!(board.units[e].hp, 0);
+    }
+
+    #[test]
+    fn test_train_survives_off_board_exit() {
+        // Train one step from the edge facing y-1. New tiles would be (4,-1)
+        // and (4,-2) — off board = exit reached, train stays alive in place.
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 0, 4, 1);
+        simulate_train_advance(&mut board);
+        assert_eq!(board.units[p].hp, 1, "train alive at exit");
+        assert_eq!(board.units[e].hp, 1);
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 0), "no position change at exit");
+    }
+
+    #[test]
+    fn test_train_skipped_when_already_dead() {
+        // Train pre-killed by Vek attack earlier in enemy phase.
+        let mut board = Board::default();
+        let (p, e) = add_train(&mut board, 4, 6, 4, 7);
+        board.units[p].hp = 0;
+        board.units[e].hp = 0;
+        simulate_train_advance(&mut board);
+        // No crash, no state mutation beyond what we set up.
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 6));
+    }
+
+    fn add_beetle_boss(board: &mut Board, uid: u16, x: u8, y: u8, qtx: u8, qty: u8) -> usize {
+        let mut unit = Unit {
+            uid, x, y, hp: 6, max_hp: 6,
+            team: Team::Enemy,
+            flags: UnitFlags::MASSIVE,
+            queued_target_x: qtx as i8,
+            queued_target_y: qty as i8,
+            weapon: WeaponId(WId::BeetleAtkB as u16),
+            weapon_damage: 3,
+            ..Default::default()
+        };
+        unit.set_type_name("BeetleBoss");
+        board.add_unit(unit)
+    }
+
+    #[test]
+    fn test_beetle_leader_weapon_mapping() {
+        // Bridge sends "BeetleAtkB"; wid_from_str should map to the new weapon.
+        assert_eq!(wid_from_str("BeetleAtkB"), WId::BeetleAtkB);
+        assert_eq!(wid_to_str(WId::BeetleAtkB), "BeetleAtkB");
+        assert_eq!(enemy_weapon_for_type("BeetleBoss"), WId::BeetleAtkB);
+    }
+
+    #[test]
+    fn test_beetle_leader_adjacent_target_building() {
+        // Beetle at (4,5), queued target (4,6) = adjacent building.
+        // No passed tiles → no fire trail. Push on building = bump (building
+        // ignores push but takes bump damage — the apply_damage on impact
+        // already handled the main damage, so push is a no-op here).
+        let mut board = Board::default();
+        board.tile_mut(4, 6).terrain = Terrain::Building;
+        board.tile_mut(4, 6).building_hp = 2;
+        add_beetle_boss(&mut board, 100, 4, 5, 4, 6);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+        // Building took 3 damage → destroyed. No fire tiles (no passed tiles).
+        assert_eq!(board.tile(4, 6).building_hp, 0, "building destroyed");
+        assert_eq!(board.tile(4, 5).on_fire(), false, "no fire on start tile");
+    }
+
+    #[test]
+    fn test_beetle_leader_fire_trail_on_long_charge() {
+        // Beetle at (4,7), target direction = y-1, blocker at (4,2).
+        // Beetle passes through tiles at i=1..5 (y=6,5,4,3,2). Blocker at i=5.
+        // Final resting = i=4 (y=3). Fire on i=1..3 (y=6,5,4). Target at y=2.
+        let mut board = Board::default();
+        // Put a vek at (4,2) as blocker
+        add_enemy_with_type(&mut board, 200, 4, 2, 3, "Scarab1", -1, -1);
+        add_beetle_boss(&mut board, 100, 4, 7, 4, 2);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+
+        // Passed-through tiles get fire: (4,6), (4,5), (4,4). Final resting
+        // (4,3) does NOT get fire. Target (4,2) takes damage.
+        assert!(board.tile(4, 6).on_fire(), "fire on first passed tile");
+        assert!(board.tile(4, 5).on_fire(), "fire on second passed tile");
+        assert!(board.tile(4, 4).on_fire(), "fire on third passed tile");
+        assert_eq!(board.tile(4, 3).on_fire(), false, "no fire on resting tile");
+        assert_eq!(board.tile(4, 2).on_fire(), false, "no fire on target tile");
+    }
+
+    #[test]
+    fn test_beetle_leader_push_on_impact() {
+        // Beetle at (4,5), target (4,6). Beetle hits the enemy at (4,6) and
+        // should push it forward (toward y+1) to (4,7). (4,7) is empty ground.
+        let mut board = Board::default();
+        let target = add_enemy_with_type(&mut board, 200, 4, 6, 2, "Scarab1", -1, -1);
+        add_beetle_boss(&mut board, 100, 4, 5, 4, 6);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig);
+        // Target took 3 damage (2 HP → 0, dead) AND was pushed.
+        // If Scarab dies first, push moves a dead unit. Per apply_push
+        // (any_unit_at), dead units can still be pushed. We just verify
+        // the damage applied correctly.
+        assert!(board.units[target].hp <= 0, "target killed by 3 dmg (hp={})", board.units[target].hp);
     }
 
     #[test]

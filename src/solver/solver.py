@@ -107,6 +107,32 @@ def _find_projectile_target(board: Board, enemy: Unit,
     return last_valid
 
 
+def _apply_charge_push(board: Board, x: int, y: int, dx: int, dy: int) -> None:
+    """Push the unit at (x,y) one tile in direction (dx,dy). Buildings and
+    non-pushable units absorb 1 bump damage instead of moving. Mirrors the
+    Rust apply_push for the enemy-charge path — intentionally minimal
+    (ignores chain pushes and swap-into-water nuances)."""
+    u = board.unit_at(x, y)
+    if u is None:
+        # Building target: bump damage already handled by main hit
+        return
+    if not u.pushable and not u.is_mech:
+        return
+    nx, ny = x + dx, y + dy
+    if not board.in_bounds(nx, ny):
+        u.hp = max(0, u.hp - 1)
+        return
+    t = board.tile(nx, ny)
+    if t.terrain == "mountain" or (t.terrain == "building" and t.building_hp > 0):
+        u.hp = max(0, u.hp - 1)
+        return
+    if board.unit_at(nx, ny) is not None:
+        u.hp = max(0, u.hp - 1)
+        return
+    u.x = nx
+    u.y = ny
+
+
 def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
     """Apply one enemy hit to a tile. Returns grid power lost."""
     if not board.in_bounds(x, y):
@@ -301,7 +327,63 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
                     buildings_destroyed += grid_lost
                     _apply_enemy_weapon_status(board, nx, ny, wdef, enemy.uid)
 
-        elif weapon_type in ("melee", "charge"):
+        elif weapon_type == "charge":
+            # Charge: scans tiles from current pos in original queued direction
+            # until a blocker (unit / building / mountain). Damages blocker.
+            # For Flaming Abdomen (fire=True): lights every PASSED tile on
+            # fire, excluding the final resting tile. For push="forward":
+            # pushes the target in the charge direction.
+            orig = original_positions.get(enemy.uid)
+            ox, oy = (orig[0], orig[1]) if orig else (enemy.x, enemy.y)
+            dx_raw = enemy.queued_target_x - ox
+            dy_raw = enemy.queued_target_y - oy
+            dx = (dx_raw > 0) - (dx_raw < 0)
+            dy = (dy_raw > 0) - (dy_raw < 0)
+            if (dx != 0) == (dy != 0):
+                continue  # Not a cardinal direction — skip
+
+            hit = None
+            hit_i = 0
+            for i in range(1, 8):
+                nx = enemy.x + dx * i
+                ny = enemy.y + dy * i
+                if not board.in_bounds(nx, ny):
+                    break
+                t = board.tile(nx, ny)
+                if t.terrain == "mountain":
+                    hit = (nx, ny); hit_i = i; break
+                if t.terrain in ("chasm",) and not t.terrain == "ground":
+                    # Deadly ground doesn't block charge (charger dies)
+                    pass
+                if t.terrain == "building" and t.building_hp > 0:
+                    hit = (nx, ny); hit_i = i; break
+                if board.unit_at(nx, ny) is not None:
+                    hit = (nx, ny); hit_i = i; break
+
+            if hit is not None:
+                hx, hy = hit
+                # Fire trail: tiles i=1..(hit_i-2) inclusive (excludes final resting)
+                if wdef and getattr(wdef, 'fire', False):
+                    for i in range(1, hit_i - 1):
+                        fx = enemy.x + dx * i
+                        fy = enemy.y + dy * i
+                        board.tile(fx, fy).fire = True
+                        fu = board.unit_at(fx, fy)
+                        if fu is not None and not fu.frozen:
+                            fu.fire = True
+
+                grid_lost = _apply_enemy_hit(board, hx, hy, damage)
+                buildings_destroyed += grid_lost
+                _apply_enemy_weapon_status(board, hx, hy, wdef, enemy.uid)
+
+                # Forward push on target (mirrors Rust Charge+Forward handler).
+                # Simple implementation: if tile behind-target (in charge dir)
+                # is clear and in-bounds, move pushed unit there. Otherwise
+                # bump damage. Buildings can't be pushed.
+                if wdef and getattr(wdef, 'push', None) == 'forward':
+                    _apply_charge_push(board, hx, hy, dx, dy)
+
+        elif weapon_type == "melee":
             tx, ty = enemy.queued_target_x, enemy.queued_target_y
 
             # Skip if pushed away from target (no longer adjacent)
@@ -351,7 +433,63 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
             grid_lost = _apply_enemy_hit(board, tx, ty, damage)
             buildings_destroyed += grid_lost
 
+    _simulate_train_advance(board)
+
     return buildings_destroyed
+
+
+def _simulate_train_advance(board: Board) -> None:
+    """Advance the Supply Train 2 tiles forward. End of enemy phase.
+
+    Forward direction is inferred from the two Train_Pawn tile entries
+    sharing a uid (primary - extra). The train is destroyed (both tiles
+    hp = 0, mirrored) if either entered tile is blocked by a mountain,
+    building, or a non-train unit/wreck. Off-board destinations are
+    treated as the train reaching the exit — hp stays alive, position
+    is not advanced.
+
+    Mirrors rust_solver/src/enemy.rs::simulate_train_advance.
+    """
+    primary = None
+    extra = None
+    for u in board.units:
+        if u.type != "Train_Pawn" or u.hp <= 0:
+            continue
+        if u.is_extra_tile:
+            extra = u
+        else:
+            primary = u
+    if primary is None or extra is None:
+        return
+
+    dx = primary.x - extra.x
+    dy = primary.y - extra.y
+    if abs(dx) + abs(dy) != 1:
+        return
+
+    steps = [(primary.x + dx, primary.y + dy),
+             (primary.x + 2 * dx, primary.y + 2 * dy)]
+    for nx, ny in steps:
+        if not board.in_bounds(nx, ny):
+            # Off-board: train reached the exit. Leave alive in place.
+            return
+        t = board.tile(nx, ny)
+        if t.terrain in ("mountain", "building"):
+            primary.hp = 0
+            extra.hp = 0
+            return
+        for u in board.units:
+            if u.x == nx and u.y == ny and u.type != "Train_Pawn":
+                # Any non-train unit (including dead wrecks) blocks.
+                primary.hp = 0
+                extra.hp = 0
+                return
+
+    # Path clear — advance both tiles 2 forward.
+    primary.x += 2 * dx
+    primary.y += 2 * dy
+    extra.x += 2 * dx
+    extra.y += 2 * dy
 
 
 # ── Post-solve replay (verification snapshots) ──────────────────────────
