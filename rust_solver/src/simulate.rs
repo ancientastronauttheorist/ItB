@@ -189,11 +189,18 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     // (ITB rule: multi-building tiles are all-or-nothing, not incremental HP)
     let mut bldg_hp_lost: u8 = 0;
     {
+        let idx = xy_to_idx(x, y) as u64;
+        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
             let old_hp = tile.building_hp;
             tile.building_hp = 0;
-            tile.terrain = Terrain::Rubble;
+            // Objective unique_buildings stay as Terrain::Building with hp=0
+            // (still blocks movement in-game). Regular buildings collapse to
+            // Rubble so their tile becomes walkable.
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
             bldg_hp_lost = old_hp;
             result.buildings_damaged += old_hp as i32;
             result.grid_damage += old_hp as i32;
@@ -418,20 +425,31 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         return;
     }
 
-    // Blocked by building — both take 1 bump (building loses grid power)
-    if board.tile(nx, ny).terrain == Terrain::Building && board.tile(nx, ny).building_hp > 0 {
-        apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
-        result.buildings_bump_damaged += 1;
-        let bt = board.tile_mut(nx, ny);
-        bt.building_hp -= 1;
-        if bt.building_hp == 0 {
-            bt.terrain = Terrain::Rubble;
-            result.grid_damage += 1;
-            result.buildings_lost += 1;
-            board.grid_power = board.grid_power.saturating_sub(1);
+    // Blocked by building — live building both take 1 bump; destroyed
+    // objective building (terrain=Building, hp=0, e.g. Emergency Batteries
+    // after destruction) still blocks but takes no further damage.
+    if board.tile(nx, ny).terrain == Terrain::Building {
+        let dest_idx = xy_to_idx(nx, ny) as u64;
+        let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
+        if board.tile(nx, ny).building_hp > 0 {
+            apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
+            result.buildings_bump_damaged += 1;
+            let bt = board.tile_mut(nx, ny);
+            bt.building_hp -= 1;
+            if bt.building_hp == 0 {
+                if !is_unique {
+                    bt.terrain = Terrain::Rubble;
+                }
+                result.grid_damage += 1;
+                result.buildings_lost += 1;
+                board.grid_power = board.grid_power.saturating_sub(1);
+            } else {
+                result.buildings_damaged += 1;
+                board.grid_power = board.grid_power.saturating_sub(1);
+            }
         } else {
-            result.buildings_damaged += 1;
-            board.grid_power = board.grid_power.saturating_sub(1);
+            // Destroyed objective: bump the thrown unit only.
+            apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
         }
         return;
     }
@@ -556,20 +574,29 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         return;
     }
 
-    // Blocked by building — BOTH take 1 bump damage (empirically verified)
-    if board.tile(nx, ny).terrain == Terrain::Building && board.tile(nx, ny).building_hp > 0 {
-        apply_damage(board, x, y, 1, result, DamageSource::Bump);
-        result.buildings_bump_damaged += 1;
-        let bt = board.tile_mut(nx, ny);
-        bt.building_hp -= 1;
-        if bt.building_hp == 0 {
-            bt.terrain = Terrain::Rubble;
-            result.grid_damage += 1;
-            result.buildings_lost += 1;
-            board.grid_power = board.grid_power.saturating_sub(1);
+    // Blocked by building — live building: BOTH take 1 bump.
+    // Destroyed objective (terrain=Building, hp=0): only pushed unit bumps.
+    if board.tile(nx, ny).terrain == Terrain::Building {
+        let dest_idx = xy_to_idx(nx, ny) as u64;
+        let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
+        if board.tile(nx, ny).building_hp > 0 {
+            apply_damage(board, x, y, 1, result, DamageSource::Bump);
+            result.buildings_bump_damaged += 1;
+            let bt = board.tile_mut(nx, ny);
+            bt.building_hp -= 1;
+            if bt.building_hp == 0 {
+                if !is_unique {
+                    bt.terrain = Terrain::Rubble;
+                }
+                result.grid_damage += 1;
+                result.buildings_lost += 1;
+                board.grid_power = board.grid_power.saturating_sub(1);
+            } else {
+                result.buildings_damaged += 1;
+                board.grid_power = board.grid_power.saturating_sub(1);
+            }
         } else {
-            result.buildings_damaged += 1;
-            board.grid_power = board.grid_power.saturating_sub(1);
+            apply_damage(board, x, y, 1, result, DamageSource::Bump);
         }
         return;
     }

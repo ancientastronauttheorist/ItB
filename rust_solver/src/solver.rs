@@ -86,9 +86,10 @@ pub(crate) fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, 
                         if board.wreck_at(txu, tyu) { continue; }
                         let dest_tile = board.tile(txu, tyu);
                         if dest_tile.terrain == Terrain::Mountain { continue; }
-                        if dest_tile.terrain == Terrain::Building && dest_tile.building_hp > 0 {
-                            continue;
-                        }
+                        // Any Building terrain blocks Vice Fist targeting, including
+                        // destroyed objective unique_buildings (terrain=Building, hp=0).
+                        // In-game the target highlight disappears.
+                        if dest_tile.terrain == Terrain::Building { continue; }
                     }
                 }
                 let has_unit = board.unit_at(nxu, nyu).is_some();

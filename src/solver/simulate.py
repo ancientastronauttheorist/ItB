@@ -193,7 +193,10 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
         # Any damage destroys ALL buildings on the tile (all-or-nothing rule)
         old_hp = tile.building_hp
         tile.building_hp = 0
-        tile.terrain = "rubble"
+        # Objective unique_buildings stay as terrain=building, hp=0 (still
+        # blocks movement in-game). Regular buildings collapse to rubble.
+        if not tile.unique_building:
+            tile.terrain = "rubble"
         result.buildings_damaged += old_hp
         result.grid_damage += old_hp
         result.buildings_lost += 1
@@ -323,13 +326,17 @@ def apply_throw(board: Board, ax: int, ay: int, tx: int, ty: int,
             tile_dest.terrain = "rubble"
         return
 
-    # Building
-    if tile_dest.terrain == "building" and tile_dest.building_hp > 0:
+    # Building — live building: both bump. Destroyed objective (hp=0,
+    # terrain stays 'building') still blocks but takes no further damage.
+    if tile_dest.terrain == "building":
         apply_damage(board, tx, ty, 1, result, "bump")
-        tile_dest.building_hp -= 1
-        board.grid_power = max(0, board.grid_power - 1)
-        if tile_dest.building_hp <= 0:
-            result.grid_damage += 1
+        if tile_dest.building_hp > 0:
+            tile_dest.building_hp -= 1
+            board.grid_power = max(0, board.grid_power - 1)
+            if tile_dest.building_hp <= 0:
+                result.grid_damage += 1
+                if not tile_dest.unique_building:
+                    tile_dest.terrain = "rubble"
         return
 
     # Unit blocker
@@ -415,24 +422,29 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         )
         return
 
-    # Blocked by building — pushed unit takes bump, building ALSO takes bump damage
-    if tile_dest.terrain == "building" and tile_dest.building_hp > 0:
+    # Blocked by building — live building: both take bump (empirically
+    # verified). Destroyed unique_building (terrain=building, hp=0) still
+    # blocks but takes no further damage.
+    if tile_dest.terrain == "building":
         apply_damage(board, x, y, 1, result, "bump")
-        # Building takes bump damage too (empirically verified)
-        tile_dest.building_hp -= 1
-        board.grid_power = max(0, board.grid_power - 1)
-        if tile_dest.building_hp <= 0:
-            result.grid_damage += 1
-            result.events.append(
-                f"Bump: building at ({nx},{ny}) destroyed by collision"
-            )
+        if tile_dest.building_hp > 0:
+            tile_dest.building_hp -= 1
+            board.grid_power = max(0, board.grid_power - 1)
+            if tile_dest.building_hp <= 0:
+                result.grid_damage += 1
+                if not tile_dest.unique_building:
+                    tile_dest.terrain = "rubble"
+                result.events.append(
+                    f"Bump: building at ({nx},{ny}) destroyed by collision"
+                )
+            else:
+                result.events.append(
+                    f"Bump: building at ({nx},{ny}) damaged by collision"
+                )
         else:
             result.events.append(
-                f"Bump: building at ({nx},{ny}) damaged by collision"
+                f"Bump: {unit.type} at ({x},{y}) blocked by destroyed unique_building at ({nx},{ny})"
             )
-        result.events.append(
-            f"Bump: {unit.type} at ({x},{y}) blocked by building at ({nx},{ny})"
-        )
         return
 
     # Blocked by another unit — BOTH take 1 bump damage, neither moves

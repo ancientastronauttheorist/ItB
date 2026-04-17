@@ -259,7 +259,11 @@ class Board:
             return True
         if self.wreck_at(x, y):
             return True  # dead unit wrecks block movement
-        if t.terrain == "building" and t.building_hp > 0:
+        if t.terrain == "building":
+            # Regular buildings turn to rubble when destroyed (own terrain);
+            # objective unique_buildings stay as terrain=building, hp=0 and
+            # remain impassable (IsBlocked=true in-game). So any 'building'
+            # terrain blocks movement regardless of HP.
             return True
         return False
 

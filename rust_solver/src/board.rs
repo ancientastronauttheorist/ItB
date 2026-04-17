@@ -327,7 +327,11 @@ impl Board {
         if !flying && t.terrain.is_deadly_ground() { return true; }
         if self.unit_at(x, y).is_some() { return true; }
         if self.wreck_at(x, y) { return true; }
-        if t.is_building() { return true; }
+        // Any Building terrain blocks: live buildings (hp>0) and destroyed
+        // objective unique_buildings (stay as terrain=Building with hp=0 and
+        // remain IsBlocked in-game). Regular buildings collapse to Rubble
+        // terrain when destroyed, so terrain=Building implies "still blocks".
+        if t.terrain == Terrain::Building { return true; }
         false
     }
 
