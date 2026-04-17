@@ -2266,6 +2266,93 @@ def _resolve_weapon_slot_from_board(mech_uid: int, weapon_id: str, board: Board)
     return 0
 
 
+def _narrate_fuzzy(
+    detections: list[dict],
+    soft_disables: list[dict],
+    unknowns: dict,
+) -> None:
+    """Print one-line human-readable summaries of self-healing events.
+
+    Called once per turn from ``cmd_auto_turn``. Kept separate from the
+    structured return dict so the operator can follow along without
+    parsing JSON, while automated callers still get the full data.
+    """
+    if not detections and not soft_disables and not (
+        unknowns.get("types") or unknowns.get("terrain_ids")
+    ):
+        return
+
+    print()
+    if unknowns.get("types") or unknowns.get("terrain_ids"):
+        bits = []
+        if unknowns.get("types"):
+            bits.append(f"types={','.join(unknowns['types'])}")
+        if unknowns.get("terrain_ids"):
+            bits.append(f"terrain={','.join(unknowns['terrain_ids'])}")
+        print(f"  UNKNOWNS flagged: {' '.join(bits)}")
+
+    for det in detections:
+        ctx = det.get("context") or {}
+        weapon = ctx.get("weapon") or "?"
+        tier = det.get("proposed_tier")
+        conf = det.get("confidence")
+        freq = det.get("frequency")
+        asym = det.get("asymmetry") or []
+        asym_str = f" [{','.join(asym)}]" if asym else ""
+        gap_str = " model_gap" if det.get("model_gap") else ""
+        print(
+            f"  FUZZY: {det.get('top_category')} on {weapon} "
+            f"(mech {ctx.get('mech_uid')} {ctx.get('sub_action')}#"
+            f"{ctx.get('action_index')}) "
+            f"freq={freq} tier={tier} conf={conf:.2f}{asym_str}{gap_str}"
+        )
+
+    for sd in soft_disables:
+        new_marker = "new" if sd.get("new_entry") else "extended"
+        print(
+            f"  SOFT-DISABLE ({new_marker}): {sd['weapon_id']} until turn "
+            f"{sd['expires_turn']} (cause={sd['cause']}, "
+            f"freq={sd.get('frequency')})"
+        )
+
+
+def _maybe_soft_disable(
+    session: RunSession,
+    signal: dict,
+    turn: int,
+    fired: list[dict],
+    window: int = 3,
+) -> None:
+    """Apply the Tier 2 response if the signal proposes it.
+
+    Writes to ``session.disabled_actions`` and appends a narrator-friendly
+    summary to ``fired`` so ``cmd_auto_turn`` can surface the action in
+    its return dict + terminal output.
+
+    Expiry is ``turn + window`` so the block lives through the next
+    ``window`` turns (inclusive). Phase 1 uses a fixed window; Phase 2
+    will gate expiry on topology change (new Vek spawn, building lost).
+    """
+    if signal.get("proposed_tier") != 2:
+        return
+    weapon = (signal.get("context") or {}).get("weapon")
+    if not weapon:
+        return
+    cause = signal.get("signature", "unknown")
+    expires = turn + window
+    added = session.add_disabled_action(
+        weapon_id=weapon, cause=cause, expires_turn=expires,
+    )
+    fired.append({
+        "weapon_id": weapon,
+        "cause": cause,
+        "expires_turn": expires,
+        "confidence": signal.get("confidence"),
+        "frequency": signal.get("frequency"),
+        "new_entry": added,
+    })
+
+
 def _log_sub_action_desync(
     session: RunSession,
     phase: str,
@@ -2419,6 +2506,15 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     score = solve_result.get("score", 0)
     session = _load_session()
 
+    # Self-healing loop Phase 1: prune expired blocklist entries and
+    # snapshot the evidence window so we can report what fired THIS turn
+    # (the suffix of failure_events_this_run after processing) instead
+    # of dumping the whole run's history.
+    session.prune_disabled_actions(turn)
+    pre_turn_event_count = len(session.failure_events_this_run)
+    soft_disables_fired_this_turn: list[dict] = []
+    unknowns_flagged = read_result.get("unknowns") or {}
+
     # Load predicted_states from the solve recording
     run_dir = _recording_dir(session)
     mi = session.mission_index
@@ -2501,9 +2597,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             "sub_action": "move",
                             "action_index": actions_completed,
                             "turn": turn,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
                         },
+                        prior_events=session.failure_events_this_run,
                     )
                     session.failure_events_this_run.append(fuzzy_signal)
+                    _maybe_soft_disable(session, fuzzy_signal, turn,
+                                        fired=soft_disables_fired_this_turn)
                     _log_sub_action_desync(
                         session, "move", actions_completed, mech_uid,
                         pred_post_move, actual_board, diff, classification, turn,
@@ -2595,9 +2696,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         "sub_action": "attack",
                         "action_index": actions_completed,
                         "turn": turn,
+                        "weapon": action.weapon,
+                        "target": list(action.target),
                     },
+                    prior_events=session.failure_events_this_run,
                 )
                 session.failure_events_this_run.append(fuzzy_signal)
+                _maybe_soft_disable(session, fuzzy_signal, turn,
+                                    fired=soft_disables_fired_this_turn)
                 _log_sub_action_desync(
                     session, "attack", actions_completed, mech_uid,
                     pred_post_attack, actual_board, diff, classification, turn,
@@ -2663,6 +2769,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _print_result(result)
         return result
 
+    fuzzy_detections = session.failure_events_this_run[pre_turn_event_count:]
+    solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
+
     if end_result.get("status") == "PLAN":
         result = {
             "status": "PLAN",
@@ -2674,7 +2783,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "batch": end_result["batch"],
             "next_step": "dispatch batch via computer_batch, wait ~6s, "
                          "then `read`",
+            "fuzzy_detections": fuzzy_detections,
+            "soft_disabled": list(session.disabled_actions),
+            "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+            "unknowns_flagged": unknowns_flagged,
+            "solver_gap_events": solver_gap_events,
         }
+        _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                       unknowns_flagged)
         _print_result(result)
         return result
 
@@ -2694,7 +2810,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "re_solves": re_solve_count,
         "post_phase": post_phase,
         "grid_power": f"{post_grid}/{post_grid_max}",
+        "fuzzy_detections": fuzzy_detections,
+        "soft_disabled": list(session.disabled_actions),
+        "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+        "unknowns_flagged": unknowns_flagged,
+        "solver_gap_events": solver_gap_events,
     }
+    _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                   unknowns_flagged)
 
     if post_board and post_board.grid_power <= 0:
         result["game_over"] = True

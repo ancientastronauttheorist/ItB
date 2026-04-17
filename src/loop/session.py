@@ -188,6 +188,13 @@ class RunSession:
     # consume without re-reading ``failure_db.jsonl``.
     failure_events_this_run: list[dict] = field(default_factory=list)
 
+    # Phase 1 Tier 2 soft-disable blocklist. Each entry tells the solver
+    # to apply a score bias on actions using ``weapon_id`` until
+    # ``expires_turn`` (inclusive). Reset at mission boundaries.
+    # Rust enforcement lands in #P1-3; the field exists now so the
+    # detector can write entries and downstream Python can read them.
+    disabled_actions: list[dict] = field(default_factory=list)
+
     # --- Solution management ---
 
     def set_solution(self, actions: list[SolverAction], score: float, turn: int):
@@ -226,10 +233,19 @@ class RunSession:
     # --- Mission tracking ---
 
     def advance_mission(self, mission_name: str):
-        """Update mission and increment index if mission changed."""
+        """Update mission and increment index if mission changed.
+
+        Also clears the Tier 2 blocklist — a terrain-specific pattern
+        in mission A (Volatile Vek, acid pools) shouldn't carry into
+        mission B. ``failure_events_this_run`` intentionally persists
+        across missions: if weapon X's push direction is wrong, that's
+        a sim bug not an environment artifact, and the evidence stays
+        valid the whole run.
+        """
         if mission_name and mission_name != self.current_mission:
             self.current_mission = mission_name
             self.mission_index += 1
+            self.disabled_actions = []
 
     # --- Decision tracking ---
 
@@ -241,6 +257,54 @@ class RunSession:
             "label": label,
             **data,
         })
+
+    # --- Soft-disable blocklist (Phase 1 Tier 2) ---
+
+    def add_disabled_action(
+        self,
+        weapon_id: str,
+        cause: str,
+        expires_turn: int,
+        strategic_override: bool = False,
+    ) -> bool:
+        """Add a blocklist entry. Returns True if new, False if already present.
+
+        Dedup key is ``weapon_id`` alone — a weapon is either disabled or
+        not. If the same weapon is re-flagged, extend its expiry to the
+        later of the two rather than stacking entries.
+        """
+        for entry in self.disabled_actions:
+            if entry.get("weapon_id") == weapon_id:
+                entry["expires_turn"] = max(entry.get("expires_turn", 0),
+                                            expires_turn)
+                if cause and cause not in entry.get("cause_pattern", ""):
+                    # Preserve causal history as an "x|y" chain.
+                    existing = entry.get("cause_pattern", "")
+                    entry["cause_pattern"] = (
+                        f"{existing}|{cause}" if existing else cause
+                    )
+                return False
+        self.disabled_actions.append({
+            "weapon_id": weapon_id,
+            "cause_pattern": cause,
+            "expires_turn": expires_turn,
+            "strategic_override": strategic_override,
+        })
+        return True
+
+    def prune_disabled_actions(self, current_turn: int) -> int:
+        """Drop entries whose ``expires_turn`` has passed. Returns drop count.
+
+        Call at the start of each turn. Expiry is inclusive: an entry with
+        ``expires_turn == current_turn`` is still active for this turn and
+        drops next turn.
+        """
+        before = len(self.disabled_actions)
+        self.disabled_actions = [
+            e for e in self.disabled_actions
+            if e.get("expires_turn", 0) >= current_turn
+        ]
+        return before - len(self.disabled_actions)
 
     # --- Serialization ---
 
@@ -269,6 +333,7 @@ class RunSession:
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
             "tags": self.tags,
             "failure_events_this_run": self.failure_events_this_run,
+            "disabled_actions": self.disabled_actions,
         }
         return d
 
@@ -299,6 +364,7 @@ class RunSession:
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             tags=d.get("tags", []),
             failure_events_this_run=d.get("failure_events_this_run", []),
+            disabled_actions=d.get("disabled_actions", []),
         )
 
     # --- Persistence with file locking ---
