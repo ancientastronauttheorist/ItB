@@ -522,6 +522,15 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 spawning = bridge_data.get("spawning_tiles", [])
                 result["spawn_points"] = len(spawning)
 
+                # Self-healing loop Phase 0: flag any pawn type or terrain
+                # id we've never cataloged. Instrumentation only — no
+                # behavior change. Regenerate the baseline with
+                # scripts/regenerate_known_types.py.
+                from src.solver.unknown_detector import detect_unknowns
+                unknowns = detect_unknowns(board)
+                if unknowns["types"] or unknowns["terrain_ids"]:
+                    result["unknowns"] = unknowns
+
                 # Deployment zone (available on turn 0 during deployment)
                 deploy_zone = bridge_data.get("deployment_zone", [])
                 if deploy_zone:
@@ -2267,8 +2276,15 @@ def _log_sub_action_desync(
     diff,
     classification: dict,
     solved_turn: int,
+    fuzzy_signal: dict | None = None,
 ) -> None:
-    """Record a sub-action desync to the failure database."""
+    """Record a sub-action desync to the failure database.
+
+    ``fuzzy_signal`` is the self-healing loop Phase 0 payload from
+    ``src.solver.fuzzy_detector.evaluate`` — passed through unchanged
+    into both the per-action recording and the failure_db record so
+    the Phase 1 detector work has a training corpus to mine.
+    """
     from src.solver.analysis import append_to_failure_db
 
     diff_dict = diff.to_dict()
@@ -2287,6 +2303,8 @@ def _log_sub_action_desync(
         "diff": diff_dict,
         "classification": classification,
     }
+    if fuzzy_signal is not None:
+        verify_record["fuzzy_signal"] = fuzzy_signal
     _record_turn_state(session, f"action_{action_index}_{phase}_verify",
                        verify_record, turn_override=solved_turn)
 
@@ -2305,6 +2323,8 @@ def _log_sub_action_desync(
         "subcategory": classification.get("subcategory"),
         "diff": diff_dict,
     }
+    if fuzzy_signal is not None:
+        desync_trigger["fuzzy_signal"] = fuzzy_signal
 
     append_to_failure_db(
         [desync_trigger],
@@ -2320,6 +2340,9 @@ def _log_sub_action_desync(
             "tags": list(session.tags),
         },
     )
+    # Persist session so failure_events_this_run (appended at the hook
+    # site just before this call) survives across CLI invocations.
+    session.save()
     print(f"  DESYNC action {action_index} {phase}: "
           f"{diff.total_count()} diffs [{cat_label}]")
 
@@ -2345,6 +2368,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     Returns dict with turn results or error.
     """
     from src.solver.verify import diff_states, classify_diff
+    from src.solver import fuzzy_detector
     from src.bridge.writer import _resolve_weapon_slot
 
     if not is_bridge_active():
@@ -2469,9 +2493,21 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 diff = diff_states(pred_post_move, actual_board)
                 if not diff.is_empty():
                     classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
+                    fuzzy_signal = fuzzy_detector.evaluate(
+                        diff, classification,
+                        context={
+                            "mech_uid": mech_uid,
+                            "phase": "move",
+                            "sub_action": "move",
+                            "action_index": actions_completed,
+                            "turn": turn,
+                        },
+                    )
+                    session.failure_events_this_run.append(fuzzy_signal)
                     _log_sub_action_desync(
                         session, "move", actions_completed, mech_uid,
                         pred_post_move, actual_board, diff, classification, turn,
+                        fuzzy_signal=fuzzy_signal,
                     )
                     re_solve_count += 1
                     # Re-solve: this mech has moved but not attacked
@@ -2551,9 +2587,21 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             diff = diff_states(pred_post_attack, actual_board)
             if not diff.is_empty():
                 classification = classify_diff(diff, mech_uid=mech_uid, phase="attack")
+                fuzzy_signal = fuzzy_detector.evaluate(
+                    diff, classification,
+                    context={
+                        "mech_uid": mech_uid,
+                        "phase": "attack",
+                        "sub_action": "attack",
+                        "action_index": actions_completed,
+                        "turn": turn,
+                    },
+                )
+                session.failure_events_this_run.append(fuzzy_signal)
                 _log_sub_action_desync(
                     session, "attack", actions_completed, mech_uid,
                     pred_post_attack, actual_board, diff, classification, turn,
+                    fuzzy_signal=fuzzy_signal,
                 )
                 # Skip re-solve if spawn-only on last action (new Vek emerged)
                 is_last_action = (action_idx >= len(actions) - 1)

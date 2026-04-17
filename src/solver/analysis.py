@@ -433,8 +433,11 @@ def append_to_failure_db(
                 "replay_file": f"recordings/{run_id}/m{mission_index:02d}_turn_{turn:02d}_board.json",
             }
             # Optional per-action fields (Phase 2 verify loop).
+            # ``fuzzy_signal`` is the self-healing loop Phase 0 hook —
+            # readers (cmd_analyze, cmd_tune, regression corpus) use
+            # ``.get()`` on optional fields so this is additive-safe.
             for opt in ("action_index", "mech_uid", "category",
-                        "subcategory", "diff"):
+                        "subcategory", "diff", "fuzzy_signal"):
                 if opt in trigger:
                     record[opt] = trigger[opt]
             f.write(json.dumps(record) + "\n")
