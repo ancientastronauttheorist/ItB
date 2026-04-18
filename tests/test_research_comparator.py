@@ -80,6 +80,43 @@ def test_damage_mismatch_is_high_severity():
     assert damage_mm[0]["severity"] == "high"
 
 
+def test_ring_aoe_vision_reads_outer_damage_not_flagged():
+    """Cluster Artillery is ``damage=0, damage_outer=1`` — Vision reads
+    "1" on the preview card (the outer-ring number). That's a correct
+    observation, not a solver bug. Comparator should accept the match
+    when Vision's number equals ``damage_outer`` on an aoe_adjacent +
+    !aoe_center weapon. Exact replay of the P3-5 live-spin finding."""
+    parsed = vision.parse_weapon_preview({
+        "name": "Cluster Artillery",
+        "damage": 1,  # matches damage_outer, not damage
+        "footprint_tiles": [[-1, 0], [1, 0], [0, -1], [0, 1]],
+        "push_directions": ["north", "south", "east", "west"],
+        "description": "Ring damage + push outward.",
+    })
+    mm = comparator.compare_weapon(parsed)
+    damage_mm = [m for m in mm if m["field"] == "damage"]
+    assert damage_mm == [], (
+        f"ring-AoE Vision match should not fire damage mismatch: {damage_mm}"
+    )
+
+
+def test_ring_aoe_genuine_damage_disagreement_still_flagged():
+    """If Vision reports a number that matches NEITHER damage nor
+    damage_outer, the mismatch still fires — the outer-damage relaxation
+    is a valid-match widening, not a blanket suppression."""
+    parsed = vision.parse_weapon_preview({
+        "name": "Cluster Artillery",
+        "damage": 3,  # neither damage (0) nor damage_outer (1)
+        "footprint_tiles": [[-1, 0], [1, 0], [0, -1], [0, 1]],
+        "push_directions": ["north", "south", "east", "west"],
+        "description": "",
+    })
+    mm = comparator.compare_weapon(parsed)
+    damage_mm = [m for m in mm if m["field"] == "damage"]
+    assert len(damage_mm) == 1
+    assert damage_mm[0]["vision_value"] == 3
+
+
 # ── footprint_size mismatch ─────────────────────────────────────────────────
 
 

@@ -211,17 +211,29 @@ def compare_weapon(parsed: dict, confidence_floor: float = 0.5) -> list[dict]:
 
     wdef = WEAPON_DEFS[weapon_id]
 
-    # Damage
+    # Damage. Ring-AoE weapons (aoe_adjacent && !aoe_center) carry their
+    # damage in ``damage_outer`` and store 0 in ``damage``; Vision sees
+    # only the number on the preview card and can't tell which field it
+    # belongs to. Accept the match when the Vision number equals either
+    # ``damage`` or ``damage_outer`` — a mismatch only fires when Vision
+    # disagrees with BOTH. Prevents the Cluster Artillery false-positive
+    # that surfaced during the Phase 3 P3-5 live spin.
     rust_damage = int(wdef.damage)
+    rust_damage_outer = int(wdef.damage_outer)
     vision_damage = int(parsed.get("damage", 0))
-    if rust_damage != vision_damage:
-        # Passive weapons legitimately show no damage — Rust has 0 too,
-        # so this branch only fires when the numbers actually disagree.
+    damage_matches_primary = rust_damage == vision_damage
+    damage_matches_outer = (
+        rust_damage_outer > 0 and vision_damage == rust_damage_outer
+    )
+    if not (damage_matches_primary or damage_matches_outer):
         out.append({
             "weapon_id": weapon_id,
             "display_name": display_name,
             "field": "damage",
-            "rust_value": rust_damage,
+            "rust_value": (
+                {"damage": rust_damage, "damage_outer": rust_damage_outer}
+                if rust_damage_outer > 0 else rust_damage
+            ),
             "vision_value": vision_damage,
             "severity": "high",
             "confidence": parsed.get("confidence", 0.0),

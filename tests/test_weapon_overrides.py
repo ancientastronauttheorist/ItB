@@ -312,19 +312,22 @@ def test_submit_research_stages_candidate_from_high_mismatch(tmp_path,
     monkeypatch.setattr(wo, "DEFAULT_STAGED_PATH", staged_path)
 
     session = RunSession(run_id="r-stage-1", squad="rift_walkers")
-    session.enqueue_research("Cluster_Artillery", None, current_turn=0,
+    session.enqueue_research("Titan_Fist", None, current_turn=0,
                              kind="mech_weapon", slot=1)
     entry = session.research_queue[0]
     entry["research_id"] = "rsid-1"
 
-    # Vision payload that will trip the damage comparator against
-    # Ranged_Defensestrike (rust damage=0, vision reports damage=1).
+    # Genuine damage disagreement: Titan Fist is damage=2, Vision
+    # reports 5. Matches neither ``damage`` nor ``damage_outer``, so
+    # the comparator fires a high-severity mismatch the stager picks
+    # up. (Cluster Artillery was the P3-5 draft fixture but is now
+    # suppressed by the ring-AoE carve-out in comparator.py.)
     weapon_preview = {
-        "name": "Cluster Artillery",
+        "name": "Titan Fist",
         "description": "",
-        "damage": 1,
-        "footprint_tiles": [[0, 0]],
-        "push_directions": [],
+        "damage": 5,
+        "footprint_tiles": [[1, 0]],
+        "push_directions": ["east"],
         "confidence": 1.0,
     }
     out = orchestrator.submit_research(
@@ -337,11 +340,11 @@ def test_submit_research_stages_candidate_from_high_mismatch(tmp_path,
     assert out["mismatches"], "comparator should have emitted the damage mismatch"
     assert out["staged_candidates"], "high-severity damage mismatch should stage"
     cand = out["staged_candidates"][0]
-    assert cand["weapon_id"] == "Ranged_Defensestrike"
-    assert cand["damage"] == 1
+    assert cand["weapon_id"] == "Prime_Punchmech"
+    assert cand["damage"] == 5
     # File hit.
     lines = staged_path.read_text().splitlines()
-    assert any('"Ranged_Defensestrike"' in line for line in lines)
+    assert any('"Prime_Punchmech"' in line for line in lines)
 
 
 def test_override_changes_solver_plan_or_score():
