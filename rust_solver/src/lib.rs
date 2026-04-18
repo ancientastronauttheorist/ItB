@@ -28,6 +28,7 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
             99999, // no pruning — Rust is fast enough to search exhaustively
             &weights,
             disabled_mask,
+            &weapons::WEAPONS,
         );
 
         Ok(serde_bridge::solution_to_json(&solution))
@@ -87,6 +88,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 (act.move_to[0], act.move_to[1]),
                 wid,
                 (act.target[0], act.target[1]),
+                &crate::weapons::WEAPONS,
             );
             kills += result.enemies_killed as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -96,7 +98,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
             .count() as i32;
 
-        let _ = simulate_enemy_attacks(&mut board, &original_positions);
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &crate::weapons::WEAPONS);
 
         let buildings_after = board.tiles.iter()
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)

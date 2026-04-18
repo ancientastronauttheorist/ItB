@@ -123,6 +123,7 @@ pub fn apply_spawn_blocking(
 pub fn simulate_enemy_attacks(
     board: &mut Board,
     original_positions: &[(u8, u8); 16],
+    weapons: &WeaponTable,
 ) -> i32 {
     let mut buildings_destroyed = 0;
     let mut result = ActionResult::default();
@@ -254,13 +255,13 @@ pub fn simulate_enemy_attacks(
         // Look up actual weapon type from enemy pawn type
         let enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
         let wdef = if enemy_wid != WId::None {
-            weapon_def(enemy_wid)
+            &weapons[enemy_wid as usize]
         } else {
             // Fallback: use ranged flag for unknown enemy types
             if enemy.ranged() {
-                weapon_def(WId::FireflyAtk1) // generic projectile
+                &weapons[WId::FireflyAtk1 as usize] // generic projectile
             } else {
-                weapon_def(WId::HornetAtk1) // generic melee
+                &weapons[WId::HornetAtk1 as usize] // generic melee
             }
         };
 
@@ -744,7 +745,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 0, 0, 3, "Scarab1", 4, 0);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         // Artillery should hit building at (4,0) directly, ignoring mountain
         assert_eq!(board.tile(4, 0).building_hp, 0, "Scarab artillery should hit building through mountain");
@@ -761,7 +762,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 0, 0, 3, "Crab1", 4, 0);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert_eq!(board.tile(4, 0).building_hp, 0, "Crab should hit first tile");
         assert_eq!(board.tile(5, 0).building_hp, 0, "Crab should hit second tile");
@@ -778,7 +779,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 3, 3, 1, "BlobMini", 3, 3);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         // Blob should self-destruct (dies from AOE_CENTER)
         assert_eq!(board.units[0].hp, 0, "Blob should die from self-damage");
@@ -796,7 +797,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 0, 0, 4, "Beetle1", 5, 0);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         // Beetle should charge and hit the building
         assert_eq!(board.tile(5, 0).building_hp, 0, "Beetle charge should hit building");
@@ -813,7 +814,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 3, 3, 2, "Digger1", 3, 4);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         // Digger self-aoe should hit adjacent buildings (both directions)
         assert_eq!(board.tile(3, 4).building_hp, 0, "Digger should hit N building");
@@ -957,7 +958,7 @@ mod tests {
         board.tile_mut(4, 6).building_hp = 2;
         add_beetle_boss(&mut board, 100, 4, 5, 4, 6);
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
         // Building took 3 damage → destroyed. No fire tiles (no passed tiles).
         assert_eq!(board.tile(4, 6).building_hp, 0, "building destroyed");
         assert_eq!(board.tile(4, 5).on_fire(), false, "no fire on start tile");
@@ -973,7 +974,7 @@ mod tests {
         add_enemy_with_type(&mut board, 200, 4, 2, 3, "Scarab1", -1, -1);
         add_beetle_boss(&mut board, 100, 4, 7, 4, 2);
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         // Passed-through tiles get fire: (4,6), (4,5), (4,4). Final resting
         // (4,3) does NOT get fire. Target (4,2) takes damage.
@@ -992,7 +993,7 @@ mod tests {
         let target = add_enemy_with_type(&mut board, 200, 4, 6, 2, "Scarab1", -1, -1);
         add_beetle_boss(&mut board, 100, 4, 5, 4, 6);
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
         // Target took 3 damage (2 HP → 0, dead) AND was pushed.
         // If Scarab dies first, push moves a dead unit. Per apply_push
         // (any_unit_at), dead units can still be pushed. We just verify
@@ -1009,7 +1010,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert_eq!(board.units[mech_idx].hp, 1, "Mech should take 2 damage from Corrosive Vomit");
         assert!(board.units[mech_idx].acid(), "Mech should be ACID'd by Corrosive Vomit");
@@ -1026,7 +1027,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert_eq!(board.units[target_idx].hp, 3, "Primary target should take 2 damage");
         assert!(board.units[target_idx].acid(), "Primary target should be ACID'd");
@@ -1048,7 +1049,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert_eq!(board.tile(4, 4).terrain, Terrain::Water,
             "Water tile stays water (now A.C.I.D. Tile, i.e. water + acid flag)");
@@ -1066,7 +1067,7 @@ mod tests {
         add_enemy_with_type(&mut board, 1, 0, 3, 5, "Centipede2", 4, 3);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert!(board.tile(4, 4).acid(),
             "Ground tile hit by acid splash should become A.C.I.D. Pool");
@@ -1096,7 +1097,7 @@ mod tests {
         board.add_unit(unit);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         // A8 (primary impact) should be an acid tile
         assert!(board.tile(0, 7).acid(),
@@ -1116,7 +1117,7 @@ mod tests {
         let egg_idx = add_enemy_with_type(&mut board, 1, 3, 3, 1, "WebbEgg1", 3, 3);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert_eq!(board.units[egg_idx].hp, 1,
             "Egg should not self-damage on its turn (hatching, not attacking)");
@@ -1131,7 +1132,7 @@ mod tests {
         let _scorp_idx = add_enemy_with_type(&mut board, 42, 3, 3, 5, "Scorpion2", 3, 4);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert_eq!(board.units[mech_idx].hp, 2, "Mech should take 3 damage from Goring Spinneret");
         assert!(board.units[mech_idx].web(), "Mech should be webbed by Goring Spinneret");
@@ -1163,7 +1164,7 @@ mod tests {
         board.add_unit(unit);
 
         let orig = default_orig_pos(&board);
-        simulate_enemy_attacks(&mut board, &orig);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert_eq!(board.tile(3, 3).building_hp, 0, "First tile destroyed");
         assert_eq!(board.tile(4, 3).building_hp, 0, "Behind tile destroyed");

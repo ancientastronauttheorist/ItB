@@ -53,8 +53,15 @@ impl Solution {
 
 // ── Weapon target enumeration ────────────────────────────────────────────────
 
-pub(crate) fn get_weapon_targets(board: &Board, mx: u8, my: u8, weapon_id: WId, mech_from: (u8, u8)) -> Vec<(u8, u8)> {
-    let wdef = weapon_def(weapon_id);
+pub(crate) fn get_weapon_targets(
+    board: &Board,
+    mx: u8,
+    my: u8,
+    weapon_id: WId,
+    mech_from: (u8, u8),
+    weapons: &WeaponTable,
+) -> Vec<(u8, u8)> {
+    let wdef = &weapons[weapon_id as usize];
     let mut targets = Vec::new();
 
     match wdef.weapon_type {
@@ -219,11 +226,17 @@ type Action = ((u8, u8), WId, (u8, u8)); // (move_to, weapon, target)
 /// Returns false when firing at empty space where no unit can be hit or pushed —
 /// the solver should prefer move-only/skip in that case. Conservative: returns
 /// true when uncertain (e.g., unknown weapon types) to avoid hiding real options.
-fn weapon_action_has_effect(board: &Board, move_to: (u8, u8), weapon_id: WId, target: (u8, u8)) -> bool {
+fn weapon_action_has_effect(
+    board: &Board,
+    move_to: (u8, u8),
+    weapon_id: WId,
+    target: (u8, u8),
+    weapons: &WeaponTable,
+) -> bool {
     if weapon_id == WId::None || weapon_id == WId::Repair {
         return true;
     }
-    let wdef = weapon_def(weapon_id);
+    let wdef = &weapons[weapon_id as usize];
     let (mx, my) = move_to;
 
     let unit_at = |x: u8, y: u8| board.unit_at(x, y).is_some();
@@ -285,7 +298,7 @@ fn weapon_action_has_effect(board: &Board, move_to: (u8, u8), weapon_id: WId, ta
     }
 }
 
-fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
+fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> Vec<Action> {
     let unit = &board.units[mech_idx];
     let mut actions = Vec::with_capacity(100);
 
@@ -319,8 +332,8 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
             let w1_id = WId::from_raw(unit.weapon.0);
             if w1_id != WId::None {
                 let mech_from = (unit.x, unit.y);
-                for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id, mech_from) {
-                    if weapon_action_has_effect(board, pos, w1_id, target) {
+                for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id, mech_from, weapons) {
+                    if weapon_action_has_effect(board, pos, w1_id, target, weapons) {
                         actions.push((pos, w1_id, target));
                     }
                 }
@@ -329,8 +342,8 @@ fn enumerate_actions(board: &Board, mech_idx: usize) -> Vec<Action> {
             // Secondary weapon
             let w2_id = WId::from_raw(unit.weapon2.0);
             if w2_id != WId::None {
-                for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id, (unit.x, unit.y)) {
-                    if weapon_action_has_effect(board, pos, w2_id, target) {
+                for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id, (unit.x, unit.y), weapons) {
+                    if weapon_action_has_effect(board, pos, w2_id, target, weapons) {
                         actions.push((pos, w2_id, target));
                     }
                 }
@@ -367,6 +380,7 @@ fn prune_actions(
     building_threats: u64,   // bitset
     spawn_bits: u64,         // bitset of spawn tiles
     max_n: usize,
+    weapons: &WeaponTable,
 ) {
     if actions.len() <= max_n { return; }
 
@@ -395,7 +409,7 @@ fn prune_actions(
             // BUILDING DAMAGE PENALTY: penalize actions that push units into buildings.
             // When a push is blocked by a building, both the unit and building take
             // 1 bump damage — losing grid power. Apply -300 per building at risk.
-            let wdef = weapon_def(weapon_id);
+            let wdef = &weapons[weapon_id as usize];
             if wdef.push != PushDir::None {
                 match wdef.weapon_type {
                     // Melee / Projectile / Charge / Laser: Forward push on the hit target
@@ -541,6 +555,7 @@ fn search_recursive(
     weights: &EvalWeights,
     deadline: Instant,
     disabled_mask: u128,
+    weapons: &WeaponTable,
     best_score: &mut f64,
     best_actions: &mut Vec<MechAction>,
     best_clean_score: &mut f64,
@@ -554,7 +569,7 @@ fn search_recursive(
         // All mechs acted — snapshot buildings before enemy phase
         let mut b_eval = board.clone();
         let buildings_before_enemy = count_buildings(&b_eval);
-        simulate_enemy_attacks(&mut b_eval, original_positions);
+        simulate_enemy_attacks(&mut b_eval, original_positions, weapons);
         apply_spawn_blocking(&mut b_eval, spawn_points);
         let raw = evaluate(&b_eval, spawn_points, weights, kills_so_far, bumps_so_far, psion_before, building_threats);
         // Tier 2 soft-disable bias: penalize any candidate plan that
@@ -589,6 +604,7 @@ fn search_recursive(
             original_positions,
             spawn_points, max_actions, weights, deadline,
             disabled_mask,
+            weapons,
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
@@ -596,14 +612,14 @@ fn search_recursive(
         return;
     }
 
-    let mut actions = enumerate_actions(board, mech_idx);
-    prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, spawn_bits, max_actions);
+    let mut actions = enumerate_actions(board, mech_idx, weapons);
+    prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, spawn_bits, max_actions, weapons);
 
     for &(move_to, weapon_id, target) in &actions {
         if Instant::now() > deadline { return; }
 
         let mut b_next = board.clone(); // ~800 byte memcpy
-        let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target);
+        let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target, weapons);
 
         // Accumulate soft-disable penalty for blocked weapons. Bit index
         // is the u8 representation of the WId variant.
@@ -627,6 +643,7 @@ fn search_recursive(
             original_positions,
             spawn_points, max_actions, weights, deadline,
             disabled_mask,
+            weapons,
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
@@ -725,6 +742,7 @@ pub fn solve_turn(
     max_actions_per_mech: usize,
     weights: &EvalWeights,
     disabled_mask: u128,
+    weapons: &WeaponTable,
 ) -> Solution {
     let active: Vec<usize> = (0..board.unit_count as usize)
         .filter(|&i| {
@@ -784,6 +802,7 @@ pub fn solve_turn(
             &original_positions,
             spawn_points, effective_max, weights, deadline,
             disabled_mask,
+            weapons,
             &mut best_score, &mut best_actions,
             &mut best_clean_score, &mut best_clean_actions, initial_building_count,
             &psion_before,

@@ -539,6 +539,81 @@ pub fn weapon_def(id: WId) -> &'static WeaponDef {
     &WEAPONS[id as usize]
 }
 
+// ── Runtime weapon-def overrides ─────────────────────────────────────────────
+//
+// Compile-time `WEAPONS` is the default table. The Phase 3 self-healing loop
+// (see docs/self_healing_loop_design.md) may apply per-field patches to a
+// cloned table so solver behaviour can be corrected between solves without a
+// Rust rebuild. Production call sites thread `&WeaponTable` through the search
+// — when no overrides are active they receive `&WEAPONS` directly (no alloc).
+
+pub type WeaponTable = [WeaponDef; WEAPON_COUNT];
+
+/// Per-field patch applied on top of a base `WeaponDef`. Any `None` field is
+/// left untouched; flag bits set in `flags_set` are OR'd in and bits set in
+/// `flags_clear` are removed. Flags are deltas so two independent fixes on the
+/// same weapon (e.g. one sets `FIRE`, another clears `SMOKE`) don't conflict.
+#[derive(Clone, Debug, Default)]
+pub struct PartialWeaponDef {
+    pub weapon_type: Option<WeaponType>,
+    pub damage: Option<u8>,
+    pub damage_outer: Option<u8>,
+    pub push: Option<PushDir>,
+    pub self_damage: Option<u8>,
+    pub range_min: Option<u8>,
+    pub range_max: Option<u8>,
+    pub limited: Option<u8>,
+    pub path_size: Option<u8>,
+    pub flags_set: WeaponFlags,
+    pub flags_clear: WeaponFlags,
+}
+
+impl PartialWeaponDef {
+    pub fn is_empty(&self) -> bool {
+        self.weapon_type.is_none()
+            && self.damage.is_none()
+            && self.damage_outer.is_none()
+            && self.push.is_none()
+            && self.self_damage.is_none()
+            && self.range_min.is_none()
+            && self.range_max.is_none()
+            && self.limited.is_none()
+            && self.path_size.is_none()
+            && self.flags_set.is_empty()
+            && self.flags_clear.is_empty()
+    }
+
+    pub fn apply_to(&self, base: &mut WeaponDef) {
+        if let Some(v) = self.weapon_type { base.weapon_type = v; }
+        if let Some(v) = self.damage { base.damage = v; }
+        if let Some(v) = self.damage_outer { base.damage_outer = v; }
+        if let Some(v) = self.push { base.push = v; }
+        if let Some(v) = self.self_damage { base.self_damage = v; }
+        if let Some(v) = self.range_min { base.range_min = v; }
+        if let Some(v) = self.range_max { base.range_max = v; }
+        if let Some(v) = self.limited { base.limited = v; }
+        if let Some(v) = self.path_size { base.path_size = v; }
+        base.flags |= self.flags_set;
+        base.flags.remove(self.flags_clear);
+    }
+}
+
+/// Build a fresh `WeaponTable` with all `overrides` merged in, or return
+/// `None` when the effective override set is empty so callers can pass
+/// `&WEAPONS` directly and skip the allocation + copy.
+pub fn build_overlay_table(overrides: &[(WId, PartialWeaponDef)]) -> Option<Box<WeaponTable>> {
+    if overrides.iter().all(|(_, p)| p.is_empty()) {
+        return None;
+    }
+    let mut table: Box<WeaponTable> = Box::new(WEAPONS);
+    for (wid, patch) in overrides {
+        if !patch.is_empty() {
+            patch.apply_to(&mut table[*wid as usize]);
+        }
+    }
+    Some(table)
+}
+
 // ── String-to-WId mapping ────────────────────────────────────────────────────
 
 pub fn wid_from_str(s: &str) -> WId {

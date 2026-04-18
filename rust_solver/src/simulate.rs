@@ -797,7 +797,8 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
 
 // ── Weapon simulation dispatch ───────────────────────────────────────────────
 
-/// Simulate firing a weapon. Modifies board in-place.
+/// Simulate firing a weapon using the compile-time default weapon table.
+/// Thin wrapper around `simulate_weapon_with` retained for test call sites.
 pub fn simulate_weapon(
     board: &mut Board,
     attacker_idx: usize,
@@ -805,8 +806,21 @@ pub fn simulate_weapon(
     target_x: u8,
     target_y: u8,
 ) -> ActionResult {
+    simulate_weapon_with(board, attacker_idx, weapon_id, target_x, target_y, &WEAPONS)
+}
+
+/// Simulate firing a weapon. Modifies board in-place. `weapons` supplies
+/// the effective `WeaponDef` table (defaults or overlay-patched).
+pub fn simulate_weapon_with(
+    board: &mut Board,
+    attacker_idx: usize,
+    weapon_id: WId,
+    target_x: u8,
+    target_y: u8,
+    weapons: &WeaponTable,
+) -> ActionResult {
     let mut result = ActionResult::default();
-    let wdef = weapon_def(weapon_id);
+    let wdef = &weapons[weapon_id as usize];
 
     let ax = board.units[attacker_idx].x;
     let ay = board.units[attacker_idx].y;
@@ -1226,6 +1240,7 @@ pub fn simulate_action(
     move_to: (u8, u8),
     weapon_id: WId,
     target: (u8, u8),
+    weapons: &WeaponTable,
 ) -> ActionResult {
     let mut result = ActionResult::default();
 
@@ -1305,7 +1320,7 @@ pub fn simulate_action(
 
     // Attack
     if weapon_id != WId::None {
-        let attack_result = simulate_weapon(board, mech_idx, weapon_id, target.0, target.1);
+        let attack_result = simulate_weapon_with(board, mech_idx, weapon_id, target.0, target.1, weapons);
         result.merge(&attack_result);
     }
 
@@ -1648,7 +1663,7 @@ mod tests {
     // a bump. The solver must match the game and skip those targets entirely.
 
     fn throw_targets(board: &Board, mech_pos: (u8, u8), mech_from: (u8, u8)) -> Vec<(u8, u8)> {
-        crate::solver::get_weapon_targets(board, mech_pos.0, mech_pos.1, WId::PrimeShift, mech_from)
+        crate::solver::get_weapon_targets(board, mech_pos.0, mech_pos.1, WId::PrimeShift, mech_from, &WEAPONS)
     }
 
     #[test]
@@ -1871,7 +1886,7 @@ mod tests {
         let target = add_enemy(&mut board, 2, 3, 4, 3);
         let original = [(255u8, 255u8); 16];
 
-        simulate_enemy_attacks(&mut board, &original);
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
         assert_eq!(board.units[target].hp, 1,
             "Target Vek took 2 damage (1 base + 1 hormone bonus)");
     }
@@ -1886,7 +1901,7 @@ mod tests {
         let mech_idx = add_mech(&mut board, 99, 3, 4, 3, WId::PrimePunchmech);
         let original = [(255u8, 255u8); 16];
 
-        simulate_enemy_attacks(&mut board, &original);
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
         assert_eq!(board.units[mech_idx].hp, 2,
             "Mech took base 1 damage (hormones don't boost vs mechs)");
     }
@@ -1901,7 +1916,7 @@ mod tests {
         let target = add_enemy(&mut board, 2, 3, 4, 3);
         let original = [(255u8, 255u8); 16];
 
-        simulate_enemy_attacks(&mut board, &original);
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
         assert_eq!(board.units[target].hp, 2, "Base 1 damage only");
     }
 
