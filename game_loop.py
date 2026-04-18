@@ -45,6 +45,7 @@ from src.loop.commands import (
     cmd_research_probe_mech,
     cmd_research_submit,
     cmd_review_overrides,
+    cmd_mine_overrides,
     cmd_end_turn,
     cmd_status,
     cmd_new_run,
@@ -174,6 +175,40 @@ def main():
         action="store_true",
         help="Accept without a regression board at tests/weapon_overrides/"
              "<weapon_id>_<case>.json (not recommended)",
+    )
+
+    # mine_overrides
+    p_mine = sub.add_parser(
+        "mine_overrides",
+        help="P4-1d: pattern-mine override candidates from failure_db "
+             "+ weapon_def_mismatches.jsonl, report or stage them",
+    )
+    p_mine.add_argument(
+        "--execute",
+        action="store_true",
+        help="Write fixtures to tests/weapon_overrides/ and append "
+             "staged entries. Default is a report-only dry run.",
+    )
+    p_mine.add_argument(
+        "--max-stage",
+        type=int,
+        default=3,
+        help="Cap on how many candidates to stage in one run "
+             "(keeps review loads sane). Default: 3.",
+    )
+    p_mine.add_argument(
+        "--time-limit",
+        type=float,
+        default=2.0,
+        help="Per-solve time limit for the observable-change verifier "
+             "(seconds). Default: 2.0.",
+    )
+    p_mine.add_argument(
+        "--no-verify",
+        action="store_true",
+        help="Skip the P4-1c observable-change verifier. Useful when "
+             "the itb_solver wheel isn't installed. Drafts still go "
+             "through the P3-7 gate when accepted.",
     )
 
     # click_end_turn
@@ -320,6 +355,13 @@ def main():
         cmd_research_probe_mech(args.tile, args.slot, profile=args.profile)
     elif args.command == "review_overrides":
         cmd_review_overrides(args.sub_action, args.index, force=args.force)
+    elif args.command == "mine_overrides":
+        cmd_mine_overrides(
+            execute=args.execute,
+            max_stage=args.max_stage,
+            time_limit=args.time_limit,
+            verify=not args.no_verify,
+        )
     elif args.command == "end_turn":
         cmd_end_turn()
     elif args.command == "status":

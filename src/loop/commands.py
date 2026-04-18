@@ -2146,6 +2146,84 @@ def cmd_review_overrides(
     return result
 
 
+def cmd_mine_overrides(
+    *,
+    execute: bool = False,
+    max_stage: int = 3,
+    time_limit: float = 2.0,
+    verify: bool = True,
+) -> dict:
+    """P4-1d — mine the jsonl corpora for override candidates and stage them.
+
+    ``execute=False`` (default) is a report-only pass: the miner runs,
+    the drafter picks auto-generatable Vision candidates, but nothing
+    hits disk. ``execute=True`` writes fixtures to
+    ``tests/weapon_overrides/`` and appends staged entries to
+    ``data/weapon_overrides_staged.jsonl`` — after which the existing
+    ``review_overrides list / accept`` flow (P3-6) takes over.
+
+    Never creates branches or PRs. Human is expected to run
+    ``git status`` → review the extracted fixture + staged entry →
+    ``review_overrides accept <idx>`` → commit + PR via the usual path.
+    """
+    from src.research.pattern_miner import mine
+    from src.research.pr_drafter import draft_from_candidates
+
+    candidates = mine()
+    report = draft_from_candidates(
+        candidates,
+        dry_run=not execute,
+        verify=verify,
+        max_stage=max_stage,
+        time_limit=time_limit,
+    )
+
+    print("\n=== MINE_OVERRIDES ===")
+    print(f"  mined candidates: {len(candidates)}")
+    print(f"  draft outcomes:   staged={report.staged_count} "
+          f"skipped={report.skipped_count} (dry_run={report.dry_run})")
+    print()
+    for i, o in enumerate(report.outcomes):
+        sig = o.candidate.signature
+        print(f"  [{i}] {sig.source}/{sig.weapon_id}/{sig.field} "
+              f"({o.candidate.count}× boards) → {o.status}")
+        print(f"       {o.reason}")
+        if o.fixture_path:
+            print(f"       fixture: {o.fixture_path}")
+        if o.verification and not o.verification.get("skipped"):
+            vr = o.verification
+            print(f"       verify:  observable={vr.get('observable_change')} "
+                  f"plan_changed={vr.get('plan_changed')} "
+                  f"score_Δ={vr.get('score_delta', 0.0):+.3f}")
+
+    if not execute:
+        print("\n  (dry-run; no files written. re-run with --execute to stage.)")
+    else:
+        print("\n  next: game_loop.py review_overrides list")
+
+    result = {
+        "mined": len(candidates),
+        "staged": report.staged_count,
+        "skipped": report.skipped_count,
+        "dry_run": report.dry_run,
+        "outcomes": [
+            {
+                "weapon_id": o.candidate.signature.weapon_id,
+                "source": o.candidate.signature.source,
+                "field": o.candidate.signature.field,
+                "signature_hash": o.candidate.signature.hash8(),
+                "status": o.status,
+                "reason": o.reason,
+                "fixture_path": str(o.fixture_path) if o.fixture_path else None,
+                "verification": o.verification,
+            }
+            for o in report.outcomes
+        ],
+    }
+    _print_result(result)
+    return result
+
+
 def cmd_end_turn() -> dict:
     """End the current turn.
 
