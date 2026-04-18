@@ -1733,6 +1733,104 @@ def cmd_research_submit(
     return out
 
 
+def _parse_visual_tile(tile: str) -> tuple[int, int] | None:
+    """Parse an A1-H8 visual tile into bridge ``(x, y)``.
+
+    Column letters A-H map to bridge ``y = 72 - ord(col)`` (so H=0, A=7).
+    Row digits 1-8 map to bridge ``x = 8 - row`` (so 1=7, 8=0).
+
+    Returns None on malformed input. The two-character shape is the
+    canonical form; spaces and lower-case are tolerated.
+    """
+    t = tile.strip().upper()
+    if len(t) != 2:
+        return None
+    col, row_s = t[0], t[1]
+    if col < "A" or col > "H" or not row_s.isdigit():
+        return None
+    row = int(row_s)
+    if row < 1 or row > 8:
+        return None
+    return (8 - row, 72 - ord(col))
+
+
+def cmd_research_probe_mech(
+    tile: str,
+    slot: int = 0,
+    profile: str = "Alpha",
+) -> dict:
+    """Probe a single weapon slot on the mech at ``tile``.
+
+    One-shot counterpart to ``cmd_research_next``. Builds a capture
+    plan that selects the mech, hovers the weapon icon for the given
+    slot, and captures the ``weapon_preview`` panel for Vision. The
+    resulting JSON is submitted via ``cmd_research_submit`` exactly
+    like a queue-driven entry — the comparator fires on submit and
+    writes mismatches to ``data/weapon_def_mismatches.jsonl``.
+
+    ``tile`` accepts A1-H8 visual notation (preferred) or a bridge
+    ``"x,y"`` pair. ``slot`` is 0-indexed into the mech's weapon-icon
+    rail (0 = secondary/repair, 1 = prime; see
+    ``capture.weapon_icon_positions``). The caller loops slots
+    externally — one probe, one submit, one comparator run.
+    """
+    from src.research import capture, orchestrator
+
+    session = _load_session()
+
+    if not is_bridge_active():
+        result = {"error": "Bridge not active — research_probe_mech requires bridge"}
+        _print_result(result)
+        return result
+
+    parsed = _parse_visual_tile(tile)
+    if parsed is None:
+        # Fallback: accept "x,y" bridge form for automation scripts.
+        try:
+            bx, by = (int(p) for p in tile.split(","))
+            parsed = (bx, by)
+        except (ValueError, AttributeError):
+            result = {"error": f"Unparseable tile '{tile}' — expected A1-H8 or 'x,y'"}
+            _print_result(result)
+            return result
+    bridge_x, bridge_y = parsed
+
+    board, _bridge = read_bridge_state()
+    if board is None:
+        result = {"error": "Failed to read bridge state for probe target"}
+        _print_result(result)
+        return result
+
+    try:
+        ui = capture.resolve_ui_regions(capture.load_ui_regions())
+    except Exception as e:
+        result = {"error": f"UI regions load failed: {e}"}
+        _print_result(result)
+        return result
+
+    out = orchestrator.begin_weapon_probe(
+        session, board, bridge_x, bridge_y, slot, ui=ui,
+    )
+    if "error" in out:
+        session.save()
+        print(f"\n=== RESEARCH_PROBE_MECH FAILED ===")
+        print(f"  {out['error']}")
+        _print_result(out)
+        return out
+
+    session.save()
+    result = {"status": "PLAN", **out}
+    target = out["target"]
+    print(f"\n=== RESEARCH_PROBE_MECH (research_id={out['research_id']}) ===")
+    print(f"  target: {target['type']} slot {target['slot']} at "
+          f"{_bv(target['position_bridge'][0], target['position_bridge'][1])} "
+          f"-> icon MCP {tuple(target['weapon_icon_mcp'])}")
+    print(f"  next: dispatch plan.batch → zoom weapon_preview → Vision → "
+          f"cmd_research_submit {out['research_id']}")
+    _print_result(result)
+    return result
+
+
 def cmd_end_turn() -> dict:
     """End the current turn.
 

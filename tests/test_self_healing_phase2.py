@@ -145,6 +145,47 @@ def test_mark_research_nonexistent_entry_returns_false():
     assert s.mark_research("Ghost", None, "done") is False
 
 
+def test_enqueue_research_same_type_different_slot_is_separate():
+    """mech_weapon probes for the same mech at different slots coexist."""
+    s = RunSession()
+    s.enqueue_research("ArtilleryMech", None, current_turn=1,
+                       kind="mech_weapon", slot=0)
+    s.enqueue_research("ArtilleryMech", None, current_turn=1,
+                       kind="mech_weapon", slot=1)
+    assert len(s.research_queue) == 2
+
+
+def test_enqueue_research_same_kind_slot_dedups():
+    s = RunSession()
+    assert s.enqueue_research("TestMech", None, current_turn=1,
+                              kind="mech_weapon", slot=0) is True
+    assert s.enqueue_research("TestMech", None, current_turn=2,
+                              kind="mech_weapon", slot=0) is False
+    assert len(s.research_queue) == 1
+
+
+def test_enqueue_research_kind_vs_no_kind_are_different_entries():
+    """A legacy unit entry and a mech_weapon probe don't alias."""
+    s = RunSession()
+    s.enqueue_research("TestMech", None, current_turn=1)
+    s.enqueue_research("TestMech", None, current_turn=1,
+                       kind="mech_weapon", slot=0)
+    assert len(s.research_queue) == 2
+
+
+def test_mark_research_matches_kind_slot():
+    s = RunSession()
+    s.enqueue_research("Mech", None, current_turn=1,
+                       kind="mech_weapon", slot=0)
+    s.enqueue_research("Mech", None, current_turn=1,
+                       kind="mech_weapon", slot=1)
+    assert s.mark_research("Mech", None, "done",
+                           kind="mech_weapon", slot=1) is True
+    entries = {e["slot"]: e["status"] for e in s.research_queue}
+    assert entries[0] == "pending"
+    assert entries[1] == "done"
+
+
 def test_research_queue_persists_across_mission_boundary():
     # Unlike disabled_actions (which reset), the queue is a run-level
     # TODO list — a novel unit seen in mission A is still worth

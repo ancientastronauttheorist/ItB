@@ -144,6 +144,120 @@ def begin_research(
     }
 
 
+def _find_mech_at(board: Board, bridge_x: int, bridge_y: int) -> Any | None:
+    """Return the live mech at the given bridge coord, or None."""
+    for u in board.units:
+        if u.hp <= 0:
+            continue
+        if not getattr(u, "is_mech", False):
+            continue
+        if u.x == bridge_x and u.y == bridge_y:
+            return u
+    return None
+
+
+def begin_weapon_probe(
+    session: RunSession,
+    board: Board,
+    bridge_x: int,
+    bridge_y: int,
+    slot: int,
+    *,
+    ui: capture.UiRegions | None = None,
+) -> dict:
+    """Start a one-shot weapon-slot probe for the mech at ``(bridge_x, bridge_y)``.
+
+    Unlike ``begin_research`` (queue-driven), this is called directly
+    by the ``research_probe_mech`` CLI — the harness decides which
+    mech and which slot. We still record the probe on
+    ``session.research_queue`` with ``kind="mech_weapon"`` so
+    ``submit_research`` can look it up by ``research_id`` and so the
+    same tuple isn't probed twice in a mission.
+
+    Returns a plan envelope identical in shape to ``begin_research``
+    so the harness can dispatch either one uniformly. Validation
+    failures return ``{"error": ...}`` instead — the CLI layer prints
+    them.
+    """
+    if ui is None:
+        ui = capture.resolve_ui_regions(capture.load_ui_regions())
+
+    unit = _find_mech_at(board, bridge_x, bridge_y)
+    if unit is None:
+        return {"error": f"No live mech at bridge ({bridge_x},{bridge_y})"}
+
+    icon_positions = capture.weapon_icon_positions(ui)
+    if slot < 0 or slot >= len(icon_positions):
+        return {
+            "error": (
+                f"slot {slot} out of range "
+                f"(mech has {len(icon_positions)} weapon slots)"
+            )
+        }
+
+    target_mcp = grid_to_mcp(unit.x, unit.y)
+    icon_mcp = icon_positions[slot]
+    plan = capture.build_weapon_probe_plan(
+        target_mcp=target_mcp,
+        weapon_icon_mcp=icon_mcp,
+        ui=ui,
+    )
+
+    # Idempotent queue entry: per-mech-type per-slot. If this probe
+    # already ran this mission, ``enqueue_research`` returns False and
+    # we reuse the existing entry so ``submit_research`` can still
+    # look it up by research_id below.
+    mech_type = getattr(unit, "type", "")
+    turn = getattr(session, "current_turn", 0)
+    session.enqueue_research(
+        mech_type, None, turn,
+        kind="mech_weapon", slot=slot,
+    )
+    entry = None
+    for e in session.research_queue:
+        if (
+            e.get("type") == mech_type
+            and e.get("kind") == "mech_weapon"
+            and e.get("slot") == slot
+        ):
+            entry = e
+            break
+    if entry is None:
+        # Shouldn't happen — enqueue_research just ran. Defensive
+        # fallback so we never return a plan with no backing entry.
+        return {"error": "failed to materialize research queue entry"}
+
+    research_id = uuid.uuid4().hex[:12]
+    entry["status"] = "in_progress"
+    entry["attempts"] = entry.get("attempts", 0) + 1
+    entry["research_id"] = research_id
+    entry["last_kind"] = "mech_weapon"
+
+    prompts = {"weapon_preview": vision.PROMPTS["weapon_preview"]}
+
+    return {
+        "research_id": research_id,
+        "target": {
+            "type": mech_type,
+            "terrain_id": None,
+            "kind": "mech_weapon",
+            "slot": slot,
+            "position_bridge": [unit.x, unit.y],
+            "target_mcp": list(target_mcp),
+            "weapon_icon_mcp": list(icon_mcp),
+        },
+        "plan": plan,
+        "prompts": prompts,
+        "next_step": (
+            "dispatch plan.batch via computer_batch, zoom "
+            "plan.crops[0].region (weapon_preview), apply "
+            "prompts.weapon_preview to produce JSON, then call "
+            "cmd_research_submit with the research_id and "
+            '{"weapon_preview": json_string}'
+        ),
+    }
+
+
 def _lookup_by_research_id(session: RunSession, research_id: str) -> dict | None:
     for entry in session.research_queue:
         if entry.get("research_id") == research_id:
@@ -211,6 +325,8 @@ def submit_research(
             "parsed": parsed,
             "mismatches": mismatches,
         },
+        kind=entry.get("kind"),
+        slot=entry.get("slot"),
     )
     # Keep research_id around in the stored entry — post-hoc analysis
     # joins mismatches back to the triggering research call.

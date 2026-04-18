@@ -125,6 +125,28 @@ def test_weapon_hover_plan_shape():
     assert plan["crops"][0]["region"] == (480, 355, 610, 720)
 
 
+def test_weapon_probe_plan_shape():
+    """Composed plan: dismiss → click mech → wait → hover icon → screenshot."""
+    ui = capture.resolve_ui_regions(_raw_regions(), current_window=REF_WINDOW)
+    plan = capture.build_weapon_probe_plan(
+        target_mcp=(694, 400),
+        weapon_icon_mcp=(388, 670),
+        ui=ui,
+    )
+    actions = [a["action"] for a in plan["batch"]]
+    assert actions == [
+        "mouse_move", "wait", "left_click", "wait",
+        "mouse_move", "wait", "screenshot",
+    ]
+    # First move = neutral dismiss, click = mech tile, last move = icon.
+    assert plan["batch"][0]["coordinate"] == [1100, 100]
+    assert plan["batch"][2]["coordinate"] == [694, 400]
+    assert plan["batch"][4]["coordinate"] == [388, 670]
+    # Single crop: weapon_preview (the comparator input).
+    assert [c["name"] for c in plan["crops"]] == ["weapon_preview"]
+    assert plan["crops"][0]["region"] == (480, 355, 610, 720)
+
+
 def test_terrain_hover_plan_shape():
     ui = capture.resolve_ui_regions(_raw_regions(), current_window=REF_WINDOW)
     plan = capture.build_terrain_hover_plan(tile_mcp=(694, 400), ui=ui)

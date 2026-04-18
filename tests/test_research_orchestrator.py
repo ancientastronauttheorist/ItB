@@ -210,6 +210,113 @@ def test_submit_research_no_comparator_call_without_weapon_preview(monkeypatch, 
     assert not mm_path.exists()
 
 
+# ── begin_weapon_probe ───────────────────────────────────────────────────────
+
+
+def test_begin_weapon_probe_emits_plan_and_queues_entry(monkeypatch):
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (694, 400))
+    s = RunSession()
+    board = _fake_board([_fake_unit("ArtilleryMech", 3, 3, is_mech=True)])
+
+    out = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=1, ui=_ui_regions(),
+    )
+    # Plan envelope matches begin_research's shape enough for the harness.
+    assert "error" not in out
+    assert out["target"]["type"] == "ArtilleryMech"
+    assert out["target"]["kind"] == "mech_weapon"
+    assert out["target"]["slot"] == 1
+    assert out["target"]["target_mcp"] == [694, 400]
+    # Composed batch: dismiss → click mech → wait → hover icon → screenshot.
+    actions = [a["action"] for a in out["plan"]["batch"]]
+    assert actions == [
+        "mouse_move", "wait", "left_click", "wait",
+        "mouse_move", "wait", "screenshot",
+    ]
+    assert "weapon_preview" in out["prompts"]
+    # Queue entry recorded with the matching compound key.
+    entry = s.research_queue[0]
+    assert entry["kind"] == "mech_weapon"
+    assert entry["slot"] == 1
+    assert entry["status"] == "in_progress"
+    assert entry["research_id"] == out["research_id"]
+
+
+def test_begin_weapon_probe_rejects_missing_mech():
+    s = RunSession()
+    board = _fake_board([])
+    out = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=0, ui=_ui_regions(),
+    )
+    assert "error" in out
+    assert "No live mech" in out["error"]
+    assert s.research_queue == []
+
+
+def test_begin_weapon_probe_rejects_non_mech_unit():
+    s = RunSession()
+    board = _fake_board([_fake_unit("Hornet1", 3, 3, is_mech=False)])
+    out = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=0, ui=_ui_regions(),
+    )
+    assert "error" in out
+
+
+def test_begin_weapon_probe_rejects_dead_mech():
+    s = RunSession()
+    board = _fake_board([_fake_unit("M", 3, 3, hp=0, is_mech=True)])
+    out = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=0, ui=_ui_regions(),
+    )
+    assert "error" in out
+
+
+def test_begin_weapon_probe_rejects_out_of_range_slot(monkeypatch):
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (0, 0))
+    s = RunSession()
+    board = _fake_board([_fake_unit("M", 3, 3, is_mech=True)])
+    # Reference UI rail only has 2 slots (0, 1). Slot 2 is invalid.
+    out = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=2, ui=_ui_regions(),
+    )
+    assert "error" in out
+    assert "out of range" in out["error"]
+
+
+def test_submit_research_for_weapon_probe_updates_kind_slot_entry(
+    monkeypatch, tmp_path: Path,
+):
+    """Probe queue entries are keyed by (type, None, kind, slot); submit uses
+    that compound key so only the matching slot transitions to done."""
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (0, 0))
+    s = RunSession()
+    board = _fake_board([_fake_unit("DualMech", 3, 3, is_mech=True)])
+
+    probe0 = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=0, ui=_ui_regions(),
+    )
+    probe1 = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=1, ui=_ui_regions(),
+    )
+    assert probe0["research_id"] != probe1["research_id"]
+
+    responses = {
+        "weapon_preview": (
+            '{"name": "Vice Fist", "weapon_class": "Prime Class Weapon", '
+            '"description": "Grab and toss.", '
+            '"damage": 1, "footprint_tiles": [[1,0]], '
+            '"push_directions": ["west"], "upgrades": []}'
+        ),
+    }
+    orchestrator.submit_research(
+        s, probe1["research_id"], responses,
+        run_id="probe-test", mismatches_path=tmp_path / "mm.jsonl",
+    )
+    by_slot = {e["slot"]: e["status"] for e in s.research_queue}
+    assert by_slot[0] == "in_progress"
+    assert by_slot[1] == "done"
+
+
 # ── end-to-end flow ──────────────────────────────────────────────────────────
 
 

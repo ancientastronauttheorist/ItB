@@ -42,6 +42,7 @@ from src.loop.commands import (
     cmd_click_action,
     cmd_click_end_turn,
     cmd_research_next,
+    cmd_research_probe_mech,
     cmd_research_submit,
     cmd_end_turn,
     cmd_status,
@@ -124,6 +125,24 @@ def main():
                                         "unit_status/weapon_preview/terrain_tooltip) "
                                         "with Vision JSON string values")
     p_research_submit.add_argument("--profile", default="Alpha")
+
+    # research_probe_mech
+    p_research_probe_mech = sub.add_parser(
+        "research_probe_mech",
+        help="Probe one weapon slot on a mech → emit capture plan + research_id",
+    )
+    p_research_probe_mech.add_argument(
+        "tile",
+        help="Mech tile in A1-H8 notation (or 'x,y' bridge coords)",
+    )
+    p_research_probe_mech.add_argument(
+        "slot",
+        type=int,
+        nargs="?",
+        default=0,
+        help="Weapon slot index (0=secondary/repair, 1=prime). Default 0.",
+    )
+    p_research_probe_mech.add_argument("--profile", default="Alpha")
 
     # click_end_turn
     sub.add_parser(
@@ -264,6 +283,8 @@ def main():
     elif args.command == "research_submit":
         cmd_research_submit(args.research_id, args.vision_json,
                             profile=args.profile)
+    elif args.command == "research_probe_mech":
+        cmd_research_probe_mech(args.tile, args.slot, profile=args.profile)
     elif args.command == "end_turn":
         cmd_end_turn()
     elif args.command == "status":

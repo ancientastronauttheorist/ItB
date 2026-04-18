@@ -203,6 +203,38 @@ def build_weapon_hover_plan(
     return {"batch": batch, "crops": crops}
 
 
+def build_weapon_probe_plan(
+    target_mcp: tuple[int, int],
+    weapon_icon_mcp: tuple[int, int],
+    ui: UiRegions,
+    dismiss_wait_s: float = 0.4,
+    post_click_wait_s: float = 0.8,
+    hover_wait_s: float = 1.2,
+) -> dict:
+    """Return a plan to select a mech and capture a single weapon preview.
+
+    Composes ``build_unit_capture_plan`` and ``build_weapon_hover_plan``
+    into one batch — the mech has to be selected before its weapon
+    rail is interactive, and doing both in a single dispatch spares
+    the harness a round-trip to re-screenshot between steps.
+
+    Sequence: neutral dismiss → click mech → wait for panel → hover
+    the weapon icon → wait for preview → screenshot. One crop,
+    ``weapon_preview``, which is what the comparator consumes.
+    """
+    batch = [
+        {"action": "mouse_move", "coordinate": list(ui.neutral_hover)},
+        {"action": "wait", "duration": dismiss_wait_s},
+        {"action": "left_click", "coordinate": list(target_mcp)},
+        {"action": "wait", "duration": post_click_wait_s},
+        {"action": "mouse_move", "coordinate": list(weapon_icon_mcp)},
+        {"action": "wait", "duration": hover_wait_s},
+        {"action": "screenshot"},
+    ]
+    crops = [{"name": "weapon_preview", "region": ui.regions["weapon_preview"]}]
+    return {"batch": batch, "crops": crops}
+
+
 def build_terrain_hover_plan(
     tile_mcp: tuple[int, int],
     ui: UiRegions,

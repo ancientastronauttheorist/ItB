@@ -320,25 +320,44 @@ class RunSession:
         type_name: str,
         terrain_id: str | None,
         current_turn: int,
+        *,
+        kind: str | None = None,
+        slot: int | None = None,
     ) -> bool:
         """Add a research entry for a novel unit type or terrain id.
 
-        Deduped by ``(type, terrain_id)``. If the pair already exists,
-        the function is idempotent — it does NOT increment ``attempts``
-        (that's the processor's job after it actually tries research).
+        Deduped by ``(type, terrain_id, kind, slot)``. If the tuple
+        already exists, the function is idempotent — it does NOT
+        increment ``attempts`` (that's the processor's job after it
+        actually tries research).
+
+        ``kind`` + ``slot`` disambiguate probes for the same unit type
+        (e.g. ``kind="mech_weapon", slot=0`` vs ``slot=1``). Legacy
+        callers pass neither and get the original
+        ``(type, terrain_id)`` dedup behaviour — an entry without kind
+        stores ``kind=None, slot=None``, which still compares equal
+        across the compound key.
 
         Pass ``type_name=""`` for terrain-only entries and
         ``terrain_id=None`` for unit-only entries.
 
         Returns True if a new entry was added, False if it was a dupe.
         """
-        key = (type_name or "", terrain_id)
+        key = (type_name or "", terrain_id, kind, slot)
         for e in self.research_queue:
-            if (e.get("type", ""), e.get("terrain_id")) == key:
+            existing = (
+                e.get("type", ""),
+                e.get("terrain_id"),
+                e.get("kind"),
+                e.get("slot"),
+            )
+            if existing == key:
                 return False
         self.research_queue.append({
             "type": type_name or "",
             "terrain_id": terrain_id,
+            "kind": kind,
+            "slot": slot,
             "mission_id": self.current_mission,
             "first_seen_turn": current_turn,
             "attempts": 0,
@@ -365,6 +384,9 @@ class RunSession:
         terrain_id: str | None,
         status: str,
         result: dict | None = None,
+        *,
+        kind: str | None = None,
+        slot: int | None = None,
     ) -> bool:
         """Update status / bump attempts on the matching entry.
 
@@ -377,11 +399,21 @@ class RunSession:
         Each transition through ``in_progress`` increments ``attempts``
         so the processor can cap retry budget.
 
+        ``kind`` + ``slot`` match the same compound key used by
+        ``enqueue_research``; unset defaults preserve legacy
+        ``(type, terrain_id)`` behaviour.
+
         Returns True if the entry was found and updated.
         """
-        key = (type_name or "", terrain_id)
+        key = (type_name or "", terrain_id, kind, slot)
         for e in self.research_queue:
-            if (e.get("type", ""), e.get("terrain_id")) == key:
+            existing = (
+                e.get("type", ""),
+                e.get("terrain_id"),
+                e.get("kind"),
+                e.get("slot"),
+            )
+            if existing == key:
                 if status == "in_progress":
                     e["attempts"] = e.get("attempts", 0) + 1
                 e["status"] = status
