@@ -247,12 +247,41 @@ Log the disagreement to `data/research_disagreements.jsonl` for later review.
 
 **Exit criteria:** one real override ships that fixes a previously-desync'd weapon behavior, demonstrated via regression diff.
 
-### Phase 4 — auto-patch pipeline (optional, later)
+### Phase 4 — auto-patch pipeline (shipped P4-1, P4-2)
 
-- **#P4-1** Between-run script that turns `failure_db.jsonl` + `data/weapon_def_mismatches.jsonl` patterns into a draft PR (new override entry, new regression board).
-- **#P4-2** Human review required before merge. Never auto-commit to main.
+- **#P4-1a** (shipped) `src/research/pattern_miner.py` — pure signature
+  + mining function over the two jsonl corpora. Thresholds per source
+  (Vision damage=1, Vision footprint/push=2, failure_db=3 boards).
+  Deny-list consulted via signature hash.
+- **#P4-1b** (shipped) `review_overrides reject` appends to
+  `data/weapon_overrides_rejected.jsonl` so rejections persist across
+  miner runs.
+- **#P4-1c** (shipped) `src/research/board_extractor.py` —
+  extract fixtures from recordings + observable-change verifier that
+  mirrors the P3-7 regression gate.
+- **#P4-1d** (shipped) `game_loop.py mine_overrides` CLI +
+  `src/research/pr_drafter.py` — stacks the above into one dry-run
+  report + ``--execute`` stage-to-disk flow. No branches, no auto-PRs
+  yet; reuses the Phase 3 `review_overrides accept` path for promotion.
+- **#P4-2** (shipped) Human review is enforced at four layers:
+  review_overrides regression-board gate (P3-7), mine_overrides
+  dry-run default, deny-list on reject, and explicit `git commit`
+  after accept. No auto-commit to main on any path.
 
-**Exit criteria:** the bot ships its first human-approved auto-drafted fix.
+**Exit criteria:** the bot's first human-approved auto-drafted fix
+— waiting on live Vision data with surviving mismatches. The P3-5
+→ P3-6 path has been exercised (dc4b364 Cluster Artillery live-spin);
+the P4-1 miner adds the cross-run pattern path that runs between
+runs rather than inline on submit.
+
+**Optional follow-ups (not scoped):**
+
+- Auto-branch + `gh pr create --draft` once the staged-output quality
+  is proven on live data.
+- failure_db → override auto-generation. Needs a category→field map
+  that doesn't exist yet; currently the drafter skips these.
+- Per-weapon quota in the drafter cap (instead of absolute
+  `--max-stage`) if one noisy weapon starts dominating the queue.
 
 ## Decisions summary
 
