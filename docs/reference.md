@@ -170,6 +170,16 @@ essentially ground truth), vision.footprint_size=2 and push_arrows=2
 (solver desyncs individually include real noise). Vision and
 failure_db sources never merge counts.
 
+**Stale-row cutoff (`data/mining_cutoff.json`):** failure_db rows
+stamped before `min_timestamp` are ignored by the miner — they
+describe sim output the current Rust build no longer produces. Bump
+this file whenever a sim or comparator fix invalidates prior rows,
+and record the commit sha so the history stays traceable. CLI
+flags: `--since ISO` overrides the config for one-off bisects,
+`--no-cutoff` disables the filter entirely for historical audits.
+Vision mismatches are never cutoff-filtered — they're comparator
+output against the current build already.
+
 **Constraints (enforced in code):**
 
 - Unknown `weapon_id` or flag name → entry silently dropped. A typo

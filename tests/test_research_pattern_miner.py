@@ -403,6 +403,159 @@ def test_mine_output_is_deterministic(tmp_path: Path):
     assert [c.board_refs for c in a] == [c.board_refs for c in b]
 
 
+# ── mining: timestamp cutoff ────────────────────────────────────────────────
+
+
+def _write_failure_rows_at(
+    fp: Path,
+    solves_root: Path,
+    weapon_id: str,
+    timestamps: list[str],
+) -> None:
+    """Helper: N failure_db rows across N distinct runs, each with
+    a timestamp and a solve.json resolving to ``weapon_id``."""
+    rows = []
+    for i, ts in enumerate(timestamps):
+        rid = f"RUN_{i}"
+        _write_solve(solves_root, rid, 0, 1, [{"weapon_id": weapon_id}])
+        rows.append({
+            "trigger": "per_sub_action_desync_attack", "run_id": rid,
+            "mission": 0, "turn": 1, "action_index": 0,
+            "category": "damage_amount",
+            "timestamp": ts,
+            "diff": {"tile_diffs": [{"field": "building_hp"}],
+                     "unit_diffs": [], "scalar_diffs": []},
+        })
+    _write_jsonl(fp, rows)
+
+
+def test_mine_filters_failure_rows_before_cutoff(tmp_path: Path):
+    """Rows stamped before ``min_timestamp`` describe sim output the
+    current solver no longer produces — they must not count toward
+    thresholds, otherwise a fix that shipped last week keeps faking
+    signal forever."""
+    fp = tmp_path / "fd.jsonl"
+    solves = tmp_path / "rec"
+    _write_failure_rows_at(fp, solves, "Prime_Shift", [
+        "2026-04-10T10:00:00",  # pre-cutoff
+        "2026-04-11T10:00:00",  # pre-cutoff
+        "2026-04-14T10:00:00",  # post-cutoff
+        "2026-04-15T10:00:00",  # post-cutoff
+    ])
+    out = pm.mine(
+        vision_path=tmp_path / "no.jsonl", failure_path=fp,
+        recordings_root=solves, deny_list=set(),
+        min_timestamp="2026-04-13T21:31:37",
+    )
+    # 2 post-cutoff rows < threshold (3) → no candidate surfaces.
+    assert out == []
+
+    # Widen the corpus so post-cutoff alone crosses threshold:
+    _write_failure_rows_at(fp, solves, "Prime_Shift", [
+        "2026-04-10T10:00:00",
+        "2026-04-11T10:00:00",
+        "2026-04-14T10:00:00",
+        "2026-04-15T10:00:00",
+        "2026-04-16T10:00:00",
+    ])
+    out = pm.mine(
+        vision_path=tmp_path / "no.jsonl", failure_path=fp,
+        recordings_root=solves, deny_list=set(),
+        min_timestamp="2026-04-13T21:31:37",
+    )
+    assert len(out) == 1
+    assert out[0].count == 3  # only the 3 post-cutoff boards
+
+
+def test_mine_cutoff_none_disables_filter(tmp_path: Path):
+    """Explicit ``min_timestamp=None`` is the historical-audit mode —
+    every row counts regardless of age."""
+    fp = tmp_path / "fd.jsonl"
+    solves = tmp_path / "rec"
+    _write_failure_rows_at(fp, solves, "Prime_Shift", [
+        "2026-04-10T10:00:00",
+        "2026-04-11T10:00:00",
+        "2026-04-12T10:00:00",
+    ])
+    out = pm.mine(
+        vision_path=tmp_path / "no.jsonl", failure_path=fp,
+        recordings_root=solves, deny_list=set(),
+        min_timestamp=None,
+    )
+    assert len(out) == 1
+    assert out[0].count == 3
+
+
+def test_mine_cutoff_unset_loads_config(tmp_path: Path, monkeypatch):
+    """When callers don't pass ``min_timestamp``, mine() must read
+    ``data/mining_cutoff.json`` — otherwise the CLI default silently
+    becomes "no filter" and stale rows leak back in."""
+    fp = tmp_path / "fd.jsonl"
+    solves = tmp_path / "rec"
+    cfg = tmp_path / "mining_cutoff.json"
+    cfg.write_text(json.dumps({"min_timestamp": "2026-04-13T21:31:37"}))
+    monkeypatch.setattr(pm, "DEFAULT_CUTOFF_PATH", cfg)
+
+    _write_failure_rows_at(fp, solves, "Prime_Shift", [
+        "2026-04-10T10:00:00",  # pre
+        "2026-04-11T10:00:00",  # pre
+        "2026-04-12T10:00:00",  # pre
+    ])
+    out = pm.mine(
+        vision_path=tmp_path / "no.jsonl", failure_path=fp,
+        recordings_root=solves, deny_list=set(),
+    )
+    assert out == []  # all rows pre-cutoff, silently filtered
+
+
+def test_mine_cutoff_does_not_filter_vision(tmp_path: Path):
+    """Vision mismatches don't carry a ``timestamp`` on the same
+    semantic — they're comparator output against the *current* Rust
+    build. Applying the cutoff to them would silently erase every
+    fresh Vision hit."""
+    vp = tmp_path / "mm.jsonl"
+    _write_jsonl(vp, [
+        {"run_id": "R1", "weapon_id": "Prime_Shift", "field": "damage",
+         "rust_value": 1, "vision_value": 5, "severity": "high"},
+    ])
+    out = pm.mine(
+        vision_path=vp, failure_path=tmp_path / "no.jsonl",
+        recordings_root=tmp_path, deny_list=set(),
+        min_timestamp="2099-01-01T00:00:00",  # future cutoff
+    )
+    assert len(out) == 1  # vision still fires
+
+
+def test_load_min_timestamp_missing_file_returns_none(tmp_path: Path):
+    assert pm.load_min_timestamp(tmp_path / "nope.json") is None
+
+
+def test_load_min_timestamp_malformed_returns_none(tmp_path: Path):
+    p = tmp_path / "broken.json"
+    p.write_text("{not json")
+    assert pm.load_min_timestamp(p) is None
+
+    p.write_text(json.dumps([1, 2, 3]))  # wrong top-level type
+    assert pm.load_min_timestamp(p) is None
+
+
+def test_load_min_timestamp_reads_value(tmp_path: Path):
+    p = tmp_path / "cutoff.json"
+    p.write_text(json.dumps({"min_timestamp": "2026-04-13T21:31:37"}))
+    assert pm.load_min_timestamp(p) == "2026-04-13T21:31:37"
+
+
+def test_normalize_ts_strips_timezone_offset():
+    """Cutoff config may carry a TZ offset; failure_db rows don't.
+    Both must compare as naive-local-time ISO strings."""
+    assert pm._normalize_ts("2026-04-13T21:31:37-05:00") == "2026-04-13T21:31:37"
+    assert pm._normalize_ts("2026-04-13T21:31:37+00:00") == "2026-04-13T21:31:37"
+    assert pm._normalize_ts("2026-04-13T21:31:37Z") == "2026-04-13T21:31:37"
+    assert pm._normalize_ts("2026-04-13T21:31:37") == "2026-04-13T21:31:37"
+    # Date hyphens inside YYYY-MM-DD must survive.
+    assert pm._normalize_ts("2026-04-13") == "2026-04-13"
+
+
 def test_mine_caps_samples_per_candidate(tmp_path: Path):
     vp = tmp_path / "mm.jsonl"
     _write_jsonl(vp, [

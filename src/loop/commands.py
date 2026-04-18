@@ -2152,6 +2152,8 @@ def cmd_mine_overrides(
     max_stage: int = 3,
     time_limit: float = 2.0,
     verify: bool = True,
+    since: str | None = None,
+    no_cutoff: bool = False,
 ) -> dict:
     """P4-1d — mine the jsonl corpora for override candidates and stage them.
 
@@ -2166,10 +2168,18 @@ def cmd_mine_overrides(
     ``git status`` → review the extracted fixture + staged entry →
     ``review_overrides accept <idx>`` → commit + PR via the usual path.
     """
-    from src.research.pattern_miner import mine
+    from src.research.pattern_miner import mine, load_min_timestamp
     from src.research.pr_drafter import draft_from_candidates
 
-    candidates = mine()
+    if no_cutoff:
+        effective_cutoff: str | None = None
+        candidates = mine(min_timestamp=None)
+    elif since is not None:
+        effective_cutoff = since
+        candidates = mine(min_timestamp=since)
+    else:
+        effective_cutoff = load_min_timestamp()
+        candidates = mine()
     report = draft_from_candidates(
         candidates,
         dry_run=not execute,
@@ -2179,6 +2189,10 @@ def cmd_mine_overrides(
     )
 
     print("\n=== MINE_OVERRIDES ===")
+    if effective_cutoff:
+        print(f"  cutoff (failure_db): {effective_cutoff}")
+    else:
+        print(f"  cutoff (failure_db): disabled")
     print(f"  mined candidates: {len(candidates)}")
     print(f"  draft outcomes:   staged={report.staged_count} "
           f"skipped={report.skipped_count} (dry_run={report.dry_run})")
@@ -2206,6 +2220,7 @@ def cmd_mine_overrides(
         "staged": report.staged_count,
         "skipped": report.skipped_count,
         "dry_run": report.dry_run,
+        "cutoff": effective_cutoff,
         "outcomes": [
             {
                 "weapon_id": o.candidate.signature.weapon_id,

@@ -210,6 +210,22 @@ def main():
              "the itb_solver wheel isn't installed. Drafts still go "
              "through the P3-7 gate when accepted.",
     )
+    p_mine.add_argument(
+        "--since",
+        type=str,
+        default=None,
+        help="ISO timestamp; failure_db rows older than this are "
+             "ignored. Overrides data/mining_cutoff.json. Use when "
+             "bisecting which fix retired which cluster.",
+    )
+    p_mine.add_argument(
+        "--no-cutoff",
+        action="store_true",
+        help="Disable the mining cutoff entirely (count every "
+             "failure_db row regardless of age). For historical "
+             "audits only — the default cutoff exists to keep stale "
+             "signal out of live mining.",
+    )
 
     # click_end_turn
     sub.add_parser(
@@ -361,6 +377,8 @@ def main():
             max_stage=args.max_stage,
             time_limit=args.time_limit,
             verify=not args.no_verify,
+            since=args.since,
+            no_cutoff=args.no_cutoff,
         )
     elif args.command == "end_turn":
         cmd_end_turn()

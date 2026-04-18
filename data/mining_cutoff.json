@@ -1,0 +1,5 @@
+{
+  "min_timestamp": "2026-04-13T21:31:37",
+  "commit": "27b03c0",
+  "note": "Ghost-unit filter (src/solver/verify.py:252-256) eliminated ~46% of pre-existing failure_db rows by skipping dead predicted units when actual is absent. Rows before this timestamp describe sim output the comparator no longer flags. Bump this cutoff whenever a Rust sim fix or comparator change invalidates prior rows, and record the commit sha so history stays traceable."
+}

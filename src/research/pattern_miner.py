@@ -43,6 +43,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_VISION_PATH = REPO_ROOT / "data" / "weapon_def_mismatches.jsonl"
 DEFAULT_FAILURE_PATH = REPO_ROOT / "recordings" / "failure_db.jsonl"
 DEFAULT_DENY_PATH = REPO_ROOT / "data" / "weapon_overrides_rejected.jsonl"
+DEFAULT_CUTOFF_PATH = REPO_ROOT / "data" / "mining_cutoff.json"
 DEFAULT_RECORDINGS_ROOT = REPO_ROOT / "recordings"
 
 
@@ -356,6 +357,55 @@ def append_to_deny_list(
     return rec
 
 
+def load_min_timestamp(path: Path | str | None = None) -> str | None:
+    """Return the ISO cutoff string from the mining-cutoff config, or None.
+
+    failure_db rows with ``timestamp < min_timestamp`` describe sim
+    output the current solver no longer produces — they're stale noise
+    that would inflate candidate counts against mechanics already
+    fixed. The config file is hand-bumped whenever a Rust sim or
+    comparator change invalidates prior rows; see
+    ``data/mining_cutoff.json``.
+
+    Missing file / bad JSON / missing key = None (no filter applied).
+    The miner treats that as "run on everything," so a fresh clone
+    with no config behaves the same as pre-P4 mining.
+    """
+    p = Path(path) if path is not None else DEFAULT_CUTOFF_PATH
+    if not p.exists():
+        return None
+    try:
+        raw = json.loads(p.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+    ts = raw.get("min_timestamp")
+    return str(ts) if isinstance(ts, str) and ts else None
+
+
+def _normalize_ts(ts: str) -> str:
+    """Strip timezone offsets so two ISO strings compare lexicographically.
+
+    failure_db writers emit tz-naive strings (datetime.now().isoformat()
+    in local time). The cutoff config may be hand-written with an
+    offset (``...-05:00``). Drop everything after the first ``+`` or
+    ``-`` that starts a timezone so both sides compare as naive local.
+    Date hyphens inside the date portion are preserved (the search
+    starts at index 10, past ``YYYY-MM-DD``).
+    """
+    if not ts:
+        return ts
+    cut = len(ts)
+    for i in range(10, len(ts)):
+        if ts[i] in "+-":
+            cut = i
+            break
+    if ts.endswith("Z"):
+        cut = min(cut, len(ts) - 1)
+    return ts[:cut]
+
+
 def load_deny_list(path: Path | str | None = None) -> set[str]:
     """Return the set of ``signature.hash8()`` strings already rejected.
 
@@ -397,6 +447,9 @@ def _iter_jsonl(path: Path) -> Iterable[dict]:
             continue
 
 
+_UNSET = object()
+
+
 def mine(
     *,
     vision_path: Path | str | None = None,
@@ -405,16 +458,29 @@ def mine(
     thresholds: dict[tuple[str, str], int] | None = None,
     recordings_root: Path | str | None = None,
     sample_cap: int = 3,
+    min_timestamp: str | None | object = _UNSET,
 ) -> list[MinedCandidate]:
     """Group jsonl corpora by signature and return crossing candidates.
 
     ``sample_cap`` trims how many raw entries ride along per candidate
     — PR drafts want a few for context, not the entire cohort.
+
+    ``min_timestamp`` filters stale failure_db rows written before a
+    Rust sim / comparator fix. Unset → load default from
+    ``data/mining_cutoff.json`` (see ``load_min_timestamp``). ``None``
+    → no filter. A literal ISO string → use as-is. Vision rows are
+    never filtered — they're comparator output already run against
+    the current Rust build.
     """
     vp = Path(vision_path) if vision_path is not None else DEFAULT_VISION_PATH
     fp = Path(failure_path) if failure_path is not None else DEFAULT_FAILURE_PATH
     rr = Path(recordings_root) if recordings_root is not None else DEFAULT_RECORDINGS_ROOT
     deny = deny_list if deny_list is not None else load_deny_list()
+    if min_timestamp is _UNSET:
+        cutoff = load_min_timestamp()
+    else:
+        cutoff = min_timestamp
+    cutoff_norm = _normalize_ts(cutoff) if cutoff else None
 
     groups: dict[DiffSignature, dict[str, Any]] = defaultdict(
         lambda: {"refs": set(), "samples": []}
@@ -440,6 +506,10 @@ def mine(
     # failure_db pass (needs solve.json resolution).
     loader = SolveLoader(rr)
     for f in _iter_jsonl(fp):
+        if cutoff_norm is not None:
+            row_ts = _normalize_ts(str(f.get("timestamp") or ""))
+            if row_ts and row_ts < cutoff_norm:
+                continue
         sig = signature_from_failure(f, solve_loader=loader)
         if sig is None:
             continue
