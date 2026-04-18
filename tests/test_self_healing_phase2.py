@@ -154,3 +154,79 @@ def test_research_queue_persists_across_mission_boundary():
     s.advance_mission("Archive 2")
     assert len(s.research_queue) == 1
     assert s.research_queue[0]["type"] == "FireflyBoss"
+
+
+# ── #P2-7 auto_turn investigating status line ────────────────────────────────
+
+
+def test_research_peek_returns_first_pending_entries():
+    from src.loop.commands import _research_peek
+    s = RunSession()
+    s.enqueue_research("A", None, current_turn=1)
+    s.enqueue_research("B", None, current_turn=1)
+    s.enqueue_research("C", None, current_turn=1)
+    peek = _research_peek(s, limit=2)
+    assert [p["type"] for p in peek] == ["A", "B"]
+
+
+def test_research_peek_includes_in_progress_entries():
+    # The status line should show "in_progress" entries so the user
+    # knows research is active, not just queued.
+    from src.loop.commands import _research_peek
+    s = RunSession()
+    s.enqueue_research("A", None, current_turn=1)
+    s.mark_research("A", None, "in_progress")
+    peek = _research_peek(s)
+    assert len(peek) == 1
+    assert peek[0]["status"] == "in_progress"
+
+
+def test_research_peek_excludes_done_entries():
+    from src.loop.commands import _research_peek
+    s = RunSession()
+    s.enqueue_research("A", None, current_turn=1)
+    s.enqueue_research("B", None, current_turn=1)
+    s.mark_research("A", None, "done")
+    peek = _research_peek(s)
+    assert [p["type"] for p in peek] == ["B"]
+
+
+def test_narrator_investigating_line_on_pending_entry(capsys):
+    from src.loop.commands import _narrate_fuzzy
+    peek = [{
+        "type": "FireflyBoss",
+        "terrain_id": None,
+        "status": "pending",
+        "attempts": 0,
+        "first_seen_turn": 1,
+    }]
+    _narrate_fuzzy([], [], {}, research_peek=peek)
+    out = capsys.readouterr().out
+    assert "INVESTIGATING" in out
+    assert "FireflyBoss" in out
+    assert "not yet researched" in out
+
+
+def test_narrator_investigating_line_shows_attempt_count(capsys):
+    from src.loop.commands import _narrate_fuzzy
+    peek = [{
+        "type": "FireflyBoss",
+        "terrain_id": None,
+        "status": "in_progress",
+        "attempts": 2,
+        "first_seen_turn": 1,
+    }]
+    _narrate_fuzzy([], [], {}, research_peek=peek)
+    out = capsys.readouterr().out
+    assert "INVESTIGATING [in_progress]" in out
+    assert "attempt 2" in out
+
+
+def test_narrator_research_peek_alone_still_prints(capsys):
+    # Previously the narrator was silent when nothing else fired.
+    # With research entries, we should still surface them.
+    from src.loop.commands import _narrate_fuzzy
+    peek = [{"type": "X", "terrain_id": None, "status": "pending",
+             "attempts": 0, "first_seen_turn": 1}]
+    _narrate_fuzzy([], [], {}, research_peek=peek)
+    assert capsys.readouterr().out != ""

@@ -2294,19 +2294,57 @@ def _resolve_weapon_slot_from_board(mech_uid: int, weapon_id: str, board: Board)
     return 0
 
 
+def _research_peek(session: RunSession, limit: int = 3) -> list[dict]:
+    """Return the first ``limit`` non-``done`` entries from the research queue.
+
+    Used by ``cmd_auto_turn`` to surface an "INVESTIGATING" status line
+    (#P2-7) so the user sees the between-turn research pipeline has
+    a backlog, not a stall.
+
+    We include both ``pending`` and ``in_progress`` entries — a caller
+    that actually runs the research will flip entries to
+    ``in_progress`` as it works them, and the line should still show
+    that work is happening.
+    """
+    out: list[dict] = []
+    for entry in session.research_queue:
+        if entry.get("status") in (None, "pending", "in_progress"):
+            out.append({
+                "type": entry.get("type", ""),
+                "terrain_id": entry.get("terrain_id"),
+                "status": entry.get("status", "pending"),
+                "attempts": entry.get("attempts", 0),
+                "first_seen_turn": entry.get("first_seen_turn", 0),
+            })
+            if len(out) >= limit:
+                break
+    return out
+
+
 def _narrate_fuzzy(
     detections: list[dict],
     soft_disables: list[dict],
     unknowns: dict,
+    research_peek: list[dict] | None = None,
 ) -> None:
     """Print one-line human-readable summaries of self-healing events.
 
     Called once per turn from ``cmd_auto_turn``. Kept separate from the
     structured return dict so the operator can follow along without
     parsing JSON, while automated callers still get the full data.
+
+    ``research_peek`` (#P2-7) is the head of ``session.research_queue``.
+    Surfacing it tells the user the game didn't freeze — the between-turn
+    processor is either about to look into a novel pawn/terrain or is
+    mid-research on one.
     """
-    if not detections and not soft_disables and not (
-        unknowns.get("types") or unknowns.get("terrain_ids")
+    research_peek = research_peek or []
+    has_research = bool(research_peek)
+    if (
+        not detections
+        and not soft_disables
+        and not (unknowns.get("types") or unknowns.get("terrain_ids"))
+        and not has_research
     ):
         return
 
@@ -2342,6 +2380,18 @@ def _narrate_fuzzy(
             f"{sd['expires_turn']} (cause={sd['cause']}, "
             f"freq={sd.get('frequency')})"
         )
+
+    for entry in research_peek:
+        # Compact "investigating: <Type> / <terrain_id>" line. One or
+        # the other is always "" — we show whichever is set.
+        t = entry.get("type") or ""
+        tid = entry.get("terrain_id")
+        label = " / ".join(x for x in (t, tid) if x) or "?"
+        status = entry.get("status", "pending")
+        attempts = entry.get("attempts", 0)
+        tail = (f" (attempt {attempts})" if attempts else
+                " (not yet researched)")
+        print(f"  INVESTIGATING [{status}]: {label}{tail}")
 
 
 def _maybe_soft_disable(
@@ -2816,9 +2866,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
             "unknowns_flagged": unknowns_flagged,
             "solver_gap_events": solver_gap_events,
+            "research_queue_peek": _research_peek(session),
         }
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
-                       unknowns_flagged)
+                       unknowns_flagged,
+                       research_peek=result["research_queue_peek"])
         _print_result(result)
         return result
 
@@ -2843,9 +2895,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
         "unknowns_flagged": unknowns_flagged,
         "solver_gap_events": solver_gap_events,
+        "research_queue_peek": _research_peek(session),
     }
     _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
-                   unknowns_flagged)
+                   unknowns_flagged,
+                   research_peek=result["research_queue_peek"])
 
     if post_board and post_board.grid_power <= 0:
         result["game_over"] = True
