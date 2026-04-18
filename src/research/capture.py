@@ -268,6 +268,12 @@ _REF_WEAPON_ICON_CENTERS: tuple[tuple[int, int], ...] = (
 )
 
 
+# Number of probeable weapon-icon slots in the mech UI rail. The
+# auto-enqueue site (``cmd_read``) uses this to avoid loading UiRegions
+# (which needs a live game window) just to count slots.
+WEAPON_SLOT_COUNT: int = len(_REF_WEAPON_ICON_CENTERS)
+
+
 def weapon_icon_positions(ui: UiRegions) -> list[tuple[int, int]]:
     """Scaled MCP positions of the weapon icons in the mech UI rail.
 

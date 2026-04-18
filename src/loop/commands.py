@@ -285,6 +285,45 @@ def _bv(x: int, y: int) -> str:
     return f"{chr(72 - y)}{8 - x}"
 
 
+def _auto_enqueue_mech_weapons(
+    session: RunSession,
+    board: Board,
+    turn_for_queue: int,
+) -> list[dict]:
+    """Enqueue a mech_weapon probe for each unique live mech × slot.
+
+    Mechs are never flagged as unknown (they're squad-native), but
+    each new mech type on the board is worth probing once to populate
+    ``data/weapon_def_mismatches.jsonl``. Dedup in
+    ``session.enqueue_research`` (compound key with ``kind="mech_weapon"``
+    + ``slot``) makes this idempotent across turns — re-reading the
+    board never double-enqueues the same probe.
+
+    Returns the list of newly-enqueued entries (empty on re-reads).
+    """
+    from src.research.capture import WEAPON_SLOT_COUNT
+
+    enqueued: list[dict] = []
+    seen_mech_types: set[str] = set()
+    for u in board.units:
+        if getattr(u, "hp", 0) <= 0:
+            continue
+        if not getattr(u, "is_mech", False):
+            continue
+        mech_type = getattr(u, "type", "") or ""
+        if not mech_type or mech_type in seen_mech_types:
+            continue
+        seen_mech_types.add(mech_type)
+        for slot in range(WEAPON_SLOT_COUNT):
+            added = session.enqueue_research(
+                mech_type, None, turn_for_queue,
+                kind="mech_weapon", slot=slot,
+            )
+            if added:
+                enqueued.append({"type": mech_type, "slot": slot})
+    return enqueued
+
+
 # --- Post-Enemy Analysis Helpers ---
 
 
@@ -528,6 +567,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 # scripts/regenerate_known_types.py.
                 from src.solver.unknown_detector import detect_unknowns
                 unknowns = detect_unknowns(board)
+                turn_for_queue = bridge_data.get("turn", 0)
                 if unknowns["types"] or unknowns["terrain_ids"]:
                     result["unknowns"] = unknowns
                     # Phase 2 #P2-2: enqueue each novel type / terrain for
@@ -535,7 +575,6 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     # (type, terrain_id), so re-seeing a pawn across turns
                     # won't re-enqueue. Enqueuing itself is cheap — the
                     # expensive Vision capture happens in #P2-3+.
-                    turn_for_queue = bridge_data.get("turn", 0)
                     enqueued = []
                     for t in unknowns["types"]:
                         if session.enqueue_research(t, None, turn_for_queue):
@@ -546,6 +585,19 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     if enqueued:
                         result["research_enqueued"] = enqueued
                         session.save()
+
+                # Phase 2 #P2-8 follow-up: auto-enqueue mech-weapon probes.
+                # Mechs aren't "unknowns" but their weapons are the
+                # comparator's primary regression target — enqueue one
+                # entry per (mech_type, slot) per mission so the
+                # research_next / research_probe_mech flow can populate
+                # weapon_def_mismatches.jsonl across the full squad.
+                mech_weapons = _auto_enqueue_mech_weapons(
+                    session, board, turn_for_queue,
+                )
+                if mech_weapons:
+                    result["mech_weapons_enqueued"] = mech_weapons
+                    session.save()
 
                 # Deployment zone (available on turn 0 during deployment)
                 deploy_zone = bridge_data.get("deployment_zone", [])

@@ -173,6 +173,72 @@ def test_enqueue_research_kind_vs_no_kind_are_different_entries():
     assert len(s.research_queue) == 2
 
 
+def test_auto_enqueue_mech_weapons_covers_each_unique_mech_type():
+    """One probe per (mech_type, slot). Duplicate mech types collapse."""
+    from types import SimpleNamespace
+    from src.loop.commands import _auto_enqueue_mech_weapons
+    from src.research.capture import WEAPON_SLOT_COUNT
+
+    s = RunSession()
+    board = SimpleNamespace(units=[
+        SimpleNamespace(type="PunchMech", x=0, y=0, hp=3, is_mech=True),
+        SimpleNamespace(type="CannonMech", x=1, y=0, hp=3, is_mech=True),
+        # Duplicate type — should NOT double-enqueue.
+        SimpleNamespace(type="PunchMech", x=2, y=0, hp=3, is_mech=True),
+    ])
+    enqueued = _auto_enqueue_mech_weapons(s, board, turn_for_queue=1)
+    # 2 unique mech types × WEAPON_SLOT_COUNT slots each.
+    assert len(enqueued) == 2 * WEAPON_SLOT_COUNT
+    types_enqueued = {e["type"] for e in enqueued}
+    assert types_enqueued == {"PunchMech", "CannonMech"}
+    # Every queue entry is kind=mech_weapon with a slot in range.
+    for e in s.research_queue:
+        assert e["kind"] == "mech_weapon"
+        assert 0 <= e["slot"] < WEAPON_SLOT_COUNT
+
+
+def test_auto_enqueue_mech_weapons_skips_dead_mechs():
+    from types import SimpleNamespace
+    from src.loop.commands import _auto_enqueue_mech_weapons
+
+    s = RunSession()
+    board = SimpleNamespace(units=[
+        SimpleNamespace(type="DeadMech", x=0, y=0, hp=0, is_mech=True),
+    ])
+    enqueued = _auto_enqueue_mech_weapons(s, board, turn_for_queue=1)
+    assert enqueued == []
+    assert s.research_queue == []
+
+
+def test_auto_enqueue_mech_weapons_skips_enemies():
+    from types import SimpleNamespace
+    from src.loop.commands import _auto_enqueue_mech_weapons
+
+    s = RunSession()
+    board = SimpleNamespace(units=[
+        SimpleNamespace(type="Hornet1", x=0, y=0, hp=3, is_mech=False),
+    ])
+    enqueued = _auto_enqueue_mech_weapons(s, board, turn_for_queue=1)
+    assert enqueued == []
+
+
+def test_auto_enqueue_mech_weapons_idempotent_across_calls():
+    """Re-reading the same board doesn't re-enqueue existing probes."""
+    from types import SimpleNamespace
+    from src.loop.commands import _auto_enqueue_mech_weapons
+    from src.research.capture import WEAPON_SLOT_COUNT
+
+    s = RunSession()
+    board = SimpleNamespace(units=[
+        SimpleNamespace(type="M", x=0, y=0, hp=3, is_mech=True),
+    ])
+    first = _auto_enqueue_mech_weapons(s, board, turn_for_queue=1)
+    second = _auto_enqueue_mech_weapons(s, board, turn_for_queue=2)
+    assert len(first) == WEAPON_SLOT_COUNT
+    assert second == []
+    assert len(s.research_queue) == WEAPON_SLOT_COUNT
+
+
 def test_mark_research_matches_kind_slot():
     s = RunSession()
     s.enqueue_research("Mech", None, current_turn=1,
