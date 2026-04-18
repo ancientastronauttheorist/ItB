@@ -2015,6 +2015,19 @@ def cmd_review_overrides(
     wid = entry.get("weapon_id", "")
 
     if action == "reject":
+        # Write to the deny list BEFORE dropping the staged entry — if
+        # the reject fails mid-write, the candidate stays visible in
+        # `review_overrides list` rather than vanishing silently.
+        from src.research.pattern_miner import (
+            append_to_deny_list,
+            signature_from_staged_entry,
+        )
+
+        deny_record = None
+        sig = signature_from_staged_entry(entry)
+        if sig is not None:
+            deny_record = append_to_deny_list(sig, reason="review_overrides reject")
+
         staged.pop(index)
         _write_staged(staged)
         result = {
@@ -2022,9 +2035,16 @@ def cmd_review_overrides(
             "index": index,
             "weapon_id": wid,
             "remaining_staged": len(staged),
+            "deny_list_entry": deny_record,
         }
         print(f"\n=== REVIEW_OVERRIDES reject [{index}] {wid} ===")
         print(f"  removed from {DEFAULT_STAGED_PATH.name}")
+        if deny_record:
+            print(f"  deny-list: signature_hash={deny_record['signature_hash']} "
+                  f"(P4 miner will skip this pattern)")
+        else:
+            print("  deny-list: skipped (no source_mismatch — miner won't "
+                  "auto-skip this signature next run)")
         print(f"  remaining staged: {len(staged)}")
         _print_result(result)
         return result

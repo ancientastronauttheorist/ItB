@@ -300,6 +300,65 @@ def test_review_reject_drops_entry(monkeypatch, tmp_path):
     assert remaining[0]["weapon_id"] == "B"
 
 
+def test_review_reject_writes_deny_list_when_source_mismatch_present(
+    monkeypatch, tmp_path,
+):
+    """Reject must pin the signature to ``weapon_overrides_rejected.jsonl``
+    so the P4 miner skips the same candidate on the next run."""
+    from src.loop.commands import cmd_review_overrides
+    from src.research import pattern_miner as pm
+    staged, _ = _prime_cli_env(monkeypatch, tmp_path)
+    deny_path = tmp_path / "rejected.jsonl"
+    monkeypatch.setattr(pm, "DEFAULT_DENY_PATH", deny_path)
+
+    staged.write_text(json.dumps({
+        "weapon_id": "Prime_Shift", "damage": 5,
+        "note": "x", "source_run_id": "r1",
+        "source_mismatch": {
+            "field": "damage", "rust_value": 1, "vision_value": 5,
+            "severity": "high", "confidence": 1.0,
+            "display_name": "Vice Fist",
+        },
+    }) + "\n")
+
+    result = cmd_review_overrides("reject", 0)
+    assert result["action"] == "rejected"
+    assert result["deny_list_entry"] is not None
+    assert result["deny_list_entry"]["weapon_id"] == "Prime_Shift"
+    assert result["deny_list_entry"]["field"] == "damage"
+
+    # Deny list is readable and the hash matches the original mismatch.
+    loaded = pm.load_deny_list(deny_path)
+    expected = pm.signature_from_vision({
+        "weapon_id": "Prime_Shift", "field": "damage",
+        "rust_value": 1, "vision_value": 5,
+    })
+    assert expected.hash8() in loaded
+
+
+def test_review_reject_skips_deny_list_for_legacy_staged_rows(
+    monkeypatch, tmp_path,
+):
+    """Pre-P3-5 staged rows (or hand-edited ones) have no
+    ``source_mismatch`` — reject still removes them, but the deny
+    list stays empty rather than logging a meaningless entry."""
+    from src.loop.commands import cmd_review_overrides
+    from src.research import pattern_miner as pm
+    staged, _ = _prime_cli_env(monkeypatch, tmp_path)
+    deny_path = tmp_path / "rejected.jsonl"
+    monkeypatch.setattr(pm, "DEFAULT_DENY_PATH", deny_path)
+
+    staged.write_text(json.dumps({
+        "weapon_id": "Prime_Shift", "damage": 5,
+        "note": "hand-edited", "source_run_id": "r1",
+    }) + "\n")
+
+    result = cmd_review_overrides("reject", 0)
+    assert result["action"] == "rejected"
+    assert result["deny_list_entry"] is None
+    assert not deny_path.exists()
+
+
 def test_submit_research_stages_candidate_from_high_mismatch(tmp_path,
                                                              monkeypatch):
     """End-to-end: orchestrator.submit_research → stage_candidates."""

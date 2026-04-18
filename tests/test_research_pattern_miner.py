@@ -290,6 +290,55 @@ def test_mine_respects_deny_list(tmp_path: Path):
     assert out == []
 
 
+def test_signature_from_staged_entry_round_trips():
+    """A staged candidate built by ``_mismatch_to_candidate`` must
+    reconstruct the same signature that the original mismatch would
+    produce — otherwise ``review_overrides reject`` writes a deny
+    hash the miner never matches."""
+    from src.solver.weapon_overrides import _mismatch_to_candidate
+    mm = {
+        "weapon_id": "Prime_Shift", "field": "damage",
+        "rust_value": 1, "vision_value": 5,
+        "severity": "high", "confidence": 1.0, "display_name": "Vice Fist",
+    }
+    staged = _mismatch_to_candidate(mm, run_id="R1")
+    sig_original = pm.signature_from_vision(mm)
+    sig_staged = pm.signature_from_staged_entry(staged)
+    assert sig_original == sig_staged
+    assert sig_original.hash8() == sig_staged.hash8()
+
+
+def test_signature_from_staged_entry_returns_none_for_legacy_rows():
+    """Pre-P3-5 staged entries (or hand-edited ones) won't carry
+    ``source_mismatch``. The helper must return None cleanly so the
+    reject path can skip the deny-list write instead of crashing."""
+    assert pm.signature_from_staged_entry({"weapon_id": "Prime_Shift"}) is None
+    assert pm.signature_from_staged_entry({}) is None
+
+
+def test_append_to_deny_list_writes_hash_and_metadata(tmp_path: Path):
+    p = tmp_path / "deny.jsonl"
+    sig = pm.DiffSignature("vision", "Prime_Shift", "damage", "1", "5")
+    rec = pm.append_to_deny_list(sig, reason="looks like a real sim bug", path=p)
+    assert rec["signature_hash"] == sig.hash8()
+    assert rec["weapon_id"] == "Prime_Shift"
+    assert rec["reason"] == "looks like a real sim bug"
+
+    # Round-trip: load_deny_list sees the same hash.
+    assert pm.load_deny_list(p) == {sig.hash8()}
+
+
+def test_append_to_deny_list_appends_never_overwrites(tmp_path: Path):
+    p = tmp_path / "deny.jsonl"
+    sig_a = pm.DiffSignature("vision", "Prime_Shift", "damage", "1", "5")
+    sig_b = pm.DiffSignature("vision", "Brute_Grapple", "damage", "1", "3")
+    pm.append_to_deny_list(sig_a, path=p)
+    pm.append_to_deny_list(sig_b, path=p)
+    lines = p.read_text().strip().split("\n")
+    assert len(lines) == 2
+    assert pm.load_deny_list(p) == {sig_a.hash8(), sig_b.hash8()}
+
+
 def test_load_deny_list_reads_jsonl(tmp_path: Path):
     p = tmp_path / "deny.jsonl"
     p.write_text(

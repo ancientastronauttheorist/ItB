@@ -34,6 +34,7 @@ import hashlib
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -298,6 +299,61 @@ class SolveLoader:
 
 
 # ── deny-list ───────────────────────────────────────────────────────────────
+
+
+def signature_from_staged_entry(entry: dict) -> DiffSignature | None:
+    """Recover the Vision signature that produced a staged candidate.
+
+    ``review_overrides reject`` needs this to pin the rejection to a
+    signature_hash that the miner will recognize on the next run.
+    Works because ``_mismatch_to_candidate`` tucks the original
+    ``field``/``rust_value``/``vision_value`` into ``source_mismatch``.
+
+    Returns ``None`` for entries that predate the source_mismatch
+    tagging or were hand-edited; callers should fall back to a
+    weapon_id-only note in that case.
+    """
+    weapon_id = entry.get("weapon_id") or ""
+    origin = entry.get("source_mismatch") or {}
+    if not weapon_id or not origin:
+        return None
+    return signature_from_vision({
+        "weapon_id": weapon_id,
+        "field": origin.get("field"),
+        "rust_value": origin.get("rust_value"),
+        "vision_value": origin.get("vision_value"),
+        "display_name": origin.get("display_name"),
+    })
+
+
+def append_to_deny_list(
+    signature: DiffSignature,
+    *,
+    reason: str = "",
+    path: Path | str | None = None,
+) -> dict:
+    """Append one deny-list record and return the serialized dict.
+
+    Append-only by design — rejecting the same signature twice just
+    writes a second row, which is fine (loader dedups via set). No
+    schema migration concern: the loader reads ``signature_hash`` /
+    ``hash8`` only and ignores every other field.
+    """
+    p = Path(path) if path is not None else DEFAULT_DENY_PATH
+    p.parent.mkdir(parents=True, exist_ok=True)
+    rec = {
+        "signature_hash": signature.hash8(),
+        "source": signature.source,
+        "weapon_id": signature.weapon_id,
+        "field": signature.field,
+        "rust_bucket": signature.rust_bucket,
+        "vision_bucket": signature.vision_bucket,
+        "reason": reason,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    with p.open("a") as f:
+        f.write(json.dumps(rec) + "\n")
+    return rec
 
 
 def load_deny_list(path: Path | str | None = None) -> set[str]:
