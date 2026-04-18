@@ -1592,6 +1592,147 @@ def cmd_click_end_turn() -> dict:
     return result
 
 
+def cmd_research_next(profile: str = "Alpha") -> dict:
+    """Pick the next research queue entry and emit its capture plan.
+
+    Between-turn research flow, Phase 2 wiring. This is the pull-side
+    of the orchestrator: picks the head of ``session.research_queue``,
+    finds the matching unit on the live board, builds the MCP capture
+    plan (mouse_move → click → screenshot), marks the entry
+    ``in_progress``, saves the session.
+
+    The caller (Claude) then:
+
+    1. Dispatches ``plan.batch`` via ``computer_batch``.
+    2. Zooms each ``plan.crops[i].region``.
+    3. Applies the matching ``prompts[crop_name]`` to produce JSON.
+    4. Calls ``cmd_research_submit`` with the research_id and
+       ``{crop_name: json_string}``.
+
+    Returns ``{"status": "NO_WORK"}`` when the queue is drained or no
+    pending entry has a matching unit on the current board.
+    """
+    from src.research import capture, orchestrator
+
+    session = _load_session()
+
+    if not is_bridge_active():
+        result = {"error": "Bridge not active — research requires bridge"}
+        _print_result(result)
+        return result
+
+    board, _bridge = read_bridge_state()
+    if board is None:
+        result = {"error": "Failed to read bridge state for research target"}
+        _print_result(result)
+        return result
+
+    try:
+        ui = capture.resolve_ui_regions(capture.load_ui_regions())
+    except Exception as e:
+        result = {"error": f"UI regions load failed: {e}"}
+        _print_result(result)
+        return result
+
+    plan = orchestrator.begin_research(session, board, ui=ui)
+    if plan is None:
+        session.save()
+        result = {
+            "status": "NO_WORK",
+            "queue_len": len(session.research_queue),
+            "pending": sum(1 for e in session.research_queue
+                           if e.get("status") == "pending"),
+        }
+        print(f"\n=== RESEARCH_NEXT ===")
+        print(f"  No researchable entry on current board "
+              f"(queue_len={result['queue_len']}, "
+              f"pending={result['pending']})")
+        _print_result(result)
+        return result
+
+    session.save()
+    result = {
+        "status": "PLAN",
+        **plan,
+    }
+    target = plan["target"]
+    print(f"\n=== RESEARCH_NEXT (research_id={plan['research_id']}) ===")
+    print(f"  target: {target['type']} ({target['kind']}) at "
+          f"bridge {tuple(target['position_bridge'])} -> "
+          f"MCP {tuple(target['target_mcp'])}")
+    print(f"  crops: {[c['name'] for c in plan['plan']['crops']]}")
+    print(f"  next: dispatch plan.batch → zoom each crop → Vision → "
+          f"cmd_research_submit {plan['research_id']}")
+    _print_result(result)
+    return result
+
+
+def cmd_research_submit(
+    research_id: str,
+    vision_responses: dict | str,
+    profile: str = "Alpha",
+) -> dict:
+    """Receive Vision JSON for a ``cmd_research_next`` plan and finalize.
+
+    ``vision_responses`` is a dict keyed by crop name (``name_tag``,
+    ``unit_status``, ``weapon_preview``, ``terrain_tooltip``) whose
+    values are either raw JSON strings or already-parsed dicts. CLI
+    callers pass a JSON string; programmatic callers pass a dict.
+
+    Side effects: runs the weapon-def comparator if ``weapon_preview``
+    is among the responses (appends to
+    ``data/weapon_def_mismatches.jsonl``), stores the parsed result on
+    the queue entry, transitions status to ``done`` or ``failed``,
+    saves the session.
+    """
+    import json as _json
+    from src.research import orchestrator
+
+    session = _load_session()
+
+    if isinstance(vision_responses, str):
+        try:
+            vision_responses = _json.loads(vision_responses)
+        except _json.JSONDecodeError as e:
+            result = {"error": f"vision_responses not valid JSON: {e}"}
+            _print_result(result)
+            return result
+
+    out = orchestrator.submit_research(
+        session,
+        research_id,
+        vision_responses or {},
+        run_id=session.run_id,
+    )
+    session.save()
+
+    if "error" in out:
+        print(f"\n=== RESEARCH_SUBMIT FAILED ===")
+        print(f"  {out['error']}")
+    else:
+        print(f"\n=== RESEARCH_SUBMIT {research_id} ===")
+        print(f"  status: {out['status']}")
+        for crop, parsed in out.get("parsed", {}).items():
+            conf = parsed.get("confidence", 0.0)
+            # Pick a single headline field per crop type for the log line.
+            head = (
+                parsed.get("name")
+                or parsed.get("kind")
+                or parsed.get("terrain")
+                or "?"
+            )
+            print(f"  {crop}: {head} (confidence={conf:.2f})")
+        if out.get("mismatches"):
+            print(f"  mismatches: {len(out['mismatches'])}")
+            for m in out["mismatches"]:
+                print(f"    - {m['field']}: rust={m['rust_value']} "
+                      f"vision={m['vision_value']} [{m['severity']}]")
+        else:
+            print(f"  mismatches: none")
+    _print_result(out)
+    return out
+
+
 def cmd_end_turn() -> dict:
     """End the current turn.
 

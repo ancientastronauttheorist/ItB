@@ -41,6 +41,8 @@ from src.loop.commands import (
     cmd_verify_action,
     cmd_click_action,
     cmd_click_end_turn,
+    cmd_research_next,
+    cmd_research_submit,
     cmd_end_turn,
     cmd_status,
     cmd_new_run,
@@ -102,6 +104,26 @@ def main():
     )
     p_click_action.add_argument("index", type=int,
                                 help="Action index from solution")
+
+    # research_next
+    p_research_next = sub.add_parser(
+        "research_next",
+        help="Pick next research queue entry → emit capture plan",
+    )
+    p_research_next.add_argument("--profile", default="Alpha")
+
+    # research_submit
+    p_research_submit = sub.add_parser(
+        "research_submit",
+        help="Submit Vision JSON response for an in-progress research entry",
+    )
+    p_research_submit.add_argument("research_id",
+                                   help="ID returned by `research_next`")
+    p_research_submit.add_argument("vision_json",
+                                   help="JSON dict keyed by crop name (name_tag/"
+                                        "unit_status/weapon_preview/terrain_tooltip) "
+                                        "with Vision JSON string values")
+    p_research_submit.add_argument("--profile", default="Alpha")
 
     # click_end_turn
     sub.add_parser(
@@ -237,6 +259,11 @@ def main():
         cmd_click_action(args.index)
     elif args.command == "click_end_turn":
         cmd_click_end_turn()
+    elif args.command == "research_next":
+        cmd_research_next(profile=args.profile)
+    elif args.command == "research_submit":
+        cmd_research_submit(args.research_id, args.vision_json,
+                            profile=args.profile)
     elif args.command == "end_turn":
         cmd_end_turn()
     elif args.command == "status":
