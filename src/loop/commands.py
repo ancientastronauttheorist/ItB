@@ -967,6 +967,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             # cmd_auto_turn; Rust just needs the weapon_id strings.
             if session.disabled_actions:
                 bridge_data["disabled_actions"] = list(session.disabled_actions)
+            # Phase 3: committed weapon-def overrides. Applied before
+            # the solve via bridge JSON; Rust reports them back in
+            # applied_overrides for audit.
+            from src.solver.weapon_overrides import (
+                load_base_overrides as _load_base_ovr,
+                inject_into_bridge as _inject_ovr,
+            )
+            _inject_ovr(bridge_data, base=_load_base_ovr())
             rust_start = _time.time()
             rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
             rust_result = _json.loads(rust_json)
@@ -2299,6 +2307,15 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
                 ud.get("pilot_level", 0),
             )
 
+    # Phase 3: committed weapon-def overrides. _solve_with_rust is the
+    # replay/tuner path; base overrides stay active so replayed scores
+    # agree with live solves.
+    from src.solver.weapon_overrides import (
+        load_base_overrides as _load_base_ovr,
+        inject_into_bridge as _inject_ovr,
+    )
+    _inject_ovr(bd, base=_load_base_ovr())
+
     import itb_solver as _rust
     rust_start = time.time()
     rust_json = _rust.solve(json.dumps(bd), time_limit)
@@ -2543,6 +2560,12 @@ def _re_solve_partial(
     # the detector just flagged it.
     if session.disabled_actions:
         bridge_data["disabled_actions"] = list(session.disabled_actions)
+    # Phase 3: committed weapon-def overrides (same as cmd_solve).
+    from src.solver.weapon_overrides import (
+        load_base_overrides as _load_base_ovr,
+        inject_into_bridge as _inject_ovr,
+    )
+    _inject_ovr(bridge_data, base=_load_base_ovr())
 
     try:
         import itb_solver as _rust

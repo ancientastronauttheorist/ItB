@@ -1,0 +1,123 @@
+"""Phase 3 weapon-def override loader.
+
+Reads curated per-field patches from ``data/weapon_overrides.json`` and
+injects them into bridge JSON before a solve. Runtime patches can be
+passed in alongside for one-off ephemeral overrides. Rust parses these
+on the solve boundary (see ``rust_solver/src/serde_bridge.rs``) and
+emits ``applied_overrides`` in the solution JSON for audit.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any, Iterable
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_OVERRIDES_PATH = REPO_ROOT / "data" / "weapon_overrides.json"
+
+# Fields the Rust JsonWeaponOverride struct understands. Anything else is
+# allowed in the JSON (e.g. free-form "note") but will not round-trip.
+_PATCH_FIELDS = (
+    "weapon_type", "damage", "damage_outer", "push",
+    "self_damage", "range_min", "range_max", "limited", "path_size",
+    "flags_set", "flags_clear",
+)
+
+_VALID_FLAGS = frozenset({
+    "FIRE", "ACID", "FREEZE", "SMOKE", "SHIELD", "WEB",
+    "TARGETS_ALLIES", "BUILDING_DAMAGE", "PHASE",
+    "AOE_CENTER", "AOE_ADJACENT", "AOE_BEHIND", "AOE_PERP",
+    "CHAIN", "CHARGE", "FLYING_CHARGE", "PUSH_SELF",
+})
+
+
+class OverrideSchemaError(ValueError):
+    """Raised when an override entry fails structural validation."""
+
+
+def _validate_entry(entry: dict, source: str) -> None:
+    if not isinstance(entry, dict):
+        raise OverrideSchemaError(f"{source}: entry must be an object, got {type(entry).__name__}")
+    wid = entry.get("weapon_id")
+    if not isinstance(wid, str) or not wid:
+        raise OverrideSchemaError(f"{source}: weapon_id must be a non-empty string")
+    has_patch = False
+    for f in _PATCH_FIELDS:
+        if f not in entry:
+            continue
+        has_patch = True
+        if f in ("flags_set", "flags_clear"):
+            val = entry[f]
+            if not isinstance(val, list) or not all(isinstance(s, str) for s in val):
+                raise OverrideSchemaError(f"{source}[{wid}]: {f} must be a list of strings")
+            unknown = [s for s in val if s.upper() not in _VALID_FLAGS]
+            if unknown:
+                raise OverrideSchemaError(
+                    f"{source}[{wid}]: unknown flag names {unknown!r}; "
+                    f"valid flags are {sorted(_VALID_FLAGS)}"
+                )
+    if not has_patch:
+        raise OverrideSchemaError(f"{source}[{wid}]: entry has no patchable fields")
+
+
+def _sanitize(entry: dict) -> dict:
+    """Keep only fields the Rust side parses. Drops free-form metadata
+    (note, source_mismatch_ts, reviewer, …) that lives in the file for
+    humans but would otherwise travel across the FFI boundary unused."""
+    out = {"weapon_id": entry["weapon_id"]}
+    for f in _PATCH_FIELDS:
+        if f in entry:
+            out[f] = entry[f]
+    return out
+
+
+def load_base_overrides(path: Path | str | None = None) -> list[dict]:
+    """Load + validate the committed base override layer.
+
+    Missing file → empty list (the common case on clean checkouts).
+    Malformed JSON → raises. Any entry that fails validation raises.
+    """
+    p = Path(path) if path is not None else DEFAULT_OVERRIDES_PATH
+    if not p.exists():
+        return []
+    with p.open() as f:
+        raw = json.load(f)
+    if not isinstance(raw, list):
+        raise OverrideSchemaError(
+            f"{p}: top-level must be a JSON array of override entries"
+        )
+    entries = []
+    for i, entry in enumerate(raw):
+        _validate_entry(entry, source=f"{p.name}[{i}]")
+        entries.append(_sanitize(entry))
+    return entries
+
+
+def inject_into_bridge(
+    bridge_data: dict,
+    *,
+    base: Iterable[dict] | None = None,
+    runtime: Iterable[dict] | None = None,
+) -> None:
+    """Attach override entries to ``bridge_data`` in place.
+
+    Only fields expected by the Rust deserializer are forwarded; any
+    free-form metadata in ``base``/``runtime`` entries is stripped.
+    Empty / all-None inputs leave the bridge dict untouched so the
+    fast path (no ``applied_overrides`` in the solution) kicks in.
+    """
+    def _collect(entries: Iterable[dict] | None, source: str) -> list[dict]:
+        if entries is None:
+            return []
+        out: list[dict] = []
+        for i, e in enumerate(entries):
+            _validate_entry(e, source=f"{source}[{i}]")
+            out.append(_sanitize(e))
+        return out
+
+    base_entries = _collect(base, "base")
+    runtime_entries = _collect(runtime, "runtime")
+    if base_entries:
+        bridge_data["weapon_overrides"] = base_entries
+    if runtime_entries:
+        bridge_data["weapon_overrides_runtime"] = runtime_entries
