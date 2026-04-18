@@ -44,6 +44,7 @@ from src.loop.commands import (
     cmd_research_next,
     cmd_research_probe_mech,
     cmd_research_submit,
+    cmd_review_overrides,
     cmd_end_turn,
     cmd_status,
     cmd_new_run,
@@ -148,6 +149,32 @@ def main():
         help="Weapon slot index (0=secondary/repair, 1=prime). Default 0.",
     )
     p_research_probe_mech.add_argument("--profile", default="Alpha")
+
+    # review_overrides
+    p_review = sub.add_parser(
+        "review_overrides",
+        help="List / accept / reject staged weapon override candidates",
+    )
+    p_review.add_argument(
+        "sub_action",
+        nargs="?",
+        default="list",
+        choices=["list", "accept", "reject"],
+        help="Subaction (default: list)",
+    )
+    p_review.add_argument(
+        "index",
+        type=int,
+        nargs="?",
+        default=None,
+        help="Staged candidate index (required for accept/reject)",
+    )
+    p_review.add_argument(
+        "--force",
+        action="store_true",
+        help="Accept without a regression board at tests/weapon_overrides/"
+             "<weapon_id>_<case>.json (not recommended)",
+    )
 
     # click_end_turn
     sub.add_parser(
@@ -291,6 +318,8 @@ def main():
                             wiki_fallback=not args.no_wiki)
     elif args.command == "research_probe_mech":
         cmd_research_probe_mech(args.tile, args.slot, profile=args.profile)
+    elif args.command == "review_overrides":
+        cmd_review_overrides(args.sub_action, args.index, force=args.force)
     elif args.command == "end_turn":
         cmd_end_turn()
     elif args.command == "status":

@@ -1916,6 +1916,216 @@ def cmd_research_probe_mech(
     return result
 
 
+def _regression_board_for_weapon(weapon_id: str) -> Path | None:
+    """Return the first tests/weapon_overrides/<weapon_id>_*.json board
+    file, or None when no board has been authored. Module-level so tests
+    can monkeypatch it without relying on the real tests/ directory."""
+    d = Path(__file__).resolve().parents[2] / "tests" / "weapon_overrides"
+    if not d.exists():
+        return None
+    matches = sorted(d.glob(f"{weapon_id}_*.json"))
+    return matches[0] if matches else None
+
+
+def cmd_review_overrides(
+    action: str = "list",
+    index: int | None = None,
+    *,
+    force: bool = False,
+) -> dict:
+    """Inspect / promote weapon override candidates staged by P3-5.
+
+    ``action``:
+      - ``list`` (default): print every staged candidate with its index.
+      - ``accept <index>``: promote into ``data/weapon_overrides.json``
+        (no auto-commit). Refuses unless a regression board exists at
+        ``tests/weapon_overrides/<weapon_id>_<case>.json`` — bypass with
+        ``--force`` only when bootstrapping P3-7.
+      - ``reject <index>``: drop the candidate from the staged file.
+
+    Returns a dict describing the outcome. Never writes to the live
+    session; overrides take effect at the next solve.
+    """
+    from src.solver.weapon_overrides import (
+        DEFAULT_OVERRIDES_PATH, DEFAULT_STAGED_PATH,
+        OverrideSchemaError, load_base_overrides,
+    )
+
+    def _read_staged() -> list[dict]:
+        if not DEFAULT_STAGED_PATH.exists():
+            return []
+        out: list[dict] = []
+        for line in DEFAULT_STAGED_PATH.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+        return out
+
+    def _write_staged(entries: list[dict]) -> None:
+        if not entries:
+            if DEFAULT_STAGED_PATH.exists():
+                DEFAULT_STAGED_PATH.unlink()
+            return
+        DEFAULT_STAGED_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with DEFAULT_STAGED_PATH.open("w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+    staged = _read_staged()
+
+    if action == "list":
+        result = {
+            "staged_path": str(DEFAULT_STAGED_PATH),
+            "overrides_path": str(DEFAULT_OVERRIDES_PATH),
+            "staged": [
+                {"index": i, **entry} for i, entry in enumerate(staged)
+            ],
+        }
+        print(f"\n=== REVIEW_OVERRIDES ({len(staged)} staged) ===")
+        if not staged:
+            print("  (none staged — data/weapon_overrides_staged.jsonl "
+                  "is empty)")
+        else:
+            for i, entry in enumerate(staged):
+                wid = entry.get("weapon_id", "?")
+                patch = {k: v for k, v in entry.items()
+                         if k not in ("weapon_id", "note",
+                                      "source_run_id", "source_mismatch")}
+                print(f"  [{i}] {wid}: {patch}")
+                note = entry.get("note")
+                if note:
+                    print(f"      note: {note}")
+        _print_result(result)
+        return result
+
+    if index is None:
+        err = {"error": f"review_overrides {action} requires <index>"}
+        _print_result(err)
+        return err
+    if index < 0 or index >= len(staged):
+        err = {"error": f"index {index} out of range (0..{len(staged) - 1})"}
+        _print_result(err)
+        return err
+
+    entry = staged[index]
+    wid = entry.get("weapon_id", "")
+
+    if action == "reject":
+        staged.pop(index)
+        _write_staged(staged)
+        result = {
+            "action": "rejected",
+            "index": index,
+            "weapon_id": wid,
+            "remaining_staged": len(staged),
+        }
+        print(f"\n=== REVIEW_OVERRIDES reject [{index}] {wid} ===")
+        print(f"  removed from {DEFAULT_STAGED_PATH.name}")
+        print(f"  remaining staged: {len(staged)}")
+        _print_result(result)
+        return result
+
+    if action != "accept":
+        err = {"error": f"unknown action: {action!r} "
+                        "(expected list | accept | reject)"}
+        _print_result(err)
+        return err
+
+    # accept path — gated on regression board presence.
+    board_path = _regression_board_for_weapon(wid)
+    if board_path is None and not force:
+        err = {
+            "error": (
+                f"no regression board for {wid} at "
+                f"tests/weapon_overrides/{wid}_<case>.json — add one that "
+                f"fails without the override and passes with it, or rerun "
+                f"with --force to bypass (not recommended)."
+            ),
+        }
+        _print_result(err)
+        return err
+
+    # Build the promoted entry: strip staging-only metadata but keep a
+    # shortened "note" so future reviewers can trace the origin.
+    promoted = {"weapon_id": wid}
+    for field in ("weapon_type", "damage", "damage_outer", "push",
+                  "self_damage", "range_min", "range_max", "limited",
+                  "path_size", "flags_set", "flags_clear"):
+        if field in entry:
+            promoted[field] = entry[field]
+    origin = entry.get("source_mismatch") or {}
+    promoted["note"] = (
+        entry.get("note")
+        or f"promoted from staged (run={entry.get('source_run_id', '?')})"
+    )
+    promoted["source_run_id"] = entry.get("source_run_id", "")
+    if origin:
+        promoted["source_mismatch"] = origin
+
+    # Load the existing base file and append (after sanity-validating
+    # the merged result — catches schema errors before we touch disk).
+    DEFAULT_OVERRIDES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    existing: list[dict] = []
+    if DEFAULT_OVERRIDES_PATH.exists():
+        try:
+            existing = json.loads(DEFAULT_OVERRIDES_PATH.read_text())
+            if not isinstance(existing, list):
+                raise OverrideSchemaError(
+                    f"{DEFAULT_OVERRIDES_PATH}: top-level must be an array"
+                )
+        except (OverrideSchemaError, json.JSONDecodeError) as e:
+            err = {"error": f"failed to read existing overrides: {e}"}
+            _print_result(err)
+            return err
+    existing.append(promoted)
+
+    # Round-trip through load_base_overrides with a tempfile so the
+    # committed file is always valid — schema errors mean we don't
+    # commit the promotion.
+    from tempfile import NamedTemporaryFile
+    tmp = NamedTemporaryFile("w", suffix=".json", delete=False)
+    try:
+        tmp.write(json.dumps(existing, indent=2))
+        tmp.close()
+        try:
+            load_base_overrides(tmp.name)
+        except OverrideSchemaError as e:
+            err = {"error": f"promoted entry fails schema validation: {e}"}
+            _print_result(err)
+            return err
+        # Validated — swap into place.
+        Path(tmp.name).replace(DEFAULT_OVERRIDES_PATH)
+    finally:
+        if Path(tmp.name).exists():
+            Path(tmp.name).unlink(missing_ok=True)
+
+    staged.pop(index)
+    _write_staged(staged)
+    result = {
+        "action": "accepted",
+        "index": index,
+        "weapon_id": wid,
+        "overrides_path": str(DEFAULT_OVERRIDES_PATH),
+        "regression_board": str(board_path) if board_path else None,
+        "forced": force and board_path is None,
+        "remaining_staged": len(staged),
+    }
+    print(f"\n=== REVIEW_OVERRIDES accept [{index}] {wid} ===")
+    if board_path:
+        print(f"  regression board: {board_path}")
+    elif force:
+        print("  WARNING: --force used without a regression board")
+    print(f"  appended to {DEFAULT_OVERRIDES_PATH}")
+    print("  next solve will apply it automatically (no rebuild needed)")
+    print("  remember to git commit data/weapon_overrides.json when ready")
+    _print_result(result)
+    return result
+
+
 def cmd_end_turn() -> dict:
     """End the current turn.
 

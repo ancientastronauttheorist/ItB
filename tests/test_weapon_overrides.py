@@ -8,6 +8,7 @@ base/runtime entries in the right bridge-JSON keys.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import pytest
 
 from src.solver.weapon_overrides import (
@@ -197,6 +198,106 @@ def test_stage_respects_severity_threshold(tmp_path):
     staged = stage_candidates(mm, run_id="r1", path=p,
                               severity_threshold="medium")
     assert len(staged) == 1
+
+
+def _prime_cli_env(monkeypatch, tmp_path, *, with_board_for: str | None = None):
+    """Redirect the CLI's file paths into tmp_path so tests don't
+    mutate data/ or tests/ on disk.
+
+    When ``with_board_for`` is set, the board-lookup helper returns a
+    stub path for that weapon_id and None for everything else.
+    """
+    from src.solver import weapon_overrides as wo
+    from src.loop import commands as cmds
+
+    staged = tmp_path / "staged.jsonl"
+    overrides = tmp_path / "weapon_overrides.json"
+
+    monkeypatch.setattr(wo, "DEFAULT_STAGED_PATH", staged)
+    monkeypatch.setattr(wo, "DEFAULT_OVERRIDES_PATH", overrides)
+
+    stub_board = tmp_path / f"{with_board_for or 'none'}_stub.json"
+    if with_board_for:
+        stub_board.write_text("{}")
+
+    def _lookup(wid: str):
+        if with_board_for and wid == with_board_for:
+            return stub_board
+        return None
+
+    monkeypatch.setattr(cmds, "_regression_board_for_weapon", _lookup)
+    return staged, overrides
+
+
+def test_review_list_empty(monkeypatch, tmp_path):
+    from src.loop.commands import cmd_review_overrides
+    _prime_cli_env(monkeypatch, tmp_path)
+    result = cmd_review_overrides("list")
+    assert result["staged"] == []
+
+
+def test_review_accept_refuses_without_regression_board(monkeypatch, tmp_path):
+    from src.loop.commands import cmd_review_overrides
+    staged, overrides = _prime_cli_env(monkeypatch, tmp_path)
+    staged.write_text(json.dumps({
+        "weapon_id": "Ranged_Defensestrike", "damage": 1,
+        "note": "test", "source_run_id": "r1",
+    }) + "\n")
+    result = cmd_review_overrides("accept", 0)
+    assert "error" in result
+    assert "regression board" in result["error"]
+    # Nothing promoted; staged still present.
+    assert staged.exists()
+    assert not overrides.exists()
+
+
+def test_review_accept_with_regression_board_promotes(monkeypatch, tmp_path):
+    from src.loop.commands import cmd_review_overrides
+    staged, overrides = _prime_cli_env(
+        monkeypatch, tmp_path, with_board_for="Ranged_Defensestrike"
+    )
+    staged.write_text(json.dumps({
+        "weapon_id": "Ranged_Defensestrike", "damage": 1,
+        "note": "test", "source_run_id": "r1",
+        "source_mismatch": {"field": "damage", "rust_value": 0},
+    }) + "\n")
+    result = cmd_review_overrides("accept", 0)
+    assert result.get("action") == "accepted"
+    loaded = json.loads(overrides.read_text())
+    assert loaded[0]["weapon_id"] == "Ranged_Defensestrike"
+    assert loaded[0]["damage"] == 1
+    # Staged entry consumed.
+    assert not staged.exists() or staged.read_text().strip() == ""
+
+
+def test_review_accept_force_bypasses_regression_board(monkeypatch, tmp_path):
+    from src.loop.commands import cmd_review_overrides
+    staged, overrides = _prime_cli_env(monkeypatch, tmp_path)
+    staged.write_text(json.dumps({
+        "weapon_id": "Prime_Punchmech", "damage": 3,
+        "note": "force path", "source_run_id": "r1",
+    }) + "\n")
+    result = cmd_review_overrides("accept", 0, force=True)
+    assert result["action"] == "accepted"
+    assert result["forced"] is True
+    assert overrides.exists()
+
+
+def test_review_reject_drops_entry(monkeypatch, tmp_path):
+    from src.loop.commands import cmd_review_overrides
+    staged, _ = _prime_cli_env(monkeypatch, tmp_path)
+    staged.write_text("\n".join([
+        json.dumps({"weapon_id": "A", "damage": 1,
+                    "note": "x", "source_run_id": "r1"}),
+        json.dumps({"weapon_id": "B", "damage": 2,
+                    "note": "y", "source_run_id": "r1"}),
+    ]) + "\n")
+    result = cmd_review_overrides("reject", 0)
+    assert result["action"] == "rejected"
+    assert result["weapon_id"] == "A"
+    remaining = [json.loads(l) for l in staged.read_text().splitlines() if l]
+    assert len(remaining) == 1
+    assert remaining[0]["weapon_id"] == "B"
 
 
 def test_submit_research_stages_candidate_from_high_mismatch(tmp_path,
