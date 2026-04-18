@@ -150,8 +150,12 @@ def test_submit_research_marks_failed_on_all_low_confidence(monkeypatch):
     rid = plan["research_id"]
 
     # Give Vision garbage → every parser returns confidence 0.
+    # Disable wiki fallback so this test stays hermetic — wiki fallback
+    # behavior has its own dedicated tests below.
     responses = {"name_tag": "garbage", "unit_status": "nope"}
-    result = orchestrator.submit_research(s, rid, responses)
+    result = orchestrator.submit_research(
+        s, rid, responses, wiki_fallback=False,
+    )
     assert result["status"] == "failed"
     assert s.research_queue[0]["status"] == "failed"
 
@@ -315,6 +319,159 @@ def test_submit_research_for_weapon_probe_updates_kind_slot_entry(
     by_slot = {e["slot"]: e["status"] for e in s.research_queue}
     assert by_slot[0] == "in_progress"
     assert by_slot[1] == "done"
+
+
+# ── wiki fallback ────────────────────────────────────────────────────────────
+
+
+def _wiki_payload(title: str, wikitext: str) -> dict:
+    """MediaWiki formatversion=2 response matching wiki_client's fetcher."""
+    return {
+        "query": {
+            "pages": [
+                {"pageid": 1, "title": title, "revisions": [{"content": wikitext}]}
+            ]
+        }
+    }
+
+
+def _wiki_missing(title: str) -> dict:
+    return {"query": {"pages": [{"title": title, "missing": True}]}}
+
+
+def test_submit_research_wiki_fallback_marks_done_on_hit(monkeypatch, tmp_path: Path):
+    """Low-confidence submission with a wiki hit → status=done, source=wiki."""
+    s = RunSession()
+    s.enqueue_research("Hornet", None, current_turn=1)
+    board = _fake_board([_fake_unit("Hornet", 3, 2)])
+    plan = _begin_for(s, board, monkeypatch)
+    rid = plan["research_id"]
+
+    # Garbage Vision output → every parser returns confidence 0.
+    responses = {"name_tag": "not json", "unit_status": "also nope"}
+    # Stub fetcher returns a valid wiki page — no network.
+    calls: list[str] = []
+    def fake_fetcher(title, _timeout):
+        calls.append(title)
+        return _wiki_payload(title, "{{Infobox weapon|damage=2|push=west}}")
+
+    out = orchestrator.submit_research(
+        s, rid, responses,
+        wiki_fetcher=fake_fetcher,
+        wiki_cache_dir=tmp_path,
+    )
+    assert out["status"] == "done"
+    assert out["source"] == "wiki"
+    assert out["wiki_fallback"]["title"] == "Hornet"
+    assert s.research_queue[0]["status"] == "done"
+    assert s.research_queue[0]["result"]["source"] == "wiki"
+    assert calls == ["Hornet"]  # wiki was actually consulted
+
+
+def test_submit_research_wiki_fallback_miss_stays_failed(monkeypatch, tmp_path: Path):
+    """Low-confidence submission, wiki returns missing → status=failed."""
+    s = RunSession()
+    s.enqueue_research("Ghost", None, current_turn=1)
+    board = _fake_board([_fake_unit("Ghost", 3, 2)])
+    plan = _begin_for(s, board, monkeypatch)
+    rid = plan["research_id"]
+
+    responses = {"name_tag": "garbage"}
+    def fake_fetcher(title, _timeout):
+        return _wiki_missing(title)
+
+    out = orchestrator.submit_research(
+        s, rid, responses,
+        wiki_fetcher=fake_fetcher,
+        wiki_cache_dir=tmp_path,
+    )
+    assert out["status"] == "failed"
+    assert out["source"] == "vision"
+    assert out["wiki_fallback"] is None
+    assert s.research_queue[0]["status"] == "failed"
+
+
+def test_submit_research_wiki_fallback_opt_out(monkeypatch, tmp_path: Path):
+    """wiki_fallback=False → fetcher never called, entry stays failed."""
+    s = RunSession()
+    s.enqueue_research("Ghost", None, current_turn=1)
+    board = _fake_board([_fake_unit("Ghost", 3, 2)])
+    plan = _begin_for(s, board, monkeypatch)
+    rid = plan["research_id"]
+
+    calls: list[str] = []
+    def fake_fetcher(title, _timeout):
+        calls.append(title)
+        return _wiki_payload(title, "should not be reached")
+
+    out = orchestrator.submit_research(
+        s, rid, {"name_tag": "garbage"},
+        wiki_fallback=False,
+        wiki_fetcher=fake_fetcher,
+        wiki_cache_dir=tmp_path,
+    )
+    assert out["status"] == "failed"
+    assert calls == []
+
+
+def test_submit_research_high_confidence_skips_wiki(monkeypatch, tmp_path: Path):
+    """Trustworthy parses don't trigger the wiki lookup even if enabled."""
+    s = RunSession()
+    s.enqueue_research("FireflyBoss", None, current_turn=1)
+    board = _fake_board([_fake_unit("FireflyBoss", 3, 2)])
+    plan = _begin_for(s, board, monkeypatch)
+    rid = plan["research_id"]
+
+    calls: list[str] = []
+    def fake_fetcher(title, _timeout):
+        calls.append(title)
+        return _wiki_payload(title, "should not be reached")
+
+    responses = {
+        "name_tag": '{"name": "Firefly Leader", "hp": 6, "move": null, '
+                    '"class_icons": []}',
+    }
+    out = orchestrator.submit_research(
+        s, rid, responses,
+        wiki_fetcher=fake_fetcher,
+        wiki_cache_dir=tmp_path,
+    )
+    assert out["status"] == "done"
+    assert out["source"] == "vision"
+    assert calls == []
+
+
+def test_submit_research_wiki_title_prefers_parsed_weapon_name(
+    monkeypatch, tmp_path: Path,
+):
+    """Weapon probes: prefer parsed weapon name over the mech type."""
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (0, 0))
+    s = RunSession()
+    board = _fake_board([_fake_unit("CannonMech", 3, 3, is_mech=True)])
+    probe = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=1, ui=_ui_regions(),
+    )
+    rid = probe["research_id"]
+
+    # Vision extracted a weapon name but nothing else trusty.
+    # (low confidence because damage/footprint missing → parse_weapon_preview
+    # returns confidence < 0.5).
+    responses = {
+        "weapon_preview": '{"name": "Taurus Cannon", "damage": 0}',
+    }
+    titles: list[str] = []
+    def fake_fetcher(title, _timeout):
+        titles.append(title)
+        return _wiki_payload(title, "{{Infobox weapon|damage=1}}")
+    out = orchestrator.submit_research(
+        s, rid, responses,
+        wiki_fetcher=fake_fetcher,
+        wiki_cache_dir=tmp_path,
+    )
+    # Wiki was queried with the weapon name, not the mech type.
+    assert titles == ["Taurus Cannon"]
+    assert out["status"] == "done"
+    assert out["source"] == "wiki"
 
 
 # ── end-to-end flow ──────────────────────────────────────────────────────────

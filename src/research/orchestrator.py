@@ -33,7 +33,7 @@ from typing import Any
 from src.control.executor import grid_to_mcp
 from src.loop.session import RunSession
 from src.model.board import Board
-from src.research import capture, comparator, vision
+from src.research import capture, comparator, vision, wiki_client
 
 
 # ── target picking ────────────────────────────────────────────────────────
@@ -265,6 +265,53 @@ def _lookup_by_research_id(session: RunSession, research_id: str) -> dict | None
     return None
 
 
+def _pick_wiki_title(entry: dict, parsed: dict) -> str | None:
+    """Pick the best page title for a wiki fallback lookup.
+
+    Preference order: ``weapon_preview.name`` (when probing a weapon
+    slot) → ``name_tag.name`` (unit probes) → ``entry["type"]``
+    (what the queue was originally keyed on). Returns None when no
+    candidate is usable — in that case wiki fallback is skipped.
+    """
+    for crop_name in ("weapon_preview", "name_tag"):
+        crop = parsed.get(crop_name) or {}
+        candidate = crop.get("name")
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    et = (entry.get("type") or "").strip()
+    return et or None
+
+
+def _try_wiki_fallback(
+    entry: dict,
+    parsed: dict,
+    *,
+    fetcher: Any = None,
+    cache_dir: Any = None,
+) -> dict | None:
+    """Run a best-effort wiki lookup for a low-confidence submission.
+
+    Returns the wiki payload (non-empty dict) on success, or None
+    when no title could be picked, the page didn't exist, or the
+    fetch raised. The caller decides what to do with the payload —
+    currently we only stash it on the entry as a diagnostic, upgrade
+    the status to "done", and mark the source as "wiki" so downstream
+    filters can distinguish Vision-verified from wiki-fallback data.
+    """
+    title = _pick_wiki_title(entry, parsed)
+    if title is None:
+        return None
+    try:
+        payload = wiki_client.fetch_weapon(
+            title, fetcher=fetcher, cache_dir=cache_dir,
+        )
+    except Exception:
+        return None
+    if not payload:
+        return None
+    return payload
+
+
 def submit_research(
     session: RunSession,
     research_id: str,
@@ -273,6 +320,9 @@ def submit_research(
     run_id: str = "",
     mismatches_path: Any = None,
     confidence_floor: float = 0.5,
+    wiki_fallback: bool = True,
+    wiki_fetcher: Any = None,
+    wiki_cache_dir: Any = None,
 ) -> dict:
     """Parse Vision JSONs, store on entry, run comparator, mark done.
 
@@ -285,6 +335,12 @@ def submit_research(
     Comparator runs only on ``weapon_preview`` (the regression
     harness target). Everything else just populates the result dict
     for later analysis.
+
+    When every parser returned confidence ≤ ``confidence_floor`` and
+    ``wiki_fallback`` is enabled, the function retries via
+    ``wiki_client.fetch_weapon`` before marking the entry failed.
+    A hit upgrades the status to ``done`` with
+    ``result["source"] = "wiki"``; a miss leaves it ``failed``.
     """
     entry = _lookup_by_research_id(session, research_id)
     if entry is None:
@@ -315,16 +371,35 @@ def submit_research(
         p.get("confidence", 0.0) > confidence_floor
         for p in parsed.values()
     )
-    final_status = "done" if trustworthy else "failed"
+    source = "vision"
+    wiki_payload: dict | None = None
+    if trustworthy:
+        final_status = "done"
+    else:
+        if wiki_fallback:
+            wiki_payload = _try_wiki_fallback(
+                entry, parsed,
+                fetcher=wiki_fetcher, cache_dir=wiki_cache_dir,
+            )
+        if wiki_payload:
+            final_status = "done"
+            source = "wiki"
+        else:
+            final_status = "failed"
+
+    result_payload: dict[str, Any] = {
+        "parsed": parsed,
+        "mismatches": mismatches,
+        "source": source,
+    }
+    if wiki_payload is not None:
+        result_payload["wiki_fallback"] = wiki_payload
 
     session.mark_research(
         entry.get("type", ""),
         entry.get("terrain_id"),
         final_status,
-        result={
-            "parsed": parsed,
-            "mismatches": mismatches,
-        },
+        result=result_payload,
         kind=entry.get("kind"),
         slot=entry.get("slot"),
     )
@@ -335,6 +410,8 @@ def submit_research(
     return {
         "research_id": research_id,
         "status": final_status,
+        "source": source,
         "parsed": parsed,
         "mismatches": mismatches,
+        "wiki_fallback": wiki_payload,
     }

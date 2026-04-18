@@ -1723,6 +1723,7 @@ def cmd_research_submit(
     research_id: str,
     vision_responses: dict | str,
     profile: str = "Alpha",
+    wiki_fallback: bool = True,
 ) -> dict:
     """Receive Vision JSON for a ``cmd_research_next`` plan and finalize.
 
@@ -1736,6 +1737,10 @@ def cmd_research_submit(
     ``data/weapon_def_mismatches.jsonl``), stores the parsed result on
     the queue entry, transitions status to ``done`` or ``failed``,
     saves the session.
+
+    When ``wiki_fallback`` is True (default), an all-low-confidence
+    submission retries via the Fandom wiki client before marking the
+    entry failed. Disable with ``--no-wiki`` for fully offline runs.
     """
     import json as _json
     from src.research import orchestrator
@@ -1755,6 +1760,7 @@ def cmd_research_submit(
         research_id,
         vision_responses or {},
         run_id=session.run_id,
+        wiki_fallback=wiki_fallback,
     )
     session.save()
 
@@ -1763,7 +1769,8 @@ def cmd_research_submit(
         print(f"  {out['error']}")
     else:
         print(f"\n=== RESEARCH_SUBMIT {research_id} ===")
-        print(f"  status: {out['status']}")
+        src = out.get("source", "vision")
+        print(f"  status: {out['status']} (source={src})")
         for crop, parsed in out.get("parsed", {}).items():
             conf = parsed.get("confidence", 0.0)
             # Pick a single headline field per crop type for the log line.
@@ -1781,6 +1788,10 @@ def cmd_research_submit(
                       f"vision={m['vision_value']} [{m['severity']}]")
         else:
             print(f"  mismatches: none")
+        if out.get("wiki_fallback"):
+            wf = out["wiki_fallback"]
+            print(f"  wiki_fallback: {wf.get('title', '?')} "
+                  f"(section={wf.get('used_section', '?')})")
     _print_result(out)
     return out
 

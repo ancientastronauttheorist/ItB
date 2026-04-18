@@ -125,6 +125,11 @@ def main():
                                         "unit_status/weapon_preview/terrain_tooltip) "
                                         "with Vision JSON string values")
     p_research_submit.add_argument("--profile", default="Alpha")
+    p_research_submit.add_argument(
+        "--no-wiki",
+        action="store_true",
+        help="Disable wiki fallback on low-confidence parses (offline mode)",
+    )
 
     # research_probe_mech
     p_research_probe_mech = sub.add_parser(
@@ -282,7 +287,8 @@ def main():
         cmd_research_next(profile=args.profile)
     elif args.command == "research_submit":
         cmd_research_submit(args.research_id, args.vision_json,
-                            profile=args.profile)
+                            profile=args.profile,
+                            wiki_fallback=not args.no_wiki)
     elif args.command == "research_probe_mech":
         cmd_research_probe_mech(args.tile, args.slot, profile=args.profile)
     elif args.command == "end_turn":
