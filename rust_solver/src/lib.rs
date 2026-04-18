@@ -18,9 +18,22 @@ pub mod serde_bridge;
 fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> {
     // Release the GIL for the entire Rust computation
     py.allow_threads(|| {
-        let (board, spawn_points, _danger_tiles, weights, disabled_mask) =
+        let (board, spawn_points, _danger_tiles, weights, disabled_mask, overlay_entries) =
             serde_bridge::board_from_json(json_input)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+
+        // Build overlay table only when overrides are present; empty overlay
+        // returns None so the solve reuses the compile-time WEAPONS directly.
+        let overlay_pairs: Vec<(weapons::WId, weapons::PartialWeaponDef)> =
+            overlay_entries.iter()
+                .map(|e| (e.wid, e.patch.clone()))
+                .collect();
+        let overlay_table = weapons::build_overlay_table(&overlay_pairs);
+        let weapons_table: &weapons::WeaponTable = match &overlay_table {
+            Some(t) => &**t,
+            None => &weapons::WEAPONS,
+        };
+
         let solution = solver::solve_turn(
             &board,
             &spawn_points,
@@ -28,10 +41,10 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
             99999, // no pruning — Rust is fast enough to search exhaustively
             &weights,
             disabled_mask,
-            &weapons::WEAPONS,
+            weapons_table,
         );
 
-        Ok(serde_bridge::solution_to_json(&solution))
+        Ok(serde_bridge::solution_to_json(&solution, &overlay_entries))
     })
 }
 
@@ -49,9 +62,17 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::types::{Terrain, xy_to_idx};
 
     py.allow_threads(|| {
-        let (mut board, spawn_points, _danger, weights, _disabled_mask) =
+        let (mut board, spawn_points, _danger, weights, _disabled_mask, overlay_entries) =
             serde_bridge::board_from_json(bridge_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+
+        let overlay_pairs: Vec<(weapons::WId, weapons::PartialWeaponDef)> =
+            overlay_entries.iter().map(|e| (e.wid, e.patch.clone())).collect();
+        let overlay_table = weapons::build_overlay_table(&overlay_pairs);
+        let weapons_table: &weapons::WeaponTable = match &overlay_table {
+            Some(t) => &**t,
+            None => &weapons::WEAPONS,
+        };
 
         #[derive(serde::Deserialize)]
         struct PlanAction {
@@ -88,7 +109,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 (act.move_to[0], act.move_to[1]),
                 wid,
                 (act.target[0], act.target[1]),
-                &crate::weapons::WEAPONS,
+                weapons_table,
             );
             kills += result.enemies_killed as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -98,7 +119,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
             .count() as i32;
 
-        let _ = simulate_enemy_attacks(&mut board, &original_positions, &crate::weapons::WEAPONS);
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
 
         let buildings_after = board.tiles.iter()
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
@@ -113,7 +134,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 
         // Recompute building_threats from the ORIGINAL (pre-action) board state
         // so threats_cleared / perfect_defense_bonus kick in correctly.
-        let (mut board_orig, _, _, _, _) = serde_bridge::board_from_json(bridge_json)
+        let (mut board_orig, _, _, _, _, _) = serde_bridge::board_from_json(bridge_json)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
         let _ = &mut board_orig; // silence unused_mut if not mutated
         let mut building_threats = 0u64;

@@ -33,11 +33,119 @@ pub struct JsonInput {
     /// but unused here — Python enforces expiry by filtering before the
     /// solve call.
     pub disabled_actions: Option<Vec<JsonDisabledAction>>,
+    /// Phase 3 base overlay — per-field patches from
+    /// ``data/weapon_overrides.json`` (human-reviewed + committed).
+    /// Applied first, so runtime entries win precedence ties.
+    pub weapon_overrides: Option<Vec<JsonWeaponOverride>>,
+    /// Phase 3 runtime overlay — ephemeral per-solve patches that the
+    /// loop may stage without a commit (Tier-3 hot-patch hook). Applied
+    /// last, highest precedence.
+    pub weapon_overrides_runtime: Option<Vec<JsonWeaponOverride>>,
 }
 
 #[derive(Deserialize)]
 pub struct JsonDisabledAction {
     pub weapon_id: String,
+}
+
+/// Per-field weapon-def patch, as emitted by the Python override loader.
+/// Any field left as ``null`` (serde default) is not touched. ``flags_set``
+/// / ``flags_clear`` take case-insensitive flag names (``FIRE``, ``acid``…);
+/// unknown flag names are skipped silently so a typo can't brick a solve.
+#[derive(Deserialize, Default)]
+pub struct JsonWeaponOverride {
+    pub weapon_id: String,
+    pub weapon_type: Option<String>,
+    pub damage: Option<u8>,
+    pub damage_outer: Option<u8>,
+    pub push: Option<String>,
+    pub self_damage: Option<u8>,
+    pub range_min: Option<u8>,
+    pub range_max: Option<u8>,
+    pub limited: Option<u8>,
+    pub path_size: Option<u8>,
+    pub flags_set: Option<Vec<String>>,
+    pub flags_clear: Option<Vec<String>>,
+}
+
+/// Which layer a particular override came from. Emitted in
+/// ``applied_overrides`` for audit.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OverlaySource { Base, Runtime }
+
+impl OverlaySource {
+    pub fn as_str(&self) -> &'static str {
+        match self { Self::Base => "base", Self::Runtime => "runtime" }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct OverlayEntry {
+    pub wid: WId,
+    pub patch: PartialWeaponDef,
+    pub source: OverlaySource,
+    /// Field names actually populated on this entry. Used for
+    /// ``applied_overrides`` audit output.
+    pub fields: Vec<&'static str>,
+}
+
+fn flag_from_name(name: &str) -> Option<WeaponFlags> {
+    match name.to_ascii_uppercase().as_str() {
+        "FIRE" => Some(WeaponFlags::FIRE),
+        "ACID" => Some(WeaponFlags::ACID),
+        "FREEZE" => Some(WeaponFlags::FREEZE),
+        "SMOKE" => Some(WeaponFlags::SMOKE),
+        "SHIELD" => Some(WeaponFlags::SHIELD),
+        "WEB" => Some(WeaponFlags::WEB),
+        "TARGETS_ALLIES" => Some(WeaponFlags::TARGETS_ALLIES),
+        "BUILDING_DAMAGE" => Some(WeaponFlags::BUILDING_DAMAGE),
+        "PHASE" => Some(WeaponFlags::PHASE),
+        "AOE_CENTER" => Some(WeaponFlags::AOE_CENTER),
+        "AOE_ADJACENT" => Some(WeaponFlags::AOE_ADJACENT),
+        "AOE_BEHIND" => Some(WeaponFlags::AOE_BEHIND),
+        "AOE_PERP" => Some(WeaponFlags::AOE_PERP),
+        "CHAIN" => Some(WeaponFlags::CHAIN),
+        "CHARGE" => Some(WeaponFlags::CHARGE),
+        "FLYING_CHARGE" => Some(WeaponFlags::FLYING_CHARGE),
+        "PUSH_SELF" => Some(WeaponFlags::PUSH_SELF),
+        _ => None,
+    }
+}
+
+fn parse_overlay_list(list: &[JsonWeaponOverride], source: OverlaySource) -> Vec<OverlayEntry> {
+    let mut out = Vec::with_capacity(list.len());
+    for jo in list {
+        let wid = wid_from_str(&jo.weapon_id);
+        if wid == WId::None { continue; }
+        let mut patch = PartialWeaponDef::default();
+        let mut fields: Vec<&'static str> = Vec::new();
+        if let Some(s) = &jo.weapon_type { patch.weapon_type = Some(WeaponType::from_str(s)); fields.push("weapon_type"); }
+        if let Some(v) = jo.damage { patch.damage = Some(v); fields.push("damage"); }
+        if let Some(v) = jo.damage_outer { patch.damage_outer = Some(v); fields.push("damage_outer"); }
+        if let Some(s) = &jo.push { patch.push = Some(PushDir::from_str(s)); fields.push("push"); }
+        if let Some(v) = jo.self_damage { patch.self_damage = Some(v); fields.push("self_damage"); }
+        if let Some(v) = jo.range_min { patch.range_min = Some(v); fields.push("range_min"); }
+        if let Some(v) = jo.range_max { patch.range_max = Some(v); fields.push("range_max"); }
+        if let Some(v) = jo.limited { patch.limited = Some(v); fields.push("limited"); }
+        if let Some(v) = jo.path_size { patch.path_size = Some(v); fields.push("path_size"); }
+        if let Some(names) = &jo.flags_set {
+            let mut any = false;
+            for n in names {
+                if let Some(bit) = flag_from_name(n) { patch.flags_set |= bit; any = true; }
+            }
+            if any { fields.push("flags_set"); }
+        }
+        if let Some(names) = &jo.flags_clear {
+            let mut any = false;
+            for n in names {
+                if let Some(bit) = flag_from_name(n) { patch.flags_clear |= bit; any = true; }
+            }
+            if any { fields.push("flags_clear"); }
+        }
+        if patch.is_empty() { continue; }
+        out.push(OverlayEntry { wid, patch, source, fields });
+    }
+    out
 }
 
 #[derive(Deserialize)]
@@ -99,11 +207,21 @@ pub struct JsonUnit {
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
 
 pub fn board_from_json(json_str: &str)
-    -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>, EvalWeights, u128), String>
+    -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>, EvalWeights, u128, Vec<OverlayEntry>), String>
 {
     let input: JsonInput = serde_json::from_str(json_str)
         .map_err(|e| format!("JSON parse error: {}", e))?;
     let weights = input.eval_weights.clone().unwrap_or_default();
+
+    // Weapon-def overlay: base (committed) applied first, runtime (ephemeral)
+    // applied last so runtime wins precedence ties inside the same field.
+    let mut overlay_entries: Vec<OverlayEntry> = Vec::new();
+    if let Some(list) = &input.weapon_overrides {
+        overlay_entries.extend(parse_overlay_list(list, OverlaySource::Base));
+    }
+    if let Some(list) = &input.weapon_overrides_runtime {
+        overlay_entries.extend(parse_overlay_list(list, OverlaySource::Runtime));
+    }
 
     let mut board = Board::default();
 
@@ -381,7 +499,7 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    Ok((board, spawn_points, danger_tiles, weights, disabled_mask))
+    Ok((board, spawn_points, danger_tiles, weights, disabled_mask, overlay_entries))
 }
 
 // ── Serialize Solution to JSON ───────────────────────────────────────────────
@@ -391,6 +509,15 @@ struct JsonOutput {
     actions: Vec<JsonAction>,
     score: f64,
     stats: JsonStats,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    applied_overrides: Vec<JsonAppliedOverride>,
+}
+
+#[derive(Serialize)]
+struct JsonAppliedOverride {
+    weapon_id: String,
+    fields: Vec<&'static str>,
+    source: &'static str,
 }
 
 #[derive(Serialize)]
@@ -412,7 +539,7 @@ struct JsonStats {
     total_permutations: usize,
 }
 
-pub fn solution_to_json(solution: &Solution) -> String {
+pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry]) -> String {
     let actions: Vec<JsonAction> = solution.actions.iter().map(|a| {
         JsonAction {
             mech_uid: a.mech_uid,
@@ -425,6 +552,14 @@ pub fn solution_to_json(solution: &Solution) -> String {
         }
     }).collect();
 
+    let applied_overrides: Vec<JsonAppliedOverride> = applied_overrides.iter().map(|e| {
+        JsonAppliedOverride {
+            weapon_id: wid_to_str(e.wid).to_string(),
+            fields: e.fields.clone(),
+            source: e.source.as_str(),
+        }
+    }).collect();
+
     let output = JsonOutput {
         actions,
         score: solution.score,
@@ -434,6 +569,7 @@ pub fn solution_to_json(solution: &Solution) -> String {
             permutations_tried: solution.permutations_tried,
             total_permutations: solution.total_permutations,
         },
+        applied_overrides,
     };
 
     serde_json::to_string(&output).unwrap_or_else(|_| "{}".to_string())

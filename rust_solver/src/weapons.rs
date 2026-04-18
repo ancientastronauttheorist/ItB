@@ -1109,4 +1109,54 @@ mod tests {
         assert_eq!(wid_to_str(WId::SupportRepair), "Support_Repair");
         assert_eq!(weapon_name(WId::SupportRepair), "Repair Drop");
     }
+
+    #[test]
+    fn test_overlay_empty_returns_none() {
+        // No entries → no allocation, callers use &WEAPONS directly.
+        assert!(build_overlay_table(&[]).is_none());
+        // Only-empty patches collapse to None as well.
+        let entries = vec![(WId::PrimePunchmech, PartialWeaponDef::default())];
+        assert!(build_overlay_table(&entries).is_none());
+    }
+
+    #[test]
+    fn test_overlay_applies_per_field_and_preserves_others() {
+        // Patch Cluster Artillery damage 0 → 1 (the live-mismatch fix
+        // targeted by Phase 3). All unrelated weapons stay untouched,
+        // and unpatched fields on the target weapon match WEAPONS.
+        let base_ranged = weapon_def(WId::RangedDefensestrike);
+        let base_titan = *weapon_def(WId::PrimePunchmech);
+
+        let patch = PartialWeaponDef { damage: Some(1), ..Default::default() };
+        let table = build_overlay_table(&[(WId::RangedDefensestrike, patch)])
+            .expect("non-empty overlay should allocate a table");
+
+        let patched = &table[WId::RangedDefensestrike as usize];
+        assert_eq!(patched.damage, 1, "damage patched");
+        assert_eq!(patched.weapon_type, base_ranged.weapon_type, "weapon_type preserved");
+        assert_eq!(patched.push, base_ranged.push, "push preserved");
+        assert_eq!(patched.range_max, base_ranged.range_max, "range preserved");
+        // Unrelated weapon untouched.
+        assert_eq!(table[WId::PrimePunchmech as usize].damage, base_titan.damage);
+        assert_eq!(table[WId::PrimePunchmech as usize].push, base_titan.push);
+    }
+
+    #[test]
+    fn test_overlay_flag_set_and_clear() {
+        // Start from a weapon without FIRE, add it via flags_set; also
+        // clear AOE_CENTER to prove bit-level deltas work.
+        let base = *weapon_def(WId::PrimePunchmech);
+        assert!(!base.fire());
+        assert!(base.aoe_center());
+
+        let patch = PartialWeaponDef {
+            flags_set: WeaponFlags::FIRE,
+            flags_clear: WeaponFlags::AOE_CENTER,
+            ..Default::default()
+        };
+        let table = build_overlay_table(&[(WId::PrimePunchmech, patch)]).unwrap();
+        let w = &table[WId::PrimePunchmech as usize];
+        assert!(w.fire(), "FIRE set by overlay");
+        assert!(!w.aoe_center(), "AOE_CENTER cleared by overlay");
+    }
 }

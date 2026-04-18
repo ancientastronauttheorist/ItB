@@ -187,7 +187,7 @@ fn regression_all_boards() {
         };
 
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let (board, spawns, _danger, weights, disabled_mask) =
+            let (board, spawns, _danger, weights, disabled_mask, _overlay) =
                 board_from_json(&bridge_json).map_err(|e| format!("board_from_json: {}", e))?;
             Ok::<_, String>(solve_turn(&board, &spawns, 2.0, 99999, &weights, disabled_mask, &itb_solver::weapons::WEAPONS))
         }));
