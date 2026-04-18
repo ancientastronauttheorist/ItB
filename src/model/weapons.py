@@ -673,8 +673,29 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
 }
 
 
+# Phase 3 parity overlay. Populated by
+# ``src.solver.weapon_overrides.apply_runtime`` so the dead-code Python
+# simulate path mirrors whatever the Rust solver is running with. Empty
+# dict = no overlay → ``get_weapon_def`` reads straight from the static
+# tables, preserving the pre-Phase-3 behaviour.
+_RUNTIME_OVERRIDES: dict[str, "WeaponDef"] = {}
+
+
+def set_runtime_overrides(overrides: dict[str, "WeaponDef"]) -> None:
+    """Replace the runtime override set. Empty mapping clears it."""
+    _RUNTIME_OVERRIDES.clear()
+    _RUNTIME_OVERRIDES.update(overrides)
+
+
+def clear_runtime_overrides() -> None:
+    _RUNTIME_OVERRIDES.clear()
+
+
 def get_weapon_def(weapon_id: str) -> WeaponDef | None:
-    """Look up weapon definition by ID."""
+    """Look up weapon definition by ID, honoring any runtime overlay."""
+    override = _RUNTIME_OVERRIDES.get(weapon_id)
+    if override is not None:
+        return override
     return WEAPON_DEFS.get(weapon_id) or ENEMY_WEAPON_DEFS.get(weapon_id)
 
 

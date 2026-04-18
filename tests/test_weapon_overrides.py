@@ -12,8 +12,10 @@ import pytest
 
 from src.solver.weapon_overrides import (
     OverrideSchemaError,
-    load_base_overrides,
+    apply_runtime,
+    clear_runtime,
     inject_into_bridge,
+    load_base_overrides,
 )
 
 
@@ -73,6 +75,76 @@ def test_inject_empty_leaves_bridge_untouched():
     inject_into_bridge(bd)
     assert "weapon_overrides" not in bd
     assert "weapon_overrides_runtime" not in bd
+
+
+def test_python_runtime_overlay_patches_get_weapon_def():
+    from src.model.weapons import get_weapon_def
+    try:
+        stock = get_weapon_def("Prime_Punchmech")
+        assert stock.damage == 2 and not stock.fire
+        bd = {
+            "weapon_overrides": [{"weapon_id": "Prime_Punchmech", "damage": 7}],
+            "weapon_overrides_runtime": [
+                {"weapon_id": "Prime_Punchmech", "flags_set": ["FIRE"]},
+                # Runtime wins the damage field on conflict.
+                {"weapon_id": "Prime_Punchmech", "damage": 99},
+            ],
+        }
+        apply_runtime(bd)
+        patched = get_weapon_def("Prime_Punchmech")
+        assert patched.damage == 99, "runtime layer should win damage"
+        assert patched.fire is True, "flag from runtime layer applied"
+        # Unrelated weapon untouched.
+        assert get_weapon_def("Brute_Tankmech").damage == 1
+    finally:
+        clear_runtime()
+    # Overlay reverts after clear.
+    assert get_weapon_def("Prime_Punchmech").damage == 2
+
+
+def test_python_runtime_overlay_affects_simulate_weapon():
+    """End-to-end parity: Python simulate_weapon damage reflects overlay."""
+    from src.model.board import Board
+    from src.solver.simulate import simulate_weapon
+
+    def _board_with_mech_and_enemy(dmg: int):
+        # Build a minimal bridge dict then construct a Board from it.
+        bridge = {
+            "grid_power": 7, "turn": 0, "total_turns": 5,
+            "tiles": [{"x": x, "y": y, "terrain": "ground"}
+                      for x in range(8) for y in range(8)],
+            "units": [
+                {"uid": 1, "type": "PunchMech", "x": 3, "y": 3,
+                 "hp": 3, "max_hp": 3, "team": 1, "mech": True,
+                 "weapons": ["Prime_Punchmech"], "move": 3, "active": True},
+                {"uid": 2, "type": "Firefly1", "x": 4, "y": 3,
+                 "hp": 5, "max_hp": 5, "team": 6,
+                 "weapons": ["FireflyAtk1"]},
+            ],
+            "spawning_tiles": [],
+        }
+        return Board.from_bridge_data(bridge)
+
+    # Stock: Titan Fist does 2 damage → enemy drops from 5 to 3.
+    clear_runtime()
+    board = _board_with_mech_and_enemy(2)
+    mech = next(u for u in board.units if u.uid == 1)
+    simulate_weapon(board, mech, "Prime_Punchmech", 4, 3)
+    enemy = next(u for u in board.units if u.uid == 2)
+    assert enemy.hp == 3, "stock damage baseline"
+
+    # Override damage to 4 → enemy should drop to 1.
+    try:
+        apply_runtime({"weapon_overrides": [
+            {"weapon_id": "Prime_Punchmech", "damage": 4},
+        ]})
+        board2 = _board_with_mech_and_enemy(4)
+        mech2 = next(u for u in board2.units if u.uid == 1)
+        simulate_weapon(board2, mech2, "Prime_Punchmech", 4, 3)
+        enemy2 = next(u for u in board2.units if u.uid == 2)
+        assert enemy2.hp == 1, "overlay damage took effect"
+    finally:
+        clear_runtime()
 
 
 def test_inject_round_trip_through_rust_applies_and_audits():

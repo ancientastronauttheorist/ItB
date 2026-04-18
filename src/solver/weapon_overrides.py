@@ -9,6 +9,7 @@ emits ``applied_overrides`` in the solution JSON for audit.
 from __future__ import annotations
 
 import json
+from dataclasses import replace as _dc_replace
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -91,6 +92,77 @@ def load_base_overrides(path: Path | str | None = None) -> list[dict]:
         _validate_entry(entry, source=f"{p.name}[{i}]")
         entries.append(_sanitize(entry))
     return entries
+
+
+# ── Python parity overlay (src.solver.simulate) ──────────────────────────────
+#
+# Rust is the hot path; Python ``simulate`` is used by tuner replay and parity
+# tests. These helpers let the same override entries patch the Python
+# ``WEAPON_DEFS`` lookup so both engines agree on effective weapon stats.
+
+# Mapping from Rust-side flag names (uppercase) → Python ``WeaponDef`` field.
+_FLAG_FIELD_MAP = {
+    "FIRE": "fire", "ACID": "acid", "FREEZE": "freeze", "SMOKE": "smoke",
+    "SHIELD": "shield", "WEB": "web", "TARGETS_ALLIES": "targets_allies",
+    "BUILDING_DAMAGE": "building_damage", "PHASE": "phase",
+    "AOE_CENTER": "aoe_center", "AOE_ADJACENT": "aoe_adjacent",
+    "AOE_BEHIND": "aoe_behind", "AOE_PERP": "aoe_perpendicular",
+    "CHAIN": "chain", "CHARGE": "charge",
+    "FLYING_CHARGE": "flying_charge", "PUSH_SELF": "push_self",
+}
+
+
+def _patch_weapon_def(base, entry: dict):
+    """Apply one override entry onto a ``WeaponDef`` via ``dataclasses.replace``.
+
+    Scalar fields (damage, push, …) map 1:1. ``flags_set`` / ``flags_clear``
+    expand into per-field booleans via ``_FLAG_FIELD_MAP``; unknown flag
+    names are dropped silently (same policy as Rust).
+    """
+    updates: dict[str, Any] = {}
+    for f in ("weapon_type", "damage", "damage_outer", "push",
+              "self_damage", "range_min", "range_max", "limited", "path_size"):
+        if f in entry:
+            updates[f] = entry[f]
+    for name in entry.get("flags_set") or []:
+        field = _FLAG_FIELD_MAP.get(name.upper())
+        if field is not None:
+            updates[field] = True
+    for name in entry.get("flags_clear") or []:
+        field = _FLAG_FIELD_MAP.get(name.upper())
+        if field is not None:
+            updates[field] = False
+    return _dc_replace(base, **updates)
+
+
+def apply_runtime(bridge_data: dict) -> None:
+    """Install Python-side overlay matching what Rust will see for this solve.
+
+    Reads ``weapon_overrides`` then ``weapon_overrides_runtime`` from
+    ``bridge_data`` (base applied first so runtime wins precedence ties)
+    and updates ``src.model.weapons._RUNTIME_OVERRIDES`` in place.
+    """
+    from src.model.weapons import (
+        WEAPON_DEFS, ENEMY_WEAPON_DEFS, set_runtime_overrides,
+    )
+    merged: dict[str, Any] = {}
+    for layer in ("weapon_overrides", "weapon_overrides_runtime"):
+        for entry in bridge_data.get(layer) or []:
+            wid = entry.get("weapon_id")
+            if not wid:
+                continue
+            base = merged.get(wid)
+            if base is None:
+                base = WEAPON_DEFS.get(wid) or ENEMY_WEAPON_DEFS.get(wid)
+            if base is None:
+                continue
+            merged[wid] = _patch_weapon_def(base, entry)
+    set_runtime_overrides(merged)
+
+
+def clear_runtime() -> None:
+    from src.model.weapons import clear_runtime_overrides
+    clear_runtime_overrides()
 
 
 def inject_into_bridge(
