@@ -92,8 +92,69 @@ Structured JSON data in `data/` — machine-readable for code:
 
 `data/wiki_raw/*.json` (135 files) — individual unit deep-dives, last-resort lookup.
 
+## Weapon-def overrides (Phase 3 self-healing loop)
+
+Runtime patches to the Rust `WEAPONS` table so the solver can be
+corrected between solves without a `maturin build`. Applied
+per-field over the compile-time defaults; an empty overlay keeps
+the fast path (`&WEAPONS` directly, no allocation).
+
+**Precedence (lowest → highest):**
+
+1. Compile-time `rust_solver/src/weapons.rs::WEAPONS`.
+2. `data/weapon_overrides.json` — committed, human-reviewed, loaded
+   on every `itb_solver.solve` via `src/solver/weapon_overrides.py::
+   load_base_overrides`.
+3. Per-solve runtime entries passed as `weapon_overrides_runtime`
+   in the bridge JSON (reserved for future Tier-3 hot-patch work;
+   not wired into the loop today).
+
+Rust reports both layers' applied patches in each solution JSON as
+`applied_overrides: [{weapon_id, fields, source}]`. Empty overlay
+omits the field entirely.
+
+**Paths and CLIs:**
+
+| Path | Purpose |
+|---|---|
+| `data/weapon_overrides.json` | Committed base layer. Array of `{weapon_id, <field>: <value>, ...}` entries. |
+| `data/weapon_overrides_staged.jsonl` | Auto-staged candidates awaiting review (one JSON per line). |
+| `tests/weapon_overrides/<weapon_id>_<case>.json` | Regression-board fixtures. Every committed override needs one. Format: `tests/weapon_overrides/README.md`. |
+| `src/solver/weapon_overrides.py` | Loader, validator, staging helper, Python parity overlay. |
+| `rust_solver/src/weapons.rs::PartialWeaponDef` | Rust patch struct + `build_overlay_table`. |
+
+**Review flow:**
+
+1. `cmd_research_submit` runs the comparator. A
+   `severity=high` mismatch whose `field` is stageable (today: only
+   `damage`) gets appended to `weapon_overrides_staged.jsonl`.
+2. `python3 game_loop.py review_overrides` lists pending candidates.
+3. `python3 game_loop.py review_overrides accept <index>` promotes
+   one into `data/weapon_overrides.json`. Refuses without a matching
+   regression board (`--force` bypasses only for bootstrap).
+4. `python3 game_loop.py review_overrides reject <index>` drops the
+   candidate.
+5. After acceptance, `pytest tests/test_weapon_overrides_regression.py`
+   validates the new entry. Next solve applies it — no rebuild needed.
+6. Human then `git commit data/weapon_overrides.json` —
+   never auto-committed.
+
+**Constraints (enforced in code):**
+
+- Unknown `weapon_id` or flag name → entry silently dropped. A typo
+  can never brick a live solve.
+- Schema validation fires at load time in Python and on accept via
+  `load_base_overrides` — a malformed `data/weapon_overrides.json`
+  fails loud at the CLI, not silently mid-run.
+- Regression-board gate runs in CI via
+  `tests/test_weapon_overrides_regression.py` — an override without
+  a fixture or with no observable effect fails the suite.
+
+**Design doc:** `docs/self_healing_loop_design.md` (Phase 3 section).
+
 ## Related docs
 
 - `docs/lua_bridge_architecture.md` — bridge IPC design, protocol, file formats
 - `docs/env_hazards_by_island.md` — environment hazard matrix per island
 - `docs/self_improvement_plan.md` — roadmap for self-correcting system
+- `docs/self_healing_loop_design.md` — self-healing research + override pipeline (Phases 0–3)
