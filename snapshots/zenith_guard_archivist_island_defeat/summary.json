@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-17T23:16:11.841275",
+  "label": "zenith_guard_archivist_island_defeat",
+  "turn": 1,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "JudoMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "DStrikeMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "GravMech",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "BeetleBoss",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 6
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 2
+    }
+  ]
+}

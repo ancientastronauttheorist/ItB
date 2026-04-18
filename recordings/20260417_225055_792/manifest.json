@@ -1,0 +1,16 @@
+{
+  "run_id": "20260417_225055_792",
+  "squad": "Zenith Guard",
+  "difficulty": 2,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-b039a5a",
+  "weight_version": "v009",
+  "updated": "2026-04-17T23:16:11.773049",
+  "created": "2026-04-17T22:50:55.804663",
+  "missions": [],
+  "outcome": "loss",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-17T23:16:11.760312",
+  "outcome_notes": "Corporate HQ boss \u2014 grid 0, Beetle Leader win"
+}

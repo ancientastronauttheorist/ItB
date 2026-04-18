@@ -1,0 +1,117 @@
+{
+  "timestamp": "2026-04-17T22:58:23.267522",
+  "run_id": "20260417_225055_792",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 9,
+      "grid_power": 2,
+      "enemies_alive": 5,
+      "enemy_hp_total": 8,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "DStrikeMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 638,
+          "type": "SatelliteRocket",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 9,
+      "grid_power": 2,
+      "enemies_alive": 1,
+      "enemy_hp_total": 2,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "DStrikeMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 638,
+          "type": "SatelliteRocket",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 4,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "DStrikeMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "predicted_hp": 2,
+          "actual_hp": 1,
+          "diff": -1
+        },
+        {
+          "uid": 638,
+          "type": "SatelliteRocket",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": [
+        "GravMech took 1 unexpected damage"
+      ]
+    }
+  }
+}
