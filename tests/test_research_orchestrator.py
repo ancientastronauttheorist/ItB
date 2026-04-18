@@ -287,6 +287,47 @@ def test_begin_weapon_probe_rejects_out_of_range_slot(monkeypatch):
     assert "out of range" in out["error"]
 
 
+def test_begin_weapon_probe_reuses_research_id_on_second_call(monkeypatch):
+    """Repeated begin_weapon_probe on the same target reuses the research_id
+    and doesn't double-bump attempts — guards the CLI-call-orphans-ID footgun."""
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (0, 0))
+    s = RunSession()
+    board = _fake_board([_fake_unit("M", 3, 3, is_mech=True)])
+
+    first = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=1, ui=_ui_regions(),
+    )
+    second = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=1, ui=_ui_regions(),
+    )
+    assert first["research_id"] == second["research_id"]
+    # Only one attempt counted even though we called twice.
+    assert s.research_queue[0]["attempts"] == 1
+
+
+def test_begin_weapon_probe_fresh_id_after_submission(monkeypatch):
+    """After a successful submit, a new probe on the same target should
+    mint a fresh research_id — the entry is no longer 'in_progress'."""
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (0, 0))
+    s = RunSession()
+    board = _fake_board([_fake_unit("M", 3, 3, is_mech=True)])
+
+    first = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=1, ui=_ui_regions(),
+    )
+    # Submit low-confidence so it marks failed (not done) — then re-probe.
+    orchestrator.submit_research(
+        s, first["research_id"],
+        {"weapon_preview": '{"name": "", "damage": 0}'},
+        wiki_fallback=False,
+    )
+    second = orchestrator.begin_weapon_probe(
+        s, board, 3, 3, slot=1, ui=_ui_regions(),
+    )
+    assert first["research_id"] != second["research_id"], \
+        "After a terminal status, the next probe should mint a new id"
+
+
 def test_submit_research_for_weapon_probe_updates_kind_slot_entry(
     monkeypatch, tmp_path: Path,
 ):

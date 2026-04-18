@@ -174,10 +174,10 @@ def test_enqueue_research_kind_vs_no_kind_are_different_entries():
 
 
 def test_auto_enqueue_mech_weapons_covers_each_unique_mech_type():
-    """One probe per (mech_type, slot). Duplicate mech types collapse."""
+    """One probe per (mech_type, probeable_slot). Duplicate mech types collapse."""
     from types import SimpleNamespace
     from src.loop.commands import _auto_enqueue_mech_weapons
-    from src.research.capture import WEAPON_SLOT_COUNT
+    from src.research.capture import PROBEABLE_WEAPON_SLOTS
 
     s = RunSession()
     board = SimpleNamespace(units=[
@@ -187,14 +187,29 @@ def test_auto_enqueue_mech_weapons_covers_each_unique_mech_type():
         SimpleNamespace(type="PunchMech", x=2, y=0, hp=3, is_mech=True),
     ])
     enqueued = _auto_enqueue_mech_weapons(s, board, turn_for_queue=1)
-    # 2 unique mech types × WEAPON_SLOT_COUNT slots each.
-    assert len(enqueued) == 2 * WEAPON_SLOT_COUNT
+    # 2 unique mech types × len(PROBEABLE_WEAPON_SLOTS) slots each.
+    assert len(enqueued) == 2 * len(PROBEABLE_WEAPON_SLOTS)
     types_enqueued = {e["type"] for e in enqueued}
     assert types_enqueued == {"PunchMech", "CannonMech"}
-    # Every queue entry is kind=mech_weapon with a slot in range.
+    # Every queue entry is kind=mech_weapon with slot in the probeable set.
     for e in s.research_queue:
         assert e["kind"] == "mech_weapon"
-        assert 0 <= e["slot"] < WEAPON_SLOT_COUNT
+        assert e["slot"] in PROBEABLE_WEAPON_SLOTS
+
+
+def test_auto_enqueue_mech_weapons_skips_nonprobeable_slots():
+    """Slot 0 (Repair on the current calibration) is NOT auto-enqueued."""
+    from types import SimpleNamespace
+    from src.loop.commands import _auto_enqueue_mech_weapons
+
+    s = RunSession()
+    board = SimpleNamespace(units=[
+        SimpleNamespace(type="M", x=0, y=0, hp=3, is_mech=True),
+    ])
+    _auto_enqueue_mech_weapons(s, board, turn_for_queue=1)
+    slots_in_queue = {e["slot"] for e in s.research_queue}
+    assert 0 not in slots_in_queue, \
+        "Repair slot should not be auto-enqueued with current calibration"
 
 
 def test_auto_enqueue_mech_weapons_skips_dead_mechs():
@@ -226,7 +241,7 @@ def test_auto_enqueue_mech_weapons_idempotent_across_calls():
     """Re-reading the same board doesn't re-enqueue existing probes."""
     from types import SimpleNamespace
     from src.loop.commands import _auto_enqueue_mech_weapons
-    from src.research.capture import WEAPON_SLOT_COUNT
+    from src.research.capture import PROBEABLE_WEAPON_SLOTS
 
     s = RunSession()
     board = SimpleNamespace(units=[
@@ -234,9 +249,9 @@ def test_auto_enqueue_mech_weapons_idempotent_across_calls():
     ])
     first = _auto_enqueue_mech_weapons(s, board, turn_for_queue=1)
     second = _auto_enqueue_mech_weapons(s, board, turn_for_queue=2)
-    assert len(first) == WEAPON_SLOT_COUNT
+    assert len(first) == len(PROBEABLE_WEAPON_SLOTS)
     assert second == []
-    assert len(s.research_queue) == WEAPON_SLOT_COUNT
+    assert len(s.research_queue) == len(PROBEABLE_WEAPON_SLOTS)
 
 
 def test_mark_research_matches_kind_slot():

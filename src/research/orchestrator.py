@@ -36,6 +36,30 @@ from src.model.board import Board
 from src.research import capture, comparator, vision, wiki_client
 
 
+# ── research_id assignment ────────────────────────────────────────────────
+
+
+def _assign_or_reuse_research_id(entry: dict) -> tuple[str, bool]:
+    """Return ``(research_id, is_new)`` for an entry about to be processed.
+
+    If the entry is already ``in_progress`` and carries a
+    ``research_id``, reuse it. That lets idempotent callers (CLI
+    scripts, testing loops) invoke ``begin_*`` multiple times without
+    orphaning earlier IDs — the stored ID stays stable, and
+    ``attempts`` doesn't double-count.
+
+    Otherwise generate a fresh UUID, which the caller will write
+    back onto the entry along with any status/attempts bookkeeping.
+    """
+    if entry.get("status") == "in_progress":
+        existing = entry.get("research_id")
+        if isinstance(existing, str) and existing:
+            return existing, False
+    new_id = uuid.uuid4().hex[:12]
+    entry["research_id"] = new_id
+    return new_id, True
+
+
 # ── target picking ────────────────────────────────────────────────────────
 
 
@@ -227,10 +251,10 @@ def begin_weapon_probe(
         # fallback so we never return a plan with no backing entry.
         return {"error": "failed to materialize research queue entry"}
 
-    research_id = uuid.uuid4().hex[:12]
-    entry["status"] = "in_progress"
-    entry["attempts"] = entry.get("attempts", 0) + 1
-    entry["research_id"] = research_id
+    research_id, is_new = _assign_or_reuse_research_id(entry)
+    if is_new:
+        entry["status"] = "in_progress"
+        entry["attempts"] = entry.get("attempts", 0) + 1
     entry["last_kind"] = "mech_weapon"
 
     prompts = {"weapon_preview": vision.PROMPTS["weapon_preview"]}

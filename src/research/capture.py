@@ -274,6 +274,20 @@ _REF_WEAPON_ICON_CENTERS: tuple[tuple[int, int], ...] = (
 WEAPON_SLOT_COUNT: int = len(_REF_WEAPON_ICON_CENTERS)
 
 
+# Subset of ``range(WEAPON_SLOT_COUNT)`` that auto-enqueue should
+# actually probe. Slot 0 is the Repair icon on every Rift Walkers
+# mech: hovering it pops a "Mech Repair" tooltip that renders in a
+# different region than the calibrated weapon_preview crop, so those
+# probes always come back with 0 confidence. Slot 1 is the prime
+# weapon on every squad.
+#
+# Squads with a real secondary weapon in slot 0 (Rusting Hulks, Zenith
+# Guard, etc.) will need this tuple expanded — at that point the
+# preview crop may also need per-slot tuning. For manual one-off
+# probing, ``research_probe_mech <tile> 0`` still works.
+PROBEABLE_WEAPON_SLOTS: tuple[int, ...] = (1,)
+
+
 def weapon_icon_positions(ui: UiRegions) -> list[tuple[int, int]]:
     """Scaled MCP positions of the weapon icons in the mech UI rail.
 

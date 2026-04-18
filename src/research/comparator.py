@@ -164,7 +164,10 @@ def _expected_push_shape(wdef: WeaponDef) -> tuple[int, int] | None:
         # Every hit tile gets pushed outward from center — 2-4 arrows.
         return (1, 4)
     if push == "inward":
-        return (1, 4)
+        # Pull weapons (Grav Well, etc.) don't always render an arrow
+        # glyph — the pull is implied by the projectile/target path.
+        # Allow 0 so we don't flag a sim/vision mismatch every time.
+        return (0, 4)
     return None
 
 

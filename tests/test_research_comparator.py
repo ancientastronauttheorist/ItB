@@ -145,6 +145,22 @@ def test_push_shape_outward_expects_multiple_arrows():
     assert any(m["field"] == "push_arrows" for m in mm)
 
 
+def test_push_shape_inward_tolerates_zero_arrows():
+    """Pull weapons (Grav Well) don't render arrow glyphs in the preview —
+    the pull is implicit in the projectile/target path. The comparator
+    shouldn't flag a mismatch when Vision reads 0 arrows."""
+    parsed = vision.parse_weapon_preview({
+        "name": "Grav Well",
+        "damage": 0,
+        "footprint_tiles": [[1, -1]],
+        "push_directions": [],
+        "description": "Artillery weapon that pulls its target towards you.",
+    })
+    mm = comparator.compare_weapon(parsed)
+    assert not any(m["field"] == "push_arrows" for m in mm), \
+        f"inward weapons with 0 arrows should pass; got {mm}"
+
+
 # ── unknown_weapon ──────────────────────────────────────────────────────────
 
 

@@ -290,7 +290,7 @@ def _auto_enqueue_mech_weapons(
     board: Board,
     turn_for_queue: int,
 ) -> list[dict]:
-    """Enqueue a mech_weapon probe for each unique live mech × slot.
+    """Enqueue a mech_weapon probe for each unique live mech × probeable slot.
 
     Mechs are never flagged as unknown (they're squad-native), but
     each new mech type on the board is worth probing once to populate
@@ -299,9 +299,15 @@ def _auto_enqueue_mech_weapons(
     + ``slot``) makes this idempotent across turns — re-reading the
     board never double-enqueues the same probe.
 
+    Only ``capture.PROBEABLE_WEAPON_SLOTS`` get auto-enqueued. Slot 0
+    is the Repair icon on the starting squad and its tooltip lives
+    outside the calibrated weapon_preview crop; auto-enqueuing it
+    just adds noise. Manual probes via ``research_probe_mech`` still
+    accept any slot index.
+
     Returns the list of newly-enqueued entries (empty on re-reads).
     """
-    from src.research.capture import WEAPON_SLOT_COUNT
+    from src.research.capture import PROBEABLE_WEAPON_SLOTS
 
     enqueued: list[dict] = []
     seen_mech_types: set[str] = set()
@@ -314,7 +320,7 @@ def _auto_enqueue_mech_weapons(
         if not mech_type or mech_type in seen_mech_types:
             continue
         seen_mech_types.add(mech_type)
-        for slot in range(WEAPON_SLOT_COUNT):
+        for slot in PROBEABLE_WEAPON_SLOTS:
             added = session.enqueue_research(
                 mech_type, None, turn_for_queue,
                 kind="mech_weapon", slot=slot,
