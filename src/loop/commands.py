@@ -1802,6 +1802,14 @@ def cmd_research_submit(
                       f"vision={m['vision_value']} [{m['severity']}]")
         else:
             print(f"  mismatches: none")
+        if out.get("staged_candidates"):
+            print(f"  staged override candidates: {len(out['staged_candidates'])}")
+            for c in out["staged_candidates"]:
+                patch_fields = [k for k in c if k not in
+                                ("weapon_id", "note", "source_run_id",
+                                 "source_mismatch")]
+                print(f"    - {c['weapon_id']}: {patch_fields}  "
+                      f"(review via game_loop.py review_overrides)")
         if out.get("wiki_fallback"):
             wf = out["wiki_fallback"]
             print(f"  wiki_fallback: {wf.get('title', '?')} "

@@ -16,6 +16,7 @@ from src.solver.weapon_overrides import (
     clear_runtime,
     inject_into_bridge,
     load_base_overrides,
+    stage_candidates,
 )
 
 
@@ -145,6 +146,101 @@ def test_python_runtime_overlay_affects_simulate_weapon():
         assert enemy2.hp == 1, "overlay damage took effect"
     finally:
         clear_runtime()
+
+
+def test_stage_skips_non_stageable_fields(tmp_path):
+    # push_arrows / footprint_size have no deterministic Rust patch.
+    p = tmp_path / "staged.jsonl"
+    mismatches = [
+        {"weapon_id": "Science_Gravwell", "display_name": "Grav Well",
+         "field": "push_arrows", "rust_value": {}, "vision_value": 0,
+         "severity": "low", "confidence": 0.9},
+        {"weapon_id": "Prime_Punchmech", "display_name": "Titan Fist",
+         "field": "footprint_size", "rust_value": "[1,1]", "vision_value": 4,
+         "severity": "medium", "confidence": 0.9},
+    ]
+    staged = stage_candidates(mismatches, run_id="r1", path=p)
+    assert staged == []
+    assert not p.exists()
+
+
+def test_stage_damage_mismatch_writes_candidate(tmp_path):
+    p = tmp_path / "staged.jsonl"
+    mismatches = [
+        # Live-smoke-test finding that already sits in
+        # data/weapon_def_mismatches.jsonl.
+        {"weapon_id": "Ranged_Defensestrike",
+         "display_name": "Cluster Artillery", "field": "damage",
+         "rust_value": 0, "vision_value": 1,
+         "severity": "high", "confidence": 1.0},
+    ]
+    staged = stage_candidates(mismatches, run_id="r1", path=p)
+    assert len(staged) == 1
+    cand = staged[0]
+    assert cand["weapon_id"] == "Ranged_Defensestrike"
+    assert cand["damage"] == 1
+    assert cand["source_run_id"] == "r1"
+    # File appended with one JSON line.
+    lines = p.read_text().splitlines()
+    assert len(lines) == 1
+    assert json.loads(lines[0])["damage"] == 1
+
+
+def test_stage_respects_severity_threshold(tmp_path):
+    # A medium-severity damage mismatch is ignored under the default
+    # "high" threshold but accepted if the caller lowers the bar.
+    p = tmp_path / "staged.jsonl"
+    mm = [{"weapon_id": "Prime_Punchmech", "display_name": "Titan Fist",
+           "field": "damage", "rust_value": 2, "vision_value": 3,
+           "severity": "medium", "confidence": 1.0}]
+    assert stage_candidates(mm, run_id="r1", path=p) == []
+    staged = stage_candidates(mm, run_id="r1", path=p,
+                              severity_threshold="medium")
+    assert len(staged) == 1
+
+
+def test_submit_research_stages_candidate_from_high_mismatch(tmp_path,
+                                                             monkeypatch):
+    """End-to-end: orchestrator.submit_research → stage_candidates."""
+    from src.loop.session import RunSession
+    from src.research import orchestrator
+    from src.solver import weapon_overrides as wo
+
+    staged_path = tmp_path / "staged.jsonl"
+    mismatches_path = tmp_path / "mismatches.jsonl"
+    monkeypatch.setattr(wo, "DEFAULT_STAGED_PATH", staged_path)
+
+    session = RunSession(run_id="r-stage-1", squad="rift_walkers")
+    session.enqueue_research("Cluster_Artillery", None, current_turn=0,
+                             kind="mech_weapon", slot=1)
+    entry = session.research_queue[0]
+    entry["research_id"] = "rsid-1"
+
+    # Vision payload that will trip the damage comparator against
+    # Ranged_Defensestrike (rust damage=0, vision reports damage=1).
+    weapon_preview = {
+        "name": "Cluster Artillery",
+        "description": "",
+        "damage": 1,
+        "footprint_tiles": [[0, 0]],
+        "push_directions": [],
+        "confidence": 1.0,
+    }
+    out = orchestrator.submit_research(
+        session, "rsid-1",
+        {"weapon_preview": weapon_preview},
+        run_id="r-stage-1",
+        mismatches_path=mismatches_path,
+        wiki_fallback=False,
+    )
+    assert out["mismatches"], "comparator should have emitted the damage mismatch"
+    assert out["staged_candidates"], "high-severity damage mismatch should stage"
+    cand = out["staged_candidates"][0]
+    assert cand["weapon_id"] == "Ranged_Defensestrike"
+    assert cand["damage"] == 1
+    # File hit.
+    lines = staged_path.read_text().splitlines()
+    assert any('"Ranged_Defensestrike"' in line for line in lines)
 
 
 def test_inject_round_trip_through_rust_applies_and_audits():

@@ -378,6 +378,7 @@ def submit_research(
         parsed[crop_name] = parser(raw)
 
     mismatches: list[dict] = []
+    staged_candidates: list[dict] = []
     weapon_parsed = parsed.get("weapon_preview")
     if weapon_parsed is not None:
         mismatches = comparator.compare_and_log(
@@ -386,6 +387,14 @@ def submit_research(
             run_id=run_id,
             confidence_floor=confidence_floor,
         )
+        # Phase 3 P3-5: auto-stage high-severity mismatches with
+        # stageable fields (currently just ``damage``) into
+        # data/weapon_overrides_staged.jsonl. The CLI
+        # ``game_loop.py review_overrides`` promotes these after a
+        # human approves — we never auto-commit to the base file.
+        if mismatches:
+            from src.solver.weapon_overrides import stage_candidates
+            staged_candidates = stage_candidates(mismatches, run_id=run_id)
 
     # Decide final status. If every returned crop was below the wiki
     # fallback threshold we mark "failed" so the next turn can either
@@ -418,6 +427,8 @@ def submit_research(
     }
     if wiki_payload is not None:
         result_payload["wiki_fallback"] = wiki_payload
+    if staged_candidates:
+        result_payload["staged_candidates"] = staged_candidates
 
     session.mark_research(
         entry.get("type", ""),
@@ -438,4 +449,5 @@ def submit_research(
         "parsed": parsed,
         "mismatches": mismatches,
         "wiki_fallback": wiki_payload,
+        "staged_candidates": staged_candidates,
     }

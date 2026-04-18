@@ -15,6 +15,13 @@ from typing import Any, Iterable
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OVERRIDES_PATH = REPO_ROOT / "data" / "weapon_overrides.json"
+DEFAULT_STAGED_PATH = REPO_ROOT / "data" / "weapon_overrides_staged.jsonl"
+
+# Mismatch fields the auto-stager can translate into a concrete override
+# patch. Other fields (unknown_weapon, footprint_size, push_arrows,
+# passive_*) require human analysis — they get logged + soft-disabled
+# but never auto-staged, because the right Rust patch isn't deterministic.
+_STAGEABLE_FIELDS = {"damage"}
 
 # Fields the Rust JsonWeaponOverride struct understands. Anything else is
 # allowed in the JSON (e.g. free-form "note") but will not round-trip.
@@ -163,6 +170,90 @@ def apply_runtime(bridge_data: dict) -> None:
 def clear_runtime() -> None:
     from src.model.weapons import clear_runtime_overrides
     clear_runtime_overrides()
+
+
+# ── Staging comparator mismatches as override candidates ────────────────────
+
+
+def _mismatch_to_candidate(mismatch: dict, run_id: str) -> dict | None:
+    """Convert one comparator mismatch into a staged-override candidate.
+
+    Only the fields in ``_STAGEABLE_FIELDS`` translate cleanly into a
+    Rust patch; anything else returns ``None`` so the caller can skip
+    it. ``P3-6``'s CLI promotes these into ``data/weapon_overrides.json``
+    entries after a human reviews them.
+    """
+    field = mismatch.get("field")
+    if field not in _STAGEABLE_FIELDS:
+        return None
+    wid = mismatch.get("weapon_id") or ""
+    if not wid:
+        return None
+    vision_value = mismatch.get("vision_value")
+    rust_value = mismatch.get("rust_value")
+    try:
+        vision_int = int(vision_value)
+    except (TypeError, ValueError):
+        return None
+    return {
+        "weapon_id": wid,
+        field: vision_int,
+        "note": (
+            f"comparator: {field} rust={rust_value} vision={vision_value} "
+            f"(severity={mismatch.get('severity')}, "
+            f"confidence={mismatch.get('confidence')})"
+        ),
+        "source_run_id": run_id,
+        "source_mismatch": {
+            "field": field,
+            "rust_value": rust_value,
+            "vision_value": vision_value,
+            "severity": mismatch.get("severity"),
+            "confidence": mismatch.get("confidence"),
+            "display_name": mismatch.get("display_name"),
+        },
+    }
+
+
+def stage_candidates(
+    mismatches: Iterable[dict],
+    *,
+    run_id: str = "",
+    path: Path | str | None = None,
+    severity_threshold: str = "high",
+) -> list[dict]:
+    """Append override candidates to ``data/weapon_overrides_staged.jsonl``.
+
+    Only mismatches at or above ``severity_threshold`` with a
+    stageable field translate — non-stageable entries (push_arrows,
+    footprint_size, unknown_weapon, …) are intentionally skipped
+    since there's no deterministic Rust patch to propose.
+
+    Returns the list of candidates that were written so callers can
+    surface them in their log line. Zero-writes return an empty list
+    and do not touch the file.
+    """
+    severity_order = {"low": 0, "medium": 1, "high": 2}
+    threshold = severity_order.get(severity_threshold, 2)
+
+    staged: list[dict] = []
+    for mm in mismatches:
+        sev = severity_order.get(mm.get("severity", "low"), 0)
+        if sev < threshold:
+            continue
+        candidate = _mismatch_to_candidate(mm, run_id=run_id)
+        if candidate is None:
+            continue
+        staged.append(candidate)
+    if not staged:
+        return []
+
+    p = Path(path) if path is not None else DEFAULT_STAGED_PATH
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("a") as f:
+        for c in staged:
+            f.write(json.dumps(c) + "\n")
+    return staged
 
 
 def inject_into_bridge(
