@@ -462,6 +462,85 @@ def load_failure_db() -> list[dict]:
     return records
 
 
+# ── stale-row cutoff (shared with src/research/pattern_miner.py) ────────────
+#
+# The mining cutoff config lives at ``data/mining_cutoff.json`` and is also
+# read by the override miner. Both consumers honor the same timestamp so a
+# single bump retires stale rows from both the mining corpus and the tuner's
+# failure corpus at once. Kept as a small duplicate of pattern_miner's
+# helpers to avoid a weird analysis → research dependency edge.
+
+_DEFAULT_CUTOFF_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "mining_cutoff.json"
+)
+_UNSET = object()
+
+
+def _normalize_ts(ts: str) -> str:
+    """Strip timezone offsets so two ISO strings compare lexicographically.
+
+    Mirror of ``pattern_miner._normalize_ts`` — see that docstring.
+    """
+    if not ts:
+        return ts
+    cut = len(ts)
+    for i in range(10, len(ts)):
+        if ts[i] in "+-":
+            cut = i
+            break
+    if ts.endswith("Z"):
+        cut = min(cut, len(ts) - 1)
+    return ts[:cut]
+
+
+def load_failure_cutoff(path: Path | str | None = None) -> str | None:
+    """Read ``min_timestamp`` from the mining-cutoff config, or None.
+
+    Missing file / bad JSON / missing key = None (filter disabled).
+    """
+    p = Path(path) if path is not None else _DEFAULT_CUTOFF_PATH
+    if not p.exists():
+        return None
+    try:
+        raw = json.loads(p.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+    ts = raw.get("min_timestamp")
+    return str(ts) if isinstance(ts, str) and ts else None
+
+
+def filter_by_timestamp(
+    records: list[dict],
+    min_timestamp: str | None | object = _UNSET,
+) -> list[dict]:
+    """Return records with ``timestamp >= min_timestamp``.
+
+    ``min_timestamp`` is unset → load from ``data/mining_cutoff.json``.
+    ``None`` → no filter applied (every row passes). An ISO string →
+    used directly. Rows with no ``timestamp`` field pass through
+    (legacy rows predate the stamp; treating them as post-cutoff
+    keeps the filter conservative — over-including is preferable to
+    silently dropping).
+    """
+    cutoff = (
+        load_failure_cutoff() if min_timestamp is _UNSET else min_timestamp
+    )
+    if not cutoff:
+        return list(records)
+    cutoff_norm = _normalize_ts(cutoff)
+    out: list[dict] = []
+    for r in records:
+        ts = r.get("timestamp")
+        if not ts:
+            out.append(r)
+            continue
+        if _normalize_ts(str(ts)) >= cutoff_norm:
+            out.append(r)
+    return out
+
+
 def analyze_failures(min_samples: int = 30) -> dict:
     """Analyze failure database for patterns.
 

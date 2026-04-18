@@ -325,6 +325,14 @@ def main():
                         help="Minimum boards required (default: 50)")
     p_tune.add_argument("--time-limit", type=float, default=5.0,
                         help="Solver time limit per board (default: 5s)")
+    p_tune.add_argument("--since", type=str, default=None,
+                        help="ISO timestamp; failure-corpus rows older "
+                             "than this are ignored. Overrides "
+                             "data/mining_cutoff.json.")
+    p_tune.add_argument("--no-cutoff", action="store_true",
+                        help="Disable the failure-corpus cutoff "
+                             "entirely (count every row regardless "
+                             "of age).")
 
     p_mission_end = sub.add_parser("mission_end",
                                    help="Record mission outcome (win/loss) on the active run")
@@ -412,7 +420,8 @@ def main():
                      failures_only=args.failures_only)
     elif args.command == "tune":
         cmd_tune(iterations=args.iterations, min_boards=args.min_boards,
-                 time_limit=args.time_limit)
+                 time_limit=args.time_limit,
+                 since=args.since, no_cutoff=args.no_cutoff)
     elif args.command == "mission_end":
         cmd_mission_end(args.outcome, notes=args.notes)
     elif args.command == "annotate":

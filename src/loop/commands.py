@@ -4168,7 +4168,9 @@ def cmd_validate(old_weights_path: str, new_weights_path: str,
 
 
 def cmd_tune(iterations: int = 100, min_boards: int = 50,
-             time_limit: float = 5.0) -> dict:
+             time_limit: float = 5.0,
+             since: str | None = None,
+             no_cutoff: bool = False) -> dict:
     """Auto-tune solver weights by replaying recorded boards.
 
     Uses random search + coordinate refinement to find weight values
@@ -4177,6 +4179,13 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
     and validates against the current weights.
 
     Data gate: refuses to run with fewer than min_boards recordings.
+
+    The failure corpus used for the penalty term honors the shared
+    mining cutoff (``data/mining_cutoff.json``): pre-cutoff rows
+    describe sim output the current build no longer produces and
+    would waste penalty budget if counted. ``since`` overrides the
+    config for bisects; ``no_cutoff=True`` disables the filter for
+    historical audits.
     """
     from src.solver.tuner import tune_weights
 
@@ -4209,8 +4218,20 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
     print(f"{'='*50}")
 
     # Load failure corpus for tuner penalty term
-    from src.solver.analysis import load_failure_db, is_auto_fixable_by_tuning
-    raw_corpus = [r for r in load_failure_db() if is_auto_fixable_by_tuning(r)]
+    from src.solver.analysis import (
+        load_failure_db, is_auto_fixable_by_tuning,
+        filter_by_timestamp, load_failure_cutoff,
+    )
+    if no_cutoff:
+        cutoff_applied: str | None = None
+        all_rows = load_failure_db()
+    elif since is not None:
+        cutoff_applied = since
+        all_rows = filter_by_timestamp(load_failure_db(), since)
+    else:
+        cutoff_applied = load_failure_cutoff()
+        all_rows = filter_by_timestamp(load_failure_db())
+    raw_corpus = [r for r in all_rows if is_auto_fixable_by_tuning(r)]
     seen = set()
     deduped = []
     for r in raw_corpus:
@@ -4219,6 +4240,10 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
             seen.add(key)
             deduped.append(r)
     failure_corpus = deduped[:20]
+    if cutoff_applied:
+        print(f"  Failure cutoff: {cutoff_applied}")
+    else:
+        print(f"  Failure cutoff: disabled")
     if failure_corpus:
         print(f"  Failure corpus: {len(failure_corpus)} records "
               f"(from {len(raw_corpus)} total)")
