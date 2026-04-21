@@ -6,8 +6,8 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 0,
-  "current_turn": 4,
+  "mission_index": 1,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -15,47 +15,47 @@
         "mech_uid": 0,
         "mech_type": "GuardMech",
         "move_to": [
-          2,
-          5
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "GuardMech, move E7\u2192C6"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "TankMech",
-        "move_to": [
           1,
-          4
+          1
         ],
         "weapon": "Unknown",
         "target": [
           255,
           255
         ],
-        "description": "TankMech, move F7\u2192D7"
+        "description": "GuardMech, move D6\u2192G7"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
-          1,
-          3
+          3,
+          0
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          6,
+          3,
           3
         ],
-        "description": "ArtiMech, move G8\u2192E7, fire Artemis Artillery at E2"
+        "description": "ArtiMech, move G3\u2192H5, fire Artemis Artillery at E5"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          4,
+          1
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          3,
+          1
+        ],
+        "description": "TankMech, move E5\u2192G4, fire Taurus Cannon at G5"
       }
     ],
-    "score": 116431.42857142857,
-    "turn": 4
+    "score": 110872.85714285714,
+    "turn": 3
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -106,6 +106,39 @@
         "TankMech, move F7\u2192D7",
         "ArtiMech, move G8\u2192E7, fire Artemis Artillery at E2"
       ]
+    },
+    {
+      "timestamp": "2026-04-21T16:34:08.082630",
+      "turn": 1,
+      "label": "solve",
+      "score": 108492.85714285714,
+      "actions": [
+        "GuardMech, move D6\u2192E6",
+        "TankMech, move E5\u2192C5, fire Taurus Cannon at C4",
+        "ArtiMech, move G5\u2192G3, fire Artemis Artillery at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T16:34:57.544139",
+      "turn": 2,
+      "label": "solve",
+      "score": 103762.85714285714,
+      "actions": [
+        "GuardMech, move E6\u2192D6",
+        "TankMech, move C5\u2192E4, fire Taurus Cannon at F4",
+        "ArtiMech, fire Artemis Artillery at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T16:35:45.026576",
+      "turn": 3,
+      "label": "solve",
+      "score": 110872.85714285714,
+      "actions": [
+        "GuardMech, move D6\u2192G7",
+        "ArtiMech, move G3\u2192H5, fire Artemis Artillery at E5",
+        "TankMech, move E5\u2192G4, fire Taurus Cannon at G5"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -120,6 +153,14 @@
     [
       0,
       3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
     ]
   ],
   "tags": [],
