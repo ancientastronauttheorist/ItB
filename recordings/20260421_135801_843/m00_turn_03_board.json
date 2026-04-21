@@ -1,26 +1,13 @@
 {
-  "timestamp": "2026-04-21T14:09:22.171651",
+  "timestamp": "2026-04-21T14:31:18.449989",
   "run_id": "20260421_135801_843",
   "mission_index": 0,
   "turn": 3,
   "label": "board",
   "data": {
     "bridge_state": {
-      "remaining_spawns": 0,
-      "spawning_tiles": [
-        [
-          5,
-          3
-        ],
-        [
-          5,
-          4
-        ],
-        [
-          6,
-          4
-        ]
-      ],
+      "remaining_spawns": 1,
+      "spawning_tiles": [],
       "tiles": [
         {
           "y": 0,
@@ -31,8 +18,8 @@
         {
           "y": 0,
           "x": 1,
-          "terrain_id": 6,
-          "terrain": "forest"
+          "terrain_id": 0,
+          "terrain": "ground"
         },
         {
           "y": 0,
@@ -43,8 +30,8 @@
         {
           "y": 0,
           "x": 3,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 3,
+          "terrain": "water"
         },
         {
           "y": 0,
@@ -69,325 +56,322 @@
           "x": 7,
           "terrain_id": 3,
           "terrain": "water"
-        },
-        {
-          "y": 1,
-          "x": 0,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 1,
-          "terrain_id": 1,
-          "x": 1,
-          "terrain": "building",
-          "building_hp": 1,
-          "unique_building": true,
-          "objective_name": "Str_Battery"
         },
         {
           "y": 1,
           "terrain_id": 1,
           "terrain": "building",
           "building_hp": 1,
-          "x": 2
+          "x": 0
         },
         {
           "y": 1,
-          "terrain_id": 1,
-          "terrain": "building",
-          "building_hp": 2,
-          "x": 3
-        },
-        {
-          "y": 1,
-          "x": 4,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 1,
-          "x": 5,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 1,
-          "x": 6,
-          "terrain_id": 3,
-          "terrain": "water"
-        },
-        {
-          "y": 1,
-          "x": 7,
-          "terrain_id": 3,
-          "terrain": "water"
-        },
-        {
-          "y": 2,
-          "x": 0,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 2,
-          "x": 1,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 2,
-          "x": 2,
-          "terrain_id": 6,
-          "terrain": "forest"
-        },
-        {
-          "y": 2,
-          "x": 3,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 2,
-          "x": 4,
-          "terrain_id": 6,
-          "terrain": "forest"
-        },
-        {
-          "y": 2,
-          "x": 5,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 2,
-          "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 2,
-          "x": 7,
-          "terrain_id": 3,
-          "terrain": "water"
-        },
-        {
-          "y": 3,
-          "x": 0,
-          "terrain_id": 6,
-          "terrain": "forest"
-        },
-        {
-          "y": 3,
-          "x": 1,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 3,
-          "terrain_id": 1,
-          "terrain": "building",
-          "building_hp": 1,
-          "x": 2
-        },
-        {
-          "y": 3,
-          "x": 3,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 3,
-          "x": 4,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 3,
-          "x": 5,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 3,
-          "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 3,
-          "x": 7,
-          "terrain_id": 3,
-          "terrain": "water"
-        },
-        {
-          "y": 4,
-          "x": 0,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 4,
-          "x": 1,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 4,
-          "x": 2,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 4,
-          "x": 3,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 4,
-          "x": 4,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 4,
-          "terrain_id": 0,
-          "terrain": "ground",
-          "x": 5,
-          "frozen": true
-        },
-        {
-          "y": 4,
-          "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 4,
-          "x": 7,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 5,
-          "x": 0,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 5,
-          "x": 1,
-          "terrain_id": 6,
-          "terrain": "forest"
-        },
-        {
-          "y": 5,
-          "x": 2,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 5,
-          "x": 3,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 5,
-          "x": 4,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 5,
-          "x": 5,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 5,
-          "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 5,
           "terrain_id": 0,
           "terrain": "ground",
           "fire": true,
-          "x": 7
+          "x": 1
         },
         {
-          "y": 6,
-          "terrain_id": 4,
-          "terrain": "mountain",
-          "building_hp": 2,
-          "population": 1,
+          "y": 1,
+          "x": 2,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 1,
+          "x": 3,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 1,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "terrain_id": 0,
+          "terrain": "ground",
+          "pod": true,
+          "x": 5
+        },
+        {
+          "y": 1,
+          "x": 6,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 1,
+          "x": 7,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
           "x": 0
         },
         {
-          "y": 6,
-          "terrain_id": 4,
-          "terrain": "mountain",
+          "y": 2,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "terrain_id": 1,
+          "terrain": "building",
           "building_hp": 2,
-          "population": 1,
-          "x": 1
+          "x": 2
+        },
+        {
+          "y": 3,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 5
+        },
+        {
+          "y": 3,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 1,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 4,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 3,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 4,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 5,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 4,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 5,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 5,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
         },
         {
           "y": 6,
           "terrain_id": 1,
           "terrain": "building",
           "building_hp": 1,
+          "x": 1
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
           "x": 2
         },
         {
           "y": 6,
-          "terrain_id": 1,
-          "terrain": "building",
-          "building_hp": 2,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 1,
+          "population": 1,
           "x": 3
         },
         {
           "y": 6,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 1,
+          "population": 1,
+          "x": 5
+        },
+        {
+          "y": 6,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 6
+        },
+        {
+          "y": 6,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 7
+        },
+        {
+          "y": 7,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
           "terrain_id": 1,
           "terrain": "building",
-          "building_hp": 2,
-          "x": 4
-        },
-        {
-          "y": 6,
-          "terrain_id": 0,
-          "terrain": "ground",
-          "x": 5,
-          "frozen": true
-        },
-        {
-          "y": 6,
-          "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 6,
-          "x": 7,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 7,
-          "terrain_id": 4,
-          "terrain": "mountain",
-          "building_hp": 2,
-          "population": 1,
-          "x": 0
-        },
-        {
-          "y": 7,
-          "terrain_id": 4,
-          "terrain": "mountain",
-          "building_hp": 2,
-          "population": 1,
+          "building_hp": 1,
           "x": 1
         },
         {
@@ -408,109 +392,59 @@
         },
         {
           "y": 7,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
           "terrain_id": 4,
           "terrain": "mountain",
           "building_hp": 2,
           "population": 1,
-          "x": 4
+          "x": 5
         },
         {
           "y": 7,
-          "x": 5,
-          "terrain_id": 0,
-          "terrain": "ground"
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 6
         },
         {
           "y": 7,
-          "x": 6,
-          "terrain_id": 0,
-          "terrain": "ground"
-        },
-        {
-          "y": 7,
-          "x": 7,
-          "terrain_id": 6,
-          "terrain": "forest"
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 7
         }
       ],
       "grid_power_max": 7,
       "phase": "combat_player",
-      "grid_power": 5,
-      "environment_danger_v2": [
-        [
-          5,
-          1,
-          1,
-          1
-        ],
-        [
-          4,
-          2,
-          1,
-          1
-        ],
-        [
-          5,
-          2,
-          1,
-          1
-        ],
-        [
-          6,
-          2,
-          1,
-          1
-        ],
-        [
-          5,
-          3,
-          1,
-          1
-        ]
-      ],
+      "grid_power": 6,
+      "environment_danger_v2": [],
       "turn": 3,
-      "env_type": "lightning_or_airstrike",
-      "mission_id": "Mission_Airstrike",
-      "environment_danger": [
-        [
-          5,
-          1
-        ],
-        [
-          4,
-          2
-        ],
-        [
-          5,
-          2
-        ],
-        [
-          6,
-          2
-        ],
-        [
-          5,
-          3
-        ]
-      ],
+      "env_type": "unknown",
+      "mission_id": "Mission_Train",
+      "environment_danger": [],
       "attack_order": [
-        437,
-        438
+        431,
+        432,
+        442,
+        443,
+        445
       ],
-      "total_turns": 4,
-      "timestamp": 1776798549,
-      "targeted_tiles": [
-        [
-          5,
-          3
-        ]
-      ],
+      "total_turns": 3,
+      "timestamp": 1776799838,
+      "targeted_tiles": [],
       "units": [
         {
           "web": false,
           "active": false,
           "base_move": 3,
-          "hp": 2,
+          "hp": 3,
           "flying": false,
           "pilot_level": 0,
           "team": 1,
@@ -529,7 +463,7 @@
           ],
           "fire": false,
           "y": 5,
-          "x": 6,
+          "x": 3,
           "acid": false,
           "shield": false,
           "type": "MirrorMech",
@@ -541,7 +475,7 @@
           "web": false,
           "active": false,
           "base_move": 3,
-          "hp": 2,
+          "hp": 1,
           "flying": true,
           "pilot_level": 0,
           "team": 1,
@@ -554,13 +488,13 @@
           "weapons": [
             "Ranged_Ice"
           ],
-          "frozen": true,
+          "frozen": false,
           "pilot_skills": [
             "skill2=3"
           ],
-          "fire": false,
-          "y": 4,
-          "x": 5,
+          "fire": true,
+          "y": 1,
+          "x": 1,
           "acid": false,
           "shield": false,
           "type": "IceMech",
@@ -571,10 +505,9 @@
         {
           "web": false,
           "active": false,
-          "base_move": 4,
-          "hp": 1,
+          "shield": false,
+          "hp": 2,
           "flying": true,
-          "pilot_level": 0,
           "team": 1,
           "massive": true,
           "web_probes": {
@@ -586,52 +519,44 @@
             "Science_Pullmech",
             "Science_Shield"
           ],
-          "frozen": false,
-          "pilot_skills": [
-            "skill2=3"
-          ],
-          "fire": false,
-          "y": 7,
-          "x": 5,
-          "acid": false,
-          "shield": false,
-          "type": "ScienceMech",
-          "mech": true,
           "uid": 2,
-          "pilot_id": "Pilot_Archive"
+          "y": 2,
+          "x": 5,
+          "fire": false,
+          "type": "ScienceMech",
+          "base_move": 4,
+          "mech": true,
+          "acid": false,
+          "frozen": false
         },
         {
           "web": false,
           "active": false,
           "shield": false,
-          "hp": 2,
+          "hp": 3,
           "weapon_push": 0,
-          "flying": true,
+          "flying": false,
           "team": 6,
-          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
-          "max_hp": 2,
-          "move": 5,
-          "x": 5,
-          "queued_target": [
-            4,
-            6
-          ],
+          "max_hp": 3,
+          "move": 2,
+          "weapon_target_behind": false,
+          "x": 6,
           "has_queued_attack": true,
           "weapons": [
-            "HornetAtk1"
+            "FireflyAtk1"
           ],
           "weapon_damage": 1,
-          "y": 6,
-          "uid": 437,
-          "type": "Hornet1",
-          "base_move": 5,
+          "y": 3,
+          "uid": 431,
+          "type": "Firefly1",
+          "base_move": 2,
           "fire": false,
           "mech": false,
           "acid": false,
-          "frozen": true
+          "frozen": false
         },
         {
           "web": false,
@@ -639,31 +564,200 @@
           "shield": false,
           "hp": 2,
           "weapon_push": 0,
-          "flying": true,
+          "flying": false,
           "team": 6,
           "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 2,
-          "move": 5,
+          "move": 3,
           "x": 4,
           "queued_target": [
-            5,
+            1,
+            2
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "ScarabAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 2,
+          "uid": 432,
+          "type": "Scarab1",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 2,
+          "x": 6,
+          "queued_target": [
+            6,
             3
           ],
           "has_queued_attack": true,
           "weapons": [
-            "HornetAtk1"
+            "FireflyAtk1"
           ],
           "weapon_damage": 1,
-          "y": 3,
-          "uid": 438,
-          "type": "Hornet1",
+          "y": 2,
+          "uid": 442,
+          "type": "Firefly1",
+          "base_move": 2,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 4,
+          "weapon_push": 0,
+          "flying": true,
+          "team": 6,
+          "weapon_target_behind": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 4,
+          "move": 5,
+          "x": 0,
+          "queued_target": [
+            0,
+            6
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "HornetAtk2"
+          ],
+          "weapon_damage": 2,
+          "y": 5,
+          "uid": 443,
+          "type": "Hornet2",
           "base_move": 5,
           "fire": false,
           "mech": false,
           "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 2,
+          "flying": true,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 2,
+          "weapons": [],
+          "x": 6,
+          "y": 4,
+          "uid": 444,
+          "type": "Jelly_Regen1",
+          "base_move": 2,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 2,
+          "x": 4,
+          "queued_target": [
+            3,
+            1
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "FireflyAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 1,
+          "uid": 445,
+          "type": "Firefly1",
+          "base_move": 2,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 0,
+          "flying": false,
+          "team": 1,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 1,
+          "move": 0,
+          "weapons": [],
+          "x": 4,
+          "y": 4,
+          "uid": 446,
+          "type": "Train_Damaged",
+          "base_move": 0,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "base_move": 0,
+          "hp": 0,
+          "is_extra_tile": true,
+          "flying": false,
+          "team": 1,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "type": "Train_Damaged",
+          "move": 0,
+          "uid": 446,
+          "acid": false,
+          "y": 5,
+          "x": 4,
+          "mech": false,
+          "max_hp": 1,
+          "shield": false,
+          "weapons": [],
+          "fire": false,
           "frozen": false
         }
       ]
@@ -672,26 +766,26 @@
       "phase": "combat_player",
       "source": "bridge",
       "turn": 3,
-      "grid_power": "5/7",
+      "grid_power": "6/7",
       "mechs": [
         {
           "type": "MirrorMech",
-          "pos": "C2",
-          "hp": "2/3",
+          "pos": "C5",
+          "hp": "3/3",
           "weapon": "Mirror Shot",
           "status": "DONE"
         },
         {
           "type": "IceMech",
-          "pos": "D3",
-          "hp": "2/2",
+          "pos": "G7",
+          "hp": "1/2",
           "weapon": "Cryo-Launcher",
           "status": "DONE"
         },
         {
           "type": "ScienceMech",
-          "pos": "A3",
-          "hp": "1/2",
+          "pos": "F3",
+          "hp": "2/2",
           "weapon": "Attract Shot",
           "status": "DONE"
         }
@@ -699,47 +793,45 @@
       "active_mechs": 0,
       "enemies": [
         {
-          "type": "Hornet1",
-          "pos": "B3",
-          "hp": "2/2",
-          "target": " \u2192 B4"
+          "type": "Firefly1",
+          "pos": "E2",
+          "hp": "3/3",
+          "target": ""
         },
         {
-          "type": "Hornet1",
-          "pos": "E4",
+          "type": "Scarab1",
+          "pos": "F4",
           "hp": "2/2",
-          "target": " \u2192 E3"
+          "target": " \u2192 F7"
+        },
+        {
+          "type": "Firefly1",
+          "pos": "F2",
+          "hp": "3/3",
+          "target": " \u2192 E2"
+        },
+        {
+          "type": "Hornet2",
+          "pos": "C8",
+          "hp": "4/4",
+          "target": " \u2192 B8"
+        },
+        {
+          "type": "Jelly_Regen1",
+          "pos": "D2",
+          "hp": "2/2",
+          "target": ""
+        },
+        {
+          "type": "Firefly1",
+          "pos": "G4",
+          "hp": "3/3",
+          "target": " \u2192 G5"
         }
       ],
-      "threatened_buildings": 1,
-      "threats": [
-        "Building B4 by Hornet1 at B3"
-      ],
-      "targeted_tiles": 1,
-      "spawn_points": 3,
-      "environment_danger": [
-        {
-          "bridge": "(5,1)",
-          "visual": "G3"
-        },
-        {
-          "bridge": "(4,2)",
-          "visual": "F4"
-        },
-        {
-          "bridge": "(5,2)",
-          "visual": "F3"
-        },
-        {
-          "bridge": "(6,2)",
-          "visual": "F2"
-        },
-        {
-          "bridge": "(5,3)",
-          "visual": "E3"
-        }
-      ],
-      "env_type": "lightning_or_airstrike"
+      "threatened_buildings": 0,
+      "targeted_tiles": 0,
+      "spawn_points": 0
     }
   }
 }

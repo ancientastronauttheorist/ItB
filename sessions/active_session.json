@@ -7,55 +7,55 @@
   "current_mission": "",
   "islands_completed": [],
   "mission_index": 0,
-  "current_turn": 4,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
+        "mech_uid": 0,
+        "mech_type": "MirrorMech",
+        "move_to": [
+          3,
+          5
+        ],
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          2,
+          5
+        ],
+        "description": "MirrorMech, fire Mirror Shot at C6"
+      },
+      {
         "mech_uid": 1,
         "mech_type": "IceMech",
         "move_to": [
-          5,
-          5
+          1,
+          1
         ],
-        "weapon": "Unknown",
+        "weapon": "_REPAIR",
         "target": [
-          255,
-          255
+          1,
+          1
         ],
-        "description": "IceMech, move D3\u2192C3"
+        "description": "IceMech, move E7\u2192G7, repair"
       },
       {
         "mech_uid": 2,
         "mech_type": "ScienceMech",
         "move_to": [
           5,
-          7
+          2
         ],
         "weapon": "Science_Pullmech",
         "target": [
-          5,
-          3
+          3,
+          2
         ],
-        "description": "ScienceMech, fire Attract Shot at E3"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "MirrorMech",
-        "move_to": [
-          7,
-          4
-        ],
-        "weapon": "Brute_Mirrorshot",
-        "target": [
-          6,
-          4
-        ],
-        "description": "MirrorMech, move C2\u2192D1, fire Mirror Shot at D2"
+        "description": "ScienceMech, move F4\u2192F3, fire Attract Shot at F5"
       }
     ],
-    "score": 111940.0,
-    "turn": 4
+    "score": 73157.14285714286,
+    "turn": 3
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -105,6 +105,39 @@
         "IceMech, move D3\u2192C3",
         "ScienceMech, fire Attract Shot at E3",
         "MirrorMech, move C2\u2192D1, fire Mirror Shot at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:27:12.810622",
+      "turn": 1,
+      "label": "solve",
+      "score": 103807.14285714286,
+      "actions": [
+        "IceMech, move C6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, move F5\u2192C5, fire Mirror Shot at C4",
+        "ScienceMech, move D5\u2192D6, fire Attract Shot at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:28:02.423681",
+      "turn": 2,
+      "label": "solve",
+      "score": 82127.14285714286,
+      "actions": [
+        "MirrorMech, fire Mirror Shot at C4",
+        "IceMech, repair",
+        "ScienceMech, move D6\u2192F4, fire Attract Shot at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:30:07.725852",
+      "turn": 3,
+      "label": "solve",
+      "score": 73157.14285714286,
+      "actions": [
+        "MirrorMech, fire Mirror Shot at C6",
+        "IceMech, move E7\u2192G7, repair",
+        "ScienceMech, move F4\u2192F3, fire Attract Shot at F5"
       ]
     }
   ],
@@ -343,6 +376,90 @@
           5
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Ice",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Mirrorshot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "damage_amount",
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Pullmech|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Pullmech",
+        "target": [
+          4,
+          4
+        ]
+      }
     }
   ],
   "disabled_actions": [
@@ -350,6 +467,12 @@
       "weapon_id": "Ranged_Ice",
       "cause_pattern": "status|Ranged_Ice|attack",
       "expires_turn": 6,
+      "strategic_override": false
+    },
+    {
+      "weapon_id": "Science_Pullmech",
+      "cause_pattern": "death|Science_Pullmech|attack",
+      "expires_turn": 5,
       "strategic_override": false
     }
   ],
@@ -361,9 +484,11 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "research_id": "1371a2593f91",
+      "last_kind": "mech"
     },
     {
       "type": "IceMech",
@@ -372,9 +497,11 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "research_id": "1731394affd9",
+      "last_kind": "mech"
     },
     {
       "type": "ScienceMech",
@@ -383,9 +510,11 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "research_id": "864218273210",
+      "last_kind": "mech"
     },
     {
       "type": "Jelly_Regen1",
@@ -395,7 +524,18 @@
       "mission_id": "",
       "first_seen_turn": 3,
       "attempts": 0,
-      "status": "pending",
+      "status": "resolved",
+      "result": null
+    },
+    {
+      "type": "Train_Damaged",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "resolved",
       "result": null
     }
   ]

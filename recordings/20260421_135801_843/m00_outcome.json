@@ -2,6 +2,6 @@
   "mission_index": 0,
   "mission_name": "",
   "result": "win",
-  "notes": "Martial District: Protect Batteries \u26a1 succeeded, Kill 7 \u2605 failed (2/7), Science Mech pilot KIA, 1500 civilians. Noted bridge active=False latency after End Turn clicks \u2014 bridge state lags UI transition, misleadingly reports 'no active mechs' mid-transition.",
-  "recorded_at": "2026-04-21T14:11:51.289806"
+  "notes": "The Library: Region Secured, Defend Train failed. Ralph +4 XP, Pinnacle +0 XP. Patched auto_turn poller worked cleanly \u2014 no 'no active mechs' flakes during turns 1-3. Turn 4 poll timeout correctly indicated mission ended (reward screen up).",
+  "recorded_at": "2026-04-21T14:31:55.102987"
 }
