@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regenerate ``data/known_types.json`` — the Phase 0 novelty baseline.
 
-Pulls three sources together:
+Pulls five sources together:
 
 1. Wiki filenames from ``data/wiki_raw/`` (dropping the ``.html``/``.json``
    extension). These are the canonical unit names from Fandom.
@@ -12,13 +12,24 @@ Pulls three sources together:
    match the wiki naming, but they're the exact strings ``unknown_detector``
    will see at runtime, so we seed them here to avoid a wave of false-positive
    "unknown" flags on Phase 0 rollout.
+4. Bridge-observed weapon IDs scanned from the same recordings. Rust exposes
+   them as underscore-free enum variants (``PrimePunchmech``); the bridge
+   emits the underscored form (``Prime_Punchmech``). We store both —
+   ``unknown_detector`` normalizes at comparison time.
+5. Known phase strings for the screen-novelty check. These are enumerated
+   from ``src/bridge/reader.py`` (bridge-side) and ``src/capture/save_parser.py``
+   (save-parser side). When either module grows new phase values, update the
+   ``KNOWN_PHASES`` list below.
 
-The ``unknown_detector`` treats the union of wiki pages + observed pawn types
-as the "known pawns" set, and the Terrain enum variants (lowercased) as the
-"known terrain" set.
+The ``unknown_detector`` treats:
+- wiki_pages + observed_pawn_types → "known pawns"
+- terrain_enum (lowercased) + terrain_ids → "known terrain"
+- weapon_enum + observed_weapons → "known weapons" (normalized)
+- known_phases → "known screens"
 
-Re-run whenever wiki_raw/ grows, Rust enums change, or you want to fold in new
-observed types. Run: ``python3 scripts/regenerate_known_types.py``.
+Re-run whenever wiki_raw/ grows, Rust enums change, phase strings drift, or
+you want to fold in new observed data. Run:
+``python3 scripts/regenerate_known_types.py``.
 """
 
 from __future__ import annotations
@@ -110,11 +121,53 @@ def observed_pawn_types() -> list[str]:
     return sorted(types)
 
 
+def observed_weapons() -> list[str]:
+    """Scan recordings for every weapon id seen on any unit.
+
+    Mirror of ``observed_pawn_types``. Captures the underscored bridge
+    form (e.g. ``Prime_Punchmech``) which the Rust enum variant form
+    (``PrimePunchmech``) can't cover by itself.
+    """
+    if not RECORDINGS.is_dir():
+        return []
+    weapons: set[str] = set()
+    for board_file in RECORDINGS.glob("*/m*_turn_*_board.json"):
+        try:
+            with open(board_file) as f:
+                rec = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+        units = rec.get("data", {}).get("bridge_state", {}).get("units", [])
+        for u in units:
+            for w in u.get("weapons", []) or []:
+                if w:
+                    weapons.add(w)
+    return sorted(weapons)
+
+
+# Phase strings enumerated by the bridge reader and save parser.
+# When either module grows a new phase value, append it here so it
+# doesn't trip a false-positive screen novelty flag.
+# Sources:
+#   - src/bridge/reader.py    (combat_player, combat_enemy, unknown)
+#   - src/capture/save_parser.py (no_save, between_missions, mission_ending,
+#                                 combat_player, combat_enemy)
+KNOWN_PHASES: list[str] = [
+    "between_missions",
+    "combat_enemy",
+    "combat_player",
+    "mission_ending",
+    "no_save",
+    "unknown",
+]
+
+
 def main() -> int:
     wiki = wiki_pages()
     weapons = weapon_enum()
     terrain = terrain_enum()
     observed = observed_pawn_types()
+    obs_weapons = observed_weapons()
 
     terrain_lc = sorted({t.lower() for t in terrain})
 
@@ -122,13 +175,15 @@ def main() -> int:
         "_comment": (
             "Regenerate with scripts/regenerate_known_types.py. "
             "Used by src/solver/unknown_detector.py to flag novel "
-            "pawn types / terrain during cmd_read."
+            "pawn types / terrain / weapons / phases during cmd_read."
         ),
         "wiki_pages": wiki,
         "weapon_enum": weapons,
         "terrain_enum": terrain,
         "terrain_ids": terrain_lc,
         "observed_pawn_types": observed,
+        "observed_weapons": obs_weapons,
+        "known_phases": list(KNOWN_PHASES),
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -141,6 +196,8 @@ def main() -> int:
     print(f"  weapon_enum:         {len(weapons)}")
     print(f"  terrain_enum:        {len(terrain)} → terrain_ids {len(terrain_lc)}")
     print(f"  observed_pawn_types: {len(observed)}")
+    print(f"  observed_weapons:    {len(obs_weapons)}")
+    print(f"  known_phases:        {len(KNOWN_PHASES)}")
     return 0
 
 

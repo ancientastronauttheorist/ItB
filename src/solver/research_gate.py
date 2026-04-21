@@ -15,16 +15,29 @@ from __future__ import annotations
 
 
 def research_gate_envelope(unknowns: dict | None) -> dict | None:
-    """Return the RESEARCH_REQUIRED envelope iff ``unknowns`` is non-empty."""
+    """Return the RESEARCH_REQUIRED envelope iff ``unknowns`` is non-empty.
+
+    Covers the four novelty axes from ``detect_unknowns``: pawn
+    ``types``, ``terrain_ids``, ``weapons``, and ``screens``. Any one
+    of them being non-empty trips the gate. Callers pass whichever
+    keys are populated; missing keys default to empty.
+    """
     if not unknowns:
         return None
     types = list(unknowns.get("types") or [])
     terrain = list(unknowns.get("terrain_ids") or [])
-    if not types and not terrain:
+    weapons = list(unknowns.get("weapons") or [])
+    screens = list(unknowns.get("screens") or [])
+    if not types and not terrain and not weapons and not screens:
         return None
     return {
         "error": "RESEARCH_REQUIRED",
-        "unknowns": {"types": types, "terrain_ids": terrain},
+        "unknowns": {
+            "types": types,
+            "terrain_ids": terrain,
+            "weapons": weapons,
+            "screens": screens,
+        },
         "next": "cmd_research_next",
         "message": (
             "Novelty on the board — research before solving. "

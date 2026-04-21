@@ -266,13 +266,26 @@ def test_model_gap_known_proposes_narrate_tier_4():
 # ── #P0-5 novelty detection ──────────────────────────────────────────────────
 
 
-def _fake_board(unit_types: list[str], terrain_ids: list[str]):
+def _fake_board(
+    unit_types: list[str],
+    terrain_ids: list[str],
+    *,
+    weapons: list[tuple[str, str]] | None = None,
+):
     """Minimal board duck-type for detect_unknowns.
 
     ``tiles`` is an 8×8 grid; only tile [0][0..N-1] carries the supplied
     terrain ids, everything else is "ground" (which is always known).
+
+    ``weapons`` is an optional list of ``(weapon, weapon2)`` tuples, one
+    per unit in ``unit_types``. Units without a matching tuple get
+    empty strings, which the detector skips.
     """
-    units = [SimpleNamespace(type=t) for t in unit_types]
+    weapons = weapons or []
+    units = []
+    for i, t in enumerate(unit_types):
+        w = weapons[i] if i < len(weapons) else ("", "")
+        units.append(SimpleNamespace(type=t, weapon=w[0], weapon2=w[1]))
     tiles = [[SimpleNamespace(terrain="ground") for _ in range(8)] for _ in range(8)]
     for i, tid in enumerate(terrain_ids):
         tiles[0][i].terrain = tid
@@ -283,7 +296,10 @@ def test_detect_unknowns_known_units_empty():
     unknown_detector.reset_cache()
     board = _fake_board(["Firefly1", "Scorpion1"], ["ground", "water"])
     r = unknown_detector.detect_unknowns(board)
-    assert r == {"types": [], "terrain_ids": []}
+    assert r["types"] == []
+    assert r["terrain_ids"] == []
+    assert r["weapons"] == []
+    assert r["screens"] == []
 
 
 def test_detect_unknowns_flags_novel_unit():
@@ -299,6 +315,53 @@ def test_detect_unknowns_flags_novel_terrain():
     board = _fake_board([], ["quicksand"])
     r = unknown_detector.detect_unknowns(board)
     assert "quicksand" in r["terrain_ids"]
+
+
+# ── weapon + screen novelty (Missing wire #2) ────────────────────────────────
+
+
+def test_detect_unknowns_flags_novel_weapon():
+    unknown_detector.reset_cache()
+    board = _fake_board(
+        ["Firefly1"], [],
+        weapons=[("Wumpus_DeathRay", "")],
+    )
+    r = unknown_detector.detect_unknowns(board)
+    assert "Wumpus_DeathRay" in r["weapons"]
+
+
+def test_detect_unknowns_normalizes_underscore_weapon_form():
+    # Bridge form ``Prime_Punchmech`` should match the Rust enum variant
+    # ``PrimePunchmech`` via underscore-stripping, not be flagged novel.
+    unknown_detector.reset_cache()
+    board = _fake_board(
+        ["Firefly1"], [],
+        weapons=[("Prime_Punchmech", "Ranged_Artillerymech")],
+    )
+    r = unknown_detector.detect_unknowns(board)
+    assert "Prime_Punchmech" not in r["weapons"]
+    assert "Ranged_Artillerymech" not in r["weapons"]
+
+
+def test_detect_unknowns_flags_novel_phase():
+    unknown_detector.reset_cache()
+    board = _fake_board([], [])
+    r = unknown_detector.detect_unknowns(board, phase="ceo_intro_popup")
+    assert r["screens"] == ["ceo_intro_popup"]
+
+
+def test_detect_unknowns_ignores_known_phase():
+    unknown_detector.reset_cache()
+    board = _fake_board([], [])
+    r = unknown_detector.detect_unknowns(board, phase="combat_player")
+    assert r["screens"] == []
+
+
+def test_detect_unknowns_phase_none_yields_empty_screens():
+    unknown_detector.reset_cache()
+    board = _fake_board([], [])
+    r = unknown_detector.detect_unknowns(board)  # phase defaults to None
+    assert r["screens"] == []
 
 
 # ── #P0-3 fuzzy_signal survives the failure_db round-trip ────────────────────

@@ -572,18 +572,19 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 # behavior change. Regenerate the baseline with
                 # scripts/regenerate_known_types.py.
                 from src.solver.unknown_detector import detect_unknowns
-                unknowns = detect_unknowns(board)
+                unknowns = detect_unknowns(board, phase=phase)
                 turn_for_queue = bridge_data.get("turn", 0)
-                if unknowns["types"] or unknowns["terrain_ids"]:
+                if (unknowns["types"] or unknowns["terrain_ids"]
+                        or unknowns["weapons"] or unknowns["screens"]):
                     result["unknowns"] = unknowns
                     # Protocol gate flag — see CLAUDE.md rule 20. The
                     # harness must run research_next before solving.
                     result["requires_research"] = True
                     # Phase 2 #P2-2: enqueue each novel type / terrain for
                     # the between-turn research processor. Dedup is per
-                    # (type, terrain_id), so re-seeing a pawn across turns
-                    # won't re-enqueue. Enqueuing itself is cheap — the
-                    # expensive Vision capture happens in #P2-3+.
+                    # (type, terrain_id, kind, slot), so re-seeing across
+                    # turns won't re-enqueue. Enqueuing itself is cheap —
+                    # the expensive Vision capture happens in #P2-3+.
                     enqueued = []
                     for t in unknowns["types"]:
                         if session.enqueue_research(t, None, turn_for_queue):
@@ -591,6 +592,22 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     for tid in unknowns["terrain_ids"]:
                         if session.enqueue_research("", tid, turn_for_queue):
                             enqueued.append({"type": "", "terrain_id": tid})
+                    for w in unknowns["weapons"]:
+                        if session.enqueue_research(
+                            w, None, turn_for_queue, kind="enemy_weapon",
+                        ):
+                            enqueued.append({
+                                "type": w, "terrain_id": None,
+                                "kind": "enemy_weapon",
+                            })
+                    for s in unknowns["screens"]:
+                        if session.enqueue_research(
+                            s, None, turn_for_queue, kind="screen",
+                        ):
+                            enqueued.append({
+                                "type": s, "terrain_id": None,
+                                "kind": "screen",
+                            })
                     if enqueued:
                         result["research_enqueued"] = enqueued
                         session.save()
@@ -600,6 +617,10 @@ def cmd_read(profile: str = "Alpha") -> dict:
                         print(f"!   Unknown types:   {', '.join(unknowns['types'])}")
                     if unknowns["terrain_ids"]:
                         print(f"!   Unknown terrain: {', '.join(unknowns['terrain_ids'])}")
+                    if unknowns["weapons"]:
+                        print(f"!   Unknown weapons: {', '.join(unknowns['weapons'])}")
+                    if unknowns["screens"]:
+                        print(f"!   Unknown screen:  {', '.join(unknowns['screens'])}")
                     print("!   Next: game_loop.py research_next  (CLAUDE.md rule 20)")
                     print("!" * 60)
 
@@ -912,7 +933,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     # rule 20 and docs/self_healing_loop_design.md.
     from src.solver.unknown_detector import detect_unknowns
     from src.solver.research_gate import research_gate_envelope
-    gate = research_gate_envelope(detect_unknowns(board))
+    _solve_phase = bridge_data.get("phase") if bridge_data else None
+    gate = research_gate_envelope(
+        detect_unknowns(board, phase=_solve_phase)
+    )
     if gate is not None:
         _print_result(gate)
         return gate

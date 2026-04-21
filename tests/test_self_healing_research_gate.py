@@ -60,3 +60,41 @@ def test_gate_envelope_mentions_rule_20():
     # If this breaks, CLAUDE.md rule 20 should be renumbered in lockstep.
     env = research_gate_envelope({"types": ["X"], "terrain_ids": []})
     assert "rule 20" in env["message"].lower() or "rule 20" in env["message"]
+
+
+# ── weapon + screen coverage (Missing wire #2) ───────────────────────────────
+
+
+def test_gate_envelope_flags_unknown_weapon():
+    env = research_gate_envelope(
+        {"types": [], "terrain_ids": [], "weapons": ["Wumpus_DeathRay"], "screens": []}
+    )
+    assert env is not None
+    assert env["error"] == "RESEARCH_REQUIRED"
+    assert env["unknowns"]["weapons"] == ["Wumpus_DeathRay"]
+
+
+def test_gate_envelope_flags_unknown_screen():
+    env = research_gate_envelope(
+        {"types": [], "terrain_ids": [], "weapons": [], "screens": ["ceo_intro_popup"]}
+    )
+    assert env is not None
+    assert env["unknowns"]["screens"] == ["ceo_intro_popup"]
+
+
+def test_gate_envelope_stays_none_on_four_empty_lists():
+    env = research_gate_envelope(
+        {"types": [], "terrain_ids": [], "weapons": [], "screens": []}
+    )
+    assert env is None
+
+
+def test_gate_envelope_missing_keys_default_to_empty():
+    # Legacy callers may pass only the original two keys; the gate must
+    # still work (weapons + screens default to empty, no false-positive
+    # envelope).
+    assert research_gate_envelope({"types": [], "terrain_ids": []}) is None
+    env = research_gate_envelope({"types": ["X"], "terrain_ids": []})
+    assert env is not None
+    assert env["unknowns"]["weapons"] == []
+    assert env["unknowns"]["screens"] == []
