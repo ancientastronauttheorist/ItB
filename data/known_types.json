@@ -282,6 +282,7 @@
     "water"
   ],
   "observed_pawn_types": [
+    "AcidVat",
     "Acid_Tank",
     "ArchiveArtillery",
     "Archive_Tank",
