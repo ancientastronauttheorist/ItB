@@ -84,6 +84,8 @@ local function _read_save_data()
         network = nil,
         networkMax = nil,
         queued_shots = {},
+        queued_targets = {},  -- [pawn_id] = {x, y} from piTarget (leap/melee landing tile)
+        queued_skills = {},   -- [pawn_id] = iQueuedSkill (>=0 when an attack is actually queued)
         conveyor_belts = {},
         pilots = {},  -- [pawn_id] = {id=..., level=..., skill1=..., skill2=...}
     }
@@ -111,13 +113,29 @@ local function _read_save_data()
         local pid = block:match('%["id"%]%s*=%s*(%d+)')
         if pid then
             local pid_n = tonumber(pid)
-            -- Queued shot
+            -- Queued shot (projectile/laser/artillery end-tile)
             local qs = block:match('%["piQueuedShot"%]%s*=%s*Point%s*%(([^%)]+)%)')
             if qs then
                 local qsx, qsy = qs:match('(%-?%d+)%s*,%s*(%-?%d+)')
                 if qsx and qsy then
                     result.queued_shots[pid_n] = {x = tonumber(qsx), y = tonumber(qsy)}
                 end
+            end
+            -- piTarget (leap landing tile, melee target, move-style queued attacks).
+            -- Populated for Leapers and other Jumper pawns when piQueuedShot is
+            -- (-1,-1). Also populated for non-queued pawns (stale last-target),
+            -- so the consumer must gate on iQueuedSkill >= 0.
+            local pt = block:match('%["piTarget"%]%s*=%s*Point%s*%(([^%)]+)%)')
+            if pt then
+                local ptx, pty = pt:match('(%-?%d+)%s*,%s*(%-?%d+)')
+                if ptx and pty then
+                    result.queued_targets[pid_n] = {x = tonumber(ptx), y = tonumber(pty)}
+                end
+            end
+            -- iQueuedSkill: -1 when no skill is queued, >=0 when queued.
+            local qsk = block:match('%["iQueuedSkill"%]%s*=%s*(%-?%d+)')
+            if qsk then
+                result.queued_skills[pid_n] = tonumber(qsk)
             end
             -- Pilot: nested table inside the pawn block
             local pilot_block = block:match('%["pilot"%]%s*=%s*(%b{})')
@@ -460,26 +478,81 @@ local function dump_state()
                         unit.has_queued_attack = true
                     end
 
-                    -- Per-enemy target from save file piQueuedShot
-                    local qs = queued_shots[pid]
+                    -- Per-enemy target: piQueuedShot first (projectile/laser/
+                    -- artillery attacks), then piTarget (leap/melee landing
+                    -- tile — used by Jumper pawns like Leaper1/Leaper2 where
+                    -- piQueuedShot is (-1,-1)), then Lua API probes. We must
+                    -- gate the piTarget read on iQueuedSkill >= 0 because the
+                    -- save stores piTarget as a stale last-target even on
+                    -- pawns that have no queued skill this turn.
+                    local qs = save_data.queued_shots[pid]
                     if qs and qs.x >= 0 and qs.y >= 0 then
                         unit.queued_target = {qs.x, qs.y}
                     elseif unit.has_queued_attack then
-                        -- Fallback: some pawn types (HornetBoss, Firefly1, ...)
-                        -- don't populate piQueuedShot in the save file even
-                        -- when an attack is queued. Ask the pawn directly so
-                        -- the solver doesn't silently skip their attacks.
+                        local resolved_via = nil
+                        -- (1) Save-file piTarget (works for Leapers, Scorpions,
+                        --     any melee/jumper pawn with AddQueuedMelee).
+                        local qt = save_data.queued_targets[pid]
+                        local qskill = save_data.queued_skills[pid]
+                        if qt and qskill and qskill >= 0
+                                and qt.x >= 0 and qt.y >= 0
+                                and qt.x <= 7 and qt.y <= 7 then
+                            unit.queued_target = {qt.x, qt.y}
+                            resolved_via = "save_piTarget"
+                        end
+                        -- (2) Live Lua API: GetQueuedShot() — works for
+                        --     HornetBoss and similar shots that don't land
+                        --     in piQueuedShot. Try even if (1) succeeded so
+                        --     we can log a mismatch for calibration.
                         local ok_gqs, gqs = pcall(function() return p:GetQueuedShot() end)
+                        local gqs_desc = "nil"
                         if ok_gqs and gqs and (type(gqs) == "userdata" or type(gqs) == "table") then
                             local gx, gy = gqs.x, gqs.y
-                            if type(gx) == "number" and type(gy) == "number"
-                                    and gx >= 0 and gy >= 0 then
-                                unit.queued_target = {gx, gy}
-                                log_bridge(string.format(
-                                    "queued_shot fallback for %s/%d: GetQueuedShot returned (%d,%d)",
-                                    ptype or "?", pid, gx, gy))
+                            if type(gx) == "number" and type(gy) == "number" then
+                                gqs_desc = string.format("(%d,%d)", gx, gy)
+                                if not unit.queued_target
+                                        and gx >= 0 and gy >= 0
+                                        and gx <= 7 and gy <= 7 then
+                                    unit.queued_target = {gx, gy}
+                                    resolved_via = "GetQueuedShot"
+                                end
+                            else
+                                gqs_desc = "non_numeric"
+                            end
+                        elseif not ok_gqs then
+                            gqs_desc = "pcall_err"
+                        end
+                        -- (3) Additional Lua API probes as last resort —
+                        --     these may or may not exist on the C++ Pawn
+                        --     binding; pcall swallows missing-method errors.
+                        --     Logged so the next run tells us which (if any)
+                        --     succeeded for stubborn pawn types.
+                        if not unit.queued_target then
+                            for _, mname in ipairs({
+                                "GetQueuedTarget", "GetTarget",
+                                "GetQueuedMove", "GetQueuedLocation",
+                            }) do
+                                local ok_m, v = pcall(function() return p[mname](p) end)
+                                if ok_m and v and (type(v) == "userdata" or type(v) == "table") then
+                                    local vx, vy = v.x, v.y
+                                    if type(vx) == "number" and type(vy) == "number"
+                                            and vx >= 0 and vy >= 0
+                                            and vx <= 7 and vy <= 7 then
+                                        unit.queued_target = {vx, vy}
+                                        resolved_via = mname
+                                        break
+                                    end
+                                end
                             end
                         end
+                        log_bridge(string.format(
+                            "queued_target fallback for %s/%d: via=%s piTarget=%s iQueuedSkill=%s GetQueuedShot=%s result=%s",
+                            ptype or "?", pid,
+                            resolved_via or "none",
+                            qt and string.format("(%d,%d)", qt.x, qt.y) or "nil",
+                            tostring(qskill),
+                            gqs_desc,
+                            unit.queued_target and string.format("(%d,%d)", unit.queued_target[1], unit.queued_target[2]) or "UNRESOLVED"))
                     end
 
                     -- Weapon properties from game globals
