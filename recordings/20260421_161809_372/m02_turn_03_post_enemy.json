@@ -1,0 +1,115 @@
+{
+  "timestamp": "2026-04-21T16:41:43.921588",
+  "run_id": "20260421_161809_372",
+  "mission_index": 2,
+  "turn": 3,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 7,
+      "grid_power": 3,
+      "enemies_alive": 5,
+      "enemy_hp_total": 10,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 120,
+          "type": "Filler_Pawn",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 7,
+      "grid_power": 3,
+      "enemies_alive": 3,
+      "enemy_hp_total": 7,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 120,
+          "type": "Filler_Pawn",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "mech_hp_diff": [
+        {
+          "uid": 120,
+          "type": "Filler_Pawn",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

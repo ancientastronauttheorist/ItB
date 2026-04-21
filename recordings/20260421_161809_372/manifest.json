@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-6682562",
+  "solver_version": "rust-0.1.0-2ea2a93",
   "weight_version": "v009",
-  "updated": "2026-04-21T16:37:37.897826",
+  "updated": "2026-04-21T16:43:47.210296",
   "created": "2026-04-21T16:18:09.401744",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 1,
-  "outcome_recorded_at": "2026-04-21T16:37:37.878923",
-  "outcome_notes": "Countdown Ridge: Defend Train damaged (\u2605/\u2605\u2605 \u2014 1 of 2). Rep 1\u21922. Ralph 23/25, Pinnacle 9/25, Third 3/25. Grid held. Auto_turn silenced-warning patch working \u2014 no output overflow."
+  "outcome_mission": 2,
+  "outcome_recorded_at": "2026-04-21T16:43:47.197055",
+  "outcome_notes": "Thunderbolt Grid: Earth Mover \u2713, Batteries \u26a1 \u2713, Spawn-block x3 \u2717. Rep 2\u21923. Pinnacle +7, Third +2. Grid 5\u21924 on finale prep. No solver crashes; phantom-attack guard silenced properly."
 }
