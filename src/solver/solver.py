@@ -9,6 +9,7 @@ This module provides:
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from src.model.board import Board, Unit
 from src.model.weapons import get_weapon_def
@@ -287,6 +288,33 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
         if enemy.type.startswith("WebbEgg"):
             continue
         if enemy.queued_target_x < 0:
+            # PHANTOM-ATTACK GUARD: Vek reports has_queued_attack=true
+            # but Lua bridge failed to populate a target. Don't silently
+            # skip — apply conservative damage to the nearest building so
+            # the scorer penalizes plans that ignore this Vek.
+            # See CLAUDE.md §21 grid-drop investigation gate.
+            if getattr(enemy, "has_queued_attack", False):
+                dmg = enemy.weapon_damage if enemy.weapon_damage > 0 else 1
+                print(
+                    f"WARN: Vek {enemy.uid} ({enemy.type}) "
+                    f"has_queued_attack=true but no target — "
+                    f"applying conservative damage",
+                    file=sys.stderr,
+                )
+                # Nearest building (Chebyshev distance).
+                best = None
+                best_d = 999
+                for bx in range(8):
+                    for by in range(8):
+                        tile = board.tile(bx, by)
+                        if tile.terrain == "building" and tile.building_hp > 0:
+                            d = max(abs(bx - enemy.x), abs(by - enemy.y))
+                            if d < best_d:
+                                best_d = d
+                                best = (bx, by)
+                if best is not None:
+                    grid_lost = _apply_enemy_hit(board, best[0], best[1], dmg)
+                    buildings_destroyed += grid_lost
             continue
 
         # Smoke cancels attacks: enemy on a smoke tile cannot attack

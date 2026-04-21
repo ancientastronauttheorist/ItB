@@ -235,7 +235,54 @@ pub fn simulate_enemy_attacks(
         // their turn. Their queued_target is their own tile; without this
         // skip the egg would be processed as a self-hit melee attack.
         if enemy.type_name_str().starts_with("WebbEgg") { continue; }
-        if enemy.queued_target_x < 0 { continue; }
+        if enemy.queued_target_x < 0 {
+            // PHANTOM-ATTACK GUARD: Vek reports has_queued_attack=true
+            // but the Lua bridge failed to populate a target. Don't
+            // silently skip — apply conservative damage to the nearest
+            // building so the scorer still penalizes plans that ignore
+            // this Vek. See CLAUDE.md §21 grid-drop investigation gate.
+            if enemy.has_queued_attack() {
+                let ex = enemy.x;
+                let ey = enemy.y;
+                let dmg = if enemy.weapon_damage > 0 { enemy.weapon_damage as i8 } else { 1 };
+                let uid = enemy.uid;
+                let type_str = enemy.type_name_str().to_string();
+                // Scan for nearest building (Chebyshev distance).
+                let mut best: Option<(u8, u8, u32)> = None;
+                for bx in 0u8..8 {
+                    for by in 0u8..8 {
+                        let tile = board.tile(bx, by);
+                        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+                            let dx = (bx as i32 - ex as i32).abs() as u32;
+                            let dy = (by as i32 - ey as i32).abs() as u32;
+                            let d = dx.max(dy);
+                            if best.map_or(true, |(_, _, bd)| d < bd) {
+                                best = Some((bx, by, d));
+                            }
+                        }
+                    }
+                }
+                eprintln!(
+                    "WARN: Vek {} ({}) has_queued_attack=true but no target — applying conservative damage",
+                    uid, type_str);
+                if let Some((bx, by, _)) = best {
+                    let tile = board.tile_mut(bx, by);
+                    let old_hp = tile.building_hp;
+                    let applied = (dmg as u8).min(old_hp);
+                    tile.building_hp = old_hp - applied;
+                    let lost = old_hp - tile.building_hp;
+                    result.buildings_damaged += lost as i32;
+                    result.grid_damage += lost as i32;
+                    if tile.building_hp == 0 {
+                        tile.terrain = Terrain::Rubble;
+                        result.buildings_lost += 1;
+                    }
+                    board.grid_power = board.grid_power.saturating_sub(lost);
+                    buildings_destroyed += lost as i32;
+                }
+            }
+            continue;
+        }
 
         // Smoke cancels attacks
         // (Eggs have Smoke Immunity, but they're skipped above anyway.)

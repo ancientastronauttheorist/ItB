@@ -128,6 +128,11 @@ class Unit:
     weapon_damage: int = 0
     weapon_target_behind: bool = False
     weapon_push: int = 0
+    # True when Lua bridge reports GetSelectedWeapon() > 0 for this Vek.
+    # Combined with queued_target_x < 0 it marks the phantom-attack state
+    # that the enemy-phase simulator treats with a conservative fallback
+    # instead of silently skipping. Default False for legacy callers.
+    has_queued_attack: bool = False
     # Multi-tile pawn duplicate (bridge emits one entry per ExtraSpace tile
     # for Dam_Pawn). All entries share `uid`; damage to any entry mirrors
     # HP to the rest via apply_damage.
@@ -432,6 +437,7 @@ class Board:
                 weapon_damage=min(ud.get("weapon_damage", 0), 255),
                 weapon_target_behind=ud.get("weapon_target_behind", False),
                 weapon_push=ud.get("weapon_push", 0),
+                has_queued_attack=bool(ud.get("has_queued_attack", False)),
                 is_extra_tile=ud.get("is_extra_tile", False),
                 pilot_id=ud.get("pilot_id", ""),
                 pilot_value=_compute_pilot_value(

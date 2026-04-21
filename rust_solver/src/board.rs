@@ -80,6 +80,11 @@ bitflags! {
         /// (Dam_Pawn occupies H3+H4 as one Lua Pawn). Damage is mirrored
         /// across all entries sharing the same uid.
         const EXTRA_TILE = 0b0010_0000_0000_0000;
+        /// Vek has a queued attack this turn (Lua bridge set
+        /// has_queued_attack=true). When this is set but queued_target_x
+        /// is -1, the simulator applies conservative phantom damage
+        /// instead of silently skipping the attack.
+        const HAS_QUEUED_ATTACK = 0b0100_0000_0000_0000;
     }
 }
 
@@ -156,6 +161,7 @@ impl Unit {
     pub fn ranged(&self) -> bool { self.flags.contains(UnitFlags::RANGED) }
     pub fn can_move(&self) -> bool { self.flags.contains(UnitFlags::CAN_MOVE) }
     pub fn is_extra_tile(&self) -> bool { self.flags.contains(UnitFlags::EXTRA_TILE) }
+    pub fn has_queued_attack(&self) -> bool { self.flags.contains(UnitFlags::HAS_QUEUED_ATTACK) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
