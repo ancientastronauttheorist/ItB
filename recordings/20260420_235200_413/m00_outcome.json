@@ -1,7 +1,7 @@
 {
   "mission_index": 0,
   "mission_name": "",
-  "result": "win",
-  "notes": "The Wasteland \u2014 both bonuses cleared. Grid 1/7\u21922/7. Time Pod recovered (Reactor Core). Civilians +1500.",
-  "recorded_at": "2026-04-21T00:27:20.287961"
+  "result": "loss",
+  "notes": "Reprocessing \u2014 grid hit 0 turn 2 enemy phase. RUN END. 0 islands secured.",
+  "recorded_at": "2026-04-21T00:43:39.137666"
 }

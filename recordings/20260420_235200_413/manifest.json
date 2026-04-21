@@ -4,13 +4,13 @@
   "difficulty": 3,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-333f75c",
+  "solver_version": "rust-0.1.0-93ec576",
   "weight_version": "v009",
-  "updated": "2026-04-21T00:27:20.302411",
+  "updated": "2026-04-21T00:43:39.152961",
   "created": "2026-04-20T23:52:00.428092",
   "missions": [],
-  "outcome": "win",
+  "outcome": "loss",
   "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-21T00:27:20.288624",
-  "outcome_notes": "The Wasteland \u2014 both bonuses cleared. Grid 1/7\u21922/7. Time Pod recovered (Reactor Core). Civilians +1500."
+  "outcome_recorded_at": "2026-04-21T00:43:39.138409",
+  "outcome_notes": "Reprocessing \u2014 grid hit 0 turn 2 enemy phase. RUN END. 0 islands secured."
 }

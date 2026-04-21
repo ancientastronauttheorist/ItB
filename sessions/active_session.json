@@ -7,56 +7,9 @@
   "current_mission": "",
   "islands_completed": [],
   "mission_index": 0,
-  "current_turn": 4,
+  "current_turn": 2,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "JudoMech",
-        "move_to": [
-          3,
-          3
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "JudoMech, move F2\u2192E5"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "ArtiMech",
-        "move_to": [
-          1,
-          5
-        ],
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          7,
-          5
-        ],
-        "description": "ArtiMech, fire Artemis Artillery at C1"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "ScienceMech",
-        "move_to": [
-          3,
-          4
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "ScienceMech, move F4\u2192D5"
-      }
-    ],
-    "score": 103735.71428571429,
-    "turn": 4
-  },
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -138,6 +91,61 @@
         "JudoMech, move F2\u2192E5",
         "ArtiMech, fire Artemis Artillery at C1",
         "ScienceMech, move F4\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T00:29:41.815647",
+      "turn": 1,
+      "label": "solve",
+      "score": 122200.0,
+      "actions": [
+        "ArtiMech, fire Artemis Artillery at H5",
+        "JudoMech, move E5\u2192E3, fire Vice Fist at F3",
+        "ScienceMech, move G5\u2192E6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T00:30:30.731607",
+      "turn": 2,
+      "label": "solve",
+      "score": 122656.6666666666,
+      "actions": [
+        "JudoMech, move E3\u2192G5, fire Vice Fist at G4",
+        "ArtiMech, move D5\u2192E4, fire Artemis Artillery at B4",
+        "ScienceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T00:31:29.613988",
+      "turn": 3,
+      "label": "solve",
+      "score": 108880.0,
+      "actions": [
+        "ArtiMech, move E4\u2192D5, fire Artemis Artillery at D2",
+        "ScienceMech, move E6\u2192E4, fire Attract Shot at C4",
+        "JudoMech, move G5\u2192E6, fire Vice Fist at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T00:32:48.200149",
+      "turn": 4,
+      "label": "solve",
+      "score": 95414.28571428571,
+      "actions": [
+        "ScienceMech, move E5\u2192C7, fire Attract Shot at C5",
+        "JudoMech, move E6\u2192E5, fire Vice Fist at D5",
+        "ArtiMech, move F5\u2192G4, fire Artemis Artillery at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T00:41:05.703685",
+      "turn": 1,
+      "label": "solve",
+      "score": 118185.71428571429,
+      "actions": [
+        "ArtiMech, move B5\u2192D6, fire Artemis Artillery at D4",
+        "JudoMech, move E7\u2192E4, fire Vice Fist at F4",
+        "ScienceMech, move F5\u2192E5"
       ]
     }
   ],
@@ -271,6 +279,116 @@
           2
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Shield|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Science_Shield",
+        "target": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "status|Prime_Shift|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Prime_Shift",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "status|Unknown|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
     }
   ],
   "disabled_actions": [
@@ -278,6 +396,12 @@
       "weapon_id": "Science_Pullmech",
       "cause_pattern": "death|Science_Pullmech|attack",
       "expires_turn": 7,
+      "strategic_override": false
+    },
+    {
+      "weapon_id": "Science_Shield",
+      "cause_pattern": "status|Science_Shield|attack",
+      "expires_turn": 6,
       "strategic_override": false
     }
   ],
@@ -432,6 +556,44 @@
         }
       },
       "research_id": "f23824253e67",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "AcidVat",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Acid Vat",
+            "hp": 0,
+            "move": 0,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Acid Vat",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Acid+Vat",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Acid+Vat&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "558c3a8c3cca",
       "last_kind": "enemy"
     }
   ]
