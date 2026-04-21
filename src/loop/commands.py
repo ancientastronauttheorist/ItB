@@ -2007,6 +2007,115 @@ def cmd_research_probe_mech(
     return result
 
 
+def cmd_research_attach_community(
+    research_id: str,
+    notes_json: str | dict,
+    profile: str = "Alpha",
+) -> dict:
+    """Attach harness-supplied community notes to a research record.
+
+    Missing wire #4 — Steam forum + Reddit fetch. Called after the
+    harness WebFetches the URLs emitted by ``cmd_research_submit``'s
+    ``community_queries`` field. See CLAUDE.md rule 20.
+
+    Args:
+        research_id: ID returned by a prior ``research_next`` /
+            ``research_probe_mech`` + ``research_submit`` cycle.
+        notes_json: Either a dict or a JSON string with shape
+            ``{source: {url, excerpt, confidence}}``. Normalized by
+            ``community_fetch.normalize_notes``; sub-threshold entries
+            are dropped before persistence.
+
+    Persists normalized notes to ``data/wiki_raw/<encoded_name>.json``
+    under a ``community_notes`` field, merging with any existing content
+    (wiki fetch output is preserved). Returns a confidence-band
+    classification per ``community_fetch.classify_confidence``.
+    """
+    from src.research import community_fetch, wiki_client
+
+    session = _load_session()
+
+    # Resolve the entry by research_id.
+    entry = None
+    for e in session.research_queue:
+        if e.get("research_id") == research_id:
+            entry = e
+            break
+    if entry is None:
+        result = {"error": f"unknown research_id: {research_id}"}
+        _print_result(result)
+        return result
+
+    # Prefer the target_name we stashed on submit; fall back to entry type.
+    stored = entry.get("result") or {}
+    cq = stored.get("community_queries") or {}
+    target_name = ""
+    if isinstance(cq, dict):
+        target_name = str(cq.get("target_name", "") or "")
+    if not target_name:
+        target_name = str(entry.get("type", "") or "")
+    if not target_name:
+        result = {"error": "no target name available to key community_notes"}
+        _print_result(result)
+        return result
+
+    # Parse input.
+    if isinstance(notes_json, str):
+        try:
+            raw = json.loads(notes_json)
+        except json.JSONDecodeError as exc:
+            result = {"error": f"invalid JSON for notes: {exc}"}
+            _print_result(result)
+            return result
+    else:
+        raw = notes_json
+
+    normalized = community_fetch.normalize_notes(raw)
+    kept = community_fetch.drop_low_confidence(normalized)
+
+    # Merge into data/wiki_raw/<encoded_name>.json. Create if missing.
+    cache_path = wiki_client._cache_path(target_name)
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    existing: dict = {}
+    if cache_path.exists():
+        try:
+            with open(cache_path) as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict):
+                existing = loaded
+        except (json.JSONDecodeError, OSError):
+            existing = {}
+    existing["community_notes"] = kept
+    with open(cache_path, "w") as f:
+        json.dump(existing, f, indent=2)
+
+    # Confidence band. tooltip_ok = any Vision parse cleared 0.5;
+    # wiki_ok = submit produced a wiki_fallback payload.
+    parsed = stored.get("parsed") or {}
+    tooltip_ok = False
+    for p in parsed.values():
+        if isinstance(p, dict) and float(p.get("confidence", 0.0)) > 0.5:
+            tooltip_ok = True
+            break
+    wiki_ok = bool(stored.get("wiki_fallback"))
+    band = community_fetch.classify_confidence(tooltip_ok, wiki_ok, len(kept))
+
+    result = {
+        "research_id": research_id,
+        "target_name": target_name,
+        "attached_count": len(kept),
+        "dropped_count": len(normalized) - len(kept),
+        "wiki_raw_path": str(cache_path),
+        "confidence_band": band,
+    }
+    print(f"\n=== RESEARCH_ATTACH_COMMUNITY (research_id={research_id}) ===")
+    print(f"  target: {target_name}")
+    print(f"  attached: {len(kept)}  dropped: {len(normalized) - len(kept)}")
+    print(f"  confidence_band: {band}")
+    _print_result(result)
+    return result
+
+
 def _regression_board_for_weapon(weapon_id: str) -> Path | None:
     """Return the first tests/weapon_overrides/<weapon_id>_*.json board
     file, or None when no board has been authored. Module-level so tests

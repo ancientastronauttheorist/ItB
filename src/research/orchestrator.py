@@ -33,7 +33,7 @@ from typing import Any
 from src.control.executor import grid_to_mcp
 from src.loop.session import RunSession
 from src.model.board import Board
-from src.research import capture, comparator, vision, wiki_client
+from src.research import capture, community_fetch, comparator, vision, wiki_client
 
 
 # ── gate predicate ────────────────────────────────────────────────────────
@@ -132,6 +132,29 @@ def _find_unit_for_entry(board: Board, entry: dict) -> Any | None:
     return None
 
 
+def _find_terrain_tile(board: Board, terrain_id: str) -> tuple[int, int] | None:
+    """Return the first (x, y) bridge coord whose tile matches ``terrain_id``.
+
+    Terrain-only research entries (``type=""``, ``terrain_id="quicksand"``)
+    target a tile rather than a unit. The first matching tile wins —
+    multiple tiles of the same novel terrain share a tooltip, so picking
+    any one is sufficient.
+    """
+    if not terrain_id:
+        return None
+    tiles = getattr(board, "tiles", None)
+    if tiles is None:
+        return None
+    for x in range(8):
+        for y in range(8):
+            try:
+                if tiles[x][y].terrain == terrain_id:
+                    return (x, y)
+            except (IndexError, KeyError, TypeError):
+                continue
+    return None
+
+
 def _crops_for_kind(kind: str) -> tuple[str, ...]:
     """Return the default crop set per target kind.
 
@@ -165,40 +188,84 @@ def begin_research(
     if ui is None:
         ui = capture.resolve_ui_regions(capture.load_ui_regions())
 
-    # Pick the first pending entry whose target is on board.
+    # Pick the first pending entry whose target is resolvable on the
+    # current board. Unit entries need a live matching unit; terrain-
+    # only entries (type="", terrain_id=X) need a tile with that terrain.
     chosen_entry = None
     chosen_unit = None
+    chosen_tile: tuple[int, int] | None = None
     for entry in session.research_queue:
         if entry.get("status") != "pending":
             continue
-        unit = _find_unit_for_entry(board, entry)
-        if unit is not None:
-            chosen_entry = entry
-            chosen_unit = unit
-            break
-        # Target not on board — defer but count the attempt.
+        type_name = entry.get("type", "")
+        terrain_id = entry.get("terrain_id")
+
+        if type_name:
+            unit = _find_unit_for_entry(board, entry)
+            if unit is not None:
+                chosen_entry = entry
+                chosen_unit = unit
+                break
+            entry["attempts"] = entry.get("attempts", 0) + 1
+            continue
+
+        if terrain_id:
+            tile = _find_terrain_tile(board, terrain_id)
+            if tile is not None:
+                chosen_entry = entry
+                chosen_tile = tile
+                break
+            entry["attempts"] = entry.get("attempts", 0) + 1
+            continue
+
+        # Malformed entry (no type, no terrain) — defer silently.
         entry["attempts"] = entry.get("attempts", 0) + 1
 
-    if chosen_entry is None or chosen_unit is None:
+    if chosen_entry is None:
         return None
 
-    target_mcp = grid_to_mcp(chosen_unit.x, chosen_unit.y)
-    kind = "mech" if chosen_unit.is_mech else "enemy"
-    crops = _crops_for_kind(kind)
-    plan = capture.build_unit_capture_plan(target_mcp=target_mcp, ui=ui, crops=crops)
+    # Branch on unit vs terrain target.
+    if chosen_unit is not None:
+        target_mcp = grid_to_mcp(chosen_unit.x, chosen_unit.y)
+        kind = "mech" if chosen_unit.is_mech else "enemy"
+        crops = _crops_for_kind(kind)
+        plan = capture.build_unit_capture_plan(
+            target_mcp=target_mcp, ui=ui, crops=crops,
+        )
+        prompts = {
+            name: vision.PROMPTS[name]
+            for name in crops if name in vision.PROMPTS
+        }
+        position_bridge = [chosen_unit.x, chosen_unit.y]
+        next_step = (
+            "dispatch plan.batch via computer_batch, zoom each "
+            "plan.crops[i].region, apply prompts[crop_name] to produce "
+            "JSON per crop, then call cmd_research_submit with the "
+            "research_id and {crop_name: json_string} dict"
+        )
+    else:
+        assert chosen_tile is not None  # picker invariant
+        bx, by = chosen_tile
+        target_mcp = grid_to_mcp(bx, by)
+        kind = "terrain"
+        plan = capture.build_terrain_hover_plan(tile_mcp=target_mcp, ui=ui)
+        prompts = {"terrain_tooltip": vision.PROMPTS["terrain_tooltip"]}
+        position_bridge = [bx, by]
+        next_step = (
+            "dispatch plan.batch via computer_batch, zoom "
+            "plan.crops[0].region (terrain_tooltip), apply "
+            "prompts.terrain_tooltip to produce JSON, then call "
+            "cmd_research_submit with the research_id and "
+            '{"terrain_tooltip": json_string}'
+        )
 
     research_id = uuid.uuid4().hex[:12]
     # Stash the key fields on the entry so submit_research can look it up
-    # without re-doing the search. Dedup key stays (type, terrain_id).
+    # without re-doing the search. Dedup key stays (type, terrain_id, kind, slot).
     chosen_entry["status"] = "in_progress"
     chosen_entry["attempts"] = chosen_entry.get("attempts", 0) + 1
     chosen_entry["research_id"] = research_id
     chosen_entry["last_kind"] = kind
-
-    # Prompt templates travel with the plan so the harness knows what
-    # to ask Vision per crop. Keeping them inline removes a round-trip
-    # back to Python just to fetch prompts.
-    prompts = {name: vision.PROMPTS[name] for name in crops if name in vision.PROMPTS}
 
     return {
         "research_id": research_id,
@@ -206,17 +273,12 @@ def begin_research(
             "type": chosen_entry.get("type"),
             "terrain_id": chosen_entry.get("terrain_id"),
             "kind": kind,
-            "position_bridge": [chosen_unit.x, chosen_unit.y],
+            "position_bridge": position_bridge,
             "target_mcp": list(target_mcp),
         },
         "plan": plan,
         "prompts": prompts,
-        "next_step": (
-            "dispatch plan.batch via computer_batch, zoom each "
-            "plan.crops[i].region, apply prompts[crop_name] to produce "
-            "JSON per crop, then call cmd_research_submit with the "
-            "research_id and {crop_name: json_string} dict"
-        ),
+        "next_step": next_step,
     }
 
 
@@ -482,6 +544,19 @@ def submit_research(
     if staged_candidates:
         result_payload["staged_candidates"] = staged_candidates
 
+    # Missing wire #4: emit community-fetch query URLs so the harness
+    # can WebFetch Steam discussions + r/IntoTheBreach and persist
+    # excerpts via cmd_research_attach_community. Best-effort — only
+    # emit when we have a usable target name.
+    community_title = _pick_wiki_title(entry, parsed)
+    if community_title:
+        queries = community_fetch.build_queries(community_title)
+        if queries:
+            result_payload["community_queries"] = {
+                "target_name": community_title,
+                "queries": queries,
+            }
+
     session.mark_research(
         entry.get("type", ""),
         entry.get("terrain_id"),
@@ -502,4 +577,5 @@ def submit_research(
         "mismatches": mismatches,
         "wiki_fallback": wiki_payload,
         "staged_candidates": staged_candidates,
+        "community_queries": result_payload.get("community_queries"),
     }

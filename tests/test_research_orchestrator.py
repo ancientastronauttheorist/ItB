@@ -548,3 +548,97 @@ def test_queue_drains_on_clean_end_to_end_run(monkeypatch):
 
     # Both entries status == done.
     assert all(e["status"] == "done" for e in s.research_queue)
+
+
+# ── terrain path (Missing wire #3) ───────────────────────────────────────────
+
+
+def _fake_board_with_tiles(units=None, terrain_at: dict | None = None):
+    """Board stub with both ``.units`` and an 8×8 ``.tiles`` grid.
+
+    ``terrain_at`` maps ``(x, y)`` → terrain id; everything else defaults
+    to ``ground``.
+    """
+    units = units or []
+    tiles = [
+        [SimpleNamespace(terrain="ground") for _ in range(8)]
+        for _ in range(8)
+    ]
+    for (x, y), terrain in (terrain_at or {}).items():
+        tiles[x][y].terrain = terrain
+    return SimpleNamespace(units=units, tiles=tiles)
+
+
+def test_begin_research_picks_terrain_entry_and_builds_hover_plan(monkeypatch):
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (500, 400))
+    s = RunSession()
+    s.enqueue_research("", "quicksand", current_turn=1)
+    board = _fake_board_with_tiles(terrain_at={(3, 4): "quicksand"})
+
+    out = orchestrator.begin_research(s, board, ui=_ui_regions())
+    assert out is not None
+    assert out["target"]["kind"] == "terrain"
+    assert out["target"]["terrain_id"] == "quicksand"
+    assert out["target"]["position_bridge"] == [3, 4]
+    assert out["target"]["target_mcp"] == [500, 400]
+    # Hover plan — no click, just mouse_move + wait + screenshot.
+    actions = [a["action"] for a in out["plan"]["batch"]]
+    assert actions == ["mouse_move", "wait", "screenshot"]
+    # One crop, the terrain tooltip region.
+    crops = out["plan"]["crops"]
+    assert len(crops) == 1
+    assert crops[0]["name"] == "terrain_tooltip"
+    # Prompts shipped so the harness knows what to ask Vision.
+    assert "terrain_tooltip" in out["prompts"]
+    # Entry transitioned to in_progress.
+    entry = s.research_queue[0]
+    assert entry["status"] == "in_progress"
+    assert entry["last_kind"] == "terrain"
+
+
+def test_begin_research_skips_terrain_when_not_on_board(monkeypatch):
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (0, 0))
+    s = RunSession()
+    s.enqueue_research("", "quicksand", current_turn=1)
+    board = _fake_board_with_tiles()  # all ground, no quicksand
+
+    out = orchestrator.begin_research(s, board, ui=_ui_regions())
+    assert out is None
+    # Entry left pending with attempts bumped.
+    entry = s.research_queue[0]
+    assert entry["status"] == "pending"
+    assert entry["attempts"] == 1
+
+
+def test_begin_research_prefers_unit_over_terrain_when_both_pending(monkeypatch):
+    # FIFO: whichever entry is first in the queue wins. Unit first → unit plan.
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (100, 100))
+    s = RunSession()
+    s.enqueue_research("FireflyBoss", None, current_turn=1)
+    s.enqueue_research("", "quicksand", current_turn=1)
+    board = _fake_board_with_tiles(
+        units=[_fake_unit("FireflyBoss", 3, 2)],
+        terrain_at={(5, 5): "quicksand"},
+    )
+
+    out = orchestrator.begin_research(s, board, ui=_ui_regions())
+    assert out is not None
+    assert out["target"]["kind"] == "enemy"
+    assert out["target"]["type"] == "FireflyBoss"
+
+
+def test_begin_research_falls_through_to_terrain_when_unit_absent(monkeypatch):
+    # Unit entry is pending but no matching unit; orchestrator should
+    # bump its attempts and fall through to the terrain entry.
+    monkeypatch.setattr(orchestrator, "grid_to_mcp", lambda x, y: (200, 200))
+    s = RunSession()
+    s.enqueue_research("FireflyBoss", None, current_turn=1)  # not on board
+    s.enqueue_research("", "quicksand", current_turn=1)
+    board = _fake_board_with_tiles(terrain_at={(5, 5): "quicksand"})
+
+    out = orchestrator.begin_research(s, board, ui=_ui_regions())
+    assert out is not None
+    assert out["target"]["kind"] == "terrain"
+    # Unit entry deferred, not selected.
+    assert s.research_queue[0]["status"] == "pending"
+    assert s.research_queue[0]["attempts"] == 1

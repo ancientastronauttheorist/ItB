@@ -41,6 +41,7 @@ from src.loop.commands import (
     cmd_verify_action,
     cmd_click_action,
     cmd_click_end_turn,
+    cmd_research_attach_community,
     cmd_research_next,
     cmd_research_probe_mech,
     cmd_research_submit,
@@ -132,6 +133,22 @@ def main():
         action="store_true",
         help="Disable wiki fallback on low-confidence parses (offline mode)",
     )
+
+    # research_attach_community
+    p_research_attach = sub.add_parser(
+        "research_attach_community",
+        help="Attach harness-supplied Steam forum + Reddit notes to a research record",
+    )
+    p_research_attach.add_argument(
+        "research_id",
+        help="ID returned by research_next / research_submit",
+    )
+    p_research_attach.add_argument(
+        "notes_json",
+        help="JSON dict keyed by source (steam_forum/reddit) with "
+             "{url, excerpt, confidence} values. See community_fetch.normalize_notes.",
+    )
+    p_research_attach.add_argument("--profile", default="Alpha")
 
     # research_probe_mech
     p_research_probe_mech = sub.add_parser(
@@ -377,6 +394,10 @@ def main():
                             wiki_fallback=not args.no_wiki)
     elif args.command == "research_probe_mech":
         cmd_research_probe_mech(args.tile, args.slot, profile=args.profile)
+    elif args.command == "research_attach_community":
+        cmd_research_attach_community(
+            args.research_id, args.notes_json, profile=args.profile,
+        )
     elif args.command == "review_overrides":
         cmd_review_overrides(args.sub_action, args.index, force=args.force)
     elif args.command == "mine_overrides":
