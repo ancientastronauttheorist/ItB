@@ -464,6 +464,22 @@ local function dump_state()
                     local qs = queued_shots[pid]
                     if qs and qs.x >= 0 and qs.y >= 0 then
                         unit.queued_target = {qs.x, qs.y}
+                    elseif unit.has_queued_attack then
+                        -- Fallback: some pawn types (HornetBoss, Firefly1, ...)
+                        -- don't populate piQueuedShot in the save file even
+                        -- when an attack is queued. Ask the pawn directly so
+                        -- the solver doesn't silently skip their attacks.
+                        local ok_gqs, gqs = pcall(function() return p:GetQueuedShot() end)
+                        if ok_gqs and gqs and (type(gqs) == "userdata" or type(gqs) == "table") then
+                            local gx, gy = gqs.x, gqs.y
+                            if type(gx) == "number" and type(gy) == "number"
+                                    and gx >= 0 and gy >= 0 then
+                                unit.queued_target = {gx, gy}
+                                log_bridge(string.format(
+                                    "queued_shot fallback for %s/%d: GetQueuedShot returned (%d,%d)",
+                                    ptype or "?", pid, gx, gy))
+                            end
+                        end
                     end
 
                     -- Weapon properties from game globals
