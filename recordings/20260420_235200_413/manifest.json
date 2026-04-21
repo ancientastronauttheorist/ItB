@@ -4,13 +4,13 @@
   "difficulty": 3,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-0f729c8",
+  "solver_version": "rust-0.1.0-333f75c",
   "weight_version": "v009",
-  "updated": "2026-04-21T00:14:46.889817",
+  "updated": "2026-04-21T00:27:20.302411",
   "created": "2026-04-20T23:52:00.428092",
   "missions": [],
   "outcome": "win",
   "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-21T00:14:46.877892",
-  "outcome_notes": "Mission 0 won \u2014 turn 4. Grid drained to 1/7. Bridge went stale during transition."
+  "outcome_recorded_at": "2026-04-21T00:27:20.288624",
+  "outcome_notes": "The Wasteland \u2014 both bonuses cleared. Grid 1/7\u21922/7. Time Pod recovered (Reactor Core). Civilians +1500."
 }
