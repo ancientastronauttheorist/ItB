@@ -576,6 +576,9 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 turn_for_queue = bridge_data.get("turn", 0)
                 if unknowns["types"] or unknowns["terrain_ids"]:
                     result["unknowns"] = unknowns
+                    # Protocol gate flag — see CLAUDE.md rule 20. The
+                    # harness must run research_next before solving.
+                    result["requires_research"] = True
                     # Phase 2 #P2-2: enqueue each novel type / terrain for
                     # the between-turn research processor. Dedup is per
                     # (type, terrain_id), so re-seeing a pawn across turns
@@ -591,6 +594,14 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     if enqueued:
                         result["research_enqueued"] = enqueued
                         session.save()
+                    print("\n" + "!" * 60)
+                    print("! RESEARCH GATE — novelty on the board.")
+                    if unknowns["types"]:
+                        print(f"!   Unknown types:   {', '.join(unknowns['types'])}")
+                    if unknowns["terrain_ids"]:
+                        print(f"!   Unknown terrain: {', '.join(unknowns['terrain_ids'])}")
+                    print("!   Next: game_loop.py research_next  (CLAUDE.md rule 20)")
+                    print("!" * 60)
 
                 # Phase 2 #P2-8 follow-up: auto-enqueue mech-weapon probes.
                 # Mechs aren't "unknowns" but their weapons are the
@@ -893,6 +904,18 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         result = {"error": "No active mechs — all have acted this turn"}
         _print_result(result)
         return result
+
+    # Research gate — refuse to solve when novelty is on the board.
+    # Solving past an unknown produces confidently-wrong plays. The
+    # harness must run cmd_research_next → dispatch the capture plan →
+    # cmd_research_submit before calling solve again. See CLAUDE.md
+    # rule 20 and docs/self_healing_loop_design.md.
+    from src.solver.unknown_detector import detect_unknowns
+    from src.solver.research_gate import research_gate_envelope
+    gate = research_gate_envelope(detect_unknowns(board))
+    if gate is not None:
+        _print_result(gate)
+        return gate
 
     # Run solver — try Rust (fast) first, fall back to Python
     print(f"\nSolving ({len(active_mechs)} active mechs, {time_limit}s limit)...")
@@ -3226,6 +3249,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         result = {"error": f"Not in combat_player phase: {phase}", "phase": phase}
         _print_result(result)
         return result
+
+    # Research gate — pick up the flag cmd_read already set when
+    # unknown_detector flagged novelty. The harness must resolve it
+    # (cmd_research_next → dispatch → cmd_research_submit) before
+    # auto_turn can solve. See CLAUDE.md rule 20.
+    if read_result.get("requires_research"):
+        from src.solver.research_gate import research_gate_envelope
+        gate = research_gate_envelope(read_result.get("unknowns"))
+        if gate is not None:
+            _print_result(gate)
+            return gate
 
     turn = read_result.get("turn", 0)
     print(f"\n{'='*50}")
