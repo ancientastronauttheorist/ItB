@@ -1,0 +1,7 @@
+{
+  "mission_index": 0,
+  "mission_name": "",
+  "result": "win",
+  "notes": "R.S.T. Weather Watch: Both main bonuses \u2014 Defend Solar Farms (\u26a1\u26a1) + Less than 3 Grid Damage (\u2605). Protect Time Pod failed (minor). Ralph 23/25, Pinnacle 5/25, new pilot 1/25. Grid never hit. Patched auto_turn + phantom-attack guard + remaining_spawns penalty all running cleanly. Guard fired for Leaper1 with has_queued_attack=true but no target \u2014 Lua GetQueuedShot fallback didn't recover; will investigate post-run.",
+  "recorded_at": "2026-04-21T16:31:11.542795"
+}

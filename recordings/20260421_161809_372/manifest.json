@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_161809_372",
+  "squad": "Random Balanced (Judo+Charge+Artillery)",
+  "difficulty": 2,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-ebe7e41",
+  "weight_version": "v009",
+  "updated": "2026-04-21T16:31:11.559667",
+  "created": "2026-04-21T16:18:09.401744",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T16:31:11.543431",
+  "outcome_notes": "R.S.T. Weather Watch: Both main bonuses \u2014 Defend Solar Farms (\u26a1\u26a1) + Less than 3 Grid Damage (\u2605). Protect Time Pod failed (minor). Ralph 23/25, Pinnacle 5/25, new pilot 1/25. Grid never hit. Patched auto_turn + phantom-attack guard + remaining_spawns penalty all running cleanly. Guard fired for Leaper1 with has_queued_attack=true but no target \u2014 Lua GetQueuedShot fallback didn't recover; will investigate post-run."
+}
