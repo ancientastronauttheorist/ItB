@@ -117,7 +117,7 @@ def resolve_ui_regions(
         regions[name] = (rx0, ry0, rx1, ry1)
 
     nh = raw["neutral_hover"]["coordinate"]
-    neutral_hover = scale(nh[0], nh[1])
+    neutral_hover = _resolve_neutral_hover(scale(nh[0], nh[1]), cur)
 
     return UiRegions(
         regions=regions,
@@ -125,6 +125,34 @@ def resolve_ui_regions(
         reference_window=ref_win,
         current_window=cur,
     )
+
+
+def _resolve_neutral_hover(
+    scaled: tuple[int, int],
+    cur: WindowInfo,
+) -> tuple[int, int]:
+    """Return a safe neutral_hover MCP coord.
+
+    The calibrated neutral_hover point ``(1100, 100)`` sits 37px ABOVE
+    the reference window's top edge (win.y=137). That's fine when the
+    live window is near the reference origin — y=100 is still on-screen.
+    But when the window moves up (e.g. user repositions it or macOS
+    hides the menu bar), the scaled y can go negative and MCP rejects
+    the batch: ``coordinate must be a tuple of non-negative numbers``.
+
+    Fix: if the scaled point would land off-screen (negative x or y),
+    snap to a genuinely-safe spot just inside the top edge of the
+    current window, horizontally centered. Still away from interactive
+    UI — name tag, weapon rail, and terrain tooltip all live in the
+    lower half — but guaranteed on-screen and still effective at
+    dismissing residual hover state.
+    """
+    nh_x, nh_y = scaled
+    if nh_x < 0 or nh_y < 0:
+        margin = 5
+        nh_x = int(round(cur.x + cur.width / 2))
+        nh_y = max(0, cur.y + margin)
+    return (nh_x, nh_y)
 
 
 # ── plan builders ────────────────────────────────────────────────────────────

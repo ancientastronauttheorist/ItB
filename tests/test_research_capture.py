@@ -63,6 +63,28 @@ def test_resolve_translates_when_window_moves():
     assert ui.neutral_hover == (1100 + 300, 100 + 200)
 
 
+def test_resolve_clamps_neutral_hover_when_window_high():
+    """Regression: window moved up so that scaled neutral_hover y < 0.
+
+    At the reference calibration, neutral_hover is ``(1100, 100)`` which
+    sits 37px above the reference window's top edge (y=137). When the
+    live game window moves up (``cur.y < 105`` with sx=sy=1), that
+    translates to a negative MCP y — which MCP rejects with
+    ``coordinate must be a tuple of non-negative numbers`` and every
+    research attempt fails. resolve_ui_regions must snap the hover to
+    a safe on-screen point inside the current window.
+    """
+    # cur.y=32 → scaled neutral_hover y would be 100 - (137 - 32) = -5.
+    moved_up = WindowInfo(x=200, y=32, width=1280, height=748)
+    ui = capture.resolve_ui_regions(_raw_regions(), current_window=moved_up)
+    assert ui.neutral_hover[0] >= 0
+    assert ui.neutral_hover[1] >= 0
+    # The fallback should land inside the current window (top-center,
+    # just below the top edge).
+    assert moved_up.x <= ui.neutral_hover[0] <= moved_up.x + moved_up.width
+    assert moved_up.y <= ui.neutral_hover[1] <= moved_up.y + moved_up.height
+
+
 def test_resolve_scales_when_window_resizes():
     # Double size, anchored at same origin. Bounds scale proportionally.
     big = WindowInfo(x=200, y=137, width=2560, height=1496)
@@ -162,6 +184,42 @@ def test_weapon_icon_positions_returns_two_slots_at_reference():
     assert len(slots) == 2
     assert slots[0] == (316, 670)
     assert slots[1] == (388, 670)
+
+
+def test_all_plans_emit_non_negative_coordinates_when_window_moved_up():
+    """Regression: MCP rejects any action with a negative coordinate.
+
+    Covers the ``(1115, -5)`` bug: a plan dispatched via
+    ``mcp__computer-use__computer_batch`` must have non-negative
+    coordinates on every ``mouse_move`` / ``left_click`` action, or the
+    whole batch is rejected and research stalls. This asserts the
+    invariant across all four plan builders for a window positioned
+    such that the naive (pre-clamp) neutral_hover would go negative.
+    """
+    moved_up = WindowInfo(x=200, y=32, width=1280, height=748)
+    ui = capture.resolve_ui_regions(_raw_regions(), current_window=moved_up)
+
+    def _has_coord(a: dict) -> bool:
+        return a["action"] in ("mouse_move", "left_click")
+
+    plans = [
+        capture.build_unit_capture_plan(target_mcp=(740, 300), ui=ui),
+        capture.build_weapon_hover_plan(weapon_icon_mcp=(388, 565), ui=ui),
+        capture.build_weapon_probe_plan(
+            target_mcp=(694, 300),
+            weapon_icon_mcp=(388, 565),
+            ui=ui,
+        ),
+        capture.build_terrain_hover_plan(tile_mcp=(694, 300), ui=ui),
+    ]
+    for plan in plans:
+        for action in plan["batch"]:
+            if not _has_coord(action):
+                continue
+            x, y = action["coordinate"]
+            assert x >= 0 and y >= 0, (
+                f"negative coord in {action} for moved-up window"
+            )
 
 
 def test_weapon_icon_positions_translates_with_window_move():
