@@ -44,13 +44,31 @@ def test_extract_behavior_novelty_flags_enemy_survived():
     assert fuzzy_detector.extract_behavior_novelty(diff) == ["Scorpion1"]
 
 
-def test_extract_behavior_novelty_flags_mech_died():
+def test_extract_behavior_novelty_skips_friendly_mech_death():
+    # When our mech dies unexpectedly, the research target is the
+    # attacker, not the mech itself — mech internals come from the
+    # dedicated mech_weapon probe path. This test locks that in so the
+    # queue doesn't get polluted with our own squad mechs every time
+    # one takes lethal damage we didn't predict.
     diff = DiffResult()
     diff.unit_diffs = [{
         "uid": 0, "type": "PunchMech", "field": "alive",
         "predicted": True, "actual": False,
     }]
-    assert fuzzy_detector.extract_behavior_novelty(diff) == ["PunchMech"]
+    assert fuzzy_detector.extract_behavior_novelty(diff) == []
+
+
+def test_extract_behavior_novelty_skips_mech_but_keeps_enemy_on_same_diff():
+    # Mixed desync: our mech died AND an enemy survived. Only the
+    # enemy should be queued for research.
+    diff = DiffResult()
+    diff.unit_diffs = [
+        {"uid": 0, "type": "PunchMech", "field": "alive",
+         "predicted": True, "actual": False},
+        {"uid": 5, "type": "Scorpion1", "field": "alive",
+         "predicted": False, "actual": True},
+    ]
+    assert fuzzy_detector.extract_behavior_novelty(diff) == ["Scorpion1"]
 
 
 def test_extract_behavior_novelty_ignores_non_alive_flips():

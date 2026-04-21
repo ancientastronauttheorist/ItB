@@ -154,13 +154,18 @@ def _propose_response(
 
 
 def extract_behavior_novelty(diff: Any) -> list[str]:
-    """Unit types with any ``alive``-field flip in ``diff``.
+    """Enemy/NPC types with any ``alive``-field flip in ``diff``.
 
     These are the smoking-gun desyncs — something died that we didn't
     predict, or something survived that we expected to kill. The
     matching unit(s) are what the behavior-novelty route enqueues for
-    the research pipeline. Both mechs and enemies are returned; the
-    caller decides whether to filter.
+    the research pipeline.
+
+    Mechs are excluded. When one of our mechs dies unexpectedly, the
+    thing to research is the *attacker* (enemy weapon, terrain, status
+    effect), not the mech itself — mech data comes from the dedicated
+    ``mech_weapon`` probe. The heuristic matches the fuzzy_detector's
+    asymmetry classifier: types containing "Mech" are friendly.
 
     Empty list when the diff has no alive-field flips (pure damage
     miscount, grid_power drift, etc.). Those desyncs aren't
@@ -172,8 +177,11 @@ def extract_behavior_novelty(diff: Any) -> list[str]:
         if ud.get("field") != "alive":
             continue
         t = ud.get("type", "")
-        if t:
-            types.add(t)
+        if not t:
+            continue
+        if "Mech" in t:
+            continue  # friendly mech — research the attacker, not the mech
+        types.add(t)
     return sorted(types)
 
 

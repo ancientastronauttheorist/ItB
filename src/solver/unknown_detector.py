@@ -122,7 +122,15 @@ def detect_unknowns(board: Any, phase: str | None = None) -> dict:
     novel_weapons: set[str] = set()
     for u in getattr(board, "units", []) or []:
         t = getattr(u, "type", None)
-        if t and t not in known["pawn_types"]:
+        is_mech = getattr(u, "is_mech", False)
+        # Friendly mechs are squad-owned — their type names aren't
+        # useful research targets. Mech internals are covered by the
+        # dedicated ``mech_weapon`` probe path in
+        # ``_auto_enqueue_mech_weapons``. Skipping them here avoids
+        # caging every fresh-squad run on turn 1. Weapon novelty on a
+        # mech still fires below — unknown weapon IDs always deserve
+        # investigation, regardless of who's wielding them.
+        if not is_mech and t and t not in known["pawn_types"]:
             novel_types.add(t)
         # Check primary + secondary weapon slots. Passives live in the
         # bridge ``weapons`` list but not on ``.weapon`` / ``.weapon2``,

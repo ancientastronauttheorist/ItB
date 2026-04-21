@@ -271,6 +271,7 @@ def _fake_board(
     terrain_ids: list[str],
     *,
     weapons: list[tuple[str, str]] | None = None,
+    is_mech: list[bool] | None = None,
 ):
     """Minimal board duck-type for detect_unknowns.
 
@@ -280,12 +281,19 @@ def _fake_board(
     ``weapons`` is an optional list of ``(weapon, weapon2)`` tuples, one
     per unit in ``unit_types``. Units without a matching tuple get
     empty strings, which the detector skips.
+
+    ``is_mech`` is an optional parallel list of mech flags. Units
+    without an entry default to False (enemy semantics).
     """
     weapons = weapons or []
+    is_mech = is_mech or []
     units = []
     for i, t in enumerate(unit_types):
         w = weapons[i] if i < len(weapons) else ("", "")
-        units.append(SimpleNamespace(type=t, weapon=w[0], weapon2=w[1]))
+        m = is_mech[i] if i < len(is_mech) else False
+        units.append(SimpleNamespace(
+            type=t, weapon=w[0], weapon2=w[1], is_mech=m,
+        ))
     tiles = [[SimpleNamespace(terrain="ground") for _ in range(8)] for _ in range(8)]
     for i, tid in enumerate(terrain_ids):
         tiles[0][i].terrain = tid
@@ -362,6 +370,50 @@ def test_detect_unknowns_phase_none_yields_empty_screens():
     board = _fake_board([], [])
     r = unknown_detector.detect_unknowns(board)  # phase defaults to None
     assert r["screens"] == []
+
+
+# ── friendly-mech skip (live-run quality fix) ────────────────────────────────
+
+
+def test_detect_unknowns_skips_type_novelty_for_friendly_mechs():
+    # Fresh-squad run: our own mech types don't appear in the registry
+    # yet, but they shouldn't cage the gate. The dedicated mech_weapon
+    # probe path covers them instead.
+    unknown_detector.reset_cache()
+    board = _fake_board(
+        ["BlitzMech_Custom"], [],
+        is_mech=[True],
+    )
+    r = unknown_detector.detect_unknowns(board)
+    assert r["types"] == []  # mech type skipped
+
+
+def test_detect_unknowns_flags_enemy_but_not_mech_on_same_board():
+    # Enemy type novelty still fires even when a mech on the same
+    # board is also "unknown" — we're not just gating all novelty,
+    # we're specifically routing mechs to the weapon probe path.
+    unknown_detector.reset_cache()
+    board = _fake_board(
+        ["BlitzMech_Custom", "Wumpus_Alpha"], [],
+        is_mech=[True, False],
+    )
+    r = unknown_detector.detect_unknowns(board)
+    assert r["types"] == ["Wumpus_Alpha"]
+
+
+def test_detect_unknowns_still_flags_weapons_on_mech():
+    # A novel weapon strapped to our mech still deserves investigation —
+    # the friendly-mech skip is type-only. An unknown weapon ID is an
+    # unknown weapon ID regardless of which team is wielding it.
+    unknown_detector.reset_cache()
+    board = _fake_board(
+        ["BlitzMech_Custom"], [],
+        weapons=[("Experimental_DeathRay", "")],
+        is_mech=[True],
+    )
+    r = unknown_detector.detect_unknowns(board)
+    assert r["types"] == []  # mech type skipped
+    assert "Experimental_DeathRay" in r["weapons"]
 
 
 # ── #P0-3 fuzzy_signal survives the failure_db round-trip ────────────────────
