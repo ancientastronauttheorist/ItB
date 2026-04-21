@@ -3314,6 +3314,113 @@ def _maybe_soft_disable(
         )
 
 
+def _maybe_flag_grid_drop(
+    investigations: list,
+    diff,
+    classification: dict,
+    predicted: dict,
+    actual_board,
+    context: dict,
+    run_id: str,
+    turn: int,
+    failure_db_id: str,
+) -> None:
+    """Snapshot + queue an investigation when grid_power dropped unexpectedly.
+
+    Fired from the per-sub-action desync hook. Caller decides what to do with
+    the queued investigations at end-of-turn (see cmd_auto_turn's INVESTIGATE
+    path). We don't halt execution mid-turn — the rest of the solver plan
+    still runs, the game still reaches "waiting on End Turn click" — but the
+    End Turn click is withheld until the investigation is resolved.
+    """
+    if "grid_power" not in classification.get("categories", ()):
+        return
+
+    # Extract the specific grid-power diff so the agent has a concrete figure.
+    grid_scalar = None
+    for sd in getattr(diff, "scalar_diffs", []) or []:
+        if sd.get("field") == "grid_power":
+            grid_scalar = sd
+            break
+    building_tile_diffs = [
+        td for td in getattr(diff, "tile_diffs", []) or []
+        if td.get("field") == "building_hp"
+    ]
+
+    # Write a minimal snapshot: predicted state + actual state + context.
+    snap_label = f"grid_drop_{run_id}_t{turn:02d}_a{context.get('action_index', '?')}"
+    snap_dir = SNAPSHOT_DIR / snap_label
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with (snap_dir / "predicted.json").open("w") as f:
+            json.dump(predicted, f, indent=2, default=str)
+        with (snap_dir / "actual_board.json").open("w") as f:
+            json.dump(
+                {
+                    "grid_power": actual_board.grid_power,
+                    "grid_power_max": actual_board.grid_power_max,
+                    "units": [
+                        {
+                            "uid": u.uid, "type": u.type,
+                            "x": u.x, "y": u.y,
+                            "hp": u.hp, "max_hp": u.max_hp,
+                            "team": u.team, "is_mech": u.is_mech,
+                        }
+                        for u in actual_board.units
+                    ],
+                    "tiles": [
+                        [
+                            {
+                                "terrain": t.terrain,
+                                "building_hp": getattr(t, "building_hp", 0),
+                            }
+                            for t in row
+                        ]
+                        for row in actual_board.tiles
+                    ],
+                },
+                f, indent=2, default=str,
+            )
+        with (snap_dir / "context.json").open("w") as f:
+            json.dump({
+                "run_id": run_id,
+                "turn": turn,
+                "sub_action": context.get("sub_action"),
+                "action_index": context.get("action_index"),
+                "mech_uid": context.get("mech_uid"),
+                "weapon": context.get("weapon"),
+                "target": context.get("target"),
+                "grid_power_diff": grid_scalar,
+                "building_hp_diffs": building_tile_diffs,
+                "failure_db_id": failure_db_id,
+                "classification": classification,
+            }, f, indent=2, default=str)
+    except OSError as e:
+        print(f"  [grid-drop] snapshot write failed: {e}")
+
+    reason_parts: list[str] = []
+    if grid_scalar:
+        reason_parts.append(
+            f"grid predicted {grid_scalar.get('predicted')}, actual "
+            f"{grid_scalar.get('actual')} "
+            f"({int(grid_scalar.get('actual') or 0) - int(grid_scalar.get('predicted') or 0):+d})"
+        )
+    if building_tile_diffs:
+        reason_parts.append(f"{len(building_tile_diffs)} building hp diff(s)")
+    reason = "; ".join(reason_parts) or "unexpected grid_power drop"
+
+    investigations.append({
+        "reason": reason,
+        "snapshot_path": str(snap_dir),
+        "failure_db_id": failure_db_id,
+        "turn": turn,
+        "action_index": context.get("action_index"),
+        "weapon": context.get("weapon"),
+        "mech_uid": context.get("mech_uid"),
+    })
+    print(f"  [grid-drop] flagged for investigation → {snap_label}")
+
+
 def _log_sub_action_desync(
     session: RunSession,
     phase: str,
@@ -3498,6 +3605,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     session.prune_disabled_actions(turn)
     pre_turn_event_count = len(session.failure_events_this_run)
     soft_disables_fired_this_turn: list[dict] = []
+    grid_drop_investigations: list[dict] = []
     unknowns_flagged = read_result.get("unknowns") or {}
 
     # Load predicted_states from the solve recording
@@ -3600,6 +3708,23 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         pred_post_move, actual_board, diff, classification, turn,
                         fuzzy_signal=fuzzy_signal,
                     )
+                    _maybe_flag_grid_drop(
+                        grid_drop_investigations, diff, classification,
+                        pred_post_move, actual_board,
+                        context={
+                            "mech_uid": mech_uid, "sub_action": "move",
+                            "action_index": actions_completed,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
+                        },
+                        run_id=session.run_id or "default",
+                        turn=turn,
+                        failure_db_id=(
+                            f"{session.run_id or 'default'}_"
+                            f"m{session.mission_index:02d}_t{turn:02d}_"
+                            f"per_sub_action_desync_move_a{actions_completed}"
+                        ),
+                    )
                     re_solve_count += 1
                     # Re-solve: this mech has moved but not attacked
                     if actual_data:
@@ -3701,6 +3826,23 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     pred_post_attack, actual_board, diff, classification, turn,
                     fuzzy_signal=fuzzy_signal,
                 )
+                _maybe_flag_grid_drop(
+                    grid_drop_investigations, diff, classification,
+                    pred_post_attack, actual_board,
+                    context={
+                        "mech_uid": mech_uid, "sub_action": "attack",
+                        "action_index": actions_completed,
+                        "weapon": action.weapon,
+                        "target": list(action.target),
+                    },
+                    run_id=session.run_id or "default",
+                    turn=turn,
+                    failure_db_id=(
+                        f"{session.run_id or 'default'}_"
+                        f"m{session.mission_index:02d}_t{turn:02d}_"
+                        f"per_sub_action_desync_attack_a{actions_completed}"
+                    ),
+                )
                 # Skip re-solve if spawn-only on last action (new Vek emerged)
                 is_last_action = (action_idx >= len(actions) - 1)
                 spawn_new_only = (
@@ -3765,6 +3907,37 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
 
     if end_result.get("status") == "PLAN":
+        # Grid-drop investigation gate — fire-now per CLAUDE.md rule 22. The
+        # bridge has already deactivated mechs via SetActive, but the MCP
+        # End Turn click is withheld: the caller must resolve every queued
+        # investigation (or choose to skip) before sending the batch.
+        if grid_drop_investigations:
+            result = {
+                "status": "INVESTIGATE",
+                "turn": turn,
+                "actions_completed": actions_completed,
+                "score": score,
+                "re_solves": re_solve_count,
+                "investigations": grid_drop_investigations,
+                "pending_end_turn_batch": end_result["batch"],
+                "bridge_ack": end_result.get("bridge_ack"),
+                "next_step": (
+                    "Resolve each investigation (see CLAUDE.md rule 22) "
+                    "before dispatching pending_end_turn_batch."
+                ),
+                "fuzzy_detections": fuzzy_detections,
+                "soft_disabled": list(session.disabled_actions),
+                "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+                "unknowns_flagged": unknowns_flagged,
+                "solver_gap_events": solver_gap_events,
+                "research_queue_peek": _research_peek(session),
+            }
+            _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                           unknowns_flagged,
+                           research_peek=result["research_queue_peek"])
+            _print_result(result)
+            return result
+
         result = {
             "status": "PLAN",
             "turn": turn,
