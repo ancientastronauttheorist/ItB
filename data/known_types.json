@@ -292,6 +292,7 @@
     "Bouncer2",
     "Burnbug1",
     "Burrower1",
+    "ChargeMech",
     "DStrikeMech",
     "Dam_Pawn",
     "Filler_Pawn",
@@ -309,6 +310,7 @@
     "Jelly_Regen1",
     "Jelly_Spider1",
     "JudoMech",
+    "LaserMech",
     "Leaper1",
     "Leaper2",
     "Mosquito1",
@@ -318,6 +320,7 @@
     "SatelliteRocket",
     "Scarab1",
     "Scarab2",
+    "ScienceMech",
     "Scorpion1",
     "Scorpion2",
     "Shaman1",
@@ -334,7 +337,8 @@
     "Totem2",
     "TotemB",
     "Train_Damaged",
-    "Train_Pawn"
+    "Train_Pawn",
+    "Volatile_Vek"
   ],
   "observed_weapons": [
     "Acid_Tank_Attack",

@@ -970,17 +970,30 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         _print_result(result)
         return result
 
-    # Research gate — refuse to solve when novelty is on the board.
-    # Solving past an unknown produces confidently-wrong plays. The
-    # harness must run cmd_research_next → dispatch the capture plan →
-    # cmd_research_submit before calling solve again. See CLAUDE.md
-    # rule 20 and docs/self_healing_loop_design.md.
-    from src.solver.unknown_detector import detect_unknowns
+    # Research gate — refuse to solve when novelty is on the board
+    # OR when a queued behavior-novelty entry's target is currently live.
+    # Solving past either produces confidently-wrong plays. The harness
+    # must run cmd_research_next → dispatch capture → cmd_research_submit
+    # before calling solve again. See CLAUDE.md rule 20 and
+    # docs/self_healing_loop_design.md.
+    from src.research.orchestrator import has_actionable_research
     from src.solver.research_gate import research_gate_envelope
+    from src.solver.unknown_detector import detect_unknowns
     _solve_phase = bridge_data.get("phase") if bridge_data else None
     gate = research_gate_envelope(
         detect_unknowns(board, phase=_solve_phase)
     )
+    if gate is None and has_actionable_research(session, board):
+        gate = {
+            "error": "RESEARCH_REQUIRED",
+            "unknowns": {},
+            "next": "cmd_research_next",
+            "message": (
+                "Queued research entry actionable on current board "
+                "(behavior novelty from a prior desync). Resolve before "
+                "solving. See CLAUDE.md rule 20."
+            ),
+        }
     if gate is not None:
         _print_result(gate)
         return gate
@@ -3428,15 +3441,28 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         return result
 
     # Research gate — pick up the flag cmd_read already set when
-    # unknown_detector flagged novelty. The harness must resolve it
-    # (cmd_research_next → dispatch → cmd_research_submit) before
-    # auto_turn can solve. See CLAUDE.md rule 20.
+    # either (a) unknown_detector flagged name novelty or (b)
+    # has_actionable_research found a queued behavior-novelty entry
+    # whose target is on the board. Both cases must block the solver;
+    # in case (b) the ``unknowns`` field is empty, so we fall back to
+    # a zero-unknowns envelope that still points at research_next.
+    # See CLAUDE.md rule 20.
     if read_result.get("requires_research"):
         from src.solver.research_gate import research_gate_envelope
         gate = research_gate_envelope(read_result.get("unknowns"))
-        if gate is not None:
-            _print_result(gate)
-            return gate
+        if gate is None:
+            gate = {
+                "error": "RESEARCH_REQUIRED",
+                "unknowns": read_result.get("unknowns") or {},
+                "next": "cmd_research_next",
+                "message": (
+                    "Queued research entry actionable on current board "
+                    "(behavior novelty from a prior desync). Resolve "
+                    "before solving. See CLAUDE.md rule 20."
+                ),
+            }
+        _print_result(gate)
+        return gate
 
     turn = read_result.get("turn", 0)
     print(f"\n{'='*50}")
