@@ -4637,14 +4637,119 @@ def cmd_analyze(min_samples: int = 30) -> dict:
     return report
 
 
-def cmd_mission_end(outcome: str, notes: str = None) -> dict:
+def _mission_end_auto_commit(
+    session: RunSession, outcome: str, mission_index: int,
+    *,
+    repo_root: "Path | None" = None,
+) -> dict:
+    """Stage mission artifacts, commit, push. Gracefully reports failures.
+
+    Only stages mission-level artifacts (the run's recordings, active
+    session file, the run's decision log, staged override candidates).
+    Never ``git add -A`` — uncommitted code edits from the session
+    stay out of the auto-commit, which matches the principle that
+    mission_end records gameplay state, not code changes.
+
+    ``repo_root`` overrides the default (inferred from ``__file__``)
+    so tests can point the helper at a tmp-path checkout.
+
+    Returns a small status dict the caller embeds in the mission_end
+    result so the operator sees whether the commit landed and was
+    pushed. Failures here never propagate — mission_end's primary job
+    is recording the outcome, and git issues shouldn't mask that.
+    """
+    import subprocess
+
+    repo = repo_root or Path(__file__).parent.parent.parent
+    run_id = session.run_id
+    mi = mission_index
+    mission_name = session.current_mission or "mission"
+
+    candidate_paths = [
+        f"recordings/{run_id}",
+        "sessions/active_session.json",
+        f"logs/{run_id}_log.md",
+        "data/weapon_overrides_staged.jsonl",
+    ]
+    existing = [p for p in candidate_paths if (repo / p).exists()]
+    if not existing:
+        return {"status": "skipped", "reason": "no stageable artifacts"}
+
+    try:
+        subprocess.run(
+            ["git", "-C", str(repo), "add"] + existing,
+            check=True, capture_output=True, text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        return {
+            "status": "failed",
+            "stage": "add",
+            "error": (exc.stderr or str(exc)).strip(),
+        }
+
+    # Nothing actually staged (files unchanged) — skip the commit.
+    diff_check = subprocess.run(
+        ["git", "-C", str(repo), "diff", "--cached", "--quiet"],
+        capture_output=True,
+    )
+    if diff_check.returncode == 0:
+        return {"status": "skipped", "reason": "no changes to commit"}
+
+    commit_msg = (
+        f"Mission end: {mission_name} — {outcome} "
+        f"({run_id} m{mi:02d})\n\n"
+        "Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+    )
+    try:
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-m", commit_msg],
+            check=True, capture_output=True, text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        return {
+            "status": "failed",
+            "stage": "commit",
+            "error": (exc.stderr or str(exc)).strip(),
+        }
+
+    commit_hash = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "--short", "HEAD"],
+        capture_output=True, text=True,
+    ).stdout.strip()
+
+    # Push is best-effort — commit locally even if push fails.
+    push_result = subprocess.run(
+        ["git", "-C", str(repo), "push", "origin", "main"],
+        capture_output=True, text=True,
+    )
+    pushed = push_result.returncode == 0
+
+    return {
+        "status": "committed",
+        "commit": commit_hash,
+        "pushed": pushed,
+        "push_error": (push_result.stderr or "").strip() if not pushed else None,
+    }
+
+
+def cmd_mission_end(
+    outcome: str,
+    notes: str = None,
+    *,
+    no_commit: bool = False,
+) -> dict:
     """Record mission outcome on the active run.
 
     outcome: "win" or "loss"
     notes: optional free-text context
+    no_commit: skip the default auto-commit + push of mission artifacts.
 
     Writes outcome to the run manifest.json and drops a small
-    m{NN}_outcome.json pointer file in the run directory.
+    m{NN}_outcome.json pointer file in the run directory, then
+    auto-commits + pushes the run's recordings, session state,
+    decision log, and any staged override candidates. Pass
+    ``--no-commit`` to skip the git step (e.g. mid-development
+    runs where you don't want every mission cluttering main).
     """
     if outcome not in ("win", "loss"):
         return {"error": f"outcome must be 'win' or 'loss', got {outcome!r}"}
@@ -4676,14 +4781,24 @@ def cmd_mission_end(outcome: str, notes: str = None) -> dict:
         "outcome_notes": notes,
     })
 
+    _repo_root = Path(__file__).parent.parent.parent
+    try:
+        outcome_file_str = str(outcome_path.relative_to(_repo_root))
+    except ValueError:
+        outcome_file_str = str(outcome_path)
     result = {
         "run_id": session.run_id,
         "mission": mi,
         "outcome": outcome,
-        "outcome_file": str(outcome_path.relative_to(
-            Path(__file__).parent.parent.parent)),
+        "outcome_file": outcome_file_str,
         "manifest_updated": True,
     }
+
+    if not no_commit:
+        git_result = _mission_end_auto_commit(session, outcome, mi)
+        result["git"] = git_result
+        print(f"\n[mission_end git] {git_result}")
+
     _print_result(result)
     print(
         "\n[reminder] If you changed solver code this session, "

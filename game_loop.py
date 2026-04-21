@@ -357,6 +357,11 @@ def main():
                                help="Mission result")
     p_mission_end.add_argument("--notes", default=None,
                                help="Optional free-text context")
+    p_mission_end.add_argument(
+        "--no-commit",
+        action="store_true",
+        help="Skip the default auto-commit + push of mission artifacts",
+    )
 
     p_annotate = sub.add_parser("annotate",
                                 help="Add a notes field to a recorded board (regression context)")
@@ -444,7 +449,7 @@ def main():
                  time_limit=args.time_limit,
                  since=args.since, no_cutoff=args.no_cutoff)
     elif args.command == "mission_end":
-        cmd_mission_end(args.outcome, notes=args.notes)
+        cmd_mission_end(args.outcome, notes=args.notes, no_commit=args.no_commit)
     elif args.command == "annotate":
         cmd_annotate(args.run_id, args.turn, args.notes, mission=args.mission)
 
