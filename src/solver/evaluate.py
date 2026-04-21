@@ -77,6 +77,12 @@ class EvalWeights:
     bld_phase_scale: float = 0.0
     building_preservation_threshold: float = 0.05
 
+    # Flat danger penalty per queued Vek spawn still to emerge.
+    # Covers the "surprise" damage from the next-turn materialize+attack
+    # that the sim does NOT project. Scaled by future_factor so it
+    # collapses to 0 on the final turn. Mirrors rust_solver/src/evaluate.rs.
+    remaining_spawn_penalty: float = 10000
+
     def to_dict(self) -> dict:
         """Serialize to dict for JSON storage and Rust solver injection."""
         from dataclasses import asdict
@@ -316,6 +322,17 @@ def evaluate(
             if board.unit_at(sx, sy) is not None:
                 score += w.spawn_blocked * ff
 
+    # --- REMAINING SPAWN DANGER: flat penalty per queued Vek ---
+    # apply_spawn_blocking charges damage to mechs on spawn tiles, but the
+    # evaluator never materializes the newly-spawned Vek or simulates its
+    # turn+1 attack. This penalty captures the unmodeled danger. Scaled by
+    # ff so it collapses to 0 on the final turn. Cap at 8 so a sentinel
+    # default (2**31-1) doesn't blow up the score — real values are 0–4.
+    _SPAWN_SENTINEL = 2**31 - 1
+    if 0 < remaining_spawns < _SPAWN_SENTINEL:
+        capped = min(remaining_spawns, 8)
+        score -= w.remaining_spawn_penalty * capped * ff
+
     # --- PODS: NO turn scaling ---
     for x in range(8):
         for y in range(8):
@@ -448,6 +465,14 @@ def evaluate_breakdown(
                 spawns_blocked += 1
     spawns_score = spawns_blocked * w.spawn_blocked * ff
 
+    # --- REMAINING SPAWN DANGER: flat penalty per queued Vek ---
+    _SPAWN_SENTINEL = 2**31 - 1
+    remaining_spawn_score = 0.0
+    remaining_spawn_count = 0
+    if 0 < remaining_spawns < _SPAWN_SENTINEL:
+        remaining_spawn_count = min(remaining_spawns, 8)
+        remaining_spawn_score = -w.remaining_spawn_penalty * remaining_spawn_count * ff
+
     # --- PODS ---
     pods_uncollected = 0
     pods_proximity = 0
@@ -465,7 +490,8 @@ def evaluate_breakdown(
 
     total = (buildings_score + building_hp_score + grid_power_score
              + enemies_killed_score + enemy_hp_score + danger_score
-             + mech_score + spawns_score + pods_score)
+             + mech_score + spawns_score + remaining_spawn_score
+             + pods_score)
 
     # Note: sanity check removed — evaluate() now requires turn params.
     # Use evaluate_breakdown only for debugging, not during search.
@@ -491,6 +517,7 @@ def evaluate_breakdown(
             "score": mech_score,
         },
         "spawns_blocked": {"count": spawns_blocked, "score": spawns_score},
+        "remaining_spawns": {"count": remaining_spawn_count, "score": remaining_spawn_score},
         "pods": {
             "uncollected": pods_uncollected,
             "proximity": pods_proximity,

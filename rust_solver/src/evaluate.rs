@@ -121,6 +121,20 @@ pub struct EvalWeights {
     // Two-stage solver filter: prefer clean plans within this margin of best
     pub building_preservation_threshold: f64,
 
+    // Flat danger penalty per queued Vek spawn still to emerge
+    // (`board.remaining_spawns`). Covers the "surprise" damage from the
+    // next-turn materialize+attack that the sim does NOT project — the
+    // evaluator models spawn-blocking on current spawn tiles but never
+    // instantiates the spawned Vek to simulate turn+1. Scaled by
+    // future_factor so it collapses to 0 on the final turn.
+    //
+    // Magnitude rationale: a spawn that emerges into a Scarab/Hornet
+    // typically costs ~1 building HP = 1 grid (≈25k points). ~40% of
+    // spawns deal net building damage after accounting for kills on
+    // emerge, blockable tiles, and weak variants (Alpha Scarab 1HP),
+    // giving ~10k per spawn.
+    pub remaining_spawn_penalty: f64,
+
     // Phase 1 soft-disable penalty: subtracted once per action in a
     // candidate plan that uses a weapon in the session's disabled_actions
     // mask. Tuned to be large enough that the solver prefers any viable
@@ -188,6 +202,7 @@ impl Default for EvalWeights {
             bld_phase_scale: 0.0,
             building_preservation_threshold: 0.05,
             soft_disabled_penalty: 10000.0,
+            remaining_spawn_penalty: 10000.0,
         }
     }
 }
@@ -565,6 +580,18 @@ pub fn evaluate(
         }
     }
 
+    // ── Remaining spawn danger: flat penalty per queued Vek ─────────────
+    // `apply_spawn_blocking` charges damage to mechs sitting on spawn tiles,
+    // but the evaluator never materializes the newly-spawned Vek or
+    // simulates its turn+1 attack. This penalty captures that unmodeled
+    // danger. Scaled by ff so it collapses to 0 on the final turn (nothing
+    // to prepare for). Cap at 8 spawns so a bogus u32::MAX from an
+    // un-bridged board doesn't blow up the score — real values are 0–4.
+    if board.remaining_spawns > 0 && board.remaining_spawns != u32::MAX {
+        let capped = board.remaining_spawns.min(8) as f64;
+        score -= weights.remaining_spawn_penalty * capped * ff;
+    }
+
     // ── Pods: NO turn scaling ──────────────────────────────────────────
     for idx in 0..64 {
         let tile = &board.tiles[idx];
@@ -687,6 +714,58 @@ mod tests {
         let with_bonus = evaluate(&board, &[], &w, 0, 0, &p_blast, 0);
         let without_bonus = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_remaining_spawn_penalty_matches_per_spawn_magnitude() {
+        // Matches tests/test_solver_spawn_penalty.py. On turn 1 of 5 (ff=1.0),
+        // remaining_spawns=2 should score ~2 * remaining_spawn_penalty less
+        // than remaining_spawns=0.
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 1;
+        b.total_turns = 5;
+        b.remaining_spawns = 0;
+        let s0 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        b.remaining_spawns = 2;
+        let s2 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let expected = 2.0 * w.remaining_spawn_penalty;
+        assert!((s0 - s2 - expected).abs() < 1.0,
+            "expected s0-s2 ~= {}, got {} (s0={}, s2={})",
+            expected, s0 - s2, s0, s2);
+    }
+
+    #[test]
+    fn test_remaining_spawn_penalty_zero_on_final_turn() {
+        // ff=0 on final turn collapses the penalty regardless of spawn count.
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 5;
+        b.total_turns = 5;
+        b.remaining_spawns = 0;
+        let s0 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        b.remaining_spawns = 3;
+        let s3 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        assert!((s0 - s3).abs() < 1.0,
+            "final turn should zero the penalty, got delta={}", s0 - s3);
+    }
+
+    #[test]
+    fn test_remaining_spawn_penalty_sentinel_skipped() {
+        // u32::MAX means "unknown / un-bridged" — must NOT apply penalty.
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 1;
+        b.total_turns = 5;
+        b.remaining_spawns = u32::MAX;
+        let s_sent = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        b.remaining_spawns = 0;
+        let s_zero = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        assert!((s_sent - s_zero).abs() < 1.0,
+            "sentinel should match zero-spawn score, got delta={}", s_sent - s_zero);
     }
 
     #[test]
