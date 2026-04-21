@@ -105,7 +105,7 @@ Each phase: read → act → verify. Detailed command semantics are in **Game Lo
 - **DEPLOYMENT:** `game_loop.py read` prints valid deploy tiles with MCP coords. Click 3 in sequence (FORWARD, MID, SUPPORT recommendation). Click CONFIRM. → COMBAT_PLAYER_TURN.
 - **COMBAT_PLAYER_TURN:** `auto_turn --time-limit 10` → dispatch End Turn click at `(295, 215)` → loop. The next `auto_turn` blocks in Python until the next player turn or mission end. On game_over or empty solution, falls back to screenshot-based reasoning.
 - **MISSION_END:** screenshot reward screen → click reward → `snapshot <label>` → ISLAND_MAP (or ISLAND_COMPLETE if all missions done).
-- **SHOP:** screenshot (neither save nor bridge distinguish shop from map). Buy grid repairs first, then weapons/cores per strategy. → ISLAND_MAP.
+- **SHOP:** appears *only after winning a whole island* (4 missions + finale), not mid-island. Do NOT expect a shop between missions — grid repair opportunities come from time-pod rewards and island completions, full stop. Screenshot when it appears (neither save nor bridge distinguish shop from map). Buy grid repairs first, then weapons/cores per strategy. → ISLAND_MAP (next island) or RUN_END.
 - **RUN_END:** `snapshot run_end`. If defeat, analyze critical turns from decision log. Check achievement progress. Start new run with next target.
 
 ### Error recovery

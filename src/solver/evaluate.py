@@ -233,22 +233,51 @@ def evaluate(
         score += _scaled(w.dam_destroyed, ff, 0.10, 0.90)
 
     # --- ENVIRONMENT DANGER: SCALED ---
+    # Lethal env (kill_int=1: Air Strike, Lightning, Cataclysm→chasm, Seismic,
+    # Tidal) bypasses flying — mirrors rust_solver/src/evaluate.rs and
+    # rust_solver/src/enemy.rs::apply_env_danger. Non-lethal env (wind, sand,
+    # snow) skips flying.
     if hasattr(board, 'environment_danger') and board.environment_danger:
         v2 = getattr(board, 'environment_danger_v2', {})
         for e in board.enemies():
-            if (e.x, e.y) in board.environment_danger and not e.flying:
+            pos = (e.x, e.y)
+            if pos not in board.environment_danger:
+                continue
+            dmg, lethal = v2.get(pos, (1, True))
+            # Lethal env kills flying enemies too (already dead if sim ran),
+            # but partial-credit scoring only makes sense for ground units
+            # about to eat the telegraphed damage. Keep the flying skip for
+            # enemies (flying-enemy kills handled by main death branch).
+            if not e.flying:
                 score += _scaled(w.enemy_on_danger, ff, 0.20, 1.60)
         for m in board.mechs():
-            if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
-                dmg, lethal = v2.get((m.x, m.y), (1, True))
-                if lethal or m.hp <= dmg:
-                    if m.is_mech:
-                        score += _scaled(w.mech_killed, ff, 0.05, 0.95)
-                        score += w.mech_killed * m.pilot_value
-                    else:
-                        score += w.friendly_npc_killed
+            if m.hp <= 0:
+                continue
+            pos = (m.x, m.y)
+            if pos not in board.environment_danger:
+                continue
+            dmg, lethal = v2.get(pos, (1, True))
+            # Lethal env: always applies — flying or ground, shield/frozen
+            # bypassed. The simulator should have already set hp=0, but guard
+            # here so scoring still penalizes off-sequence branches.
+            if lethal:
+                if m.is_mech:
+                    score += _scaled(w.mech_killed, ff, 0.05, 0.95)
+                    score += w.mech_killed * m.pilot_value
                 else:
-                    score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1
+                    score += w.friendly_npc_killed
+                continue
+            # Non-lethal env: skip flying (they don't take the hit).
+            if m.flying:
+                continue
+            if m.hp <= dmg:
+                if m.is_mech:
+                    score += _scaled(w.mech_killed, ff, 0.05, 0.95)
+                    score += w.mech_killed * m.pilot_value
+                else:
+                    score += w.friendly_npc_killed
+            else:
+                score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1
 
     # --- MECHS + FRIENDLY NPCs: SCALED ---
     # board.mechs() returns all player-team units (is_player) including
@@ -365,6 +394,7 @@ def evaluate_breakdown(
     enemy_hp_score = enemy_hp_total * _scaled(w.enemy_hp_remaining, ff, 0.10, 0.90)
 
     # --- ENVIRONMENT DANGER ---
+    # Lethal env (kill_int=1) bypasses flying — mirrors main evaluate() fix.
     danger_enemies_on = 0
     danger_mechs_on = 0
     danger_score = 0.0
@@ -375,10 +405,19 @@ def evaluate_breakdown(
                 danger_enemies_on += 1
                 danger_score += _scaled(w.enemy_on_danger, ff, 0.20, 1.60)
         for m in board.mechs():
-            if m.hp > 0 and (m.x, m.y) in board.environment_danger and not m.flying:
+            if m.hp <= 0:
+                continue
+            pos = (m.x, m.y)
+            if pos not in board.environment_danger:
+                continue
+            dmg, lethal = v2.get(pos, (1, True))
+            if lethal:
+                # Lethal env hits flying too (air strike, lightning)
                 danger_mechs_on += 1
-                dmg, lethal = v2.get((m.x, m.y), (1, True))
-                if lethal or m.hp <= dmg:
+                danger_score += _scaled(w.mech_killed, ff, 0.05, 0.95)
+            elif not m.flying:
+                danger_mechs_on += 1
+                if m.hp <= dmg:
                     danger_score += _scaled(w.mech_killed, ff, 0.05, 0.95)
                 else:
                     danger_score += dmg * _scaled(w.mech_hp, ff, 0.20, 0.80) * -1

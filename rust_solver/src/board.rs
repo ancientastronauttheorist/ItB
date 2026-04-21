@@ -342,6 +342,13 @@ impl Board {
         self.env_danger & bit != 0
     }
 
+    /// Is tile on the env_danger_kill bitset (Deadly Threat / kill_int=1)?
+    #[inline]
+    pub fn is_env_danger_kill(&self, x: u8, y: u8) -> bool {
+        let bit = 1u64 << xy_to_idx(x, y);
+        self.env_danger_kill & bit != 0
+    }
+
     /// Iterate alive player units (mechs + friendly controllable).
     pub fn active_mechs(&self) -> Vec<usize> {
         let mut result = Vec::new();

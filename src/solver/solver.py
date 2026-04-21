@@ -207,9 +207,21 @@ def _simulate_env_effects(board: Board):
         u = board.unit_at(dx, dy)
 
         if lethal:
-            # Lethal env: kill ground units (bypass shield/frozen/armor)
-            if u and not u.flying:
+            # Deadly Threat (Air Strike, Lightning, Cataclysm→chasm, Seismic→chasm,
+            # Tidal→water): sets HP=0 outright. Bypasses shield/frozen/armor/ACID.
+            # Hits flying units too — air strikes drop bombs from above, lightning
+            # arcs down. Matches rust_solver/src/enemy.rs::apply_env_danger.
+            if u:
                 u.hp = 0
+                u.shield = False
+                u.frozen = False
+            # Also destroy buildings on lethal env tiles
+            tile = board.tile(dx, dy)
+            if tile.terrain == "building" and tile.building_hp > 0:
+                lost = tile.building_hp
+                tile.building_hp = 0
+                tile.terrain = "rubble"
+                board.grid_power = max(0, board.grid_power - lost)
         elif env_type == "snow":
             # Ice Storm: freeze non-flying units (shield blocks freeze)
             if u and not u.flying and not u.shield:

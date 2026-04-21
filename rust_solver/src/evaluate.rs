@@ -398,20 +398,50 @@ pub fn evaluate(
     }
 
     // ── Environment danger: enemy scaled like kills, mech like mech_killed ─
+    //
+    // This branch fires for LIVE units still on a danger tile at scoring time.
+    // `simulate_enemy_attacks` has already applied env_danger damage before
+    // reaching here, so most deaths are counted in the main mech-death branch
+    // below. This loop catches the remaining cases:
+    //   - Non-lethal env survivors (shield consumed, frozen unfrozen): unit is
+    //     still alive but sitting on a danger tile — soft penalty for the tile.
+    //   - Enemies on danger tiles: partial-credit reward toward enemy_killed
+    //     (assumes the hazard will finish them next turn).
+    //
+    // IMPORTANT: Lethal env (kill_int=1) bypasses flying, so a flying mech on a
+    // kill_int=1 tile IS killed by the simulator (enemy.rs::apply_env_danger).
+    // The flying skip here is correct for NON-lethal branches (wind/sand/snow
+    // don't affect flying), but we explicitly penalize flying mechs sitting on
+    // kill_int=1 tiles as belt-and-suspenders in case the simulator order
+    // changes or a search branch evaluates pre-enemy-phase (e.g. a push chain
+    // that lands a mech on the tile AFTER env_danger already ticked).
     if board.env_danger != 0 {
         for i in 0..board.unit_count as usize {
             let u = &board.units[i];
             if !u.alive() { continue; }
             if !board.is_env_danger(u.x, u.y) { continue; }
+
+            let on_kill_tile = board.is_env_danger_kill(u.x, u.y);
+
+            if u.is_player() && on_kill_tile {
+                // Defensive penalty: a player mech on a kill_int=1 tile is a
+                // pending death regardless of flying status. The simulator
+                // should already have killed it (firing the main mech-death
+                // branch), but this guards against off-sequence scoring.
+                let base = scaled(weights.mech_killed, ff, 0.05, 0.95);
+                let pilot_penalty = weights.mech_killed * u.pilot_value as f64;
+                score += base + pilot_penalty;
+                continue;
+            }
+
             if u.flying() { continue; }
 
             if u.is_enemy() {
                 score += scaled(weights.enemy_on_danger, ff, 0.20, 1.60);
             } else if u.is_player() {
-                // Scale mech loss by future_factor + pilot_value (see the
-                // main mech-loss branch below for the rationale). Lethal
-                // environment hazards apply the same penalty as any other
-                // mech kill.
+                // Non-lethal env: soft penalty for a mech taking the hit next
+                // enemy phase (1 dmg). Matches the mech-loss magnitude for
+                // consistency with the existing tuner corpus.
                 let base = scaled(weights.mech_killed, ff, 0.05, 0.95);
                 let pilot_penalty = weights.mech_killed * u.pilot_value as f64;
                 score += base + pilot_penalty;
