@@ -5035,6 +5035,18 @@ def cmd_mission_end(
         result["git"] = git_result
         print(f"\n[mission_end git] {git_result}")
 
+    # Advance the mission counter AFTER auto-commit (so the just-finished
+    # mission's artifacts were staged under their own ``mi`` prefix), so
+    # the NEXT mission's recordings land under ``m{mi+1:02d}_...``. Without
+    # this bump every mission in a multi-mission run collides on m00_*
+    # (see run 20260421_135801_843 where 5 missions all wrote m00_*).
+    # Also reset per-mission blocklist state, mirroring ``advance_mission``.
+    session.mission_index = mi + 1
+    session.current_mission = ""
+    session.disabled_actions = []
+    session.save()
+    result["next_mission_index"] = session.mission_index
+
     _print_result(result)
     print(
         "\n[reminder] If you changed solver code this session, "

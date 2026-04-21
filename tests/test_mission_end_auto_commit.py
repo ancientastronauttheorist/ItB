@@ -193,6 +193,8 @@ def test_cmd_mission_end_no_commit_skips_helper(monkeypatch, tmp_path):
     monkeypatch.setattr(loop_commands, "_recording_dir", lambda sess: tmp_path)
     monkeypatch.setattr(loop_commands, "_atomic_json_write", lambda p, d: None)
     monkeypatch.setattr(loop_commands, "_write_manifest", lambda sess, d: None)
+    # Stub session.save so we don't clobber the on-disk active_session.json.
+    monkeypatch.setattr(RunSession, "save", lambda self, *a, **kw: None)
 
     called: list = []
     monkeypatch.setattr(
@@ -203,6 +205,10 @@ def test_cmd_mission_end_no_commit_skips_helper(monkeypatch, tmp_path):
     out = loop_commands.cmd_mission_end("win", no_commit=True)
     assert "git" not in out
     assert called == []
+    # mission_index bumps even on no_commit — next mission's recordings
+    # need a fresh counter regardless of git auto-commit toggle.
+    assert s.mission_index == 1
+    assert out["next_mission_index"] == 1
 
 
 def test_cmd_mission_end_default_invokes_helper(monkeypatch, tmp_path):
@@ -211,6 +217,7 @@ def test_cmd_mission_end_default_invokes_helper(monkeypatch, tmp_path):
     monkeypatch.setattr(loop_commands, "_recording_dir", lambda sess: tmp_path)
     monkeypatch.setattr(loop_commands, "_atomic_json_write", lambda p, d: None)
     monkeypatch.setattr(loop_commands, "_write_manifest", lambda sess, d: None)
+    monkeypatch.setattr(RunSession, "save", lambda self, *a, **kw: None)
 
     called: list = []
     monkeypatch.setattr(
@@ -221,5 +228,9 @@ def test_cmd_mission_end_default_invokes_helper(monkeypatch, tmp_path):
 
     out = loop_commands.cmd_mission_end("win")
     assert len(called) == 1
+    # The auto-commit fires under the CURRENT mi (0), not the bumped one,
+    # so the just-finished mission's artifacts commit under m00_* as expected.
     assert called[0] == (RUN_ID, "win", 0)
     assert out["git"]["status"] == "committed"
+    assert s.mission_index == 1
+    assert out["next_mission_index"] == 1
