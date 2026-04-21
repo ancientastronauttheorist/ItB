@@ -30,6 +30,7 @@ from src.solver.evaluate import evaluate_threats
 from src.control.executor import (
     plan_single_mech,
     plan_end_turn,
+    plan_balanced_roll,
     grid_to_mcp,
     recalibrate,
 )
@@ -1759,6 +1760,29 @@ def cmd_click_end_turn() -> dict:
     for i, c in enumerate(batch):
         print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
     print(f"Next: dispatch batch via computer_batch, wait ~6s, then `read`")
+    _print_result(result)
+    return result
+
+
+def cmd_click_balanced_roll() -> dict:
+    """Emit a click plan for the Balanced Roll button on squad-select.
+
+    Pure planner. Dispatch the batch via ``computer_batch`` before
+    clicking Start, so a Balanced Roll (no duplicate mech classes, max
+    4 weapons between them) is seeded instead of whatever squad is
+    currently shown.
+    """
+    recalibrate()
+    batch = plan_balanced_roll()
+    result = {
+        "status": "PLAN",
+        "batch": batch,
+        "next_step": "dispatch batch, then click Start to begin the run",
+    }
+    print(f"\n=== CLICK_BALANCED_ROLL ===")
+    for i, c in enumerate(batch):
+        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
+    print(f"Next: dispatch batch via computer_batch, then click Start")
     _print_result(result)
     return result
 

@@ -41,6 +41,7 @@ from src.loop.commands import (
     cmd_verify_action,
     cmd_click_action,
     cmd_click_end_turn,
+    cmd_click_balanced_roll,
     cmd_research_attach_community,
     cmd_research_next,
     cmd_research_probe_mech,
@@ -250,6 +251,12 @@ def main():
         help="Plan clicks for the End Turn button",
     )
 
+    # click_balanced_roll
+    sub.add_parser(
+        "click_balanced_roll",
+        help="Plan a click for the Balanced Roll button on squad-select",
+    )
+
     # end_turn
     sub.add_parser("end_turn", help="Plan clicks for End Turn")
 
@@ -391,6 +398,8 @@ def main():
         cmd_click_action(args.index)
     elif args.command == "click_end_turn":
         cmd_click_end_turn()
+    elif args.command == "click_balanced_roll":
+        cmd_click_balanced_roll()
     elif args.command == "research_next":
         cmd_research_next(profile=args.profile)
     elif args.command == "research_submit":

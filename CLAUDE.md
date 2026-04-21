@@ -133,6 +133,7 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 - `auto_turn [--time-limit N] [--no-wait] [--max-wait S]` — Full turn via bridge with per-sub-action verification. Polls at entry for `combat_player` phase (up to `--max-wait` seconds; disable with `--no-wait`). Returns an MCP click plan for End Turn. On desync, re-solves from actual board with partial mech states (DONE = inactive, MID_ACTION = can_move=false, ACTIVE = full search).
 - `click_action <i>` — Pure planner for manual play. Emits a `computer_batch`-ready sequence for ONE mech action (select-tile, optional move, weapon icon, target). Handles dash weapons (skip move click), Repair (click Repair button), passives (no-op).
 - `click_end_turn` — Pure planner. Emits a single click on End Turn.
+- `click_balanced_roll` — Pure planner. Emits a single click on the Balanced Roll button on the squad-select screen. Dispatch before clicking Start so a Balanced Roll (unique mech classes, ≤4 weapons total) is seeded instead of the default squad.
 - `execute <index>` / `end_turn` — Bridge-mode action commands. Used internally by `auto_turn`. In manual play, use `click_action` / `click_end_turn` instead.
 
 **Full-mission automation:**

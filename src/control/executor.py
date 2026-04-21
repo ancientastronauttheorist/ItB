@@ -119,6 +119,11 @@ _UI_WEAPON_SLOT_1 = (191, 528)
 _UI_WEAPON_SLOT_2 = (255, 528)
 _UI_REPAIR_BUTTON = (111, 528)
 
+# Squad-select screen. Calibrated 2026-04-21 via hover-verify: cursor at
+# MCP (1006, 562) with window at Quartz (215, 32, 1280, 748) triggered
+# the Balanced Roll tooltip → offset (1006-215, 562-32) = (791, 530).
+_UI_BALANCED_ROLL = (791, 530)
+
 
 def _ui_pos(offset: tuple[int, int]) -> tuple[int, int]:
     """Scale a window-relative UI offset to MCP coordinates."""
@@ -145,6 +150,10 @@ def _ui_repair_button() -> tuple[int, int]:
 
 def _ui_end_turn() -> tuple[int, int]:
     return _ui_pos(_UI_END_TURN)
+
+
+def _ui_balanced_roll() -> tuple[int, int]:
+    return _ui_pos(_UI_BALANCED_ROLL)
 
 
 # --- Weapon-type classifier ---
@@ -316,6 +325,16 @@ def plan_end_turn() -> list[dict]:
         "type": "left_click",
         "x": ex, "y": ey,
         "description": "Click End Turn",
+    }]
+
+
+def plan_balanced_roll() -> list[dict]:
+    """Plan a click for the Balanced Roll button on the squad-select screen."""
+    bx, by = _ui_balanced_roll()
+    return [{
+        "type": "left_click",
+        "x": bx, "y": by,
+        "description": "Click Balanced Roll",
     }]
 
 
