@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-2b3d3bc",
+  "solver_version": "rust-0.1.0-f431eea",
   "weight_version": "v009",
-  "updated": "2026-04-21T18:45:40.470158",
+  "updated": "2026-04-21T18:50:34.181286",
   "created": "2026-04-21T18:38:03.973867",
   "missions": [],
-  "outcome": "win",
-  "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-21T18:45:40.457545",
+  "outcome": "loss",
+  "outcome_mission": 1,
+  "outcome_recorded_at": "2026-04-21T18:50:34.168530",
   "outcome_notes": null
 }

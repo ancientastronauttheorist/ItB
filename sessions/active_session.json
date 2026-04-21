@@ -6,56 +6,56 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 0,
-  "current_turn": 4,
+  "mission_index": 1,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
+        "mech_uid": 2,
+        "mech_type": "PulseMech",
         "move_to": [
-          4,
+          5,
           3
         ],
-        "weapon": "Brute_Jetmech",
+        "weapon": "Science_Repulse",
         "target": [
-          4,
-          5
+          5,
+          3
         ],
-        "description": "JetMech, move E6\u2192E4, fire Aerial Bombs at C4"
+        "description": "PulseMech, fire Repulse at E3"
       },
       {
         "mech_uid": 1,
         "mech_type": "IceMech",
         "move_to": [
           2,
-          4
+          3
         ],
         "weapon": "Ranged_Ice",
         "target": [
-          2,
-          0
+          5,
+          3
         ],
-        "description": "IceMech, fire Cryo-Launcher at H6"
+        "description": "IceMech, move C5\u2192E6, fire Cryo-Launcher at E3"
       },
       {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
+        "mech_uid": 0,
+        "mech_type": "JetMech",
         "move_to": [
-          4,
-          3
+          3,
+          4
         ],
-        "weapon": "Science_Repulse",
+        "weapon": "Brute_Jetmech",
         "target": [
-          4,
-          3
+          2,
+          4
         ],
-        "description": "PulseMech, move G6\u2192E4, fire Repulse at E4"
+        "description": "JetMech, fire Aerial Bombs at D6"
       }
     ],
-    "score": 56210.0,
-    "turn": 4
+    "score": -479765.0,
+    "turn": 3
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -106,6 +106,39 @@
         "IceMech, fire Cryo-Launcher at H6",
         "PulseMech, move G6\u2192E4, fire Repulse at E4"
       ]
+    },
+    {
+      "timestamp": "2026-04-21T18:47:05.370680",
+      "turn": 1,
+      "label": "solve",
+      "score": 119328.57142857142,
+      "actions": [
+        "IceMech, fire Cryo-Launcher at C7",
+        "PulseMech, move D6\u2192E3, fire Repulse at E3",
+        "JetMech, move E5\u2192D5, fire Aerial Bombs at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T18:47:52.501672",
+      "turn": 2,
+      "label": "solve",
+      "score": 83130.95238095232,
+      "actions": [
+        "PulseMech, fire Repulse at E3",
+        "JetMech, fire Aerial Bombs at C4",
+        "IceMech, move C5\u2192B4, fire Cryo-Launcher at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T18:48:36.190410",
+      "turn": 3,
+      "label": "solve",
+      "score": -479765.0,
+      "actions": [
+        "PulseMech, fire Repulse at E3",
+        "IceMech, move C5\u2192E6, fire Cryo-Launcher at E3",
+        "JetMech, fire Aerial Bombs at D6"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -120,6 +153,14 @@
     [
       0,
       3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
     ]
   ],
   "tags": [],
@@ -400,13 +441,148 @@
           3
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Ice",
+        "target": [
+          1,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Ranged_Ice",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          2,
+          4
+        ]
+      }
     }
   ],
   "disabled_actions": [
     {
       "weapon_id": "Ranged_Ice",
       "cause_pattern": "status|Ranged_Ice|attack",
-      "expires_turn": 7,
+      "expires_turn": 6,
       "strategic_override": false
     }
   ],

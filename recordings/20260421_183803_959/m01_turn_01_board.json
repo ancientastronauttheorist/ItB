@@ -1,0 +1,729 @@
+{
+  "timestamp": "2026-04-21T18:47:04.303620",
+  "run_id": "20260421_183803_959",
+  "mission_index": 1,
+  "turn": 1,
+  "label": "board",
+  "data": {
+    "bridge_state": {
+      "remaining_spawns": 1,
+      "spawning_tiles": [
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ]
+      ],
+      "tiles": [
+        {
+          "y": 0,
+          "x": 0,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 1,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 2,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 3,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 4,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 0,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 1,
+          "x": 1,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 1,
+          "x": 3,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 1,
+          "x": 4,
+          "terrain_id": 9,
+          "terrain": "chasm"
+        },
+        {
+          "y": 1,
+          "x": 5,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 1,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 7,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 2,
+          "x": 0,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 2,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 3
+        },
+        {
+          "y": 2,
+          "x": 4,
+          "terrain_id": 9,
+          "terrain": "chasm"
+        },
+        {
+          "y": 2,
+          "x": 5,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 2,
+          "x": 6,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 2,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 0,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 3,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 0,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 4,
+          "x": 1,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 4,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 7,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 5,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 6,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 2
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 3
+        },
+        {
+          "y": 6,
+          "x": 4,
+          "terrain_id": 9,
+          "terrain": "chasm"
+        },
+        {
+          "y": 6,
+          "x": 5,
+          "terrain_id": 9,
+          "terrain": "chasm"
+        },
+        {
+          "y": 6,
+          "x": 6,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 6,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 4,
+          "terrain_id": 9,
+          "terrain": "chasm"
+        },
+        {
+          "y": 7,
+          "x": 5,
+          "terrain_id": 9,
+          "terrain": "chasm"
+        },
+        {
+          "y": 7,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        }
+      ],
+      "grid_power_max": 7,
+      "phase": "combat_player",
+      "grid_power": 3,
+      "environment_danger_v2": [],
+      "turn": 1,
+      "env_type": "unknown",
+      "mission_id": "Mission_Filler",
+      "environment_danger": [],
+      "attack_order": [
+        432,
+        433,
+        434
+      ],
+      "total_turns": 4,
+      "timestamp": 1776815224,
+      "targeted_tiles": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          0,
+          5
+        ]
+      ],
+      "units": [
+        {
+          "web": true,
+          "active": false,
+          "shield": false,
+          "hp": 2,
+          "flying": false,
+          "team": 1,
+          "web_source_uid": 432,
+          "web_probes": {
+            "IsGrappled": true
+          },
+          "max_hp": 2,
+          "move": 0,
+          "weapons": [
+            "Filler_Attack"
+          ],
+          "x": 4,
+          "y": 4,
+          "uid": 431,
+          "type": "Filler_Pawn",
+          "base_move": 0,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": true,
+          "base_move": 4,
+          "hp": 4,
+          "flying": true,
+          "pilot_level": 1,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 4,
+          "weapons": [
+            "Brute_Jetmech"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill2=1"
+          ],
+          "fire": false,
+          "y": 3,
+          "x": 3,
+          "acid": false,
+          "shield": false,
+          "type": "JetMech",
+          "mech": true,
+          "uid": 0,
+          "pilot_id": "Pilot_Original"
+        },
+        {
+          "web": false,
+          "active": true,
+          "base_move": 3,
+          "hp": 2,
+          "flying": true,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 3,
+          "weapons": [
+            "Ranged_Ice"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill2=1"
+          ],
+          "fire": false,
+          "y": 5,
+          "x": 3,
+          "acid": false,
+          "shield": false,
+          "type": "IceMech",
+          "mech": true,
+          "uid": 1,
+          "pilot_id": "Pilot_Detritus"
+        },
+        {
+          "web": false,
+          "active": true,
+          "base_move": 4,
+          "hp": 3,
+          "flying": false,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 4,
+          "weapons": [
+            "Science_Repulse"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=2",
+            "skill2=1"
+          ],
+          "fire": false,
+          "y": 4,
+          "x": 2,
+          "acid": false,
+          "shield": false,
+          "type": "PulseMech",
+          "mech": true,
+          "uid": 2,
+          "pilot_id": "Pilot_Rust"
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 5,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 5,
+          "move": 3,
+          "x": 5,
+          "queued_target": [
+            4,
+            4
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "ScorpionAtk2"
+          ],
+          "weapon_damage": 3,
+          "y": 4,
+          "uid": 432,
+          "type": "Scorpion2",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 2,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 3,
+          "x": 5,
+          "queued_target": [
+            3,
+            2
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "ScarabAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 2,
+          "uid": 433,
+          "type": "Scarab1",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 2,
+          "weapon_push": 0,
+          "flying": true,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 5,
+          "x": 1,
+          "queued_target": [
+            0,
+            5
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "HornetAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 5,
+          "uid": 434,
+          "type": "Hornet1",
+          "base_move": 5,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        }
+      ]
+    },
+    "result_summary": {
+      "phase": "combat_player",
+      "source": "bridge",
+      "turn": 1,
+      "grid_power": "3/7",
+      "mechs": [
+        {
+          "type": "Filler_Pawn",
+          "pos": "D4",
+          "hp": "2/2",
+          "weapon": "Filler_Attack",
+          "status": "DONE"
+        },
+        {
+          "type": "JetMech",
+          "pos": "E5",
+          "hp": "4/2",
+          "weapon": "Aerial Bombs",
+          "status": "READY"
+        },
+        {
+          "type": "IceMech",
+          "pos": "C5",
+          "hp": "2/2",
+          "weapon": "Cryo-Launcher",
+          "status": "READY"
+        },
+        {
+          "type": "PulseMech",
+          "pos": "D6",
+          "hp": "3/3",
+          "weapon": "Repulse",
+          "status": "READY"
+        }
+      ],
+      "active_mechs": 3,
+      "enemies": [
+        {
+          "type": "Scorpion2",
+          "pos": "D3",
+          "hp": "5/5",
+          "target": " \u2192 D4"
+        },
+        {
+          "type": "Scarab1",
+          "pos": "F3",
+          "hp": "2/2",
+          "target": " \u2192 F5"
+        },
+        {
+          "type": "Hornet1",
+          "pos": "C7",
+          "hp": "2/2",
+          "target": " \u2192 C8"
+        }
+      ],
+      "threatened_buildings": 2,
+      "threats": [
+        "Building F5 by Scarab1 at F3",
+        "Building C8 by Hornet1 at C7"
+      ],
+      "targeted_tiles": 3,
+      "spawn_points": 2
+    }
+  }
+}
