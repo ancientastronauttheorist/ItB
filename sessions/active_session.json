@@ -1,61 +1,61 @@
 {
-  "run_id": "20260421_161809_372",
-  "squad": "Random Balanced (Judo+Charge+Artillery)",
+  "run_id": "20260421_183803_959",
+  "squad": "Balanced (Jet+Ice+Pulse)",
   "achievement_targets": [],
   "difficulty": 2,
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 3,
-  "current_turn": 3,
+  "mission_index": 0,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
-        "mech_type": "GuardMech",
+        "mech_type": "JetMech",
         "move_to": [
-          2,
+          4,
           3
         ],
-        "weapon": "Unknown",
+        "weapon": "Brute_Jetmech",
         "target": [
-          255,
-          255
+          4,
+          5
         ],
-        "description": "GuardMech"
+        "description": "JetMech, move E6\u2192E4, fire Aerial Bombs at C4"
       },
       {
         "mech_uid": 1,
-        "mech_type": "TankMech",
+        "mech_type": "IceMech",
         "move_to": [
-          5,
-          2
+          2,
+          4
         ],
-        "weapon": "Brute_Tankmech",
+        "weapon": "Ranged_Ice",
         "target": [
-          5,
-          1
+          2,
+          0
         ],
-        "description": "TankMech, fire Taurus Cannon at G3"
+        "description": "IceMech, fire Cryo-Launcher at H6"
       },
       {
         "mech_uid": 2,
-        "mech_type": "ArtiMech",
+        "mech_type": "PulseMech",
         "move_to": [
-          3,
+          4,
           3
         ],
-        "weapon": "Ranged_Artillerymech",
+        "weapon": "Science_Repulse",
         "target": [
-          6,
+          4,
           3
         ],
-        "description": "ArtiMech, fire Artemis Artillery at E2"
+        "description": "PulseMech, move G6\u2192E4, fire Repulse at E4"
       }
     ],
-    "score": 118901.42857142857,
-    "turn": 3
+    "score": 56210.0,
+    "turn": 4
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -64,157 +64,47 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-21T16:19:42.458634",
+      "timestamp": "2026-04-21T18:39:21.241828",
       "turn": 1,
       "label": "solve",
-      "score": 124535.71428571426,
+      "score": 107000.0,
       "actions": [
-        "GuardMech, move F5\u2192C6",
-        "TankMech, move C5\u2192B5, fire Taurus Cannon at B4",
-        "ArtiMech, move E6\u2192F6, fire Artemis Artillery at F4"
+        "JetMech, move D5\u2192C4, fire Aerial Bombs at C2",
+        "IceMech, move F5\u2192E7, fire Cryo-Launcher at E3",
+        "PulseMech, move E6\u2192G4, fire Repulse at G4"
       ]
     },
     {
-      "timestamp": "2026-04-21T16:20:46.563386",
+      "timestamp": "2026-04-21T18:40:14.415792",
       "turn": 2,
       "label": "solve",
-      "score": 125772.38095238108,
+      "score": 100283.33333333327,
       "actions": [
-        "GuardMech, move C6\u2192E7",
-        "TankMech, move B5\u2192C7, fire Taurus Cannon at D7",
-        "ArtiMech, fire Artemis Artillery at F4"
+        "JetMech, move C2\u2192E4, fire Aerial Bombs at F5",
+        "IceMech, move E7\u2192C7, fire Cryo-Launcher at C4",
+        "PulseMech, fire Repulse at G4"
       ]
     },
     {
-      "timestamp": "2026-04-21T16:22:52.860069",
+      "timestamp": "2026-04-21T18:41:13.420086",
       "turn": 3,
       "label": "solve",
-      "score": 126265.71428571428,
+      "score": 79745.0,
       "actions": [
-        "GuardMech, repair",
-        "ArtiMech, move F6\u2192G8, fire Artemis Artillery at G5",
-        "TankMech, move C7\u2192F7, fire Taurus Cannon at F6"
+        "JetMech, fire Aerial Bombs at E6",
+        "PulseMech, move G4\u2192G5, fire Repulse at G5",
+        "IceMech, move D6\u2192C5, fire Cryo-Launcher at F5"
       ]
     },
     {
-      "timestamp": "2026-04-21T16:23:38.380237",
+      "timestamp": "2026-04-21T18:42:19.882968",
       "turn": 4,
       "label": "solve",
-      "score": 116431.42857142857,
+      "score": 56210.0,
       "actions": [
-        "GuardMech, move E7\u2192C6",
-        "TankMech, move F7\u2192D7",
-        "ArtiMech, move G8\u2192E7, fire Artemis Artillery at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:34:08.082630",
-      "turn": 1,
-      "label": "solve",
-      "score": 108492.85714285714,
-      "actions": [
-        "GuardMech, move D6\u2192E6",
-        "TankMech, move E5\u2192C5, fire Taurus Cannon at C4",
-        "ArtiMech, move G5\u2192G3, fire Artemis Artillery at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:34:57.544139",
-      "turn": 2,
-      "label": "solve",
-      "score": 103762.85714285714,
-      "actions": [
-        "GuardMech, move E6\u2192D6",
-        "TankMech, move C5\u2192E4, fire Taurus Cannon at F4",
-        "ArtiMech, fire Artemis Artillery at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:35:45.026576",
-      "turn": 3,
-      "label": "solve",
-      "score": 110872.85714285714,
-      "actions": [
-        "GuardMech, move D6\u2192G7",
-        "ArtiMech, move G3\u2192H5, fire Artemis Artillery at E5",
-        "TankMech, move E5\u2192G4, fire Taurus Cannon at G5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:39:11.337999",
-      "turn": 1,
-      "label": "solve",
-      "score": 125150.0,
-      "actions": [
-        "TankMech, move F6\u2192E5, fire Taurus Cannon at D5",
-        "GuardMech, move C5\u2192E6, repair",
-        "ArtiMech, move D6\u2192C4, fire Artemis Artillery at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:40:02.787318",
-      "turn": 2,
-      "label": "solve",
-      "score": 108670.47619047613,
-      "actions": [
-        "TankMech, move E5\u2192F7, fire Taurus Cannon at F6",
-        "ArtiMech, move C4\u2192E5, fire Artemis Artillery at E2",
-        "GuardMech, move E6\u2192E3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:40:57.698494",
-      "turn": 3,
-      "label": "solve",
-      "score": 117207.14285714286,
-      "actions": [
-        "TankMech, move F7\u2192E7, fire Taurus Cannon at E6",
-        "GuardMech, move E3\u2192F5, repair",
-        "ArtiMech, move D5\u2192D6, fire Artemis Artillery at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:41:46.734427",
-      "turn": 4,
-      "label": "solve",
-      "score": 117257.14285714286,
-      "actions": [
-        "GuardMech, move F5\u2192F6, repair",
-        "TankMech, move E7\u2192F8, fire Taurus Cannon at F7",
-        "ArtiMech, move D6\u2192C6, fire Artemis Artillery at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:45:18.085667",
-      "turn": 1,
-      "label": "solve",
-      "score": 118699.99999999999,
-      "actions": [
-        "TankMech, move D5\u2192E5, fire Taurus Cannon at F5",
-        "ArtiMech, move E6\u2192D5, fire Artemis Artillery at D3",
-        "GuardMech, move C6\u2192E6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:46:03.209007",
-      "turn": 2,
-      "label": "solve",
-      "score": 118949.99999999993,
-      "actions": [
-        "GuardMech",
-        "TankMech, move E5\u2192F3, fire Taurus Cannon at E3",
-        "ArtiMech, move D5\u2192E5, fire Artemis Artillery at G5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T16:46:51.323904",
-      "turn": 3,
-      "label": "solve",
-      "score": 118901.42857142857,
-      "actions": [
-        "GuardMech",
-        "TankMech, fire Taurus Cannon at G3",
-        "ArtiMech, fire Artemis Artillery at E2"
+        "JetMech, move E6\u2192E4, fire Aerial Bombs at C4",
+        "IceMech, fire Cryo-Launcher at H6",
+        "PulseMech, move G6\u2192E4, fire Repulse at E4"
       ]
     }
   ],
@@ -230,74 +120,47 @@
     [
       0,
       3
-    ],
-    [
-      1,
-      1
-    ],
-    [
-      1,
-      2
-    ],
-    [
-      2,
-      1
-    ],
-    [
-      2,
-      2
-    ],
-    [
-      2,
-      3
-    ],
-    [
-      3,
-      1
-    ],
-    [
-      3,
-      2
     ]
   ],
   "tags": [],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "pod",
+      "top_category": "terrain",
       "categories": [
-        "pod"
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "pod|Ranged_Artillerymech|attack",
+      "signature": "terrain|Brute_Jetmech|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.3,
       "context": {
-        "mech_uid": 2,
+        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 2,
+        "action_index": 0,
         "turn": 1,
-        "weapon": "Ranged_Artillerymech",
+        "weapon": "Brute_Jetmech",
         "target": [
-          4,
-          2
+          6,
+          5
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "grid_power",
+      "top_category": "status",
       "categories": [
-        "grid_power"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "grid_power|Brute_Tankmech|attack",
+      "signature": "status|Ranged_Ice|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -307,9 +170,63 @@
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Ice",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
         "action_index": 0,
         "turn": 2,
-        "weapon": "Brute_Tankmech",
+        "weapon": "Brute_Jetmech",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Ranged_Ice",
         "target": [
           2,
           2
@@ -318,13 +235,15 @@
     },
     {
       "version": 1,
-      "top_category": "grid_power",
+      "top_category": "status",
       "categories": [
-        "grid_power"
+        "status",
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "grid_power|Unknown|attack",
+      "signature": "status|Brute_Jetmech|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -336,52 +255,164 @@
         "sub_action": "attack",
         "action_index": 0,
         "turn": 3,
-        "weapon": "Unknown",
+        "weapon": "Brute_Jetmech",
         "target": [
-          255,
-          255
+          2,
+          3
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "grid_power",
+      "top_category": "status",
       "categories": [
-        "grid_power"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "grid_power|Brute_Tankmech|attack",
+      "signature": "status|Brute_Jetmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Brute_Jetmech|attack",
       "frequency": 1,
       "asymmetry": [],
       "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
       "proposed_tier": 2,
-      "confidence": 0.7,
+      "confidence": 0.8,
       "context": {
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 1,
-        "turn": 3,
-        "weapon": "Brute_Tankmech",
+        "turn": 4,
+        "weapon": "Ranged_Ice",
+        "target": [
+          2,
+          0
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Repulse|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Science_Repulse",
         "target": [
           4,
-          1
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "damage_amount",
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Science_Repulse",
+        "target": [
+          4,
+          3
         ]
       }
     }
   ],
   "disabled_actions": [
     {
-      "weapon_id": "Brute_Tankmech",
-      "cause_pattern": "grid_power|Brute_Tankmech|attack",
-      "expires_turn": 6,
+      "weapon_id": "Ranged_Ice",
+      "cause_pattern": "status|Ranged_Ice|attack",
+      "expires_turn": 7,
       "strategic_override": false
     }
   ],
   "research_queue": [
     {
-      "type": "GuardMech",
+      "type": "JetMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
@@ -392,7 +423,7 @@
       "result": null
     },
     {
-      "type": "TankMech",
+      "type": "IceMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
@@ -403,12 +434,23 @@
       "result": null
     },
     {
-      "type": "ArtiMech",
+      "type": "PulseMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "Terraformer",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 4,
       "attempts": 0,
       "status": "pending",
       "result": null
