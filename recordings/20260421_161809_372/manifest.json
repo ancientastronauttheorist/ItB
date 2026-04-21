@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-2ea2a93",
+  "solver_version": "rust-0.1.0-fee44ff",
   "weight_version": "v009",
-  "updated": "2026-04-21T16:43:47.210296",
+  "updated": "2026-04-21T16:48:49.058446",
   "created": "2026-04-21T16:18:09.401744",
   "missions": [],
-  "outcome": "win",
-  "outcome_mission": 2,
-  "outcome_recorded_at": "2026-04-21T16:43:47.197055",
-  "outcome_notes": "Thunderbolt Grid: Earth Mover \u2713, Batteries \u26a1 \u2713, Spawn-block x3 \u2717. Rep 2\u21923. Pinnacle +7, Third +2. Grid 5\u21924 on finale prep. No solver crashes; phantom-attack guard silenced properly."
+  "outcome": "loss",
+  "outcome_mission": 3,
+  "outcome_recorded_at": "2026-04-21T16:48:49.042701",
+  "outcome_notes": "R.S.T. run: won Weather Watch (\u26a1\u26a1\u2605 2/3 \u2014 Time Pod failed), Countdown Ridge (\u2605/\u2605\u2605), Thunderbolt Grid (\u2605\u26a1). Rep 3. Died at Disintegration Flats (4th mission, grid hit 0). Turn 3 had a -448k re-solve that recovered to 102k \u2014 some kind of mid-turn cascade. 3948 civilians, 30m07s. All patches from this session ran cleanly: auto_turn 45s poll, phantom-attack guard (fired for Leaper1 \u2014 Lua fallback didn't catch it), spawn penalty, silenced warnings."
 }

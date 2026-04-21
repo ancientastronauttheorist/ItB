@@ -1,0 +1,7 @@
+{
+  "mission_index": 3,
+  "mission_name": "",
+  "result": "loss",
+  "notes": "R.S.T. run: won Weather Watch (\u26a1\u26a1\u2605 2/3 \u2014 Time Pod failed), Countdown Ridge (\u2605/\u2605\u2605), Thunderbolt Grid (\u2605\u26a1). Rep 3. Died at Disintegration Flats (4th mission, grid hit 0). Turn 3 had a -448k re-solve that recovered to 102k \u2014 some kind of mid-turn cascade. 3948 civilians, 30m07s. All patches from this session ran cleanly: auto_turn 45s poll, phantom-attack guard (fired for Leaper1 \u2014 Lua fallback didn't catch it), spawn penalty, silenced warnings.",
+  "recorded_at": "2026-04-21T16:48:49.042248"
+}
