@@ -9,6 +9,7 @@ This module provides:
 
 from __future__ import annotations
 
+import os
 import sys
 from dataclasses import dataclass, field
 from src.model.board import Board, Unit
@@ -295,12 +296,15 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
             # See CLAUDE.md §21 grid-drop investigation gate.
             if getattr(enemy, "has_queued_attack", False):
                 dmg = enemy.weapon_damage if enemy.weapon_damage > 0 else 1
-                print(
-                    f"WARN: Vek {enemy.uid} ({enemy.type}) "
-                    f"has_queued_attack=true but no target — "
-                    f"applying conservative damage",
-                    file=sys.stderr,
-                )
+                # Warning suppressed in hot path — see enemy.rs note.
+                # Re-enable with ITB_LOG_PHANTOM_ATTACK=1.
+                if os.environ.get("ITB_LOG_PHANTOM_ATTACK"):
+                    print(
+                        f"WARN: Vek {enemy.uid} ({enemy.type}) "
+                        f"has_queued_attack=true but no target — "
+                        f"applying conservative damage",
+                        file=sys.stderr,
+                    )
                 # Nearest building (Chebyshev distance).
                 best = None
                 best_d = 999

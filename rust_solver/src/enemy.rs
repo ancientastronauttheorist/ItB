@@ -262,9 +262,16 @@ pub fn simulate_enemy_attacks(
                         }
                     }
                 }
-                eprintln!(
-                    "WARN: Vek {} ({}) has_queued_attack=true but no target — applying conservative damage",
-                    uid, type_str);
+                // Warning suppressed in hot path — solver evaluates this hundreds of
+                // thousands of times per turn and the log becomes unreadable. The
+                // diagnostic value is preserved via the phantom-damage effect on the
+                // score, which the tuner / replay will surface. Re-enable by setting
+                // ITB_LOG_PHANTOM_ATTACK=1.
+                if std::env::var("ITB_LOG_PHANTOM_ATTACK").is_ok() {
+                    eprintln!(
+                        "WARN: Vek {} ({}) has_queued_attack=true but no target — applying conservative damage",
+                        uid, type_str);
+                }
                 if let Some((bx, by, _)) = best {
                     let tile = board.tile_mut(bx, by);
                     let old_hp = tile.building_hp;
