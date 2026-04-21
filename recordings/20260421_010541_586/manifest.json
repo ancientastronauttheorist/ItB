@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_010541_586",
+  "squad": "Random Balanced (Aegis+Charge+Artillery)",
+  "difficulty": 3,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-e3be28a",
+  "weight_version": "v009",
+  "updated": "2026-04-21T01:35:42.184358",
+  "created": "2026-04-21T01:05:41.605169",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T01:35:42.170100",
+  "outcome_notes": "Retrospect Park (Archive) \u2014 Coal Plant + Time Pod saved. Lost Charge + Artillery to mines (proximity mines on deploy zone tiles)."
+}
