@@ -1,7 +1,7 @@
 {
   "mission_index": 0,
   "mission_name": "",
-  "result": "win",
-  "notes": "The Pasture: ALL bonuses \u2014 Defend Tanks (\u2605\u2605) + Protect Coal Plant (\u26a1). Rep 1\u21923. Ralph 22/25, Pinnacle 5/25. Auto_turn patch running cleanly \u2014 45s poll correctly handles enemy animations and detects mission end.",
-  "recorded_at": "2026-04-21T14:43:58.739097"
+  "result": "loss",
+  "notes": "Corporate HQ (Archive finale): TIMELINE LOST \u2014 grid hit 0. Run ended after 4 successful missions (Martial District, The Library, Excavation Site full-bonus, The Pasture full-bonus). Arrived at finale with 1/7 grid, couldn't absorb the Hornet Leader pressure. 5178 civilians saved across run. HornetBoss name registered to data/known_types.json during this run (same AcidVat-style fix). click_balanced_roll + auto_turn 45s poll patch both worked as designed.",
+  "recorded_at": "2026-04-21T14:52:48.754577"
 }

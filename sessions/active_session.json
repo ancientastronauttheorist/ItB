@@ -15,26 +15,26 @@
         "mech_uid": 0,
         "mech_type": "MirrorMech",
         "move_to": [
-          4,
+          3,
           4
         ],
-        "weapon": "Brute_Mirrorshot",
+        "weapon": "Unknown",
         "target": [
-          4,
-          5
+          255,
+          255
         ],
-        "description": "MirrorMech, move D7\u2192D4, fire Mirror Shot at C4"
+        "description": "MirrorMech, move C5\u2192D5"
       },
       {
         "mech_uid": 1,
         "mech_type": "IceMech",
         "move_to": [
-          1,
+          2,
           2
         ],
         "weapon": "_REPAIR",
         "target": [
-          1,
+          2,
           2
         ],
         "description": "IceMech, repair"
@@ -43,18 +43,18 @@
         "mech_uid": 2,
         "mech_type": "ScienceMech",
         "move_to": [
-          2,
-          5
+          5,
+          4
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Science_Pullmech",
         "target": [
-          2,
-          5
+          5,
+          2
         ],
-        "description": "ScienceMech, move B7\u2192C6, repair"
+        "description": "ScienceMech, move E1\u2192D3, fire Attract Shot at F3"
       }
     ],
-    "score": 98886.42857142857,
+    "score": -482250.0,
     "turn": 4
   },
   "actions_executed": 0,
@@ -230,6 +230,50 @@
         "MirrorMech, move D7\u2192D4, fire Mirror Shot at C4",
         "IceMech, repair",
         "ScienceMech, move B7\u2192C6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:48:10.047660",
+      "turn": 1,
+      "label": "solve",
+      "score": 90100.0,
+      "actions": [
+        "IceMech, move E5\u2192F7, fire Cryo-Launcher at F4",
+        "MirrorMech, move C5\u2192B7, fire Mirror Shot at C7",
+        "ScienceMech, move F6\u2192G3, fire Attract Shot at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:48:59.204415",
+      "turn": 2,
+      "label": "solve",
+      "score": 101993.33333333328,
+      "actions": [
+        "MirrorMech, move B7\u2192B5, fire Mirror Shot at C5",
+        "IceMech, move G7\u2192D7",
+        "ScienceMech, move G3\u2192G2, fire Attract Shot at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:49:55.190016",
+      "turn": 3,
+      "label": "solve",
+      "score": 71609.28571428571,
+      "actions": [
+        "MirrorMech, move B5\u2192C5, fire Mirror Shot at B5",
+        "IceMech, move D7\u2192F6, fire Cryo-Launcher at F4",
+        "ScienceMech, move G2\u2192E1, fire Attract Shot at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:50:53.436628",
+      "turn": 4,
+      "label": "solve",
+      "score": -482250.0,
+      "actions": [
+        "MirrorMech, move C5\u2192D5",
+        "IceMech, repair",
+        "ScienceMech, move E1\u2192D3, fire Attract Shot at F3"
       ]
     }
   ],
@@ -911,6 +955,87 @@
           5
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 7,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Ice",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Science_Pullmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Pullmech",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 8,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Ranged_Ice",
+        "target": [
+          4,
+          2
+        ]
+      }
     }
   ],
   "disabled_actions": [
@@ -922,7 +1047,7 @@
     },
     {
       "weapon_id": "Science_Pullmech",
-      "cause_pattern": "death|Science_Pullmech|attack",
+      "cause_pattern": "death|Science_Pullmech|attack|push_dir|Science_Pullmech|attack",
       "expires_turn": 5,
       "strategic_override": false
     },
@@ -1011,6 +1136,49 @@
       "attempts": 0,
       "status": "resolved",
       "result": null
+    },
+    {
+      "type": "HornetBoss",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Hornet Leader",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "damages_mountain",
+              "flying",
+              "boss",
+              "dies_in_forest"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Hornet Leader",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hornet+Leader",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hornet+Leader&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "5a0036acb569",
+      "last_kind": "enemy"
     }
   ]
 }
