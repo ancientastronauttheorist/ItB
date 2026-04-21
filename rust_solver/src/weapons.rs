@@ -255,8 +255,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[2] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 3: Prime_Lasermech — Burst Beam
     w[3] = WeaponDef { weapon_type: WeaponType::Laser, damage: 3, range_max: 0, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
-    // 4: Prime_ShieldBash — Shield Bash
-    w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
+    // 4: Prime_ShieldBash — Spartan Shield (passive self-effect).
+    // Empirically does 0 damage and no push: bridge dispatches it with target
+    // (255,255) = no-target sentinel, and every desync shows target alive +
+    // attacker HP unchanged (see recordings/failure_db.jsonl). Kept as Melee so
+    // adjacency constraints still hold, but effectively a no-op for enemies.
+    w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::None, flags: C, ..DEF };
     // 5: Prime_Shift — Vice Fist (grab and toss target to tile behind attacker)
     w[5] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Throw, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 6: Prime_Flamethrower — Flamethrower

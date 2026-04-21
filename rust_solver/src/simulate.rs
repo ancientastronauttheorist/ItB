@@ -910,8 +910,10 @@ pub fn simulate_weapon_with(
         _ => {} // Passive, Deploy, TwoClick — no simulation
     }
 
-    // Self damage
-    if wdef.self_damage > 0 {
+    // Self damage. Skipped for Charge weapons — sim_charge applies it inline
+    // only when the charge actually hits a target (empty-tile charges take no
+    // recoil in the game, but the solver used to over-predict HP by 1).
+    if wdef.self_damage > 0 && wdef.weapon_type != WeaponType::Charge {
         let ax = board.units[attacker_idx].x;
         let ay = board.units[attacker_idx].y;
         apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
@@ -1205,12 +1207,18 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
     board.units[attacker_idx].x = last_free.0;
     board.units[attacker_idx].y = last_free.1;
 
-    // Damage hit target
+    // Damage hit target. Self-damage is only taken on impact (empty-tile
+    // charges deal no recoil — see outer simulate() for the Charge skip).
     if let Some((hx, hy)) = hit {
         apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
         apply_weapon_status(board, hx, hy, wdef); // status BEFORE push
         if wdef.push == PushDir::Forward {
             apply_push(board, hx, hy, dir, result);
+        }
+        if wdef.self_damage > 0 {
+            let ax = board.units[attacker_idx].x;
+            let ay = board.units[attacker_idx].y;
+            apply_damage(board, ax, ay, wdef.self_damage, result, DamageSource::SelfDamage);
         }
     }
 }

@@ -629,8 +629,9 @@ def simulate_weapon(
     elif wdef.weapon_type == "heal_all":
         _sim_heal_all(board, result)
 
-    # Self damage
-    if wdef.self_damage > 0:
+    # Self damage. Charge weapons handle self_damage inside _sim_charge so it
+    # only applies on impact (empty-tile charges take no recoil in-game).
+    if wdef.self_damage > 0 and wdef.weapon_type != "charge":
         apply_damage(board, attacker.x, attacker.y, wdef.self_damage, result, "self")
 
     # Push self backward
@@ -860,11 +861,14 @@ def _sim_charge(board, attacker, wdef, attack_dir, result):
     # Move attacker to last free tile
     attacker.x, attacker.y = last_free_x, last_free_y
 
-    # Deal damage to hit target
+    # Deal damage to hit target. Self-damage is only taken on impact — empty-
+    # tile charges deal no recoil (see caller's self_damage skip for Charge).
     if hit_x >= 0:
         apply_damage(board, hit_x, hit_y, wdef.damage, result)
         if wdef.push == "forward":
             apply_push(board, hit_x, hit_y, attack_dir, result)
+        if wdef.self_damage > 0:
+            apply_damage(board, attacker.x, attacker.y, wdef.self_damage, result, "self")
 
 
 def _sim_leap(board, attacker, wdef, tx, ty, result):

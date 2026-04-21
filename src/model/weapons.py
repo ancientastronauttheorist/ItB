@@ -104,10 +104,10 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_b="+1 starting damage (total 4)",
     ),
     "Prime_ShieldBash": WeaponDef(
-        name="Shield Bash", weapon_type="melee",
-        damage=2, push="flip",
+        name="Spartan Shield", weapon_type="melee",
+        damage=0, push="none",
         upgrade_a="shield self before attack",
-        upgrade_b="+1 damage (total 3)",
+        upgrade_b="+1 damage (total 1)",
     ),
     "Prime_Shift": WeaponDef(
         name="Vice Fist", weapon_type="melee",

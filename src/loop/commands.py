@@ -43,6 +43,7 @@ from src.bridge.writer import (
 )
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
+from src.loop import weapon_penalty_log
 
 SNAPSHOT_DIR = Path(__file__).parent.parent.parent / "snapshots"
 SAVE_DIR = Path.home() / "Library" / "Application Support" / "IntoTheBreach"
@@ -3275,6 +3276,7 @@ def _maybe_soft_disable(
     turn: int,
     fired: list[dict],
     window: int = 3,
+    run_id: str | None = None,
 ) -> None:
     """Apply the Tier 2 response if the signal proposes it.
 
@@ -3304,6 +3306,12 @@ def _maybe_soft_disable(
         "frequency": signal.get("frequency"),
         "new_entry": added,
     })
+    # Persist cross-run: only on first firing in this session so one bad run
+    # doesn't multi-count the same signature.
+    if added:
+        weapon_penalty_log.record_soft_disable(
+            signature=cause, weapon_id=weapon, run_id=run_id or "",
+        )
 
 
 def _log_sub_action_desync(
@@ -3577,11 +3585,15 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             "weapon": action.weapon,
                             "target": list(action.target),
                         },
-                        prior_events=session.failure_events_this_run,
+                        prior_events=(
+                            weapon_penalty_log.synthetic_prior_events()
+                            + session.failure_events_this_run
+                        ),
                     )
                     session.failure_events_this_run.append(fuzzy_signal)
                     _maybe_soft_disable(session, fuzzy_signal, turn,
-                                        fired=soft_disables_fired_this_turn)
+                                        fired=soft_disables_fired_this_turn,
+                                        run_id=session.run_id)
                     _enqueue_behavior_novelty(session, diff, turn)
                     _log_sub_action_desync(
                         session, "move", actions_completed, mech_uid,
@@ -3681,7 +3693,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 )
                 session.failure_events_this_run.append(fuzzy_signal)
                 _maybe_soft_disable(session, fuzzy_signal, turn,
-                                    fired=soft_disables_fired_this_turn)
+                                    fired=soft_disables_fired_this_turn,
+                                    run_id=session.run_id)
                 _enqueue_behavior_novelty(session, diff, turn)
                 _log_sub_action_desync(
                     session, "attack", actions_completed, mech_uid,

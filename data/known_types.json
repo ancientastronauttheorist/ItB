@@ -342,7 +342,8 @@
     "TotemB",
     "Train_Damaged",
     "Train_Pawn",
-    "Volatile_Vek"
+    "Volatile_Vek",
+    "Disposal_Unit"
   ],
   "observed_weapons": [
     "Acid_Tank_Attack",
@@ -386,7 +387,8 @@
     "TotemAtk1",
     "TotemAtk2",
     "TotemAtkB",
-    "Train_Move"
+    "Train_Move",
+    "Disposal_Attack"
   ],
   "known_phases": [
     "between_missions",
