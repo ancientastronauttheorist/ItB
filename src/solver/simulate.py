@@ -31,6 +31,28 @@ class ActionResult:
     events: list[str] = field(default_factory=list)
 
 
+def _apply_volatile_decay(board: Board, x: int, y: int,
+                          result: ActionResult) -> None:
+    """Volatile Vek's Explosive Decay: 1 damage to all 4 adjacent tiles
+    when it dies, for any cause (weapon, push-to-deadly, mine).
+
+    Bump-class damage — ignores armor and ACID, same rules the game
+    applies. Per ``data/vek.json`` #262, damage is 1 for the base-game
+    Volatile Vek.
+
+    Chain-kills (this decay kills an adjacent Volatile Vek) resolve
+    naturally through ``apply_damage``'s own kill hook — we don't need
+    manual recursion here. The cap prevents infinite loops in the
+    unlikely case that the chain cycles back through this tile.
+    """
+    result.events.append(f"Volatile decay at ({x},{y})")
+    for dx, dy in DIRS:
+        nx, ny = x + dx, y + dy
+        if not board.in_bounds(nx, ny):
+            continue
+        apply_damage(board, nx, ny, 1, result, "bump")
+
+
 def _apply_death_explosion(board: Board, x: int, y: int, dead_type: str,
                            result: ActionResult, depth: int = 0) -> None:
     """Apply Blast Psion death explosion: 1 damage to all 4 adjacent tiles.
@@ -164,6 +186,13 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
                                         result.events.append(
                                             f"{other.type} killed by Soldier Psion death"
                                         )
+                    # Volatile Vek's Explosive Decay — unit-intrinsic, fires
+                    # regardless of any aura. Runs before the Blast Psion
+                    # explosion so a volatile death that leaves an adjacent
+                    # Psion-tagged enemy dead still chains through the other
+                    # helper's check.
+                    if was_alive and "Volatile_Vek" in unit.type:
+                        _apply_volatile_decay(board, x, y, result)
                     # Blast Psion death explosion: all Vek explode on death
                     if (was_alive and board.blast_psion_active
                             and unit.type != "Jelly_Explode1"):
@@ -481,6 +510,10 @@ def apply_push(board: Board, x: int, y: int, direction: int,
         unit.hp = 0
         if unit.is_enemy:
             result.enemies_killed += 1
+            # Volatile Vek explodes on any death (unit-intrinsic), fires
+            # first so chain-kill logic sees consistent adjacency state.
+            if "Volatile_Vek" in unit.type:
+                _apply_volatile_decay(board, nx, ny, result)
             # Blast Psion: Vek dying in deadly terrain also explodes
             if (board.blast_psion_active
                     and unit.type != "Jelly_Explode1"):
@@ -512,6 +545,8 @@ def apply_push(board: Board, x: int, y: int, direction: int,
             tile_dest.old_earth_mine = False
             if unit.is_enemy:
                 result.enemies_killed += 1
+                if "Volatile_Vek" in unit.type:
+                    _apply_volatile_decay(board, nx, ny, result)
                 if (board.blast_psion_active
                         and unit.type != "Jelly_Explode1"):
                     _apply_death_explosion(board, nx, ny, unit.type, result)

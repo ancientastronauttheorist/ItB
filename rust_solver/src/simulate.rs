@@ -13,6 +13,46 @@ use crate::movement::{direction_between, cardinal_direction};
 /// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
 /// Called when an enemy Vek dies while Blast Psion is alive on the board.
 /// Handles chain reactions (explosion kills another Vek → another explosion).
+/// Volatile Vek's "Explosive Decay": 1 damage to all 4 adjacent tiles
+/// when it dies, for any cause. Bump-class damage (ignores armor, acid,
+/// shield, frozen — same rules the game applies to Volatile Guts).
+///
+/// Per `data/vek.json` #262 the base-game Volatile Vek explodes for 1
+/// damage. Matches the Blast Psion aura in shape but is unit-intrinsic
+/// rather than aura-conditional — ``apply_damage``'s "track then check"
+/// pattern doesn't need re-entry protection here because the helper
+/// calls ``apply_damage_core`` directly (which doesn't re-trigger this
+/// helper). A ``depth`` cap still covers the chain-of-volatiles case
+/// where one explosion kills an adjacent volatile vek.
+fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
+    if depth > 8 { return; }
+
+    for &(dx, dy) in &DIRS {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if nx < 0 || nx >= 8 || ny < 0 || ny >= 8 { continue; }
+        let nx = nx as u8;
+        let ny = ny as u8;
+
+        // Track adjacent Volatile Vek for the chain check — if this 1
+        // damage kills one, it explodes too.
+        let chain_idx = board.unit_at(nx, ny).and_then(|idx| {
+            let u = &board.units[idx];
+            if u.is_enemy() && u.hp > 0 && u.type_name_str().contains("Volatile_Vek") {
+                Some(idx)
+            } else { None }
+        });
+
+        apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
+
+        if let Some(idx) = chain_idx {
+            if board.units[idx].hp <= 0 {
+                apply_volatile_decay(board, nx, ny, result, depth + 1);
+            }
+        }
+    }
+}
+
 fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
     if depth > 8 { return; } // safety limit for chain reactions
 
@@ -360,12 +400,13 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
     }
 }
 
-/// Apply damage to whatever is at (x, y), including Blast Psion death explosions.
+/// Apply damage to whatever is at (x, y), including Blast Psion death
+/// explosions and Volatile Vek decay.
 /// Source: Bump/Fire bypass armor and acid. Normal/Self respects them.
 pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
 
-    // Pre-check: track alive non-Psion enemy for death explosion
+    // Pre-check: track alive non-Psion enemy for Blast Psion death explosion.
     let death_check = if board.blast_psion {
         board.unit_at(x, y).and_then(|idx| {
             let u = &board.units[idx];
@@ -375,8 +416,25 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
         })
     } else { None };
 
+    // Pre-check: track Volatile Vek for Explosive Decay (unit-intrinsic, no aura dep).
+    let volatile_check = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.is_enemy() && u.hp > 0 && u.type_name_str().contains("Volatile_Vek") {
+            Some(idx)
+        } else { None }
+    });
+
     // Apply core damage
     apply_damage_core(board, x, y, damage, result, source);
+
+    // Volatile Vek decay fires first — it's a tier-0 unit effect. If the
+    // ensuing damage kills a Blast Psion–tagged enemy that was adjacent,
+    // the second helper will still see it dead and chain correctly.
+    if let Some(idx) = volatile_check {
+        if board.units[idx].hp <= 0 {
+            apply_volatile_decay(board, x, y, result, 0);
+        }
+    }
 
     // Blast Psion death explosion: if tracked enemy just died, explode
     if let Some(idx) = death_check {
@@ -669,10 +727,15 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         let has_acid = board.units[unit_idx].acid();
         let can_explode = is_enemy && board.blast_psion
             && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
+        let is_volatile = is_enemy
+            && board.units[unit_idx].type_name_str().contains("Volatile_Vek");
         let unit = &mut board.units[unit_idx];
         unit.hp = 0;
         if is_enemy {
             result.enemies_killed += 1;
+            if is_volatile {
+                apply_volatile_decay(board, nx, ny, result, 0);
+            }
             if can_explode {
                 apply_death_explosion(board, nx, ny, result, 0);
             }
@@ -691,9 +754,14 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
             let is_enemy = board.units[unit_idx].is_enemy();
             let can_explode = is_enemy && board.blast_psion
                 && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
+            let is_volatile = is_enemy
+                && board.units[unit_idx].type_name_str().contains("Volatile_Vek");
             board.units[unit_idx].hp = 0;
             if is_enemy {
                 result.enemies_killed += 1;
+                if is_volatile {
+                    apply_volatile_decay(board, nx, ny, result, 0);
+                }
                 if can_explode {
                     apply_death_explosion(board, nx, ny, result, 0);
                 }
