@@ -29,7 +29,7 @@ cd rust_solver && maturin build --release && \
 
 ## Execution Model
 
-**Default combat mode: `auto_turn`.** A single `game_loop.py auto_turn` call reads board, solves, executes every mech action via bridge (move → verify → attack → verify, re-solving on desync), and emits an End Turn click plan. It *polls the bridge internally* for the enemy→player transition (up to 20s) at entry, so you don't burn LLM round-trips on "Not in combat_player" retries.
+**Default combat mode: `auto_turn`.** A single `game_loop.py auto_turn` call reads board, solves, executes every mech action via bridge (move → verify → attack → verify, re-solving on desync), and emits an End Turn click plan. It *polls the bridge internally* for the enemy→player transition (up to 45s by default) at entry, waiting for both `phase == combat_player` **and** `active_mechs > 0` — the animation window after End Turn flips phase early but leaves mechs inactive, so checking phase alone falsely proceeds into "No active mechs" errors.
 
 **Typical turn = 2 LLM rounds:** `auto_turn` → click End Turn → `auto_turn` (blocks in Python until next player turn) → click End Turn → ...
 
@@ -130,7 +130,7 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 - Recordings from `read`/`solve` land in `recordings/<run_id>/m<NN>_turn_<NN>_<label>.json`. Dedup guard prevents duplicate `(mission, turn)` pairs.
 
 **Combat execution:**
-- `auto_turn [--time-limit N] [--no-wait] [--max-wait S]` — Full turn via bridge with per-sub-action verification. Polls at entry for `combat_player` phase (up to `--max-wait` seconds; disable with `--no-wait`). Returns an MCP click plan for End Turn. On desync, re-solves from actual board with partial mech states (DONE = inactive, MID_ACTION = can_move=false, ACTIVE = full search).
+- `auto_turn [--time-limit N] [--no-wait] [--max-wait S]` — Full turn via bridge with per-sub-action verification. Polls at entry for `combat_player` phase **and** `active_mechs > 0` (up to `--max-wait` seconds, default 45; disable with `--no-wait`). Returns an MCP click plan for End Turn. On desync, re-solves from actual board with partial mech states (DONE = inactive, MID_ACTION = can_move=false, ACTIVE = full search).
 - `click_action <i>` — Pure planner for manual play. Emits a `computer_batch`-ready sequence for ONE mech action (select-tile, optional move, weapon icon, target). Handles dash weapons (skip move click), Repair (click Repair button), passives (no-op).
 - `click_end_turn` — Pure planner. Emits a single click on End Turn.
 - `click_balanced_roll` — Pure planner. Emits a single click on the Balanced Roll button on the squad-select screen. Dispatch before clicking Start so a Balanced Roll (unique mech classes, ≤4 weapons total) is seeded instead of the default squad.

@@ -309,8 +309,9 @@ def main():
                              help="Solver time limit (default: 10s)")
     p_auto_turn.add_argument("--no-wait", action="store_true",
                              help="Don't poll bridge for combat_player at entry")
-    p_auto_turn.add_argument("--max-wait", type=float, default=20.0,
-                             help="Seconds to poll enemy→player transition (default: 20)")
+    p_auto_turn.add_argument("--max-wait", type=float, default=45.0,
+                             help="Seconds to poll enemy→player transition "
+                                  "(default: 45 — covers Hard-difficulty enemy animations)")
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",

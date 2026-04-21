@@ -3527,7 +3527,7 @@ def _log_sub_action_desync(
 
 
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
-                  wait_for_turn: bool = True, max_wait: float = 20.0) -> dict:
+                  wait_for_turn: bool = True, max_wait: float = 45.0) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -3558,24 +3558,50 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     # 1. Read state — with optional phase polling. If enemy phase is still
     #    animating from the previous End Turn click, block here instead of
     #    bouncing back to Claude with "Not in combat_player phase".
+    #
+    # Two signals must both clear before we solve:
+    #   (a) phase == combat_player
+    #   (b) active_mechs > 0 (or no mechs left alive — a terminal state)
+    # The bridge flips (a) as soon as the logical turn starts, but (b) only
+    # resets once enemy animations finish playing — that gap is 10–30s on
+    # Hard difficulty. Solving inside the gap produces "No active mechs —
+    # all have acted this turn" and does nothing. See
+    # `feedback_enemy_turn_animation_window.md`.
+    def _ready(rr: dict) -> bool:
+        if rr.get("phase") != "combat_player":
+            return False
+        # If no mechs alive, caller needs to handle (mission will end) —
+        # treat as ready so we exit the poll and report accurately.
+        if "active_mechs" not in rr:
+            return True
+        return rr["active_mechs"] > 0
+
     if wait_for_turn:
         import time as _t
         poll_start = _t.time()
         read_result = cmd_read(profile=profile)
-        phase = read_result.get("phase")
-        while phase != "combat_player" and _t.time() - poll_start < max_wait:
+        while not _ready(read_result) and _t.time() - poll_start < max_wait:
+            phase = read_result.get("phase")
             # Terminal states — don't keep polling.
             if read_result.get("game_over") or phase in ("mission_end", "unknown"):
                 break
             _t.sleep(1.5)
             read_result = cmd_read(profile=profile)
-            phase = read_result.get("phase")
     else:
         read_result = cmd_read(profile=profile)
 
     phase = read_result.get("phase")
     if phase != "combat_player":
         result = {"error": f"Not in combat_player phase: {phase}", "phase": phase}
+        _print_result(result)
+        return result
+    if read_result.get("active_mechs", 1) == 0:
+        result = {
+            "error": "No active mechs after polling — animations still playing "
+                     f"or all mechs dead. Waited {max_wait}s.",
+            "phase": phase,
+            "active_mechs": 0,
+        }
         _print_result(result)
         return result
 
