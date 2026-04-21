@@ -1,0 +1,7 @@
+{
+  "mission_index": 0,
+  "mission_name": "",
+  "result": "win",
+  "notes": "Martial District: Protect Batteries \u26a1 succeeded, Kill 7 \u2605 failed (2/7), Science Mech pilot KIA, 1500 civilians. Noted bridge active=False latency after End Turn clicks \u2014 bridge state lags UI transition, misleadingly reports 'no active mechs' mid-transition.",
+  "recorded_at": "2026-04-21T14:11:51.289806"
+}

@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_135801_843",
+  "squad": "Random Balanced (Mirror+Ice+Defense)",
+  "difficulty": 2,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-26e5c78",
+  "weight_version": "v009",
+  "updated": "2026-04-21T14:11:51.309982",
+  "created": "2026-04-21T13:58:01.862614",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T14:11:51.290304",
+  "outcome_notes": "Martial District: Protect Batteries \u26a1 succeeded, Kill 7 \u2605 failed (2/7), Science Mech pilot KIA, 1500 civilians. Noted bridge active=False latency after End Turn clicks \u2014 bridge state lags UI transition, misleadingly reports 'no active mechs' mid-transition."
+}
