@@ -1,6 +1,6 @@
 {
-  "run_id": "20260421_015818_989",
-  "squad": "Random Balanced (Aegis+Charge+Defense)",
+  "run_id": "20260421_121854_923",
+  "squad": "Random Balanced (Judo+Siege+Gravity)",
   "achievement_targets": [],
   "difficulty": 4,
   "current_island": "",
@@ -13,34 +13,48 @@
     "actions": [
       {
         "mech_uid": 0,
-        "mech_type": "GuardMech",
+        "mech_type": "JudoMech",
         "move_to": [
-          6,
-          4
+          3,
+          3
         ],
-        "weapon": "Prime_ShieldBash",
+        "weapon": "Unknown",
         "target": [
-          5,
-          4
+          255,
+          255
         ],
-        "description": "GuardMech, move E2\u2192D2, fire Shield Bash at D3"
+        "description": "JudoMech"
       },
       {
         "mech_uid": 1,
-        "mech_type": "ChargeMech",
+        "mech_type": "DStrikeMech",
         "move_to": [
-          2,
+          5,
           4
         ],
-        "weapon": "Brute_Beetle",
+        "weapon": "Unknown",
         "target": [
-          2,
-          5
+          255,
+          255
         ],
-        "description": "ChargeMech, fire Ramming Engines at C6"
+        "description": "DStrikeMech, move D5\u2192D3"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "GravMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Science_Gravwell",
+        "target": [
+          3,
+          1
+        ],
+        "description": "GravMech, move F6\u2192D5, fire Grav Well at G5"
       }
     ],
-    "score": -520950.00178813934,
+    "score": -434950.0,
     "turn": 4
   },
   "actions_executed": 0,
@@ -50,45 +64,212 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-21T02:03:12.704429",
+      "timestamp": "2026-04-21T12:22:04.485531",
       "turn": 1,
       "label": "solve",
-      "score": 136914.2857142857,
+      "score": 125600.0,
       "actions": [
-        "GuardMech, move E5\u2192F3, fire Shield Bash at G3",
-        "ScienceMech, move D6\u2192E3, fire Attract Shot at B3",
-        "ChargeMech, fire Ramming Engines at E6"
+        "DStrikeMech, move F5\u2192D6, fire Cluster Artillery at D3",
+        "GravMech, move G6\u2192F5, fire Grav Well at D5",
+        "JudoMech, move E5\u2192D2, fire Vice Fist at C2"
       ]
     },
     {
-      "timestamp": "2026-04-21T02:04:18.055816",
+      "timestamp": "2026-04-21T12:23:12.113486",
       "turn": 2,
       "label": "solve",
-      "score": -16951.43035956793,
+      "score": 122946.6666666666,
       "actions": [
-        "GuardMech, fire Shield Bash at F2",
-        "ChargeMech, move D6\u2192E6, fire Ramming Engines at D6",
-        "ScienceMech, fire Attract Shot at E4"
+        "DStrikeMech, move D6\u2192F7, fire Cluster Artillery at F3",
+        "JudoMech, move F6\u2192E5, fire Vice Fist at F5",
+        "GravMech, move E2\u2192B1, fire Grav Well at B3"
       ]
     },
     {
-      "timestamp": "2026-04-21T02:04:54.259212",
+      "timestamp": "2026-04-21T12:24:29.553233",
       "turn": 3,
       "label": "solve",
-      "score": 43564.28392614637,
+      "score": 104940.71428571429,
       "actions": [
-        "GuardMech, move F3\u2192E2",
-        "ChargeMech, move A6\u2192D6, repair"
+        "JudoMech, move E5\u2192E4, fire Vice Fist at F4",
+        "DStrikeMech, move F7\u2192D6, fire Cluster Artillery at D3",
+        "GravMech, move B1\u2192D1, fire Grav Well at D3"
       ]
     },
     {
-      "timestamp": "2026-04-21T02:05:55.512742",
+      "timestamp": "2026-04-21T12:25:15.940353",
       "turn": 4,
       "label": "solve",
-      "score": -520950.00178813934,
+      "score": 111080.71428571429,
       "actions": [
-        "GuardMech, move E2\u2192D2, fire Shield Bash at D3",
-        "ChargeMech, fire Ramming Engines at C6"
+        "DStrikeMech, move D6\u2192F6, fire Cluster Artillery at F3",
+        "JudoMech, move E4\u2192E5, fire Vice Fist at F5",
+        "GravMech, move D1\u2192D3, fire Grav Well at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:28:59.317468",
+      "turn": 1,
+      "label": "solve",
+      "score": 87278.57142857143,
+      "actions": [
+        "JudoMech, move C6\u2192B3",
+        "DStrikeMech, fire Cluster Artillery at D5",
+        "GravMech, move B5\u2192A5, fire Grav Well at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:30:16.668105",
+      "turn": 2,
+      "label": "solve",
+      "score": 49018.571428571435,
+      "actions": [
+        "GravMech, move A5\u2192B5, fire Grav Well at B3",
+        "JudoMech, move B4\u2192F4, fire Vice Fist at F5",
+        "DStrikeMech, move E5\u2192F5, fire Cluster Artillery at F1"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:31:04.989137",
+      "turn": 3,
+      "label": "solve",
+      "score": 91763.57142857143,
+      "actions": [
+        "DStrikeMech, move F5\u2192F3, fire Cluster Artillery at B3",
+        "JudoMech, move F4\u2192B4",
+        "GravMech, move B5\u2192A3, fire Grav Well at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:34:21.394361",
+      "turn": 1,
+      "label": "solve",
+      "score": 115428.57142857142,
+      "actions": [
+        "JudoMech, move C6\u2192E6",
+        "DStrikeMech, move D5\u2192D6, fire Cluster Artillery at D4",
+        "GravMech"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:35:07.050596",
+      "turn": 2,
+      "label": "solve",
+      "score": 118415.23809523802,
+      "actions": [
+        "DStrikeMech, move D6\u2192E7, fire Cluster Artillery at E4",
+        "JudoMech, move E6\u2192E3",
+        "GravMech, move B5\u2192C3, fire Grav Well at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:36:40.675692",
+      "turn": 3,
+      "label": "solve",
+      "score": 71782.85714285714,
+      "actions": [
+        "GravMech, move C3\u2192E5, fire Grav Well at B5",
+        "DStrikeMech, fire Cluster Artillery at E3",
+        "JudoMech, move E3\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:37:25.867356",
+      "turn": 4,
+      "label": "solve",
+      "score": 81975.71428571429,
+      "actions": [
+        "JudoMech, move E6\u2192F7",
+        "DStrikeMech, move E7\u2192H7, fire Cluster Artillery at H2",
+        "GravMech, move E5\u2192F6, fire Grav Well at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:58:22.699573",
+      "turn": 1,
+      "label": "solve",
+      "score": 129542.85714285714,
+      "actions": [
+        "JudoMech, move D5\u2192E3",
+        "DStrikeMech, fire Cluster Artillery at C2",
+        "GravMech, move B5\u2192C5, fire Grav Well at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T12:59:15.726624",
+      "turn": 2,
+      "label": "solve",
+      "score": 122159.52380952376,
+      "actions": [
+        "JudoMech",
+        "GravMech, move C5\u2192D2, fire Grav Well at D6",
+        "DStrikeMech, move C6\u2192C5, fire Cluster Artillery at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T13:00:01.323862",
+      "turn": 3,
+      "label": "solve",
+      "score": 109112.85714285714,
+      "actions": [
+        "JudoMech, move E3\u2192D6",
+        "DStrikeMech, move C5\u2192C6, fire Cluster Artillery at F6",
+        "GravMech, move D2\u2192C5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T13:01:10.450415",
+      "turn": 4,
+      "label": "solve",
+      "score": 116117.85714285714,
+      "actions": [
+        "GravMech, move C5\u2192E4, fire Grav Well at E6",
+        "JudoMech, move D6\u2192D5",
+        "DStrikeMech, move C6\u2192D6, fire Cluster Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T13:04:49.682644",
+      "turn": 1,
+      "label": "solve",
+      "score": 121150.0,
+      "actions": [
+        "JudoMech",
+        "DStrikeMech, move F5\u2192H4, fire Cluster Artillery at E4",
+        "GravMech, move E6\u2192D3, fire Grav Well at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T13:05:38.656308",
+      "turn": 2,
+      "label": "solve",
+      "score": 107923.33333333326,
+      "actions": [
+        "JudoMech, move D5\u2192C3",
+        "DStrikeMech, move H4\u2192G5, fire Cluster Artillery at G2",
+        "GravMech, move E6\u2192D6, fire Grav Well at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T13:06:32.751617",
+      "turn": 3,
+      "label": "solve",
+      "score": 92185.0,
+      "actions": [
+        "DStrikeMech, move G5\u2192D5, fire Cluster Artillery at D2",
+        "JudoMech, move C3\u2192E5, fire Vice Fist at E6",
+        "GravMech, move D6\u2192F6, fire Grav Well at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T13:08:07.213584",
+      "turn": 4,
+      "label": "solve",
+      "score": -434950.0,
+      "actions": [
+        "JudoMech",
+        "DStrikeMech, move D5\u2192D3",
+        "GravMech, move F6\u2192D5, fire Grav Well at G5"
       ]
     }
   ],
@@ -110,18 +291,47 @@
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "death",
+      "top_category": "damage_amount",
       "categories": [
         "damage_amount",
-        "death"
+        "spawn",
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "death|Prime_ShieldBash|attack",
+      "signature": "damage_amount|Ranged_Defensestrike|attack",
       "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "terrain",
+        "tile_status"
       ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Shift|attack",
+      "frequency": 0,
+      "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
@@ -129,29 +339,26 @@
         "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_ShieldBash",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Prime_Shift",
         "target": [
-          5,
-          1
+          3,
+          2
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "death",
+      "top_category": "push_dir",
       "categories": [
-        "damage_amount",
-        "death"
+        "push_dir"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "death|Science_Pullmech|attack",
+      "signature": "push_dir|Science_Gravwell|attack",
       "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
+      "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
@@ -159,24 +366,52 @@
         "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Science_Pullmech",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Science_Gravwell",
         "target": [
           5,
-          1
+          4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "status",
       "categories": [
-        "damage_amount"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Brute_Beetle|attack",
+      "signature": "status|Prime_Shift|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Prime_Shift",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Ranged_Defensestrike|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -187,23 +422,77 @@
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 1,
-        "turn": 2,
-        "weapon": "Brute_Beetle",
+        "turn": 1,
+        "weapon": "Ranged_Defensestrike",
         "target": [
-          2,
+          3,
           4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "status",
       "categories": [
-        "damage_amount"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Prime_ShieldBash|attack",
+      "signature": "status|Science_Gravwell|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Science_Gravwell",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Ranged_Defensestrike|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Unknown|move",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -211,122 +500,199 @@
       "confidence": 0.4,
       "context": {
         "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
+        "phase": "move",
+        "sub_action": "move",
         "action_index": 0,
         "turn": 4,
-        "weapon": "Prime_ShieldBash",
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Ranged_Defensestrike|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          6,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "pod",
+      "categories": [
+        "pod"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "pod|Ranged_Defensestrike|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Ranged_Defensestrike",
         "target": [
           5,
           4
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Ranged_Defensestrike|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Defensestrike|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          6,
+          4
+        ]
+      }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Prime_Shift",
+      "cause_pattern": "status|Prime_Shift|attack",
+      "expires_turn": 7,
+      "strategic_override": false
+    },
+    {
+      "weapon_id": "Ranged_Defensestrike",
+      "cause_pattern": "push_dir|Ranged_Defensestrike|attack",
+      "expires_turn": 4,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
-      "type": "Disposal_Unit",
+      "type": "Terraformer",
       "terrain_id": null,
       "kind": null,
       "slot": null,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 1,
+      "attempts": 0,
       "status": "done",
       "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Disposal Unit",
-            "hp": 4,
-            "move": null,
-            "class_icons": [],
-            "confidence": 0.9
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Disposal Unit",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Disposal+Unit",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Disposal+Unit&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "9e02a6794be1",
-      "last_kind": "enemy"
+        "manually_resolved": true
+      }
     },
     {
-      "type": "Disposal_Attack",
+      "type": "Terraformer_Attack",
       "terrain_id": null,
       "kind": "enemy_weapon",
       "slot": null,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 3,
+      "attempts": 0,
       "status": "done",
       "result": {
         "manually_resolved": true
       }
     },
     {
-      "type": "GuardMech",
+      "type": "JudoMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
       "attempts": 0,
-      "status": "done",
-      "result": {
-        "manually_resolved": true
-      }
+      "status": "pending",
+      "result": null
     },
     {
-      "type": "ChargeMech",
+      "type": "DStrikeMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
       "attempts": 0,
-      "status": "done",
-      "result": {
-        "manually_resolved": true
-      }
+      "status": "pending",
+      "result": null
     },
     {
-      "type": "ScienceMech",
+      "type": "GravMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
       "attempts": 0,
-      "status": "done",
-      "result": {
-        "manually_resolved": true
-      }
-    },
-    {
-      "type": "Scarab1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "manually_resolved": true
-      }
+      "status": "pending",
+      "result": null
     }
   ]
 }

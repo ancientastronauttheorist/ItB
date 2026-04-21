@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_121854_923",
+  "squad": "Random Balanced (Judo+Siege+Gravity)",
+  "difficulty": 4,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-454012b",
+  "weight_version": "v009",
+  "updated": "2026-04-21T13:09:18.660593",
+  "created": "2026-04-21T12:18:54.938252",
+  "missions": [],
+  "outcome": "loss",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T13:09:18.645620",
+  "outcome_notes": null
+}
