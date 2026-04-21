@@ -1,0 +1,118 @@
+{
+  "timestamp": "2026-04-21T02:04:07.045978",
+  "run_id": "20260421_015818_989",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "grid_power": 3,
+      "enemies_alive": 4,
+      "enemy_hp_total": 8,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 1633,
+          "type": "Disposal_Unit",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 4,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "ChargeMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ScienceMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 12,
+      "grid_power": 5,
+      "enemies_alive": 3,
+      "enemy_hp_total": 7,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 1633,
+          "type": "Disposal_Unit",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "ChargeMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ScienceMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": -1,
+      "building_hp_diff": -2,
+      "grid_power_diff": -2,
+      "enemies_alive_diff": 1,
+      "mech_hp_diff": [
+        {
+          "uid": 1633,
+          "type": "Disposal_Unit",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "predicted_hp": 3,
+          "actual_hp": 4,
+          "diff": 1
+        },
+        {
+          "uid": 1,
+          "type": "ChargeMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "ScienceMech",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": [
+        "Lost 1 unexpected building(s)",
+        "Grid power dropped by 2 unexpectedly"
+      ]
+    }
+  }
+}

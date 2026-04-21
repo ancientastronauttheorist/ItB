@@ -1,8 +1,8 @@
 {
-  "run_id": "20260421_010541_586",
-  "squad": "Random Balanced (Aegis+Charge+Artillery)",
+  "run_id": "20260421_015818_989",
+  "squad": "Random Balanced (Aegis+Charge+Defense)",
   "achievement_targets": [],
-  "difficulty": 3,
+  "difficulty": 4,
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
@@ -15,32 +15,32 @@
         "mech_uid": 0,
         "mech_type": "GuardMech",
         "move_to": [
-          2,
-          2
+          6,
+          4
         ],
         "weapon": "Prime_ShieldBash",
         "target": [
-          2,
-          1
+          5,
+          4
         ],
-        "description": "GuardMech, move F5\u2192F6, fire Shield Bash at G6"
+        "description": "GuardMech, move E2\u2192D2, fire Shield Bash at D3"
       },
       {
         "mech_uid": 1,
         "mech_type": "ChargeMech",
         "move_to": [
-          6,
+          2,
           4
         ],
         "weapon": "Brute_Beetle",
         "target": [
-          7,
-          4
+          2,
+          5
         ],
-        "description": "ChargeMech, fire Ramming Engines at D1"
+        "description": "ChargeMech, fire Ramming Engines at C6"
       }
     ],
-    "score": -18745.003576278687,
+    "score": -520950.00178813934,
     "turn": 4
   },
   "actions_executed": 0,
@@ -50,46 +50,45 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-21T01:17:16.885799",
+      "timestamp": "2026-04-21T02:03:12.704429",
       "turn": 1,
       "label": "solve",
-      "score": 129050.0,
+      "score": 136914.2857142857,
       "actions": [
-        "GuardMech, move C7\u2192C6",
-        "ArtiMech, move G5\u2192F3, fire Artemis Artillery at F7",
-        "ChargeMech, fire Ramming Engines at F6"
+        "GuardMech, move E5\u2192F3, fire Shield Bash at G3",
+        "ScienceMech, move D6\u2192E3, fire Attract Shot at B3",
+        "ChargeMech, fire Ramming Engines at E6"
       ]
     },
     {
-      "timestamp": "2026-04-21T01:18:03.769171",
+      "timestamp": "2026-04-21T02:04:18.055816",
       "turn": 2,
       "label": "solve",
-      "score": 84923.3333333333,
+      "score": -16951.43035956793,
       "actions": [
-        "GuardMech",
-        "ChargeMech, move F5\u2192C5, repair",
-        "ArtiMech, repair"
+        "GuardMech, fire Shield Bash at F2",
+        "ChargeMech, move D6\u2192E6, fire Ramming Engines at D6",
+        "ScienceMech, fire Attract Shot at E4"
       ]
     },
     {
-      "timestamp": "2026-04-21T01:18:54.853397",
+      "timestamp": "2026-04-21T02:04:54.259212",
       "turn": 3,
       "label": "solve",
-      "score": 53766.42678328924,
+      "score": 43564.28392614637,
       "actions": [
-        "ChargeMech, move C5\u2192C2, fire Ramming Engines at D2",
-        "ArtiMech, fire Artemis Artillery at F5",
-        "GuardMech, move C6\u2192F5, fire Shield Bash at F4"
+        "GuardMech, move F3\u2192E2",
+        "ChargeMech, move A6\u2192D6, repair"
       ]
     },
     {
-      "timestamp": "2026-04-21T01:26:43.743423",
+      "timestamp": "2026-04-21T02:05:55.512742",
       "turn": 4,
       "label": "solve",
-      "score": -18745.003576278687,
+      "score": -520950.00178813934,
       "actions": [
-        "GuardMech, move F5\u2192F6, fire Shield Bash at G6",
-        "ChargeMech, fire Ramming Engines at D1"
+        "GuardMech, move E2\u2192D2, fire Shield Bash at D3",
+        "ChargeMech, fire Ramming Engines at C6"
       ]
     }
   ],
@@ -130,12 +129,12 @@
         "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
+        "action_index": 0,
+        "turn": 1,
         "weapon": "Prime_ShieldBash",
         "target": [
-          4,
-          2
+          5,
+          1
         ]
       }
     },
@@ -148,36 +147,7 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "death|Prime_ShieldBash|attack",
-      "frequency": 1,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.7,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Prime_ShieldBash",
-        "target": [
-          2,
-          1
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Brute_Beetle|attack",
+      "signature": "death|Science_Pullmech|attack",
       "frequency": 0,
       "asymmetry": [
         "enemy_survived_unexpectedly"
@@ -186,28 +156,126 @@
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Science_Pullmech",
+        "target": [
+          5,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Brute_Beetle|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 1,
-        "turn": 4,
+        "turn": 2,
         "weapon": "Brute_Beetle",
         "target": [
-          7,
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_ShieldBash|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          5,
           4
         ]
       }
     }
   ],
-  "disabled_actions": [
-    {
-      "weapon_id": "Prime_ShieldBash",
-      "cause_pattern": "death|Prime_ShieldBash|attack",
-      "expires_turn": 7,
-      "strategic_override": false
-    }
-  ],
+  "disabled_actions": [],
   "research_queue": [
+    {
+      "type": "Disposal_Unit",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Disposal Unit",
+            "hp": 4,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.9
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Disposal Unit",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Disposal+Unit",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Disposal+Unit&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "9e02a6794be1",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Disposal_Attack",
+      "terrain_id": null,
+      "kind": "enemy_weapon",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 3,
+      "status": "done",
+      "result": {
+        "manually_resolved": true
+      }
+    },
     {
       "type": "GuardMech",
       "terrain_id": null,
@@ -215,11 +283,11 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "resolved",
-      "result": null,
-      "research_id": "7f0187311ee2",
-      "last_kind": "mech"
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "manually_resolved": true
+      }
     },
     {
       "type": "ChargeMech",
@@ -228,46 +296,37 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "resolved",
-      "result": null,
-      "research_id": "8e33fe1a9261",
-      "last_kind": "mech"
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "manually_resolved": true
+      }
     },
     {
-      "type": "ArtiMech",
+      "type": "ScienceMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "Scarab2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "resolved",
-      "result": null,
-      "research_id": "ba496cf5e4ad",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Scorpion1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 4,
       "attempts": 0,
-      "status": "resolved",
-      "result": null
+      "status": "done",
+      "result": {
+        "manually_resolved": true
+      }
+    },
+    {
+      "type": "Scarab1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "manually_resolved": true
+      }
     }
   ]
 }

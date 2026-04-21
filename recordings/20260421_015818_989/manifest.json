@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_015818_989",
+  "squad": "Random Balanced (Aegis+Charge+Defense)",
+  "difficulty": 4,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-03523a1",
+  "weight_version": "v009",
+  "updated": "2026-04-21T02:06:51.023927",
+  "created": "2026-04-21T01:58:19.003455",
+  "missions": [],
+  "outcome": "loss",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T02:06:51.008188",
+  "outcome_notes": null
+}
