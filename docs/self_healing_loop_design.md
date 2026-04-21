@@ -1,6 +1,12 @@
 # Self-Healing Loop Design
 
-**Status:** proposal. Nothing is implemented yet.
+**Status:** in progress (revised 2026-04-20).
+
+Phase 0 instrumentation is shipped (`src/solver/unknown_detector.py`, `src/solver/fuzzy_detector.py`, `data/known_types.json`). Phase 2 research modules exist in `src/research/` (capture, vision, wiki_client, comparator, orchestrator). Phase 3 overrides and Phase 4 P4-1/P4-2 auto-drafter landed per recent commits.
+
+The loop does not yet close on its own — detection signals are advisory; research doesn't auto-fire. See **Missing wire** at the end.
+
+Timing: revised from "between turns" to **inline per turn**. See Research section.
 
 **Goal:** turn solver desyncs from post-hoc training data into a closed feedback loop that detects, responds to, and researches unknown or drifted game behavior during a run, then feeds validated findings back into the solver between runs.
 
@@ -25,25 +31,19 @@ Three subsystems, each independently deployable:
 
 ```
                     ┌────────── DETECTION ──────────┐
-  bridge read ────▶ │ unknown_detector → signals   │ ──▶ session.failure_events_this_run
+  bridge read ────▶ │ unknown_detector → unknowns  │ ──▶ session.failure_events_this_run
                     │ fuzzy_detector → signals     │
                     │ (hook after classify_diff)   │
-                    └──────────────┬───────────────┘
-                                   │
-                                   ▼
-                    ┌────────── RESPONSE ───────────┐
-                    │ Tier 1: re-solve (existing)   │
-                    │ Tier 2: soft-disable action   │
-                    │ Tier 3: JSON weapon override  │  ◀─── Phase 3 only
-                    │ Tier 4: narrate, continue     │
-                    └──────────────┬───────────────┘
-                                   │
-                                   ▼
-                    ┌──────── RESEARCH (deferred) ───┐
-                    │ tooltip capture (MCP + Vision)│
-                    │ wiki.fandom API client         │
-                    │ writes data/wiki_raw/<T>.json │
-                    └───────────────────────────────┘
+                    └──────┬───────────────┬───────┘
+                           │ signals       │ unknowns + 'unknown_behavior' tags
+                           ▼               ▼
+                    ┌── RESPONSE ──┐  ┌──── RESEARCH (inline) ────────┐
+                    │ Tier 1..4    │  │ hover + Vision tooltip (MCP)  │
+                    │ (existing)   │  │ wiki_raw scrape → MediaWiki   │
+                    │              │  │ Steam forum / Reddit (WebFetch)│
+                    │              │  │ comparator → override staging │
+                    │              │  │ writes data/wiki_raw/<T>.json │
+                    └──────────────┘  └───────────────────────────────┘
 ```
 
 ## Detection
@@ -134,11 +134,17 @@ When signal confidence is low or no safe response exists, emit `{"event": "solve
 
 ## Research
 
-Runs between turns or between missions, never mid-turn (visual stall + recursion risk).
+Runs **inline the moment an unknown is detected during `cmd_read`**, before the solver runs. Revised 2026-04-20 from the original deferred-between-turns model.
+
+Rationale: an unresolved unknown is a desync waiting to happen. ITB is turn-based with no timer, so pausing to research before the move is safer than playing blind and repairing the record after the fact. First-turn stalls in missions with multiple novel enemies are acceptable; subsequent turns in the same run hit the registry and fire-through with zero latency.
+
+The original "visual stall + recursion risk" concerns are handled by: (a) `snapshot <auto-label>` before the orchestrator runs, (b) strict dedup on the `(type, terrain_id, weapon_id, screen_id)` tuple so the orchestrator never re-enters on the same target, (c) a hard per-unknown timeout — on failure, the target drops to the deferred queue below and the loop narrates + continues.
 
 ### Queue
 
-`RunSession.research_queue` — list of `{type, terrain_id, mission_id, first_seen_turn, attempts}`. Deduped by `(type, terrain_id)`. Persists across sessions.
+`RunSession.research_queue` — list of `{type, terrain_id, weapon_id, screen_id, mission_id, first_seen_turn, attempts}`. Deduped by that tuple. Persists across sessions.
+
+In the inline model the queue holds **unknowns that failed to resolve inline** (Vision low-confidence, wiki miss, network fail, timeout). Those drop to the original deferred-between-turns path — processed before the next mission starts. Successful inline resolutions never hit the queue.
 
 ### In-game tooltip capture
 
@@ -160,7 +166,7 @@ MCP sequence:
    - Weapon preview crop: `"This is an Into the Breach weapon preview. Return JSON: {name, description, damage, footprint_tiles, push_directions}."`
 6. Diff the extracted geometry against `rust_solver/src/weapons.rs` for that weapon. Flag mismatches.
 
-For **terrain** tooltips, hover is needed (different code path). Pixel region also TBD.
+For **terrain** tooltips, hover is needed (different code path). Pixel region also TBD — see **Missing wire** below.
 
 ### External research (Fandom MediaWiki API)
 
@@ -173,7 +179,13 @@ Cache to `data/wiki_raw/<Name>.json`. Only consulted when tooltip extraction giv
 
 AE filter: the wiki flags Advanced Edition content explicitly. Since we run AE, prefer AE sections.
 
-Steam forum and community guides remain **manual-only** sources — used by humans when post-run analysis needs deeper mechanics clarification.
+**Steam forum + Reddit** are an automated third source, added 2026-04-20.
+
+Fetched via `WebFetch` after the wiki returns. Confined to two queries per unknown — one Steam forum search, one `r/IntoTheBreach` search — both keyed on the unknown's canonical name. Community threads catch edge-case interactions and unintuitive behavior that the wiki sanitizes or omits.
+
+Results attach to the same `data/wiki_raw/<Name>.json` record under a `community_notes` field: `[{source_url, excerpt, confidence}, ...]`. Confidence bands: `confirmed` (tooltip + wiki + forum agree), `likely` (tooltip + wiki), `speculative` (forum-only). Low-confidence notes (sparse, contradicted, joke threads) are dropped by the orchestrator before write.
+
+Still manual: deep mechanics debates, speculative patch notes, version-divergence discussions — these need human judgment the automated step shouldn't fake.
 
 ### Disagreement resolution
 
@@ -195,13 +207,13 @@ Log the disagreement to `data/research_disagreements.jsonl` for later review.
 6. **Hidden modifiers** — Volatile Vek looks like regular Scorpion. Include mission-level flags in novelty check, not just unit type.
 7. **Bridge gap category** — field in save file but not in bridge state. Detector runs save-parser in parallel and diffs keys.
 8. **Game version drift** — AE vs vanilla. Tag every research artifact with version pulled from save file.
-9. **Recursive discovery** — new unknown during research of previous unknown. Queue + dedup; never start research while another is in flight.
+9. **Recursive discovery** — new unknown surfaced while researching a prior unknown. Dedup by `(type, terrain_id, weapon_id, screen_id)` tuple. The inline orchestrator holds a per-call in-flight set to block re-entry on the same target; nested novel terms encountered while researching X are appended to the run queue and picked up after X's record is written.
 10. **User pauses / quits mid-research** — queue persists; resume on next session.
 11. **Hot-patch safety** — never auto-commit overrides. PR-style review required.
 12. **Tooltip occlusion** — attack preview / shield animation hides panel. Mouse-move to neutral tile first.
 13. **Claude Vision miss** — small fonts, pixel art. Zoom 3–4× before reading; fall back to "asked-user" on low confidence.
 14. **Multi-select / multiple enemies selected** — UI may show the wrong unit's panel. Click exactly one tile, verify the panel matches.
-15. **Terminal states during research** — if research fires between turns and mission ends, abort research cleanly (don't block `Region Secured` flow).
+15. **Terminal states during research** — inline research can be interrupted by a terminal transition (`Region Secured`, defeat, crash). The orchestrator polls the bridge phase on each step boundary; on a terminal observation it aborts cleanly so the end-of-mission UI flow isn't blocked, and unfinished targets persist in the queue for the next mission or run.
 
 ## Phased tickets
 
@@ -283,11 +295,23 @@ runs rather than inline on submit.
 - Per-weapon quota in the drafter cap (instead of absolute
   `--max-stage`) if one noisy weapon starts dominating the queue.
 
+## Missing wire
+
+Most subsystems are shipped (see **Status** at top). What's missing is the signal → action wiring and the coverage gaps the inline model exposes.
+
+1. **Auto-dispatch from `cmd_read`.** `unknown_detector.detect_unknowns()` returns a list; today that list is advisory only. Extend `cmd_read` so that when the list is non-empty it: (a) writes a `snapshot <auto-label>`, (b) calls `src/research/orchestrator.py` with the unknown targets + their bridge coords, (c) blocks return until the orchestrator resolves every target or the per-unknown timeout fires. Solver never runs on an unresolved board.
+2. **Weapon-id and screen-id coverage.** `unknown_detector` today only checks `pawn_types` and `terrain_ids`. Extend the registry and the detector to cover: (a) weapon ids observed in enemy attack data, (b) a top-level screen classification (shop / reward / CEO dialog / unknown popup) so UI novelty triggers research too. Screen detection needs a lightweight vision classifier or a phase-string registry keyed off the save file + bridge.
+3. **Terrain + tile hover calibration.** Phase 2 `P2-1` calibrated unit tooltip crops only. Terrain tooltips hover on the tile itself and surface a different panel layout. Measure the crop region against this build; write to `data/ui_regions.json`.
+4. **Forum/Reddit WebFetch step in `orchestrator.py`.** Slot it after the wiki lookup. Two queries per unknown; results attach to the wiki_raw record under `community_notes` with the confidence banding described in **External research**.
+5. **Behavior-novelty route.** `fuzzy_detector` already tags unclassifiable desyncs. Extend the tag with the involved `unit.type` + `weapon_id`, and route the tag through the same orchestrator on the **next** `cmd_read` (not mid-sub-action — the one-action-per-desync verify contract stands).
+
+Each item ships independently; order above is detection-first so the loop starts producing signal immediately, even before the forum step and behavior-novelty route land.
+
 ## Decisions summary
 
 - Detection: structured signal pipeline, piggyback on `failure_db.jsonl`, wire at existing hook point.
-- Response v1: Tier 1 (existing) + Tier 2 (soft-disable) + Tier 4 (narrate). Skip Tier 3 until measured need.
+- Response: Tier 1–4; Tier 3 JSON override mechanism shipped in Phase 3, auto-drafter in Phase 4.
 - Tooltip: Claude Vision on small crops. Skip OCR.
-- External research: Fandom MediaWiki API only in v1. Forum stays manual.
-- Research timing: deferred between turns. Mid-turn research is a non-goal.
+- External research: Fandom MediaWiki API **plus** Steam forum + Reddit via WebFetch. [revised 2026-04-20]
+- Research timing: **inline when an unknown is detected**, with deferred-queue fallback on failure. Mid-turn research IS a goal — ITB's turn-based nature makes the pause safe. [revised 2026-04-20]
 - Weapon-def regression: pull out as an explicit v1 use case of Phase 2, not a v3 nice-to-have.
