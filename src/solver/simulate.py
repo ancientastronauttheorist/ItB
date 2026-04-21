@@ -219,18 +219,22 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
             tile.on_fire = False
 
     if tile.terrain == "building" and tile.building_hp > 0 and damage > 0:
-        # Any damage destroys ALL buildings on the tile (all-or-nothing rule)
-        old_hp = tile.building_hp
-        tile.building_hp = 0
-        # Objective unique_buildings stay as terrain=building, hp=0 (still
-        # blocks movement in-game). Regular buildings collapse to rubble.
-        if not tile.unique_building:
+        # Objective unique_buildings (2 HP, e.g. ACID launcher, Disposal Unit)
+        # take incremental damage. Regular buildings (1 HP) are all-or-nothing
+        # per the "any damage destroys" rule.
+        if tile.unique_building:
+            hp_lost = min(tile.building_hp, damage)
+            tile.building_hp -= hp_lost
+        else:
+            hp_lost = tile.building_hp
+            tile.building_hp = 0
             tile.terrain = "rubble"
-        result.buildings_damaged += old_hp
-        result.grid_damage += old_hp
-        result.buildings_lost += 1
-        board.grid_power = max(0, board.grid_power - old_hp)
-        result.events.append(f"Building destroyed at ({x},{y}) ({old_hp} grid damage)")
+        result.buildings_damaged += hp_lost
+        result.grid_damage += hp_lost
+        if tile.building_hp == 0:
+            result.buildings_lost += 1
+        board.grid_power = max(0, board.grid_power - hp_lost)
+        result.events.append(f"Building damaged at ({x},{y}) ({hp_lost} grid damage)")
 
     # Mountain damage: 2 HP → 1 HP → 0 (rubble). Does not affect grid_power.
     if tile.terrain == "mountain" and tile.building_hp > 0 and damage > 0:
@@ -739,7 +743,7 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
             if tile.terrain == "mountain":
                 break
             if tile.terrain == "building" and tile.building_hp > 0:
-                hit_x, hit_y = nx, ny
+                apply_damage(board, nx, ny, wdef.damage, result)
                 break
             unit = board.unit_at(nx, ny)
             if unit is not None:
@@ -756,7 +760,13 @@ def _sim_artillery(board, attacker, wdef, tx, ty, attack_dir, result):
         apply_damage(board, tx, ty, wdef.damage, result)
 
     if wdef.fire:
-        board.tile(tx, ty).on_fire = True
+        tile = board.tile(tx, ty)
+        tile.on_fire = True
+        tile.smoke = False  # fire replaces smoke
+    if wdef.smoke:
+        tile = board.tile(tx, ty)
+        tile.smoke = True
+        tile.on_fire = False  # smoke replaces fire
     if wdef.freeze:
         unit = board.unit_at(tx, ty)
         if unit:

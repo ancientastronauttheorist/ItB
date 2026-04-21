@@ -233,18 +233,24 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            let old_hp = tile.building_hp;
-            tile.building_hp = 0;
-            // Objective unique_buildings stay as Terrain::Building with hp=0
-            // (still blocks movement in-game). Regular buildings collapse to
-            // Rubble so their tile becomes walkable.
-            if !is_unique {
+            // Unique (objective) buildings take incremental damage; regular
+            // 1-HP buildings are all-or-nothing per the "any damage destroys"
+            // rule.
+            let hp_lost = if is_unique {
+                damage.min(tile.building_hp)
+            } else {
+                tile.building_hp
+            };
+            tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
+            if tile.building_hp == 0 && !is_unique {
                 tile.terrain = Terrain::Rubble;
             }
-            bldg_hp_lost = old_hp;
-            result.buildings_damaged += old_hp as i32;
-            result.grid_damage += old_hp as i32;
-            result.buildings_lost += 1;
+            bldg_hp_lost = hp_lost;
+            result.buildings_damaged += hp_lost as i32;
+            result.grid_damage += hp_lost as i32;
+            if tile.building_hp == 0 {
+                result.buildings_lost += 1;
+            }
         }
     }
     if bldg_hp_lost > 0 {
@@ -1069,7 +1075,10 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
             let tile = board.tile(nxu, nyu);
             if tile.terrain == Terrain::Mountain { break; }
-            if tile.is_building() { break; }
+            if tile.is_building() {
+                apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
+                break;
+            }
             if board.unit_at(nxu, nyu).is_some() {
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
                 if wdef.push == PushDir::Forward {

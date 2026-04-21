@@ -334,7 +334,8 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[33] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, damage_outer: 1, push: PushDir::Outward, range_min: 2,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 34: Ranged_Rocket — Rocket Artillery
-    w[34] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2, flags: C, ..DEF };
+    w[34] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits()), ..DEF };

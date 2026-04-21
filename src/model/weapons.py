@@ -298,7 +298,7 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     ),
     "Ranged_Rocket": WeaponDef(
         name="Rocket Artillery", weapon_type="artillery",
-        damage=2, push="forward", range_min=2,
+        damage=2, push="forward", smoke=True, range_min=2,
         upgrade_a="+1 damage (total 3)",
         upgrade_b="+1 damage (total 3)",
     ),
