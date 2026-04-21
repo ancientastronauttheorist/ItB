@@ -153,6 +153,30 @@ def _propose_response(
     return 4, 0.3
 
 
+def extract_behavior_novelty(diff: Any) -> list[str]:
+    """Unit types with any ``alive``-field flip in ``diff``.
+
+    These are the smoking-gun desyncs — something died that we didn't
+    predict, or something survived that we expected to kill. The
+    matching unit(s) are what the behavior-novelty route enqueues for
+    the research pipeline. Both mechs and enemies are returned; the
+    caller decides whether to filter.
+
+    Empty list when the diff has no alive-field flips (pure damage
+    miscount, grid_power drift, etc.). Those desyncs aren't
+    necessarily behavior novelty — usually just magnitude bugs — and
+    are better handled by the existing tier-2 soft-disable path.
+    """
+    types: set[str] = set()
+    for ud in getattr(diff, "unit_diffs", []) or []:
+        if ud.get("field") != "alive":
+            continue
+        t = ud.get("type", "")
+        if t:
+            types.add(t)
+    return sorted(types)
+
+
 def evaluate(
     diff: Any,
     classification: dict,

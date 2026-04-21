@@ -36,6 +36,58 @@ from src.model.board import Board
 from src.research import capture, comparator, vision, wiki_client
 
 
+# ── gate predicate ────────────────────────────────────────────────────────
+
+
+def _has_terrain_on_board(board: Board, terrain_id: str) -> bool:
+    """Return True if any 8x8 tile has the given terrain id."""
+    tiles = getattr(board, "tiles", None)
+    if tiles is None:
+        return False
+    for x in range(8):
+        for y in range(8):
+            try:
+                if tiles[x][y].terrain == terrain_id:
+                    return True
+            except (IndexError, KeyError, TypeError):
+                continue
+    return False
+
+
+def has_actionable_research(session: RunSession, board: Board) -> bool:
+    """True iff a pending non-background entry is resolvable right now.
+
+    Used by ``cmd_read`` to fire the research gate when the queue
+    carries entries that detect_unknowns didn't flag this turn — most
+    notably ``kind="behavior_novelty"`` entries enqueued during a prior
+    turn's per-sub-action desync handling.
+
+    Background kinds that do not trip the gate:
+
+    - ``mech_weapon`` — weapon-def regression probe, auto-enqueued for
+      every live mech. Resolved opportunistically via
+      ``research_probe_mech``; not a reason to block the solver.
+
+    Gate-triggering kinds (``None`` / ``behavior_novelty`` / ``enemy_weapon``
+    / ``screen`` / terrain-only): require a live target on the board
+    for unit-keyed entries, or terrain presence for terrain-only entries.
+    Weapon + screen entries are gate-worthy on their own but get
+    re-flagged by ``detect_unknowns`` every turn they remain novel, so
+    we need not re-check them here.
+    """
+    for entry in session.research_queue:
+        if entry.get("status") != "pending":
+            continue
+        if entry.get("kind") == "mech_weapon":
+            continue  # background probe
+        if _find_unit_for_entry(board, entry) is not None:
+            return True
+        terrain_id = entry.get("terrain_id")
+        if terrain_id and _has_terrain_on_board(board, terrain_id):
+            return True
+    return False
+
+
 # ── research_id assignment ────────────────────────────────────────────────
 
 

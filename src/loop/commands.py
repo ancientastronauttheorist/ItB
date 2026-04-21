@@ -285,6 +285,36 @@ def _bv(x: int, y: int) -> str:
     return f"{chr(72 - y)}{8 - x}"
 
 
+def _enqueue_behavior_novelty(
+    session: RunSession,
+    diff,
+    turn: int,
+) -> list[str]:
+    """Enqueue research on every unit type that alive-flipped in ``diff``.
+
+    Called from ``cmd_auto_turn`` right after each ``fuzzy_detector.evaluate``
+    firing. An alive-field flip is the smoking gun for behavior novelty —
+    the solver predicted kill/no-kill and reality said otherwise. Queue
+    entries land with ``kind="behavior_novelty"`` so ``has_actionable_research``
+    can pick them up on the next ``cmd_read`` and trip the gate.
+
+    Dedup in ``session.enqueue_research`` (compound key with ``kind``)
+    keeps re-seeing the same unit across multiple desyncs from
+    double-queuing.
+
+    Returns the list of unit types newly enqueued.
+    """
+    from src.solver.fuzzy_detector import extract_behavior_novelty
+
+    enqueued: list[str] = []
+    for unit_type in extract_behavior_novelty(diff):
+        if session.enqueue_research(
+            unit_type, None, turn, kind="behavior_novelty",
+        ):
+            enqueued.append(unit_type)
+    return enqueued
+
+
 def _auto_enqueue_mech_weapons(
     session: RunSession,
     board: Board,
@@ -623,6 +653,20 @@ def cmd_read(profile: str = "Alpha") -> dict:
                         print(f"!   Unknown screen:  {', '.join(unknowns['screens'])}")
                     print("!   Next: game_loop.py research_next  (CLAUDE.md rule 20)")
                     print("!" * 60)
+
+                # Missing wire #5: gate on queued behavior-novelty entries
+                # too. detect_unknowns only catches name-novelty; desyncs
+                # enqueued mid-turn by cmd_auto_turn won't re-flag here
+                # (the unit is already known), so we need a separate
+                # check that walks the queue for actionable entries.
+                if not result.get("requires_research"):
+                    from src.research.orchestrator import has_actionable_research
+                    if has_actionable_research(session, board):
+                        result["requires_research"] = True
+                        print("\n" + "!" * 60)
+                        print("! RESEARCH GATE — behavior-novelty entry in queue.")
+                        print("!   Next: game_loop.py research_next  (CLAUDE.md rule 20)")
+                        print("!" * 60)
 
                 # Phase 2 #P2-8 follow-up: auto-enqueue mech-weapon probes.
                 # Mechs aren't "unknowns" but their weapons are the
@@ -3403,6 +3447,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     session.failure_events_this_run.append(fuzzy_signal)
                     _maybe_soft_disable(session, fuzzy_signal, turn,
                                         fired=soft_disables_fired_this_turn)
+                    _enqueue_behavior_novelty(session, diff, turn)
                     _log_sub_action_desync(
                         session, "move", actions_completed, mech_uid,
                         pred_post_move, actual_board, diff, classification, turn,
@@ -3502,6 +3547,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 session.failure_events_this_run.append(fuzzy_signal)
                 _maybe_soft_disable(session, fuzzy_signal, turn,
                                     fired=soft_disables_fired_this_turn)
+                _enqueue_behavior_novelty(session, diff, turn)
                 _log_sub_action_desync(
                     session, "attack", actions_completed, mech_uid,
                     pred_post_attack, actual_board, diff, classification, turn,
