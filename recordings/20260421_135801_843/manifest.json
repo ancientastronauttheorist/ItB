@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-8b4c176",
+  "solver_version": "rust-0.1.0-0b5e204",
   "weight_version": "v009",
-  "updated": "2026-04-21T14:31:55.117546",
+  "updated": "2026-04-21T14:38:15.149101",
   "created": "2026-04-21T13:58:01.862614",
   "missions": [],
   "outcome": "win",
   "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-21T14:31:55.103577",
-  "outcome_notes": "The Library: Region Secured, Defend Train failed. Ralph +4 XP, Pinnacle +0 XP. Patched auto_turn poller worked cleanly \u2014 no 'no active mechs' flakes during turns 1-3. Turn 4 poll timeout correctly indicated mission ended (reward screen up)."
+  "outcome_recorded_at": "2026-04-21T14:38:15.134737",
+  "outcome_notes": "Excavation Site: Both bonuses achieved \u2014 Defend Artillery Support (\u2605) and Protect Coal Plant (\u26a1). Ralph +4 XP (18/25), Pinnacle +4 XP (5/25). Reputation +2 (now 1 visible at top). Patched auto_turn worked across all 4 turns without desync."
 }

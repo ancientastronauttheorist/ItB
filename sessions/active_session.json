@@ -7,55 +7,69 @@
   "current_mission": "",
   "islands_completed": [],
   "mission_index": 0,
-  "current_turn": 3,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
+        "mech_uid": 452,
+        "mech_type": "ArchiveArtillery",
+        "move_to": [
+          3,
+          1
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "ArchiveArtillery"
+      },
+      {
         "mech_uid": 0,
         "mech_type": "MirrorMech",
         "move_to": [
-          3,
-          5
-        ],
-        "weapon": "Brute_Mirrorshot",
-        "target": [
           2,
-          5
+          3
         ],
-        "description": "MirrorMech, fire Mirror Shot at C6"
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "MirrorMech, move C7\u2192E6"
       },
       {
         "mech_uid": 1,
         "mech_type": "IceMech",
         "move_to": [
-          1,
-          1
+          2,
+          5
         ],
         "weapon": "_REPAIR",
         "target": [
-          1,
-          1
+          2,
+          5
         ],
-        "description": "IceMech, move E7\u2192G7, repair"
+        "description": "IceMech, repair"
       },
       {
         "mech_uid": 2,
         "mech_type": "ScienceMech",
         "move_to": [
-          5,
-          2
+          7,
+          4
         ],
-        "weapon": "Science_Pullmech",
+        "weapon": "Unknown",
         "target": [
-          3,
-          2
+          255,
+          255
         ],
-        "description": "ScienceMech, move F4\u2192F3, fire Attract Shot at F5"
+        "description": "ScienceMech"
       }
     ],
-    "score": 73157.14285714286,
-    "turn": 3
+    "score": 108557.14285714286,
+    "turn": 4
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -138,6 +152,54 @@
         "MirrorMech, fire Mirror Shot at C6",
         "IceMech, move E7\u2192G7, repair",
         "ScienceMech, move F4\u2192F3, fire Attract Shot at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:34:21.896312",
+      "turn": 1,
+      "label": "solve",
+      "score": 138550.0,
+      "actions": [
+        "ArchiveArtillery, fire Old Earth Artillery at B5",
+        "MirrorMech, move D5\u2192B6, fire Mirror Shot at B5",
+        "IceMech, move E6\u2192D6",
+        "ScienceMech, move F5\u2192E5, fire Shield Projector at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:35:12.946864",
+      "turn": 2,
+      "label": "solve",
+      "score": 97732.85714285709,
+      "actions": [
+        "ArchiveArtillery, fire Old Earth Artillery at G3",
+        "MirrorMech, move B6\u2192B7, fire Mirror Shot at B6",
+        "IceMech",
+        "ScienceMech, move E4\u2192D4, fire Attract Shot at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:35:58.400040",
+      "turn": 3,
+      "label": "solve",
+      "score": 90662.14285714286,
+      "actions": [
+        "ArchiveArtillery, fire Old Earth Artillery at E5",
+        "IceMech, move C7\u2192C6",
+        "MirrorMech, move B7\u2192C7, fire Mirror Shot at C6",
+        "ScienceMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:36:39.712403",
+      "turn": 4,
+      "label": "solve",
+      "score": 108557.14285714286,
+      "actions": [
+        "ArchiveArtillery",
+        "MirrorMech, move C7\u2192E6",
+        "IceMech, repair",
+        "ScienceMech"
       ]
     }
   ],
@@ -460,6 +522,171 @@
           4
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Mirrorshot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Shield|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 3,
+        "turn": 1,
+        "weapon": "Science_Shield",
+        "target": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Mirrorshot|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Shield|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Shield",
+        "target": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 3,
+        "turn": 2,
+        "weapon": "Ranged_Ice",
+        "target": [
+          6,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Mirrorshot|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          2,
+          5
+        ]
+      }
     }
   ],
   "disabled_actions": [
@@ -472,6 +699,18 @@
     {
       "weapon_id": "Science_Pullmech",
       "cause_pattern": "death|Science_Pullmech|attack",
+      "expires_turn": 5,
+      "strategic_override": false
+    },
+    {
+      "weapon_id": "Brute_Mirrorshot",
+      "cause_pattern": "grid_power|Brute_Mirrorshot|attack",
+      "expires_turn": 6,
+      "strategic_override": false
+    },
+    {
+      "weapon_id": "Science_Shield",
+      "cause_pattern": "status|Science_Shield|attack",
       "expires_turn": 5,
       "strategic_override": false
     }
