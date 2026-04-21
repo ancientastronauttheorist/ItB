@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-04-18T15:31:19.154577",
+  "run_id": "20260418_152129_869",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 8,
+      "grid_power": 2,
+      "enemies_alive": 5,
+      "enemy_hp_total": 11,
+      "mechs_alive": 2,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 3,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 5,
+      "building_hp_total": 6,
+      "grid_power": 0,
+      "enemies_alive": 5,
+      "enemy_hp_total": 10,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "DStrikeMech",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 3,
+          "max_hp": 3
+        }
+      ],
+      "buildings_destroyed_by_enemies": 2
+    },
+    "deltas": {
+      "buildings_alive_diff": 1,
+      "building_hp_diff": 2,
+      "grid_power_diff": 2,
+      "enemies_alive_diff": 0,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "predicted_hp": 2,
+          "actual_hp": 3,
+          "diff": 1
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

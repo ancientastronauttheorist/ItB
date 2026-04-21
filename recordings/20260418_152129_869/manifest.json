@@ -1,0 +1,16 @@
+{
+  "run_id": "20260418_152129_869",
+  "squad": "Steel Judoka",
+  "difficulty": 3,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-9e6b88c",
+  "weight_version": "v009",
+  "updated": "2026-04-20T22:37:13.482249",
+  "created": "2026-04-18T15:21:29.884087",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-20T22:37:12.053812",
+  "outcome_notes": "The Library \u2014 defended Artillery Support bonus \u2605. Grid 2/7 held, no pilot losses."
+}
