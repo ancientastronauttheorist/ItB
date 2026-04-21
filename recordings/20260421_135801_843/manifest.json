@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-0b5e204",
+  "solver_version": "rust-0.1.0-f485479",
   "weight_version": "v009",
-  "updated": "2026-04-21T14:38:15.149101",
+  "updated": "2026-04-21T14:43:58.751414",
   "created": "2026-04-21T13:58:01.862614",
   "missions": [],
   "outcome": "win",
   "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-21T14:38:15.134737",
-  "outcome_notes": "Excavation Site: Both bonuses achieved \u2014 Defend Artillery Support (\u2605) and Protect Coal Plant (\u26a1). Ralph +4 XP (18/25), Pinnacle +4 XP (5/25). Reputation +2 (now 1 visible at top). Patched auto_turn worked across all 4 turns without desync."
+  "outcome_recorded_at": "2026-04-21T14:43:58.739951",
+  "outcome_notes": "The Pasture: ALL bonuses \u2014 Defend Tanks (\u2605\u2605) + Protect Coal Plant (\u26a1). Rep 1\u21923. Ralph 22/25, Pinnacle 5/25. Auto_turn patch running cleanly \u2014 45s poll correctly handles enemy animations and detects mission end."
 }

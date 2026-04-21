@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-21T14:27:17.784094",
+  "timestamp": "2026-04-21T14:39:59.623517",
   "run_id": "20260421_135801_843",
   "mission_index": 0,
   "turn": 1,
@@ -18,7 +18,7 @@
           "type": "MirrorMech",
           "pos": [
             3,
-            2
+            4
           ],
           "hp": 3,
           "max_hp": 3,
@@ -39,7 +39,7 @@
           "type": "IceMech",
           "pos": [
             1,
-            3
+            1
           ],
           "hp": 2,
           "max_hp": 2,
@@ -60,7 +60,7 @@
           "type": "ScienceMech",
           "pos": [
             3,
-            4
+            1
           ],
           "hp": 2,
           "max_hp": 2,
@@ -77,7 +77,49 @@
           }
         },
         {
-          "uid": 431,
+          "uid": 464,
+          "type": "Hornet2",
+          "pos": [
+            4,
+            1
+          ],
+          "hp": 4,
+          "max_hp": 4,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 465,
+          "type": "Jelly_Regen1",
+          "pos": [
+            5,
+            4
+          ],
+          "hp": 2,
+          "max_hp": 2,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 466,
           "type": "Firefly1",
           "pos": [
             6,
@@ -98,32 +140,11 @@
           }
         },
         {
-          "uid": 432,
-          "type": "Scarab1",
-          "pos": [
-            4,
-            4
-          ],
-          "hp": 2,
-          "max_hp": 2,
-          "alive": true,
-          "active": false,
-          "is_mech": false,
-          "team": 6,
-          "status": {
-            "fire": false,
-            "acid": false,
-            "frozen": false,
-            "shield": false,
-            "web": false
-          }
-        },
-        {
-          "uid": 433,
+          "uid": 467,
           "type": "Hornet1",
           "pos": [
-            4,
-            5
+            1,
+            2
           ],
           "hp": 2,
           "max_hp": 2,
@@ -140,11 +161,11 @@
           }
         },
         {
-          "uid": 430,
-          "type": "Train_Pawn",
+          "uid": 462,
+          "type": "Archive_Tank",
           "pos": [
-            4,
-            6
+            3,
+            5
           ],
           "hp": 1,
           "max_hp": 1,
@@ -161,11 +182,11 @@
           }
         },
         {
-          "uid": 430,
-          "type": "Train_Pawn",
+          "uid": 463,
+          "type": "Archive_Tank",
           "pos": [
-            4,
-            7
+            5,
+            5
           ],
           "hp": 1,
           "max_hp": 1,
@@ -185,158 +206,138 @@
       "tiles_changed": [
         {
           "x": 0,
-          "y": 2,
-          "terrain": "building",
-          "building_hp": 1,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 0,
-          "y": 3,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 0,
-          "y": 4,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 1,
-          "y": 2,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 1,
-          "y": 3,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 1,
-          "y": 4,
-          "terrain": "forest",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 1,
-          "y": 5,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 1,
-          "y": 6,
-          "terrain": "building",
-          "building_hp": 1,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 2,
-          "y": 2,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 2,
-          "y": 3,
-          "terrain": "building",
-          "building_hp": 2,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 2,
-          "y": 4,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 2,
-          "y": 5,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 2,
-          "y": 6,
-          "terrain": "building",
-          "building_hp": 2,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 3,
-          "y": 4,
-          "terrain": "forest",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 3,
-          "y": 5,
-          "terrain": "ground",
-          "building_hp": 0,
-          "fire": false,
-          "acid": false,
-          "smoke": false,
-          "has_pod": false
-        },
-        {
-          "x": 3,
-          "y": 6,
+          "y": 0,
           "terrain": "mountain",
+          "building_hp": 2,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "terrain": "forest",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 3,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 2,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 3,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 2,
+          "terrain": "building",
+          "building_hp": 1,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 3,
+          "terrain": "building",
           "building_hp": 2,
           "fire": false,
           "acid": false,
@@ -344,7 +345,7 @@
           "has_pod": false
         }
       ],
-      "grid_power": 6
+      "grid_power": 4
     },
     "diff": {
       "unit_diffs": [
@@ -356,8 +357,8 @@
           "actual": true
         },
         {
-          "uid": 431,
-          "type": "Firefly1",
+          "uid": 464,
+          "type": "Hornet2",
           "field": "status.frozen",
           "predicted": false,
           "actual": true
@@ -384,11 +385,11 @@
       "subcategory": null,
       "model_gap": false,
       "signature": "status|Ranged_Ice|attack",
-      "frequency": 2,
+      "frequency": 4,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 2,
-      "confidence": 0.8,
+      "confidence": 0.9,
       "context": {
         "mech_uid": 1,
         "phase": "attack",
@@ -397,8 +398,8 @@
         "turn": 1,
         "weapon": "Ranged_Ice",
         "target": [
-          6,
-          3
+          4,
+          1
         ]
       }
     }

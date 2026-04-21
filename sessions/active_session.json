@@ -12,36 +12,36 @@
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 452,
-        "mech_type": "ArchiveArtillery",
-        "move_to": [
-          3,
-          1
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "ArchiveArtillery"
-      },
-      {
         "mech_uid": 0,
         "mech_type": "MirrorMech",
         "move_to": [
-          2,
-          3
+          4,
+          4
         ],
-        "weapon": "Unknown",
+        "weapon": "Brute_Mirrorshot",
         "target": [
-          255,
-          255
+          4,
+          5
         ],
-        "description": "MirrorMech, move C7\u2192E6"
+        "description": "MirrorMech, move D7\u2192D4, fire Mirror Shot at C4"
       },
       {
         "mech_uid": 1,
         "mech_type": "IceMech",
+        "move_to": [
+          1,
+          2
+        ],
+        "weapon": "_REPAIR",
+        "target": [
+          1,
+          2
+        ],
+        "description": "IceMech, repair"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ScienceMech",
         "move_to": [
           2,
           5
@@ -51,24 +51,10 @@
           2,
           5
         ],
-        "description": "IceMech, repair"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "ScienceMech",
-        "move_to": [
-          7,
-          4
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "ScienceMech"
+        "description": "ScienceMech, move B7\u2192C6, repair"
       }
     ],
-    "score": 108557.14285714286,
+    "score": 98886.42857142857,
     "turn": 4
   },
   "actions_executed": 0,
@@ -200,6 +186,50 @@
         "MirrorMech, move C7\u2192E6",
         "IceMech, repair",
         "ScienceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:39:54.639426",
+      "turn": 1,
+      "label": "solve",
+      "score": 100121.42857142857,
+      "actions": [
+        "IceMech, move F6\u2192G7, fire Cryo-Launcher at G4",
+        "MirrorMech, move D5\u2192D7, fire Mirror Shot at E7",
+        "ScienceMech, move G5\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:40:37.932811",
+      "turn": 2,
+      "label": "solve",
+      "score": 112217.61904761917,
+      "actions": [
+        "MirrorMech, move D7\u2192D6",
+        "IceMech, move G7\u2192F7, fire Cryo-Launcher at F2",
+        "ScienceMech, move E6\u2192G7, fire Attract Shot at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:41:31.110533",
+      "turn": 3,
+      "label": "solve",
+      "score": 93834.28571428568,
+      "actions": [
+        "ScienceMech, move G7\u2192C7, fire Shield Projector at C3",
+        "MirrorMech, move D6\u2192D7, fire Mirror Shot at E7",
+        "IceMech, move G7\u2192F7, fire Cryo-Launcher at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T14:42:20.138473",
+      "turn": 4,
+      "label": "solve",
+      "score": 98886.42857142857,
+      "actions": [
+        "MirrorMech, move D7\u2192D4, fire Mirror Shot at C4",
+        "IceMech, repair",
+        "ScienceMech, move B7\u2192C6, repair"
       ]
     }
   ],
@@ -687,6 +717,200 @@
           5
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Ice",
+        "target": [
+          4,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 5,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Ranged_Ice",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Pullmech|attack",
+      "frequency": 2,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Pullmech",
+        "target": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Shield|move",
+      "frequency": 0,
+      "asymmetry": [
+        "mech_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Science_Shield",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Shield|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Science_Shield",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Ice|attack",
+      "frequency": 6,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Ice",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Mirrorshot|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          4,
+          5
+        ]
+      }
     }
   ],
   "disabled_actions": [
@@ -705,13 +929,13 @@
     {
       "weapon_id": "Brute_Mirrorshot",
       "cause_pattern": "grid_power|Brute_Mirrorshot|attack",
-      "expires_turn": 6,
+      "expires_turn": 7,
       "strategic_override": false
     },
     {
       "weapon_id": "Science_Shield",
       "cause_pattern": "status|Science_Shield|attack",
-      "expires_turn": 5,
+      "expires_turn": 6,
       "strategic_override": false
     }
   ],
@@ -768,6 +992,17 @@
     },
     {
       "type": "Train_Damaged",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null
+    },
+    {
+      "type": "Scarab1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
