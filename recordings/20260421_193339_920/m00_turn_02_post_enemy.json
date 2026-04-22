@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-04-21T19:38:22.775192",
+  "run_id": "20260421_193339_920",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 9,
+      "grid_power": 4,
+      "enemies_alive": 6,
+      "enemy_hp_total": 18,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "WallMech",
+          "hp": 4,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "hp": 3,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 9,
+      "grid_power": 4,
+      "enemies_alive": 5,
+      "enemy_hp_total": 17,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "WallMech",
+          "hp": 5,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "hp": 3,
+          "max_hp": 3
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 1,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "WallMech",
+          "predicted_hp": 5,
+          "actual_hp": 4,
+          "diff": -1
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": [
+        "WallMech took 1 unexpected damage"
+      ]
+    }
+  }
+}

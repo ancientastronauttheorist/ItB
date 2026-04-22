@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_193339_920",
+  "squad": "Balanced (Hook+Ice+Pulse)",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-69dbeac",
+  "weight_version": "v009",
+  "updated": "2026-04-21T19:45:32.542166",
+  "created": "2026-04-21T19:33:39.935856",
+  "missions": [],
+  "outcome": "loss",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T19:45:32.524804",
+  "outcome_notes": null
+}
