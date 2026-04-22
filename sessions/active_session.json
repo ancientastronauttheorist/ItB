@@ -6,56 +6,56 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 0,
-  "current_turn": 4,
+  "mission_index": 1,
+  "current_turn": 2,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "ElectricMech",
+        "move_to": [
+          6,
+          5
+        ],
+        "weapon": "Prime_Lightning",
+        "target": [
+          6,
+          6
+        ],
+        "description": "ElectricMech, fire Chain Whip at B2"
+      },
       {
         "mech_uid": 1,
         "mech_type": "JetMech",
         "move_to": [
           6,
-          4
-        ],
-        "weapon": "Brute_Jetmech",
-        "target": [
-          6,
-          2
-        ],
-        "description": "JetMech, fire Aerial Bombs at F2"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "ElectricMech",
-        "move_to": [
-          5,
           3
         ],
-        "weapon": "Prime_Lightning",
+        "weapon": "Unknown",
         "target": [
-          4,
-          3
+          255,
+          255
         ],
-        "description": "ElectricMech, move G3\u2192E3, fire Chain Whip at E4"
+        "description": "JetMech, move C4\u2192E2"
       },
       {
         "mech_uid": 2,
         "mech_type": "RocketMech",
         "move_to": [
           1,
-          5
+          3
         ],
         "weapon": "Ranged_Rocket",
         "target": [
           5,
-          5
+          3
         ],
-        "description": "RocketMech, move D5\u2192C7, fire Rocket Artillery at C3"
+        "description": "RocketMech, move C8\u2192E7, fire Rocket Artillery at E3"
       }
     ],
-    "score": 123734.99999999999,
-    "turn": 4
+    "score": 103905.71428571423,
+    "turn": 2
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -112,6 +112,28 @@
         "ElectricMech, move G3\u2192E3, fire Chain Whip at E4",
         "RocketMech, move D5\u2192C7, fire Rocket Artillery at C3"
       ]
+    },
+    {
+      "timestamp": "2026-04-21T20:01:23.593126",
+      "turn": 1,
+      "label": "solve",
+      "score": 113221.42857142855,
+      "actions": [
+        "JetMech, move E6\u2192E4, fire Aerial Bombs at C4",
+        "ElectricMech, move D5\u2192C2, fire Chain Whip at B2",
+        "RocketMech, move C6\u2192D4, fire Rocket Artillery at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T20:02:04.184662",
+      "turn": 2,
+      "label": "solve",
+      "score": 103905.71428571423,
+      "actions": [
+        "ElectricMech, fire Chain Whip at B2",
+        "JetMech, move C4\u2192E2",
+        "RocketMech, move C8\u2192E7, fire Rocket Artillery at E3"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -126,6 +148,10 @@
     [
       0,
       3
+    ],
+    [
+      1,
+      1
     ]
   ],
   "tags": [],
@@ -325,9 +351,102 @@
           5
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "status",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Ranged_Rocket|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          5,
+          3
+        ]
+      }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Brute_Jetmech",
+      "cause_pattern": "death|Brute_Jetmech|attack",
+      "expires_turn": 4,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
       "type": "ElectricMech",
@@ -336,9 +455,10 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "resolution": "manual_clear_stuck_queue"
     },
     {
       "type": "JetMech",
@@ -347,9 +467,10 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "resolution": "manual_clear_stuck_queue"
     },
     {
       "type": "RocketMech",
@@ -358,9 +479,10 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "resolution": "manual_clear_stuck_queue"
     },
     {
       "type": "Leaper1",
@@ -369,9 +491,12 @@
       "slot": null,
       "mission_id": "",
       "first_seen_turn": 4,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "research_id": "1cb150cb2d7f",
+      "last_kind": "enemy",
+      "resolution": "manual_clear_stuck_queue"
     }
   ]
 }
