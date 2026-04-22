@@ -6,56 +6,56 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 1,
-  "current_turn": 3,
+  "mission_index": 2,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "TankMech",
-        "move_to": [
-          5,
-          4
-        ],
-        "weapon": "Brute_Tankmech",
-        "target": [
-          5,
-          3
-        ],
-        "description": "TankMech, move D5\u2192D3, fire Taurus Cannon at E3"
-      },
-      {
         "mech_uid": 1,
         "mech_type": "ArtiMech",
         "move_to": [
-          1,
-          4
+          0,
+          6
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          1,
-          7
+          4,
+          6
         ],
-        "description": "ArtiMech, fire Artemis Artillery at A7"
+        "description": "ArtiMech, move D7\u2192B8, fire Artemis Artillery at B4"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "TankMech",
+        "move_to": [
+          2,
+          3
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "TankMech, move C5\u2192E6"
       },
       {
         "mech_uid": 2,
         "mech_type": "GravMech",
         "move_to": [
-          1,
-          1
+          3,
+          3
         ],
-        "weapon": "Science_Gravwell",
+        "weapon": "_REPAIR",
         "target": [
-          4,
-          1
+          3,
+          3
         ],
-        "description": "GravMech, move E6\u2192G7, fire Grav Well at G4"
+        "description": "GravMech, move F5\u2192E5, repair"
       }
     ],
-    "score": 112756.42857142857,
-    "turn": 3
+    "score": 68840.00104904175,
+    "turn": 4
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -145,6 +145,50 @@
         "ArtiMech, fire Artemis Artillery at A7",
         "GravMech, move E6\u2192G7, fire Grav Well at G4"
       ]
+    },
+    {
+      "timestamp": "2026-04-21T21:04:12.064557",
+      "turn": 1,
+      "label": "solve",
+      "score": 115950.0,
+      "actions": [
+        "TankMech, fire Taurus Cannon at C5",
+        "GravMech, move D6\u2192C3, fire Grav Well at E3",
+        "ArtiMech, move E6\u2192D7, fire Artemis Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T21:04:48.905479",
+      "turn": 2,
+      "label": "solve",
+      "score": 107866.66666666661,
+      "actions": [
+        "TankMech, move D5\u2192D3",
+        "ArtiMech, move D7\u2192C8, fire Artemis Artillery at C4",
+        "GravMech, move B3\u2192E2, fire Grav Well at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T21:08:11.200754",
+      "turn": 3,
+      "label": "solve",
+      "score": 110835.71428571429,
+      "actions": [
+        "ArtiMech, move C8\u2192D7, fire Artemis Artillery at D3",
+        "GravMech, move C6\u2192F5, fire Grav Well at C5",
+        "TankMech, move D3\u2192C5, fire Taurus Cannon at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T21:10:01.951955",
+      "turn": 4,
+      "label": "solve",
+      "score": 68840.00104904175,
+      "actions": [
+        "ArtiMech, move D7\u2192B8, fire Artemis Artillery at B4",
+        "TankMech, move C5\u2192E6",
+        "GravMech, move F5\u2192E5, repair"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -167,10 +211,104 @@
     [
       1,
       2
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
     ]
   ],
   "tags": [],
-  "failure_events_this_run": [],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "mech_position_wrong",
+      "categories": [
+        "mech_position_wrong"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "mech_position_wrong|Science_Gravwell|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Gravwell",
+        "target": [
+          6,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Brute_Tankmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          4,
+          6
+        ]
+      }
+    }
+  ],
   "disabled_actions": [],
   "research_queue": [
     {

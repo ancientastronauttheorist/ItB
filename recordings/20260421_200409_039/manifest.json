@@ -4,13 +4,13 @@
   "difficulty": 0,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-ef430c3",
+  "solver_version": "rust-0.1.0-c0b8575",
   "weight_version": "v009",
-  "updated": "2026-04-21T21:00:49.637345",
+  "updated": "2026-04-21T21:15:20.103244",
   "created": "2026-04-21T20:04:09.053238",
   "missions": [],
-  "outcome": "win",
-  "outcome_mission": 1,
-  "outcome_recorded_at": "2026-04-21T21:00:49.621290",
-  "outcome_notes": "Teleport Facility 2/2 bonus (defend the train)"
+  "outcome": "loss",
+  "outcome_mission": 2,
+  "outcome_recorded_at": "2026-04-21T21:15:20.090220",
+  "outcome_notes": "Wasteland turn 5: grid hit 0. Started mission with only 2/7 grid \u2014 no buffer. Kill-7 bonus unreached. Should have picked Disposal Vault (2/7 grid \u2192 easier conveyor/shields than buildings threatened)"
 }
