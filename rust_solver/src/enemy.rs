@@ -234,7 +234,19 @@ pub fn simulate_enemy_attacks(
         // Spider/Arachnid eggs don't attack — they hatch into Spiderlings on
         // their turn. Their queued_target is their own tile; without this
         // skip the egg would be processed as a self-hit melee attack.
-        if enemy.type_name_str().starts_with("WebbEgg") { continue; }
+        // Catch all known egg types: WebbEgg* (Hive Arachnid / Spiderlings),
+        // SpiderlingEgg* (SpiderBoss finale — Corporate HQ), and any other
+        // name containing "Egg" so new egg enemies default to safe-skip
+        // rather than phantom melee self-attack.
+        {
+            let name = enemy.type_name_str();
+            if name.starts_with("WebbEgg")
+                || name.starts_with("SpiderlingEgg")
+                || name.contains("Egg")
+            {
+                continue;
+            }
+        }
         if enemy.queued_target_x < 0 {
             // PHANTOM-ATTACK GUARD: Vek reports has_queued_attack=true
             // but the Lua bridge failed to populate a target. Don't

@@ -1216,12 +1216,20 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
         "actions": [a.description for a in solution.actions],
     })
 
-    # Replay solution for enriched recording data
+    # Replay solution for enriched recording data. Pass the active weights
+    # so score_breakdown in the recording reflects the values the solver
+    # actually searched under (not evaluate.py DEFAULT_WEIGHTS).
     rem_spawns = bridge_data.get("remaining_spawns", 2**31 - 1) if bridge_data else 2**31 - 1
+    _breakdown_weights = None
+    if eval_weights_dict:
+        from src.solver.evaluate import EvalWeights as _EW
+        _breakdown_weights = _EW(**{k: v for k, v in eval_weights_dict.items()
+                                    if k in _EW.__dataclass_fields__})
     enriched = replay_solution(board, solution, spawns,
                                current_turn=current_turn,
                                total_turns=board.total_turns if hasattr(board, 'total_turns') else 5,
-                               remaining_spawns=rem_spawns)
+                               remaining_spawns=rem_spawns,
+                               weights=_breakdown_weights)
 
     # Record solver output for replay/analysis (enriched format)
     solve_data = {

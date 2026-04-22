@@ -286,7 +286,11 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
         # Spider/Arachnid eggs don't attack — they transform into Spiderlings
         # on their turn. Their queued_target is their own tile (hatch marker),
         # which would otherwise be processed as a self-hit melee attack.
-        if enemy.type.startswith("WebbEgg"):
+        # Covers WebbEgg* (Hive) and SpiderlingEgg* (SpiderBoss finale),
+        # plus any future egg type whose name contains "Egg".
+        if (enemy.type.startswith("WebbEgg")
+                or enemy.type.startswith("SpiderlingEgg")
+                or "Egg" in enemy.type):
             continue
         if enemy.queued_target_x < 0:
             # PHANTOM-ATTACK GUARD: Vek reports has_queued_attack=true
@@ -580,6 +584,7 @@ def replay_solution(
     current_turn: int = 0,
     total_turns: int = 5,
     remaining_spawns: int = 2**31 - 1,
+    weights=None,
 ) -> dict:
     """Re-simulate the best solution to capture detailed per-action data.
 
@@ -660,11 +665,14 @@ def replay_solution(
     # simulate_enemy_attacks during search scoring.
     _apply_spawn_blocking(b, spawn_pts)
 
-    # Score breakdown on predicted post-enemy board
+    # Score breakdown on predicted post-enemy board — pass the caller's
+    # active weights so the recorded breakdown reflects what the solver
+    # actually used (active.json), not DEFAULT_WEIGHTS.
     score_breakdown = evaluate_breakdown(b, spawn_pts, kills=total_kills,
                                          current_turn=current_turn,
                                          total_turns=total_turns,
-                                         remaining_spawns=remaining_spawns)
+                                         remaining_spawns=remaining_spawns,
+                                         weights=weights)
 
     # Predicted outcome summary
     buildings_alive = 0
