@@ -779,6 +779,15 @@ def _sim_artillery(board, attacker, wdef, tx, ty, attack_dir, result):
     if wdef.shield:
         pass  # TODO: shield status
 
+    # Center-tile push (mirrors projectile: push after damage/status). Without
+    # this, artillery weapons with Forward/Backward push (e.g. Ranged_Rocket)
+    # fail to push the center target, causing building-bump desyncs.
+    if wdef.aoe_center and attack_dir is not None:
+        if wdef.push == "forward":
+            apply_push(board, tx, ty, attack_dir, result)
+        elif wdef.push == "backward":
+            apply_push(board, tx, ty, opposite_dir(attack_dir), result)
+
     # Behind tile damage (Old Earth Artillery: hits target + tile behind)
     if wdef.aoe_behind and attack_dir is not None:
         dx, dy = DIRS[attack_dir]

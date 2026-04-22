@@ -1101,6 +1101,20 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir
     // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
     apply_weapon_status(board, tx, ty, wdef);
 
+    // Center-tile push (mirrors projectile: status BEFORE push so the unit
+    // picks up fire/smoke on the source tile before moving). Without this,
+    // artillery with Forward/Backward push (e.g. Ranged_Rocket) fails to move
+    // the center target, causing building-bump desyncs.
+    if wdef.aoe_center() {
+        if let Some(dir) = attack_dir {
+            match wdef.push {
+                PushDir::Forward => apply_push(board, tx, ty, dir, result),
+                PushDir::Backward => apply_push(board, tx, ty, opposite_dir(dir), result),
+                _ => {}
+            }
+        }
+    }
+
     // Behind tile damage (Old Earth Artillery)
     if wdef.aoe_behind() {
         if let Some(dir) = attack_dir {
