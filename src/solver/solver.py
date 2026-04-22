@@ -339,9 +339,16 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
         # Shamans use support-type weapons (buff allies, no direct damage)
         if wdef and wdef.weapon_type == "support":
             continue
+        # Unknown-enemy fallback: boss/leader types get a 3-dmg template
+        # (mirrors Rust fallback — see rust_solver/src/enemy.rs). A blank
+        # 1-dmg melee underestimates unmapped bosses by 3x and has caused
+        # grid losses on finale missions.
+        _is_big = wdef is None and (
+            "Boss" in enemy.type or "Leader" in enemy.type)
         damage = enemy.weapon_damage if enemy.weapon_damage > 0 else (
-            wdef.damage if wdef else 1)
-        weapon_type = wdef.weapon_type if wdef else "melee"
+            wdef.damage if wdef else (3 if _is_big else 1))
+        weapon_type = wdef.weapon_type if wdef else (
+            "projectile" if _is_big else "melee")
 
         if weapon_type == "projectile":
             # Re-trace projectile path on current board state

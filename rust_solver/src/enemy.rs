@@ -320,14 +320,30 @@ pub fn simulate_enemy_attacks(
 
         // Look up actual weapon type from enemy pawn type
         let enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
+        // Unknown-enemy fallback. Boss/Leader types default to a stronger
+        // template (Alpha Firefly / Alpha Hornet = 3 dmg) because an
+        // unmapped boss missing from `enemy_weapon_for_type` is far more
+        // dangerous than a 1-dmg basic Vek. Grid has been lost repeatedly
+        // in finale missions where unknown bosses (e.g. SpiderBoss before
+        // it was mapped) simulated as 1-dmg melee and the real attack hit
+        // buildings un-modeled. See project_research_gate_gap memory.
         let wdef = if enemy_wid != WId::None {
             &weapons[enemy_wid as usize]
         } else {
-            // Fallback: use ranged flag for unknown enemy types
+            let name = enemy.type_name_str();
+            let is_big = name.contains("Boss") || name.contains("Leader");
             if enemy.ranged() {
-                &weapons[WId::FireflyAtk1 as usize] // generic projectile
+                if is_big {
+                    &weapons[WId::FireflyAtk2 as usize] // alpha projectile, 3 dmg
+                } else {
+                    &weapons[WId::FireflyAtk1 as usize] // basic projectile
+                }
             } else {
-                &weapons[WId::HornetAtk1 as usize] // generic melee
+                if is_big {
+                    &weapons[WId::HornetAtk2 as usize] // alpha melee, 3 dmg
+                } else {
+                    &weapons[WId::HornetAtk1 as usize] // basic melee
+                }
             }
         };
 

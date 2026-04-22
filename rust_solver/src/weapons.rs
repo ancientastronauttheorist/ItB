@@ -903,6 +903,14 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "FireflyBoss" => WId::FireflyAtkB,
         "ScorpionBoss" => WId::ScorpionAtkB,
         "BeetleBoss" => WId::BeetleAtkB,
+        // Spider Leader (bridge: SpiderBoss) — "Plentiful Offspring":
+        // spawns 2-3 Spiderling eggs at telegraphed tiles. No direct damage.
+        // Reuse Alpha Spider's spawn-eggs template (Artillery, 0 damage).
+        "SpiderBoss" => WId::SpiderAtk2,
+        // Shaman / Large Goo Leader — "Goo Attack": 4-damage adjacent
+        // squish. Closest existing template is BeetleAtkB (boss beetle
+        // melee); underestimates damage vs 4 but still multi-dmg melee.
+        "ShamanBoss" => WId::BeetleAtkB,
         _ => WId::None,
     }
 }
