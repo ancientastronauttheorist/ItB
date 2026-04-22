@@ -9,6 +9,60 @@ use crate::board::*;
 use crate::weapons::*;
 use crate::simulate::{apply_damage, apply_push, apply_weapon_status};
 
+/// Spawn a new enemy unit at (x, y). Used by Spider/Blobber artillery
+/// whose in-game effect is "create an egg / blob" at the telegraphed
+/// tile. Returns true if the unit was placed, false if blocked.
+///
+/// A unit spawns only on terrain that can hold a small Vek:
+/// Ground, Sand, Forest, Rubble, Fire, Ice. Blocked by buildings,
+/// mountains, water, chasm, lava. Also blocked if a live unit already
+/// occupies the tile (the game's attack resolves with no spawn).
+///
+/// The spawned unit inherits safe defaults: 1 HP, move 0, queued
+/// target = own tile (so the egg-skip treats it as "hatching, not
+/// attacking"). UID uses the 9000+ range to avoid colliding with
+/// bridge-provided UIDs.
+fn spawn_enemy(
+    board: &mut Board,
+    x: u8, y: u8,
+    type_name: &str,
+    hp: i8,
+) -> bool {
+    // Board unit capacity is fixed (16). If full, skip spawn rather
+    // than panic — the sim loses fidelity but stays alive.
+    if board.unit_count as usize >= board.units.len() { return false; }
+    // Occupied → no spawn
+    if board.unit_at(x, y).is_some() { return false; }
+    let t = board.tile(x, y);
+    match t.terrain {
+        Terrain::Ground | Terrain::Sand | Terrain::Forest
+        | Terrain::Rubble | Terrain::Fire | Terrain::Ice => {}
+        _ => return false,
+    }
+
+    // Pick a fresh UID in the spawned-unit range. Keep counting up
+    // from 9000 to avoid duplicates within a single enemy phase.
+    let mut new_uid: u16 = 9000;
+    for i in 0..board.unit_count as usize {
+        if board.units[i].uid >= new_uid { new_uid = board.units[i].uid + 1; }
+    }
+
+    let mut u = Unit {
+        uid: new_uid,
+        x, y,
+        hp, max_hp: hp,
+        team: Team::Enemy,
+        move_speed: 0,
+        base_move: 0,
+        queued_target_x: x as i8,
+        queued_target_y: y as i8,
+        ..Unit::default()
+    };
+    u.set_type_name(type_name);
+    board.add_unit(u);
+    true
+}
+
 /// Get effective damage for an enemy hit at a tile (Vek Hormones adds +1 vs other enemies).
 fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: bool) -> u8 {
     if vek_hormones {
@@ -483,6 +537,26 @@ pub fn simulate_enemy_attacks(
                     if !in_bounds(tx_n, ty_n) { break; }
                     let d_n = enemy_hit_damage(board, tx_n as u8, ty_n as u8, damage, vh);
                     apply_damage(board, tx_n as u8, ty_n as u8, d_n, &mut result, DamageSource::Weapon);
+                }
+
+                // Spawn-artillery side effects: Spider (webb eggs) and
+                // Blobber (blobs) fire a 0-dmg artillery whose real
+                // effect is placing a unit at the target tile. Without
+                // this the solver never sees the follow-up threat
+                // (egg hatches → Spiderling damages building next turn).
+                // SpiderBoss maps to SpiderAtk2 which also spawns eggs,
+                // though the real boss drops 2-3; we approximate with 1.
+                match enemy_wid {
+                    WId::SpiderAtk1 | WId::SpiderAtk2 => {
+                        spawn_enemy(board, tx, ty, "WebbEgg1", 1);
+                    }
+                    WId::BlobberAtk1 => {
+                        spawn_enemy(board, tx, ty, "Blob1", 1);
+                    }
+                    WId::BlobberAtk2 => {
+                        spawn_enemy(board, tx, ty, "Blob2", 1);
+                    }
+                    _ => {}
                 }
             }
 

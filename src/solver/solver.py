@@ -135,6 +135,50 @@ def _apply_charge_push(board: Board, x: int, y: int, dx: int, dy: int) -> None:
     u.y = ny
 
 
+def _spawn_from_artillery(board: Board, x: int, y: int, weapon_id: str) -> None:
+    """Spawn egg/blob unit when a Spider/Blobber artillery resolves.
+
+    Mirrors the Rust `spawn_enemy` helper. Called from the artillery
+    branch after damage is applied. No-op for all non-spawn weapons.
+    The target tile must be clear (no live unit) and on terrain a small
+    Vek can stand on — buildings, mountains, water, chasm, and lava
+    reject the spawn (the in-game egg/blob silently fails to place).
+    """
+    spawn_type = None
+    spawn_hp = 1
+    if weapon_id in ("SpiderAtk1", "SpiderAtk2"):
+        spawn_type = "WebbEgg1"
+    elif weapon_id == "BlobberAtk1":
+        spawn_type = "Blob1"
+    elif weapon_id == "BlobberAtk2":
+        spawn_type = "Blob2"
+    else:
+        return
+    if not board.in_bounds(x, y):
+        return
+    if board.unit_at(x, y) is not None:
+        return
+    t = board.tile(x, y)
+    if t.terrain in ("building", "mountain", "water", "chasm", "lava"):
+        return
+    # UID in 9000+ range to avoid colliding with bridge UIDs.
+    existing_uids = [u.uid for u in board.units]
+    new_uid = max([9000] + [uid for uid in existing_uids if uid >= 9000]) + 1
+    from src.model.board import Unit as _U
+    board.units.append(_U(
+        uid=new_uid,
+        type=spawn_type,
+        x=x, y=y,
+        hp=spawn_hp, max_hp=spawn_hp,
+        team=6,  # enemy
+        is_mech=False,
+        move_speed=0,
+        flying=False, massive=False, armor=False, pushable=True,
+        weapon="",
+        queued_target_x=x, queued_target_y=y,
+    ))
+
+
 def _apply_enemy_hit(board: Board, x: int, y: int, damage: int) -> int:
     """Apply one enemy hit to a tile. Returns grid power lost."""
     if not board.in_bounds(x, y):
@@ -491,6 +535,12 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
             grid_lost = _apply_enemy_hit(board, tx, ty, damage)
             buildings_destroyed += grid_lost
             _apply_enemy_weapon_status(board, tx, ty, wdef, enemy.uid)
+
+            # Spawn-artillery side effect: Spider (eggs) and Blobber
+            # (blobs) fire a 0-dmg artillery whose in-game effect is
+            # placing a unit at the target tile. Mirrors the Rust
+            # spawn_enemy logic in rust_solver/src/enemy.rs.
+            _spawn_from_artillery(board, tx, ty, enemy.weapon)
 
         elif weapon_type == "self_aoe":
             # Scorpion Leader's Massive Spinneret and similar: hit all 4
