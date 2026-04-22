@@ -214,28 +214,34 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                 if 0 <= x < 8 and 0 <= y < 8:
                     board.tile(x, y).conveyor = direction
 
-        # Supplement with freeze mine data from save file
-        # (fallback until bridge modloader reports items natively)
-        has_bridge_mines = any(
-            board.tile(x, y).freeze_mine
-            for x in range(8) for y in range(8)
-        )
-        if not has_bridge_mines:
-            freeze_mines = _read_freeze_mines_from_save()
-            for (x, y) in freeze_mines:
-                if 0 <= x < 8 and 0 <= y < 8:
-                    board.tile(x, y).freeze_mine = True
+        # Supplement mines from save file ONLY on turn 0 (mission start).
+        # After turn 0 the Lua bridge is authoritative for mine presence —
+        # the save file can contain stale mines that were consumed in-game
+        # but not cleared from the save region, and injecting those produces
+        # phantom mines that cause the solver to predict non-existent kills
+        # (run 20260421_211617_239 m02 t01 a2: Scorpion "killed" by phantom
+        # Old Earth Mine at C4 that the bridge correctly did not emit).
+        turn = data.get("turn", -1)
+        if turn <= 0:
+            has_bridge_freeze_mines = any(
+                board.tile(x, y).freeze_mine
+                for x in range(8) for y in range(8)
+            )
+            if not has_bridge_freeze_mines:
+                freeze_mines = _read_freeze_mines_from_save()
+                for (x, y) in freeze_mines:
+                    if 0 <= x < 8 and 0 <= y < 8:
+                        board.tile(x, y).freeze_mine = True
 
-        # Supplement with old earth mine data from save file
-        has_bridge_oe_mines = any(
-            board.tile(x, y).old_earth_mine
-            for x in range(8) for y in range(8)
-        )
-        if not has_bridge_oe_mines:
-            oe_mines = _read_old_earth_mines_from_save()
-            for (x, y) in oe_mines:
-                if 0 <= x < 8 and 0 <= y < 8:
-                    board.tile(x, y).old_earth_mine = True
+            has_bridge_oe_mines = any(
+                board.tile(x, y).old_earth_mine
+                for x in range(8) for y in range(8)
+            )
+            if not has_bridge_oe_mines:
+                oe_mines = _read_old_earth_mines_from_save()
+                for (x, y) in oe_mines:
+                    if 0 <= x < 8 and 0 <= y < 8:
+                        board.tile(x, y).old_earth_mine = True
 
         # Infer deployment zone from tile data when Lua GetZone fails
         # (Board:GetZone("deployment") has never returned tiles on this build)

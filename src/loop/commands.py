@@ -2848,8 +2848,10 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
     if weights:
         bd["eval_weights"] = weights
 
-    # Inject mine data from save file fallback
-    if "tiles" in bd:
+    # Inject mine data from save file ONLY on turn 0. After turn 0 the Lua
+    # bridge is authoritative — stale save-file mines produce phantom kills
+    # (see reader.py for the same gate and the m02 t01 a2 incident).
+    if "tiles" in bd and bd.get("turn", -1) <= 0:
         has_freeze = any(t.get("freeze_mine") for t in bd["tiles"])
         if not has_freeze:
             from src.bridge.reader import _read_freeze_mines_from_save
