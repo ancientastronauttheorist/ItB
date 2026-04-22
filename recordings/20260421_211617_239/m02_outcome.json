@@ -1,0 +1,7 @@
+{
+  "mission_index": 2,
+  "mission_name": "",
+  "result": "loss",
+  "notes": "Artifact Vaults turn 4: grid hit 0. Pattern: 2 consecutive runs lost at grid 1/7 \u2192 0. Need earlier grid repair or solver weight fix",
+  "recorded_at": "2026-04-21T21:51:19.902419"
+}

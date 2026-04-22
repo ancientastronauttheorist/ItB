@@ -4,13 +4,13 @@
   "difficulty": 3,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-dd498c0",
+  "solver_version": "rust-0.1.0-16c3081",
   "weight_version": "v009",
-  "updated": "2026-04-21T21:41:51.744376",
+  "updated": "2026-04-21T21:51:19.916006",
   "created": "2026-04-21T21:16:17.254536",
   "missions": [],
-  "outcome": "win",
-  "outcome_mission": 1,
-  "outcome_recorded_at": "2026-04-21T21:41:51.732658",
-  "outcome_notes": "Library: \u2605 Artillery saved, Coal Plant failed. Grid 1/7 \u2014 critical state after"
+  "outcome": "loss",
+  "outcome_mission": 2,
+  "outcome_recorded_at": "2026-04-21T21:51:19.903173",
+  "outcome_notes": "Artifact Vaults turn 4: grid hit 0. Pattern: 2 consecutive runs lost at grid 1/7 \u2192 0. Need earlier grid repair or solver weight fix"
 }

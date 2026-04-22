@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-04-21T21:49:00.329353",
+  "run_id": "20260421_211617_239",
+  "mission_index": 2,
+  "turn": 2,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 9,
+      "grid_power": 1,
+      "enemies_alive": 6,
+      "enemy_hp_total": 20,
+      "mechs_alive": 5,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 967,
+          "type": "Train_Damaged",
+          "hp": 1,
+          "max_hp": 1
+        },
+        {
+          "uid": 967,
+          "type": "Train_Damaged",
+          "hp": 1,
+          "max_hp": 1
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 9,
+      "grid_power": 1,
+      "enemies_alive": 2,
+      "enemy_hp_total": 5,
+      "mechs_alive": 5,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 967,
+          "type": "Train_Damaged",
+          "hp": 1,
+          "max_hp": 1
+        },
+        {
+          "uid": 967,
+          "type": "Train_Damaged",
+          "hp": 1,
+          "max_hp": 1
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 4,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 967,
+          "type": "Train_Damaged",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 967,
+          "type": "Train_Damaged",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}
