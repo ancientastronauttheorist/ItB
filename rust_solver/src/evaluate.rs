@@ -305,12 +305,14 @@ pub fn evaluate(
     let mut score = 0.0;
     let ff = future_factor(board.current_turn, board.total_turns, board.remaining_spawns);
 
-    // Grid power urgency multiplier — uses effective grid.
-    let grid_multiplier = if eff_grid <= 1.0 {
+    // Grid power urgency multiplier — gate on RAW grid_power so the 15%
+    // defense's expected-save (which inflates eff_grid by ~0.15 per hit)
+    // can't push grid=3 above the `<= 3` medium threshold.
+    let grid_multiplier = if board.grid_power <= 1 {
         weights.grid_urgency_critical
-    } else if eff_grid <= 2.0 {
+    } else if board.grid_power <= 2 {
         weights.grid_urgency_high
-    } else if eff_grid <= 3.0 {
+    } else if board.grid_power <= 3 {
         weights.grid_urgency_medium
     } else { 1.0 };
 

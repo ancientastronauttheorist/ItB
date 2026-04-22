@@ -204,14 +204,18 @@ def evaluate(
     score = 0.0
     ff = _future_factor(current_turn, total_turns, remaining_spawns)
 
-    # --- GRID POWER URGENCY (uses effective grid) ---
+    # --- GRID POWER URGENCY ---
+    # Gate on the RAW grid_power so the 15% defense's expected-save (which
+    # inflates eff_grid by ~0.15 per expected hit) can't push grid=3 above
+    # the `<= 3` medium-urgency threshold. Weights come from EvalWeights
+    # (not hardcoded) so active.json tuning takes effect.
     grid_multiplier = 1.0
-    if eff_grid <= 1:
-        grid_multiplier = 5.0
-    elif eff_grid <= 2:
-        grid_multiplier = 3.0
-    elif eff_grid <= 3:
-        grid_multiplier = 2.0
+    if board.grid_power <= 1:
+        grid_multiplier = w.grid_urgency_critical
+    elif board.grid_power <= 2:
+        grid_multiplier = w.grid_urgency_high
+    elif board.grid_power <= 3:
+        grid_multiplier = w.grid_urgency_medium
 
     # --- BUILDINGS: context-aware multiplier (bld_mult) ---
     grid_max = getattr(board, 'grid_power_max', 7) or 7
@@ -423,14 +427,14 @@ def evaluate_breakdown(
     # Effective grid = deterministic + expected Grid Defense save.
     eff_grid = board.grid_power + getattr(board, "enemy_grid_save_expected", 0.0)
 
-    # --- GRID POWER URGENCY (uses effective grid) ---
+    # --- GRID POWER URGENCY --- (raw grid, EvalWeights — see evaluate())
     grid_multiplier = 1.0
-    if eff_grid <= 1:
-        grid_multiplier = 5.0
-    elif eff_grid <= 2:
-        grid_multiplier = 3.0
-    elif eff_grid <= 3:
-        grid_multiplier = 2.0
+    if board.grid_power <= 1:
+        grid_multiplier = w.grid_urgency_critical
+    elif board.grid_power <= 2:
+        grid_multiplier = w.grid_urgency_high
+    elif board.grid_power <= 3:
+        grid_multiplier = w.grid_urgency_medium
 
     # --- BUILDINGS (context-aware multiplier) ---
     grid_max = getattr(board, 'grid_power_max', 7) or 7
