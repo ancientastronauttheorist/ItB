@@ -506,6 +506,13 @@ def _simulate_enemy_attacks(board: Board, original_positions: dict) -> int:
 
     _simulate_train_advance(board)
 
+    # Grid Defense expected save: each grid point lost had a
+    # grid_defense_pct/100 chance to be blocked. Stored as float on the
+    # board for the evaluator. Without this the solver over-predicts
+    # building loss by ~1 grid/turn at the 15% baseline.
+    gd = getattr(board, "grid_defense_pct", 15)
+    board.enemy_grid_save_expected = buildings_destroyed * (gd / 100.0)
+
     return buildings_destroyed
 
 

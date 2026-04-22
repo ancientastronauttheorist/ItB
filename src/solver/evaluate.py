@@ -164,27 +164,33 @@ def evaluate(
     """
     w = weights or DEFAULT_WEIGHTS
 
-    # Game over: grid power depleted.
+    # Effective grid = deterministic grid_power + expected save from Grid
+    # Defense (fraction of buildings the enemy hit that the 15%-ish
+    # resist-chance blocks). Use this for urgency/game_over/scoring so the
+    # solver isn't pessimistic about buildings the game will actually save.
+    eff_grid = board.grid_power + getattr(board, "enemy_grid_save_expected", 0.0)
+
+    # Game over: expected grid power below half a point (≈ ≤0 actual).
     # Graduated score: -500000 base + normal evaluation components.
     # Keeps all game-over states strictly below any non-game-over state
     # while letting the solver rank bad options (e.g. lose 1 vs 3 buildings).
-    game_over = board.grid_power <= 0
+    game_over = eff_grid < 0.5
 
     score = 0.0
     ff = _future_factor(current_turn, total_turns, remaining_spawns)
 
-    # --- GRID POWER URGENCY (unchanged) ---
+    # --- GRID POWER URGENCY (uses effective grid) ---
     grid_multiplier = 1.0
-    if board.grid_power <= 1:
+    if eff_grid <= 1:
         grid_multiplier = 5.0
-    elif board.grid_power <= 2:
+    elif eff_grid <= 2:
         grid_multiplier = 3.0
-    elif board.grid_power <= 3:
+    elif eff_grid <= 3:
         grid_multiplier = 2.0
 
     # --- BUILDINGS: context-aware multiplier (bld_mult) ---
     grid_max = getattr(board, 'grid_power_max', 7) or 7
-    grid_health = board.grid_power / max(grid_max, 1)
+    grid_health = eff_grid / max(grid_max, 1)
     mp = 0.0
     if total_turns > 1:
         mp = max(current_turn - 1, 0) / (total_turns - 1)
@@ -214,8 +220,9 @@ def evaluate(
     # --- GRID POWER: urgency multiplier applied here ---
     # When grid is low, each grid point is worth more. Multiplier was
     # previously on buildings but caused inversion (fewer buildings at
-    # critical scored higher than more buildings at normal).
-    score += board.grid_power * w.grid_power * grid_multiplier
+    # critical scored higher than more buildings at normal). Uses
+    # effective grid to credit expected Grid Defense saves.
+    score += eff_grid * w.grid_power * grid_multiplier
 
     # --- ENEMIES: SCALED (kills worth more early, less on final turn) ---
     # kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
@@ -368,18 +375,21 @@ def evaluate_breakdown(
     w = weights or DEFAULT_WEIGHTS
     ff = _future_factor(current_turn, total_turns, remaining_spawns)
 
-    # --- GRID POWER URGENCY ---
+    # Effective grid = deterministic + expected Grid Defense save.
+    eff_grid = board.grid_power + getattr(board, "enemy_grid_save_expected", 0.0)
+
+    # --- GRID POWER URGENCY (uses effective grid) ---
     grid_multiplier = 1.0
-    if board.grid_power <= 1:
+    if eff_grid <= 1:
         grid_multiplier = 5.0
-    elif board.grid_power <= 2:
+    elif eff_grid <= 2:
         grid_multiplier = 3.0
-    elif board.grid_power <= 3:
+    elif eff_grid <= 3:
         grid_multiplier = 2.0
 
     # --- BUILDINGS (context-aware multiplier) ---
     grid_max = getattr(board, 'grid_power_max', 7) or 7
-    grid_health = board.grid_power / max(grid_max, 1)
+    grid_health = eff_grid / max(grid_max, 1)
     mp = 0.0
     if total_turns > 1:
         mp = max(current_turn - 1, 0) / (total_turns - 1)
@@ -400,7 +410,7 @@ def evaluate_breakdown(
     building_hp_score = total_building_hp * w.building_hp * bld_mult
 
     # --- GRID POWER: urgency multiplier applied here ---
-    grid_power_score = board.grid_power * w.grid_power * grid_multiplier
+    grid_power_score = eff_grid * w.grid_power * grid_multiplier
 
     # --- ENEMIES ---
     enemies_killed_score = kills * _scaled(w.enemy_killed, ff, 0.20, 1.60)
@@ -502,7 +512,12 @@ def evaluate_breakdown(
         "bld_mult": bld_mult,
         "buildings_alive": {"count": buildings_alive, "score": buildings_score},
         "building_hp": {"total": total_building_hp, "score": building_hp_score},
-        "grid_power": {"value": board.grid_power, "score": grid_power_score},
+        "grid_power": {
+            "value": board.grid_power,
+            "effective": eff_grid,
+            "expected_save": getattr(board, "enemy_grid_save_expected", 0.0),
+            "score": grid_power_score,
+        },
         "enemies_killed": {"count": kills, "score": enemies_killed_score},
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
         "environment_danger": {

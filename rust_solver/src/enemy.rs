@@ -655,6 +655,14 @@ pub fn simulate_enemy_attacks(
 
     // Count buildings destroyed from result
     buildings_destroyed += result.grid_damage;
+
+    // Grid Defense expected save: each grid point lost had a
+    // grid_defense_pct/100 chance to be blocked. Track as float on the
+    // board for the evaluator. Without this the solver over-predicts
+    // building loss by ~1 grid/turn at the 15% baseline.
+    let gd = board.grid_defense_pct as f32;
+    board.enemy_grid_save_expected = (buildings_destroyed as f32) * (gd / 100.0);
+
     buildings_destroyed
 }
 

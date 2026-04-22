@@ -181,6 +181,14 @@ class Board:
         self.units: list[Unit] = []
         self.grid_power: int = 0
         self.grid_power_max: int = 7
+        # Grid Defense: % chance a building resists damage. Not exposed by
+        # Lua API (C++-only), so we default to 15 (game baseline) and let
+        # callers override if tuning suggests a different value.
+        self.grid_defense_pct: int = 15
+        # Expected grid power saved during enemy phase via Grid Defense,
+        # accumulated as float (buildings_destroyed * grid_defense_pct/100).
+        # Read by evaluator to offset pessimistic post-enemy grid count.
+        self.enemy_grid_save_expected: float = 0.0
         self.environment_danger: set[tuple[int, int]] = set()
         self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
         # Maps (x,y) -> (damage, is_lethal)
@@ -206,6 +214,8 @@ class Board:
         b.units = [deepcopy(u) for u in self.units]
         b.grid_power = self.grid_power
         b.grid_power_max = self.grid_power_max
+        b.grid_defense_pct = self.grid_defense_pct
+        b.enemy_grid_save_expected = self.enemy_grid_save_expected
         b.environment_danger = set(self.environment_danger)
         b.environment_danger_v2 = dict(self.environment_danger_v2)
         b.env_type = self.env_type

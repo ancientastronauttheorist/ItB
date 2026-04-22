@@ -272,29 +272,36 @@ pub fn evaluate(
     psion_before: &PsionState,
     initial_building_threats: u64,
 ) -> f64 {
-    // Game over: grid power depleted.
+    // Effective grid = deterministic grid_power + expected Grid Defense
+    // save (fractional grid saved by the 15%-ish resist-chance). Used for
+    // urgency/game_over/scoring so the solver isn't pessimistic about
+    // buildings the game will actually save.
+    let eff_grid = board.grid_power as f64 + board.enemy_grid_save_expected as f64;
+
+    // Game over: expected grid below half a point (≈ ≤0 actual).
     // Instead of flat -999999, use -500000 + normal score so the solver
     // can rank bad options (e.g. "lose 1 building" > "lose 3 buildings").
     // -500000 keeps all game-over states strictly below any non-game-over
     // (worst non-game-over is ~-275000 with 2 dead mechs at -150000 each).
-    let game_over = board.grid_power == 0;
+    let game_over = eff_grid < 0.5;
 
     let mut score = 0.0;
     let ff = future_factor(board.current_turn, board.total_turns, board.remaining_spawns);
 
-    // Grid power urgency multiplier (from weights)
-    let grid_multiplier = match board.grid_power {
-        0..=1 => weights.grid_urgency_critical,
-        2 => weights.grid_urgency_high,
-        3 => weights.grid_urgency_medium,
-        _ => 1.0,
-    };
+    // Grid power urgency multiplier — uses effective grid.
+    let grid_multiplier = if eff_grid <= 1.0 {
+        weights.grid_urgency_critical
+    } else if eff_grid <= 2.0 {
+        weights.grid_urgency_high
+    } else if eff_grid <= 3.0 {
+        weights.grid_urgency_medium
+    } else { 1.0 };
 
     // ── Buildings: context-aware multiplier, NO urgency multiplier ───────
     // bld_mult scales building value by grid health and mission phase.
     // Goes DOWN at low grid (opposite of urgency), so more-buildings always
     // beats fewer — avoids the old inversion bug.
-    let grid_health = board.grid_power as f64 / board.grid_power_max.max(1) as f64;
+    let grid_health = eff_grid / board.grid_power_max.max(1) as f64;
     let mission_phase = if board.total_turns > 1 {
         (board.current_turn.saturating_sub(1) as f64) / (board.total_turns - 1) as f64
     } else { 0.0 };
@@ -323,8 +330,9 @@ pub fn evaluate(
 
     // ── Grid power: urgency multiplier applied here ───────────────────
     // When grid is low, each grid point is worth more — this incentivizes
-    // protecting buildings at low grid without the inversion bug.
-    score += board.grid_power as f64 * weights.grid_power * grid_multiplier;
+    // protecting buildings at low grid without the inversion bug. Uses
+    // effective grid to credit expected Grid Defense saves.
+    score += eff_grid * weights.grid_power * grid_multiplier;
 
     // ── Enemies: SCALED (kills worth more early, less on final turn) ────
     // kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100

@@ -210,6 +210,15 @@ pub struct Board {
     pub unit_count: u8,
     pub grid_power: u8,
     pub grid_power_max: u8,
+    // Grid Defense: % chance any building resists damage. Not exposed by
+    // ITB's Lua API (C++-only), so default to 15 (game baseline). Set
+    // higher when reputation upgrades it. Read by evaluator for expected
+    // grid offset.
+    pub grid_defense_pct: u8,
+    // Expected grid power saved during the simulated enemy phase via Grid
+    // Defense (buildings_destroyed * grid_defense_pct / 100). f32 because
+    // it's a fractional expected value. Evaluator adds to grid_power.
+    pub enemy_grid_save_expected: f32,
     pub env_danger: u64,        // bitset: bit i = tile i is danger
     pub env_danger_kill: u64,   // bitset: bit i = tile i is lethal env (Deadly Threat: air strike, lightning, etc.)
     pub unique_buildings: u64,  // bitset: bit i = tile i is a mission objective building (Coal Plant, Power Generator, Emergency Batteries)
@@ -247,6 +256,8 @@ impl Default for Board {
             unit_count: 0,
             grid_power: 7,
             grid_power_max: 7,
+            grid_defense_pct: 15,
+            enemy_grid_save_expected: 0.0,
             env_danger: 0,
             env_danger_kill: 0,
             unique_buildings: 0,
