@@ -792,6 +792,34 @@ local function dump_state()
         end
     end)
 
+    -- Bonus-objective progress for "Kill N enemies" (BONUS_KILL_FIVE = 6).
+    -- Emitted so the Python evaluator can reward plans that reach the
+    -- cumulative kill target. Absent / 0 → no kill-N bonus on this mission;
+    -- the evaluator's step-function check neutralizes safely. Per
+    -- scripts/missions/missions.lua:
+    --   BONUS_KILL_FIVE = 6 in the enum
+    --   mission.BonusObjs is the chosen bonus list (random from BonusPool)
+    --   mission.KilledVek is cumulative this-mission kills
+    --   mission:GetKillBonus() is difficulty-scaled (5 easy / 7 normal/hard)
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if mission and mission.BonusObjs then
+            local has_kill_five = false
+            for _, obj in ipairs(mission.BonusObjs) do
+                if obj == 6 then has_kill_five = true; break end
+            end
+            if has_kill_five and mission.GetKillBonus then
+                local ok, target = pcall(function() return mission:GetKillBonus() end)
+                if ok and type(target) == "number" then
+                    state.mission_kill_target = target
+                end
+            end
+            if mission.KilledVek ~= nil then
+                state.mission_kills_done = mission.KilledVek
+            end
+        end
+    end)
+
     -- Victory signal: when mission:IsFinalTurn() is true, no more Vek will
     -- emerge after this turn's enemy phase. Solver treats this as the final
     -- turn (future_factor = 0). Also expose mission.TurnLimit as authoritative

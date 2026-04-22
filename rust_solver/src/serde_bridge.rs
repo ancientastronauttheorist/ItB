@@ -26,6 +26,13 @@ pub struct JsonInput {
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int], ...]
     pub eval_weights: Option<EvalWeights>,
     pub mission_id: Option<String>,
+    /// "Kill N enemies" bonus target (mission:GetKillBonus(), difficulty-scaled).
+    /// Missing / 0 → no bonus on this mission; evaluator's step-function
+    /// scoring is a no-op in that case.
+    pub mission_kill_target: Option<u8>,
+    /// Cumulative this-mission kills (mission.KilledVek). Combined with the
+    /// simulated turn's kills to decide whether a plan crosses the target.
+    pub mission_kills_done: Option<u8>,
     /// Phase 1 soft-disable blocklist — weapons the Python detector has
     /// flagged as drifting. Each entry's ``weapon_id`` becomes a bit in
     /// the ``disabled_mask`` returned by ``board_from_json``. Other
@@ -400,6 +407,8 @@ pub fn board_from_json(json_str: &str)
     board.total_turns = input.total_turns.unwrap_or(5);
     board.remaining_spawns = input.remaining_spawns.unwrap_or(u32::MAX);
     board.mission_id = input.mission_id.clone().unwrap_or_default();
+    board.mission_kill_target = input.mission_kill_target.unwrap_or(0);
+    board.mission_kills_done = input.mission_kills_done.unwrap_or(0);
 
     // Detect Old Earth Dam: populate dam_alive + dam_primary from the primary
     // tile entry (the one without EXTRA_TILE). Used by trigger_dam_flood at

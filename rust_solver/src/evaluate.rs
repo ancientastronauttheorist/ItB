@@ -121,6 +121,12 @@ pub struct EvalWeights {
     // Boss kill bonus (mission objective: destroy the Hornet Leader, etc.)
     pub boss_killed_bonus: f64,
 
+    // "Kill N enemies" bonus (BONUS_KILL_FIVE). Step function that fires
+    // exactly once per mission — on the plan whose cumulative kills cross
+    // board.mission_kill_target. See the scoring block below for the
+    // pre-turn-below / post-turn-at-or-above check.
+    pub mission_kill_bonus: f64,
+
     // Context-aware building multiplier knobs
     pub bld_grid_floor: f64,
     pub bld_grid_scale: f64,
@@ -206,6 +212,7 @@ impl Default for EvalWeights {
             building_objective_bonus: 8000.0,
             grid_reward_building_bonus: 25000.0,
             boss_killed_bonus: 8000.0,
+            mission_kill_bonus: 15000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
             bld_phase_floor: 1.0,
@@ -439,6 +446,20 @@ pub fn evaluate(
         let damage_dealt = (psion_before.dam_hp - hp_after).max(0) as f64;
         if damage_dealt > 0.0 {
             score += weights.dam_damage_dealt * damage_dealt;
+        }
+    }
+
+    // ── Mission bonus: "Kill N enemies" threshold cross ─────────────────
+    // Step function — fires exactly once per mission on the plan that
+    // pushes cumulative kills across the target. Pre-turn < target AND
+    // post-turn ≥ target is the cross condition. scaled() floor=0.25
+    // leaves a meaningful bonus even on the final turn since unlocking
+    // the rep star still matters.
+    let kt = board.mission_kill_target as i32;
+    if kt > 0 {
+        let kd = board.mission_kills_done as i32;
+        if kd < kt && kd + kills >= kt {
+            score += scaled(weights.mission_kill_bonus, ff, 0.25, 0.75);
         }
     }
 

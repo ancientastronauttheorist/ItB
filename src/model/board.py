@@ -207,6 +207,15 @@ class Board:
         self.force_amp: bool = False
         # Mission metadata (from bridge mission.ID, e.g. "Mission_Dam").
         self.mission_id: str = ""
+        # "Kill N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
+        # mission doesn't have this bonus. Target is difficulty-scaled by
+        # the game (5 on Easy, 7 on Normal/Hard). Used by the evaluator to
+        # fire a step-function bonus when cumulative kills cross the target.
+        self.mission_kill_target: int = 0
+        # Cumulative enemy kills this mission (mission.KilledVek from Lua).
+        # Combined with the simulated turn's kills to decide whether a plan
+        # crosses the kill target threshold.
+        self.mission_kills_done: int = 0
         # Old Earth Dam state — flipped to False exactly once when the last
         # Dam_Pawn tile dies; the transition triggers trigger_dam_flood.
         self.dam_alive: bool = False
@@ -229,6 +238,8 @@ class Board:
         b.soldier_psion_active = self.soldier_psion_active
         b.force_amp = self.force_amp
         b.mission_id = self.mission_id
+        b.mission_kill_target = self.mission_kill_target
+        b.mission_kills_done = self.mission_kills_done
         b.dam_alive = self.dam_alive
         b.dam_primary = self.dam_primary
         return b
@@ -466,6 +477,19 @@ class Board:
 
         # Mission metadata — may be empty string if bridge couldn't resolve.
         board.mission_id = data.get("mission_id", "") or ""
+        # Kill-N bonus objective fields. Both default 0, which makes the
+        # evaluator's step-function check a no-op for missions without the
+        # kill-N bonus. Emitted by the Lua bridge from mission.BonusObjs +
+        # mission.KilledVek + mission:GetKillBonus(). Safe when the Lua side
+        # hasn't been updated — int() wraps whatever the bridge sent.
+        try:
+            board.mission_kill_target = int(data.get("mission_kill_target", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_kill_target = 0
+        try:
+            board.mission_kills_done = int(data.get("mission_kills_done", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_kills_done = 0
 
         # Infer WEB status from Spider Egg adjacency.
         # Game rule (weapons_enemy.lua SpiderAtk1:GetSkillEffect):

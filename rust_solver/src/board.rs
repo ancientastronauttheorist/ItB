@@ -241,6 +241,12 @@ pub struct Board {
                                 // after current turn, treat as final turn for scoring.
     pub mission_id: String,     // Mission class name from bridge (e.g. "Mission_Dam").
                                 // Empty when the bridge couldn't resolve it.
+    pub mission_kill_target: u8,   // "Kill N enemies" bonus target from mission:GetKillBonus()
+                                // (7 on Normal/Hard, 5 on Easy). 0 when the mission
+                                // doesn't have BONUS_KILL_FIVE in its BonusObjs.
+    pub mission_kills_done: u8,    // Cumulative this-mission kills (mission.KilledVek).
+                                // Combined with the simulated turn's kills to decide
+                                // whether a plan crosses the kill target threshold.
     pub dam_alive: bool,        // True while at least one Dam_Pawn has hp > 0. Flips
                                 // false exactly once when the last tile is destroyed —
                                 // the transition triggers trigger_dam_flood().
@@ -277,6 +283,8 @@ impl Default for Board {
             total_turns: 5,
             remaining_spawns: u32::MAX, // Unknown → treat as "plenty of future"
             mission_id: String::new(),
+            mission_kill_target: 0,
+            mission_kills_done: 0,
             dam_alive: false,
             dam_primary: None,
         }

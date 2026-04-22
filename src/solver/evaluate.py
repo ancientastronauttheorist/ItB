@@ -66,6 +66,11 @@ class EvalWeights:
     # Old Earth Dam: +1 Rep + 14-tile flood. Turn-aware scaling in evaluate.
     dam_destroyed: float = 0
 
+    # "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Fires as a step
+    # function exactly once — on the plan that crosses the cumulative
+    # target. Solver will route kills to whichever turn reaches N fastest.
+    mission_kill_bonus: float = 15000
+
     # Building protection
     mech_self_frozen: float = -12000
     building_bump_damage: float = -8000
@@ -273,6 +278,17 @@ def evaluate(
     # value on final turn; early turns get full flood-denial reward) ---
     if dam_was_alive and not getattr(board, 'dam_alive', False):
         score += _scaled(w.dam_destroyed, ff, 0.10, 0.90)
+
+    # --- "KILL N ENEMIES" BONUS: step function on threshold cross ---
+    # Fires exactly once per mission, on the plan whose simulated kills push
+    # cumulative count to the target. Pre-turn < target AND post-turn ≥
+    # target is the cross condition. Scaled by future_factor so the bonus
+    # decays toward final turn (matches dam_destroyed pattern).
+    kt = getattr(board, 'mission_kill_target', 0)
+    if kt > 0:
+        kd = getattr(board, 'mission_kills_done', 0)
+        if kd < kt and kd + kills >= kt:
+            score += _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
 
     # --- ENVIRONMENT DANGER: SCALED ---
     # Lethal env (kill_int=1: Air Strike, Lightning, Cataclysm→chasm, Seismic,
@@ -537,12 +553,19 @@ def evaluate_breakdown(
                         pods_proximity += 1
                         pods_score += w.pod_proximity
 
+    # Kill-N bonus: step function on cumulative-kill cross. See evaluate().
+    kill_n_score = 0.0
+    kt = getattr(board, 'mission_kill_target', 0)
+    kd = getattr(board, 'mission_kills_done', 0)
+    if kt > 0 and kd < kt and kd + kills >= kt:
+        kill_n_score = _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+
     total = (buildings_score + building_hp_score
              + objective_rep_score + objective_grid_score
              + grid_power_score
              + enemies_killed_score + enemy_hp_score + danger_score
              + mech_score + spawns_score + remaining_spawn_score
-             + pods_score)
+             + pods_score + kill_n_score)
 
     # Note: sanity check removed — evaluate() now requires turn params.
     # Use evaluate_breakdown only for debugging, not during search.
@@ -568,6 +591,12 @@ def evaluate_breakdown(
             "score": grid_power_score,
         },
         "enemies_killed": {"count": kills, "score": enemies_killed_score},
+        "mission_kill_bonus": {
+            "target": kt,
+            "done_pre_turn": kd,
+            "kills_this_turn": kills,
+            "score": kill_n_score,
+        },
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
         "environment_danger": {
             "enemies_on": danger_enemies_on,
