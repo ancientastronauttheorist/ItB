@@ -1,61 +1,61 @@
 {
-  "run_id": "20260421_211617_239",
-  "squad": "Jet+Ice+Gravity (Balanced Roll, Ralph Time Traveler)",
+  "run_id": "20260422_182751_384",
+  "squad": "Detritus_Judo+Charge+Boulder (Balanced, Collin Singh carryover, post-bridge-fix)",
   "achievement_targets": [],
-  "difficulty": 3,
+  "difficulty": 2,
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 2,
-  "current_turn": 3,
+  "mission_index": 0,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
-        "mech_type": "JetMech",
+        "mech_type": "JudoMech",
+        "move_to": [
+          3,
+          3
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "JudoMech, move B6\u2192E5"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "ChargeMech",
         "move_to": [
           4,
           3
         ],
-        "weapon": "Unknown",
+        "weapon": "Brute_Beetle",
         "target": [
-          255,
-          255
+          4,
+          2
         ],
-        "description": "JetMech"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "IceMech",
-        "move_to": [
-          3,
-          6
-        ],
-        "weapon": "Ranged_Ice",
-        "target": [
-          3,
-          3
-        ],
-        "description": "IceMech, fire Cryo-Launcher at E5"
+        "description": "ChargeMech, move D5\u2192E4, fire Ramming Engines at F4"
       },
       {
         "mech_uid": 2,
-        "mech_type": "GravMech",
+        "mech_type": "RockartMech",
         "move_to": [
-          2,
+          3,
           4
         ],
-        "weapon": "Unknown",
+        "weapon": "Ranged_Rockthrow",
         "target": [
-          255,
-          255
+          3,
+          2
         ],
-        "description": "GravMech, move C6\u2192D6"
+        "description": "RockartMech, move E6\u2192D5, fire Rock Launcher at F5"
       }
     ],
-    "score": 68616.43010411944,
-    "turn": 3
+    "score": 132788.57251439776,
+    "turn": 4
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -64,128 +64,47 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-21T21:23:06.719679",
+      "timestamp": "2026-04-22T18:29:57.852209",
       "turn": 1,
       "label": "solve",
-      "score": 108264.28571428571,
+      "score": 138007.14285714284,
       "actions": [
-        "JetMech, move F6\u2192F4, fire Aerial Bombs at F2",
-        "IceMech, move G5\u2192G4, fire Cryo-Launcher at G2",
-        "GravMech, move D5\u2192E7, fire Grav Well at E3"
+        "JudoMech, move E5\u2192B5, fire Vice Fist at B4",
+        "ChargeMech, move F6\u2192E5, fire Ramming Engines at E4",
+        "RockartMech, move D6\u2192C6, fire Rock Launcher at E6"
       ]
     },
     {
-      "timestamp": "2026-04-21T21:24:44.040467",
+      "timestamp": "2026-04-22T18:30:54.866873",
       "turn": 2,
       "label": "solve",
-      "score": 82671.90520672567,
+      "score": 133397.14285714302,
       "actions": [
-        "JetMech, move F2\u2192F5, fire Aerial Bombs at D5",
-        "IceMech, move G4\u2192F2, fire Cryo-Launcher at F7",
-        "GravMech, move E7\u2192F6, fire Grav Well at F2"
+        "JudoMech, move B5\u2192D5, fire Vice Fist at E5",
+        "ChargeMech, move E4\u2192E3, repair",
+        "RockartMech, move C6\u2192B6, fire Rock Launcher at B4"
       ]
     },
     {
-      "timestamp": "2026-04-21T21:26:51.050296",
+      "timestamp": "2026-04-22T18:31:44.338500",
       "turn": 3,
       "label": "solve",
-      "score": 87298.57187339239,
+      "score": 129855.71453332901,
       "actions": [
-        "JetMech, fire Aerial Bombs at D7",
-        "IceMech, move F3\u2192E5",
-        "GravMech, move F6\u2192E7, fire Grav Well at E5"
+        "RockartMech, move B6\u2192E6, fire Rock Launcher at E2",
+        "JudoMech, move D5\u2192B6",
+        "ChargeMech, move E3\u2192D5, repair"
       ]
     },
     {
-      "timestamp": "2026-04-21T21:28:52.267645",
+      "timestamp": "2026-04-22T18:32:42.344051",
       "turn": 4,
       "label": "solve",
-      "score": 85565.00033361571,
+      "score": 132788.57251439776,
       "actions": [
-        "JetMech, move D7\u2192D6",
-        "IceMech, move E3\u2192C2, fire Cryo-Launcher at G2",
-        "GravMech, move D8\u2192C5, fire Grav Well at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:35:59.869997",
-      "turn": 1,
-      "label": "solve",
-      "score": 129007.14285714284,
-      "actions": [
-        "JetMech, move C5\u2192D1",
-        "IceMech, move D6\u2192C5, fire Cryo-Launcher at C3",
-        "GravMech, move E5\u2192G7, fire Grav Well at D7",
-        "ArchiveArtillery, move D5\u2192E5, fire Old Earth Artillery at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:37:36.720571",
-      "turn": 2,
-      "label": "solve",
-      "score": 63120.4764793032,
-      "actions": [
-        "ArchiveArtillery, move D5\u2192E5, fire Old Earth Artillery at C5",
-        "JetMech",
-        "IceMech, move C5\u2192E6, fire Cryo-Launcher at G6",
-        "GravMech, move G7\u2192D6, fire Grav Well at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:38:31.296568",
-      "turn": 3,
-      "label": "solve",
-      "score": 72100.71532385689,
-      "actions": [
-        "JetMech, fire Aerial Bombs at D3",
-        "IceMech, move D6\u2192B5, fire Cryo-Launcher at B3",
-        "ArchiveArtillery, fire Old Earth Artillery at C5",
-        "GravMech, move H6\u2192G4, fire Grav Well at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:39:22.262824",
-      "turn": 4,
-      "label": "solve",
-      "score": 67373.57295717511,
-      "actions": [
-        "JetMech, repair",
-        "IceMech, move D6\u2192B6, fire Cryo-Launcher at B1",
-        "ArchiveArtillery, move E5\u2192E6, fire Old Earth Artillery at C6",
-        "GravMech, move H6\u2192E5, fire Grav Well at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:46:41.908065",
-      "turn": 1,
-      "label": "solve",
-      "score": 58957.142857142855,
-      "actions": [
-        "JetMech, move F5\u2192E3, fire Aerial Bombs at E1",
-        "IceMech, move D5\u2192C3, fire Cryo-Launcher at C7",
-        "GravMech, move C6\u2192D6, fire Grav Well at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:48:09.464635",
-      "turn": 2,
-      "label": "solve",
-      "score": 81722.14285714286,
-      "actions": [
-        "JetMech, move E1\u2192G4, fire Aerial Bombs at E4",
-        "GravMech, move D6\u2192C6, fire Grav Well at C4",
-        "IceMech, move C3\u2192B5, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:49:00.858695",
-      "turn": 3,
-      "label": "solve",
-      "score": 68616.43010411944,
-      "actions": [
-        "JetMech",
-        "IceMech, fire Cryo-Launcher at E5",
-        "GravMech, move C6\u2192D6"
+        "JudoMech, move B6\u2192E5",
+        "ChargeMech, move D5\u2192E4, fire Ramming Engines at F4",
+        "RockartMech, move E6\u2192D5, fire Rock Launcher at F5"
       ]
     }
   ],
@@ -201,449 +120,102 @@
     [
       0,
       3
-    ],
-    [
-      1,
-      1
-    ],
-    [
-      1,
-      2
-    ],
-    [
-      1,
-      3
-    ],
-    [
-      2,
-      1
-    ],
-    [
-      2,
-      2
     ]
   ],
-  "tags": [],
+  "tags": [
+    "audit"
+  ],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "click_miss",
       "categories": [
-        "damage_amount",
-        "terrain",
-        "tile_status"
+        "click_miss"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Brute_Jetmech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "grid_power",
-      "categories": [
-        "grid_power",
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "grid_power|Brute_Jetmech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "grid_power",
-      "categories": [
-        "grid_power",
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "grid_power|Brute_Jetmech|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.7,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          1,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Science_Gravwell|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Science_Gravwell",
-        "target": [
-          1,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "mech_position_wrong",
-      "categories": [
-        "mech_position_wrong"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "mech_position_wrong|Ranged_Ice|move",
+      "signature": "click_miss|Ranged_Rockthrow|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 1,
       "confidence": 0.8,
       "context": {
-        "mech_uid": 1,
-        "phase": "move",
-        "sub_action": "move",
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
         "action_index": 2,
-        "turn": 2,
-        "weapon": "Ranged_Ice",
+        "turn": 1,
+        "weapon": "Ranged_Rockthrow",
         "target": [
           2,
-          1
+          3
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "status",
       "categories": [
-        "damage_amount",
-        "grid_power",
         "status",
         "tile_status"
       ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Jetmech|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.7,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          5,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Ranged_Ice|attack",
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "status|Ranged_Rockthrow|move",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.3,
+      "confidence": 0.7,
       "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "Ranged_Ice",
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Ranged_Rockthrow",
         "target": [
-          7,
-          6
+          6,
+          3
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "mech_position_wrong",
+      "top_category": "click_miss",
       "categories": [
-        "mech_position_wrong"
+        "click_miss"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "mech_position_wrong|Archive_ArtShot|move",
-      "frequency": 0,
+      "signature": "click_miss|Ranged_Rockthrow|attack",
+      "frequency": 1,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 1,
       "confidence": 0.8,
       "context": {
-        "mech_uid": 949,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 4,
-        "weapon": "Archive_ArtShot",
-        "target": [
-          2,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "pod",
-      "categories": [
-        "pod"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "pod|Brute_Jetmech|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          7,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Brute_Jetmech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          7,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Science_Gravwell|attack",
-      "frequency": 1,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.7,
-      "context": {
         "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 2,
-        "turn": 1,
-        "weapon": "Science_Gravwell",
-        "target": [
-          6,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Jetmech|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Ranged_Ice|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Ranged_Ice",
+        "turn": 4,
+        "weapon": "Ranged_Rockthrow",
         "target": [
           3,
-          3
+          2
         ]
       }
     }
   ],
-  "disabled_actions": [
-    {
-      "weapon_id": "Science_Gravwell",
-      "cause_pattern": "death|Science_Gravwell|attack",
-      "expires_turn": 4,
-      "strategic_override": false
-    },
-    {
-      "weapon_id": "Brute_Jetmech",
-      "cause_pattern": "damage_amount|Brute_Jetmech|attack",
-      "expires_turn": 5,
-      "strategic_override": false
-    }
-  ],
+  "disabled_actions": [],
   "research_queue": [
     {
-      "type": "JetMech",
+      "type": "JudoMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "IceMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "GravMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "Hornet2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
       "mission_id": "",
       "first_seen_turn": 1,
       "attempts": 0,
@@ -651,10 +223,21 @@
       "result": null
     },
     {
-      "type": "Scorpion1",
+      "type": "ChargeMech",
       "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null
+    },
+    {
+      "type": "RockartMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
       "mission_id": "",
       "first_seen_turn": 1,
       "attempts": 0,
