@@ -367,12 +367,18 @@ pub fn evaluate(
 
     // ── Enemies: SCALED (kills worth more early, less on final turn) ────
     // kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
-    score += kills as f64 * scaled(weights.enemy_killed, ff, 0.20, 1.60);
+    // At low grid, kills and leftover HP matter more: a 1-turn lookahead
+    // solver can't anticipate turn N+1 threats, so we approximate "future
+    // grid risk" by scaling both the kill bonus and the hp-remaining penalty
+    // with grid_multiplier. Gated to multipliers > 1.0 so normal-grid play
+    // isn't distorted.
+    let enemy_urgency = if grid_multiplier > 1.0 { grid_multiplier } else { 1.0 };
+    score += kills as f64 * scaled(weights.enemy_killed, ff, 0.20, 1.60) * enemy_urgency;
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.is_enemy() && u.alive() {
             // damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
-            score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90);
+            score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90) * enemy_urgency;
         }
     }
 

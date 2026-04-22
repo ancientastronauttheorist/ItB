@@ -18,7 +18,7 @@ Earn all 70 achievements in Into the Breach autonomously. The game runs natively
 - **Layer 0 — Game loop:** `game_loop.py` CLI + `src/loop/` (session, logger, commands). Claude is the control loop; Python commands are stateless.
 - **Layer 1 — State extraction:** `src/bridge/` (primary) and `src/capture/save_parser.py` (fallback). The bridge delivers richer data: targeted tiles, per-enemy attack data, environment hazards with kill flag, deployment zones, objective buildings, attack order.
 - **Layer 2 — Game state:** `src/model/` (Board, Unit, WeaponDef). Single source of truth for solver.
-- **Layer 3 — Solver:** `rust_solver/` (primary, pyo3 extension `itb_solver`) + `src/solver/simulate.py` (Python parity). Search is constraint-based threat response + bounded search. `EvalWeights` tune scoring without changing search logic.
+- **Layer 3 — Solver:** `rust_solver/` (the only live solver, pyo3 extension `itb_solver`). Search is constraint-based threat response + bounded search. `EvalWeights` tune scoring without changing search logic. `src/solver/{solver,simulate,evaluate}.py` still exist but only as data-model classes (`MechAction`, `Solution`), a `replay_solution` harness, and test primitives (`apply_push`, `apply_damage`, `simulate_weapon`). They are *not* run to score plans — do not edit them as if they were parity code.
 - **Layer 4 — Strategist:** `src/strategy/` picks `EvalWeights` per achievement target; manages squad/island/shop choices.
 
 **Rebuild the solver** after editing any `rust_solver/src/*.rs`:
