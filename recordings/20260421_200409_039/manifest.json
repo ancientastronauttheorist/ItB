@@ -4,13 +4,13 @@
   "difficulty": 0,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-7ba53a8",
+  "solver_version": "rust-0.1.0-ef430c3",
   "weight_version": "v009",
-  "updated": "2026-04-21T20:52:38.775269",
+  "updated": "2026-04-21T21:00:49.637345",
   "created": "2026-04-21T20:04:09.053238",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-21T20:52:38.761931",
-  "outcome_notes": "Pumping Station 2/2 bonus (grid damage, clinic)"
+  "outcome_mission": 1,
+  "outcome_recorded_at": "2026-04-21T21:00:49.621290",
+  "outcome_notes": "Teleport Facility 2/2 bonus (defend the train)"
 }

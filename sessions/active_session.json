@@ -6,8 +6,8 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 0,
-  "current_turn": 4,
+  "mission_index": 1,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -16,46 +16,46 @@
         "mech_type": "TankMech",
         "move_to": [
           5,
-          5
+          4
         ],
         "weapon": "Brute_Tankmech",
         "target": [
-          4,
-          5
+          5,
+          3
         ],
-        "description": "TankMech, move C2\u2192C3, fire Taurus Cannon at C4"
+        "description": "TankMech, move D5\u2192D3, fire Taurus Cannon at E3"
       },
       {
         "mech_uid": 1,
         "mech_type": "ArtiMech",
         "move_to": [
-          5,
+          1,
           4
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          2,
-          4
+          1,
+          7
         ],
-        "description": "ArtiMech, move C1\u2192D3, fire Artemis Artillery at D6"
+        "description": "ArtiMech, fire Artemis Artillery at A7"
       },
       {
         "mech_uid": 2,
         "mech_type": "GravMech",
         "move_to": [
-          3,
-          3
+          1,
+          1
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Science_Gravwell",
         "target": [
-          3,
-          3
+          4,
+          1
         ],
-        "description": "GravMech, repair"
+        "description": "GravMech, move E6\u2192G7, fire Grav Well at G4"
       }
     ],
-    "score": 92875.00034179006,
-    "turn": 4
+    "score": 112756.42857142857,
+    "turn": 3
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -112,6 +112,39 @@
         "ArtiMech, move C1\u2192D3, fire Artemis Artillery at D6",
         "GravMech, repair"
       ]
+    },
+    {
+      "timestamp": "2026-04-21T20:54:18.354412",
+      "turn": 1,
+      "label": "solve",
+      "score": 99871.42857142857,
+      "actions": [
+        "TankMech, move D5\u2192D2, fire Taurus Cannon at E2",
+        "GravMech, move B5\u2192D3, fire Grav Well at B3",
+        "ArtiMech, move E6\u2192C7, fire Artemis Artillery at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T20:55:03.034697",
+      "turn": 2,
+      "label": "solve",
+      "score": 105646.42857142857,
+      "actions": [
+        "ArtiMech, move C7\u2192D7, fire Artemis Artillery at D2",
+        "TankMech, move D2\u2192D5, fire Taurus Cannon at C5",
+        "GravMech, move E3\u2192E6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T20:57:59.645483",
+      "turn": 3,
+      "label": "solve",
+      "score": 112756.42857142857,
+      "actions": [
+        "TankMech, move D5\u2192D3, fire Taurus Cannon at E3",
+        "ArtiMech, fire Artemis Artillery at A7",
+        "GravMech, move E6\u2192G7, fire Grav Well at G4"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -126,6 +159,14 @@
     [
       0,
       3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
     ]
   ],
   "tags": [],
