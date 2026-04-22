@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_200409_039",
+  "squad": "Balanced (Laser+Mirror+Boulder) Ralph promoted",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-7ba53a8",
+  "weight_version": "v009",
+  "updated": "2026-04-21T20:52:38.775269",
+  "created": "2026-04-21T20:04:09.053238",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T20:52:38.761931",
+  "outcome_notes": "Pumping Station 2/2 bonus (grid damage, clinic)"
+}
