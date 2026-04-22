@@ -6,13 +6,13 @@
   "tags": [
     "audit"
   ],
-  "solver_version": "rust-0.1.0-96808a7",
+  "solver_version": "rust-0.1.0-4abb952",
   "weight_version": "v009",
-  "updated": "2026-04-22T18:36:11.578517",
+  "updated": "2026-04-22T18:44:26.059500",
   "created": "2026-04-22T18:27:51.407299",
   "missions": [],
-  "outcome": "win",
-  "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-22T18:36:11.563939",
-  "outcome_notes": "Detritus Pumping Station \u2014 Coal Plant protected (\u26a1). Block spawns bonus failed. Grid held 5/7 throughout. First mission after bridge active-flag fix \u2014 no turn skips observed."
+  "outcome": "loss",
+  "outcome_mission": 1,
+  "outcome_recorded_at": "2026-04-22T18:44:26.044788",
+  "outcome_notes": "CZD Timeline Lost t4. Post-bridge-fix run. Bridge fix CONFIRMED working (Pumping Station completed fine, grid held). Loss mechanism here is different: grid attrition across 4 turns, RockartMech died t3, score collapsed -65k. Likely same 1-turn-lookahead limitation as previous Pinnacle loss."
 }

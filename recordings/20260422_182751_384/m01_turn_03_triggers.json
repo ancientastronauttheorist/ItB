@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-22T18:41:47.754794",
+  "run_id": "20260422_182751_384",
+  "mission_index": 1,
+  "turn": 3,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "grid_critical",
+        "tier": 6,
+        "severity": "high",
+        "details": "Grid power at 2 (critical)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}

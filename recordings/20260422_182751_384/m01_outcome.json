@@ -1,0 +1,7 @@
+{
+  "mission_index": 1,
+  "mission_name": "",
+  "result": "loss",
+  "notes": "CZD Timeline Lost t4. Post-bridge-fix run. Bridge fix CONFIRMED working (Pumping Station completed fine, grid held). Loss mechanism here is different: grid attrition across 4 turns, RockartMech died t3, score collapsed -65k. Likely same 1-turn-lookahead limitation as previous Pinnacle loss.",
+  "recorded_at": "2026-04-22T18:44:26.044459"
+}

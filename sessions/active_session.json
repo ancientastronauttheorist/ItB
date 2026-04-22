@@ -6,7 +6,7 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 0,
+  "mission_index": 1,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
@@ -16,45 +16,31 @@
         "mech_type": "JudoMech",
         "move_to": [
           3,
-          3
+          4
         ],
         "weapon": "Unknown",
         "target": [
           255,
           255
         ],
-        "description": "JudoMech, move B6\u2192E5"
+        "description": "JudoMech"
       },
       {
         "mech_uid": 1,
         "mech_type": "ChargeMech",
         "move_to": [
-          4,
-          3
+          1,
+          7
         ],
-        "weapon": "Brute_Beetle",
+        "weapon": "_REPAIR",
         "target": [
-          4,
-          2
+          1,
+          7
         ],
-        "description": "ChargeMech, move D5\u2192E4, fire Ramming Engines at F4"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "RockartMech",
-        "move_to": [
-          3,
-          4
-        ],
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          3,
-          2
-        ],
-        "description": "RockartMech, move E6\u2192D5, fire Rock Launcher at F5"
+        "description": "ChargeMech, move B5\u2192A7, repair"
       }
     ],
-    "score": 132788.57251439776,
+    "score": -65698.5740157536,
     "turn": 4
   },
   "actions_executed": 0,
@@ -106,6 +92,49 @@
         "ChargeMech, move D5\u2192E4, fire Ramming Engines at F4",
         "RockartMech, move E6\u2192D5, fire Rock Launcher at F5"
       ]
+    },
+    {
+      "timestamp": "2026-04-22T18:38:23.516877",
+      "turn": 1,
+      "label": "solve",
+      "score": 109650.0002861023,
+      "actions": [
+        "JudoMech, move E5\u2192C4, fire Vice Fist at B4",
+        "ChargeMech, move F6\u2192F5, fire Ramming Engines at G5",
+        "RockartMech, move D6\u2192F7, fire Rock Launcher at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-22T18:39:26.652171",
+      "turn": 2,
+      "label": "solve",
+      "score": 112873.80952380947,
+      "actions": [
+        "ChargeMech, fire Ramming Engines at E5",
+        "RockartMech, move F7\u2192E6, fire Rock Launcher at E3",
+        "JudoMech, move C4\u2192F3, fire Vice Fist at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-22T18:40:29.456276",
+      "turn": 3,
+      "label": "solve",
+      "score": 93182.85790920258,
+      "actions": [
+        "ChargeMech, move C5\u2192B5, repair",
+        "JudoMech, fire Vice Fist at E5",
+        "RockartMech, move E6\u2192D6, fire Rock Launcher at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-22T18:41:48.364320",
+      "turn": 4,
+      "label": "solve",
+      "score": -65698.5740157536,
+      "actions": [
+        "JudoMech",
+        "ChargeMech, move B5\u2192A7, repair"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -119,6 +148,18 @@
     ],
     [
       0,
+      3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      1,
       3
     ]
   ],
@@ -207,6 +248,90 @@
           2
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Prime_Shift|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Shift",
+        "target": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Ranged_Rockthrow|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Shift|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Prime_Shift",
+        "target": [
+          3,
+          3
+        ]
+      }
     }
   ],
   "disabled_actions": [],
@@ -243,6 +368,42 @@
       "attempts": 0,
       "status": "resolved",
       "result": null
+    },
+    {
+      "type": "Firefly1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null,
+      "diff_field": "pos",
+      "diff_predicted": [
+        5,
+        4
+      ],
+      "diff_actual": [
+        5,
+        5
+      ],
+      "severity": "medium"
+    },
+    {
+      "type": "Leaper2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 3,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null,
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high"
     }
   ]
 }
