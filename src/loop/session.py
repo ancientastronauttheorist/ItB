@@ -323,6 +323,10 @@ class RunSession:
         *,
         kind: str | None = None,
         slot: int | None = None,
+        diff_field: str | None = None,
+        diff_predicted: object = None,
+        diff_actual: object = None,
+        severity: str | None = None,
     ) -> bool:
         """Add a research entry for a novel unit type or terrain id.
 
@@ -341,6 +345,13 @@ class RunSession:
         Pass ``type_name=""`` for terrain-only entries and
         ``terrain_id=None`` for unit-only entries.
 
+        ``diff_field`` / ``diff_predicted`` / ``diff_actual`` /
+        ``severity`` attach the triggering desync metadata to the entry
+        so ``drain_stale_behavior_novelty`` can auto-resolve catalogued
+        types whose diff looks like benign model drift. Defaults leave
+        the fields off the entry entirely so legacy callers stay
+        schema-compatible.
+
         Returns True if a new entry was added, False if it was a dupe.
         """
         key = (type_name or "", terrain_id, kind, slot)
@@ -353,7 +364,7 @@ class RunSession:
             )
             if existing == key:
                 return False
-        self.research_queue.append({
+        entry: dict = {
             "type": type_name or "",
             "terrain_id": terrain_id,
             "kind": kind,
@@ -363,7 +374,14 @@ class RunSession:
             "attempts": 0,
             "status": "pending",
             "result": None,
-        })
+        }
+        if diff_field is not None:
+            entry["diff_field"] = diff_field
+            entry["diff_predicted"] = diff_predicted
+            entry["diff_actual"] = diff_actual
+        if severity is not None:
+            entry["severity"] = severity
+        self.research_queue.append(entry)
         return True
 
     def next_research_entry(self) -> dict | None:

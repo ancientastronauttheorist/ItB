@@ -36,6 +36,130 @@ from src.model.board import Board
 from src.research import capture, community_fetch, comparator, vision, wiki_client
 
 
+# ── severity classification & queue drain ────────────────────────────────
+
+
+_SEVERITY_RANK = {"low": 0, "medium": 1, "high": 2}
+
+
+def derive_severity(field: str, predicted: Any, actual: Any) -> str:
+    """Classify a single ``unit_diff`` entry as ``low`` / ``medium`` / ``high``.
+
+    Used by ``drain_stale_behavior_novelty`` to decide which queue entries
+    on catalogued types are safe to auto-resolve. Thresholds match the
+    Fix-#4 spec:
+
+    - ``alive`` / ``push_dir``: structural mis-predict, always high.
+      These are smoking-gun solver bugs (missed kill, wrong push chain).
+    - ``hp`` / ``damage_amount``: high when the magnitude gap is ≥ 2,
+      low when the gap is 1 (armor-rounding / ACID / fire-tick drift
+      that tuning or overrides will catch anyway).
+    - ``position``: low (execution / animation timing, not a behavior
+      mispredict).
+    - anything else: medium, so we err on keeping the entry for review.
+
+    Unparseable predicted/actual falls back to medium — we can't classify
+    magnitude without numbers, and high would over-gate.
+    """
+    if field in ("alive", "push_dir"):
+        return "high"
+    if field in ("hp", "damage_amount"):
+        try:
+            delta = abs(int(predicted) - int(actual))
+        except (TypeError, ValueError):
+            return "medium"
+        return "high" if delta >= 2 else "low"
+    if field == "position":
+        return "low"
+    return "medium"
+
+
+def worst_diff_per_type(
+    diff: Any,
+) -> dict[str, tuple[str, Any, Any, str]]:
+    """Collapse ``diff.unit_diffs`` to one ``(field, predicted, actual, severity)``
+    tuple per non-mech unit type, keeping the worst severity seen.
+
+    Skips friendly mechs (types containing ``"Mech"``) — mech internals
+    are researched via the dedicated ``mech_weapon`` probe path, not the
+    behavior-novelty queue. Empty type names are skipped too.
+
+    Callers use this to stamp metadata on queue entries when a type appears
+    in multiple diff rows this turn (e.g. a Scorpion1 both surviving *and*
+    taking off-by-one damage — the alive flip wins).
+    """
+    best: dict[str, tuple[str, Any, Any, str]] = {}
+    for ud in getattr(diff, "unit_diffs", []) or []:
+        utype = ud.get("type", "")
+        if not utype or "Mech" in utype:
+            continue
+        field = ud.get("field", "")
+        predicted = ud.get("predicted")
+        actual = ud.get("actual")
+        sev = derive_severity(field, predicted, actual)
+        cur = best.get(utype)
+        if cur is None or _SEVERITY_RANK[sev] > _SEVERITY_RANK[cur[3]]:
+            best[utype] = (field, predicted, actual, sev)
+    return best
+
+
+def drain_stale_behavior_novelty(session: RunSession) -> list[str]:
+    """Auto-resolve pending ``behavior_novelty`` entries that look benign.
+
+    An entry is drained when **all** of the following hold:
+
+    - ``status == "pending"``
+    - ``kind == "behavior_novelty"``
+    - ``severity == "low"`` (per :func:`derive_severity`)
+    - ``type`` appears in ``data/known_types.json`` (wiki or observed)
+
+    Those together say: we've catalogued the type, and this turn's worst
+    desync on it was off-by-one magnitude or a position-only diff. That's
+    the class of signal the tuner corpus already captures via
+    ``failure_db.jsonl`` — keeping it on the research queue just re-fires
+    the gate every turn the unit is on the board without giving the
+    Vision pipeline anything useful to extract.
+
+    High-severity entries (alive flips, push_dir, ≥2 damage gap) and
+    entries on uncatalogued types stay pending so the analyst gets a
+    crack at them via ``research_next``.
+
+    Returns the list of resolved type names (for log surface). Saves the
+    session exactly once at the end if anything was drained; no-ops
+    otherwise. Does NOT mutate the queue when no entries qualify, so
+    ``has_actionable_research`` stays the sole place the gate decision
+    is made.
+    """
+    from src.solver.unknown_detector import _load_known
+
+    known_pawn_types = _load_known().get("pawn_types", set())
+
+    resolved: list[str] = []
+    for entry in session.research_queue:
+        if entry.get("status") != "pending":
+            continue
+        if entry.get("kind") != "behavior_novelty":
+            continue
+        if entry.get("severity") != "low":
+            continue
+        type_name = entry.get("type", "")
+        if not type_name or type_name not in known_pawn_types:
+            continue
+        entry["status"] = "done"
+        entry["result"] = {
+            "source": "auto_resolved",
+            "reason": "low_severity_known_type",
+            "diff_field": entry.get("diff_field"),
+            "diff_predicted": entry.get("diff_predicted"),
+            "diff_actual": entry.get("diff_actual"),
+        }
+        resolved.append(type_name)
+
+    if resolved:
+        session.save()
+    return resolved
+
+
 # ── gate predicate ────────────────────────────────────────────────────────
 
 

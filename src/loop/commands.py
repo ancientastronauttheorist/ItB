@@ -292,26 +292,38 @@ def _enqueue_behavior_novelty(
     diff,
     turn: int,
 ) -> list[str]:
-    """Enqueue research on every unit type that alive-flipped in ``diff``.
+    """Enqueue research on every non-mech unit type present in ``diff``.
 
     Called from ``cmd_auto_turn`` right after each ``fuzzy_detector.evaluate``
     firing. An alive-field flip is the smoking gun for behavior novelty —
-    the solver predicted kill/no-kill and reality said otherwise. Queue
-    entries land with ``kind="behavior_novelty"`` so ``has_actionable_research``
-    can pick them up on the next ``cmd_read`` and trip the gate.
+    solver predicted kill/no-kill and reality said otherwise — but magnitude
+    diffs (hp off by one, damage_amount mismatches) also belong on the queue
+    so ``drain_stale_behavior_novelty`` can distinguish structural surprises
+    from benign model drift on a catalogued type.
 
-    Dedup in ``session.enqueue_research`` (compound key with ``kind``)
-    keeps re-seeing the same unit across multiple desyncs from
-    double-queuing.
+    Per unit type we pick the worst diff (by severity) and stamp
+    ``diff_field``, ``diff_predicted``, ``diff_actual``, ``severity`` onto
+    the queue entry. The drain helper uses that metadata to auto-resolve
+    catalogued types whose worst desync this turn was low-severity.
+
+    Dedup in ``session.enqueue_research`` (compound key with ``kind``) keeps
+    re-seeing the same unit across multiple desyncs from double-queuing;
+    the first enqueue wins its severity stamp for the life of the entry.
 
     Returns the list of unit types newly enqueued.
     """
-    from src.solver.fuzzy_detector import extract_behavior_novelty
+    from src.research.orchestrator import worst_diff_per_type
 
     enqueued: list[str] = []
-    for unit_type in extract_behavior_novelty(diff):
+    for unit_type, (field, predicted, actual, severity) in (
+        worst_diff_per_type(diff).items()
+    ):
         if session.enqueue_research(
             unit_type, None, turn, kind="behavior_novelty",
+            diff_field=field,
+            diff_predicted=predicted,
+            diff_actual=actual,
+            severity=severity,
         ):
             enqueued.append(unit_type)
     return enqueued
@@ -661,8 +673,20 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 # enqueued mid-turn by cmd_auto_turn won't re-flag here
                 # (the unit is already known), so we need a separate
                 # check that walks the queue for actionable entries.
+                #
+                # Fix #4: drain stale low-severity entries on catalogued
+                # types *before* asking the predicate — otherwise the gate
+                # fires every turn for off-by-one HP diffs that the tuner
+                # corpus already handles. The drain is the only mutator;
+                # has_actionable_research stays read-only.
                 if not result.get("requires_research"):
-                    from src.research.orchestrator import has_actionable_research
+                    from src.research.orchestrator import (
+                        drain_stale_behavior_novelty,
+                        has_actionable_research,
+                    )
+                    drained = drain_stale_behavior_novelty(session)
+                    if drained:
+                        result["research_auto_resolved"] = drained
                     if has_actionable_research(session, board):
                         result["requires_research"] = True
                         print("\n" + "!" * 60)
@@ -978,13 +1002,21 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     # must run cmd_research_next → dispatch capture → cmd_research_submit
     # before calling solve again. See CLAUDE.md rule 20 and
     # docs/self_healing_loop_design.md.
-    from src.research.orchestrator import has_actionable_research
+    from src.research.orchestrator import (
+        drain_stale_behavior_novelty,
+        has_actionable_research,
+    )
     from src.solver.research_gate import research_gate_envelope
     from src.solver.unknown_detector import detect_unknowns
     _solve_phase = bridge_data.get("phase") if bridge_data else None
     gate = research_gate_envelope(
         detect_unknowns(board, phase=_solve_phase)
     )
+    # Fix #4: drain stale low-severity entries on catalogued types before
+    # checking the predicate. Otherwise auto_turn→solve returns
+    # RESEARCH_REQUIRED with unknowns:{} every turn for off-by-one HP
+    # mismatches the tuner already learns from via failure_db.
+    drain_stale_behavior_novelty(session)
     if gate is None and has_actionable_research(session, board):
         gate = {
             "error": "RESEARCH_REQUIRED",
