@@ -1,60 +1,60 @@
 {
-  "run_id": "20260421_200409_039",
-  "squad": "Balanced (Laser+Mirror+Boulder) Ralph promoted",
+  "run_id": "20260421_211617_239",
+  "squad": "Jet+Ice+Gravity (Balanced Roll, Ralph Time Traveler)",
   "achievement_targets": [],
-  "difficulty": 0,
+  "difficulty": 3,
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 2,
+  "mission_index": 0,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "ArtiMech",
-        "move_to": [
-          0,
-          6
-        ],
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          4,
-          6
-        ],
-        "description": "ArtiMech, move D7\u2192B8, fire Artemis Artillery at B4"
-      },
-      {
         "mech_uid": 0,
-        "mech_type": "TankMech",
+        "mech_type": "JetMech",
         "move_to": [
           2,
-          3
+          4
         ],
         "weapon": "Unknown",
         "target": [
           255,
           255
         ],
-        "description": "TankMech, move C5\u2192E6"
+        "description": "JetMech, move D7\u2192D6"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "IceMech",
+        "move_to": [
+          6,
+          5
+        ],
+        "weapon": "Ranged_Ice",
+        "target": [
+          6,
+          1
+        ],
+        "description": "IceMech, move E3\u2192C2, fire Cryo-Launcher at G2"
       },
       {
         "mech_uid": 2,
         "mech_type": "GravMech",
         "move_to": [
           3,
-          3
+          5
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Science_Gravwell",
         "target": [
-          3,
-          3
+          6,
+          5
         ],
-        "description": "GravMech, move F5\u2192E5, repair"
+        "description": "GravMech, move D8\u2192C5, fire Grav Well at C2"
       }
     ],
-    "score": 68840.00104904175,
+    "score": 85565.00033361571,
     "turn": 4
   },
   "actions_executed": 0,
@@ -64,130 +64,47 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-21T20:18:35.008754",
-      "turn": 0,
-      "label": "note",
-      "message": "Deep-dive findings: (1) Agent 3 web-AoE claim for Aerial Bombs is hallucination \u2014 sim_leap correctly models smoke-landing + adjacent dmg only. (2) Agents 1&2 enemy-phase over-prediction pattern is real (~1 bldg/turn over-predicted). Cause: Grid Defense 15% not modeled in bridge/solver (only src/vision/board_scanner.py:61 declares field, unused). Fix needs 3 layers: bridge Lua expose GridShield, sim building-damage expected scaling, re-tune. Deferring."
-    },
-    {
-      "timestamp": "2026-04-21T20:48:40.523090",
+      "timestamp": "2026-04-21T21:23:06.719679",
       "turn": 1,
       "label": "solve",
-      "score": 118500.0,
+      "score": 108264.28571428571,
       "actions": [
-        "TankMech, move C5\u2192D3",
-        "ArtiMech, move E5\u2192E3, fire Artemis Artillery at G3",
-        "GravMech, move D6\u2192C6, fire Grav Well at C2"
+        "JetMech, move F6\u2192F4, fire Aerial Bombs at F2",
+        "IceMech, move G5\u2192G4, fire Cryo-Launcher at G2",
+        "GravMech, move D5\u2192E7, fire Grav Well at E3"
       ]
     },
     {
-      "timestamp": "2026-04-21T20:49:29.285988",
+      "timestamp": "2026-04-21T21:24:44.040467",
       "turn": 2,
       "label": "solve",
-      "score": 121719.99999999994,
+      "score": 82671.90520672567,
       "actions": [
-        "TankMech",
-        "GravMech, move C6\u2192E5, fire Grav Well at E7",
-        "ArtiMech, move E3\u2192C2, fire Artemis Artillery at C5"
+        "JetMech, move F2\u2192F5, fire Aerial Bombs at D5",
+        "IceMech, move G4\u2192F2, fire Cryo-Launcher at F7",
+        "GravMech, move E7\u2192F6, fire Grav Well at F2"
       ]
     },
     {
-      "timestamp": "2026-04-21T20:50:14.438534",
+      "timestamp": "2026-04-21T21:26:51.050296",
       "turn": 3,
       "label": "solve",
-      "score": 121690.0,
+      "score": 87298.57187339239,
       "actions": [
-        "ArtiMech, move C2\u2192C1, fire Artemis Artillery at C7",
-        "TankMech, move D3\u2192C2, fire Taurus Cannon at C3",
-        "GravMech, fire Grav Well at E7"
+        "JetMech, fire Aerial Bombs at D7",
+        "IceMech, move F3\u2192E5",
+        "GravMech, move F6\u2192E7, fire Grav Well at E5"
       ]
     },
     {
-      "timestamp": "2026-04-21T20:50:56.239903",
+      "timestamp": "2026-04-21T21:28:52.267645",
       "turn": 4,
       "label": "solve",
-      "score": 92875.00034179006,
+      "score": 85565.00033361571,
       "actions": [
-        "TankMech, move C2\u2192C3, fire Taurus Cannon at C4",
-        "ArtiMech, move C1\u2192D3, fire Artemis Artillery at D6",
-        "GravMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T20:54:18.354412",
-      "turn": 1,
-      "label": "solve",
-      "score": 99871.42857142857,
-      "actions": [
-        "TankMech, move D5\u2192D2, fire Taurus Cannon at E2",
-        "GravMech, move B5\u2192D3, fire Grav Well at B3",
-        "ArtiMech, move E6\u2192C7, fire Artemis Artillery at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T20:55:03.034697",
-      "turn": 2,
-      "label": "solve",
-      "score": 105646.42857142857,
-      "actions": [
-        "ArtiMech, move C7\u2192D7, fire Artemis Artillery at D2",
-        "TankMech, move D2\u2192D5, fire Taurus Cannon at C5",
-        "GravMech, move E3\u2192E6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T20:57:59.645483",
-      "turn": 3,
-      "label": "solve",
-      "score": 112756.42857142857,
-      "actions": [
-        "TankMech, move D5\u2192D3, fire Taurus Cannon at E3",
-        "ArtiMech, fire Artemis Artillery at A7",
-        "GravMech, move E6\u2192G7, fire Grav Well at G4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:04:12.064557",
-      "turn": 1,
-      "label": "solve",
-      "score": 115950.0,
-      "actions": [
-        "TankMech, fire Taurus Cannon at C5",
-        "GravMech, move D6\u2192C3, fire Grav Well at E3",
-        "ArtiMech, move E6\u2192D7, fire Artemis Artillery at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:04:48.905479",
-      "turn": 2,
-      "label": "solve",
-      "score": 107866.66666666661,
-      "actions": [
-        "TankMech, move D5\u2192D3",
-        "ArtiMech, move D7\u2192C8, fire Artemis Artillery at C4",
-        "GravMech, move B3\u2192E2, fire Grav Well at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:08:11.200754",
-      "turn": 3,
-      "label": "solve",
-      "score": 110835.71428571429,
-      "actions": [
-        "ArtiMech, move C8\u2192D7, fire Artemis Artillery at D3",
-        "GravMech, move C6\u2192F5, fire Grav Well at C5",
-        "TankMech, move D3\u2192C5, fire Taurus Cannon at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-21T21:10:01.951955",
-      "turn": 4,
-      "label": "solve",
-      "score": 68840.00104904175,
-      "actions": [
-        "ArtiMech, move D7\u2192B8, fire Artemis Artillery at B4",
-        "TankMech, move C5\u2192E6",
-        "GravMech, move F5\u2192E5, repair"
+        "JetMech, move D7\u2192D6",
+        "IceMech, move E3\u2192C2, fire Cryo-Launcher at G2",
+        "GravMech, move D8\u2192C5, fire Grav Well at C2"
       ]
     }
   ],
@@ -203,66 +120,21 @@
     [
       0,
       3
-    ],
-    [
-      1,
-      1
-    ],
-    [
-      1,
-      2
-    ],
-    [
-      2,
-      1
-    ],
-    [
-      2,
-      2
-    ],
-    [
-      2,
-      3
     ]
   ],
   "tags": [],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "mech_position_wrong",
+      "top_category": "damage_amount",
       "categories": [
-        "mech_position_wrong"
+        "damage_amount",
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "mech_position_wrong|Science_Gravwell|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_Gravwell",
-        "target": [
-          6,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "push_dir",
-      "categories": [
-        "push_dir"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "push_dir|Brute_Tankmech|attack",
+      "signature": "damage_amount|Brute_Jetmech|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -272,9 +144,38 @@
         "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Brute_Tankmech",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
         "target": [
           3,
           4
@@ -283,36 +184,45 @@
     },
     {
       "version": 1,
-      "top_category": "push_dir",
+      "top_category": "grid_power",
       "categories": [
-        "push_dir"
+        "grid_power",
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "push_dir|Ranged_Artillerymech|attack",
-      "frequency": 0,
+      "signature": "grid_power|Brute_Jetmech|attack",
+      "frequency": 1,
       "asymmetry": [],
       "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
+      "proposed_tier": 2,
+      "confidence": 0.7,
       "context": {
-        "mech_uid": 1,
+        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 0,
-        "turn": 4,
-        "weapon": "Ranged_Artillerymech",
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
         "target": [
-          4,
-          6
+          1,
+          4
         ]
       }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Brute_Jetmech",
+      "cause_pattern": "grid_power|Brute_Jetmech|attack",
+      "expires_turn": 6,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
-      "type": "TankMech",
+      "type": "JetMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
@@ -323,7 +233,7 @@
       "result": null
     },
     {
-      "type": "ArtiMech",
+      "type": "IceMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,

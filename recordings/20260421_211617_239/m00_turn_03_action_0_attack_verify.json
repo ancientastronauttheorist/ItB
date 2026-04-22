@@ -1,0 +1,383 @@
+{
+  "timestamp": "2026-04-21T21:26:54.264733",
+  "run_id": "20260421_211617_239",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "action_0_attack_verify",
+  "data": {
+    "action_index": 0,
+    "sub_action": "attack",
+    "mech_uid": 0,
+    "predicted": {
+      "action_index": 0,
+      "mech_uid": 0,
+      "snapshot_phase": "after_mech_action",
+      "units": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "pos": [
+            1,
+            4
+          ],
+          "hp": 3,
+          "max_hp": 2,
+          "alive": true,
+          "active": false,
+          "is_mech": true,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "pos": [
+            5,
+            2
+          ],
+          "hp": 2,
+          "max_hp": 2,
+          "alive": true,
+          "active": true,
+          "is_mech": true,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "pos": [
+            2,
+            2
+          ],
+          "hp": 3,
+          "max_hp": 3,
+          "alive": true,
+          "active": true,
+          "is_mech": true,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 934,
+          "type": "Firefly2",
+          "pos": [
+            6,
+            1
+          ],
+          "hp": 5,
+          "max_hp": 5,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": true,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 935,
+          "type": "Hornet1",
+          "pos": [
+            5,
+            6
+          ],
+          "hp": 2,
+          "max_hp": 2,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 940,
+          "type": "Hornet1",
+          "pos": [
+            4,
+            4
+          ],
+          "hp": 2,
+          "max_hp": 2,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 942,
+          "type": "Firefly1",
+          "pos": [
+            6,
+            3
+          ],
+          "hp": 3,
+          "max_hp": 3,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 932,
+          "type": "SatelliteRocket",
+          "pos": [
+            4,
+            6
+          ],
+          "hp": 2,
+          "max_hp": 2,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        }
+      ],
+      "tiles_changed": [
+        {
+          "x": 0,
+          "y": 3,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 0,
+          "y": 4,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 0,
+          "y": 5,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 3,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 4,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 5,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 3,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "terrain": "rubble",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 5,
+          "terrain": "building",
+          "building_hp": 2,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 3,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": true,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 4,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 5,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        }
+      ],
+      "grid_power": 4
+    },
+    "diff": {
+      "unit_diffs": [],
+      "tile_diffs": [
+        {
+          "x": 2,
+          "y": 4,
+          "field": "terrain",
+          "predicted": "rubble",
+          "actual": "building"
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "field": "building_hp",
+          "predicted": 0,
+          "actual": 1
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "field": "smoke",
+          "predicted": false,
+          "actual": true
+        }
+      ],
+      "scalar_diffs": [
+        {
+          "field": "grid_power",
+          "predicted": 4,
+          "actual": 5
+        }
+      ],
+      "total_count": 4
+    },
+    "classification": {
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false
+    },
+    "fuzzy_signal": {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          1,
+          4
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-04-21T21:24:37.337060",
+  "run_id": "20260421_211617_239",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "grid_power": 5,
+      "enemies_alive": 4,
+      "enemy_hp_total": 12,
+      "mechs_alive": 5,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "hp": 3,
+          "max_hp": 2
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 931,
+          "type": "SatelliteRocket",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 932,
+          "type": "SatelliteRocket",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "grid_power": 5,
+      "enemies_alive": 3,
+      "enemy_hp_total": 9,
+      "mechs_alive": 5,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "hp": 3,
+          "max_hp": 2
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 931,
+          "type": "SatelliteRocket",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 932,
+          "type": "SatelliteRocket",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 1,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "IceMech",
+          "predicted_hp": 1,
+          "actual_hp": 2,
+          "diff": 1
+        },
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 931,
+          "type": "SatelliteRocket",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 932,
+          "type": "SatelliteRocket",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

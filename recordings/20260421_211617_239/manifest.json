@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_211617_239",
+  "squad": "Jet+Ice+Gravity (Balanced Roll, Ralph Time Traveler)",
+  "difficulty": 3,
+  "achievement_targets": [],
+  "tags": [],
+  "solver_version": "rust-0.1.0-f5e0997",
+  "weight_version": "v009",
+  "updated": "2026-04-21T21:31:56.675273",
+  "created": "2026-04-21T21:16:17.254536",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-04-21T21:31:56.661753",
+  "outcome_notes": "Old Town: 1/2 satellites defended, 1 rep star. Grid 3/7 after"
+}
