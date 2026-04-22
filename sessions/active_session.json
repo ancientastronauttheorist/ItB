@@ -1,6 +1,6 @@
 {
-  "run_id": "20260421_193339_920",
-  "squad": "Balanced (Hook+Ice+Pulse)",
+  "run_id": "20260421_194613_599",
+  "squad": "Balanced (Lightning+Jet+Rocket)",
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
@@ -12,49 +12,49 @@
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "WallMech",
+        "mech_uid": 1,
+        "mech_type": "JetMech",
         "move_to": [
-          0,
-          1
+          6,
+          4
         ],
-        "weapon": "Brute_Grapple",
+        "weapon": "Brute_Jetmech",
         "target": [
-          2,
-          1
+          6,
+          2
         ],
-        "description": "WallMech, move F7\u2192G8, fire Vice Fist at G6"
+        "description": "JetMech, fire Aerial Bombs at F2"
       },
       {
-        "mech_uid": 1,
-        "mech_type": "IceMech",
+        "mech_uid": 0,
+        "mech_type": "ElectricMech",
         "move_to": [
-          1,
-          2
+          5,
+          3
         ],
-        "weapon": "Ranged_Ice",
+        "weapon": "Prime_Lightning",
         "target": [
           4,
-          2
+          3
         ],
-        "description": "IceMech, move E7\u2192F7, fire Cryo-Launcher at F4"
+        "description": "ElectricMech, move G3\u2192E3, fire Chain Whip at E4"
       },
       {
         "mech_uid": 2,
-        "mech_type": "PulseMech",
+        "mech_type": "RocketMech",
         "move_to": [
           1,
-          4
+          5
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Ranged_Rocket",
         "target": [
-          1,
-          4
+          5,
+          5
         ],
-        "description": "PulseMech, move D6\u2192D7, repair"
+        "description": "RocketMech, move D5\u2192C7, fire Rocket Artillery at C3"
       }
     ],
-    "score": -464960.0,
+    "score": 123734.99999999999,
     "turn": 4
   },
   "actions_executed": 0,
@@ -64,47 +64,53 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-21T19:36:42.293338",
+      "timestamp": "2026-04-21T19:49:24.459801",
       "turn": 1,
       "label": "solve",
-      "score": 108800.0,
+      "score": 129000.0,
       "actions": [
-        "WallMech, move D5\u2192D7, fire Vice Fist at D4",
-        "IceMech",
-        "PulseMech, move B5\u2192B4, fire Repulse at B4"
+        "JetMech, move D5\u2192F5, fire Aerial Bombs at F3",
+        "ElectricMech, move E6\u2192D5",
+        "RocketMech, move E5\u2192D6, fire Rocket Artillery at G6"
       ]
     },
     {
-      "timestamp": "2026-04-21T19:37:36.232119",
+      "timestamp": "2026-04-21T19:50:11.111391",
       "turn": 2,
       "label": "solve",
-      "score": 92879.52380952373,
+      "score": 121879.99999999991,
       "actions": [
-        "WallMech, move D7\u2192D6, fire Vice Fist at D4",
-        "IceMech, move C6\u2192E7, fire Cryo-Launcher at E3",
-        "PulseMech, move B4\u2192B7, fire Repulse at B7"
+        "JetMech, move F3\u2192F2, repair",
+        "ElectricMech, move D5\u2192E4, fire Chain Whip at E3",
+        "RocketMech, fire Rocket Artillery at D2"
       ]
     },
     {
-      "timestamp": "2026-04-21T19:38:23.496577",
+      "timestamp": "2026-04-21T19:50:50.114958",
       "turn": 3,
       "label": "solve",
-      "score": 94136.42857142857,
+      "score": 131760.0,
       "actions": [
-        "WallMech, move D6\u2192F7, fire Vice Fist at E7",
-        "PulseMech, move B7\u2192D6, fire Repulse at D6",
-        "IceMech, move E7\u2192C6, fire Cryo-Launcher at C3"
+        "JetMech, move F2\u2192D2, repair",
+        "ElectricMech, move E4\u2192G3, fire Chain Whip at G2",
+        "RocketMech, move D6\u2192D5, fire Rocket Artillery at F5"
       ]
     },
     {
-      "timestamp": "2026-04-21T19:41:28.546677",
+      "timestamp": "2026-04-21T19:53:45.854042",
+      "turn": 3,
+      "label": "note",
+      "message": "INVESTIGATE t3 m00: Ranged_Rocket artillery missing center-tile Forward push in _sim_artillery (python + rust). High confidence fix per Explore agent \u2014 predicted no building damage, actual had 1bd from pushed Leaper bumping building at (3,1). Deferring fix to post-run; failure_db preserved."
+    },
+    {
+      "timestamp": "2026-04-21T19:54:19.774387",
       "turn": 4,
       "label": "solve",
-      "score": -464960.0,
+      "score": 123734.99999999999,
       "actions": [
-        "WallMech, move F7\u2192G8, fire Vice Fist at G6",
-        "IceMech, move E7\u2192F7, fire Cryo-Launcher at F4",
-        "PulseMech, move D6\u2192D7, repair"
+        "JetMech, fire Aerial Bombs at F2",
+        "ElectricMech, move G3\u2192E3, fire Chain Whip at E4",
+        "RocketMech, move D5\u2192C7, fire Rocket Artillery at C3"
       ]
     }
   ],
@@ -126,56 +132,197 @@
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "push_dir",
+      "top_category": "tile_status",
       "categories": [
-        "push_dir"
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "push_dir|Brute_Grapple|attack",
+      "signature": "tile_status|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Ranged_Rocket|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Prime_Lightning|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
         "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Brute_Grapple",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Prime_Lightning",
         "target": [
-          4,
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          6,
           4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "grid_power",
       "categories": [
-        "damage_amount",
-        "status"
+        "grid_power",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Brute_Grapple|attack",
+      "signature": "grid_power|Ranged_Rocket|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
-        "mech_uid": 0,
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "status",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 0,
-        "turn": 3,
-        "weapon": "Brute_Grapple",
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
         "target": [
-          1,
-          3
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Ranged_Rocket|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          5,
+          5
         ]
       }
     }
@@ -183,7 +330,7 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "WallMech",
+      "type": "ElectricMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
@@ -194,7 +341,7 @@
       "result": null
     },
     {
-      "type": "IceMech",
+      "type": "JetMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
@@ -205,12 +352,23 @@
       "result": null
     },
     {
-      "type": "PulseMech",
+      "type": "RocketMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "Leaper1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 4,
       "attempts": 0,
       "status": "pending",
       "result": null
