@@ -70,6 +70,15 @@ class EvalWeights:
     mech_self_frozen: float = -12000
     building_bump_damage: float = -8000
     building_objective_bonus: float = 8000
+    # Objective buildings whose survival grants ⚡ +1 Grid Power (Coal Plant,
+    # Emergency Batteries, Solar Farms). Scored with bld_mult (same pattern
+    # as all other building scoring — goes DOWN at low grid to avoid the
+    # inversion bug where a safely-out-of-reach grid-reward building
+    # incentivizes the solver to drop grid just to inflate its bonus).
+    # Higher base weight than rep-only (≈3×) reflects the mission-end +1
+    # grid power versus +1 rep. See _GRID_REWARD_OBJECTIVE_NAMES for the
+    # allowlist.
+    grid_reward_building_bonus: float = 25000
     boss_killed_bonus: float = 8000
     bld_grid_floor: float = 0.6
     bld_grid_scale: float = 0.4
@@ -104,6 +113,17 @@ class EvalWeights:
 
 
 DEFAULT_WEIGHTS = EvalWeights()
+
+
+# Objective buildings whose bridge objective_name tag maps to ⚡ +1 Grid
+# Power on survival. Anything not in this set falls back to the ⭐ rep-only
+# path (scored by building_objective_bonus). Unknown / new tags are treated
+# as rep-only for safety; add here after wiki/game confirmation.
+_GRID_REWARD_OBJECTIVE_NAMES: set[str] = {
+    "Str_Power",     # Coal Plant, Power Generator
+    "Str_Battery",   # Emergency Batteries
+    "Mission_Solar", # Solar Farms (Mission_Critical variant)
+}
 
 
 def _future_factor(current_turn: int, total_turns: int, remaining_spawns: int = 2**31 - 1) -> float:
@@ -200,7 +220,8 @@ def evaluate(
 
     buildings_alive = 0
     total_building_hp = 0
-    objective_buildings_alive = 0
+    objective_rep_buildings_alive = 0
+    objective_grid_buildings_alive = 0
     for x in range(8):
         for y in range(8):
             t = board.tile(x, y)
@@ -208,14 +229,22 @@ def evaluate(
                 buildings_alive += 1
                 total_building_hp += t.building_hp
                 if t.unique_building:
-                    objective_buildings_alive += 1
+                    if t.objective_name in _GRID_REWARD_OBJECTIVE_NAMES:
+                        objective_grid_buildings_alive += 1
+                    else:
+                        # Rep-only (Clinic/Nimbus/Tower) and unknown tags.
+                        objective_rep_buildings_alive += 1
 
     score += buildings_alive * w.building_alive * bld_mult
     score += total_building_hp * w.building_hp * bld_mult
-    # Objective buildings (Coal Plant / Emergency Batteries / Power Generator)
-    # grant a bonus objective reward (+1 Grid Power or +1 Rep) on survival.
-    # Add a per-surviving-objective bonus scaled by bld_mult.
-    score += objective_buildings_alive * w.building_objective_bonus * bld_mult
+    # ⭐ rep-only objectives: flat bonus scaled by bld_mult (unchanged).
+    score += objective_rep_buildings_alive * w.building_objective_bonus * bld_mult
+    # ⚡ grid-reward objectives: higher base weight but SAME bld_mult pattern
+    # as other buildings. Using grid_multiplier here would invert: at low
+    # grid an untouchable grid-reward building would pay out more, and the
+    # solver would drop grid to inflate its own bonus. bld_mult (goes DOWN
+    # at low grid) prevents that.
+    score += objective_grid_buildings_alive * w.grid_reward_building_bonus * bld_mult
 
     # --- GRID POWER: urgency multiplier applied here ---
     # When grid is low, each grid point is worth more. Multiplier was
@@ -399,15 +428,25 @@ def evaluate_breakdown(
 
     buildings_alive = 0
     total_building_hp = 0
+    objective_rep_alive = 0
+    objective_grid_alive = 0
     for x in range(8):
         for y in range(8):
             t = board.tile(x, y)
             if t.terrain == "building" and t.building_hp > 0:
                 buildings_alive += 1
                 total_building_hp += t.building_hp
+                if t.unique_building:
+                    if t.objective_name in _GRID_REWARD_OBJECTIVE_NAMES:
+                        objective_grid_alive += 1
+                    else:
+                        objective_rep_alive += 1
 
     buildings_score = buildings_alive * w.building_alive * bld_mult
     building_hp_score = total_building_hp * w.building_hp * bld_mult
+    objective_rep_score = objective_rep_alive * w.building_objective_bonus * bld_mult
+    # See evaluate() for why bld_mult (not grid_multiplier) — avoids inversion.
+    objective_grid_score = objective_grid_alive * w.grid_reward_building_bonus * bld_mult
 
     # --- GRID POWER: urgency multiplier applied here ---
     grid_power_score = eff_grid * w.grid_power * grid_multiplier
@@ -498,7 +537,9 @@ def evaluate_breakdown(
                         pods_proximity += 1
                         pods_score += w.pod_proximity
 
-    total = (buildings_score + building_hp_score + grid_power_score
+    total = (buildings_score + building_hp_score
+             + objective_rep_score + objective_grid_score
+             + grid_power_score
              + enemies_killed_score + enemy_hp_score + danger_score
              + mech_score + spawns_score + remaining_spawn_score
              + pods_score)
@@ -512,6 +553,14 @@ def evaluate_breakdown(
         "bld_mult": bld_mult,
         "buildings_alive": {"count": buildings_alive, "score": buildings_score},
         "building_hp": {"total": total_building_hp, "score": building_hp_score},
+        "objective_rep": {
+            "count": objective_rep_alive,
+            "score": objective_rep_score,
+        },
+        "objective_grid": {
+            "count": objective_grid_alive,
+            "score": objective_grid_score,
+        },
         "grid_power": {
             "value": board.grid_power,
             "effective": eff_grid,

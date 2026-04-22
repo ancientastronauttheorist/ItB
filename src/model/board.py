@@ -169,6 +169,11 @@ class BoardTile:
     freeze_mine: bool = False  # freeze mine on this tile (freezes unit that stops here)
     old_earth_mine: bool = False  # old earth mine — kills any unit that stops here (bypasses shield)
     unique_building: bool = False  # objective building (Coal Plant / Batteries / Generator)
+    # Specific objective tag when unique_building=True (e.g. "Str_Power",
+    # "Str_Battery", "Mission_Solar" for ⚡ grid-reward; "Str_Clinic",
+    # "Str_Nimbus", "Str_Tower" for ⭐ rep-only). Empty when not an objective
+    # or when the bridge didn't resolve the tag.
+    objective_name: str = ""
 
 
 class Board:
@@ -380,6 +385,7 @@ class Board:
                     bt.building_hp = td.get("building_hp", 1)
                     bt.population = td.get("population", 1)
                     bt.unique_building = td.get("unique_building", False)
+                    bt.objective_name = td.get("objective_name", "")
                 elif bt.terrain == "mountain":
                     # Mountains have 2 HP (bridge doesn't send mountain HP)
                     bt.building_hp = td.get("building_hp", 2)

@@ -109,6 +109,15 @@ pub struct EvalWeights {
     // Objective building bonus (Coal Plant, Power Generator, Emergency Batteries)
     pub building_objective_bonus: f64,
 
+    // ⚡ Grid-reward objective bonus (Str_Power / Str_Battery / Mission_Solar).
+    // Survival grants +1 Grid Power at mission end. Scored with bld_mult
+    // (NOT grid_multiplier) to match other building scoring and avoid the
+    // inversion bug where a safely-out-of-reach grid-reward building would
+    // pay out more as grid depletes, incentivizing the solver to drop grid
+    // just to inflate its own bonus. Higher base weight (≈3× rep-only)
+    // reflects the mission-end +1 grid vs +1 rep value.
+    pub grid_reward_building_bonus: f64,
+
     // Boss kill bonus (mission objective: destroy the Hornet Leader, etc.)
     pub boss_killed_bonus: f64,
 
@@ -195,6 +204,7 @@ impl Default for EvalWeights {
             // Building protection
             building_bump_damage: -8000.0,
             building_objective_bonus: 8000.0,
+            grid_reward_building_bonus: 25000.0,
             boss_killed_bonus: 8000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
@@ -311,19 +321,31 @@ pub fn evaluate(
 
     let mut buildings_alive = 0i32;
     let mut total_building_hp = 0i32;
-    let mut objective_alive = 0i32;
+    let mut objective_rep_alive = 0i32;
+    let mut objective_grid_alive = 0i32;
     for (idx, tile) in board.tiles.iter().enumerate() {
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
             buildings_alive += 1;
             total_building_hp += tile.building_hp as i32;
             if (board.unique_buildings & (1u64 << idx)) != 0 {
-                objective_alive += 1;
+                if (board.grid_reward_buildings & (1u64 << idx)) != 0 {
+                    objective_grid_alive += 1;
+                } else {
+                    objective_rep_alive += 1;
+                }
             }
         }
     }
     score += buildings_alive as f64 * weights.building_alive * bld_mult;
     score += total_building_hp as f64 * weights.building_hp * bld_mult;
-    score += objective_alive as f64 * weights.building_objective_bonus * bld_mult;
+    // ⭐ rep-only (Clinic/Nimbus/Tower): flat bonus × bld_mult.
+    score += objective_rep_alive as f64 * weights.building_objective_bonus * bld_mult;
+    // ⚡ grid-reward (Power/Battery/Solar): higher base weight but SAME
+    // bld_mult pattern as other buildings — using grid_multiplier here
+    // would invert: at low grid, an untouchable grid-reward building would
+    // pay out more, and the solver would intentionally drop grid to
+    // inflate its own bonus. bld_mult (goes DOWN at low grid) avoids that.
+    score += objective_grid_alive as f64 * weights.grid_reward_building_bonus * bld_mult;
 
     // ── Bump penalty: extra cost for push-chain collateral to buildings ──
     score += building_bumps as f64 * weights.building_bump_damage;

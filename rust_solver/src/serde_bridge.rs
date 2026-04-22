@@ -166,6 +166,10 @@ pub struct JsonTile {
     pub population: Option<u8>,
     pub conveyor: Option<i8>,
     pub unique_building: Option<bool>,
+    // Bridge's specific objective tag. "Str_Power" / "Str_Battery" /
+    // "Mission_Solar" → ⚡ grid-reward. "Str_Clinic" / "Str_Nimbus" /
+    // "Str_Tower" → ⭐ rep-only. Empty / unknown → rep-only fallback.
+    pub objective_name: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -253,10 +257,19 @@ pub fn board_from_json(json_str: &str)
             tile.flags = flags;
             tile.conveyor_dir = jt.conveyor.unwrap_or(-1);
 
-            // Objective buildings (Coal Plant, Power Generator, Batteries)
+            // Objective buildings (Coal Plant, Power Generator, Batteries,
+            // Clinic, Nimbus, Tower, Solar Farms). `unique_buildings` is the
+            // full set; `grid_reward_buildings` is the ⚡ subset whose
+            // survival restores +1 Grid Power at mission end. See
+            // evaluate.rs for why the two are scored differently.
             if jt.unique_building.unwrap_or(false) {
                 let idx = (jt.x as usize) * 8 + (jt.y as usize);
                 board.unique_buildings |= 1u64 << idx;
+                if let Some(name) = jt.objective_name.as_deref() {
+                    if matches!(name, "Str_Power" | "Str_Battery" | "Mission_Solar") {
+                        board.grid_reward_buildings |= 1u64 << idx;
+                    }
+                }
             }
         }
     }

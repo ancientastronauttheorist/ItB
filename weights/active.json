@@ -42,6 +42,7 @@
     "mech_self_frozen": -12000,
     "building_bump_damage": -8000,
     "building_objective_bonus": 8000,
+    "grid_reward_building_bonus": 25000,
     "boss_killed_bonus": 8000,
     "bld_grid_floor": 0.6,
     "bld_grid_scale": 0.4,
