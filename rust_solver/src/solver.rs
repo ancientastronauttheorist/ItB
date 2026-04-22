@@ -184,10 +184,17 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::Leap => {
             let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
+            let min_r = if wdef.range_min == 0 { 1 } else { wdef.range_min };
+            // Fixed-distance leaps (Aerial Bombs: range_min == range_max) fly
+            // over a straight cardinal line and land on the target, so the
+            // target must share a row or column with the attacker. Variable
+            // leaps (Hydraulic Legs) can land anywhere within range.
+            let cardinal_only = wdef.range_min > 0 && wdef.range_min == wdef.range_max;
             for x in 0..8u8 {
                 for y in 0..8u8 {
+                    if cardinal_only && x != mx && y != my { continue; }
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
-                    if dist < 1 || dist > max_r { continue; }
+                    if dist < min_r || dist > max_r { continue; }
                     if !board.is_blocked(x, y, true) { // leap always uses flying passability
                         targets.push((x, y));
                     }

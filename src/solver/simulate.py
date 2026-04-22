@@ -642,6 +642,11 @@ def simulate_weapon(
     if wdef.push_self and attack_dir is not None:
         apply_push(board, attacker.x, attacker.y, opposite_dir(attack_dir), result)
 
+    # Self-freeze: Cryo-Launcher freezes its own caster after firing.
+    # Mirrors rust_solver/src/simulate.rs:928-934.
+    if weapon_id == "Ranged_Ice" and not attacker.shield:
+        attacker.frozen = True
+
     return result
 
 
@@ -769,8 +774,8 @@ def _sim_artillery(board, attacker, wdef, tx, ty, attack_dir, result):
         tile.on_fire = False  # smoke replaces fire
     if wdef.freeze:
         unit = board.unit_at(tx, ty)
-        if unit:
-            pass  # TODO: freeze status
+        if unit and not unit.shield:
+            unit.frozen = True
     if wdef.shield:
         pass  # TODO: shield status
 
