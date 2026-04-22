@@ -4,13 +4,13 @@
   "difficulty": 3,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-f5e0997",
+  "solver_version": "rust-0.1.0-dd498c0",
   "weight_version": "v009",
-  "updated": "2026-04-21T21:31:56.675273",
+  "updated": "2026-04-21T21:41:51.744376",
   "created": "2026-04-21T21:16:17.254536",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 0,
-  "outcome_recorded_at": "2026-04-21T21:31:56.661753",
-  "outcome_notes": "Old Town: 1/2 satellites defended, 1 rep star. Grid 3/7 after"
+  "outcome_mission": 1,
+  "outcome_recorded_at": "2026-04-21T21:41:51.732658",
+  "outcome_notes": "Library: \u2605 Artillery saved, Coal Plant failed. Grid 1/7 \u2014 critical state after"
 }
