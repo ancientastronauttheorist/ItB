@@ -292,10 +292,12 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         if tile.cracked() || source == DamageSource::Fire {
             tile.terrain = Terrain::Water;
             tile.set_cracked(false);
-            // Non-flying unit drowns
+            // Non-flying unit drowns. effectively_flying() = flying && !frozen,
+            // so a frozen flying unit loses its flight and drowns here.
+            // Massive units survive drowning (drown-immunity applies to Water).
             if let Some(idx) = board.unit_at(x, y) {
                 let unit = &mut board.units[idx];
-                if unit.hp > 0 && !unit.flying() {
+                if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
                     unit.hp = 0;
                     if unit.is_enemy() {
                         result.enemies_killed += 1;
@@ -582,26 +584,38 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // Frozen unit on water → creates ice
+    // Frozen GROUNDED unit on water → creates ice (not drowned — the ice
+    // shell sits on the water). Frozen FLYING units skip this: frozen cancels
+    // flight, so they fall through and drown per the deadly-terrain check
+    // below (unless Massive, which is drown-immune).
     let dest_terrain = board.tile(nx, ny).terrain;
-    if board.units[unit_idx].frozen() && dest_terrain == Terrain::Water {
+    if board.units[unit_idx].frozen() && !board.units[unit_idx].flying()
+        && dest_terrain == Terrain::Water {
         board.tile_mut(nx, ny).terrain = Terrain::Ice;
         board.tile_mut(nx, ny).set_cracked(false);
         return;
     }
 
-    // Water/lava/chasm: kills non-flying ground units (Lava also sets fire on flying)
-    if board.units[unit_idx].hp > 0 && !board.units[unit_idx].flying() {
+    // Water/lava/chasm: kills non-flying ground units (Lava also sets fire on flying).
+    // Uses effectively_flying() = flying && !frozen, so a frozen flying unit
+    // is grounded here and drowns/falls like any other grounded unit.
+    // Massive prevents DROWNING in Water/Lava only — Massive does NOT save
+    // from Chasm (falling into a pit is a destroy, not a drown). Flying
+    // exempts from all three (unless frozen).
+    if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
+        let massive = board.units[unit_idx].massive();
         match dest_terrain {
-            Terrain::Water | Terrain::Chasm => {
-                board.units[unit_idx].hp = 0;
+            Terrain::Water | Terrain::Lava => {
+                if !massive {
+                    board.units[unit_idx].hp = 0;
+                }
             }
-            Terrain::Lava => {
+            Terrain::Chasm => {
                 board.units[unit_idx].hp = 0;
             }
             _ => {}
         }
-    } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].flying()
+    } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].effectively_flying()
         && dest_terrain == Terrain::Lava {
         if !board.units[unit_idx].shield()
             && board.units[unit_idx].can_catch_fire()
@@ -779,9 +793,12 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // Frozen unit on water → creates ice (unit survives)
+    // Frozen GROUNDED unit on water → creates ice (unit survives). Frozen
+    // FLYING units skip this: frozen cancels flight, so the unit drops from
+    // the air and drowns per the deadly-terrain check below (unless Massive).
     let dest_terrain = board.tile(nx, ny).terrain;
-    if board.units[unit_idx].frozen() && dest_terrain == Terrain::Water {
+    if board.units[unit_idx].frozen() && !board.units[unit_idx].flying()
+        && dest_terrain == Terrain::Water {
         board.tile_mut(nx, ny).terrain = Terrain::Ice;
         board.tile_mut(nx, ny).set_cracked(false);
         return; // unit survives on ice
@@ -792,12 +809,21 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         board.units[unit_idx].set_frozen(false);
     }
 
-    // Check deadly terrain (frozen flying = grounded)
+    // Check deadly terrain (frozen flying = grounded).
+    // Massive prevents DROWNING in Water/Lava only — Chasm always kills
+    // non-flying units (a pit-fall is a destroy, not a drown).
     let unit = &board.units[unit_idx];
     let eff_flying = unit.effectively_flying();
+    let is_massive = unit.massive();
     let dest_terrain = board.tile(nx, ny).terrain;
 
-    if dest_terrain.is_deadly_ground() && !eff_flying {
+    let deadly_kill = !eff_flying && match dest_terrain {
+        Terrain::Chasm => true,
+        Terrain::Water | Terrain::Lava => !is_massive,
+        _ => false,
+    };
+
+    if deadly_kill {
         let is_enemy = board.units[unit_idx].is_enemy();
         let has_acid = board.units[unit_idx].acid();
         let can_explode = is_enemy && board.blast_psion
@@ -988,7 +1014,7 @@ pub fn simulate_weapon_with(
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
-        WeaponType::Artillery => sim_artillery(board, wdef, target_x, target_y, attack_dir, &mut result),
+        WeaponType::Artillery => sim_artillery(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::SelfAoe => sim_self_aoe(board, ax, ay, wdef, &mut result),
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
         WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
@@ -1174,7 +1200,7 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
 // ── Artillery ────────────────────────────────────────────────────────────────
 
-fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     // Center damage
     if wdef.aoe_center() {
         apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
@@ -1182,6 +1208,24 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir
 
     // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
     apply_weapon_status(board, tx, ty, wdef);
+
+    // Smoke-behind-shooter: Rocket Artillery (Ranged_Rocket) places a single
+    // smoke tile one step opposite the shot direction from the shooter's
+    // position. If behind-tile is off-board (shooter on edge), skip silently —
+    // not an error, just no smoke placed. Smoke replaces fire on the tile
+    // (mirrors standard smoke semantics in apply_weapon_status).
+    if wdef.smoke_behind_shooter() {
+        if let Some(dir) = attack_dir {
+            let (ddx, ddy) = DIRS[dir];
+            let bx = ax as i8 - ddx;
+            let by = ay as i8 - ddy;
+            if in_bounds(bx, by) {
+                let tile = board.tile_mut(bx as u8, by as u8);
+                tile.set_on_fire(false); // smoke replaces fire
+                tile.set_smoke(true);
+            }
+        }
+    }
 
     // Center-tile push (mirrors projectile: status BEFORE push so the unit
     // picks up fire/smoke on the source tile before moving). Without this,
@@ -1333,11 +1377,58 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
 fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, result: &mut ActionResult) {
     let old_x = board.units[attacker_idx].x;
     let old_y = board.units[attacker_idx].y;
+
+    // Defensive landing-legality check. Target enumeration in
+    // solver::get_weapon_targets already filters out mountains, buildings,
+    // wrecks, and occupied tiles via Board::is_blocked(…, flying=true), so a
+    // plan that reaches sim_leap with an illegal landing indicates a bug in
+    // the enumerator or a caller bypassing it. In debug builds we crash
+    // loudly so the upstream bug is obvious; in release we still execute
+    // the (now-silent) leap-through rather than corrupt state further.
+    debug_assert!(
+        {
+            let landing = board.tile(tx, ty);
+            let same_tile = tx == old_x && ty == old_y;
+            let occupied_by_other = board
+                .unit_at(tx, ty)
+                .map_or(false, |u| u != attacker_idx);
+            landing.terrain != Terrain::Mountain
+                && landing.terrain != Terrain::Building
+                && !board.wreck_at(tx, ty)
+                && (!occupied_by_other || same_tile)
+        },
+        "sim_leap: illegal landing tile ({tx}, {ty}) — enumerator should have filtered this"
+    );
+
     board.units[attacker_idx].x = tx;
     board.units[attacker_idx].y = ty;
 
-    // Apply status to landing tile (Jetmech smokes landing spot)
-    apply_weapon_status(board, tx, ty, wdef);
+    // Apply status to landing tile. Exception: Jet_BombDrop (Aerial Bombs)
+    // tooltip reads "Fly over a target, dropping an explosive smoke bomb" —
+    // smoke lands on the TRANSIT tile(s), not on the landing tile. Jet_BombDrop
+    // is the only SMOKE-flagged Leap weapon in the registry, so we gate on the
+    // smoke flag: smoke-leaps emit smoke along the cardinal flight path
+    // (tiles strictly between source and landing); other statuses, if ever
+    // added to a Leap weapon, still apply at the landing tile.
+    if wdef.smoke() {
+        if let Some(dir) = cardinal_direction(old_x, old_y, tx, ty) {
+            let (dx, dy) = DIRS[dir];
+            let dist =
+                (tx as i8 - old_x as i8).abs() + (ty as i8 - old_y as i8).abs();
+            for step in 1..dist {
+                let nx = old_x as i8 + dx * step;
+                let ny = old_y as i8 + dy * step;
+                if !in_bounds(nx, ny) { continue; }
+                let tile = board.tile_mut(nx as u8, ny as u8);
+                tile.set_on_fire(false); // smoke replaces fire (parity with apply_weapon_status)
+                tile.set_smoke(true);
+            }
+        }
+        // Note: deliberately do NOT call apply_weapon_status here — Jet_BombDrop
+        // has no non-smoke status flags, and we do not want smoke at landing.
+    } else {
+        apply_weapon_status(board, tx, ty, wdef);
+    }
 
     // Damage adjacent tiles (skip source direction)
     let from_dir = direction_between(tx, ty, old_x, old_y);
@@ -1717,14 +1808,120 @@ mod tests {
         assert!(board.units[idx].fire(), "Unit pushed onto fire tile should catch fire");
     }
 
+    // ── Ranged_Rocket smoke-behind-shooter ──────────────────────────────────
+    // Tooltip: "Fires a pushing artillery and creates Smoke behind the shooter."
+    // Smoke lands one tile opposite the shot direction from the attacker; NOT
+    // on the target tile. Off-board behind-tile = no-op (shooter at edge).
     #[test]
-    fn test_jetmech_smokes_landing() {
+    fn test_sim_artillery_rocket_smokes_behind_shooter() {
+        // Rocket Mech at (3,3) fires east at (3,6). DIRS[0] = (0,1) so east is
+        // dir=0; behind-shooter is (3,3) - (0,1) = (3,2). Target takes 2 dmg
+        // and is pushed east to (3,7). Smoke lands at (3,2).
         let mut board = make_test_board();
-        let mech_idx = add_mech(&mut board, 0, 0, 0, 3, WId::BruteJetmech);
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedRocket);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 6, 3);
 
-        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 2, 2);
-        // Jetmech Aerial Bombs: smoke on landing tile
-        assert!(board.tile(2, 2).smoke(), "Jetmech landing tile should have smoke");
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 6);
+
+        assert_eq!(board.units[enemy_idx].hp, 1, "target took 2 damage (3 → 1)");
+        assert_eq!(
+            (board.units[enemy_idx].x, board.units[enemy_idx].y),
+            (3, 7),
+            "target pushed east (forward = attack dir)"
+        );
+        assert!(
+            board.tile(3, 2).smoke(),
+            "smoke placed one tile west of shooter (behind the attack direction)"
+        );
+        assert!(
+            !board.tile(3, 6).smoke(),
+            "target tile must NOT be smoked — Ranged_Rocket smokes behind the shooter, not the target"
+        );
+    }
+
+    #[test]
+    fn test_sim_artillery_rocket_no_smoke_when_shooter_on_edge() {
+        // Rocket Mech at (3,0) (west edge, y=0) fires east. Behind-shooter
+        // would be (3,-1) which is off-board — smoke must be skipped silently
+        // (no panic, no phantom smoke).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 0, 3, WId::RangedRocket);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 3);
+
+        // Target still takes damage + push.
+        assert_eq!(board.units[enemy_idx].hp, 1, "target took 2 damage even on edge shot");
+        assert_eq!(
+            (board.units[enemy_idx].x, board.units[enemy_idx].y),
+            (3, 4),
+            "target pushed east"
+        );
+        // No smoke anywhere on row 3 — especially not at shooter's own tile,
+        // and no spurious smoke on target or intermediate tiles.
+        for y in 0..8u8 {
+            assert!(
+                !board.tile(3, y).smoke(),
+                "edge-case shot produced phantom smoke at (3,{})",
+                y
+            );
+        }
+    }
+
+    #[test]
+    fn test_jetmech_smokes_transit_base_range() {
+        // Aerial Bombs tooltip: "Fly over a target, dropping an explosive
+        // smoke bomb." Smoke goes on the TRANSIT tile(s), NOT landing or start.
+        // Base range: S=(3,3) → T=(3,4) → L=(3,5). Smoke only on T=(3,4).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 3, 5);
+        assert!(
+            board.tile(3, 4).smoke(),
+            "Jetmech base-range leap: smoke should be on transit tile (3,4)"
+        );
+        assert!(
+            !board.tile(3, 5).smoke(),
+            "Jetmech base-range leap: smoke must NOT be on landing tile (3,5)"
+        );
+        assert!(
+            !board.tile(3, 3).smoke(),
+            "Jetmech base-range leap: smoke must NOT be on starting tile (3,3)"
+        );
+    }
+
+    #[test]
+    fn test_jetmech_smokes_transit_range_upgraded() {
+        // Range-upgraded Aerial Bombs (e.g. +1 range power): S=(3,3) → T1=(3,4)
+        // → T2=(3,5) → L=(3,6). Smoke on BOTH transit tiles, not on L or S.
+        // We call sim_leap directly with a distance-3 cardinal leap to
+        // exercise the multi-transit-tile branch; sim_leap itself performs
+        // no range enforcement.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        // Clone the default def and expand range so the leap covers 3 tiles.
+        let upgraded = WEAPONS[WId::BruteJetmech as usize];
+        let mut result = ActionResult::default();
+        sim_leap(&mut board, mech_idx, &upgraded, 3, 6, &mut result);
+
+        assert!(
+            board.tile(3, 4).smoke(),
+            "Jetmech range-upgraded leap: smoke should be on first transit tile (3,4)"
+        );
+        assert!(
+            board.tile(3, 5).smoke(),
+            "Jetmech range-upgraded leap: smoke should be on second transit tile (3,5)"
+        );
+        assert!(
+            !board.tile(3, 6).smoke(),
+            "Jetmech range-upgraded leap: smoke must NOT be on landing tile (3,6)"
+        );
+        assert!(
+            !board.tile(3, 3).smoke(),
+            "Jetmech range-upgraded leap: smoke must NOT be on starting tile (3,3)"
+        );
     }
 
     #[test]
@@ -2563,5 +2760,428 @@ mod tests {
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 4),
             "non-Repairman repair must not displace adjacent enemies");
         assert_eq!(board.units[mech].hp, 3, "Repair still heals 1 HP");
+    }
+
+    // ── Aerial Bombs (Brute_Jetmech) landing-tile legality gate ───────────────
+    // In-game, Aerial Bombs is unfireable at a target whose landing tile is a
+    // mountain (any HP) or occupied by a unit, wreck, or building. Rubble and
+    // water/chasm/lava ARE legal (Jet Mech is Flying+Massive). The filter
+    // lives in solver::get_weapon_targets via Board::is_blocked(flying=true).
+    // Evidence: Steam/gamepressure/GameFAQs weapon references + Board::is_blocked
+    // logic (board.rs ~400). These tests pin the gate so we notice if it regresses.
+
+    fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
+        crate::solver::get_weapon_targets(
+            board, mech_pos.0, mech_pos.1, WId::BruteJetmech, mech_pos, &WEAPONS,
+        )
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_allows_empty_landing() {
+        // Jet Mech at (3,3). Landing tile (3,5) is plain ground — legal.
+        // Aerial Bombs has range_min=range_max=2, so valid targets sit on the
+        // same row or column at Manhattan distance 2.
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(targets.contains(&(3, 5)),
+            "Empty ground 2 tiles away must be a legal landing — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_friendly_mech() {
+        // Friendly mech already occupies the landing tile → illegal.
+        let mut board = make_test_board();
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let _ally = add_mech(&mut board, 1, 3, 5, 3, WId::None);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Friendly mech on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_enemy() {
+        // Enemy on the landing tile → illegal (no "crush" mechanic).
+        let mut board = make_test_board();
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let _enemy = add_enemy(&mut board, 99, 3, 5, 3);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Enemy on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_full_mountain() {
+        // Full-HP mountain (terrain=Mountain, hp=2) on the landing tile → illegal.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Mountain;
+        board.tile_mut(3, 5).building_hp = 2;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Full mountain on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_damaged_mountain() {
+        // Damaged mountain (terrain=Mountain, hp=1) still blocks — only
+        // rubble (terrain=Rubble) is walkable.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Mountain;
+        board.tile_mut(3, 5).building_hp = 1;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Damaged mountain (1 HP) still blocks landing — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_allows_landing_on_rubble() {
+        // Rubble (destroyed mountain) is walkable terrain → legal landing.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Rubble;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(targets.contains(&(3, 5)),
+            "Rubble must be a legal landing tile — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_allows_landing_on_water() {
+        // Jet Mech is Flying+Massive → can land on water without drowning.
+        // (sim_leap doesn't apply is_deadly_ground to the attacker; the
+        // enumerator passes flying=true which also skips deadly-terrain gate.)
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Water;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(targets.contains(&(3, 5)),
+            "Water must be a legal landing for flying Jet Mech — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_building() {
+        // Buildings occupy their tile (terrain=Building) and block movement —
+        // including for flying units. Jet Mech cannot land on a building.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Building;
+        board.tile_mut(3, 5).building_hp = 1;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Building on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_out_of_bounds_landing() {
+        // Jet Mech in column 0. A 2-tile cardinal leap east lands at (0,2) —
+        // legal. A 2-tile cardinal leap west would go off-board; the target
+        // enumerator never offers off-board tiles because it iterates 0..8.
+        // This test pins that invariant via a mech at (0,0): the only legal
+        // Aerial Bombs targets are (0,2) and (2,0) — NOT (-2,0) / (0,-2) /
+        // (1,-1) / etc., which are all off-board or non-cardinal.
+        let mut board = make_test_board();
+        let _jet = add_mech(&mut board, 0, 0, 0, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (0, 0));
+        // Only two cardinal distance-2 targets exist from (0,0).
+        assert!(targets.contains(&(0, 2)),
+            "(0,2) — east by 2 — should be legal; got {:?}", targets);
+        assert!(targets.contains(&(2, 0)),
+            "(2,0) — south by 2 — should be legal; got {:?}", targets);
+        // Every produced target must be in bounds and cardinal at distance 2.
+        for &(x, y) in &targets {
+            assert!(x < 8 && y < 8, "Off-board target {:?} leaked through", (x, y));
+            let dist = (x as i16 - 0).abs() + (y as i16 - 0).abs();
+            assert_eq!(dist, 2, "Non-distance-2 target {:?} leaked through", (x, y));
+            assert!(x == 0 || y == 0, "Non-cardinal target {:?} leaked through", (x, y));
+        }
+    }
+    // ── Massive trait: drown-immunity is Water/Lava ONLY ───────────────────
+    //
+    // Ground truth (Fandom Traits wiki + community consensus):
+    //   Massive prevents DROWNING in water/lava. It does NOT save from:
+    //     • Chasm tiles (pit-fall is a destroy, not a drown)
+    //     • Cataclysm / Seismic opening a chasm under the unit
+    //     • Tidal Wave (unconditional destroy)
+    //     • Pushes, bumps, or displacement (that's Stable, a different trait)
+
+    fn add_massive_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::MASSIVE,
+            ..Default::default()
+        })
+    }
+
+    fn add_massive_flying_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::MASSIVE | UnitFlags::FLYING,
+            ..Default::default()
+        })
+    }
+
+    #[test]
+    fn test_massive_pushed_into_water_survives() {
+        // Baseline: Massive saves from drowning.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Water;
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push into water
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Massive unit pushed into water must survive (drown immunity)");
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4),
+            "Massive unit must still move to the water tile");
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_massive_pushed_into_lava_survives() {
+        // Parallel to water: Massive is drown-immune in lava too.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Lava;
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push into lava
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Massive unit pushed into lava must survive (drown immunity)");
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_massive_pushed_into_chasm_dies() {
+        // THE FIX: chasm ≠ drowning, Massive must not save here.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push into chasm
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive non-flying unit pushed into chasm must die");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_massive_flying_pushed_into_chasm_survives() {
+        // Flying exempts from chasm; Massive is redundant here, but
+        // confirms we didn't wire Massive to also block flying-survival.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let idx = add_massive_flying_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Flying Massive unit pushed into chasm must survive (Flying exempts)");
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
+    }
+
+    #[test]
+    fn test_massive_thrown_into_chasm_dies() {
+        // Throw path (apply_throw) must agree with push path: Massive
+        // does NOT save from chasm fall.
+        // Vice-Fist-style throw: attacker at (3,3), target at (4,3).
+        // Attack direction = +x = DIRS index 1. Destination = attacker +
+        // opposite_dir(1) = (3,3) + DIRS[3] = (2,3) = the chasm tile.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Chasm;
+        let _attacker = add_mech(&mut board, 99, 3, 3, 3, WId::None);
+        let idx = add_massive_enemy(&mut board, 1, 4, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 4, 3, 1, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive non-flying unit thrown into chasm must die");
+    }
+
+    #[test]
+    fn test_massive_thrown_into_water_survives() {
+        // Throw-path parity with push-path for drown immunity.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Water;
+        let _attacker = add_mech(&mut board, 99, 3, 3, 3, WId::None);
+        let idx = add_massive_enemy(&mut board, 1, 4, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 4, 3, 1, &mut result);
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Massive unit thrown into water must survive");
+        assert_eq!((board.units[idx].x, board.units[idx].y), (2, 3),
+            "Massive unit must still land on the water tile");
+    }
+
+    #[test]
+    fn test_massive_cataclysm_lethal_env_dies() {
+        // Cataclysm opens a chasm under the unit; the env-danger tick
+        // fires in enemy phase as a lethal (kill_int=1) event. Massive
+        // must NOT save the unit from that.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+        let bit = 1u64 << xy_to_idx(3, 3);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive unit on Cataclysm lethal env-danger tile must die");
+    }
+
+    #[test]
+    fn test_massive_seismic_lethal_env_dies() {
+        // Seismic Activity turns a tile into chasm under a unit; the
+        // env-danger tile is tagged lethal (kill_int=1). Massive must die.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_massive_enemy(&mut board, 42, 4, 2, 4);
+        let bit = 1u64 << xy_to_idx(4, 2);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive unit caught by Seismic lethal env-danger must die");
+    }
+
+    #[test]
+    fn test_massive_tidal_wave_lethal_destroys() {
+        // Tidal Wave is usually flagged lethal by the bridge (kill_int=1).
+        // It's a destroy, not a drown — Massive does NOT save.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_massive_enemy(&mut board, 7, 1, 1, 5);
+        let bit = 1u64 << xy_to_idx(1, 1);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive unit hit by lethal Tidal Wave must be destroyed");
+    }
+
+    // ── Frozen flying = grounded ─────────────────────────────────────────────
+    //
+    // Freezing a flying Vek (Hornet, Mosquito, Jet Mech) grounds it — frozen
+    // overrides flight. Pushing it into water or chasm kills it: the ice
+    // shell shears off and the ungrounded body drowns / falls. Key kill
+    // pattern the solver was missing before this fix.
+    //
+    // The sim uses effectively_flying() = flying && !frozen in apply_push,
+    // apply_throw, and apply_damage_core (ice-break drown). These tests lock
+    // in each path.
+
+    fn add_flying_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::FLYING,
+            ..Default::default()
+        })
+    }
+
+    #[test]
+    fn test_unfrozen_flying_pushed_into_water_survives() {
+        // Baseline: flying unit is exempt from drowning.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Water;
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Unfrozen flying unit pushed into water must survive");
+    }
+
+    #[test]
+    fn test_frozen_flying_pushed_into_water_drowns() {
+        // THE FIX: frozen cancels flight; pushed into water, drowns.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Water;
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].set_frozen(true);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Frozen flying unit pushed into water must drown");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_frozen_flying_pushed_into_chasm_dies() {
+        // Chasm kill: no Massive guard even if it had Massive.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].set_frozen(true);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Frozen flying unit pushed into chasm must fall");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_frozen_flying_thrown_into_water_drowns() {
+        // Throw path parity: Vice Fist thrown frozen-flying into water drowns.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Water;
+        let _attacker = add_mech(&mut board, 99, 3, 3, 3, WId::None);
+        let idx = add_flying_enemy(&mut board, 1, 4, 3, 3);
+        board.units[idx].set_frozen(true);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 4, 3, 1, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Frozen flying unit thrown into water must drown");
+    }
+
+    #[test]
+    fn test_flying_ice_break_survives() {
+        // apply_damage_core path: weapon damage melts cracked ice to water.
+        // A unit on the tile drowns if not effectively_flying() && not massive.
+        // The frozen case doesn't fire here in practice — any damage that
+        // breaks the ice ALSO unfreezes the unit (frozen-takes-0-damage
+        // unfreeze runs FIRST in apply_damage_core, before the tile effect),
+        // so by the time the ice→water conversion happens the unit is already
+        // un-frozen and re-flying. Test the baseline (damage-through-ice
+        // survives for a flying unit) to lock in the effectively_flying-based
+        // check in apply_damage_core.
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ice;
+        board.tile_mut(3, 3).set_cracked(true);
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[idx].hp, 2,
+            "Flying unit on melting ice must survive (took 1 weapon dmg)");
     }
 }

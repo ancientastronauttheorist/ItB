@@ -27,6 +27,13 @@ bitflags! {
         const CHARGE          = 1 << 14;
         const FLYING_CHARGE   = 1 << 15;
         const PUSH_SELF       = 1 << 16;
+        /// Weapon places a smoke tile directly behind the shooter (one tile
+        /// opposite the attack direction, from the shooter's position).
+        /// Ranged_Rocket (Rocket Artillery) is the only mech weapon with this
+        /// behavior per in-game tooltip: "Fires a pushing artillery and creates
+        /// Smoke behind the shooter." Mutually independent from SMOKE (which
+        /// smokes the target tile).
+        const SMOKE_BEHIND_SHOOTER = 1 << 17;
     }
 }
 
@@ -62,6 +69,7 @@ impl WeaponDef {
     pub fn chain(&self) -> bool { self.flags.contains(WeaponFlags::CHAIN) }
     pub fn flying_charge(&self) -> bool { self.flags.contains(WeaponFlags::FLYING_CHARGE) }
     pub fn push_self(&self) -> bool { self.flags.contains(WeaponFlags::PUSH_SELF) }
+    pub fn smoke_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::SMOKE_BEHIND_SHOOTER) }
 }
 
 /// Default weapon def (no-op).
@@ -334,8 +342,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[33] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, damage_outer: 1, push: PushDir::Outward, range_min: 2,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 34: Ranged_Rocket — Rocket Artillery
+    // Tooltip: "Fires a pushing artillery and creates Smoke behind the shooter."
+    // Smoke lands ONE tile opposite the shot direction, at the shooter's row/col —
+    // NOT on the target tile. Use SMOKE_BEHIND_SHOOTER (handled in sim_artillery),
+    // not SMOKE (which would smoke the target tile).
     w[34] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2,
-        flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
+        flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
