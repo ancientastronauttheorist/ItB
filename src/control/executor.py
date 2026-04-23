@@ -66,27 +66,38 @@ def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
     (auto-detected via Quartz). STEP_X and STEP_Y are the half-tile
     dimensions in MCP pixel space, derived from the window size.
 
-    Calibrated 2026-04-07 against all 4 grid corners (A1, A8, H1, H8)
-    with user-verified cursor placement. Max error <2px across all corners.
+    Calibrated 2026-04-23 from data/grid_reference.json's measured corners
+    at window (215, 32). Empirically verified: grid_to_mcp(F5) = (740, 412)
+    hovers the water tile the JetMech flies over — correct terrain per the
+    bridge state and ItB's mouse-hover tooltip.
+
+    Historical note: the 2026-04-07 constants (494, 56, 46.21, 34.57) were
+    off — step_y was 26% too large and the Y origin was ~187 px too high.
+    `auto_turn` (Lua bridge, no MCP clicks) masked the bug for 12 days. First
+    `click_action` use on 2026-04-11 failed 50% immediately and was silently
+    abandoned. See docs/investigation_grid_calibration_broken.md.
     """
     win = _get_window()
 
-    # Calibrated from 4 corner tiles at 1280x748 window:
-    #   H8 = save(0,0) → pixel (694, 193)  [origin]
-    #   A8 = save(0,7) → pixel (369, 436)
-    #   H1 = save(7,0) → pixel (1016, 435)
-    #   A1 = save(7,7) → pixel (694, 677)
+    # Derivation from grid_reference.json corners at window (215, 32):
+    #   H8 absolute image-pixel  = (690, 275)
+    #   A1 absolute image-pixel  = (690, 660)
+    #   H1 absolute image-pixel  = (1040, 467)
+    #   A8 absolute image-pixel  = (340, 467)
+    #
+    # Window-relative origin (H8) = (690-215, 275-32) = (475, 243)
+    # Step sizes (constant across window moves):
+    #   step_x = (H1_x - H8_x) / 7 = (1040-690)/7 = 50.0
+    #   step_y = (A1_y - H8_y) / 14 = (660-275)/14 = 27.5
 
     sx = win.width / 1280.0
     sy = win.height / 748.0
 
-    # Origin in MCP coords (tile 0,0 center, adjusted for window position)
-    ox = win.x + 494 * sx
-    oy = win.y + 56 * sy
+    ox = win.x + 475.0 * sx
+    oy = win.y + 243.0 * sy
 
-    # Isometric step sizes in MCP pixels
-    step_x = 46.21 * sx
-    step_y = 34.57 * sy
+    step_x = 50.0 * sx
+    step_y = 27.5 * sy
 
     px = ox + step_x * (save_x - save_y)
     py = oy + step_y * (save_x + save_y)
@@ -115,9 +126,13 @@ def recalibrate():
 # Slot 2 mirrors slot 1 horizontally inside the same weapon box; it
 # activates only when a mech has a second weapon (time pod upgrade).
 _UI_END_TURN = (95, 78)
-_UI_WEAPON_SLOT_1 = (191, 528)
-_UI_WEAPON_SLOT_2 = (255, 528)
-_UI_REPAIR_BUTTON = (111, 528)
+# Weapon/repair slot offsets re-calibrated 2026-04-23. Old values (191/255/111, 528)
+# missed the icons by ~25 px in Y and ~10 px in X. Empirical hover-verify
+# on Pinnacle Frozen Plains placed the Aerial Bombs icon center at image
+# (396, 585) with window at (215, 32), giving window-relative (181, 553).
+_UI_WEAPON_SLOT_1 = (181, 553)
+_UI_WEAPON_SLOT_2 = (245, 553)
+_UI_REPAIR_BUTTON = (105, 553)
 
 # Squad-select screen. Calibrated 2026-04-21 via hover-verify: cursor at
 # MCP (1006, 562) with window at Quartz (215, 32, 1280, 748) triggered
@@ -235,11 +250,19 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     if mech is None:
         return []
 
-    # Step 1: select the mech by clicking its current tile.
-    sx, sy = grid_to_mcp(mech.x, mech.y)
+    # Step 1: select the mech by clicking its SPRITE position, not the tile
+    # center. Mech sprites render ~150 px above the tile they occupy. For
+    # flying mechs (e.g., JetMech over water), the tile beneath the sprite
+    # is water — clicking the water tile highlights the tile but does NOT
+    # select the flying unit hovering above it. Clicking the sprite position
+    # selects correctly for both flying and grounded mechs since the sprite
+    # always sits on the mech's body.  Empirically verified 2026-04-23 on
+    # F5 (grid_to_mcp → (740, 412); sprite at (740, 262) selected JetMech).
+    _SPRITE_OFFSET_Y = -150
+    tx, ty = grid_to_mcp(mech.x, mech.y)
     plan: list[dict] = [{
         "type": "left_click",
-        "x": sx, "y": sy,
+        "x": tx, "y": ty + _SPRITE_OFFSET_Y,
         "description": f"Select {action.mech_type} at ({mech.x},{mech.y})",
     }]
 
