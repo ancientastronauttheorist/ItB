@@ -292,10 +292,12 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         if tile.cracked() || source == DamageSource::Fire {
             tile.terrain = Terrain::Water;
             tile.set_cracked(false);
-            // Non-flying unit drowns
+            // Non-flying unit drowns. effectively_flying() = flying && !frozen,
+            // so a frozen flying unit loses its flight and drowns here.
+            // Massive units survive drowning (drown-immunity applies to Water).
             if let Some(idx) = board.unit_at(x, y) {
                 let unit = &mut board.units[idx];
-                if unit.hp > 0 && !unit.flying() {
+                if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
                     unit.hp = 0;
                     if unit.is_enemy() {
                         result.enemies_killed += 1;
@@ -582,19 +584,25 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // Frozen unit on water → creates ice
+    // Frozen GROUNDED unit on water → creates ice (not drowned — the ice
+    // shell sits on the water). Frozen FLYING units skip this: frozen cancels
+    // flight, so they fall through and drown per the deadly-terrain check
+    // below (unless Massive, which is drown-immune).
     let dest_terrain = board.tile(nx, ny).terrain;
-    if board.units[unit_idx].frozen() && dest_terrain == Terrain::Water {
+    if board.units[unit_idx].frozen() && !board.units[unit_idx].flying()
+        && dest_terrain == Terrain::Water {
         board.tile_mut(nx, ny).terrain = Terrain::Ice;
         board.tile_mut(nx, ny).set_cracked(false);
         return;
     }
 
     // Water/lava/chasm: kills non-flying ground units (Lava also sets fire on flying).
+    // Uses effectively_flying() = flying && !frozen, so a frozen flying unit
+    // is grounded here and drowns/falls like any other grounded unit.
     // Massive prevents DROWNING in Water/Lava only — Massive does NOT save
     // from Chasm (falling into a pit is a destroy, not a drown). Flying
-    // exempts from all three.
-    if board.units[unit_idx].hp > 0 && !board.units[unit_idx].flying() {
+    // exempts from all three (unless frozen).
+    if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
         let massive = board.units[unit_idx].massive();
         match dest_terrain {
             Terrain::Water | Terrain::Lava => {
@@ -607,7 +615,7 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
             }
             _ => {}
         }
-    } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].flying()
+    } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].effectively_flying()
         && dest_terrain == Terrain::Lava {
         if !board.units[unit_idx].shield()
             && board.units[unit_idx].can_catch_fire()
@@ -785,9 +793,12 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // Frozen unit on water → creates ice (unit survives)
+    // Frozen GROUNDED unit on water → creates ice (unit survives). Frozen
+    // FLYING units skip this: frozen cancels flight, so the unit drops from
+    // the air and drowns per the deadly-terrain check below (unless Massive).
     let dest_terrain = board.tile(nx, ny).terrain;
-    if board.units[unit_idx].frozen() && dest_terrain == Terrain::Water {
+    if board.units[unit_idx].frozen() && !board.units[unit_idx].flying()
+        && dest_terrain == Terrain::Water {
         board.tile_mut(nx, ny).terrain = Terrain::Ice;
         board.tile_mut(nx, ny).set_cracked(false);
         return; // unit survives on ice
@@ -3067,5 +3078,110 @@ mod tests {
 
         assert_eq!(board.units[idx].hp, 0,
             "Massive unit hit by lethal Tidal Wave must be destroyed");
+    }
+
+    // ── Frozen flying = grounded ─────────────────────────────────────────────
+    //
+    // Freezing a flying Vek (Hornet, Mosquito, Jet Mech) grounds it — frozen
+    // overrides flight. Pushing it into water or chasm kills it: the ice
+    // shell shears off and the ungrounded body drowns / falls. Key kill
+    // pattern the solver was missing before this fix.
+    //
+    // The sim uses effectively_flying() = flying && !frozen in apply_push,
+    // apply_throw, and apply_damage_core (ice-break drown). These tests lock
+    // in each path.
+
+    fn add_flying_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::FLYING,
+            ..Default::default()
+        })
+    }
+
+    #[test]
+    fn test_unfrozen_flying_pushed_into_water_survives() {
+        // Baseline: flying unit is exempt from drowning.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Water;
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Unfrozen flying unit pushed into water must survive");
+    }
+
+    #[test]
+    fn test_frozen_flying_pushed_into_water_drowns() {
+        // THE FIX: frozen cancels flight; pushed into water, drowns.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Water;
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].set_frozen(true);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Frozen flying unit pushed into water must drown");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_frozen_flying_pushed_into_chasm_dies() {
+        // Chasm kill: no Massive guard even if it had Massive.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].set_frozen(true);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Frozen flying unit pushed into chasm must fall");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_frozen_flying_thrown_into_water_drowns() {
+        // Throw path parity: Vice Fist thrown frozen-flying into water drowns.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Water;
+        let _attacker = add_mech(&mut board, 99, 3, 3, 3, WId::None);
+        let idx = add_flying_enemy(&mut board, 1, 4, 3, 3);
+        board.units[idx].set_frozen(true);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 4, 3, 1, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Frozen flying unit thrown into water must drown");
+    }
+
+    #[test]
+    fn test_flying_ice_break_survives() {
+        // apply_damage_core path: weapon damage melts cracked ice to water.
+        // A unit on the tile drowns if not effectively_flying() && not massive.
+        // The frozen case doesn't fire here in practice — any damage that
+        // breaks the ice ALSO unfreezes the unit (frozen-takes-0-damage
+        // unfreeze runs FIRST in apply_damage_core, before the tile effect),
+        // so by the time the ice→water conversion happens the unit is already
+        // un-frozen and re-flying. Test the baseline (damage-through-ice
+        // survives for a flying unit) to lock in the effectively_flying-based
+        // check in apply_damage_core.
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ice;
+        board.tile_mut(3, 3).set_cracked(true);
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[idx].hp, 2,
+            "Flying unit on melting ice must survive (took 1 weapon dmg)");
     }
 }
