@@ -82,6 +82,12 @@ def main():
     p_solve.add_argument("--profile", default="Alpha")
     p_solve.add_argument("--time-limit", type=float, default=10.0,
                          help="Solver time limit in seconds")
+    p_solve.add_argument("--beam", type=int, default=0, choices=[0, 1, 2],
+                         help="Beam depth. 0 (default) = single-turn top-1. "
+                              "2 = depth-2 beam (solve_beam, K=5); picks the "
+                              "plan whose chain_score (turn-1 + best turn-2) "
+                              "is highest. 1 = depth-1 beam (skip the "
+                              "clean-plan filter). Does not affect auto_turn.")
 
     # execute
     p_exec = sub.add_parser("execute", help="Plan clicks for one mech action")
@@ -392,7 +398,8 @@ def main():
     if args.command == "read":
         cmd_read(profile=args.profile)
     elif args.command == "solve":
-        cmd_solve(profile=args.profile, time_limit=args.time_limit)
+        cmd_solve(profile=args.profile, time_limit=args.time_limit,
+                  beam=args.beam)
     elif args.command == "execute":
         cmd_execute(args.index, profile=args.profile)
     elif args.command == "verify":

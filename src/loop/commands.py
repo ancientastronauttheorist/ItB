@@ -1000,11 +1000,24 @@ def _check_wheel_sim_version() -> dict | None:
     return None
 
 
-def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
+def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
+              beam: int = 0) -> dict:
     """Run solver on current board, store solution in session.
 
-    Returns the solution with actions and score.
+    Args:
+        beam: 0 (default) uses `itb_solver.solve` — the current top-1 path.
+              2 uses `itb_solver.solve_beam(depth=2, k=5)` and picks the plan
+              with the highest chain_score (turn-1 score + best turn-2 sub-plan
+              score). 1 uses solve_beam(depth=1) which is equivalent to
+              solve_top_k with K=5 — takes the top raw-score plan without the
+              two-stage clean-plan filter. Other values raise ValueError.
+
+    Returns the chosen solution with actions and score. When beam>=1 the
+    recording stamps `beam_mode` and `chain_score` so downstream analysis
+    can diff plan quality vs. top-1.
     """
+    if beam not in (0, 1, 2):
+        return {"error": f"invalid beam value {beam!r}; must be 0, 1, or 2"}
     # Refuse to solve against a stale wheel after a Rust rebuild.
     wheel_err = _check_wheel_sim_version()
     if wheel_err is not None:
@@ -1169,8 +1182,27 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             )
             _inject_ovr(bridge_data, base=_load_base_ovr())
             rust_start = _time.time()
-            rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
-            rust_result = _json.loads(rust_json)
+            beam_chain_score = None  # only set on beam>=1 path
+            if beam == 0:
+                rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
+                rust_result = _json.loads(rust_json)
+            else:
+                # solve_beam returns a JSON array of chain objects sorted
+                # by chain_score desc; we pick chains[0]. Empty array means
+                # no active mechs / no legal plans — normalize to the
+                # shape `solve` returns so the downstream code path stays
+                # single-branch.
+                chains_json = _rust.solve_beam(
+                    _json.dumps(bridge_data), beam, 5, time_limit,
+                )
+                chains = _json.loads(chains_json)
+                if not chains:
+                    rust_result = {"actions": [], "score": float("-inf"),
+                                   "stats": {}, "applied_overrides": []}
+                else:
+                    top = chains[0]
+                    rust_result = top["level_0"]
+                    beam_chain_score = top["chain_score"]
             rust_elapsed = _time.time() - rust_start
 
             if rust_result.get("actions"):
@@ -1316,6 +1348,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
             "active_mech_count": solution.active_mech_count,
         },
         "weight_version": weight_version,
+        "beam_mode": beam,
+        "beam_chain_score": beam_chain_score,
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
         "predicted_outcome": enriched["predicted_outcome"],
