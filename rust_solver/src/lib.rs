@@ -336,7 +336,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // without a matching Rust bump each time — live cmd_solve was
 // erroring on wheel_sim_version_mismatch. Bringing Rust to v6 clears
 // the block. Any future bump MUST edit both constants atomically.
-pub const SIMULATOR_VERSION: u32 = 6;
+//
+// v7 (2026-04-23, grid-drop deep dive): Mirrorshot mountain damage,
+// dead-pusher no longer bumps live blocker, non-unique multi-HP
+// buildings preserve grid_power on bump. See src/solver/verify.py for
+// the full per-bump changelog.
+pub const SIMULATOR_VERSION: u32 = 7;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -523,6 +523,10 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
     // Blocked by building — live building both take 1 bump; destroyed
     // objective building (terrain=Building, hp=0, e.g. Emergency Batteries
     // after destruction) still blocks but takes no further damage.
+    //
+    // Grid-power accounting mirrors apply_push: non-unique buildings
+    // contribute ONE grid power regardless of HP, so bump only drops grid on
+    // full destruction. Unique buildings lose grid per HP.
     if board.tile(nx, ny).terrain == Terrain::Building {
         let dest_idx = xy_to_idx(nx, ny) as u64;
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
@@ -545,7 +549,9 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
                 board.grid_power = board.grid_power.saturating_sub(1);
             } else {
                 result.buildings_damaged += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
+                if is_unique {
+                    board.grid_power = board.grid_power.saturating_sub(1);
+                }
             }
         } else {
             // Destroyed objective: bump the thrown unit only.
@@ -695,7 +701,11 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
 
 // ── apply_push ───────────────────────────────────────────────────────────────
 
-/// Push unit at (x, y) in direction. Damage+push are simultaneous (dead units still push).
+/// Push unit at (x, y) in direction. Damage+push are simultaneous; a
+/// corpse still pushes into static obstacles (building/mountain/edge) and
+/// takes/deals bump damage there. Exception: a dead corpse pushed INTO a
+/// live blocker unit is absorbed silently — no bump to either. See the
+/// in-body comment on the unit-blocker branch for the snapshot citation.
 pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mut ActionResult) {
     // Find ANY unit (including dead) — simultaneous damage+push
     let unit_idx = match board.any_unit_at(x, y) {
@@ -736,6 +746,18 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
 
     // Blocked by building — live building: BOTH take 1 bump.
     // Destroyed objective (terrain=Building, hp=0): only pushed unit bumps.
+    //
+    // Grid-power accounting: non-unique buildings contribute ONE grid power
+    // regardless of their HP (a Residential 2-HP house provides +1 grid, not
+    // +2). Bump damage only reduces grid_power when the building is fully
+    // destroyed (bhp → 0). Unique objective buildings (Coal Plant, Power
+    // Generator, Solar Farm, Batteries) have per-HP grid worth and decrement
+    // grid_power on every HP lost.
+    //
+    // Regression: grid_drop_20260421_161809_372_t02_a0 (Taurus Cannon push
+    // into bhp=2 Residential: actual bhp 2→1 with grid unchanged) and
+    // m00_turn_03 Ranged_Rocket bump from commit 2a86ca1 (pred grid would be
+    // 4 with old code, actual grid stayed 5).
     if board.tile(nx, ny).terrain == Terrain::Building {
         let dest_idx = xy_to_idx(nx, ny) as u64;
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
@@ -758,7 +780,11 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
                 board.grid_power = board.grid_power.saturating_sub(1);
             } else {
                 result.buildings_damaged += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
+                // Non-unique multi-HP building: damaged but not destroyed →
+                // grid_power stays. Unique building: each HP is worth 1 grid.
+                if is_unique {
+                    board.grid_power = board.grid_power.saturating_sub(1);
+                }
             }
         } else {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
@@ -766,9 +792,23 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         return;
     }
 
-    // Blocked by another alive unit — BOTH take 1 bump
+    // Blocked by another alive unit — BOTH take 1 bump.
+    //
+    // Exception: if the pushed unit is already dead (HP<=0), its corpse
+    // does NOT deal bump damage to a live blocker unit. Static obstacles
+    // (building/mountain/edge, handled above) still bump with a corpse —
+    // see `test_dead_unit_still_pushes_into_building`. But in-game, a
+    // simultaneous kill+push does NOT splash onto an adjacent live Vek
+    // or mech: the corpse is consumed. Observed on snapshot
+    // `grid_drop_20260421_131027_968_t03_a0` (Cluster Artillery kills
+    // Train_Damaged on (4,4); sim predicted the corpse bumped the
+    // Jelly_Explode1 at (3,4), actual game left the Jelly at full HP).
     if let Some(blocker_idx) = board.unit_at(nx, ny) {
         if blocker_idx != unit_idx {
+            if board.units[unit_idx].hp <= 0 {
+                // Dead pusher: corpse absorbed by live blocker, no bump.
+                return;
+            }
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
             apply_damage(board, nx, ny, 1, result, DamageSource::Bump);
             return;
@@ -1148,9 +1188,14 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
     let (dx, dy) = DIRS[dir];
 
-    // Find first hit
+    // Find first hit. Mountains stop the projectile AND take 1 damage
+    // (2 HP → damaged → rubble), mirroring sim_laser's beam-hits-mountain
+    // behavior. Without the damage call, Mirror Shot's backward arm
+    // mispredicted "mountain blocks free" and we under-counted building
+    // destruction when a bumped unit or pushed tile cascade followed.
     let mut hit_x: i8 = -1;
     let mut hit_y: i8 = -1;
+    let mut mountain_hit: Option<(u8, u8)> = None;
     for i in 1..8i8 {
         let nx = ax as i8 + dx * i;
         let ny = ay as i8 + dy * i;
@@ -1159,7 +1204,10 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         let nyu = ny as u8;
 
         let tile = board.tile(nxu, nyu);
-        if tile.terrain == Terrain::Mountain { break; }
+        if tile.terrain == Terrain::Mountain {
+            mountain_hit = Some((nxu, nyu));
+            break;
+        }
         if tile.is_building() && !wdef.phase() {
             hit_x = nx; hit_y = ny; break;
         }
@@ -1178,6 +1226,9 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
             PushDir::Backward => apply_push(board, hx, hy, opposite_dir(dir), result),
             _ => {}
         }
+    } else if let Some((mx, my)) = mountain_hit {
+        // Projectile struck a mountain with no prior target — damage it.
+        apply_damage(board, mx, my, wdef.damage, result, DamageSource::Weapon);
     }
 
     // Mirror shot (aoe_behind): also fire backward
@@ -1192,7 +1243,13 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
             let nyu = ny as u8;
 
             let tile = board.tile(nxu, nyu);
-            if tile.terrain == Terrain::Mountain { break; }
+            if tile.terrain == Terrain::Mountain {
+                // Backward projectile stops at a mountain but damages it
+                // (Janus Cannon / Mirror Shot rubbleizes mountains behind
+                // the shooter, matching forward-projectile behavior).
+                apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
+                break;
+            }
             if tile.is_building() {
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
                 break;
@@ -1706,6 +1763,73 @@ mod tests {
         assert_eq!(board.units[idx].hp, 2); // -1 bump
         assert_eq!(board.tile(3, 4).building_hp, 0); // building destroyed
         assert_eq!(result.grid_damage, 1);
+        // 1-HP regular building destroyed → grid -1
+        assert_eq!(board.grid_power, 6);
+    }
+
+    // Regression: snapshots grid_drop_20260421_161809_372_t02_a0 and t03_a1
+    // plus the Ranged_Rocket bump trace from commit 2a86ca1.
+    //
+    // Non-unique multi-HP buildings (e.g. 2-HP Residential) contribute a
+    // single grid power regardless of HP. A bump that damages but does NOT
+    // destroy them must leave grid_power alone — only full destruction
+    // (bhp → 0) drops grid. Unique/objective buildings keep per-HP grid
+    // accounting (verified by the following unique-building test).
+    #[test]
+    fn test_push_into_nonunique_2hp_building_preserves_grid() {
+        let mut board = make_test_board();
+        assert_eq!(board.grid_power, 7);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push N into building
+        assert_eq!(board.units[idx].hp, 2); // -1 bump
+        assert_eq!(board.tile(3, 4).building_hp, 1); // damaged, not destroyed
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(result.grid_damage, 0);
+        // CRITICAL: grid_power unchanged because the non-unique building
+        // was damaged, not destroyed.
+        assert_eq!(board.grid_power, 7);
+    }
+
+    #[test]
+    fn test_push_into_unique_2hp_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        // Mark as unique/objective building.
+        let idx = xy_to_idx(3, 4) as u64;
+        board.unique_buildings |= 1u64 << idx;
+        let eidx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!(board.units[eidx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        // Unique objective building: each HP is worth 1 grid.
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_push_destroys_nonunique_2hp_on_second_bump_drops_grid() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1; // already damaged once
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        // Building destroyed (hp 1 → 0). Non-unique → rubble.
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+        assert_eq!(result.grid_damage, 1);
+        // Destruction drops grid by 1 (the building's only grid contribution).
+        assert_eq!(board.grid_power, 6);
+        // Unit still took the bump.
+        assert_eq!(board.units[idx].hp, 2);
     }
 
     #[test]
@@ -1902,6 +2026,67 @@ mod tests {
                 y
             );
         }
+    }
+
+    // ── Ranged_Rocket: push-bump when target is killed by the rocket ─────────
+    // Regression: snapshot grid_drop_20260423_131700_144_t02_a1. Shooter (3,5)
+    // fires Rocket Artillery at (3,1). Target is killed by the 2 weapon
+    // damage, but the Forward push must still move the corpse one tile
+    // toward smaller x — which is a mountain at (3,0). The bump must damage
+    // the mountain (HP 2 → 1). Actual game applies this; regression pins the
+    // simulator agrees.
+    //
+    // Diagnostic note: when these tests were written both snapshots
+    // already exercised the correct `apply_damage` → `apply_push` ordering
+    // in `_sim_artillery` (added in commit 2a86ca1) and the `any_unit_at`
+    // dead-corpse handling in `apply_push`. Running `replay_solution` on
+    // the reconstructed boards now produces the correct mountain HP 1 /
+    // building HP 1 outcome. Recorded `predicted.json` files with HP 2
+    // trace back to pre-fix solver versions (snapshot 1 ran on solver
+    // rust-0.1.0-1d06ac9, pre-commit 2a86ca1). The tests here pin the fix
+    // so a regression would be caught as a unit-test failure.
+    #[test]
+    fn test_rocket_kills_target_still_bumps_mountain_behind() {
+        let mut board = make_test_board();
+        // Shooter at (3,5), target tile (3,1). Forward = toward smaller x.
+        let mech_idx = add_mech(&mut board, 0, 3, 5, 3, WId::RangedRocket);
+        // Target: 2-HP pushable enemy — dies on 2 weapon damage (no armor).
+        let _enemy_idx = add_enemy(&mut board, 1, 3, 1, 2);
+        // Push destination (3,0) = mountain (HP 2). Forward push is blocked.
+        board.tile_mut(3, 0).terrain = Terrain::Mountain;
+        board.tile_mut(3, 0).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 1);
+
+        // Mountain should be damaged (HP 2 → 1) by the bump from the pushed
+        // (dead) corpse.
+        assert_eq!(
+            board.tile(3, 0).building_hp, 1,
+            "mountain behind a killed Rocket target must take 1 bump damage"
+        );
+        assert_eq!(board.tile(3, 0).terrain, Terrain::Mountain);
+    }
+
+    // Regression: snapshot grid_drop_20260421_194613_599_t03_a2. Shooter (3,4)
+    // fires at (3,2). Target Leaper1 (HP 1) is killed by 2 damage. The
+    // dead-corpse push forward (toward smaller x) into the building at (3,1)
+    // should bump both the building (HP 2 → 1) and (no-op) the dead corpse.
+    #[test]
+    fn test_rocket_kills_target_still_bumps_building_behind() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 4, 3, WId::RangedRocket);
+        // 1-HP target — dies instantly.
+        let _enemy_idx = add_enemy(&mut board, 1, 3, 2, 1);
+        board.tile_mut(3, 1).terrain = Terrain::Building;
+        board.tile_mut(3, 1).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 2);
+
+        assert_eq!(
+            board.tile(3, 1).building_hp, 1,
+            "building behind a killed Rocket target must take 1 bump damage"
+        );
+        assert_eq!(board.tile(3, 1).terrain, Terrain::Building);
     }
 
     #[test]
@@ -2399,6 +2584,51 @@ mod tests {
         assert_eq!(board.units[attacker].hp, 2, "Adjacent enemy damaged");
         // Adjacent enemy at (4,5) pushed north away from center → (4,6)
         assert_eq!(board.units[attacker].y, 6, "Pushed north (away from center)");
+    }
+
+    #[test]
+    fn test_cluster_artillery_kills_outer_corpse_absorbed_by_blocker() {
+        // Regression: snapshot grid_drop_20260421_131027_968_t03_a0.
+        //
+        // Cluster Artillery fires at (4,4). The outer tile (3,4) holds a
+        // 1-HP enemy that dies to damage_outer=1; outward push from the
+        // centre at (4,4) points (3,4) further west → (2,4), where a live
+        // blocker sits. Previously the sim bumped both the dead pusher
+        // (a no-op on apply_damage since damage 0 early-returns) AND the
+        // live blocker for 1 HP. Game truth: dead corpse is consumed by
+        // the live blocker, neither takes bump damage.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 2, WId::RangedDefensestrike);
+        // Outer tile (3,4) has a 1-HP enemy that will die from damage_outer=1.
+        let dying = add_enemy(&mut board, 1, 3, 4, 1);
+        // Blocker at (2,4) — the push destination when (3,4) is pushed west.
+        let blocker = add_enemy(&mut board, 2, 2, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedDefensestrike, 4, 4);
+        // Dying enemy killed by damage_outer, stayed at (3,4) as a corpse.
+        assert_eq!(board.units[dying].hp, 0, "Outer enemy killed by damage_outer");
+        // Critical: blocker UNHARMED — the dead pusher's corpse is absorbed.
+        assert_eq!(board.units[blocker].hp, 3, "Live blocker takes no bump from corpse");
+        assert_eq!(board.units[blocker].x, 2, "Blocker did not move");
+        assert_eq!(board.units[blocker].y, 4, "Blocker did not move");
+    }
+
+    #[test]
+    fn test_cluster_artillery_live_outer_unit_still_bumps_live_blocker() {
+        // Parity check: when the outer unit SURVIVES damage_outer, it DOES
+        // bump a live blocker. Only the dead-corpse case is special.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 2, WId::RangedDefensestrike);
+        // 3-HP enemy survives damage_outer=1 (HP 2 after)
+        let pusher = add_enemy(&mut board, 1, 3, 4, 3);
+        let blocker = add_enemy(&mut board, 2, 2, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedDefensestrike, 4, 4);
+        // Pusher: 3 − 1 (damage_outer) − 1 (bump) = 1
+        assert_eq!(board.units[pusher].hp, 1, "Live pusher took damage + bump");
+        assert_eq!(board.units[pusher].x, 3, "Pusher did not move");
+        // Blocker: 3 − 1 (bump) = 2
+        assert_eq!(board.units[blocker].hp, 2, "Live blocker took bump");
     }
 
     // ── Grav Well (Science_Gravwell) ───────────────────────────────────────────
@@ -3465,5 +3695,89 @@ mod tests {
         assert_eq!(board.units[idx].y, 2);
         assert_eq!(board.units[idx].hp, 2);
         assert_eq!(board.tile(3, 4).building_hp, 0);
+    }
+
+    // ── Brute_Mirrorshot (Janus Cannon) ─────────────────────────────────────
+    // Mirror Shot fires two projectiles in opposite directions. Prior bug:
+    // the backward arm stopped at a mountain without damaging it, and the
+    // forward arm had the same gap. Reproduces the failure_db signature from
+    // snapshots/grid_drop_20260421_135801_843_t02_a1 — attacker at (1,6),
+    // target (2,6), mountain at (0,6) left sim at hp=2 while the game
+    // rubble-tracked it at hp=1.
+
+    #[test]
+    fn test_mirrorshot_backward_arm_damages_mountain() {
+        // Attacker at (1,6) shoots south toward (2,6). A ground enemy at
+        // (2,6) absorbs the forward projectile. Backward arm travels north
+        // from (1,6) and hits the mountain at (0,6), which must take 1
+        // damage (2 HP → 1 HP), matching the game's behavior.
+        let mut board = make_test_board();
+        board.tile_mut(0, 6).terrain = Terrain::Mountain;
+        board.tile_mut(0, 6).building_hp = 2;
+
+        let mech_idx = add_mech(&mut board, 0, 1, 6, 3, WId::BruteMirrorshot);
+        // Target for forward arm so the mirror's backward fire is the only
+        // thing touching (0,6) — isolates the mountain-damage fix.
+        let target_idx = add_enemy(&mut board, 1, 2, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteMirrorshot, 2, 6);
+
+        // Backward arm damaged the mountain: hp 2 → 1, still Mountain
+        // terrain (rubble conversion only happens at hp=0).
+        assert_eq!(
+            board.tile(0, 6).building_hp, 1,
+            "Mirror Shot backward arm should damage mountain at (0,6) by 1"
+        );
+        assert_eq!(board.tile(0, 6).terrain, Terrain::Mountain);
+        // Forward arm still hit the enemy as expected.
+        assert_eq!(board.units[target_idx].hp, 2);
+    }
+
+    #[test]
+    fn test_mirrorshot_forward_arm_damages_mountain_when_no_target() {
+        // If the forward path hits nothing but a mountain (no unit or
+        // building in the line of fire), the projectile still damages the
+        // mountain. Previously this was a silent miss — the forward loop
+        // broke on mountain without damage, so weapons like Tank Cannon
+        // shooting into an empty corridor that terminated in a mountain
+        // also mispredicted.
+        let mut board = make_test_board();
+        board.tile_mut(1, 5).terrain = Terrain::Mountain;
+        board.tile_mut(1, 5).building_hp = 2;
+
+        let mech_idx = add_mech(&mut board, 0, 1, 0, 3, WId::BruteMirrorshot);
+        // No units between shooter and mountain, and no mountain in the
+        // backward direction — isolates forward-arm mountain damage.
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteMirrorshot, 1, 5);
+
+        assert_eq!(
+            board.tile(1, 5).building_hp, 1,
+            "Mirror Shot forward arm should damage mountain at end of line"
+        );
+        assert_eq!(board.tile(1, 5).terrain, Terrain::Mountain);
+    }
+
+    #[test]
+    fn test_mirrorshot_backward_arm_rubbleizes_damaged_mountain() {
+        // A mountain already at hp=1 (damaged) should be converted to
+        // Rubble when the backward arm hits it. Reproduces the second-shot
+        // scenario: Mirror Shot first run drops mountain 2→1, the next
+        // turn's Mirror Shot should finish it off.
+        let mut board = make_test_board();
+        board.tile_mut(0, 6).terrain = Terrain::Mountain;
+        board.tile_mut(0, 6).building_hp = 1;
+
+        let mech_idx = add_mech(&mut board, 0, 1, 6, 3, WId::BruteMirrorshot);
+        // Forward target to absorb the forward projectile.
+        add_enemy(&mut board, 1, 2, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteMirrorshot, 2, 6);
+
+        // Mountain goes from hp=1 → hp=0 → Rubble terrain.
+        assert_eq!(board.tile(0, 6).building_hp, 0);
+        assert_eq!(
+            board.tile(0, 6).terrain, Terrain::Rubble,
+            "Mountain at hp=1 hit by Mirror Shot backward arm should become Rubble"
+        );
     }
 }

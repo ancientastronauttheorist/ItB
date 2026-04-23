@@ -99,7 +99,27 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #     Bombing Run entries (grep -c Bombrun = 0) so regression is clean, but
 #     the semantic change still warrants a bump per CLAUDE.md rule 22.
 # Pre-v6 rows archived to failure_db_snapshot_sim_v5.jsonl.
-SIMULATOR_VERSION = 6
+#
+# v7 (2026-04-23, grid-drop deep dive):
+#   - Brute_Mirrorshot: sim_projectile now calls apply_damage when an arm
+#     stops on a Mountain tile (previously silently skipped, under-counting
+#     terrain loss on both arms of Mirror Shot).
+#   - Ranged_Defensestrike & all push-driven weapons: dead-pusher no longer
+#     deals spurious bump damage to live blocker in apply_push. Corpse
+#     still bumps static obstacles (building/mountain/edge) — only the
+#     live-unit blocker branch is gated on pusher.hp > 0.
+#   - Non-unique multi-HP buildings preserve grid_power on bump: previously
+#     apply_push/apply_throw decremented board.grid_power by 1 on every
+#     bump regardless of whether the building survived; now only drops on
+#     full destruction. Unique objective buildings keep per-HP accounting.
+#   - Python _sim_leap now emits transit-tile damage for Aerial Bombs +
+#     Bombing Run (closes the parity gap from PR #11/#12; Python is
+#     non-scoring so this alone would not require a bump, but ships with
+#     the Rust changes above).
+#   - Python apply_damage now ignites forest on weapon damage (parity with
+#     Rust — previously Python replay missed the forest-fire transition).
+# Pre-v7 rows archived to failure_db_snapshot_sim_v6.jsonl.
+SIMULATOR_VERSION = 7
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

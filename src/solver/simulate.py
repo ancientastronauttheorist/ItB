@@ -212,6 +212,16 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
         tile.smoke = True
         tile.on_fire = False
 
+    # Forest → ignites on weapon damage (not push/bump). Tile stays Forest
+    # with on_fire=true; the unit does NOT immediately catch fire (that
+    # happens at end-of-turn). Mirrors rust_solver/src/simulate.rs:314.
+    # Surfaces in Ranged_Rocket shots on forest tiles: the Python replay
+    # previously predicted (forest, fire=false) while Rust/actual had
+    # (forest, fire=true), yielding spurious terrain/fire tile_diffs in
+    # failure_db (e.g. grid_drop_20260423_131700_144_t02_a1).
+    if tile.terrain == "forest" and damage > 0 and source != "bump":
+        tile.on_fire = True
+
     # Acid pool creation: unit with acid dies → acid pool on tile
     if unit and unit.hp <= 0 and getattr(unit, 'acid', False):
         if tile.terrain not in TERRAIN_DEADLY_GROUND or tile.terrain == "water":
@@ -368,15 +378,21 @@ def apply_throw(board: Board, ax: int, ay: int, tx: int, ty: int,
 
     # Building — live building: both bump. Destroyed objective (hp=0,
     # terrain stays 'building') still blocks but takes no further damage.
+    #
+    # Grid accounting: non-unique buildings contribute 1 grid regardless of HP,
+    # so bump only reduces grid on destruction. Unique buildings lose 1 grid
+    # per HP.
     if tile_dest.terrain == "building":
         apply_damage(board, tx, ty, 1, result, "bump")
         if tile_dest.building_hp > 0:
             tile_dest.building_hp -= 1
-            board.grid_power = max(0, board.grid_power - 1)
             if tile_dest.building_hp <= 0:
                 result.grid_damage += 1
+                board.grid_power = max(0, board.grid_power - 1)
                 if not tile_dest.unique_building:
                     tile_dest.terrain = "rubble"
+            elif tile_dest.unique_building:
+                board.grid_power = max(0, board.grid_power - 1)
         return
 
     # Unit blocker
@@ -493,19 +509,26 @@ def apply_push(board: Board, x: int, y: int, direction: int,
     # Blocked by building — live building: both take bump (empirically
     # verified). Destroyed unique_building (terrain=building, hp=0) still
     # blocks but takes no further damage.
+    #
+    # Grid accounting: non-unique buildings contribute 1 grid regardless of
+    # HP (a 2-HP Residential provides +1 grid, not +2). Bump only reduces
+    # grid_power when the building is fully destroyed. Unique objective
+    # buildings lose 1 grid per HP.
     if tile_dest.terrain == "building":
         apply_damage(board, x, y, 1, result, "bump")
         if tile_dest.building_hp > 0:
             tile_dest.building_hp -= 1
-            board.grid_power = max(0, board.grid_power - 1)
             if tile_dest.building_hp <= 0:
                 result.grid_damage += 1
+                board.grid_power = max(0, board.grid_power - 1)
                 if not tile_dest.unique_building:
                     tile_dest.terrain = "rubble"
                 result.events.append(
                     f"Bump: building at ({nx},{ny}) destroyed by collision"
                 )
             else:
+                if tile_dest.unique_building:
+                    board.grid_power = max(0, board.grid_power - 1)
                 result.events.append(
                     f"Bump: building at ({nx},{ny}) damaged by collision"
                 )
@@ -515,9 +538,23 @@ def apply_push(board: Board, x: int, y: int, direction: int,
             )
         return
 
-    # Blocked by another unit — BOTH take 1 bump damage, neither moves
+    # Blocked by another unit — BOTH take 1 bump damage, neither moves.
+    #
+    # Exception: if the pushed unit is already dead (hp<=0), its corpse
+    # does NOT deal bump damage to a live blocker unit. Static obstacles
+    # (building/mountain/edge, handled above) still bump with a corpse.
+    # But in-game a simultaneous kill+push does NOT splash onto an
+    # adjacent live Vek or mech: the corpse is consumed silently.
+    # Mirrors the Rust fix in apply_push (see that comment for details).
     blocker = board.unit_at(nx, ny)
     if blocker is not None:
+        if unit.hp <= 0:
+            # Dead pusher: corpse absorbed by live blocker, no bump.
+            result.events.append(
+                f"Dead {unit.type} corpse at ({x},{y}) absorbed by "
+                f"{blocker.type} at ({nx},{ny})"
+            )
+            return
         apply_damage(board, x, y, 1, result, "bump")
         apply_damage(board, nx, ny, 1, result, "bump")
         result.events.append(
@@ -733,7 +770,13 @@ def _sim_melee(board, attacker, wdef, tx, ty, attack_dir, result):
 
 
 def _sim_projectile(board, attacker, wdef, attack_dir, result):
-    """Simulate projectile weapon (fires in line, hits first obstacle)."""
+    """Simulate projectile weapon (fires in line, hits first obstacle).
+
+    Mountains stop the projectile but also take 1 damage (2 HP → damaged →
+    rubble), matching in-game behavior and the Rust simulator's sim_laser
+    pattern. Previously the loop broke on mountain without applying damage,
+    which under-counted terrain loss along Mirror Shot's backward arm.
+    """
     if attack_dir is None:
         return
 
@@ -742,12 +785,14 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
 
     # Find first hit
     hit_x, hit_y = -1, -1
+    mountain_hit = None
     for i in range(1, 8):
         nx, ny = ax + dx * i, ay + dy * i
         if not board.in_bounds(nx, ny):
             break
         tile = board.tile(nx, ny)
         if tile.terrain == "mountain":
+            mountain_hit = (nx, ny)
             break
         if tile.terrain == "building" and tile.building_hp > 0 and not wdef.phase:
             hit_x, hit_y = nx, ny
@@ -767,6 +812,9 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
             unit = board.unit_at(hit_x, hit_y)
             if unit:
                 pass  # TODO: acid status
+    elif mountain_hit is not None:
+        mx, my = mountain_hit
+        apply_damage(board, mx, my, wdef.damage, result)
 
     # Mirror shot: also fire backward
     if wdef.aoe_behind:
@@ -778,6 +826,9 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
                 break
             tile = board.tile(nx, ny)
             if tile.terrain == "mountain":
+                # Backward arm damages the mountain it stops at (Janus
+                # Cannon rubbleizes mountains behind the shooter).
+                apply_damage(board, nx, ny, wdef.damage, result)
                 break
             if tile.terrain == "building" and tile.building_hp > 0:
                 apply_damage(board, nx, ny, wdef.damage, result)
@@ -972,14 +1023,26 @@ def _sim_leap(board, attacker, wdef, tx, ty, result):
                 tile.on_fire = False  # smoke replaces fire (parity with apply_weapon_status)
                 tile.smoke = True
 
-    # Damage emission. Parity with Rust sim_leap post-PR #11/#12:
+    # Damage emission. Parity with Rust sim_leap post-PR #11/#12
+    # (rust_solver/src/simulate.rs commit 2723938 / 45bd059):
     # transit-damage weapons (Jet_BombDrop via smoke, Brute_Bombrun via
-    # damages_transit) damage tiles along the cardinal flight path, not
-    # landing-adjacent tiles. We minimally match Rust by SKIPPING the
-    # landing-adjacent damage for those weapons — the transit damage itself
-    # is not yet mirrored here (Python sim is non-scoring, used for
-    # predicted.json snapshots and replay_solution only).
-    if not (wdef.smoke or wdef.damages_transit):
+    # damages_transit) damage tiles along the cardinal flight path
+    # (strictly between source and landing), not landing-adjacent tiles.
+    # Other leap weapons (Prime_Leap "Hydraulic Legs": "damaging self and
+    # adjacent tiles") keep the legacy 4-cardinal-neighbors-of-landing
+    # damage. Neither Jet_BombDrop nor Brute_Bombrun has a push direction
+    # so the transit branch omits the push block (matching Rust).
+    if wdef.smoke or wdef.damages_transit:
+        path_dir = cardinal_direction(old_x, old_y, tx, ty)
+        if path_dir is not None:
+            dx, dy = DIRS[path_dir]
+            dist = abs(tx - old_x) + abs(ty - old_y)
+            for step in range(1, dist):  # strictly between (excludes landing)
+                nx, ny = old_x + dx * step, old_y + dy * step
+                if not board.in_bounds(nx, ny):
+                    continue
+                apply_damage(board, nx, ny, wdef.damage, result)
+    else:
         # Damage adjacent tiles on landing (not the tile we came from)
         from_dir = direction_between(tx, ty, old_x, old_y)
         for i, (dx, dy) in enumerate(DIRS):
