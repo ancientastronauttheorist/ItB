@@ -329,7 +329,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // brings the wheel in line so `_check_wheel_sim_version` stops
 // erroring on live cmd_solve. See src/solver/verify.py for the full
 // per-bump changelog.
-pub const SIMULATOR_VERSION: u32 = 3;
+//
+// v6 (2026-04-23): catch-up bump. Python was advanced through v4 (Rift
+// Walkers mechanics pass), v5 (building HP underflow + Aerial Bombs
+// damage + Python smoke parity), and v6 (Brute_Bombrun transit damage)
+// without a matching Rust bump each time — live cmd_solve was
+// erroring on wheel_sim_version_mismatch. Bringing Rust to v6 clears
+// the block. Any future bump MUST edit both constants atomically.
+pub const SIMULATOR_VERSION: u32 = 6;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
