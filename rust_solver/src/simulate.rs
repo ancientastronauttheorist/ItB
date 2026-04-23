@@ -701,7 +701,11 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
 
 // ── apply_push ───────────────────────────────────────────────────────────────
 
-/// Push unit at (x, y) in direction. Damage+push are simultaneous (dead units still push).
+/// Push unit at (x, y) in direction. Damage+push are simultaneous; a
+/// corpse still pushes into static obstacles (building/mountain/edge) and
+/// takes/deals bump damage there. Exception: a dead corpse pushed INTO a
+/// live blocker unit is absorbed silently — no bump to either. See the
+/// in-body comment on the unit-blocker branch for the snapshot citation.
 pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mut ActionResult) {
     // Find ANY unit (including dead) — simultaneous damage+push
     let unit_idx = match board.any_unit_at(x, y) {
@@ -788,9 +792,23 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         return;
     }
 
-    // Blocked by another alive unit — BOTH take 1 bump
+    // Blocked by another alive unit — BOTH take 1 bump.
+    //
+    // Exception: if the pushed unit is already dead (HP<=0), its corpse
+    // does NOT deal bump damage to a live blocker unit. Static obstacles
+    // (building/mountain/edge, handled above) still bump with a corpse —
+    // see `test_dead_unit_still_pushes_into_building`. But in-game, a
+    // simultaneous kill+push does NOT splash onto an adjacent live Vek
+    // or mech: the corpse is consumed. Observed on snapshot
+    // `grid_drop_20260421_131027_968_t03_a0` (Cluster Artillery kills
+    // Train_Damaged on (4,4); sim predicted the corpse bumped the
+    // Jelly_Explode1 at (3,4), actual game left the Jelly at full HP).
     if let Some(blocker_idx) = board.unit_at(nx, ny) {
         if blocker_idx != unit_idx {
+            if board.units[unit_idx].hp <= 0 {
+                // Dead pusher: corpse absorbed by live blocker, no bump.
+                return;
+            }
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
             apply_damage(board, nx, ny, 1, result, DamageSource::Bump);
             return;
@@ -2566,6 +2584,51 @@ mod tests {
         assert_eq!(board.units[attacker].hp, 2, "Adjacent enemy damaged");
         // Adjacent enemy at (4,5) pushed north away from center → (4,6)
         assert_eq!(board.units[attacker].y, 6, "Pushed north (away from center)");
+    }
+
+    #[test]
+    fn test_cluster_artillery_kills_outer_corpse_absorbed_by_blocker() {
+        // Regression: snapshot grid_drop_20260421_131027_968_t03_a0.
+        //
+        // Cluster Artillery fires at (4,4). The outer tile (3,4) holds a
+        // 1-HP enemy that dies to damage_outer=1; outward push from the
+        // centre at (4,4) points (3,4) further west → (2,4), where a live
+        // blocker sits. Previously the sim bumped both the dead pusher
+        // (a no-op on apply_damage since damage 0 early-returns) AND the
+        // live blocker for 1 HP. Game truth: dead corpse is consumed by
+        // the live blocker, neither takes bump damage.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 2, WId::RangedDefensestrike);
+        // Outer tile (3,4) has a 1-HP enemy that will die from damage_outer=1.
+        let dying = add_enemy(&mut board, 1, 3, 4, 1);
+        // Blocker at (2,4) — the push destination when (3,4) is pushed west.
+        let blocker = add_enemy(&mut board, 2, 2, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedDefensestrike, 4, 4);
+        // Dying enemy killed by damage_outer, stayed at (3,4) as a corpse.
+        assert_eq!(board.units[dying].hp, 0, "Outer enemy killed by damage_outer");
+        // Critical: blocker UNHARMED — the dead pusher's corpse is absorbed.
+        assert_eq!(board.units[blocker].hp, 3, "Live blocker takes no bump from corpse");
+        assert_eq!(board.units[blocker].x, 2, "Blocker did not move");
+        assert_eq!(board.units[blocker].y, 4, "Blocker did not move");
+    }
+
+    #[test]
+    fn test_cluster_artillery_live_outer_unit_still_bumps_live_blocker() {
+        // Parity check: when the outer unit SURVIVES damage_outer, it DOES
+        // bump a live blocker. Only the dead-corpse case is special.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 2, WId::RangedDefensestrike);
+        // 3-HP enemy survives damage_outer=1 (HP 2 after)
+        let pusher = add_enemy(&mut board, 1, 3, 4, 3);
+        let blocker = add_enemy(&mut board, 2, 2, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedDefensestrike, 4, 4);
+        // Pusher: 3 − 1 (damage_outer) − 1 (bump) = 1
+        assert_eq!(board.units[pusher].hp, 1, "Live pusher took damage + bump");
+        assert_eq!(board.units[pusher].x, 3, "Pusher did not move");
+        // Blocker: 3 − 1 (bump) = 2
+        assert_eq!(board.units[blocker].hp, 2, "Live blocker took bump");
     }
 
     // ── Grav Well (Science_Gravwell) ───────────────────────────────────────────

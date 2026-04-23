@@ -538,9 +538,23 @@ def apply_push(board: Board, x: int, y: int, direction: int,
             )
         return
 
-    # Blocked by another unit — BOTH take 1 bump damage, neither moves
+    # Blocked by another unit — BOTH take 1 bump damage, neither moves.
+    #
+    # Exception: if the pushed unit is already dead (hp<=0), its corpse
+    # does NOT deal bump damage to a live blocker unit. Static obstacles
+    # (building/mountain/edge, handled above) still bump with a corpse.
+    # But in-game a simultaneous kill+push does NOT splash onto an
+    # adjacent live Vek or mech: the corpse is consumed silently.
+    # Mirrors the Rust fix in apply_push (see that comment for details).
     blocker = board.unit_at(nx, ny)
     if blocker is not None:
+        if unit.hp <= 0:
+            # Dead pusher: corpse absorbed by live blocker, no bump.
+            result.events.append(
+                f"Dead {unit.type} corpse at ({x},{y}) absorbed by "
+                f"{blocker.type} at ({nx},{ny})"
+            )
+            return
         apply_damage(board, x, y, 1, result, "bump")
         apply_damage(board, nx, ny, 1, result, "bump")
         result.events.append(
