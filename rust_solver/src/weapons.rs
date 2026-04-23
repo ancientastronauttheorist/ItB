@@ -34,6 +34,15 @@ bitflags! {
         /// Smoke behind the shooter." Mutually independent from SMOKE (which
         /// smokes the target tile).
         const SMOKE_BEHIND_SHOOTER = 1 << 17;
+        /// Leap-weapon damage lands on the transit tile(s) along the cardinal
+        /// flight path (strictly between source and landing), NOT on the 4
+        /// cardinal neighbors of the landing tile. Jet_BombDrop (Aerial Bombs)
+        /// expresses this via SMOKE + transit-damage in one; Brute_Bombrun
+        /// (Bombing Run) tooltip reads "Leap over any distance dropping a bomb
+        /// on each tile you pass" — per-transit damage but NO smoke. This flag
+        /// lets Brute_Bombrun opt into transit-damage without gaining smoke.
+        /// `sim_leap` applies transit-damage when SMOKE || DAMAGES_TRANSIT.
+        const DAMAGES_TRANSIT = 1 << 18;
     }
 }
 
@@ -70,6 +79,7 @@ impl WeaponDef {
     pub fn flying_charge(&self) -> bool { self.flags.contains(WeaponFlags::FLYING_CHARGE) }
     pub fn push_self(&self) -> bool { self.flags.contains(WeaponFlags::PUSH_SELF) }
     pub fn smoke_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::SMOKE_BEHIND_SHOOTER) }
+    pub fn damages_transit(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGES_TRANSIT) }
 }
 
 /// Default weapon def (no-op).
@@ -327,7 +337,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[28] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Outward, range_max: 0, limited: 1,
         flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 29: Brute_Bombrun — Bombing Run
-    w[29] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, range_min: 2, range_max: 8, limited: 1, flags: f_nc(0), ..DEF };
+    // Tooltip: "Leap over any distance dropping a bomb on each tile you pass."
+    // Damage lands on every transit tile along the flight path, NOT on the
+    // landing-adjacent tiles. Uses DAMAGES_TRANSIT (not SMOKE — Bombing Run
+    // does not emit smoke).
+    w[29] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, range_min: 2, range_max: 8, limited: 1,
+        flags: f_nc(WeaponFlags::DAMAGES_TRANSIT.bits()), ..DEF };
 
     // 30: Archive_ArtShot — Old Earth Artillery
     w[30] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2,

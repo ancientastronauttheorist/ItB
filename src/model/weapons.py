@@ -56,6 +56,7 @@ class WeaponDef:
     freeze: bool = False
     smoke: bool = False
     smoke_behind_shooter: bool = False  # smoke lands one tile opposite attack_dir from shooter (Ranged_Rocket)
+    damages_transit: bool = False       # leap damage on transit tiles, not landing-adjacent (Brute_Bombrun)
     shield: bool = False
     web: bool = False
     # Targeting
@@ -263,6 +264,7 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Bombing Run", weapon_type="leap",
         damage=1, range_min=2, range_max=8, limited=1,
         aoe_center=False,
+        damages_transit=True,  # drops a bomb on each tile flown over; not landing-adjacent
         upgrade_a="+1 use (total 2)",
         upgrade_b="+2 damage (total 3)",
     ),
