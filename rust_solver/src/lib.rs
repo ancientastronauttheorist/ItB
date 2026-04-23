@@ -323,7 +323,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 /// loaded wheel's value and the Python constant indicates a stale
 /// wheel after a rebuild — ``cmd_solve`` rejects it with a clear
 /// error so we never run new Python bindings against old Rust code.
-pub const SIMULATOR_VERSION: u32 = 2;
+// v3 (2026-04-22): pilot passives wired into the simulator. The Python
+// constant was bumped at ship time but the Rust side was missed; this
+// brings the wheel in line so `_check_wheel_sim_version` stops
+// erroring on live cmd_solve. See src/solver/verify.py for the full
+// per-bump changelog.
+pub const SIMULATOR_VERSION: u32 = 3;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
