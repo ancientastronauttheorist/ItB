@@ -590,13 +590,19 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         return;
     }
 
-    // Water/lava/chasm: kills non-flying ground units (Lava also sets fire on flying)
+    // Water/lava/chasm: kills non-flying ground units (Lava also sets fire on flying).
+    // Massive prevents DROWNING in Water/Lava only — Massive does NOT save
+    // from Chasm (falling into a pit is a destroy, not a drown). Flying
+    // exempts from all three.
     if board.units[unit_idx].hp > 0 && !board.units[unit_idx].flying() {
+        let massive = board.units[unit_idx].massive();
         match dest_terrain {
-            Terrain::Water | Terrain::Chasm => {
-                board.units[unit_idx].hp = 0;
+            Terrain::Water | Terrain::Lava => {
+                if !massive {
+                    board.units[unit_idx].hp = 0;
+                }
             }
-            Terrain::Lava => {
+            Terrain::Chasm => {
                 board.units[unit_idx].hp = 0;
             }
             _ => {}
@@ -792,12 +798,21 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         board.units[unit_idx].set_frozen(false);
     }
 
-    // Check deadly terrain (frozen flying = grounded)
+    // Check deadly terrain (frozen flying = grounded).
+    // Massive prevents DROWNING in Water/Lava only — Chasm always kills
+    // non-flying units (a pit-fall is a destroy, not a drown).
     let unit = &board.units[unit_idx];
     let eff_flying = unit.effectively_flying();
+    let is_massive = unit.massive();
     let dest_terrain = board.tile(nx, ny).terrain;
 
-    if dest_terrain.is_deadly_ground() && !eff_flying {
+    let deadly_kill = !eff_flying && match dest_terrain {
+        Terrain::Chasm => true,
+        Terrain::Water | Terrain::Lava => !is_massive,
+        _ => false,
+    };
+
+    if deadly_kill {
         let is_enemy = board.units[unit_idx].is_enemy();
         let has_acid = board.units[unit_idx].acid();
         let can_explode = is_enemy && board.blast_psion
@@ -2869,5 +2884,188 @@ mod tests {
             assert_eq!(dist, 2, "Non-distance-2 target {:?} leaked through", (x, y));
             assert!(x == 0 || y == 0, "Non-cardinal target {:?} leaked through", (x, y));
         }
+    }
+    // ── Massive trait: drown-immunity is Water/Lava ONLY ───────────────────
+    //
+    // Ground truth (Fandom Traits wiki + community consensus):
+    //   Massive prevents DROWNING in water/lava. It does NOT save from:
+    //     • Chasm tiles (pit-fall is a destroy, not a drown)
+    //     • Cataclysm / Seismic opening a chasm under the unit
+    //     • Tidal Wave (unconditional destroy)
+    //     • Pushes, bumps, or displacement (that's Stable, a different trait)
+
+    fn add_massive_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::MASSIVE,
+            ..Default::default()
+        })
+    }
+
+    fn add_massive_flying_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::MASSIVE | UnitFlags::FLYING,
+            ..Default::default()
+        })
+    }
+
+    #[test]
+    fn test_massive_pushed_into_water_survives() {
+        // Baseline: Massive saves from drowning.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Water;
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push into water
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Massive unit pushed into water must survive (drown immunity)");
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4),
+            "Massive unit must still move to the water tile");
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_massive_pushed_into_lava_survives() {
+        // Parallel to water: Massive is drown-immune in lava too.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Lava;
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push into lava
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Massive unit pushed into lava must survive (drown immunity)");
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_massive_pushed_into_chasm_dies() {
+        // THE FIX: chasm ≠ drowning, Massive must not save here.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push into chasm
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive non-flying unit pushed into chasm must die");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_massive_flying_pushed_into_chasm_survives() {
+        // Flying exempts from chasm; Massive is redundant here, but
+        // confirms we didn't wire Massive to also block flying-survival.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let idx = add_massive_flying_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Flying Massive unit pushed into chasm must survive (Flying exempts)");
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
+    }
+
+    #[test]
+    fn test_massive_thrown_into_chasm_dies() {
+        // Throw path (apply_throw) must agree with push path: Massive
+        // does NOT save from chasm fall.
+        // Vice-Fist-style throw: attacker at (3,3), target at (4,3).
+        // Attack direction = +x = DIRS index 1. Destination = attacker +
+        // opposite_dir(1) = (3,3) + DIRS[3] = (2,3) = the chasm tile.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Chasm;
+        let _attacker = add_mech(&mut board, 99, 3, 3, 3, WId::None);
+        let idx = add_massive_enemy(&mut board, 1, 4, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 4, 3, 1, &mut result);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive non-flying unit thrown into chasm must die");
+    }
+
+    #[test]
+    fn test_massive_thrown_into_water_survives() {
+        // Throw-path parity with push-path for drown immunity.
+        let mut board = make_test_board();
+        board.tile_mut(2, 3).terrain = Terrain::Water;
+        let _attacker = add_mech(&mut board, 99, 3, 3, 3, WId::None);
+        let idx = add_massive_enemy(&mut board, 1, 4, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 4, 3, 1, &mut result);
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Massive unit thrown into water must survive");
+        assert_eq!((board.units[idx].x, board.units[idx].y), (2, 3),
+            "Massive unit must still land on the water tile");
+    }
+
+    #[test]
+    fn test_massive_cataclysm_lethal_env_dies() {
+        // Cataclysm opens a chasm under the unit; the env-danger tick
+        // fires in enemy phase as a lethal (kill_int=1) event. Massive
+        // must NOT save the unit from that.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_massive_enemy(&mut board, 1, 3, 3, 3);
+        let bit = 1u64 << xy_to_idx(3, 3);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive unit on Cataclysm lethal env-danger tile must die");
+    }
+
+    #[test]
+    fn test_massive_seismic_lethal_env_dies() {
+        // Seismic Activity turns a tile into chasm under a unit; the
+        // env-danger tile is tagged lethal (kill_int=1). Massive must die.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_massive_enemy(&mut board, 42, 4, 2, 4);
+        let bit = 1u64 << xy_to_idx(4, 2);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive unit caught by Seismic lethal env-danger must die");
+    }
+
+    #[test]
+    fn test_massive_tidal_wave_lethal_destroys() {
+        // Tidal Wave is usually flagged lethal by the bridge (kill_int=1).
+        // It's a destroy, not a drown — Massive does NOT save.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_massive_enemy(&mut board, 7, 1, 1, 5);
+        let bit = 1u64 << xy_to_idx(1, 1);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Massive unit hit by lethal Tidal Wave must be destroyed");
     }
 }
