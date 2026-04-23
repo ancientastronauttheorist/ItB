@@ -1904,6 +1904,67 @@ mod tests {
         }
     }
 
+    // ── Ranged_Rocket: push-bump when target is killed by the rocket ─────────
+    // Regression: snapshot grid_drop_20260423_131700_144_t02_a1. Shooter (3,5)
+    // fires Rocket Artillery at (3,1). Target is killed by the 2 weapon
+    // damage, but the Forward push must still move the corpse one tile
+    // toward smaller x — which is a mountain at (3,0). The bump must damage
+    // the mountain (HP 2 → 1). Actual game applies this; regression pins the
+    // simulator agrees.
+    //
+    // Diagnostic note: when these tests were written both snapshots
+    // already exercised the correct `apply_damage` → `apply_push` ordering
+    // in `_sim_artillery` (added in commit 2a86ca1) and the `any_unit_at`
+    // dead-corpse handling in `apply_push`. Running `replay_solution` on
+    // the reconstructed boards now produces the correct mountain HP 1 /
+    // building HP 1 outcome. Recorded `predicted.json` files with HP 2
+    // trace back to pre-fix solver versions (snapshot 1 ran on solver
+    // rust-0.1.0-1d06ac9, pre-commit 2a86ca1). The tests here pin the fix
+    // so a regression would be caught as a unit-test failure.
+    #[test]
+    fn test_rocket_kills_target_still_bumps_mountain_behind() {
+        let mut board = make_test_board();
+        // Shooter at (3,5), target tile (3,1). Forward = toward smaller x.
+        let mech_idx = add_mech(&mut board, 0, 3, 5, 3, WId::RangedRocket);
+        // Target: 2-HP pushable enemy — dies on 2 weapon damage (no armor).
+        let _enemy_idx = add_enemy(&mut board, 1, 3, 1, 2);
+        // Push destination (3,0) = mountain (HP 2). Forward push is blocked.
+        board.tile_mut(3, 0).terrain = Terrain::Mountain;
+        board.tile_mut(3, 0).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 1);
+
+        // Mountain should be damaged (HP 2 → 1) by the bump from the pushed
+        // (dead) corpse.
+        assert_eq!(
+            board.tile(3, 0).building_hp, 1,
+            "mountain behind a killed Rocket target must take 1 bump damage"
+        );
+        assert_eq!(board.tile(3, 0).terrain, Terrain::Mountain);
+    }
+
+    // Regression: snapshot grid_drop_20260421_194613_599_t03_a2. Shooter (3,4)
+    // fires at (3,2). Target Leaper1 (HP 1) is killed by 2 damage. The
+    // dead-corpse push forward (toward smaller x) into the building at (3,1)
+    // should bump both the building (HP 2 → 1) and (no-op) the dead corpse.
+    #[test]
+    fn test_rocket_kills_target_still_bumps_building_behind() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 4, 3, WId::RangedRocket);
+        // 1-HP target — dies instantly.
+        let _enemy_idx = add_enemy(&mut board, 1, 3, 2, 1);
+        board.tile_mut(3, 1).terrain = Terrain::Building;
+        board.tile_mut(3, 1).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 2);
+
+        assert_eq!(
+            board.tile(3, 1).building_hp, 1,
+            "building behind a killed Rocket target must take 1 bump damage"
+        );
+        assert_eq!(board.tile(3, 1).terrain, Terrain::Building);
+    }
+
     #[test]
     fn test_jetmech_smokes_transit_base_range() {
         // Aerial Bombs tooltip: "Fly over a target, dropping an explosive

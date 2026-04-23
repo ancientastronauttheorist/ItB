@@ -212,6 +212,16 @@ def apply_damage(board: Board, x: int, y: int, damage: int,
         tile.smoke = True
         tile.on_fire = False
 
+    # Forest → ignites on weapon damage (not push/bump). Tile stays Forest
+    # with on_fire=true; the unit does NOT immediately catch fire (that
+    # happens at end-of-turn). Mirrors rust_solver/src/simulate.rs:314.
+    # Surfaces in Ranged_Rocket shots on forest tiles: the Python replay
+    # previously predicted (forest, fire=false) while Rust/actual had
+    # (forest, fire=true), yielding spurious terrain/fire tile_diffs in
+    # failure_db (e.g. grid_drop_20260423_131700_144_t02_a1).
+    if tile.terrain == "forest" and damage > 0 and source != "bump":
+        tile.on_fire = True
+
     # Acid pool creation: unit with acid dies → acid pool on tile
     if unit and unit.hp <= 0 and getattr(unit, 'acid', False):
         if tile.terrain not in TERRAIN_DEADLY_GROUND or tile.terrain == "water":
