@@ -378,15 +378,21 @@ def apply_throw(board: Board, ax: int, ay: int, tx: int, ty: int,
 
     # Building — live building: both bump. Destroyed objective (hp=0,
     # terrain stays 'building') still blocks but takes no further damage.
+    #
+    # Grid accounting: non-unique buildings contribute 1 grid regardless of HP,
+    # so bump only reduces grid on destruction. Unique buildings lose 1 grid
+    # per HP.
     if tile_dest.terrain == "building":
         apply_damage(board, tx, ty, 1, result, "bump")
         if tile_dest.building_hp > 0:
             tile_dest.building_hp -= 1
-            board.grid_power = max(0, board.grid_power - 1)
             if tile_dest.building_hp <= 0:
                 result.grid_damage += 1
+                board.grid_power = max(0, board.grid_power - 1)
                 if not tile_dest.unique_building:
                     tile_dest.terrain = "rubble"
+            elif tile_dest.unique_building:
+                board.grid_power = max(0, board.grid_power - 1)
         return
 
     # Unit blocker
@@ -503,19 +509,26 @@ def apply_push(board: Board, x: int, y: int, direction: int,
     # Blocked by building — live building: both take bump (empirically
     # verified). Destroyed unique_building (terrain=building, hp=0) still
     # blocks but takes no further damage.
+    #
+    # Grid accounting: non-unique buildings contribute 1 grid regardless of
+    # HP (a 2-HP Residential provides +1 grid, not +2). Bump only reduces
+    # grid_power when the building is fully destroyed. Unique objective
+    # buildings lose 1 grid per HP.
     if tile_dest.terrain == "building":
         apply_damage(board, x, y, 1, result, "bump")
         if tile_dest.building_hp > 0:
             tile_dest.building_hp -= 1
-            board.grid_power = max(0, board.grid_power - 1)
             if tile_dest.building_hp <= 0:
                 result.grid_damage += 1
+                board.grid_power = max(0, board.grid_power - 1)
                 if not tile_dest.unique_building:
                     tile_dest.terrain = "rubble"
                 result.events.append(
                     f"Bump: building at ({nx},{ny}) destroyed by collision"
                 )
             else:
+                if tile_dest.unique_building:
+                    board.grid_power = max(0, board.grid_power - 1)
                 result.events.append(
                     f"Bump: building at ({nx},{ny}) damaged by collision"
                 )

@@ -126,7 +126,14 @@ class TestBumpDamage:
         assert board.tile(4, 3).terrain == "rubble"
 
     def test_bump_against_building(self):
-        """Push into building: BOTH take 1 bump damage (empirically verified)."""
+        """Push into non-unique multi-HP building: unit takes bump, building
+        loses 1 HP but grid_power is unchanged (non-unique buildings
+        contribute exactly 1 grid regardless of HP — grid only drops on
+        full destruction).
+
+        Regression: grid_drop_20260421_161809_372_t02_a0 (Taurus Cannon push
+        into bhp=2 Residential: actual bhp 2→1 with grid preserved).
+        """
         u = _make_unit(1, 3, 3, hp=5)
         board = _make_board_with_units(u)
         board.tile(4, 3).terrain = "building"
@@ -137,7 +144,38 @@ class TestBumpDamage:
         assert u.hp == 4  # bump damage
         assert u.x == 3   # didn't move
         assert board.tile(4, 3).building_hp == 1  # building takes 1 bump damage
-        assert board.grid_power == 6  # grid power decremented
+        # Non-unique building damaged but not destroyed → grid unchanged.
+        assert board.grid_power == 7
+
+    def test_bump_destroys_1hp_building_drops_grid(self):
+        """Bumping a 1-HP building destroys it and drops grid by 1."""
+        u = _make_unit(1, 3, 3, hp=5)
+        board = _make_board_with_units(u)
+        board.tile(4, 3).terrain = "building"
+        board.tile(4, 3).building_hp = 1
+        board.grid_power = 7
+        result = ActionResult()
+        apply_push(board, 3, 3, 1, result)
+        assert u.hp == 4
+        assert board.tile(4, 3).building_hp == 0
+        assert board.tile(4, 3).terrain == "rubble"
+        assert board.grid_power == 6
+
+    def test_bump_against_unique_2hp_building_drops_grid_per_hp(self):
+        """Unique objective buildings lose 1 grid per HP (each HP is worth a
+        grid power reward)."""
+        u = _make_unit(1, 3, 3, hp=5)
+        board = _make_board_with_units(u)
+        board.tile(4, 3).terrain = "building"
+        board.tile(4, 3).building_hp = 2
+        board.tile(4, 3).unique_building = True
+        board.grid_power = 7
+        result = ActionResult()
+        apply_push(board, 3, 3, 1, result)
+        assert u.hp == 4
+        assert board.tile(4, 3).building_hp == 1
+        assert board.tile(4, 3).terrain == "building"  # unique stays "building"
+        assert board.grid_power == 6  # unique: grid -1 per HP
 
     def test_bump_against_unit_both_take_damage(self):
         """Push A into B: BOTH take 1 bump damage, neither moves."""

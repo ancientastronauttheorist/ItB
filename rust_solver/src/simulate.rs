@@ -523,6 +523,10 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
     // Blocked by building — live building both take 1 bump; destroyed
     // objective building (terrain=Building, hp=0, e.g. Emergency Batteries
     // after destruction) still blocks but takes no further damage.
+    //
+    // Grid-power accounting mirrors apply_push: non-unique buildings
+    // contribute ONE grid power regardless of HP, so bump only drops grid on
+    // full destruction. Unique buildings lose grid per HP.
     if board.tile(nx, ny).terrain == Terrain::Building {
         let dest_idx = xy_to_idx(nx, ny) as u64;
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
@@ -545,7 +549,9 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
                 board.grid_power = board.grid_power.saturating_sub(1);
             } else {
                 result.buildings_damaged += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
+                if is_unique {
+                    board.grid_power = board.grid_power.saturating_sub(1);
+                }
             }
         } else {
             // Destroyed objective: bump the thrown unit only.
@@ -736,6 +742,18 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
 
     // Blocked by building — live building: BOTH take 1 bump.
     // Destroyed objective (terrain=Building, hp=0): only pushed unit bumps.
+    //
+    // Grid-power accounting: non-unique buildings contribute ONE grid power
+    // regardless of their HP (a Residential 2-HP house provides +1 grid, not
+    // +2). Bump damage only reduces grid_power when the building is fully
+    // destroyed (bhp → 0). Unique objective buildings (Coal Plant, Power
+    // Generator, Solar Farm, Batteries) have per-HP grid worth and decrement
+    // grid_power on every HP lost.
+    //
+    // Regression: grid_drop_20260421_161809_372_t02_a0 (Taurus Cannon push
+    // into bhp=2 Residential: actual bhp 2→1 with grid unchanged) and
+    // m00_turn_03 Ranged_Rocket bump from commit 2a86ca1 (pred grid would be
+    // 4 with old code, actual grid stayed 5).
     if board.tile(nx, ny).terrain == Terrain::Building {
         let dest_idx = xy_to_idx(nx, ny) as u64;
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
@@ -758,7 +776,11 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
                 board.grid_power = board.grid_power.saturating_sub(1);
             } else {
                 result.buildings_damaged += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
+                // Non-unique multi-HP building: damaged but not destroyed →
+                // grid_power stays. Unique building: each HP is worth 1 grid.
+                if is_unique {
+                    board.grid_power = board.grid_power.saturating_sub(1);
+                }
             }
         } else {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
@@ -1723,6 +1745,73 @@ mod tests {
         assert_eq!(board.units[idx].hp, 2); // -1 bump
         assert_eq!(board.tile(3, 4).building_hp, 0); // building destroyed
         assert_eq!(result.grid_damage, 1);
+        // 1-HP regular building destroyed → grid -1
+        assert_eq!(board.grid_power, 6);
+    }
+
+    // Regression: snapshots grid_drop_20260421_161809_372_t02_a0 and t03_a1
+    // plus the Ranged_Rocket bump trace from commit 2a86ca1.
+    //
+    // Non-unique multi-HP buildings (e.g. 2-HP Residential) contribute a
+    // single grid power regardless of HP. A bump that damages but does NOT
+    // destroy them must leave grid_power alone — only full destruction
+    // (bhp → 0) drops grid. Unique/objective buildings keep per-HP grid
+    // accounting (verified by the following unique-building test).
+    #[test]
+    fn test_push_into_nonunique_2hp_building_preserves_grid() {
+        let mut board = make_test_board();
+        assert_eq!(board.grid_power, 7);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push N into building
+        assert_eq!(board.units[idx].hp, 2); // -1 bump
+        assert_eq!(board.tile(3, 4).building_hp, 1); // damaged, not destroyed
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(result.grid_damage, 0);
+        // CRITICAL: grid_power unchanged because the non-unique building
+        // was damaged, not destroyed.
+        assert_eq!(board.grid_power, 7);
+    }
+
+    #[test]
+    fn test_push_into_unique_2hp_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        // Mark as unique/objective building.
+        let idx = xy_to_idx(3, 4) as u64;
+        board.unique_buildings |= 1u64 << idx;
+        let eidx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!(board.units[eidx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        // Unique objective building: each HP is worth 1 grid.
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_push_destroys_nonunique_2hp_on_second_bump_drops_grid() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1; // already damaged once
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        // Building destroyed (hp 1 → 0). Non-unique → rubble.
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+        assert_eq!(result.grid_damage, 1);
+        // Destruction drops grid by 1 (the building's only grid contribution).
+        assert_eq!(board.grid_power, 6);
+        // Unit still took the bump.
+        assert_eq!(board.units[idx].hp, 2);
     }
 
     #[test]
