@@ -89,7 +89,17 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #     arithmetic. Python-side _sim_leap gained smoke parity with Rust
 #     (non-scoring, but keeps replay_solution output consistent).
 # Pre-v5 rows archived to failure_db_snapshot_sim_v4.jsonl.
-SIMULATOR_VERSION = 5
+#
+# v6 (2026-04-23):
+#   - Brute_Bombrun (Bombing Run) damage now lands on every transit tile
+#     along the cardinal flight path, not on the 4 cardinal neighbors of
+#     the landing tile. New DAMAGES_TRANSIT weapon flag gates this (mirrors
+#     how SMOKE gates Jet_BombDrop's transit-damage). Alters predictions on
+#     any board where Bombing Run is fired; current failure corpus has no
+#     Bombing Run entries (grep -c Bombrun = 0) so regression is clean, but
+#     the semantic change still warrants a bump per CLAUDE.md rule 22.
+# Pre-v6 rows archived to failure_db_snapshot_sim_v5.jsonl.
+SIMULATOR_VERSION = 6
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
