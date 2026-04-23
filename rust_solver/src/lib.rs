@@ -10,6 +10,7 @@ pub mod evaluate;
 pub mod solver;
 pub mod serde_bridge;
 pub mod turn_projection;
+pub mod beam;
 
 /// Solve a turn given bridge JSON data.
 ///
@@ -335,12 +336,73 @@ fn simulator_version() -> u32 {
     SIMULATOR_VERSION
 }
 
+/// Depth-N beam search. Task #10.
+///
+/// Input:
+///   - `bridge_json`: board state (same shape as `solve`)
+///   - `depth`: 1 or 2. Depth ≥ 3 is deferred.
+///   - `k`: beam width at every level. v1 uses `k` for level_0 and
+///     `max(k/2, 1)` for level_1; keeping a single knob in the Python
+///     surface lets callers tune without picking exact K per level.
+///   - `time_limit_secs`: total wall-clock budget, split 40/60 between
+///     level 0 and the aggregate level-1 sub-solves.
+///
+/// Output: JSON array of chain objects, sorted by `chain_score` desc.
+/// Each chain: `{chain_score, level_0: <solution>, level_1_best: <solution>|null}`.
+/// Empty board (no active mechs) → `[]`.
+#[pyfunction]
+fn solve_beam(
+    py: Python<'_>,
+    bridge_json: &str,
+    depth: usize,
+    k: usize,
+    time_limit_secs: f64,
+) -> PyResult<String> {
+    py.allow_threads(|| {
+        let (board, spawn_points, _danger, weights, disabled_mask, overlay_entries) =
+            serde_bridge::board_from_json(bridge_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+
+        let overlay_pairs: Vec<(weapons::WId, weapons::PartialWeaponDef)> =
+            overlay_entries.iter().map(|e| (e.wid, e.patch.clone())).collect();
+        let overlay_table = weapons::build_overlay_table(&overlay_pairs);
+        let weapons_table: &weapons::WeaponTable = match &overlay_table {
+            Some(t) => &**t,
+            None => &weapons::WEAPONS,
+        };
+
+        let k_per_level = [k, (k / 2).max(1)];
+        let chains = crate::beam::solve_beam(
+            &board,
+            &spawn_points,
+            depth,
+            &k_per_level[..depth.min(2)],
+            time_limit_secs,
+            &weights,
+            disabled_mask,
+            weapons_table,
+        );
+
+        let items: Vec<String> = chains.iter().map(|c| {
+            let lvl0 = serde_bridge::solution_to_json(&c.level_0, &overlay_entries);
+            let lvl1 = match &c.level_1_best {
+                Some(s) => serde_bridge::solution_to_json(s, &overlay_entries),
+                None    => "null".to_string(),
+            };
+            format!("{{\"chain_score\":{},\"level_0\":{},\"level_1_best\":{}}}",
+                    c.chain_score, lvl0, lvl1)
+        }).collect();
+        Ok(format!("[{}]", items.join(",")))
+    })
+}
+
 #[pymodule]
 fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(solve, m)?)?;
     m.add_function(wrap_pyfunction!(solve_top_k, m)?)?;
     m.add_function(wrap_pyfunction!(score_plan, m)?)?;
     m.add_function(wrap_pyfunction!(project_plan, m)?)?;
+    m.add_function(wrap_pyfunction!(solve_beam, m)?)?;
     m.add_function(wrap_pyfunction!(simulator_version, m)?)?;
     Ok(())
 }

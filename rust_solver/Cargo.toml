@@ -32,6 +32,10 @@ path = "tests/regression.rs"
 name = "eval_turn_projection"
 path = "tests/eval_turn_projection.rs"
 
+[[test]]
+name = "beam_vs_top1"
+path = "tests/beam_vs_top1.rs"
+
 [profile.release]
 opt-level = 3
 lto = "fat"
