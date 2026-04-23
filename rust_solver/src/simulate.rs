@@ -529,8 +529,13 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
             result.buildings_bump_damaged += 1;
+            // Guard: apply_damage above can trigger volatile decay / blast
+            // psion chains that damage adjacent tiles, including (nx, ny).
+            // That path may have already driven building_hp to 0, so the
+            // outer `> 0` guard is stale. Use saturating_sub to avoid u8
+            // underflow (debug panic / release wrap-to-255).
             let bt = board.tile_mut(nx, ny);
-            bt.building_hp -= 1;
+            bt.building_hp = bt.building_hp.saturating_sub(1);
             if bt.building_hp == 0 {
                 if !is_unique {
                     bt.terrain = Terrain::Rubble;
@@ -737,8 +742,13 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
             result.buildings_bump_damaged += 1;
+            // Guard: apply_damage above can trigger volatile decay / blast
+            // psion chains that damage adjacent tiles, including (nx, ny).
+            // That path may have already driven building_hp to 0, so the
+            // outer `> 0` guard is stale. Use saturating_sub to avoid u8
+            // underflow (debug panic / release wrap-to-255).
             let bt = board.tile_mut(nx, ny);
-            bt.building_hp -= 1;
+            bt.building_hp = bt.building_hp.saturating_sub(1);
             if bt.building_hp == 0 {
                 if !is_unique {
                     bt.terrain = Terrain::Rubble;
@@ -1430,16 +1440,44 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty
         apply_weapon_status(board, tx, ty, wdef);
     }
 
-    // Damage adjacent tiles (skip source direction)
-    let from_dir = direction_between(tx, ty, old_x, old_y);
-    for (i, &(dx, dy)) in DIRS.iter().enumerate() {
-        if Some(i) == from_dir { continue; }
-        let nx = tx as i8 + dx;
-        let ny = ty as i8 + dy;
-        if !in_bounds(nx, ny) { continue; }
-        apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
-        if wdef.push == PushDir::Outward {
-            apply_push(board, nx as u8, ny as u8, i, result);
+    // Damage emission. Jet_BombDrop (Aerial Bombs) tooltip: "Fly over a target,
+    // dropping an explosive smoke bomb." Damage lands on the TRANSIT tile(s) —
+    // the tiles flown over between source and landing — not on landing-adjacent
+    // tiles. Gated on the same smoke() flag the smoke-placement branch above
+    // uses so the behavior change is scoped to Jet_BombDrop only; other leap
+    // weapons (Prime_Leap "Hydraulic Legs", whose tooltip explicitly reads
+    // "damaging self and adjacent tiles") keep their legacy 4-cardinal-
+    // neighbors-of-landing damage. Jet_BombDrop has PushDir::None so no push
+    // is emitted here; the transit branch intentionally omits the push block.
+    //
+    // Out-of-scope note: Brute_Bombrun (Bombing Run) tooltip — "Leap over any
+    // distance dropping a bomb on each tile you pass" — ALSO damages transit
+    // tiles, not landing-adjacent ones. It has no SMOKE flag so this fix does
+    // not touch it; tracked separately.
+    if wdef.smoke() {
+        if let Some(dir) = cardinal_direction(old_x, old_y, tx, ty) {
+            let (dx, dy) = DIRS[dir];
+            let dist =
+                (tx as i8 - old_x as i8).abs() + (ty as i8 - old_y as i8).abs();
+            for step in 1..dist {
+                let nx = old_x as i8 + dx * step;
+                let ny = old_y as i8 + dy * step;
+                if !in_bounds(nx, ny) { continue; }
+                apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
+            }
+        }
+    } else {
+        // Damage adjacent tiles (skip source direction)
+        let from_dir = direction_between(tx, ty, old_x, old_y);
+        for (i, &(dx, dy)) in DIRS.iter().enumerate() {
+            if Some(i) == from_dir { continue; }
+            let nx = tx as i8 + dx;
+            let ny = ty as i8 + dy;
+            if !in_bounds(nx, ny) { continue; }
+            apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
+            if wdef.push == PushDir::Outward {
+                apply_push(board, nx as u8, ny as u8, i, result);
+            }
         }
     }
 }
@@ -1922,6 +1960,101 @@ mod tests {
             !board.tile(3, 3).smoke(),
             "Jetmech range-upgraded leap: smoke must NOT be on starting tile (3,3)"
         );
+    }
+
+    #[test]
+    fn test_aerial_bombs_damages_transit_tile_base_range() {
+        // Aerial Bombs tooltip: "Fly over a target, dropping an explosive
+        // smoke bomb." Base range (uid 17) is exactly distance 2 cardinal:
+        // S=(3,3) → T=(3,4) (transit) → L=(3,5). Damage = 1 lands on the
+        // TRANSIT tile only. Landing tile and all 4-neighbors of landing
+        // (the legacy behavior) take NO damage.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        // Enemy on transit tile — takes 1 damage.
+        let transit_enemy = add_enemy(&mut board, 10, 3, 4, 3);
+        // Enemies on landing tile is illegal (enumerator blocks it), but we
+        // can place enemies on 4-neighbors of the landing tile to assert
+        // they are unaffected by the new damage emission.
+        let north_of_land = add_enemy(&mut board, 11, 2, 5, 3); // (2,5) north of land
+        let south_of_land = add_enemy(&mut board, 12, 4, 5, 3); // (4,5) south of land
+        let east_of_land  = add_enemy(&mut board, 13, 3, 6, 3); // (3,6) east of land
+        // West of land is (3,4) which IS the transit tile — already covered.
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 3, 5);
+
+        assert_eq!(
+            board.units[transit_enemy].hp, 2,
+            "Transit tile (3,4) enemy should take 1 damage"
+        );
+        assert_eq!(
+            board.units[north_of_land].hp, 3,
+            "North-of-landing (2,5) enemy must take NO damage (was landing-neighbor under legacy behavior)"
+        );
+        assert_eq!(
+            board.units[south_of_land].hp, 3,
+            "South-of-landing (4,5) enemy must take NO damage"
+        );
+        assert_eq!(
+            board.units[east_of_land].hp, 3,
+            "East-of-landing (3,6) enemy must take NO damage"
+        );
+    }
+
+    #[test]
+    fn test_aerial_bombs_damages_both_transit_tiles_range_upgraded() {
+        // Range-upgraded Aerial Bombs: S=(3,3) → T1=(3,4) → T2=(3,5) → L=(3,6).
+        // Damage = 1 lands on BOTH transit tiles; landing tile is untouched.
+        // Following the pattern of test_jetmech_smokes_transit_range_upgraded,
+        // we call sim_leap directly (it performs no range enforcement).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        let t1_enemy = add_enemy(&mut board, 20, 3, 4, 3);
+        let t2_enemy = add_enemy(&mut board, 21, 3, 5, 3);
+
+        let upgraded = WEAPONS[WId::BruteJetmech as usize];
+        let mut result = ActionResult::default();
+        sim_leap(&mut board, mech_idx, &upgraded, 3, 6, &mut result);
+
+        assert_eq!(
+            board.units[t1_enemy].hp, 2,
+            "First transit tile (3,4) enemy should take 1 damage"
+        );
+        assert_eq!(
+            board.units[t2_enemy].hp, 2,
+            "Second transit tile (3,5) enemy should take 1 damage"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_keeps_landing_adjacent_damage() {
+        // Regression guard: Prime_Leap (Hydraulic Legs) tooltip reads
+        // "Leap to a tile, damaging self and adjacent tiles (with push)."
+        // It has no SMOKE flag, so it must retain the legacy
+        // 4-cardinal-neighbors-of-landing damage. This locks in that the
+        // smoke-gated transit-damage path does not regress Prime_Leap.
+        //
+        // Use an adjacent leap: S=(3,3) → L=(3,4). `direction_between` is
+        // only defined for unit-vector adjacency, so from_dir is the
+        // cardinal back at (3,3) and gets skipped cleanly. Landing-adjacents
+        // are (2,4) (north), (4,4) (south), (3,5) (east); (3,3) (west, the
+        // from_dir) is the skipped direction.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeLeap);
+
+        let adj_n = add_enemy(&mut board, 30, 2, 4, 3); // north of landing
+        let adj_s = add_enemy(&mut board, 31, 4, 4, 3); // south of landing
+        let adj_e = add_enemy(&mut board, 32, 3, 5, 3); // east of landing
+
+        let upgraded = WEAPONS[WId::PrimeLeap as usize];
+        let mut result = ActionResult::default();
+        sim_leap(&mut board, mech_idx, &upgraded, 3, 4, &mut result);
+
+        assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
+        assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
+        assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
     }
 
     #[test]
@@ -3183,5 +3316,105 @@ mod tests {
 
         assert_eq!(board.units[idx].hp, 2,
             "Flying unit on melting ice must survive (took 1 weapon dmg)");
+    }
+
+    // ── building_hp underflow regression tests ───────────────────────────
+    //
+    // Previously `apply_push` / `apply_throw` had:
+    //
+    //     if board.tile(nx, ny).building_hp > 0 {
+    //         apply_damage(...);          // can mutate tile hp via volatile
+    //                                     // decay / blast psion chains that
+    //                                     // damage adjacent tiles
+    //         let bt = board.tile_mut(nx, ny);
+    //         bt.building_hp -= 1;        // stale guard: could underflow u8
+    //     }
+    //
+    // If the intervening `apply_damage` drove the building at (nx, ny) to 0
+    // (e.g., Volatile Vek death explosion chained into the building), the
+    // `-= 1` would panic on debug builds and wrap to 255 on release. Both
+    // sites now use saturating_sub.
+
+    #[test]
+    fn test_push_into_destroyed_objective_no_underflow() {
+        // Simplest stub of the destroyed-but-still-blocking case:
+        // terrain = Building, building_hp = 0 (e.g. Emergency Batteries
+        // after destruction). Push a unit into it; the unit takes bump,
+        // the tile stays at 0 hp, no panic.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 0;
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push N into destroyed bldg
+
+        // Unit did not move — still at origin with -1 bump
+        assert_eq!(board.units[idx].x, 3);
+        assert_eq!(board.units[idx].y, 3);
+        assert_eq!(board.units[idx].hp, 2, "pushed unit took 1 bump");
+        // Building hp stays at 0, no underflow
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        // Destroyed stub shouldn't re-count as a new loss
+        assert_eq!(result.buildings_lost, 0);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_push_volatile_into_building_no_underflow() {
+        // Exercises the real underflow path: the outer `building_hp > 0`
+        // guard is satisfied (hp=1), but apply_damage on the pushed unit
+        // kills a Volatile Vek whose decay explosion damages the building
+        // at (nx, ny), dropping hp to 0 BEFORE the post-apply_damage
+        // `bt.building_hp -= 1`. Without saturating_sub this panics in
+        // debug builds.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+
+        // 1-HP Volatile Vek at (3,3) — the bump will kill it, triggering
+        // Explosive Decay (1 bump dmg to all 4 adjacent tiles, including
+        // the building at (3,4)).
+        let idx = board.add_unit(Unit {
+            uid: 1, x: 3, y: 3, hp: 1, max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Volatile_Vek");
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push N into building
+
+        // Volatile vek died from bump damage
+        assert_eq!(board.units[idx].hp, 0);
+        assert_eq!(result.enemies_killed, 1);
+        // Building driven to 0 and converted to rubble (non-unique), no underflow
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+    }
+
+    #[test]
+    fn test_throw_into_destroyed_objective_no_underflow() {
+        // Parallel case for apply_throw's building branch (line ~533).
+        // apply_throw has the same stale-guard pattern; verify the hp=0
+        // stub path stays safe (underflow-prone path is only reachable via
+        // chain damage from apply_damage on the thrown unit).
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 0;
+        // Target (the thrown unit) at (3, 2); attacker at (3, 3) attacking
+        // dir=2 (y-). apply_throw's destination = attacker + opposite(dir)
+        // = (3,3) + (0,1) = (3,4), the destroyed building.
+        let idx = add_enemy(&mut board, 1, 3, 2, 3);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 3, 2, 2, &mut result);
+
+        // Target stayed at (3,2), took 1 bump, building still at 0
+        assert_eq!(board.units[idx].x, 3);
+        assert_eq!(board.units[idx].y, 2);
+        assert_eq!(board.units[idx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
     }
 }

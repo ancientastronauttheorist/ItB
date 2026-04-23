@@ -938,9 +938,39 @@ def _sim_charge(board, attacker, wdef, attack_dir, result):
 
 
 def _sim_leap(board, attacker, wdef, tx, ty, result):
-    """Simulate leap weapon (jump to target, AoE on landing)."""
+    """Simulate leap weapon (jump to target, AoE on landing).
+
+    Smoke emission parity with Rust ``sim_leap`` (see
+    ``rust_solver/src/simulate.rs`` commit 37fbcb4): Aerial Bombs
+    (``Brute_Jetmech`` — the only SMOKE-flagged Leap weapon) tooltip reads
+    "Fly over a target, dropping an explosive smoke bomb" — smoke lands on
+    the TRANSIT tile(s), not on the landing tile. We gate on ``wdef.smoke``
+    and walk the cardinal flight path, dropping smoke on every strictly-
+    between tile. Other leap weapons (``Prime_Leap``, ``Brute_Bombrun``)
+    have no smoke flag and emit no smoke — matching current Rust behavior.
+
+    Other status flags (fire/freeze/acid) are not currently used by any
+    leap weapon in the registry, so we intentionally do NOT call an
+    ``apply_weapon_status``-style helper at the landing tile either — that
+    would give Jet_BombDrop smoke at the landing tile, which is exactly
+    what Rust's commit 37fbcb4 fix avoids.
+    """
     old_x, old_y = attacker.x, attacker.y
     attacker.x, attacker.y = tx, ty
+
+    # Smoke along the cardinal transit path (Aerial Bombs).
+    if wdef.smoke:
+        path_dir = cardinal_direction(old_x, old_y, tx, ty)
+        if path_dir is not None:
+            dx, dy = DIRS[path_dir]
+            dist = abs(tx - old_x) + abs(ty - old_y)
+            for step in range(1, dist):  # strictly between (excludes landing)
+                nx, ny = old_x + dx * step, old_y + dy * step
+                if not board.in_bounds(nx, ny):
+                    continue
+                tile = board.tile(nx, ny)
+                tile.on_fire = False  # smoke replaces fire (parity with apply_weapon_status)
+                tile.smoke = True
 
     # Damage adjacent tiles on landing (not the tile we came from)
     from_dir = direction_between(tx, ty, old_x, old_y)

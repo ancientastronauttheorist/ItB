@@ -76,7 +76,20 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #     lethal Tidal Wave. Previously apply_push/apply_throw killed Massive
 #     units on ALL deadly ground (over-killing in Water/Lava).
 # Pre-v4 rows archived to failure_db_snapshot_sim_v3.jsonl.
-SIMULATOR_VERSION = 4
+#
+# v5 (2026-04-23, Rift Walkers follow-up fixes):
+#   - Jet_BombDrop (Aerial Bombs) now damages the transit tile(s) only, not
+#     the 4 cardinal neighbors of the landing tile. Gated on wdef.smoke() so
+#     other leap weapons (Prime_Leap, Brute_Bombrun) are unchanged.
+#   - apply_push / apply_throw building-bump branches now use saturating_sub
+#     on building_hp to prevent u8 underflow when a Volatile Vek / Blast
+#     Psion death chain drops the bumped building to 0 before the post-
+#     apply_damage decrement. Previously panicked in debug and wrapped to
+#     255 in release. Latent on observed boards but corrects the underlying
+#     arithmetic. Python-side _sim_leap gained smoke parity with Rust
+#     (non-scoring, but keeps replay_solution output consistent).
+# Pre-v5 rows archived to failure_db_snapshot_sim_v4.jsonl.
+SIMULATOR_VERSION = 5
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
