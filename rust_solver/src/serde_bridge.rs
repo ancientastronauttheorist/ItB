@@ -214,6 +214,24 @@ pub struct JsonUnit {
     pub can_move: Option<bool>,
     pub is_extra_tile: Option<bool>,
     pub pilot_value: Option<f64>,
+    /// Lua bridge `pilot.id` (e.g. "Pilot_Soldier"). Maps to `PilotFlags`
+    /// via `pilot_flags_from_id` for the combat-affecting passives the
+    /// solver actually models (Camila / Ariadne / Harold today).
+    pub pilot_id: Option<String>,
+}
+
+/// Map a Lua pilot_id string to the bitflags the solver uses at call sites.
+/// Unknown or empty pilot_ids return an empty set (no simulator effect);
+/// the mech still gets its `pilot_value` penalty via the Python-side
+/// `_PILOT_VALUE_TABLE` lookup regardless.
+fn pilot_flags_from_id(pilot_id: &str) -> crate::board::PilotFlags {
+    use crate::board::PilotFlags;
+    match pilot_id {
+        "Pilot_Soldier"   => PilotFlags::SOLDIER,    // Camila Vera — Evasion
+        "Pilot_Rock"      => PilotFlags::ROCK,       // Ariadne — Rockman
+        "Pilot_Repairman" => PilotFlags::REPAIRMAN,  // Harold Schmidt — Frenzied Repair
+        _ => PilotFlags::empty(),
+    }
 }
 
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
@@ -395,6 +413,11 @@ pub fn board_from_json(json_str: &str)
                 weapon_target_behind: ju.weapon_target_behind.unwrap_or(false),
                 web_source_uid: ju.web_source_uid.unwrap_or(0),
                 pilot_value: ju.pilot_value.unwrap_or(0.0) as f32,
+                pilot_flags: if is_mech {
+                    pilot_flags_from_id(ju.pilot_id.as_deref().unwrap_or(""))
+                } else {
+                    crate::board::PilotFlags::empty()
+                },
             };
 
             unit.set_type_name(&ju.unit_type);

@@ -112,6 +112,69 @@ fn break_web_from(board: &mut Board, src_uid: u16) {
 
 /// Internal damage logic without death explosion processing.
 /// Used by apply_death_explosion to avoid double-triggering.
+/// Shared Psion-aura / boss cleanup invoked when an enemy dies. Called
+/// from ``apply_damage`` (weapon/bump kills) and ``apply_env_danger``
+/// (lethal environment kills that bypass the core damage path — e.g.
+/// Air Strike, Cataclysm, Tidal Wave, Seismic→chasm). Without this in
+/// the env-kill path, a Soldier/Shell/Blood/Tyrant Psion killed by
+/// environment retains its aura indefinitely: all surviving Vek keep
+/// +1 HP / Armor / regen / boosted damage that should have cleared.
+///
+/// Caller invariant: the unit at ``idx`` has just had its HP set to 0.
+pub(crate) fn on_enemy_death(
+    board: &mut Board,
+    idx: usize,
+    result: &mut ActionResult,
+) {
+    // Shell Psion killed: remove armor aura from all Vek
+    if board.armor_psion && board.units[idx].type_name_str() == "Jelly_Armor1" {
+        let other_alive = (0..board.unit_count as usize)
+            .any(|j| j != idx
+                && board.units[j].type_name_str() == "Jelly_Armor1"
+                && board.units[j].hp > 0);
+        if !other_alive {
+            board.armor_psion = false;
+            for j in 0..board.unit_count as usize {
+                if board.units[j].is_enemy() {
+                    board.units[j].flags.set(UnitFlags::ARMOR, false);
+                }
+            }
+        }
+    }
+
+    // Soldier Psion killed: remove +1 HP from all Vek
+    if board.soldier_psion && board.units[idx].type_name_str() == "Jelly_Health1" {
+        board.soldier_psion = false;
+        for j in 0..board.unit_count as usize {
+            if board.units[j].is_enemy() && board.units[j].hp > 0
+                && board.units[j].type_name_str() != "Jelly_Health1"
+            {
+                board.units[j].max_hp -= 1;
+                board.units[j].hp -= 1;
+                if board.units[j].hp <= 0 {
+                    result.enemies_killed += 1;
+                }
+            }
+        }
+    }
+
+    // Blood Psion killed: stop regen
+    if board.regen_psion && board.units[idx].type_name_str() == "Jelly_Regen1" {
+        board.regen_psion = false;
+    }
+
+    // Psion Tyrant killed: stop mech damage
+    if board.tyrant_psion && board.units[idx].type_name_str() == "Jelly_Lava1" {
+        board.tyrant_psion = false;
+    }
+
+    // Boss killed: clear flag for kill bonus in evaluate
+    if board.boss_alive && board.units[idx].type_name_str().contains("Boss") {
+        board.boss_alive = false;
+    }
+}
+
+
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
 
@@ -158,52 +221,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                 result.enemy_damage_dealt += actual as i32;
                 if unit.hp <= 0 {
                     result.enemies_killed += 1;
-                    // Shell Psion killed: remove armor aura from all Vek
-                    if board.armor_psion && board.units[idx].type_name_str() == "Jelly_Armor1" {
-                        let other_alive = (0..board.unit_count as usize)
-                            .any(|j| j != idx
-                                && board.units[j].type_name_str() == "Jelly_Armor1"
-                                && board.units[j].hp > 0);
-                        if !other_alive {
-                            board.armor_psion = false;
-                            for j in 0..board.unit_count as usize {
-                                if board.units[j].is_enemy() {
-                                    board.units[j].flags.set(UnitFlags::ARMOR, false);
-                                }
-                            }
-                        }
-                    }
-
-                    // Soldier Psion killed: remove +1 HP from all Vek
-                    if board.soldier_psion && board.units[idx].type_name_str() == "Jelly_Health1" {
-                        board.soldier_psion = false;
-                        for j in 0..board.unit_count as usize {
-                            if board.units[j].is_enemy() && board.units[j].hp > 0
-                                && board.units[j].type_name_str() != "Jelly_Health1"
-                            {
-                                board.units[j].max_hp -= 1;
-                                board.units[j].hp -= 1;
-                                if board.units[j].hp <= 0 {
-                                    result.enemies_killed += 1;
-                                }
-                            }
-                        }
-                    }
-
-                    // Blood Psion killed: stop regen
-                    if board.regen_psion && board.units[idx].type_name_str() == "Jelly_Regen1" {
-                        board.regen_psion = false;
-                    }
-
-                    // Psion Tyrant killed: stop mech damage
-                    if board.tyrant_psion && board.units[idx].type_name_str() == "Jelly_Lava1" {
-                        board.tyrant_psion = false;
-                    }
-
-                    // Boss killed: clear flag for kill bonus in evaluate
-                    if board.boss_alive && board.units[idx].type_name_str().contains("Boss") {
-                        board.boss_alive = false;
-                    }
+                    on_enemy_death(board, idx, result);
                 }
             } else if unit.is_player() {
                 result.mech_damage_taken += actual as i32;
@@ -549,7 +567,10 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
     }
 
     // Fire tile: thrown unit catches fire
-    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
+        && board.units[unit_idx].can_catch_fire()
+        && !(board.flame_shielding && board.units[unit_idx].is_player())
+    {
         board.units[unit_idx].set_fire(true);
     }
 
@@ -582,7 +603,10 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         }
     } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].flying()
         && dest_terrain == Terrain::Lava {
-        if !board.units[unit_idx].shield() {
+        if !board.units[unit_idx].shield()
+            && board.units[unit_idx].can_catch_fire()
+            && !(board.flame_shielding && board.units[unit_idx].is_player())
+        {
             board.units[unit_idx].set_fire(true);
         }
     }
@@ -605,6 +629,48 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
             }
             board.tile_mut(nx, ny).set_freeze_mine(false);
         }
+    }
+}
+
+// ── flip_queued_attack ───────────────────────────────────────────────────────
+
+/// Flip a unit's queued attack direction 180° around its own position.
+/// This is the true semantic for Spartan Shield (Prime_ShieldBash) and
+/// Confusion Ray (Science_Confuse): the bashed enemy still attacks next
+/// turn, but its target is mirrored across its own tile. If the flipped
+/// target would fall off the board, the attack is cancelled by setting
+/// queued_target_x = -1 (the sentinel enemy.rs:314 reads as "no target").
+///
+/// Ignores units with no queued attack (queued_target_x < 0 already).
+/// Intentionally does NOT flip attacks for units whose queued_target
+/// equals their own position (self-destructs, spawn effects, etc.) —
+/// there's no "direction" to flip. Does not mutate HP, status, or
+/// position; this is purely a target-vector rewrite.
+pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
+    let idx = match board.unit_at(x, y) {
+        Some(i) => i,
+        None => return,
+    };
+    let unit = &mut board.units[idx];
+    if unit.hp <= 0 { return; }
+    if unit.queued_target_x < 0 { return; }
+    let qtx = unit.queued_target_x as i32;
+    let qty = unit.queued_target_y as i32;
+    let ux = unit.x as i32;
+    let uy = unit.y as i32;
+    if qtx == ux && qty == uy {
+        // Self-targeted (suicide bomber / egg spawner) — no vector to flip.
+        return;
+    }
+    let flipped_x = 2 * ux - qtx;
+    let flipped_y = 2 * uy - qty;
+    if !(0..8).contains(&flipped_x) || !(0..8).contains(&flipped_y) {
+        // Flipped target is off-board: cancel the attack entirely.
+        unit.queued_target_x = -1;
+        unit.queued_target_y = -1;
+    } else {
+        unit.queued_target_x = flipped_x as i8;
+        unit.queued_target_y = flipped_y as i8;
     }
 }
 
@@ -698,7 +764,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     }
 
     // Fire tile: pushed unit catches fire
-    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
+        && board.units[unit_idx].can_catch_fire()
+        && !(board.flame_shielding && board.units[unit_idx].is_player())
+    {
         board.units[unit_idx].set_fire(true);
     }
 
@@ -848,7 +917,15 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
             if u.frozen() {
                 u.set_frozen(false); // fire on frozen: unfreeze AND catch fire
             }
-            u.set_fire(true);
+            // Pilot_Rock (Ariadne) is fire-immune. Flame Shielding (squad-wide)
+            // also blocks fire-apply on player units; mirror the enemy-phase
+            // check here for consistency. Freeze-on-fire still unfreezes
+            // above because that mechanic is independent of fire application.
+            if u.can_catch_fire()
+                && !(board.flame_shielding && u.is_player())
+            {
+                u.set_fire(true);
+            }
         }
         if wdef.acid() {
             board.units[idx].set_acid(true);
@@ -861,7 +938,12 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
             u.set_frozen(true);
         }
         if wdef.web() {
-            board.units[idx].set_web(true);
+            // Pilot_Soldier (Camila Vera) is web-immune. The web_source_uid
+            // setter at the enemy-weapon site is also guarded on this flag,
+            // so a Camila-piloted mech never ends up in a half-webbed state.
+            if !board.units[idx].pilot_soldier() {
+                board.units[idx].set_web(true);
+            }
         }
         if wdef.shield() {
             board.units[idx].set_shield(true);
@@ -983,7 +1065,7 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
 
         match wdef.push {
             PushDir::Forward => apply_push(board, tx, ty, dir, result),
-            PushDir::Flip => apply_push(board, tx, ty, opposite_dir(dir), result),
+            PushDir::Flip => flip_queued_attack(board, tx, ty),
             PushDir::Backward => apply_push(board, tx, ty, opposite_dir(dir), result),
             PushDir::Perpendicular => apply_push(board, tx, ty, (dir + 1) % 4, result),
             PushDir::Outward => {
@@ -1395,19 +1477,37 @@ pub fn simulate_action(
     // Mirrors apply_push's fire-catch logic so move and push paths agree.
     if move_to != old_pos {
         let tile = board.tile(move_to.0, move_to.1);
-        if tile.on_fire() && board.units[mech_idx].hp > 0 && !board.units[mech_idx].shield() {
+        if tile.on_fire() && board.units[mech_idx].hp > 0 && !board.units[mech_idx].shield()
+            && board.units[mech_idx].can_catch_fire()
+            && !(board.flame_shielding && board.units[mech_idx].is_player())
+        {
             board.units[mech_idx].set_fire(true);
         }
     }
 
     // Repair
     if weapon_id == WId::Repair {
-        let unit = &mut board.units[mech_idx];
-        unit.hp = unit.hp.min(unit.max_hp - 1) + 1; // heal 1
-        unit.set_fire(false);
-        unit.set_acid(false);
-        unit.set_frozen(false);
-        unit.set_active(false);
+        let (is_repairman, rx, ry) = {
+            let unit = &mut board.units[mech_idx];
+            unit.hp = unit.hp.min(unit.max_hp - 1) + 1; // heal 1
+            unit.set_fire(false);
+            unit.set_acid(false);
+            unit.set_frozen(false);
+            unit.set_active(false);
+            (unit.pilot_repairman(), unit.x, unit.y)
+        };
+        // Harold Schmidt (Pilot_Repairman) — Frenzied Repair: push all four
+        // cardinal neighbours outward. Uses `apply_push` so push chains,
+        // bump-into-building damage, drown/lava kills, and terrain
+        // interactions agree with every other push source in the sim.
+        if is_repairman {
+            for (i, &(dx, dy)) in DIRS.iter().enumerate() {
+                let nx = rx as i8 + dx;
+                let ny = ry as i8 + dy;
+                if !in_bounds(nx, ny) { continue; }
+                apply_push(board, nx as u8, ny as u8, i, &mut result);
+            }
+        }
         return result;
     }
 
@@ -2019,6 +2119,168 @@ mod tests {
         assert_eq!(board.units[target].hp, 2, "Base 1 damage only");
     }
 
+    // ── PushDir::Flip semantics (Spartan Shield / Confusion Ray) ──────────────
+
+    #[test]
+    fn test_flip_queued_attack_flips_180_around_unit_position() {
+        // Enemy at (3,3) aimed NORTH at (3,0). Flip → aimed SOUTH at (3,6).
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].queued_target_x = 3;
+        board.units[idx].queued_target_y = 0;
+
+        flip_queued_attack(&mut board, 3, 3);
+
+        assert_eq!(board.units[idx].queued_target_x, 3);
+        assert_eq!(board.units[idx].queued_target_y, 6,
+            "Flipped target is mirror image around (3,3)");
+        assert_eq!(board.units[idx].x, 3,
+            "Unit position unchanged — Flip does NOT push the unit");
+        assert_eq!(board.units[idx].y, 3);
+    }
+
+    #[test]
+    fn test_flip_queued_attack_cancels_when_off_board() {
+        // Enemy at (1,1) aimed at (1,0). Flip → (1,2). On-board, fine.
+        // Enemy at (0,0) aimed at (0,3). Flip → (0,-3). Off-board → cancel.
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 0, 0, 3);
+        board.units[idx].queued_target_x = 0;
+        board.units[idx].queued_target_y = 3;
+
+        flip_queued_attack(&mut board, 0, 0);
+
+        assert_eq!(board.units[idx].queued_target_x, -1,
+            "Off-board flipped target → attack cancelled (sentinel -1)");
+    }
+
+    #[test]
+    fn test_flip_queued_attack_ignores_no_queued_target() {
+        // Unit with queued_target_x = -1 (no attack queued) → no-op.
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].queued_target_x = -1;
+        board.units[idx].queued_target_y = -1;
+
+        flip_queued_attack(&mut board, 3, 3);
+
+        assert_eq!(board.units[idx].queued_target_x, -1,
+            "No queued attack → stays cleared");
+    }
+
+    #[test]
+    fn test_flip_queued_attack_ignores_self_target() {
+        // Unit queued at its own position (suicide bomber / egg spawn).
+        // No attack vector to flip → no-op.
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].queued_target_x = 3;
+        board.units[idx].queued_target_y = 3;
+
+        flip_queued_attack(&mut board, 3, 3);
+
+        assert_eq!(board.units[idx].queued_target_x, 3,
+            "Self-targeted attacks not flipped");
+        assert_eq!(board.units[idx].queued_target_y, 3);
+    }
+
+    // ── Psion aura cleanup on lethal env_danger kill ──────────────────────────
+
+    #[test]
+    fn test_soldier_psion_aura_clears_on_lethal_env_kill() {
+        // Soldier Psion on a lethal env tile (Air Strike / Cataclysm / Tidal).
+        // After env tick, psion dies → aura must clear → all surviving Vek
+        // lose their +1 HP. Pre-fix, apply_env_danger bypassed the shared
+        // kill-cleanup path and left soldier_psion=true forever.
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.soldier_psion = true;
+        // Soldier Psion at (2,2), lethal env on its tile.
+        let psion_idx = add_enemy(&mut board, 1, 2, 2, 2);
+        board.units[psion_idx].set_type_name("Jelly_Health1");
+        // Buffed grunt at (5,5) — started with +1 HP from the aura.
+        let grunt_idx = add_enemy(&mut board, 2, 5, 5, 3);
+        board.units[grunt_idx].max_hp = 3;
+        // Mark (2,2) as a lethal env tile.
+        let tile_idx = 2 * 8 + 2;
+        board.env_danger |= 1u64 << tile_idx;
+        board.env_danger_kill |= 1u64 << tile_idx;
+
+        let original = [(255u8, 255u8); 16];
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
+
+        assert!(!board.soldier_psion,
+            "soldier_psion flag must clear after env-kill");
+        assert_eq!(board.units[psion_idx].hp, 0, "Psion killed by env");
+        assert_eq!(board.units[grunt_idx].hp, 2,
+            "Grunt loses +1 aura HP after Psion dies (3 -> 2)");
+        assert_eq!(board.units[grunt_idx].max_hp, 2,
+            "Grunt max_hp also reduced");
+    }
+
+    // ── Storm Generator (Passive_Electric — Rusting Hulks / Detritus) ─────────
+
+    #[test]
+    fn test_storm_generator_damages_enemies_in_smoke() {
+        // Enemy standing on a smoke tile takes 1 damage at start of enemy
+        // phase when storm_generator is active. Confirms enemy.rs:198-209.
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.storm_generator = true;
+        board.tile_mut(3, 3).set_smoke(true);
+        let target = add_enemy(&mut board, 1, 3, 3, 3);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
+        assert_eq!(board.units[target].hp, 2,
+            "Enemy in smoke took 1 Storm Generator damage");
+    }
+
+    #[test]
+    fn test_storm_generator_skips_enemies_not_in_smoke() {
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.storm_generator = true;
+        // No smoke on tile (3,4); enemy on it should be untouched.
+        let target = add_enemy(&mut board, 1, 3, 4, 3);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
+        assert_eq!(board.units[target].hp, 3,
+            "Enemy not on smoke tile unaffected");
+    }
+
+    #[test]
+    fn test_storm_generator_leaves_mechs_untouched() {
+        // Smoke + Storm Generator should not damage mechs — mechs in smoke
+        // are safe (and smoke cancels enemy attacks targeting them).
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.storm_generator = true;
+        board.tile_mut(4, 4).set_smoke(true);
+        let mech_idx = add_mech(&mut board, 99, 4, 4, 3, WId::PrimePunchmech);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
+        assert_eq!(board.units[mech_idx].hp, 3,
+            "Mech in smoke is unharmed by Storm Generator");
+    }
+
+    #[test]
+    fn test_storm_generator_off_no_smoke_damage() {
+        // Sanity: enemy on smoke, flag off — no damage.
+        use crate::enemy::simulate_enemy_attacks;
+        let mut board = make_test_board();
+        board.storm_generator = false;
+        board.tile_mut(3, 3).set_smoke(true);
+        let target = add_enemy(&mut board, 1, 3, 3, 3);
+        let original = [(255u8, 255u8); 16];
+
+        simulate_enemy_attacks(&mut board, &original, &WEAPONS);
+        assert_eq!(board.units[target].hp, 3,
+            "Flag off: enemy unharmed even on smoke");
+    }
+
     // ── Repair Drop (Support_Repair) ───────────────────────────────────────────
 
     #[test]
@@ -2163,5 +2425,143 @@ mod tests {
 
         assert!(!board.units[ally].fire(), "Mech fire status cleared");
         assert!(board.tile(4, 3).on_fire(), "Burning terrain tile preserved");
+    }
+
+    // ── Pilot passive tests ─────────────────────────────────────────────────
+    //
+    // These tests use `apply_weapon_status` and the push/move fire-catch
+    // helpers directly so the passive behavior is exercised at the hook
+    // points, not through a specific mech/enemy weapon that happens to
+    // route fire/web at the time the test was written. Call-site coverage
+    // still matters (regression.sh exercises full solves), but isolating
+    // the hook here keeps the tests from breaking when unrelated weapon
+    // defs or enemy types change.
+
+    fn wdef_fire() -> crate::weapons::WeaponDef {
+        use crate::weapons::{WeaponDef, WeaponFlags};
+        WeaponDef {
+            weapon_type: WeaponType::Melee,
+            damage: 0, damage_outer: 0,
+            push: PushDir::None,
+            self_damage: 0,
+            range_min: 1, range_max: 1,
+            limited: 0, path_size: 1,
+            flags: WeaponFlags::FIRE,
+        }
+    }
+
+    fn wdef_web() -> crate::weapons::WeaponDef {
+        use crate::weapons::{WeaponDef, WeaponFlags};
+        WeaponDef {
+            weapon_type: WeaponType::Projectile,
+            damage: 0, damage_outer: 0,
+            push: PushDir::None,
+            self_damage: 0,
+            range_min: 1, range_max: 4,
+            limited: 0, path_size: 1,
+            flags: WeaponFlags::WEB,
+        }
+    }
+
+    #[test]
+    fn test_pilot_soldier_immune_to_web() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let camila = add_mech(&mut board, 1, 3, 3, 2, WId::None);
+        board.units[camila].pilot_flags = PilotFlags::SOLDIER;
+        apply_weapon_status(&mut board, 3, 3, &wdef_web());
+        assert!(!board.units[camila].web(),
+            "Pilot_Soldier (Camila) must not be webbed");
+    }
+
+    #[test]
+    fn test_non_soldier_gets_webbed() {
+        // Control: a mech without Pilot_Soldier DOES get webbed at the
+        // same hook, proving the guard isn't unconditionally suppressing
+        // the effect.
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 2, WId::None);
+        apply_weapon_status(&mut board, 3, 3, &wdef_web());
+        assert!(board.units[mech].web(),
+            "Default-pilot mech must still be webbed (control)");
+    }
+
+    #[test]
+    fn test_pilot_rock_immune_to_weapon_fire() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let ariadne = add_mech(&mut board, 1, 3, 3, 2, WId::None);
+        board.units[ariadne].pilot_flags = PilotFlags::ROCK;
+        apply_weapon_status(&mut board, 3, 3, &wdef_fire());
+        assert!(!board.units[ariadne].fire(),
+            "Pilot_Rock (Ariadne) must not catch fire from a weapon hit");
+    }
+
+    #[test]
+    fn test_pilot_rock_immune_to_tile_fire_on_push() {
+        use crate::board::PilotFlags;
+        // Push Ariadne onto a burning tile — she still must not catch fire.
+        let mut board = make_test_board();
+        let ariadne = add_mech(&mut board, 1, 3, 3, 2, WId::None);
+        board.units[ariadne].pilot_flags = PilotFlags::ROCK;
+        board.tile_mut(3, 4).set_on_fire(true);
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push east: (3,3)->(3,4)
+        assert_eq!(board.units[ariadne].y, 4,
+            "Mech should have moved onto the fire tile");
+        assert!(!board.units[ariadne].fire(),
+            "Ariadne must stay fire-free on a burning tile");
+    }
+
+    #[test]
+    fn test_pilot_repairman_pushes_adjacent_enemies() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let harold = add_mech(&mut board, 1, 3, 3, 2, WId::None);
+        board.units[harold].max_hp = 4;
+        board.units[harold].hp = 2; // damaged so Repair actually heals
+        board.units[harold].pilot_flags = PilotFlags::REPAIRMAN;
+
+        // Drop a Vek on each of the 4 cardinal neighbours.
+        let e_e = add_enemy(&mut board, 10, 3, 4, 2);
+        let e_s = add_enemy(&mut board, 11, 4, 3, 2);
+        let e_w = add_enemy(&mut board, 12, 3, 2, 2);
+        let e_n = add_enemy(&mut board, 13, 2, 3, 2);
+
+        // Repair goes through simulate_action (the real solver call path —
+        // WId::Repair isn't a WeaponType::Melee/Projectile/etc. so
+        // simulate_weapon's match dispatcher no-ops on it).
+        let _ = simulate_action(&mut board, harold, (3, 3), WId::Repair,
+                                (3, 3), &WEAPONS);
+
+        // Each enemy should have moved one tile further from Harold than
+        // its starting adjacent position. DIRS = [(0,1),(1,0),(0,-1),(-1,0)].
+        assert_eq!((board.units[e_e].x, board.units[e_e].y), (3, 5),
+            "+y neighbour pushed further in +y");
+        assert_eq!((board.units[e_s].x, board.units[e_s].y), (5, 3),
+            "+x neighbour pushed further in +x");
+        assert_eq!((board.units[e_w].x, board.units[e_w].y), (3, 1),
+            "-y neighbour pushed further in -y");
+        assert_eq!((board.units[e_n].x, board.units[e_n].y), (1, 3),
+            "-x neighbour pushed further in -x");
+        // Repair still heals.
+        assert_eq!(board.units[harold].hp, 3, "Repair heals 1 HP");
+    }
+
+    #[test]
+    fn test_non_repairman_repair_does_not_push() {
+        // Control: a non-Harold mech repairing next to an enemy does NOT
+        // push the enemy. Guards against my push loop accidentally firing
+        // on every repair.
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 2, WId::None);
+        board.units[mech].max_hp = 4;
+        board.units[mech].hp = 2;
+        let enemy = add_enemy(&mut board, 10, 3, 4, 2);
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair,
+                                (3, 3), &WEAPONS);
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 4),
+            "non-Repairman repair must not displace adjacent enemies");
+        assert_eq!(board.units[mech].hp, 3, "Repair still heals 1 HP");
     }
 }

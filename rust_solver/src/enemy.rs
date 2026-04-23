@@ -88,7 +88,10 @@ fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: 
 /// Inlined unit/building handling (does not call apply_damage) so we can bypass
 /// shield/frozen for the lethal case without polluting the core damage path.
 fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut ActionResult) {
-    // Damage unit if present
+    // Damage unit if present. Track whether an enemy died so we can run
+    // the shared death-cleanup after the mutable borrow ends — Psion
+    // auras must be torn down even on env kills, which bypass apply_damage.
+    let mut enemy_died_idx: Option<usize> = None;
     if let Some(uidx) = board.unit_at(x, y) {
         let unit = &mut board.units[uidx];
         if unit.hp > 0 {
@@ -104,6 +107,7 @@ fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut 
                 } else if unit.is_enemy() {
                     result.enemies_killed += 1;
                     result.enemy_damage_dealt += prev_hp as i32;
+                    enemy_died_idx = Some(uidx);
                 }
             } else if !unit.effectively_flying() {
                 // Non-lethal env (1 dmg): bump-like — consumed by shield, ignores armor/ACID
@@ -118,12 +122,18 @@ fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut 
                         if unit.hp <= 0 { result.mechs_killed += 1; }
                     } else if unit.is_enemy() {
                         result.enemy_damage_dealt += 1;
-                        if unit.hp <= 0 { result.enemies_killed += 1; }
+                        if unit.hp <= 0 {
+                            result.enemies_killed += 1;
+                            enemy_died_idx = Some(uidx);
+                        }
                     }
                 }
             }
             // else: flying, non-lethal env doesn't hit
         }
+    }
+    if let Some(idx) = enemy_died_idx {
+        crate::simulate::on_enemy_death(board, idx, result);
     }
 
     // Damage building if present (lethal destroys entirely, non-lethal does 1 HP)
@@ -184,10 +194,20 @@ pub fn simulate_enemy_attacks(
 
     // Fire tick: burning units take 1 damage before attacks
     // Flame Shielding: player mechs immune to fire
+    // Pilot_Rock (Ariadne): defensive skip. The fire-apply hooks never set
+    // the FIRE flag on a Rockman mech in the first place, so this branch
+    // only matters if fire snuck in via an un-guarded path (future bug
+    // guard) or if pilot_flags were injected mid-mission.
     for i in 0..board.unit_count as usize {
         if board.units[i].fire() && board.units[i].hp > 0 {
             if board.flame_shielding && board.units[i].is_player() {
                 continue; // mechs immune to fire with Flame Shielding
+            }
+            if board.units[i].pilot_rock() {
+                // Rockman is fire-immune; clear the flag as a safety net
+                // so a stale burn doesn't sit on the unit forever.
+                board.units[i].set_fire(false);
+                continue;
             }
             let x = board.units[i].x;
             let y = board.units[i].y;
@@ -422,8 +442,15 @@ pub fn simulate_enemy_attacks(
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                     if wdef.fire() {
                         if let Some(idx) = board.unit_at(tx, ty) {
-                            if !board.units[idx].frozen() {
-                                board.units[idx].set_fire(true);
+                            let u = &mut board.units[idx];
+                            // Pilot_Rock is fire-immune; skip even the
+                            // "unfreeze + catch fire" combo so Ariadne on
+                            // ice stays frozen rather than becoming a
+                            // walking exception.
+                            if !u.frozen() && u.can_catch_fire()
+                                && !(board.flame_shielding && u.is_player())
+                            {
+                                u.set_fire(true);
                             }
                         }
                         board.tile_mut(tx, ty).set_on_fire(true);
@@ -432,7 +459,11 @@ pub fn simulate_enemy_attacks(
                     apply_weapon_status(board, tx, ty, wdef);
                     if wdef.web() {
                         if let Some(idx) = board.unit_at(tx, ty) {
-                            board.units[idx].web_source_uid = enemy_uid;
+                            // Skip webber-uid tracking for Pilot_Soldier so
+                            // Camila's Unit stays clean (no phantom webber).
+                            if !board.units[idx].pilot_soldier() {
+                                board.units[idx].web_source_uid = enemy_uid;
+                            }
                         }
                     }
 
@@ -460,7 +491,9 @@ pub fn simulate_enemy_attacks(
                             apply_weapon_status(board, nxu, nyu, wdef);
                             if wdef.web() {
                                 if let Some(idx) = board.unit_at(nxu, nyu) {
-                                    board.units[idx].web_source_uid = enemy_uid;
+                                    if !board.units[idx].pilot_soldier() {
+                                        board.units[idx].web_source_uid = enemy_uid;
+                                    }
                                 }
                             }
                         }
@@ -605,8 +638,11 @@ pub fn simulate_enemy_attacks(
                                 let fy = (ey as i8 + dy * i) as u8;
                                 board.tile_mut(fx, fy).set_on_fire(true);
                                 if let Some(idx) = board.unit_at(fx, fy) {
-                                    if !board.units[idx].frozen() {
-                                        board.units[idx].set_fire(true);
+                                    let u = &mut board.units[idx];
+                                    if !u.frozen() && u.can_catch_fire()
+                                        && !(board.flame_shielding && u.is_player())
+                                    {
+                                        u.set_fire(true);
                                     }
                                 }
                             }
@@ -652,7 +688,9 @@ pub fn simulate_enemy_attacks(
                             // apply to the live unit on that tile.
                             if wdef.web() {
                                 if let Some(idx) = board.unit_at(nx as u8, ny as u8) {
-                                    board.units[idx].set_web(true);
+                                    if !board.units[idx].pilot_soldier() {
+                                        board.units[idx].set_web(true);
+                                    }
                                 }
                             }
                         }
@@ -1332,5 +1370,58 @@ mod tests {
 
         assert_eq!(board.tile(3, 3).building_hp, 0, "First tile destroyed");
         assert_eq!(board.tile(4, 3).building_hp, 0, "Behind tile destroyed");
+    }
+
+    // ── Pilot_Rock fire tick ────────────────────────────────────────────────
+
+    #[test]
+    fn test_pilot_rock_skips_fire_tick() {
+        // Defensive guard: even if FIRE somehow gets set on Ariadne, the
+        // fire-tick loop clears it and deals no damage.
+        use crate::board::{PilotFlags, UnitFlags};
+        let mut board = Board::default();
+        let mut unit = Unit {
+            uid: 1, x: 3, y: 3, hp: 5, max_hp: 5,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::FIRE,
+            pilot_flags: PilotFlags::ROCK,
+            move_speed: 3,
+            ..Default::default()
+        };
+        unit.set_type_name("PunchMech");
+        let idx = board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 5,
+            "Pilot_Rock (Ariadne) must take 0 fire-tick damage");
+        assert!(!board.units[idx].fire(),
+            "Fire flag cleared as a safety net");
+    }
+
+    #[test]
+    fn test_non_rock_takes_fire_tick_damage() {
+        // Control: a player mech without Pilot_Rock still takes 1 fire
+        // damage at the start of the enemy phase.
+        use crate::board::UnitFlags;
+        let mut board = Board::default();
+        let mut unit = Unit {
+            uid: 1, x: 3, y: 3, hp: 5, max_hp: 5,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::FIRE,
+            move_speed: 3,
+            ..Default::default()
+        };
+        unit.set_type_name("PunchMech");
+        let idx = board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 4,
+            "Default-pilot mech takes 1 fire-tick damage");
+        assert!(board.units[idx].fire(),
+            "Fire flag persists for a non-Rockman mech");
     }
 }
