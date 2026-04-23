@@ -9,6 +9,7 @@ pub mod enemy;
 pub mod evaluate;
 pub mod solver;
 pub mod serde_bridge;
+pub mod turn_projection;
 
 /// Solve a turn given bridge JSON data.
 ///
@@ -181,6 +182,94 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     })
 }
 
+/// Project a plan (sequence of mech actions) forward one full turn:
+/// apply mech actions, simulate enemy phase, reset mechs for the next turn.
+///
+/// Input: bridge JSON (board state) + plan JSON (array of action objects,
+///   same shape as `score_plan`'s plan input).
+/// Output: JSON string with:
+///   - `board_json`: projected board in bridge-compatible format (can be
+///     passed directly to `solve` / `solve_top_k` for depth-2 beam).
+///   - `action_result`: aggregate outcome of the mech actions + enemy phase
+///     (enemies_killed, mechs_killed, buildings_lost, grid_damage, ...).
+///   - `spawn_points`: spawn tile list forwarded from the input board.
+///
+/// Option C behaviour: enemies on the projected board have NO queued targets
+/// (`queued_target_x = -1`). The returned `board_json` injects
+/// `eval_weights.pseudo_threat_eval = true` so that `evaluate()` runs the
+/// queueless-threat augmentation (1.5× next_turn_threat_penalty per alive
+/// enemy that can reach a building) when the projected board is re-evaluated
+/// by a downstream solve call.
+#[pyfunction]
+fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
+    use crate::turn_projection::{project_plan as tp_project_plan, board_to_json};
+    use crate::solver::MechAction;
+    use crate::weapons::wid_from_str;
+
+    py.allow_threads(|| {
+        let (board, spawn_points, _danger, _weights, _disabled_mask, _overlay_entries) =
+            serde_bridge::board_from_json(bridge_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+
+        let overlay_pairs: Vec<(weapons::WId, weapons::PartialWeaponDef)> =
+            _overlay_entries.iter().map(|e| (e.wid, e.patch.clone())).collect();
+        let overlay_table = weapons::build_overlay_table(&overlay_pairs);
+        let weapons_table: &weapons::WeaponTable = match &overlay_table {
+            Some(t) => &**t,
+            None => &weapons::WEAPONS,
+        };
+
+        #[derive(serde::Deserialize)]
+        struct PlanAction {
+            mech_uid: u16,
+            #[serde(default)]
+            mech_type: String,
+            move_to: [u8; 2],
+            weapon_id: String,
+            target: [u8; 2],
+        }
+        let raw_plan: Vec<PlanAction> = serde_json::from_str(plan_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(
+                format!("plan parse: {}", e)))?;
+
+        let actions: Vec<MechAction> = raw_plan.iter().map(|a| MechAction {
+            mech_uid: a.mech_uid,
+            mech_type: a.mech_type.clone(),
+            move_to: (a.move_to[0], a.move_to[1]),
+            weapon: wid_from_str(&a.weapon_id),
+            target: (a.target[0], a.target[1]),
+            description: String::new(),
+        }).collect();
+
+        let (projected, result) = tp_project_plan(&board, &actions, &spawn_points, weapons_table);
+
+        let proj_board_json = board_to_json(&projected, &spawn_points);
+
+        // Aggregate spawning_tiles forward (same as input)
+        let spawn_json: Vec<serde_json::Value> = spawn_points.iter()
+            .map(|&(x, y)| serde_json::json!([x, y]))
+            .collect();
+
+        let out = serde_json::json!({
+            "board_json": proj_board_json,
+            "spawn_points": spawn_json,
+            "action_result": {
+                "enemies_killed": result.enemies_killed,
+                "mechs_killed": result.mechs_killed,
+                "buildings_lost": result.buildings_lost,
+                "buildings_damaged": result.buildings_damaged,
+                "grid_damage": result.grid_damage,
+                "enemy_damage_dealt": result.enemy_damage_dealt,
+                "mech_damage_taken": result.mech_damage_taken,
+                "spawns_blocked": result.spawns_blocked,
+                "pods_collected": result.pods_collected,
+            },
+            "projected_turn": projected.current_turn,
+        });
+        Ok(out.to_string())
+    })
+}
+
 /// Top-K solve: returns up to `k` plans sorted by raw score descending.
 ///
 /// Feeds the depth-2+ beam search — each beam level needs ranked candidates
@@ -246,6 +335,7 @@ fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(solve, m)?)?;
     m.add_function(wrap_pyfunction!(solve_top_k, m)?)?;
     m.add_function(wrap_pyfunction!(score_plan, m)?)?;
+    m.add_function(wrap_pyfunction!(project_plan, m)?)?;
     m.add_function(wrap_pyfunction!(simulator_version, m)?)?;
     Ok(())
 }

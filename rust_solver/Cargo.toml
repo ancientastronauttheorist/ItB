@@ -28,6 +28,10 @@ glob = "0.3"
 name = "regression"
 path = "tests/regression.rs"
 
+[[test]]
+name = "eval_turn_projection"
+path = "tests/eval_turn_projection.rs"
+
 [profile.release]
 opt-level = 3
 lto = "fat"
