@@ -1324,10 +1324,26 @@ Mission.BaseUpdate = function(self)
     end
 end
 
--- NextTurn: dump state on each turn change
+-- NextTurn: dump state on each turn change.
+--
+-- Defensive re-activation: when our bridge END_TURN took the SetActive(false)
+-- fallback path (Game:EndTurn() unavailable), the engine's turn-start lifecycle
+-- may not re-activate pawns on the next player phase because our manual
+-- SetActive(false) was out of band. Without this, auto_turn's poller sees
+-- phase=combat_player + active_mechs=0 forever and the whole player turn is
+-- skipped, bleeding grid power.
 Mission.NextTurn = function(self)
     _orig_NextTurn(self)
     _ITB_CURRENT_MISSION = self
+    pcall(function()
+        if Game and Game:GetTeamTurn() == TEAM_PLAYER then
+            local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+            for _, mid in ipairs(mech_ids) do
+                local m = Board:GetPawn(mid)
+                if m and not m:IsDead() then m:SetActive(true) end
+            end
+        end
+    end)
     pcall(dump_state)
     log_bridge("TURN " .. (Game and Game:GetTurnCount() or "?") .. " team=" .. (Game and Game:GetTeamTurn() or "?"))
 end

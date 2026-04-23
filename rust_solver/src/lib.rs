@@ -181,9 +181,71 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     })
 }
 
+/// Top-K solve: returns up to `k` plans sorted by raw score descending.
+///
+/// Feeds the depth-2+ beam search — each beam level needs ranked candidates
+/// to expand. Unlike `solve`, this does NOT apply the two-stage clean-plan
+/// filter: the caller wants top-K by raw score, and swapping a lower-score
+/// clean plan into slot [0] would violate the sorted-desc contract.
+///
+/// Output: JSON array of solution objects (same per-entry shape as `solve`).
+/// When fewer than `k` unique plans exist, the array is shorter.
+#[pyfunction]
+fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> PyResult<String> {
+    py.allow_threads(|| {
+        let (board, spawn_points, _danger_tiles, weights, disabled_mask, overlay_entries) =
+            serde_bridge::board_from_json(json_input)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+
+        let overlay_pairs: Vec<(weapons::WId, weapons::PartialWeaponDef)> =
+            overlay_entries.iter()
+                .map(|e| (e.wid, e.patch.clone()))
+                .collect();
+        let overlay_table = weapons::build_overlay_table(&overlay_pairs);
+        let weapons_table: &weapons::WeaponTable = match &overlay_table {
+            Some(t) => &**t,
+            None => &weapons::WEAPONS,
+        };
+
+        let solutions = solver::solve_turn_top_k(
+            &board,
+            &spawn_points,
+            time_limit,
+            99999,
+            &weights,
+            disabled_mask,
+            weapons_table,
+            k,
+        );
+
+        let json_items: Vec<String> = solutions.iter()
+            .map(|sol| serde_bridge::solution_to_json(sol, &overlay_entries))
+            .collect();
+        // Each solution_to_json is a JSON object; concatenate into an array.
+        Ok(format!("[{}]", json_items.join(",")))
+    })
+}
+
+/// Simulator semantic version. Must be kept in lockstep with
+/// Python's ``src/solver/verify.py::SIMULATOR_VERSION``. Bump when
+/// simulator behavior changes in a way that invalidates pre-bump
+/// predictions (e.g., Storm Generator implemented, Spartan Shield
+/// fixed, PushDir::Flip semantics changed). A mismatch between the
+/// loaded wheel's value and the Python constant indicates a stale
+/// wheel after a rebuild — ``cmd_solve`` rejects it with a clear
+/// error so we never run new Python bindings against old Rust code.
+pub const SIMULATOR_VERSION: u32 = 2;
+
+#[pyfunction]
+fn simulator_version() -> u32 {
+    SIMULATOR_VERSION
+}
+
 #[pymodule]
 fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(solve, m)?)?;
+    m.add_function(wrap_pyfunction!(solve_top_k, m)?)?;
     m.add_function(wrap_pyfunction!(score_plan, m)?)?;
+    m.add_function(wrap_pyfunction!(simulator_version, m)?)?;
     Ok(())
 }
