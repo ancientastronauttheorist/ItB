@@ -57,7 +57,26 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   - Pilot_Repairman (Harold Schmidt): Repair pushes all 4 adjacent tiles
 # Any board with one of these pilots can now produce a different predicted
 # state than v2. Pre-v3 rows archived to failure_db_snapshot_sim_v2.jsonl.
-SIMULATOR_VERSION = 3
+#
+# v4 (2026-04-23, Rift Walkers simulator pass):
+#   - Ranged_Rocket places smoke on the tile directly behind the shooter
+#     (new SMOKE_BEHIND_SHOOTER weapon flag).
+#   - Jet_BombDrop (Aerial Bombs) places smoke on transit tile(s), not
+#     the landing tile.
+#   - Sim now enforces Jet_BombDrop landing-tile legality (mountain or
+#     occupied landing = target rejected at enumeration time). Behavior
+#     was correct in production via Board::is_blocked; debug_assert added
+#     to guard against regressions.
+#   - effectively_flying() = flying && !frozen is now used in
+#     apply_damage_core, apply_throw, and apply_push deadly-terrain checks:
+#     frozen flying Vek pushed/thrown into water drown (they were
+#     previously predicted to survive).
+#   - Massive trait's drown-immunity is now correctly scoped to Water/Lava
+#     only — Massive units die in chasms (Seismic/Cataclysm/push) and from
+#     lethal Tidal Wave. Previously apply_push/apply_throw killed Massive
+#     units on ALL deadly ground (over-killing in Water/Lava).
+# Pre-v4 rows archived to failure_db_snapshot_sim_v3.jsonl.
+SIMULATOR_VERSION = 4
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
