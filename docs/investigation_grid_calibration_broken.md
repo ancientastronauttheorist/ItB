@@ -1,114 +1,109 @@
-# Investigation: grid_to_mcp broken for current display setup
+# grid_to_mcp calibration broken — ROOT CAUSE FOUND (2026-04-23)
 
-## Symptom
+## TL;DR
 
-2026-04-23 live play session on a Pinnacle Frozen Plains mission:
-every tile-click missed. `game_loop.py click_action <i>` dispatched
-via `computer_batch` → `verify_action` returns `desync` with
-category `click_miss` every time. `cmd_solve --beam 2` plan itself
-was sane (score 121k, 3 sensible actions); the clicks just didn't
-land on the intended tiles.
+Calibration in `src/control/executor.py::grid_to_mcp` was wrong from the
+start. 2026-04-07's "calibration" was off by **Y step 26% too large
+(34.57 vs 27.5) and Y origin ~187 px high**. `auto_turn` (Lua bridge,
+no MCP clicks) masked the bug for 12 days. First real use of
+`click_action` on 2026-04-11 failed 50% immediately and was silently
+abandoned for `auto_turn`.
 
-## Evidence
+Fixed in PR #7 follow-up commit.
 
-### The coord systems don't agree
+## The fix
 
-- `python3 tile_hover.py F5` returns `(755, 261)` — this matches
-  `src/control/executor.py::grid_to_mcp(3, 2)` which produces
-  `(755, 261)` via:
+Three code changes to `src/control/executor.py`:
 
-  ```
-  ox = win.x + 494 * sx    # win.x = 215, sx = 1.0
-  oy = win.y + 56 * sy
-  step_x = 46.21 * sx
-  step_y = 34.57 * sy
-  ```
+### 1. Grid origin + step constants
 
-- `mouse_move` to image-pixel `(755, 261)` lands on a **Ground Tile
-  tooltip** — not F5 (which should have the Jet Mech).
-- `mouse_move` to `(740, 413)` (from `grid_reference.json`'s formula)
-  lands on a **Water Tile tooltip** — correct terrain for F5 (flying
-  mech over water), but clicking doesn't select the mech.
-- `mouse_move` to `(690, 660)` (grid_reference's claimed A1 origin)
-  lands OUTSIDE the board — tile tooltip is empty.
+```
+_H8_WIN_REL_X:  494.0 → 475.0
+_H8_WIN_REL_Y:   56.0 → 243.0
+_STEP_X:        46.21 → 50.0
+_STEP_Y:        34.57 → 27.5
+```
 
-### The window hasn't moved
+These reproduce `data/grid_reference.json`'s measured corners exactly
+at window (215, 32). Empirically verified by hovering at the new
+`grid_to_mcp(F5) = (740, 412)` and seeing the game's "Water Tile"
+tooltip — correct terrain for F5 under a flying mech.
 
-Quartz reports window at `(215, 32, 1280, 748)` consistently across
-the session.
+Derivation (from grid_reference.json corners):
+- `H8_WIN_REL = (690-215, 275-32) = (475, 243)`
+- `step_x = (H1_x - H8_x)/7 = 50.0`
+- `step_y = (A1_y - H8_y)/14 = (660-275)/14 = 27.5`
 
-### Non-tile clicks work
+### 2. Mech-select sprite offset
 
-`mouse_move` to image-pixel `(280, 122)` correctly hovers the End
-Turn button (visible white-border highlight). Per CLAUDE.md, End Turn
-is at window-relative `(95, 78)` ⇒ logical `(310, 110)`. That gives
-an image-to-logical mapping of `(280/310, 122/110) = (0.903, 1.109)`
-— non-uniform.
+`plan_single_mech` now clicks the mech's **sprite position** (tile
+center - 150 px in Y), not the tile center. For flying mechs over
+water, clicking the tile hits the water tile but not the mech
+hovering above it. The sprite is ~150 px above the tile center and is
+visually always on the mech's body. Empirically confirmed:
+`(740, 412)` click highlighted the F5 water tile but did not select
+the JetMech; `(740, 262)` click selected the JetMech.
 
-### Two different formulas in the repo disagree
+### 3. Weapon-slot UI offsets
 
-- `executor.py::grid_to_mcp` — logical-coord formula calibrated to
-  a 1280×748 window
-- `data/grid_reference.json` — image-pixel formula with origin
-  `(1, A) = (690, 660)`, `row_step = (-50, -27.5)`, `col_step =
-  (50, -27.5)`
+`_UI_WEAPON_SLOT_1 = (191, 528) → (181, 553)`
+`_UI_WEAPON_SLOT_2 = (255, 528) → (245, 553)`
+`_UI_REPAIR_BUTTON = (111, 528) → (105, 553)`
 
-Neither matches the actual on-screen tile positions this session.
+The old Y (528) was off by 25 px. Empirically verified weapon icon
+center is at image (396, 585) for this squad; clicking it armed
+Aerial Bombs and showed the weapon tooltip. The (181, 553)
+window-relative offset + window (215, 32) = (396, 585).
 
-## Corpus sweep of when this might have broken
+## Residual issue: target-tile clicks sometimes miss due to sprite overlap
 
-Not done as part of this investigation. Candidates:
+**Not fixed in this PR.** When a dash weapon targets a tile that sits
+visually beneath a large building sprite, the click's pixel hit-test
+resolves to the BUILDING rather than the tile underneath. Example
+this session: JetMech dash targeting E4 at (740, 468) — E4 is empty
+ground per bridge state, but the F7 / F6 building column renders a
+sprite that visually overlaps E4. Clicking (740, 468) shows
+"Civilian Building" tooltip and cancels the armed weapon.
 
-1. **Display change** — main display logical resolution is
-   `1680×1050` now; previous calibration may have assumed a
-   different resolution.
-2. **Screenshot scale change** — the MCP tool reports coords in
-   `image_pixels`. Observed screenshot dimensions this session are
-   ~`1389×867`, giving an image-to-logical ratio of ~`0.827`. If
-   prior sessions had `image == logical` (no compositor
-   downscaling), the formulas would have worked as-is.
-3. **ItB version / window chrome change** — unlikely (Steam version
-   string in `grid_reference.json` matches; 3-12-2024).
+This is a known limitation of isometric pixel-based click testing.
+Possible fixes:
+- **Click offset per tile based on surrounding buildings** — expensive
+  to compute, brittle
+- **Target alternate tile in the same dash path** — Aerial Bombs
+  tracks from start to end; any valid intermediate also works
+- **Use a "click nearest valid orange highlight" strategy** — requires
+  OCR / color detection on the active screen
+- **Fall back to a different weapon/plan if target is visually
+  occluded** — the solver doesn't know about sprite overlap
 
-## Proposed fix (next session)
+Safe for follow-up. The core calibration fix unblocks the happy path
+(mech on clear terrain, target on clear terrain).
 
-Write a dedicated calibration tool `scripts/calibrate_grid.py` that:
+## Empirical verification checklist
 
-1. Takes a fresh screenshot
-2. Uses `mouse_move` + `zoom` at a known UI anchor (End Turn
-   button) to confirm the image-to-screen coord mapping is 1:1
-3. For each of 4 corner tiles (A1, A8, H1, H8), does a binary
-   search of hover positions until the correct tile-tooltip fires
-4. Fits a single affine transform `image_pixel = f(save_x, save_y)`
-   from the 4 corners
-5. Emits updated calibration constants to write back to
-   `executor.py` (and/or deprecate `data/grid_reference.json`)
+Once this fix is merged, the user should verify in a live session:
 
-This replaces both the logical-coord formula and the old
-image-pixel formula with **measured coordinates for the current
-setup**.
+1. `python3 tile_hover.py F5` emits `(740, 412)` at window (215, 32)
+2. `mouse_move` to `(740, 412)` shows the expected F5 terrain tooltip
+3. `mouse_move` to `(740, 262)` shows the Jet Mech's tooltip or
+   selects the mech on click
+4. `game_loop.py click_action 0` emits sprite-offset selects, correct
+   weapon coord, correct target tile
+5. At least ONE complete dispatch (select → arm → click target) on a
+   board where the target is NOT occluded by a building sprite
+   completes without `click_miss` in `verify_action`
 
-Gate: the calibration needs to be re-run whenever the display or
-MCP screenshot scale changes. Add a runtime sanity check to
-`cmd_solve` (or `auto_turn`) that hovers a known tile during
-initialization and refuses to proceed if the tooltip is wrong.
+## Git archaeology notes (from sibling agent)
 
-## State of the run when giving up
+- 2026-04-07 `9e998be`: the "calibration" commit that introduced the
+  wrong constants. Corner-hover was verified for CURSOR position
+  but not for MECH SELECTION — the two are not equivalent under an
+  incorrect formula.
+- 2026-04-10 `a9d567e`: MCP click rewrite, `click_action` introduced
+  with the broken constants
+- 2026-04-11: first live use, 50% `click_miss`, silently abandoned
+- 2026-04-12 onward: all runs used `auto_turn` (Lua bridge) → bug
+  never re-exercised until 2026-04-23
 
-- `solver/beam-cmd-integration` PR #5 has merged (beam flag
-  available via `--beam {0,1,2}`)
-- Live run: Pinnacle Robotics → Frozen Plains, Turn 1, combat_player
-- No mech actions actually executed this turn
-- Three bonus objectives visible (Kill 7, Protect Coal Plant,
-  Protect Time Pod)
-- Game window still open; Jet/Arti/Science mechs at deploy positions
-  F5 / C5 / G6; JetMech has Aerial Bombs ready
-
-Next session: close the game (or abandon this run), fix the
-calibration, then re-attempt a fresh run.
-
-## Rollback note
-
-No code change in this investigation — just this doc. If future
-readers see similar `click_miss` behavior, reopen and read this
-first.
+No code changes to `grid_to_mcp` at any point after `9e998be`. The
+breakage was always latent, not a regression.
