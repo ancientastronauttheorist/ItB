@@ -1148,9 +1148,14 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
     let (dx, dy) = DIRS[dir];
 
-    // Find first hit
+    // Find first hit. Mountains stop the projectile AND take 1 damage
+    // (2 HP → damaged → rubble), mirroring sim_laser's beam-hits-mountain
+    // behavior. Without the damage call, Mirror Shot's backward arm
+    // mispredicted "mountain blocks free" and we under-counted building
+    // destruction when a bumped unit or pushed tile cascade followed.
     let mut hit_x: i8 = -1;
     let mut hit_y: i8 = -1;
+    let mut mountain_hit: Option<(u8, u8)> = None;
     for i in 1..8i8 {
         let nx = ax as i8 + dx * i;
         let ny = ay as i8 + dy * i;
@@ -1159,7 +1164,10 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         let nyu = ny as u8;
 
         let tile = board.tile(nxu, nyu);
-        if tile.terrain == Terrain::Mountain { break; }
+        if tile.terrain == Terrain::Mountain {
+            mountain_hit = Some((nxu, nyu));
+            break;
+        }
         if tile.is_building() && !wdef.phase() {
             hit_x = nx; hit_y = ny; break;
         }
@@ -1178,6 +1186,9 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
             PushDir::Backward => apply_push(board, hx, hy, opposite_dir(dir), result),
             _ => {}
         }
+    } else if let Some((mx, my)) = mountain_hit {
+        // Projectile struck a mountain with no prior target — damage it.
+        apply_damage(board, mx, my, wdef.damage, result, DamageSource::Weapon);
     }
 
     // Mirror shot (aoe_behind): also fire backward
@@ -1192,7 +1203,13 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
             let nyu = ny as u8;
 
             let tile = board.tile(nxu, nyu);
-            if tile.terrain == Terrain::Mountain { break; }
+            if tile.terrain == Terrain::Mountain {
+                // Backward projectile stops at a mountain but damages it
+                // (Janus Cannon / Mirror Shot rubbleizes mountains behind
+                // the shooter, matching forward-projectile behavior).
+                apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
+                break;
+            }
             if tile.is_building() {
                 apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
                 break;
@@ -3526,5 +3543,89 @@ mod tests {
         assert_eq!(board.units[idx].y, 2);
         assert_eq!(board.units[idx].hp, 2);
         assert_eq!(board.tile(3, 4).building_hp, 0);
+    }
+
+    // ── Brute_Mirrorshot (Janus Cannon) ─────────────────────────────────────
+    // Mirror Shot fires two projectiles in opposite directions. Prior bug:
+    // the backward arm stopped at a mountain without damaging it, and the
+    // forward arm had the same gap. Reproduces the failure_db signature from
+    // snapshots/grid_drop_20260421_135801_843_t02_a1 — attacker at (1,6),
+    // target (2,6), mountain at (0,6) left sim at hp=2 while the game
+    // rubble-tracked it at hp=1.
+
+    #[test]
+    fn test_mirrorshot_backward_arm_damages_mountain() {
+        // Attacker at (1,6) shoots south toward (2,6). A ground enemy at
+        // (2,6) absorbs the forward projectile. Backward arm travels north
+        // from (1,6) and hits the mountain at (0,6), which must take 1
+        // damage (2 HP → 1 HP), matching the game's behavior.
+        let mut board = make_test_board();
+        board.tile_mut(0, 6).terrain = Terrain::Mountain;
+        board.tile_mut(0, 6).building_hp = 2;
+
+        let mech_idx = add_mech(&mut board, 0, 1, 6, 3, WId::BruteMirrorshot);
+        // Target for forward arm so the mirror's backward fire is the only
+        // thing touching (0,6) — isolates the mountain-damage fix.
+        let target_idx = add_enemy(&mut board, 1, 2, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteMirrorshot, 2, 6);
+
+        // Backward arm damaged the mountain: hp 2 → 1, still Mountain
+        // terrain (rubble conversion only happens at hp=0).
+        assert_eq!(
+            board.tile(0, 6).building_hp, 1,
+            "Mirror Shot backward arm should damage mountain at (0,6) by 1"
+        );
+        assert_eq!(board.tile(0, 6).terrain, Terrain::Mountain);
+        // Forward arm still hit the enemy as expected.
+        assert_eq!(board.units[target_idx].hp, 2);
+    }
+
+    #[test]
+    fn test_mirrorshot_forward_arm_damages_mountain_when_no_target() {
+        // If the forward path hits nothing but a mountain (no unit or
+        // building in the line of fire), the projectile still damages the
+        // mountain. Previously this was a silent miss — the forward loop
+        // broke on mountain without damage, so weapons like Tank Cannon
+        // shooting into an empty corridor that terminated in a mountain
+        // also mispredicted.
+        let mut board = make_test_board();
+        board.tile_mut(1, 5).terrain = Terrain::Mountain;
+        board.tile_mut(1, 5).building_hp = 2;
+
+        let mech_idx = add_mech(&mut board, 0, 1, 0, 3, WId::BruteMirrorshot);
+        // No units between shooter and mountain, and no mountain in the
+        // backward direction — isolates forward-arm mountain damage.
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteMirrorshot, 1, 5);
+
+        assert_eq!(
+            board.tile(1, 5).building_hp, 1,
+            "Mirror Shot forward arm should damage mountain at end of line"
+        );
+        assert_eq!(board.tile(1, 5).terrain, Terrain::Mountain);
+    }
+
+    #[test]
+    fn test_mirrorshot_backward_arm_rubbleizes_damaged_mountain() {
+        // A mountain already at hp=1 (damaged) should be converted to
+        // Rubble when the backward arm hits it. Reproduces the second-shot
+        // scenario: Mirror Shot first run drops mountain 2→1, the next
+        // turn's Mirror Shot should finish it off.
+        let mut board = make_test_board();
+        board.tile_mut(0, 6).terrain = Terrain::Mountain;
+        board.tile_mut(0, 6).building_hp = 1;
+
+        let mech_idx = add_mech(&mut board, 0, 1, 6, 3, WId::BruteMirrorshot);
+        // Forward target to absorb the forward projectile.
+        add_enemy(&mut board, 1, 2, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteMirrorshot, 2, 6);
+
+        // Mountain goes from hp=1 → hp=0 → Rubble terrain.
+        assert_eq!(board.tile(0, 6).building_hp, 0);
+        assert_eq!(
+            board.tile(0, 6).terrain, Terrain::Rubble,
+            "Mountain at hp=1 hit by Mirror Shot backward arm should become Rubble"
+        );
     }
 }

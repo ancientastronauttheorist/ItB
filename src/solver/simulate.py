@@ -743,7 +743,13 @@ def _sim_melee(board, attacker, wdef, tx, ty, attack_dir, result):
 
 
 def _sim_projectile(board, attacker, wdef, attack_dir, result):
-    """Simulate projectile weapon (fires in line, hits first obstacle)."""
+    """Simulate projectile weapon (fires in line, hits first obstacle).
+
+    Mountains stop the projectile but also take 1 damage (2 HP → damaged →
+    rubble), matching in-game behavior and the Rust simulator's sim_laser
+    pattern. Previously the loop broke on mountain without applying damage,
+    which under-counted terrain loss along Mirror Shot's backward arm.
+    """
     if attack_dir is None:
         return
 
@@ -752,12 +758,14 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
 
     # Find first hit
     hit_x, hit_y = -1, -1
+    mountain_hit = None
     for i in range(1, 8):
         nx, ny = ax + dx * i, ay + dy * i
         if not board.in_bounds(nx, ny):
             break
         tile = board.tile(nx, ny)
         if tile.terrain == "mountain":
+            mountain_hit = (nx, ny)
             break
         if tile.terrain == "building" and tile.building_hp > 0 and not wdef.phase:
             hit_x, hit_y = nx, ny
@@ -777,6 +785,9 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
             unit = board.unit_at(hit_x, hit_y)
             if unit:
                 pass  # TODO: acid status
+    elif mountain_hit is not None:
+        mx, my = mountain_hit
+        apply_damage(board, mx, my, wdef.damage, result)
 
     # Mirror shot: also fire backward
     if wdef.aoe_behind:
@@ -788,6 +799,9 @@ def _sim_projectile(board, attacker, wdef, attack_dir, result):
                 break
             tile = board.tile(nx, ny)
             if tile.terrain == "mountain":
+                # Backward arm damages the mountain it stops at (Janus
+                # Cannon rubbleizes mountains behind the shooter).
+                apply_damage(board, nx, ny, wdef.damage, result)
                 break
             if tile.terrain == "building" and tile.building_hp > 0:
                 apply_damage(board, nx, ny, wdef.damage, result)
