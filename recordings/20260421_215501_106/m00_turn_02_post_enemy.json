@@ -1,0 +1,115 @@
+{
+  "timestamp": "2026-04-22T11:19:49.279457",
+  "run_id": "20260421_215501_106",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "grid_power": 5,
+      "enemies_alive": 4,
+      "enemy_hp_total": 10,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 14,
+          "type": "Terraformer",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "hp": 4,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "ChargeMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RocketMech",
+          "hp": 3,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "grid_power": 5,
+      "enemies_alive": 2,
+      "enemy_hp_total": 5,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 14,
+          "type": "Terraformer",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "ChargeMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RocketMech",
+          "hp": 3,
+          "max_hp": 3
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "mech_hp_diff": [
+        {
+          "uid": 14,
+          "type": "Terraformer",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 0,
+          "type": "JudoMech",
+          "predicted_hp": 3,
+          "actual_hp": 4,
+          "diff": 1
+        },
+        {
+          "uid": 1,
+          "type": "ChargeMech",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "RocketMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

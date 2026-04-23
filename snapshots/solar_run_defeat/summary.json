@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-17T15:37:18.161309",
+  "label": "solar_run_defeat",
+  "turn": 3,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "JudoMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "DStrikeMech",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "GravMech",
+      "pos": [
+        3,
+        0
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab2",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Blobber1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 1
+    }
+  ]
+}

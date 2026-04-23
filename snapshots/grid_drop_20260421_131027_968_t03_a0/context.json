@@ -1,0 +1,28 @@
+{
+  "run_id": "20260421_131027_968",
+  "turn": 3,
+  "sub_action": "attack",
+  "action_index": 0,
+  "mech_uid": 1,
+  "weapon": "Ranged_Defensestrike",
+  "target": [
+    5,
+    4
+  ],
+  "grid_power_diff": {
+    "field": "grid_power",
+    "predicted": 4,
+    "actual": 5
+  },
+  "building_hp_diffs": [],
+  "failure_db_id": "20260421_131027_968_m00_t03_per_sub_action_desync_attack_a0",
+  "classification": {
+    "top_category": "damage_amount",
+    "categories": [
+      "damage_amount",
+      "grid_power"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

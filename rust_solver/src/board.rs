@@ -58,6 +58,38 @@ impl Tile {
 
 // ── Unit Flags ───────────────────────────────────────────────────────────────
 
+// ── Pilot Flags ──────────────────────────────────────────────────────────────
+//
+// Persistent combat-affecting pilot passives. Each bit maps to one pilot_id
+// the Lua bridge reports for mechs (enemies/neutrals have no bits set). Set
+// in `serde_bridge::board_from_json` via `pilot_flags_from_id`.
+//
+// Passives that are already reflected in bridge state (Bethany's starting
+// shield via `shield=true`, Abe's Armored via `armor=true`, Lily's +3 move
+// via the bridge's `move` field, Ariadne's +3 HP via `max_hp`) do NOT need
+// a bit here — only passives that change simulator predictions on a given
+// board do.
+bitflags! {
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+    pub struct PilotFlags: u8 {
+        /// Camila Vera (Pilot_Soldier) — Evasion: web + smoke immune.
+        /// Web branch: `apply_weapon_status` skips `set_web` on this unit.
+        /// Smoke branch: no-op today (the simulator does not currently
+        /// cancel mech attacks when the mech stands on a smoke tile), but
+        /// the flag is wired so any future fix to that base mechanic will
+        /// automatically honor Camila.
+        const SOLDIER   = 0b0000_0001;
+        /// Ariadne (Pilot_Rock) — Rockman: fire immune. The +3 HP half of
+        /// the passive is already folded into `max_hp` by the Python bridge's
+        /// `_compute_pilot_value` HP-boost heuristic, so only fire needs
+        /// a simulator hook.
+        const ROCK      = 0b0000_0010;
+        /// Harold Schmidt (Pilot_Repairman) — Frenzied Repair: the mech's
+        /// Repair action also pushes all four adjacent tiles outward.
+        const REPAIRMAN = 0b0000_0100;
+    }
+}
+
 bitflags! {
     #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
     pub struct UnitFlags: u16 {
@@ -143,6 +175,9 @@ pub struct Unit {
     /// only; enemies and neutrals stay at 0. Computed by Python's
     /// `_compute_pilot_value` from pilot_id + current max_hp.
     pub pilot_value: f32,
+    /// Combat-affecting pilot passives (see `PilotFlags` above). Empty
+    /// for enemies, neutrals, and mechs with no recognized pilot.
+    pub pilot_flags: PilotFlags,
 }
 
 impl Unit {
@@ -173,6 +208,21 @@ impl Unit {
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
     pub fn alive(&self) -> bool { self.hp > 0 }
+
+    // Pilot-passive accessors. Enemies and neutrals never have these bits,
+    // so there's no team check needed at call sites — a raw pilot_flags
+    // read is 0 for any non-piloted unit.
+    pub fn pilot_soldier(&self) -> bool { self.pilot_flags.contains(PilotFlags::SOLDIER) }
+    pub fn pilot_rock(&self) -> bool { self.pilot_flags.contains(PilotFlags::ROCK) }
+    pub fn pilot_repairman(&self) -> bool { self.pilot_flags.contains(PilotFlags::REPAIRMAN) }
+
+    /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and for
+    /// any player unit when the squad has Flame Shielding (checked at the
+    /// call site by passing `board.flame_shielding`). Keeping this on
+    /// `Unit` alone avoids threading `board` through every fire-apply
+    /// callsite — squad-wide Flame Shielding is handled separately at
+    /// each hook (`!(board.flame_shielding && u.is_player())`).
+    pub fn can_catch_fire(&self) -> bool { !self.pilot_rock() }
 
     /// Get pawn type name as string (from stored bytes).
     pub fn type_name_str(&self) -> &str {
@@ -459,9 +509,13 @@ mod tests {
 
     #[test]
     fn test_board_size() {
+        // Soft sanity bound: Board stays small enough that Clone is cheap.
+        // Pilot_flags (u8 + alignment) on 16 Units added ~40 bytes, still
+        // well under any hot-path concern — memcpy bandwidth on M-series
+        // is ~60GB/s, so 1.3kB copies are sub-nanosecond.
         let size = std::mem::size_of::<Board>();
         println!("Board size: {} bytes", size);
-        assert!(size <= 1200, "Board too large: {} bytes", size);
+        assert!(size <= 1280, "Board too large: {} bytes", size);
     }
 
     #[test]

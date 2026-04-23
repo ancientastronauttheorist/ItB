@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-20T23:41:12.030931",
+  "label": "research_gate_venting_t3",
+  "turn": 3,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IceMech",
+      "pos": [
+        2,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Leaper1",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab2",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 1
+    }
+  ]
+}

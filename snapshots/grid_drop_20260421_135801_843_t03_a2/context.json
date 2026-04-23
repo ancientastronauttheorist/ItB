@@ -1,0 +1,27 @@
+{
+  "run_id": "20260421_135801_843",
+  "turn": 3,
+  "sub_action": "attack",
+  "action_index": 2,
+  "mech_uid": 0,
+  "weapon": "Brute_Mirrorshot",
+  "target": [
+    2,
+    5
+  ],
+  "grid_power_diff": {
+    "field": "grid_power",
+    "predicted": 3,
+    "actual": 4
+  },
+  "building_hp_diffs": [],
+  "failure_db_id": "20260421_135801_843_m00_t03_per_sub_action_desync_attack_a2",
+  "classification": {
+    "top_category": "grid_power",
+    "categories": [
+      "grid_power"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

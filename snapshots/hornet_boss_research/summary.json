@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-21T14:45:50.756605",
+  "label": "hornet_boss_research",
+  "turn": 1,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "MirrorMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IceMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "HornetBoss",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 6
+    },
+    {
+      "type": "Scarab2",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

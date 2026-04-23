@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-22T14:38:42.294384",
+  "label": "timeline_lost_archive_island",
+  "turn": 3,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "MirrorMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "BeetleBoss",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 6
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet2",
+      "pos": [
+        1,
+        1
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

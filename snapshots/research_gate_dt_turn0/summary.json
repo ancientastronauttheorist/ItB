@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-04-21T02:00:52.188384",
+  "label": "research_gate_dt_turn0",
+  "turn": 3,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "GuardMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly2",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 2
+    }
+  ]
+}

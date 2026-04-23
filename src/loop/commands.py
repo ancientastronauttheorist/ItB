@@ -118,6 +118,17 @@ def _record_turn_state(session: RunSession, label: str, data: dict,
     _atomic_json_write(filepath, record)
 
 
+def _get_simulator_version() -> int:
+    """Return the simulator semantic version (bumps when sim behavior changes).
+
+    See src/solver/verify.py:SIMULATOR_VERSION for bump discipline. Stamped
+    on solve records and failure_db entries so the tuner can refuse to
+    mix pre-bump and post-bump corpora without explicit acknowledgment.
+    """
+    from src.solver.verify import SIMULATOR_VERSION
+    return SIMULATOR_VERSION
+
+
 def _get_solver_version() -> str:
     """Get solver version from Cargo.toml + git hash."""
     try:
@@ -531,6 +542,7 @@ def _record_post_enemy(session: RunSession, board: Board,
                 "solver_timed_out": solve_data.get("search_stats", {}).get("timed_out", False),
                 "weight_version": solve_data.get("weight_version", "unknown"),
                 "solver_version": _get_solver_version(),
+                "simulator_version": _get_simulator_version(),
                 "tags": list(session.tags),
             },
         )
@@ -951,11 +963,54 @@ def _infer_webb_egg_adjacency(units: list) -> None:
             neighbor["web_source_uid"] = egg.get("uid", 0)
 
 
+def _check_wheel_sim_version() -> dict | None:
+    """Return an error dict iff the installed Rust wheel's SIMULATOR_VERSION
+    disagrees with the Python constant. Returns None when OK or unchecked.
+
+    The Rust wheel exposes ``itb_solver.simulator_version()`` (a u32 const
+    baked at build time). A mismatch means the wheel wasn't rebuilt after
+    a simulator change — running Python code against stale Rust produces
+    silent prediction divergence. Fail loudly at cmd_solve entry.
+
+    If the function is missing on the wheel (older build without the
+    export), skip the check — the rebuild itself will add it.
+    """
+    from src.solver.verify import SIMULATOR_VERSION as PY_SIM_VERSION
+    try:
+        import itb_solver as _itb
+    except ImportError:
+        return None
+    sim_fn = getattr(_itb, "simulator_version", None)
+    if sim_fn is None:
+        return None
+    try:
+        rust_sim = int(sim_fn())
+    except Exception:
+        return None
+    if rust_sim != PY_SIM_VERSION:
+        return {
+            "error": "wheel_sim_version_mismatch",
+            "python_simulator_version": PY_SIM_VERSION,
+            "rust_wheel_simulator_version": rust_sim,
+            "hint": ("Rust wheel is out of sync with Python. Rebuild: "
+                     "cd rust_solver && maturin build --release && "
+                     "pip3 install --user --force-reinstall "
+                     "target/wheels/itb_solver-*.whl"),
+        }
+    return None
+
+
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
     """Run solver on current board, store solution in session.
 
     Returns the solution with actions and score.
     """
+    # Refuse to solve against a stale wheel after a Rust rebuild.
+    wheel_err = _check_wheel_sim_version()
+    if wheel_err is not None:
+        _print_result(wheel_err)
+        return wheel_err
+
     session = _load_session()
     logger = _get_logger(session)
 
@@ -1231,8 +1286,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0) -> dict:
                                remaining_spawns=rem_spawns,
                                weights=_breakdown_weights)
 
-    # Record solver output for replay/analysis (enriched format)
+    # Record solver output for replay/analysis (enriched format).
+    # schema_version stamps the shape of this record so future beam
+    # output (Task #10) can coexist with the current top-1 flat format.
+    # Readers must route through verify.predicted_states_from_solve_record
+    # rather than reaching into data.predicted_states directly.
+    from src.solver.verify import SOLVE_RECORD_SCHEMA_VERSION
     solve_data = {
+        "schema_version": SOLVE_RECORD_SCHEMA_VERSION,
+        "simulator_version": _get_simulator_version(),
         "score": solution.score,
         "actions": [{
             "mech_uid": a.mech_uid,
@@ -1537,7 +1599,11 @@ def cmd_verify_action(action_index: int) -> dict:
     a top_category and (optionally) a model_gap_known subcategory so Phase 4's
     tuner can filter pre-existing simulation gaps from tunable failures.
     """
-    from src.solver.verify import diff_states, classify_diff
+    from src.solver.verify import (
+        diff_states,
+        classify_diff,
+        predicted_states_from_solve_record,
+    )
 
     session = _load_session()
 
@@ -1586,7 +1652,7 @@ def cmd_verify_action(action_index: int) -> dict:
         _print_result(result)
         return result
 
-    predicted_states = solve_record.get("data", {}).get("predicted_states") or []
+    predicted_states = predicted_states_from_solve_record(solve_record)
     if action_index >= len(predicted_states):
         result = {
             "status": "ERROR",
@@ -1671,6 +1737,7 @@ def cmd_verify_action(action_index: int) -> dict:
             "model_gap": classification.get("model_gap", False),
             "weight_version": _get_weight_version(),
             "solver_version": _get_solver_version(),
+            "simulator_version": _get_simulator_version(),
             "tags": list(session.tags),
         },
     )
@@ -3558,6 +3625,7 @@ def _log_sub_action_desync(
             "model_gap": classification.get("model_gap", False),
             "weight_version": _get_weight_version(),
             "solver_version": _get_solver_version(),
+            "simulator_version": _get_simulator_version(),
             "tags": list(session.tags),
         },
     )
@@ -3700,7 +3768,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     grid_drop_investigations: list[dict] = []
     unknowns_flagged = read_result.get("unknowns") or {}
 
-    # Load predicted_states from the solve recording
+    # Load predicted_states from the solve recording via the schema-aware
+    # helper so future beam-format records (Task #10) route correctly.
+    from src.solver.verify import predicted_states_from_solve_record
     run_dir = _recording_dir(session)
     mi = session.mission_index
     solve_file = run_dir / f"m{mi:02d}_turn_{turn:02d}_solve.json"
@@ -3709,7 +3779,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         try:
             with open(solve_file) as f:
                 solve_record = json.load(f)
-            predicted_states = solve_record.get("data", {}).get("predicted_states", [])
+            predicted_states = predicted_states_from_solve_record(solve_record)
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -4687,7 +4757,8 @@ def cmd_validate(old_weights_path: str, new_weights_path: str,
 def cmd_tune(iterations: int = 100, min_boards: int = 50,
              time_limit: float = 5.0,
              since: str | None = None,
-             no_cutoff: bool = False) -> dict:
+             no_cutoff: bool = False,
+             accept_version_change: bool = False) -> dict:
     """Auto-tune solver weights by replaying recorded boards.
 
     Uses random search + coordinate refinement to find weight values
@@ -4696,6 +4767,13 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
     and validates against the current weights.
 
     Data gate: refuses to run with fewer than min_boards recordings.
+
+    Version gate: refuses to run if the failure corpus spans multiple
+    simulator_version values (pre-bump rows describe sim output the
+    current build no longer produces — tuning on them optimizes for a
+    ghost). Pass ``accept_version_change=True`` to override after
+    manually archiving the pre-bump corpus. See CLAUDE.md §Operational
+    Rules for the archival procedure.
 
     The failure corpus used for the penalty term honors the shared
     mining cutoff (``data/mining_cutoff.json``): pre-cutoff rows
@@ -4739,6 +4817,34 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
         load_failure_db, is_auto_fixable_by_tuning,
         filter_by_timestamp, load_failure_cutoff,
     )
+
+    # Version gate: tuning on a corpus that mixes pre-bump and post-bump
+    # simulator output produces weights optimized for a ghost build.
+    # Entries missing simulator_version are legacy rows from before the
+    # field existed; treat them as v1 (the first stamped version) — the
+    # gate fires naturally when SIMULATOR_VERSION bumps to 2+ without
+    # archival.
+    current_sim = _get_simulator_version()
+    all_rows_unfiltered = load_failure_db()
+    versions_in_corpus = {r.get("simulator_version", 1) for r in all_rows_unfiltered}
+    mixed = versions_in_corpus and versions_in_corpus != {current_sim}
+    if mixed and not accept_version_change:
+        result = {
+            "error": "corpus_version_mismatch",
+            "current_simulator_version": current_sim,
+            "corpus_versions": sorted(versions_in_corpus),
+            "hint": ("failure_db contains rows from a prior simulator "
+                     "version. Archive the old corpus "
+                     "(cp recordings/failure_db.jsonl "
+                     "recordings/failure_db_snapshot_sim_v<N>.jsonl) and "
+                     "start fresh, or rerun with "
+                     "--accept-version-change if mixing is intentional."),
+        }
+        print(f"\n  VERSION GATE: corpus spans simulator versions "
+              f"{sorted(versions_in_corpus)}, current is v{current_sim}. "
+              f"Refusing to tune without --accept-version-change.")
+        _print_result(result)
+        return result
     if no_cutoff:
         cutoff_applied: str | None = None
         all_rows = load_failure_db()

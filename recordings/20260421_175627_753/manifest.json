@@ -1,0 +1,16 @@
+{
+  "run_id": "20260421_175627_753",
+  "squad": "Balanced (Aegis+Jet+Rocket)",
+  "difficulty": 2,
+  "achievement_targets": [],
+  "tags": [
+    "random_squad",
+    "continuity_ralph"
+  ],
+  "solver_version": "rust-0.1.0-bfb81e7",
+  "weight_version": "v009",
+  "updated": "2026-04-21T17:56:27.773326",
+  "created": "2026-04-21T17:56:27.773341",
+  "missions": [],
+  "outcome": null
+}

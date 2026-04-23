@@ -21,6 +21,69 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+
+# Solve-record schema version. Bump when the shape of the ``data`` block
+# written by cmd_solve changes in a way readers must adapt to.
+#
+#   version 1 (current): flat top-1 plan. ``data.predicted_states`` holds
+#     a list of per-action snapshots for the single chosen plan.
+#   version 2 (reserved, beam lands in Task #10): ``data.beam`` carries
+#     top-K plans and per-depth projections; ``data.predicted_states``
+#     stays populated with the chosen plan's states for backward reads.
+#
+# Readers must route through ``predicted_states_from_solve_record`` so
+# the adapter can evolve centrally.
+SOLVE_RECORD_SCHEMA_VERSION = 1
+_KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
+
+
+# Simulator semantic version. Bump every time the Rust or Python simulator
+# changes behavior in a way that would make pre-bump predictions invalid
+# for post-bump corpus analysis. Examples that require a bump:
+#   - Storm Generator passive implemented (was silent)
+#   - Psion regen actually applied (was a no-op)
+#   - Spartan Shield damage + flip semantics fixed
+#   - Any PushDir::Flip change
+#   - Any change to simulate_enemy_attacks, apply_damage, apply_push paths
+# Weight-tuning changes do NOT require a bump; this is semantic, not scoring.
+#
+# The tuner and analysis tools pin their corpus to a simulator_version so
+# pre-bump failure_db rows don't contaminate post-bump optimization.
+# v3 (2026-04-23): pilot passives wired into the simulator
+#   - Pilot_Soldier (Camila Vera): web immunity at the apply_weapon_status /
+#     enemy web hooks
+#   - Pilot_Rock (Ariadne): fire immunity at every fire-apply site (weapon,
+#     tile catch on push/move/throw, enemy weapon fire) + fire-tick skip
+#   - Pilot_Repairman (Harold Schmidt): Repair pushes all 4 adjacent tiles
+# Any board with one of these pilots can now produce a different predicted
+# state than v2. Pre-v3 rows archived to failure_db_snapshot_sim_v2.jsonl.
+SIMULATOR_VERSION = 3
+
+
+def predicted_states_from_solve_record(record: dict) -> list:
+    """Return the per-action predicted_states list from a solve recording.
+
+    Handles both pre-versioning recordings (missing schema_version, treat
+    as v1) and current recordings (schema_version=1). Future beam-shape
+    records (v2) will also expose predicted_states for the chosen plan;
+    this helper is the single extension point.
+
+    Returns an empty list if the record is malformed or the schema is
+    unknown — callers should check length before indexing.
+    """
+    if not isinstance(record, dict):
+        return []
+    data = record.get("data") or {}
+    if not isinstance(data, dict):
+        return []
+    version = data.get("schema_version", 1)
+    if version not in _KNOWN_SOLVE_SCHEMA_VERSIONS:
+        # Unknown future version — return what's present so readers can
+        # at least attempt a diff, but they'll see a truncated list if
+        # the new shape moved predicted_states elsewhere.
+        return data.get("predicted_states") or []
+    return data.get("predicted_states") or []
+
 # Matches "(x,y)" with optional whitespace, e.g. "Killed Hornet at (3, 5)".
 _COORD_RE = re.compile(r"\(\s*(\d+)\s*,\s*(\d+)\s*\)")
 

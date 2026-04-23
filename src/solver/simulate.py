@@ -404,6 +404,34 @@ def apply_throw(board: Board, ax: int, ay: int, tx: int, ty: int,
         result.events.append(f"Threw {unit.type} ({tx},{ty})->({nx},{ny})")
 
 
+def _flip_queued_attack(board: Board, x: int, y: int) -> None:
+    """Flip the unit's queued attack direction 180° around its own position.
+
+    True Spartan Shield / Confusion Ray semantic: the bashed enemy stays
+    where it is but now aims at the mirrored tile. If the flipped target
+    is off-board, cancel the attack by setting queued_target_x=-1 (matches
+    the enemy-phase "no target" sentinel). Mirrors rust_solver/src/
+    simulate.rs::flip_queued_attack.
+    """
+    unit = next((u for u in board.units
+                 if u.x == x and u.y == y and u.hp > 0), None)
+    if unit is None:
+        return
+    if unit.queued_target_x < 0:
+        return
+    qtx, qty = unit.queued_target_x, unit.queued_target_y
+    if qtx == unit.x and qty == unit.y:
+        return
+    fx = 2 * unit.x - qtx
+    fy = 2 * unit.y - qty
+    if not (0 <= fx < 8 and 0 <= fy < 8):
+        unit.queued_target_x = -1
+        unit.queued_target_y = -1
+    else:
+        unit.queued_target_x = fx
+        unit.queued_target_y = fy
+
+
 def apply_push(board: Board, x: int, y: int, direction: int,
                result: ActionResult) -> None:
     """Push unit at (x, y) one tile in the given direction.
@@ -658,8 +686,12 @@ def _sim_melee(board, attacker, wdef, tx, ty, attack_dir, result):
         if wdef.push == "forward":
             apply_push(board, tx, ty, attack_dir, result)
         elif wdef.push == "flip" and attack_dir is not None:
-            # Flip reverses the unit's attack direction
-            apply_push(board, tx, ty, opposite_dir(attack_dir), result)
+            # Flip the target's QUEUED ATTACK direction 180° around its
+            # own position. This is the true Spartan Shield / Confusion
+            # Ray semantic — the bashed enemy stays put but now attacks
+            # the mirrored tile. Off-board → cancel attack (-1 sentinel).
+            # Mirrors rust_solver/src/simulate.rs::flip_queued_attack.
+            _flip_queued_attack(board, tx, ty)
         elif wdef.push == "backward":
             # 1-tile pull toward attacker (not Vice Fist — see "throw" below).
             # Used by projectile pull weapons (e.g. Pull Beam).

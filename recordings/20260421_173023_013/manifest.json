@@ -1,0 +1,15 @@
+{
+  "run_id": "20260421_173023_013",
+  "squad": "Random Balanced (Judo+Mirror+Rocket)",
+  "difficulty": 2,
+  "achievement_targets": [],
+  "tags": [
+    "random_squad"
+  ],
+  "solver_version": "rust-0.1.0-bfb81e7",
+  "weight_version": "v009",
+  "updated": "2026-04-21T17:30:23.030102",
+  "created": "2026-04-21T17:30:23.030113",
+  "missions": [],
+  "outcome": null
+}

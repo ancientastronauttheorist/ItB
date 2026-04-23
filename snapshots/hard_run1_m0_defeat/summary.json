@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-04-18T15:33:04.011982",
+  "label": "hard_run1_m0_defeat",
+  "turn": 4,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "JudoMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "GravMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        7,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

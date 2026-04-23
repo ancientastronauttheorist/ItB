@@ -1,9 +1,109 @@
 {
   "signatures": {
+    "damage_amount|Brute_Jetmech|attack": {
+      "count": 2,
+      "last_run_id": "20260421_211617_239",
+      "weapon_id": "Brute_Jetmech"
+    },
+    "damage_amount|Ranged_Rocket|attack": {
+      "count": 1,
+      "last_run_id": "20260421_173023_013",
+      "weapon_id": "Ranged_Rocket"
+    },
+    "damage_amount|ScorpionAtk1|attack": {
+      "count": 1,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "ScorpionAtk1"
+    },
+    "death|Brute_Grapple|attack": {
+      "count": 1,
+      "last_run_id": "20260422_171013_371",
+      "weapon_id": "Brute_Grapple"
+    },
+    "death|Brute_Jetmech|attack": {
+      "count": 2,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Brute_Jetmech"
+    },
     "death|Prime_ShieldBash|attack": {
       "count": 5,
       "last_run_id": "20260421_015818_989",
       "weapon_id": "Prime_ShieldBash"
+    },
+    "death|Science_Gravwell|attack": {
+      "count": 1,
+      "last_run_id": "20260421_211617_239",
+      "weapon_id": "Science_Gravwell"
+    },
+    "death|Science_Pullmech|attack": {
+      "count": 1,
+      "last_run_id": "20260421_135801_843",
+      "weapon_id": "Science_Pullmech"
+    },
+    "death|ScorpionAtk1|attack": {
+      "count": 1,
+      "last_run_id": "20260421_175627_753",
+      "weapon_id": "ScorpionAtk1"
+    },
+    "grid_power|Brute_Beetle|attack": {
+      "count": 1,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Brute_Beetle"
+    },
+    "grid_power|Brute_Jetmech|attack": {
+      "count": 1,
+      "last_run_id": "20260421_211617_239",
+      "weapon_id": "Brute_Jetmech"
+    },
+    "grid_power|Brute_Mirrorshot|attack": {
+      "count": 3,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Brute_Mirrorshot"
+    },
+    "grid_power|Brute_Tankmech|attack": {
+      "count": 1,
+      "last_run_id": "20260421_161809_372",
+      "weapon_id": "Brute_Tankmech"
+    },
+    "push_dir|Ranged_Defensestrike|attack": {
+      "count": 1,
+      "last_run_id": "20260421_121854_923",
+      "weapon_id": "Ranged_Defensestrike"
+    },
+    "push_dir|Ranged_Rockthrow|attack": {
+      "count": 1,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Ranged_Rockthrow"
+    },
+    "status|Prime_Shift|attack": {
+      "count": 2,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Prime_Shift"
+    },
+    "status|Ranged_Defensestrike|attack": {
+      "count": 2,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Ranged_Defensestrike"
+    },
+    "status|Ranged_Ice|attack": {
+      "count": 3,
+      "last_run_id": "20260421_183803_959",
+      "weapon_id": "Ranged_Ice"
+    },
+    "status|Ranged_Rocket|attack": {
+      "count": 1,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Ranged_Rocket"
+    },
+    "status|Science_Shield|attack": {
+      "count": 2,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "Science_Shield"
+    },
+    "status|_REPAIR|move": {
+      "count": 1,
+      "last_run_id": "20260421_215501_106",
+      "weapon_id": "_REPAIR"
     }
   },
   "version": 1

@@ -1,0 +1,27 @@
+{
+  "run_id": "20260421_161809_372",
+  "turn": 3,
+  "sub_action": "attack",
+  "action_index": 0,
+  "mech_uid": 0,
+  "weapon": "Unknown",
+  "target": [
+    255,
+    255
+  ],
+  "grid_power_diff": {
+    "field": "grid_power",
+    "predicted": 3,
+    "actual": 2
+  },
+  "building_hp_diffs": [],
+  "failure_db_id": "20260421_161809_372_m03_t03_per_sub_action_desync_attack_a0",
+  "classification": {
+    "top_category": "grid_power",
+    "categories": [
+      "grid_power"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

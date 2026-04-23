@@ -358,6 +358,10 @@ def main():
                         help="Disable the failure-corpus cutoff "
                              "entirely (count every row regardless "
                              "of age).")
+    p_tune.add_argument("--accept-version-change", action="store_true",
+                        help="Allow tuning when failure_db spans "
+                             "multiple simulator_version values. "
+                             "Only use after archiving the old corpus.")
 
     p_mission_end = sub.add_parser("mission_end",
                                    help="Record mission outcome (win/loss) on the active run")
@@ -457,7 +461,8 @@ def main():
     elif args.command == "tune":
         cmd_tune(iterations=args.iterations, min_boards=args.min_boards,
                  time_limit=args.time_limit,
-                 since=args.since, no_cutoff=args.no_cutoff)
+                 since=args.since, no_cutoff=args.no_cutoff,
+                 accept_version_change=args.accept_version_change)
     elif args.command == "mission_end":
         cmd_mission_end(args.outcome, notes=args.notes, no_commit=args.no_commit)
     elif args.command == "annotate":

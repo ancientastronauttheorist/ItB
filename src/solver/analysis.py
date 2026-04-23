@@ -430,6 +430,7 @@ def append_to_failure_db(
                 "details": trigger["details"],
                 "context": context,
                 "solver_version": context.get("solver_version", "unknown"),
+                "simulator_version": context.get("simulator_version", 1),
                 "replay_file": f"recordings/{run_id}/m{mission_index:02d}_turn_{turn:02d}_board.json",
             }
             # Optional per-action fields (Phase 2 verify loop).

@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-04-20T23:00:05.307734",
+  "label": "run_defeat_archive_m01",
+  "turn": 3,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        1,
+        1
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Leaper2",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    }
+  ]
+}
