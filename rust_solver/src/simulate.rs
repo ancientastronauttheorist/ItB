@@ -988,7 +988,7 @@ pub fn simulate_weapon_with(
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
-        WeaponType::Artillery => sim_artillery(board, wdef, target_x, target_y, attack_dir, &mut result),
+        WeaponType::Artillery => sim_artillery(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::SelfAoe => sim_self_aoe(board, ax, ay, wdef, &mut result),
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
         WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
@@ -1174,7 +1174,7 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
 // ── Artillery ────────────────────────────────────────────────────────────────
 
-fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     // Center damage
     if wdef.aoe_center() {
         apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
@@ -1182,6 +1182,24 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir
 
     // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
     apply_weapon_status(board, tx, ty, wdef);
+
+    // Smoke-behind-shooter: Rocket Artillery (Ranged_Rocket) places a single
+    // smoke tile one step opposite the shot direction from the shooter's
+    // position. If behind-tile is off-board (shooter on edge), skip silently —
+    // not an error, just no smoke placed. Smoke replaces fire on the tile
+    // (mirrors standard smoke semantics in apply_weapon_status).
+    if wdef.smoke_behind_shooter() {
+        if let Some(dir) = attack_dir {
+            let (ddx, ddy) = DIRS[dir];
+            let bx = ax as i8 - ddx;
+            let by = ay as i8 - ddy;
+            if in_bounds(bx, by) {
+                let tile = board.tile_mut(bx as u8, by as u8);
+                tile.set_on_fire(false); // smoke replaces fire
+                tile.set_smoke(true);
+            }
+        }
+    }
 
     // Center-tile push (mirrors projectile: status BEFORE push so the unit
     // picks up fire/smoke on the source tile before moving). Without this,
@@ -1715,6 +1733,66 @@ mod tests {
         let mut result = ActionResult::default();
         apply_push(&mut board, 3, 3, 0, &mut result);
         assert!(board.units[idx].fire(), "Unit pushed onto fire tile should catch fire");
+    }
+
+    // ── Ranged_Rocket smoke-behind-shooter ──────────────────────────────────
+    // Tooltip: "Fires a pushing artillery and creates Smoke behind the shooter."
+    // Smoke lands one tile opposite the shot direction from the attacker; NOT
+    // on the target tile. Off-board behind-tile = no-op (shooter at edge).
+    #[test]
+    fn test_sim_artillery_rocket_smokes_behind_shooter() {
+        // Rocket Mech at (3,3) fires east at (3,6). DIRS[0] = (0,1) so east is
+        // dir=0; behind-shooter is (3,3) - (0,1) = (3,2). Target takes 2 dmg
+        // and is pushed east to (3,7). Smoke lands at (3,2).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedRocket);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 6);
+
+        assert_eq!(board.units[enemy_idx].hp, 1, "target took 2 damage (3 → 1)");
+        assert_eq!(
+            (board.units[enemy_idx].x, board.units[enemy_idx].y),
+            (3, 7),
+            "target pushed east (forward = attack dir)"
+        );
+        assert!(
+            board.tile(3, 2).smoke(),
+            "smoke placed one tile west of shooter (behind the attack direction)"
+        );
+        assert!(
+            !board.tile(3, 6).smoke(),
+            "target tile must NOT be smoked — Ranged_Rocket smokes behind the shooter, not the target"
+        );
+    }
+
+    #[test]
+    fn test_sim_artillery_rocket_no_smoke_when_shooter_on_edge() {
+        // Rocket Mech at (3,0) (west edge, y=0) fires east. Behind-shooter
+        // would be (3,-1) which is off-board — smoke must be skipped silently
+        // (no panic, no phantom smoke).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 0, 3, WId::RangedRocket);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 3);
+
+        // Target still takes damage + push.
+        assert_eq!(board.units[enemy_idx].hp, 1, "target took 2 damage even on edge shot");
+        assert_eq!(
+            (board.units[enemy_idx].x, board.units[enemy_idx].y),
+            (3, 4),
+            "target pushed east"
+        );
+        // No smoke anywhere on row 3 — especially not at shooter's own tile,
+        // and no spurious smoke on target or intermediate tiles.
+        for y in 0..8u8 {
+            assert!(
+                !board.tile(3, y).smoke(),
+                "edge-case shot produced phantom smoke at (3,{})",
+                y
+            );
+        }
     }
 
     #[test]

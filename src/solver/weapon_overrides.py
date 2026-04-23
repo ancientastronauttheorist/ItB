@@ -116,6 +116,7 @@ _FLAG_FIELD_MAP = {
     "AOE_BEHIND": "aoe_behind", "AOE_PERP": "aoe_perpendicular",
     "CHAIN": "chain", "CHARGE": "charge",
     "FLYING_CHARGE": "flying_charge", "PUSH_SELF": "push_self",
+    "SMOKE_BEHIND_SHOOTER": "smoke_behind_shooter",
 }
 
 

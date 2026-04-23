@@ -820,6 +820,16 @@ def _sim_artillery(board, attacker, wdef, tx, ty, attack_dir, result):
         elif wdef.push == "backward":
             apply_push(board, tx, ty, opposite_dir(attack_dir), result)
 
+    # Smoke-behind-shooter: Rocket Artillery (Ranged_Rocket) drops a smoke tile
+    # one step opposite the shot direction from the shooter. Off-board = no-op.
+    if getattr(wdef, "smoke_behind_shooter", False) and attack_dir is not None:
+        dx, dy = DIRS[attack_dir]
+        bx, by = attacker.x - dx, attacker.y - dy
+        if board.in_bounds(bx, by):
+            tile = board.tile(bx, by)
+            tile.on_fire = False  # smoke replaces fire
+            tile.smoke = True
+
     # Behind tile damage (Old Earth Artillery: hits target + tile behind)
     if wdef.aoe_behind and attack_dir is not None:
         dx, dy = DIRS[attack_dir]

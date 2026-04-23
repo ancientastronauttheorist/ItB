@@ -55,6 +55,7 @@ class WeaponDef:
     acid: bool = False
     freeze: bool = False
     smoke: bool = False
+    smoke_behind_shooter: bool = False  # smoke lands one tile opposite attack_dir from shooter (Ranged_Rocket)
     shield: bool = False
     web: bool = False
     # Targeting
@@ -298,7 +299,7 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     ),
     "Ranged_Rocket": WeaponDef(
         name="Rocket Artillery", weapon_type="artillery",
-        damage=2, push="forward", smoke=True, range_min=2,
+        damage=2, push="forward", smoke_behind_shooter=True, range_min=2,
         upgrade_a="+1 damage (total 3)",
         upgrade_b="+1 damage (total 3)",
     ),
