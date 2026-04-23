@@ -15,10 +15,12 @@ Covers:
 12. classify_diff: click_miss subsumes other categories
 """
 from src.solver.verify import (
+    SOLVE_RECORD_SCHEMA_VERSION,
     parse_tiles_from_events,
     snapshot_after_action,
     diff_states,
     classify_diff,
+    predicted_states_from_solve_record,
     DiffResult,
 )
 from src.model.board import Board, Unit, BoardTile
@@ -190,6 +192,57 @@ diff = diff_states(snap, b2)
 cls = classify_diff(diff, mech_uid=1)
 check("click_miss subsumes other categories",
       cls["categories"] == ["click_miss"], cls)
+
+# Test 13: predicted_states_from_solve_record — pre-versioning records
+# (no schema_version field) still yield their predicted_states.
+pre_version_record = {
+    "label": "solve",
+    "data": {
+        "score": 1234,
+        "predicted_states": [{"post_attack": {"units": []}}],
+    },
+}
+states = predicted_states_from_solve_record(pre_version_record)
+check("pre-versioning record: predicted_states readable",
+      len(states) == 1 and states[0]["post_attack"]["units"] == [])
+
+# Test 14: predicted_states_from_solve_record — explicit v1 record.
+v1_record = {
+    "label": "solve",
+    "data": {
+        "schema_version": 1,
+        "score": 1234,
+        "predicted_states": [{"post_attack": {"units": []}},
+                             {"post_attack": {"units": [1]}}],
+    },
+}
+states = predicted_states_from_solve_record(v1_record)
+check("v1 record: predicted_states readable",
+      len(states) == 2)
+
+# Test 15: predicted_states_from_solve_record — malformed record → [].
+check("malformed record (non-dict) returns empty list",
+      predicted_states_from_solve_record(None) == [])
+check("malformed record (missing data) returns empty list",
+      predicted_states_from_solve_record({"label": "solve"}) == [])
+
+# Test 16: schema constant matches the documented current version.
+check("SOLVE_RECORD_SCHEMA_VERSION == 1 (bump when shape changes)",
+      SOLVE_RECORD_SCHEMA_VERSION == 1)
+
+# Test 17: unknown future schema version still yields any present
+# predicted_states (v2 keeps the field for backward reads per design).
+v2_forward_record = {
+    "label": "solve",
+    "data": {
+        "schema_version": 2,
+        "predicted_states": [{"post_attack": {}}],
+        "beam": {"top_k": []},
+    },
+}
+states = predicted_states_from_solve_record(v2_forward_record)
+check("future v2 record: chosen-plan predicted_states still readable",
+      len(states) == 1)
 
 print(f"\n{passed}/{passed+failed} tests passed")
 if failed:

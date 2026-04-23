@@ -97,6 +97,34 @@ class EvalWeights:
     # collapses to 0 on the final turn. Mirrors rust_solver/src/evaluate.rs.
     remaining_spawn_penalty: float = 10000
 
+    # Turn+1 threat preview penalty — per surviving enemy whose taxicab
+    # (move+range) envelope reaches any building on the post-mech board.
+    # Proxy for 2-turn lookahead; collapses to 0 on the final turn via
+    # future_factor. Must mirror rust_solver/src/evaluate.rs:160.
+    next_turn_threat_penalty: float = 2500
+
+    # Phase 1 soft-disable penalty — per action in a plan that uses a
+    # weapon in the session's disabled_actions mask. Must mirror
+    # rust_solver/src/evaluate.rs:170.
+    soft_disabled_penalty: float = 10000
+
+    # Coverage / defensive posture rewards (all mirror Rust defaults).
+    # threats_cleared: reward per building threat neutralized this turn.
+    threats_cleared: float = 4000
+    # body_block_bonus: reward per mech absorbing a building threat.
+    body_block_bonus: float = 0
+    # building_coverage: bonus per building within mech reach.
+    building_coverage: float = 50
+    # uncovered_building: penalty per building not near any mech (negative).
+    uncovered_building: float = -500
+    # perfect_defense_bonus: bonus when ALL building threats cleared.
+    perfect_defense_bonus: float = 6000
+    # mech_sacrifice_at_critical: reduces mech_killed penalty at grid<=2.
+    # Currently 0 — prior 50000 value created perverse sacrifice incentive.
+    mech_sacrifice_at_critical: float = 0
+    # dam_damage_dealt: Old Earth Dam weight (bonus objective).
+    dam_damage_dealt: float = 0
+
     def to_dict(self) -> dict:
         """Serialize to dict for JSON storage and Rust solver injection."""
         from dataclasses import asdict
