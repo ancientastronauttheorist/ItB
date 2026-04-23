@@ -972,14 +972,26 @@ def _sim_leap(board, attacker, wdef, tx, ty, result):
                 tile.on_fire = False  # smoke replaces fire (parity with apply_weapon_status)
                 tile.smoke = True
 
-    # Damage emission. Parity with Rust sim_leap post-PR #11/#12:
+    # Damage emission. Parity with Rust sim_leap post-PR #11/#12
+    # (rust_solver/src/simulate.rs commit 2723938 / 45bd059):
     # transit-damage weapons (Jet_BombDrop via smoke, Brute_Bombrun via
-    # damages_transit) damage tiles along the cardinal flight path, not
-    # landing-adjacent tiles. We minimally match Rust by SKIPPING the
-    # landing-adjacent damage for those weapons — the transit damage itself
-    # is not yet mirrored here (Python sim is non-scoring, used for
-    # predicted.json snapshots and replay_solution only).
-    if not (wdef.smoke or wdef.damages_transit):
+    # damages_transit) damage tiles along the cardinal flight path
+    # (strictly between source and landing), not landing-adjacent tiles.
+    # Other leap weapons (Prime_Leap "Hydraulic Legs": "damaging self and
+    # adjacent tiles") keep the legacy 4-cardinal-neighbors-of-landing
+    # damage. Neither Jet_BombDrop nor Brute_Bombrun has a push direction
+    # so the transit branch omits the push block (matching Rust).
+    if wdef.smoke or wdef.damages_transit:
+        path_dir = cardinal_direction(old_x, old_y, tx, ty)
+        if path_dir is not None:
+            dx, dy = DIRS[path_dir]
+            dist = abs(tx - old_x) + abs(ty - old_y)
+            for step in range(1, dist):  # strictly between (excludes landing)
+                nx, ny = old_x + dx * step, old_y + dy * step
+                if not board.in_bounds(nx, ny):
+                    continue
+                apply_damage(board, nx, ny, wdef.damage, result)
+    else:
         # Damage adjacent tiles on landing (not the tile we came from)
         from_dir = direction_between(tx, ty, old_x, old_y)
         for i, (dx, dy) in enumerate(DIRS):
