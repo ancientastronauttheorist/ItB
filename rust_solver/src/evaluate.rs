@@ -168,6 +168,22 @@ pub struct EvalWeights {
     // before using a soft-disabled weapon 10+ times in one turn, but
     // won't throw the mission for a single forced use.
     pub soft_disabled_penalty: f64,
+
+    // Option C evaluator augmentation: "queueless threat" signal for projected
+    // boards. When `true`, `evaluate` applies an extra 1.5× next_turn_threat_penalty
+    // per alive enemy that has NO queued target (queued_target_x < 0) AND can
+    // reach a building within `move_speed + 4` Manhattan distance. This
+    // compensates for the fact that projected boards (from `project_plan`) have
+    // cleared enemy targets — the normal `next_turn_threat_penalty` block only
+    // fires for enemies WITH queued targets.
+    //
+    // Default: `false` — the augmentation does NOT run on the standard 1-turn
+    // evaluation path, so it cannot alter regression scores. It must be explicitly
+    // enabled by setting this to `true` (done by `project_plan`'s returned
+    // `board_to_json` via `eval_weights.pseudo_threat_eval`). This gating ensures
+    // no SIMULATOR_VERSION bump is required.
+    #[serde(default)]
+    pub pseudo_threat_eval: bool,
 }
 
 impl Default for EvalWeights {
@@ -230,6 +246,7 @@ impl Default for EvalWeights {
             soft_disabled_penalty: 10000.0,
             remaining_spawn_penalty: 10000.0,
             next_turn_threat_penalty: 2500.0,
+            pseudo_threat_eval: false,
         }
     }
 }
@@ -698,6 +715,57 @@ pub fn evaluate(
         }
         if threatening_enemies > 0 {
             score -= weights.next_turn_threat_penalty * threatening_enemies as f64 * ff * grid_multiplier;
+        }
+    }
+
+    // ── Option C: Queueless threat (projected boards only) ────────────────
+    // Alive enemies that have NO queued target (queued_target_x < 0) but can
+    // still reach a building within `move_speed + 4` Manhattan are penalised
+    // at 1.5× next_turn_threat_penalty. This compensates for the fact that
+    // `project_plan` (Option C) clears all enemy queued targets: without this
+    // extra signal the evaluator would see no threats and prefer "kill
+    // everything to exhaustion" over "protect buildings" — the same failure
+    // mode Option A exhibits.
+    //
+    // Gated behind `pseudo_threat_eval` (default false) so it fires ONLY when
+    // the caller explicitly sets it — i.e., on projected boards from
+    // `project_plan`. Normal 1-turn evaluation is unchanged, so no
+    // SIMULATOR_VERSION bump is needed.
+    //
+    // Filters: same as the existing `next_turn_threat_penalty` block — skip
+    // Frozen, Webbed, and enemies on Smoke.
+    if weights.pseudo_threat_eval && weights.next_turn_threat_penalty > 0.0 && ff > 0.01 {
+        let mut queueless_threatening = 0i32;
+        for i in 0..board.unit_count as usize {
+            let e = &board.units[i];
+            if !e.is_enemy() || !e.alive() { continue; }
+            if e.queued_target_x >= 0 { continue; } // already has a target — don't double-count
+            if e.frozen() || e.web() { continue; }
+            if board.tile(e.x, e.y).smoke() { continue; }
+            let reach = e.move_speed as i32 + 4;
+            let mut can_reach_building = false;
+            for idx in 0..64 {
+                let tile = &board.tiles[idx];
+                if tile.terrain != Terrain::Building || tile.building_hp == 0 { continue; }
+                let (bx, by) = idx_to_xy(idx);
+                let dist = (e.x as i32 - bx as i32).abs() + (e.y as i32 - by as i32).abs();
+                if dist <= reach {
+                    can_reach_building = true;
+                    break;
+                }
+            }
+            if can_reach_building {
+                queueless_threatening += 1;
+            }
+        }
+        if queueless_threatening > 0 {
+            // 1.5× penalty: queueless enemies are harder to defend against
+            // (no specific tile to body-block) so their threat is slightly
+            // amplified vs. the standard queued-target case.
+            score -= 1.5 * weights.next_turn_threat_penalty
+                * queueless_threatening as f64
+                * ff
+                * grid_multiplier;
         }
     }
 
