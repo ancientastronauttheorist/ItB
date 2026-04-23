@@ -972,17 +972,25 @@ def _sim_leap(board, attacker, wdef, tx, ty, result):
                 tile.on_fire = False  # smoke replaces fire (parity with apply_weapon_status)
                 tile.smoke = True
 
-    # Damage adjacent tiles on landing (not the tile we came from)
-    from_dir = direction_between(tx, ty, old_x, old_y)
-    for i, (dx, dy) in enumerate(DIRS):
-        if i == from_dir:
-            continue  # skip the tile we jumped from
-        nx, ny = tx + dx, ty + dy
-        if not board.in_bounds(nx, ny):
-            continue
-        apply_damage(board, nx, ny, wdef.damage, result)
-        if wdef.push == "outward":
-            apply_push(board, nx, ny, i, result)
+    # Damage emission. Parity with Rust sim_leap post-PR #11/#12:
+    # transit-damage weapons (Jet_BombDrop via smoke, Brute_Bombrun via
+    # damages_transit) damage tiles along the cardinal flight path, not
+    # landing-adjacent tiles. We minimally match Rust by SKIPPING the
+    # landing-adjacent damage for those weapons — the transit damage itself
+    # is not yet mirrored here (Python sim is non-scoring, used for
+    # predicted.json snapshots and replay_solution only).
+    if not (wdef.smoke or wdef.damages_transit):
+        # Damage adjacent tiles on landing (not the tile we came from)
+        from_dir = direction_between(tx, ty, old_x, old_y)
+        for i, (dx, dy) in enumerate(DIRS):
+            if i == from_dir:
+                continue  # skip the tile we jumped from
+            nx, ny = tx + dx, ty + dy
+            if not board.in_bounds(nx, ny):
+                continue
+            apply_damage(board, nx, ny, wdef.damage, result)
+            if wdef.push == "outward":
+                apply_push(board, nx, ny, i, result)
 
 
 def _sim_laser(board, attacker, wdef, attack_dir, result):
