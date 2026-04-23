@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-17T22:13:44.100341",
+  "label": "phase4_live_validation_mission_win",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "JudoMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "DStrikeMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "GravMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab2",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

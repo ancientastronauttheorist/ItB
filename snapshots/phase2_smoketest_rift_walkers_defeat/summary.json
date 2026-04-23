@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-04-17T19:52:38.030965",
+  "label": "phase2_smoketest_rift_walkers_defeat",
+  "turn": 3,
+  "grid_power": 1,
+  "mechs": [
+    {
+      "type": "JudoMech",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "DStrikeMech",
+      "pos": [
+        0,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "GravMech",
+      "pos": [
+        4,
+        7
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "FireflyBoss",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    }
+  ]
+}

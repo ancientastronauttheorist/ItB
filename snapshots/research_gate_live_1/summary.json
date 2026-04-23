@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-20T21:46:33.968442",
+  "label": "research_gate_live_1",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "GlowingScorpion",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly2",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 5
+    }
+  ]
+}

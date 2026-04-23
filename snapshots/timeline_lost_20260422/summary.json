@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-04-22T17:07:37.955054",
+  "label": "timeline_lost_20260422",
+  "turn": 2,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "GuardMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RockartMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Hornet2",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 2
+    }
+  ]
+}

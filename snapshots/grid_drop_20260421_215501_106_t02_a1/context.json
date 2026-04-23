@@ -1,0 +1,27 @@
+{
+  "run_id": "20260421_215501_106",
+  "turn": 2,
+  "sub_action": "attack",
+  "action_index": 1,
+  "mech_uid": 1,
+  "weapon": "Brute_Beetle",
+  "target": [
+    3,
+    2
+  ],
+  "grid_power_diff": {
+    "field": "grid_power",
+    "predicted": 3,
+    "actual": 4
+  },
+  "building_hp_diffs": [],
+  "failure_db_id": "20260421_215501_106_m00_t02_per_sub_action_desync_attack_a1",
+  "classification": {
+    "top_category": "grid_power",
+    "categories": [
+      "grid_power"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

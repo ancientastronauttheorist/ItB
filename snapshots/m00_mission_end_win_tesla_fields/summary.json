@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-04-21T18:44:22.870335",
+  "label": "m00_mission_end_win_tesla_fields",
+  "turn": 4,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "Terraformer",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IceMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion2",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        1,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    }
+  ]
+}

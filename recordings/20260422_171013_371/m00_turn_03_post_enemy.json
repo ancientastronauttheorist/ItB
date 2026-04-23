@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-04-22T17:16:37.708738",
+  "run_id": "20260422_171013_371",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 5,
+      "building_hp_total": 6,
+      "grid_power": 1,
+      "enemies_alive": 5,
+      "enemy_hp_total": 12,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 4,
+      "building_hp_total": 6,
+      "grid_power": 1,
+      "enemies_alive": 3,
+      "enemy_hp_total": 10,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 1,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "predicted_hp": 1,
+          "actual_hp": 2,
+          "diff": 1
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

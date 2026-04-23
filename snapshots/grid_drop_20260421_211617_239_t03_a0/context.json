@@ -1,0 +1,34 @@
+{
+  "run_id": "20260421_211617_239",
+  "turn": 3,
+  "sub_action": "attack",
+  "action_index": 0,
+  "mech_uid": 0,
+  "weapon": "Brute_Jetmech",
+  "target": [
+    5,
+    4
+  ],
+  "grid_power_diff": null,
+  "building_hp_diffs": [
+    {
+      "x": 5,
+      "y": 3,
+      "field": "building_hp",
+      "predicted": 1,
+      "actual": 2
+    }
+  ],
+  "failure_db_id": "20260421_211617_239_m01_t03_per_sub_action_desync_attack_a0",
+  "classification": {
+    "top_category": "damage_amount",
+    "categories": [
+      "damage_amount",
+      "grid_power",
+      "status",
+      "tile_status"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

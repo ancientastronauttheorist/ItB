@@ -1,47 +1,61 @@
 {
-  "run_id": "20260422_182751_384",
-  "squad": "Detritus_Judo+Charge+Boulder (Balanced, Collin Singh carryover, post-bridge-fix)",
+  "run_id": "20260422_192122_780",
+  "squad": "Detritus_Jet+Boulder+Pulse (Balanced, Nikola carryover, post-solver-fix)",
   "achievement_targets": [],
   "difficulty": 2,
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
   "mission_index": 1,
-  "current_turn": 4,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
-        "mech_type": "JudoMech",
+        "mech_type": "GuardMech",
         "move_to": [
-          3,
-          4
+          0,
+          5
         ],
         "weapon": "Unknown",
         "target": [
           255,
           255
         ],
-        "description": "JudoMech"
+        "description": "GuardMech, move C5\u2192C8"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "RockartMech",
+        "move_to": [
+          1,
+          4
+        ],
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          6,
+          4
+        ],
+        "description": "RockartMech, move E7\u2192D7, fire Rock Launcher at D2"
       },
       {
         "mech_uid": 1,
-        "mech_type": "ChargeMech",
+        "mech_type": "MirrorMech",
         "move_to": [
-          1,
-          7
+          6,
+          5
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Brute_Mirrorshot",
         "target": [
-          1,
-          7
+          6,
+          6
         ],
-        "description": "ChargeMech, move B5\u2192A7, repair"
+        "description": "MirrorMech, move D3\u2192C2, fire Mirror Shot at B2"
       }
     ],
-    "score": -65698.5740157536,
-    "turn": 4
+    "score": 88617.85765511649,
+    "turn": 3
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -50,90 +64,80 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-22T18:29:57.852209",
+      "timestamp": "2026-04-22T19:38:06.923771",
       "turn": 1,
       "label": "solve",
-      "score": 138007.14285714284,
+      "score": 109628.57142857143,
       "actions": [
-        "JudoMech, move E5\u2192B5, fire Vice Fist at B4",
-        "ChargeMech, move F6\u2192E5, fire Ramming Engines at E4",
-        "RockartMech, move D6\u2192C6, fire Rock Launcher at E6"
+        "GuardMech",
+        "RockartMech, move F6\u2192E7, fire Rock Launcher at E3",
+        "MirrorMech, move C5\u2192C3, fire Mirror Shot at D3"
       ]
     },
     {
-      "timestamp": "2026-04-22T18:30:54.866873",
+      "timestamp": "2026-04-22T19:39:38.780313",
       "turn": 2,
       "label": "solve",
-      "score": 133397.14285714302,
+      "score": 112978.57142857133,
       "actions": [
-        "JudoMech, move B5\u2192D5, fire Vice Fist at E5",
-        "ChargeMech, move E4\u2192E3, repair",
-        "RockartMech, move C6\u2192B6, fire Rock Launcher at B4"
+        "GuardMech, move D7\u2192C7",
+        "MirrorMech, move C3\u2192D2, fire Mirror Shot at C2",
+        "RockartMech, move F7\u2192D7, fire Rock Launcher at D3"
       ]
     },
     {
-      "timestamp": "2026-04-22T18:31:44.338500",
+      "timestamp": "2026-04-22T19:40:56.807476",
       "turn": 3,
       "label": "solve",
-      "score": 129855.71453332901,
+      "score": 128167.85738706589,
       "actions": [
-        "RockartMech, move B6\u2192E6, fire Rock Launcher at E2",
-        "JudoMech, move D5\u2192B6",
-        "ChargeMech, move E3\u2192D5, repair"
+        "GuardMech",
+        "RockartMech, fire Rock Launcher at D3",
+        "MirrorMech, move D2\u2192C3, fire Mirror Shot at B3"
       ]
     },
     {
-      "timestamp": "2026-04-22T18:32:42.344051",
+      "timestamp": "2026-04-22T19:42:19.463661",
       "turn": 4,
       "label": "solve",
-      "score": 132788.57251439776,
+      "score": 129838.57142857143,
       "actions": [
-        "JudoMech, move B6\u2192E5",
-        "ChargeMech, move D5\u2192E4, fire Ramming Engines at F4",
-        "RockartMech, move E6\u2192D5, fire Rock Launcher at F5"
+        "GuardMech, move C5\u2192C7",
+        "MirrorMech, move C3\u2192C4, fire Mirror Shot at B4",
+        "RockartMech, move D7\u2192F8, fire Rock Launcher at F4"
       ]
     },
     {
-      "timestamp": "2026-04-22T18:38:23.516877",
+      "timestamp": "2026-04-22T22:17:21.880723",
       "turn": 1,
       "label": "solve",
-      "score": 109650.0002861023,
+      "score": 78830.00011188645,
       "actions": [
-        "JudoMech, move E5\u2192C4, fire Vice Fist at B4",
-        "ChargeMech, move F6\u2192F5, fire Ramming Engines at G5",
-        "RockartMech, move D6\u2192F7, fire Rock Launcher at F3"
+        "GuardMech, move D5\u2192B3",
+        "RockartMech, move B5\u2192D6, fire Rock Launcher at D2",
+        "MirrorMech, move C6\u2192D5, fire Mirror Shot at D4"
       ]
     },
     {
-      "timestamp": "2026-04-22T18:39:26.652171",
+      "timestamp": "2026-04-22T22:18:28.386671",
       "turn": 2,
       "label": "solve",
-      "score": 112873.80952380947,
+      "score": 93686.42885344368,
       "actions": [
-        "ChargeMech, fire Ramming Engines at E5",
-        "RockartMech, move F7\u2192E6, fire Rock Launcher at E3",
-        "JudoMech, move C4\u2192F3, fire Vice Fist at E3"
+        "GuardMech, move B3\u2192C5, repair",
+        "RockartMech, move D7\u2192E7, fire Rock Launcher at E3",
+        "MirrorMech, move D5\u2192D3, fire Mirror Shot at C3"
       ]
     },
     {
-      "timestamp": "2026-04-22T18:40:29.456276",
+      "timestamp": "2026-04-22T22:19:29.515381",
       "turn": 3,
       "label": "solve",
-      "score": 93182.85790920258,
+      "score": 88617.85765511649,
       "actions": [
-        "ChargeMech, move C5\u2192B5, repair",
-        "JudoMech, fire Vice Fist at E5",
-        "RockartMech, move E6\u2192D6, fire Rock Launcher at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-22T18:41:48.364320",
-      "turn": 4,
-      "label": "solve",
-      "score": -65698.5740157536,
-      "actions": [
-        "JudoMech",
-        "ChargeMech, move B5\u2192A7, repair"
+        "GuardMech, move C5\u2192C8",
+        "RockartMech, move E7\u2192D7, fire Rock Launcher at D2",
+        "MirrorMech, move D3\u2192C2, fire Mirror Shot at B2"
       ]
     }
   ],
@@ -157,125 +161,12 @@
     [
       1,
       2
-    ],
-    [
-      1,
-      3
     ]
   ],
   "tags": [
     "audit"
   ],
   "failure_events_this_run": [
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Ranged_Rockthrow|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          2,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status",
-        "tile_status"
-      ],
-      "subcategory": "model_gap_known",
-      "model_gap": true,
-      "signature": "status|Ranged_Rockthrow|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.7,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          6,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Ranged_Rockthrow|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 4,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          3,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": "model_gap_known",
-      "model_gap": true,
-      "signature": "tile_status|Prime_Shift|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.7,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_Shift",
-        "target": [
-          4,
-          6
-        ]
-      }
-    },
     {
       "version": 1,
       "top_category": "push_dir",
@@ -295,41 +186,11 @@
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 1,
-        "turn": 2,
+        "turn": 1,
         "weapon": "Ranged_Rockthrow",
         "target": [
-          5,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death",
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Prime_Shift|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Prime_Shift",
-        "target": [
-          3,
-          3
+          6,
+          4
         ]
       }
     }
@@ -337,18 +198,18 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "JudoMech",
+      "type": "MirrorMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
-      "first_seen_turn": 1,
+      "first_seen_turn": 0,
       "attempts": 0,
       "status": "resolved",
       "result": null
     },
     {
-      "type": "ChargeMech",
+      "type": "GuardMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
@@ -375,35 +236,20 @@
       "kind": "behavior_novelty",
       "slot": null,
       "mission_id": "",
-      "first_seen_turn": 2,
+      "first_seen_turn": 1,
       "attempts": 0,
       "status": "resolved",
       "result": null,
       "diff_field": "pos",
       "diff_predicted": [
-        5,
-        4
+        6,
+        3
       ],
       "diff_actual": [
-        5,
-        5
+        6,
+        2
       ],
       "severity": "medium"
-    },
-    {
-      "type": "Leaper2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 3,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null,
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high"
     }
   ]
 }

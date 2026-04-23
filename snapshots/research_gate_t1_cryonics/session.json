@@ -1,0 +1,495 @@
+{
+  "run_id": "20260421_173023_013",
+  "squad": "Random Balanced (Judo+Mirror+Rocket)",
+  "achievement_targets": [],
+  "difficulty": 2,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "mission_index": 0,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "JudoMech",
+        "move_to": [
+          5,
+          2
+        ],
+        "weapon": "Prime_Shift",
+        "target": [
+          5,
+          1
+        ],
+        "description": "JudoMech, fire Vice Fist at G3"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "MirrorMech",
+        "move_to": [
+          1,
+          4
+        ],
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          2,
+          4
+        ],
+        "description": "MirrorMech, fire Mirror Shot at D6"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "RocketMech",
+        "move_to": [
+          3,
+          0
+        ],
+        "weapon": "_REPAIR",
+        "target": [
+          3,
+          0
+        ],
+        "description": "RocketMech, move H2\u2192H5, repair"
+      }
+    ],
+    "score": -422750.0,
+    "turn": 4
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-21T17:33:27.988626",
+      "turn": 1,
+      "label": "solve",
+      "score": 113964.28571428571,
+      "actions": [
+        "JudoMech, move E6\u2192D6",
+        "MirrorMech, move F5\u2192E6, fire Mirror Shot at E5",
+        "RocketMech, move D5\u2192F5, fire Rocket Artillery at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T17:34:14.555032",
+      "turn": 2,
+      "label": "solve",
+      "score": 123774.28571428562,
+      "actions": [
+        "JudoMech, move D6\u2192E3",
+        "MirrorMech, move E6\u2192D7, fire Mirror Shot at D6",
+        "RocketMech, move F5\u2192D5, fire Rocket Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T17:36:51.459651",
+      "turn": 3,
+      "label": "solve",
+      "score": 124624.28571428571,
+      "actions": [
+        "RocketMech, move D5\u2192C3, fire Rocket Artillery at F3",
+        "MirrorMech, fire Mirror Shot at D6",
+        "JudoMech, move E3\u2192D2, fire Vice Fist at D1"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T17:39:44.080799",
+      "turn": 4,
+      "label": "solve",
+      "score": 125794.28571428571,
+      "actions": [
+        "JudoMech, move D2\u2192E2, fire Vice Fist at F2",
+        "MirrorMech, fire Mirror Shot at D6",
+        "RocketMech, move C3\u2192D4, fire Rocket Artillery at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T17:43:56.413360",
+      "turn": 1,
+      "label": "solve",
+      "score": 156921.42857142855,
+      "actions": [
+        "JudoMech, move F5\u2192D3, fire Vice Fist at D2",
+        "MirrorMech, move C5\u2192D6, fire Mirror Shot at D5",
+        "RocketMech, move E6\u2192F5, fire Rocket Artillery at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T17:44:42.355379",
+      "turn": 2,
+      "label": "solve",
+      "score": 155084.7619047621,
+      "actions": [
+        "MirrorMech, move D6\u2192D7, fire Mirror Shot at D6",
+        "RocketMech, move F5\u2192E3",
+        "JudoMech, move D3\u2192F3, fire Vice Fist at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T17:45:31.428430",
+      "turn": 3,
+      "label": "solve",
+      "score": 127710.0,
+      "actions": [
+        "JudoMech",
+        "MirrorMech",
+        "RocketMech, move G3\u2192H2, fire Rocket Artillery at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-21T17:46:11.591081",
+      "turn": 4,
+      "label": "solve",
+      "score": -422750.0,
+      "actions": [
+        "JudoMech, fire Vice Fist at G3",
+        "MirrorMech, fire Mirror Shot at D6",
+        "RocketMech, move H2\u2192H5, repair"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ]
+  ],
+  "tags": [
+    "random_squad"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Ranged_Rocket|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Shift|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Prime_Shift",
+        "target": [
+          7,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Ranged_Rocket|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          4,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Ranged_Rocket|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_Rocket|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Prime_Shift|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Shift",
+        "target": [
+          5,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Brute_Mirrorshot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          2,
+          4
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [
+    {
+      "weapon_id": "Ranged_Rocket",
+      "cause_pattern": "damage_amount|Ranged_Rocket|attack",
+      "expires_turn": 6,
+      "strategic_override": false
+    }
+  ],
+  "research_queue": [
+    {
+      "type": "JudoMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "MirrorMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "RocketMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "Snowart1",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "Snowlaser1",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "Snowlaser2",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    }
+  ]
+}

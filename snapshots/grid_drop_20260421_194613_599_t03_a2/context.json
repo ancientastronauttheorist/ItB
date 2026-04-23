@@ -1,0 +1,32 @@
+{
+  "run_id": "20260421_194613_599",
+  "turn": 3,
+  "sub_action": "attack",
+  "action_index": 2,
+  "mech_uid": 2,
+  "weapon": "Ranged_Rocket",
+  "target": [
+    3,
+    2
+  ],
+  "grid_power_diff": null,
+  "building_hp_diffs": [
+    {
+      "x": 3,
+      "y": 1,
+      "field": "building_hp",
+      "predicted": 2,
+      "actual": 1
+    }
+  ],
+  "failure_db_id": "20260421_194613_599_m00_t03_per_sub_action_desync_attack_a2",
+  "classification": {
+    "top_category": "grid_power",
+    "categories": [
+      "grid_power",
+      "tile_status"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

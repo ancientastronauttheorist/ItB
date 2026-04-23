@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-04-22T19:39:38.073541",
+  "run_id": "20260422_192122_780",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 11,
+      "grid_power": 5,
+      "enemies_alive": 4,
+      "enemy_hp_total": 12,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "MirrorMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 11,
+      "grid_power": 5,
+      "enemies_alive": 2,
+      "enemy_hp_total": 5,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "MirrorMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "buildings_destroyed_by_enemies": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "MirrorMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "predicted_hp": 2,
+          "actual_hp": 1,
+          "diff": -1
+        }
+      ],
+      "unexpected_events": [
+        "RockartMech took 1 unexpected damage"
+      ]
+    }
+  }
+}
