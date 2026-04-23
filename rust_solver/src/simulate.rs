@@ -1377,8 +1377,32 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty
     board.units[attacker_idx].x = tx;
     board.units[attacker_idx].y = ty;
 
-    // Apply status to landing tile (Jetmech smokes landing spot)
-    apply_weapon_status(board, tx, ty, wdef);
+    // Apply status to landing tile. Exception: Jet_BombDrop (Aerial Bombs)
+    // tooltip reads "Fly over a target, dropping an explosive smoke bomb" —
+    // smoke lands on the TRANSIT tile(s), not on the landing tile. Jet_BombDrop
+    // is the only SMOKE-flagged Leap weapon in the registry, so we gate on the
+    // smoke flag: smoke-leaps emit smoke along the cardinal flight path
+    // (tiles strictly between source and landing); other statuses, if ever
+    // added to a Leap weapon, still apply at the landing tile.
+    if wdef.smoke() {
+        if let Some(dir) = cardinal_direction(old_x, old_y, tx, ty) {
+            let (dx, dy) = DIRS[dir];
+            let dist =
+                (tx as i8 - old_x as i8).abs() + (ty as i8 - old_y as i8).abs();
+            for step in 1..dist {
+                let nx = old_x as i8 + dx * step;
+                let ny = old_y as i8 + dy * step;
+                if !in_bounds(nx, ny) { continue; }
+                let tile = board.tile_mut(nx as u8, ny as u8);
+                tile.set_on_fire(false); // smoke replaces fire (parity with apply_weapon_status)
+                tile.set_smoke(true);
+            }
+        }
+        // Note: deliberately do NOT call apply_weapon_status here — Jet_BombDrop
+        // has no non-smoke status flags, and we do not want smoke at landing.
+    } else {
+        apply_weapon_status(board, tx, ty, wdef);
+    }
 
     // Damage adjacent tiles (skip source direction)
     let from_dir = direction_between(tx, ty, old_x, old_y);
@@ -1819,13 +1843,59 @@ mod tests {
     }
 
     #[test]
-    fn test_jetmech_smokes_landing() {
+    fn test_jetmech_smokes_transit_base_range() {
+        // Aerial Bombs tooltip: "Fly over a target, dropping an explosive
+        // smoke bomb." Smoke goes on the TRANSIT tile(s), NOT landing or start.
+        // Base range: S=(3,3) → T=(3,4) → L=(3,5). Smoke only on T=(3,4).
         let mut board = make_test_board();
-        let mech_idx = add_mech(&mut board, 0, 0, 0, 3, WId::BruteJetmech);
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
 
-        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 2, 2);
-        // Jetmech Aerial Bombs: smoke on landing tile
-        assert!(board.tile(2, 2).smoke(), "Jetmech landing tile should have smoke");
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 3, 5);
+        assert!(
+            board.tile(3, 4).smoke(),
+            "Jetmech base-range leap: smoke should be on transit tile (3,4)"
+        );
+        assert!(
+            !board.tile(3, 5).smoke(),
+            "Jetmech base-range leap: smoke must NOT be on landing tile (3,5)"
+        );
+        assert!(
+            !board.tile(3, 3).smoke(),
+            "Jetmech base-range leap: smoke must NOT be on starting tile (3,3)"
+        );
+    }
+
+    #[test]
+    fn test_jetmech_smokes_transit_range_upgraded() {
+        // Range-upgraded Aerial Bombs (e.g. +1 range power): S=(3,3) → T1=(3,4)
+        // → T2=(3,5) → L=(3,6). Smoke on BOTH transit tiles, not on L or S.
+        // We call sim_leap directly with a distance-3 cardinal leap to
+        // exercise the multi-transit-tile branch; sim_leap itself performs
+        // no range enforcement.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        // Clone the default def and expand range so the leap covers 3 tiles.
+        let upgraded = WEAPONS[WId::BruteJetmech as usize];
+        let mut result = ActionResult::default();
+        sim_leap(&mut board, mech_idx, &upgraded, 3, 6, &mut result);
+
+        assert!(
+            board.tile(3, 4).smoke(),
+            "Jetmech range-upgraded leap: smoke should be on first transit tile (3,4)"
+        );
+        assert!(
+            board.tile(3, 5).smoke(),
+            "Jetmech range-upgraded leap: smoke should be on second transit tile (3,5)"
+        );
+        assert!(
+            !board.tile(3, 6).smoke(),
+            "Jetmech range-upgraded leap: smoke must NOT be on landing tile (3,6)"
+        );
+        assert!(
+            !board.tile(3, 3).smoke(),
+            "Jetmech range-upgraded leap: smoke must NOT be on starting tile (3,3)"
+        );
     }
 
     #[test]
