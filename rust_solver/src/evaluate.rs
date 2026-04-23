@@ -150,6 +150,15 @@ pub struct EvalWeights {
     // giving ~10k per spawn.
     pub remaining_spawn_penalty: f64,
 
+    // Turn+1 threat preview: penalty per surviving enemy that can reach
+    // a building within its taxicab move+range envelope on its next turn.
+    // Mitigates the "solver kills 2 weak enemies and lets the grid bleed
+    // turn+1" pattern observed on Pinnacle Ice Forest / Detritus CZD
+    // where the 1-turn evaluator can't see that the REMAINING enemies
+    // will destroy buildings next turn. Scaled by future_factor so it
+    // collapses to 0 on the final turn.
+    pub next_turn_threat_penalty: f64,
+
     // Phase 1 soft-disable penalty: subtracted once per action in a
     // candidate plan that uses a weapon in the session's disabled_actions
     // mask. Tuned to be large enough that the solver prefers any viable
@@ -220,6 +229,7 @@ impl Default for EvalWeights {
             building_preservation_threshold: 0.05,
             soft_disabled_penalty: 10000.0,
             remaining_spawn_penalty: 10000.0,
+            next_turn_threat_penalty: 2500.0,
         }
     }
 }
@@ -649,6 +659,46 @@ pub fn evaluate(
     if board.remaining_spawns > 0 && board.remaining_spawns != u32::MAX {
         let capped = board.remaining_spawns.min(8) as f64;
         score -= weights.remaining_spawn_penalty * capped * ff;
+    }
+
+    // ── Turn+1 threat preview ──────────────────────────────────────────
+    // For each surviving, unhindered enemy, count it as a threat if any
+    // building tile lies within its taxicab (move_speed + range_envelope)
+    // on the post-turn-1 board. Collapses to 0 on final turn via `ff`.
+    //
+    // We use a generous range envelope of +4 tiles (covers adjacent-melee
+    // through most artillery/ranged weapons on an 8×8 board) because the
+    // goal is to TILT action selection toward clearing threat-adjacent
+    // enemies, not to precisely simulate turn+2. Precise enemy AI would
+    // require a much larger module and the 1-turn solver can't act on it
+    // anyway — a tilt is what helps it pick "kill the Hornet next to the
+    // Coal Plant" over "kill two far-side scouts" when scores are close.
+    if weights.next_turn_threat_penalty > 0.0 && ff > 0.01 {
+        let mut threatening_enemies = 0i32;
+        for i in 0..board.unit_count as usize {
+            let e = &board.units[i];
+            if !e.is_enemy() || !e.alive() { continue; }
+            if e.frozen() || e.web() { continue; }
+            if board.tile(e.x, e.y).smoke() { continue; }
+            let reach = e.move_speed as i32 + 4;
+            let mut can_reach_building = false;
+            for idx in 0..64 {
+                let tile = &board.tiles[idx];
+                if tile.terrain != Terrain::Building || tile.building_hp == 0 { continue; }
+                let (bx, by) = idx_to_xy(idx);
+                let dist = (e.x as i32 - bx as i32).abs() + (e.y as i32 - by as i32).abs();
+                if dist <= reach {
+                    can_reach_building = true;
+                    break;
+                }
+            }
+            if can_reach_building {
+                threatening_enemies += 1;
+            }
+        }
+        if threatening_enemies > 0 {
+            score -= weights.next_turn_threat_penalty * threatening_enemies as f64 * ff * grid_multiplier;
+        }
     }
 
     // ── Pods: NO turn scaling ──────────────────────────────────────────

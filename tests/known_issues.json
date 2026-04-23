@@ -14,6 +14,15 @@
       "scope": "python",
       "reason": "Exposed by cardinal_direction fix — solver now correctly sees that Old Earth Artillery's aoe_behind destroys a friendly building at A6 when firing E6->B6. Picks this plan anyway because alternatives score lower (24/24 perms explored). Evaluator may need to raise building_lost penalty, or this is legitimately the least-bad plan given the board. Not a sim correctness bug; a value-tuning discussion.",
       "acknowledged": "2026-04-14"
+    },
+    {
+      "run_id": "20260422_171013_371",
+      "mission": 0,
+      "turn": 3,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Pinnacle Ice Forest t3 — RockartMech fires Rock Launcher at D6 with splash/push collateral against a 1HP building. Plan chosen is identical before and after the next_turn_threat_penalty addition (2026-04-22); penalty scales all alternatives equally so selection is unchanged. Crowded 6-enemy board with 1HP buildings everywhere; legitimately least-bad plan. Value-tuning territory, not a sim bug.",
+      "acknowledged": "2026-04-22"
     }
   ]
 }
