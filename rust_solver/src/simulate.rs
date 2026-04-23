@@ -1351,6 +1351,29 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
 fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, result: &mut ActionResult) {
     let old_x = board.units[attacker_idx].x;
     let old_y = board.units[attacker_idx].y;
+
+    // Defensive landing-legality check. Target enumeration in
+    // solver::get_weapon_targets already filters out mountains, buildings,
+    // wrecks, and occupied tiles via Board::is_blocked(…, flying=true), so a
+    // plan that reaches sim_leap with an illegal landing indicates a bug in
+    // the enumerator or a caller bypassing it. In debug builds we crash
+    // loudly so the upstream bug is obvious; in release we still execute
+    // the (now-silent) leap-through rather than corrupt state further.
+    debug_assert!(
+        {
+            let landing = board.tile(tx, ty);
+            let same_tile = tx == old_x && ty == old_y;
+            let occupied_by_other = board
+                .unit_at(tx, ty)
+                .map_or(false, |u| u != attacker_idx);
+            landing.terrain != Terrain::Mountain
+                && landing.terrain != Terrain::Building
+                && !board.wreck_at(tx, ty)
+                && (!occupied_by_other || same_tile)
+        },
+        "sim_leap: illegal landing tile ({tx}, {ty}) — enumerator should have filtered this"
+    );
+
     board.units[attacker_idx].x = tx;
     board.units[attacker_idx].y = ty;
 
@@ -2641,5 +2664,140 @@ mod tests {
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 4),
             "non-Repairman repair must not displace adjacent enemies");
         assert_eq!(board.units[mech].hp, 3, "Repair still heals 1 HP");
+    }
+
+    // ── Aerial Bombs (Brute_Jetmech) landing-tile legality gate ───────────────
+    // In-game, Aerial Bombs is unfireable at a target whose landing tile is a
+    // mountain (any HP) or occupied by a unit, wreck, or building. Rubble and
+    // water/chasm/lava ARE legal (Jet Mech is Flying+Massive). The filter
+    // lives in solver::get_weapon_targets via Board::is_blocked(flying=true).
+    // Evidence: Steam/gamepressure/GameFAQs weapon references + Board::is_blocked
+    // logic (board.rs ~400). These tests pin the gate so we notice if it regresses.
+
+    fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
+        crate::solver::get_weapon_targets(
+            board, mech_pos.0, mech_pos.1, WId::BruteJetmech, mech_pos, &WEAPONS,
+        )
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_allows_empty_landing() {
+        // Jet Mech at (3,3). Landing tile (3,5) is plain ground — legal.
+        // Aerial Bombs has range_min=range_max=2, so valid targets sit on the
+        // same row or column at Manhattan distance 2.
+        let mut board = make_test_board();
+        let _mech = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(targets.contains(&(3, 5)),
+            "Empty ground 2 tiles away must be a legal landing — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_friendly_mech() {
+        // Friendly mech already occupies the landing tile → illegal.
+        let mut board = make_test_board();
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let _ally = add_mech(&mut board, 1, 3, 5, 3, WId::None);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Friendly mech on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_enemy() {
+        // Enemy on the landing tile → illegal (no "crush" mechanic).
+        let mut board = make_test_board();
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let _enemy = add_enemy(&mut board, 99, 3, 5, 3);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Enemy on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_full_mountain() {
+        // Full-HP mountain (terrain=Mountain, hp=2) on the landing tile → illegal.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Mountain;
+        board.tile_mut(3, 5).building_hp = 2;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Full mountain on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_damaged_mountain() {
+        // Damaged mountain (terrain=Mountain, hp=1) still blocks — only
+        // rubble (terrain=Rubble) is walkable.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Mountain;
+        board.tile_mut(3, 5).building_hp = 1;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Damaged mountain (1 HP) still blocks landing — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_allows_landing_on_rubble() {
+        // Rubble (destroyed mountain) is walkable terrain → legal landing.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Rubble;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(targets.contains(&(3, 5)),
+            "Rubble must be a legal landing tile — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_allows_landing_on_water() {
+        // Jet Mech is Flying+Massive → can land on water without drowning.
+        // (sim_leap doesn't apply is_deadly_ground to the attacker; the
+        // enumerator passes flying=true which also skips deadly-terrain gate.)
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Water;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(targets.contains(&(3, 5)),
+            "Water must be a legal landing for flying Jet Mech — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_building() {
+        // Buildings occupy their tile (terrain=Building) and block movement —
+        // including for flying units. Jet Mech cannot land on a building.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Building;
+        board.tile_mut(3, 5).building_hp = 1;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Building on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_enum_rejects_out_of_bounds_landing() {
+        // Jet Mech in column 0. A 2-tile cardinal leap east lands at (0,2) —
+        // legal. A 2-tile cardinal leap west would go off-board; the target
+        // enumerator never offers off-board tiles because it iterates 0..8.
+        // This test pins that invariant via a mech at (0,0): the only legal
+        // Aerial Bombs targets are (0,2) and (2,0) — NOT (-2,0) / (0,-2) /
+        // (1,-1) / etc., which are all off-board or non-cardinal.
+        let mut board = make_test_board();
+        let _jet = add_mech(&mut board, 0, 0, 0, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (0, 0));
+        // Only two cardinal distance-2 targets exist from (0,0).
+        assert!(targets.contains(&(0, 2)),
+            "(0,2) — east by 2 — should be legal; got {:?}", targets);
+        assert!(targets.contains(&(2, 0)),
+            "(2,0) — south by 2 — should be legal; got {:?}", targets);
+        // Every produced target must be in bounds and cardinal at distance 2.
+        for &(x, y) in &targets {
+            assert!(x < 8 && y < 8, "Off-board target {:?} leaked through", (x, y));
+            let dist = (x as i16 - 0).abs() + (y as i16 - 0).abs();
+            assert_eq!(dist, 2, "Non-distance-2 target {:?} leaked through", (x, y));
+            assert!(x == 0 || y == 0, "Non-cardinal target {:?} leaked through", (x, y));
+        }
     }
 }
