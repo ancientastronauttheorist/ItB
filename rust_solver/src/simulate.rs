@@ -1440,21 +1440,19 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty
         apply_weapon_status(board, tx, ty, wdef);
     }
 
-    // Damage emission. Jet_BombDrop (Aerial Bombs) tooltip: "Fly over a target,
-    // dropping an explosive smoke bomb." Damage lands on the TRANSIT tile(s) —
-    // the tiles flown over between source and landing — not on landing-adjacent
-    // tiles. Gated on the same smoke() flag the smoke-placement branch above
-    // uses so the behavior change is scoped to Jet_BombDrop only; other leap
-    // weapons (Prime_Leap "Hydraulic Legs", whose tooltip explicitly reads
-    // "damaging self and adjacent tiles") keep their legacy 4-cardinal-
-    // neighbors-of-landing damage. Jet_BombDrop has PushDir::None so no push
-    // is emitted here; the transit branch intentionally omits the push block.
-    //
-    // Out-of-scope note: Brute_Bombrun (Bombing Run) tooltip — "Leap over any
-    // distance dropping a bomb on each tile you pass" — ALSO damages transit
-    // tiles, not landing-adjacent ones. It has no SMOKE flag so this fix does
-    // not touch it; tracked separately.
-    if wdef.smoke() {
+    // Damage emission. Transit-damage leap weapons drop damage on each tile
+    // along the cardinal flight path (strictly between source and landing),
+    // not on landing-adjacent tiles:
+    //   - Jet_BombDrop (Aerial Bombs): "Fly over a target, dropping an
+    //     explosive smoke bomb." Uses SMOKE (damage + smoke on transit).
+    //   - Brute_Bombrun (Bombing Run): "Leap over any distance dropping a
+    //     bomb on each tile you pass." Uses DAMAGES_TRANSIT (damage only,
+    //     no smoke).
+    // Other leap weapons (Prime_Leap "Hydraulic Legs", whose tooltip reads
+    // "damaging self and adjacent tiles") keep the legacy 4-cardinal-
+    // neighbors-of-landing damage. Neither Jet_BombDrop nor Brute_Bombrun
+    // has a push direction so the transit branch omits the push block.
+    if wdef.smoke() || wdef.damages_transit() {
         if let Some(dir) = cardinal_direction(old_x, old_y, tx, ty) {
             let (dx, dy) = DIRS[dir];
             let dist =
@@ -2055,6 +2053,57 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_bombing_run_damages_every_transit_tile() {
+        // Brute_Bombrun (Bombing Run) tooltip: "Leap over any distance
+        // dropping a bomb on each tile you pass." Damage = 1 on each tile
+        // along the cardinal flight path (strictly between source and
+        // landing); landing tile and landing-neighbors take no damage.
+        // Gated on DAMAGES_TRANSIT (not SMOKE — Bombing Run does not emit
+        // smoke). sim_leap performs no range enforcement so we call it
+        // directly for a long leap.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteBombrun);
+
+        // Transit tiles on S=(3,3) → L=(3,6): (3,4) and (3,5). Each takes 1 dmg.
+        let t1_enemy = add_enemy(&mut board, 40, 3, 4, 3);
+        let t2_enemy = add_enemy(&mut board, 41, 3, 5, 3);
+        // Landing-adjacents: (2,6) N, (4,6) S. Neither should take damage
+        // under the DAMAGES_TRANSIT branch.
+        let north_of_land = add_enemy(&mut board, 42, 2, 6, 3);
+        let south_of_land = add_enemy(&mut board, 43, 4, 6, 3);
+
+        let wdef = WEAPONS[WId::BruteBombrun as usize];
+        let mut result = ActionResult::default();
+        sim_leap(&mut board, mech_idx, &wdef, 3, 6, &mut result);
+
+        assert_eq!(
+            board.units[t1_enemy].hp, 2,
+            "Bombing Run transit tile (3,4) enemy should take 1 damage"
+        );
+        assert_eq!(
+            board.units[t2_enemy].hp, 2,
+            "Bombing Run transit tile (3,5) enemy should take 1 damage"
+        );
+        assert_eq!(
+            board.units[north_of_land].hp, 3,
+            "Landing-adjacent N (2,6) must take NO damage (legacy path is disabled)"
+        );
+        assert_eq!(
+            board.units[south_of_land].hp, 3,
+            "Landing-adjacent S (4,6) must take NO damage"
+        );
+        // Regression guard: Bombing Run must not emit smoke on transit tiles.
+        assert!(
+            !board.tile(3, 4).smoke(),
+            "Bombing Run must not emit smoke on transit (SMOKE flag is off)"
+        );
+        assert!(
+            !board.tile(3, 5).smoke(),
+            "Bombing Run must not emit smoke on second transit either"
+        );
     }
 
     #[test]

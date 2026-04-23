@@ -103,6 +103,13 @@ class EvalWeights:
     # future_factor. Must mirror rust_solver/src/evaluate.rs:160.
     next_turn_threat_penalty: float = 2500
 
+    # Option-C pseudo-threat augmentation flag — when True, evaluate() also
+    # penalizes surviving enemies that can reach a building within
+    # move_speed + 4 Manhattan distance on projected boards (where queued
+    # targets have been cleared). Off by default; enabled only by
+    # project_plan's board_to_json output. Mirrors rust_solver/src/evaluate.rs.
+    pseudo_threat_eval: bool = False
+
     # Phase 1 soft-disable penalty — per action in a plan that uses a
     # weapon in the session's disabled_actions mask. Must mirror
     # rust_solver/src/evaluate.rs:170.
