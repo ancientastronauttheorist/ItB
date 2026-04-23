@@ -62,42 +62,48 @@ def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
       mcp_x = OX + STEP_X * (save_x - save_y)
       mcp_y = OY + STEP_Y * (save_x + save_y)
 
-    The origin (OX, OY) is computed from the game window position
-    (auto-detected via Quartz). STEP_X and STEP_Y are the half-tile
-    dimensions in MCP pixel space, derived from the window size.
+    Calibrated 2026-04-23 from live hover-measurements of all 4 board-diamond
+    corners at window (215, 32). See docs/investigation_grid_calibration_residual.md.
 
-    Calibrated 2026-04-23 from data/grid_reference.json's measured corners
-    at window (215, 32). Empirically verified: grid_to_mcp(F5) = (740, 412)
-    hovers the water tile the JetMech flies over — correct terrain per the
-    bridge state and ItB's mouse-hover tooltip.
+    Measured image-pixel tile centers (user-hovered, cursor_position grabbed):
+      H8 save(0,0)  (707, 122)    top vertex
+      A8 save(0,7)  (384, 359)    left vertex
+      H1 save(7,0)  (1033, 364)   right vertex
+      A1 save(7,7)  (705, 603)    bottom vertex
 
-    Historical note: the 2026-04-07 constants (494, 56, 46.21, 34.57) were
-    off — step_y was 26% too large and the Y origin was ~187 px too high.
-    `auto_turn` (Lua bridge, no MCP clicks) masked the bug for 12 days. First
-    `click_action` use on 2026-04-11 failed 50% immediately and was silently
-    abandoned. See docs/investigation_grid_calibration_broken.md.
+    Least-squares isometric fit:
+      origin_win_rel = (492.25, 89.50)
+      step_x = 46.357   step_y = 34.357
+      max residual = 3.3 px (within human-hover precision)
+
+    All three mechs on the live Silicate Plains board (PunchMech B6, JetMech C5,
+    RocketMech E5) were successfully hover-identified with this formula — the
+    game's info panel appeared for each, confirming the formula lands on the
+    correct mech-bearing tile.
+
+    Historical notes:
+    - 2026-04-07 constants (494, 56, 46.21, 34.57) were close but used a y-origin
+      measured at a different window-Y (the grid_reference.json corners were
+      captured when the game window was at a different position).
+    - 2026-04-23 PR #7 changed the constants to (475, 243, 50, 27.5) — ALL FOUR
+      WRONG. The "hover verification" for PR #7 (F5 = water tile) happened to
+      land on *some* water tile (not F5), producing a false-positive confirmation.
+      Deploy clicks drifted 1-2 tiles consistently; mech-select clicks missed the
+      board entirely.
+    - This fix re-derives the constants from empirical measurements instead of
+      relying on grid_reference.json (which was measured at a different window
+      position and never cross-validated against live hover identity).
     """
     win = _get_window()
-
-    # Derivation from grid_reference.json corners at window (215, 32):
-    #   H8 absolute image-pixel  = (690, 275)
-    #   A1 absolute image-pixel  = (690, 660)
-    #   H1 absolute image-pixel  = (1040, 467)
-    #   A8 absolute image-pixel  = (340, 467)
-    #
-    # Window-relative origin (H8) = (690-215, 275-32) = (475, 243)
-    # Step sizes (constant across window moves):
-    #   step_x = (H1_x - H8_x) / 7 = (1040-690)/7 = 50.0
-    #   step_y = (A1_y - H8_y) / 14 = (660-275)/14 = 27.5
 
     sx = win.width / 1280.0
     sy = win.height / 748.0
 
-    ox = win.x + 475.0 * sx
-    oy = win.y + 243.0 * sy
+    ox = win.x + 492.25 * sx
+    oy = win.y + 89.50 * sy
 
-    step_x = 50.0 * sx
-    step_y = 27.5 * sy
+    step_x = 46.357 * sx
+    step_y = 34.357 * sy
 
     px = ox + step_x * (save_x - save_y)
     py = oy + step_y * (save_x + save_y)
@@ -250,19 +256,20 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     if mech is None:
         return []
 
-    # Step 1: select the mech by clicking its SPRITE position, not the tile
-    # center. Mech sprites render ~150 px above the tile they occupy. For
-    # flying mechs (e.g., JetMech over water), the tile beneath the sprite
-    # is water — clicking the water tile highlights the tile but does NOT
-    # select the flying unit hovering above it. Clicking the sprite position
-    # selects correctly for both flying and grounded mechs since the sprite
-    # always sits on the mech's body.  Empirically verified 2026-04-23 on
-    # F5 (grid_to_mcp → (740, 412); sprite at (740, 262) selected JetMech).
-    _SPRITE_OFFSET_Y = -150
+    # Step 1: select the mech by clicking its tile center. With the corrected
+    # grid_to_mcp formula (2026-04-23 hover-measured calibration), the tile
+    # center pixel falls within the mech sprite's hit-box — empirically
+    # confirmed for all three Rift Walkers mechs on Silicate Plains: hovering
+    # grid_to_mcp(mech.x, mech.y) triggered the game's mech info panel.
+    #
+    # Historical: a -150 Y sprite offset was added in PR #7 to compensate for
+    # a broken grid_to_mcp that placed tiles ~100 px south of reality. With
+    # the corrected formula the offset overshoots into empty space above the
+    # mech and is no longer needed.
     tx, ty = grid_to_mcp(mech.x, mech.y)
     plan: list[dict] = [{
         "type": "left_click",
-        "x": tx, "y": ty + _SPRITE_OFFSET_Y,
+        "x": tx, "y": ty,
         "description": f"Select {action.mech_type} at ({mech.x},{mech.y})",
     }]
 
