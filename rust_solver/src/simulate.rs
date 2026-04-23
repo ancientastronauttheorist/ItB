@@ -529,8 +529,13 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
             result.buildings_bump_damaged += 1;
+            // Guard: apply_damage above can trigger volatile decay / blast
+            // psion chains that damage adjacent tiles, including (nx, ny).
+            // That path may have already driven building_hp to 0, so the
+            // outer `> 0` guard is stale. Use saturating_sub to avoid u8
+            // underflow (debug panic / release wrap-to-255).
             let bt = board.tile_mut(nx, ny);
-            bt.building_hp -= 1;
+            bt.building_hp = bt.building_hp.saturating_sub(1);
             if bt.building_hp == 0 {
                 if !is_unique {
                     bt.terrain = Terrain::Rubble;
@@ -737,8 +742,13 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
             result.buildings_bump_damaged += 1;
+            // Guard: apply_damage above can trigger volatile decay / blast
+            // psion chains that damage adjacent tiles, including (nx, ny).
+            // That path may have already driven building_hp to 0, so the
+            // outer `> 0` guard is stale. Use saturating_sub to avoid u8
+            // underflow (debug panic / release wrap-to-255).
             let bt = board.tile_mut(nx, ny);
-            bt.building_hp -= 1;
+            bt.building_hp = bt.building_hp.saturating_sub(1);
             if bt.building_hp == 0 {
                 if !is_unique {
                     bt.terrain = Terrain::Rubble;
@@ -3183,5 +3193,105 @@ mod tests {
 
         assert_eq!(board.units[idx].hp, 2,
             "Flying unit on melting ice must survive (took 1 weapon dmg)");
+    }
+
+    // ── building_hp underflow regression tests ───────────────────────────
+    //
+    // Previously `apply_push` / `apply_throw` had:
+    //
+    //     if board.tile(nx, ny).building_hp > 0 {
+    //         apply_damage(...);          // can mutate tile hp via volatile
+    //                                     // decay / blast psion chains that
+    //                                     // damage adjacent tiles
+    //         let bt = board.tile_mut(nx, ny);
+    //         bt.building_hp -= 1;        // stale guard: could underflow u8
+    //     }
+    //
+    // If the intervening `apply_damage` drove the building at (nx, ny) to 0
+    // (e.g., Volatile Vek death explosion chained into the building), the
+    // `-= 1` would panic on debug builds and wrap to 255 on release. Both
+    // sites now use saturating_sub.
+
+    #[test]
+    fn test_push_into_destroyed_objective_no_underflow() {
+        // Simplest stub of the destroyed-but-still-blocking case:
+        // terrain = Building, building_hp = 0 (e.g. Emergency Batteries
+        // after destruction). Push a unit into it; the unit takes bump,
+        // the tile stays at 0 hp, no panic.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 0;
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push N into destroyed bldg
+
+        // Unit did not move — still at origin with -1 bump
+        assert_eq!(board.units[idx].x, 3);
+        assert_eq!(board.units[idx].y, 3);
+        assert_eq!(board.units[idx].hp, 2, "pushed unit took 1 bump");
+        // Building hp stays at 0, no underflow
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        // Destroyed stub shouldn't re-count as a new loss
+        assert_eq!(result.buildings_lost, 0);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_push_volatile_into_building_no_underflow() {
+        // Exercises the real underflow path: the outer `building_hp > 0`
+        // guard is satisfied (hp=1), but apply_damage on the pushed unit
+        // kills a Volatile Vek whose decay explosion damages the building
+        // at (nx, ny), dropping hp to 0 BEFORE the post-apply_damage
+        // `bt.building_hp -= 1`. Without saturating_sub this panics in
+        // debug builds.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+
+        // 1-HP Volatile Vek at (3,3) — the bump will kill it, triggering
+        // Explosive Decay (1 bump dmg to all 4 adjacent tiles, including
+        // the building at (3,4)).
+        let idx = board.add_unit(Unit {
+            uid: 1, x: 3, y: 3, hp: 1, max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Volatile_Vek");
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result); // push N into building
+
+        // Volatile vek died from bump damage
+        assert_eq!(board.units[idx].hp, 0);
+        assert_eq!(result.enemies_killed, 1);
+        // Building driven to 0 and converted to rubble (non-unique), no underflow
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+    }
+
+    #[test]
+    fn test_throw_into_destroyed_objective_no_underflow() {
+        // Parallel case for apply_throw's building branch (line ~533).
+        // apply_throw has the same stale-guard pattern; verify the hp=0
+        // stub path stays safe (underflow-prone path is only reachable via
+        // chain damage from apply_damage on the thrown unit).
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 0;
+        // Target (the thrown unit) at (3, 2); attacker at (3, 3) attacking
+        // dir=2 (y-). apply_throw's destination = attacker + opposite(dir)
+        // = (3,3) + (0,1) = (3,4), the destroyed building.
+        let idx = add_enemy(&mut board, 1, 3, 2, 3);
+
+        let mut result = ActionResult::default();
+        apply_throw(&mut board, 3, 3, 3, 2, 2, &mut result);
+
+        // Target stayed at (3,2), took 1 bump, building still at 0
+        assert_eq!(board.units[idx].x, 3);
+        assert_eq!(board.units[idx].y, 2);
+        assert_eq!(board.units[idx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
     }
 }
