@@ -3,6 +3,8 @@
 /// Recursive search over all mech orderings (parallelized via rayon).
 /// Each permutation gets its own board copy and full time budget.
 
+use std::cmp::{Ordering, Reverse};
+use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
 use rayon::prelude::*;
 
@@ -48,6 +50,104 @@ impl Solution {
             permutations_tried: 0,
             total_permutations: 0,
         }
+    }
+}
+
+// ── BoundedTopK ──────────────────────────────────────────────────────────────
+//
+// Keeps the K highest-scoring plans encountered during the search. Backed by
+// a min-heap of `Reverse<ScoredPlan>` so we can evict the current worst in
+// O(log K) when a better plan arrives. Insertion sequence is the deterministic
+// tiebreak: on equal scores, the EARLIER insertion wins (keeps its slot). This
+// matters because depth-5 beam search will compound any nondeterminism at
+// ties across levels — `tests/test_solver_determinism.py` asserts
+// byte-identical output across 10 runs, and unstable tie handling here would
+// flake it.
+
+#[derive(Clone, Debug)]
+pub struct ScoredPlan {
+    pub score: f64,
+    pub seq: u64,
+    pub actions: Vec<MechAction>,
+}
+
+impl PartialEq for ScoredPlan {
+    fn eq(&self, other: &Self) -> bool {
+        self.score.to_bits() == other.score.to_bits() && self.seq == other.seq
+    }
+}
+impl Eq for ScoredPlan {}
+impl Ord for ScoredPlan {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // "Greater" = better plan: higher score wins; on score tie, the earlier
+        // insertion (smaller seq) wins. total_cmp handles any NaN scores
+        // deterministically (shouldn't occur, but we don't want a panic here
+        // silently corrupting the heap).
+        self.score.total_cmp(&other.score)
+            .then_with(|| other.seq.cmp(&self.seq))
+    }
+}
+impl PartialOrd for ScoredPlan {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+}
+
+pub struct BoundedTopK {
+    capacity: usize,
+    heap: BinaryHeap<Reverse<ScoredPlan>>,
+    next_seq: u64,
+}
+
+impl BoundedTopK {
+    pub fn new(capacity: usize) -> Self {
+        assert!(capacity >= 1, "BoundedTopK capacity must be >= 1");
+        BoundedTopK {
+            capacity,
+            heap: BinaryHeap::with_capacity(capacity + 1),
+            next_seq: 0,
+        }
+    }
+
+    pub fn len(&self) -> usize { self.heap.len() }
+    pub fn is_empty(&self) -> bool { self.heap.is_empty() }
+
+    /// Offer a (score, actions) pair. Clones `actions` only if the plan
+    /// actually enters the heap (i.e., beats the current worst slot). A full
+    /// search can produce thousands of terminals per permutation — skipping
+    /// the clone on rejected candidates keeps memory bounded.
+    pub fn offer(&mut self, score: f64, actions: &[MechAction]) {
+        let seq = self.next_seq;
+        self.next_seq += 1;
+
+        if self.heap.len() < self.capacity {
+            let plan = ScoredPlan { score, seq, actions: actions.to_vec() };
+            self.heap.push(Reverse(plan));
+            return;
+        }
+
+        // At capacity. New plan must strictly beat the worst on SCORE to
+        // enter — equal scores lose because our Ord treats later seqs as
+        // worse (the new insertion is always the latest seq by construction).
+        // Checking only the score here is equivalent to a full Ord compare
+        // and avoids allocating `actions` for the rejection case.
+        let worst_score = match self.heap.peek() {
+            Some(Reverse(w)) => w.score,
+            None => return,
+        };
+        if score.total_cmp(&worst_score) != Ordering::Greater {
+            return;
+        }
+
+        let plan = ScoredPlan { score, seq, actions: actions.to_vec() };
+        self.heap.pop();
+        self.heap.push(Reverse(plan));
+    }
+
+    /// Consume and return plans sorted best-first (highest score, earliest
+    /// insertion on ties). `BinaryHeap::into_sorted_vec` returns items in
+    /// ascending order of their Ord; for `Reverse<T>`, ascending is the
+    /// reverse of `T`, which matches our "best first" requirement.
+    pub fn into_sorted_desc(self) -> Vec<ScoredPlan> {
+        self.heap.into_sorted_vec().into_iter().map(|Reverse(p)| p).collect()
     }
 }
 
@@ -538,7 +638,12 @@ fn prune_actions(
         (s, i)
     }).collect();
 
-    scored.sort_by(|a, b| b.0.cmp(&a.0));
+    // Score descending; on tie, preserve enumeration order by original
+    // index ascending. Without the tiebreak, equal-score actions could
+    // flip between runs on an unstable sort — at depth 5 that's the
+    // kind of nondeterminism that compounds into inconsistent beam
+    // survivors and unreproducible failures.
+    scored.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));
     let keep: Vec<Action> = scored.iter().take(max_n).map(|&(_, i)| actions[i]).collect();
     *actions = keep;
 }
@@ -569,6 +674,7 @@ fn search_recursive(
     best_clean_actions: &mut Vec<MechAction>,
     initial_building_count: i32,
     psion_before: &PsionState,
+    top_k_out: &mut Option<BoundedTopK>,
 ) {
     if Instant::now() > deadline { return; }
 
@@ -596,6 +702,9 @@ fn search_recursive(
             *best_clean_score = score;
             *best_clean_actions = actions_so_far.clone();
         }
+        if let Some(top_k) = top_k_out.as_mut() {
+            top_k.offer(score, actions_so_far.as_slice());
+        }
         return;
     }
 
@@ -615,6 +724,7 @@ fn search_recursive(
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
+            top_k_out,
         );
         return;
     }
@@ -654,6 +764,7 @@ fn search_recursive(
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
+            top_k_out,
         );
 
         actions_so_far.pop();
@@ -801,6 +912,7 @@ pub fn solve_turn(
         let mut best_clean_score = f64::NEG_INFINITY;
         let mut best_clean_actions = Vec::new();
         let mut actions_buf = Vec::new();
+        let mut top_k_out: Option<BoundedTopK> = None;
 
         search_recursive(
             board, mech_order, 0,
@@ -813,6 +925,7 @@ pub fn solve_turn(
             &mut best_score, &mut best_actions,
             &mut best_clean_score, &mut best_clean_actions, initial_building_count,
             &psion_before,
+            &mut top_k_out,
         );
 
         let timed_out = Instant::now() > deadline;
@@ -854,6 +967,128 @@ pub fn solve_turn(
     best
 }
 
+// ── Top-K solve ──────────────────────────────────────────────────────────────
+//
+// Returns the K highest-scoring plans by raw `evaluate()` score (no two-stage
+// clean-plan filter — that belongs to single-plan `solve_turn`). Meant to feed
+// the depth-2+ beam search: each beam level needs ranked candidates to expand.
+//
+// The clean-plan post-process is deliberately skipped here. A candidate that
+// sacrifices a building for a decisive strategic gain is a valid beam node,
+// and swapping in a lower-raw-score clean plan at position [0] would violate
+// the sorted-descending contract that the caller depends on.
+
+pub fn solve_turn_top_k(
+    board: &Board,
+    spawn_points: &[(u8, u8)],
+    time_limit_secs: f64,
+    max_actions_per_mech: usize,
+    weights: &EvalWeights,
+    disabled_mask: u128,
+    weapons: &WeaponTable,
+    k: usize,
+) -> Vec<Solution> {
+    if k == 0 {
+        return Vec::new();
+    }
+
+    let active: Vec<usize> = (0..board.unit_count as usize)
+        .filter(|&i| {
+            let u = &board.units[i];
+            u.is_player() && u.alive() && u.active()
+                && (u.is_mech() || u.weapon.0 > 0)
+        })
+        .collect();
+
+    if active.is_empty() {
+        return Vec::new();
+    }
+
+    let n = active.len();
+    let effective_max = if n >= 4 { max_actions_per_mech.min(25) } else { max_actions_per_mech };
+    let (threat_tiles, building_threats) = precompute_threats(board);
+
+    let mut spawn_bits = 0u64;
+    for &(sx, sy) in spawn_points {
+        spawn_bits |= 1u64 << xy_to_idx(sx, sy);
+    }
+
+    let mut original_positions = [(0u8, 0u8); 16];
+    for i in 0..board.unit_count as usize {
+        original_positions[i] = (board.units[i].x, board.units[i].y);
+    }
+
+    let psion_before = PsionState::capture(board);
+
+    let perms = permutations(n);
+    let total_perms = perms.len();
+    let deadline = Instant::now() + Duration::from_secs_f64(time_limit_secs);
+    let start = Instant::now();
+
+    let perm_mapped: Vec<Vec<usize>> = perms.iter()
+        .map(|p| p.iter().map(|&i| active[i]).collect())
+        .collect();
+
+    let initial_building_count = count_buildings(board);
+
+    // Each rayon thread builds its own BoundedTopK. rayon collect preserves
+    // input order so the downstream merge is deterministic regardless of
+    // thread scheduling.
+    let results: Vec<(BoundedTopK, bool)> = perm_mapped.par_iter().map(|mech_order| {
+        let mut top_k_local: Option<BoundedTopK> = Some(BoundedTopK::new(k));
+        // Dummy best tracking — required by search_recursive's signature but
+        // unused in the top-K path. Kept as `f64::NEG_INFINITY` seeds so any
+        // real terminal score wins and we don't short-circuit anything.
+        let mut best_score = f64::NEG_INFINITY;
+        let mut best_actions = Vec::new();
+        let mut best_clean_score = f64::NEG_INFINITY;
+        let mut best_clean_actions = Vec::new();
+        let mut actions_buf = Vec::new();
+
+        search_recursive(
+            board, mech_order, 0,
+            &mut actions_buf, 0, 0, 0.0,
+            threat_tiles, building_threats, spawn_bits,
+            &original_positions,
+            spawn_points, effective_max, weights, deadline,
+            disabled_mask,
+            weapons,
+            &mut best_score, &mut best_actions,
+            &mut best_clean_score, &mut best_clean_actions, initial_building_count,
+            &psion_before,
+            &mut top_k_local,
+        );
+
+        let timed_out = Instant::now() > deadline;
+        (top_k_local.expect("local top_k was Some at entry"), timed_out)
+    }).collect();
+
+    // Merge: walk permutations in input order and offer each plan to a
+    // single global BoundedTopK. Local plans arrive in descending rank,
+    // so the global heap's insertion sequence encodes permutation order
+    // first, then within-permutation rank — giving stable tiebreaks across
+    // runs even when rayon schedules differently.
+    let mut global = BoundedTopK::new(k);
+    let mut any_timed_out = false;
+    for (local, timed_out) in results {
+        if timed_out { any_timed_out = true; }
+        for plan in local.into_sorted_desc() {
+            global.offer(plan.score, plan.actions.as_slice());
+        }
+    }
+
+    let elapsed = (Instant::now() - start).as_secs_f64();
+
+    global.into_sorted_desc().into_iter().map(|plan| Solution {
+        actions: plan.actions,
+        score: plan.score,
+        elapsed_secs: elapsed,
+        timed_out: any_timed_out,
+        permutations_tried: total_perms,
+        total_permutations: total_perms,
+    }).collect()
+}
+
 // ── WId helper ───────────────────────────────────────────────────────────────
 
 impl WId {
@@ -862,5 +1097,154 @@ impl WId {
         if v == 0xFFFF { return WId::Repair; }
         // Safety: we trust the values stored in Unit.weapon
         unsafe { std::mem::transmute::<u8, WId>(v as u8) }
+    }
+}
+
+#[cfg(test)]
+mod top_k_tests {
+    //! Unit tests for `BoundedTopK`.
+    //!
+    //! The invariants under test are exactly what beam search will rely on:
+    //!   - sorted-descending output,
+    //!   - bounded capacity (worst evicted when full),
+    //!   - deterministic tiebreaks on equal scores (earlier insertion wins).
+    //!
+    //! If these flake, `tests/test_solver_determinism.py` will flake at depth
+    //! 1 already — but catching the regression here gives a sharper failure
+    //! message than a byte-diff at the Python layer.
+    use super::*;
+
+    #[test]
+    fn bounded_top_k_basic_desc_ordering() {
+        let mut h = BoundedTopK::new(5);
+        h.offer(10.0, &[]);
+        h.offer(30.0, &[]);
+        h.offer(20.0, &[]);
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 3);
+        assert_eq!(out[0].score, 30.0);
+        assert_eq!(out[1].score, 20.0);
+        assert_eq!(out[2].score, 10.0);
+    }
+
+    #[test]
+    fn bounded_top_k_respects_capacity() {
+        let mut h = BoundedTopK::new(3);
+        for s in [10.0, 50.0, 20.0, 40.0, 30.0] {
+            h.offer(s, &[]);
+        }
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 3);
+        assert_eq!(out[0].score, 50.0);
+        assert_eq!(out[1].score, 40.0);
+        assert_eq!(out[2].score, 30.0);
+    }
+
+    #[test]
+    fn bounded_top_k_earlier_insertion_wins_ties() {
+        // All three plans fit (capacity >= n). Output must preserve insertion
+        // order, because within equal scores our Ord treats smaller seq as
+        // "better" (the deterministic tiebreak).
+        let mut h = BoundedTopK::new(3);
+        h.offer(10.0, &[]);
+        h.offer(10.0, &[]);
+        h.offer(10.0, &[]);
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 3);
+        assert_eq!(out[0].seq, 0);
+        assert_eq!(out[1].seq, 1);
+        assert_eq!(out[2].seq, 2);
+    }
+
+    #[test]
+    fn bounded_top_k_tie_rejects_later_insertion_at_capacity() {
+        // Capacity 2; four tied offers — first two win, last two are rejected
+        // because ties lose against incumbents (later seqs are "worse").
+        let mut h = BoundedTopK::new(2);
+        h.offer(10.0, &[]); // seq=0
+        h.offer(10.0, &[]); // seq=1
+        h.offer(10.0, &[]); // seq=2 → rejected
+        h.offer(10.0, &[]); // seq=3 → rejected
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0].seq, 0);
+        assert_eq!(out[1].seq, 1);
+    }
+
+    #[test]
+    fn bounded_top_k_higher_score_evicts_worst() {
+        // Fill with two tied plans, then a strictly higher score arrives —
+        // it evicts the later-seq tied plan (the current worst).
+        let mut h = BoundedTopK::new(2);
+        h.offer(10.0, &[]); // seq=0
+        h.offer(10.0, &[]); // seq=1
+        h.offer(20.0, &[]); // seq=2 — evicts seq=1
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0].score, 20.0);
+        assert_eq!(out[0].seq, 2);
+        assert_eq!(out[1].score, 10.0);
+        assert_eq!(out[1].seq, 0);
+    }
+
+    #[test]
+    fn bounded_top_k_empty() {
+        let h = BoundedTopK::new(5);
+        assert!(h.is_empty());
+        assert_eq!(h.len(), 0);
+        assert_eq!(h.into_sorted_desc().len(), 0);
+    }
+
+    #[test]
+    fn bounded_top_k_k_greater_than_plans_returns_all() {
+        let mut h = BoundedTopK::new(10);
+        h.offer(10.0, &[]);
+        h.offer(20.0, &[]);
+        h.offer(5.0, &[]);
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 3);
+        assert_eq!(out[0].score, 20.0);
+        assert_eq!(out[1].score, 10.0);
+        assert_eq!(out[2].score, 5.0);
+    }
+
+    #[test]
+    fn bounded_top_k_lower_score_rejected_at_capacity() {
+        let mut h = BoundedTopK::new(2);
+        h.offer(100.0, &[]);
+        h.offer(50.0, &[]);
+        // Below current worst (50) — rejected without allocating.
+        h.offer(10.0, &[]);
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0].score, 100.0);
+        assert_eq!(out[1].score, 50.0);
+    }
+
+    #[test]
+    fn bounded_top_k_actions_preserved() {
+        // Smoke-check that the action payload rides through the heap intact.
+        let mut h = BoundedTopK::new(2);
+        let a = vec![MechAction {
+            mech_uid: 7,
+            mech_type: "PunchMech".to_string(),
+            move_to: (3, 4),
+            weapon: WId::None,
+            target: (3, 4),
+            description: "test".to_string(),
+        }];
+        h.offer(5.0, &a);
+        let out = h.into_sorted_desc();
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].actions.len(), 1);
+        assert_eq!(out[0].actions[0].mech_uid, 7);
+        assert_eq!(out[0].actions[0].move_to, (3, 4));
+    }
+
+    #[test]
+    #[should_panic(expected = "BoundedTopK capacity must be >= 1")]
+    fn bounded_top_k_rejects_zero_capacity() {
+        // k=0 is meaningless and would break the peek-when-full branch.
+        let _ = BoundedTopK::new(0);
     }
 }
