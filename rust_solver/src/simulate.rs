@@ -91,6 +91,58 @@ fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionRes
     }
 }
 
+// ── Teleporter pad swap (Mission_Teleporter) ─────────────────────────────────
+
+/// End-of-movement teleporter-pad swap. Called from every call site that
+/// lands a unit on a new tile: `apply_push` destination-clear branch,
+/// `apply_throw` landing, mech-move in `simulate_action`, Swap-weapon in
+/// `sim_pull_or_swap`, dash landing in `sim_charge`, leap landing in
+/// `sim_leap`. Pull uses `apply_push` so it's covered transitively.
+///
+/// Game rules (from scripts/missions/acid/mission_teleport.lua + wiki):
+///   - Fires only for LIVE units (`hp > 0`). Corpses don't teleport; the
+///     unit may have drowned / been mined out before pad evaluation, so
+///     callers run this AFTER terrain-kill / old-earth-mine / volatile
+///     decay resolves.
+///   - If paired pad is empty → unit teleports to partner.
+///   - If paired pad has an occupant → the two swap positions.
+///   - Pad swap does NOT break web (unlike push). Fire/acid/frozen/shield
+///     carry with the swapped unit; no status change.
+///   - Does NOT recurse. The adjacent-paired-pads + dash infinite-loop bug
+///     is a known vanilla glitch; our deterministic sim fires the swap
+///     once per move-end and moves on — matches how a single `MOVE` command
+///     lands in the bridge (one pos delta per sub-action).
+///   - Safe no-op when `board.teleporter_pairs` is empty (vast majority of
+///     missions) — the linear scan in `Board::teleport_partner` is cheap.
+#[inline]
+pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
+    if board.units[unit_idx].hp <= 0 { return; }
+    let ux = board.units[unit_idx].x;
+    let uy = board.units[unit_idx].y;
+    let (px, py) = match board.teleport_partner(ux, uy) {
+        Some(pair) => pair,
+        None => return,
+    };
+    // Partner occupant (if any). `unit_at` skips corpses; a wreck on the
+    // partner tile blocks move-onto normally, but pads in vanilla are
+    // placed on clear ground so this edge case shouldn't come up. We still
+    // guard by checking for a live occupant only — a wreck under the
+    // partner silently leaves the wreck where it is (consistent with how
+    // push-onto-wreck is treated: blocker).
+    let partner_idx = board.unit_at(px, py);
+    // Move current unit to the partner pad.
+    board.units[unit_idx].x = px;
+    board.units[unit_idx].y = py;
+    // Swap the partner unit (if any, and not the same pawn in multi-tile
+    // edge cases) back onto the original pad.
+    if let Some(other_idx) = partner_idx {
+        if other_idx != unit_idx {
+            board.units[other_idx].x = ux;
+            board.units[other_idx].y = uy;
+        }
+    }
+}
+
 // ── Web break ────────────────────────────────────────────────────────────────
 
 /// Clear the WEB flag on any unit whose web_source_uid matches `src_uid`.
@@ -655,6 +707,9 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
             board.tile_mut(nx, ny).set_freeze_mine(false);
         }
     }
+
+    // Teleporter pad: fires LAST, after terrain/mine resolution.
+    apply_teleport_on_land(board, unit_idx);
 }
 
 // ── flip_queued_attack ───────────────────────────────────────────────────────
@@ -934,6 +989,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
             }
         }
     }
+
+    // Teleporter pad: fires LAST, after terrain-kill / mine / fire / acid
+    // have had a chance to mutate the unit (dead units don't swap).
+    apply_teleport_on_land(board, unit_idx);
 }
 
 // ── Weapon status effect application ────────────────────────────────────────
@@ -1369,10 +1428,16 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
             board.units[target_idx].y = ay;
             board.units[attacker_idx].x = tx;
             board.units[attacker_idx].y = ty;
+            // Teleporter pads: either newly-landed unit may be on a pad.
+            // Apply in target→attacker order (matches push-chain ordering:
+            // the "other" unit resolves landing first).
+            apply_teleport_on_land(board, target_idx);
+            apply_teleport_on_land(board, attacker_idx);
         } else {
             // Teleport to empty tile
             board.units[attacker_idx].x = tx;
             board.units[attacker_idx].y = ty;
+            apply_teleport_on_land(board, attacker_idx);
         }
         let _ = result; // no damage from swap
         return;
@@ -1422,6 +1487,12 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
     // Move attacker to last free tile
     board.units[attacker_idx].x = last_free.0;
     board.units[attacker_idx].y = last_free.1;
+
+    // Teleporter pad: the charger may land on a pad. Fire BEFORE applying
+    // damage to the hit target, because the self-damage block below uses
+    // the charger's post-teleport position (self_damage should hit where
+    // the mech actually ends up).
+    apply_teleport_on_land(board, attacker_idx);
 
     // Damage hit target. Self-damage is only taken on impact (empty-tile
     // charges deal no recoil — see outer simulate() for the Charge skip).
@@ -1535,6 +1606,12 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty
             }
         }
     }
+
+    // Teleporter pad: fires at the VERY END so weapon status (fire/smoke/ACID)
+    // lands on the leap target tile BEFORE the mech teleports away. Matches
+    // in-game behaviour: you aim Bombing Run at the pad, the bomb drops on
+    // the pad, then the mech swaps to the partner pad.
+    apply_teleport_on_land(board, attacker_idx);
 }
 
 // ── Laser ────────────────────────────────────────────────────────────────────
@@ -1667,6 +1744,16 @@ pub fn simulate_action(
         {
             board.units[mech_idx].set_fire(true);
         }
+    }
+
+    // Teleporter pad: if the mech moved AND landed on a pad, swap with
+    // partner. Only fires when move_to != old_pos — a mech that doesn't
+    // move (already on a pad from deployment or prior turn) does NOT
+    // re-trigger (game rule: "does not fire for units that START on a
+    // pad"). Runs after mine/fire/acid so a mech that dies on a mine
+    // doesn't teleport its corpse.
+    if move_to != old_pos {
+        apply_teleport_on_land(board, mech_idx);
     }
 
     // Repair
@@ -3779,5 +3866,142 @@ mod tests {
             board.tile(0, 6).terrain, Terrain::Rubble,
             "Mountain at hp=1 hit by Mirror Shot backward arm should become Rubble"
         );
+    }
+
+    // ── Teleporter pad swap (Mission_Teleporter) ──────────────────────────
+
+    #[test]
+    fn test_teleport_partner_lookup_both_directions() {
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((1, 1, 5, 5));
+        assert_eq!(board.teleport_partner(1, 1), Some((5, 5)));
+        assert_eq!(board.teleport_partner(5, 5), Some((1, 1)));
+        assert_eq!(board.teleport_partner(3, 3), None);
+    }
+
+    #[test]
+    fn test_push_lands_on_pad_swaps_to_empty_partner() {
+        // ScienceMech regression: mech moves/pushed to E3, pad partner C3 is
+        // empty → mech teleports to C3. This was the exact failure seen on
+        // run 20260423_131700_144 T1 (ScienceMech predicted E3, actual C3).
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((5, 3, 5, 5)); // E3 <-> C3
+        let idx = add_enemy(&mut board, 1, 4, 3, 3); // at (4,3), push +x → (5,3) pad
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 4, 3, 1, &mut result); // push +x direction
+        assert_eq!(
+            (board.units[idx].x, board.units[idx].y),
+            (5, 5),
+            "Unit pushed onto empty pad should teleport to partner"
+        );
+    }
+
+    #[test]
+    fn test_push_lands_on_pad_swaps_with_occupant() {
+        // Paired pads with occupants: the two units swap. Mech at pad-A
+        // lands on pad-A's location; Vek on pad-B swaps to pad-A.
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((3, 3, 6, 6));
+        let mech = add_mech(&mut board, 0, 2, 3, 3, WId::PrimePunchmech);
+        let vek  = add_enemy(&mut board, 1, 6, 6, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 2, 3, 1, &mut result); // push mech +x → (3,3) pad
+        assert_eq!((board.units[mech].x, board.units[mech].y), (6, 6));
+        assert_eq!((board.units[vek].x, board.units[vek].y), (3, 3));
+    }
+
+    #[test]
+    fn test_corpse_does_not_teleport() {
+        // Unit pushed onto pad over water dies first; the corpse doesn't
+        // teleport. Pads in vanilla aren't on water, but the rule also
+        // covers old-earth-mine kills on-pad.
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((3, 3, 6, 6));
+        board.tile_mut(3, 3).terrain = Terrain::Water;
+        let idx = add_enemy(&mut board, 1, 2, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 2, 3, 1, &mut result); // push +x onto water-pad
+
+        assert_eq!(board.units[idx].hp, 0, "Unit should drown before pad fires");
+        // Drowned unit's position should stay on the killing tile (water),
+        // not teleport to partner. The sim doesn't "undo" the move — the
+        // corpse sinks where it fell. Check: the partner tile must be empty.
+        assert!(board.unit_at(6, 6).is_none(), "Corpse must not teleport to partner");
+    }
+
+    #[test]
+    fn test_mine_kill_on_pad_does_not_teleport() {
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((3, 3, 6, 6));
+        board.tile_mut(3, 3).set_old_earth_mine(true);
+        let idx = add_enemy(&mut board, 1, 2, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 2, 3, 1, &mut result); // push onto mined pad
+        assert_eq!(board.units[idx].hp, 0, "Mine kills before pad fires");
+        assert!(board.unit_at(6, 6).is_none(), "Mined corpse does not teleport");
+    }
+
+    #[test]
+    fn test_mech_move_onto_pad_teleports() {
+        // simulate_action(move to pad) should land mech on partner.
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((4, 4, 1, 1));
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::Repair);
+
+        let _ = simulate_action(&mut board, mech, (4, 4), WId::Repair, (3, 3), &WEAPONS);
+        assert_eq!(
+            (board.units[mech].x, board.units[mech].y),
+            (1, 1),
+            "Mech move-end on pad swaps to partner"
+        );
+    }
+
+    #[test]
+    fn test_mech_starting_on_pad_does_not_trigger() {
+        // Game rule: "does not fire for units that START on a pad".
+        // simulate_action with move_to == old_pos is a no-move (mech
+        // fires without moving); pad should NOT trigger.
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((3, 3, 7, 7));
+        let mech = add_mech(&mut board, 0, 3, 3, 3, WId::Repair);
+
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair, (3, 3), &WEAPONS);
+        assert_eq!(
+            (board.units[mech].x, board.units[mech].y),
+            (3, 3),
+            "Mech that didn't move (move_to == old_pos) stays put on its pad"
+        );
+    }
+
+    #[test]
+    fn test_web_survives_pad_swap() {
+        // Pad swap is NOT a push; webbed units stay webbed after teleporting.
+        // Push-break path sets `.set_web(false)` on the pusher's webbing
+        // target; pad swap must not touch the web flag.
+        let mut board = make_test_board();
+        board.teleporter_pairs.push((3, 3, 6, 6));
+        let idx = add_enemy(&mut board, 1, 2, 3, 3);
+        board.units[idx].set_web(true);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 2, 3, 1, &mut result); // push onto pad
+        assert_eq!((board.units[idx].x, board.units[idx].y), (6, 6));
+        assert!(board.units[idx].web(), "Pad swap must not break web");
+    }
+
+    #[test]
+    fn test_empty_teleporter_pairs_is_noop() {
+        // Sanity: non-teleporter missions have empty teleporter_pairs; the
+        // linear scan must cost nothing observable.
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 2, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 2, 3, 1, &mut result);
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 3));
     }
 }

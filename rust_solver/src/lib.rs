@@ -341,7 +341,16 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // dead-pusher no longer bumps live blocker, non-unique multi-HP
 // buildings preserve grid_power on bump. See src/solver/verify.py for
 // the full per-bump changelog.
-pub const SIMULATOR_VERSION: u32 = 7;
+//
+// v8 (2026-04-23, Mission_Teleporter): teleporter pad swap now modelled.
+// Bridge extracts pad pairs via Board.AddTeleport hook and emits
+// `teleporter_pairs`; Rust Board carries them; `apply_teleport_on_land`
+// fires at every move-end site (apply_push, apply_throw, sim_charge,
+// sim_leap, Swap weapon, mech move) AFTER terrain-kill / mines so
+// corpses don't teleport. Closes the silent position desync that caused
+// grid loss on run 20260423_131700_144 Disposal Site C (ScienceMech
+// predicted E3, actual C3 — exact 2-tile pad swap).
+pub const SIMULATOR_VERSION: u32 = 8;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

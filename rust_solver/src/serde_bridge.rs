@@ -48,6 +48,12 @@ pub struct JsonInput {
     /// loop may stage without a commit (Tier-3 hot-patch hook). Applied
     /// last, highest precedence.
     pub weapon_overrides_runtime: Option<Vec<JsonWeaponOverride>>,
+    /// Teleporter pad pairs on Mission_Teleporter (Detritus disposal
+    /// missions). Each entry = [x1, y1, x2, y2]. Bridge populates via the
+    /// Board.AddTeleport hook in modloader.lua. Parsed into
+    /// `Board::teleporter_pairs`. Missing / empty on non-teleporter
+    /// missions.
+    pub teleporter_pairs: Option<Vec<Vec<u8>>>,
 }
 
 #[derive(Deserialize)]
@@ -335,6 +341,15 @@ pub fn board_from_json(json_str: &str)
     }
     board.env_danger = env_danger;
     board.env_danger_kill = env_danger_kill;
+
+    // Teleporter pad pairs (Mission_Teleporter overlay from Board:AddTeleport)
+    if let Some(pairs) = &input.teleporter_pairs {
+        for p in pairs {
+            if p.len() >= 4 && p[0] < 8 && p[1] < 8 && p[2] < 8 && p[3] < 8 {
+                board.teleporter_pairs.push((p[0], p[1], p[2], p[3]));
+            }
+        }
+    }
 
     // Spawn points
     let mut spawn_points = Vec::new();

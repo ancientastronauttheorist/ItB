@@ -220,6 +220,12 @@ class Board:
         # Dam_Pawn tile dies; the transition triggers trigger_dam_flood.
         self.dam_alive: bool = False
         self.dam_primary: tuple[int, int] | None = None
+        # Teleporter pad pairs (Mission_Teleporter overlay from
+        # Board:AddTeleport in mission_teleport.lua). Each entry =
+        # (x1, y1, x2, y2). Empty on non-teleporter missions. Rust is
+        # the authoritative simulator for combat; this field mirrors the
+        # Rust shape so test fixtures and `replay_solution` harness agree.
+        self.teleporter_pairs: list[tuple[int, int, int, int]] = []
 
     def copy(self) -> Board:
         """Deep copy for search branching."""
@@ -242,6 +248,7 @@ class Board:
         b.mission_kills_done = self.mission_kills_done
         b.dam_alive = self.dam_alive
         b.dam_primary = self.dam_primary
+        b.teleporter_pairs = list(self.teleporter_pairs)
         return b
 
     def tile(self, x: int, y: int) -> BoardTile:
@@ -400,6 +407,14 @@ class Board:
                 elif bt.terrain == "mountain":
                     # Mountains have 2 HP (bridge doesn't send mountain HP)
                     bt.building_hp = td.get("building_hp", 2)
+
+        # Teleporter pad pairs (Mission_Teleporter). Bridge emits each
+        # entry as [x1, y1, x2, y2]; normalize to tuples.
+        for pair in data.get("teleporter_pairs", []) or []:
+            if isinstance(pair, (list, tuple)) and len(pair) >= 4:
+                board.teleporter_pairs.append(
+                    (int(pair[0]), int(pair[1]), int(pair[2]), int(pair[3]))
+                )
 
         # Environment danger: v2 format has per-tile lethality [x, y, damage, kill_int]
         board.env_type = data.get("env_type", "unknown")
