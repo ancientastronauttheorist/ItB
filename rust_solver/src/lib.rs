@@ -371,7 +371,18 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // evaluate.rs. Closes the chain-reaction gap that killed LaserMech on
 // run 20260424_011517_057 turn 1 (solver didn't predict the decay →
 // cracked-C5 → chasm → mech death).
-pub const SIMULATOR_VERSION: u32 = 16;
+// v17: Non-unique 2-HP building damage is now incremental. Previously
+// apply_damage_core treated non-unique buildings as all-or-nothing
+// (any damage destroyed the full HP pool), which over-predicted HP
+// loss against 2-HP non-objective buildings. Aerial Bombs transit
+// damage against F6 (HP=2) predicted destruction, actual took 1 HP
+// → survived at HP=1. Fix: always use damage.min(building_hp); the
+// is_unique flag now only controls terrain-transition at hp=0
+// (objective buildings retain Terrain::Building, regulars become
+// Rubble). Mirrors the existing incremental behavior in apply_push.
+// Surfaced by grid_drop investigation on run 20260424_144237_364
+// turn 1 (snapshots/grid_drop_20260424_144237_364_t01_a1).
+pub const SIMULATOR_VERSION: u32 = 17;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

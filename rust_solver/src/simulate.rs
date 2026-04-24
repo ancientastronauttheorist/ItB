@@ -295,22 +295,26 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
-    // Damage building if present — any damage destroys ALL buildings on the tile
-    // (ITB rule: multi-building tiles are all-or-nothing, not incremental HP)
+    // Damage building if present — incremental HP damage. All buildings take
+    // damage per-HP regardless of uniqueness (the push-damage path at
+    // apply_push already does this; weapon damage must match). Previously this
+    // branch treated non-unique buildings as all-or-nothing (any damage
+    // destroys the whole HP pool), which over-predicted damage against 2-HP
+    // non-objective buildings — e.g. Aerial Bombs transit tile hitting a
+    // 2-HP building: predicted 0 HP, actual 1 HP. See
+    // snapshots/grid_drop_20260424_144237_364_t01_a1.
+    //
+    // The is_unique flag still controls terrain transition at hp=0:
+    // objective buildings retain Terrain::Building (so they keep their
+    // objective identity for end-of-mission scoring) while regular buildings
+    // become Rubble.
     let mut bldg_hp_lost: u8 = 0;
     {
         let idx = xy_to_idx(x, y) as u64;
         let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            // Unique (objective) buildings take incremental damage; regular
-            // 1-HP buildings are all-or-nothing per the "any damage destroys"
-            // rule.
-            let hp_lost = if is_unique {
-                damage.min(tile.building_hp)
-            } else {
-                tile.building_hp
-            };
+            let hp_lost = damage.min(tile.building_hp);
             tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
             if tile.building_hp == 0 && !is_unique {
                 tile.terrain = Terrain::Rubble;

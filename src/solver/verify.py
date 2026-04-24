@@ -160,7 +160,16 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # "GlowingScorpion"; all 4 decay-firing simulate.rs sites + the
 # evaluate.rs penalty now use it. Pre-v16 rows archived to
 # failure_db_snapshot_sim_v15.jsonl.
-SIMULATOR_VERSION = 16
+# v17: Non-unique 2-HP building damage is now incremental in
+# rust_solver/src/simulate.rs::apply_damage_core — previously non-
+# unique buildings were all-or-nothing (any damage destroyed the
+# whole HP pool), which over-predicted HP loss against 2-HP non-
+# objective buildings. Aerial Bombs transit-damage against a 2-HP
+# building predicted destruction (hp 2→0) vs actual hp 2→1.
+# Surfaced by grid_drop investigation on run 20260424_144237_364
+# (snapshots/grid_drop_20260424_144237_364_t01_a1). Pre-v17 rows
+# archived to failure_db_snapshot_sim_v16.jsonl.
+SIMULATOR_VERSION = 17
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
