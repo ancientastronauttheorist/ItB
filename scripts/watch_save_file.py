@@ -30,25 +30,19 @@ OUT_PATH = Path(__file__).resolve().parent.parent / "recordings" / "save_timing.
 POLL_INTERVAL_S = 0.25  # 250 ms — task-spec minimum is 50 ms, max sensible is ~1 s.
 RETRY_DELAY_S = 0.05    # 50 ms retry if parse fails (file may be mid-write).
 
-# Locate `["region1"] = {` then brace-walk. Lua saves use balanced `{...}` so a
-# simple depth counter is enough. We only need the *contents* of that block,
-# then can sub-match aiSeed / iCurrentTurn inside.
-_REGION1_HEAD = re.compile(r'\["region1"\]\s*=\s*\{')
+# Find EVERY region block, brace-walk it, then pick the one whose iState==0
+# (the mission currently in combat). Region assignment changes between
+# missions — hardcoding region1 only works for the first run. Lua saves use
+# balanced `{...}` so a simple depth counter is enough.
+_REGION_HEAD = re.compile(r'\["(region\d+)"\]\s*=\s*\{')
 _AI_SEED = re.compile(r'\["aiSeed"\]\s*=\s*(-?\d+)')
 _TURN = re.compile(r'\["iCurrentTurn"\]\s*=\s*(-?\d+)')
+_STATE = re.compile(r'\["iState"\]\s*=\s*(-?\d+)')
 
 
-def _extract_region1_block(text: str) -> str | None:
-    """Return the brace-balanced contents of the `["region1"] = {...}` block.
-
-    Returns None if `region1` isn't present or braces never balance (partial
-    write). Uses a simple depth counter — Lua saveData.lua doesn't embed `{`
-    inside string literals in this region, so we don't need a full parser.
-    """
-    m = _REGION1_HEAD.search(text)
-    if not m:
-        return None
-    start = m.end()  # position just after the opening `{`
+def _walk_block(text: str, start: int) -> int | None:
+    """Return the index just past the closing `}` of the block starting at
+    `start` (which must point at position just after the opening `{`)."""
     depth = 1
     i = start
     n = len(text)
@@ -59,23 +53,42 @@ def _extract_region1_block(text: str) -> str | None:
         elif c == '}':
             depth -= 1
             if depth == 0:
-                return text[start:i]
+                return i + 1
         i += 1
     return None  # never balanced — mid-write
 
 
-def _parse(text: str) -> tuple[int, int] | None:
-    block = _extract_region1_block(text)
-    if block is None:
+def _extract_active_region_block(text: str) -> tuple[str, str] | None:
+    """Scan every region and return (region_key, block_contents) for the
+    region whose iState==0 (the mission currently in combat). Missions that
+    are scouted but not yet entered have iState==4. If no region is active,
+    returns None.
+    """
+    for m in _REGION_HEAD.finditer(text):
+        region_key = m.group(1)
+        end = _walk_block(text, m.end())
+        if end is None:
+            continue
+        block = text[m.end():end - 1]  # drop the closing `}`
+        state_match = _STATE.search(block)
+        if state_match and int(state_match.group(1)) == 0:
+            return region_key, block
+    return None
+
+
+def _parse(text: str) -> tuple[str, int, int] | None:
+    active = _extract_active_region_block(text)
+    if active is None:
         return None
+    region_key, block = active
     s = _AI_SEED.search(block)
     t = _TURN.search(block)
     if not s or not t:
         return None
-    return int(s.group(1)), int(t.group(1))
+    return region_key, int(s.group(1)), int(t.group(1))
 
 
-def _read_and_parse(path: Path) -> tuple[int, int, float] | None:
+def _read_and_parse(path: Path) -> tuple[str, int, int, float] | None:
     """Read + parse with one retry if parse fails (game may be mid-write)."""
     for attempt in range(2):
         try:
@@ -85,7 +98,7 @@ def _read_and_parse(path: Path) -> tuple[int, int, float] | None:
             return None
         parsed = _parse(text)
         if parsed is not None:
-            return parsed[0], parsed[1], mtime
+            return parsed[0], parsed[1], parsed[2], mtime
         if attempt == 0:
             time.sleep(RETRY_DELAY_S)
     return None
@@ -103,6 +116,7 @@ def main() -> int:
 
     last_seed: int | None = None
     last_turn: int | None = None
+    last_region: str | None = None
     last_mtime: float | None = None
 
     try:
@@ -122,10 +136,14 @@ def main() -> int:
                 if rec is None:
                     time.sleep(POLL_INTERVAL_S)
                     continue
-                ai_seed, turn, file_mtime = rec
+                region_key, ai_seed, turn, file_mtime = rec
                 last_mtime = file_mtime
 
-                changed = (ai_seed != last_seed) or (turn != last_turn)
+                changed = (
+                    ai_seed != last_seed
+                    or turn != last_turn
+                    or region_key != last_region
+                )
                 if not changed:
                     time.sleep(POLL_INTERVAL_S)
                     continue
@@ -133,6 +151,7 @@ def main() -> int:
                 wallclock_ms = int(time.time() * 1000)
                 line = json.dumps({
                     "wallclock_ms": wallclock_ms,
+                    "region": region_key,
                     "ai_seed": ai_seed,
                     "turn": turn,
                     "file_mtime": file_mtime,
@@ -160,6 +179,7 @@ def main() -> int:
 
                 last_seed = ai_seed
                 last_turn = turn
+                last_region = region_key
                 time.sleep(POLL_INTERVAL_S)
     except KeyboardInterrupt:
         print("\nstopped.", file=sys.stderr)
