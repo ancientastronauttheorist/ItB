@@ -351,7 +351,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // corpses don't teleport. Closes the silent position desync that caused
 // grid loss on run 20260423_131700_144 Disposal Site C (ScienceMech
 // predicted E3, actual C3 — exact 2-tile pad swap).
-pub const SIMULATOR_VERSION: u32 = 13;
+// v14: Cluster Artillery (Ranged_Defensestrike) center-tile damage
+// corrected from 0 → 1 in weapons.rs. Matches game behavior where the
+// weapon deals 1 damage to the center target tile in addition to the
+// 4 adjacent tiles. Surfaced by grid_drop investigation on
+// run 20260424_011517_057 t03 (predicted grid=3, actual=4).
+pub const SIMULATOR_VERSION: u32 = 14;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -362,7 +362,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 32: Ranged_Rockthrow — Rock Launcher
     w[32] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Perpendicular, range_min: 2, flags: C, ..DEF };
     // 33: Ranged_Defensestrike — Cluster Artillery
-    w[33] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, damage_outer: 1, push: PushDir::Outward, range_min: 2,
+    w[33] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, damage_outer: 1, push: PushDir::Outward, range_min: 2,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 34: Ranged_Rocket — Rocket Artillery
     // Tooltip: "Fires a pushing artillery and creates Smoke behind the shooter."
@@ -1178,18 +1178,18 @@ mod tests {
 
     #[test]
     fn test_overlay_applies_per_field_and_preserves_others() {
-        // Patch Cluster Artillery damage 0 → 1 (the live-mismatch fix
-        // targeted by Phase 3). All unrelated weapons stay untouched,
-        // and unpatched fields on the target weapon match WEAPONS.
+        // Patch Cluster Artillery damage to an upgraded value; verify the
+        // overlay affects only the patched field and leaves unrelated
+        // weapons untouched.
         let base_ranged = weapon_def(WId::RangedDefensestrike);
         let base_titan = *weapon_def(WId::PrimePunchmech);
 
-        let patch = PartialWeaponDef { damage: Some(1), ..Default::default() };
+        let patch = PartialWeaponDef { damage: Some(2), ..Default::default() };
         let table = build_overlay_table(&[(WId::RangedDefensestrike, patch)])
             .expect("non-empty overlay should allocate a table");
 
         let patched = &table[WId::RangedDefensestrike as usize];
-        assert_eq!(patched.damage, 1, "damage patched");
+        assert_eq!(patched.damage, 2, "damage patched");
         assert_eq!(patched.weapon_type, base_ranged.weapon_type, "weapon_type preserved");
         assert_eq!(patched.push, base_ranged.push, "push preserved");
         assert_eq!(patched.range_max, base_ranged.range_max, "range preserved");

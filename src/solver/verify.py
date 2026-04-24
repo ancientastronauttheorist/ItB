@@ -149,7 +149,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   - score_breakdown still computed by Python evaluate_breakdown on the
 #     post-enemy board round-tripped via board_to_json.
 # Pre-v13 rows archived to failure_db_snapshot_sim_v12.jsonl.
-SIMULATOR_VERSION = 13
+# v14: Cluster Artillery (Ranged_Defensestrike) center-tile damage
+# corrected 0 → 1 in rust_solver/src/weapons.rs:365. Surfaced by
+# grid_drop investigation on run 20260424_011517_057 t03.
+# Pre-v14 rows archived to failure_db_snapshot_sim_v13.jsonl.
+SIMULATOR_VERSION = 14
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
