@@ -499,3 +499,75 @@ def test_known_gap_short_circuits_diagnose(tmp_path):
     # fall through to needs_agent — but the key assertion is the known_gap
     # suppression was bypassed (i.e. status != insufficient_data).
     assert forced["status"] != "insufficient_data"
+
+
+@pytest.mark.regression
+def test_known_gap_does_not_short_circuit_mixed_record(tmp_path):
+    """Mixed record: ONE gap-tagged diff + one novel diff. Old behaviour
+    short-circuited the whole diagnose to insufficient_data on the first
+    gap match — surfaced when running the loop on turn 2 of run
+    20260423_131700_144 (28-diff record where 1 was acid-tile-gap and 27
+    were novel; nothing got enqueued).
+
+    New behaviour: diff_known_gap returns None on a mixed record so
+    Layer 2 keeps routing through rules + agent fallback. The gap diffs
+    are tagged in Layer 1's verbose output but don't gate Layer 2.
+    """
+    mixed_diff = {
+        "unit_diffs": [
+            # Known gap (web clear on push, in known_gaps.yaml).
+            {"uid": 1, "type": "Scarab2", "field": "status.web",
+             "predicted": True, "actual": False},
+            # Novel — no rule, no gap, would normally need agent.
+            {"uid": 2, "type": "Hornet1", "field": "hp",
+             "predicted": 1, "actual": 3},
+        ],
+        "tile_diffs": [],
+        "scalar_diffs": [],
+    }
+    assert diff_known_gap(mixed_diff) is None, (
+        "mixed record (gap + novel) must not short-circuit — let the novel "
+        "diff flow through to rules/agent"
+    )
+
+    failure = {
+        "id": "fixture_mixed", "run_id": "test", "mission": 0, "turn": 1,
+        "action_index": 0, "simulator_version": 10, "diff": mixed_diff,
+    }
+    result = diagnose(
+        failure["id"], out_dir=tmp_path / "diag",
+        failure=failure, action=None,
+    )
+    assert result["status"] != "insufficient_data", (
+        f"mixed record should not be insufficient_data; got {result}"
+    )
+
+
+@pytest.mark.regression
+def test_classify_diffs_against_gaps_counts_per_diff():
+    """The per-diff classifier is the building block both Layer 1 (verbose
+    summary line) and Layer 2 (gap-vs-novel routing) consume. Verify it
+    counts gap and novel entries separately rather than collapsing on
+    the first hit."""
+    from src.solver.diagnosis import classify_diffs_against_gaps
+    diff = {
+        "unit_diffs": [
+            {"uid": 1, "type": "X", "field": "status.web",
+             "predicted": True, "actual": False},   # gap
+            {"uid": 2, "type": "Y", "field": "hp",
+             "predicted": 2, "actual": 1},          # novel
+            {"uid": 3, "type": "Z", "field": "hp",
+             "predicted": 3, "actual": 0},          # novel
+        ],
+        "tile_diffs": [
+            {"x": 4, "y": 4, "field": "smoke",
+             "predicted": False, "actual": True},   # gap
+        ],
+        "scalar_diffs": [
+            {"field": "grid_power", "predicted": 5, "actual": 4},  # novel
+        ],
+    }
+    gap_count, novel_count, sample = classify_diffs_against_gaps(diff)
+    assert gap_count == 2
+    assert novel_count == 3
+    assert sample is not None  # one of {web_clear_on_push, vek_attack_smoke}

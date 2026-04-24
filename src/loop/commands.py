@@ -1847,18 +1847,21 @@ def _enqueue_diagnosis(session: RunSession, failure_id: str, diff_dict: dict,
                        sim_version: int, classification: dict) -> bool:
     """Append a desync to session.diagnosis_queue.
 
-    Returns True if a new entry was added, False if skipped (model_gap or
-    duplicate signature). The queue dedups on (diff_signature, sim_version)
-    against pending+done entries — same diff in same sim version diagnoses
-    to the same answer, no point re-running.
+    Returns True if a new entry was added, False if skipped (only on
+    duplicate signature now — see below). The queue dedups on
+    (diff_signature, sim_version) against pending+done entries: same
+    diff in same sim version diagnoses to the same answer.
+
+    NOTE: an earlier version skipped enqueue when classification.model_gap
+    was true (any diff matching a known_gap). That was over-eager —
+    classify_diff sets model_gap on a single tile.acid diff, suppressing
+    enqueue for 27 unrelated novel diffs in the same record. Layer 2 is
+    now smarter about per-diff gap tagging (diagnosis.diff_known_gap
+    short-circuits only when ALL diffs are gaps), so we always enqueue
+    and let Layer 2 route correctly.
     """
     from datetime import datetime as _dt
     from src.solver.diagnosis import combined_diff_signature
-
-    if classification.get("model_gap"):
-        # Model gaps would short-circuit Layer 2 to insufficient_data —
-        # don't waste a queue slot on them.
-        return False
 
     diff_sig = combined_diff_signature(diff_dict)
     for entry in session.diagnosis_queue:

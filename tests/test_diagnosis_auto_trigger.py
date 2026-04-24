@@ -117,15 +117,21 @@ def test_enqueue_separates_different_diffs(tmp_path):
 
 
 @pytest.mark.regression
-def test_enqueue_skips_model_gap_desyncs(tmp_path):
-    """Layer 2 short-circuits model_gap diffs to insufficient_data —
-    no point queueing them up."""
-    s = _make_session(tmp_path)
+def test_enqueue_does_not_skip_model_gap_records():
+    """Earlier _enqueue_diagnosis skipped enqueue whenever classification
+    set model_gap=true. That was over-eager — classify_diff fires
+    model_gap on a single tile.acid diff, dropping the 27 novel siblings
+    on a 28-diff record. Surfaced when running the loop on turn 2 of
+    20260423_131700_144 (no entries enqueued despite real desyncs).
+    Now: always enqueue; Layer 2's per-diff gap tagging handles routing.
+    """
+    s = RunSession(run_id="t", squad="t", mission_index=0)
+    s.diagnosis_queue = []
     diff = _frozen_diff()
     cls = {"top_category": "tile_status", "model_gap": True}
     added = _enqueue_diagnosis(s, "fid_gap", diff, 10, cls)
-    assert added is False
-    assert s.diagnosis_queue == []
+    assert added is True
+    assert len(s.diagnosis_queue) == 1
 
 
 # ---------------------------------------------------------------------------

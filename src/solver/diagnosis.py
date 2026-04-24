@@ -373,41 +373,89 @@ def match_rule(
     )
 
 
-def diff_known_gap(diff: dict, gaps: list[dict] | None = None) -> str | None:
-    """Return the id of the first known-gap that matches any diff entry."""
+def _match_gap_for_entry(
+    entry: dict, kind: str, gaps: list[dict]
+) -> str | None:
+    """Return the id of the first known-gap matching this single diff entry."""
+    for gap in gaps:
+        m = gap.get("match") or {}
+        if m.get("diff_kind") not in (None, kind):
+            continue
+        if "field" in m and entry.get("field") != m["field"]:
+            continue
+        if "predicted" in m and entry.get("predicted") != m["predicted"]:
+            continue
+        if "actual" in m and entry.get("actual") != m["actual"]:
+            continue
+        if not any(k in m for k in ("field", "predicted", "actual")):
+            continue
+        return gap.get("id")
+    return None
+
+
+def classify_diffs_against_gaps(
+    diff: dict, gaps: list[dict] | None = None,
+) -> tuple[int, int, str | None]:
+    """Per-diff classification against known_gaps.yaml.
+
+    Returns (gap_count, novel_count, sample_gap_id):
+      - gap_count: number of diff entries that match some known gap
+      - novel_count: entries that DON'T match any known gap
+      - sample_gap_id: id of one matching gap (for the markdown body),
+        or None when no diffs match a gap.
+
+    Use this instead of the old all-or-nothing `diff_known_gap` so that
+    a single gap-tagged diff doesn't suppress diagnosis on its 27 novel
+    siblings (the bug surfaced when running the loop on turn 2 of run
+    20260423_131700_144).
+    """
     if gaps is None:
         gaps = load_known_gaps()
+    gap_count = 0
+    novel_count = 0
+    sample: str | None = None
     if not gaps:
-        return None
+        novel_count = (
+            len(diff.get("unit_diffs", []))
+            + len(diff.get("tile_diffs", []))
+            + len(diff.get("scalar_diffs", []))
+        )
+        return 0, novel_count, None
     for ud in diff.get("unit_diffs", []):
-        for gap in gaps:
-            m = gap.get("match") or {}
-            if m.get("diff_kind") not in (None, "unit_diff"):
-                continue
-            if "field" in m and ud.get("field") != m["field"]:
-                continue
-            if "predicted" in m and ud.get("predicted") != m["predicted"]:
-                continue
-            if "actual" in m and ud.get("actual") != m["actual"]:
-                continue
-            if not any(k in m for k in ("field", "predicted", "actual")):
-                continue
-            return gap.get("id")
+        gid = _match_gap_for_entry(ud, "unit_diff", gaps)
+        if gid is not None:
+            gap_count += 1
+            sample = sample or gid
+        else:
+            novel_count += 1
     for td in diff.get("tile_diffs", []):
-        for gap in gaps:
-            m = gap.get("match") or {}
-            if m.get("diff_kind") not in (None, "tile_diff"):
-                continue
-            if "field" in m and td.get("field") != m["field"]:
-                continue
-            if "predicted" in m and td.get("predicted") != m["predicted"]:
-                continue
-            if "actual" in m and td.get("actual") != m["actual"]:
-                continue
-            if not any(k in m for k in ("field", "predicted", "actual")):
-                continue
-            return gap.get("id")
-    return None
+        gid = _match_gap_for_entry(td, "tile_diff", gaps)
+        if gid is not None:
+            gap_count += 1
+            sample = sample or gid
+        else:
+            novel_count += 1
+    # scalar_diffs aren't gap-matchable today; treat them as novel.
+    novel_count += len(diff.get("scalar_diffs", []))
+    return gap_count, novel_count, sample
+
+
+def diff_known_gap(diff: dict, gaps: list[dict] | None = None) -> str | None:
+    """Return a known-gap id IF every diff entry is gap-tagged, else None.
+
+    Behavioural note: this used to return on the FIRST gap match — that
+    short-circuited diagnose on a 28-diff record where 27 diffs were
+    novel. New semantics: short-circuit only when there's nothing else
+    worth diagnosing. Mixed records (some gap, some novel) flow into the
+    rules engine + agent fallback as usual; the gap diffs are tagged in
+    the verbose Layer 1 output but don't gate Layer 2.
+    """
+    gap_count, novel_count, sample = classify_diffs_against_gaps(diff, gaps)
+    if novel_count > 0:
+        return None
+    if gap_count == 0:
+        return None
+    return sample
 
 
 # ── Rejection store ────────────────────────────────────────────────────────
