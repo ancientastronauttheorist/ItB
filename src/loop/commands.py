@@ -113,13 +113,19 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
         return
     mission_id = bridge_data.get("mission_id") or ""
     mission_seeds = bridge_data.get("mission_seeds") or {}
-    # Pick the region whose sMission matches the active mission.
+    # Pick the active region — the one currently in combat. iState=0 marks
+    # the mission that's actively being played; iState=4 is scouted /
+    # not yet entered. The bridge's `mission_id` (e.g. "Mission_Survive")
+    # is the template name, not the save-file's sMission slot (e.g.
+    # "Mission7"), so we match on iState rather than name.
     active_seed = None
     active_region = None
+    active_mission_slot = None
     for region_key, info in mission_seeds.items():
-        if isinstance(info, dict) and info.get("mission") == mission_id:
+        if isinstance(info, dict) and info.get("state") == 0:
             active_seed = info.get("ai_seed")
             active_region = region_key
+            active_mission_slot = info.get("mission")
             break
     # Telegraphed building attacks: enemy.target lands on a building tile.
     telegraphed = []
@@ -139,6 +145,7 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
         "run_id": session.run_id or "default",
         "mission_id": mission_id,
         "region": active_region,
+        "mission_slot": active_mission_slot,
         "turn": bridge_data.get("turn", 0),
         "master_seed": master_seed,
         "ai_seed": active_seed,
