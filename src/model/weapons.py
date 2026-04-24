@@ -364,6 +364,15 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Acid Projector", weapon_type="projectile",
         damage=0, push="forward", acid=True, range_max=0,
     ),
+    # A.C.I.D. Cannon — "Any Class Weapon" on the A.C.I.D. Tank NPC
+    # deployable. 0 damage, infinite-range cardinal projectile, applies
+    # A.C.I.D. to hit target. Base has NO push; +Push is an optional 1-core
+    # upgrade not tracked here. Distinct from Science_AcidShot (Nano Mech
+    # Acid Projector) which has built-in forward push.
+    "Acid_Tank_Attack": WeaponDef(
+        name="A.C.I.D. Cannon", weapon_type="projectile",
+        damage=0, push="none", acid=True, range_max=0,
+    ),
     "Science_Shield": WeaponDef(
         name="Shield Projector", weapon_type="artillery",
         damage=0, shield=True, limited=2, range_min=2,

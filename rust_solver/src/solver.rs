@@ -242,10 +242,15 @@ pub(crate) fn get_weapon_targets(
             }
         }
         WeaponType::Pull => {
-            // Pull weapons fire axis-aligned like artillery. The simulate path
-            // uses cardinal_direction(attacker→target) to pick the pull axis, so
-            // the target must lie on a cardinal line. Range is [range_min, range_max]
-            // (0 means unlimited = 7).
+            // Pull weapons (Grappling Hook, Gravity Well, etc.) fire a
+            // cardinal-line projectile. In-game the line STOPS at the first
+            // occupant (unit, mountain, or building) — that occupant IS the
+            // only valid target in that direction. Empty tiles, chasms, water,
+            // lava, smoke, rubble do NOT stop the line. Without this blocking
+            // check the solver enumerated tiles past allied mechs and picked
+            // plans the game UI refuses to execute (e.g. Hook Mech D7 → D3
+            // with Lightning Mech at D5 in the line). Range = [range_min,
+            // range_max], range_max=0 means unlimited (clamped to 7).
             let min_r = wdef.range_min.max(1);
             let max_r = if wdef.range_max == 0 { 7 } else { wdef.range_max };
             for &(dx, dy) in &DIRS {
@@ -253,7 +258,23 @@ pub(crate) fn get_weapon_targets(
                     let nx = mx as i8 + dx * i;
                     let ny = my as i8 + dy * i;
                     if !in_bounds(nx, ny) { break; }
-                    targets.push((nx as u8, ny as u8));
+                    let ux = nx as u8;
+                    let uy = ny as u8;
+                    let tile = board.tile(ux, uy);
+                    let has_unit = board.unit_at(ux, uy).is_some();
+                    let is_mountain = tile.terrain == Terrain::Mountain;
+                    let is_building = tile.is_building();
+                    if has_unit || is_mountain || is_building {
+                        // First blocker — this is the sole valid target in
+                        // this direction. Push it even if non-pushable
+                        // (Stable / building / mountain): sim_pull_or_swap
+                        // currently no-ops on non-pushable, which matches the
+                        // ?-targetable-but-no-effect behavior the player sees.
+                        // Full self-pull semantics (mech moves toward Stable
+                        // anchor) are a separate TODO.
+                        targets.push((ux, uy));
+                        break;
+                    }
                 }
             }
         }

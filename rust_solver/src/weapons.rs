@@ -254,9 +254,17 @@ pub enum WId {
     /// Inner damage is DAMAGE_DEATH in-game (kills the Blob) — we represent as 2 since
     /// Blob HP is always 1; effect is identical.
     BlobAtk2 = 114,
+
+    /// A.C.I.D. Cannon — "Any Class Weapon" on the A.C.I.D. Tank NPC
+    /// deployable. 0-damage cardinal projectile (infinite range, first
+    /// blocker is the target) that applies A.C.I.D. to the hit unit. Base
+    /// has NO push — the Push upgrade (1 core) adds 1-tile forward push
+    /// but upgrade flags aren't tracked yet. Distinct from Science_AcidShot
+    /// (Nano Mech's A.C.I.D. Projector) which has built-in forward push.
+    AcidTankAtk = 115,
 }
 
-pub const WEAPON_COUNT: usize = 115;
+pub const WEAPON_COUNT: usize = 116;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -556,6 +564,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 114: BlobAtk2 — alpha blob explode, 2 dmg center + 4 cardinal adjacent
     w[114] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 2, flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
+    // 115: Acid_Tank_Attack — A.C.I.D. Cannon (NPC tank deployable).
+    // 0-damage cardinal projectile, infinite range (range_max=0), applies
+    // A.C.I.D. to hit target. Base has no push (upgrade adds Forward push,
+    // not modelled until we track tank upgrade flags).
+    w[115] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::None, range_max: 0,
+        flags: f(WeaponFlags::ACID.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -748,7 +763,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
         "ScorpionAtkB" => WId::ScorpionAtkB,
-        "Acid_Tank_Attack" => WId::ScorpionAtk1, // Reuse melee/1dmg — NPC controllable unit
+        "Acid_Tank_Attack" => WId::AcidTankAtk,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
         _ => WId::None,
@@ -861,6 +876,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::Repair => "_REPAIR",
         WId::SupportRepair => "Support_Repair",
         WId::BlobAtk2 => "BlobAtk2",
+        WId::AcidTankAtk => "Acid_Tank_Attack",
         _ => "",
     }
 }
@@ -1046,6 +1062,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScorpionAtkB => "Massive Spinneret",
         WId::BeetleAtkB => "Flaming Abdomen",
         WId::SupportRepair => "Repair Drop",
+        WId::AcidTankAtk => "A.C.I.D. Cannon",
         _ => "Unknown",
     }
 }
