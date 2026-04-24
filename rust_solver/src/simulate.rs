@@ -4076,4 +4076,273 @@ mod tests {
         apply_push(&mut board, 2, 3, 1, &mut result);
         assert_eq!((board.units[idx].x, board.units[idx].y), (3, 3));
     }
+
+    // ── Volatile Vek Explosive Decay ─────────────────────────────────────
+    //
+    // Ported from tests/test_volatile_vek.py (Python sim removal, PR-C).
+    // Behavior under test: when a Volatile Vek dies (any cause — weapon
+    // damage, push to deadly terrain, etc.) it deals 1 bump-class damage
+    // to all 4 adjacent tiles. Bump-class bypasses armor + ACID. Chains
+    // through adjacent volatiles (depth-capped at 8).
+
+    fn add_volatile(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        let idx = board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Volatile_Vek");
+        idx
+    }
+
+    fn add_armored_mech(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        let idx = add_mech(board, uid, x, y, hp, WId::None);
+        board.units[idx].flags.insert(UnitFlags::ARMOR);
+        idx
+    }
+
+    fn add_acid_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        let idx = add_enemy(board, uid, x, y, hp);
+        board.units[idx].set_acid(true);
+        idx
+    }
+
+    #[test]
+    fn test_volatile_vek_death_damages_four_adjacent_mechs() {
+        // Mechs N/S/E/W of the Volatile Vek. Kill the Vek → each loses 1 HP.
+        let mut board = make_test_board();
+        let v = add_volatile(&mut board, 1, 3, 3, 1);
+        let n = add_mech(&mut board, 2, 3, 4, 3, WId::None);
+        let s = add_mech(&mut board, 3, 3, 2, 3, WId::None);
+        let e = add_mech(&mut board, 4, 4, 3, 3, WId::None);
+        let w = add_mech(&mut board, 5, 2, 3, 3, WId::None);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[v].hp, 0, "volatile killed");
+        assert_eq!(board.units[n].hp, 2);
+        assert_eq!(board.units[s].hp, 2);
+        assert_eq!(board.units[e].hp, 2);
+        assert_eq!(board.units[w].hp, 2);
+        assert_eq!(result.mech_damage_taken, 4);
+    }
+
+    #[test]
+    fn test_volatile_vek_survives_when_not_killed() {
+        // Vek HP > damage → no death → no explosion.
+        let mut board = make_test_board();
+        let v = add_volatile(&mut board, 1, 3, 3, 2);
+        let neighbor = add_mech(&mut board, 2, 4, 3, 3, WId::None);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[v].hp, 1, "survived");
+        assert_eq!(board.units[neighbor].hp, 3, "no splash");
+        assert_eq!(result.mech_damage_taken, 0);
+    }
+
+    #[test]
+    fn test_volatile_decay_ignores_armor_and_acid() {
+        // Bump-class damage bypasses both, matching Explosive Decay rules.
+        let mut board = make_test_board();
+        let _v = add_volatile(&mut board, 1, 3, 3, 1);
+        let armored = add_armored_mech(&mut board, 2, 4, 3, 3);
+        let acid_enemy = add_acid_enemy(&mut board, 3, 2, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        // Armor would normally reduce 1→0; bump damage ignores armor.
+        assert_eq!(board.units[armored].hp, 2, "armor bypassed");
+        // ACID doubles weapon damage; bump ignores ACID, so 1 not 2.
+        assert_eq!(board.units[acid_enemy].hp, 2, "acid double bypassed");
+    }
+
+    #[test]
+    fn test_volatile_decay_does_not_chain_on_non_volatile() {
+        // Adjacent non-volatile dies from the 1 damage; no second explosion.
+        let mut board = make_test_board();
+        let _v = add_volatile(&mut board, 1, 3, 3, 1);
+        let fragile = add_enemy(&mut board, 2, 4, 3, 1);
+        let bystander = add_mech(&mut board, 3, 5, 3, 3, WId::None);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[fragile].hp, 0, "fragile killed by decay");
+        assert_eq!(board.units[bystander].hp, 3,
+                   "no second explosion from non-volatile death");
+    }
+
+    #[test]
+    fn test_volatile_decay_chains_through_adjacent_volatile() {
+        // A at (3,3) dies → hits B at (4,3) for 1 → B at 0 → B's decay
+        // fires → hits mech at (5,3) for 1.
+        let mut board = make_test_board();
+        let a = add_volatile(&mut board, 1, 3, 3, 1);
+        let b = add_volatile(&mut board, 2, 4, 3, 1);
+        let mech = add_mech(&mut board, 3, 5, 3, 3, WId::None);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[a].hp, 0);
+        assert_eq!(board.units[b].hp, 0);
+        // Mech is adjacent to B, NOT to A — only B's chain explosion hits it.
+        assert_eq!(board.units[mech].hp, 2);
+    }
+
+    #[test]
+    fn test_volatile_vek_pushed_into_water_explodes() {
+        // Non-flying volatile pushed into water: drowns AND explodes,
+        // damaging the mech adjacent to the destination tile.
+        let mut board = make_test_board();
+        board.tile_mut(4, 3).terrain = Terrain::Water;
+        let v = add_volatile(&mut board, 1, 3, 3, 3);
+        let mech = add_mech(&mut board, 2, 5, 3, 3, WId::None);
+
+        let mut result = ActionResult::default();
+        // Push east: (3,3) -> (4,3) which is water. DIRS index 1 = east.
+        apply_push(&mut board, 3, 3, 1, &mut result);
+
+        assert_eq!(board.units[v].hp, 0, "drowned");
+        // Mech at (5,3) is adjacent to (4,3); decay reaches it.
+        assert_eq!(board.units[mech].hp, 2,
+                   "mech took 1 from explosion at the drown tile");
+    }
+
+    // NOTE: test_volatile_decay_attribution_in_events from the Python
+    // suite is intentionally NOT ported. Rust ActionResult.events is
+    // never populated by any sim path (grep `events.push` across
+    // rust_solver/src/* returns nothing). The Python convention of
+    // pushing human-readable event strings was Python-specific; Rust
+    // tracks state mutations directly via Board fields. If event
+    // attribution is later useful for diagnose markdown body text,
+    // wire it as a separate feature with its own tests.
+
+    // ── Push mechanics — gap-filling cases from tests/test_push_mechanics.py ──
+    //
+    // The existing Rust corpus already covers push_into_water,
+    // push_into_building, ignores_armor, etc. These add the rules that
+    // weren't yet tested at the unit level: non-pushable immunity,
+    // edge/mountain bumps, two-unit collision damage, chasm/lava
+    // deadly-ground, flying immunity to deadly ground, and the
+    // no-chain rule. Ported during PR-C of the Python-sim removal.
+
+    #[test]
+    fn test_non_pushable_non_mech_is_immune() {
+        // Massive Vek without PUSHABLE flag doesn't move on push.
+        let mut board = make_test_board();
+        let v = board.add_unit(Unit {
+            uid: 1, x: 3, y: 3, hp: 3, max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::MASSIVE,  // NO PUSHABLE
+            ..Default::default()
+        });
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);  // try to push N
+        assert_eq!((board.units[v].x, board.units[v].y), (3, 3),
+                   "non-pushable unit must not move");
+    }
+
+    #[test]
+    fn test_bump_against_edge_takes_one_damage() {
+        // Pushing a unit off the board (no destination) → 1 bump damage.
+        let mut board = make_test_board();
+        let v = add_enemy(&mut board, 1, 0, 3, 3);  // at west edge
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 0, 3, 3, &mut result);  // DIRS index 3 = west
+        assert_eq!((board.units[v].x, board.units[v].y), (0, 3),
+                   "edge bump leaves unit in place");
+        assert_eq!(board.units[v].hp, 2, "1 bump damage from edge");
+    }
+
+    #[test]
+    fn test_bump_against_mountain_damages_both() {
+        // Mountain stops the push; unit takes 1; mountain HP -1.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        let v = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);  // push N into mountain
+        assert_eq!((board.units[v].x, board.units[v].y), (3, 3),
+                   "mountain blocks push");
+        assert_eq!(board.units[v].hp, 2, "1 bump damage");
+        assert_eq!(board.tile(3, 4).building_hp, 1, "mountain damaged");
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Mountain,
+                   "mountain still standing at 1 HP");
+    }
+
+    #[test]
+    fn test_two_unit_collision_both_take_one_damage() {
+        // Push A into occupied B's tile → A stays put, both take 1.
+        let mut board = make_test_board();
+        let a = add_enemy(&mut board, 1, 3, 3, 3);
+        let b = add_enemy(&mut board, 2, 3, 4, 3);  // N of A
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);  // push A north into B
+        assert_eq!((board.units[a].x, board.units[a].y), (3, 3),
+                   "A doesn't move into occupied B");
+        assert_eq!(board.units[a].hp, 2, "A takes 1 bump");
+        assert_eq!(board.units[b].hp, 2, "B takes 1 bump");
+    }
+
+    #[test]
+    fn test_push_into_chasm_kills_ground_unit() {
+        // Chasm is deadly to non-flying ground units.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let v = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!(board.units[v].hp, 0, "chasm kills");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_flying_unit_survives_chasm_push() {
+        // Flying units cross chasm/water/lava without dying.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Chasm;
+        let f = board.add_unit(Unit {
+            uid: 1, x: 3, y: 3, hp: 3, max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::FLYING,
+            ..Default::default()
+        });
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+        assert_eq!(board.units[f].hp, 3, "flying unit survives chasm");
+        assert_eq!((board.units[f].x, board.units[f].y), (3, 4),
+                   "flying unit landed on chasm tile");
+    }
+
+    #[test]
+    fn test_no_chain_push_collision_with_space_behind() {
+        // A pushed into B doesn't transfer the push to B even with empty
+        // space behind B. Both take collision damage; A stays put; B
+        // stays put.
+        let mut board = make_test_board();
+        let a = add_enemy(&mut board, 1, 3, 3, 3);
+        let b = add_enemy(&mut board, 2, 3, 4, 3);
+        // Tile at (3,5) is empty Ground — would receive the chain if it existed.
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);  // push A north
+        assert_eq!((board.units[a].x, board.units[a].y), (3, 3));
+        assert_eq!((board.units[b].x, board.units[b].y), (3, 4),
+                   "no chain — B doesn't move into the empty (3,5)");
+        assert_eq!(board.units[a].hp, 2);
+        assert_eq!(board.units[b].hp, 2);
+    }
 }
