@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 # Solve-record schema version. Bump when the shape of the ``data`` block
@@ -611,3 +612,295 @@ def classify_diff(diff: DiffResult, mech_uid: int = None, phase: str = "action")
         "subcategory": subcategory,
         "model_gap": model_gap,
     }
+
+
+# Bridge (x,y) → visual A1-H8 (Row=8-x, Col=chr(72-y)).
+# CLAUDE.md rule 10: visual notation primary in all communication.
+def visual_coord(x: int, y: int) -> str:
+    if not (0 <= x < 8 and 0 <= y < 8):
+        return f"({x},{y})"
+    return f"{chr(72 - y)}{8 - x}"
+
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_KNOWN_GAPS_CACHE: list[dict] | None = None
+
+
+def load_known_gaps(path: Path | None = None) -> list[dict]:
+    """Load diagnoses/known_gaps.yaml. Returns [] if missing or PyYAML absent.
+
+    Each gap entry is a dict with at minimum:
+      id: short slug
+      reason: one-line human explanation
+      match: dict of diff-shape constraints (diff_kind/field/predicted/actual)
+    """
+    global _KNOWN_GAPS_CACHE
+    if path is None and _KNOWN_GAPS_CACHE is not None:
+        return _KNOWN_GAPS_CACHE
+    p = path or (_REPO_ROOT / "diagnoses" / "known_gaps.yaml")
+    if not p.exists():
+        if path is None:
+            _KNOWN_GAPS_CACHE = []
+        return []
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        if path is None:
+            _KNOWN_GAPS_CACHE = []
+        return []
+    try:
+        with open(p) as f:
+            data = yaml.safe_load(f) or {}
+    except Exception:
+        if path is None:
+            _KNOWN_GAPS_CACHE = []
+        return []
+    gaps = data.get("known_gaps") or []
+    if path is None:
+        _KNOWN_GAPS_CACHE = gaps
+    return gaps
+
+
+def _match_gap(diff_entry: dict, kind: str, gaps: list[dict]) -> dict | None:
+    """Return first matching known-gap entry, or None."""
+    for gap in gaps:
+        m = gap.get("match") or {}
+        if m.get("diff_kind") and m["diff_kind"] != kind:
+            continue
+        if "field" in m and diff_entry.get("field") != m["field"]:
+            continue
+        if "predicted" in m and diff_entry.get("predicted") != m["predicted"]:
+            continue
+        if "actual" in m and diff_entry.get("actual") != m["actual"]:
+            continue
+        return gap
+    return None
+
+
+def _diff_signature(kind: str, entry: dict) -> str:
+    """Stable signature for dedup against cached diagnoses."""
+    if kind == "unit_diff":
+        return (
+            f"unit:{entry.get('type','?')}:{entry.get('field','?')}:"
+            f"{entry.get('predicted')}->{entry.get('actual')}"
+        )
+    if kind == "tile_diff":
+        return (
+            f"tile:({entry.get('x')},{entry.get('y')}):{entry.get('field','?')}:"
+            f"{entry.get('predicted')}->{entry.get('actual')}"
+        )
+    return f"scalar:{entry.get('field','?')}:{entry.get('predicted')}->{entry.get('actual')}"
+
+
+def _load_cached_signatures(run_id: str | None) -> dict[str, str]:
+    """Scan recordings/<run_id>/diagnoses/*.md for previously-diagnosed signatures.
+
+    Returns a map of diff_signature → failure_id. Only the current run's
+    diagnoses are considered (cross-run reuse is PR3 territory).
+    """
+    if not run_id:
+        return {}
+    diag_dir = _REPO_ROOT / "recordings" / run_id / "diagnoses"
+    if not diag_dir.exists():
+        return {}
+    out: dict[str, str] = {}
+    for md in diag_dir.glob("*.md"):
+        try:
+            text = md.read_text()
+        except OSError:
+            continue
+        # Frontmatter is YAML between leading "---" lines; bail if missing.
+        if not text.startswith("---"):
+            continue
+        end = text.find("\n---", 3)
+        if end < 0:
+            continue
+        try:
+            import yaml  # type: ignore
+            fm = yaml.safe_load(text[3:end]) or {}
+        except Exception:
+            continue
+        fid = fm.get("failure_id") or fm.get("id")
+        for sig in (fm.get("diff_signatures") or []):
+            if sig and fid and sig not in out:
+                out[sig] = fid
+    return out
+
+
+_WEAPON_DESC_HINTS = ("at ", "fire ", "move ")
+
+
+def _action_summary(action: dict | None) -> str:
+    """One-line description for the diff header."""
+    if not action:
+        return "(action unknown)"
+    desc = action.get("description")
+    if desc:
+        return desc
+    parts = []
+    mt = action.get("mech_type")
+    if mt:
+        parts.append(mt)
+    weapon = action.get("weapon")
+    if weapon and weapon != "Unknown":
+        parts.append(weapon)
+    target = action.get("target")
+    if target and target != [255, 255]:
+        parts.append(f"at {visual_coord(target[0], target[1])}")
+    return " ".join(parts) if parts else "(action unknown)"
+
+
+def format_diff_for_log(
+    diff: DiffResult,
+    action_index: int,
+    action: dict | None = None,
+    failure_id: str | None = None,
+    run_id: str | None = None,
+    known_gaps: list[dict] | None = None,
+    cached_sigs: dict[str, str] | None = None,
+) -> str:
+    """Pretty-print a DiffResult for terminal display + log file.
+
+    Tags each diff line with one of:
+      [novel]                  — no prior knowledge of this signature
+      [known-gap: <id>]        — matches an entry in diagnoses/known_gaps.yaml
+      [cached: <failure_id>]   — already diagnosed in this run
+
+    Visual A1-H8 coords primary, bridge (x,y) secondary (CLAUDE.md rule 10).
+    """
+    if diff.is_empty():
+        return f"=== VERIFY {action_index}: PASS (no diffs) ==="
+
+    if known_gaps is None:
+        known_gaps = load_known_gaps()
+    if cached_sigs is None:
+        cached_sigs = _load_cached_signatures(run_id)
+
+    summary = _action_summary(action)
+    total = diff.total_count()
+    lines: list[str] = []
+    header = f"=== DESYNC: Action {action_index} ({summary}) — {total} diffs ==="
+    if failure_id:
+        header += f" [failure_id={failure_id}]"
+    lines.append(header)
+
+    known_gap_count = 0
+    cached_count = 0
+
+    def tag(kind: str, entry: dict) -> str:
+        nonlocal known_gap_count, cached_count
+        sig = _diff_signature(kind, entry)
+        gap = _match_gap(entry, kind, known_gaps)
+        if gap is not None:
+            known_gap_count += 1
+            return f"[known-gap: {gap.get('id', 'unknown')}]"
+        cached_id = cached_sigs.get(sig)
+        if cached_id:
+            cached_count += 1
+            return f"[cached: {cached_id}]"
+        return "[novel]"
+
+    if diff.unit_diffs:
+        lines.append("")
+        lines.append("UNITS:")
+        for ud in diff.unit_diffs:
+            utype = str(ud.get("type", "?"))
+            uid = str(ud.get("uid", "?"))
+            field_name = str(ud.get("field", "?"))
+            pred = ud.get("predicted")
+            actual = ud.get("actual")
+            t = tag("unit_diff", ud)
+            lines.append(
+                f"  {utype:<14}  uid={uid:<4}  {field_name:<18}  "
+                f"pred={str(pred):<12}  actual={str(actual):<12}  {t}"
+            )
+
+    if diff.tile_diffs:
+        lines.append("")
+        lines.append("TILES:")
+        for td in diff.tile_diffs:
+            x = td.get("x", 0)
+            y = td.get("y", 0)
+            vc = visual_coord(x, y)
+            field_name = str(td.get("field", "?"))
+            pred = td.get("predicted")
+            actual = td.get("actual")
+            t = tag("tile_diff", td)
+            lines.append(
+                f"  {vc:<4} ({x},{y})    {field_name:<18}  "
+                f"pred={str(pred):<12}  actual={str(actual):<12}  {t}"
+            )
+
+    if diff.scalar_diffs:
+        lines.append("")
+        lines.append("SCALARS:")
+        for sd in diff.scalar_diffs:
+            field_name = str(sd.get("field", "?"))
+            pred = sd.get("predicted")
+            actual = sd.get("actual")
+            t = tag("scalar_diff", sd)
+            lines.append(
+                f"  {field_name:<18}  pred={str(pred):<12}  "
+                f"actual={str(actual):<12}  {t}"
+            )
+
+    classification = classify_diff(
+        diff,
+        mech_uid=(action or {}).get("mech_uid"),
+    )
+    cats = classification.get("categories") or []
+    if cats:
+        from collections import Counter
+        per_cat = Counter()
+        for ud in diff.unit_diffs:
+            f = ud.get("field", "")
+            if f == "pos":
+                per_cat["push_dir/pos"] += 1
+            elif f == "active":
+                per_cat["active"] += 1
+            elif f == "alive":
+                per_cat["death"] += 1
+            elif f == "hp":
+                per_cat["damage_amount"] += 1
+            elif f.startswith("status."):
+                per_cat["status"] += 1
+            elif f in ("missing_in_actual", "missing_in_predicted"):
+                per_cat["spawn"] += 1
+            else:
+                per_cat[f or "unknown"] += 1
+        for td in diff.tile_diffs:
+            f = td.get("field", "")
+            if f == "terrain":
+                per_cat["terrain"] += 1
+            elif f == "building_hp":
+                per_cat["grid_power"] += 1
+            elif f == "has_pod":
+                per_cat["pod"] += 1
+            else:
+                per_cat["tile_status"] += 1
+        for sd in diff.scalar_diffs:
+            per_cat[sd.get("field", "scalar")] += 1
+        cat_str = ", ".join(f"{k} × {v}" for k, v in per_cat.most_common())
+        lines.append("")
+        lines.append(f"CATEGORIES:  {cat_str}")
+
+    novel_count = total - known_gap_count - cached_count
+    lines.append("")
+    lines.append(f"Known gaps folded: {known_gap_count} of {total} diffs")
+    lines.append(f"Cached prior:      {cached_count} of {total} diffs")
+    lines.append(f"Novel diffs:       {novel_count} of {total} diffs")
+
+    if novel_count > 0:
+        lines.append("")
+        if failure_id:
+            lines.append(
+                f"Run `python3 game_loop.py diagnose {failure_id}` to "
+                "produce a fix proposal."
+            )
+        else:
+            lines.append(
+                "Run `python3 game_loop.py diagnose <failure_id>` to "
+                "produce a fix proposal."
+            )
+
+    return "\n".join(lines)

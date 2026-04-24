@@ -1775,6 +1775,34 @@ def cmd_verify_action(action_index: int) -> dict:
             "tags": list(session.tags),
         },
     )
+    # Mirror the ID construction in append_to_failure_db so callers can hand
+    # the failure_id straight to `game_loop.py diagnose`.
+    failure_id = (
+        f"{session.run_id or 'default'}_m{session.mission_index:02d}"
+        f"_t{solved_turn:02d}_per_action_desync_a{action_index}"
+    )
+
+    # Verbose per-field block (Layer 1 of the diagnosis loop). Replaces the
+    # category-only one-liner that used to be the entire desync output.
+    action_meta = None
+    sol_actions = session.active_solution.actions
+    if 0 <= action_index < len(sol_actions):
+        a = sol_actions[action_index]
+        action_meta = {
+            "mech_uid": getattr(a, "mech_uid", None),
+            "mech_type": getattr(a, "mech_type", None),
+            "weapon": getattr(a, "weapon", None),
+            "target": list(a.target) if getattr(a, "target", None) else None,
+            "description": getattr(a, "description", None),
+        }
+    from src.solver.verify import format_diff_for_log
+    print(format_diff_for_log(
+        diff,
+        action_index,
+        action=action_meta,
+        failure_id=failure_id,
+        run_id=session.run_id,
+    ))
 
     result = {
         "status": "DESYNC",
@@ -1784,8 +1812,8 @@ def cmd_verify_action(action_index: int) -> dict:
         "categories": classification["categories"],
         "subcategory": classification.get("subcategory"),
         "model_gap": classification.get("model_gap", False),
+        "failure_id": failure_id,
     }
-    print(f"VERIFY {action_index}: DESYNC ({diff.total_count()} diffs) [{cat_label}]")
     _print_result(result)
     return result
 
