@@ -216,6 +216,26 @@ class RunSession:
     # not produce a second entry.
     research_queue: list[dict] = field(default_factory=list)
 
+    # Layer 3 of the diagnosis loop. Populated by `verify_action --diagnose`
+    # (or with ITB_AUTO_DIAGNOSE=1). Pending entries are drained by the
+    # harness via `game_loop.py diagnose_next` between turns — NEVER on the
+    # auto_turn hot path (45s enemy-animation budget). Spec: docs/
+    # diagnosis_loop_design.md §8.
+    # Entry shape:
+    #   {
+    #     "failure_id": str,
+    #     "diff_signature": str,         # combined sha; for dedup
+    #     "sim_version": int,
+    #     "enqueued_at": str,            # ISO timestamp
+    #     "status": "pending"|"done"|"failed",
+    #     "diagnose_status": str|None,   # set after drain: rule_match / needs_agent / ...
+    #     "rule_id": str|None,
+    #     "markdown": str|None,
+    #   }
+    # Dedup key: (diff_signature, sim_version) — same diff in same sim
+    # diagnoses to the same answer; no point re-enqueueing.
+    diagnosis_queue: list[dict] = field(default_factory=list)
+
     # --- Solution management ---
 
     def set_solution(self, actions: list[SolverAction], score: float, turn: int):
@@ -483,6 +503,7 @@ class RunSession:
             "failure_events_this_run": self.failure_events_this_run,
             "disabled_actions": self.disabled_actions,
             "research_queue": self.research_queue,
+            "diagnosis_queue": self.diagnosis_queue,
         }
         return d
 
@@ -515,6 +536,7 @@ class RunSession:
             failure_events_this_run=d.get("failure_events_this_run") or [],
             disabled_actions=d.get("disabled_actions") or [],
             research_queue=d.get("research_queue") or [],
+            diagnosis_queue=d.get("diagnosis_queue") or [],
         )
 
     # --- Persistence with file locking ---

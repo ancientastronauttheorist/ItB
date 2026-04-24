@@ -41,6 +41,8 @@ from src.loop.commands import (
     cmd_verify_action,
     cmd_diagnose,
     cmd_diagnose_apply_agent,
+    cmd_diagnose_next,
+    cmd_diagnose_queue,
     cmd_reject_diagnosis,
     cmd_click_action,
     cmd_click_end_turn,
@@ -110,6 +112,12 @@ def main():
     )
     p_verify_action.add_argument("index", type=int,
                                  help="Action index from solution")
+    p_verify_action.add_argument(
+        "--diagnose", action="store_true",
+        help="On desync, append the failure to session.diagnosis_queue. "
+             "The harness drains the queue between turns via "
+             "`diagnose_next`. Also enabled by ITB_AUTO_DIAGNOSE=1."
+    )
 
     # diagnose
     p_diagnose = sub.add_parser(
@@ -148,6 +156,23 @@ def main():
                        help="One-line explanation of why the proposal was wrong")
     p_rej.add_argument("--out", default=None,
                        help="Override the markdown output directory")
+
+    # diagnose_next
+    p_dn = sub.add_parser(
+        "diagnose_next",
+        help="Drain the next pending entry from session.diagnosis_queue (Layer 3)",
+    )
+    p_dn.add_argument("--force", action="store_true",
+                      help="Pass --force through to diagnose (skip rejections + known_gaps)")
+
+    # diagnose_queue
+    p_dq = sub.add_parser(
+        "diagnose_queue",
+        help="List session.diagnosis_queue entries",
+    )
+    p_dq.add_argument("--show", default="pending",
+                      choices=["pending", "done", "failed", "all"],
+                      help="Filter by status (default: pending)")
 
     # click_action
     p_click_action = sub.add_parser(
@@ -446,11 +471,15 @@ def main():
     elif args.command == "verify":
         cmd_verify(args.index, profile=args.profile)
     elif args.command == "verify_action":
-        cmd_verify_action(args.index)
+        cmd_verify_action(args.index, auto_diagnose=args.diagnose)
     elif args.command == "diagnose":
         cmd_diagnose(args.failure_id, force=args.force, out_path=args.out)
     elif args.command == "diagnose_apply_agent":
         cmd_diagnose_apply_agent(args.failure_id, args.payload, out_path=args.out)
+    elif args.command == "diagnose_next":
+        cmd_diagnose_next(force=args.force)
+    elif args.command == "diagnose_queue":
+        cmd_diagnose_queue(show=args.show)
     elif args.command == "reject_diagnosis":
         cmd_reject_diagnosis(args.failure_id, args.reason, out_path=args.out)
     elif args.command == "click_action":

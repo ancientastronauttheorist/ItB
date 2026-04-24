@@ -1622,12 +1622,18 @@ def cmd_verify(action_index: int = -1, profile: str = "Alpha",
     return result
 
 
-def cmd_verify_action(action_index: int) -> dict:
+def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
     """Per-action verification: diff predicted vs actual board state.
 
     Reads the per-action snapshot the solver captured during replay_solution,
     refreshes the bridge, and diffs the two. NEVER re-solves, NEVER overrides
     — desyncs are written to the failure database as data for the tuner.
+
+    When ``auto_diagnose`` is True (also enabled by ITB_AUTO_DIAGNOSE=1
+    in the environment), desyncs are appended to ``session.diagnosis_queue``
+    with status=pending. The harness drains the queue between turns via
+    ``cmd_diagnose_next``; nothing about diagnosis runs on the verify_action
+    hot path itself (per design doc §13 #17).
 
     Returns a dict with status PASS/DESYNC/ERROR. The desync record carries
     a top_category and (optionally) a model_gap_known subcategory so Phase 4's
@@ -1804,6 +1810,24 @@ def cmd_verify_action(action_index: int) -> dict:
         run_id=session.run_id,
     ))
 
+    enqueued = False
+    if auto_diagnose or os.environ.get("ITB_AUTO_DIAGNOSE") == "1":
+        enqueued = _enqueue_diagnosis(
+            session,
+            failure_id=failure_id,
+            diff_dict=diff_dict,
+            sim_version=_get_simulator_version(),
+            classification=classification,
+        )
+        if enqueued:
+            # Pass the session path explicitly so test monkeypatches on
+            # DEFAULT_SESSION_FILE flow through (the default-arg form binds
+            # at import time and would write to the original location).
+            session.save(DEFAULT_SESSION_FILE)
+            print(f"  [auto-diagnose] enqueued — drain via "
+                  f"`game_loop.py diagnose_next` (queue depth: "
+                  f"{sum(1 for e in session.diagnosis_queue if e.get('status') == 'pending')})")
+
     result = {
         "status": "DESYNC",
         "action_index": action_index,
@@ -1813,6 +1837,148 @@ def cmd_verify_action(action_index: int) -> dict:
         "subcategory": classification.get("subcategory"),
         "model_gap": classification.get("model_gap", False),
         "failure_id": failure_id,
+        "diagnosis_enqueued": enqueued,
+    }
+    _print_result(result)
+    return result
+
+
+def _enqueue_diagnosis(session: RunSession, failure_id: str, diff_dict: dict,
+                       sim_version: int, classification: dict) -> bool:
+    """Append a desync to session.diagnosis_queue.
+
+    Returns True if a new entry was added, False if skipped (model_gap or
+    duplicate signature). The queue dedups on (diff_signature, sim_version)
+    against pending+done entries — same diff in same sim version diagnoses
+    to the same answer, no point re-running.
+    """
+    from datetime import datetime as _dt
+    from src.solver.diagnosis import combined_diff_signature
+
+    if classification.get("model_gap"):
+        # Model gaps would short-circuit Layer 2 to insufficient_data —
+        # don't waste a queue slot on them.
+        return False
+
+    diff_sig = combined_diff_signature(diff_dict)
+    for entry in session.diagnosis_queue:
+        if (
+            entry.get("diff_signature") == diff_sig
+            and entry.get("sim_version") == sim_version
+        ):
+            return False
+
+    session.diagnosis_queue.append({
+        "failure_id": failure_id,
+        "diff_signature": diff_sig,
+        "sim_version": sim_version,
+        "enqueued_at": _dt.utcnow().isoformat() + "Z",
+        "status": "pending",
+        "diagnose_status": None,
+        "rule_id": None,
+        "markdown": None,
+    })
+    return True
+
+
+def cmd_diagnose_queue(show: str = "pending") -> dict:
+    """List diagnosis queue entries.
+
+    ``show`` ∈ {"pending", "done", "failed", "all"}. Default "pending"
+    is what the harness wants between turns; "all" gives the full
+    audit log.
+    """
+    session = _load_session()
+    entries = session.diagnosis_queue
+    if show != "all":
+        entries = [e for e in entries if e.get("status") == show]
+
+    print(f"DIAGNOSIS_QUEUE ({show}): {len(entries)} entries")
+    for i, e in enumerate(entries):
+        st = e.get("status", "?")
+        ds = e.get("diagnose_status") or ""
+        rid = e.get("rule_id") or ""
+        suffix = f" → {ds}" + (f" ({rid})" if rid else "")
+        print(f"  {i:>2}. [{st}] {e.get('failure_id', '?')}{suffix}")
+
+    result = {
+        "status": "OK",
+        "show": show,
+        "count": len(entries),
+        "entries": entries,
+    }
+    _print_result(result)
+    return result
+
+
+def cmd_diagnose_next(force: bool = False) -> dict:
+    """Drain the next pending entry from session.diagnosis_queue.
+
+    Calls ``diagnose()`` on the entry's failure_id, marks the queue entry
+    done (or failed), and returns a result dict. Designed to be called by
+    the harness between turns — never on the auto_turn hot path.
+
+    Returns ``{status: "EMPTY"}`` if the queue is drained.
+    """
+    from src.solver.diagnosis import diagnose
+
+    session = _load_session()
+    pending_idx = next(
+        (i for i, e in enumerate(session.diagnosis_queue)
+         if e.get("status") == "pending"),
+        None,
+    )
+    if pending_idx is None:
+        result = {"status": "EMPTY", "message": "no pending diagnoses"}
+        print("DIAGNOSE_NEXT: queue empty")
+        _print_result(result)
+        return result
+
+    entry = session.diagnosis_queue[pending_idx]
+    failure_id = entry.get("failure_id", "")
+
+    try:
+        diag = diagnose(failure_id, force=force)
+    except Exception as e:
+        entry["status"] = "failed"
+        entry["error"] = str(e)
+        session.save(DEFAULT_SESSION_FILE)
+        result = {
+            "status": "ERROR",
+            "failure_id": failure_id,
+            "error": str(e),
+        }
+        print(f"DIAGNOSE_NEXT {failure_id}: ERROR {e}")
+        _print_result(result)
+        return result
+
+    entry["status"] = "done" if diag.get("status") != "ERROR" else "failed"
+    entry["diagnose_status"] = diag.get("status")
+    entry["rule_id"] = diag.get("rule_id")
+    entry["markdown"] = diag.get("markdown")
+    if diag.get("status") == "ERROR":
+        entry["error"] = diag.get("error")
+    session.save(DEFAULT_SESSION_FILE)
+
+    print(f"DIAGNOSE_NEXT {failure_id}: {diag.get('status')}")
+    if diag.get("rule_id"):
+        print(f"  rule: {diag['rule_id']} (confidence={diag.get('confidence', '?')})")
+    if diag.get("known_gap"):
+        print(f"  known_gap: {diag['known_gap']}")
+    if diag.get("markdown"):
+        print(f"  markdown: {diag['markdown']}")
+    pending_remaining = sum(
+        1 for e in session.diagnosis_queue if e.get("status") == "pending"
+    )
+    print(f"  queue remaining: {pending_remaining}")
+
+    result = {
+        "status": "OK",
+        "failure_id": failure_id,
+        "diagnose_status": diag.get("status"),
+        "rule_id": diag.get("rule_id"),
+        "markdown": diag.get("markdown"),
+        "queue_remaining": pending_remaining,
     }
     _print_result(result)
     return result

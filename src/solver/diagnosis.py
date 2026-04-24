@@ -107,18 +107,20 @@ def load_rules(path: Path = RULES_PATH) -> list[Rule]:
     return out
 
 
-def find_failure(failure_id: str, db_path: Path = FAILURE_DB_PATH) -> dict | None:
+def find_failure(failure_id: str, db_path: Path | None = None) -> dict | None:
     """Return the most recent failure_db record with matching id, or None.
 
     The id is constructed deterministically from (run_id, mission, turn,
     trigger, action_index) so the same id can recur across re-runs of
     verify_action. We pick the *last* matching line to reflect current
-    state.
+    state. Path is resolved lazily so test fixtures can monkeypatch
+    ``FAILURE_DB_PATH`` at the module level.
     """
-    if not db_path.exists():
+    p = db_path if db_path is not None else FAILURE_DB_PATH
+    if not p.exists():
         return None
     last: dict | None = None
-    with open(db_path) as f:
+    with open(p) as f:
         for line in f:
             line = line.strip()
             if not line:
