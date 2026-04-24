@@ -310,6 +310,15 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
         "grid_defense_pct": getattr(board, "grid_defense_pct", 15),
         "grid_power": board.grid_power,
         "grid_power_max": board.grid_power_max,
+        # Per-tile building HP map {"A1": hp, ...} — lets the analyzer tell
+        # WHICH building lost HP across turns, not just the total. Needed to
+        # disambiguate "one resist + one destroy" vs "two small hits".
+        "building_hp_map": {
+            f"{chr(72 - y)}{8 - x}": board.tiles[x][y].building_hp
+            for x in range(8) for y in range(8)
+            if board.tiles[x][y].terrain == "building"
+            and board.tiles[x][y].building_hp > 0
+        },
         "telegraphed_building_attacks": telegraphed,
         "resist_observations": resist_observations,
         "timestamp": int(bridge_data.get("timestamp", 0)),
