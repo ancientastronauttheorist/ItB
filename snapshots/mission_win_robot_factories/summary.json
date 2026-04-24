@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-23T16:06:43.192219",
+  "label": "mission_win_robot_factories",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly2",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    }
+  ]
+}

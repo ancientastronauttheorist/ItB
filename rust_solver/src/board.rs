@@ -303,6 +303,13 @@ pub struct Board {
     pub dam_primary: Option<(u8, u8)>, // Coords of the Dam_Pawn's primary tile (the
                                 // one WITHOUT the EXTRA_TILE flag). Used to compute
                                 // the 14-tile flood offsets.
+    // Teleporter pad pairs for Mission_Teleporter (Detritus disposal missions).
+    // Each entry = (x1, y1, x2, y2) — the two paired pads swap any unit that
+    // ends movement on one of them. Bridge populates via the Board.AddTeleport
+    // hook (see modloader.lua). Typical Disposal Site C map has 2 pairs across
+    // 4 pads; other missions usually have 0. Iterated linearly in
+    // `teleport_partner()` — stays cheap at this size.
+    pub teleporter_pairs: Vec<(u8, u8, u8, u8)>,
 }
 
 impl Default for Board {
@@ -337,6 +344,7 @@ impl Default for Board {
             mission_kills_done: 0,
             dam_alive: false,
             dam_primary: None,
+            teleporter_pairs: Vec::new(),
         }
     }
 }
@@ -382,6 +390,21 @@ impl Board {
             if u.x == x && u.y == y {
                 return Some(i);
             }
+        }
+        None
+    }
+
+    /// Teleporter partner: if (x, y) is a pad, return the coords of its
+    /// paired pad. None if not a pad or no pairs on this board.
+    ///
+    /// Pads are an overlay added by `Board:AddTeleport(p1, p2)` during
+    /// mission setup — stored on the Board, not the Tile. See
+    /// `apply_teleport_on_land` (simulate.rs) for when this fires.
+    #[inline]
+    pub fn teleport_partner(&self, x: u8, y: u8) -> Option<(u8, u8)> {
+        for &(ax, ay, bx, by) in &self.teleporter_pairs {
+            if ax == x && ay == y { return Some((bx, by)); }
+            if bx == x && by == y { return Some((ax, ay)); }
         }
         None
     }

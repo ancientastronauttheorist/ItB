@@ -7,55 +7,55 @@
   "current_mission": "",
   "islands_completed": [],
   "mission_index": 0,
-  "current_turn": 3,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
-        "mech_type": "JudoMech",
+        "mech_type": "PunchMech",
         "move_to": [
-          5,
-          4
+          4,
+          2
         ],
-        "weapon": "Prime_Shift",
+        "weapon": "Unknown",
         "target": [
-          6,
-          4
+          255,
+          255
         ],
-        "description": "JudoMech, fire Vice Fist at D2"
+        "description": "PunchMech, move E3\u2192F4"
       },
       {
         "mech_uid": 1,
-        "mech_type": "WallMech",
+        "mech_type": "JetMech",
         "move_to": [
-          2,
-          3
-        ],
-        "weapon": "Brute_Grapple",
-        "target": [
           4,
-          3
+          6
         ],
-        "description": "WallMech, fire Vice Fist at E4"
+        "weapon": "Brute_Jetmech",
+        "target": [
+          2,
+          6
+        ],
+        "description": "JetMech, move E5\u2192B4, fire Aerial Bombs at B6"
       },
       {
         "mech_uid": 2,
-        "mech_type": "ScienceMech",
+        "mech_type": "RocketMech",
         "move_to": [
-          5,
-          6
-        ],
-        "weapon": "Science_Pullmech",
-        "target": [
           5,
           4
         ],
-        "description": "ScienceMech, move C3\u2192B3, fire Attract Shot at D3"
+        "weapon": "Ranged_Rocket",
+        "target": [
+          7,
+          4
+        ],
+        "description": "RocketMech, fire Rocket Artillery at D1"
       }
     ],
-    "score": 57230.00295911516,
-    "turn": 3
+    "score": 97620.0,
+    "turn": 4
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -293,72 +293,6 @@
         "PunchMech, move E3\u2192F4",
         "JetMech, move E5\u2192B4, fire Aerial Bombs at B6",
         "RocketMech, fire Rocket Artillery at D1"
-      ]
-    },
-    {
-      "timestamp": "2026-04-23T16:52:52.319074",
-      "turn": 1,
-      "label": "solve",
-      "score": 143714.2857142857,
-      "actions": [
-        "RocketMech, move E7\u2192D6, fire Rocket Artillery at D4",
-        "PunchMech, move C6\u2192D4, fire Titan Fist at E4",
-        "JetMech, move E5\u2192C3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-23T16:53:38.327496",
-      "turn": 2,
-      "label": "solve",
-      "score": 112766.42857142857,
-      "actions": [
-        "PunchMech, fire Titan Fist at E4",
-        "JetMech, move C3\u2192F4, fire Aerial Bombs at F6",
-        "RocketMech, fire Rocket Artillery at G6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-23T16:54:53.670025",
-      "turn": 3,
-      "label": "solve",
-      "score": -437744.2851768221,
-      "actions": [
-        "PunchMech, move D4\u2192D3, fire Titan Fist at C3",
-        "JetMech, move F4\u2192E5, repair",
-        "RocketMech"
-      ]
-    },
-    {
-      "timestamp": "2026-04-23T18:37:32.887594",
-      "turn": 1,
-      "label": "solve",
-      "score": 93058.57166051865,
-      "actions": [
-        "JudoMech, move E5\u2192D2, fire Vice Fist at D3",
-        "WallMech, move D6\u2192E6, fire Vice Fist at C6",
-        "ScienceMech, move D6\u2192E3, fire Attract Shot at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-23T18:38:16.078692",
-      "turn": 2,
-      "label": "solve",
-      "score": 109987.14285714278,
-      "actions": [
-        "ScienceMech, fire Attract Shot at E5",
-        "JudoMech, move D2\u2192D3, fire Vice Fist at E3",
-        "WallMech, fire Vice Fist at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-23T18:41:27.685323",
-      "turn": 3,
-      "label": "solve",
-      "score": 57230.00295911516,
-      "actions": [
-        "JudoMech, fire Vice Fist at D2",
-        "WallMech, fire Vice Fist at E4",
-        "ScienceMech, move C3\u2192B3, fire Attract Shot at D3"
       ]
     }
   ],
@@ -767,168 +701,6 @@
           4
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Brute_Jetmech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          2,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "push_dir",
-      "categories": [
-        "push_dir"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "push_dir|Prime_Shift|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_Shift",
-        "target": [
-          5,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Prime_Shift|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Prime_Shift",
-        "target": [
-          5,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "push_dir",
-      "categories": [
-        "push_dir"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "push_dir|Brute_Grapple|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Brute_Grapple",
-        "target": [
-          6,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Grapple|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Brute_Grapple",
-        "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Science_Pullmech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Science_Pullmech",
-        "target": [
-          5,
-          4
-        ]
-      }
     }
   ],
   "disabled_actions": [
@@ -1069,98 +841,12 @@
       "mission_id": "",
       "first_seen_turn": 4,
       "attempts": 0,
-      "status": "resolved",
+      "status": "pending",
       "result": null,
       "diff_field": "alive",
       "diff_predicted": false,
       "diff_actual": true,
       "severity": "high"
-    },
-    {
-      "type": "Beetle2",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 2,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "JudoMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
-    },
-    {
-      "type": "WallMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
-    },
-    {
-      "type": "ScienceMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "pending",
-      "result": null
-    },
-    {
-      "type": "Jelly_Health1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "pending",
-      "result": null,
-      "diff_field": "pos",
-      "diff_predicted": [
-        5,
-        4
-      ],
-      "diff_actual": [
-        7,
-        4
-      ],
-      "severity": "medium"
-    },
-    {
-      "type": "Hornet1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 3,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 1,
-        "diff_actual": 2
-      },
-      "diff_field": "hp",
-      "diff_predicted": 1,
-      "diff_actual": 2,
-      "severity": "low"
     }
   ]
 }

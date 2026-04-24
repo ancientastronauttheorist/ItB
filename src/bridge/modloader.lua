@@ -792,6 +792,17 @@ local function dump_state()
         end
     end)
 
+    -- Teleporter pads: recorded by the Board.AddTeleport hook above. Each
+    -- entry = {x1, y1, x2, y2}. Empty list on non-teleporter missions; the
+    -- Rust/Python simulators ignore an empty list. See simulate.rs
+    -- apply_teleport_on_land for swap semantics.
+    if _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
+        state.teleporter_pairs = {}
+        for _, pair in ipairs(_ITB_TELEPORT_PAIRS) do
+            state.teleporter_pairs[#state.teleporter_pairs + 1] = pair
+        end
+    end
+
     -- Bonus-objective progress for "Kill N enemies" (BONUS_KILL_FIVE = 6).
     -- Emitted so the Python evaluator can reward plans that reach the
     -- cumulative kill target. Absent / 0 → no kill-N bonus on this mission;
@@ -1253,19 +1264,49 @@ end
 -- preventing the wrap-on-wrap stack that kills frame rate.
 if not _ITB_BRIDGE_ORIGINALS then
     _ITB_BRIDGE_ORIGINALS = {
-        BaseUpdate     = Mission.BaseUpdate,
-        NextTurn       = Mission.NextTurn,
-        BaseStart      = Mission.BaseStart,
-        MissionEnd     = Mission.MissionEnd,
-        BaseDeployment = Mission.BaseDeployment,
+        BaseUpdate       = Mission.BaseUpdate,
+        NextTurn         = Mission.NextTurn,
+        BaseStart        = Mission.BaseStart,
+        MissionEnd       = Mission.MissionEnd,
+        BaseDeployment   = Mission.BaseDeployment,
+        -- Board:AddTeleport(pointA, pointB[, delay]) is the only way pads
+        -- are registered (Mission_Teleporter:StartMission calls it exactly
+        -- once per pair — Disposal Site C adds two pairs across four quads).
+        -- No Board:Is/GetTeleporter getter exists on macOS, so we hook the
+        -- setter and record pairs as they're created. Guarded by nil so
+        -- modloader reloads don't compound the wrap (same pattern as the
+        -- Mission.* originals above).
+        BoardAddTeleport = Board and Board.AddTeleport or nil,
     }
 end
 
-local _orig_BaseUpdate     = _ITB_BRIDGE_ORIGINALS.BaseUpdate
-local _orig_NextTurn       = _ITB_BRIDGE_ORIGINALS.NextTurn
-local _orig_BaseStart      = _ITB_BRIDGE_ORIGINALS.BaseStart
-local _orig_MissionEnd     = _ITB_BRIDGE_ORIGINALS.MissionEnd
-local _orig_BaseDeployment = _ITB_BRIDGE_ORIGINALS.BaseDeployment
+local _orig_BaseUpdate       = _ITB_BRIDGE_ORIGINALS.BaseUpdate
+local _orig_NextTurn         = _ITB_BRIDGE_ORIGINALS.NextTurn
+local _orig_BaseStart        = _ITB_BRIDGE_ORIGINALS.BaseStart
+local _orig_MissionEnd       = _ITB_BRIDGE_ORIGINALS.MissionEnd
+local _orig_BaseDeployment   = _ITB_BRIDGE_ORIGINALS.BaseDeployment
+local _orig_BoardAddTeleport = _ITB_BRIDGE_ORIGINALS.BoardAddTeleport
+
+-- Teleporter pads for the CURRENT mission. Accumulated as Board:AddTeleport
+-- fires (once per pair on Mission_Teleporter:StartMission). Cleared on
+-- MissionEnd so stale pairs from a prior mission don't leak into the next
+-- read. Each entry = {x1, y1, x2, y2}.
+_ITB_TELEPORT_PAIRS = _ITB_TELEPORT_PAIRS or {}
+
+if Board and _orig_BoardAddTeleport then
+    Board.AddTeleport = function(self, p1, p2, delay)
+        pcall(function()
+            if p1 and p2 then
+                _ITB_TELEPORT_PAIRS[#_ITB_TELEPORT_PAIRS + 1] =
+                    {p1.x, p1.y, p2.x, p2.y}
+                log_bridge(string.format(
+                    "TELEPORT PAIR: (%d,%d) <-> (%d,%d)",
+                    p1.x, p1.y, p2.x, p2.y))
+            end
+        end)
+        return _orig_BoardAddTeleport(self, p1, p2, delay)
+    end
+end
 
 -- Cached deployment zone (captured in BaseDeployment, cleared on MissionEnd)
 _ITB_DEPLOY_ZONE = _ITB_DEPLOY_ZONE or {}
@@ -1371,11 +1412,12 @@ Mission.BaseDeployment = function(self)
     pcall(dump_state)
 end
 
--- MissionEnd: log mission completion, clear deployment zone
+-- MissionEnd: log mission completion, clear deployment zone + teleport pads
 Mission.MissionEnd = function(self)
     log_bridge("MISSION END: " .. tostring(self.ID or self.Name or "unknown"))
     _ITB_DEPLOY_ZONE = {}
     _ITB_CURRENT_MISSION = nil
+    _ITB_TELEPORT_PAIRS = {}
     _orig_MissionEnd(self)
 end
 

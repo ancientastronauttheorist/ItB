@@ -1,0 +1,15 @@
+{
+  "run_id": "20260423_115757_556",
+  "squad": "Balanced Roll (Jet/Arti/Defense)",
+  "difficulty": 2,
+  "achievement_targets": [],
+  "tags": [
+    "audit"
+  ],
+  "solver_version": "rust-0.1.0-2249a80",
+  "weight_version": "v009",
+  "updated": "2026-04-23T11:57:57.577143",
+  "created": "2026-04-23T11:57:57.577158",
+  "missions": [],
+  "outcome": null
+}

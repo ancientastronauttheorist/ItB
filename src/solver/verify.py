@@ -119,7 +119,23 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   - Python apply_damage now ignites forest on weapon damage (parity with
 #     Rust — previously Python replay missed the forest-fire transition).
 # Pre-v7 rows archived to failure_db_snapshot_sim_v6.jsonl.
-SIMULATOR_VERSION = 7
+#
+# v8 (2026-04-23, Mission_Teleporter):
+#   - Bridge extracts teleporter-pad pairs via a Board.AddTeleport hook
+#     (modloader.lua) and emits `teleporter_pairs`.
+#   - Rust Board carries `teleporter_pairs: Vec<(u8,u8,u8,u8)>` and
+#     `apply_teleport_on_land` fires at every move-end site (apply_push,
+#     apply_throw, sim_charge, sim_leap, Swap weapon, mech move) AFTER
+#     terrain-kill / mines resolve — corpses don't teleport, web survives
+#     (pad swap is not a push).
+#   - Python Board mirrors the field for test-fixture parity; the live
+#     Rust solver is authoritative for combat decisions.
+#   - Closes the silent position desync observed on run 20260423_131700_144
+#     Disposal Site C: ScienceMech moved to E3 (a pad), predicted post-enemy
+#     at E3, actually swapped to C3 — a canonical 2-tile pad swap the sim
+#     was blind to. Similar drift on Judo/Science across T2/T3.
+# Pre-v8 rows archived to failure_db_snapshot_sim_v7.jsonl.
+SIMULATOR_VERSION = 8
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1,15 +1,24 @@
 {
-  "timestamp": "2026-04-23T11:56:29.356716",
-  "run_id": "20260422_192122_780",
-  "mission_index": 1,
-  "turn": 0,
+  "timestamp": "2026-04-23T12:19:10.593753",
+  "run_id": "20260423_115757_556",
+  "mission_index": 0,
+  "turn": 1,
   "label": "board",
   "data": {
     "bridge_state": {
-      "spawning_tiles": [],
+      "spawning_tiles": [
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          5
+        ]
+      ],
       "grid_power_max": 7,
       "grid_power": 5,
-      "turn": 0,
+      "turn": 1,
       "mission_id": "Mission_Survive",
       "total_turns": 4,
       "environment_danger": [],
@@ -186,9 +195,10 @@
         },
         {
           "y": 3,
-          "x": 4,
           "terrain_id": 0,
-          "terrain": "ground"
+          "terrain": "ground",
+          "pod": true,
+          "x": 4
         },
         {
           "y": 3,
@@ -408,10 +418,114 @@
           "terrain": "ground"
         }
       ],
-      "targeted_tiles": [],
-      "phase": "combat_enemy",
+      "targeted_tiles": [
+        [
+          3,
+          5
+        ],
+        [
+          5,
+          5
+        ]
+      ],
+      "phase": "combat_player",
       "mission_kill_target": 7,
       "units": [
+        {
+          "web": false,
+          "active": true,
+          "base_move": 4,
+          "hp": 2,
+          "flying": true,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 4,
+          "weapons": [
+            "Brute_Jetmech"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=2",
+            "skill2=1"
+          ],
+          "fire": false,
+          "y": 2,
+          "x": 3,
+          "acid": false,
+          "shield": false,
+          "type": "JetMech",
+          "mech": true,
+          "uid": 0,
+          "pilot_id": "Pilot_Detritus"
+        },
+        {
+          "web": false,
+          "active": true,
+          "base_move": 3,
+          "hp": 2,
+          "flying": false,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 3,
+          "weapons": [
+            "Ranged_Artillerymech"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=3"
+          ],
+          "fire": false,
+          "y": 5,
+          "x": 3,
+          "acid": false,
+          "shield": false,
+          "type": "ArtiMech",
+          "mech": true,
+          "uid": 1,
+          "pilot_id": "Pilot_Archive"
+        },
+        {
+          "web": false,
+          "active": true,
+          "base_move": 4,
+          "hp": 2,
+          "flying": true,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 4,
+          "weapons": [
+            "Science_Pullmech",
+            "Science_Shield"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill2=2"
+          ],
+          "fire": false,
+          "y": 1,
+          "x": 2,
+          "acid": false,
+          "shield": false,
+          "type": "ScienceMech",
+          "mech": true,
+          "uid": 2,
+          "pilot_id": "Pilot_Rust"
+        },
         {
           "web": false,
           "active": false,
@@ -420,18 +534,23 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
+          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 3,
           "move": 3,
-          "weapon_target_behind": false,
-          "x": 6,
+          "x": 5,
+          "queued_target": [
+            5,
+            5
+          ],
+          "has_queued_attack": true,
           "weapons": [
             "ScorpionAtk1"
           ],
           "weapon_damage": 1,
-          "y": 5,
+          "y": 6,
           "uid": 365,
           "type": "Scorpion1",
           "base_move": 3,
@@ -448,13 +567,18 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
+          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 2,
           "move": 3,
-          "weapon_target_behind": false,
-          "x": 6,
+          "x": 5,
+          "queued_target": [
+            5,
+            5
+          ],
+          "has_queued_attack": true,
           "weapons": [
             "ScarabAtk1"
           ],
@@ -476,18 +600,23 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
+          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 4,
           "move": 3,
-          "weapon_target_behind": false,
-          "x": 5,
+          "x": 3,
+          "queued_target": [
+            3,
+            5
+          ],
+          "has_queued_attack": true,
           "weapons": [
             "ScarabAtk2"
           ],
           "weapon_damage": 3,
-          "y": 2,
+          "y": 3,
           "uid": 367,
           "type": "Scarab2",
           "base_move": 3,
@@ -498,213 +627,72 @@
         }
       ],
       "env_type": "unknown",
-      "attack_order": [],
+      "attack_order": [
+        365,
+        366,
+        367
+      ],
       "remaining_spawns": 1,
-      "timestamp": 1776963389,
+      "timestamp": 1776964750,
       "mission_kills_done": 0,
-      "environment_danger_v2": [],
-      "deployment_zone": [
-        [
-          1,
-          1
-        ],
-        [
-          1,
-          4
-        ],
-        [
-          2,
-          1
-        ],
-        [
-          2,
-          4
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          3,
-          1
-        ],
-        [
-          3,
-          2
-        ],
-        [
-          3,
-          3
-        ],
-        [
-          3,
-          4
-        ],
-        [
-          3,
-          5
-        ],
-        [
-          3,
-          6
-        ]
-      ]
+      "environment_danger_v2": []
     },
     "result_summary": {
-      "phase": "combat_enemy",
+      "phase": "combat_player",
       "source": "bridge",
-      "turn": 0,
+      "turn": 1,
       "grid_power": "5/7",
-      "mechs": [],
-      "active_mechs": 0,
+      "mechs": [
+        {
+          "type": "JetMech",
+          "pos": "F5",
+          "hp": "2/2",
+          "weapon": "Aerial Bombs",
+          "status": "READY"
+        },
+        {
+          "type": "ArtiMech",
+          "pos": "C5",
+          "hp": "2/2",
+          "weapon": "Artemis Artillery",
+          "status": "READY"
+        },
+        {
+          "type": "ScienceMech",
+          "pos": "G6",
+          "hp": "2/2",
+          "weapon": "Attract Shot",
+          "status": "READY"
+        }
+      ],
+      "active_mechs": 3,
       "enemies": [
         {
           "type": "Scorpion1",
-          "pos": "C2",
+          "pos": "B3",
           "hp": "3/3",
-          "target": ""
+          "target": " \u2192 C3"
         },
         {
           "type": "Scarab1",
-          "pos": "E2",
+          "pos": "E3",
           "hp": "2/2",
-          "target": ""
+          "target": " \u2192 C3"
         },
         {
           "type": "Scarab2",
-          "pos": "F3",
+          "pos": "E5",
           "hp": "4/4",
-          "target": ""
+          "target": " \u2192 C5"
         }
       ],
-      "threatened_buildings": 0,
-      "targeted_tiles": 0,
-      "spawn_points": 0,
-      "deployment_zone": [
-        {
-          "bridge": "(1,1)",
-          "visual": "G7",
-          "mcp": [
-            709,
-            157
-          ]
-        },
-        {
-          "bridge": "(1,4)",
-          "visual": "D7",
-          "mcp": [
-            570,
-            261
-          ]
-        },
-        {
-          "bridge": "(2,1)",
-          "visual": "G6",
-          "mcp": [
-            755,
-            192
-          ]
-        },
-        {
-          "bridge": "(2,4)",
-          "visual": "D6",
-          "mcp": [
-            617,
-            295
-          ]
-        },
-        {
-          "bridge": "(2,5)",
-          "visual": "C6",
-          "mcp": [
-            570,
-            330
-          ]
-        },
-        {
-          "bridge": "(2,6)",
-          "visual": "B6",
-          "mcp": [
-            524,
-            365
-          ]
-        },
-        {
-          "bridge": "(3,1)",
-          "visual": "G5",
-          "mcp": [
-            801,
-            226
-          ]
-        },
-        {
-          "bridge": "(3,2)",
-          "visual": "F5",
-          "mcp": [
-            755,
-            261
-          ]
-        },
-        {
-          "bridge": "(3,3)",
-          "visual": "E5",
-          "mcp": [
-            709,
-            295
-          ]
-        },
-        {
-          "bridge": "(3,4)",
-          "visual": "D5",
-          "mcp": [
-            663,
-            330
-          ]
-        },
-        {
-          "bridge": "(3,5)",
-          "visual": "C5",
-          "mcp": [
-            617,
-            365
-          ]
-        },
-        {
-          "bridge": "(3,6)",
-          "visual": "B5",
-          "mcp": [
-            570,
-            399
-          ]
-        }
+      "threatened_buildings": 2,
+      "threats": [
+        "Building C3 by Scorpion1 at B3",
+        "Building C3 by Scarab1 at E3"
       ],
-      "recommended_deploy": [
-        {
-          "visual": "F5",
-          "mcp": [
-            755,
-            261
-          ]
-        },
-        {
-          "visual": "C5",
-          "mcp": [
-            617,
-            365
-          ]
-        },
-        {
-          "visual": "G6",
-          "mcp": [
-            755,
-            192
-          ]
-        }
-      ]
+      "targeted_tiles": 2,
+      "spawn_points": 2
     }
   }
 }

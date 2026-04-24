@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-23T13:44:31.952348",
+  "run_id": "20260423_131700_144",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_damage_unexpected",
+        "tier": 1,
+        "severity": "high",
+        "details": "RocketMech: predicted HP 3, actual 2 (-1)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}

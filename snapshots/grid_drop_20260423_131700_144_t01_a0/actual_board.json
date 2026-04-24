@@ -1,0 +1,370 @@
+{
+  "grid_power": 4,
+  "grid_power_max": 7,
+  "units": [
+    {
+      "uid": 495,
+      "type": "Snowmine1",
+      "x": 4,
+      "y": 1,
+      "hp": 1,
+      "max_hp": 1,
+      "team": 1,
+      "is_mech": false
+    },
+    {
+      "uid": 496,
+      "type": "Snowmine1",
+      "x": 6,
+      "y": 7,
+      "hp": 1,
+      "max_hp": 1,
+      "team": 1,
+      "is_mech": false
+    },
+    {
+      "uid": 0,
+      "type": "PunchMech",
+      "x": 3,
+      "y": 5,
+      "hp": 3,
+      "max_hp": 3,
+      "team": 1,
+      "is_mech": true
+    },
+    {
+      "uid": 1,
+      "type": "JetMech",
+      "x": 5,
+      "y": 6,
+      "hp": 2,
+      "max_hp": 2,
+      "team": 1,
+      "is_mech": true
+    },
+    {
+      "uid": 2,
+      "type": "RocketMech",
+      "x": 2,
+      "y": 6,
+      "hp": 3,
+      "max_hp": 3,
+      "team": 1,
+      "is_mech": true
+    },
+    {
+      "uid": 497,
+      "type": "Firefly2",
+      "x": 6,
+      "y": 5,
+      "hp": 5,
+      "max_hp": 5,
+      "team": 6,
+      "is_mech": false
+    },
+    {
+      "uid": 498,
+      "type": "Firefly1",
+      "x": 7,
+      "y": 6,
+      "hp": 3,
+      "max_hp": 3,
+      "team": 6,
+      "is_mech": false
+    },
+    {
+      "uid": 499,
+      "type": "Firefly1",
+      "x": 5,
+      "y": 3,
+      "hp": 3,
+      "max_hp": 3,
+      "team": 6,
+      "is_mech": false
+    },
+    {
+      "uid": 500,
+      "type": "Jelly_Armor1",
+      "x": 5,
+      "y": 1,
+      "hp": 2,
+      "max_hp": 2,
+      "team": 6,
+      "is_mech": false
+    }
+  ],
+  "tiles": [
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "building",
+        "building_hp": 2
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "building",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "lava",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "forest",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "lava",
+        "building_hp": 0
+      },
+      {
+        "terrain": "water",
+        "building_hp": 0
+      }
+    ]
+  ]
+}
