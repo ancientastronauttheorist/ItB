@@ -129,12 +129,24 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         }));
     }
 
-    // Snapshot building count BEFORE the enemy phase so we can attribute
+    // Snapshot building coords BEFORE the enemy phase so we can attribute
     // the post-enemy delta to enemies (mirrors solver.py:718's
-    // buildings_destroyed return).
-    let buildings_pre_enemy = board.tiles.iter()
-        .filter(|t| t.terrain == Terrain::Building && t.building_hp > 0)
-        .count() as i32;
+    // buildings_destroyed return). Using a coord set rather than a scalar
+    // count lets us tolerate mid-turn mission/state shifts — if a new
+    // building appears in the post-enemy state (shouldn't happen in
+    // vanilla ITB, but could from modded content or cross-mission
+    // recording aliasing), it won't be counted as "destroyed" just
+    // because the pre-count was off.
+    let mut alive_building_coords_pre: std::collections::HashSet<(u8, u8)> =
+        std::collections::HashSet::new();
+    for x in 0..8u8 {
+        for y in 0..8u8 {
+            let t = board.tile(x, y);
+            if t.terrain == Terrain::Building && t.building_hp > 0 {
+                alive_building_coords_pre.insert((x, y));
+            }
+        }
+    }
 
     // Env effects + Vek attacks. simulate_enemy_attacks handles env_danger
     // BEFORE Vek attacks (enemy.rs:287-297) — same ordering as Python's
@@ -170,7 +182,17 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             enemy_hp_total += u.hp as i32;
         }
     }
-    let buildings_destroyed_by_enemies = (buildings_pre_enemy - buildings_alive).max(0);
+    // Count only coords that WERE alive pre-enemy and are now destroyed
+    // (missing from alive set or hp dropped to 0). Coords that appear
+    // alive post-enemy but were NOT alive pre-enemy are ignored — they
+    // cannot have been "destroyed by enemies" this turn.
+    let mut buildings_destroyed_by_enemies = 0i32;
+    for (x, y) in &alive_building_coords_pre {
+        let t = board.tile(*x, *y);
+        if !(t.terrain == Terrain::Building && t.building_hp > 0) {
+            buildings_destroyed_by_enemies += 1;
+        }
+    }
 
     let predicted_outcome = json!({
         "buildings_alive":               buildings_alive,
