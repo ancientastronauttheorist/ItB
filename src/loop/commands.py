@@ -88,6 +88,71 @@ def _recording_dir(session: RunSession) -> Path:
     return run_dir
 
 
+def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
+    """Log RNG seeds + telegraphed building attacks for the grid-defense probe.
+
+    Writes one JSONL entry per player-turn-start to
+    ``recordings/<run_id>/resist_probe.jsonl``. Each entry captures:
+
+    - master_seed, ai_seed (from saveData.lua; ai_seed advances per turn)
+    - grid_defense_pct, grid_power
+    - telegraphed attacks landing on building tiles (the events whose
+      resist outcome we want to predict)
+
+    Pairing consecutive entries (plus observing final building HPs) lets us
+    reconstruct which telegraphed attacks the game pre-rolled as resists,
+    then attempt to replay the ``ai_seed`` locally through Lua's math.random
+    to find the offset at which resist rolls appear.
+
+    No-ops unless bridge reports a master_seed (i.e. save was readable).
+    """
+    if bridge_data.get("phase") != "combat_player":
+        return
+    master_seed = bridge_data.get("master_seed")
+    if master_seed is None:
+        return
+    mission_id = bridge_data.get("mission_id") or ""
+    mission_seeds = bridge_data.get("mission_seeds") or {}
+    # Pick the region whose sMission matches the active mission.
+    active_seed = None
+    active_region = None
+    for region_key, info in mission_seeds.items():
+        if isinstance(info, dict) and info.get("mission") == mission_id:
+            active_seed = info.get("ai_seed")
+            active_region = region_key
+            break
+    # Telegraphed building attacks: enemy.target lands on a building tile.
+    telegraphed = []
+    for e in board.enemies():
+        if e.target_x < 0 or e.target_y < 0:
+            continue
+        tile = board.tiles[e.target_x][e.target_y]
+        if tile.terrain != "building" or tile.building_hp <= 0:
+            continue
+        telegraphed.append({
+            "attacker_type": e.type,
+            "attacker_pos": _bv(e.x, e.y),
+            "target_pos": _bv(e.target_x, e.target_y),
+            "target_building_hp_before": tile.building_hp,
+        })
+    entry = {
+        "run_id": session.run_id or "default",
+        "mission_id": mission_id,
+        "region": active_region,
+        "turn": bridge_data.get("turn", 0),
+        "master_seed": master_seed,
+        "ai_seed": active_seed,
+        "grid_defense_pct": getattr(board, "grid_defense_pct", 15),
+        "grid_power": board.grid_power,
+        "grid_power_max": board.grid_power_max,
+        "telegraphed_building_attacks": telegraphed,
+        "timestamp": int(bridge_data.get("timestamp", 0)),
+    }
+    log_path = _recording_dir(session) / "resist_probe.jsonl"
+    with open(log_path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
 def _record_turn_state(session: RunSession, label: str, data: dict,
                        turn_override: int = None) -> None:
     """Record full game state to a per-run, per-mission, per-turn JSON file.
@@ -589,6 +654,15 @@ def cmd_read(profile: str = "Alpha") -> dict:
             }
 
             session.current_turn = bridge_data.get("turn", 0)
+
+            # Grid-defense resist probe: log aiSeed + telegraphed building
+            # attacks each player-turn-start. No-op if the bridge didn't
+            # surface a seed or phase isn't combat_player.
+            try:
+                _log_resist_probe(session, board, bridge_data)
+            except Exception:
+                # Probe is observational — never break cmd_read on a log error.
+                pass
 
             if phase in ("combat_player", "combat_enemy"):
                 mechs = board.mechs()

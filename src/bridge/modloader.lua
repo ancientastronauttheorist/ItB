@@ -88,6 +88,8 @@ local function _read_save_data()
         queued_skills = {},   -- [pawn_id] = iQueuedSkill (>=0 when an attack is actually queued)
         conveyor_belts = {},
         pilots = {},  -- [pawn_id] = {id=..., level=..., skill1=..., skill2=...}
+        master_seed = nil,    -- GameData.seed — run-lifetime master RNG seed
+        mission_seeds = {},   -- [region_key] = aiSeed — per-mission per-turn PRNG snapshot
     }
     local base = os.getenv("HOME") ..
         "/Library/Application Support/IntoTheBreach/profile_Alpha/"
@@ -104,6 +106,29 @@ local function _read_save_data()
     if net then result.network = tonumber(net) end
     local netMax = content:match('%["networkMax"%]%s*=%s*(%d+)')
     if netMax then result.networkMax = tonumber(netMax) end
+
+    -- RNG seeds — for grid-defense resist prediction probe.
+    -- `seed` is the run-lifetime master seed (appears once, top-level GameData).
+    -- `aiSeed` is per-mission and advances each turn — it's the PRNG state
+    -- snapshot the game uses for AI / resist rolls starting from the next
+    -- enemy phase. Recording it per turn lets us replay forward locally and
+    -- fish which telegraphed attacks the game has pre-rolled as resists.
+    local ms = content:match('%["seed"%]%s*=%s*(%-?%d+)')
+    if ms then result.master_seed = tonumber(ms) end
+    for region_key, region_block in content:gmatch('%["(region%d+)"%]%s*=%s*(%b{})') do
+        local ais = region_block:match('%["aiSeed"%]%s*=%s*(%-?%d+)')
+        if ais then
+            local sMission = region_block:match('%["sMission"%]%s*=%s*"([^"]+)"')
+            local iTurn = region_block:match('%["iCurrentTurn"%]%s*=%s*(%-?%d+)')
+            local iState = region_block:match('%["iState"%]%s*=%s*(%-?%d+)')
+            result.mission_seeds[region_key] = {
+                ai_seed = tonumber(ais),
+                mission = sMission,
+                turn = tonumber(iTurn),
+                state = tonumber(iState),
+            }
+        end
+    end
 
     -- Queued shots + pilot data: per-pawn, in a single pass.
     -- Save has blocks like `["pawn3"] = { ["id"] = 3, ["piQueuedShot"] =
@@ -233,6 +258,16 @@ local function dump_state()
     state.grid_power = save_data.network or (GameData and GameData.network) or 0
     state.grid_power_max = save_data.networkMax or (GameData and GameData.networkMax) or 7
     state.timestamp = os.time()
+
+    -- RNG seeds for grid-defense resist prediction probe. master_seed is the
+    -- run-lifetime constant; mission_seeds is a {region_key -> aiSeed} map
+    -- that updates each turn. Python side decides which region is "active".
+    if save_data.master_seed ~= nil then
+        state.master_seed = save_data.master_seed
+    end
+    if next(save_data.mission_seeds) ~= nil then
+        state.mission_seeds = save_data.mission_seeds
+    end
 
     -- Conveyor belts from consolidated save read
     local conveyor_belts = save_data.conveyor_belts
