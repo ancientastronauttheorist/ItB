@@ -40,6 +40,8 @@ from src.loop.commands import (
     cmd_verify,
     cmd_verify_action,
     cmd_diagnose,
+    cmd_diagnose_apply_agent,
+    cmd_reject_diagnosis,
     cmd_click_action,
     cmd_click_end_turn,
     cmd_click_balanced_roll,
@@ -112,15 +114,40 @@ def main():
     # diagnose
     p_diagnose = sub.add_parser(
         "diagnose",
-        help="Layer 2 of the diagnosis loop: rules-based root-cause proposal",
+        help="Layer 2 of the diagnosis loop: rules + agent fallback prompt",
     )
     p_diagnose.add_argument("failure_id",
                             help="Failure_db.jsonl entry id (printed by verify_action)")
     p_diagnose.add_argument("--force", action="store_true",
-                            help="Ignore the known_gaps suppression and run rule matching anyway")
+                            help="Ignore the rejections + known_gaps suppression "
+                                 "and run rule matching anyway")
     p_diagnose.add_argument("--out", default=None,
                             help="Override the markdown output directory "
                                  "(default: recordings/<run_id>/diagnoses/)")
+
+    # diagnose_apply_agent
+    p_dag = sub.add_parser(
+        "diagnose_apply_agent",
+        help="Submit an Explore-agent JSON response back into the diagnosis loop",
+    )
+    p_dag.add_argument("failure_id",
+                       help="Failure_db.jsonl entry id (must match diagnose's)")
+    p_dag.add_argument("payload",
+                       help="Agent's JSON response — raw string OR path to a file")
+    p_dag.add_argument("--out", default=None,
+                       help="Override the markdown output directory")
+
+    # reject_diagnosis
+    p_rej = sub.add_parser(
+        "reject_diagnosis",
+        help="Mark a diagnosis proposal wrong so the same diff doesn't re-fire",
+    )
+    p_rej.add_argument("failure_id",
+                       help="Failure_db.jsonl entry id")
+    p_rej.add_argument("--reason", required=True,
+                       help="One-line explanation of why the proposal was wrong")
+    p_rej.add_argument("--out", default=None,
+                       help="Override the markdown output directory")
 
     # click_action
     p_click_action = sub.add_parser(
@@ -422,6 +449,10 @@ def main():
         cmd_verify_action(args.index)
     elif args.command == "diagnose":
         cmd_diagnose(args.failure_id, force=args.force, out_path=args.out)
+    elif args.command == "diagnose_apply_agent":
+        cmd_diagnose_apply_agent(args.failure_id, args.payload, out_path=args.out)
+    elif args.command == "reject_diagnosis":
+        cmd_reject_diagnosis(args.failure_id, args.reason, out_path=args.out)
     elif args.command == "click_action":
         cmd_click_action(args.index)
     elif args.command == "click_end_turn":

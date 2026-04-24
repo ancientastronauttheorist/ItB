@@ -26,6 +26,20 @@ from src.solver.diagnosis import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _isolated_rejections_path(monkeypatch, tmp_path):
+    """Every test gets a fresh, empty rejections.jsonl.
+
+    Without this, anything that touches record_rejection / reject (here or
+    in test_diagnosis_agent_fallback.py) can leave entries that make a
+    later diagnose() call short-circuit to status=rejected unexpectedly.
+    """
+    monkeypatch.setattr(
+        "src.solver.diagnosis.REJECTIONS_PATH",
+        tmp_path / "isolated_rejections.jsonl",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Static fixtures
 # ---------------------------------------------------------------------------

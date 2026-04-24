@@ -1820,21 +1820,21 @@ def cmd_verify_action(action_index: int) -> dict:
 
 def cmd_diagnose(failure_id: str, force: bool = False,
                  out_path: str | None = None) -> dict:
-    """Layer 2 of the diagnosis loop: rules-only root-cause proposal.
+    """Layer 2 of the diagnosis loop: rules + agent fallback prompt.
 
-    Looks up `failure_id` in `recordings/failure_db.jsonl`, loads the
-    triggering action from the corresponding solve recording, and matches
-    the diff against `diagnoses/rules.yaml`. Writes a markdown proposal
-    under `recordings/<run_id>/diagnoses/<failure_id>.md` and prints a
-    summary.
+    Resolution order: rejections.jsonl → known_gaps.yaml → rules.yaml →
+    needs_agent. ``--force`` skips the rejection + known_gap guards so
+    the loop will retry a previously-suppressed diff.
 
     Status outcomes:
       rule_match           — one rule won; markdown carries hypothesis + fix
-      needs_agent          — no rule (or ambiguous tie); body asks for review
-      insufficient_data    — diff matches a known model gap; skipped unless --force
+      needs_agent          — no rule; markdown embeds the agent prompt block
+                             — dispatch via Agent tool and submit response
+                             via `diagnose_apply_agent <id> '<json>'`
+      insufficient_data    — diff matches a known model gap (--force overrides)
+      rejected             — prior rejection on this diff_signature × sim_version
 
-    Agent fallback (PR3) is intentionally absent here — unmatched diffs
-    surface as needs_agent and stop. Spec: docs/diagnosis_loop_design.md §7.
+    Spec: docs/diagnosis_loop_design.md §7 + §12.
     """
     from pathlib import Path as _Path
     from src.solver.diagnosis import diagnose
@@ -1854,13 +1854,99 @@ def cmd_diagnose(failure_id: str, force: bool = False,
               f"(confidence={result.get('confidence', '?')})")
     elif status == "insufficient_data":
         print(f"DIAGNOSE {failure_id}: insufficient_data → "
-              f"known_gap={result.get('known_gap')}")
+              f"known_gap={result.get('known_gap')} (use --force to override)")
+    elif status == "rejected":
+        rec = result.get("rejection") or {}
+        print(f"DIAGNOSE {failure_id}: rejected — "
+              f"reason={rec.get('reason', '?')!r} "
+              f"(use --force to override)")
     elif result.get("ambiguous"):
         cands = ", ".join(result.get("candidates") or [])
         print(f"DIAGNOSE {failure_id}: needs_agent — ambiguous match "
               f"({cands})")
     else:
         print(f"DIAGNOSE {failure_id}: needs_agent — no rule matched")
+    print(f"  markdown: {result.get('markdown')}")
+    if result.get("next_step"):
+        print(f"  next: {result['next_step']}")
+    # Don't echo the full prompt through _print_result — the markdown carries
+    # it for the harness to copy. Strip from the JSON dump for readability.
+    display = {k: v for k, v in result.items() if k != "agent_prompt"}
+    if "agent_prompt" in result:
+        display["agent_prompt"] = (
+            f"<{len(result['agent_prompt'])} chars — see {result['markdown']}>"
+        )
+    _print_result(display)
+    return result
+
+
+def cmd_diagnose_apply_agent(failure_id: str, payload: str,
+                             out_path: str | None = None) -> dict:
+    """Validate an Explore-agent JSON response and write agent_proposed markdown.
+
+    `payload` is the agent's JSON response (raw string OR a path to a file
+    containing the response). Validation enforces:
+      - JSON parses
+      - target_language == "rust" (no Python sim fixes)
+      - every suspect_files[*].path resolves and the cited lines exist
+      - confidence ∈ {high, medium, low}
+      - fix_snippet has both before + after non-empty
+
+    On failure, returns status=ERROR with the per-clause error list — fix
+    the JSON and resubmit. On success, writes status=agent_proposed
+    markdown alongside the previous needs_agent file (overwrites).
+    """
+    from pathlib import Path as _Path
+    from src.solver.diagnosis import apply_agent_response
+
+    payload_text = payload
+    p = _Path(payload)
+    if p.exists() and p.is_file():
+        payload_text = p.read_text()
+
+    out_dir = _Path(out_path) if out_path else None
+    result = apply_agent_response(failure_id, payload_text, out_dir=out_dir)
+
+    if result.get("status") == "ERROR":
+        print(f"DIAGNOSE_APPLY_AGENT {failure_id}: ERROR")
+        for e in result.get("errors") or [result.get("error", "?")]:
+            print(f"  - {e}")
+        _print_result(result)
+        return result
+
+    print(f"DIAGNOSE_APPLY_AGENT {failure_id}: agent_proposed "
+          f"(confidence={result.get('confidence', '?')})")
+    print(f"  markdown: {result.get('markdown')}")
+    print(f"  fix_signature: {result.get('fix_signature')}")
+    print(f"  next: review the markdown; reject with "
+          f"`reject_diagnosis {failure_id} --reason '...'` "
+          f"or apply with Layer 4 (PR5) when it ships.")
+    _print_result(result)
+    return result
+
+
+def cmd_reject_diagnosis(failure_id: str, reason: str,
+                         out_path: str | None = None) -> dict:
+    """Record a rejection so the same diff_signature × sim_version is suppressed.
+
+    Appends to `diagnoses/rejections.jsonl` and rewrites the diagnosis
+    markdown to status=rejected. Future `diagnose` calls on the same
+    failure short-circuit unless `--force` is passed.
+    """
+    from pathlib import Path as _Path
+    from src.solver.diagnosis import reject
+
+    out_dir = _Path(out_path) if out_path else None
+    result = reject(failure_id, reason, out_dir=out_dir)
+
+    if result.get("status") == "ERROR":
+        print(f"REJECT_DIAGNOSIS {failure_id}: ERROR {result.get('error')}")
+        _print_result(result)
+        return result
+
+    print(f"REJECT_DIAGNOSIS {failure_id}: rejected at {result.get('rejected_at')}")
+    print(f"  diff_signature: {result.get('diff_signature')}")
+    print(f"  proposed_fix_sig: {result.get('proposed_fix_sig')}")
     print(f"  markdown: {result.get('markdown')}")
     _print_result(result)
     return result
