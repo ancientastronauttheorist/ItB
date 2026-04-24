@@ -42,7 +42,6 @@ SIM_FILE_PREFIXES: tuple[str, ...] = (
     "rust_solver/src/",
     "src/solver/verify.py",
 )
-PYTHON_SIM_BLOCKLIST: str = "src/solver/simulate.py"
 
 VERSION_FILE_RUST = REPO_ROOT / "rust_solver" / "src" / "lib.rs"
 VERSION_FILE_PY = REPO_ROOT / "src" / "solver" / "verify.py"
@@ -195,7 +194,8 @@ def build_apply_plan(failure_id: str,
             "status": "ERROR",
             "error": (
                 f"target_language must be 'rust' (got {target_language!r}); "
-                "Python sim is test-only — Rust is authoritative"
+                "rust_solver/ is the only simulator — proposals targeting "
+                "Python files are auto-rejected"
             ),
         }
 
@@ -207,14 +207,6 @@ def build_apply_plan(failure_id: str,
         }
     for sf in suspect_files:
         path_str = (sf or {}).get("path") or ""
-        if path_str.startswith(PYTHON_SIM_BLOCKLIST):
-            return {
-                "status": "ERROR",
-                "error": (
-                    f"proposed_files contains {path_str!r} — Python sim is "
-                    "test-only. Refusing to apply."
-                ),
-            }
         if not (REPO_ROOT / path_str).exists():
             return {
                 "status": "ERROR",

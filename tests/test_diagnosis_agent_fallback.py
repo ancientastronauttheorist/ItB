@@ -98,11 +98,13 @@ def _frozen_status_failure() -> tuple[dict, dict]:
 
 @pytest.mark.regression
 def test_validate_rejects_python_target_language():
+    """Python sim was deleted — proposals targeting any Python file
+    are auto-rejected via the target_language check."""
     bad = {
         "target_language": "python",
-        "root_cause": "Python sim missed it",
+        "root_cause": "Some hypothetical Python fix",
         "suspect_files": [
-            {"path": "src/solver/simulate.py", "lines": [10]}
+            {"path": "src/solver/solver.py", "lines": [10]}
         ],
         "fix_snippet": {"before": "x", "after": "y"},
         "confidence": "high",
@@ -112,7 +114,9 @@ def test_validate_rejects_python_target_language():
     response, errors = validate_agent_response(bad)
     assert response is None
     assert any("target_language" in e for e in errors)
-    assert any("simulate.py" in e for e in errors)
+    # Validator no longer mentions simulate.py by name (deleted in PR-D);
+    # the message now points at the Rust-only policy.
+    assert any("Python sim was deleted" in e or "rust_solver" in e for e in errors)
 
 
 @pytest.mark.regression
@@ -347,7 +351,7 @@ def test_apply_agent_response_returns_errors_on_invalid_payload(tmp_path):
         {
             "target_language": "python",
             "root_cause": "?",
-            "suspect_files": [{"path": "src/solver/simulate.py", "lines": [10]}],
+            "suspect_files": [{"path": "src/solver/solver.py", "lines": [10]}],
             "fix_snippet": {"before": "x", "after": "y"},
             "confidence": "high",
             "verification_plan": [],
@@ -512,13 +516,14 @@ def test_diagnose_emits_agent_prompt_on_needs_agent(tmp_path):
 
 
 @pytest.mark.regression
-def test_build_agent_prompt_pins_rust_authoritative():
+def test_build_agent_prompt_pins_rust_only():
+    """The agent prompt must pin Rust as the only simulator and reject
+    target_language=python. Python sim was deleted in PR-D."""
     failure, action = _frozen_status_failure()
     prompt = build_agent_prompt(failure, action)
-    assert "AUTHORITATIVE" in prompt
     assert "rust_solver/src/" in prompt
-    assert "src/solver/simulate.py" in prompt
-    assert "TEST PRIMITIVES ONLY" in prompt
+    assert "ONLY simulator" in prompt
+    assert "target_language: python" in prompt  # auto-rejection notice
     assert '"target_language": "rust"' in prompt
     # Section 9 category map is included so the agent has somewhere to start.
     assert "DIFF-CATEGORY" in prompt

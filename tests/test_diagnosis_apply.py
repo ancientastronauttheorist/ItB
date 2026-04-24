@@ -94,11 +94,15 @@ def test_build_apply_plan_refuses_rule_match(tmp_path):
 
 
 @pytest.mark.regression
-def test_build_apply_plan_refuses_python_sim_target(tmp_path):
+def test_build_apply_plan_refuses_non_rust_path_target(tmp_path):
+    """The Python sim was deleted in the simulate.py-removal PR series.
+    PR-D dropped the dedicated PYTHON_SIM_BLOCKLIST entry; the only
+    refusal pathway now is the path-must-resolve check (since stale
+    Python sim references can no longer resolve under repo_root)."""
     md = _write_diag(tmp_path, [
         "id: x", "status: agent_proposed", "target_language: rust",
         "proposed_files:",
-        "  - path: src/solver/simulate.py",
+        "  - path: src/solver/does_not_exist.py",
         "    lines: [10]",
         "fix_snippet:",
         "  before: |",
@@ -108,7 +112,7 @@ def test_build_apply_plan_refuses_python_sim_target(tmp_path):
     ])
     res = build_apply_plan("x", diagnosis_path=md)
     assert isinstance(res, dict)
-    assert "Python sim is" in res["error"]
+    assert "does not resolve" in res["error"] or "not found" in res["error"]
 
 
 @pytest.mark.regression

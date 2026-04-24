@@ -13,9 +13,9 @@ Given a ``failure_db.jsonl`` entry id:
      validates path/line existence and ``target_language=rust`` before
      writing ``status=agent_proposed`` markdown.
 
-Authoritative sim is the Rust crate at ``rust_solver/src/*.rs``.
-``src/solver/simulate.py`` is test primitives only; agent responses
-targeting it are rejected by the validator.
+The Rust crate at ``rust_solver/src/*.rs`` is the only simulator.
+The Python sim was deleted; agent responses with ``target_language: python``
+are rejected by the validator regardless of which Python file they cite.
 
 Spec: docs/diagnosis_loop_design.md §7 + §12.
 """
@@ -672,9 +672,10 @@ def build_agent_prompt(
 
     return f"""You are diagnosing a simulator desync in an Into the Breach solver.
 
-The Rust simulator at `rust_solver/src/` is AUTHORITATIVE. Files under
-`src/solver/simulate.py` are TEST PRIMITIVES ONLY — never propose fixes
-there. Responses with `target_language: python` are auto-rejected.
+The Rust crate at `rust_solver/src/` is the ONLY simulator. The Python
+sim (`src/solver/simulate.py`) was deleted in the simulate.py-removal
+PR series — every fix must target Rust source. Responses with
+`target_language: python` are auto-rejected.
 
 FAILURE RECORD (failure_db.jsonl entry):
 ```json
@@ -833,9 +834,9 @@ def validate_agent_response(
     Returns (AgentResponse, []) on success, or (None, [error, ...]) on
     failure. The validator enforces:
       - JSON parses (one tolerance: leading/trailing markdown fences)
-      - target_language == "rust"
+      - target_language == "rust"  (the Python sim was deleted; every
+        fix targets rust_solver/* or src/bridge/*)
       - suspect_files is non-empty and every path resolves under repo_root
-        (and never under src/solver/simulate.py — Python sim is test-only)
       - lines are integers within the file's actual line count
       - confidence ∈ {high, medium, low}
       - fix_snippet has both before + after (non-empty)
@@ -851,7 +852,7 @@ def validate_agent_response(
     if target_language != "rust":
         errors.append(
             f"target_language must be 'rust' (got {target_language!r}); "
-            "src/solver/simulate.py is test-only — fixes go in rust_solver/"
+            "the Python sim was deleted — every fix targets rust_solver/"
         )
 
     confidence = parsed.get("confidence")
@@ -872,12 +873,6 @@ def validate_agent_response(
         path_str = sf.get("path") or ""
         if not path_str:
             errors.append(f"suspect_files[{i}] missing 'path'")
-            continue
-        if path_str.startswith("src/solver/simulate.py"):
-            errors.append(
-                f"suspect_files[{i}] targets src/solver/simulate.py — that's "
-                "test primitives only. Propose Rust fixes."
-            )
             continue
         if not (
             path_str.startswith("rust_solver/")
