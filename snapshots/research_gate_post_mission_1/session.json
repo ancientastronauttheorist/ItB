@@ -1,0 +1,277 @@
+{
+  "run_id": "20260424_011517_057",
+  "squad": "Balanced Roll (Laser/Cannon/Siege)",
+  "achievement_targets": [],
+  "difficulty": 2,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "mission_index": 0,
+  "current_turn": 3,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "LaserMech",
+        "move_to": [
+          3,
+          6
+        ],
+        "weapon": "Prime_Lasermech",
+        "target": [
+          4,
+          6
+        ],
+        "description": "LaserMech, move C6\u2192B5, fire Burst Beam at B4"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          2,
+          4
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          3,
+          4
+        ],
+        "description": "TankMech, fire Taurus Cannon at D5"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "DStrikeMech",
+        "move_to": [
+          2,
+          6
+        ],
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          2,
+          4
+        ],
+        "description": "DStrikeMech, move C4\u2192B6, fire Cluster Artillery at D6"
+      }
+    ],
+    "score": 130801.42857142857,
+    "turn": 3
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-04-24T01:18:43.836150",
+      "turn": 1,
+      "label": "solve",
+      "score": 133035.7142857143,
+      "actions": [
+        "TankMech, fire Taurus Cannon at F6",
+        "DStrikeMech, move C6\u2192B4, fire Cluster Artillery at D4",
+        "LaserMech, move D5\u2192C6, fire Burst Beam at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-24T01:19:25.190492",
+      "turn": 2,
+      "label": "solve",
+      "score": 135758.57167482376,
+      "actions": [
+        "LaserMech, fire Burst Beam at B6",
+        "DStrikeMech, move B4\u2192C4, fire Cluster Artillery at G4",
+        "TankMech, move E6\u2192D6, fire Taurus Cannon at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-24T01:20:09.231156",
+      "turn": 3,
+      "label": "solve",
+      "score": 130801.42857142857,
+      "actions": [
+        "LaserMech, move C6\u2192B5, fire Burst Beam at B4",
+        "TankMech, fire Taurus Cannon at D5",
+        "DStrikeMech, move C4\u2192B6, fire Cluster Artillery at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-24T01:21:17.930685",
+      "turn": 3,
+      "label": "note",
+      "message": "Turn 3 INVESTIGATE: grid predicted 3, actual 4 (+1) \u2014 benign divergence (we underpredicted grid retention). 3 sub-action desyncs: push_dir on TankMech attack D5, push_dir on DStrikeMech move to B6, death-miss on DStrikeMech Cluster Artillery at D6 (enemy_survived_unexpectedly). Failure_db entry logged: 20260424_011517_057_m00_t03_per_sub_action_desync_attack_a2. Not dispatching Explore agent mid-run since grid is in better shape than predicted \u2014 queued for post-mission analysis."
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ]
+  ],
+  "tags": [],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Brute_Tankmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Ranged_Defensestrike|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "damage_amount",
+        "death",
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Defensestrike|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          2,
+          4
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "LaserMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "TankMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "DStrikeMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "Jelly_Health1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 3,
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
+      "diff_field": "pos",
+      "diff_predicted": [
+        3,
+        4
+      ],
+      "diff_actual": [
+        4,
+        4
+      ],
+      "severity": "medium"
+    },
+    {
+      "type": "Firefly1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 3,
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high"
+    }
+  ],
+  "diagnosis_queue": []
+}

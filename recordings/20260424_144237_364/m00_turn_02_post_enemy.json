@@ -1,0 +1,109 @@
+{
+  "timestamp": "2026-04-24T14:51:33.268688",
+  "run_id": "20260424_144237_364",
+  "mission_index": 0,
+  "turn": 2,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 8,
+      "grid_power": 5,
+      "enemies_alive": 2,
+      "enemy_hp_total": 3,
+      "mechs_alive": 4,
+      "mech_hp": [
+        {
+          "uid": 451,
+          "type": "Snowmine1",
+          "hp": 1,
+          "max_hp": 1
+        },
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "JetMech",
+          "hp": 1,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "RocketMech",
+          "hp": 2,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "building_hp_total": 8,
+      "buildings_alive": 6,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 0,
+      "enemy_hp_total": 0,
+      "grid_power": 5,
+      "mech_hp": [
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "PunchMech",
+          "uid": 0
+        },
+        {
+          "hp": 1,
+          "max_hp": 2,
+          "type": "JetMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 3,
+          "type": "RocketMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 3
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "mech_hp_diff": [
+        {
+          "uid": 451,
+          "type": "Snowmine1",
+          "predicted_hp": 0,
+          "actual_hp": 1,
+          "diff": 1
+        },
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "JetMech",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "RocketMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

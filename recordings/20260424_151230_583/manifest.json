@@ -1,0 +1,16 @@
+{
+  "run_id": "20260424_151230_583",
+  "squad": "Balanced Roll (Laser/Hook/Boulder)",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [
+    "probe",
+    "grid_defense"
+  ],
+  "solver_version": "rust-0.1.0-b51363a",
+  "weight_version": "v009",
+  "updated": "2026-04-24T15:12:30.602363",
+  "created": "2026-04-24T15:12:30.602376",
+  "missions": [],
+  "outcome": null
+}

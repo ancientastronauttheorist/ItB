@@ -1,0 +1,308 @@
+{
+  "timestamp": "2026-04-24T15:15:05.569686",
+  "run_id": "20260424_151230_583",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "action_1_attack_verify",
+  "data": {
+    "action_index": 1,
+    "sub_action": "attack",
+    "mech_uid": 2,
+    "predicted": {
+      "action_index": 1,
+      "grid_power": 5,
+      "mech_uid": 2,
+      "snapshot_phase": "after_mech_action",
+      "tiles_changed": [
+        {
+          "acid": false,
+          "building_hp": 1,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 1,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 1,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 2,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 2,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 3,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 3,
+          "y": 7
+        }
+      ],
+      "units": [
+        {
+          "active": true,
+          "alive": true,
+          "hp": 5,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            2,
+            6
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "JudoMech",
+          "uid": 0
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 3,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            3,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "TankMech",
+          "uid": 1
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 1,
+          "is_mech": true,
+          "max_hp": 2,
+          "pos": [
+            2,
+            7
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "ArtiMech",
+          "uid": 2
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 2,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            6,
+            1
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "AcidVat",
+          "uid": 580
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": 0,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            3,
+            7
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "AcidVat",
+          "uid": 581
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 2,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            1,
+            4
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Hornet1",
+          "uid": 582
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 4,
+          "is_mech": false,
+          "max_hp": 4,
+          "pos": [
+            4,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Hornet2",
+          "uid": 583
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 3,
+          "is_mech": false,
+          "max_hp": 3,
+          "pos": [
+            5,
+            4
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Firefly1",
+          "uid": 584
+        }
+      ]
+    },
+    "diff": {
+      "unit_diffs": [],
+      "tile_diffs": [
+        {
+          "x": 3,
+          "y": 7,
+          "field": "terrain",
+          "predicted": "ground",
+          "actual": "water"
+        },
+        {
+          "x": 3,
+          "y": 7,
+          "field": "acid",
+          "predicted": false,
+          "actual": true
+        }
+      ],
+      "scalar_diffs": [],
+      "total_count": 2
+    },
+    "classification": {
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true
+    },
+    "fuzzy_signal": {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "terrain|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          4,
+          7
+        ]
+      }
+    }
+  }
+}

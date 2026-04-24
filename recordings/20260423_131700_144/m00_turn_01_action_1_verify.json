@@ -1,0 +1,358 @@
+{
+  "timestamp": "2026-04-23T21:38:41.338479",
+  "run_id": "20260423_131700_144",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "action_1_verify",
+  "data": {
+    "action_index": 1,
+    "mech_uid": 1,
+    "predicted": {
+      "action_index": 1,
+      "mech_uid": 1,
+      "snapshot_phase": "after_mech_action",
+      "units": [
+        {
+          "uid": 118,
+          "type": "Acid_Tank",
+          "pos": [
+            5,
+            6
+          ],
+          "hp": 1,
+          "max_hp": 1,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "pos": [
+            3,
+            4
+          ],
+          "hp": 3,
+          "max_hp": 3,
+          "alive": true,
+          "active": true,
+          "is_mech": true,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "pos": [
+            1,
+            4
+          ],
+          "hp": 3,
+          "max_hp": 3,
+          "alive": true,
+          "active": false,
+          "is_mech": true,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "pos": [
+            2,
+            5
+          ],
+          "hp": 2,
+          "max_hp": 2,
+          "alive": true,
+          "active": true,
+          "is_mech": true,
+          "team": 1,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 119,
+          "type": "Scarab2",
+          "pos": [
+            4,
+            4
+          ],
+          "hp": 4,
+          "max_hp": 4,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": true,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 120,
+          "type": "Scarab1",
+          "pos": [
+            4,
+            3
+          ],
+          "hp": 2,
+          "max_hp": 2,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        },
+        {
+          "uid": 121,
+          "type": "Leaper1",
+          "pos": [
+            5,
+            5
+          ],
+          "hp": 1,
+          "max_hp": 1,
+          "alive": true,
+          "active": false,
+          "is_mech": false,
+          "team": 6,
+          "status": {
+            "fire": false,
+            "acid": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          }
+        }
+      ],
+      "tiles_changed": [
+        {
+          "x": 0,
+          "y": 3,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 0,
+          "y": 4,
+          "terrain": "building",
+          "building_hp": 1,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 0,
+          "y": 5,
+          "terrain": "building",
+          "building_hp": 1,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 3,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 4,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 1,
+          "y": 5,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 3,
+          "terrain": "building",
+          "building_hp": 1,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 2,
+          "y": 5,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 3,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 4,
+          "terrain": "ground",
+          "building_hp": 0,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        },
+        {
+          "x": 3,
+          "y": 5,
+          "terrain": "building",
+          "building_hp": 2,
+          "fire": false,
+          "acid": false,
+          "smoke": false,
+          "has_pod": false
+        }
+      ],
+      "grid_power": 5
+    },
+    "diff": {
+      "unit_diffs": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "field": "active",
+          "predicted": true,
+          "actual": false
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "field": "active",
+          "predicted": false,
+          "actual": true
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "field": "active",
+          "predicted": true,
+          "actual": false
+        },
+        {
+          "uid": 118,
+          "type": "Acid_Tank",
+          "field": "pos",
+          "predicted": [
+            5,
+            6
+          ],
+          "actual": [
+            5,
+            7
+          ]
+        },
+        {
+          "uid": 119,
+          "type": "Scarab2",
+          "field": "missing_in_actual",
+          "predicted": "present",
+          "actual": "absent"
+        },
+        {
+          "uid": 120,
+          "type": "Scarab1",
+          "field": "missing_in_actual",
+          "predicted": "present",
+          "actual": "absent"
+        },
+        {
+          "uid": 121,
+          "type": "Leaper1",
+          "field": "missing_in_actual",
+          "predicted": "present",
+          "actual": "absent"
+        }
+      ],
+      "tile_diffs": [],
+      "scalar_diffs": [],
+      "total_count": 7
+    },
+    "classification": {
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false
+    }
+  }
+}
