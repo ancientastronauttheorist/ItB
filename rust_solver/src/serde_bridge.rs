@@ -440,6 +440,20 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
+    // Apply tile-borne A.C.I.D. to units standing on ACID pools.
+    // Game rule: a unit on an A.C.I.D. tile carries the A.C.I.D. status,
+    // doubling weapon damage taken. The bridge reports tile.acid correctly
+    // but often does NOT propagate that to unit.acid — surfaced on
+    // Disposal Site boards where Scarab2 on D4 (ACID pool) should take
+    // 4-dmg Chain Whip hits but the sim predicted 2-dmg survival. Applied
+    // after unit population so late-join mechs (tanks) pick it up too.
+    for i in 0..board.unit_count as usize {
+        let (ux, uy) = (board.units[i].x, board.units[i].y);
+        if ux < 8 && uy < 8 && board.tile(ux, uy).acid() && !board.units[i].acid() {
+            board.units[i].set_acid(true);
+        }
+    }
+
     // Turn info
     board.current_turn = input.turn.unwrap_or(0);
     board.total_turns = input.total_turns.unwrap_or(5);

@@ -1167,10 +1167,15 @@ pub fn simulate_weapon_with(
 fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
 
-    // Chain weapon (Electric Whip): BFS through adjacent occupied tiles
+    // Chain weapon (Electric Whip): BFS through adjacent occupied tiles.
+    // The shooter's own tile is excluded from the chain graph — in-game
+    // Electric Whip never damages its own mech even when the chain would
+    // loop back adjacent. Seed `visited` with both target and attacker so
+    // the BFS cannot re-enter the source.
     if wdef.chain() {
         let mut visited = 0u64;
         visited |= 1u64 << xy_to_idx(tx, ty);
+        visited |= 1u64 << xy_to_idx(ax, ay);
         let mut queue: Vec<(u8, u8)> = vec![(tx, ty)];
         let mut head = 0;
         while head < queue.len() {
@@ -1357,13 +1362,36 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
     // picks up fire/smoke on the source tile before moving). Without this,
     // artillery with Forward/Backward push (e.g. Ranged_Rocket) fails to move
     // the center target, causing building-bump desyncs.
-    if wdef.aoe_center() {
-        if let Some(dir) = attack_dir {
-            match wdef.push {
-                PushDir::Forward => apply_push(board, tx, ty, dir, result),
-                PushDir::Backward => apply_push(board, tx, ty, opposite_dir(dir), result),
-                _ => {}
+    //
+    // PushDir::Perpendicular: artillery like the Rock Accelerator pushes the
+    // two tiles adjacent to the destination perpendicular to the firing axis
+    // (east+west when firing north, north+south when firing east). Previously
+    // unhandled — the sim silently dropped both side pushes, predicting
+    // static bystanders that actually got flung one tile.
+    if let Some(dir) = attack_dir {
+        match wdef.push {
+            PushDir::Forward if wdef.aoe_center()  => apply_push(board, tx, ty, dir, result),
+            PushDir::Backward if wdef.aoe_center() => apply_push(board, tx, ty, opposite_dir(dir), result),
+            PushDir::Perpendicular => {
+                // Two side tiles outward. Perpendicular directions are
+                // (dir + 1) % 4 and (dir + 3) % 4; each side pushes outward
+                // (away from the destination tile).
+                let left = (dir + 1) % 4;
+                let right = (dir + 3) % 4;
+                let (ldx, ldy) = DIRS[left];
+                let (rdx, rdy) = DIRS[right];
+                let lx = tx as i8 + ldx;
+                let ly = ty as i8 + ldy;
+                let rx = tx as i8 + rdx;
+                let ry = ty as i8 + rdy;
+                if in_bounds(lx, ly) {
+                    apply_push(board, lx as u8, ly as u8, left, result);
+                }
+                if in_bounds(rx, ry) {
+                    apply_push(board, rx as u8, ry as u8, right, result);
+                }
             }
+            _ => {}
         }
     }
 
@@ -1794,7 +1822,14 @@ pub fn simulate_action(
         result.merge(&attack_result);
     }
 
-    board.units[mech_idx].set_active(false);
+    // Active flag: in-game, moving without firing leaves the mech READY
+    // (the player can still attack later in the same turn). Only firing a
+    // weapon consumes the mech's action. Previously we unconditionally
+    // cleared active which made verify_action flag every move-only plan
+    // as a desync on WallMech, pawn movement rounds, etc.
+    if weapon_id != WId::None {
+        board.units[mech_idx].set_active(false);
+    }
     result
 }
 

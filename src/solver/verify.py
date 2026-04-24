@@ -135,7 +135,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #     at E3, actually swapped to C3 — a canonical 2-tile pad swap the sim
 #     was blind to. Similar drift on Judo/Science across T2/T3.
 # Pre-v8 rows archived to failure_db_snapshot_sim_v7.jsonl.
-SIMULATOR_VERSION = 9
+SIMULATOR_VERSION = 10
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
