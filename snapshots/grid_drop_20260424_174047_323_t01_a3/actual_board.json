@@ -1,0 +1,340 @@
+{
+  "grid_power": 4,
+  "grid_power_max": 7,
+  "units": [
+    {
+      "uid": 152,
+      "type": "Acid_Tank",
+      "x": 4,
+      "y": 6,
+      "hp": 1,
+      "max_hp": 1,
+      "team": 1,
+      "is_mech": false
+    },
+    {
+      "uid": 0,
+      "type": "PunchMech",
+      "x": 1,
+      "y": 3,
+      "hp": 5,
+      "max_hp": 3,
+      "team": 1,
+      "is_mech": true
+    },
+    {
+      "uid": 1,
+      "type": "JetMech",
+      "x": 5,
+      "y": 6,
+      "hp": 2,
+      "max_hp": 2,
+      "team": 1,
+      "is_mech": true
+    },
+    {
+      "uid": 2,
+      "type": "PulseMech",
+      "x": 4,
+      "y": 4,
+      "hp": 3,
+      "max_hp": 3,
+      "team": 1,
+      "is_mech": true
+    },
+    {
+      "uid": 153,
+      "type": "Hornet2",
+      "x": 4,
+      "y": 1,
+      "hp": 4,
+      "max_hp": 4,
+      "team": 6,
+      "is_mech": false
+    },
+    {
+      "uid": 154,
+      "type": "Leaper1",
+      "x": 4,
+      "y": 2,
+      "hp": 1,
+      "max_hp": 1,
+      "team": 6,
+      "is_mech": false
+    }
+  ],
+  "tiles": [
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 1
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 2
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "building",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "building",
+        "building_hp": 2
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      }
+    ],
+    [
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      }
+    ],
+    [
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "ground",
+        "building_hp": 0
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      },
+      {
+        "terrain": "mountain",
+        "building_hp": 2
+      }
+    ]
+  ]
+}

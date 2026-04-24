@@ -1,61 +1,61 @@
 {
-  "run_id": "20260424_151230_583",
-  "squad": "Balanced Roll (Laser/Hook/Boulder)",
+  "run_id": "20260424_174047_323",
+  "squad": "JetMech Aerial Bombs test (Combat/Jet/Pulse)",
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
   "mission_index": 0,
-  "current_turn": 3,
-  "phase": "combat_player",
+  "current_turn": 1,
+  "phase": "no_save",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "JudoMech",
+        "mech_uid": 1,
+        "mech_type": "JetMech",
         "move_to": [
           4,
-          2
+          5
         ],
-        "weapon": "Unknown",
+        "weapon": "Brute_Jetmech",
         "target": [
-          255,
-          255
+          6,
+          5
         ],
-        "description": "JudoMech, move G4\u2192F4"
+        "description": "JetMech, move C7\u2192C4, fire Aerial Bombs at C2"
       },
       {
         "mech_uid": 2,
-        "mech_type": "ArtiMech",
+        "mech_type": "PulseMech",
         "move_to": [
           3,
-          1
-        ],
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          3,
-          7
-        ],
-        "description": "ArtiMech, move F6\u2192G5, fire Artemis Artillery at A5"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "TankMech",
-        "move_to": [
-          2,
-          4
-        ],
-        "weapon": "Brute_Tankmech",
-        "target": [
-          2,
           3
         ],
-        "description": "TankMech, fire Taurus Cannon at E6"
+        "weapon": "Science_Repulse",
+        "target": [
+          3,
+          3
+        ],
+        "description": "PulseMech, move F6\u2192E5, fire Repulse at E5"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Prime_Punchmech",
+        "target": [
+          4,
+          4
+        ],
+        "description": "PunchMech, move E7\u2192D5, fire Titan Fist at D4"
       }
     ],
-    "score": 96507.14312996184,
-    "turn": 3
+    "score": 95850.0,
+    "turn": 1
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -64,168 +64,110 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-24T15:14:53.457649",
+      "timestamp": "2026-04-24T17:42:39.125609",
       "turn": 1,
       "label": "solve",
-      "score": 105314.28571428571,
+      "score": 110448.57167005539,
       "actions": [
-        "TankMech, fire Taurus Cannon at B5",
-        "ArtiMech, move D6\u2192A6, fire Artemis Artillery at A4",
-        "JudoMech, move B6\u2192D6, fire Vice Fist at D7"
+        "JetMech, move C5\u2192D2, fire Aerial Bombs at F2",
+        "PulseMech, fire Repulse at F6",
+        "PunchMech, move E5\u2192E6, fire Titan Fist at D6"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:15:46.447654",
+      "timestamp": "2026-04-24T17:45:21.803830",
       "turn": 2,
       "label": "solve",
-      "score": 101560.95238095234,
+      "score": 109684.76190476184,
       "actions": [
-        "TankMech, move C5\u2192C2, repair",
-        "ArtiMech, move A6\u2192B5, fire Artemis Artillery at E5",
-        "JudoMech, move D6\u2192C4, fire Vice Fist at C5"
+        "JetMech, move F2\u2192G2, fire Aerial Bombs at G4",
+        "PulseMech, move F6\u2192E7, fire Repulse at E7",
+        "PunchMech, move E5\u2192D3, fire Titan Fist at E3"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:16:36.321670",
+      "timestamp": "2026-04-24T18:00:41.391933",
       "turn": 3,
       "label": "solve",
-      "score": 115004.28629193988,
+      "score": 124151.42857142857,
       "actions": [
-        "TankMech, fire Taurus Cannon at D2",
-        "ArtiMech, move B5\u2192E5, fire Artemis Artillery at E2",
-        "JudoMech, move C4\u2192D6, fire Vice Fist at D7"
+        "PulseMech, move E7\u2192E6, fire Repulse at E6",
+        "PunchMech, move D3\u2192C5, fire Titan Fist at C6",
+        "JetMech, move G4\u2192D3, fire Aerial Bombs at B3"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:17:21.360795",
+      "timestamp": "2026-04-24T18:02:37.553559",
       "turn": 4,
       "label": "solve",
-      "score": 110156.4288020134,
+      "score": 117857.14300700597,
       "actions": [
-        "JudoMech, move D6\u2192D3, fire Vice Fist at C3",
-        "TankMech, fire Taurus Cannon at D2",
-        "ArtiMech, move E5\u2192D6, fire Artemis Artillery at D1"
+        "PunchMech, move C5\u2192E4, fire Titan Fist at E3",
+        "PulseMech, move E6\u2192F6, fire Repulse at F6",
+        "JetMech, move B3\u2192C6, fire Aerial Bombs at E6"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:22:05.532042",
+      "timestamp": "2026-04-24T18:25:07.675033",
       "turn": 1,
       "label": "solve",
-      "score": 115685.71428571426,
+      "score": 86724.28652048111,
       "actions": [
-        "TankMech, move E6\u2192E3, fire Taurus Cannon at D3",
-        "JudoMech, fire Vice Fist at G5",
-        "ArtiMech, move C5\u2192D5, fire Artemis Artillery at D2"
+        "Acid_Tank, move D6\u2192C4, fire A.C.I.D. Cannon at B4",
+        "JetMech, fire Aerial Bombs at B3",
+        "PulseMech, move E7\u2192D4, fire Repulse at D4",
+        "PunchMech, move D6\u2192E7, fire Titan Fist at F7"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:22:53.980872",
+      "timestamp": "2026-04-24T18:26:37.568869",
+      "turn": 1,
+      "label": "note",
+      "message": "INVESTIGATE turn 1 CZD a3: Titan Fist (Prime_Punchmech) melee attack on (1,2)=F7 overdamages adjacent mountains (0,2)=F8 and (2,2)=F6 by 1 hp each. Mountains predicted=1 actual=2 (no damage). Melee def has no AOE but sim behaves as AOE_PERP or similar. New bug, deferred. Snapshot: grid_drop_20260424_174047_323_t01_a3."
+    },
+    {
+      "timestamp": "2026-04-24T18:27:06.292655",
       "turn": 2,
       "label": "solve",
-      "score": 119443.33345782201,
+      "score": 63552.38095238092,
       "actions": [
-        "ArtiMech, move D5\u2192E5, fire Artemis Artillery at E8",
-        "TankMech, move E3\u2192D5, fire Taurus Cannon at D4",
-        "JudoMech, move F5\u2192D4, fire Vice Fist at C4"
+        "Acid_Tank, move B4\u2192D5, fire A.C.I.D. Cannon at D6",
+        "PunchMech, move E7\u2192D7, fire Titan Fist at D6",
+        "PulseMech, fire Repulse at D4",
+        "JetMech, move B3\u2192D3, fire Aerial Bombs at D1"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:23:45.065086",
+      "timestamp": "2026-04-24T18:27:59.708426",
       "turn": 3,
       "label": "solve",
-      "score": 131632.14285714284,
+      "score": 97260.71428571429,
       "actions": [
-        "TankMech, move D5\u2192C7, fire Taurus Cannon at C6",
-        "ArtiMech, fire Artemis Artillery at E3",
-        "JudoMech, move D4\u2192E4, fire Vice Fist at F4"
+        "PunchMech, move D7\u2192B8, fire Titan Fist at B7",
+        "JetMech, move D1\u2192C3, fire Aerial Bombs at E3",
+        "PulseMech, fire Repulse at D4"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:24:41.746206",
+      "timestamp": "2026-04-24T18:28:51.311646",
       "turn": 4,
       "label": "solve",
-      "score": -4132.8571428571595,
+      "score": -434783.5708924702,
       "actions": [
-        "JudoMech, fire Vice Fist at F4",
-        "ArtiMech, fire Artemis Artillery at C5",
-        "TankMech, move C7\u2192D6, fire Taurus Cannon at D5"
+        "PunchMech, move B8\u2192D8",
+        "JetMech, move E3\u2192C2, fire Aerial Bombs at C4",
+        "PulseMech, move D4\u2192E3, fire Repulse at E3"
       ]
     },
     {
-      "timestamp": "2026-04-24T15:29:18.564433",
+      "timestamp": "2026-04-24T18:41:58.663153",
       "turn": 1,
       "label": "solve",
-      "score": 89550.00011665482,
+      "score": 95850.0,
       "actions": [
-        "ArtiMech, move F5\u2192F4, fire Artemis Artillery at B4",
-        "TankMech, move E6\u2192D6, fire Taurus Cannon at C6",
-        "JudoMech, move C5\u2192B4, fire Vice Fist at C4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-24T15:30:05.071821",
-      "turn": 2,
-      "label": "solve",
-      "score": 80820.00043732775,
-      "actions": [
-        "JudoMech, move B4\u2192C2, fire Vice Fist at D2",
-        "ArtiMech, move F4\u2192G5, fire Artemis Artillery at C5",
-        "TankMech, move D6\u2192B6, fire Taurus Cannon at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-24T15:30:54.923350",
-      "turn": 3,
-      "label": "solve",
-      "score": 113434.28571428571,
-      "actions": [
-        "JudoMech, move C2\u2192F2, fire Vice Fist at G2",
-        "ArtiMech, fire Artemis Artillery at C5",
-        "TankMech, move B6\u2192C6, fire Taurus Cannon at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-24T15:31:42.536656",
-      "turn": 4,
-      "label": "solve",
-      "score": 91207.14285714287,
-      "actions": [
-        "JudoMech, move F2\u2192F6, fire Vice Fist at F7",
-        "TankMech, fire Taurus Cannon at D6",
-        "ArtiMech, fire Artemis Artillery at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-24T15:36:05.403246",
-      "turn": 1,
-      "label": "solve",
-      "score": 98142.85714285716,
-      "actions": [
-        "JudoMech, move F6\u2192G4, fire Vice Fist at F4",
-        "TankMech, move D5\u2192B6, fire Taurus Cannon at B5",
-        "ArtiMech, move G5\u2192F6, fire Artemis Artillery at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-24T15:37:13.793243",
-      "turn": 2,
-      "label": "solve",
-      "score": 92889.52380952396,
-      "actions": [
-        "JudoMech, fire Vice Fist at F4",
-        "TankMech, move B6\u2192D6, fire Taurus Cannon at D5",
-        "ArtiMech, fire Artemis Artillery at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-24T15:38:08.775717",
-      "turn": 3,
-      "label": "solve",
-      "score": 96507.14312996184,
-      "actions": [
-        "JudoMech, move G4\u2192F4",
-        "ArtiMech, move F6\u2192G5, fire Artemis Artillery at A5",
-        "TankMech, fire Taurus Cannon at E6"
+        "JetMech, move C7\u2192C4, fire Aerial Bombs at C2",
+        "PulseMech, move F6\u2192E5, fire Repulse at E5",
+        "PunchMech, move E7\u2192D5, fire Titan Fist at D4"
       ]
     }
   ],
@@ -244,20 +186,407 @@
     ]
   ],
   "tags": [
-    "probe",
-    "grid_defense"
+    "test",
+    "aerial_bombs_fix"
   ],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "terrain",
+      "top_category": "tile_status",
       "categories": [
-        "terrain",
+        "spawn",
         "tile_status"
       ],
       "subcategory": "model_gap_known",
       "model_gap": true,
-      "signature": "terrain|Ranged_Artillerymech|attack",
+      "signature": "tile_status|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Science_Repulse",
+        "target": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Prime_Punchmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "spawn",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Prime_Punchmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "spawn",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "damage_amount|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_Repulse|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Science_Repulse",
+        "target": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Science_Repulse",
+        "target": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 152,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 3,
+        "turn": 1,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 152,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Prime_Punchmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Prime_Punchmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "spawn",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Science_Repulse|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -267,147 +596,66 @@
         "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Ranged_Artillerymech",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Repulse",
         "target": [
           4,
-          7
+          4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "click_miss",
+      "top_category": "spawn",
       "categories": [
-        "click_miss"
+        "spawn"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
+      "signature": "spawn|Brute_Jetmech|move",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 3,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          7,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
       "context": {
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
+        "action_index": 3,
         "turn": 2,
-        "weapon": "_REPAIR",
+        "weapon": "Brute_Jetmech",
         "target": [
-          6,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Ranged_Artillerymech|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          3,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Ranged_Artillerymech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          3,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Prime_Shift|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Prime_Shift",
-        "target": [
-          3,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Prime_Shift|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Prime_Shift",
-        "target": [
-          3,
-          5
+          7,
+          4
         ]
       }
     },
@@ -430,7 +678,7 @@
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 0,
-        "turn": 3,
+        "turn": 4,
         "weapon": "Unknown",
         "target": [
           255,
@@ -444,22 +692,22 @@
       "categories": [],
       "subcategory": null,
       "model_gap": false,
-      "signature": "unknown|Ranged_Artillerymech|move",
+      "signature": "unknown|Brute_Jetmech|move",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.3,
       "context": {
-        "mech_uid": 2,
+        "mech_uid": 1,
         "phase": "move",
         "sub_action": "move",
         "action_index": 1,
-        "turn": 3,
-        "weapon": "Ranged_Artillerymech",
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
         "target": [
-          3,
-          7
+          4,
+          5
         ]
       }
     },
@@ -469,32 +717,7 @@
       "categories": [],
       "subcategory": null,
       "model_gap": false,
-      "signature": "unknown|Ranged_Artillerymech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          3,
-          7
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "unknown",
-      "categories": [],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "unknown|Brute_Tankmech|attack",
+      "signature": "unknown|Brute_Jetmech|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -504,50 +727,149 @@
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Brute_Tankmech",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
         "target": [
-          2,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "unknown",
+      "categories": [],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "unknown|Science_Repulse|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Science_Repulse",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "unknown",
+      "categories": [],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "unknown|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Science_Repulse",
+        "target": [
+          5,
           3
         ]
       }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Prime_Punchmech",
+      "cause_pattern": "damage_amount|Prime_Punchmech|attack",
+      "expires_turn": 4,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
-      "type": "JudoMech",
+      "type": "PunchMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 1,
       "attempts": 0,
-      "status": "pending",
-      "result": null
+      "status": "done",
+      "result": {
+        "source": "user_override",
+        "reason": "stuck_queue_workaround"
+      }
     },
     {
-      "type": "TankMech",
+      "type": "JetMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 1,
       "attempts": 0,
-      "status": "pending",
-      "result": null
+      "status": "done",
+      "result": {
+        "source": "user_override",
+        "reason": "stuck_queue_workaround"
+      }
     },
     {
-      "type": "ArtiMech",
+      "type": "PulseMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 1,
       "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "user_override",
+        "reason": "stuck_queue_workaround"
+      }
+    },
+    {
+      "type": "Firefly1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "user_override",
+        "reason": "stuck_queue_workaround"
+      },
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium"
+    },
+    {
+      "type": "Acid_Tank",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 2,
+      "attempts": 0,
       "status": "pending",
-      "result": null
+      "result": null,
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": []

@@ -1,0 +1,39 @@
+{
+  "run_id": "20260424_174047_323",
+  "turn": 1,
+  "sub_action": "attack",
+  "action_index": 3,
+  "mech_uid": 0,
+  "weapon": "Prime_Punchmech",
+  "target": [
+    1,
+    2
+  ],
+  "grid_power_diff": null,
+  "building_hp_diffs": [
+    {
+      "x": 0,
+      "y": 2,
+      "field": "building_hp",
+      "predicted": 1,
+      "actual": 2
+    },
+    {
+      "x": 2,
+      "y": 2,
+      "field": "building_hp",
+      "predicted": 1,
+      "actual": 2
+    }
+  ],
+  "failure_db_id": "20260424_174047_323_m00_t01_per_sub_action_desync_attack_a3",
+  "classification": {
+    "top_category": "damage_amount",
+    "categories": [
+      "damage_amount",
+      "grid_power"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}
