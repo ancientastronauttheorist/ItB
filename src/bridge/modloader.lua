@@ -991,6 +991,68 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     end
     log_bridge("FIRE: " .. wname .. " slot=" .. slot .. " " ..
                source.x .. "," .. source.y .. " -> " .. tx .. "," .. ty)
+
+    -- Transit-damage workaround for Brute_Jetmech (Aerial Bombs) and
+    -- Brute_Bombrun (Bombing Run). The game's weapons_brute.lua
+    -- Brute_Jetmech:GetSkillEffect (and Brute_Bombrun which inherits
+    -- from it) loops k=1..Range-1 and calls Board:DamageSpace with
+    -- damage + iSmoke on each transit tile. pawn:FireWeapon() dispatches
+    -- the leap movement but does NOT execute that Lua script —
+    -- 5/5 snapshots (grid_drop_20260421_211617_239_t02_a0,
+    -- _20260421_215501_106_t02_a0, _20260423_131700_144_t01_a0,
+    -- _20260424_144237_364_t01_a1, plus t03_a0 in the 211617 run) show
+    -- transit tiles at predicted HP-1 vs actual HP unchanged, and zero
+    -- smoke tiles in all five actual boards. Replicate the game's own
+    -- GetSkillEffect loop here, pulling skill.Damage / skill.Smoke off
+    -- the live Lua skill so weapon upgrades (Jetmech_A Damage=2,
+    -- Bombrun_B Damage=3) flow through automatically.
+    --
+    -- NOT using skill:GetSkillEffect + Board:AddEffect: the comment at
+    -- the top of this section records that path leaves Board:IsBusy()
+    -- stuck true and broke the engine queue.
+    local is_transit_leap =
+        string.find(wname, "^Brute_Jetmech") ~= nil or
+        string.find(wname, "^Brute_Bombrun") ~= nil
+    if is_transit_leap then
+        local skill = _G[wname]
+        if skill and skill.Damage and skill.Damage > 0 then
+            local dx = tx - source.x
+            local dy = ty - source.y
+            local dist = math.abs(dx) + math.abs(dy)
+            -- Cardinal-only (leap enumerator already guarantees this,
+            -- but guard defensively).
+            if dist >= 2 and (dx == 0 or dy == 0) then
+                local sx = dx == 0 and 0 or (dx / math.abs(dx))
+                local sy = dy == 0 and 0 or (dy / math.abs(dy))
+                local applied = 0
+                for k = 1, dist - 1 do
+                    local nx = source.x + sx * k
+                    local ny = source.y + sy * k
+                    local sd = SpaceDamage(Point(nx, ny), skill.Damage)
+                    if skill.Smoke and skill.Smoke > 0 then
+                        sd.iSmoke = skill.Smoke
+                    end
+                    if skill.Acid and skill.Acid > 0 then
+                        sd.iAcid = skill.Acid
+                    end
+                    local ok_d, err_d = pcall(function()
+                        Board:DamageSpace(sd)
+                    end)
+                    if ok_d then
+                        applied = applied + 1
+                    else
+                        log_bridge("WARN: transit DamageSpace failed at (" ..
+                                   nx .. "," .. ny .. ") for " .. wname ..
+                                   ": " .. tostring(err_d))
+                    end
+                end
+                log_bridge("TRANSIT: " .. wname .. " applied=" .. applied ..
+                           " damage=" .. skill.Damage ..
+                           " smoke=" .. tostring(skill.Smoke or 0))
+            end
+        end
+    end
+
     return true, "FireWeapon[" .. slot .. "](" .. wname .. ")"
 end
 
