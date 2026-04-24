@@ -356,7 +356,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // weapon deals 1 damage to the center target tile in addition to the
 // 4 adjacent tiles. Surfaced by grid_drop investigation on
 // run 20260424_011517_057 t03 (predicted grid=3, actual=4).
-pub const SIMULATOR_VERSION: u32 = 14;
+// v15: Cracked-ground → Chasm on damage in simulate.rs (was only
+// handled for Ice terrain). Unit standing on a damaged cracked-ground
+// tile falls in and dies; Massive does NOT save from Chasm. Plus new
+// `volatile_enemy_killed` EvalWeights term to preserve Volatile Vek
+// (GlowingScorpion) for Weather Watch ⭐ bonus. Surfaced by R.S.T.
+// Weather Watch mission, run 20260424_011517_057 turn 1.
+pub const SIMULATOR_VERSION: u32 = 15;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

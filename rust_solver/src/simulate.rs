@@ -361,6 +361,25 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
+    // Cracked ground: any damage turns the tile into a Chasm.
+    // The unit standing on it (if any) falls in and dies. Unlike drowning,
+    // Massive does NOT save from Chasm — falling into a pit is a destroy.
+    // Flying units are exempt via effectively_flying().
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Ground && tile.cracked() {
+        tile.terrain = Terrain::Chasm;
+        tile.set_cracked(false);
+        if let Some(idx) = board.unit_at(x, y) {
+            let unit = &mut board.units[idx];
+            if unit.hp > 0 && !unit.effectively_flying() {
+                unit.hp = 0;
+                if unit.is_enemy() {
+                    result.enemies_killed += 1;
+                }
+            }
+        }
+    }
+
     // Forest: weapon damage ignites (NOT bump/push damage)
     let tile = board.tile_mut(x, y);
     if tile.terrain == Terrain::Forest && source != DamageSource::Bump {

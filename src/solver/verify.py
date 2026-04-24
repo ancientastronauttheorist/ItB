@@ -153,7 +153,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # corrected 0 → 1 in rust_solver/src/weapons.rs:365. Surfaced by
 # grid_drop investigation on run 20260424_011517_057 t03.
 # Pre-v14 rows archived to failure_db_snapshot_sim_v13.jsonl.
-SIMULATOR_VERSION = 14
+# v15: Cracked-ground → Chasm on damage (simulate.rs) + volatile_enemy_killed
+# penalty to preserve Volatile Vek / GlowingScorpion. Weather Watch mission.
+# Pre-v15 rows archived to failure_db_snapshot_sim_v14.jsonl.
+SIMULATOR_VERSION = 15
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

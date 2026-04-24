@@ -71,6 +71,7 @@ pub struct EvalWeights {
     pub mech_self_frozen: f64,       // mech frozen by own move (freeze mine) — loses next turn
     pub mech_low_hp_risk: f64,       // 1HP mech near active enemy (binary, negative)
     pub friendly_npc_killed: f64,    // non-mech player unit killed (penalty)
+    pub volatile_enemy_killed: f64,  // Volatile Vek killed (Weather Watch ⭐ bonus)
 
     // Grid urgency multipliers (applied to building scores)
     pub grid_urgency_critical: f64,  // grid_power <= 1
@@ -212,6 +213,7 @@ impl Default for EvalWeights {
             mech_self_frozen: -12000.0,
             mech_low_hp_risk: -2000.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
+            volatile_enemy_killed: -10000.0, // Volatile Vek must not die (Weather Watch ⭐)
             // Pro-strategy
             threats_cleared: 4000.0,
             body_block_bonus: 0.0,
@@ -401,13 +403,26 @@ pub fn evaluate(
     // isn't distorted.
     let enemy_urgency = if grid_multiplier > 1.0 { grid_multiplier } else { 1.0 };
     score += kills as f64 * scaled(weights.enemy_killed, ff, 0.20, 1.60) * enemy_urgency;
+    let mut volatile_dead = 0i32;
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.is_enemy() && u.alive() {
             // damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
             score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90) * enemy_urgency;
         }
+        // Weather Watch ⭐ bonus: "Don't let the Volatile Vek die." Count
+        // dead Volatile-type enemies on the post-state board — solver clones
+        // the initial board each plan, so dead-at-end = killed-this-turn.
+        // Matches both the canonical "Volatile_Vek" marker and the
+        // "GlowingScorpion" unit class name the live game uses.
+        if u.is_enemy() && !u.alive() {
+            let t = u.type_name_str();
+            if t.contains("Volatile_Vek") || t.contains("GlowingScorpion") {
+                volatile_dead += 1;
+            }
+        }
     }
+    score += volatile_dead as f64 * weights.volatile_enemy_killed;
 
     // ── Threats cleared: reward neutralizing building threats ─────────
     // Compare initial building_threats bitset against post-attack survival.
