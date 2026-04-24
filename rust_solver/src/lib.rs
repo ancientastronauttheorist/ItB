@@ -11,6 +11,7 @@ pub mod solver;
 pub mod serde_bridge;
 pub mod turn_projection;
 pub mod beam;
+pub mod replay;
 
 /// Solve a turn given bridge JSON data.
 ///
@@ -350,11 +351,35 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // corpses don't teleport. Closes the silent position desync that caused
 // grid loss on run 20260423_131700_144 Disposal Site C (ScienceMech
 // predicted E3, actual C3 — exact 2-tile pad swap).
-pub const SIMULATOR_VERSION: u32 = 10;
+pub const SIMULATOR_VERSION: u32 = 12;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
     SIMULATOR_VERSION
+}
+
+/// Replay a solver plan to capture per-action snapshots for the verify
+/// loop. Mirrors `src/solver/solver.py::replay_solution()` exactly.
+///
+/// Input:
+///   - `bridge_json`: bridge state (same shape as `solve` / `score_plan`).
+///   - `plan_json`: list of `{mech_uid, move_to:[x,y], weapon_id, target:[x,y]}`.
+///
+/// Output JSON:
+///   {
+///     "action_results":   [<one per action>],
+///     "predicted_states": [{"post_move": <snap>, "post_attack": <snap>}, ...],
+///     "predicted_outcome": {<post-enemy summary>},
+///     "final_board":       <bridge JSON of post-enemy board>
+///   }
+///
+/// Snapshot shape matches `verify.py::diff_states` byte-for-byte.
+#[pyfunction]
+fn replay_solution(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
+    py.allow_threads(|| {
+        crate::replay::replay_solution(bridge_json, plan_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))
+    })
 }
 
 /// Depth-N beam search. Task #10.
@@ -425,5 +450,6 @@ fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(project_plan, m)?)?;
     m.add_function(wrap_pyfunction!(solve_beam, m)?)?;
     m.add_function(wrap_pyfunction!(simulator_version, m)?)?;
+    m.add_function(wrap_pyfunction!(replay_solution, m)?)?;
     Ok(())
 }

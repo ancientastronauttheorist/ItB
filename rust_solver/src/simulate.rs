@@ -24,7 +24,7 @@ use crate::movement::{direction_between, cardinal_direction};
 /// calls ``apply_damage_core`` directly (which doesn't re-trigger this
 /// helper). A ``depth`` cap still covers the chain-of-volatiles case
 /// where one explosion kills an adjacent volatile vek.
-fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
+pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
     if depth > 8 { return; }
 
     for &(dx, dy) in &DIRS {
@@ -1701,20 +1701,25 @@ fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
     }
 }
 
-// ── simulate_action (move + attack) ──────────────────────────────────────────
+// ── simulate_move / simulate_attack / simulate_action ───────────────────────
+//
+// Split into two phases so callers (replay.rs) can capture per-phase
+// snapshots between them — the verify_action diff loop and cmd_auto_turn's
+// per-sub-action verifier both consume both `post_move` and `post_attack`
+// states. Existing combat-decision callers (`score_plan`, solver tree
+// search, `turn_projection`) keep calling `simulate_action`, which is now
+// a thin wrapper. Semantic behaviour is identical to the old monolithic
+// `simulate_action`; this is purely structural.
 
-/// Simulate a complete mech action: move + attack. Modifies board in-place.
-pub fn simulate_action(
+/// Move phase only: position update, pod pickup, ACID transfer, mines,
+/// fire-tile catch, teleporter pad swap.
+pub fn simulate_move(
     board: &mut Board,
     mech_idx: usize,
     move_to: (u8, u8),
-    weapon_id: WId,
-    target: (u8, u8),
-    weapons: &WeaponTable,
 ) -> ActionResult {
     let mut result = ActionResult::default();
 
-    // Move
     let old_pos = (board.units[mech_idx].x, board.units[mech_idx].y);
     board.units[mech_idx].x = move_to.0;
     board.units[mech_idx].y = move_to.1;
@@ -1784,6 +1789,20 @@ pub fn simulate_action(
         apply_teleport_on_land(board, mech_idx);
     }
 
+    result
+}
+
+/// Attack phase only: repair (with Frenzied Repair pushes), frozen-mech
+/// early-return, weapon fire, set_active(false) on weapon use.
+pub fn simulate_attack(
+    board: &mut Board,
+    mech_idx: usize,
+    weapon_id: WId,
+    target: (u8, u8),
+    weapons: &WeaponTable,
+) -> ActionResult {
+    let mut result = ActionResult::default();
+
     // Repair
     if weapon_id == WId::Repair {
         let (is_repairman, rx, ry) = {
@@ -1830,6 +1849,24 @@ pub fn simulate_action(
     if weapon_id != WId::None {
         board.units[mech_idx].set_active(false);
     }
+    result
+}
+
+/// Simulate a complete mech action: move + attack. Modifies board in-place.
+/// Thin wrapper over `simulate_move` + `simulate_attack`. Existing callers
+/// (score_plan, solver tree search, turn_projection) use this; replay.rs
+/// uses the split helpers directly to capture mid-action snapshots.
+pub fn simulate_action(
+    board: &mut Board,
+    mech_idx: usize,
+    move_to: (u8, u8),
+    weapon_id: WId,
+    target: (u8, u8),
+    weapons: &WeaponTable,
+) -> ActionResult {
+    let mut result = simulate_move(board, mech_idx, move_to);
+    let attack_result = simulate_attack(board, mech_idx, weapon_id, target, weapons);
+    result.merge(&attack_result);
     result
 }
 
