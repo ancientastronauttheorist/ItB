@@ -792,10 +792,10 @@ local function dump_state()
         end
     end)
 
-    -- Teleporter pads: recorded by the Board.AddTeleport hook above. Each
-    -- entry = {x1, y1, x2, y2}. Empty list on non-teleporter missions; the
-    -- Rust/Python simulators ignore an empty list. See simulate.rs
-    -- apply_teleport_on_land for swap semantics.
+    -- Teleporter pads: previously recorded via a Board.AddTeleport hook,
+    -- but that crashed macOS. Now always empty until we find a safe
+    -- pad-discovery path. Each entry would be {x1, y1, x2, y2}. The
+    -- Rust/Python simulators ignore an empty list (pre-sim-v8 behavior).
     if _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
         state.teleporter_pairs = {}
         for _, pair in ipairs(_ITB_TELEPORT_PAIRS) do
@@ -1269,14 +1269,6 @@ if not _ITB_BRIDGE_ORIGINALS then
         BaseStart        = Mission.BaseStart,
         MissionEnd       = Mission.MissionEnd,
         BaseDeployment   = Mission.BaseDeployment,
-        -- Board:AddTeleport(pointA, pointB[, delay]) is the only way pads
-        -- are registered (Mission_Teleporter:StartMission calls it exactly
-        -- once per pair — Disposal Site C adds two pairs across four quads).
-        -- No Board:Is/GetTeleporter getter exists on macOS, so we hook the
-        -- setter and record pairs as they're created. Guarded by nil so
-        -- modloader reloads don't compound the wrap (same pattern as the
-        -- Mission.* originals above).
-        BoardAddTeleport = Board and Board.AddTeleport or nil,
     }
 end
 
@@ -1285,28 +1277,16 @@ local _orig_NextTurn         = _ITB_BRIDGE_ORIGINALS.NextTurn
 local _orig_BaseStart        = _ITB_BRIDGE_ORIGINALS.BaseStart
 local _orig_MissionEnd       = _ITB_BRIDGE_ORIGINALS.MissionEnd
 local _orig_BaseDeployment   = _ITB_BRIDGE_ORIGINALS.BaseDeployment
-local _orig_BoardAddTeleport = _ITB_BRIDGE_ORIGINALS.BoardAddTeleport
 
--- Teleporter pads for the CURRENT mission. Accumulated as Board:AddTeleport
--- fires (once per pair on Mission_Teleporter:StartMission). Cleared on
--- MissionEnd so stale pairs from a prior mission don't leak into the next
--- read. Each entry = {x1, y1, x2, y2}.
+-- Teleporter pads for the CURRENT mission. Previously populated by a
+-- Board.AddTeleport wrapper, but that hook crashed macOS builds with
+-- "Lua Error: no static 'AddTeleport' in class 'Board'" on teleporter
+-- mission load (likely ITB's class system doesn't expose the setter as
+-- a plain Lua field on this build). Left as an always-empty list so the
+-- state dump shape stays stable — solver falls back to pre-sim-v8
+-- behavior on teleporter missions until we find a safe pad-discovery
+-- hook. See docs/research/ + commit 456ba49 for context.
 _ITB_TELEPORT_PAIRS = _ITB_TELEPORT_PAIRS or {}
-
-if Board and _orig_BoardAddTeleport then
-    Board.AddTeleport = function(self, p1, p2, delay)
-        pcall(function()
-            if p1 and p2 then
-                _ITB_TELEPORT_PAIRS[#_ITB_TELEPORT_PAIRS + 1] =
-                    {p1.x, p1.y, p2.x, p2.y}
-                log_bridge(string.format(
-                    "TELEPORT PAIR: (%d,%d) <-> (%d,%d)",
-                    p1.x, p1.y, p2.x, p2.y))
-            end
-        end)
-        return _orig_BoardAddTeleport(self, p1, p2, delay)
-    end
-end
 
 -- Cached deployment zone (captured in BaseDeployment, cleared on MissionEnd)
 _ITB_DEPLOY_ZONE = _ITB_DEPLOY_ZONE or {}
