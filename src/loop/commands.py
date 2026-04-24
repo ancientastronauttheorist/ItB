@@ -138,6 +138,42 @@ def _read_last_resist_entry(log_path: Path, run_id: str,
     return None
 
 
+def _first_grid_power_for_turn(log_path: Path, run_id: str,
+                               region: str | None, turn: int) -> int | None:
+    """Return the grid_power of the FIRST probe entry for (run_id, region,
+    turn). Auto_turn polls the bridge multiple times per player turn; the
+    first poll of a given turn sits nearest to the turn boundary and is
+    the cleanest anchor for turn-to-turn `grid_power_delta`. Using the
+    LAST entry of the previous turn conflates enemy-phase damage with
+    whatever intra-turn mech actions happened after the poll fired.
+    """
+    if not log_path.exists() or turn is None:
+        return None
+    try:
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+    except OSError:
+        return None
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if obj.get("run_id") != run_id:
+            continue
+        if obj.get("region") != region:
+            continue
+        if obj.get("turn") != turn:
+            continue
+        gp = obj.get("grid_power")
+        if isinstance(gp, int):
+            return gp
+    return None
+
+
 def _classify_resist_outcome(
     hp_before: int,
     hp_after: int,
@@ -200,7 +236,9 @@ def _find_enemy_by_uid(board, uid: int):
 
 
 def _compute_resist_observations(prev_entry: dict, board,
-                                 grid_power_now: int) -> list[dict]:
+                                 grid_power_now: int,
+                                 prev_turn_start_grid_power: int | None = None
+                                 ) -> list[dict]:
     """Diff previous-turn telegraphed attacks against current board state.
 
     Uses attacker UID (captured at telegraph time) to identify the specific
@@ -210,13 +248,25 @@ def _compute_resist_observations(prev_entry: dict, board,
     matched attackers by type name and produced ~70% false-positive resist
     rates when the solver preempted many attacks — see project memory
     `project_grid_defense_probe.md`.
+
+    grid_power_delta compares against ``prev_turn_start_grid_power`` when
+    provided (the grid value at the FIRST probe entry of the previous
+    turn — i.e. the true turn boundary anchor). Falls back to
+    ``prev_entry.grid_power`` which is the LAST entry of the previous
+    turn; that fallback is noisy because auto_turn polls multiple times
+    per turn and the last poll often lands after our mech actions have
+    already destroyed buildings, masking the enemy-phase contribution.
     """
     observations: list[dict] = []
     prev_attacks = prev_entry.get("telegraphed_building_attacks") or []
-    prev_grid_power = prev_entry.get("grid_power")
+    anchor_grid_power = (
+        prev_turn_start_grid_power
+        if isinstance(prev_turn_start_grid_power, int)
+        else prev_entry.get("grid_power")
+    )
     grid_power_delta = (
-        grid_power_now - prev_grid_power
-        if isinstance(prev_grid_power, int) else None
+        grid_power_now - anchor_grid_power
+        if isinstance(anchor_grid_power, int) else None
     )
 
     for attack in prev_attacks:
@@ -368,8 +418,17 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
     elif prev_entry is None:
         resist_observations = []
     else:
+        # Anchor grid_power_delta to the FIRST poll of the previous turn
+        # (the true turn boundary) rather than whatever the last entry's
+        # grid was. Intra-turn polls drop grid after our mech actions, so
+        # the last entry misattributes mech damage to the enemy phase.
+        prev_turn = prev_entry.get("turn")
+        prev_turn_start_gp = _first_grid_power_for_turn(
+            log_path, run_id, active_region, prev_turn,
+        )
         resist_observations = _compute_resist_observations(
             prev_entry, board, board.grid_power,
+            prev_turn_start_grid_power=prev_turn_start_gp,
         )
     entry = {
         "run_id": run_id,
