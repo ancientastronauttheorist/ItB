@@ -238,6 +238,35 @@ def main(argv: list[str] | None = None) -> int:
                   f"-> {a.get('target_pos')}  bldg_hp_before="
                   f"{a.get('target_building_hp_before')}")
 
+    # Outcome breakdown from resist_observations. The probe infers
+    # per-attack outcomes on the next-turn diff. We separate "resisted"
+    # (true roll-resist candidate) from disruption outcomes (attacker
+    # killed/pushed/webbed, target smoked), which are what inflated the
+    # apparent resist rate in the 2026-04-24 data (72% vs 15% expected).
+    print()
+    print("# resist_observations outcome breakdown (across run)")
+    outcomes: dict[str, int] = {}
+    for row in raw_rows:
+        for o in row.get("resist_observations") or []:
+            k = o.get("inferred_outcome", "unknown")
+            outcomes[k] = outcomes.get(k, 0) + 1
+    if outcomes:
+        for k in sorted(outcomes, key=outcomes.get, reverse=True):
+            print(f"  {k}: {outcomes[k]}")
+        true_resists = outcomes.get("resisted", 0)
+        disrupted = sum(outcomes.get(k, 0) for k in
+                        ("attacker_killed", "attacker_pushed",
+                         "attacker_webbed", "target_smoked"))
+        hit = outcomes.get("destroyed", 0) + outcomes.get("damaged", 0)
+        total = true_resists + disrupted + hit
+        if total:
+            print(f"  # true-resist rate (excl. disrupted + hits):"
+                  f" {true_resists}/{true_resists + hit}"
+                  f" ({100*true_resists/max(1, true_resists+hit):.1f}%)"
+                  f" — disruption: {disrupted}")
+    else:
+        print("  (no observations yet — probe entries lack resist_observations)")
+
     # Hint about how to USE this output.
     print()
     print("# Notes")
@@ -248,6 +277,8 @@ def main(argv: list[str] | None = None) -> int:
     print("# - `grid_Δ` is grid_power[T] - grid_power[T+1] inferred from the")
     print("#   probe log; 0 is ambiguous (could be 0 damage OR all resisted).")
     print("# - Only turns with ai_seed != null can test H1.")
+    print("# - For correlation: use only `inferred_outcome == resisted`")
+    print("#   observations. Disrupted attacks never rolled.")
     return 0
 
 

@@ -138,29 +138,79 @@ def _read_last_resist_entry(log_path: Path, run_id: str,
     return None
 
 
-def _classify_resist_outcome(hp_before: int, hp_after: int,
-                             attacker_alive_now: bool) -> str:
+def _classify_resist_outcome(
+    hp_before: int,
+    hp_after: int,
+    *,
+    attacker_found: bool,
+    attacker_pos_changed: bool,
+    attacker_webbed: bool,
+    target_smoked: bool,
+) -> str:
     """Classify one telegraphed-attack outcome post-enemy-phase.
 
-    Rules (per CLAUDE.md task spec):
-      destroyed:             hp_after == 0
-      damaged:               hp_after < hp_before and hp_after > 0
-      resisted:              hp_after == hp_before AND attacker still alive
-      attacker_neutralized:  hp_after == hp_before AND attacker gone
-      unknown:               anything else (e.g. hp_after > hp_before)
+    Outcomes:
+      destroyed:          hp_after == 0
+      damaged:            hp_before > hp_after > 0
+      resisted:           hp unchanged, attacker alive & at same pos,
+                          not webbed, target not smoked — the ONLY case
+                          where the roll-resist hypothesis is testable.
+      attacker_killed:    hp unchanged, specific attacker UID gone —
+                          solver preempted; attack never fired.
+      attacker_pushed:    hp unchanged, attacker alive but moved —
+                          telegraph disrupted; attack may or may not
+                          have fired at a different tile.
+      attacker_webbed:    hp unchanged, attacker webbed — can't attack.
+      target_smoked:      hp unchanged, target tile has smoke — attack
+                          blocked by smoke (treated as 0-damage, not a
+                          roll resist).
+      unknown:            hp_after > hp_before (repair?) or unexpected.
+
+    Priority: destroyed/damaged > disruption flags > resisted. We check
+    disruption flags BEFORE calling this "resisted" because disrupted
+    attacks look identical to resisted ones via the HP-diff test alone,
+    and conflating them is what inflates the apparent resist rate.
     """
     if hp_after == 0:
         return "destroyed"
     if hp_before > hp_after > 0:
         return "damaged"
-    if hp_after == hp_before:
-        return "resisted" if attacker_alive_now else "attacker_neutralized"
-    return "unknown"
+    if hp_after != hp_before:
+        return "unknown"
+    # HP unchanged. Determine why.
+    if not attacker_found:
+        return "attacker_killed"
+    if attacker_pos_changed:
+        return "attacker_pushed"
+    if attacker_webbed:
+        return "attacker_webbed"
+    if target_smoked:
+        return "target_smoked"
+    return "resisted"
+
+
+def _find_enemy_by_uid(board, uid: int):
+    """Look up a specific enemy by UID. Returns None if not found."""
+    if uid is None or uid < 0:
+        return None
+    for u in board.units:
+        if u.uid == uid and u.is_enemy and u.hp > 0:
+            return u
+    return None
 
 
 def _compute_resist_observations(prev_entry: dict, board,
                                  grid_power_now: int) -> list[dict]:
-    """Diff previous-turn telegraphed attacks against current board state."""
+    """Diff previous-turn telegraphed attacks against current board state.
+
+    Uses attacker UID (captured at telegraph time) to identify the specific
+    attacker post-enemy-phase, so we can distinguish a true resist (attack
+    fired, rolled 0 damage) from a disrupted attack (solver killed, pushed,
+    or webbed the attacker before it could fire). The older implementation
+    matched attackers by type name and produced ~70% false-positive resist
+    rates when the solver preempted many attacks — see project memory
+    `project_grid_defense_probe.md`.
+    """
     observations: list[dict] = []
     prev_attacks = prev_entry.get("telegraphed_building_attacks") or []
     prev_grid_power = prev_entry.get("grid_power")
@@ -168,31 +218,37 @@ def _compute_resist_observations(prev_entry: dict, board,
         grid_power_now - prev_grid_power
         if isinstance(prev_grid_power, int) else None
     )
-    # Precompute the set of currently-alive enemy types for O(1) lookup.
-    # The task spec notes this is best-effort: if a unit of the same type is
-    # still on the board anywhere, we treat the attacker as "alive". Tracking
-    # a specific attacker UID across turns is unreliable because Vek spawn /
-    # die / transform between turns.
-    alive_types: set[str] = set()
-    for e in board.enemies():
-        if e.hp > 0:
-            alive_types.add(e.type)
 
     for attack in prev_attacks:
         target_pos = attack.get("target_pos")
         attacker_type = attack.get("attacker_type")
         attacker_pos_prev = attack.get("attacker_pos")
+        attacker_uid = attack.get("attacker_uid")
         hp_before = attack.get("target_building_hp_before", 0)
+
+        attacker = _find_enemy_by_uid(board, attacker_uid)
+        attacker_found = attacker is not None
+        attacker_pos_now = _bv(attacker.x, attacker.y) if attacker else None
+        attacker_pos_changed = (
+            attacker_found and attacker_pos_now != attacker_pos_prev
+        )
+        attacker_webbed = bool(attacker and attacker.web)
+
         coords = _visual_to_bridge(target_pos) if target_pos else None
         if coords is None:
             observations.append({
                 "target_pos": target_pos,
                 "attacker_type": attacker_type,
+                "attacker_uid": attacker_uid,
                 "attacker_pos_prev": attacker_pos_prev,
+                "attacker_pos_now": attacker_pos_now,
                 "hp_before": hp_before,
                 "hp_after": None,
                 "grid_power_delta": grid_power_delta,
-                "attacker_alive_now": attacker_type in alive_types,
+                "attacker_found": attacker_found,
+                "attacker_pos_changed": attacker_pos_changed,
+                "attacker_webbed": attacker_webbed,
+                "target_smoked": False,
                 "inferred_outcome": "unknown",
             })
             continue
@@ -204,16 +260,27 @@ def _compute_resist_observations(prev_entry: dict, board,
             hp_after = 0
         else:
             hp_after = tile.building_hp
-        attacker_alive_now = attacker_type in alive_types if attacker_type else False
-        outcome = _classify_resist_outcome(hp_before, hp_after, attacker_alive_now)
+        target_smoked = bool(tile.smoke)
+        outcome = _classify_resist_outcome(
+            hp_before, hp_after,
+            attacker_found=attacker_found,
+            attacker_pos_changed=attacker_pos_changed,
+            attacker_webbed=attacker_webbed,
+            target_smoked=target_smoked,
+        )
         observations.append({
             "target_pos": target_pos,
             "attacker_type": attacker_type,
+            "attacker_uid": attacker_uid,
             "attacker_pos_prev": attacker_pos_prev,
+            "attacker_pos_now": attacker_pos_now,
             "hp_before": hp_before,
             "hp_after": hp_after,
             "grid_power_delta": grid_power_delta,
-            "attacker_alive_now": attacker_alive_now,
+            "attacker_found": attacker_found,
+            "attacker_pos_changed": attacker_pos_changed,
+            "attacker_webbed": attacker_webbed,
+            "target_smoked": target_smoked,
             "inferred_outcome": outcome,
         })
     return observations
@@ -264,6 +331,10 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
             active_mission_slot = info.get("mission")
             break
     # Telegraphed building attacks: enemy.target lands on a building tile.
+    # Capture attacker UID so the next-turn diff can identify this specific
+    # attacker (not just its type) — needed to distinguish a true resist
+    # from a solver-preempted attack when multiple enemies of the same type
+    # are on the board.
     telegraphed = []
     for e in board.enemies():
         if e.target_x < 0 or e.target_y < 0:
@@ -272,6 +343,7 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
         if tile.terrain != "building" or tile.building_hp <= 0:
             continue
         telegraphed.append({
+            "attacker_uid": e.uid,
             "attacker_type": e.type,
             "attacker_pos": _bv(e.x, e.y),
             "target_pos": _bv(e.target_x, e.target_y),

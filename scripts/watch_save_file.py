@@ -106,9 +106,16 @@ def _read_and_parse(path: Path) -> tuple[str, int, int, float] | None:
 
 def main() -> int:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    if not SAVE_PATH.exists():
-        print(f"save file not found: {SAVE_PATH}", file=sys.stderr)
-        return 1
+    # Wait for the save file to appear. When the user is at the main menu
+    # before a fresh run, saveData.lua doesn't exist yet — it's written
+    # once they start and complete deployment. Poll until it shows up so
+    # the watcher can be launched in the background ahead of time.
+    waited_announce = False
+    while not SAVE_PATH.exists():
+        if not waited_announce:
+            print(f"waiting for save file: {SAVE_PATH}", file=sys.stderr)
+            waited_announce = True
+        time.sleep(1.0)
 
     print(f"watching: {SAVE_PATH}", file=sys.stderr)
     print(f"writing:  {OUT_PATH}", file=sys.stderr)
