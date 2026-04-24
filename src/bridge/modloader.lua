@@ -1024,11 +1024,27 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
             if dist >= 2 and (dx == 0 or dy == 0) then
                 local sx = dx == 0 and 0 or (dx / math.abs(dx))
                 local sy = dy == 0 and 0 or (dy / math.abs(dy))
-                local applied = 0
+                local dmg_applied = 0
+                local smoke_applied = 0
                 for k = 1, dist - 1 do
                     local nx = source.x + sx * k
                     local ny = source.y + sy * k
-                    local sd = SpaceDamage(Point(nx, ny), skill.Damage)
+                    local tp = Point(nx, ny)
+                    -- FireWeapon DOES apply transit damage to any unit
+                    -- standing on the transit tile (observed 2026-04-24
+                    -- turn 1 and turn 2: acid-statused Firefly1 on
+                    -- transit died after 1 of our manual + 1 of the
+                    -- engine's damage, instead of surviving at HP=1).
+                    -- FireWeapon does NOT damage terrain (buildings /
+                    -- mountains on transit) and does NOT emit the
+                    -- tile's smoke/acid effect — both are still on us.
+                    -- So: apply damage ONLY to tiles without a live
+                    -- unit (FireWeapon handles those), and always
+                    -- apply smoke/acid flags via a damage=0 SpaceDamage.
+                    local occupant = Board:GetPawn(tp)
+                    local has_live = occupant ~= nil and not occupant:IsDead()
+                    local dmg_val = has_live and 0 or skill.Damage
+                    local sd = SpaceDamage(tp, dmg_val)
                     if skill.Smoke and skill.Smoke > 0 then
                         sd.iSmoke = skill.Smoke
                     end
@@ -1039,14 +1055,19 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                         Board:DamageSpace(sd)
                     end)
                     if ok_d then
-                        applied = applied + 1
+                        if dmg_val > 0 then dmg_applied = dmg_applied + 1 end
+                        if skill.Smoke and skill.Smoke > 0 then
+                            smoke_applied = smoke_applied + 1
+                        end
                     else
                         log_bridge("WARN: transit DamageSpace failed at (" ..
                                    nx .. "," .. ny .. ") for " .. wname ..
                                    ": " .. tostring(err_d))
                     end
                 end
-                log_bridge("TRANSIT: " .. wname .. " applied=" .. applied ..
+                log_bridge("TRANSIT: " .. wname ..
+                           " dmg_applied=" .. dmg_applied ..
+                           " smoke_applied=" .. smoke_applied ..
                            " damage=" .. skill.Damage ..
                            " smoke=" .. tostring(skill.Smoke or 0))
             end
