@@ -743,9 +743,19 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 board.print_board()
 
                 if deploy_zone:
-                    print(f"\nDEPLOYMENT ZONE ({len(deploy_tiles)} tiles):")
+                    # Annotate cracked tiles so the caller sees the hazard.
+                    for tile, dt in zip(deploy_zone, deploy_tiles):
+                        bx, by = tile[0], tile[1]
+                        if board.tiles[bx][by].cracked:
+                            dt["cracked"] = True
+                    cracked_count = sum(1 for dt in deploy_tiles if dt.get("cracked"))
+                    hdr = f"\nDEPLOYMENT ZONE ({len(deploy_tiles)} tiles):"
+                    if cracked_count:
+                        hdr += f"  [⚠ {cracked_count} cracked — avoid]"
+                    print(hdr)
                     for dt in deploy_tiles:
-                        print(f"  {dt['visual']} (bridge {dt['bridge']}) -> MCP ({dt['mcp'][0]}, {dt['mcp'][1]})")
+                        suffix = "  ⚠ CRACKED" if dt.get("cracked") else ""
+                        print(f"  {dt['visual']} (bridge {dt['bridge']}) -> MCP ({dt['mcp'][0]}, {dt['mcp'][1]}){suffix}")
 
                     # Show ranked recommendations
                     ranked = rank_deploy_tiles(board, deploy_zone)
@@ -4670,10 +4680,19 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
         visual_row = 8 - tx
         forward = 1.0 if 4 <= visual_row <= 6 else 0.0
 
+        # Cracked ground: any damage on this tile converts it to a Chasm and
+        # the mech falls in. Massive does NOT save from Chasm. Deploying here
+        # means a single adjacent enemy attack (incl. Volatile-Vek death
+        # explosion from 1 tile away) can kill the mech before it ever acts.
+        # Huge penalty so cracked tiles are only picked when no other option
+        # exists (cf. R.S.T. Weather Watch, sim v15 investigation).
+        cracked_penalty = -1000.0 if board.tiles[tx][ty].cracked else 0.0
+
         score = (-min_e * 3.0       # get within striking range
                  + near_bldg * 2.0   # protect nearby buildings
                  + forward * 5.0     # reward forward positioning
-                 - avg_e * 1.0)      # prefer overall closer to enemies
+                 - avg_e * 1.0       # prefer overall closer to enemies
+                 + cracked_penalty)  # almost-always exclude cracked ground
         scored.append((score, tx, ty))
 
     scored.sort(key=lambda s: s[0], reverse=True)
