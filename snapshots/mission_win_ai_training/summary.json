@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-23T16:30:55.130962",
+  "label": "mission_win_ai_training",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 3
+    }
+  ]
+}

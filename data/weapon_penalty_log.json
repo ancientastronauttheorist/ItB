@@ -1,8 +1,8 @@
 {
   "signatures": {
     "damage_amount|Brute_Jetmech|attack": {
-      "count": 2,
-      "last_run_id": "20260421_211617_239",
+      "count": 3,
+      "last_run_id": "20260423_131700_144",
       "weapon_id": "Brute_Jetmech"
     },
     "damage_amount|Ranged_Rocket|attack": {

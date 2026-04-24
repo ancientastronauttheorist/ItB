@@ -1,0 +1,15 @@
+{
+  "run_id": "20260423_131700_144",
+  "squad": "Balanced Roll (Punch/Jet/Rocket)",
+  "difficulty": 2,
+  "achievement_targets": [],
+  "tags": [
+    "audit"
+  ],
+  "solver_version": "rust-0.1.0-f11e30b",
+  "weight_version": "v009",
+  "updated": "2026-04-23T13:17:00.161748",
+  "created": "2026-04-23T13:17:00.161760",
+  "missions": [],
+  "outcome": null
+}

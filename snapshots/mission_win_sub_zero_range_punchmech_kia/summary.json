@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-04-23T16:21:50.894035",
+  "label": "mission_win_sub_zero_range_punchmech_kia",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "Snowmine1",
+      "pos": [
+        7,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowmine1",
+      "pos": [
+        4,
+        7
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PunchMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly2",
+      "pos": [
+        7,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 2
+    }
+  ]
+}
