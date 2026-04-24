@@ -88,6 +88,137 @@ def _recording_dir(session: RunSession) -> Path:
     return run_dir
 
 
+def _visual_to_bridge(pos: str) -> tuple[int, int] | None:
+    """Reverse of ``_bv``: 'C5' -> (3, 5). Returns None on malformed input."""
+    if not isinstance(pos, str) or len(pos) < 2:
+        return None
+    col_char = pos[0].upper()
+    row_str = pos[1:]
+    if not row_str.isdigit():
+        return None
+    try:
+        y = 72 - ord(col_char)
+        x = 8 - int(row_str)
+    except (TypeError, ValueError):
+        return None
+    if not (0 <= x < 8 and 0 <= y < 8):
+        return None
+    return (x, y)
+
+
+def _read_last_resist_entry(log_path: Path, run_id: str,
+                            region: str | None) -> dict | None:
+    """Return the most recent probe entry for ``(run_id, region)``.
+
+    Reads the whole JSONL (each run_id has its own directory so files are
+    small) and scans bottom-up. Returns ``None`` if no match. Malformed
+    lines are ignored — the probe is observational and must not break on
+    log corruption.
+    """
+    if not log_path.exists():
+        return None
+    try:
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if obj.get("run_id") != run_id:
+            continue
+        if obj.get("region") != region:
+            continue
+        return obj
+    return None
+
+
+def _classify_resist_outcome(hp_before: int, hp_after: int,
+                             attacker_alive_now: bool) -> str:
+    """Classify one telegraphed-attack outcome post-enemy-phase.
+
+    Rules (per CLAUDE.md task spec):
+      destroyed:             hp_after == 0
+      damaged:               hp_after < hp_before and hp_after > 0
+      resisted:              hp_after == hp_before AND attacker still alive
+      attacker_neutralized:  hp_after == hp_before AND attacker gone
+      unknown:               anything else (e.g. hp_after > hp_before)
+    """
+    if hp_after == 0:
+        return "destroyed"
+    if hp_before > hp_after > 0:
+        return "damaged"
+    if hp_after == hp_before:
+        return "resisted" if attacker_alive_now else "attacker_neutralized"
+    return "unknown"
+
+
+def _compute_resist_observations(prev_entry: dict, board,
+                                 grid_power_now: int) -> list[dict]:
+    """Diff previous-turn telegraphed attacks against current board state."""
+    observations: list[dict] = []
+    prev_attacks = prev_entry.get("telegraphed_building_attacks") or []
+    prev_grid_power = prev_entry.get("grid_power")
+    grid_power_delta = (
+        grid_power_now - prev_grid_power
+        if isinstance(prev_grid_power, int) else None
+    )
+    # Precompute the set of currently-alive enemy types for O(1) lookup.
+    # The task spec notes this is best-effort: if a unit of the same type is
+    # still on the board anywhere, we treat the attacker as "alive". Tracking
+    # a specific attacker UID across turns is unreliable because Vek spawn /
+    # die / transform between turns.
+    alive_types: set[str] = set()
+    for e in board.enemies():
+        if e.hp > 0:
+            alive_types.add(e.type)
+
+    for attack in prev_attacks:
+        target_pos = attack.get("target_pos")
+        attacker_type = attack.get("attacker_type")
+        attacker_pos_prev = attack.get("attacker_pos")
+        hp_before = attack.get("target_building_hp_before", 0)
+        coords = _visual_to_bridge(target_pos) if target_pos else None
+        if coords is None:
+            observations.append({
+                "target_pos": target_pos,
+                "attacker_type": attacker_type,
+                "attacker_pos_prev": attacker_pos_prev,
+                "hp_before": hp_before,
+                "hp_after": None,
+                "grid_power_delta": grid_power_delta,
+                "attacker_alive_now": attacker_type in alive_types,
+                "inferred_outcome": "unknown",
+            })
+            continue
+        tx, ty = coords
+        tile = board.tiles[tx][ty]
+        # If the tile is no longer a building (e.g. now rubble / ground),
+        # treat HP as 0 — the building was destroyed.
+        if tile.terrain != "building":
+            hp_after = 0
+        else:
+            hp_after = tile.building_hp
+        attacker_alive_now = attacker_type in alive_types if attacker_type else False
+        outcome = _classify_resist_outcome(hp_before, hp_after, attacker_alive_now)
+        observations.append({
+            "target_pos": target_pos,
+            "attacker_type": attacker_type,
+            "attacker_pos_prev": attacker_pos_prev,
+            "hp_before": hp_before,
+            "hp_after": hp_after,
+            "grid_power_delta": grid_power_delta,
+            "attacker_alive_now": attacker_alive_now,
+            "inferred_outcome": outcome,
+        })
+    return observations
+
+
 def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
     """Log RNG seeds + telegraphed building attacks for the grid-defense probe.
 
@@ -98,6 +229,11 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
     - grid_defense_pct, grid_power
     - telegraphed attacks landing on building tiles (the events whose
       resist outcome we want to predict)
+    - ``resist_observations``: per-target outcome diffs against the
+      previous entry's ``telegraphed_building_attacks``. Since the enemy
+      phase runs between two consecutive player-turn snapshots, comparing
+      the two tells us which buildings resisted, were damaged, or were
+      destroyed — the ground-truth signal for grid-defense-roll replay.
 
     Pairing consecutive entries (plus observing final building HPs) lets us
     reconstruct which telegraphed attacks the game pre-rolled as resists,
@@ -141,21 +277,43 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
             "target_pos": _bv(e.target_x, e.target_y),
             "target_building_hp_before": tile.building_hp,
         })
+    # Outcome diff vs previous turn's telegraphed attacks. First snapshot
+    # in a mission (and the first snapshot after a region swap) gets an
+    # empty list. ``auto_turn`` may poll the bridge multiple times per
+    # player turn; skip observation-recomputation if the last entry is
+    # already for the same (region, turn) so we don't clobber the signal
+    # with all-zero diffs on re-reads.
+    run_id = session.run_id or "default"
+    log_path = _recording_dir(session) / "resist_probe.jsonl"
+    current_turn = bridge_data.get("turn", 0)
+    prev_entry = _read_last_resist_entry(log_path, run_id, active_region)
+    if (prev_entry is not None
+            and prev_entry.get("turn") == current_turn
+            and prev_entry.get("region") == active_region):
+        # Reuse the observations we computed on the first read of this
+        # (region, turn) so the signal survives intra-turn bridge polls.
+        resist_observations = list(prev_entry.get("resist_observations") or [])
+    elif prev_entry is None:
+        resist_observations = []
+    else:
+        resist_observations = _compute_resist_observations(
+            prev_entry, board, board.grid_power,
+        )
     entry = {
-        "run_id": session.run_id or "default",
+        "run_id": run_id,
         "mission_id": mission_id,
         "region": active_region,
         "mission_slot": active_mission_slot,
-        "turn": bridge_data.get("turn", 0),
+        "turn": current_turn,
         "master_seed": master_seed,
         "ai_seed": active_seed,
         "grid_defense_pct": getattr(board, "grid_defense_pct", 15),
         "grid_power": board.grid_power,
         "grid_power_max": board.grid_power_max,
         "telegraphed_building_attacks": telegraphed,
+        "resist_observations": resist_observations,
         "timestamp": int(bridge_data.get("timestamp", 0)),
     }
-    log_path = _recording_dir(session) / "resist_probe.jsonl"
     with open(log_path, "a") as f:
         f.write(json.dumps(entry) + "\n")
 
