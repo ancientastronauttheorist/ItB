@@ -43,6 +43,7 @@ from src.loop.commands import (
     cmd_diagnose_apply_agent,
     cmd_diagnose_next,
     cmd_diagnose_queue,
+    cmd_apply_diagnosis,
     cmd_reject_diagnosis,
     cmd_click_action,
     cmd_click_end_turn,
@@ -173,6 +174,20 @@ def main():
     p_dq.add_argument("--show", default="pending",
                       choices=["pending", "done", "failed", "all"],
                       help="Filter by status (default: pending)")
+
+    # apply_diagnosis
+    p_ad = sub.add_parser(
+        "apply_diagnosis",
+        help="Layer 4: apply an agent_proposed diagnosis to the codebase",
+    )
+    p_ad.add_argument("failure_id",
+                      help="Failure_db.jsonl entry id (must have status=agent_proposed)")
+    p_ad.add_argument("--dry-run", action="store_true",
+                      help="Print the apply plan and exit without touching files")
+    p_ad.add_argument("--skip-build", action="store_true",
+                      help="Skip the maturin rebuild (use only when no Rust files changed)")
+    p_ad.add_argument("--skip-regression", action="store_true",
+                      help="Skip scripts/regression.sh — dangerous; you must run it before commit")
 
     # click_action
     p_click_action = sub.add_parser(
@@ -480,6 +495,11 @@ def main():
         cmd_diagnose_next(force=args.force)
     elif args.command == "diagnose_queue":
         cmd_diagnose_queue(show=args.show)
+    elif args.command == "apply_diagnosis":
+        cmd_apply_diagnosis(args.failure_id,
+                            dry_run=args.dry_run,
+                            skip_regression=args.skip_regression,
+                            skip_build=args.skip_build)
     elif args.command == "reject_diagnosis":
         cmd_reject_diagnosis(args.failure_id, args.reason, out_path=args.out)
     elif args.command == "click_action":

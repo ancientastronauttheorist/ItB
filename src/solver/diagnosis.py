@@ -1166,6 +1166,19 @@ def write_agent_proposed_markdown(
         "\n".join(f"  - \"{s}\"" for s in diff_sigs) if diff_sigs else "  []"
     )
 
+    # Embed the fix snippet structurally so apply_diagnosis (Layer 4) can
+    # parse it back unambiguously instead of reverse-engineering the body.
+    # YAML literal block scalars preserve newlines + indentation.
+    def _yaml_block(text: str) -> list[str]:
+        text = text.rstrip("\n")
+        return ["    " + line for line in text.split("\n")]
+
+    fix_yaml_lines: list[str] = ["fix_snippet:"]
+    fix_yaml_lines.append("  before: |")
+    fix_yaml_lines.extend(_yaml_block(response.fix_snippet.get("before", "")))
+    fix_yaml_lines.append("  after: |")
+    fix_yaml_lines.extend(_yaml_block(response.fix_snippet.get("after", "")))
+
     frontmatter = "\n".join(
         [
             "---",
@@ -1179,6 +1192,7 @@ def write_agent_proposed_markdown(
             "status: agent_proposed",
             f"confidence: {response.confidence}",
             "applied_in_commit: null",
+            "applied_at: null",
             "retired_in_sim_version: null",
             "duplicates_of: null",
             f"target_language: {response.target_language}",
@@ -1189,6 +1203,7 @@ def write_agent_proposed_markdown(
             "agent_invoked: true",
             "agent_tokens: 0",
             f"proposed_fix_sig: \"{fix_signature(response.fix_snippet)}\"",
+            *fix_yaml_lines,
             "diff_signatures:",
             diff_sigs_yaml,
             "---",

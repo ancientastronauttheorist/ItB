@@ -2091,6 +2091,109 @@ def cmd_diagnose_apply_agent(failure_id: str, payload: str,
     return result
 
 
+def cmd_apply_diagnosis(failure_id: str,
+                        dry_run: bool = False,
+                        skip_regression: bool = False,
+                        skip_build: bool = False) -> dict:
+    """Layer 4: walk an agent_proposed diagnosis through the apply sequence.
+
+    Strict order: parse markdown frontmatter → check git clean → snapshot
+    → apply before/after → atomic SIMULATOR_VERSION bump (when sim files
+    touched) → archive failure_db → rebuild → regression. On any failure,
+    every edit is reverted and the diagnosis status flips to apply_failed.
+
+    --dry-run prints the plan and exits before touching any file.
+    --skip-build skips maturin (use for non-Rust edits).
+    --skip-regression skips scripts/regression.sh (dangerous; the user
+    is responsible for running it manually before commit).
+
+    Spec: docs/diagnosis_loop_design.md §11.
+    """
+    from src.solver.diagnosis_apply import apply_diagnosis
+
+    outcome = apply_diagnosis(
+        failure_id, dry_run=dry_run,
+        skip_regression=skip_regression, skip_build=skip_build,
+    )
+
+    plan = outcome.plan
+    suspect_paths = (
+        [sf.get("path") for sf in plan.suspect_files] if plan else []
+    )
+
+    if outcome.status in ("refused", "apply_failed"):
+        print(f"APPLY_DIAGNOSIS {failure_id}: {outcome.status} "
+              f"(stage={outcome.stage})")
+        print(f"  error: {outcome.error}")
+        result = {
+            "status": outcome.status,
+            "failure_id": failure_id,
+            "stage": outcome.stage,
+            "error": outcome.error,
+            "suspect_files": suspect_paths,
+        }
+        _print_result(result)
+        return result
+
+    if outcome.status == "dry_run":
+        print(f"APPLY_DIAGNOSIS {failure_id}: dry_run plan")
+        print(f"  confidence: {plan.confidence}")
+        print(f"  suspect files: {suspect_paths}")
+        print(f"  needs_sim_bump: {plan.needs_sim_bump}")
+        if plan.needs_sim_bump:
+            print(f"  sim_version_before: {plan.sim_version_before} "
+                  f"→ {plan.sim_version_before + 1 if plan.sim_version_before else '?'}")
+        print("  fix_snippet.before:")
+        for line in plan.fix_snippet["before"].splitlines():
+            print(f"    | {line}")
+        print("  fix_snippet.after:")
+        for line in plan.fix_snippet["after"].splitlines():
+            print(f"    | {line}")
+        result = {
+            "status": "dry_run",
+            "failure_id": failure_id,
+            "suspect_files": suspect_paths,
+            "needs_sim_bump": plan.needs_sim_bump,
+        }
+        _print_result(result)
+        return result
+
+    # applied / applied_unverified
+    print(f"APPLY_DIAGNOSIS {failure_id}: {outcome.status}")
+    print(f"  files edited: {len(outcome.edits)}")
+    if outcome.sim_bumped:
+        print(f"  SIMULATOR_VERSION bumped {plan.sim_version_before} "
+              f"→ {plan.sim_version_before + 1}")
+    if outcome.archived_failure_db:
+        try:
+            rel = outcome.archived_failure_db.relative_to(
+                Path(__file__).resolve().parent.parent.parent
+            )
+            print(f"  failure_db archived: {rel}")
+        except ValueError:
+            print(f"  failure_db archived: {outcome.archived_failure_db}")
+    if outcome.status == "applied":
+        print("  next: review the diff with `git diff`, then commit + push")
+    else:
+        print("  next: --skip-regression was set; run "
+              "`bash scripts/regression.sh` manually before commit")
+    result = {
+        "status": outcome.status,
+        "failure_id": failure_id,
+        "edits": [str(p.relative_to(Path(__file__).resolve().parent.parent.parent))
+                  for p in outcome.edits.keys()
+                  if str(p).startswith(str(Path(__file__).resolve().parent.parent.parent))]
+                 or [str(p) for p in outcome.edits.keys()],
+        "sim_bumped": outcome.sim_bumped,
+        "archived_failure_db": (
+            str(outcome.archived_failure_db)
+            if outcome.archived_failure_db else None
+        ),
+    }
+    _print_result(result)
+    return result
+
+
 def cmd_reject_diagnosis(failure_id: str, reason: str,
                          out_path: str | None = None) -> dict:
     """Record a rejection so the same diff_signature × sim_version is suppressed.
