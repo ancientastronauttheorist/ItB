@@ -351,7 +351,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // corpses don't teleport. Closes the silent position desync that caused
 // grid loss on run 20260423_131700_144 Disposal Site C (ScienceMech
 // predicted E3, actual C3 — exact 2-tile pad swap).
-pub const SIMULATOR_VERSION: u32 = 12;
+pub const SIMULATOR_VERSION: u32 = 13;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

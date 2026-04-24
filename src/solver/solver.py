@@ -635,7 +635,7 @@ def _simulate_train_advance(board: Board) -> None:
 
 
 def replay_solution(
-    board: Board,
+    bridge_data: dict,
     solution: Solution,
     spawn_pts: list[tuple[int, int]],
     current_turn: int = 0,
@@ -645,121 +645,63 @@ def replay_solution(
 ) -> dict:
     """Re-simulate the best solution to capture detailed per-action data.
 
-    Called ONCE after solve_turn() on the original (unmutated) board.
-    Returns enriched data: per-action ActionResult, per-action board
-    snapshots (for the verify loop), predicted post-enemy board summary,
-    and score component breakdown.
+    Thin wrapper over `itb_solver.replay_solution` (Rust). Called ONCE
+    after solve_turn() with the original (unmutated) bridge JSON dict.
+    Returns enriched data: per-action ActionResult dicts, per-action
+    board snapshots (for the verify loop), predicted post-enemy board
+    summary, and score component breakdown.
+
+    The Rust backend produces every field except `score_breakdown` —
+    that runs on the Python side via `evaluate_breakdown()` because the
+    evaluator owns weight/threat/psion machinery that hasn't moved to
+    Rust yet (audit-only output, no programmatic consumer).
     """
-    from src.solver.verify import snapshot_after_action, snapshot_after_move
-    from src.solver.simulate import simulate_move, simulate_attack
+    import itb_solver
+    import json as _json
 
-    b = board.copy()
-    original_positions = {e.uid: (e.x, e.y) for e in b.enemies()}
-
-    action_results = []
-    predicted_states = []
-    total_kills = 0
-
-    for i, action in enumerate(solution.actions):
-        m = next((u for u in b.units if u.uid == action.mech_uid), None)
-        if m is None:
-            error_snap = {
-                "action_index": i,
-                "mech_uid": action.mech_uid,
-                "snapshot_phase": "after_mech_action",
-                "error": "mech_not_found",
-                "units": [], "tiles_changed": [], "grid_power": b.grid_power,
-            }
-            action_results.append({
-                "enemies_killed": 0, "enemy_damage_dealt": 0,
-                "buildings_lost": 0, "buildings_damaged": 0,
-                "mech_damage_taken": 0, "pods_collected": 0,
-                "spawns_blocked": 0, "events": [f"Mech UID {action.mech_uid} not found"],
-            })
-            predicted_states.append({
-                "post_move": error_snap,
-                "post_attack": error_snap,
-            })
-            continue
-
-        # Phase 1: Move only
-        move_result = simulate_move(b, m, action.move_to)
-        post_move_snap = snapshot_after_move(b, i, action.mech_uid, move_result.events)
-
-        # Phase 2: Attack (or repair/skip)
-        attack_result = simulate_attack(b, m, action.weapon, action.target)
-        total_kills += attack_result.enemies_killed
-        all_events = move_result.events + attack_result.events
-
-        action_results.append({
-            "enemies_killed": attack_result.enemies_killed,
-            "enemy_damage_dealt": attack_result.enemy_damage_dealt,
-            "buildings_lost": attack_result.buildings_lost,
-            "buildings_damaged": attack_result.buildings_damaged,
-            "grid_damage": attack_result.grid_damage,
-            "mech_damage_taken": attack_result.mech_damage_taken,
-            "mechs_killed": attack_result.mechs_killed,
-            "pods_collected": move_result.pods_collected,
-            "spawns_blocked": attack_result.spawns_blocked,
-            "events": all_events,
-        })
-
-        post_attack_snap = snapshot_after_action(b, i, action.mech_uid, all_events)
-
-        predicted_states.append({
-            "post_move": post_move_snap,
-            "post_attack": post_attack_snap,
-        })
-
-    # Simulate environment effects (freeze, smoke, etc.) BEFORE enemy attacks
-    _simulate_env_effects(b)
-
-    # Simulate enemy attacks on post-mech board
-    buildings_destroyed = _simulate_enemy_attacks(b, original_positions)
-
-    # Spawn-blocking damage: mechs ending on spawn tiles take 1 damage each.
-    # Matches rust_solver/src/solver.rs where apply_spawn_blocking runs after
-    # simulate_enemy_attacks during search scoring.
-    _apply_spawn_blocking(b, spawn_pts)
-
-    # Score breakdown on predicted post-enemy board — pass the caller's
-    # active weights so the recorded breakdown reflects what the solver
-    # actually used (active.json), not DEFAULT_WEIGHTS.
-    score_breakdown = evaluate_breakdown(b, spawn_pts, kills=total_kills,
-                                         current_turn=current_turn,
-                                         total_turns=total_turns,
-                                         remaining_spawns=remaining_spawns,
-                                         weights=weights)
-
-    # Predicted outcome summary
-    buildings_alive = 0
-    building_hp_total = 0
-    for x in range(8):
-        for y in range(8):
-            t = b.tile(x, y)
-            if t.terrain == "building" and t.building_hp > 0:
-                buildings_alive += 1
-                building_hp_total += t.building_hp
-
-    predicted_outcome = {
-        "buildings_alive": buildings_alive,
-        "building_hp_total": building_hp_total,
-        "grid_power": b.grid_power,
-        "enemies_alive": len(b.enemies()),
-        "enemy_hp_total": sum(e.hp for e in b.enemies()),
-        "mechs_alive": len([m for m in b.mechs() if m.hp > 0]),
-        "mech_hp": [
-            {"uid": m.uid, "type": m.type, "hp": m.hp, "max_hp": m.max_hp}
-            for m in b.mechs()
-        ],
-        "buildings_destroyed_by_enemies": buildings_destroyed,
+    # Build plan_json. Rust expects {mech_uid, move_to:[x,y], weapon_id,
+    # target:[x,y]}. action.weapon already holds the weapon_id string
+    # (e.g. "Prime_Punchmech"); wid_from_str maps unknowns to WId::None.
+    # move_to can be None on synthetic actions — treat as "stay put" by
+    # falling back to the mech's current position from bridge_data.
+    bridge_units_by_uid = {
+        int(u["uid"]): (int(u["x"]), int(u["y"]))
+        for u in (bridge_data.get("units") or [])
     }
+    plan = []
+    for a in solution.actions:
+        mt = a.move_to
+        if mt is None:
+            mt = bridge_units_by_uid.get(int(a.mech_uid), (0, 0))
+        target = a.target if a.target is not None else (255, 255)
+        plan.append({
+            "mech_uid":  int(a.mech_uid),
+            "move_to":   [int(mt[0]), int(mt[1])],
+            "weapon_id": a.weapon or "None",
+            "target":    [int(target[0]), int(target[1])],
+        })
+
+    raw = itb_solver.replay_solution(_json.dumps(bridge_data), _json.dumps(plan))
+    data = _json.loads(raw)
+
+    # Round-trip the post-enemy board so evaluate_breakdown has a real
+    # Board to score (its weight/threat/psion logic runs on Python types).
+    final_board_data = data.get("final_board") or {}
+    final_board = Board.from_bridge_data(final_board_data)
+    total_kills = sum(int(r.get("enemies_killed", 0)) for r in data.get("action_results", []))
+    score_breakdown = evaluate_breakdown(
+        final_board, spawn_pts, kills=total_kills,
+        current_turn=current_turn,
+        total_turns=total_turns,
+        remaining_spawns=remaining_spawns,
+        weights=weights,
+    )
 
     return {
-        "action_results": action_results,
-        "predicted_states": predicted_states,
-        "predicted_outcome": predicted_outcome,
-        "score_breakdown": score_breakdown,
+        "action_results":   data.get("action_results") or [],
+        "predicted_states": data.get("predicted_states") or [],
+        "predicted_outcome": data.get("predicted_outcome") or {},
+        "score_breakdown":  score_breakdown,
     }
 
 

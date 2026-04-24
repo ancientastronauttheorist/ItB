@@ -133,7 +133,7 @@ def test_failure_corpus_not_regressed():
         # Re-simulate to get the enriched action results + NEW predicted outcome
         try:
             enriched = replay_solution(
-                board.copy(),
+                bridge_data,
                 sol,
                 spawns,
                 current_turn=bridge_data.get("turn", 0),

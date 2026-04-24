@@ -99,7 +99,7 @@ def evaluate_weights(
             solution = _solve_with_rust(bridge_data, time_limit, weights=weights)
 
             if solution.actions:
-                enriched = replay_solution(board, solution, spawns)
+                enriched = replay_solution(bridge_data, solution, spawns)
                 if enriched and "predicted_outcome" in enriched:
                     total_score += _fixed_score(enriched["predicted_outcome"])
                     tested += 1
@@ -188,7 +188,7 @@ def count_fired_triggers(
             continue
 
         try:
-            enriched = replay_solution(board, solution, spawns)
+            enriched = replay_solution(bridge_data, solution, spawns)
         except Exception:
             count += 1
             continue

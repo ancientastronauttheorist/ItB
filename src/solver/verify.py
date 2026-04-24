@@ -136,7 +136,20 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #     at E3, actually swapped to C3 — a canonical 2-tile pad swap the sim
 #     was blind to. Similar drift on Judo/Science across T2/T3.
 # Pre-v8 rows archived to failure_db_snapshot_sim_v7.jsonl.
-SIMULATOR_VERSION = 10
+#
+# v13 (2026-04-24, Python-sim removal):
+#   - replay_solution now calls itb_solver.replay_solution (Rust) instead
+#     of Python's simulate_move/simulate_attack. predicted_states in
+#     solve.json reflect the same Rust simulator that drives solve()
+#     decisions, closing the prediction-vs-decision sim mismatch (see
+#     run 20260423_131700_144 m00_t02 acid-tile-pickup miss).
+#   - simulate_action split into pub fn simulate_move + pub fn
+#     simulate_attack on the Rust side; behavior unchanged but the
+#     split lets replay capture per-phase snapshots.
+#   - score_breakdown still computed by Python evaluate_breakdown on the
+#     post-enemy board round-tripped via board_to_json.
+# Pre-v13 rows archived to failure_db_snapshot_sim_v12.jsonl.
+SIMULATOR_VERSION = 13
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

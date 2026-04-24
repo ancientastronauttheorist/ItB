@@ -1312,7 +1312,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         from src.solver.evaluate import EvalWeights as _EW
         _breakdown_weights = _EW(**{k: v for k, v in eval_weights_dict.items()
                                     if k in _EW.__dataclass_fields__})
-    enriched = replay_solution(board, solution, spawns,
+    enriched = replay_solution(bridge_data, solution, spawns,
                                current_turn=current_turn,
                                total_turns=board.total_turns if hasattr(board, 'total_turns') else 5,
                                remaining_spawns=rem_spawns,
@@ -3551,7 +3551,7 @@ def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0,
     # Replay for enriched data
     enriched = None
     if solution.actions:
-        enriched = replay_solution(board, solution, spawns)
+        enriched = replay_solution(bridge_data, solution, spawns)
 
     # Load original solve recording for comparison
     solve_file = run_dir / f"turn_{turn:02d}_solve.json"
@@ -4930,7 +4930,7 @@ def _cmd_validate_failures_only(old_version, new_version, old_weights,
         old_solve_data = {}
         new_solve_data = {}
         if sol_old.actions:
-            enriched_old = replay_solution(board.copy(), sol_old, spawns)
+            enriched_old = replay_solution(bridge_data, sol_old, spawns)
             outcome_old = enriched_old.get("predicted_outcome", outcome_old)
             old_solve_data = {
                 "actions": [{
@@ -4943,7 +4943,7 @@ def _cmd_validate_failures_only(old_version, new_version, old_weights,
                 "search_stats": {"timed_out": sol_old.timed_out},
             }
         if sol_new.actions:
-            enriched_new = replay_solution(board.copy(), sol_new, spawns)
+            enriched_new = replay_solution(bridge_data, sol_new, spawns)
             outcome_new = enriched_new.get("predicted_outcome", outcome_new)
             new_solve_data = {
                 "actions": [{
@@ -5164,11 +5164,11 @@ def cmd_validate(old_weights_path: str, new_weights_path: str,
         outcome_old = {"buildings_alive": 0, "grid_power": 0, "mechs_alive": 0}
         outcome_new = {"buildings_alive": 0, "grid_power": 0, "mechs_alive": 0}
         if sol_old.actions:
-            enriched = replay_solution(board, sol_old, spawns)
+            enriched = replay_solution(bridge_data, sol_old, spawns)
             if enriched:
                 outcome_old = enriched.get("predicted_outcome", outcome_old)
         if sol_new.actions:
-            enriched = replay_solution(board.copy(), sol_new, spawns)
+            enriched = replay_solution(bridge_data, sol_new, spawns)
             if enriched:
                 outcome_new = enriched.get("predicted_outcome", outcome_new)
 
