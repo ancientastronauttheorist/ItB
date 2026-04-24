@@ -39,6 +39,7 @@ from src.loop.commands import (
     cmd_execute,
     cmd_verify,
     cmd_verify_action,
+    cmd_diagnose,
     cmd_click_action,
     cmd_click_end_turn,
     cmd_click_balanced_roll,
@@ -107,6 +108,19 @@ def main():
     )
     p_verify_action.add_argument("index", type=int,
                                  help="Action index from solution")
+
+    # diagnose
+    p_diagnose = sub.add_parser(
+        "diagnose",
+        help="Layer 2 of the diagnosis loop: rules-based root-cause proposal",
+    )
+    p_diagnose.add_argument("failure_id",
+                            help="Failure_db.jsonl entry id (printed by verify_action)")
+    p_diagnose.add_argument("--force", action="store_true",
+                            help="Ignore the known_gaps suppression and run rule matching anyway")
+    p_diagnose.add_argument("--out", default=None,
+                            help="Override the markdown output directory "
+                                 "(default: recordings/<run_id>/diagnoses/)")
 
     # click_action
     p_click_action = sub.add_parser(
@@ -406,6 +420,8 @@ def main():
         cmd_verify(args.index, profile=args.profile)
     elif args.command == "verify_action":
         cmd_verify_action(args.index)
+    elif args.command == "diagnose":
+        cmd_diagnose(args.failure_id, force=args.force, out_path=args.out)
     elif args.command == "click_action":
         cmd_click_action(args.index)
     elif args.command == "click_end_turn":

@@ -1,0 +1,45 @@
+# Layer 1+2 known-gap suppressions for diagnose / verify_action.
+#
+# Diff entries that match one of these patterns are tagged
+# [known-gap: <id>] in verify_action's verbose output AND short-circuit
+# the rule-match pass in `game_loop.py diagnose` (status=insufficient_data,
+# reason=known_gap) unless --force is passed.
+#
+# Each entry:
+#   id        — short slug (also shown in verify_action output)
+#   reason    — one-line human explanation
+#   match     — diff-shape constraints
+#   code_ref  — optional pointer to the relevant TODO / file:line
+#
+# match supports:
+#   diff_kind:  "unit_diff" | "tile_diff" | "scalar_diff"
+#   field:      exact field name on the diff entry
+#   predicted:  exact predicted value
+#   actual:     exact actual value
+#
+# Add new gaps here when a recurring desync turns out to be unmodelled
+# behaviour rather than a fixable simulator bug. Retire by deletion when
+# the gap is closed in the simulator.
+
+known_gaps:
+  - id: web_clear_on_push
+    reason: "Non-deterministic web-clearing on mech push; not yet modelled."
+    match:
+      diff_kind: unit_diff
+      field: status.web
+      predicted: true
+      actual: false
+
+  - id: vek_attack_smoke
+    reason: "Some Vek attack smoke behaviors not routed through apply_weapon_status."
+    match:
+      diff_kind: tile_diff
+      field: smoke
+      predicted: false
+      actual: true
+
+  - id: flood_blast_psion_chain
+    reason: "flood_tile drown deaths don't trigger Blast Psion explosion chain."
+    code_ref: "rust_solver/src/simulate.rs:439"
+    match:
+      diff_kind: comment_only

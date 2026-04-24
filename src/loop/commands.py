@@ -1818,6 +1818,54 @@ def cmd_verify_action(action_index: int) -> dict:
     return result
 
 
+def cmd_diagnose(failure_id: str, force: bool = False,
+                 out_path: str | None = None) -> dict:
+    """Layer 2 of the diagnosis loop: rules-only root-cause proposal.
+
+    Looks up `failure_id` in `recordings/failure_db.jsonl`, loads the
+    triggering action from the corresponding solve recording, and matches
+    the diff against `diagnoses/rules.yaml`. Writes a markdown proposal
+    under `recordings/<run_id>/diagnoses/<failure_id>.md` and prints a
+    summary.
+
+    Status outcomes:
+      rule_match           — one rule won; markdown carries hypothesis + fix
+      needs_agent          — no rule (or ambiguous tie); body asks for review
+      insufficient_data    — diff matches a known model gap; skipped unless --force
+
+    Agent fallback (PR3) is intentionally absent here — unmatched diffs
+    surface as needs_agent and stop. Spec: docs/diagnosis_loop_design.md §7.
+    """
+    from pathlib import Path as _Path
+    from src.solver.diagnosis import diagnose
+
+    out_dir = _Path(out_path) if out_path else None
+    result = diagnose(failure_id, force=force, out_dir=out_dir)
+
+    if result.get("status") == "ERROR":
+        print(f"DIAGNOSE {failure_id}: ERROR {result.get('error')}")
+        _print_result(result)
+        return result
+
+    status = result.get("status", "?")
+    rule_id = result.get("rule_id")
+    if status == "rule_match" and rule_id:
+        print(f"DIAGNOSE {failure_id}: rule_match → {rule_id} "
+              f"(confidence={result.get('confidence', '?')})")
+    elif status == "insufficient_data":
+        print(f"DIAGNOSE {failure_id}: insufficient_data → "
+              f"known_gap={result.get('known_gap')}")
+    elif result.get("ambiguous"):
+        cands = ", ".join(result.get("candidates") or [])
+        print(f"DIAGNOSE {failure_id}: needs_agent — ambiguous match "
+              f"({cands})")
+    else:
+        print(f"DIAGNOSE {failure_id}: needs_agent — no rule matched")
+    print(f"  markdown: {result.get('markdown')}")
+    _print_result(result)
+    return result
+
+
 def cmd_click_action(action_index: int) -> dict:
     """Plan clicks for ONE mech action and emit a computer_batch-ready batch.
 

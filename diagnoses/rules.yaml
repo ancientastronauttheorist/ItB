@@ -1,0 +1,144 @@
+# Layer 2 rules table — diff signatures with attached fix proposals.
+#
+# Schema: see docs/diagnosis_loop_design.md §3.3 + §10.
+#
+# Each rule has:
+#   id                            short slug (used in markdown frontmatter, INDEX.md)
+#   introduced_in_sim_version     null = always-on; integer = active for sim_version >= N
+#   retired_in_sim_version        null = still active; integer = inactive for sim_version >= N
+#                                 (Set this when the underlying bug ships and the rule
+#                                  should stop firing on post-fix corpus rows.)
+#   signature                     diff-shape constraints (must match)
+#   discriminator                 action-context constraints (must hold)
+#   confidence                    high | medium | low
+#   suspect_files                 ["path:line", ...] (Rust authoritative)
+#   hypothesis                    one paragraph for the markdown body
+#   proposed_fix                  short snippet for the markdown
+#
+# Signature keys:
+#   unit_diff: { field, predicted, actual, type, uid, actor_only,
+#                actual_greater_than_predicted, actual_less_than_predicted,
+#                pos_shift_one_tile }
+#   tile_diff: { field, predicted, actual, at_action_target }
+#
+# Discriminator keys:
+#   weapon_id_in:    [list]
+#   weapon_id_none:  bool   (true ⇒ action has no weapon — move-only)
+#   mech_type_in:    [list]
+#
+# Discriminators should rule IN the hypothesis, not just rule out symptoms
+# (design doc §13 #9 — never match on symptom alone).
+
+rules:
+  # ── Sim v10 fixes (commit f00a394) — already shipped, rules retired.
+  # Kept here so the same diff shape on a sim_version <10 corpus row still
+  # diagnoses to the right historical fix; sim_version >=10 rows skip them.
+
+  - id: move_only_active_guard
+    introduced_in_sim_version: null
+    retired_in_sim_version: 10
+    signature:
+      unit_diff:
+        field: active
+        predicted: false
+        actual: true
+    discriminator:
+      weapon_id_none: true
+    confidence: high
+    suspect_files:
+      - rust_solver/src/simulate.rs:1825
+    hypothesis: >
+      simulate_action cleared unit.active unconditionally at end of call;
+      the actual game leaves the mech READY when the plan was move-only
+      (no weapon fire). Symptom: every move-only WallMech / WallStandIn /
+      similar plan flagged as a desync.
+    proposed_fix: |
+      // simulate.rs ~1825 — only clear active when we actually fired.
+      if action.weapon_id != WId::None {
+          board.units[idx].set_active(false);
+      }
+
+  - id: chain_shooter_self_damage
+    introduced_in_sim_version: null
+    retired_in_sim_version: 10
+    signature:
+      unit_diff:
+        field: hp
+        actor_only: true
+        actual_greater_than_predicted: true
+    discriminator:
+      weapon_id_in:
+        - Prime_Lightning
+    confidence: high
+    suspect_files:
+      - rust_solver/src/simulate.rs:1172
+    hypothesis: >
+      sim_melee's CHAIN BFS seeded `visited` with the target tile only,
+      so the conductor graph wrapped back to the firing mech through any
+      adjacent path. In-game Electric Whip never hits its own shooter —
+      ElectricMech firing chain stays at full HP. Fix: also seed
+      `visited` with the attacker's tile so it's excluded from the BFS.
+    proposed_fix: |
+      // simulate.rs:1172 — exclude the attacker tile from the chain BFS.
+      let mut visited = HashSet::new();
+      visited.insert(xy_to_idx(tx, ty));
+      visited.insert(xy_to_idx(ax, ay));   // <-- attacker tile
+
+  - id: artillery_perpendicular_push_missing
+    introduced_in_sim_version: null
+    retired_in_sim_version: 10
+    signature:
+      unit_diff:
+        field: pos
+        pos_shift_one_tile: true
+    discriminator:
+      weapon_id_in:
+        - Ranged_Rockthrow
+        - Acid_Tank_Attack
+    confidence: high
+    suspect_files:
+      - rust_solver/src/simulate.rs:1360
+    hypothesis: >
+      sim_artillery handled Forward / Backward center-tile push and
+      Outward on adjacent tiles, but Rock Accelerator's
+      PushDir::Perpendicular side-push had no code path — the two
+      flanking tiles were silently not pushed. Add a Perpendicular branch
+      that pushes (tx ± 1, ty) and (tx, ty ± 1) outward.
+    proposed_fix: |
+      // simulate.rs:1360 — add Perpendicular branch in sim_artillery.
+      PushDir::Perpendicular => {
+          // perpendicular-to-firing-axis neighbours
+          for (nx, ny) in perpendicular_neighbours(ax, ay, tx, ty) {
+              apply_push_outward(board, nx, ny, tx, ty);
+          }
+      }
+
+  - id: acid_tile_unit_status_at_load
+    introduced_in_sim_version: null
+    retired_in_sim_version: 10
+    signature:
+      tile_diff:
+        field: acid
+        predicted: false
+        actual: true
+    discriminator:
+      weapon_id_in:
+        - Acid_Tank_Attack
+    confidence: high
+    suspect_files:
+      - rust_solver/src/serde_bridge.rs:440
+    hypothesis: >
+      The bridge reports tile.acid=true on pre-placed pools but doesn't
+      propagate to unit.acid on the occupying Vek. The sim then under-
+      predicts damage (ACID doubles weapon damage). Fix in serde_bridge:
+      after all units are loaded, scan each unit's tile — if
+      tile.acid() && !unit.acid(), set the unit's ACID status. Matches
+      the in-game rule "standing on an A.C.I.D. pool = A.C.I.D. status".
+    proposed_fix: |
+      // serde_bridge.rs ~440 — after units are populated.
+      for unit in board.units.iter_mut() {
+          let t = board.tiles[xy_to_idx(unit.x, unit.y)];
+          if t.acid() && !unit.acid() {
+              unit.set_acid(true);
+          }
+      }
