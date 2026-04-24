@@ -156,7 +156,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v15: Cracked-ground → Chasm on damage (simulate.rs) + volatile_enemy_killed
 # penalty to preserve Volatile Vek / GlowingScorpion. Weather Watch mission.
 # Pre-v15 rows archived to failure_db_snapshot_sim_v14.jsonl.
-SIMULATOR_VERSION = 15
+# v16: Unit::is_volatile_vek() helper matches both "Volatile_Vek" and
+# "GlowingScorpion"; all 4 decay-firing simulate.rs sites + the
+# evaluate.rs penalty now use it. Pre-v16 rows archived to
+# failure_db_snapshot_sim_v15.jsonl.
+SIMULATOR_VERSION = 16
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

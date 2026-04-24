@@ -413,13 +413,10 @@ pub fn evaluate(
         // Weather Watch ⭐ bonus: "Don't let the Volatile Vek die." Count
         // dead Volatile-type enemies on the post-state board — solver clones
         // the initial board each plan, so dead-at-end = killed-this-turn.
-        // Matches both the canonical "Volatile_Vek" marker and the
-        // "GlowingScorpion" unit class name the live game uses.
-        if u.is_enemy() && !u.alive() {
-            let t = u.type_name_str();
-            if t.contains("Volatile_Vek") || t.contains("GlowingScorpion") {
-                volatile_dead += 1;
-            }
+        // Shares the Unit::is_volatile_vek() helper used by the decay sim
+        // so the penalty and the explosion trigger always agree.
+        if u.is_enemy() && !u.alive() && u.is_volatile_vek() {
+            volatile_dead += 1;
         }
     }
     score += volatile_dead as f64 * weights.volatile_enemy_killed;

@@ -362,7 +362,16 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // `volatile_enemy_killed` EvalWeights term to preserve Volatile Vek
 // (GlowingScorpion) for Weather Watch ⭐ bonus. Surfaced by R.S.T.
 // Weather Watch mission, run 20260424_011517_057 turn 1.
-pub const SIMULATOR_VERSION: u32 = 15;
+// v16: Volatile Vek pattern-match fix. The simulator previously only
+// triggered Explosive Decay on units whose type_name contained
+// "Volatile_Vek", but the live game uses "GlowingScorpion" as the
+// unit class name for the Weather Watch Volatile. Added
+// Unit::is_volatile_vek() helper matching both, used by all four
+// decay-firing sites in simulate.rs and the Volatile-kill penalty in
+// evaluate.rs. Closes the chain-reaction gap that killed LaserMech on
+// run 20260424_011517_057 turn 1 (solver didn't predict the decay →
+// cracked-C5 → chasm → mech death).
+pub const SIMULATOR_VERSION: u32 = 16;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

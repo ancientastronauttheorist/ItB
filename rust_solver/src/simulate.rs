@@ -38,7 +38,7 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
         // damage kills one, it explodes too.
         let chain_idx = board.unit_at(nx, ny).and_then(|idx| {
             let u = &board.units[idx];
-            if u.is_enemy() && u.hp > 0 && u.type_name_str().contains("Volatile_Vek") {
+            if u.is_enemy() && u.hp > 0 && u.is_volatile_vek() {
                 Some(idx)
             } else { None }
         });
@@ -516,7 +516,7 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
     // Pre-check: track Volatile Vek for Explosive Decay (unit-intrinsic, no aura dep).
     let volatile_check = board.unit_at(x, y).and_then(|idx| {
         let u = &board.units[idx];
-        if u.is_enemy() && u.hp > 0 && u.type_name_str().contains("Volatile_Vek") {
+        if u.is_enemy() && u.hp > 0 && u.is_volatile_vek() {
             Some(idx)
         } else { None }
     });
@@ -952,8 +952,7 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         let has_acid = board.units[unit_idx].acid();
         let can_explode = is_enemy && board.blast_psion
             && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
-        let is_volatile = is_enemy
-            && board.units[unit_idx].type_name_str().contains("Volatile_Vek");
+        let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
         let unit = &mut board.units[unit_idx];
         unit.hp = 0;
         if is_enemy {
@@ -979,8 +978,7 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
             let is_enemy = board.units[unit_idx].is_enemy();
             let can_explode = is_enemy && board.blast_psion
                 && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
-            let is_volatile = is_enemy
-                && board.units[unit_idx].type_name_str().contains("Volatile_Vek");
+            let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
             board.units[unit_idx].hp = 0;
             if is_enemy {
                 result.enemies_killed += 1;

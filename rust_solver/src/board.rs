@@ -230,6 +230,17 @@ impl Unit {
         std::str::from_utf8(&self.type_name[..len]).unwrap_or("Unknown")
     }
 
+    /// Is this unit a Volatile Vek? Matches both the canonical
+    /// `Volatile_Vek` marker (test fixtures, data/vek.json #262) and the
+    /// live-game `GlowingScorpion` class name used in Weather Watch. Both
+    /// trigger the same Explosive Decay mechanic (1 damage to 4 adjacent
+    /// tiles on death). Keeping this as one helper guarantees every
+    /// decay-firing callsite uses the same set of type names.
+    pub fn is_volatile_vek(&self) -> bool {
+        let name = self.type_name_str();
+        name.contains("Volatile_Vek") || name.contains("GlowingScorpion")
+    }
+
     /// Set type name from string.
     pub fn set_type_name(&mut self, name: &str) {
         let bytes = name.as_bytes();
