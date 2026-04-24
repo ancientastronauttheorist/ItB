@@ -2084,9 +2084,9 @@ def cmd_diagnose_apply_agent(failure_id: str, payload: str,
           f"(confidence={result.get('confidence', '?')})")
     print(f"  markdown: {result.get('markdown')}")
     print(f"  fix_signature: {result.get('fix_signature')}")
-    print(f"  next: review the markdown; reject with "
-          f"`reject_diagnosis {failure_id} --reason '...'` "
-          f"or apply with Layer 4 (PR5) when it ships.")
+    print(f"  next: review the markdown, then either "
+          f"`apply_diagnosis {failure_id} [--dry-run]` or "
+          f"`reject_diagnosis {failure_id} --reason '...'`")
     _print_result(result)
     return result
 

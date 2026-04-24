@@ -532,6 +532,45 @@ def test_apply_reverts_on_rebuild_failure(tmp_path, monkeypatch):
 
 
 @pytest.mark.regression
+def test_dirty_targets_preserves_leading_space_in_path(monkeypatch):
+    """`git status --porcelain` formats worktree-only changes as ` M PATH`
+    (leading space for the X status). A naive proc.stdout.strip() eats
+    that space and shifts every byte left, lopping the first character
+    off the path — surfaced as 'ust_solver/src/lib.rs' on a live run.
+    Regression: the slicer must keep the path intact."""
+    from src.solver import diagnosis_apply
+
+    class _FakeProc:
+        returncode = 0
+        # Two lines, both worktree-only modifications. The first path
+        # has its leading-space-stripping bug; the second one stays
+        # correct either way (so the test isolates the bug).
+        stdout = " M rust_solver/src/lib.rs\n M src/solver/verify.py\n"
+
+    def _fake_run(*a, **k):
+        return _FakeProc()
+
+    monkeypatch.setattr(diagnosis_apply.subprocess, "run", _fake_run)
+
+    plan = diagnosis_apply.ApplyPlan(
+        failure_id="x",
+        diagnosis_path=Path("ignored"),
+        status="agent_proposed",
+        confidence="high",
+        target_language="rust",
+        suspect_files=[
+            {"path": "rust_solver/src/lib.rs", "lines": [1]},
+        ],
+        needs_sim_bump=True,
+    )
+    dirty = diagnosis_apply.dirty_targets(plan)
+    assert "rust_solver/src/lib.rs" in dirty, (
+        f"expected full path; got {dirty!r} — leading-space-strip bug regressed"
+    )
+    assert "src/solver/verify.py" in dirty
+
+
+@pytest.mark.regression
 def test_apply_skip_build_skip_regression_marks_applied_unverified(
     tmp_path, monkeypatch
 ):

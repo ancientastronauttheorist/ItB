@@ -281,15 +281,18 @@ def dirty_targets(plan: ApplyPlan) -> list[str]:
     )
     if proc.returncode != 0:
         return rel  # treat as dirty if git itself failed
-    out = proc.stdout.strip()
-    if not out:
+    if not proc.stdout:
         return []
     dirty = []
-    for line in out.splitlines():
-        # `git status --porcelain` lines: "XY <path>" with X+Y status
-        # codes and a leading space when only the worktree changed.
+    for line in proc.stdout.splitlines():
+        # `git status --porcelain` lines: "XY PATH" — column 0-1 is the
+        # status code (X=staged, Y=worktree; either may be a space) and
+        # column 2 is the separator. Path starts at column 3. Don't
+        # `.strip()` proc.stdout first — that eats the leading space on
+        # worktree-only changes (` M PATH`), shifting every byte left
+        # and lopping the first letter off the path.
         if len(line) > 3:
-            dirty.append(line[3:].strip())
+            dirty.append(line[3:].rstrip())
     return dirty
 
 

@@ -697,25 +697,83 @@ class AgentResponse:
 
 
 def _parse_agent_json(payload: str | dict) -> tuple[dict | None, str | None]:
+    """Extract a JSON object from an agent's response.
+
+    The prompt asks for raw stdout, but real agents return prose around
+    their JSON, multiple ```json fences, or both. We try in order:
+      1. Parse the whole string verbatim.
+      2. Strip a single leading ``` fence (one-shot fenced output).
+      3. Find the last complete top-level {...} block by brace-balancing
+         and parse that. Last-block-wins so when an agent thinks aloud
+         then commits to a final answer, we honour the final one.
+    Returns (dict, None) on success or (None, error_msg) on failure.
+    """
     if isinstance(payload, dict):
         return payload, None
     if not isinstance(payload, str):
         return None, f"agent response must be str or dict, got {type(payload).__name__}"
     text = payload.strip()
-    # Tolerate fenced markdown — agents tend to wrap JSON in ```json blocks
-    # despite the prompt asking for raw stdout.
-    if text.startswith("```"):
-        first_nl = text.find("\n")
-        if first_nl < 0:
-            return None, "fenced response with no body"
-        text = text[first_nl + 1 :]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
+
+    # Step 1: bare JSON.
     try:
         return json.loads(text), None
-    except json.JSONDecodeError as e:
-        return None, f"invalid JSON: {e}"
+    except json.JSONDecodeError:
+        pass
+
+    # Step 2: fenced output — strip a single ``` wrapper.
+    fenced = text
+    if fenced.startswith("```"):
+        first_nl = fenced.find("\n")
+        if first_nl > 0:
+            fenced = fenced[first_nl + 1 :]
+            if fenced.rstrip().endswith("```"):
+                fenced = fenced.rstrip()[:-3]
+            try:
+                return json.loads(fenced.strip()), None
+            except json.JSONDecodeError:
+                pass
+
+    # Step 3: scan for top-level {...} blocks via brace-balancing.
+    # Skip braces inside string literals (handles JSON strings that
+    # contain '{' or '}' — Rust code snippets in fix_snippet do).
+    blocks: list[str] = []
+    depth = 0
+    start = -1
+    in_string = False
+    escape = False
+    for i, ch in enumerate(text):
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+            continue
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start >= 0:
+                blocks.append(text[start : i + 1])
+                start = -1
+
+    # Try each candidate block, last first — when the agent reasons aloud
+    # and then finalizes, the final block is the answer.
+    last_err = None
+    for candidate in reversed(blocks):
+        try:
+            return json.loads(candidate), None
+        except json.JSONDecodeError as e:
+            last_err = e
+            continue
+
+    return None, f"invalid JSON: {last_err or 'no parseable {...} block found'}"
 
 
 def validate_agent_response(

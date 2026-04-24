@@ -616,6 +616,52 @@ Seed fixtures (one per rule in seed table):
 - `game_loop.py revert_diagnosis <id>` with `git revert` on tagged commit.
 - Explicit `--auto-commit` flag; never default.
 
+## 15.1 Post-shipping retrospective + known limitations
+
+PR1–PR5 shipped 2026-04-23 / 2026-04-24. PR6 was a live integration run on
+`20260423_131700_144_m00_t01_per_action_desync_a0` — no production code
+changed; instead it surfaced four rough edges that are now patched or
+documented.
+
+### Patched in PR6
+
+1. **`dirty_targets` lopped the first letter of the path.** The slicer
+   did `proc.stdout.strip().splitlines()`, but `git status --porcelain`
+   formats worktree-only changes as `" M PATH"` with a leading space
+   (the X status). `proc.stdout.strip()` ate that leading space and
+   shifted every byte of the first line one position to the left, so
+   `line[3:]` returned `"ust_solver/src/lib.rs"`. Fix: don't strip the
+   whole stdout — split first, slice each line at column 3 individually.
+   Regression: `test_dirty_targets_preserves_leading_space_in_path`.
+
+2. **Validator rejected prose-wrapped JSON.** Agents reason aloud, then
+   commit to a final JSON block. `_parse_agent_json` previously accepted
+   only bare JSON or a single ` ``` ` fence wrapper, so realistic agent
+   output failed. Fix: brace-balance the response and accept the LAST
+   complete top-level `{...}` block. Skips braces inside string literals
+   so Rust code in `fix_snippet.before` doesn't fool the balancer.
+   Regressions: `test_validate_extracts_last_json_from_prose_wrapped_response`,
+   `test_validate_skips_braces_inside_strings`.
+
+### Known limitation — multi-location fixes
+
+`fix_snippet` is a single `{before, after}` pair. Real Rust fixes often
+touch multiple sites at once — adding a parameter to a function requires
+editing both the signature AND every call site. The agent on PR6
+proposed exactly this kind of fix and the apply path can't express it.
+
+Workaround for now: agent should propose fixes that are *local* — a
+guard added inside an existing function, a missed branch in a match arm,
+a flag flipped in `WeaponDef`. When a multi-location refactor is the
+right answer, the agent should return `confidence: low` with an
+`open_questions` entry asking a human to do it.
+
+Real fix (deferred): change `fix_snippet` to a list of per-file
+`{path, before, after}` entries. Schema change touches the validator,
+the markdown writer, `apply_fix`, and the rules.yaml shape if rules
+ever grow Edit-able fixes. One PR's worth of work; not ahead of
+demonstrated need.
+
 ## 16. Metrics to track (future)
 
 These aren't needed for v1 but worth planning the data shape now:

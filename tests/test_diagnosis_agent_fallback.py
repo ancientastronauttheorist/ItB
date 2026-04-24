@@ -239,6 +239,57 @@ def test_validate_strips_markdown_fences():
 
 
 @pytest.mark.regression
+def test_validate_extracts_last_json_from_prose_wrapped_response():
+    """Surfaced on the live integration test (PR6): agents reason aloud,
+    return a tentative JSON, then a "wait, let me reconsider" paragraph
+    followed by the FINAL JSON. The validator must pick the last block.
+    """
+    early = json.dumps({
+        "target_language": "rust", "root_cause": "first guess",
+        "suspect_files": [{"path": "rust_solver/src/lib.rs", "lines": [1]}],
+        "fix_snippet": {"before": "a", "after": "b"},
+        "confidence": "low", "verification_plan": [], "open_questions": [],
+    })
+    final = json.dumps({
+        "target_language": "rust", "root_cause": "FINAL answer",
+        "suspect_files": [{"path": "rust_solver/src/lib.rs", "lines": [1]}],
+        "fix_snippet": {"before": "x", "after": "y"},
+        "confidence": "high", "verification_plan": ["regression"],
+        "open_questions": [],
+    })
+    payload = (
+        "Now I'll think out loud.\n\n"
+        f"```json\n{early}\n```\n\n"
+        "Wait, that's wrong. Let me reconsider...\n\n"
+        f"```json\n{final}\n```\n"
+    )
+    response, errors = validate_agent_response(payload)
+    assert errors == [], errors
+    assert response is not None
+    assert response.root_cause == "FINAL answer"
+    assert response.confidence == "high"
+
+
+@pytest.mark.regression
+def test_validate_skips_braces_inside_strings():
+    """Brace-balancer must ignore '{' and '}' inside JSON string literals
+    (e.g. Rust code in fix_snippet.before contains them constantly)."""
+    payload = json.dumps({
+        "target_language": "rust", "root_cause": "?",
+        "suspect_files": [{"path": "rust_solver/src/lib.rs", "lines": [1]}],
+        "fix_snippet": {
+            "before": "fn x() { let y = 1; }",
+            "after": "fn x() { let y = 2; }",
+        },
+        "confidence": "high", "verification_plan": [], "open_questions": [],
+    })
+    response, errors = validate_agent_response(f"prose\n{payload}\nmore prose")
+    assert errors == [], errors
+    assert response is not None
+    assert "let y = 2" in response.fix_snippet["after"]
+
+
+@pytest.mark.regression
 def test_validate_rejects_malformed_json():
     response, errors = validate_agent_response("not actually json {")
     assert response is None
