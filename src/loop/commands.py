@@ -1102,16 +1102,22 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 deploy_zone = bridge_data.get("deployment_zone", [])
                 if deploy_zone:
                     deploy_tiles = []
+                    teleporter_tiles_set = _teleporter_tile_set(board)
                     for tile in deploy_zone:
                         bx, by = tile[0], tile[1]
                         visual_row = 8 - bx
                         visual_col = chr(72 - by)
                         mcp_x, mcp_y = grid_to_mcp(bx, by)
-                        deploy_tiles.append({
+                        hazard = classify_deploy_hazard(
+                            board, bx, by, teleporter_tiles_set,
+                        )
+                        entry = {
                             "bridge": f"({bx},{by})",
                             "visual": f"{visual_col}{visual_row}",
                             "mcp": [mcp_x, mcp_y],
-                        })
+                            "hazard": hazard,
+                        }
+                        deploy_tiles.append(entry)
                     result["deployment_zone"] = deploy_tiles
 
                 print(f"\n{'='*50}")
@@ -1128,27 +1134,47 @@ def cmd_read(profile: str = "Alpha") -> dict:
                         if board.tiles[bx][by].cracked:
                             dt["cracked"] = True
                     cracked_count = sum(1 for dt in deploy_tiles if dt.get("cracked"))
+                    hazard_count = sum(1 for dt in deploy_tiles if dt.get("hazard"))
                     hdr = f"\nDEPLOYMENT ZONE ({len(deploy_tiles)} tiles):"
+                    flags: list[str] = []
                     if cracked_count:
-                        hdr += f"  [⚠ {cracked_count} cracked — avoid]"
+                        flags.append(f"⚠ {cracked_count} cracked")
+                    if hazard_count:
+                        flags.append(f"⚠ {hazard_count} hazard")
+                    if flags:
+                        hdr += "  [" + " | ".join(flags) + " — avoid]"
                     print(hdr)
                     for dt in deploy_tiles:
-                        suffix = "  ⚠ CRACKED" if dt.get("cracked") else ""
+                        bits = []
+                        if dt.get("cracked"):
+                            bits.append("CRACKED")
+                        if dt.get("hazard"):
+                            bits.append(dt["hazard"].upper())
+                        suffix = ("  ⚠ " + ",".join(bits)) if bits else ""
                         print(f"  {dt['visual']} (bridge {dt['bridge']}) -> MCP ({dt['mcp'][0]}, {dt['mcp'][1]}){suffix}")
 
-                    # Show ranked recommendations
-                    ranked = rank_deploy_tiles(board, deploy_zone)
-                    if ranked:
+                    # Show ranked recommendations (hazard-aware)
+                    ranked_full = recommend_deploy_tiles(board, deploy_zone)
+                    if ranked_full:
                         print(f"\nRECOMMENDED DEPLOY (ranked by enemy proximity + building cover):")
-                        for idx, (rx, ry) in enumerate(ranked):
+                        for idx, d in enumerate(ranked_full):
+                            rx, ry = d["x"], d["y"]
                             vr = 8 - rx
                             vc = chr(72 - ry)
                             mx, my = grid_to_mcp(rx, ry)
                             role = ["FORWARD", "MID", "SUPPORT"][min(idx, 2)]
-                            print(f"  {idx+1}. {vc}{vr} ({role}) -> MCP ({mx}, {my})")
+                            warn = ""
+                            if d.get("hazard_warning") and d.get("hazard"):
+                                warn = f"  ⚠ FALLBACK: {d['hazard']}"
+                            print(f"  {idx+1}. {vc}{vr} ({role}) -> MCP ({mx}, {my}){warn}")
                         result["recommended_deploy"] = [
-                            {"visual": f"{chr(72-ry)}{8-rx}", "mcp": list(grid_to_mcp(rx, ry))}
-                            for rx, ry in ranked
+                            {
+                                "visual": f"{chr(72-d['y'])}{8-d['x']}",
+                                "mcp": list(grid_to_mcp(d["x"], d["y"])),
+                                "hazard": d.get("hazard"),
+                                "hazard_warning": bool(d.get("hazard_warning")),
+                            }
+                            for d in ranked_full
                         ]
 
                 # Environment danger tiles
@@ -5019,27 +5045,81 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     return result
 
 
-def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
-    """Rank deployment tiles by strategic value.
+# Hazard severity classification used by deploy filtering.
+#
+#   0  none        — plain ground / forest / sand / road / building rubble.
+#   1  conveyor    — pad/belt slides the mech off the deploy tile silently.
+#   1  teleporter  — pad teleports the mech to the paired endpoint.
+#   2  freeze_mine — freezes the mech (invincible+immobilized for several
+#                    turns, wastes the unit but doesn't kill it).
+#   3  old_earth_mine — KILLS any unit that stops on it. Bypasses shield.
+#
+# The recommender filters out severity ≥ 1 by default and only falls back
+# to higher-severity tiles when the deploy zone has fewer than 3 safe ones.
+_HAZARD_SEVERITY: dict[str, int] = {
+    "conveyor": 1,
+    "teleporter": 1,
+    "freeze_mine": 2,
+    "old_earth_mine": 3,
+}
 
-    Scores each tile based on:
-    - Proximity to enemies (closer = better for interception on Turn 1)
-    - Proximity to buildings (adjacent = better for protection)
-    - Forward positioning (rows 4-6 bonus — at least one mech in strike range)
 
-    Returns list of (x, y) bridge coordinates, best first.
-    Picks 3 tiles with spatial diversity (not all clustered together).
+def _teleporter_tile_set(board) -> set[tuple[int, int]]:
+    """Collect every (x, y) that appears as a teleporter-pair endpoint."""
+    tiles: set[tuple[int, int]] = set()
+    for pair in getattr(board, "teleporter_pairs", []) or []:
+        if len(pair) >= 4:
+            tiles.add((pair[0], pair[1]))
+            tiles.add((pair[2], pair[3]))
+    return tiles
 
-    Filters out hazard tiles that don't make sense as deployment targets even
-    when the game lists them in the deploy zone:
-    - Conveyor belts (Detritus/Disposal Vault): clicking deploys then the
-      conveyor immediately pushes the mech off, sometimes off the deploy
-      zone entirely. Mirrors the teleporter-pad workaround.
-    - Teleporter pads (Detritus/disposal): same problem — pad teleports
-      the mech off the chosen tile.
 
-    The full `deployment_zone` list returned to the caller still contains
-    these tiles so the user can override the filter manually.
+def classify_deploy_hazard(board, x: int, y: int,
+                           teleporter_tiles: set[tuple[int, int]] | None = None
+                           ) -> str | None:
+    """Return the hazard name for a deploy tile, or None if safe.
+
+    The classification is the WORST hazard on the tile (highest severity).
+    Forest is intentionally NOT a hazard — it only burns when damaged, so
+    a mech that stops there pre-attack is unharmed.
+
+    Cracked ground is rated separately by the ranker (cracked tiles get a
+    score penalty rather than a hazard label) because a cracked tile is
+    only dangerous if the mech is later attacked while standing on it,
+    which is a positional concern rather than a "stops here = bad" hazard.
+    """
+    if teleporter_tiles is None:
+        teleporter_tiles = _teleporter_tile_set(board)
+    tile = board.tiles[x][y]
+    # Severity-ordered checks so the most dangerous wins on overlapping items.
+    if getattr(tile, "old_earth_mine", False):
+        return "old_earth_mine"
+    if getattr(tile, "freeze_mine", False):
+        return "freeze_mine"
+    if (x, y) in teleporter_tiles:
+        return "teleporter"
+    if getattr(tile, "conveyor", -1) >= 0:
+        return "conveyor"
+    return None
+
+
+def recommend_deploy_tiles(board, deploy_zone: list) -> list[dict]:
+    """Rank deployment tiles strategically and annotate hazard fallbacks.
+
+    Returns a list of dicts (best first), each:
+        {"x": int, "y": int, "hazard": str | None, "hazard_warning": bool}
+
+    Strategy:
+      * Score every non-occupied tile (proximity to enemies, building cover,
+        forward-row bonus, cracked-ground penalty).
+      * Pick up to 3 SAFE (hazard=None) tiles first, with spatial diversity
+        and a forward-row guarantee.
+      * If fewer than 3 safe tiles exist, fall back to hazard tiles in
+        ASCENDING severity (conveyor/teleporter < freeze_mine < old_earth_mine).
+        Each fallback pick is flagged with `hazard_warning=True` so the caller
+        can surface a "reluctant" notice to the user.
+
+    Severity order is documented at `_HAZARD_SEVERITY`.
     """
     enemies = [u for u in board.units if u.is_enemy and u.hp > 0]
     buildings = []
@@ -5049,32 +5129,22 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
             if t.terrain == "building" and t.building_hp > 0:
                 buildings.append((x, y))
 
-    # Teleporter pads: any tile that appears as either endpoint of a
-    # teleporter pair. Bridge emits these in `teleporter_pairs` as
-    # (x1, y1, x2, y2) tuples.
-    teleporter_tiles: set[tuple[int, int]] = set()
-    for pair in getattr(board, "teleporter_pairs", []) or []:
-        if len(pair) >= 4:
-            teleporter_tiles.add((pair[0], pair[1]))
-            teleporter_tiles.add((pair[2], pair[3]))
+    teleporter_tiles = _teleporter_tile_set(board)
 
     def dist(x1, y1, x2, y2):
         return abs(x1 - x2) + abs(y1 - y2)
 
-    # Score every candidate tile
-    scored = []
+    # Score every candidate tile. We DON'T drop hazardous tiles here — they
+    # stay in the candidate pool with their hazard label so the fallback
+    # logic can pick them when the safe pool is exhausted.
+    scored: list[tuple[float, int, int, str | None]] = []
     for tile in deploy_zone:
         tx, ty = tile[0], tile[1]
         # Skip tiles already occupied
         if any(u.x == tx and u.y == ty for u in board.units):
             continue
-        # Skip conveyor belts: deploying here gets immediately pushed off.
-        # Tile.conveyor is -1 when not a belt, 0-3 for direction.
-        if board.tiles[tx][ty].conveyor >= 0:
-            continue
-        # Skip teleporter pads for the same reason.
-        if (tx, ty) in teleporter_tiles:
-            continue
+
+        hazard = classify_deploy_hazard(board, tx, ty, teleporter_tiles)
 
         if enemies:
             min_e = min(dist(tx, ty, e.x, e.y) for e in enemies)
@@ -5099,29 +5169,80 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
                  + forward * 5.0     # reward forward positioning
                  - avg_e * 1.0       # prefer overall closer to enemies
                  + cracked_penalty)  # almost-always exclude cracked ground
-        scored.append((score, tx, ty))
+        scored.append((score, tx, ty, hazard))
 
     scored.sort(key=lambda s: s[0], reverse=True)
 
-    # Greedy pick with diversity: avoid clustering within 1 tile
-    selected = []
-    for score, tx, ty in scored:
+    safe_pool = [(s, x, y) for (s, x, y, h) in scored if h is None]
+    hazard_pool_by_sev: dict[int, list[tuple[float, int, int, str]]] = {}
+    for s, x, y, h in scored:
+        if h is None:
+            continue
+        sev = _HAZARD_SEVERITY[h]
+        hazard_pool_by_sev.setdefault(sev, []).append((s, x, y, h))
+
+    # Greedy pick with diversity: avoid clustering within 1 tile.
+    selected: list[dict] = []
+
+    def _try_add(tx: int, ty: int, hazard: str | None, warning: bool) -> bool:
+        if any(d["x"] == tx and d["y"] == ty for d in selected):
+            return False
+        selected.append({
+            "x": tx,
+            "y": ty,
+            "hazard": hazard,
+            "hazard_warning": warning,
+        })
+        return True
+
+    # Pass 1: safe tiles, with diversity.
+    for score, tx, ty in safe_pool:
         if len(selected) >= 3:
             break
-        too_close = any(dist(tx, ty, sx, sy) <= 1 for sx, sy in selected)
-        if too_close and len(scored) > len(selected) + 3:
+        too_close = any(
+            dist(tx, ty, d["x"], d["y"]) <= 1 for d in selected
+        )
+        if too_close and len(safe_pool) > len(selected) + 3:
             continue
-        selected.append((tx, ty))
+        _try_add(tx, ty, None, False)
 
-    # Ensure at least one tile is "forward" (rows 4-6 = bridge x 2-4)
-    has_forward = any(2 <= tx <= 4 for tx, ty in selected)
-    if not has_forward and len(selected) == 3:
-        for score, tx, ty in scored:
-            if 2 <= tx <= 4 and (tx, ty) not in selected:
-                selected[-1] = (tx, ty)
+    # Ensure at least one safe tile is "forward" (rows 4-6 = bridge x 2-4),
+    # mirroring the legacy guarantee.
+    has_forward = any(2 <= d["x"] <= 4 and d["hazard"] is None for d in selected)
+    if not has_forward and len(selected) == 3 and all(d["hazard"] is None for d in selected):
+        for score, tx, ty in safe_pool:
+            if 2 <= tx <= 4 and not any(d["x"] == tx and d["y"] == ty for d in selected):
+                # Replace the LAST safe pick with a forward one.
+                selected[-1] = {
+                    "x": tx,
+                    "y": ty,
+                    "hazard": None,
+                    "hazard_warning": False,
+                }
+                break
+
+    # Pass 2: reluctant fallback in ascending severity. We only enter this
+    # branch when fewer than 3 safe tiles exist on the deploy zone.
+    if len(selected) < 3:
+        for sev in sorted(hazard_pool_by_sev.keys()):
+            for score, tx, ty, hazard in hazard_pool_by_sev[sev]:
+                if len(selected) >= 3:
+                    break
+                _try_add(tx, ty, hazard, True)
+            if len(selected) >= 3:
                 break
 
     return selected
+
+
+def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
+    """Backwards-compatible wrapper around `recommend_deploy_tiles`.
+
+    Returns just `[(x, y), ...]` for callers that don't care about the
+    hazard annotations. The richer `recommend_deploy_tiles()` output is
+    used by `cmd_read` to print hazard warnings.
+    """
+    return [(d["x"], d["y"]) for d in recommend_deploy_tiles(board, deploy_zone)]
 
 
 def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
