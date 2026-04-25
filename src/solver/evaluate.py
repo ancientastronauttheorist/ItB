@@ -290,12 +290,15 @@ def evaluate(
     # at low grid) prevents that.
     score += objective_grid_buildings_alive * w.grid_reward_building_bonus * bld_mult
 
-    # --- GRID POWER: urgency multiplier applied here ---
-    # When grid is low, each grid point is worth more. Multiplier was
-    # previously on buildings but caused inversion (fewer buildings at
-    # critical scored higher than more buildings at normal). Uses
-    # effective grid to credit expected Grid Defense saves.
-    score += eff_grid * w.grid_power * grid_multiplier
+    # --- GRID POWER: monotonic reward + below-threshold urgency penalty ---
+    # Previous `eff_grid * weight * multiplier` was non-monotonic in grid_power
+    # (grid=3 could score higher than grid=5). Mirrors Rust evaluate.rs fix:
+    # linear base + penalty for sliding below the crisis_threshold.
+    score += eff_grid * w.grid_power
+    crisis_threshold = 4.0
+    if eff_grid < crisis_threshold:
+        gap = crisis_threshold - eff_grid
+        score -= gap * w.grid_power * (grid_multiplier - 1.0)
 
     # --- ENEMIES: SCALED (kills worth more early, less on final turn) ---
     # kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
@@ -360,7 +363,8 @@ def evaluate(
             if lethal:
                 if m.is_mech:
                     score += _scaled(w.mech_killed, ff, 0.05, 0.95)
-                    score += w.mech_killed * m.pilot_value
+                    if not board.medical_supplies:
+                        score += w.mech_killed * m.pilot_value
                 else:
                     score += w.friendly_npc_killed
                 continue
@@ -370,7 +374,8 @@ def evaluate(
             if m.hp <= dmg:
                 if m.is_mech:
                     score += _scaled(w.mech_killed, ff, 0.05, 0.95)
-                    score += w.mech_killed * m.pilot_value
+                    if not board.medical_supplies:
+                        score += w.mech_killed * m.pilot_value
                 else:
                     score += w.friendly_npc_killed
             else:
@@ -389,7 +394,10 @@ def evaluate(
             continue
         if m.hp <= 0:
             score += _scaled(w.mech_killed, ff, 0.05, 0.95)
-            score += w.mech_killed * m.pilot_value
+            # Passive_Medical revives the pilot — no permanent-loss cost.
+            # Mech itself is still destroyed (base mech_killed still applies).
+            if not board.medical_supplies:
+                score += w.mech_killed * m.pilot_value
         else:
             score += m.hp * _scaled(w.mech_hp, ff, 0.20, 0.80)
             cx = abs(m.x - 3.5)
@@ -503,8 +511,13 @@ def evaluate_breakdown(
     # See evaluate() for why bld_mult (not grid_multiplier) — avoids inversion.
     objective_grid_score = objective_grid_alive * w.grid_reward_building_bonus * bld_mult
 
-    # --- GRID POWER: urgency multiplier applied here ---
-    grid_power_score = eff_grid * w.grid_power * grid_multiplier
+    # --- GRID POWER: monotonic reward + below-threshold urgency penalty ---
+    # See evaluate() for the formula + why.
+    grid_power_score = eff_grid * w.grid_power
+    crisis_threshold = 4.0
+    if eff_grid < crisis_threshold:
+        gap = crisis_threshold - eff_grid
+        grid_power_score -= gap * w.grid_power * (grid_multiplier - 1.0)
 
     # --- ENEMIES ---
     enemies_killed_score = kills * _scaled(w.enemy_killed, ff, 0.20, 1.60)

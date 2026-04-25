@@ -552,6 +552,7 @@ pub fn board_from_json(json_str: &str)
                             "Passive_FlameImmune" => board.flame_shielding = true,
                             "Passive_FriendlyFire" => board.vek_hormones = true,
                             "Passive_ForceAmp" => board.force_amp = true,
+                            "Passive_Medical" => board.medical_supplies = true,
                             _ => {}
                         }
                     }

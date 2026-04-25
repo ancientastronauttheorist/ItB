@@ -205,6 +205,11 @@ class Board:
         # take +1 damage from bump-class sources (push collisions + spawn
         # blocking). Sentient enemies (Bot Leader) are exempt per the wiki.
         self.force_amp: bool = False
+        # Passive_Medical ("Medical Supplies"): all pilots survive mech death.
+        # The mech itself is still destroyed (grid/HP consequences unchanged);
+        # only the permanent pilot-loss component of the mech-death penalty
+        # is zeroed. Squad-wide — any mech carrying it covers all pilots.
+        self.medical_supplies: bool = False
         # Mission metadata (from bridge mission.ID, e.g. "Mission_Dam").
         self.mission_id: str = ""
         # "Kill N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
@@ -243,6 +248,7 @@ class Board:
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
         b.force_amp = self.force_amp
+        b.medical_supplies = self.medical_supplies
         b.mission_id = self.mission_id
         b.mission_kill_target = self.mission_kill_target
         b.mission_kills_done = self.mission_kills_done
@@ -533,16 +539,17 @@ class Board:
                 neighbor.web = True
                 neighbor.web_source_uid = egg.uid
 
-        # Detect Passive_ForceAmp on any friendly mech — flips the board flag
-        # so bump-class damage against Vek gets +1 in apply_damage. Mirrors
-        # the Rust serde_bridge detection. Bridge emits mech weapons as a
-        # list of internal names in `unit.weapons`, so we re-scan here.
+        # Detect Passive_ForceAmp / Passive_Medical on any friendly mech.
+        # Mirrors the Rust serde_bridge detection. Bridge emits mech weapons
+        # as a list of internal names in `unit.weapons`, so we re-scan here.
+        # Both passives are squad-wide: any mech carrying them flips the flag.
         for ud in data.get("units", []):
             if ud.get("mech") or ud.get("is_mech"):
                 weapons = ud.get("weapons", []) or []
                 if "Passive_ForceAmp" in weapons:
                     board.force_amp = True
-                    break
+                if "Passive_Medical" in weapons:
+                    board.medical_supplies = True
 
         # Detect Blast Psion: if alive on board, all Vek explode on death
         board.blast_psion_active = any(

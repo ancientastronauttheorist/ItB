@@ -388,11 +388,22 @@ pub fn evaluate(
     // ── Bump penalty: extra cost for push-chain collateral to buildings ──
     score += building_bumps as f64 * weights.building_bump_damage;
 
-    // ── Grid power: urgency multiplier applied here ───────────────────
-    // When grid is low, each grid point is worth more — this incentivizes
-    // protecting buildings at low grid without the inversion bug. Uses
-    // effective grid to credit expected Grid Defense saves.
-    score += eff_grid * weights.grid_power * grid_multiplier;
+    // ── Grid power: monotonic reward + below-threshold urgency penalty ─
+    // Previous version multiplied `remaining_grid * weight * grid_multiplier`,
+    // which made end-state grid=3 (1.0 multiplier → 3.0) score HIGHER than
+    // end-state grid=5 (1.0 multiplier) — a perverse incentive that
+    // let Turn 2 on Ice Forest (2026-04-24) choose a plan ending at grid=3
+    // over plans preserving grid=5. Fix: linear monotonic base reward, plus
+    // a below-threshold penalty that scales with (multiplier - 1.0) so urgency
+    // still disincentivizes slipping toward 0 without breaking monotonicity.
+    // The urgency multiplier continues to scale enemy_urgency + env_danger
+    // terms below — only the direct grid_power reward needed this fix.
+    score += eff_grid * weights.grid_power;
+    let crisis_threshold: f64 = 4.0;
+    if eff_grid < crisis_threshold {
+        let gap = crisis_threshold - eff_grid;
+        score -= gap * weights.grid_power * (grid_multiplier - 1.0);
+    }
 
     // ── Enemies: SCALED (kills worth more early, less on final turn) ────
     // kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
@@ -542,7 +553,11 @@ pub fn evaluate(
                 // should already have killed it (firing the main mech-death
                 // branch), but this guards against off-sequence scoring.
                 let base = scaled(weights.mech_killed, ff, 0.05, 0.95);
-                let pilot_penalty = weights.mech_killed * u.pilot_value as f64;
+                let pilot_penalty = if board.medical_supplies {
+                    0.0
+                } else {
+                    weights.mech_killed * u.pilot_value as f64
+                };
                 score += base + pilot_penalty;
                 continue;
             }
@@ -554,9 +569,16 @@ pub fn evaluate(
             } else if u.is_player() {
                 // Non-lethal env: soft penalty for a mech taking the hit next
                 // enemy phase (1 dmg). Matches the mech-loss magnitude for
-                // consistency with the existing tuner corpus.
+                // consistency with the existing tuner corpus. Medical Supplies
+                // still zeroes the pilot-loss component — if the 1 dmg kills
+                // a low-HP mech (shouldn't happen on non-lethal env, but
+                // conservative), the pilot still revives.
                 let base = scaled(weights.mech_killed, ff, 0.05, 0.95);
-                let pilot_penalty = weights.mech_killed * u.pilot_value as f64;
+                let pilot_penalty = if board.medical_supplies {
+                    0.0
+                } else {
+                    weights.mech_killed * u.pilot_value as f64
+                };
                 score += base + pilot_penalty;
             }
         }
@@ -595,8 +617,17 @@ pub fn evaluate(
             // scale with ff: a veteran pilot is lost forever (no XP/skills
             // for remaining missions) and its cost applies regardless of
             // how many turns remain in this mission.
+            //
+            // Passive_Medical ("Medical Supplies") revives all pilots on
+            // death — the pilot is NOT permanently lost, so the pilot-value
+            // component is zeroed. The mech itself is still destroyed, so
+            // base_penalty (grid/HP consequences) still applies.
             let base_penalty = scaled(weights.mech_killed, ff, 0.05, 0.95);
-            let pilot_penalty = weights.mech_killed * u.pilot_value as f64;
+            let pilot_penalty = if board.medical_supplies {
+                0.0
+            } else {
+                weights.mech_killed * u.pilot_value as f64
+            };
             let mut penalty = base_penalty + pilot_penalty;
             // At critical grid, reduce mech death penalty — losing a mech is
             // preferable to losing the game from undefended buildings

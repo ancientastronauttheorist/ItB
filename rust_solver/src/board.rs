@@ -295,6 +295,11 @@ pub struct Board {
     pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
     pub force_amp: bool,        // Passive_ForceAmp: Vek take +1 from bump/spawn-block
                                 // damage. Excludes sentient enemies (Bot Leader).
+    pub medical_supplies: bool, // Passive_Medical: all pilots survive mech death (no
+                                // permanent pilot loss). The mech is still destroyed —
+                                // grid/HP/threat consequences unchanged; only the
+                                // pilot_value permanent-loss component is zeroed in
+                                // evaluate.rs.
     pub current_turn: u8,       // 0-indexed (0 = deployment, 1 = first combat turn)
     pub total_turns: u8,        // Mission length (typically 5, train/tidal = 4)
     pub remaining_spawns: u32,  // Queued Vek spawns still to emerge (from bridge
@@ -347,6 +352,7 @@ impl Default for Board {
             flame_shielding: false,
             vek_hormones: false,
             force_amp: false,
+            medical_supplies: false,
             current_turn: 0,
             total_turns: 5,
             remaining_spawns: u32::MAX, // Unknown → treat as "plenty of future"
