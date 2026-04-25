@@ -2,7 +2,7 @@
 
 An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Claude is the control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **12 / 70 achievements earned** (see `TODO.md`).
+Status: **15 / 70 achievements earned** (live from Steam Web API via `python3 game_loop.py achievements`; see `TODO.md` for the checklist).
 
 ---
 

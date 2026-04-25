@@ -2,13 +2,15 @@
 
 ## Achievement Checklist
 
-12 of 70 completed (verified 2026-04-24 against `~/Library/Application Support/IntoTheBreach/profile_Alpha/profile.lua`). 58 remaining, sorted by global unlock % (easiest first).
+15 of 70 completed (authoritative source: `python3 game_loop.py achievements` → Steam Web API. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 55 remaining, sorted by global unlock % (easiest first).
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
+- [x] Perfect Island (61.3%) — Do not fail any objective on a single Corporate Island
 - [x] Friends in High Places (49.8%) — Spend 50 Reputation across all games [cumulative]
 - [x] Come Together (44.7%) — Unlock 6 additional Pilots [cumulative]
+- [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
 - [ ] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
 - [ ] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 
@@ -75,22 +77,22 @@
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (12, verified against profile.lua)
-- [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Archive_A_3]
-- [x] Field Promotion (73.2%) — Have a Pilot reach maximum level  [Global_Pilot_Max]
-- [x] Emerging Technologies — Unlock a new Mech Squad  [Global_Meta_Unlock]
-- [x] Victory — Beat the game (any length)  [Global_Victory_Any]
-- [x] The Defenders — Finish a Corporate Island without Building Damage  [Global_Island_Building]
-- [x] Friends in High Places (49.8%) — Spend 50 Reputation across games  [Global_Meta_Reputation]
-- [x] Come Together (44.7%) — Unlock 6 additional Pilots  [Global_Pilot_Unlocked]
-- [x] Immovable Objects — Block 100 Vek across all games  [Global_Meta_Block]
-- [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians  [Global_Meta_Rescue]
-- [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Archive_B_3, Steel Judoka]
-- [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Archive_B_2, Steel Judoka]
-- [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Archive_B_1, Steel Judoka]
-
-### Partial (in-progress in profile)
-- [ ] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Archive_A_1, Rift Walkers]
+### Already Completed (15, from Steam Web API)
+- [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
+- [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
+- [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
+- [x] Perfect Island (61.3%) — Do not fail any objective on a single Corporate Island
+- [x] Emerging Technologies — Unlock a new Mech Squad
+- [x] Victory — Beat the game (any length)
+- [x] The Defenders — Finish a Corporate Island without Building Damage
+- [x] Friends in High Places (49.8%) — Spend 50 Reputation across games
+- [x] Come Together (44.7%) — Unlock 6 additional Pilots
+- [x] Immovable Objects — Block 100 Vek across all games
+- [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
+- [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
+- [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
+- [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
+- [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 
 
 ## Development Phases

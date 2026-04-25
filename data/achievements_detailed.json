@@ -14,7 +14,7 @@
         "description": "Drown 3 enemies in water in a single battle with the Rift Walkers squad",
         "type": "single_battle",
         "global_unlock_pct": 68.0,
-        "completed": false,
+        "completed": true,
         "strategy": "Choose Archive island for abundant water tiles and tidal waves. Use Cannon Mech push and Artillery Mech push to knock Vek into water. Tidal waves count as drowning. Avoid flying Vek (Hornets, Psions) which cannot drown.",
         "setup": "Archive island, missions near water edges",
         "pitfalls": "Flying Vek don't drown. Frozen Vek on water survive (they create ice)."
@@ -650,7 +650,7 @@
         "description": "Do not fail any objective on a single Corporate Island",
         "type": "single_island",
         "global_unlock_pct": 61.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Complete all bonus objectives on all missions on one island. Building damage is okay \u2014 only bonus objectives matter.",
         "setup": "Easy difficulty. 1-objective missions.",
         "pitfalls": "Failed objectives (not building damage) break perfection."
@@ -702,7 +702,7 @@
         "description": "Finish 3 Corporate Islands without dropping below 4 Grid Power",
         "type": "single_run",
         "global_unlock_pct": 39.0,
-        "completed": false,
+        "completed": true,
         "strategy": "Keep grid power above 4 the entire run. Maximize protection. Buy grid power early.",
         "setup": "3-island run. Defensive play. Easy difficulty.",
         "pitfalls": "Grid power must NEVER drop below 4. Even briefly."
