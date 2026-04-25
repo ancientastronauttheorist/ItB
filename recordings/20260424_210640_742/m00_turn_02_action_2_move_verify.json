@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-04-24T22:42:07.840021",
+  "timestamp": "2026-04-24T22:34:57.389675",
   "run_id": "20260424_210640_742",
   "mission_index": 0,
-  "turn": 3,
-  "label": "action_2_attack_verify",
+  "turn": 2,
+  "label": "action_2_move_verify",
   "data": {
     "action_index": 2,
-    "sub_action": "attack",
-    "mech_uid": 1,
+    "sub_action": "move",
+    "mech_uid": 0,
     "predicted": {
       "action_index": 2,
-      "grid_power": 2,
-      "mech_uid": 1,
-      "snapshot_phase": "after_mech_action",
+      "grid_power": 3,
+      "mech_uid": 0,
+      "snapshot_phase": "after_move",
       "tiles_changed": [
         {
           "acid": false,
@@ -47,7 +47,7 @@
         {
           "acid": false,
           "building_hp": 0,
-          "fire": true,
+          "fire": false,
           "has_pod": false,
           "smoke": false,
           "terrain": "ground",
@@ -83,6 +83,16 @@
           "terrain": "ground",
           "x": 6,
           "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 6,
+          "y": 4
         },
         {
           "acid": false,
@@ -92,16 +102,6 @@
           "smoke": false,
           "terrain": "forest",
           "x": 6,
-          "y": 4
-        },
-        {
-          "acid": false,
-          "building_hp": 0,
-          "fire": false,
-          "has_pod": false,
-          "smoke": false,
-          "terrain": "ground",
-          "x": 6,
           "y": 5
         }
       ],
@@ -110,27 +110,6 @@
           "active": true,
           "alive": true,
           "hp": 2,
-          "is_mech": true,
-          "max_hp": 3,
-          "pos": [
-            3,
-            2
-          ],
-          "status": {
-            "acid": false,
-            "fire": false,
-            "frozen": false,
-            "shield": false,
-            "web": false
-          },
-          "team": 1,
-          "type": "PunchMech",
-          "uid": 0
-        },
-        {
-          "active": false,
-          "alive": true,
-          "hp": 3,
           "is_mech": true,
           "max_hp": 3,
           "pos": [
@@ -145,18 +124,39 @@
             "web": false
           },
           "team": 1,
+          "type": "PunchMech",
+          "uid": 0
+        },
+        {
+          "active": true,
+          "alive": true,
+          "hp": 2,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            2,
+            4
+          ],
+          "status": {
+            "acid": false,
+            "fire": true,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
           "type": "TankMech",
           "uid": 1
         },
         {
           "active": false,
-          "alive": false,
-          "hp": 0,
+          "alive": true,
+          "hp": 2,
           "is_mech": true,
           "max_hp": 2,
           "pos": [
-            5,
-            1
+            2,
+            3
           ],
           "status": {
             "acid": false,
@@ -172,11 +172,53 @@
         {
           "active": false,
           "alive": true,
-          "hp": 3,
+          "hp": 2,
+          "is_mech": false,
+          "max_hp": 3,
+          "pos": [
+            5,
+            3
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Firefly1",
+          "uid": 731
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 2,
           "is_mech": false,
           "max_hp": 5,
           "pos": [
-            5,
+            6,
+            6
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Firefly2",
+          "uid": 732
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 1,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            2,
             1
           ],
           "status": {
@@ -187,57 +229,128 @@
             "web": false
           },
           "team": 6,
-          "type": "Scorpion2",
-          "uid": 759
+          "type": "Hornet1",
+          "uid": 733
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 2,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            1,
+            6
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Hornet1",
+          "uid": 751
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 3,
+          "is_mech": false,
+          "max_hp": 3,
+          "pos": [
+            5,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Scorpion1",
+          "uid": 752
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 1,
+          "is_mech": false,
+          "max_hp": 1,
+          "pos": [
+            4,
+            4
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "Train_Pawn",
+          "uid": 730
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 1,
+          "is_mech": false,
+          "max_hp": 1,
+          "pos": [
+            4,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "Train_Pawn",
+          "uid": 730
         }
       ]
     },
     "diff": {
       "unit_diffs": [
         {
-          "uid": 0,
-          "type": "PunchMech",
+          "uid": 1,
+          "type": "TankMech",
           "field": "hp",
           "predicted": 2,
           "actual": 3
         },
         {
-          "uid": 0,
-          "type": "PunchMech",
+          "uid": 1,
+          "type": "TankMech",
           "field": "active",
           "predicted": true,
           "actual": false
         },
         {
-          "uid": 759,
-          "type": "Scorpion2",
-          "field": "hp",
-          "predicted": 3,
-          "actual": 2
-        },
-        {
-          "uid": 759,
-          "type": "Scorpion2",
-          "field": "pos",
-          "predicted": [
-            5,
-            1
-          ],
-          "actual": [
-            5,
-            2
-          ]
+          "uid": 1,
+          "type": "TankMech",
+          "field": "status.fire",
+          "predicted": true,
+          "actual": false
         }
       ],
       "tile_diffs": [],
       "scalar_diffs": [],
-      "total_count": 4
+      "total_count": 3
     },
     "classification": {
       "top_category": "damage_amount",
       "categories": [
         "damage_amount",
-        "push_dir"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false
@@ -247,23 +360,23 @@
       "top_category": "damage_amount",
       "categories": [
         "damage_amount",
-        "push_dir"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Brute_Tankmech|attack",
+      "signature": "damage_amount|Prime_Punchmech|move",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
         "action_index": 2,
-        "turn": 3,
-        "weapon": "Brute_Tankmech",
+        "turn": 2,
+        "weapon": "Prime_Punchmech",
         "target": [
           5,
           3
