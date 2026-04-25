@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-04-25T14:53:13.939784",
+  "run_id": "20260425_005049_742",
+  "mission_index": 1,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 7,
+      "grid_power": 3,
+      "enemies_alive": 2,
+      "enemy_hp_total": 4,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "hp": 5,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "RockartMech",
+          "hp": 2,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "hp": 3,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "building_hp_total": 8,
+      "buildings_alive": 6,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 1,
+      "enemy_hp_total": 2,
+      "grid_power": 3,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 3,
+          "type": "LaserMech",
+          "uid": 0
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "RockartMech",
+          "uid": 1
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "PulseMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 3
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": -1,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 1,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "predicted_hp": 5,
+          "actual_hp": 5,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "RockartMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

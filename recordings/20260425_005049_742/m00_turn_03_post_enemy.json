@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-04-25T14:47:03.047664",
+  "run_id": "20260425_005049_742",
+  "mission_index": 0,
+  "turn": 3,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 8,
+      "grid_power": 5,
+      "enemies_alive": 5,
+      "enemy_hp_total": 11,
+      "mechs_alive": 2,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "hp": 2,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "building_hp_total": 7,
+      "buildings_alive": 5,
+      "buildings_destroyed_by_enemies": 2,
+      "enemies_alive": 5,
+      "enemy_hp_total": 11,
+      "grid_power": 4,
+      "mech_hp": [
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "LaserMech",
+          "uid": 0
+        },
+        {
+          "hp": 0,
+          "max_hp": 2,
+          "type": "RockartMech",
+          "uid": 1
+        },
+        {
+          "hp": 1,
+          "max_hp": 3,
+          "type": "PulseMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 2
+    },
+    "deltas": {
+      "buildings_alive_diff": 1,
+      "building_hp_diff": 1,
+      "grid_power_diff": 1,
+      "enemies_alive_diff": 0,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "predicted_hp": 1,
+          "actual_hp": 2,
+          "diff": 1
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

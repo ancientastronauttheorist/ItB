@@ -4,10 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-7825152",
+  "solver_version": "rust-0.1.0-cba081d",
   "weight_version": "v009",
-  "updated": "2026-04-25T00:50:49.770529",
+  "updated": "2026-04-25T15:20:47.129314",
   "created": "2026-04-25T00:50:49.770545",
   "missions": [],
-  "outcome": null
+  "outcome": "win",
+  "outcome_mission": 3,
+  "outcome_recorded_at": "2026-04-25T15:20:47.112384",
+  "outcome_notes": "Antiquity Row: Dam destroyed (1\u2605), Block Spawn failed. Grid 3/7."
 }
