@@ -151,11 +151,11 @@
 
 ### Environment Awareness
 - [x] **Tidal waves / air strikes / lightning**: Bridge provides `environment_danger` tiles via `Board:IsEnvironmentDanger()`. Solver avoids placing mechs on them, rewards pushing enemies onto them.
-- [ ] **Conveyor belt direction**: Bridge provides tile type but NOT push direction. Need Lua-side `Board:GetConveyorDirection()` or similar. Required for Detritus Disposal island.
-- [ ] **Teleporter pad pairing**: Bridge doesn't provide which pads are linked. Need Lua-side extraction or visual detection. Required for Detritus Disposal island.
+- [x] **Conveyor belt direction**: Bridge regex extracts `conveyorN.png` direction (0-3); Rust `Board.conveyor_dir` per tile; deploy filter excludes conveyor tiles. Commit 1c6b38b (2026-04-24).
+- [x] **Teleporter pad pairing**: Lua hooks `Board.AddTeleport` to capture pairs; Rust `Board.teleporter_pairs` + `apply_teleport_on_land()` fires on move-end / push / throw. Sim v8, commit 456ba49 (2026-04-23).
 - [ ] **Windstorm direction**: No directional data in bridge. Need Lua extraction for R.S.T. island.
 - [ ] **Volcanic Hive patterns**: Lava flow / falling rocks / tentacles follow cycles (Random → Aimed → Area). Pattern prediction needed for final mission.
-- [ ] **Cataclysm board shrinking**: Row-of-chasms advancing each turn. Already covered by `IsEnvironmentDanger()` but no prediction of next-turn danger.
+- [~] **Cataclysm board shrinking**: `cracked` flag exposed per tile; cracked→chasm on damage modeled (sim v15, commit 0fecd0f). Still missing: next-turn row-advancement prediction so the solver can pre-empt the shrink.
 
 ### Simulation Gaps
 - [x] **ACID damage doubling**: Weapon damage doubled, armor disabled when unit has acid.
