@@ -2058,6 +2058,163 @@ mod tests {
         assert_eq!(board.units[enemy_idx].y, 5); // moved from 4 to 5
     }
 
+    /// Regression: snapshot grid_drop_20260424_174047_323_t01_a3.
+    /// Titan Fist (plain Melee, no AOE flags) targeting an empty tile with
+    /// mountains at the perpendicular cardinal neighbors must NOT damage
+    /// those mountains. Only AOE_PERP weapons (Sword, Janus Cannon, etc.)
+    /// hit perpendicular tiles.
+    #[test]
+    fn test_titan_fist_does_not_damage_perpendicular_mountains() {
+        let mut board = make_test_board();
+        // PunchMech at (1,3) attacking (1,2) — direction is (0,-1).
+        // Perpendicular tiles around target (1,2): (0,2) and (2,2).
+        let mech_idx = add_mech(&mut board, 0, 1, 3, 3, WId::PrimePunchmech);
+        // Place mountains (HP 2) at the perpendicular tiles.
+        {
+            let t = board.tile_mut(0, 2);
+            t.terrain = Terrain::Mountain;
+            t.building_hp = 2;
+        }
+        {
+            let t = board.tile_mut(2, 2);
+            t.terrain = Terrain::Mountain;
+            t.building_hp = 2;
+        }
+        // Target tile (1,2) is empty ground — no unit, no terrain feature.
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 1, 2);
+
+        // Mountains MUST be untouched. Plain Melee with no AOE_PERP flag
+        // should not splash to perpendicular tiles.
+        assert_eq!(board.tile(0, 2).terrain, Terrain::Mountain,
+            "(0,2) mountain should remain mountain");
+        assert_eq!(board.tile(0, 2).building_hp, 2,
+            "(0,2) mountain HP must be unchanged (was 2)");
+        assert_eq!(board.tile(2, 2).terrain, Terrain::Mountain,
+            "(2,2) mountain should remain mountain");
+        assert_eq!(board.tile(2, 2).building_hp, 2,
+            "(2,2) mountain HP must be unchanged (was 2)");
+    }
+
+    /// Reproduce the full board layout from snapshot
+    /// grid_drop_20260424_174047_323_t01_a3 to ensure no neighbouring
+    /// terrain or building interaction triggers stray perpendicular damage
+    /// for plain Titan Fist.
+    #[test]
+    fn test_titan_fist_perp_mountains_with_full_neighbourhood() {
+        let mut board = make_test_board();
+        // PunchMech at (1,3) — same as snapshot.
+        let mech_idx = add_mech(&mut board, 0, 1, 3, 5, WId::PrimePunchmech);
+        // Snapshot terrain (relevant tiles near target):
+        //   (0,2) mountain hp=2
+        //   (1,1) building hp=1
+        //   (1,2) ground (target — empty)
+        //   (2,1) building hp=1
+        //   (2,2) mountain hp=2
+        //   (2,3) building hp=1
+        for &(mx, my) in &[(0u8, 2u8), (2u8, 2u8)] {
+            let t = board.tile_mut(mx, my);
+            t.terrain = Terrain::Mountain;
+            t.building_hp = 2;
+        }
+        for &(bx, by) in &[(1u8, 1u8), (2u8, 1u8), (2u8, 3u8)] {
+            let t = board.tile_mut(bx, by);
+            t.terrain = Terrain::Building;
+            t.building_hp = 1;
+        }
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 1, 2);
+
+        // Critical assertion: perpendicular mountains untouched.
+        assert_eq!(board.tile(0, 2).terrain, Terrain::Mountain);
+        assert_eq!(board.tile(0, 2).building_hp, 2);
+        assert_eq!(board.tile(2, 2).terrain, Terrain::Mountain);
+        assert_eq!(board.tile(2, 2).building_hp, 2);
+        // Diagonally-adjacent buildings also untouched.
+        assert_eq!(board.tile(2, 1).building_hp, 1);
+        assert_eq!(board.tile(2, 3).building_hp, 1);
+        // Mech HP unchanged (no self-damage on a plain Titan Fist hit on
+        // empty ground).
+        assert_eq!(board.units[mech_idx].hp, 5);
+    }
+
+    /// Reproduction via the bridge JSON path — the failing run actually
+    /// dispatched through `replay_solution`, so verify the JSON pipeline
+    /// (board_from_json → simulate_attack → snapshot serializer) reaches
+    /// the same answer as the in-Rust unit test above.
+    #[test]
+    fn test_titan_fist_perp_via_bridge_replay() {
+        // Bridge state matching snapshot grid_drop_20260424_174047_323_t01_a3
+        // (see actual_board.json). Mech is at (1,3); target is empty (1,2);
+        // mountains at (0,2) and (2,2); buildings at (1,1)/(2,1)/(2,3)/...
+        let bridge = r#"{
+          "tiles": [
+            {"x":0,"y":2,"terrain":"mountain","building_hp":2},
+            {"x":2,"y":2,"terrain":"mountain","building_hp":2},
+            {"x":1,"y":1,"terrain":"building","building_hp":1},
+            {"x":2,"y":1,"terrain":"building","building_hp":1},
+            {"x":2,"y":3,"terrain":"building","building_hp":1}
+          ],
+          "units": [
+            {"uid":0,"type":"PunchMech","x":1,"y":3,
+             "hp":5,"max_hp":3,"team":1,"mech":true,
+             "active":true,"move":4,"massive":true,
+             "weapons":["Prime_Punchmech"]}
+          ],
+          "grid_power": 4,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let plan = r#"[{"mech_uid":0,"move_to":[1,3],"weapon_id":"Prime_Punchmech","target":[1,2]}]"#;
+        let raw = crate::replay::replay_solution(bridge, plan)
+            .expect("replay should succeed");
+        let v: serde_json::Value = serde_json::from_str(&raw).unwrap();
+        // Walk tiles_changed in post_attack and assert the mountains kept HP=2.
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let tiles = post_attack["tiles_changed"].as_array().unwrap();
+        for t in tiles {
+            let x = t["x"].as_u64().unwrap() as u8;
+            let y = t["y"].as_u64().unwrap() as u8;
+            if (x, y) == (0, 2) || (x, y) == (2, 2) {
+                assert_eq!(t["terrain"].as_str().unwrap(), "mountain",
+                    "({},{}) terrain", x, y);
+                assert_eq!(t["building_hp"].as_u64().unwrap(), 2,
+                    "({},{}) mountain HP via bridge replay", x, y);
+            }
+        }
+        // Also assert mech HP unchanged.
+        let units = post_attack["units"].as_array().unwrap();
+        let mech = units.iter().find(|u| u["uid"].as_u64() == Some(0)).unwrap();
+        assert_eq!(mech["hp"].as_i64().unwrap(), 5, "mech HP must be 5 (unchanged)");
+    }
+
+    /// Companion check: Sword (AOE_PERP melee) MUST still damage perpendicular
+    /// mountains. Guards against an over-broad fix that strips the AOE_PERP
+    /// path altogether.
+    #[test]
+    fn test_sword_damages_perpendicular_mountains() {
+        let mut board = make_test_board();
+        // Mech at (1,3), target (1,2), direction (0,-1).
+        let mech_idx = add_mech(&mut board, 0, 1, 3, 3, WId::PrimeSword);
+        for &(mx, my) in &[(0u8, 2u8), (2u8, 2u8)] {
+            let t = board.tile_mut(mx, my);
+            t.terrain = Terrain::Mountain;
+            t.building_hp = 2;
+        }
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeSword, 1, 2);
+
+        // Sword has AOE_PERP — both perpendicular mountains lose 1 HP.
+        assert_eq!(board.tile(0, 2).building_hp, 1,
+            "(0,2) mountain should be damaged by Sword AOE_PERP");
+        assert_eq!(board.tile(2, 2).building_hp, 1,
+            "(2,2) mountain should be damaged by Sword AOE_PERP");
+    }
+
     #[test]
     fn test_frozen_unit_invincible() {
         let mut board = make_test_board();
