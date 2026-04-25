@@ -14,7 +14,7 @@
         "description": "Drown 3 enemies in water in a single battle with the Rift Walkers squad",
         "type": "single_battle",
         "global_unlock_pct": 68.0,
-        "completed": true,
+        "completed": false,
         "strategy": "Choose Archive island for abundant water tiles and tidal waves. Use Cannon Mech push and Artillery Mech push to knock Vek into water. Tidal waves count as drowning. Avoid flying Vek (Hornets, Psions) which cannot drown.",
         "setup": "Archive island, missions near water edges",
         "pitfalls": "Flying Vek don't drown. Frozen Vek on water survive (they create ice)."
@@ -34,10 +34,10 @@
         "description": "Complete 1st Corporate Island with the Rift Walkers squad",
         "type": "single_island",
         "global_unlock_pct": 75.0,
-        "completed": false,
-        "strategy": "Play Rift Walkers on Easy. Focus on protecting buildings. Use Alt key to check enemy attack order. Complete any island — just finish 4 missions + boss.",
+        "completed": true,
+        "strategy": "Play Rift Walkers on Easy. Focus on protecting buildings. Use Alt key to check enemy attack order. Complete any island \u2014 just finish 4 missions + boss.",
         "setup": "Easy difficulty, any island",
-        "pitfalls": "None — straightforward progression achievement."
+        "pitfalls": "None \u2014 straightforward progression achievement."
       }
     ],
     "rusting_hulks": [
@@ -58,7 +58,7 @@
         "global_unlock_pct": 15.3,
         "completed": false,
         "strategy": "Storm Generator deals 1 damage to each enemy in smoke at end of enemy turn. Need 12 total smoke-damage instances. Use Jet Mech and Rocket Mech to create lots of smoke. Keep enemies alive in smoke. Upgrade Storm Generator (3 cores). Later turns with more enemies are better.",
-        "setup": "Upgrade Storm Generator. Missions with many enemies. Don't kill Vek — keep them in smoke.",
+        "setup": "Upgrade Storm Generator. Missions with many enemies. Don't kill Vek \u2014 keep them in smoke.",
         "pitfalls": "Killing Vek removes them from smoke. Need to balance damage vs keeping enemies alive."
       },
       {
@@ -67,7 +67,7 @@
         "type": "single_battle",
         "global_unlock_pct": 36.3,
         "completed": false,
-        "strategy": "Play defensively. Use smoke to cancel attacks. Position mechs where they won't be hit. Shield mechs when possible. Web prevention essential — Camila Vera helps. Choose 1-objective missions (shields on buildings).",
+        "strategy": "Play defensively. Use smoke to cancel attacks. Position mechs where they won't be hit. Shield mechs when possible. Web prevention essential \u2014 Camila Vera helps. Choose 1-objective missions (shields on buildings).",
         "setup": "Rusting Hulks, easy difficulty, 1-objective mission with shielded buildings",
         "pitfalls": "ANY mech or building damage fails it. Repaired damage is still damage. Self-damage counts. Watch for splash damage."
       }
@@ -89,7 +89,7 @@
         "type": "single_battle",
         "global_unlock_pct": 14.8,
         "completed": false,
-        "strategy": "Get 4 enemies in a straight line and hit them all with Burst Beam. Use other mechs to push/pull enemies into alignment. Spider Leader missions are good — spiderlings provide extra targets. Late-game turns with many enemies work best.",
+        "strategy": "Get 4 enemies in a straight line and hit them all with Burst Beam. Use other mechs to push/pull enemies into alignment. Spider Leader missions are good \u2014 spiderlings provide extra targets. Late-game turns with many enemies work best.",
         "setup": "Need many enemies aligned. Use Charge Mech and Defense Mech to reposition Vek.",
         "pitfalls": "Burst Beam damage decreases with range (3-2-1-0). Further targets may take 0 damage but still 'hit'."
       },
@@ -101,7 +101,7 @@
         "completed": false,
         "strategy": "Use Defense Mech's shield upgrade to repeatedly shield buildings/mechs that are about to be hit. Bethany Jones or Mafan (Zoltan) provides free shields each turn. 4 shield blocks in one battle.",
         "setup": "Shield upgrade on Defense Mech. Bethany pilot. Let enemies target shielded units.",
-        "pitfalls": "Each shield blocks only once — need to re-apply. Need 4 separate instances."
+        "pitfalls": "Each shield blocks only once \u2014 need to re-apply. Need 4 separate instances."
       }
     ],
     "blitzkrieg": [
@@ -111,7 +111,7 @@
         "type": "single_battle",
         "global_unlock_pct": 24.8,
         "completed": false,
-        "strategy": "Electric Whip chains through ALL connected adjacent units/objects. Spider eggs, boulders, your own mechs, AND Vek all count as chain links. Spider Leader mission ideal — spiderlings everywhere. Upgrade whip for range. Position your mechs in the chain.",
+        "strategy": "Electric Whip chains through ALL connected adjacent units/objects. Spider eggs, boulders, your own mechs, AND Vek all count as chain links. Spider Leader mission ideal \u2014 spiderlings everywhere. Upgrade whip for range. Position your mechs in the chain.",
         "setup": "Upgrade Electric Whip. Spider Leader mission for many small targets. Position all units adjacently.",
         "pitfalls": "Chain damages everything including allies. Plan for friendly fire damage."
       },
@@ -121,7 +121,7 @@
         "type": "single_run",
         "global_unlock_pct": 10.5,
         "completed": false,
-        "strategy": "Enable timer UI in settings. Max combat speed. Choose 2-island run. Pick easy 1-objective missions. Don't overthink moves — speed matters. 'Protect train' missions are shorter. Minimal shop time between islands.",
+        "strategy": "Enable timer UI in settings. Max combat speed. Choose 2-island run. Pick easy 1-objective missions. Don't overthink moves \u2014 speed matters. 'Protect train' missions are shorter. Minimal shop time between islands.",
         "setup": "Timer enabled, combat speed maxed, 2-island run, easy difficulty",
         "pitfalls": "Timer is real-time. Menu/shop time counts. Don't pause to think too long."
       },
@@ -142,7 +142,7 @@
         "description": "Have Mech Armor absorb 5 damage in a single battle with Steel Judoka",
         "type": "single_battle",
         "global_unlock_pct": 10.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Abe Isamu (Armored pilot) on a non-Judo mech. Let enemies hit the armored mech 5+ times. Each hit absorbs 1 damage from armor. Target Firefly missions where many ranged attacks hit the same mech.",
         "setup": "Abe Isamu pilot. Let mech tank 5+ hits. Easy difficulty for more turns.",
         "pitfalls": "Mech needs enough HP to survive 5 hits even with armor. Repair when needed."
@@ -152,7 +152,7 @@
         "description": "Have 4 enemies die from enemy fire in a single battle with Steel Judoka",
         "type": "single_battle",
         "global_unlock_pct": 14.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Gravity Mech's Vek Hormones to flip enemy attacks into other enemies. Push enemies into each other's attack lines. Environmental kills (dam floods) count as non-player kills. Need 4 enemy-on-enemy kills in one battle.",
         "setup": "Upgrade Vek Hormones. Archive island with dam. Many enemies on field.",
         "pitfalls": "Player-caused kills don't count. Only enemy fire/environmental kills count."
@@ -162,10 +162,10 @@
         "description": "Push 3 enemies with a single attack with the Steel Judoka squad",
         "type": "single_battle",
         "global_unlock_pct": 22.9,
-        "completed": false,
-        "strategy": "Siege Mech's Cluster Artillery hits a cross pattern — if 3+ enemies are in the cross, all get pushed. Alternatively, find/buy displacement weapons. Position enemies near each other with Judo/Gravity Mechs first.",
+        "completed": true,
+        "strategy": "Siege Mech's Cluster Artillery hits a cross pattern \u2014 if 3+ enemies are in the cross, all get pushed. Alternatively, find/buy displacement weapons. Position enemies near each other with Judo/Gravity Mechs first.",
         "setup": "Siege Mech, crowded enemy positions",
-        "pitfalls": "Cluster Artillery damages in cross pattern — enemies must be in specific tiles."
+        "pitfalls": "Cluster Artillery damages in cross pattern \u2014 enemies must be in specific tiles."
       }
     ],
     "flame_behemoths": [
@@ -195,7 +195,7 @@
         "type": "single_battle",
         "global_unlock_pct": 15.7,
         "completed": false,
-        "strategy": "Blood Psion mission ideal — enemies regenerate, keeping them alive while burning. Upgrade Flamethrower range. Set all enemies on fire but don't kill them. Need 5 burning Vek at same time.",
+        "strategy": "Blood Psion mission ideal \u2014 enemies regenerate, keeping them alive while burning. Upgrade Flamethrower range. Set all enemies on fire but don't kill them. Need 5 burning Vek at same time.",
         "setup": "Blood Psion mission. Upgraded Flamethrower. Late turn with many enemies.",
         "pitfalls": "Burning enemies take 1 damage/turn and may die. Blood Psion regeneration counteracts this."
       }
@@ -271,7 +271,7 @@
         "type": "single_run",
         "global_unlock_pct": 9.4,
         "completed": false,
-        "strategy": "4-island run required for enough missions. Protect every Time Pod encountered. Use mobility to collect pods. Not every mission has a pod — need luck plus protection.",
+        "strategy": "4-island run required for enough missions. Protect every Time Pod encountered. Use mobility to collect pods. Not every mission has a pod \u2014 need luck plus protection.",
         "setup": "4-island run. Random squad. Prioritize pod protection.",
         "pitfalls": "Pod spawns are random. May not get 5 across a run. Must protect every one."
       },
@@ -347,7 +347,7 @@
         "completed": false,
         "strategy": "Upgrade Bomb Dispenser (3 cores) for dual Bomblings. Silica pilot enables 4 Bomblings/turn. Place Bomblings and mechs on spawn points. 30 blocks across 8 missions.",
         "setup": "Silica pilot. Upgraded Bomb Dispenser. Prioritize blocking over killing.",
-        "pitfalls": "30 is a lot — average ~4 blocks per mission needed. Must consistently block spawns."
+        "pitfalls": "30 is a lot \u2014 average ~4 blocks per mission needed. Must consistently block spawns."
       },
       {
         "name": "No Survivors",
@@ -525,9 +525,9 @@
         "type": "cumulative",
         "global_unlock_pct": 18.9,
         "completed": false,
-        "strategy": "Win with 4 different squads across multiple runs. Start with easier squads. Cumulative — doesn't need to be same run.",
+        "strategy": "Win with 4 different squads across multiple runs. Start with easier squads. Cumulative \u2014 doesn't need to be same run.",
         "setup": "Multiple runs with different squads. Easy difficulty fine.",
-        "pitfalls": "None — straightforward cumulative."
+        "pitfalls": "None \u2014 straightforward cumulative."
       },
       {
         "name": "Complete Victory",
@@ -556,10 +556,10 @@
         "description": "Spend 50 Reputation across all games",
         "type": "cumulative",
         "global_unlock_pct": 49.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Cumulative. Spend reputation at shops between islands. Happens naturally over many games.",
         "setup": "Play normally and spend reputation.",
-        "pitfalls": "None — just play enough games."
+        "pitfalls": "None \u2014 just play enough games."
       },
       {
         "name": "Immovable Objects",
@@ -576,7 +576,7 @@
         "description": "Rescue 100,000 civilians across all games",
         "type": "cumulative",
         "global_unlock_pct": 27.7,
-        "completed": false,
+        "completed": true,
         "strategy": "Cumulative. Civilians saved = buildings protected. Higher difficulty = more civilians per building (Easy:500, Normal:1000, Hard:1500). Play many games protecting buildings.",
         "setup": "Play on Normal or Hard for more civilians per building.",
         "pitfalls": "100,000 is a lot. Will happen naturally over many games."
@@ -598,7 +598,7 @@
         "description": "Have a Pilot reach maximum level",
         "type": "cumulative",
         "global_unlock_pct": 73.1,
-        "completed": false,
+        "completed": true,
         "strategy": "Ralph Karlsson gains +2 XP per kill (fastest leveling). Put him on high-kill mech. Need 50 total XP (25 for level 1, 50 for level 2).",
         "setup": "Ralph Karlsson on damage-dealing mech.",
         "pitfalls": "May take multiple runs with time travel."
@@ -618,10 +618,10 @@
         "description": "Unlock 6 additional Pilots",
         "type": "cumulative",
         "global_unlock_pct": 44.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Find pilots in Time Pods or select as Perfect Island rewards. Cumulative across games.",
         "setup": "Protect Time Pods. Get Perfect Islands. Choose pilot rewards.",
-        "pitfalls": "None — cumulative."
+        "pitfalls": "None \u2014 cumulative."
       },
       {
         "name": "I'm getting too old for this...",
@@ -650,8 +650,8 @@
         "description": "Do not fail any objective on a single Corporate Island",
         "type": "single_island",
         "global_unlock_pct": 61.2,
-        "completed": true,
-        "strategy": "Complete all bonus objectives on all missions on one island. Building damage is okay — only bonus objectives matter.",
+        "completed": false,
+        "strategy": "Complete all bonus objectives on all missions on one island. Building damage is okay \u2014 only bonus objectives matter.",
         "setup": "Easy difficulty. 1-objective missions.",
         "pitfalls": "Failed objectives (not building damage) break perfection."
       },
@@ -702,7 +702,7 @@
         "description": "Finish 3 Corporate Islands without dropping below 4 Grid Power",
         "type": "single_run",
         "global_unlock_pct": 39.0,
-        "completed": true,
+        "completed": false,
         "strategy": "Keep grid power above 4 the entire run. Maximize protection. Buy grid power early.",
         "setup": "3-island run. Defensive play. Easy difficulty.",
         "pitfalls": "Grid power must NEVER drop below 4. Even briefly."
