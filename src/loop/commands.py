@@ -5029,6 +5029,17 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
 
     Returns list of (x, y) bridge coordinates, best first.
     Picks 3 tiles with spatial diversity (not all clustered together).
+
+    Filters out hazard tiles that don't make sense as deployment targets even
+    when the game lists them in the deploy zone:
+    - Conveyor belts (Detritus/Disposal Vault): clicking deploys then the
+      conveyor immediately pushes the mech off, sometimes off the deploy
+      zone entirely. Mirrors the teleporter-pad workaround.
+    - Teleporter pads (Detritus/disposal): same problem — pad teleports
+      the mech off the chosen tile.
+
+    The full `deployment_zone` list returned to the caller still contains
+    these tiles so the user can override the filter manually.
     """
     enemies = [u for u in board.units if u.is_enemy and u.hp > 0]
     buildings = []
@@ -5037,6 +5048,15 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
             t = board.tiles[x][y]
             if t.terrain == "building" and t.building_hp > 0:
                 buildings.append((x, y))
+
+    # Teleporter pads: any tile that appears as either endpoint of a
+    # teleporter pair. Bridge emits these in `teleporter_pairs` as
+    # (x1, y1, x2, y2) tuples.
+    teleporter_tiles: set[tuple[int, int]] = set()
+    for pair in getattr(board, "teleporter_pairs", []) or []:
+        if len(pair) >= 4:
+            teleporter_tiles.add((pair[0], pair[1]))
+            teleporter_tiles.add((pair[2], pair[3]))
 
     def dist(x1, y1, x2, y2):
         return abs(x1 - x2) + abs(y1 - y2)
@@ -5047,6 +5067,13 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
         tx, ty = tile[0], tile[1]
         # Skip tiles already occupied
         if any(u.x == tx and u.y == ty for u in board.units):
+            continue
+        # Skip conveyor belts: deploying here gets immediately pushed off.
+        # Tile.conveyor is -1 when not a belt, 0-3 for direction.
+        if board.tiles[tx][ty].conveyor >= 0:
+            continue
+        # Skip teleporter pads for the same reason.
+        if (tx, ty) in teleporter_tiles:
             continue
 
         if enemies:
