@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-04-24T21:15:51.748981",
+  "run_id": "20260424_210640_742",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "grid_power": 5,
+      "enemies_alive": 6,
+      "enemy_hp_total": 14,
+      "mechs_alive": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "hp": 5,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "MirrorMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ScienceMech",
+          "hp": 1,
+          "max_hp": 2
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "building_hp_total": 10,
+      "buildings_alive": 7,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 4,
+      "enemy_hp_total": 9,
+      "grid_power": 5,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 3,
+          "type": "LaserMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "MirrorMech",
+          "uid": 1
+        },
+        {
+          "hp": 1,
+          "max_hp": 2,
+          "type": "ScienceMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 3
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "LaserMech",
+          "predicted_hp": 5,
+          "actual_hp": 5,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "MirrorMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "ScienceMech",
+          "predicted_hp": 1,
+          "actual_hp": 1,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

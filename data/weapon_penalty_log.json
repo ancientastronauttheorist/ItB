@@ -10,6 +10,16 @@
       "last_run_id": "20260424_174047_323",
       "weapon_id": "Prime_Punchmech"
     },
+    "damage_amount|Prime_Shift|move": {
+      "count": 1,
+      "last_run_id": "20260424_193000_165",
+      "weapon_id": "Prime_Shift"
+    },
+    "damage_amount|Ranged_Artillerymech|attack": {
+      "count": 1,
+      "last_run_id": "20260424_193000_165",
+      "weapon_id": "Ranged_Artillerymech"
+    },
     "damage_amount|Ranged_Rocket|attack": {
       "count": 2,
       "last_run_id": "20260424_144237_364",
@@ -19,6 +29,11 @@
       "count": 1,
       "last_run_id": "20260421_215501_106",
       "weapon_id": "ScorpionAtk1"
+    },
+    "damage_amount|Unknown|move": {
+      "count": 1,
+      "last_run_id": "20260424_193000_165",
+      "weapon_id": "Unknown"
     },
     "death|Brute_Grapple|attack": {
       "count": 1,

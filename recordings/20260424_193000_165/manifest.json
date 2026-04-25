@@ -1,0 +1,16 @@
+{
+  "run_id": "20260424_193000_165",
+  "squad": "Balanced Roll (Judo/Charge/Artillery)",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [
+    "probe",
+    "grid_defense"
+  ],
+  "solver_version": "rust-0.1.0-1c6b38b",
+  "weight_version": "v009",
+  "updated": "2026-04-24T19:30:00.191113",
+  "created": "2026-04-24T19:30:00.191130",
+  "missions": [],
+  "outcome": null
+}
