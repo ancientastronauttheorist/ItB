@@ -532,13 +532,16 @@ pub fn evaluate(
     //   - Enemies on danger tiles: partial-credit reward toward enemy_killed
     //     (assumes the hazard will finish them next turn).
     //
-    // IMPORTANT: Lethal env (kill_int=1) bypasses flying, so a flying mech on a
-    // kill_int=1 tile IS killed by the simulator (enemy.rs::apply_env_danger).
+    // IMPORTANT: Most lethal env (kill_int=1, Air Strike / Lightning / Satellite)
+    // bypasses flying, so a flying mech on such a tile IS killed by the simulator
+    // (enemy.rs::apply_env_danger). Tidal Wave / Cataclysm / Seismic — flagged
+    // env_danger_flying_immune — skip flyers; the simulator leaves them alive.
     // The flying skip here is correct for NON-lethal branches (wind/sand/snow
-    // don't affect flying), but we explicitly penalize flying mechs sitting on
-    // kill_int=1 tiles as belt-and-suspenders in case the simulator order
-    // changes or a search branch evaluates pre-enemy-phase (e.g. a push chain
-    // that lands a mech on the tile AFTER env_danger already ticked).
+    // don't affect flying) AND for flying_immune-lethal branches; we explicitly
+    // penalize flying mechs sitting on non-flying-immune kill_int=1 tiles as
+    // belt-and-suspenders in case the simulator order changes or a search branch
+    // evaluates pre-enemy-phase (e.g. a push chain that lands a mech on the tile
+    // AFTER env_danger already ticked).
     if board.env_danger != 0 {
         for i in 0..board.unit_count as usize {
             let u = &board.units[i];
@@ -546,8 +549,15 @@ pub fn evaluate(
             if !board.is_env_danger(u.x, u.y) { continue; }
 
             let on_kill_tile = board.is_env_danger_kill(u.x, u.y);
+            let on_flying_immune_kill = on_kill_tile
+                && board.is_env_danger_flying_immune(u.x, u.y);
 
             if u.is_player() && on_kill_tile {
+                // Flying mech on Tidal/Cataclysm/Seismic tile survives —
+                // skip the defensive death penalty (the simulator agrees).
+                if u.effectively_flying() && on_flying_immune_kill {
+                    continue;
+                }
                 // Defensive penalty: a player mech on a kill_int=1 tile is a
                 // pending death regardless of flying status. The simulator
                 // should already have killed it (firing the main mech-death

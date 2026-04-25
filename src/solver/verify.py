@@ -177,7 +177,18 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # diagnosing the 2026-04-24 Rift Walkers Corporate HQ finale defeat
 # (recordings/20260424_210640_742). Pre-v18 rows archived to
 # failure_db_snapshot_sim_v17.jsonl.
-SIMULATOR_VERSION = 18
+# v19 (2026-04-25): apply_env_danger now spares effectively-flying
+# units on terrain-conversion lethal hazards (Tidal Wave, Cataclysm,
+# Seismic). Air Strike / Lightning / Satellite Rocket continue to kill
+# flyers. New per-tile bit `env_danger_flying_immune` carries the
+# distinction; bridge emits a 5th element on each
+# `environment_danger_v2` entry, with an `env_type`-based fallback for
+# older recordings. Closes the silent "Hornet on Tidal" desync
+# (m04 Artifact Vaults, run 20260425_005049_742) where the solver
+# projected a flying enemy dead and wasted a turn, letting the live
+# Hornet destroy the Power Generator. Pre-v19 rows archived to
+# failure_db_snapshot_sim_v18.jsonl.
+SIMULATOR_VERSION = 19
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

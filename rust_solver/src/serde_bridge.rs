@@ -23,7 +23,14 @@ pub struct JsonInput {
     pub remaining_spawns: Option<u32>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
-    pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int], ...]
+    pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int, flying_immune?], ...]
+    /// Top-level env type tag from the bridge (e.g. "tidal_or_cataclysm",
+    /// "cataclysm_or_seismic", "lightning_or_airstrike", "wind", "sandstorm",
+    /// "snow"). Used as a back-compat fallback when v2 entries lack the 5th
+    /// `flying_immune` field — older recordings + boards stamped before
+    /// SIMULATOR_VERSION 19 only have 4 fields. Never authoritative when the
+    /// per-tile field is present.
+    pub env_type: Option<String>,
     pub eval_weights: Option<EvalWeights>,
     pub mission_id: Option<String>,
     /// "Kill N enemies" bonus target (mission:GetKillBonus(), difficulty-scaled).
@@ -317,14 +324,35 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Environment danger v2: per-tile {damage, kill} metadata.
-    // Each entry is [x, y, damage, kill_int] where kill_int != 0 means
-    // Deadly Threat (instant-kill, bypasses shield/frozen/armor/ACID).
-    // v2 entries implicitly populate the v1 bitset too (a v2 entry IS a danger tile).
-    // If v2 is missing entirely (older bridge), conservatively treat ALL existing
-    // env_danger tiles as lethal — over-pessimistic on tidal waves but never
-    // under-predicts air strike deaths.
+    // Environment danger v2: per-tile {damage, kill, flying_immune} metadata.
+    // Each entry is [x, y, damage, kill_int, flying_immune?] where:
+    //   kill_int != 0      → Deadly Threat (bypasses shield/frozen/armor/ACID)
+    //   flying_immune != 0 → terrain-conversion lethal (Tidal Wave/Cataclysm/
+    //                        Seismic): effectively-flying units survive.
+    //                        Air Strike / Lightning / Satellite Rocket leave
+    //                        this field 0 — they bypass flight.
+    // The 5th field is an optional addition introduced at SIMULATOR_VERSION 19
+    // (Lua bridge 2026-04-25). Older recordings only have 4 fields; we infer
+    // flying_immune from the top-level `env_type` tag when present, else
+    // leave it 0 (preserves pre-fix "kill everything" behavior).
+    // v2 entries implicitly populate the v1 bitset too.
+    // If v2 is missing entirely (older bridge), conservatively treat ALL
+    // existing env_danger tiles as lethal — over-pessimistic on tidal waves
+    // but never under-predicts air strike deaths.
     let mut env_danger_kill = 0u64;
+    let mut env_danger_flying_immune = 0u64;
+    // Back-compat fallback: when the 5th element is missing, look at the
+    // top-level env_type to decide whether the lethal hazard is terrain-
+    // conversion (flying_immune=true) or Deadly Threat (false).
+    let env_type_flying_immune: Option<bool> = input.env_type.as_deref().map(|t| {
+        matches!(t,
+            "tidal_or_cataclysm"
+            | "cataclysm_or_seismic"
+            | "tidal"
+            | "cataclysm"
+            | "seismic"
+        )
+    });
     if let Some(v2) = &input.environment_danger_v2 {
         for entry in v2 {
             if entry.len() >= 4 && entry[0] < 8 && entry[1] < 8 {
@@ -332,15 +360,30 @@ pub fn board_from_json(json_str: &str)
                 env_danger |= bit;  // v2 entry is also a v1 danger tile
                 if entry[3] != 0 {
                     env_danger_kill |= bit;
+                    let flying_immune = if entry.len() >= 5 {
+                        entry[4] != 0
+                    } else {
+                        // 4-field legacy entry — fall back to env_type
+                        env_type_flying_immune.unwrap_or(false)
+                    };
+                    if flying_immune {
+                        env_danger_flying_immune |= bit;
+                    }
                 }
             }
         }
     } else if env_danger != 0 {
-        // Backwards compat: no v2 → assume all dangers are lethal
+        // Backwards compat: no v2 → assume all dangers are lethal. Use
+        // env_type if available to populate flying_immune; otherwise the
+        // pre-fix conservative default (no flying immunity) holds.
         env_danger_kill = env_danger;
+        if env_type_flying_immune.unwrap_or(false) {
+            env_danger_flying_immune = env_danger;
+        }
     }
     board.env_danger = env_danger;
     board.env_danger_kill = env_danger_kill;
+    board.env_danger_flying_immune = env_danger_flying_immune;
 
     // Teleporter pad pairs (Mission_Teleporter overlay from Board:AddTeleport)
     if let Some(pairs) = &input.teleporter_pairs {

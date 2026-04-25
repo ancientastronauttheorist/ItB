@@ -79,15 +79,28 @@ fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: 
 ///
 /// `lethal=true` (Deadly Threat: air strike, lightning, cataclysm, etc.) bypasses
 /// shield, frozen, armor, and ACID — sets HP=0 outright. Buildings destroyed.
-/// Hits flying units too (air strikes drop bombs from above).
 ///
-/// `lethal=false` (tidal wave, sandstorm, etc.) does 1 damage with bump-like
-/// semantics: ignored by armor/ACID, consumed by shield, skips flying units.
-/// Buildings take 1 HP.
+/// `flying_immune=true` (Tidal Wave, Cataclysm, Seismic — terrain-conversion
+/// lethal hazards) skips effectively-flying units: water-conversion hovers
+/// flyers; chasm-conversion hovers flyers. Massive non-flying still die
+/// (chasm rules + project convention). Buildings on the tile still take
+/// the lethal damage regardless. The bridge populates this per-tile via the
+/// 5th element of `environment_danger_v2` entries; missing → false (treat as
+/// pure Deadly Threat, preserving pre-fix behavior).
+///
+/// `lethal=false` (sandstorm, wind storm, snow storm) does 1 damage with
+/// bump-like semantics: ignored by armor/ACID, consumed by shield, skips
+/// flying units. Buildings take 1 HP.
 ///
 /// Inlined unit/building handling (does not call apply_damage) so we can bypass
 /// shield/frozen for the lethal case without polluting the core damage path.
-fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut ActionResult) {
+fn apply_env_danger(
+    board: &mut Board,
+    x: u8, y: u8,
+    lethal: bool,
+    flying_immune: bool,
+    result: &mut ActionResult,
+) {
     // Damage unit if present. Track whether an enemy died so we can run
     // the shared death-cleanup after the mutable borrow ends — Psion
     // auras must be torn down even on env kills, which bypass apply_damage.
@@ -95,7 +108,11 @@ fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut 
     if let Some(uidx) = board.unit_at(x, y) {
         let unit = &mut board.units[uidx];
         if unit.hp > 0 {
-            if lethal {
+            // Tidal/Cataclysm/Seismic spare effectively-flying units. Massive
+            // non-flying still die: water-conversion is destroy-not-drown per
+            // project convention; chasm rules ignore Massive.
+            let spared_by_flight = lethal && flying_immune && unit.effectively_flying();
+            if lethal && !spared_by_flight {
                 // Deadly Threat: bypass shield/frozen/armor/ACID, set HP=0
                 let prev_hp = unit.hp;
                 unit.hp = 0;
@@ -109,6 +126,9 @@ fn apply_env_danger(board: &mut Board, x: u8, y: u8, lethal: bool, result: &mut 
                     result.enemy_damage_dealt += prev_hp as i32;
                     enemy_died_idx = Some(uidx);
                 }
+            } else if lethal && spared_by_flight {
+                // Flying unit on Tidal/Cataclysm/Seismic tile: untouched.
+                // No damage, no shield/frozen consumption.
             } else if !unit.effectively_flying() {
                 // Non-lethal env (1 dmg): bump-like — consumed by shield, ignores armor/ACID
                 if unit.shield() {
@@ -291,8 +311,10 @@ pub fn simulate_enemy_attacks(
         for tile_idx in 0usize..64 {
             if board.env_danger & (1u64 << tile_idx) == 0 { continue; }
             let (x, y) = idx_to_xy(tile_idx);
-            let lethal = board.env_danger_kill & (1u64 << tile_idx) != 0;
-            apply_env_danger(board, x, y, lethal, &mut result);
+            let bit = 1u64 << tile_idx;
+            let lethal = board.env_danger_kill & bit != 0;
+            let flying_immune = lethal && (board.env_danger_flying_immune & bit != 0);
+            apply_env_danger(board, x, y, lethal, flying_immune, &mut result);
         }
     }
 

@@ -282,6 +282,18 @@ pub struct Board {
     pub enemy_grid_save_expected: f32,
     pub env_danger: u64,        // bitset: bit i = tile i is danger
     pub env_danger_kill: u64,   // bitset: bit i = tile i is lethal env (Deadly Threat: air strike, lightning, etc.)
+    /// Bitset: bit i = tile i is a TERRAIN-CONVERSION lethal env (Tidal Wave →
+    /// water, Cataclysm/Seismic → chasm). Effectively-flying units stand on
+    /// these without dying — water rules let flyers hover, chasm rules let
+    /// flyers hover. Massive non-flying still die per existing tests
+    /// (water-conversion is treated as a destroy, not a drown, and chasm
+    /// always kills non-flying including Massive).
+    ///
+    /// Air Strike / Lightning / Satellite Rocket are NOT in this set —
+    /// those bypass flight (bombs / lightning hit anything in the air).
+    /// Subset of `env_danger_kill`. When a kill tile is NOT in this set,
+    /// flying offers no protection.
+    pub env_danger_flying_immune: u64,
     pub unique_buildings: u64,  // bitset: bit i = tile i is a mission objective building (Coal Plant, Power Generator, Emergency Batteries)
     pub grid_reward_buildings: u64, // bitset: subset of unique_buildings whose survival restores +1 Grid Power at mission end (Str_Power / Str_Battery / Mission_Solar). See evaluate.rs.
     pub blast_psion: bool,   // Blast Psion (Jelly_Explode1): all Vek explode on death
@@ -340,6 +352,7 @@ impl Default for Board {
             enemy_grid_save_expected: 0.0,
             env_danger: 0,
             env_danger_kill: 0,
+            env_danger_flying_immune: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
             blast_psion: false,
@@ -464,6 +477,16 @@ impl Board {
     pub fn is_env_danger_kill(&self, x: u8, y: u8) -> bool {
         let bit = 1u64 << xy_to_idx(x, y);
         self.env_danger_kill & bit != 0
+    }
+
+    /// Is the lethal env on this tile a terrain-conversion event whose
+    /// kill effect skips flying units (Tidal Wave, Cataclysm, Seismic)?
+    /// Always false for Air Strike / Lightning style "Deadly Threat"
+    /// hazards — those hit flyers too.
+    #[inline]
+    pub fn is_env_danger_flying_immune(&self, x: u8, y: u8) -> bool {
+        let bit = 1u64 << xy_to_idx(x, y);
+        self.env_danger_flying_immune & bit != 0
     }
 
     /// Iterate alive player units (mechs + friendly controllable).

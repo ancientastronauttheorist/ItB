@@ -382,7 +382,17 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // Rubble). Mirrors the existing incremental behavior in apply_push.
 // Surfaced by grid_drop investigation on run 20260424_144237_364
 // turn 1 (snapshots/grid_drop_20260424_144237_364_t01_a1).
-pub const SIMULATOR_VERSION: u32 = 18;
+// v19 (2026-04-25, flying-on-terrain-conversion env): apply_env_danger
+// now spares effectively-flying units on terrain-conversion lethal
+// hazards (Tidal Wave, Cataclysm, Seismic). Air Strike / Lightning /
+// Satellite Rocket continue to kill flyers. New per-tile bit
+// `env_danger_flying_immune` carries the distinction; bridge emits a
+// 5th element on each `environment_danger_v2` entry, with an
+// `env_type`-based fallback for older recordings. Closes the silent
+// "Hornet on Tidal" desync (m04 Artifact Vaults, run 20260425_005049_742)
+// where the solver projected a flying enemy dead and wasted a turn,
+// letting the live Hornet destroy the Power Generator.
+pub const SIMULATOR_VERSION: u32 = 19;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

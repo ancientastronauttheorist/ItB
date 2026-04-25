@@ -683,8 +683,18 @@ local function dump_state()
     end
 
     -- Environment danger (v1 + v2). v1 = flat list of [x,y] tiles.
-    -- v2 = list of [x, y, damage, kill_int] where kill_int=1 means Deadly Threat
-    -- (instant-kill, bypasses shield/frozen/armor/ACID per ITB spec).
+    -- v2 = list of [x, y, damage, kill_int, flying_immune] where:
+    --   kill_int=1      → Deadly Threat (instant-kill, bypasses shield/
+    --                     frozen/armor/ACID per ITB spec)
+    --   flying_immune=1 → terrain-conversion lethal (Tidal Wave, Cataclysm,
+    --                     Seismic). Effectively-flying units survive
+    --                     because water/chasm rules let them hover.
+    --                     Air Strike / Lightning / Satellite emit
+    --                     flying_immune=0 — those hit flyers too.
+    -- The 5th field landed at SIMULATOR_VERSION 19 (2026-04-25) closing the
+    -- "Hornet on Tidal tile" silent kill desync. Older bridges emit only 4
+    -- fields; the Rust deserializer falls back to env_type when the 5th is
+    -- missing.
     state.environment_danger = {}
     state.environment_danger_v2 = {}
 
@@ -695,6 +705,9 @@ local function dump_state()
     -- and get kill=0.
     local env_damage = 1
     local env_kill_default = true
+    -- Default flying_immune is false. Set true for terrain-conversion
+    -- env types when env_type detection lands on tidal/cataclysm/seismic.
+    local env_flying_immune_default = false
 
     -- Detect hazard type via LiveEnvironment field signatures:
     --   WindDir       → Wind Storm (push, non-lethal)
@@ -719,10 +732,17 @@ local function dump_state()
                 env_kill_default = false
             elseif le.Locations ~= nil then
                 env_type = "lightning_or_airstrike"
+                -- Lightning + Air Strike + Satellite Rocket bypass flight.
+                env_flying_immune_default = false
             elseif le.Index ~= nil then
                 env_type = "tidal_or_cataclysm"
+                -- Tidal Wave (water-conversion) and Cataclysm (chasm-
+                -- conversion) both spare effectively-flying units.
+                env_flying_immune_default = true
             elseif le.StartEffect ~= nil then
                 env_type = "cataclysm_or_seismic"
+                -- Both convert tiles to chasm; flyers hover.
+                env_flying_immune_default = true
             end
             -- Fallback class matching for Sandstorm (Row may be nil initially)
             if env_type == "unknown" then
@@ -761,14 +781,25 @@ local function dump_state()
     end)
     state.env_type = env_type
 
-    -- Helper: add a danger tile to both v1 and v2 fields.
-    local function add_danger(x, y, kill_override)
+    -- Helper: add a danger tile to both v1 and v2 fields. The optional
+    -- `flying_immune_override` controls the 5th field (Satellite Rocket
+    -- forces it false — bombs hit flyers).
+    local function add_danger(x, y, kill_override, flying_immune_override)
         state.environment_danger[#state.environment_danger + 1] = {x, y}
         local k = env_kill_default
         if kill_override ~= nil then
             k = kill_override
         end
-        state.environment_danger_v2[#state.environment_danger_v2 + 1] = {x, y, env_damage, k and 1 or 0}
+        local fi = env_flying_immune_default
+        if flying_immune_override ~= nil then
+            fi = flying_immune_override
+        end
+        -- flying_immune is meaningless on non-lethal tiles (1 dmg already
+        -- skips flying via the bump path); zero it out to keep the wire
+        -- representation tidy.
+        if not k then fi = false end
+        state.environment_danger_v2[#state.environment_danger_v2 + 1] =
+            {x, y, env_damage, k and 1 or 0, fi and 1 or 0}
     end
 
     for y = 0, 7 do
@@ -796,7 +827,9 @@ local function dump_state()
                     for _, d in ipairs(dirs) do
                         local nx, ny = u.x + d[1], u.y + d[2]
                         if nx >= 0 and nx <= 7 and ny >= 0 and ny <= 7 then
-                            add_danger(nx, ny, true)  -- always lethal
+                            -- Always lethal, never flying-immune (rockets
+                            -- detonate above ground level — flyers caught).
+                            add_danger(nx, ny, true, false)
                         end
                     end
                 end

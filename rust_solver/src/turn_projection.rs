@@ -267,7 +267,12 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if board.env_danger & bit != 0 {
             let (x, y) = idx_to_xy(idx);
             let kill_int: u8 = if board.env_danger_kill & bit != 0 { 1 } else { 0 };
-            env_danger_v2.push(vec![x, y, 1, kill_int]);
+            // 5th field: flying_immune (sim v19+). 1 = Tidal/Cataclysm/Seismic
+            // (effectively-flying spared); 0 = Air Strike / Lightning / non-
+            // lethal hazard. Always 0 unless the lethal bit is set.
+            let flying_immune: u8 = if kill_int != 0
+                && (board.env_danger_flying_immune & bit != 0) { 1 } else { 0 };
+            env_danger_v2.push(vec![x, y, 1, kill_int, flying_immune]);
         }
     }
     // Option C: enable pseudo_threat_eval on the projected board so the

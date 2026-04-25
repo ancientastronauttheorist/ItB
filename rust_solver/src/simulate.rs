@@ -3854,6 +3854,234 @@ mod tests {
             "Massive unit hit by lethal Tidal Wave must be destroyed");
     }
 
+    // ── Flying immunity on terrain-conversion lethal env (sim v19+) ──────────
+    //
+    // Tidal Wave / Cataclysm / Seismic Activity convert tiles to water/chasm.
+    // Effectively-flying units hover and survive. Air Strike / Lightning /
+    // Satellite Rocket stay lethal even to flyers (bombs/lightning ignore
+    // flight altitude). Pre-v19, apply_env_danger killed any unit on a
+    // kill_int=1 tile regardless of flying — the bridge had no way to express
+    // the distinction. v19 adds `env_danger_flying_immune` as a sibling bitset
+    // (5th field on each environment_danger_v2 entry).
+
+    #[test]
+    fn test_tidal_wave_lethal_spares_flying() {
+        // Flying enemy on a Tidal Wave tile: tile bit is lethal AND
+        // flying_immune. Hornet hovers over the new water — must survive.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_flying_enemy(&mut board, 1, 3, 3, 4);
+        let bit = 1u64 << xy_to_idx(3, 3);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 4,
+            "Flying enemy on Tidal Wave tile must survive (water hovers)");
+    }
+
+    #[test]
+    fn test_tidal_wave_lethal_kills_grounded() {
+        // Regression guard: non-flying units still die on Tidal Wave.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 3, 3, 4);
+        let bit = 1u64 << xy_to_idx(3, 3);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Non-flying enemy on Tidal Wave tile must drown");
+    }
+
+    #[test]
+    fn test_cataclysm_lethal_spares_flying() {
+        // Flying enemy on a Cataclysm tile (chasm-conversion): flyer hovers
+        // over the new chasm and lives. Mirrors the Tidal Wave path — same
+        // flying_immune flag.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_flying_enemy(&mut board, 9, 5, 2, 3);
+        let bit = 1u64 << xy_to_idx(5, 2);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 3,
+            "Flying enemy on Cataclysm tile must survive (hovers over chasm)");
+    }
+
+    #[test]
+    fn test_air_strike_lethal_kills_flying() {
+        // Regression guard: Air Strike / Lightning have flying_immune=0 even
+        // when kill_int=1. A flying unit on such a tile MUST die — bombs and
+        // lightning hit anything in the air. This was the pre-fix behavior
+        // for ALL lethal env; making sure we didn't over-spare.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_flying_enemy(&mut board, 11, 2, 6, 3);
+        let bit = 1u64 << xy_to_idx(2, 6);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        // Crucially: env_danger_flying_immune NOT set on this tile.
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0,
+            "Flying enemy on Air Strike tile must die (bombs ignore flight)");
+    }
+
+    #[test]
+    fn test_tidal_wave_flying_immune_still_destroys_building() {
+        // Even when a flyer survives, the env tick still wipes out any
+        // building on the tile (water/chasm conversion deletes buildings).
+        // This guards against an over-eager early-return that would skip the
+        // building branch when the unit was spared.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let _flyer = add_flying_enemy(&mut board, 13, 4, 4, 3);
+        // Place a building UNDER the flyer at (4,4)
+        let tile = board.tile_mut(4, 4);
+        tile.terrain = Terrain::Building;
+        tile.building_hp = 1;
+        let prev_grid = board.grid_power;
+        let bit = 1u64 << xy_to_idx(4, 4);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.tile(4, 4).terrain, Terrain::Rubble,
+            "Building destroyed by Tidal Wave even when flyer is spared");
+        assert!(board.grid_power < prev_grid,
+            "Grid power drops from destroyed building");
+    }
+
+    #[test]
+    fn test_massive_flying_tidal_wave_lethal_spares() {
+        // Flying Massive on Tidal Wave: flying overrides Massive — flyer
+        // hovers. (The non-flying Massive case still dies — see
+        // test_massive_tidal_wave_lethal_destroys.)
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let idx = add_massive_flying_enemy(&mut board, 17, 6, 3, 5);
+        let bit = 1u64 << xy_to_idx(6, 3);
+        board.env_danger |= bit;
+        board.env_danger_kill |= bit;
+        board.env_danger_flying_immune |= bit;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 5,
+            "Massive flying unit on Tidal Wave tile must survive (flying immunity)");
+    }
+
+    #[test]
+    fn test_env_danger_v2_deserializes_flying_immune_field() {
+        // Wire-format check: the bridge emits a 5th element on each
+        // environment_danger_v2 entry. Confirm board_from_json populates the
+        // env_danger_flying_immune bitset accordingly.
+        use crate::serde_bridge::board_from_json;
+        let json = r#"{
+          "tiles": [],
+          "units": [],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [
+            [3, 3, 1, 1, 1],
+            [4, 4, 1, 1, 0],
+            [5, 5, 1, 0, 0]
+          ],
+          "env_type": "tidal_or_cataclysm",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let (board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        assert!(board.is_env_danger(3, 3));
+        assert!(board.is_env_danger_kill(3, 3));
+        assert!(board.is_env_danger_flying_immune(3, 3),
+            "5-elem entry with flying_immune=1 sets the bit");
+        assert!(board.is_env_danger_kill(4, 4));
+        assert!(!board.is_env_danger_flying_immune(4, 4),
+            "5-elem entry with flying_immune=0 clears the bit");
+        assert!(board.is_env_danger(5, 5));
+        assert!(!board.is_env_danger_kill(5, 5),
+            "kill_int=0 leaves env_danger_kill clear");
+        assert!(!board.is_env_danger_flying_immune(5, 5),
+            "non-lethal tile is never flying-immune");
+    }
+
+    #[test]
+    fn test_env_danger_v2_legacy_4field_falls_back_to_env_type() {
+        // Older recordings emit only 4 fields. Fallback path: when 5th is
+        // missing, derive flying_immune from `env_type`.
+        use crate::serde_bridge::board_from_json;
+        let json = r#"{
+          "tiles": [],
+          "units": [],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[2, 2, 1, 1]],
+          "env_type": "cataclysm_or_seismic",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let (board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        assert!(board.is_env_danger_kill(2, 2));
+        assert!(board.is_env_danger_flying_immune(2, 2),
+            "Missing 5th field falls back to env_type=cataclysm_or_seismic → flying-immune");
+    }
+
+    #[test]
+    fn test_env_danger_v2_legacy_4field_lightning_not_immune() {
+        // env_type=lightning_or_airstrike → flying NOT immune (Air Strike,
+        // Lightning hit flyers).
+        use crate::serde_bridge::board_from_json;
+        let json = r#"{
+          "tiles": [],
+          "units": [],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[1, 1, 1, 1]],
+          "env_type": "lightning_or_airstrike",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let (board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        assert!(board.is_env_danger_kill(1, 1));
+        assert!(!board.is_env_danger_flying_immune(1, 1),
+            "Air Strike / Lightning legacy entries must not set flying-immune");
+    }
+
     // ── Frozen flying = grounded ─────────────────────────────────────────────
     //
     // Freezing a flying Vek (Hornet, Mosquito, Jet Mech) grounds it — frozen
