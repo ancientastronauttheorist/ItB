@@ -169,7 +169,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Surfaced by grid_drop investigation on run 20260424_144237_364
 # (snapshots/grid_drop_20260424_144237_364_t01_a1). Pre-v17 rows
 # archived to failure_db_snapshot_sim_v16.jsonl.
-SIMULATOR_VERSION = 17
+# v18: sim_charge now applies the FIRE-trail. Charge weapons with the
+# FIRE flag (BeetleAtkB Flaming Abdomen) ignite every tile passed
+# through, EXCLUDING the final resting tile, matching the in-game rule.
+# Previously sim_charge dropped the FIRE flag on intermediate tiles —
+# only the impact tile got fire via apply_weapon_status. Surfaced by
+# diagnosing the 2026-04-24 Rift Walkers Corporate HQ finale defeat
+# (recordings/20260424_210640_742). Pre-v18 rows archived to
+# failure_db_snapshot_sim_v17.jsonl.
+SIMULATOR_VERSION = 18
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

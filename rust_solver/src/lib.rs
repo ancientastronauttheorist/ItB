@@ -382,7 +382,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // Rubble). Mirrors the existing incremental behavior in apply_push.
 // Surfaced by grid_drop investigation on run 20260424_144237_364
 // turn 1 (snapshots/grid_drop_20260424_144237_364_t01_a1).
-pub const SIMULATOR_VERSION: u32 = 17;
+pub const SIMULATOR_VERSION: u32 = 18;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

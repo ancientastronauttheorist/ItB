@@ -1516,6 +1516,12 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
 
     let mut last_free = (ax, ay);
     let mut hit: Option<(u8, u8)> = None;
+    // Track tiles the charger passes through, in order. Used to apply the
+    // FIRE-flag fire trail below (currently only BeetleAtkB Flaming
+    // Abdomen has CHARGE+FIRE — Brute_Beetle Ramming Engines is FLYING_CHARGE
+    // only, no fire). Final resting tile (== last_free) is excluded per the
+    // in-game rule.
+    let mut path: Vec<(u8, u8)> = Vec::new();
 
     for i in 1..8i8 {
         let nx = ax as i8 + dx * i;
@@ -1530,12 +1536,31 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
         if !wdef.flying_charge() && tile.terrain.is_deadly_ground() { break; }
         if board.unit_at(nxu, nyu).is_some() { hit = Some((nxu, nyu)); break; }
 
+        path.push((nxu, nyu));
         last_free = (nxu, nyu);
     }
 
     // Move attacker to last free tile
     board.units[attacker_idx].x = last_free.0;
     board.units[attacker_idx].y = last_free.1;
+
+    // FIRE-trail: charge weapons with the FIRE flag (BeetleAtkB Flaming
+    // Abdomen — Beetle Leader boss) ignite every tile passed through,
+    // EXCLUDING the final resting tile (where the charger ends up). The
+    // hit tile gets fire via apply_weapon_status below; the start tile is
+    // not "passed" (charger was already there).
+    //
+    // Mirrors the tile-effects pattern in apply_weapon_status: fire
+    // replaces smoke. Charger's own tile never gets fire.
+    if wdef.fire() && path.len() >= 2 {
+        let trail_len = path.len() - 1; // exclude last_free
+        for i in 0..trail_len {
+            let (tx, ty) = path[i];
+            let tile = board.tile_mut(tx, ty);
+            tile.set_smoke(false);
+            tile.set_on_fire(true);
+        }
+    }
 
     // Teleporter pad: the charger may land on a pad. Fire BEFORE applying
     // damage to the hit target, because the self-damage block below uses
