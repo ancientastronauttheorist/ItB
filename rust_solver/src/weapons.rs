@@ -43,6 +43,13 @@ bitflags! {
         /// lets Brute_Bombrun opt into transit-damage without gaining smoke.
         /// `sim_leap` applies transit-damage when SMOKE || DAMAGES_TRANSIT.
         const DAMAGES_TRANSIT = 1 << 18;
+        /// Pull weapon drags target ALL THE WAY to the tile adjacent to the
+        /// attacker (or until a blocker stops the pull early). Default Pull
+        /// behavior is 1-tile (Science_Pullmech "Attraction Pulse"). Per wiki,
+        /// Brute_Grapple "Grappling Hook" and Science_Gravwell "Grav Well"
+        /// pull until adjacent — handled in `sim_pull_or_swap` by looping
+        /// `apply_push` rather than calling it once.
+        const FULL_PULL = 1 << 19;
     }
 }
 
@@ -80,6 +87,7 @@ impl WeaponDef {
     pub fn push_self(&self) -> bool { self.flags.contains(WeaponFlags::PUSH_SELF) }
     pub fn smoke_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::SMOKE_BEHIND_SHOOTER) }
     pub fn damages_transit(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGES_TRANSIT) }
+    pub fn full_pull(&self) -> bool { self.flags.contains(WeaponFlags::FULL_PULL) }
 }
 
 /// Default weapon def (no-op).
@@ -319,8 +327,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 19: Brute_Beetle — Ramming Engines
     w[19] = WeaponDef { weapon_type: WeaponType::Charge, damage: 2, push: PushDir::Forward, self_damage: 1, range_max: 0,
         flags: f(WeaponFlags::CHARGE.bits() | WeaponFlags::FLYING_CHARGE.bits()), ..DEF };
-    // 20: Brute_Grapple — Vice Fist (Pull)
-    w[20] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_max: 0, flags: C, ..DEF };
+    // 20: Brute_Grapple — Grappling Hook (Hook Mech, Blitzkrieg).
+    // Per wiki: "Use a grapple to pull Mech towards objects, or units to the
+    // Mech." Pulls the target ALL the way to the tile adjacent to the
+    // attacker, or until a blocker stops the chain (in which case the target
+    // bumps into the blocker). FULL_PULL flag distinguishes it from
+    // Science_Pullmech (Attraction Pulse, 1-tile-only).
+    w[20] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_max: 0,
+        flags: f(WeaponFlags::FULL_PULL.bits()), ..DEF };
     // 21: Brute_Unstable — Unstable Cannon
     w[21] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, self_damage: 1, range_max: 0,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
@@ -388,11 +402,18 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 40: Science_Pullmech — Attract Shot
     w[40] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_max: 0, flags: C, ..DEF };
-    // 41: Science_Gravwell — Grav Well
+    // 41: Science_Gravwell — Grav Well (Gravity Mech, Steel Judoka).
     // range_max: 0 = unlimited (Pull fires axis-aligned any distance from range_min out).
     // Without this override, DEF's default range_max=1 makes the range (2..=1) empty
     // and Grav Well enumerates zero targets — solver would never fire it.
-    w[41] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_min: 2, range_max: 0, flags: C, ..DEF };
+    // Per wiki: "Artillery weapon that pulls its target towards you... not able
+    // to pull enemies into the Gravity Mech for bump damage". I.e., target is
+    // dragged to the tile adjacent to the mech (the mech itself is a blocker so
+    // the chain naturally halts there). Uses FULL_PULL flag — same multi-tile
+    // semantic as Brute_Grapple. Science_Pullmech (Attraction Pulse) does NOT
+    // get this flag and remains 1-tile.
+    w[41] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_min: 2, range_max: 0,
+        flags: f(WeaponFlags::FULL_PULL.bits()), ..DEF };
     // 42: Science_Repulse — Repulse
     w[42] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 43: Science_Swap — Teleporter
@@ -980,7 +1001,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteJetmech => "Aerial Bombs",
         WId::BruteMirrorshot => "Mirror Shot",
         WId::BruteBeetle => "Ramming Engines",
-        WId::BruteGrapple => "Vice Fist",
+        WId::BruteGrapple => "Grappling Hook",
         WId::BruteUnstable => "Unstable Cannon",
         WId::BrutePhaseShot => "Phase Cannon",
         WId::BruteShrapnel => "Defensive Shrapnel",

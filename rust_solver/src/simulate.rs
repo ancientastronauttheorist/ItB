@@ -1492,12 +1492,69 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
         return;
     }
 
-    // Pull: move target toward attacker
-    if let Some(dir) = attack_dir {
-        if let Some(_target_idx) = board.unit_at(tx, ty) {
-            if board.units[_target_idx].pushable() {
-                apply_push(board, tx, ty, opposite_dir(dir), result);
-            }
+    // Pull: move target toward attacker.
+    //
+    // Two modes, distinguished by the FULL_PULL flag:
+    //   - default (1-tile):   Science_Pullmech "Attraction Pulse" — apply_push
+    //                         once toward the attacker.
+    //   - FULL_PULL:          Brute_Grapple "Grappling Hook" and
+    //                         Science_Gravwell "Grav Well" drag the target
+    //                         all the way to the tile adjacent to the mech
+    //                         (or until blocked: another unit, mountain,
+    //                         building, edge, or a death by terrain mid-pull).
+    //
+    // The pull stops naturally at adjacency: the next push step would target
+    // the mech's own tile, and the mech itself is a blocker — apply_push
+    // would then deal bump damage to BOTH the target and the mech, which is
+    // not what Grappling Hook / Grav Well do per the wiki ("not able to pull
+    // enemies into the Gravity Mech for bump damage"). So FULL_PULL halts
+    // BEFORE the adjacency step.
+    let dir = match attack_dir {
+        Some(d) => d,
+        None => return,
+    };
+    let pull_dir = opposite_dir(dir);
+    let target_idx = match board.unit_at(tx, ty) {
+        Some(idx) => idx,
+        None => return,
+    };
+    if !board.units[target_idx].pushable() {
+        return;
+    }
+
+    if !wdef.full_pull() {
+        // Single-step pull (Attraction Pulse): unchanged behavior.
+        apply_push(board, tx, ty, pull_dir, result);
+        return;
+    }
+
+    // FULL_PULL loop. Re-fetch target position each iteration since
+    // apply_push mutates it. Stop when:
+    //   - target is adjacent to the mech (next step would land on the mech),
+    //   - the previous push didn't move the target (bumped into a blocker
+    //     or died from terrain — apply_push handles bump damage / death
+    //     internally, including frozen-thaw, web-break, fire/acid, mines),
+    //   - target's HP fell to 0 mid-pull (water/chasm/lava/mine/bump kill).
+    //
+    // Bound the loop at 8 (board diameter) as a safety guard against any
+    // future apply_push regression that doesn't move and doesn't bump.
+    let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+    for _ in 0..8 {
+        let (cx, cy) = (board.units[target_idx].x, board.units[target_idx].y);
+        // Already adjacent to the mech → no further pull (no movement, no bump).
+        if (cx as i16 - ax as i16).abs() + (cy as i16 - ay as i16).abs() <= 1 {
+            break;
+        }
+        apply_push(board, cx, cy, pull_dir, result);
+        // Bail if the target died (terrain kill, mine, bump fatal).
+        if board.units[target_idx].hp <= 0 {
+            break;
+        }
+        // Bail if the target didn't move (bumped against blocker / mountain /
+        // building / edge — apply_push has already applied the bump damage).
+        let (nx, ny) = (board.units[target_idx].x, board.units[target_idx].y);
+        if nx == cx && ny == cy {
+            break;
         }
     }
 }
@@ -2995,19 +3052,24 @@ mod tests {
 
     // ── Grav Well (Science_Gravwell) ───────────────────────────────────────────
     // Gravity Mech weapon: artillery (range ≥2) that pulls the targeted unit
-    // one tile TOWARD the attacker. No damage. Used to drag enemies into
-    // friendly attack lanes or off threatened buildings.
+    // ALL the way to the tile adjacent to the attacker. No damage. Used to
+    // drag enemies into friendly attack lanes or onto hazardous terrain.
+    // Per wiki: "Artillery weapon that pulls its target towards you... not
+    // able to pull enemies into the Gravity Mech for bump damage." That last
+    // clause is exactly the "stop adjacent" semantic encoded by FULL_PULL.
 
     #[test]
     fn test_grav_well_pulls_target_toward_attacker() {
-        // GravMech at (3,3) pulls target at (3,6) one tile south toward attacker.
+        // GravMech at (3,3) pulls target at (3,6) all the way to (3,4),
+        // adjacent to the mech.
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceGravwell);
         let enemy_idx = add_enemy(&mut board, 99, 3, 6, 4);
 
         let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceGravwell, 3, 6);
         assert_eq!(board.units[enemy_idx].x, 3, "Stays in column");
-        assert_eq!(board.units[enemy_idx].y, 5, "Pulled 1 tile toward attacker (6→5)");
+        assert_eq!(board.units[enemy_idx].y, 4,
+            "Pulled adjacent to attacker (6→4, stops at y=4 since mech is at y=3)");
         assert_eq!(board.units[enemy_idx].hp, 4, "No damage from Grav Well itself");
     }
 
@@ -3023,6 +3085,131 @@ mod tests {
         assert_eq!(board.units[target].y, 6, "Target stays — destination blocked");
         assert_eq!(board.units[target].hp, 2, "Bump damage");
         assert_eq!(board.units[blocker].hp, 2, "Blocker bumped too");
+    }
+
+    #[test]
+    fn test_science_gravwell_pulls_to_adjacent() {
+        // Same as the basic Grav Well test but explicitly named per the
+        // FULL_PULL fix's regression checklist. Mech at (3,3), target at
+        // (3,7) — should walk all the way to (3,4).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceGravwell);
+        let enemy_idx = add_enemy(&mut board, 99, 3, 7, 4);
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceGravwell, 3, 7);
+        assert_eq!(board.units[enemy_idx].y, 4,
+            "Grav Well pulls target all the way to mech-adjacent (7→4)");
+        assert_eq!(board.units[enemy_idx].hp, 4, "No damage during pull");
+    }
+
+    // ── Grappling Hook (Brute_Grapple) ─────────────────────────────────────────
+    // Hook Mech weapon: melee-pull (range 1..) that drags the target ALL the
+    // way to the tile adjacent to the mech, or until a blocker stops the pull.
+    // Per wiki: "Use a grapple to pull Mech towards objects, or units to the
+    // Mech." Same FULL_PULL semantic as Grav Well.
+
+    #[test]
+    fn test_brute_grapple_pulls_to_adjacent() {
+        // Hook Mech at (3,3) (= "A1"-style; bridge coords) targets enemy at
+        // (3,6) ("A4"). After full-pull the enemy should sit at (3,4) ("A2"),
+        // adjacent to the mech.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+        let enemy_idx = add_enemy(&mut board, 99, 3, 6, 4);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 6);
+        assert_eq!(board.units[enemy_idx].x, 3, "Stays in column");
+        assert_eq!(board.units[enemy_idx].y, 4,
+            "Grappling Hook pulls all the way (6→4, stops adjacent to mech)");
+        assert_eq!(board.units[enemy_idx].hp, 4, "No damage from Grappling Hook itself");
+    }
+
+    #[test]
+    fn test_brute_grapple_blocked_by_unit() {
+        // Mech (3,3); Vek blocker at (3,4); target at (3,6). The pull tries
+        // step 1: target (3,6)→(3,5) — clear. Step 2: target (3,5)→(3,4) —
+        // blocked by Vek. Both bump. Final: target at (3,5) with -1 HP, Vek
+        // at (3,4) with -1 HP.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+        let blocker = add_enemy(&mut board, 1, 3, 4, 3);
+        let target = add_enemy(&mut board, 2, 3, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 6);
+        assert_eq!(board.units[target].y, 5, "Target moved one tile then bumped");
+        assert_eq!(board.units[target].hp, 2, "Target took bump damage");
+        assert_eq!(board.units[blocker].x, 3, "Blocker did not move");
+        assert_eq!(board.units[blocker].y, 4, "Blocker did not move");
+        assert_eq!(board.units[blocker].hp, 2, "Blocker took bump damage");
+    }
+
+    #[test]
+    fn test_brute_grapple_blocked_by_mountain() {
+        // Mountain at (3,4) blocks the chain. Target at (3,6) walks to (3,5),
+        // then bumps the mountain on the next step. Mountain takes 1 HP.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+        let target = add_enemy(&mut board, 2, 3, 6, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 6);
+        assert_eq!(board.units[target].y, 5, "Target stops one short of the mountain");
+        assert_eq!(board.units[target].hp, 2, "Target bumped, took 1 damage");
+        assert_eq!(board.tile(3, 4).building_hp, 1, "Mountain damaged but not destroyed");
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Mountain, "Mountain still there");
+    }
+
+    #[test]
+    fn test_brute_grapple_target_already_adjacent_noop() {
+        // Target already adjacent to mech: no movement, no bump damage.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+        let target = add_enemy(&mut board, 2, 3, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 4);
+        assert_eq!(board.units[target].x, 3, "No move");
+        assert_eq!(board.units[target].y, 4, "No move");
+        assert_eq!(board.units[target].hp, 3, "No bump damage on no-op pull");
+    }
+
+    #[test]
+    fn test_science_pullmech_still_one_tile() {
+        // REGRESSION GUARD: Science_Pullmech (Attraction Pulse) is correctly
+        // 1-tile per wiki and MUST NOT be promoted to FULL_PULL. Pulse Mech
+        // at (3,3) pulling target at (3,6) should leave target at (3,5).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::SciencePullmech);
+        let target = add_enemy(&mut board, 2, 3, 6, 4);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::SciencePullmech, 3, 6);
+        assert_eq!(board.units[target].x, 3, "Stays in column");
+        assert_eq!(board.units[target].y, 5,
+            "Attraction Pulse pulls exactly 1 tile (6→5), NOT all the way");
+        assert_eq!(board.units[target].hp, 4, "No damage");
+    }
+
+    #[test]
+    fn test_brute_grapple_pulls_into_water_kills_target() {
+        // Non-flying Vek pulled across a water tile mid-chain dies; the pull
+        // chain stops because the target's HP went to 0. Mech at (3,3), water
+        // at (3,5), target at (3,7). Step 1: (3,7)→(3,6). Step 2: (3,6)→(3,5)
+        // — water → kill, hp=0 → loop bails.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Water;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+        let target = add_enemy(&mut board, 2, 3, 7, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 7);
+        assert_eq!(board.units[target].hp, 0, "Target drowned in water during pull");
+        assert_eq!(board.units[target].y, 5, "Corpse rests on the water tile");
+    }
+
+    #[test]
+    fn test_brute_grapple_display_name() {
+        // The display name was previously "Vice Fist" (the name of
+        // Prime_Shift). Per data/wiki_raw/Weapons.json, Brute_Grapple's
+        // canonical name is "Grappling Hook".
+        assert_eq!(weapon_name(WId::BruteGrapple), "Grappling Hook");
     }
 
     // ── Vek Hormones (Passive_FriendlyFire) ──────────────────────────────────

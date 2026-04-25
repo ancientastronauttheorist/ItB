@@ -188,7 +188,18 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # projected a flying enemy dead and wasted a turn, letting the live
 # Hornet destroy the Power Generator. Pre-v19 rows archived to
 # failure_db_snapshot_sim_v18.jsonl.
-SIMULATOR_VERSION = 19
+# v20 (2026-04-25, full-pull pull weapons): Brute_Grapple "Grappling Hook"
+# and Science_Gravwell "Grav Well" now drag the target ALL the way to the
+# tile adjacent to the mech, matching the wiki ("pull units to the Mech" /
+# "pulls its target towards you... not able to pull enemies into the
+# Gravity Mech for bump damage"). Previously both shared the 1-tile path
+# with Science_Pullmech (Attraction Pulse), under-predicting destination
+# by ≥1 tile every cast. New WeaponFlags::FULL_PULL bit; sim_pull_or_swap
+# loops apply_push until adjacency, death, or blocker. Science_Pullmech
+# remains 1-tile (correctly per wiki). Also fixes BruteGrapple display
+# name (was "Vice Fist", which is actually Prime_Shift). Pre-v20 rows
+# archived to failure_db_snapshot_sim_v19.jsonl.
+SIMULATOR_VERSION = 20
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

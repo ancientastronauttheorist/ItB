@@ -392,7 +392,19 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // "Hornet on Tidal" desync (m04 Artifact Vaults, run 20260425_005049_742)
 // where the solver projected a flying enemy dead and wasted a turn,
 // letting the live Hornet destroy the Power Generator.
-pub const SIMULATOR_VERSION: u32 = 19;
+// v20 (2026-04-25, full-pull pull weapons): Brute_Grapple "Grappling
+// Hook" and Science_Gravwell "Grav Well" now drag the target ALL the
+// way to the tile adjacent to the mech, mirroring the wiki ("pull
+// units to the Mech" / "pulls its target towards you... not able to
+// pull enemies into the Gravity Mech for bump damage"). Previously
+// both used the 1-tile path shared with Science_Pullmech (Attraction
+// Pulse), under-predicting the destination by 1 tile per tile of pull
+// distance. Encoded via new WeaponFlags::FULL_PULL bit; sim_pull_or_swap
+// loops apply_push until the target reaches mech-adjacency, dies, or
+// bumps a blocker. Science_Pullmech remains 1-tile (correctly per wiki).
+// Also fixes BruteGrapple display name "Vice Fist" → "Grappling Hook"
+// (Vice Fist is Prime_Shift's name).
+pub const SIMULATOR_VERSION: u32 = 20;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
