@@ -936,6 +936,89 @@ local function dump_state()
         end
     end)
 
+    -- Island map: per-region mission preview for the squad-aware mission
+    -- picker. The currently-selected island's mission slate lives at the
+    -- global `GAME.Missions` (see scripts/islands.lua createIncidents:319 —
+    -- "GAME.Missions = incidents"). Each entry is a Mission object with:
+    --   .ID         -- "Mission_Train", "Mission_Volatile", etc.
+    --   .BonusObjs  -- list of int enums (1-9). See missions.lua:32-40 —
+    --                 BONUS_ASSET=1 BONUS_KILL=2 BONUS_GRID=3 BONUS_MECHS=4
+    --                 BONUS_BLOCK=5 BONUS_KILL_FIVE=6 BONUS_DEBRIS=7
+    --                 BONUS_SELFDAMAGE=8 BONUS_PACIFIST=9
+    --   .Environment -- "Env_Lava", "Env_TidalWaves", "Env_Conveyor",
+    --                   "Env_Null", etc.
+    --   .DiffMod    -- DIFF_MOD_EASY=-1, DIFF_MOD_NONE=0, DIFF_MOD_HARD=1
+    --   .AssetId    -- e.g. "Mission_Mech_Boss" — only set for some missions
+    -- GAME.Island holds the 1-based corp slot for the current island (set
+    -- in createIncidents:191). Defensive: GAME and GAME.Missions may be
+    -- nil during boot or non-island screens; pcall guards every read.
+    --
+    -- Emit only when we are NOT in an active mission (combat/deployment) —
+    -- in combat, _ITB_CURRENT_MISSION is set and the slate is irrelevant.
+    -- Outside combat the player is on the corp island map, between-mission
+    -- transition, or shop; the bridge phase will read "unknown" and the
+    -- picker can score the available missions.
+    state.island_map = nil
+    pcall(function()
+        if _ITB_CURRENT_MISSION ~= nil then
+            return  -- in active mission; slate is not the right answer
+        end
+        if not GAME or type(GAME) ~= "table" then
+            return
+        end
+        local missions = GAME.Missions
+        if type(missions) ~= "table" then
+            return
+        end
+        local out = {}
+        -- GAME.Missions is 1-indexed for regular missions; key 0 is the
+        -- boss/final mission when present. Walk both 0 and 1..N.
+        local indices = {}
+        for k, _ in pairs(missions) do
+            if type(k) == "number" then
+                indices[#indices + 1] = k
+            end
+        end
+        table.sort(indices)
+        for _, k in ipairs(indices) do
+            local m = missions[k]
+            if type(m) == "table" then
+                local entry = {
+                    region_id = k,
+                    mission_id = m.ID or "",
+                }
+                local bonus_ids = {}
+                if type(m.BonusObjs) == "table" then
+                    for _, b in ipairs(m.BonusObjs) do
+                        if type(b) == "number" then
+                            bonus_ids[#bonus_ids + 1] = b
+                        end
+                    end
+                end
+                entry.bonus_objective_ids = bonus_ids
+                if type(m.Environment) == "string" and m.Environment ~= "" then
+                    entry.environment = m.Environment
+                else
+                    entry.environment = nil
+                end
+                if type(m.DiffMod) == "number" then
+                    entry.diff_mod = m.DiffMod
+                end
+                if type(m.AssetId) == "string" and m.AssetId ~= "" then
+                    entry.asset_id = m.AssetId
+                end
+                if type(m.BossMission) == "boolean" then
+                    entry.boss = m.BossMission
+                end
+                out[#out + 1] = entry
+            end
+        end
+        state.island_map = out
+        if type(GAME.Island) == "number" then
+            state.island_index = GAME.Island
+        end
+    end)
+
     write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
 end
 

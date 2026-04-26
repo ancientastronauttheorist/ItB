@@ -1,0 +1,250 @@
+"""Tests for the squad-aware mission picker.
+
+The picker is pure: given an island_map slate + the squad's live units +
+grid power, returns a deterministic ranked list. These tests fix the
+scoring contract for cases that materialised during real runs (or that
+we expect to in the near future).
+"""
+from __future__ import annotations
+
+from src.strategy.mission_picker import (
+    BONUS_ASSET,
+    BONUS_GRID,
+    BONUS_KILL_FIVE,
+    BONUS_MECHS,
+    derive_squad_tags,
+    score_island_map,
+    score_mission,
+)
+
+
+# ---------------------------------------------------------------------------
+# Squad fixtures (matches bridge.units shape: mech=True + weapons=[wid])
+# ---------------------------------------------------------------------------
+
+# Lightning / Jet Bombs / Grav Well — the squad that wiped on
+# 20260425_185532_218 m04 → m05. No reliable single-target push or pull
+# from the front line, so train_defender is absent. crowd_control is
+# present (Grav Well) but pull-only — won't stop a train.
+LIGHTNING_GRAV_SQUAD = [
+    {"mech": True, "hp": 3, "weapons": ["Prime_Lightning"]},
+    {"mech": True, "hp": 3, "weapons": ["Brute_Jetmech"]},
+    {"mech": True, "hp": 3, "weapons": ["Science_Gravwell",
+                                        "Passive_FriendlyFire"]},
+]
+
+# Rift Walkers — Titan Fist (push 1) + Taurus (push) + Artemis. Solid
+# train defender (front-line push from Combat + Cannon).
+RIFT_WALKERS_SQUAD = [
+    {"mech": True, "hp": 3, "weapons": ["Prime_Punchmech"]},
+    {"mech": True, "hp": 3, "weapons": ["Brute_Tankmech"]},
+    {"mech": True, "hp": 3, "weapons": ["Ranged_Artillerymech"]},
+]
+
+# Frozen Titans — Cryo (freeze) + Ice + Hook. Heavy crowd-control.
+FROZEN_TITANS_SQUAD = [
+    {"mech": True, "hp": 3, "weapons": ["Ranged_Ice"]},
+    {"mech": True, "hp": 3, "weapons": ["Brute_Grapple"]},
+    {"mech": True, "hp": 3, "weapons": ["Science_Swap"]},
+]
+
+
+# ---------------------------------------------------------------------------
+# Mission fixtures
+# ---------------------------------------------------------------------------
+
+def _train_high_threat() -> dict:
+    """Historic County-style train mission with ⚡ high-threat bonus."""
+    return {
+        "region_id": 2,
+        "mission_id": "Mission_Train",
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": "Env_Null",
+    }
+
+
+def _volatile_vek_mission() -> dict:
+    """Secondary Archives-style 'do not kill volatile Vek' mission."""
+    return {
+        "region_id": 3,
+        "mission_id": "Mission_Volatile",
+        "bonus_objective_ids": [BONUS_MECHS],
+        "environment": "Env_Null",
+    }
+
+
+def _safe_battle_mission() -> dict:
+    """Plain skirmish with the kill-7 bonus."""
+    return {
+        "region_id": 1,
+        "mission_id": "Mission_Battle",
+        "bonus_objective_ids": [BONUS_KILL_FIVE],
+        "environment": "Env_Null",
+    }
+
+
+def _tidal_mission() -> dict:
+    """Tidal-environment mission — flying matters."""
+    return {
+        "region_id": 4,
+        "mission_id": "Mission_Battle",
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": "Env_TidalWaves",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Squad tag derivation
+# ---------------------------------------------------------------------------
+
+def test_derive_squad_tags_lightning_grav():
+    tags = derive_squad_tags(LIGHTNING_GRAV_SQUAD)
+    assert "train_defender" not in tags
+    assert "crowd_control" in tags  # Grav Well is pull-cc
+    assert "aoe" in tags             # Lightning + Jet Bombs
+    assert "flying" in tags          # Jet Mech
+
+
+def test_derive_squad_tags_rift_walkers():
+    tags = derive_squad_tags(RIFT_WALKERS_SQUAD)
+    assert "train_defender" in tags  # Titan Fist + Taurus Cannon
+    # Rift Walkers do NOT have crowd_control (no freeze, swap, repulse,
+    # ACID, confuse). Artemis push_chain is offence, not cc.
+    assert "crowd_control" not in tags
+
+
+def test_derive_squad_tags_skips_dead_mechs():
+    units = [
+        {"mech": True, "hp": 0, "weapons": ["Prime_Punchmech"]},  # dead
+        {"mech": True, "hp": 3, "weapons": ["Science_Gravwell"]},
+    ]
+    tags = derive_squad_tags(units)
+    assert "train_defender" not in tags  # Punch ignored
+    assert "crowd_control" in tags
+
+
+# ---------------------------------------------------------------------------
+# Core scoring scenarios
+# ---------------------------------------------------------------------------
+
+def test_train_no_defender_loses_to_safe_battle():
+    """The 20260425_185532_218 m05 case: Lightning/Jet/Grav vs train.
+
+    Historic County (train + ⚡ high-threat bonus, grid 7) should rank
+    BELOW any plain battle alternative on the same island. The penalty
+    -8 (no train_defender) outweighs the +2 ⚡ reward.
+    """
+    island = [_train_high_threat(), _safe_battle_mission()]
+    ranked = score_island_map(island, LIGHTNING_GRAV_SQUAD, grid_power=7)
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    assert ranked[1]["mission_id"] == "Mission_Train"
+    # Sanity check the rationale surfaces the actual penalty.
+    train_rationale = " ".join(ranked[1]["rationale_lines"])
+    assert "no train_defender" in train_rationale
+
+
+def test_train_with_defender_outranks_safe_battle():
+    """Mirror case: a Rift-Walkers-style squad WITH train defenders
+    should prefer the train mission (+2 ⚡) over a kill-7 bonus (+2)
+    because no penalty fires; ties go to the train mission only when
+    bonus values differ. Here the train mission's ⚡ ties exactly with
+    Battle's kill-7 bonus, so we just assert the train penalty did NOT
+    fire (no negative score component) and Battle does not outrank it
+    by more than its own bonus value.
+    """
+    island = [_train_high_threat(), _safe_battle_mission()]
+    ranked = score_island_map(island, RIFT_WALKERS_SQUAD, grid_power=7)
+    train = next(e for e in ranked if e["mission_id"] == "Mission_Train")
+    # No train-defender penalty.
+    for line in train["rationale_lines"]:
+        assert "no train_defender" not in line
+    # Both score equally given equal bonus values (+2 each). Ranking
+    # should be stable with no penalty fired on either side.
+    assert train["score"] >= 0
+
+
+def test_volatile_vek_no_cc_penalised():
+    """Secondary Archives + Lightning/Jet/Grav: -3 penalty fires.
+
+    Note Lightning/Jet/Grav DOES have crowd_control via Grav Well, so
+    the actual run squad would NOT trigger this. Use a strictly
+    no-cc squad to lock the penalty in place.
+    """
+    no_cc_squad = [
+        {"mech": True, "hp": 3, "weapons": ["Prime_Lasermech"]},
+        {"mech": True, "hp": 3, "weapons": ["Brute_Tankmech"]},
+        {"mech": True, "hp": 3, "weapons": ["Ranged_Artillerymech"]},
+    ]
+    scored = score_mission(_volatile_vek_mission(), derive_squad_tags(no_cc_squad),
+                           grid_power=7)
+    assert scored["score"] < 4  # raw +4 (★ keep mechs alive) - 3 = 1
+    assert any("no crowd-control" in line for line in scored["rationale_lines"])
+
+
+def test_volatile_vek_with_cc_keeps_full_value():
+    """Frozen Titans on volatile-Vek: penalty does not fire, mission's
+    full +4 (★ keep mechs alive) survives.
+    """
+    scored = score_mission(_volatile_vek_mission(), derive_squad_tags(FROZEN_TITANS_SQUAD),
+                           grid_power=7)
+    assert scored["score"] == 4
+    for line in scored["rationale_lines"]:
+        assert "no crowd-control" not in line
+
+
+# ---------------------------------------------------------------------------
+# Grid-power-conditioned bonuses
+# ---------------------------------------------------------------------------
+
+def test_low_grid_amplifies_grid_bonus():
+    """⚡ grid bonus rewards more at low grid (defensive priority).
+
+    +4 when grid<5, +2 otherwise. Use an UNTAGGED mission_id so the
+    only score component is the bonus value (no high_threat penalty).
+    """
+    mission = {
+        "region_id": 5,
+        "mission_id": "Mission_Generic",   # no MISSION_ID_TAGS entry
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": None,
+    }
+    low = score_mission(mission, derive_squad_tags(RIFT_WALKERS_SQUAD), grid_power=2)
+    high = score_mission(mission, derive_squad_tags(RIFT_WALKERS_SQUAD), grid_power=7)
+    assert low["score"] > high["score"]
+    assert low["score"] == 4
+    assert high["score"] == 2
+
+
+def test_tidal_no_flying_penalty_only_when_no_flying():
+    """Tidal env -2 penalty fires only when squad has no flying mech."""
+    no_fly = score_mission(_tidal_mission(), derive_squad_tags(RIFT_WALKERS_SQUAD),
+                           grid_power=7)
+    with_fly = score_mission(_tidal_mission(), derive_squad_tags(LIGHTNING_GRAV_SQUAD),
+                             grid_power=7)
+    assert any("no flying" in line for line in no_fly["rationale_lines"])
+    for line in with_fly["rationale_lines"]:
+        assert "no flying" not in line
+    assert with_fly["score"] > no_fly["score"]
+
+
+# ---------------------------------------------------------------------------
+# Empty / no-op cases
+# ---------------------------------------------------------------------------
+
+def test_empty_island_map_returns_empty():
+    assert score_island_map(None, RIFT_WALKERS_SQUAD, 7) == []
+    assert score_island_map([], RIFT_WALKERS_SQUAD, 7) == []
+
+
+def test_unknown_mission_id_scores_only_bonus():
+    """Unknown mission_id has no MISSION_ID_TAGS entry — no penalties
+    fire. Score should equal the raw bonus value.
+    """
+    entry = {
+        "region_id": 9,
+        "mission_id": "Mission_Unmapped",
+        "bonus_objective_ids": [BONUS_ASSET],
+        "environment": None,
+    }
+    scored = score_mission(entry, derive_squad_tags(RIFT_WALKERS_SQUAD), 7)
+    assert scored["score"] == 5  # ⊕ pilot/asset reward

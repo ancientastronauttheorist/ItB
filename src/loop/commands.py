@@ -2785,6 +2785,108 @@ def cmd_click_balanced_roll() -> dict:
     return result
 
 
+def cmd_recommend_mission(
+    profile: str = "Alpha",
+    island_map_json: str | None = None,
+) -> dict:
+    """Recommend a mission from the current island slate.
+
+    Reads the bridge ``island_map`` (or the supplied JSON file when the
+    bridge isn't on the island map screen — the Lua hook only emits it
+    outside active combat). Derives squad capability tags from the live
+    units list, scores each available mission, prints the top 3 with
+    rationale lines.
+
+    The ``--island-map-json`` flag points at a file containing a list
+    of {region_id, mission_id, bonus_objective_ids, environment, ...}
+    objects (same shape Lua emits). Used for offline scoring / tests
+    when the bridge is unavailable or the Lua hook hasn't been
+    installed yet.
+    """
+    from src.strategy.mission_picker import score_island_map
+
+    bridge_data: dict = {}
+    units: list = []
+    grid_power = 7
+    island_map: list | None = None
+
+    if island_map_json:
+        try:
+            with open(island_map_json) as fh:
+                payload = json.load(fh)
+        except (OSError, json.JSONDecodeError) as e:
+            result = {"status": "ERROR",
+                      "error": f"Failed to load island_map_json: {e}"}
+            _print_result(result)
+            return result
+        if isinstance(payload, dict):
+            island_map = payload.get("island_map")
+            units = payload.get("units", [])
+            grid_power = payload.get("grid_power", 7)
+        else:
+            island_map = payload  # bare list
+    else:
+        # Pull live bridge state.
+        if not is_bridge_active():
+            result = {"status": "NO_BRIDGE",
+                      "note": "Bridge not active. Pass --island-map-json "
+                              "<path> to score from a saved payload."}
+            _print_result(result)
+            return result
+        try:
+            refresh_bridge_state()
+        except (BridgeError, Exception):
+            pass
+        board, bridge_data = read_bridge_state()
+        if bridge_data is None:
+            result = {"status": "NO_BRIDGE",
+                      "note": "Bridge read failed."}
+            _print_result(result)
+            return result
+        island_map = bridge_data.get("island_map")
+        units = bridge_data.get("units", [])
+        grid_power = bridge_data.get("grid_power", 7)
+
+    if not island_map:
+        phase = bridge_data.get("phase", "unknown") if bridge_data else "unknown"
+        result = {
+            "status": "NO_ISLAND_MAP",
+            "phase": phase,
+            "note": ("No mission options visible. The Lua hook only emits "
+                     "island_map outside active combat. If you're on the "
+                     "corp island map and this still fails, the modloader "
+                     "may need a rebuild (scripts/install_modloader.sh)."),
+        }
+        _print_result(result)
+        return result
+
+    ranked = score_island_map(island_map, units, grid_power)
+    top3 = ranked[:3]
+
+    print(f"\n=== RECOMMEND_MISSION ===")
+    print(f"Squad weapons:   "
+          f"{[w for u in units if u.get('mech') for w in u.get('weapons', [])]}")
+    print(f"Grid power:      {grid_power}")
+    print(f"Available:       {len(island_map)} mission(s)")
+    print()
+    for rank, m in enumerate(top3, start=1):
+        print(f"  #{rank}  region={m.get('region_id')}  "
+              f"{m.get('mission_id', '?')}  "
+              f"score={m['score']}")
+        for line in m.get("rationale_lines", []):
+            print(f"        {line}")
+        print()
+
+    result = {
+        "status": "OK",
+        "grid_power": grid_power,
+        "ranked": ranked,
+        "top3": top3,
+    }
+    _print_result(result)
+    return result
+
+
 def cmd_research_next(profile: str = "Alpha") -> dict:
     """Pick the next research queue entry and emit its capture plan.
 

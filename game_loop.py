@@ -48,6 +48,7 @@ from src.loop.commands import (
     cmd_click_action,
     cmd_click_end_turn,
     cmd_click_balanced_roll,
+    cmd_recommend_mission,
     cmd_research_attach_community,
     cmd_research_next,
     cmd_research_probe_mech,
@@ -344,6 +345,20 @@ def main():
         help="Plan a click for the Balanced Roll button on squad-select",
     )
 
+    # recommend_mission
+    p_rec_mission = sub.add_parser(
+        "recommend_mission",
+        help="Score available missions on the current island, top 3 ranked.",
+    )
+    p_rec_mission.add_argument("--profile", default="Alpha")
+    p_rec_mission.add_argument(
+        "--island-map-json",
+        default=None,
+        help="Optional path to a JSON file containing {island_map, units, "
+             "grid_power} (or a bare island_map list). When the bridge "
+             "isn't on the corp map screen, use this to score offline.",
+    )
+
     # end_turn
     sub.add_parser("end_turn", help="Plan clicks for End Turn")
 
@@ -508,6 +523,11 @@ def main():
         cmd_click_end_turn()
     elif args.command == "click_balanced_roll":
         cmd_click_balanced_roll()
+    elif args.command == "recommend_mission":
+        cmd_recommend_mission(
+            profile=args.profile,
+            island_map_json=args.island_map_json,
+        )
     elif args.command == "research_next":
         cmd_research_next(profile=args.profile)
     elif args.command == "research_submit":
