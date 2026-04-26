@@ -304,6 +304,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 8: Prime_Leap — Hydraulic Legs
     w[8] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, push: PushDir::Outward, self_damage: 1, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 9: Prime_Spear — Spear
+    // TODO(weapons-audit 2026-04-25): Lua scripts/weapons_prime.lua:792-846
+    // Range=2, PathSize=2 — the spear stabs EVERY tile from p1 forward to p2,
+    // with only the FURTHEST tile pushed forward. Currently modelled as a
+    // 1-tile melee, so range-2 stabs are never enumerated and 2-tile transit
+    // damage is missing. Proper fix needs sim_melee + target enumeration to
+    // honour `path_size` (analogous to HornetAtkB's path_size=3 artillery
+    // pattern, but for melee/line attacks) AND range_max>1. Defer to a
+    // dedicated PR — refactor mid-audit is out of scope.
     w[9] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward, flags: C, ..DEF };
     // 10: Prime_Rockmech — Rock Throw
     w[10] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, range_max: 0, flags: C, ..DEF };
@@ -333,6 +341,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // attacker, or until a blocker stops the chain (in which case the target
     // bumps into the blocker). FULL_PULL flag distinguishes it from
     // Science_Pullmech (Attraction Pulse, 1-tile-only).
+    //
+    // TODO(weapons-audit 2026-04-25): Lua scripts/weapons_brute.lua:339-389.
+    // When the targeted blocker is a mountain/building (NOT a pawn), Lua
+    // charges the MECH toward the obstacle (line 374-385) instead of pulling.
+    // Our sim_pull_or_swap returns early when no unit_at(tx,ty), so this
+    // self-charge case is silently dropped. Edge case (rare to grapple at
+    // empty mountain tile) — defer to a dedicated PR.
     w[20] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_max: 0,
         flags: f(WeaponFlags::FULL_PULL.bits()), ..DEF };
     // 21: Brute_Unstable — Unstable Cannon
@@ -354,6 +369,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[26] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Backward, range_max: 0,
         flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 27: Brute_Sniper — Sniper Rifle
+    // TODO(weapons-audit 2026-04-25): Lua scripts/weapons_brute.lua:969-991
+    // Damage = min(MaxDamage, distance_to_target_minus_one). Default
+    // MaxDamage=2: adjacent target → 0 dmg, dist=2 → 1 dmg, dist≥3 → 2 dmg.
+    // We currently apply a flat damage=2, over-predicting near-target shots
+    // and under-predicting only when MaxDamage exceeds simulated damage on
+    // upgraded variants (not modelled). Proper fix needs distance-scaling
+    // logic in sim_projectile (new flag SCALE_DAMAGE_WITH_RANGE or similar).
     w[27] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     // 28: Brute_Splitshot — Split Shot
     w[28] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Outward, range_max: 0, limited: 1,
