@@ -425,6 +425,18 @@ pub fn evaluate(
     let enemy_urgency = if grid_multiplier > 1.0 { grid_multiplier } else { 1.0 };
     score += kills as f64 * scaled(weights.enemy_killed, ff, 0.20, 1.60) * enemy_urgency;
     let mut volatile_dead = 0i32;
+    // Mission-aware "do not kill X" bonus gate. The penalty is opt-in
+    // per mission via Board::bonus_dont_kill_types: empty list → no
+    // protected types, the penalty is a no-op (correct on every mission
+    // that doesn't have a "Don't let X die" bonus). Non-empty → the unit's
+    // type_name must match an entry. The legacy `is_volatile_vek()` filter
+    // (Volatile_Vek / GlowingScorpion) used to fire unconditionally, which
+    // mis-scored boards that had a GlowingScorpion present but where the
+    // active mission's BonusObjs didn't actually protect it. We retain the
+    // is_volatile_vek check as the *capability* gate (only "exploding /
+    // protected" archetype enemies can ever be the bonus target) so a
+    // mis-typed mission entry can't silently penalize unrelated kills.
+    let bonus_active = !board.bonus_dont_kill_types.is_empty();
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.is_enemy() && u.alive() {
@@ -446,12 +458,19 @@ pub fn evaluate(
             }
         }
         // Weather Watch ⭐ bonus: "Don't let the Volatile Vek die." Count
-        // dead Volatile-type enemies on the post-state board — solver clones
-        // the initial board each plan, so dead-at-end = killed-this-turn.
-        // Shares the Unit::is_volatile_vek() helper used by the decay sim
-        // so the penalty and the explosion trigger always agree.
-        if u.is_enemy() && !u.alive() && u.is_volatile_vek() {
-            volatile_dead += 1;
+        // dead protected-type enemies on the post-state board — solver
+        // clones the initial board each plan, so dead-at-end = killed-this-turn.
+        if u.is_enemy() && !u.alive() && bonus_active {
+            let name = u.type_name_str();
+            // Each entry is matched as a substring (mirrors is_volatile_vek's
+            // contains() pattern) so "Volatile_Vek" catches "Volatile_Vek1",
+            // "Volatile_Vek2" etc. without needing to enumerate variants.
+            for protected in &board.bonus_dont_kill_types {
+                if !protected.is_empty() && name.contains(protected.as_str()) {
+                    volatile_dead += 1;
+                    break;
+                }
+            }
         }
     }
     score += volatile_dead as f64 * weights.volatile_enemy_killed;
@@ -1032,5 +1051,90 @@ mod tests {
         let with = evaluate(&board, &[], &w, 0, 0, &p_tyrant, 0);
         let without = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
         assert!((with - without - 2500.0).abs() < 1.0);
+    }
+
+    /// Mission-aware Volatile Vek penalty: when bonus_dont_kill_types is
+    /// empty (default — most missions), killing a GlowingScorpion no
+    /// longer applies the volatile_enemy_killed penalty. When the list
+    /// is populated (mission has BONUS_PROTECT_X), the penalty fires.
+    /// Same dead-Volatile board on both branches; the only difference is
+    /// the per-mission flag. Pre-fix this penalty was unconditional and
+    /// fired on every Volatile kill regardless of the active mission's
+    /// bonus, biasing the solver away from valid plays on non-protect
+    /// missions where a Volatile happened to spawn.
+    #[test]
+    fn test_volatile_kill_penalty_gated_by_mission_bonus() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        // Board: a dead GlowingScorpion (decay-explosion victim or
+        // pushed into chasm — either way alive=false, type matches).
+        let mut base = Board::default();
+        base.current_turn = 1;
+        base.total_turns = 5;
+        let mut volatile = Unit {
+            uid: 1, x: 3, y: 3, hp: 0, max_hp: 3,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        volatile.set_type_name("GlowingScorpion");
+        base.add_unit(volatile);
+
+        // Branch A: no protected types this mission — penalty no-ops.
+        let s_no_bonus = evaluate(&base, &[], &w, 0, 0, &p, 0);
+
+        // Branch B: this mission DOES protect Volatiles — penalty fires.
+        let mut with_bonus = base.clone();
+        with_bonus.bonus_dont_kill_types.push("GlowingScorpion".to_string());
+        let s_with_bonus = evaluate(&with_bonus, &[], &w, 0, 0, &p, 0);
+
+        let delta = s_no_bonus - s_with_bonus;
+        // Penalty default = -10000.0. The bonus-active branch must be
+        // 10000 lower (more negative) than the no-bonus branch.
+        assert!((delta - 10000.0).abs() < 1.0,
+            "expected 10000 penalty delta, got {} (no_bonus={}, with_bonus={})",
+            delta, s_no_bonus, s_with_bonus);
+
+        // Substring match: "Volatile_Vek" in the protected list also
+        // matches the canonical fixture name.
+        let mut volatile_canonical = Board::default();
+        volatile_canonical.current_turn = 1;
+        volatile_canonical.total_turns = 5;
+        let mut u = Unit {
+            uid: 1, x: 3, y: 3, hp: 0, max_hp: 3,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        u.set_type_name("Volatile_Vek");
+        volatile_canonical.add_unit(u);
+        volatile_canonical.bonus_dont_kill_types.push("Volatile_Vek".to_string());
+        let s_canonical = evaluate(&volatile_canonical, &[], &w, 0, 0, &p, 0);
+        let s_canonical_no_bonus = {
+            let mut b = volatile_canonical.clone();
+            b.bonus_dont_kill_types.clear();
+            evaluate(&b, &[], &w, 0, 0, &p, 0)
+        };
+        assert!((s_canonical_no_bonus - s_canonical - 10000.0).abs() < 1.0,
+            "canonical Volatile_Vek should also fire when listed");
+
+        // A non-volatile dead enemy never fires the penalty, even when
+        // bonus_dont_kill_types is non-empty (substring guard prevents
+        // collateral damage from a typo'd config).
+        let mut other = Board::default();
+        other.current_turn = 1;
+        other.total_turns = 5;
+        let mut u2 = Unit {
+            uid: 1, x: 3, y: 3, hp: 0, max_hp: 3,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        u2.set_type_name("Scarab1");
+        other.add_unit(u2);
+        other.bonus_dont_kill_types.push("GlowingScorpion".to_string());
+        let s_unrelated = evaluate(&other, &[], &w, 0, 0, &p, 0);
+        let mut other_clean = other.clone();
+        other_clean.bonus_dont_kill_types.clear();
+        let s_unrelated_clean = evaluate(&other_clean, &[], &w, 0, 0, &p, 0);
+        assert!((s_unrelated - s_unrelated_clean).abs() < 1.0,
+            "non-matching enemy must not trigger penalty regardless of bonus list");
     }
 }

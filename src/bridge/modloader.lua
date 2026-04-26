@@ -899,6 +899,19 @@ local function dump_state()
         end
     end)
 
+    -- TODO(sim_v21): emit `state.bonus_objective_unit_types` — the list of
+    -- pawn-type strings the active mission's BonusObjs flag as "do not
+    -- kill X" (e.g. BONUS_PROTECT_VOLATILE → {"GlowingScorpion"}). The
+    -- Rust side already reads `JsonInput::bonus_objective_unit_types`
+    -- and gates `volatile_enemy_killed` on it; while this Lua hook is
+    -- unimplemented, Python falls back to `data/mission_bonus_objectives.json`
+    -- keyed by mission_id (see src/solver/mission_bonus_objectives.py).
+    -- Implementing this in Lua requires inspecting mission.BonusObjs for
+    -- the protect-X enum values + walking the mission's Pawn list to map
+    -- enum→type-name; safe to do but needs in-game testing to validate
+    -- the enum values, hence deferred. The Python fallback covers all
+    -- catalogued protect-X missions today.
+
     -- Victory signal: when mission:IsFinalTurn() is true, no more Vek will
     -- emerge after this turn's enemy phase. Solver treats this as the final
     -- turn (future_factor = 0). Also expose mission.TurnLimit as authoritative

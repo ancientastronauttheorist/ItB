@@ -404,7 +404,21 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // bumps a blocker. Science_Pullmech remains 1-tile (correctly per wiki).
 // Also fixes BruteGrapple display name "Vice Fist" → "Grappling Hook"
 // (Vice Fist is Prime_Shift's name).
-pub const SIMULATOR_VERSION: u32 = 20;
+//
+// v21 (2026-04-25, mission-aware "do not kill X" bonus penalty):
+//   The `volatile_enemy_killed` evaluator term used to fire
+//   unconditionally on every Volatile_Vek / GlowingScorpion kill,
+//   regardless of the active mission's BonusObjs. New
+//   `Board::bonus_dont_kill_types: Vec<String>` populated from
+//   `JsonInput::bonus_objective_unit_types` gates the penalty per
+//   mission. Empty list (most missions) = penalty no-ops. Python
+//   side resolves via `data/mission_bonus_objectives.json` keyed by
+//   mission_id, with a future Lua-bridge precedence path already
+//   wired (TODO comment in modloader.lua). Surfaced by the
+//   20260425_185532_218 Archive Inc loss where boards with a stray
+//   GlowingScorpion fired the penalty even though the active mission
+//   had no BONUS_PROTECT_X.
+pub const SIMULATOR_VERSION: u32 = 21;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

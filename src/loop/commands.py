@@ -1596,6 +1596,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 inject_into_bridge as _inject_ovr,
             )
             _inject_ovr(bridge_data, base=_load_base_ovr())
+            # Mission-aware "do not kill X" bonus-objective resolver.
+            # Replaces the previous unconditional Volatile-Vek penalty
+            # with a per-mission gate (sim v21). Empty list on missions
+            # that don't have a "do not kill" bonus → penalty no-ops.
+            from src.solver.mission_bonus_objectives import (
+                inject_into_bridge as _inject_bonus_obj,
+            )
+            _inject_bonus_obj(bridge_data)
             rust_start = _time.time()
             beam_chain_score = None  # only set on beam>=1 path
             if beam == 0:
@@ -3876,6 +3884,14 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
         inject_into_bridge as _inject_ovr,
     )
     _inject_ovr(bd, base=_load_base_ovr())
+    # Mission-aware "do not kill X" bonus-objective resolver — replay
+    # parity with live solves. Same precedence rules: pre-populated
+    # bridge entry wins, else data/mission_bonus_objectives.json,
+    # else empty (penalty no-ops).
+    from src.solver.mission_bonus_objectives import (
+        inject_into_bridge as _inject_bonus_obj,
+    )
+    _inject_bonus_obj(bd)
 
     import itb_solver as _rust
     rust_start = time.time()
@@ -4140,6 +4156,13 @@ def _re_solve_partial(
         inject_into_bridge as _inject_ovr,
     )
     _inject_ovr(bridge_data, base=_load_base_ovr())
+    # Mission-aware "do not kill X" bonus-objective resolver (same as
+    # cmd_solve, sim v21). Empty list on missions without a "do not
+    # kill" bonus → penalty no-ops.
+    from src.solver.mission_bonus_objectives import (
+        inject_into_bridge as _inject_bonus_obj,
+    )
+    _inject_bonus_obj(bridge_data)
 
     try:
         import itb_solver as _rust

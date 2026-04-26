@@ -199,7 +199,21 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # remains 1-tile (correctly per wiki). Also fixes BruteGrapple display
 # name (was "Vice Fist", which is actually Prime_Shift). Pre-v20 rows
 # archived to failure_db_snapshot_sim_v19.jsonl.
-SIMULATOR_VERSION = 20
+# v21 (2026-04-25, mission-aware "do not kill X" bonus penalty):
+#   The Rust `volatile_enemy_killed` evaluator term is now gated by
+#   `Board::bonus_dont_kill_types`, populated from the new
+#   `JsonInput::bonus_objective_unit_types` field. Python resolves the
+#   mission_id → protected types via
+#   `src/solver/mission_bonus_objectives.py` reading
+#   `data/mission_bonus_objectives.json`. Lua-bridge precedence path
+#   is wired (bridge populates the field directly when modloader
+#   gains BONUS_PROTECT_X exposure — TODO in modloader.lua). Empty
+#   list on missions without a "do not kill" bonus = penalty no-ops,
+#   matching pre-fix behavior on those boards but removing the
+#   false-positive on missions where a Volatile spawned without
+#   BONUS_PROTECT_X. Pre-v21 rows archived to
+#   failure_db_snapshot_sim_v20.jsonl.
+SIMULATOR_VERSION = 21
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

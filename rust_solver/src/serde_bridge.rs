@@ -61,6 +61,21 @@ pub struct JsonInput {
     /// `Board::teleporter_pairs`. Missing / empty on non-teleporter
     /// missions.
     pub teleporter_pairs: Option<Vec<Vec<u8>>>,
+    /// Per-mission "do not kill X" bonus objective unit-type list. When
+    /// non-empty, the evaluator's `volatile_enemy_killed` penalty fires
+    /// only for kills whose `type_name` matches one of these strings —
+    /// previously the penalty applied unconditionally to every Volatile
+    /// Vek / GlowingScorpion kill regardless of the active mission's
+    /// bonus objective. Source order:
+    ///   1. Lua bridge (when modloader exposes the live mission's
+    ///      bonus-objective unit type — e.g. BONUS_PROTECT_<X>),
+    ///   2. Python-side `data/mission_bonus_objectives.json` keyed by
+    ///      `mission_id`.
+    /// Empty / missing on missions without a "do not kill" bonus → the
+    /// penalty is a no-op (matches pre-fix behavior on those boards but
+    /// removes the false-positive on Weather Watch boards where Volatiles
+    /// aren't actually a protected objective).
+    pub bonus_objective_unit_types: Option<Vec<String>>,
 }
 
 #[derive(Deserialize)]
@@ -392,6 +407,13 @@ pub fn board_from_json(json_str: &str)
                 board.teleporter_pairs.push((p[0], p[1], p[2], p[3]));
             }
         }
+    }
+
+    // Mission-aware bonus-objective protected types ("do not kill X").
+    // Empty list → no protection this mission, evaluator's volatile-kill
+    // penalty no-ops. See Board::bonus_dont_kill_types and JsonInput field.
+    if let Some(types) = &input.bonus_objective_unit_types {
+        board.bonus_dont_kill_types = types.iter().cloned().collect();
     }
 
     // Spawn points

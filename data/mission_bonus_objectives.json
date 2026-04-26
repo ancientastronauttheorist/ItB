@@ -1,0 +1,8 @@
+{
+  "_comment": "Per-mission 'do not kill X' bonus-objective protected unit-type list. Keyed by Lua mission.ID (the mission template name, e.g. 'Mission_Volatile'). Each value is a list of pawn-type substrings; the evaluator's volatile-kill penalty fires only for kills whose unit.type_name contains one of these strings. Empty lists / missions not present here = no protection on that mission, no penalty. Add entries here as new 'do not kill' missions are catalogued. The matching is substring-based to mirror is_volatile_vek() (so 'Volatile_Vek' covers Volatile_Vek1/2 if those ever appear).",
+  "_format": {
+    "<Mission_ID>": ["<protected_pawn_type_substring>", "..."]
+  },
+  "_pending_research": "Mission_ID for the R.S.T. 'Volatile Vek / Weather Watch' encounter. The GlowingScorpion class is the live unit. Once the Lua bridge confirms the exact mission.ID at runtime, add an entry like 'Mission_VolatileMine': ['GlowingScorpion'] (current best guess based on weapons_enemy.lua naming). Until then the penalty is correctly disabled on every mission, including ones that previously fired it incorrectly.",
+  "Mission_VolatileMine": ["GlowingScorpion", "Volatile_Vek"]
+}

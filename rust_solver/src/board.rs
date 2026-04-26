@@ -338,6 +338,16 @@ pub struct Board {
     // 4 pads; other missions usually have 0. Iterated linearly in
     // `teleport_partner()` — stays cheap at this size.
     pub teleporter_pairs: Vec<(u8, u8, u8, u8)>,
+    /// Per-mission "do not kill X" bonus objective unit-type list. When
+    /// empty, the evaluator's `volatile_enemy_killed` penalty is a no-op
+    /// (no protected types this mission). When non-empty, the penalty
+    /// fires only on kills whose `type_name` is in this list. Populated
+    /// via `JsonInput::bonus_objective_unit_types` (Lua bridge or Python
+    /// `data/mission_bonus_objectives.json`). Replaces the previous
+    /// hardcoded "always penalize Volatile_Vek / GlowingScorpion" gate
+    /// which fired on every Weather Watch kill regardless of whether the
+    /// current mission's BonusObjs actually included BONUS_PROTECT_X.
+    pub bonus_dont_kill_types: Vec<String>,
 }
 
 impl Default for Board {
@@ -375,6 +385,7 @@ impl Default for Board {
             dam_alive: false,
             dam_primary: None,
             teleporter_pairs: Vec::new(),
+            bonus_dont_kill_types: Vec::new(),
         }
     }
 }
@@ -576,9 +587,13 @@ mod tests {
         // Pilot_flags (u8 + alignment) on 16 Units added ~40 bytes, still
         // well under any hot-path concern — memcpy bandwidth on M-series
         // is ~60GB/s, so 1.3kB copies are sub-nanosecond.
+        // Sim v21: bonus_dont_kill_types: Vec<String> added 24 bytes
+        // (Vec header). Empty Vec doesn't allocate, so Clone is still
+        // a memcpy on the common path; only missions with a populated
+        // protected-list pay the heap-clone cost (1× per solve).
         let size = std::mem::size_of::<Board>();
         println!("Board size: {} bytes", size);
-        assert!(size <= 1280, "Board too large: {} bytes", size);
+        assert!(size <= 1320, "Board too large: {} bytes", size);
     }
 
     #[test]
