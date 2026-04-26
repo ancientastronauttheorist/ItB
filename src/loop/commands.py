@@ -4657,6 +4657,49 @@ def _log_sub_action_desync(
           f"{diff.total_count()} diffs [{cat_label}]")
 
 
+_WINNABILITY_SCORE_THRESHOLD = -100_000
+_WINNABILITY_GRID_DROP = 2
+
+
+def _check_winnability(turn: int, score: float,
+                       grid_power_str: str | None,
+                       predicted_outcome: dict) -> dict | None:
+    """Return a warning dict if turn-1 solve looks catastrophically lost.
+
+    Fires only on turn 1 (freshly post-deployment). Triggers when the
+    solver score is below ``_WINNABILITY_SCORE_THRESHOLD`` AND the
+    predicted post-enemy grid_power drops by ``_WINNABILITY_GRID_DROP`` or
+    more vs. the current grid. Observational — never aborts.
+    """
+    if turn != 1:
+        return None
+    if not isinstance(grid_power_str, str) or "/" not in grid_power_str:
+        return None
+    try:
+        current_grid = int(grid_power_str.split("/", 1)[0])
+    except (ValueError, TypeError):
+        return None
+    predicted_grid = predicted_outcome.get("grid_power")
+    if not isinstance(predicted_grid, int):
+        return None
+    if score >= _WINNABILITY_SCORE_THRESHOLD:
+        return None
+    if predicted_grid > current_grid - _WINNABILITY_GRID_DROP:
+        return None
+    bar = "=" * 60
+    print(bar)
+    print(f"! ABORT WARNING — solver score {score:.0f} on turn 1")
+    print(f"! Predicted grid: {current_grid} -> {predicted_grid}")
+    print("! Position is likely unwinnable. Recommend: forfeit and")
+    print("! pick a different mission. Continue at your own risk.")
+    print(bar)
+    return {
+        "score": float(score),
+        "predicted_grid": predicted_grid,
+        "current_grid": current_grid,
+    }
+
+
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   wait_for_turn: bool = True, max_wait: float = 45.0) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
@@ -4796,13 +4839,24 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     mi = session.mission_index
     solve_file = run_dir / f"m{mi:02d}_turn_{turn:02d}_solve.json"
     predicted_states = []
+    predicted_outcome: dict = {}
     if solve_file.exists():
         try:
             with open(solve_file) as f:
                 solve_record = json.load(f)
             predicted_states = predicted_states_from_solve_record(solve_record)
+            predicted_outcome = (solve_record.get("data") or {}).get("predicted_outcome") or {}
         except (json.JSONDecodeError, OSError):
             pass
+
+    # Pre-turn-1 winnability check — if the solver scored catastrophically low
+    # AND grid power is forecast to drop ≥2 on turn 1, the position is most
+    # likely unwinnable. Surface a loud banner so the operator can forfeit
+    # before sinking more turns into a lost mission. Observational only —
+    # never auto-aborts (CLAUDE.md "Executing actions with care").
+    winnability_warning: dict | None = _check_winnability(
+        turn, score, read_result.get("grid_power"), predicted_outcome
+    )
 
     # Build action list from session solution
     actions = session.active_solution.actions if session.active_solution else []
@@ -5115,6 +5169,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 "solver_gap_events": solver_gap_events,
                 "research_queue_peek": _research_peek(session),
             }
+            if winnability_warning:
+                result["winnability_warning"] = winnability_warning
             _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                            unknowns_flagged,
                            research_peek=result["research_queue_peek"])
@@ -5138,6 +5194,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "solver_gap_events": solver_gap_events,
             "research_queue_peek": _research_peek(session),
         }
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                        unknowns_flagged,
                        research_peek=result["research_queue_peek"])
@@ -5167,6 +5225,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "solver_gap_events": solver_gap_events,
         "research_queue_peek": _research_peek(session),
     }
+    if winnability_warning:
+        result["winnability_warning"] = winnability_warning
     _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
                    unknowns_flagged,
                    research_peek=result["research_queue_peek"])

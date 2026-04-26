@@ -204,7 +204,7 @@ impl Default for EvalWeights {
             grid_power: 5000.0,
             enemy_killed: 500.0,
             enemy_hp_remaining: -100.0,
-            enemy_threat_remaining: 0.0,
+            enemy_threat_remaining: -100.0,
             mech_killed: -150000.0,
             mech_hp: 100.0,
             spawn_blocked: 1000.0,
