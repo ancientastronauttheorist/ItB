@@ -959,22 +959,41 @@ local function dump_state()
     -- transition, or shop; the bridge phase will read "unknown" and the
     -- picker can score the available missions.
     state.island_map = nil
-    pcall(function()
+    state.island_map_debug = nil
+    -- Unconditional reachability probe: if state.island_map_probe shows up
+    -- in the JSON but state.island_map does not, we know the pcall block is
+    -- the failure point (not the surrounding scope or write_atomic).
+    state.island_map_probe = "scope_alive"
+    -- Resolve GAME via _G first, fall back to bare global. Both should work
+    -- given Lua's scoping rules, but we record which path succeeded so a
+    -- failed lookup can be told apart from a missing-Missions case.
+    local _game_ref = rawget(_G, "GAME")
+    if _game_ref == nil then
+        _game_ref = GAME  -- bare-global fallback (ITB's own scope convention)
+    end
+    state.island_map_game_seen = (_game_ref ~= nil) and type(_game_ref) or "nil"
+    local ok_island_map, err_island_map = pcall(function()
         if _ITB_CURRENT_MISSION ~= nil then
+            state.island_map_debug = "skipped: in active mission"
             return  -- in active mission; slate is not the right answer
         end
-        if not GAME or type(GAME) ~= "table" then
+        if not _game_ref or type(_game_ref) ~= "table" then
+            state.island_map_debug = "GAME is " .. tostring(_game_ref)
             return
         end
-        local missions = GAME.Missions
+        local missions = _game_ref.Missions
         if type(missions) ~= "table" then
+            state.island_map_debug = "GAME.Missions is " .. type(missions) ..
+                " (value=" .. tostring(missions) .. ")"
             return
         end
         local out = {}
         -- GAME.Missions is 1-indexed for regular missions; key 0 is the
         -- boss/final mission when present. Walk both 0 and 1..N.
         local indices = {}
+        local n_keys = 0
         for k, _ in pairs(missions) do
+            n_keys = n_keys + 1
             if type(k) == "number" then
                 indices[#indices + 1] = k
             end
@@ -1014,10 +1033,15 @@ local function dump_state()
             end
         end
         state.island_map = out
-        if type(GAME.Island) == "number" then
-            state.island_index = GAME.Island
+        state.island_map_debug = "ok: " .. tostring(#out) .. " entries from " ..
+            tostring(n_keys) .. " keys"
+        if type(_game_ref.Island) == "number" then
+            state.island_index = _game_ref.Island
         end
     end)
+    if not ok_island_map then
+        state.island_map_debug = "pcall error: " .. tostring(err_island_map)
+    end
 
     write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
 end
