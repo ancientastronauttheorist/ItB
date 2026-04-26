@@ -1265,6 +1265,21 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
 
 // ── Projectile ───────────────────────────────────────────────────────────────
 
+/// Resolve projectile damage at the hit tile, honoring DAMAGE_SCALES_WITH_DIST.
+/// Mirrors Brute_Sniper's Lua formula (weapons_brute.lua:969-991): damage =
+/// max(0, min(MaxDamage, tile_distance - 1)). Adjacent target → 0 damage.
+/// `wdef.damage` is the unscaled damage cap (== MaxDamage in Lua).
+fn projectile_damage(wdef: &WeaponDef, ax: u8, ay: u8, hx: u8, hy: u8) -> u8 {
+    if !wdef.damage_scales_with_dist() {
+        return wdef.damage;
+    }
+    let tile_dist = (ax as i16 - hx as i16).unsigned_abs()
+        + (ay as i16 - hy as i16).unsigned_abs();
+    // Cardinal projectile, so one of (|dx|, |dy|) is 0 — Manhattan == Chebyshev.
+    let scaled = tile_dist.saturating_sub(1) as u8;
+    scaled.min(wdef.damage)
+}
+
 fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
     let dir = match attack_dir {
         Some(d) => d,
@@ -1304,7 +1319,8 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
     if hit_x >= 0 {
         let hx = hit_x as u8;
         let hy = hit_y as u8;
-        apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+        let dmg = projectile_damage(wdef, ax, ay, hx, hy);
+        apply_damage(board, hx, hy, dmg, result, DamageSource::Weapon);
         apply_weapon_status(board, hx, hy, wdef); // status BEFORE push (unit still here)
         match wdef.push {
             PushDir::Forward => apply_push(board, hx, hy, dir, result),
@@ -1313,7 +1329,8 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         }
     } else if let Some((mx, my)) = mountain_hit {
         // Projectile struck a mountain with no prior target — damage it.
-        apply_damage(board, mx, my, wdef.damage, result, DamageSource::Weapon);
+        let dmg = projectile_damage(wdef, ax, ay, mx, my);
+        apply_damage(board, mx, my, dmg, result, DamageSource::Weapon);
     }
 
     // Mirror shot (aoe_behind): also fire backward
@@ -4943,6 +4960,60 @@ mod tests {
         assert_eq!(board.units[f].hp, 3, "flying unit survives chasm");
         assert_eq!((board.units[f].x, board.units[f].y), (3, 4),
                    "flying unit landed on chasm tile");
+    }
+
+    // ── Brute_Sniper distance scaling (weapons_brute.lua:969-991) ────────
+    // damage = max(0, min(MaxDamage, tile_distance - 1)). MaxDamage=2 at base.
+    // Push (Forward) fires regardless of damage value.
+
+    /// Adjacent target (tile_distance=1) → 0 damage; push still fires.
+    #[test]
+    fn test_brute_sniper_adjacent_target_zero_damage() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteSniper);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+        let result = simulate_weapon(&mut board, mech_idx, WId::BruteSniper, 3, 4);
+        assert_eq!(board.units[enemy_idx].hp, 3, "adjacent shot deals 0 damage");
+        assert_eq!(result.enemies_killed, 0);
+        assert_eq!(board.units[enemy_idx].y, 5,
+            "Forward push still fires at zero damage");
+    }
+
+    /// tile_distance=2 → 1 damage.
+    #[test]
+    fn test_brute_sniper_dist2_one_damage() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteSniper);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 5, 3);
+        simulate_weapon(&mut board, mech_idx, WId::BruteSniper, 3, 5);
+        assert_eq!(board.units[enemy_idx].hp, 2, "dist=2 shot deals 1 damage");
+    }
+
+    /// tile_distance=3 → 2 damage (== MaxDamage at base).
+    #[test]
+    fn test_brute_sniper_dist3_caps_at_max_damage() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteSniper);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 6, 3);
+        simulate_weapon(&mut board, mech_idx, WId::BruteSniper, 3, 6);
+        assert_eq!(board.units[enemy_idx].hp, 1, "dist=3 caps at MaxDamage=2");
+    }
+
+    /// Long-range target (tile_distance=4, with empty space behind so push
+    /// doesn't bump-bonus the damage) → exactly MaxDamage=2.
+    #[test]
+    fn test_brute_sniper_long_range_exactly_max_damage() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 0, 0, 3, WId::BruteSniper);
+        // Shooter at (0,0), target at (0,4) → tile_distance=4, scaled=3,
+        // capped at MaxDamage=2. Tile (0,5) is empty → unit pushes cleanly,
+        // no bump damage.
+        let enemy_idx = add_enemy(&mut board, 1, 0, 4, 5);
+        simulate_weapon(&mut board, mech_idx, WId::BruteSniper, 0, 4);
+        assert_eq!(board.units[enemy_idx].hp, 5 - 2,
+            "dist=4 still caps at MaxDamage=2");
+        assert_eq!(board.units[enemy_idx].y, 5,
+            "Forward push moves target one tile (no bump)");
     }
 
     #[test]

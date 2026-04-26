@@ -50,6 +50,16 @@ bitflags! {
         /// pull until adjacent — handled in `sim_pull_or_swap` by looping
         /// `apply_push` rather than calling it once.
         const FULL_PULL = 1 << 19;
+        /// Projectile damage scales with shot distance: dealt damage =
+        /// max(0, min(wdef.damage, tile_distance_from_shooter - 1)).
+        /// Mirrors Brute_Sniper's Lua formula (weapons_brute.lua:969-991):
+        ///     local damage = SpaceDamage(target, math.min(self.MaxDamage, dist), dir)
+        /// where Lua's `dist` counter is initialized at 0 with the projectile
+        /// pre-stepped one tile, so `dist` increments to (tile_distance - 1).
+        /// Adjacent target → 0 damage; dist=2 → 1 damage; dist≥MaxDamage+1 →
+        /// MaxDamage. `wdef.damage` plays the role of MaxDamage. Push still
+        /// fires regardless of damage value.
+        const DAMAGE_SCALES_WITH_DIST = 1 << 20;
     }
 }
 
@@ -88,6 +98,7 @@ impl WeaponDef {
     pub fn smoke_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::SMOKE_BEHIND_SHOOTER) }
     pub fn damages_transit(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGES_TRANSIT) }
     pub fn full_pull(&self) -> bool { self.flags.contains(WeaponFlags::FULL_PULL) }
+    pub fn damage_scales_with_dist(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGE_SCALES_WITH_DIST) }
 }
 
 /// Default weapon def (no-op).
@@ -369,14 +380,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[26] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Backward, range_max: 0,
         flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 27: Brute_Sniper — Sniper Rifle
-    // TODO(weapons-audit 2026-04-25): Lua scripts/weapons_brute.lua:969-991
-    // Damage = min(MaxDamage, distance_to_target_minus_one). Default
+    // Lua scripts/weapons_brute.lua:969-991: damage = min(MaxDamage, dist),
+    // where Lua's `dist` counter increments to (tile_distance - 1). With
     // MaxDamage=2: adjacent target → 0 dmg, dist=2 → 1 dmg, dist≥3 → 2 dmg.
-    // We currently apply a flat damage=2, over-predicting near-target shots
-    // and under-predicting only when MaxDamage exceeds simulated damage on
-    // upgraded variants (not modelled). Proper fix needs distance-scaling
-    // logic in sim_projectile (new flag SCALE_DAMAGE_WITH_RANGE or similar).
-    w[27] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    // Push still fires regardless. Distance-scaling is encoded via the
+    // DAMAGE_SCALES_WITH_DIST flag and consumed in `sim_projectile`.
+    w[27] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0,
+        flags: f(WeaponFlags::DAMAGE_SCALES_WITH_DIST.bits()), ..DEF };
     // 28: Brute_Splitshot — Split Shot
     w[28] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Outward, range_max: 0, limited: 1,
         flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
