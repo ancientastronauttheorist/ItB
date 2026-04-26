@@ -860,10 +860,14 @@ local function dump_state()
         end
     end)
 
-    -- Teleporter pads: previously recorded via a Board.AddTeleport hook,
-    -- but that crashed macOS. Now always empty until we find a safe
-    -- pad-discovery path. Each entry would be {x1, y1, x2, y2}. The
-    -- Rust/Python simulators ignore an empty list (pre-sim-v8 behavior).
+    -- Teleporter pads: populated by the Mission_Teleporter:StartMission
+    -- wrap below. Each entry = {x1, y1, x2, y2}. Empty list / absent on
+    -- non-teleporter missions; the Rust/Python simulators ignore an empty
+    -- list (pre-sim-v8 behavior). The earlier Board.AddTeleport global
+    -- override crashed mac OS at file-load with "no static 'AddTeleport'
+    -- in class 'Board'" (commit 456ba49 → rolled back in 63e0e18); the
+    -- current scope-rebinds AddTeleport only inside StartMission and pcalls
+    -- everything so a future API change can't take down mission load.
     if _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
         state.teleporter_pairs = {}
         for _, pair in ipairs(_ITB_TELEPORT_PAIRS) do
@@ -1540,23 +1544,28 @@ if not _ITB_BRIDGE_ORIGINALS then
         BaseStart        = Mission.BaseStart,
         MissionEnd       = Mission.MissionEnd,
         BaseDeployment   = Mission.BaseDeployment,
+        -- Mission_Teleporter is loaded earlier (scripts.lua line 65 vs
+        -- modloader.lua at 160) but guard regardless — any plugin can
+        -- redefine it before our hook installs.
+        TeleporterStartMission = (Mission_Teleporter
+            and Mission_Teleporter.StartMission) or nil,
     }
 end
 
-local _orig_BaseUpdate       = _ITB_BRIDGE_ORIGINALS.BaseUpdate
-local _orig_NextTurn         = _ITB_BRIDGE_ORIGINALS.NextTurn
-local _orig_BaseStart        = _ITB_BRIDGE_ORIGINALS.BaseStart
-local _orig_MissionEnd       = _ITB_BRIDGE_ORIGINALS.MissionEnd
-local _orig_BaseDeployment   = _ITB_BRIDGE_ORIGINALS.BaseDeployment
+local _orig_BaseUpdate              = _ITB_BRIDGE_ORIGINALS.BaseUpdate
+local _orig_NextTurn                = _ITB_BRIDGE_ORIGINALS.NextTurn
+local _orig_BaseStart               = _ITB_BRIDGE_ORIGINALS.BaseStart
+local _orig_MissionEnd              = _ITB_BRIDGE_ORIGINALS.MissionEnd
+local _orig_BaseDeployment          = _ITB_BRIDGE_ORIGINALS.BaseDeployment
+local _orig_TeleporterStartMission  = _ITB_BRIDGE_ORIGINALS.TeleporterStartMission
 
--- Teleporter pads for the CURRENT mission. Previously populated by a
--- Board.AddTeleport wrapper, but that hook crashed macOS builds with
--- "Lua Error: no static 'AddTeleport' in class 'Board'" on teleporter
--- mission load (likely ITB's class system doesn't expose the setter as
--- a plain Lua field on this build). Left as an always-empty list so the
--- state dump shape stays stable — solver falls back to pre-sim-v8
--- behavior on teleporter missions until we find a safe pad-discovery
--- hook. See docs/research/ + commit 456ba49 for context.
+-- Teleporter pads for the CURRENT mission. Each entry = {x1, y1, x2, y2}.
+-- Populated by the Mission_Teleporter:StartMission wrap further down: that
+-- wrap scope-rebinds Board.AddTeleport in a pcall so the C++ class system
+-- can reject the assignment (commit 456ba49 hit "no static 'AddTeleport'
+-- in class 'Board'" with a permanent global rebind at file-load) without
+-- taking down mission load. On rejection the list stays empty and the
+-- solver falls back to pre-sim-v8 behavior for that mission.
 _ITB_TELEPORT_PAIRS = _ITB_TELEPORT_PAIRS or {}
 
 -- Cached deployment zone (captured in BaseDeployment, cleared on MissionEnd)
@@ -1670,6 +1679,108 @@ Mission.MissionEnd = function(self)
     _ITB_CURRENT_MISSION = nil
     _ITB_TELEPORT_PAIRS = {}
     _orig_MissionEnd(self)
+end
+
+-- Mission_Teleporter:StartMission — capture pad pairs.
+--
+-- Why this wrap exists: Mission_Teleporter calls Board:AddTeleport(p1,p2)
+-- twice during StartMission to register two pad pairs, and the C++ side
+-- never re-exposes those pairs through a documented Lua getter. The Rust
+-- sim's apply_teleport_on_land needs them to score post-move positions
+-- correctly on Detritus disposal missions (commit 456ba49 added the sim
+-- side; the bridge has been emitting an empty list since 63e0e18 rolled
+-- back the global Board.AddTeleport hook that crashed macOS).
+--
+-- Why this is safer than the prior global hook:
+--   * Wrap target is Mission_Teleporter, a pure-Lua subclass of
+--     Mission_Auto. Method dispatch on Mission goes through plain Lua
+--     metatables (the existing Mission.BaseStart wrap proves that works
+--     on macOS); Board lives in the C++ class proxy that rejected the
+--     earlier rawset.
+--   * The Board.AddTeleport scope-rebind is wrapped in pcall. If the
+--     proxy still refuses the assignment we just log + skip capture; the
+--     original StartMission still runs, _ITB_TELEPORT_PAIRS stays empty,
+--     and the simulator falls back to pre-v8 behavior — same outcome
+--     we have today, no crash.
+--   * No other mission ever touches Board.AddTeleport in our wrap, so
+--     Vice Fist throw and Science_Swap (the other AddTeleport callers)
+--     never see our shadow function.
+--   * Every step is pcall-guarded. The worst case is that the next
+--     teleporter mission solves on stale (empty) pad data; combat still
+--     proceeds.
+if Mission_Teleporter and _orig_TeleporterStartMission then
+    Mission_Teleporter.StartMission = function(self)
+        _ITB_TELEPORT_PAIRS = {}
+        local original_AddTeleport = nil
+        local rebound = false
+        local capture_fn = function(board_self, p1, p2, delay)
+            -- Record the pair, then defer to the original engine method
+            -- so the actual pad placement / animation still happens.
+            local ok = pcall(function()
+                if p1 and p2
+                   and type(p1.x) == "number" and type(p1.y) == "number"
+                   and type(p2.x) == "number" and type(p2.y) == "number" then
+                    _ITB_TELEPORT_PAIRS[#_ITB_TELEPORT_PAIRS + 1] =
+                        {p1.x, p1.y, p2.x, p2.y}
+                    log_bridge(
+                        "TELEPORT PAD pair captured: ("
+                        .. p1.x .. "," .. p1.y .. ") <-> ("
+                        .. p2.x .. "," .. p2.y .. ")")
+                end
+            end)
+            if not ok then
+                log_bridge("TELEPORT PAD capture: pair record failed (non-fatal)")
+            end
+            -- Always invoke the original — never swallow the pad placement.
+            return original_AddTeleport(board_self, p1, p2, delay)
+        end
+
+        -- Try to install the capture. If the C++ proxy rejects the
+        -- assignment (the failure mode that bit commit 456ba49) the
+        -- pcall returns false and we proceed without recording — the
+        -- original StartMission still runs through the unmodified
+        -- engine method, mission load succeeds.
+        local install_ok = pcall(function()
+            original_AddTeleport = Board and Board.AddTeleport or nil
+            if original_AddTeleport then
+                Board.AddTeleport = capture_fn
+                rebound = true
+            end
+        end)
+
+        if not install_ok then
+            log_bridge("TELEPORT PAD: Board.AddTeleport rebind rejected — "
+                .. "running StartMission with empty pad list (sim falls back "
+                .. "to pre-v8 behavior on this mission)")
+            rebound = false
+        end
+
+        -- Run the original mission setup. This is the call that
+        -- triggers Board:AddTeleport(start, finish) twice.
+        local run_ok, run_err = pcall(function()
+            _orig_TeleporterStartMission(self)
+        end)
+
+        -- ALWAYS restore, regardless of whether StartMission errored.
+        -- Leaving our shadow function on Board would break Vice Fist /
+        -- Science_Swap on subsequent turns.
+        if rebound then
+            pcall(function()
+                Board.AddTeleport = original_AddTeleport
+            end)
+        end
+
+        if not run_ok then
+            log_bridge("TELEPORT PAD: original StartMission errored: "
+                .. tostring(run_err))
+            -- Re-raise so the engine sees the same error it would have
+            -- without our wrap. Game-side error recovery owns this path.
+            error(run_err)
+        end
+
+        log_bridge("TELEPORT PAD: StartMission complete, "
+            .. #_ITB_TELEPORT_PAIRS .. " pair(s) captured")
+    end
 end
 
 --------------------------------------------------------------------
