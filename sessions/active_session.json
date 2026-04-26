@@ -6,55 +6,55 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 1,
+  "mission_index": 2,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 2,
-        "mech_type": "GravMech",
-        "move_to": [
-          2,
-          4
-        ],
-        "weapon": "Science_Gravwell",
-        "target": [
-          2,
-          6
-        ],
-        "description": "GravMech, move E7\u2192D6, fire Grav Well at B6"
-      },
-      {
         "mech_uid": 1,
         "mech_type": "JetMech",
         "move_to": [
-          1,
-          5
+          4,
+          2
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "JetMech, move D6\u2192F4"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "GravMech",
+        "move_to": [
+          5,
+          4
         ],
         "weapon": "_REPAIR",
         "target": [
-          1,
-          5
+          5,
+          4
         ],
-        "description": "JetMech, move C6\u2192C7, repair"
+        "description": "GravMech, move A4\u2192D3, repair"
       },
       {
         "mech_uid": 0,
         "mech_type": "ElectricMech",
         "move_to": [
-          2,
-          5
+          3,
+          4
         ],
         "weapon": "Prime_Lightning",
         "target": [
-          3,
-          5
+          4,
+          4
         ],
-        "description": "ElectricMech, move F5\u2192C6, fire Chain Whip at C5"
+        "description": "ElectricMech, move E5\u2192D5, fire Chain Whip at D4"
       }
     ],
-    "score": 57920.00011495182,
+    "score": 112945.71428571428,
     "turn": 4
   },
   "actions_executed": 0,
@@ -150,6 +150,50 @@
         "JetMech, move C6\u2192C7, repair",
         "ElectricMech, move F5\u2192C6, fire Chain Whip at C5"
       ]
+    },
+    {
+      "timestamp": "2026-04-25T19:22:44.110072",
+      "turn": 1,
+      "label": "solve",
+      "score": 127385.71428571426,
+      "actions": [
+        "JetMech, move E6\u2192E5, fire Aerial Bombs at G5",
+        "GravMech, move C6\u2192B3, fire Grav Well at E3",
+        "ElectricMech, move D5\u2192C4, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T19:23:41.185959",
+      "turn": 2,
+      "label": "solve",
+      "score": 110915.71428571425,
+      "actions": [
+        "JetMech, move G5\u2192D5, fire Aerial Bombs at B5",
+        "GravMech, move B3\u2192A4",
+        "ElectricMech, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T19:24:12.684936",
+      "turn": 3,
+      "label": "solve",
+      "score": 114015.71428571428,
+      "actions": [
+        "ElectricMech, move C4\u2192E5, fire Chain Whip at E6",
+        "JetMech, move B5\u2192B6, fire Aerial Bombs at D6",
+        "GravMech"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T19:24:46.024029",
+      "turn": 4,
+      "label": "solve",
+      "score": 112945.71428571428,
+      "actions": [
+        "JetMech, move D6\u2192F4",
+        "GravMech, move A4\u2192D3, repair",
+        "ElectricMech, move E5\u2192D5, fire Chain Whip at D4"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -175,6 +219,18 @@
     ],
     [
       1,
+      3
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
       3
     ]
   ],
@@ -557,19 +613,321 @@
           5
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir",
+        "status",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "push_dir|Science_Gravwell|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Science_Gravwell",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir",
+        "status",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "push_dir|Prime_Lightning|move",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "damage_amount",
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Lightning|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "unknown",
+      "categories": [],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "unknown|Prime_Lightning|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "unknown",
+      "categories": [],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "unknown|_REPAIR|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "_REPAIR",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|_REPAIR|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "_REPAIR",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Lightning|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Lightning",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Lightning|attack",
+      "frequency": 2,
+      "asymmetry": [
+        "mech_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Lightning",
+        "target": [
+          4,
+          4
+        ]
+      }
     }
   ],
   "disabled_actions": [
     {
-      "weapon_id": "Brute_Jetmech",
-      "cause_pattern": "status|Brute_Jetmech|attack",
-      "expires_turn": 6,
+      "weapon_id": "Science_Gravwell",
+      "cause_pattern": "push_dir|Science_Gravwell|attack",
+      "expires_turn": 4,
       "strategic_override": false
     },
     {
-      "weapon_id": "Science_Gravwell",
-      "cause_pattern": "status|Science_Gravwell|attack",
-      "expires_turn": 6,
+      "weapon_id": "Prime_Lightning",
+      "cause_pattern": "push_dir|Prime_Lightning|move|death|Prime_Lightning|attack",
+      "expires_turn": 7,
       "strategic_override": false
     }
   ],
@@ -625,6 +983,27 @@
       "diff_actual": [
         4,
         2
+      ],
+      "severity": "medium"
+    },
+    {
+      "type": "Hornet1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null,
+      "diff_field": "pos",
+      "diff_predicted": [
+        5,
+        5
+      ],
+      "diff_actual": [
+        5,
+        4
       ],
       "severity": "medium"
     }

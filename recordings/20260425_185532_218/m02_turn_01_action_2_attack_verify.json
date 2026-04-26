@@ -1,0 +1,305 @@
+{
+  "timestamp": "2026-04-25T19:22:58.509658",
+  "run_id": "20260425_185532_218",
+  "mission_index": 2,
+  "turn": 1,
+  "label": "action_2_attack_verify",
+  "data": {
+    "action_index": 2,
+    "sub_action": "attack",
+    "mech_uid": 0,
+    "predicted": {
+      "action_index": 2,
+      "grid_power": 4,
+      "mech_uid": 0,
+      "snapshot_phase": "after_mech_action",
+      "tiles_changed": [
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 3,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 3,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "water",
+          "x": 3,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 4,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "water",
+          "x": 4,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 4
+        },
+        {
+          "acid": true,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 6
+        }
+      ],
+      "units": [
+        {
+          "active": false,
+          "alive": true,
+          "hp": 5,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            4,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "ElectricMech",
+          "uid": 0
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 2,
+          "is_mech": true,
+          "max_hp": 2,
+          "pos": [
+            3,
+            1
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "JetMech",
+          "uid": 1
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 1,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            5,
+            6
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "GravMech",
+          "uid": 2
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": -2,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            5,
+            5
+          ],
+          "status": {
+            "acid": true,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Hornet1",
+          "uid": 434
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": 0,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            6,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Scarab1",
+          "uid": 435
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": -1,
+          "is_mech": false,
+          "max_hp": 1,
+          "pos": [
+            3,
+            2
+          ],
+          "status": {
+            "acid": true,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Leaper1",
+          "uid": 436
+        }
+      ]
+    },
+    "diff": {
+      "unit_diffs": [
+        {
+          "uid": 2,
+          "type": "GravMech",
+          "field": "hp",
+          "predicted": 1,
+          "actual": 3
+        },
+        {
+          "uid": 434,
+          "type": "Hornet1",
+          "field": "alive",
+          "predicted": false,
+          "actual": true
+        },
+        {
+          "uid": 435,
+          "type": "Scarab1",
+          "field": "alive",
+          "predicted": false,
+          "actual": true
+        }
+      ],
+      "tile_diffs": [],
+      "scalar_diffs": [],
+      "total_count": 3
+    },
+    "classification": {
+      "top_category": "death",
+      "categories": [
+        "damage_amount",
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false
+    },
+    "fuzzy_signal": {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "damage_amount",
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Lightning|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          5
+        ]
+      }
+    }
+  }
+}

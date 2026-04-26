@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-e9bdae0",
+  "solver_version": "rust-0.1.0-521215d",
   "weight_version": "v009",
-  "updated": "2026-04-25T19:21:35.091770",
+  "updated": "2026-04-25T19:27:15.488694",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 1,
-  "outcome_recorded_at": "2026-04-25T19:21:35.078801",
-  "outcome_notes": "Containment Zone D: Coal Plant saved. Kill 7 Enemies failed. Grid 6->4. Re-solve Board.get error during desyncs - log only."
+  "outcome_mission": 2,
+  "outcome_recorded_at": "2026-04-25T19:27:15.475703",
+  "outcome_notes": "Pumping Station: Emergency Batteries + Time Pod saved. Pod recovered (Passive + Reactor Core)."
 }
