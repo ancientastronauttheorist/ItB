@@ -418,7 +418,19 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260425_185532_218 Archive Inc loss where boards with a stray
 //   GlowingScorpion fired the penalty even though the active mission
 //   had no BONUS_PROTECT_X.
-pub const SIMULATOR_VERSION: u32 = 21;
+// v22 (2026-04-25, WebbEgg → Spiderling hatch sim):
+//   The simulator left WebbEgg / SpiderlingEgg units unchanged across
+//   the enemy phase, while the live game transforms them into live
+//   Spiderlings on hatch turn — every spider-bonus mission produced
+//   verify_action desyncs and a wall-of-Spiderlings surprise on turn
+//   3-4. New hatch step at the start of `simulate_enemy_attacks`
+//   (after fire/env_danger so dead eggs don't resurrect) flips
+//   WebbEgg1/SpiderlingEgg1 → Spiderling1, WebbEgg2 → Spiderling2,
+//   updates move_speed/weapon_id, clears queued_target +
+//   HAS_QUEUED_ATTACK so the attack loop's phantom-attack guard
+//   `continue`s cleanly (real game: hatchling's bite is turn after
+//   hatch). Surfaced by the 20260425_185532_218 Archive Inc loss.
+pub const SIMULATOR_VERSION: u32 = 22;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

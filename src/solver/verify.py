@@ -213,7 +213,20 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   false-positive on missions where a Volatile spawned without
 #   BONUS_PROTECT_X. Pre-v21 rows archived to
 #   failure_db_snapshot_sim_v20.jsonl.
-SIMULATOR_VERSION = 21
+# v22 (2026-04-25, WebbEgg → Spiderling hatch simulation):
+#   `simulate_enemy_attacks` now runs a hatch step at the start of the
+#   enemy phase (after fire tick + env_danger so dead eggs don't
+#   resurrect): WebbEgg1/SpiderlingEgg1 → Spiderling1,
+#   WebbEgg2 → Spiderling2. Pre-fix, the predicted post-enemy state
+#   showed an egg while the live game showed a Spiderling — every
+#   spider-bonus mission produced a verify_action desync, and turn
+#   3-4 board states diverged after eggs piled up across turns.
+#   Hatchlings have no queued attack on their hatch turn (real game:
+#   bite is turn after hatch); the attack loop's phantom-attack guard
+#   handles the cleared queued_target. Surfaced by the
+#   20260425_185532_218 Archive Inc loss. Pre-v22 rows archived to
+#   failure_db_snapshot_sim_v21.jsonl.
+SIMULATOR_VERSION = 22
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

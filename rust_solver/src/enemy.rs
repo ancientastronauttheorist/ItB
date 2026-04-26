@@ -318,6 +318,70 @@ pub fn simulate_enemy_attacks(
         }
     }
 
+    // Egg hatch step: transform any surviving spider/spiderling egg into
+    // its hatched live unit (sim v22). Runs AFTER fire tick + env_danger
+    // so eggs killed by those still die without hatching, but BEFORE the
+    // attack loop so the hatched Spiderling participates in the unit
+    // census the loop snapshots. The fresh hatchling has no queued
+    // attack on its hatch turn (real game: bite happens turn after
+    // hatch), so we clear queued_target + HAS_QUEUED_ATTACK so the
+    // attack-loop's phantom-attack guard `continue`s cleanly without
+    // applying conservative damage.
+    //
+    // Hatch table (per data/ref_vek_bestiary.md):
+    //   WebbEgg1       → Spiderling1   (Hive Arachnid Spider laying egg)
+    //   WebbEgg2       → Spiderling2   (Alpha Spider variant)
+    //   SpiderlingEgg1 → Spiderling1   (Corporate HQ SpiderBoss finale)
+    // Other "*Egg" types (none today) fall through unchanged — the egg
+    // skip below catches them so they never phantom-attack.
+    //
+    // Why this matters even though it's a 1-turn-deep solver: the
+    // simulator emits `predicted_post_enemy_state` which `verify_action`
+    // diffs against the actual post-enemy board. Pre-fix, the predicted
+    // state showed a WebbEgg at hatch position; the live game showed a
+    // Spiderling — every spider-bonus mission produced a desync row in
+    // failure_db. Surfaced by the 20260425_185532_218 Archive run, where
+    // 2-3 eggs piled up over turns 2-3 and were predicted as eggs but
+    // played as a Spiderling wall on turns 3-4.
+    for i in 0..board.unit_count as usize {
+        if board.units[i].hp <= 0 { continue; }
+        let new_type: Option<&'static str> = {
+            let name = board.units[i].type_name_str();
+            if name == "WebbEgg1" || name == "SpiderlingEgg1" {
+                Some("Spiderling1")
+            } else if name == "WebbEgg2" {
+                Some("Spiderling2")
+            } else {
+                None
+            }
+        };
+        if let Some(target_type) = new_type {
+            let u = &mut board.units[i];
+            u.set_type_name(target_type);
+            // Spiderling stats (data/ref_vek_bestiary.md, pawn_stats.py).
+            // 1 HP minor unit with melee bite. Eggs were also 1HP so
+            // hp/max_hp don't change here.
+            u.move_speed = 3;
+            u.base_move = 3;
+            // Bind weapon so a downstream call site that looks at
+            // `unit.weapon` (rare on enemy turn — most paths read
+            // weapon_damage/weapon_target_behind directly from the unit)
+            // sees the right id. Damage stays on the unit's
+            // weapon_damage field (telegraphed = 0 this turn = no
+            // attack).
+            u.weapon = WeaponId(WId::SpiderlingAtk1 as u16);
+            u.weapon_damage = 0;
+            u.weapon_push = 0;
+            u.weapon_target_behind = false;
+            // Clear the egg's "queued target = self-tile" so the attack
+            // loop's egg-name skip is no longer needed for this unit
+            // and the phantom-attack guard treats it as a no-op.
+            u.queued_target_x = -1;
+            u.queued_target_y = -1;
+            u.flags.set(UnitFlags::HAS_QUEUED_ATTACK, false);
+        }
+    }
+
     // Collect enemy indices sorted by UID
     let mut enemy_indices: Vec<usize> = (0..board.unit_count as usize)
         .filter(|&i| board.units[i].is_enemy())
@@ -328,12 +392,10 @@ pub fn simulate_enemy_attacks(
         let enemy = &board.units[ei];
         if enemy.hp <= 0 { continue; }
         // Spider/Arachnid eggs don't attack — they hatch into Spiderlings on
-        // their turn. Their queued_target is their own tile; without this
-        // skip the egg would be processed as a self-hit melee attack.
-        // Catch all known egg types: WebbEgg* (Hive Arachnid / Spiderlings),
-        // SpiderlingEgg* (SpiderBoss finale — Corporate HQ), and any other
-        // name containing "Egg" so new egg enemies default to safe-skip
-        // rather than phantom melee self-attack.
+        // their turn. The hatch step above transforms WebbEgg1/2 +
+        // SpiderlingEgg1 into Spiderling1/2 BEFORE this loop runs, so any
+        // egg still here is an unhandled "*Egg" subtype (defensive). Skip
+        // them as a fallback so an unmapped egg type doesn't phantom-melee.
         {
             let name = enemy.type_name_str();
             if name.starts_with("WebbEgg")
@@ -1337,6 +1399,8 @@ mod tests {
         // "action" is to hatch into a Spiderling — not an attack. Without
         // the skip, the fallback melee path would apply 1 damage to the
         // egg's own tile, self-destructing a 1-HP egg (phantom death).
+        // Post-sim-v22 the egg now hatches in place (becomes Spiderling1)
+        // instead of staying an egg, but it still must not self-damage.
         let mut board = Board::default();
         let egg_idx = add_enemy_with_type(&mut board, 1, 3, 3, 1, "WebbEgg1", 3, 3);
 
@@ -1345,6 +1409,72 @@ mod tests {
 
         assert_eq!(board.units[egg_idx].hp, 1,
             "Egg should not self-damage on its turn (hatching, not attacking)");
+    }
+
+    /// Sim v22 hatch step: a WebbEgg present at the start of the enemy
+    /// phase transforms into a Spiderling in-place. The hatchling has
+    /// no queued attack on its hatch turn (real-game: bite happens turn
+    /// after hatch), so its own tile is not damaged. The unit's
+    /// type_name flips, move_speed/weapon are bound to Spiderling stats.
+    #[test]
+    fn test_webb_egg_hatches_into_spiderling() {
+        let mut board = Board::default();
+        let egg_idx = add_enemy_with_type(&mut board, 1, 3, 3, 1, "WebbEgg1", 3, 3);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let u = &board.units[egg_idx];
+        assert_eq!(u.type_name_str(), "Spiderling1",
+            "WebbEgg1 should hatch into Spiderling1");
+        assert_eq!(u.hp, 1, "hatched Spiderling inherits 1 HP");
+        assert_eq!(u.move_speed, 3, "Spiderling has move_speed=3 per pawn_stats");
+        assert!(!u.has_queued_attack(),
+            "fresh hatchling has no queued attack on its hatch turn");
+        assert_eq!(u.queued_target_x, -1,
+            "queued_target cleared so phantom-attack guard `continue`s");
+    }
+
+    #[test]
+    fn test_alpha_webb_egg_hatches_into_alpha_spiderling() {
+        let mut board = Board::default();
+        let egg_idx = add_enemy_with_type(&mut board, 1, 4, 4, 1, "WebbEgg2", 4, 4);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+        assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling2",
+            "WebbEgg2 should hatch into Spiderling2 (alpha)");
+    }
+
+    #[test]
+    fn test_spiderling_egg_hatches_into_spiderling() {
+        // SpiderlingEgg1 (Corporate HQ SpiderBoss finale) → Spiderling1
+        let mut board = Board::default();
+        let egg_idx = add_enemy_with_type(&mut board, 1, 5, 5, 1, "SpiderlingEgg1", 5, 5);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+        assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling1",
+            "SpiderlingEgg1 should hatch into Spiderling1");
+    }
+
+    #[test]
+    fn test_dead_egg_does_not_hatch() {
+        // Egg killed by player attack pre-enemy-phase: hp=0 going in.
+        // Hatch step must skip dead units so we don't resurrect Spiderlings.
+        let mut board = Board::default();
+        let mut unit = Unit {
+            uid: 1, x: 2, y: 2, hp: 0, max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            queued_target_x: 2,
+            queued_target_y: 2,
+            ..Default::default()
+        };
+        unit.set_type_name("WebbEgg1");
+        let idx = board.add_unit(unit);
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+        assert_eq!(board.units[idx].type_name_str(), "WebbEgg1",
+            "Dead egg must not hatch (resurrection guard)");
+        assert_eq!(board.units[idx].hp, 0, "Dead egg stays dead");
     }
 
     #[test]
