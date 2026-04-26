@@ -226,7 +226,23 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   handles the cleared queued_target. Surfaced by the
 #   20260425_185532_218 Archive Inc loss. Pre-v22 rows archived to
 #   failure_db_snapshot_sim_v21.jsonl.
-SIMULATOR_VERSION = 22
+# v23 (2026-04-25, hatch-table corrected against game Lua source):
+#   v22 hatch table came from data/ref_vek_bestiary.md; validating
+#   against the actual scripts revealed:
+#     pawns.lua has NO WebbEgg2. Spider1 and Spider2 (Alpha) both
+#     lay a WebbEgg1 — weapons_enemy.lua:760 sets MyPawn="WebbEgg1"
+#     on SpiderAtk1, and SpiderAtk2 = SpiderAtk1:new{...} does not
+#     override it (the Alpha description even says "hatches into a
+#     Spiderling", singular). WebeggHatch1.SpiderType="Spiderling1".
+#   So every vanilla spider egg hatches into a regular Spiderling1
+#   (1 HP, 1 dmg melee), NOT a Spiderling2 Alpha. The dead
+#   `WebbEgg2 → Spiderling2` branch was unreachable on real boards
+#   (bridge never surfaces a non-existent type) but is removed for
+#   correctness. SpiderlingEgg1 → Spiderling1 retained as a
+#   defensive alias. No behavior change predicted for live runs;
+#   version bumped because the hatch-mapping table changed. Pre-v23
+#   rows archived to failure_db_snapshot_sim_v22.jsonl.
+SIMULATOR_VERSION = 23
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

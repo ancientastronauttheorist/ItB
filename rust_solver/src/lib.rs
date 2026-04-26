@@ -430,7 +430,27 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   HAS_QUEUED_ATTACK so the attack loop's phantom-attack guard
 //   `continue`s cleanly (real game: hatchling's bite is turn after
 //   hatch). Surfaced by the 20260425_185532_218 Archive Inc loss.
-pub const SIMULATOR_VERSION: u32 = 22;
+// v23 (2026-04-25, hatch-table corrected against game Lua source):
+//   v22 shipped with a hatch table mined from the bestiary doc; we
+//   then validated against the actual game scripts and found the doc
+//   was wrong:
+//     pawns.lua has NO `WebbEgg2` pawn at all — both Spider1 and
+//     Spider2 (Alpha) lay a WebbEgg1 (weapons_enemy.lua:760 sets
+//     `SpiderAtk1.MyPawn="WebbEgg1"`, and weapons_enemy.lua:815
+//     `SpiderAtk2 = SpiderAtk1:new{...}` does not override MyPawn).
+//     weapons_enemy.lua:830 `WebeggHatch1.SpiderType="Spiderling1"`
+//     means EVERY spider egg hatches into a regular Spiderling1
+//     (1 HP, 1 dmg melee), NOT an Alpha Spiderling2.
+//   Removed the dead `WebbEgg2 → Spiderling2` branch and its test;
+//   added a guard test asserting Alpha-laid eggs hatch to Spiderling1.
+//   `SpiderlingEgg1 → Spiderling1` retained as a defensive fallback
+//   (not in vanilla pawns.lua but registered in known_types.json from
+//   a prior research cycle; mapping to Spiderling1 matches the only
+//   WebeggHatch skill). No behavior change on real boards (the bogus
+//   branch was unreachable since the bridge never surfaces WebbEgg2)
+//   but version bumped because the semantic-mapping table changed.
+//   Pre-v23 rows archived to failure_db_snapshot_sim_v22.jsonl.
+pub const SIMULATOR_VERSION: u32 = 23;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

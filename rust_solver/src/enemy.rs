@@ -328,12 +328,35 @@ pub fn simulate_enemy_attacks(
     // attack-loop's phantom-attack guard `continue`s cleanly without
     // applying conservative damage.
     //
-    // Hatch table (per data/ref_vek_bestiary.md):
+    // Hatch table (verified against game source 2026-04-25, sim v23):
     //   WebbEgg1       → Spiderling1   (Hive Arachnid Spider laying egg)
-    //   WebbEgg2       → Spiderling2   (Alpha Spider variant)
-    //   SpiderlingEgg1 → Spiderling1   (Corporate HQ SpiderBoss finale)
-    // Other "*Egg" types (none today) fall through unchanged — the egg
-    // skip below catches them so they never phantom-attack.
+    //   SpiderlingEgg1 → Spiderling1   (defensive: not in vanilla pawns.lua
+    //                                   but registered in known_types.json
+    //                                   from a prior research cycle —
+    //                                   probably a campaign/finale variant
+    //                                   or a bridge-side alias; mapping to
+    //                                   Spiderling1 matches what the only
+    //                                   known WebeggHatch skill produces)
+    // Source citations:
+    //   pawns.lua:1022 Spider1.SkillList = {"SpiderAtk1"}, Health=2
+    //   pawns.lua:1038 Spider2.SkillList = {"SpiderAtk2"}, Health=4 (Alpha)
+    //   pawns.lua:1059 WebbEgg1.SkillList = {"WebeggHatch1"}, Health=1
+    //   pawns.lua:1078 Spiderling1.MoveSpeed=3, SkillList={"SpiderlingAtk1"}
+    //   weapons_enemy.lua:758 SpiderAtk1.MyPawn = "WebbEgg1"
+    //   weapons_enemy.lua:815 SpiderAtk2 = SpiderAtk1:new{...} — does NOT
+    //     override MyPawn, so Spider2 (the Alpha) ALSO lays a WebbEgg1.
+    //     Confirmed by localization: SpiderAtk2_Description = "Throw a
+    //     sticky egg that hatches into a Spiderling." (regular Spiderling,
+    //     singular).
+    //   weapons_enemy.lua:830 WebeggHatch1.SpiderType = "Spiderling1"
+    // CRITICAL: there is NO `WebbEgg2` pawn in the game. The pre-v23 sim
+    // v22 hatch table claimed Alpha eggs were a distinct `WebbEgg2`
+    // hatching to `Spiderling2` (a 2-dmg Alpha Spiderling). That was
+    // bestiary-doc fiction — the bridge will never surface a `WebbEgg2`
+    // type_name on a vanilla board. Removing the dead branch.
+    //
+    // Other "*Egg" types fall through unchanged — the egg-skip below
+    // catches them so they never phantom-attack.
     //
     // Why this matters even though it's a 1-turn-deep solver: the
     // simulator emits `predicted_post_enemy_state` which `verify_action`
@@ -347,10 +370,12 @@ pub fn simulate_enemy_attacks(
         if board.units[i].hp <= 0 { continue; }
         let new_type: Option<&'static str> = {
             let name = board.units[i].type_name_str();
+            // Per game source: ALL spider eggs in vanilla hatch into
+            // Spiderling1 (1 HP, 1 dmg melee). See hatch-table comment
+            // above. WebbEgg2 is bestiary-doc fiction; SpiderlingEgg1 is a
+            // defensive alias kept because data/known_types.json has it.
             if name == "WebbEgg1" || name == "SpiderlingEgg1" {
                 Some("Spiderling1")
-            } else if name == "WebbEgg2" {
-                Some("Spiderling2")
             } else {
                 None
             }
@@ -392,8 +417,8 @@ pub fn simulate_enemy_attacks(
         let enemy = &board.units[ei];
         if enemy.hp <= 0 { continue; }
         // Spider/Arachnid eggs don't attack — they hatch into Spiderlings on
-        // their turn. The hatch step above transforms WebbEgg1/2 +
-        // SpiderlingEgg1 into Spiderling1/2 BEFORE this loop runs, so any
+        // their turn. The hatch step above transforms WebbEgg1 +
+        // SpiderlingEgg1 into Spiderling1 BEFORE this loop runs, so any
         // egg still here is an unhandled "*Egg" subtype (defensive). Skip
         // them as a fallback so an unmapped egg type doesn't phantom-melee.
         {
@@ -1435,13 +1460,27 @@ mod tests {
     }
 
     #[test]
-    fn test_alpha_webb_egg_hatches_into_alpha_spiderling() {
+    fn test_alpha_spider_egg_hatches_into_regular_spiderling() {
+        // Verified against game Lua source 2026-04-25:
+        //   weapons_enemy.lua:815 `SpiderAtk2 = SpiderAtk1:new{...}` does
+        //   not override `MyPawn`, so Spider2 (Alpha) inherits MyPawn =
+        //   "WebbEgg1". And weapons_enemy.lua:830 WebeggHatch1.SpiderType =
+        //   "Spiderling1". So Alpha Spider eggs hatch to a regular
+        //   Spiderling1 (1 HP, 1 dmg melee), NOT a Spiderling2 Alpha.
+        //   Localization confirms: SpiderAtk2_Description = "Throw a
+        //   sticky egg that hatches into a Spiderling." (singular,
+        //   regular).
+        // Pre-v23 sim claimed there was a `WebbEgg2` that hatched into
+        // `Spiderling2`; that pawn type does not exist in pawns.lua.
+        // This test guards against re-introducing that fiction.
         let mut board = Board::default();
-        let egg_idx = add_enemy_with_type(&mut board, 1, 4, 4, 1, "WebbEgg2", 4, 4);
+        // The egg laid by Spider2 is still a WebbEgg1 — no separate type.
+        let egg_idx = add_enemy_with_type(&mut board, 1, 4, 4, 1, "WebbEgg1", 4, 4);
         let orig = default_orig_pos(&board);
         simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
-        assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling2",
-            "WebbEgg2 should hatch into Spiderling2 (alpha)");
+        assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling1",
+            "All vanilla spider eggs (regular and Alpha-laid) hatch into Spiderling1; \
+             WebbEgg2 is bestiary-doc fiction (no such pawn in pawns.lua)");
     }
 
     #[test]
