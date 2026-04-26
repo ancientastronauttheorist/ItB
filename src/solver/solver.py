@@ -20,6 +20,96 @@ from src.model.board import Board
 from src.solver.evaluate import evaluate_breakdown
 
 
+_WHEEL_FRESHNESS_CHECKED = False
+
+
+def _check_wheel_freshness() -> None:
+    """Warn when ``rust_solver/src/*.rs`` is newer than the installed wheel.
+
+    Catches the failure mode where someone commits Rust source changes
+    (and bumps ``SIMULATOR_VERSION``) but forgets to rebuild the wheel.
+    The Python and Rust constants both report the new version, but the
+    binary in site-packages is still the previous build — predictions
+    silently use stale logic. This is exactly how the m09 Containment
+    Zone D loss surfaced a phantom "+1 building loss" mystery on
+    2026-04-26: 12 commits to ``rust_solver/src/`` (including 5
+    SIMULATOR_VERSION bumps from v18 → v24) had landed without rebuilding
+    the wheel, so the recording was generated against a sim ~v17 binary
+    while the version label said v24.
+
+    Observational only — never raises. Operator decides whether to
+    rebuild before continuing (CLAUDE.md "Executing actions with care").
+    """
+    global _WHEEL_FRESHNESS_CHECKED
+    if _WHEEL_FRESHNESS_CHECKED:
+        return
+    _WHEEL_FRESHNESS_CHECKED = True
+
+    try:
+        import os
+        import sys
+        from pathlib import Path
+        import itb_solver
+
+        wheel_path = Path(itb_solver.__file__)
+        wheel_mtime = wheel_path.stat().st_mtime
+
+        # rust_solver/ lives at repo root, src/solver/solver.py → ../../..
+        repo_root = Path(__file__).resolve().parents[2]
+        rust_src = repo_root / "rust_solver" / "src"
+        cargo_toml = repo_root / "rust_solver" / "Cargo.toml"
+        cargo_lock = repo_root / "rust_solver" / "Cargo.lock"
+        if not rust_src.exists():
+            return  # outside the source repo — installed wheel only
+
+        latest_src_mtime = 0.0
+        latest_path: Path | None = None
+        for candidate in (
+            *rust_src.rglob("*.rs"),
+            cargo_toml if cargo_toml.exists() else None,
+            cargo_lock if cargo_lock.exists() else None,
+        ):
+            if candidate is None:
+                continue
+            m = candidate.stat().st_mtime
+            if m > latest_src_mtime:
+                latest_src_mtime = m
+                latest_path = candidate
+
+        # 5s slack: maturin install touches files in close succession;
+        # don't false-positive when a build just completed.
+        if latest_src_mtime <= wheel_mtime + 5:
+            return
+
+        rel_src = latest_path.relative_to(repo_root) if latest_path else "?"
+        skew = int(latest_src_mtime - wheel_mtime)
+        bar = "=" * 70
+        print(bar, file=sys.stderr)
+        print("! WHEEL OUT OF DATE — rust_solver source is newer than the installed",
+              file=sys.stderr)
+        print("! itb_solver wheel. Predictions will use stale logic and may diverge",
+              file=sys.stderr)
+        print("! from real-game outcomes (the m09 ghost-bug failure mode).",
+              file=sys.stderr)
+        print(f"! Latest source: {rel_src} ({skew}s newer than wheel)",
+              file=sys.stderr)
+        print(f"! Installed wheel: {wheel_path.name}", file=sys.stderr)
+        print("! Rebuild before resuming play:", file=sys.stderr)
+        print("!   cd rust_solver && maturin build --release && \\",
+              file=sys.stderr)
+        print("!     pip3 install --user --force-reinstall \\",
+              file=sys.stderr)
+        print("!     target/wheels/itb_solver-0.1.0-cp39-cp39-macosx_11_0_arm64.whl",
+              file=sys.stderr)
+        print(bar, file=sys.stderr)
+    except Exception:
+        # Check is observational — never break solver import on a check error.
+        pass
+
+
+_check_wheel_freshness()
+
+
 @dataclass
 class MechAction:
     """A single mech's action: move somewhere, then attack."""
