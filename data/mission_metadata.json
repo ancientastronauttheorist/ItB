@@ -1,0 +1,2743 @@
+{
+  "_count": 73,
+  "_generated_from": "/Users/aircow/Library/Application Support/Steam/steamapps/common/Into the Breach/Into the Breach.app/Contents/Resources/scripts",
+  "_schema_version": 1,
+  "missions": {
+    "Mission_Acid": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Acid",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "acid_pool"
+      ],
+      "mission_id": "Mission_Acid",
+      "source_file": "missions/acid/mission_acid.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_AcidStorm": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        7
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_AcidStorm",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_AcidStorm",
+      "forced_pawns": [
+        "Storm_Generator"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_AcidStorm",
+      "source_file": "advanced/missions/acid/mission_acidstorm.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_AcidTank": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_AcidTank",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Acid_Tank"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_AcidTank",
+      "source_file": "missions/acid/mission_acidtank.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Airstrike": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        7,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Airstrike",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Airstrike",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Airstrike",
+      "source_file": "missions/grass/mission_airstrike.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Armored_Train": {
+      "base_class": "Mission_Train",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Armored_Train",
+        "Mission_Train",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Train_Armored",
+        "Train_Armored_Damaged"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [
+        "train"
+      ],
+      "mission_id": "Mission_Armored_Train",
+      "source_file": "advanced/missions/grass/mission_armored_train.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": true,
+      "turn_limit": 3,
+      "use_bonus": false
+    },
+    "Mission_Artillery": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Artillery",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Artillery",
+      "source_file": "missions/grass/mission_artillery.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Auto": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Auto",
+      "source_file": "missions/missions.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Barrels": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Barrels",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "AcidVat"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "satellite"
+      ],
+      "mission_id": "Mission_Barrels",
+      "source_file": "missions/acid/mission_barrels.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Battle": {
+      "base_class": "Mission",
+      "block_cracks": false,
+      "bonus_pool": [
+        6,
+        3,
+        4,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Battle",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": false,
+      "map_tags": [],
+      "mission_id": "Mission_Battle",
+      "source_file": "missions/missions.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_BeetleBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "BeetleBoss",
+      "class_chain": [
+        "Mission_BeetleBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "BeetleBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_BeetleBoss",
+      "source_file": "missions/bosses/beetle.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Belt": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        6,
+        3,
+        4,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Belt",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_BeltLine",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Belt",
+      "source_file": "missions/acid/mission_belt.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_BeltRandom": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        6,
+        3,
+        4,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_BeltRandom",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_BeltRandom",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_BeltRandom",
+      "source_file": "missions/acid/mission_belt.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_BlobBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "BlobBoss",
+      "class_chain": [
+        "Mission_BlobBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "BlobBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_BlobBoss",
+      "source_file": "missions/bosses/goo.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Bomb": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Bomb",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [
+        "satellite"
+      ],
+      "mission_id": "Mission_Bomb",
+      "source_file": "missions/sand/mission_bomb.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_BoomBots": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_BoomBots",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Snowtank1_Boom",
+        "Snowlaser1_Boom",
+        "Snowart1_Boom"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_BoomBots",
+      "source_file": "advanced/missions/snow/mission_boombots.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Boss": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Boss",
+      "source_file": "missions/bosses/boss.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_BotBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "BotBoss",
+      "class_chain": [
+        "Mission_BotBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "BotBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_BotBoss",
+      "source_file": "missions/bosses/bot.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_BotDefense": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_BotDefense",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Snowmine1"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_BotDefense",
+      "source_file": "missions/snow/mission_botdefense.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Cataclysm": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Cataclysm",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Cataclysm",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "cataclysm"
+      ],
+      "mission_id": "Mission_Cataclysm",
+      "source_file": "missions/sand/mission_cataclysm.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": 3,
+      "use_bonus": true
+    },
+    "Mission_Civilians": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Civilians",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [
+        "satellite"
+      ],
+      "mission_id": "Mission_Civilians",
+      "source_file": "advanced/missions/acid/mission_civilians.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Crack": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Crack",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Seismic",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Crack",
+      "source_file": "missions/sand/mission_crack.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Critical": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Critical",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Critical",
+      "source_file": "missions/mission_critical.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Dam": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Dam",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Dam_Pawn"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "dam"
+      ],
+      "mission_id": "Mission_Dam",
+      "source_file": "missions/grass/mission_dam.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Disposal": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        5,
+        8,
+        7
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Disposal",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Disposal_Unit"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "disposal"
+      ],
+      "mission_id": "Mission_Disposal",
+      "source_file": "missions/acid/mission_disposal.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Factory": {
+      "base_class": "Mission_Critical",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Factory",
+        "Mission_Critical",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Factory",
+      "source_file": "missions/snow/mission_factory.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Fence": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Fence",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Fence",
+      "source_file": "missions/acid/mission_fence.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Filler": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Filler",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Filler_Pawn"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "filler"
+      ],
+      "mission_id": "Mission_Filler",
+      "source_file": "missions/sand/mission_filler.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Final": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [
+        "ScorpionBoss",
+        "FireflyBoss",
+        "HornetBoss"
+      ],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Final",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Volcano",
+      "forced_pawns": [
+        "ScorpionBoss",
+        "FireflyBoss",
+        "HornetBoss"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "final_island"
+      ],
+      "mission_id": "Mission_Final",
+      "source_file": "missions/final/mission_final.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Final_Cave": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [
+        "BeetleBoss",
+        "FireflyBoss",
+        "HornetBoss"
+      ],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Final_Cave",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Final",
+      "forced_pawns": [
+        "BeetleBoss",
+        "FireflyBoss",
+        "HornetBoss"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "final_cave"
+      ],
+      "mission_id": "Mission_Final_Cave",
+      "source_file": "missions/final/mission_final_two.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_FireflyBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "FireflyBoss",
+      "class_chain": [
+        "Mission_FireflyBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "FireflyBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_FireflyBoss",
+      "source_file": "missions/bosses/firefly.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Force": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Force",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "mountain"
+      ],
+      "mission_id": "Mission_Force",
+      "source_file": "missions/sand/mission_force.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_ForestFire": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_ForestFire",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_ForestFire",
+      "source_file": "advanced/missions/grass/mission_fires.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_FreezeBldg": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_FreezeBldg",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_FreezeBldg",
+      "source_file": "missions/snow/mission_freezebldg.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_FreezeBots": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_FreezeBots",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Freeze_Tank"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_FreezeBots",
+      "source_file": "missions/snow/mission_freezebots.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_FreezeMines": {
+      "base_class": "Mission_MineBase",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_FreezeMines",
+        "Mission_MineBase",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_FreezeMines",
+      "source_file": "missions/snow/mission_freezemines.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Hacking": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Hacking",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Hacked_Building",
+        "Snowtank1",
+        "Snowtank1_Player"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Hacking",
+      "source_file": "advanced/missions/snow/mission_hacking.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Holes": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Holes",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "sand_hole"
+      ],
+      "mission_id": "Mission_Holes",
+      "source_file": "missions/sand/mission_holes.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_HornetBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "HornetBoss",
+      "class_chain": [
+        "Mission_HornetBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "HornetBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_HornetBoss",
+      "source_file": "missions/bosses/hornet.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Infinite": {
+      "base_class": "Mission",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Infinite",
+      "source_file": "missions/missions.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_JellyBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "Jelly_Boss",
+      "class_chain": [
+        "Mission_JellyBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Jelly_Boss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_JellyBoss",
+      "source_file": "missions/bosses/psion.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Laser": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Laser",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Pawn_Laser_U",
+        "Pawn_Laser_R",
+        "Pawn_Laser_D",
+        "Pawn_Laser_L"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "lasers"
+      ],
+      "mission_id": "Mission_Laser",
+      "source_file": "missions/acid/mission_laser.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Lightning": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Lightning",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Lightning",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Lightning",
+      "source_file": "missions/sand/mission_lightning.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_MineBase": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_MineBase",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_MineBase",
+      "source_file": "missions/mission_minebase.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Mines": {
+      "base_class": "Mission_MineBase",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        5,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Mines",
+        "Mission_MineBase",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Mines",
+      "source_file": "missions/grass/mission_mines.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Missiles": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        5,
+        3,
+        4,
+        9
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Missiles",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Missile_Unit"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "disposal"
+      ],
+      "mission_id": "Mission_Missiles",
+      "source_file": "advanced/missions/acid/mission_missiles.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_NanoStorm": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_NanoStorm",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_NanoStorm",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_NanoStorm",
+      "source_file": "advanced/missions/acid/mission_nanostorm.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Piston": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Piston",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Pawn_Piston_U",
+        "Pawn_Piston_R",
+        "Pawn_Piston_D",
+        "Pawn_Piston_L"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "pistons"
+      ],
+      "mission_id": "Mission_Piston",
+      "source_file": "missions/acid/mission_piston.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Power": {
+      "base_class": "Mission_Critical",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Power",
+        "Mission_Critical",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Power",
+      "source_file": "missions/mission_critical.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Reactivation": {
+      "base_class": "Mission",
+      "block_cracks": false,
+      "bonus_pool": [
+        6,
+        3,
+        4,
+        7,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Reactivation",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": false,
+      "map_tags": [],
+      "mission_id": "Mission_Reactivation",
+      "source_file": "missions/snow/mission_reactivation.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Repair": {
+      "base_class": "Mission_MineBase",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        6,
+        9
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Repair",
+        "Mission_MineBase",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_RepairMission",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Repair",
+      "source_file": "advanced/missions/grass/mission_repair.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Respawn": {
+      "base_class": "Mission",
+      "block_cracks": false,
+      "bonus_pool": [
+        6,
+        3,
+        4,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Respawn",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": false,
+      "map_tags": [],
+      "mission_id": "Mission_Respawn",
+      "source_file": "missions/acid/mission_respawn.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Sandstorm": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Sandstorm",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Sandstorm",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Sandstorm",
+      "source_file": "missions/sand/mission_sandstorm.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Satellite": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Satellite",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "SatelliteRocket"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "satellite"
+      ],
+      "mission_id": "Mission_Satellite",
+      "source_file": "missions/grass/mission_satellites.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_ScorpionBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "ScorpionBoss",
+      "class_chain": [
+        "Mission_ScorpionBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "ScorpionBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_ScorpionBoss",
+      "source_file": "missions/bosses/scorpion.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Shields": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Shields",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_ShieldMission",
+      "forced_pawns": [
+        "Shield_Building"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Shields",
+      "source_file": "advanced/missions/snow/mission_shields.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_SlugBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "SlugBoss",
+      "class_chain": [
+        "Mission_SlugBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "SlugBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_SlugBoss",
+      "source_file": "missions/bosses/slug.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_SnowBattle": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_SnowBattle",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_SnowBattle",
+      "source_file": "missions/snow/mission_snowbattle.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_SnowStorm": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_SnowStorm",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_SnowStorm",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_SnowStorm",
+      "source_file": "missions/snow/mission_snowstorm.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Solar": {
+      "base_class": "Mission_Critical",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Solar",
+        "Mission_Critical",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Solar",
+      "source_file": "missions/mission_critical.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_SpiderBoss": {
+      "base_class": "Mission_Boss",
+      "block_cracks": true,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": true,
+      "boss_pawn": "SpiderBoss",
+      "class_chain": [
+        "Mission_SpiderBoss",
+        "Mission_Boss",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "SpiderlingEgg1",
+        "SpiderBoss"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_SpiderBoss",
+      "source_file": "missions/bosses/spider.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Stasis": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Stasis",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Stasis",
+      "source_file": "missions/snow/mission_stasis.lua",
+      "tilesets": [
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Survive": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Survive",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert",
+        "Corp_Factory",
+        "Corp_Grass",
+        "Corp_Snow"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Survive",
+      "source_file": "missions/missions.lua",
+      "tilesets": [
+        "acid",
+        "grass",
+        "sand",
+        "snow"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Tanks": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Tanks",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [
+        "satellite"
+      ],
+      "mission_id": "Mission_Tanks",
+      "source_file": "missions/grass/mission_tanks.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Teleporter": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Teleporter",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Factory"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Teleporter",
+      "source_file": "missions/acid/mission_teleport.lua",
+      "tilesets": [
+        "acid"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Terraform": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Terraform",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Terraformer"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "terraformer"
+      ],
+      "mission_id": "Mission_Terraform",
+      "source_file": "missions/sand/mission_terraform.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Terratide": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Terratide",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Terratide",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Terratide",
+      "source_file": "advanced/missions/sand/mission_terratide.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": 3,
+      "use_bonus": true
+    },
+    "Mission_Test": {
+      "base_class": "Mission",
+      "block_cracks": false,
+      "bonus_pool": [
+        6,
+        3,
+        4,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Test",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": false,
+      "map_tags": [],
+      "mission_id": "Mission_Test",
+      "source_file": "missions/missions.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Tides": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Tides",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Grass"
+      ],
+      "environment": "Env_Tides",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [
+        "tide"
+      ],
+      "mission_id": "Mission_Tides",
+      "source_file": "missions/grass/mission_tides.lua",
+      "tilesets": [
+        "grass"
+      ],
+      "train_mission": false,
+      "turn_limit": 3,
+      "use_bonus": true
+    },
+    "Mission_Train": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Train",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert",
+        "Corp_Factory",
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Train_Pawn",
+        "Train_Damaged"
+      ],
+      "has_objective_building": true,
+      "infinite_spawn": true,
+      "map_tags": [
+        "train"
+      ],
+      "mission_id": "Mission_Train",
+      "source_file": "missions/mission_train.lua",
+      "tilesets": [
+        "acid",
+        "grass",
+        "sand"
+      ],
+      "train_mission": true,
+      "turn_limit": 3,
+      "use_bonus": false
+    },
+    "Mission_Trapped": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Trapped",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Trapped_Building"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Trapped",
+      "source_file": "advanced/missions/sand/mission_trapped.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    },
+    "Mission_Tutorial": {
+      "base_class": "Mission",
+      "block_cracks": false,
+      "bonus_pool": [
+        6,
+        3,
+        4,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Tutorial",
+        "Mission"
+      ],
+      "corps": [],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "Firefly1",
+        "Leaper1",
+        "Hornet1",
+        "TankMech",
+        "ArtiMech",
+        "PunchMech"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": false,
+      "map_tags": [],
+      "mission_id": "Mission_Tutorial",
+      "source_file": "missions/mission_tutorial.lua",
+      "tilesets": [],
+      "train_mission": false,
+      "turn_limit": 7,
+      "use_bonus": false
+    },
+    "Mission_Volatile": {
+      "base_class": "Mission_Auto",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Volatile",
+        "Mission_Auto",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert",
+        "Corp_Grass"
+      ],
+      "environment": "Env_Null",
+      "forced_pawns": [
+        "GlowingScorpion"
+      ],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Volatile",
+      "source_file": "missions/mission_volatile.lua",
+      "tilesets": [
+        "grass",
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": false
+    },
+    "Mission_Wind": {
+      "base_class": "Mission_Infinite",
+      "block_cracks": false,
+      "bonus_pool": [
+        3,
+        4,
+        6,
+        7,
+        9,
+        8
+      ],
+      "boss_list": [],
+      "boss_mission": false,
+      "boss_pawn": null,
+      "class_chain": [
+        "Mission_Wind",
+        "Mission_Infinite",
+        "Mission"
+      ],
+      "corps": [
+        "Corp_Desert"
+      ],
+      "environment": "Env_RandomWind",
+      "forced_pawns": [],
+      "has_objective_building": false,
+      "infinite_spawn": true,
+      "map_tags": [],
+      "mission_id": "Mission_Wind",
+      "source_file": "advanced/missions/sand/mission_wind.lua",
+      "tilesets": [
+        "sand"
+      ],
+      "train_mission": false,
+      "turn_limit": null,
+      "use_bonus": true
+    }
+  }
+}

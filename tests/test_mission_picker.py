@@ -246,5 +246,173 @@ def test_unknown_mission_id_scores_only_bonus():
         "bonus_objective_ids": [BONUS_ASSET],
         "environment": None,
     }
-    scored = score_mission(entry, derive_squad_tags(RIFT_WALKERS_SQUAD), 7)
+    # Pass an empty overlay so the on-disk metadata cache can't taint the
+    # test (Mission_Unmapped is fictional anyway).
+    scored = score_mission(
+        entry, derive_squad_tags(RIFT_WALKERS_SQUAD), 7, mission_metadata={}
+    )
     assert scored["score"] == 5  # ⊕ pilot/asset reward
+
+
+# ---------------------------------------------------------------------------
+# Mission-metadata–derived tags (flier_heavy / armored_heavy / psion_present)
+# ---------------------------------------------------------------------------
+
+# Synthetic metadata overlay used by the metadata-driven tests below. We
+# pass this dict directly so the tests don't depend on the on-disk
+# data/mission_metadata.json shape staying constant across game updates.
+METADATA_FIXTURE: dict = {
+    "Mission_HornetBoss_Synth": {
+        "mission_id": "Mission_HornetBoss_Synth",
+        "boss_mission": True,
+        "boss_pawn": "HornetBoss",
+        "forced_pawns": ["HornetBoss"],
+        "environment": "Env_Null",
+        "train_mission": False,
+        "has_objective_building": True,
+    },
+    "Mission_BeetleBoss_Synth": {
+        "mission_id": "Mission_BeetleBoss_Synth",
+        "boss_mission": True,
+        "boss_pawn": "BeetleBoss",
+        "forced_pawns": ["BeetleBoss"],
+        "environment": "Env_Null",
+        "train_mission": False,
+        "has_objective_building": True,
+    },
+    "Mission_JellyBoss_Synth": {
+        "mission_id": "Mission_JellyBoss_Synth",
+        "boss_mission": True,
+        "boss_pawn": "Jelly_Boss",
+        "forced_pawns": ["Jelly_Boss"],
+        "environment": "Env_Null",
+        "train_mission": False,
+        "has_objective_building": True,
+    },
+}
+
+
+def _boss_entry(mission_id: str) -> dict:
+    """Synthetic island_map entry for a metadata-keyed mission."""
+    return {
+        "region_id": 7,
+        "mission_id": mission_id,
+        # No bonus objs — keep the score component coming purely from the
+        # boss penalties + the mandatory boss/high_threat tag fallout.
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
+def test_flier_heavy_no_aoe_no_pierce_penalised():
+    """Hornet boss + a melee-only squad → -3 flier_heavy penalty fires.
+
+    Use Rift Walkers' Punch+Tank+Artemis but strip aoe/armor_pierce by
+    swapping in a no-aoe non-pierce squad.
+    """
+    melee_only = [
+        {"mech": True, "hp": 3, "weapons": ["Prime_Punchmech"]},
+        {"mech": True, "hp": 3, "weapons": ["Brute_Tankmech"]},
+        # Splitshot = burst only, no aoe/armor_pierce
+        {"mech": True, "hp": 3, "weapons": ["Brute_Splitshot"]},
+    ]
+    tags = derive_squad_tags(melee_only)
+    assert "aoe" not in tags and "armor_pierce" not in tags
+    scored = score_mission(
+        _boss_entry("Mission_HornetBoss_Synth"),
+        tags,
+        grid_power=7,
+        mission_metadata=METADATA_FIXTURE,
+    )
+    assert "flier_heavy" in scored["mission_tags"]
+    assert any("flying-heavy" in line for line in scored["rationale_lines"])
+    # Score should reflect both the boss low-grid penalty (not fired at
+    # grid 7) and the -3 flier_heavy hit.
+    assert scored["score"] == -3
+
+
+def test_flier_heavy_aoe_squad_no_penalty():
+    """Hornet boss + Lightning/Jet/Grav (has aoe) → no flier_heavy fire."""
+    scored = score_mission(
+        _boss_entry("Mission_HornetBoss_Synth"),
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),
+        grid_power=7,
+        mission_metadata=METADATA_FIXTURE,
+    )
+    for line in scored["rationale_lines"]:
+        assert "flying-heavy" not in line
+
+
+def test_armored_heavy_no_pierce_penalised():
+    """Beetle boss + Rift Walkers (no armor_pierce) → -4 fires."""
+    scored = score_mission(
+        _boss_entry("Mission_BeetleBoss_Synth"),
+        derive_squad_tags(RIFT_WALKERS_SQUAD),
+        grid_power=7,
+        mission_metadata=METADATA_FIXTURE,
+    )
+    assert "armored_heavy" in scored["mission_tags"]
+    assert any("armored-heavy" in line for line in scored["rationale_lines"])
+    assert scored["score"] == -4
+
+
+def test_armored_heavy_with_pierce_no_penalty():
+    """Beetle boss + Lightning (has armor_pierce) → no penalty."""
+    scored = score_mission(
+        _boss_entry("Mission_BeetleBoss_Synth"),
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),
+        grid_power=7,
+        mission_metadata=METADATA_FIXTURE,
+    )
+    for line in scored["rationale_lines"]:
+        assert "armored-heavy" not in line
+
+
+def test_psion_present_no_burst_penalised():
+    """Jelly boss + Rift Walkers (no burst weapon) → -2 fires."""
+    tags = derive_squad_tags(RIFT_WALKERS_SQUAD)
+    assert "burst" not in tags  # sanity — no burst on Punch/Taurus/Artemis
+    scored = score_mission(
+        _boss_entry("Mission_JellyBoss_Synth"),
+        tags,
+        grid_power=7,
+        mission_metadata=METADATA_FIXTURE,
+    )
+    assert "psion_present" in scored["mission_tags"]
+    assert any("psion" in line for line in scored["rationale_lines"])
+    assert scored["score"] == -2
+
+
+def test_metadata_derived_train_tag_overrides_substring_match():
+    """A previously-unknown mission_id whose metadata says
+    train_mission=True still gets the -8 train penalty.
+
+    This is the value-add over the legacy substring table: the picker
+    now picks up new-corp train missions (Mission_Armored_Train was
+    already in the table, but a future Mission_BulletTrain wouldn't
+    be — metadata catches it).
+    """
+    overlay = {
+        "Mission_BulletTrain_Synth": {
+            "mission_id": "Mission_BulletTrain_Synth",
+            "train_mission": True,
+            "forced_pawns": ["Train_Bullet"],
+            "boss_mission": False,
+            "environment": "Env_Null",
+            "has_objective_building": True,
+        }
+    }
+    entry = {
+        "region_id": 8,
+        "mission_id": "Mission_BulletTrain_Synth",
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": "Env_Null",
+    }
+    scored = score_mission(
+        entry,
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),  # no train_defender
+        grid_power=7,
+        mission_metadata=overlay,
+    )
+    assert "train" in scored["mission_tags"]
+    assert any("no train_defender" in line for line in scored["rationale_lines"])
