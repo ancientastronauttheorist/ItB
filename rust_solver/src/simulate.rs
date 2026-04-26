@@ -1552,7 +1552,53 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
     let pull_dir = opposite_dir(dir);
     let target_idx = match board.unit_at(tx, ty) {
         Some(idx) => idx,
-        None => return,
+        None => {
+            // No pawn at the target tile.
+            //
+            // Per Lua weapons_brute.lua:339-389 (Brute_Grapple:GetSkillEffect),
+            // when the targeted tile has no pawn but IS PATH_PROJECTILE-blocked
+            // (mountain or intact building), the mech itself charges along the
+            // line and stops at the tile adjacent to the obstacle:
+            //   ret:AddCharge(Board:GetSimplePath(p1, target - DIR_VECTORS[direction]), FULL_DELAY)
+            // The path between mech and (target - dir) is guaranteed unblocked
+            // because the projectile loop stopped at `target` as the FIRST
+            // PATH_PROJECTILE blocker.
+            //
+            // This branch is FULL_PULL-only. Science_Pullmech (1-tile pull,
+            // no FULL_PULL) and Science_Gravwell's Lua are not Brute_Grapple
+            // and don't have a self-charge effect — Gravwell's Lua just
+            // AddArtillery's an air-push at p2; if p2 is empty, it's a no-op.
+            if !wdef.full_pull() {
+                return;
+            }
+            let tile = board.tile(tx, ty);
+            let is_blocker = tile.terrain == Terrain::Mountain || tile.is_building();
+            if !is_blocker {
+                // Empty tile (no pawn, no terrain block). Lua's targeting
+                // predicate filters such tiles out (projectile loop only stops
+                // at PATH_PROJECTILE-blocked tiles). If we somehow reached
+                // here, no-op rather than self-charge into a vacant tile.
+                return;
+            }
+            let (dx, dy) = DIRS[dir];
+            let stop_x = tx as i8 - dx;
+            let stop_y = ty as i8 - dy;
+            // The stop tile is `target - dir`. If that's the mech's own tile
+            // (target was at distance 1 from mech), nothing to do — the mech
+            // is already there. Lua's GetTargetArea requires Manhattan > 1 so
+            // this is an over-cautious guard.
+            let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+            if stop_x as u8 == ax && stop_y as u8 == ay {
+                return;
+            }
+            // Move the mech to the tile adjacent to the obstacle.
+            board.units[attacker_idx].x = stop_x as u8;
+            board.units[attacker_idx].y = stop_y as u8;
+            // Teleporter pad: mech may land on a pad at the stop tile.
+            apply_teleport_on_land(board, attacker_idx);
+            let _ = result; // no damage from self-charge
+            return;
+        }
     };
     if !board.units[target_idx].pushable() {
         return;
@@ -3344,6 +3390,90 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 7);
         assert_eq!(board.units[target].hp, 0, "Target drowned in water during pull");
         assert_eq!(board.units[target].y, 5, "Corpse rests on the water tile");
+    }
+
+    // ── Brute_Grapple no-pawn self-charge (mountain/building target) ──────────
+    // Per Lua weapons_brute.lua:339-389, when Brute_Grapple targets a tile that
+    // has no pawn but IS PATH_PROJECTILE-blocked (mountain or intact building),
+    // the MECH charges toward the obstacle and ends at the tile adjacent to it
+    // (target - dir). The pull branch is the pawn case; this is the obstruction
+    // branch (`elseif Board:IsBlocked(target, Pawn:GetPathProf())`).
+
+    #[test]
+    fn test_brute_grapple_self_charge_into_mountain() {
+        // Mech at (3,3); empty path (3,4)/(3,5); mountain at (3,6). The Lua
+        // projectile loop stops at (3,6) (PATH_PROJECTILE-blocked). With no
+        // pawn there, mech charges to (3,6 - dir) = (3,5).
+        let mut board = make_test_board();
+        board.tile_mut(3, 6).terrain = Terrain::Mountain;
+        board.tile_mut(3, 6).building_hp = 2;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 6);
+        assert_eq!(board.units[mech_idx].x, 3, "Mech stays in column");
+        assert_eq!(board.units[mech_idx].y, 5,
+            "Mech charges to tile adjacent to mountain (target - dir)");
+        assert_eq!(board.units[mech_idx].hp, 3, "No self-damage from self-charge");
+        assert_eq!(board.tile(3, 6).terrain, Terrain::Mountain,
+            "Mountain unaffected by self-charge");
+        assert_eq!(board.tile(3, 6).building_hp, 2, "Mountain HP unchanged");
+    }
+
+    #[test]
+    fn test_brute_grapple_self_charge_into_building() {
+        // Mech at (3,3); empty path; intact building at (3,7). Mech ends at
+        // (3,6). Building HP unchanged (no damage from self-charge — Lua only
+        // applies AddCharge + shieldSelf, no SpaceDamage to the obstacle).
+        let mut board = make_test_board();
+        board.tile_mut(3, 7).terrain = Terrain::Building;
+        board.tile_mut(3, 7).building_hp = 1;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+        let initial_grid = board.grid_power;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteGrapple, 3, 7);
+        assert_eq!(board.units[mech_idx].x, 3);
+        assert_eq!(board.units[mech_idx].y, 6,
+            "Mech charges to tile adjacent to building");
+        assert_eq!(board.tile(3, 7).building_hp, 1,
+            "Building takes no damage from self-charge");
+        assert_eq!(board.grid_power, initial_grid,
+            "Grid power unchanged — building intact");
+    }
+
+    #[test]
+    fn test_brute_grapple_self_charge_target_enumerated_at_mountain() {
+        // Solver target enumeration: with a mountain at (3,6) and no other
+        // unit/blocker between, Brute_Grapple from (3,3) MUST enumerate (3,6)
+        // as a valid target (per Lua's GetTargetArea — first PATH_PROJECTILE
+        // blocker in each cardinal direction).
+        use crate::solver::get_weapon_targets;
+        use crate::weapons::WEAPONS;
+        let mut board = make_test_board();
+        board.tile_mut(3, 6).terrain = Terrain::Mountain;
+        board.tile_mut(3, 6).building_hp = 2;
+        let _mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteGrapple);
+
+        let targets = get_weapon_targets(&board, 3, 3, WId::BruteGrapple, (3, 3), &WEAPONS);
+        assert!(targets.contains(&(3, 6)),
+            "Brute_Grapple enumerates the mountain at (3,6) as a target; got {:?}", targets);
+    }
+
+    #[test]
+    fn test_brute_grapple_self_charge_does_not_apply_to_pullmech() {
+        // REGRESSION GUARD: Science_Pullmech (Attraction Pulse) has no
+        // FULL_PULL flag and no self-charge branch in its Lua. Targeting an
+        // empty mountain tile must be a no-op for Pullmech, NOT a self-charge.
+        // (Mountain tiles are still enumerated by the shared Pull target code,
+        // so this guard prevents accidental over-correction.)
+        let mut board = make_test_board();
+        board.tile_mut(3, 6).terrain = Terrain::Mountain;
+        board.tile_mut(3, 6).building_hp = 2;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::SciencePullmech);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::SciencePullmech, 3, 6);
+        assert_eq!(board.units[mech_idx].x, 3, "Pullmech mech stays put");
+        assert_eq!(board.units[mech_idx].y, 3,
+            "Attraction Pulse on empty mountain target = no-op (no self-charge)");
     }
 
     #[test]

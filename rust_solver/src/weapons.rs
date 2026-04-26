@@ -352,12 +352,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // bumps into the blocker). FULL_PULL flag distinguishes it from
     // Science_Pullmech (Attraction Pulse, 1-tile-only).
     //
-    // TODO(weapons-audit 2026-04-25): Lua scripts/weapons_brute.lua:339-389.
-    // When the targeted blocker is a mountain/building (NOT a pawn), Lua
-    // charges the MECH toward the obstacle (line 374-385) instead of pulling.
-    // Our sim_pull_or_swap returns early when no unit_at(tx,ty), so this
-    // self-charge case is silently dropped. Edge case (rare to grapple at
-    // empty mountain tile) — defer to a dedicated PR.
+    // No-pawn-at-target case (Lua weapons_brute.lua:374-385): when the
+    // PATH_PROJECTILE blocker is a mountain or intact building, the mech
+    // charges along the line and stops at `target - dir`. Handled in
+    // sim_pull_or_swap's None-branch under the FULL_PULL guard.
     w[20] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_max: 0,
         flags: f(WeaponFlags::FULL_PULL.bits()), ..DEF };
     // 21: Brute_Unstable — Unstable Cannon
