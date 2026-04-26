@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-521215d",
+  "solver_version": "rust-0.1.0-761c781",
   "weight_version": "v009",
-  "updated": "2026-04-25T19:27:15.488694",
+  "updated": "2026-04-25T19:33:57.512690",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 2,
-  "outcome_recorded_at": "2026-04-25T19:27:15.475703",
-  "outcome_notes": "Pumping Station: Emergency Batteries + Time Pod saved. Pod recovered (Passive + Reactor Core)."
+  "outcome_mission": 3,
+  "outcome_recorded_at": "2026-04-25T19:33:57.498477",
+  "outcome_notes": "Reclamation Zone: Train damaged (1/2 star), Coal Plant saved. Hive Leader awakened at Corporate HQ."
 }
