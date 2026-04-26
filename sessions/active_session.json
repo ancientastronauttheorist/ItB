@@ -1,60 +1,60 @@
 {
-  "run_id": "20260425_005049_742",
-  "squad": "Balanced Roll (Laser/Boulder/Pulse)",
+  "run_id": "20260425_185532_218",
+  "squad": "Balanced Roll (Lightning/Jet/Gravity)",
   "achievement_targets": [],
   "difficulty": 2,
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 4,
+  "mission_index": 0,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "RockartMech",
+        "mech_uid": 0,
+        "mech_type": "ElectricMech",
         "move_to": [
-          2,
-          2
-        ],
-        "weapon": "Ranged_Rockthrow",
-        "target": [
           4,
           2
         ],
-        "description": "RockartMech, fire Rock Launcher at F4"
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          2
+        ],
+        "description": "ElectricMech, fire Chain Whip at F3"
       },
       {
-        "mech_uid": 0,
-        "mech_type": "LaserMech",
+        "mech_uid": 1,
+        "mech_type": "JetMech",
         "move_to": [
           3,
-          1
+          4
         ],
-        "weapon": "Prime_Lasermech",
+        "weapon": "Brute_Jetmech",
         "target": [
-          4,
-          1
+          5,
+          4
         ],
-        "description": "LaserMech, move F4\u2192G5, fire Burst Beam at G4"
+        "description": "JetMech, move D8\u2192D5, fire Aerial Bombs at D3"
       },
       {
         "mech_uid": 2,
-        "mech_type": "PulseMech",
+        "mech_type": "GravMech",
         "move_to": [
-          3,
-          0
+          4,
+          5
         ],
-        "weapon": "Science_Repulse",
+        "weapon": "Unknown",
         "target": [
-          3,
-          0
+          255,
+          255
         ],
-        "description": "PulseMech, move E4\u2192H5, fire Repulse at H5"
+        "description": "GravMech"
       }
     ],
-    "score": 29324.28627286639,
+    "score": 92610.71452856064,
     "turn": 4
   },
   "actions_executed": 0,
@@ -64,255 +64,47 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-25T00:54:21.905971",
+      "timestamp": "2026-04-25T19:09:37.059911",
       "turn": 1,
       "label": "solve",
-      "score": 137635.7142857143,
+      "score": 114250.0,
       "actions": [
-        "LaserMech, move F5\u2192D4, fire Burst Beam at D3",
-        "RockartMech, move E6\u2192E3, fire Rock Launcher at E7",
-        "PulseMech, move C5\u2192C3, fire Repulse at C3"
+        "ElectricMech, fire Chain Whip at E5",
+        "JetMech, move G5\u2192E3, fire Aerial Bombs at E1",
+        "GravMech, fire Grav Well at D5"
       ]
     },
     {
-      "timestamp": "2026-04-25T00:55:08.266190",
+      "timestamp": "2026-04-25T19:10:15.847988",
       "turn": 2,
       "label": "solve",
-      "score": 144965.7142857143,
+      "score": 118839.99999999991,
       "actions": [
-        "LaserMech, move D4\u2192E5, fire Burst Beam at F5",
-        "RockartMech, move E3\u2192D5, fire Rock Launcher at F5",
-        "PulseMech, move C3\u2192B4, repair"
+        "ElectricMech, move D6\u2192D3, fire Chain Whip at E3",
+        "JetMech, move E1\u2192D4, fire Aerial Bombs at B4",
+        "GravMech, move D7\u2192C5, fire Grav Well at E5"
       ]
     },
     {
-      "timestamp": "2026-04-25T00:55:46.829592",
+      "timestamp": "2026-04-25T19:11:01.207906",
       "turn": 3,
       "label": "solve",
-      "score": 145065.7142857143,
+      "score": 120540.0,
       "actions": [
-        "LaserMech, fire Burst Beam at F5",
-        "PulseMech, move B4\u2192C6, fire Repulse at C6",
-        "RockartMech, move D5\u2192B5, fire Rock Launcher at D5"
+        "ElectricMech, move D3\u2192F5, fire Chain Whip at F4",
+        "JetMech, move B4\u2192D6, fire Aerial Bombs at D8",
+        "GravMech, move C4\u2192C5, fire Grav Well at C2"
       ]
     },
     {
-      "timestamp": "2026-04-25T14:43:41.359561",
-      "turn": 1,
-      "label": "solve",
-      "score": 135992.85714285716,
-      "actions": [
-        "LaserMech, move D6\u2192F4, fire Burst Beam at E4",
-        "RockartMech, move C5\u2192E6, fire Rock Launcher at E2",
-        "PulseMech"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:44:25.715361",
-      "turn": 2,
-      "label": "solve",
-      "score": 138986.19047619065,
-      "actions": [
-        "RockartMech, move E6\u2192F6, fire Rock Launcher at F4",
-        "PulseMech, move F5\u2192C6, fire Repulse at C6",
-        "LaserMech, move F4\u2192E6, fire Burst Beam at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:45:02.983026",
-      "turn": 3,
-      "label": "solve",
-      "score": 45558.56976066317,
-      "actions": [
-        "RockartMech, fire Rock Launcher at F4",
-        "PulseMech, move C6\u2192C3, repair",
-        "LaserMech, fire Burst Beam at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:47:42.386969",
+      "timestamp": "2026-04-25T19:11:39.544607",
       "turn": 4,
       "label": "solve",
-      "score": 2104.9986563410057,
+      "score": 92610.71452856064,
       "actions": [
-        "LaserMech, move E6\u2192D6, fire Burst Beam at D7",
-        "PulseMech, move C3\u2192D4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:52:34.496193",
-      "turn": 1,
-      "label": "solve",
-      "score": 75800.0,
-      "actions": [
-        "LaserMech, move D6\u2192E3, fire Burst Beam at F3",
-        "RockartMech, move C5\u2192B6, fire Rock Launcher at B4",
-        "PulseMech, move F5\u2192C4, fire Repulse at C4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:53:16.530931",
-      "turn": 2,
-      "label": "solve",
-      "score": 49164.761904761945,
-      "actions": [
-        "LaserMech, move E3\u2192D3, fire Burst Beam at D4",
-        "RockartMech, fire Rock Launcher at B4",
-        "PulseMech, move D4\u2192E3, fire Repulse at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:53:55.056724",
-      "turn": 3,
-      "label": "solve",
-      "score": 46271.42857142858,
-      "actions": [
-        "LaserMech, fire Burst Beam at C2",
-        "RockartMech, move B6\u2192B4, fire Rock Launcher at B6",
-        "PulseMech, move E3\u2192F2, fire Repulse at F2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:54:37.283960",
-      "turn": 4,
-      "label": "solve",
-      "score": -46124.99973773956,
-      "actions": [
-        "LaserMech, fire Burst Beam at D3",
-        "RockartMech, move B4\u2192C2, fire Rock Launcher at F2",
-        "PulseMech, move F2\u2192E4, fire Repulse at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:58:20.553064",
-      "turn": 1,
-      "label": "solve",
-      "score": -62397.14258398328,
-      "actions": [
-        "LaserMech, move F5\u2192E6, fire Burst Beam at E7",
-        "RockartMech, move D6\u2192E5, fire Rock Launcher at E7",
-        "PulseMech, fire Repulse at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:59:08.934012",
-      "turn": 2,
-      "label": "solve",
-      "score": 43372.38095238099,
-      "actions": [
-        "LaserMech, move E6\u2192D3, fire Burst Beam at E3",
-        "RockartMech",
-        "PulseMech, move C5\u2192C6, fire Repulse at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T14:59:53.799678",
-      "turn": 3,
-      "label": "solve",
-      "score": 62615.71428571429,
-      "actions": [
-        "RockartMech, move E5\u2192D6, fire Rock Launcher at D4",
-        "PulseMech, move C6\u2192E4, fire Repulse at E4",
-        "LaserMech, move D3\u2192C2, fire Burst Beam at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:00:58.780964",
-      "turn": 4,
-      "label": "solve",
-      "score": -16067.142583983281,
-      "actions": [
-        "RockartMech, move D6\u2192E5, fire Rock Launcher at E7",
-        "LaserMech, move D3\u2192D6, fire Burst Beam at C6",
-        "PulseMech"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:04:28.650224",
-      "turn": 1,
-      "label": "solve",
-      "score": -34064.28571428571,
-      "actions": [
-        "PulseMech, move F5\u2192F4, fire Repulse at F4",
-        "RockartMech, move E6\u2192F5, fire Rock Launcher at D5",
-        "LaserMech, move C5\u2192B3, fire Burst Beam at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:05:11.273008",
-      "turn": 2,
-      "label": "solve",
-      "score": -17580.952380952367,
-      "actions": [
-        "RockartMech, move F5\u2192D6, fire Rock Launcher at D2",
-        "PulseMech, move F4\u2192D5, fire Repulse at D5",
-        "LaserMech, move B3\u2192B4, fire Burst Beam at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:05:49.605991",
-      "turn": 3,
-      "label": "solve",
-      "score": -19174.28571428571,
-      "actions": [
-        "RockartMech, move D7\u2192D6, fire Rock Launcher at F6",
-        "PulseMech, fire Repulse at D5",
-        "LaserMech, move B4\u2192D4, fire Burst Beam at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:06:30.413475",
-      "turn": 4,
-      "label": "solve",
-      "score": -17204.28571428571,
-      "actions": [
-        "LaserMech, move D4\u2192B4, fire Burst Beam at B3",
-        "RockartMech, fire Rock Launcher at D3",
-        "PulseMech, move D5\u2192D4, fire Repulse at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:16:43.892865",
-      "turn": 1,
-      "label": "solve",
-      "score": 119707.14285714284,
-      "actions": [
-        "LaserMech, move C5\u2192D4, fire Burst Beam at E4",
-        "PulseMech, move F6\u2192E7, fire Repulse at E7",
-        "RockartMech, move D6\u2192D7, fire Rock Launcher at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:17:29.308822",
-      "turn": 2,
-      "label": "solve",
-      "score": 122877.14285714284,
-      "actions": [
-        "LaserMech, move D4\u2192F3, fire Burst Beam at G3",
-        "RockartMech, move D7\u2192E6, fire Rock Launcher at E4",
-        "PulseMech, move E7\u2192D6, fire Repulse at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:18:09.979627",
-      "turn": 3,
-      "label": "solve",
-      "score": 87234.28582566125,
-      "actions": [
-        "RockartMech, fire Rock Launcher at F4",
-        "PulseMech, move D6\u2192E4, fire Repulse at E4",
-        "LaserMech, move F3\u2192F4, fire Burst Beam at G4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-25T15:18:47.844777",
-      "turn": 4,
-      "label": "solve",
-      "score": 29324.28627286639,
-      "actions": [
-        "RockartMech, fire Rock Launcher at F4",
-        "LaserMech, move F4\u2192G5, fire Burst Beam at G4",
-        "PulseMech, move E4\u2192H5, fire Repulse at H5"
+        "ElectricMech, fire Chain Whip at F3",
+        "JetMech, move D8\u2192D5, fire Aerial Bombs at D3",
+        "GravMech"
       ]
     }
   ],
@@ -328,475 +120,34 @@
     [
       0,
       3
-    ],
-    [
-      1,
-      1
-    ],
-    [
-      1,
-      2
-    ],
-    [
-      1,
-      3
-    ],
-    [
-      2,
-      1
-    ],
-    [
-      2,
-      2
-    ],
-    [
-      2,
-      3
-    ],
-    [
-      3,
-      1
-    ],
-    [
-      3,
-      2
-    ],
-    [
-      3,
-      3
     ]
   ],
   "tags": [],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "_REPAIR",
-        "target": [
-          4,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
       "top_category": "status",
       "categories": [
         "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Science_Repulse|attack",
+      "signature": "status|Science_Gravwell|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Science_Repulse",
-        "target": [
-          2,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "mech_position_wrong",
-      "categories": [
-        "mech_position_wrong",
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "mech_position_wrong|Ranged_Rockthrow|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Ranged_Rockthrow|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Unknown|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
       "context": {
         "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 2,
         "turn": 1,
-        "weapon": "Unknown",
+        "weapon": "Science_Gravwell",
         "target": [
-          255,
-          255
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Ranged_Rockthrow|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          4,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|_REPAIR|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "_REPAIR",
-        "target": [
-          5,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "_REPAIR",
-        "target": [
-          5,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Prime_Lasermech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          2,
+          3,
           4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Unknown|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Ranged_Rockthrow|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          2,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Science_Repulse|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Science_Repulse",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Science_Repulse|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Science_Repulse",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Unknown|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "unknown",
-      "categories": [],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "unknown|Science_Repulse|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_Repulse",
-        "target": [
-          2,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "unknown",
-      "categories": [],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "unknown|Science_Repulse|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_Repulse",
-        "target": [
-          2,
-          5
         ]
       }
     },
@@ -808,76 +159,21 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Science_Repulse|attack",
-      "frequency": 1,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 0,
       "asymmetry": [],
       "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.7,
+      "proposed_tier": 4,
+      "confidence": 0.4,
       "context": {
-        "mech_uid": 2,
+        "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 1,
-        "turn": 3,
-        "weapon": "Science_Repulse",
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
         "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "mech_position_wrong",
-      "categories": [
-        "mech_position_wrong",
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "mech_position_wrong|Prime_Lasermech|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          6,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Prime_Lasermech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          6,
+          5,
           4
         ]
       }
@@ -891,7 +187,7 @@
       "subcategory": null,
       "model_gap": false,
       "signature": "click_miss|Unknown|attack",
-      "frequency": 3,
+      "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 1,
@@ -906,196 +202,6 @@
         "target": [
           255,
           255
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Ranged_Rockthrow|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Ranged_Rockthrow",
-        "target": [
-          6,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Science_Repulse|move",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Science_Repulse",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Science_Repulse|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Science_Repulse",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Prime_Lasermech|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          3,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Prime_Lasermech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          3,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Prime_Lasermech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          5,
-          1
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "push_dir"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Science_Repulse|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 4,
-        "weapon": "Science_Repulse",
-        "target": [
-          3,
-          0
         ]
       }
     }
@@ -1103,118 +209,37 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "LaserMech",
+      "type": "ElectricMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "resolved",
-      "result": "manual_clear_known_type"
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     },
     {
-      "type": "RockartMech",
+      "type": "JetMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "resolved",
-      "result": "manual_clear_known_type"
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     },
     {
-      "type": "PulseMech",
+      "type": "GravMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
       "mission_id": "",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "resolved",
-      "result": "manual_clear_known_type"
-    },
-    {
-      "type": "Scorpion1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "resolved",
-      "result": "manual_clear_known_type",
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high",
-      "research_id": "0985c54deb85",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "RockThrown",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "resolved",
-      "result": "manual_added_known_artillery_projectile",
-      "diff_field": "missing_in_predicted",
-      "diff_predicted": "absent",
-      "diff_actual": "present",
-      "severity": "medium",
-      "research_id": "cfdd2c77310b",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "RockThrown",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 3,
+      "first_seen_turn": 0,
       "attempts": 0,
-      "status": "resolved",
-      "result": "manual_added_known_artillery_projectile"
-    },
-    {
-      "type": "GlowingScorpion",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 3,
-      "attempts": 0,
-      "status": "resolved",
-      "result": "manual_clear_known_type",
-      "diff_field": "hp",
-      "diff_predicted": 2,
-      "diff_actual": 4,
-      "severity": "high"
-    },
-    {
-      "type": "Hornet1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "",
-      "first_seen_turn": 4,
-      "attempts": 0,
-      "status": "resolved",
-      "result": "manual_clear_known_type",
-      "diff_field": "pos",
-      "diff_predicted": [
-        5,
-        0
-      ],
-      "diff_actual": [
-        4,
-        0
-      ],
-      "severity": "medium"
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": []
