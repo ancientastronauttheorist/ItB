@@ -51,6 +51,15 @@ pub struct EvalWeights {
     pub grid_power: f64,
     pub enemy_killed: f64,
     pub enemy_hp_remaining: f64, // negative
+    // Threat-aware survivor penalty: penalty per (weapon_damage * 1) for each
+    // surviving enemy with a queued attack. Distinct from enemy_hp_remaining
+    // (which tilts toward kill ease) — this tilts toward neutralizing the
+    // enemies that hit hardest. Scaled by future_factor + grid_multiplier
+    // (same shape as enemy_hp_remaining). Default 0.0 so the stock weights
+    // don't change behavior; bumped via weights/active.json. Motivating case:
+    // m05 t1 of 20260425_185532_218 — a 3-dmg Scorpion2 (5 HP, hard to kill)
+    // was left alive while a 0-dmg WebbEgg + 0-dmg Spider got priority.
+    pub enemy_threat_remaining: f64, // negative
     pub mech_killed: f64,        // negative
     pub mech_hp: f64,
     pub spawn_blocked: f64,
@@ -195,6 +204,7 @@ impl Default for EvalWeights {
             grid_power: 5000.0,
             enemy_killed: 500.0,
             enemy_hp_remaining: -100.0,
+            enemy_threat_remaining: 0.0,
             mech_killed: -150000.0,
             mech_hp: 100.0,
             spawn_blocked: 1000.0,
@@ -420,6 +430,20 @@ pub fn evaluate(
         if u.is_enemy() && u.alive() {
             // damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
             score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90) * enemy_urgency;
+            // Threat-weighted survivor penalty: enemies that hit hardest
+            // cost more to leave alive. Skips webbed/frozen (can't attack
+            // this turn) and units with no queued attack. weapon_damage
+            // is the per-attack damage value already populated by the
+            // bridge (see enemy.rs WeaponDef populate_unit_from_weapon).
+            if weights.enemy_threat_remaining != 0.0
+                && u.weapon_damage > 0
+                && !u.web()
+                && !u.frozen()
+            {
+                score += (u.weapon_damage as f64)
+                    * scaled(weights.enemy_threat_remaining, ff, 0.10, 0.90)
+                    * enemy_urgency;
+            }
         }
         // Weather Watch ⭐ bonus: "Don't let the Volatile Vek die." Count
         // dead Volatile-type enemies on the post-state board — solver clones

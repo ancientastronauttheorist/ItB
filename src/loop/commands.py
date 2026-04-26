@@ -3952,9 +3952,22 @@ def cmd_replay(run_id: str, turn: int, time_limit: float = 30.0,
           f"(time limit: {time_limit}s, solver: {'rust' if use_rust else 'python'})...")
 
     solution = None
+    # Load active.json weights so replay reflects the current weight bundle
+    # rather than Rust's compiled defaults (caller can still pass --no-rust
+    # to use the Python solver, which already loads active.json elsewhere).
+    eval_weights_dict = None
+    weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
+    if weights_path.exists():
+        try:
+            with open(weights_path) as wf:
+                weight_data = json.load(wf)
+            eval_weights_dict = weight_data.get("weights")
+        except (json.JSONDecodeError, IOError):
+            pass
+
     if use_rust:
         try:
-            solution = _solve_with_rust(bridge_data, time_limit)
+            solution = _solve_with_rust(bridge_data, time_limit, weights=eval_weights_dict)
         except Exception as e:
             print(f"  Rust solver error: {e}")
 
