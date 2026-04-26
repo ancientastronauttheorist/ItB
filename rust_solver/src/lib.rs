@@ -450,7 +450,22 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   branch was unreachable since the bridge never surfaces WebbEgg2)
 //   but version bumped because the semantic-mapping table changed.
 //   Pre-v23 rows archived to failure_db_snapshot_sim_v22.jsonl.
-pub const SIMULATOR_VERSION: u32 = 23;
+// v24 (2026-04-25, three player-weapon fixes after Lua audit):
+//   - Prime_Spear: Range/PathSize now 2 (was 1). The spear stabs along
+//     a 2-tile cardinal path, hitting any in-path unit and the target
+//     tile per weapons_prime.lua:792-846. Solver enumerates range-2
+//     stabs; sim_melee handles in-path damage before final-tile push.
+//   - Brute_Sniper: damage = max(0, min(MaxDamage, dist - 1)) per
+//     weapons_brute.lua:969-991. Adjacent shots now correctly deal 0
+//     damage; dist=2 -> 1 dmg; dist >= MaxDamage+1 -> MaxDamage.
+//     Encoded as a reusable WeaponFlags::DAMAGE_SCALES_WITH_DIST flag.
+//   - Brute_Grapple: when target tile has no pawn but is blocked by
+//     mountain or intact building, the mech itself charges along the
+//     line and stops at target-dir, per weapons_brute.lua:339-389.
+//     Previously sim_pull_or_swap silently exited in the no-pawn
+//     branch; now self-charges (FULL_PULL gated). No damage to obstacle.
+//   Pre-v24 rows archived to failure_db_snapshot_sim_v23.jsonl.
+pub const SIMULATOR_VERSION: u32 = 24;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

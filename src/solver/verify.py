@@ -242,7 +242,16 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   defensive alias. No behavior change predicted for live runs;
 #   version bumped because the hatch-mapping table changed. Pre-v23
 #   rows archived to failure_db_snapshot_sim_v22.jsonl.
-SIMULATOR_VERSION = 23
+# v24 (2026-04-25, three player-weapon fixes after Lua audit):
+#   - Prime_Spear: Range/PathSize 1 -> 2 per weapons_prime.lua:792-846.
+#     Range-2 stabs enumerated; in-path damage before final-tile push.
+#   - Brute_Sniper: damage = max(0, min(MaxDamage, dist-1)) per
+#     weapons_brute.lua:969-991. Adjacent shots now 0 damage.
+#   - Brute_Grapple: self-charge into mountain/building per
+#     weapons_brute.lua:339-389. Mech stops at target-dir; no obstacle
+#     damage. Previously the no-pawn branch silently exited.
+#   Pre-v24 rows archived to failure_db_snapshot_sim_v23.jsonl.
+SIMULATOR_VERSION = 24
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
