@@ -6,56 +6,56 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 8,
-  "current_turn": 4,
+  "mission_index": 9,
+  "current_turn": 1,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "JudoMech",
+        "move_to": [
+          5,
+          6
+        ],
+        "weapon": "Prime_Shift",
+        "target": [
+          6,
+          6
+        ],
+        "description": "JudoMech, move C5\u2192B3, fire Vice Fist at B2"
+      },
       {
         "mech_uid": 1,
         "mech_type": "TankMech",
         "move_to": [
           4,
-          4
+          2
         ],
-        "weapon": "Unknown",
+        "weapon": "Brute_Tankmech",
         "target": [
-          255,
-          255
-        ],
-        "description": "TankMech, move E2\u2192D4"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "JudoMech",
-        "move_to": [
-          6,
+          4,
           3
         ],
-        "weapon": "Prime_Shift",
-        "target": [
-          5,
-          3
-        ],
-        "description": "JudoMech, move C4\u2192E2, fire Vice Fist at E3"
+        "description": "TankMech, move F5\u2192F4, fire Taurus Cannon at E4"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
-          5,
-          3
+          2,
+          5
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          5,
-          0
+          4,
+          5
         ],
-        "description": "ArtiMech, move D3\u2192E3, fire Artemis Artillery at H3"
+        "description": "ArtiMech, move B6\u2192C6, fire Artemis Artillery at C4"
       }
     ],
-    "score": 43755.71428571429,
-    "turn": 4
+    "score": -181425.71373667038,
+    "turn": 1
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -476,6 +476,17 @@
         "TankMech, move E2\u2192D4",
         "JudoMech, move C4\u2192E2, fire Vice Fist at E3",
         "ArtiMech, move D3\u2192E3, fire Artemis Artillery at H3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-26T00:01:53.999343",
+      "turn": 1,
+      "label": "solve",
+      "score": -181425.71373667038,
+      "actions": [
+        "JudoMech, move C5\u2192B3, fire Vice Fist at B2",
+        "TankMech, move F5\u2192F4, fire Taurus Cannon at E4",
+        "ArtiMech, move B6\u2192C6, fire Artemis Artillery at C4"
       ]
     }
   ],

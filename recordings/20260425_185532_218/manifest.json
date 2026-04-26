@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-7891aa0",
+  "solver_version": "rust-0.1.0-46063ed",
   "weight_version": "v010",
-  "updated": "2026-04-25T23:57:12.990652",
+  "updated": "2026-04-26T00:03:22.269764",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
-  "outcome": "win",
-  "outcome_mission": 8,
-  "outcome_recorded_at": "2026-04-25T23:57:12.975321",
-  "outcome_notes": "The Heap \u2014 first mission with save-fallback teleporter pad recovery. Fix shipped commit 7891aa0; pads correctly identified as F4\u2194D2 (RED) + G6\u2194D5 (BLUE) and respected by solver every turn. Grid 2/7 held; bonus 5/7 (failed)."
+  "outcome": "loss",
+  "outcome_mission": 9,
+  "outcome_recorded_at": "2026-04-26T00:03:22.255456",
+  "outcome_notes": "Containment Zone D \u2014 High Threat at grid 2/7 was too aggressive. Solver returned score=-181k on turn 1 (red flag we should have read). Grid hit 0 during enemy turn 1 \u2014 buildings collapsed before we could stabilize. Lesson: at grid \u22642, defensive missions over \u26a1 payouts. Pad-fix unaffected (no teleporter mission)."
 }

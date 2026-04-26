@@ -1,0 +1,7 @@
+{
+  "mission_index": 9,
+  "mission_name": "",
+  "result": "loss",
+  "notes": "Containment Zone D \u2014 High Threat at grid 2/7 was too aggressive. Solver returned score=-181k on turn 1 (red flag we should have read). Grid hit 0 during enemy turn 1 \u2014 buildings collapsed before we could stabilize. Lesson: at grid \u22642, defensive missions over \u26a1 payouts. Pad-fix unaffected (no teleporter mission).",
+  "recorded_at": "2026-04-26T00:03:22.255073"
+}
