@@ -1,0 +1,7 @@
+{
+  "mission_index": 8,
+  "mission_name": "",
+  "result": "win",
+  "notes": "The Heap \u2014 first mission with save-fallback teleporter pad recovery. Fix shipped commit 7891aa0; pads correctly identified as F4\u2194D2 (RED) + G6\u2194D5 (BLUE) and respected by solver every turn. Grid 2/7 held; bonus 5/7 (failed).",
+  "recorded_at": "2026-04-25T23:57:12.974987"
+}

@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-59c31e6",
+  "solver_version": "rust-0.1.0-7891aa0",
   "weight_version": "v010",
-  "updated": "2026-04-25T22:44:24.870057",
+  "updated": "2026-04-25T23:57:12.990652",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 7,
-  "outcome_recorded_at": "2026-04-25T22:44:24.855746",
-  "outcome_notes": "Scrapheap: 1/2 vats destroyed, pilot Ganymede KIA. Grid 4->2. Re-solve recovery worked but mission was overscoped for current grid level."
+  "outcome_mission": 8,
+  "outcome_recorded_at": "2026-04-25T23:57:12.975321",
+  "outcome_notes": "The Heap \u2014 first mission with save-fallback teleporter pad recovery. Fix shipped commit 7891aa0; pads correctly identified as F4\u2194D2 (RED) + G6\u2194D5 (BLUE) and respected by solver every turn. Grid 2/7 held; bonus 5/7 (failed)."
 }
