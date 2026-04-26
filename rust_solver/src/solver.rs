@@ -166,46 +166,67 @@ pub(crate) fn get_weapon_targets(
 
     match wdef.weapon_type {
         WeaponType::Melee => {
+            // For path_size>1 melee (Prime_Spear: Range=2, PathSize=2 in
+            // Lua scripts/weapons_prime.lua:792-846) the weapon enumerates
+            // tiles +1..=+range_max in each cardinal direction. Lua
+            // GetTargetArea breaks only on board edge — units in the path
+            // do NOT stop enumeration; they merely receive transit damage
+            // when the player picks a further tile. Standard 1-tile melee
+            // (range_max=1, the historical default) keeps its prior logic.
+            let max_r = wdef.range_max.max(1);
             for &(dx, dy) in &DIRS {
-                let nx = mx as i8 + dx;
-                let ny = my as i8 + dy;
-                if !in_bounds(nx, ny) { continue; }
-                let nxu = nx as u8;
-                let nyu = ny as u8;
-                // Throw weapons (Vice Fist): the game rejects the target entirely
-                // unless the throw destination — attacker + (attacker-target) — is
-                // an unoccupied tile. Any unit, mountain, building, or wreck there
-                // makes the weapon unfireable (the in-game "no target available"
-                // error). Water / chasm / lava ARE valid destinations — throwing a
-                // non-flying enemy into deadly terrain is the main use of the weapon.
-                // Exception: if the destination equals the mech's pre-move tile, the
-                // board still shows the mech there (board isn't updated during action
-                // enumeration), but that tile will be vacated once the move executes,
-                // so treat it as empty.
+                // Throw weapons (Vice Fist) are always range_max=1 in Lua;
+                // check the throw-destination once per direction.
                 if wdef.push == PushDir::Throw {
                     let throw_x = mx as i8 - dx;
                     let throw_y = my as i8 - dy;
                     if !in_bounds(throw_x, throw_y) { continue; }
                     let txu = throw_x as u8;
                     let tyu = throw_y as u8;
+                    // Throw weapons (Vice Fist): the game rejects the target
+                    // entirely unless the throw destination — attacker +
+                    // (attacker-target) — is an unoccupied tile. Any unit,
+                    // mountain, building, or wreck there makes the weapon
+                    // unfireable (the in-game "no target available" error).
+                    // Water / chasm / lava ARE valid destinations — throwing
+                    // a non-flying enemy into deadly terrain is the main use
+                    // of the weapon. Exception: if the destination equals the
+                    // mech's pre-move tile, the board still shows the mech
+                    // there (board isn't updated during action enumeration),
+                    // but that tile will be vacated once the move executes,
+                    // so treat it as empty.
                     if (txu, tyu) != mech_from {
                         if board.unit_at(txu, tyu).is_some() { continue; }
                         if board.wreck_at(txu, tyu) { continue; }
                         let dest_tile = board.tile(txu, tyu);
                         if dest_tile.terrain == Terrain::Mountain { continue; }
-                        // Any Building terrain blocks Vice Fist targeting, including
-                        // destroyed objective unique_buildings (terrain=Building, hp=0).
-                        // In-game the target highlight disappears.
+                        // Any Building terrain blocks Vice Fist targeting,
+                        // including destroyed objective unique_buildings
+                        // (terrain=Building, hp=0). In-game the target
+                        // highlight disappears.
                         if dest_tile.terrain == Terrain::Building { continue; }
                     }
                 }
-                let has_unit = board.unit_at(nxu, nyu).is_some();
-                if has_unit {
-                    targets.push((nxu, nyu));
-                } else if wdef.push != PushDir::None {
-                    let tile = board.tile(nxu, nyu);
-                    if !(tile.terrain == Terrain::Building && tile.building_hp > 0) {
+                // Track whether any tile in the path so far holds a unit —
+                // this lets a path_size>1 stab target the further tile even
+                // when only the closer tile is occupied (the spear damages
+                // both, only the furthest is pushed).
+                let mut path_has_unit = false;
+                for i in 1..=(max_r as i8) {
+                    let nx = mx as i8 + dx * i;
+                    let ny = my as i8 + dy * i;
+                    if !in_bounds(nx, ny) { break; }
+                    let nxu = nx as u8;
+                    let nyu = ny as u8;
+                    let has_unit = board.unit_at(nxu, nyu).is_some();
+                    if has_unit { path_has_unit = true; }
+                    if has_unit || path_has_unit {
                         targets.push((nxu, nyu));
+                    } else if wdef.push != PushDir::None {
+                        let tile = board.tile(nxu, nyu);
+                        if !(tile.terrain == Terrain::Building && tile.building_hp > 0) {
+                            targets.push((nxu, nyu));
+                        }
                     }
                 }
             }
@@ -378,7 +399,28 @@ fn weapon_action_has_effect(
     };
 
     match wdef.weapon_type {
-        WeaponType::Melee => unit_at(target.0, target.1),
+        WeaponType::Melee => {
+            // For path_size>1 melee (Prime_Spear) any unit in the cardinal
+            // line from move_to to target counts as an effect — the spear
+            // damages every tile it passes through.
+            if unit_at(target.0, target.1) { return true; }
+            if wdef.path_size > 1 || wdef.range_max > 1 {
+                let dx_diff = target.0 as i8 - mx as i8;
+                let dy_diff = target.1 as i8 - my as i8;
+                if dx_diff == 0 && dy_diff == 0 { return false; }
+                let dx = dx_diff.signum();
+                let dy = dy_diff.signum();
+                let dist = dx_diff.abs().max(dy_diff.abs());
+                for i in 1..dist {
+                    let px = mx as i8 + dx * i;
+                    let py = my as i8 + dy * i;
+                    if !in_bounds(px, py) { break; }
+                    if unit_at(px as u8, py as u8) { return true; }
+                }
+                return false;
+            }
+            false
+        }
         WeaponType::Projectile | WeaponType::Laser | WeaponType::Pull => {
             // Trace from move_to toward target direction — any unit in line = effect
             let dx = (target.0 as i8 - mx as i8).signum();

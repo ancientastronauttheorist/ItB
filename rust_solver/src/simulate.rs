@@ -1186,6 +1186,25 @@ pub fn simulate_weapon_with(
 // ── Melee ────────────────────────────────────────────────────────────────────
 
 fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+    // path_size>1 melee (Prime_Spear: Lua scripts/weapons_prime.lua:792-846).
+    // Lua SkillEffect damages every tile from attacker+1 .. attacker+distance
+    // in order, with only the FURTHEST tile receiving Push and weapon status
+    // (acid). Damage in-path tiles first so the closer-tile occupant resolves
+    // before the target tile's push (matches Lua sequential SpaceDamage).
+    if let Some(dir) = attack_dir {
+        let (dxs, dys) = DIRS[dir];
+        let dist_x = (tx as i8 - ax as i8).abs();
+        let dist_y = (ty as i8 - ay as i8).abs();
+        let distance = dist_x.max(dist_y); // cardinal => one axis is 0
+        if distance > 1 {
+            for i in 1..distance {
+                let px = ax as i8 + dxs * i;
+                let py = ay as i8 + dys * i;
+                if !in_bounds(px, py) { break; }
+                apply_damage(board, px as u8, py as u8, wdef.damage, result, DamageSource::Weapon);
+            }
+        }
+    }
     apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
 
     // Chain weapon (Electric Whip): BFS through adjacent occupied tiles.
@@ -2155,6 +2174,112 @@ mod tests {
         assert_eq!(result.enemies_killed, 1);
         // Dead unit pushed forward (simultaneous)
         assert_eq!(board.units[enemy_idx].y, 5); // moved from 4 to 5
+    }
+
+    // ── Prime_Spear path_size=2 stab (Lua weapons_prime.lua:792-846) ──────────
+    //
+    // Spear is Range=2, PathSize=2: GetTargetArea enumerates both +1 and +2
+    // tiles; GetSkillEffect damages every tile from attacker+1 to target with
+    // only the FURTHEST tile receiving Push.
+
+    #[test]
+    fn test_spear_range_2_stab_through_empty_tile_hits_far_enemy_only() {
+        // Mech at (3,3), enemy at (3,5). Empty tile (3,4) is the in-path tile.
+        // Lua damages (3,4) with 2 (no occupant → no effect on units, but
+        // mountains/buildings would get hit) and damages (3,5) with 2 + push.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimeSpear);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 5, 3);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeSpear, 3, 5);
+        // Far enemy (3,5) takes 2 damage (3hp → 1hp) and is pushed forward to (3,6).
+        assert_eq!(result.enemies_killed, 0, "3hp enemy survives 2 damage");
+        assert_eq!(board.units[enemy_idx].hp, 1, "Enemy HP: 3 - 2 = 1");
+        assert_eq!(board.units[enemy_idx].x, 3);
+        assert_eq!(board.units[enemy_idx].y, 6,
+            "Far enemy pushed forward (Lua: push only on furthest tile)");
+        // In-path tile (3,4) had no unit — it's just transit damage on empty
+        // ground. Tile must not have spurious terrain change.
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+    }
+
+    #[test]
+    fn test_spear_range_2_stab_damages_tile_1_unit_when_targeting_tile_2() {
+        // Mech at (3,3), enemy A at (3,4) (in-path), enemy B at (3,5) (target).
+        // Spear damages BOTH tiles for 2 each — only B gets pushed.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimeSpear);
+        let near_idx = add_enemy(&mut board, 1, 3, 4, 3); // in-path, 3 hp
+        let far_idx  = add_enemy(&mut board, 2, 3, 5, 3); // target,  3 hp
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeSpear, 3, 5);
+        // Both alive (3 - 2 = 1) — neither dies.
+        assert_eq!(board.units[near_idx].hp, 1, "Near enemy takes 2 transit damage");
+        assert_eq!(board.units[far_idx].hp, 1, "Far enemy takes 2 weapon damage");
+        // Near enemy NOT pushed (Lua: only furthest tile receives push).
+        assert_eq!((board.units[near_idx].x, board.units[near_idx].y), (3, 4),
+            "In-path enemy is NOT pushed");
+        // Far enemy push attempt: destination (3,6) is empty → moves there.
+        assert_eq!((board.units[far_idx].x, board.units[far_idx].y), (3, 6),
+            "Far enemy pushed forward by 1 tile");
+    }
+
+    #[test]
+    fn test_spear_range_1_stab_unchanged_legacy_behavior() {
+        // Targeting the adjacent tile (distance=1) must behave exactly like a
+        // 1-tile melee — single-tile damage + push, no in-path damage.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimeSpear);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeSpear, 3, 4);
+        // Enemy at (3,4) takes 2 damage (3 → 1) and is pushed to (3,5).
+        assert_eq!(board.units[enemy_idx].hp, 1);
+        assert_eq!(board.units[enemy_idx].x, 3);
+        assert_eq!(board.units[enemy_idx].y, 5,
+            "Range-1 stab still pushes target forward");
+        // No spurious self-damage on attacker.
+        assert_eq!(board.units[mech_idx].hp, 3);
+    }
+
+    #[test]
+    fn test_spear_push_direction_is_along_path_away_from_mech() {
+        // Verify the push direction is the spear's attack axis (mech → target),
+        // not some other inferred axis. Mech at (5,3), target enemy at (3,3)
+        // (distance 2, attack direction = west, dx=-1). Push must move enemy
+        // further west to (2,3).
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeSpear);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeSpear, 3, 3);
+        assert_eq!(board.units[enemy_idx].hp, 1, "Far enemy hit for 2");
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (2, 3),
+            "Push direction is mech → target (west), enemy moves further west");
+        // In-path tile (4,3) had no unit; no terrain change.
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
+        // Mech unchanged.
+        assert_eq!(board.units[mech_idx].x, 5);
+        assert_eq!(board.units[mech_idx].y, 3);
+    }
+
+    #[test]
+    fn test_spear_target_enumeration_includes_range_2() {
+        // Target enumeration must produce BOTH +1 and +2 tiles in each
+        // cardinal direction (Lua GetTargetArea iterates k=1..PathSize and
+        // breaks only at board edge).
+        let mut board = make_test_board();
+        let _mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimeSpear);
+        // Place an enemy at the +2 tile so the action is considered
+        // effectful even if path tile is empty.
+        add_enemy(&mut board, 1, 3, 5, 3);
+
+        let targets = crate::solver::get_weapon_targets(
+            &board, 3, 3, WId::PrimeSpear, (3, 3), &WEAPONS);
+        assert!(targets.contains(&(3, 5)),
+            "Spear must enumerate range-2 tile (3,5); got {:?}", targets);
+        assert!(targets.contains(&(3, 4)),
+            "Spear must enumerate range-1 tile (3,4); got {:?}", targets);
     }
 
     /// Regression: snapshot grid_drop_20260424_174047_323_t01_a3.

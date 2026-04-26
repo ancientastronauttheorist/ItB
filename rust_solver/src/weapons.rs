@@ -315,15 +315,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 8: Prime_Leap — Hydraulic Legs
     w[8] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, push: PushDir::Outward, self_damage: 1, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 9: Prime_Spear — Spear
-    // TODO(weapons-audit 2026-04-25): Lua scripts/weapons_prime.lua:792-846
-    // Range=2, PathSize=2 — the spear stabs EVERY tile from p1 forward to p2,
-    // with only the FURTHEST tile pushed forward. Currently modelled as a
-    // 1-tile melee, so range-2 stabs are never enumerated and 2-tile transit
-    // damage is missing. Proper fix needs sim_melee + target enumeration to
-    // honour `path_size` (analogous to HornetAtkB's path_size=3 artillery
-    // pattern, but for melee/line attacks) AND range_max>1. Defer to a
-    // dedicated PR — refactor mid-audit is out of scope.
-    w[9] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward, flags: C, ..DEF };
+    // Lua scripts/weapons_prime.lua:792-846 (Range=2, PathSize=2). The spear
+    // stabs EVERY tile from attacker forward to the targeted tile, taking
+    // self.Damage on each (transit damage on tile 1 when firing at tile 2).
+    // Only the FURTHEST tile (the target) receives the Forward push.
+    // GetTargetArea enumerates tiles +1 and +2 in each cardinal direction,
+    // breaking only at the board edge — units along the path do NOT stop
+    // target enumeration, they just take the in-path damage.
+    w[9] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward, range_max: 2, path_size: 2, flags: C, ..DEF };
     // 10: Prime_Rockmech — Rock Throw
     w[10] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, range_max: 0, flags: C, ..DEF };
     // 11: Prime_RocketPunch — Rocket Fist
