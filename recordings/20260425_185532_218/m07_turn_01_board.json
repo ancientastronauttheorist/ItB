@@ -1,0 +1,806 @@
+{
+  "timestamp": "2026-04-25T22:37:39.055423",
+  "run_id": "20260425_185532_218",
+  "mission_index": 7,
+  "turn": 1,
+  "label": "board",
+  "data": {
+    "bridge_state": {
+      "environment_danger_v2": [],
+      "grid_power_max": 7,
+      "grid_power": 4,
+      "turn": 1,
+      "mission_id": "Mission_Barrels",
+      "master_seed": 1778373499,
+      "total_turns": 4,
+      "environment_danger": [],
+      "tiles": [
+        {
+          "y": 0,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 6,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 7,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 1,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 1
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 3
+        },
+        {
+          "y": 1,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 6,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 1,
+          "x": 7,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 2,
+          "terrain_id": 0,
+          "terrain": "ground",
+          "acid": true,
+          "x": 0
+        },
+        {
+          "y": 2,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "terrain_id": 0,
+          "terrain": "ground",
+          "acid": true,
+          "x": 2
+        },
+        {
+          "y": 2,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "terrain_id": 0,
+          "terrain": "ground",
+          "acid": true,
+          "x": 4
+        },
+        {
+          "y": 2,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 7,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 3,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 3,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 7,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 4,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "terrain_id": 3,
+          "terrain": "water",
+          "acid": true,
+          "x": 2
+        },
+        {
+          "y": 4,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 0
+        },
+        {
+          "y": 6,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 1
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 3
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 6,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 0
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 1
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 2
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 3
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 4
+        },
+        {
+          "y": 7,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        }
+      ],
+      "targeted_tiles": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "phase": "combat_enemy",
+      "units": [
+        {
+          "web": true,
+          "active": false,
+          "base_move": 4,
+          "hp": 3,
+          "flying": false,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_source_uid": 109,
+          "web_probes": {
+            "IsGrappled": true
+          },
+          "max_hp": 3,
+          "move": 0,
+          "weapons": [
+            "Prime_Shift"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=2",
+            "skill2=3"
+          ],
+          "fire": false,
+          "y": 4,
+          "x": 2,
+          "acid": true,
+          "shield": false,
+          "type": "JudoMech",
+          "mech": true,
+          "uid": 0,
+          "pilot_id": "Pilot_Detritus"
+        },
+        {
+          "web": false,
+          "active": false,
+          "base_move": 3,
+          "hp": 3,
+          "flying": false,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 3,
+          "weapons": [
+            "Brute_Tankmech"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=1",
+            "skill2=3"
+          ],
+          "fire": false,
+          "y": 2,
+          "x": 3,
+          "acid": false,
+          "shield": false,
+          "type": "TankMech",
+          "mech": true,
+          "uid": 1,
+          "pilot_id": "Pilot_Archive"
+        },
+        {
+          "web": false,
+          "active": false,
+          "base_move": 3,
+          "hp": 2,
+          "flying": false,
+          "pilot_level": 0,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 3,
+          "weapons": [
+            "Ranged_Artillerymech"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=1",
+            "skill2=3"
+          ],
+          "fire": false,
+          "y": 4,
+          "x": 1,
+          "acid": false,
+          "shield": false,
+          "type": "ArtiMech",
+          "mech": true,
+          "uid": 2,
+          "pilot_id": "Pilot_Pinnacle"
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 2,
+          "flying": false,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 0,
+          "weapons": [],
+          "x": 5,
+          "y": 3,
+          "uid": 106,
+          "type": "AcidVat",
+          "base_move": 0,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 3,
+          "weapon_target_behind": false,
+          "x": 4,
+          "has_queued_attack": true,
+          "weapons": [
+            "ScorpionAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 5,
+          "uid": 108,
+          "type": "Scorpion1",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 3,
+          "x": 3,
+          "queued_target": [
+            3,
+            5
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "ScorpionAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 4,
+          "uid": 109,
+          "type": "Scorpion1",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 2,
+          "flying": true,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 2,
+          "weapons": [],
+          "x": 4,
+          "y": 1,
+          "uid": 110,
+          "type": "Jelly_Armor1",
+          "base_move": 2,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 4,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 4,
+          "move": 3,
+          "weapon_target_behind": false,
+          "x": 6,
+          "has_queued_attack": true,
+          "weapons": [
+            "ScarabAtk2"
+          ],
+          "weapon_damage": 3,
+          "y": 3,
+          "uid": 111,
+          "type": "Scarab2",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": true,
+          "shield": false,
+          "hp": 2,
+          "weapon_push": 0,
+          "flying": true,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 5,
+          "weapon_target_behind": false,
+          "x": 5,
+          "has_queued_attack": true,
+          "weapons": [
+            "HornetAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 5,
+          "uid": 112,
+          "type": "Hornet1",
+          "base_move": 5,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        }
+      ],
+      "env_type": "unknown",
+      "remaining_spawns": 1,
+      "mission_seeds": {
+        "region1": {
+          "state": 4,
+          "turn": 0,
+          "mission": "Mission4",
+          "ai_seed": 1614441736
+        },
+        "region5": {
+          "state": 0,
+          "turn": 1,
+          "mission": "Mission7",
+          "ai_seed": 184915662
+        }
+      },
+      "mission_kills_done": 0,
+      "timestamp": 1777174657,
+      "spawning_tiles": [],
+      "attack_order": [
+        108,
+        109,
+        111,
+        112
+      ]
+    },
+    "result_summary": {
+      "phase": "combat_enemy",
+      "source": "bridge",
+      "turn": 1,
+      "grid_power": "4/7",
+      "mechs": [
+        {
+          "type": "JudoMech",
+          "pos": "D6",
+          "hp": "3/3",
+          "weapon": "Vice Fist",
+          "status": "DONE"
+        },
+        {
+          "type": "TankMech",
+          "pos": "F5",
+          "hp": "3/3",
+          "weapon": "Taurus Cannon",
+          "status": "DONE"
+        },
+        {
+          "type": "ArtiMech",
+          "pos": "D7",
+          "hp": "2/2",
+          "weapon": "Artemis Artillery",
+          "status": "DONE"
+        }
+      ],
+      "active_mechs": 0,
+      "enemies": [
+        {
+          "type": "AcidVat",
+          "pos": "E3",
+          "hp": "2/2",
+          "target": ""
+        },
+        {
+          "type": "Scorpion1",
+          "pos": "C4",
+          "hp": "3/3",
+          "target": ""
+        },
+        {
+          "type": "Scorpion1",
+          "pos": "D5",
+          "hp": "3/3",
+          "target": " \u2192 C5"
+        },
+        {
+          "type": "Jelly_Armor1",
+          "pos": "G4",
+          "hp": "2/2",
+          "target": ""
+        },
+        {
+          "type": "Scarab2",
+          "pos": "E2",
+          "hp": "4/4",
+          "target": ""
+        },
+        {
+          "type": "Hornet1",
+          "pos": "C3",
+          "hp": "2/2",
+          "target": ""
+        }
+      ],
+      "threatened_buildings": 0,
+      "targeted_tiles": 3,
+      "spawn_points": 0
+    }
+  }
+}

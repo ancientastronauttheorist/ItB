@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-3277dc9",
+  "solver_version": "rust-0.1.0-59c31e6",
   "weight_version": "v010",
-  "updated": "2026-04-25T22:35:00.547239",
+  "updated": "2026-04-25T22:44:24.870057",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 6,
-  "outcome_recorded_at": "2026-04-25T22:35:00.535414",
-  "outcome_notes": "Chemical Field A: both bonuses earned. Re-solve fix engaged twice cleanly (action 0 click_miss \u2192 RE-SOLVED 2 actions). Squad: Judo/Cannon/Artillery."
+  "outcome_mission": 7,
+  "outcome_recorded_at": "2026-04-25T22:44:24.855746",
+  "outcome_notes": "Scrapheap: 1/2 vats destroyed, pilot Ganymede KIA. Grid 4->2. Re-solve recovery worked but mission was overscoped for current grid level."
 }
