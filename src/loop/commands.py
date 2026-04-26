@@ -4164,7 +4164,7 @@ def _re_solve_partial(
 
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
-            enriched = _replay(board, solution, spawns,
+            enriched = _replay(bridge_data, solution, spawns,
                                current_turn=current_turn,
                                total_turns=bridge_data.get("total_turns", 5))
             return actions, enriched.get("predicted_states", []), score
