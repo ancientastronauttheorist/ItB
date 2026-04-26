@@ -93,6 +93,53 @@ def _read_old_earth_mines_from_save() -> set[tuple[int, int]]:
     return mines
 
 
+def _read_teleporter_pads_from_save() -> list[tuple[int, int, int, int]]:
+    """Recover Mission_Teleporter pad pairs from the save file.
+
+    The Lua wrap in modloader.lua only captures pads when
+    Mission_Teleporter:StartMission fires fresh. If the modloader was
+    installed mid-mission, or the player quit and the game restored the
+    save mid-mission, StartMission never re-fires and `_ITB_TELEPORT_PAIRS`
+    stays empty — leaving the solver blind to swap mechanics.
+
+    The engine persists pad coords in `RegionData.region<N>.player.teleports`
+    as 4 sequential Points. Pairing is `array[1]↔array[2] + array[3]↔array[4]`
+    — verified 2026-04-25 against in-game pad colors (RED↔RED + BLUE↔BLUE)
+    on a live Mission_Teleporter board, matching how
+    Mission_Teleporter:StartMission iterates `for i=1,2 do
+    Board:AddTeleport(random_removal(t), random_removal(t)) end`.
+
+    Returns up to 2 pairs as [(x1,y1,x2,y2), ...]; empty list if no pads
+    found (saves on non-teleporter missions have no `["teleports"]` array).
+    """
+    pairs: list[tuple[int, int, int, int]] = []
+    profile_dir = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
+    )
+    # saveData.lua first (live), undoSave.lua as fallback (post-restart
+    # state where saveData.lua may be absent — observed 2026-04-25).
+    for filename in ("saveData.lua", "undoSave.lua"):
+        try:
+            with open(os.path.join(profile_dir, filename)) as f:
+                content = f.read()
+        except OSError:
+            continue
+
+        m = re.search(r'\["teleports"\]\s*=\s*\{([^}]*)\}', content)
+        if not m:
+            continue
+        pts = re.findall(
+            r'Point\(\s*(\d+)\s*,\s*(\d+)\s*\)', m.group(1)
+        )
+        if len(pts) >= 4:
+            c = [(int(x), int(y)) for x, y in pts[:4]]
+            return [
+                (c[0][0], c[0][1], c[1][0], c[1][1]),
+                (c[2][0], c[2][1], c[3][0], c[3][1]),
+            ]
+    return pairs
+
+
 def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
     """Read ``piOrigin`` per unit uid from the save file.
 
@@ -256,6 +303,19 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
             deploy_tiles = _infer_deployment_zone(board)
             if deploy_tiles:
                 data["deployment_zone"] = deploy_tiles
+
+        # Teleporter pads: the Lua wrap only fires on a fresh
+        # Mission_Teleporter:StartMission. If the modloader installed
+        # mid-mission or the game restored from save, _ITB_TELEPORT_PAIRS
+        # stays empty. Recover from the save file (engine persists pad
+        # coords in region.player.teleports across save/load).
+        if (not board.teleporter_pairs
+                and data.get("mission_id") == "Mission_Teleporter"):
+            recovered = _read_teleporter_pads_from_save()
+            if recovered:
+                board.teleporter_pairs = list(recovered)
+                data["teleporter_pairs"] = [list(p) for p in recovered]
+                data["teleporter_pairs_source"] = "save_fallback"
 
         return board, data
     except Exception as e:
