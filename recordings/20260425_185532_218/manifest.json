@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-761c781",
+  "solver_version": "rust-0.1.0-559d0a4",
   "weight_version": "v009",
-  "updated": "2026-04-25T19:33:57.512690",
+  "updated": "2026-04-25T19:39:53.197783",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 3,
-  "outcome_recorded_at": "2026-04-25T19:33:57.498477",
-  "outcome_notes": "Reclamation Zone: Train damaged (1/2 star), Coal Plant saved. Hive Leader awakened at Corporate HQ."
+  "outcome_mission": 4,
+  "outcome_recorded_at": "2026-04-25T19:39:53.185637",
+  "outcome_notes": "Corporate HQ: Hornet Leader destroyed + Tower saved. Detritus island COMPLETE! 4 stars total."
 }
