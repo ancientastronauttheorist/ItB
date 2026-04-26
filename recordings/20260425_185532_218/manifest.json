@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-0e84f88",
-  "weight_version": "v009",
-  "updated": "2026-04-25T19:49:54.973267",
+  "solver_version": "rust-0.1.0-3277dc9",
+  "weight_version": "v010",
+  "updated": "2026-04-25T22:35:00.547239",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 5,
-  "outcome_recorded_at": "2026-04-25T19:49:54.959965",
-  "outcome_notes": "Historic County: both bonuses FAILED, pilot Ayesha Kirby KIA. Train mission too risky with current weapons + Spider2 spawn surprise."
+  "outcome_mission": 6,
+  "outcome_recorded_at": "2026-04-25T22:35:00.535414",
+  "outcome_notes": "Chemical Field A: both bonuses earned. Re-solve fix engaged twice cleanly (action 0 click_miss \u2192 RE-SOLVED 2 actions). Squad: Judo/Cannon/Artillery."
 }

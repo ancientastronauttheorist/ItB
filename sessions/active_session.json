@@ -6,56 +6,56 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 5,
-  "current_turn": 3,
+  "mission_index": 6,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "JetMech",
+        "mech_uid": 0,
+        "mech_type": "JudoMech",
         "move_to": [
-          4,
-          3
+          5,
+          1
         ],
-        "weapon": "Brute_Jetmech",
+        "weapon": "Prime_Shift",
         "target": [
           4,
           1
         ],
-        "description": "JetMech, fire Aerial Bombs at G4"
+        "description": "JudoMech, move E4\u2192G3, fire Vice Fist at G4"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          3,
+          3
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          3,
+          2
+        ],
+        "description": "TankMech, fire Taurus Cannon at F5"
       },
       {
         "mech_uid": 2,
-        "mech_type": "GravMech",
+        "mech_type": "ArtiMech",
         "move_to": [
-          1,
-          2
-        ],
-        "weapon": "Science_Gravwell",
-        "target": [
-          1,
+          5,
           6
         ],
-        "description": "GravMech, move F6\u2192F7, fire Grav Well at B7"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "ElectricMech",
-        "move_to": [
-          4,
-          4
-        ],
-        "weapon": "Prime_Lightning",
+        "weapon": "_REPAIR",
         "target": [
-          3,
-          4
+          5,
+          6
         ],
-        "description": "ElectricMech, fire Chain Whip at D5"
+        "description": "ArtiMech, repair"
       }
     ],
-    "score": -95162.86061729703,
-    "turn": 3
+    "score": 65925.0001180172,
+    "turn": 4
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -304,6 +304,91 @@
         "GravMech, move F6\u2192F7, fire Grav Well at B7",
         "ElectricMech, fire Chain Whip at D5"
       ]
+    },
+    {
+      "timestamp": "2026-04-25T19:53:28.740613",
+      "turn": 1,
+      "label": "solve",
+      "score": 116817.14292168617,
+      "actions": [
+        "GravMech, move D5\u2192F4, fire Grav Well at F6",
+        "ElectricMech, move F5\u2192F3, fire Chain Whip at F2",
+        "JetMech, move E6\u2192E4, fire Aerial Bombs at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T19:54:13.187527",
+      "turn": 2,
+      "label": "solve",
+      "score": 107539.52380952377,
+      "actions": [
+        "JetMech, fire Aerial Bombs at C2",
+        "ElectricMech, move F3\u2192E2, repair",
+        "GravMech, move F4\u2192F3, fire Grav Well at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T19:54:56.571898",
+      "turn": 3,
+      "label": "solve",
+      "score": -28995.001352855135,
+      "actions": [
+        "ElectricMech, move E2\u2192E5, fire Chain Whip at D5",
+        "JetMech, move C2\u2192E2, fire Aerial Bombs at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T19:55:45.806002",
+      "turn": 4,
+      "label": "solve",
+      "score": -163214.28648335594,
+      "actions": [
+        "JetMech, fire Aerial Bombs at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T22:30:05.533150",
+      "turn": 1,
+      "label": "solve",
+      "score": 102100.0,
+      "actions": [
+        "JudoMech, move F6\u2192F2",
+        "ArtiMech, move D5\u2192D3, fire Artemis Artillery at B3",
+        "TankMech, fire Taurus Cannon at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T22:30:56.663576",
+      "turn": 2,
+      "label": "solve",
+      "score": 101479.99999999993,
+      "actions": [
+        "JudoMech, move F2\u2192E4, fire Vice Fist at D4",
+        "TankMech, move G5\u2192E5, fire Taurus Cannon at D5",
+        "ArtiMech, move D3\u2192C3, fire Artemis Artillery at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T22:32:04.532569",
+      "turn": 3,
+      "label": "solve",
+      "score": 118220.0,
+      "actions": [
+        "JudoMech, repair",
+        "TankMech, fire Taurus Cannon at F5",
+        "ArtiMech, move C3\u2192B3, fire Artemis Artillery at B8"
+      ]
+    },
+    {
+      "timestamp": "2026-04-25T22:32:55.139570",
+      "turn": 4,
+      "label": "solve",
+      "score": 65925.0001180172,
+      "actions": [
+        "JudoMech, move E4\u2192G3, fire Vice Fist at G4",
+        "TankMech, fire Taurus Cannon at F5",
+        "ArtiMech, repair"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -370,6 +455,18 @@
     [
       5,
       2
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      6,
+      3
     ]
   ],
   "tags": [],
@@ -1849,25 +1946,355 @@
           4
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|_REPAIR|move",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "_REPAIR",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|_REPAIR|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "_REPAIR",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_Gravwell|move",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Gravwell",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "push_dir",
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_Gravwell|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Gravwell",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Lightning|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Lightning",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 5,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 6,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 8,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|_REPAIR|attack",
+      "frequency": 5,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "_REPAIR",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|_REPAIR|attack",
+      "frequency": 6,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "_REPAIR",
+        "target": [
+          5,
+          6
+        ]
+      }
     }
   ],
   "disabled_actions": [
     {
-      "weapon_id": "Science_Gravwell",
-      "cause_pattern": "death|Science_Gravwell|attack|status|Science_Gravwell|move",
-      "expires_turn": 6,
-      "strategic_override": false
-    },
-    {
       "weapon_id": "Brute_Jetmech",
       "cause_pattern": "status|Brute_Jetmech|attack",
-      "expires_turn": 6,
+      "expires_turn": 7,
       "strategic_override": false
     },
     {
-      "weapon_id": "Prime_Lightning",
-      "cause_pattern": "death|Prime_Lightning|attack",
-      "expires_turn": 6,
+      "weapon_id": "_REPAIR",
+      "cause_pattern": "status|_REPAIR|move",
+      "expires_turn": 5,
+      "strategic_override": false
+    },
+    {
+      "weapon_id": "Science_Gravwell",
+      "cause_pattern": "damage_amount|Science_Gravwell|move|damage_amount|Science_Gravwell|attack",
+      "expires_turn": 5,
       "strategic_override": false
     }
   ],
@@ -2039,6 +2466,71 @@
       "diff_predicted": false,
       "diff_actual": true,
       "severity": "high"
+    },
+    {
+      "type": "Spider1",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null
+    },
+    {
+      "type": "Firefly2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null,
+      "diff_field": "pos",
+      "diff_predicted": [
+        5,
+        3
+      ],
+      "diff_actual": [
+        5,
+        4
+      ],
+      "severity": "medium"
+    },
+    {
+      "type": "JudoMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null
+    },
+    {
+      "type": "TankMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null
+    },
+    {
+      "type": "ArtiMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "resolved",
+      "result": null
     }
   ],
   "diagnosis_queue": []
