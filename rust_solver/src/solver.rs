@@ -890,6 +890,12 @@ fn precompute_threats(board: &Board) -> (u64, u64) {
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if !u.is_enemy() || !u.alive() || u.queued_target_x < 0 { continue; }
+        // OOB guard: bridge can deliver off-board queued_target after direction
+        // normalization (M04 2026-04-28 — cx=7,ddx=+1 → x=8). board.tile() and
+        // xy_to_idx panic on x>=8 / y>=8. Upstream `reader.py` nulls these,
+        // but defense-in-depth here ensures direct-JSON solve calls (tests,
+        // future bridge bugs) don't crash. See sim v27 changelog.
+        if u.queued_target_x >= 8 || u.queued_target_y < 0 || u.queued_target_y >= 8 { continue; }
         let tx = u.queued_target_x as u8;
         let ty = u.queued_target_y as u8;
         let bit = 1u64 << xy_to_idx(tx, ty);

@@ -280,7 +280,55 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   ONE tile, not all the way. Brute_Grapple (which DOES use AddCharge)
 #   keeps FULL_PULL. See rust_solver/src/lib.rs v26 block for full detail.
 #   Pre-v26 rows archived to failure_db_snapshot_sim_v25.jsonl.
-SIMULATOR_VERSION = 26
+#
+# v27 (2026-04-28, queued_target OOB guard):
+#   M04 (Old Town) crashed mid-turn with `index out of bounds: the len is 64
+#   but the index is 69` from rust_solver/src/enemy.rs apply_damage path.
+#   Index 69 = 8*8 + 5 unambiguously identifies tile (x=8, y=5). Root cause:
+#   a Vek at cx=7 with normalized direction ddx=+1 produced queued_target.x=8
+#   in `_normalize_queued_targets`, off-board on an 8×8 grid. The bogus
+#   state also tripped Python `board.tile()` IndexErrors in
+#   `get_threatened_buildings` and `cmd_read`'s telegraphed-attack scan,
+#   crashing `cmd_read` after restart. Fix: bridge reader nulls the
+#   queued_target when normalization yields an off-board coord; Rust Melee
+#   + catch-all attack arms gain `if qtx<0||qty<0||qtx>=8||qty>=8 {continue;}`
+#   guards matching the existing phantom-attack bail; Python sites
+#   bounds-check before `self.tile()`. Behavior change: enemies with bogus
+#   normalized queued targets now skip their attack instead of panicking.
+#   Defensive fix; affected boards previously crashed before predictions
+#   could be compared, so no failure_db rows are invalidated. Snapshot
+#   kept regardless per CLAUDE.md rule 22.
+#
+# v28 (2026-04-28, infinite-spawn future_factor floor):
+#   Corp HQ M05 (boss-style finale) loss: solver picked a no-attack
+#   "JudoMech G3→G7" plan on the bridge-reported "final" turn because
+#   `evaluate::future_factor` collapsed to 0 (enemy_killed × 0 = 0). On
+#   boss / Mission_Infinite missions the bridge reports
+#   total_turns = current_turn every turn (turn_limit=null in
+#   data/mission_metadata.json). Fix: bridge reader (src/bridge/reader.py)
+#   stamps `is_infinite_spawn=true` on bridge_data for those missions;
+#   the Rust solver floors future_factor at 0.5 when set so kills stay
+#   meaningful. remaining_spawns=0 still triggers the genuine "no future"
+#   path. Rationale: feedback_grid_management.md.
+#   Pre-v28 corpus archived as failure_db_snapshot_sim_v27.jsonl.
+#
+# v29 (2026-04-28, BlobBoss queued-damage persists):
+#   M13 turn 4 (Mission_BlobBoss) defeat: WallMech's Grappling Hook pulled
+#   BlobBoss D6→E6 and the simulator predicted no D5 hit (Melee handler
+#   cancels when curr_dist>1). Real game still applied 4 damage at D5 —
+#   the 2-HP Corp Tower fell, grid 2→0, run lost. Per Lua
+#   `scripts/missions/bosses/goo.lua:172-187`,
+#   `BlobBossAtk:GetSkillEffect` calls
+#   `AddQueuedDamage(SpaceDamage(p2, 4))` BEFORE optionally adding the
+#   move; queued damage at p2 fires regardless of attacker position. Fix
+#   (rust): new `WeaponFlags::QUEUED_DAMAGE_PERSISTS`; new weapon defs
+#   `BlobBossAtk` / `BlobBossAtkMed` / `BlobBossAtkSmall` (all 4-damage
+#   Melee with the persists flag); `enemy_weapon_for_type` maps the
+#   BlobBoss family to them; `apply_enemy_attacks` Melee arm skips its
+#   adjacency cancel when the flag is set. Smaller variants confirmed
+#   identical via Lua inheritance (`BlobBossAtkMed = BlobBossAtk:new{}`).
+#   Pre-v29 corpus archived as failure_db_snapshot_sim_v28.jsonl.
+SIMULATOR_VERSION = 29
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

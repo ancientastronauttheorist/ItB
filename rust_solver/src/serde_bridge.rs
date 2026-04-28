@@ -21,6 +21,13 @@ pub struct JsonInput {
     pub turn: Option<u8>,
     pub total_turns: Option<u8>,
     pub remaining_spawns: Option<u32>,
+    /// Set by Python `src/bridge/reader.py` when `mission_id` matches a
+    /// `Mission_Infinite` subclass / boss mission (turn_limit=null in
+    /// `data/mission_metadata.json`). On those missions the bridge
+    /// reports total_turns = current_turn each turn, which would
+    /// collapse `future_factor` to 0 and tell the solver kills are
+    /// worthless. Floored at 0.5 in `evaluate::future_factor` instead.
+    pub is_infinite_spawn: Option<bool>,
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int, flying_immune?], ...]
@@ -542,6 +549,7 @@ pub fn board_from_json(json_str: &str)
     board.current_turn = input.turn.unwrap_or(0);
     board.total_turns = input.total_turns.unwrap_or(5);
     board.remaining_spawns = input.remaining_spawns.unwrap_or(u32::MAX);
+    board.infinite_spawn = input.is_infinite_spawn.unwrap_or(false);
     board.mission_id = input.mission_id.clone().unwrap_or_default();
     board.mission_kill_target = input.mission_kill_target.unwrap_or(0);
     board.mission_kills_done = input.mission_kills_done.unwrap_or(0);

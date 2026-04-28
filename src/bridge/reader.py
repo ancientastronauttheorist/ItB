@@ -5,11 +5,61 @@ Replaces save_parser.py as the state source when the bridge is active.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 
 from src.model.board import Board
 from src.bridge.protocol import read_state
+
+
+# data/mission_metadata.json — used to flag infinite-spawn missions so the
+# Rust solver doesn't collapse future_factor to 0 on the bridge-reported
+# "final" turn (boss / Mission_Infinite have turn_limit=null and the
+# bridge sets total_turns = current_turn). See feedback_grid_management.md
+# / Corp HQ M05 Defeat 2026-04-28.
+_MISSION_METADATA_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data",
+    "mission_metadata.json",
+)
+_MISSION_METADATA_CACHE: dict | None = None
+
+
+def _load_mission_metadata() -> dict:
+    global _MISSION_METADATA_CACHE
+    if _MISSION_METADATA_CACHE is not None:
+        return _MISSION_METADATA_CACHE
+    try:
+        with open(_MISSION_METADATA_PATH) as f:
+            payload = json.load(f)
+        missions = payload.get("missions", {}) if isinstance(payload, dict) else {}
+    except (OSError, ValueError):
+        missions = {}
+    _MISSION_METADATA_CACHE = missions
+    return missions
+
+
+def _is_infinite_spawn_mission(mission_id: str) -> bool:
+    """Return True iff `mission_id` has `infinite_spawn: true` (or is a
+    boss mission with turn_limit=null) per data/mission_metadata.json.
+
+    Boss missions and Mission_Infinite subclasses have no fixed turn
+    limit; the bridge reports total_turns = current_turn so the solver
+    sees "final turn" forever and ignores future enemies.
+    """
+    if not mission_id:
+        return False
+    md = _load_mission_metadata()
+    rec = md.get(mission_id)
+    if not isinstance(rec, dict):
+        return False
+    if rec.get("infinite_spawn"):
+        return True
+    # Boss missions also have turn_limit=null and grind for many turns.
+    if rec.get("boss_mission") and rec.get("turn_limit") is None:
+        return True
+    return False
 
 
 def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
@@ -225,7 +275,14 @@ def _normalize_queued_targets(bridge_units: list) -> None:
             continue
         # Normalize to one-step-in-direction so the solver's standard
         # direction computation (queued_target - current_pos) works.
-        u["queued_target"] = [cx + ddx, cy + ddy]
+        nx, ny = cx + ddx, cy + ddy
+        # Guard against off-board normalized targets (M04 OOB bug 2026-04-28:
+        # Vek at cx=7,ddx=+1 produced queued_target.x=8 → Rust tile_mut OOB
+        # panic at enemy.rs:883/889 and Python IndexError in board.tile()).
+        if 0 <= nx < 8 and 0 <= ny < 8:
+            u["queued_target"] = [nx, ny]
+        else:
+            u["queued_target"] = None
 
 
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
@@ -316,6 +373,16 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                 board.teleporter_pairs = list(recovered)
                 data["teleporter_pairs"] = [list(p) for p in recovered]
                 data["teleporter_pairs_source"] = "save_fallback"
+
+        # Infinite-spawn / boss-mission flag for the Rust solver. Bridge
+        # reports total_turns = current_turn on these missions (turn_limit
+        # is null in mission_metadata), which collapses future_factor to 0
+        # and tells the solver kills are worth nothing. Pass the flag so
+        # evaluate.rs::future_factor can floor at 0.5 when set. See
+        # feedback_grid_management.md / Corp HQ M05 Defeat 2026-04-28.
+        data["is_infinite_spawn"] = _is_infinite_spawn_mission(
+            data.get("mission_id") or ""
+        )
 
         return board, data
     except Exception as e:

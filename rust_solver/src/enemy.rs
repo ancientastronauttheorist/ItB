@@ -879,11 +879,23 @@ pub fn simulate_enemy_attacks(
                     }
                 } else {
                     // Standard single-tile melee: attack fixed queued target.
-                    // If pushed out of adjacency, attack fails (enemy can't reach).
+                    // OOB guard: bridge can deliver off-board queued_target after
+                    // direction normalization (M04 2026-04-28 — cx=7,ddx=+1 → x=8).
+                    // Without this, apply_damage→tile_mut panics with index 69 OOB.
+                    if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
                     let tx = qtx as u8;
                     let ty = qty as u8;
                     let curr_dist = (ex as i32 - tx as i32).abs() + (ey as i32 - ty as i32).abs();
-                    if curr_dist > 1 { continue; }
+                    // Adjacency check: most melee weapons require the attacker
+                    // to still be next to the target. BlobBoss family
+                    // (QUEUED_DAMAGE_PERSISTS) is the exception — its Lua skill
+                    // (scripts/missions/bosses/goo.lua:172-187) registers
+                    // AddQueuedDamage(SpaceDamage(p2, 4)) BEFORE the optional
+                    // boss move, so the queued damage fires regardless of the
+                    // attacker's current position (e.g. pulled away by
+                    // Grappling Hook). Bounds check on (tx, ty) above is what
+                    // makes this safe to apply when curr_dist > 1.
+                    if curr_dist > 1 && !wdef.queued_damage_persists() { continue; }
 
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
@@ -897,6 +909,9 @@ pub fn simulate_enemy_attacks(
             }
 
             _ => {
+                // OOB guard: see Melee arm above. Catch-all path also fed
+                // qtx/qty straight into tile_mut and panicked on M04.
+                if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
                 let tx = qtx as u8;
                 let ty = qty as u8;
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);

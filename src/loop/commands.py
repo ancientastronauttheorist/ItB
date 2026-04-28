@@ -4029,6 +4029,18 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
     )
     _inject_bonus_obj(bd)
 
+    # Sim v28: stamp `is_infinite_spawn` on replayed/tuned bridge_data so
+    # the Rust solver's future_factor floor (0.5) kicks in on boss /
+    # Mission_Infinite missions. Live bridge reads route this through
+    # `src/bridge/reader.py`, but replays load straight from recordings
+    # (bridge_state was captured before the field existed) and the tuner
+    # corpus pre-dates the field too. Idempotent: only sets when missing.
+    if "is_infinite_spawn" not in bd:
+        from src.bridge.reader import _is_infinite_spawn_mission
+        bd["is_infinite_spawn"] = _is_infinite_spawn_mission(
+            bd.get("mission_id") or ""
+        )
+
     import itb_solver as _rust
     rust_start = time.time()
     rust_json = _rust.solve(json.dumps(bd), time_limit)

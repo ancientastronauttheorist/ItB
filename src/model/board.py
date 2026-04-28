@@ -327,6 +327,10 @@ class Board:
             if u.target_x < 0:
                 continue
             tx, ty = u.target_x, u.target_y
+            # OOB guard: bridge can deliver off-board target_x/y after direction
+            # normalization (M04 2026-04-28 — cx=7,ddx=+1 → x=8 → IndexError).
+            if not self.in_bounds(tx, ty):
+                continue
             t = self.tile(tx, ty)
             if t.terrain == "building" and t.building_hp > 0:
                 threats.append((tx, ty, u))

@@ -21,15 +21,26 @@ use crate::board::*;
 /// bridge total_turns can report more turns than the mission actually lasts.
 /// When remaining_spawns is 0 and the board has no live threats beyond the
 /// queued attacks, there is no future to prepare for.
-fn future_factor(current_turn: u8, total_turns: u8, remaining_spawns: u32) -> f64 {
+///
+/// `infinite_spawn` floors the factor at 0.5: boss / Mission_Infinite
+/// missions have turn_limit=null and the bridge reports
+/// total_turns = current_turn every turn, which would zero out kill
+/// rewards and produce no-attack plans on missions that grind grid across
+/// many turns (see feedback_grid_management.md, Corp HQ M05 defeat
+/// 2026-04-28). 0.5 keeps kills meaningful without overweighting future
+/// vs. present on a mission with no real "final" turn.
+fn future_factor(current_turn: u8, total_turns: u8, remaining_spawns: u32, infinite_spawn: bool) -> f64 {
     if remaining_spawns == 0 { return 0.0; }
-    if total_turns <= 1 { return 0.0; }
+    if total_turns <= 1 {
+        return if infinite_spawn { 0.5 } else { 0.0 };
+    }
     // Combat turn = current_turn - 1 (turn 0 is deployment)
     // But clamp so we don't go negative
     let combat_turn = if current_turn > 0 { current_turn - 1 } else { 0 };
     let remaining = total_turns.saturating_sub(combat_turn + 1) as f64;
     let max_remaining = (total_turns - 1) as f64;
-    (remaining / max_remaining).clamp(0.0, 1.0)
+    let raw = (remaining / max_remaining).clamp(0.0, 1.0);
+    if infinite_spawn { raw.max(0.5) } else { raw }
 }
 
 /// Scale a weight: base * (floor + scale * future_factor).
@@ -342,7 +353,7 @@ pub fn evaluate(
     let game_over = eff_grid < 0.5;
 
     let mut score = 0.0;
-    let ff = future_factor(board.current_turn, board.total_turns, board.remaining_spawns);
+    let ff = future_factor(board.current_turn, board.total_turns, board.remaining_spawns, board.infinite_spawn);
 
     // Grid power urgency multiplier — gate on RAW grid_power so the 15%
     // defense's expected-save (which inflates eff_grid by ~0.15 per hit)
@@ -994,13 +1005,23 @@ mod tests {
     #[test]
     fn test_future_factor() {
         let inf = u32::MAX;
-        assert!((future_factor(0, 5, inf) - 1.0).abs() < 0.01);
-        assert!((future_factor(1, 5, inf) - 1.0).abs() < 0.01);
-        assert!((future_factor(3, 5, inf) - 0.5).abs() < 0.01);
-        assert!((future_factor(5, 5, inf) - 0.0).abs() < 0.01);
+        assert!((future_factor(0, 5, inf, false) - 1.0).abs() < 0.01);
+        assert!((future_factor(1, 5, inf, false) - 1.0).abs() < 0.01);
+        assert!((future_factor(3, 5, inf, false) - 0.5).abs() < 0.01);
+        assert!((future_factor(5, 5, inf, false) - 0.0).abs() < 0.01);
         // No more spawns → treat as final turn regardless of total_turns
-        assert!((future_factor(1, 5, 0) - 0.0).abs() < 0.01);
-        assert!((future_factor(4, 5, 0) - 0.0).abs() < 0.01);
+        assert!((future_factor(1, 5, 0, false) - 0.0).abs() < 0.01);
+        assert!((future_factor(4, 5, 0, false) - 0.0).abs() < 0.01);
+
+        // infinite_spawn=true floors the factor at 0.5 instead of 0
+        // (bridge reports total_turns = current_turn on Mission_Infinite
+        // and boss missions; without the floor, kills reward 0). Does NOT
+        // override remaining_spawns=0 — that still means the mission
+        // genuinely ends now.
+        assert!((future_factor(5, 5, inf, true) - 0.5).abs() < 0.01);
+        assert!((future_factor(3, 3, inf, true) - 0.5).abs() < 0.01);
+        assert!((future_factor(1, 5, inf, true) - 1.0).abs() < 0.01);
+        assert!((future_factor(1, 5, 0, true) - 0.0).abs() < 0.01);
     }
 
     #[test]

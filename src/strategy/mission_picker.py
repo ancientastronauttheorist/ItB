@@ -337,6 +337,18 @@ def _tags_from_metadata(
         # — adding ``protect_specific_building`` on top would double-fire.
         if not rec.get("train_mission") and not rec.get("boss_mission"):
             tags.add("protect_specific_building")
+    if rec.get("infinite_spawn"):
+        # Mission_Infinite descendants spawn a fresh wave every turn
+        # (Mission:GetSpawnCount in missions.lua:937; SpawnsPerTurn={2,3}
+        # baseline). The implication for the picker: even a *won* mission
+        # bleeds grid more than a fixed-roster Mission_Battle of the same
+        # nominal star value, because each turn brings new emergence
+        # damage opportunities. ~93% of mission templates inherit from
+        # Mission_Infinite (only Mission_Battle / Reactivation / Respawn /
+        # Test / Tutorial don't), so this tag fires broadly — the
+        # corresponding penalty must therefore stay modest, applying
+        # only at low grid where the next-mission cliff matters.
+        tags.add("infinite_spawn")
     forced = rec.get("forced_pawns") or []
     if "GlowingScorpion" in forced:
         tags.add("volatile_vek")
@@ -501,7 +513,38 @@ def score_mission(
     if "conveyor" in mission_tags and grid_power < 4:
         score -= 2
         rationale.append(f"-2  conveyor mission + low grid ({grid_power})")
-    if "boss" in mission_tags and grid_power < 4:
+    # Infinite-spawn missions (descendants of Mission_Infinite — ~93% of
+    # templates including Mission_Volatile, Mission_Survive, every
+    # *Boss* mission, most environment missions). Each turn brings a
+    # fresh wave (Mission:GetSpawnCount → SpawnsPerTurn), so the mission
+    # bleeds grid even when won. At low grid the next-mission cliff is
+    # what kills timelines (run 20260425_185532_218: m07 Mission_Barrels
+    # drained 4→2, then m08 Mission_Teleporter and m13 Mission_BlobBoss
+    # both entered at grid 2 with no margin).
+    #
+    # Rationale for thresholds:
+    #   grid==3: -10 → Volatile-style mission with BONUS_MECHS (+4) lands
+    #     at -6, losing to a Mission_Battle-style 1★ alternative (+1, no
+    #     infinite_spawn → no penalty) by 7 points. Still pickable when
+    #     no fixed-roster alternative exists.
+    #   grid≤2: -50 → hard veto, matching high_threat semantics. At this
+    #     grid the next mission decides the run; only Mission_Battle /
+    #     Mission_Reactivation / Mission_Respawn-style missions stay
+    #     viable.
+    # Subsumes the ``boss + grid<4`` -4 penalty (every boss mission is
+    # also infinite_spawn, and -10/-50 dominates -4): use elif so we
+    # don't double-charge.
+    if "infinite_spawn" in mission_tags and grid_power <= 2:
+        score -= 50
+        rationale.append(
+            f"-50 infinite-spawn + critical grid ({grid_power}) — hard veto"
+        )
+    elif "infinite_spawn" in mission_tags and grid_power == 3:
+        score -= 10
+        rationale.append(
+            f"-10 infinite-spawn + grid {grid_power} (next-mission cliff)"
+        )
+    elif "boss" in mission_tags and grid_power < 4:
         score -= 4
         rationale.append(f"-4  boss + low grid ({grid_power})")
     if "protect_specific_building" in mission_tags and "crowd_control" not in squad_tags:

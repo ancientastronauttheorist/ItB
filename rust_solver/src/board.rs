@@ -332,6 +332,14 @@ pub struct Board {
     pub remaining_spawns: u32,  // Queued Vek spawns still to emerge (from bridge
                                 // mission.EnemyList etc). 0 = no more reinforcements
                                 // after current turn, treat as final turn for scoring.
+    pub infinite_spawn: bool,   // True on boss / Mission_Infinite missions where
+                                // `turn_limit` is null and the bridge reports
+                                // total_turns = current_turn every turn. Used by
+                                // `evaluate::future_factor` to floor at 0.5 instead
+                                // of 0.0 so kills aren't valued at zero on the
+                                // bridge-reported "final" turn. See
+                                // feedback_grid_management.md / Corp HQ M05 defeat
+                                // 2026-04-28.
     pub mission_id: String,     // Mission class name from bridge (e.g. "Mission_Dam").
                                 // Empty when the bridge couldn't resolve it.
     pub mission_kill_target: u8,   // "Kill N enemies" bonus target from mission:GetKillBonus()
@@ -395,6 +403,7 @@ impl Default for Board {
             current_turn: 0,
             total_turns: 5,
             remaining_spawns: u32::MAX, // Unknown → treat as "plenty of future"
+            infinite_spawn: false,
             mission_id: String::new(),
             mission_kill_target: 0,
             mission_kills_done: 0,

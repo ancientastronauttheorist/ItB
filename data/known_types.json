@@ -350,6 +350,8 @@
     "Snowtank1",
     "Snowtank1_Boom",
     "Snowtank2",
+    "Spider1",
+    "Spider2",
     "SpiderBoss",
     "Spiderling1",
     "SpiderlingEgg1",
@@ -360,7 +362,12 @@
     "TotemB",
     "Train_Damaged",
     "Train_Pawn",
-    "Volatile_Vek"
+    "Volatile_Vek",
+    "WallMech",
+    "WebbEgg1",
+    "BlobBoss",
+    "BlobBossMed",
+    "BlobBossSmall"
   ],
   "observed_weapons": [
     "Acid_Tank_Attack",
@@ -409,7 +416,11 @@
     "TotemAtk1",
     "TotemAtk2",
     "TotemAtkB",
-    "Train_Move"
+    "Train_Move",
+    "WebeggHatch1",
+    "BlobBossAtk",
+    "BlobBossAtkMed",
+    "BlobBossAtkSmall"
   ],
   "known_phases": [
     "between_missions",

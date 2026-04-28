@@ -60,6 +60,17 @@ bitflags! {
         /// MaxDamage. `wdef.damage` plays the role of MaxDamage. Push still
         /// fires regardless of damage value.
         const DAMAGE_SCALES_WITH_DIST = 1 << 20;
+        /// Queued damage at the queued target tile (p2) fires regardless of
+        /// the attacker's current position. Mirrors Lua skills like
+        /// `BlobBossAtk:GetSkillEffect` (scripts/missions/bosses/goo.lua:172-187)
+        /// where `AddQueuedDamage(SpaceDamage(p2, 4))` is appended to the
+        /// SkillEffect *before* the optional move; the engine evaluates the
+        /// queued damage on the next enemy turn at p2 even if the boss has
+        /// since been pushed/pulled out of adjacency. Used for goo bosses
+        /// (BlobBoss / BlobBossMed / BlobBossSmall) — without this, pulling
+        /// the boss with Grappling Hook silently nullifies a 4-damage
+        /// building hit and the solver mispredicts grid_power loss.
+        const QUEUED_DAMAGE_PERSISTS = 1 << 21;
     }
 }
 
@@ -99,6 +110,7 @@ impl WeaponDef {
     pub fn damages_transit(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGES_TRANSIT) }
     pub fn full_pull(&self) -> bool { self.flags.contains(WeaponFlags::FULL_PULL) }
     pub fn damage_scales_with_dist(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGE_SCALES_WITH_DIST) }
+    pub fn queued_damage_persists(&self) -> bool { self.flags.contains(WeaponFlags::QUEUED_DAMAGE_PERSISTS) }
 }
 
 /// Default weapon def (no-op).
@@ -281,9 +293,24 @@ pub enum WId {
     /// but upgrade flags aren't tracked yet. Distinct from Science_AcidShot
     /// (Nano Mech's A.C.I.D. Projector) which has built-in forward push.
     AcidTankAtk = 115,
+    /// BlobBoss "Goo Attack" (Large Goo): adjacent melee, 4 damage to the
+    /// queued target. Per scripts/missions/bosses/goo.lua:172-187, the
+    /// SkillEffect first calls `AddQueuedDamage(SpaceDamage(p2, 4))`, then
+    /// optionally adds a move toward p2. The queued damage is registered
+    /// before any move and fires next enemy turn regardless of the boss's
+    /// current position — confirmed in m13_turn_04 where WallMech's
+    /// Grappling Hook pulled BlobBoss D6→E6 and the queued D5 hit still
+    /// landed (4 dmg → 2-HP Corp Tower destroyed → grid 2→0).
+    BlobBossAtk = 116,
+    /// BlobBossMed "Goo Attack" (Medium Goo): same queued-damage pattern
+    /// as BlobBossAtk per goo.lua:189-197 (`BlobBossAtkMed = BlobBossAtk:new{...}`).
+    BlobBossAtkMed = 117,
+    /// BlobBossSmall "Goo Attack" (Small Goo): same queued-damage pattern
+    /// as BlobBossAtk per goo.lua:198-206 (`BlobBossAtkSmall = BlobBossAtk:new{...}`).
+    BlobBossAtkSmall = 118,
 }
 
-pub const WEAPON_COUNT: usize = 116;
+pub const WEAPON_COUNT: usize = 119;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -628,6 +655,20 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[115] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::None, range_max: 0,
         flags: f(WeaponFlags::ACID.bits()), ..DEF };
 
+    // 116-118: BlobBoss family — "Goo Attack". Single-tile melee at the
+    // queued target with 4 damage. The Lua skill registers the queued
+    // damage on p2 BEFORE any optional move (goo.lua:172-187), so the
+    // damage fires regardless of whether the boss is adjacent at the time
+    // of attack — modelled via the QUEUED_DAMAGE_PERSISTS flag.
+    // Empirically all three sizes deal 4 damage (BlobBossAtk:GetSkillEffect
+    // is shared by Med/Small via Skill:new{} inheritance).
+    w[116] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::None,
+        flags: f(WeaponFlags::QUEUED_DAMAGE_PERSISTS.bits()), ..DEF };
+    w[117] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::None,
+        flags: f(WeaponFlags::QUEUED_DAMAGE_PERSISTS.bits()), ..DEF };
+    w[118] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::None,
+        flags: f(WeaponFlags::QUEUED_DAMAGE_PERSISTS.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -823,6 +864,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Acid_Tank_Attack" => WId::AcidTankAtk,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
+        "BlobBossAtk" => WId::BlobBossAtk,
+        "BlobBossAtkMed" => WId::BlobBossAtkMed,
+        "BlobBossAtkSmall" => WId::BlobBossAtkSmall,
         _ => WId::None,
     }
 }
@@ -934,6 +978,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::SupportRepair => "Support_Repair",
         WId::BlobAtk2 => "BlobAtk2",
         WId::AcidTankAtk => "Acid_Tank_Attack",
+        WId::BlobBossAtk => "BlobBossAtk",
+        WId::BlobBossAtkMed => "BlobBossAtkMed",
+        WId::BlobBossAtkSmall => "BlobBossAtkSmall",
         _ => "",
     }
 }
@@ -1011,6 +1058,17 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         // squish. Closest existing template is BeetleAtkB (boss beetle
         // melee); underestimates damage vs 4 but still multi-dmg melee.
         "ShamanBoss" => WId::BeetleAtkB,
+        // BlobBoss family — Mission_BlobBoss "Large Goo" boss. Per
+        // scripts/missions/bosses/goo.lua:172-187, BlobBossAtk:GetSkillEffect
+        // calls AddQueuedDamage(SpaceDamage(p2, 4)) BEFORE any optional
+        // move; queued damage at p2 fires regardless of attacker position.
+        // BlobBossMed and BlobBossSmall inherit the same skill (via
+        // Skill:new{}). Without the QUEUED_DAMAGE_PERSISTS flag the boss
+        // would silently no-op when pulled out of adjacency by Grappling
+        // Hook / Grav Well — see m13 turn 4 grid_power 2→0 desync.
+        "BlobBoss" => WId::BlobBossAtk,
+        "BlobBossMed" => WId::BlobBossAtkMed,
+        "BlobBossSmall" => WId::BlobBossAtkSmall,
         _ => WId::None,
     }
 }
@@ -1120,6 +1178,9 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BeetleAtkB => "Flaming Abdomen",
         WId::SupportRepair => "Repair Drop",
         WId::AcidTankAtk => "A.C.I.D. Cannon",
+        WId::BlobBossAtk => "Goo Attack",
+        WId::BlobBossAtkMed => "Goo Attack (Med)",
+        WId::BlobBossAtkSmall => "Goo Attack (Small)",
         _ => "Unknown",
     }
 }

@@ -530,7 +530,65 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   to_adjacent` removed. Brute_Grapple unchanged (correctly full-pull per
 //   its own AddCharge Lua). Pre-v26 rows archived to
 //   failure_db_snapshot_sim_v25.jsonl.
-pub const SIMULATOR_VERSION: u32 = 26;
+//
+// v27 (2026-04-28, queued_target OOB guard):
+//   M04 (Old Town) panicked mid-turn with
+//   `index out of bounds: the len is 64 but the index is 69` from
+//   `enemy.rs::apply_damage` → `Board::tile_mut`. 69 = 8*8 + 5 = (x=8, y=5),
+//   off-board on an 8×8 grid. Root cause: bridge reader's
+//   `_normalize_queued_targets` rewrites `queued_target` to
+//   `(cx + ddx, cy + ddy)` for direction-sane delta, but never bounds-checks
+//   the result. A Vek at cx=7 with ddx=+1 produces x=8. The Melee arm and
+//   catch-all `_ =>` arm in `apply_enemy_attacks` cast the bogus qtx/qty to
+//   `u8` and called `apply_damage` which panicked in `tile_mut`. Same drift
+//   crashed Python `board.tile()` in `get_threatened_buildings` and
+//   `cmd_read`'s telegraphed-attack scan. Fix: bridge reader nulls
+//   off-board normalized targets; Rust Melee + catch-all gain
+//   `if qtx<0||qty<0||qtx>=8||qty>=8 { continue; }` matching the existing
+//   phantom-attack `continue` style; Python sites bounds-check before
+//   `self.tile()`. Defensive fix — affected boards previously crashed
+//   before predictions could be compared, so no failure_db rows are
+//   invalidated. Pre-v27 corpus archived as
+//   `failure_db_snapshot_sim_v26.jsonl` per CLAUDE.md rule 22.
+//
+// v28 (2026-04-28, infinite-spawn future_factor floor):
+//   Corp HQ M05 (Mission_Final / boss-style) defeat: solver returned a
+//   no-attack JudoMech G3→G7 plan on the bridge-reported "final" turn
+//   because `future_factor` collapsed to 0. On boss / Mission_Infinite
+//   missions the bridge reports `total_turns = current_turn` every
+//   turn (turn_limit is null in `data/mission_metadata.json`), so
+//   ff=0.0 made every kill score 0 (enemy_killed × ff = 0).
+//   Fix: Python `src/bridge/reader.py` reads
+//   `data/mission_metadata.json` and stamps `is_infinite_spawn=true`
+//   on bridge_data when `infinite_spawn` is set or the mission is a
+//   `boss_mission` with turn_limit=null. JsonInput passes the flag
+//   into `Board::infinite_spawn`, and `evaluate::future_factor` floors
+//   the factor at 0.5 when the flag is true (kills still rewarded
+//   without overweighting future on a mission with no real "final"
+//   turn). `remaining_spawns=0` still wins (genuine end of mission).
+//   Rationale: feedback_grid_management.md — "infinite-spawn missions
+//   grind grid across many turns". Pre-v28 corpus archived as
+//   `failure_db_snapshot_sim_v27.jsonl` per CLAUDE.md rule 22.
+//
+// v29 (2026-04-28, BlobBoss queued-damage persists):
+//   M13 turn 4 (Mission_BlobBoss finale) lost the run when WallMech's
+//   Grappling Hook pulled BlobBoss D6→E6 and the simulator predicted no
+//   D5 hit, while the real game still applied BlobBossAtk's queued 4
+//   damage at D5 — the 2-HP Corp Tower fell, grid 2→0, defeat. Per
+//   `scripts/missions/bosses/goo.lua:172-187`, BlobBossAtk:GetSkillEffect
+//   calls AddQueuedDamage(SpaceDamage(p2, 4)) BEFORE adding the optional
+//   move; the queued damage is registered against the target tile and
+//   fires next enemy turn regardless of where the boss has been pushed
+//   or pulled. Fix: new `WeaponFlags::QUEUED_DAMAGE_PERSISTS`, three new
+//   weapon defs (`BlobBossAtk` / `BlobBossAtkMed` / `BlobBossAtkSmall` —
+//   all 4-damage Melee with the persists flag), `enemy_weapon_for_type`
+//   maps `BlobBoss` / `BlobBossMed` / `BlobBossSmall` to them, and the
+//   Melee arm in `apply_enemy_attacks` now skips its `curr_dist > 1`
+//   cancel when `wdef.queued_damage_persists()` is set. The OOB bounds
+//   check on (qtx, qty) inherited from v27 makes this safe to apply when
+//   the attacker is non-adjacent. Pre-v29 corpus archived as
+//   `failure_db_snapshot_sim_v28.jsonl` per CLAUDE.md rule 22.
+pub const SIMULATOR_VERSION: u32 = 29;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

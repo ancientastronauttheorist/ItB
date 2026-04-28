@@ -485,6 +485,224 @@ def test_psion_present_no_burst_penalised():
     assert scored["score"] == -2
 
 
+# ---------------------------------------------------------------------------
+# Infinite-spawn × low-grid penalty (post-2026-04-28 m07 Mission_Barrels
+# 4→2 grid drain that put the run at grid 2 entering the m13 finale).
+# ---------------------------------------------------------------------------
+
+# Synthetic overlay: a Mission_Infinite-derived mission (Volatile-style)
+# and a fixed-roster alternative without infinite_spawn (Battle-style).
+# Using a synthetic overlay keeps the test deterministic against game
+# updates that might shuffle which templates inherit Mission_Infinite.
+INFINITE_SPAWN_FIXTURE: dict = {
+    "Mission_VolatileSynth": {
+        "mission_id": "Mission_VolatileSynth",
+        "boss_mission": False,
+        "train_mission": False,
+        "forced_pawns": ["GlowingScorpion"],
+        "environment": "Env_Null",
+        "has_objective_building": False,
+        "infinite_spawn": True,
+    },
+    "Mission_FixedSynth": {
+        # Mirrors Mission_Battle / Mission_Reactivation: fixed roster,
+        # no per-turn spawn pressure.
+        "mission_id": "Mission_FixedSynth",
+        "boss_mission": False,
+        "train_mission": False,
+        "forced_pawns": [],
+        "environment": "Env_Null",
+        "has_objective_building": False,
+        "infinite_spawn": False,
+    },
+}
+
+
+def _infinite_spawn_mission_with_mechs_bonus() -> dict:
+    """Volatile-style entry with ★ keep-mechs-alive (+4)."""
+    return {
+        "region_id": 12,
+        "mission_id": "Mission_VolatileSynth",
+        "bonus_objective_ids": [BONUS_MECHS],
+        "environment": "Env_Null",
+    }
+
+
+def _fixed_roster_mission_with_kill_bonus() -> dict:
+    """Battle-style 1★ alternative (+2 kill-7)."""
+    return {
+        "region_id": 13,
+        "mission_id": "Mission_FixedSynth",
+        "bonus_objective_ids": [BONUS_KILL_FIVE],
+        "environment": "Env_Null",
+    }
+
+
+def test_infinite_spawn_tag_attached_from_metadata():
+    """`_tags_from_metadata` propagates `infinite_spawn` into the tag set."""
+    scored = score_mission(
+        _infinite_spawn_mission_with_mechs_bonus(),
+        derive_squad_tags(FROZEN_TITANS_SQUAD),
+        grid_power=7,
+        mission_metadata=INFINITE_SPAWN_FIXTURE,
+    )
+    assert "infinite_spawn" in scored["mission_tags"]
+
+
+def test_infinite_spawn_at_grid_3_loses_to_fixed_alternative():
+    """At grid=3, infinite-spawn -10 pushes Volatile below 1★ alternative.
+
+    This is the m07-Mission_Barrels-style scenario the run logs hit:
+    grid 4→2 drain on a mission that LOOKED affordable. With the new
+    penalty, a fixed-roster Mission_Battle (or any non-Mission_Infinite
+    template) ranks higher when grid is critical.
+    """
+    island = [
+        _infinite_spawn_mission_with_mechs_bonus(),
+        _fixed_roster_mission_with_kill_bonus(),
+    ]
+    ranked = score_island_map(
+        island,
+        FROZEN_TITANS_SQUAD,
+        grid_power=3,
+        mission_metadata=INFINITE_SPAWN_FIXTURE,
+    )
+    assert ranked[0]["mission_id"] == "Mission_FixedSynth"
+    assert ranked[1]["mission_id"] == "Mission_VolatileSynth"
+    volatile_score = next(
+        e["score"] for e in ranked if e["mission_id"] == "Mission_VolatileSynth"
+    )
+    fixed_score = next(
+        e["score"] for e in ranked if e["mission_id"] == "Mission_FixedSynth"
+    )
+    # +4 (★ mechs) - 10 (infinite_spawn at grid 3) = -6
+    assert volatile_score == -6
+    # +2 (★ kill 7) — no penalty (infinite_spawn=False)
+    assert fixed_score == 2
+    # Rationale visibility.
+    assert any(
+        "infinite-spawn" in line and "grid 3" in line
+        for line in next(
+            e for e in ranked if e["mission_id"] == "Mission_VolatileSynth"
+        )["rationale_lines"]
+    )
+
+
+def test_infinite_spawn_at_grid_2_hard_veto():
+    """At grid≤2, infinite-spawn -50 is a hard veto (matches high_threat)."""
+    scored = score_mission(
+        _infinite_spawn_mission_with_mechs_bonus(),
+        derive_squad_tags(FROZEN_TITANS_SQUAD),
+        grid_power=2,
+        mission_metadata=INFINITE_SPAWN_FIXTURE,
+    )
+    assert any(
+        "hard veto" in line and "infinite-spawn" in line
+        for line in scored["rationale_lines"]
+    )
+    # +4 (★ mechs) - 50 (hard veto) = -46
+    assert scored["score"] == -46
+
+    # grid=1 still hard-veto.
+    scored1 = score_mission(
+        _infinite_spawn_mission_with_mechs_bonus(),
+        derive_squad_tags(FROZEN_TITANS_SQUAD),
+        grid_power=1,
+        mission_metadata=INFINITE_SPAWN_FIXTURE,
+    )
+    assert scored1["score"] == -46
+
+
+def test_infinite_spawn_at_grid_4_still_pickable():
+    """At grid=4 the infinite-spawn penalty does NOT fire — these
+    missions remain in the candidate pool. Grid=4 is the threshold
+    where high_threat starts to bite (-8) but infinite_spawn alone
+    is still affordable.
+    """
+    scored = score_mission(
+        _infinite_spawn_mission_with_mechs_bonus(),
+        derive_squad_tags(FROZEN_TITANS_SQUAD),
+        grid_power=4,
+        mission_metadata=INFINITE_SPAWN_FIXTURE,
+    )
+    assert "infinite_spawn" in scored["mission_tags"]
+    for line in scored["rationale_lines"]:
+        assert "infinite-spawn" not in line
+    # Pure +4 (★ mechs).
+    assert scored["score"] == 4
+
+
+def test_infinite_spawn_at_full_grid_no_penalty():
+    """At grid≥5 the infinite-spawn penalty does not fire."""
+    scored = score_mission(
+        _infinite_spawn_mission_with_mechs_bonus(),
+        derive_squad_tags(FROZEN_TITANS_SQUAD),
+        grid_power=7,
+        mission_metadata=INFINITE_SPAWN_FIXTURE,
+    )
+    for line in scored["rationale_lines"]:
+        assert "infinite-spawn" not in line
+    assert scored["score"] == 4
+
+
+def test_fixed_roster_mission_no_infinite_spawn_tag():
+    """Mission_Battle-style entries (infinite_spawn=False) do NOT pick
+    up the tag, so the penalty cannot fire on them at any grid level.
+    """
+    scored = score_mission(
+        _fixed_roster_mission_with_kill_bonus(),
+        derive_squad_tags(FROZEN_TITANS_SQUAD),
+        grid_power=2,
+        mission_metadata=INFINITE_SPAWN_FIXTURE,
+    )
+    assert "infinite_spawn" not in scored["mission_tags"]
+    for line in scored["rationale_lines"]:
+        assert "infinite-spawn" not in line
+    # +2 (★ kill 7) — clean.
+    assert scored["score"] == 2
+
+
+def test_infinite_spawn_does_not_double_charge_boss_low_grid():
+    """A mission that is BOTH boss_mission and infinite_spawn fires the
+    infinite_spawn penalty (-10/-50) but NOT the boss low-grid -4 on
+    top. Otherwise at grid=3 a boss mission would eat -10 + -4 = -14.
+
+    Use a synthetic boss overlay so we control both flags.
+    """
+    overlay = {
+        "Mission_BossInfSynth": {
+            "mission_id": "Mission_BossInfSynth",
+            "boss_mission": True,
+            "boss_pawn": "HornetBoss",
+            "forced_pawns": ["HornetBoss"],
+            "environment": "Env_Null",
+            "train_mission": False,
+            "has_objective_building": True,
+            "infinite_spawn": True,
+        },
+    }
+    entry = {
+        "region_id": 14,
+        "mission_id": "Mission_BossInfSynth",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+    scored = score_mission(
+        entry,
+        derive_squad_tags(LIGHTNING_GRAV_SQUAD),  # has aoe → no flier_heavy fire
+        grid_power=3,
+        mission_metadata=overlay,
+    )
+    rationale = " | ".join(scored["rationale_lines"])
+    # The infinite_spawn rule fired (it dominates the boss low-grid -4)
+    assert "infinite-spawn" in rationale and "grid 3" in rationale
+    # The boss low-grid -4 did NOT fire (no "boss + low grid" line).
+    assert "boss + low grid" not in rationale
+    # Score: 0 bonuses, -10 infinite_spawn at grid 3 (boss tags also
+    # add high_threat → -15, but that's a separate rule).
+    assert scored["score"] == -10 + -15  # high_threat -15 at grid 3
+
+
 def test_metadata_derived_train_tag_overrides_substring_match():
     """A previously-unknown mission_id whose metadata says
     train_mission=True still gets the -8 train penalty.
