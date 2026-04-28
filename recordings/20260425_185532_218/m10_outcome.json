@@ -1,0 +1,7 @@
+{
+  "mission_index": 10,
+  "mission_name": "",
+  "result": "win",
+  "notes": "Cryogenic Labs win: \u2605 <4 mech damage + \u26a1 Coal Plant. Ice Storm misclassified as lethal env_type=lightning_or_airstrike \u2014 root cause: Env_SnowStorm uses LiveEnvironment.Locations same as Lightning, bridge field-signature heuristic in modloader.lua:733 hits Locations branch first.",
+  "recorded_at": "2026-04-27T22:15:24.877638"
+}

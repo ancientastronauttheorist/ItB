@@ -6,56 +6,56 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 9,
-  "current_turn": 1,
+  "mission_index": 10,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
-        "mech_type": "JudoMech",
+        "mech_type": "WallMech",
         "move_to": [
-          5,
-          6
+          7,
+          3
         ],
-        "weapon": "Prime_Shift",
+        "weapon": "Brute_Grapple",
         "target": [
-          6,
-          6
+          5,
+          3
         ],
-        "description": "JudoMech, move C5\u2192B3, fire Vice Fist at B2"
+        "description": "WallMech, fire Grappling Hook at E3"
       },
       {
         "mech_uid": 1,
-        "mech_type": "TankMech",
-        "move_to": [
-          4,
-          2
-        ],
-        "weapon": "Brute_Tankmech",
-        "target": [
-          4,
-          3
-        ],
-        "description": "TankMech, move F5\u2192F4, fire Taurus Cannon at E4"
-      },
-      {
-        "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
           2,
-          5
+          1
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          4,
-          5
+          2,
+          4
         ],
-        "description": "ArtiMech, move B6\u2192C6, fire Artemis Artillery at C4"
+        "description": "ArtiMech, move H4\u2192G6, fire Artemis Artillery at D6"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "GravMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Science_Gravwell",
+        "target": [
+          3,
+          2
+        ],
+        "description": "GravMech, move D3\u2192D5, fire Grav Well at F5"
       }
     ],
-    "score": -181425.71373667038,
-    "turn": 1
+    "score": -17007.141273362293,
+    "turn": 4
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -488,6 +488,50 @@
         "TankMech, move F5\u2192F4, fire Taurus Cannon at E4",
         "ArtiMech, move B6\u2192C6, fire Artemis Artillery at C4"
       ]
+    },
+    {
+      "timestamp": "2026-04-27T22:06:05.899766",
+      "turn": 1,
+      "label": "solve",
+      "score": -158417.1407835824,
+      "actions": [
+        "WallMech, move D5\u2192D2, fire Grappling Hook at F2",
+        "ArtiMech, move F5\u2192H4, fire Artemis Artillery at E4",
+        "GravMech, fire Grav Well at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:07:13.453329",
+      "turn": 2,
+      "label": "solve",
+      "score": 62906.190715630815,
+      "actions": [
+        "WallMech, fire Grappling Hook at F2",
+        "ArtiMech, move H4\u2192G5, fire Artemis Artillery at D5",
+        "GravMech, move E6\u2192E4, fire Grav Well at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:07:54.657661",
+      "turn": 3,
+      "label": "solve",
+      "score": 80842.85719854491,
+      "actions": [
+        "WallMech, move D2\u2192E1, fire Grappling Hook at E3",
+        "GravMech, move E4\u2192D3, fire Grav Well at D7",
+        "ArtiMech, move G5\u2192H4, fire Artemis Artillery at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:13:52.346906",
+      "turn": 4,
+      "label": "solve",
+      "score": -17007.141273362293,
+      "actions": [
+        "WallMech, fire Grappling Hook at E3",
+        "ArtiMech, move H4\u2192G6, fire Artemis Artillery at D6",
+        "GravMech, move D3\u2192D5, fire Grav Well at F5"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -589,6 +633,18 @@
     ],
     [
       8,
+      3
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
       3
     ]
   ],
@@ -2617,9 +2673,72 @@
           255
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Gravwell|attack",
+      "frequency": 3,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Science_Gravwell",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Science_Gravwell|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Science_Gravwell",
+        "target": [
+          1,
+          4
+        ]
+      }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Science_Gravwell",
+      "cause_pattern": "death|Science_Gravwell|attack|push_dir|Science_Gravwell|attack",
+      "expires_turn": 6,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
       "type": "ElectricMech",
@@ -2868,6 +2987,17 @@
       "diff_predicted": "present",
       "diff_actual": "absent",
       "severity": "medium"
+    },
+    {
+      "type": "WallMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": []
