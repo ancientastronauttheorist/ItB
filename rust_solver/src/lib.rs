@@ -588,7 +588,16 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   check on (qtx, qty) inherited from v27 makes this safe to apply when
 //   the attacker is non-adjacent. Pre-v29 corpus archived as
 //   `failure_db_snapshot_sim_v28.jsonl` per CLAUDE.md rule 22.
-pub const SIMULATOR_VERSION: u32 = 29;
+// v30 (2026-04-28) — Mission_Reactivation thaw: at start of each enemy
+//   phase, thaw the 2 lowest-uid frozen enemy pawns when
+//   `board.mission_id == "Mission_Reactivation"`. Mirrors
+//   `Mission_Reactivation:NextTurn` in
+//   `scripts/missions/snow/mission_reactivation.lua` lines 50-66 (which
+//   uses `random_removal` to thaw 2 pawns/turn). Without this hook the
+//   solver thought Lifeless Basin's frozen Vek were permanently inert
+//   and under-priced threats to the grid: the proximate cause of the
+//   4-grid leak in run 20260425_185532_218 (sim_v29 → sim_v30 fix).
+pub const SIMULATOR_VERSION: u32 = 30;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

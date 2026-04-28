@@ -328,7 +328,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   adjacency cancel when the flag is set. Smaller variants confirmed
 #   identical via Lua inheritance (`BlobBossAtkMed = BlobBossAtk:new{}`).
 #   Pre-v29 corpus archived as failure_db_snapshot_sim_v28.jsonl.
-SIMULATOR_VERSION = 29
+# v30 (2026-04-28) — Mission_Reactivation thaw. Lua mission file
+#   `scripts/missions/snow/mission_reactivation.lua` thaws 2 frozen Vek
+#   per enemy turn (`Mission_Reactivation:NextTurn` lines 50-66). Rust
+#   sim now mirrors this in `simulate_reactivation_thaw` called at the
+#   top of `simulate_enemy_attacks` (rust_solver/src/enemy.rs). Pre-fix
+#   the solver under-priced threats on Lifeless Basin / any
+#   Mission_Reactivation board because frozen Vek looked permanently
+#   inert — caused 4-grid leak documented at run 20260425_185532_218.
+SIMULATOR_VERSION = 30
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

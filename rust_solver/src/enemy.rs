@@ -200,6 +200,45 @@ pub fn apply_spawn_blocking(
     }
 }
 
+/// Mission_Reactivation thaw: at the start of each enemy turn, the Lua
+/// `Mission_Reactivation:NextTurn` thaws up to 2 frozen pawns from its
+/// `self.Enemies` roster (see scripts/missions/snow/mission_reactivation.lua
+/// lines 50-66). The thawed pawns DO NOT have a queued attack this turn
+/// (they were frozen, so they never queued one) but become attackers on
+/// the next player turn.
+///
+/// The simulator's enemy phase otherwise treats `frozen` as a permanent
+/// inert state (`if enemy.frozen() { continue; }` skip). Without this
+/// hook, the solver assumes the 4-7 frozen Vek placed at mission start
+/// stay inert forever, and `enemy_hp_remaining` / next-turn threat
+/// scoring under-counts the looming wave. That mis-pricing was the
+/// proximate cause of the 4-grid leak on Lifeless Basin (Mission_Reactivation)
+/// in run 20260425_185532_218 / 2026-04-28.
+///
+/// Selection is deterministic for solver reproducibility: thaw the two
+/// LOWEST uid frozen enemies. The real game uses `random_removal` over
+/// `self.Enemies`, but a 1-turn-horizon search just needs the COUNT to be
+/// right so the eval term sees the post-thaw enemy_hp_remaining.
+fn simulate_reactivation_thaw(board: &mut Board) {
+    if board.mission_id != "Mission_Reactivation" { return; }
+    let mut thawed = 0u8;
+    // Stable iteration: by uid ascending so the same two pawns thaw on
+    // every solve of the same board (the Python verifier compares the
+    // same pair).
+    let mut order: Vec<usize> = (0..board.unit_count as usize)
+        .filter(|&i| {
+            let u = &board.units[i];
+            u.is_enemy() && u.hp > 0 && u.frozen()
+        })
+        .collect();
+    order.sort_by_key(|&i| board.units[i].uid);
+    for i in order {
+        if thawed >= 2 { break; }
+        board.units[i].set_frozen(false);
+        thawed += 1;
+    }
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
 /// Processes in UID order. Returns buildings destroyed count.
 ///
@@ -209,6 +248,12 @@ pub fn simulate_enemy_attacks(
     original_positions: &[(u8, u8); 16],
     weapons: &WeaponTable,
 ) -> i32 {
+    // Mission_Reactivation: thaw 2 frozen Vek at start of enemy phase.
+    // Must run BEFORE the frozen-skip in the attack loop so newly-thawed
+    // pawns are reflected in post-enemy state (they don't attack this
+    // turn — no queued attack — but the eval scores their HP correctly).
+    simulate_reactivation_thaw(board);
+
     let mut buildings_destroyed = 0;
     let mut result = ActionResult::default();
 
@@ -1665,5 +1710,95 @@ mod tests {
             "Default-pilot mech takes 1 fire-tick damage");
         assert!(board.units[idx].fire(),
             "Fire flag persists for a non-Rockman mech");
+    }
+
+    #[test]
+    fn test_reactivation_thaws_two_per_enemy_turn() {
+        // Mission_Reactivation thaws 2 frozen Vek per enemy turn.
+        // Set up 4 frozen enemies on a Mission_Reactivation board with
+        // no queued attacks (frozen pawns don't queue attacks). After
+        // simulate_enemy_attacks, the 2 lowest-uid pawns should be
+        // unfrozen (deterministic stand-in for the Lua random_removal),
+        // the other 2 should still be frozen.
+        let mut board = Board::default();
+        board.mission_id = "Mission_Reactivation".to_string();
+        for (uid, x) in [(10u16, 0u8), (20, 2), (30, 4), (40, 6)].iter() {
+            let mut u = Unit {
+                uid: *uid, x: *x, y: 0, hp: 3, max_hp: 3,
+                team: Team::Enemy,
+                flags: UnitFlags::FROZEN,
+                queued_target_x: -1, queued_target_y: -1,
+                weapon_damage: 0,
+                ..Default::default()
+            };
+            u.set_type_name("Scorpion1");
+            board.add_unit(u);
+        }
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        // Two lowest-uid (10, 20) thawed; (30, 40) still frozen.
+        let by_uid = |uid: u16| board.units.iter()
+            .find(|u| u.uid == uid).expect("unit");
+        assert!(!by_uid(10).frozen(), "uid 10 should thaw (lowest)");
+        assert!(!by_uid(20).frozen(), "uid 20 should thaw (2nd lowest)");
+        assert!(by_uid(30).frozen(), "uid 30 should remain frozen");
+        assert!(by_uid(40).frozen(), "uid 40 should remain frozen");
+    }
+
+    #[test]
+    fn test_reactivation_thaw_skipped_on_other_missions() {
+        // Identical setup but mission_id != Mission_Reactivation: no
+        // pawns should thaw.
+        let mut board = Board::default();
+        board.mission_id = "Mission_Stasis".to_string();
+        for (uid, x) in [(10u16, 0u8), (20, 2)].iter() {
+            let mut u = Unit {
+                uid: *uid, x: *x, y: 0, hp: 3, max_hp: 3,
+                team: Team::Enemy,
+                flags: UnitFlags::FROZEN,
+                queued_target_x: -1, queued_target_y: -1,
+                weapon_damage: 0,
+                ..Default::default()
+            };
+            u.set_type_name("Scorpion1");
+            board.add_unit(u);
+        }
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        for u in board.units.iter().take(board.unit_count as usize) {
+            assert!(u.frozen(), "no thaw on non-Reactivation mission");
+        }
+    }
+
+    #[test]
+    fn test_reactivation_thaw_caps_at_two_even_with_more_frozen() {
+        // 5 frozen enemies → only 2 thaw.
+        let mut board = Board::default();
+        board.mission_id = "Mission_Reactivation".to_string();
+        for (uid, x) in [(1u16, 0u8), (2, 1), (3, 2), (4, 3), (5, 4)].iter() {
+            let mut u = Unit {
+                uid: *uid, x: *x, y: 0, hp: 3, max_hp: 3,
+                team: Team::Enemy,
+                flags: UnitFlags::FROZEN,
+                queued_target_x: -1, queued_target_y: -1,
+                weapon_damage: 0,
+                ..Default::default()
+            };
+            u.set_type_name("Scorpion1");
+            board.add_unit(u);
+        }
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let thawed = board.units.iter()
+            .take(board.unit_count as usize)
+            .filter(|u| !u.frozen())
+            .count();
+        assert_eq!(thawed, 2, "exactly 2 thaw per enemy turn");
     }
 }
