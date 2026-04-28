@@ -6,55 +6,55 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 10,
+  "mission_index": 11,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "WallMech",
+        "mech_uid": 2,
+        "mech_type": "GravMech",
         "move_to": [
           7,
-          3
+          4
         ],
-        "weapon": "Brute_Grapple",
+        "weapon": "Science_Gravwell",
         "target": [
           5,
-          3
+          4
         ],
-        "description": "WallMech, fire Grappling Hook at E3"
+        "description": "GravMech, fire Grav Well at D3"
       },
       {
         "mech_uid": 1,
         "mech_type": "ArtiMech",
         "move_to": [
-          2,
-          1
+          6,
+          4
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          2,
+          3,
           4
         ],
-        "description": "ArtiMech, move H4\u2192G6, fire Artemis Artillery at D6"
+        "description": "ArtiMech, fire Artemis Artillery at D5"
       },
       {
-        "mech_uid": 2,
-        "mech_type": "GravMech",
+        "mech_uid": 0,
+        "mech_type": "WallMech",
         "move_to": [
-          3,
-          4
+          4,
+          3
         ],
-        "weapon": "Science_Gravwell",
+        "weapon": "Unknown",
         "target": [
-          3,
-          2
+          255,
+          255
         ],
-        "description": "GravMech, move D3\u2192D5, fire Grav Well at F5"
+        "description": "WallMech, move C4\u2192E4"
       }
     ],
-    "score": -17007.141273362293,
+    "score": 63890.71452379227,
     "turn": 4
   },
   "actions_executed": 0,
@@ -532,6 +532,50 @@
         "ArtiMech, move H4\u2192G6, fire Artemis Artillery at D6",
         "GravMech, move D3\u2192D5, fire Grav Well at F5"
       ]
+    },
+    {
+      "timestamp": "2026-04-27T22:42:30.013158",
+      "turn": 1,
+      "label": "solve",
+      "score": 135292.85714285716,
+      "actions": [
+        "ArtiMech, move E5\u2192D3, fire Artemis Artillery at B3",
+        "GravMech, move D6\u2192C3, fire Grav Well at C5",
+        "WallMech, move C5\u2192D5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:44:21.263987",
+      "turn": 2,
+      "label": "solve",
+      "score": 140706.19047619056,
+      "actions": [
+        "ArtiMech, move D3\u2192F3, fire Artemis Artillery at F5",
+        "GravMech, move C3\u2192D2, fire Grav Well at B2",
+        "WallMech, move D5\u2192C4, fire Grappling Hook at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:45:04.636302",
+      "turn": 3,
+      "label": "solve",
+      "score": 143962.85714285716,
+      "actions": [
+        "GravMech, move D2\u2192D1, fire Grav Well at D7",
+        "WallMech, move C4\u2192B2, fire Grappling Hook at D2",
+        "ArtiMech, move F3\u2192E3, fire Artemis Artillery at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:45:56.892976",
+      "turn": 4,
+      "label": "solve",
+      "score": 63890.71452379227,
+      "actions": [
+        "GravMech, fire Grav Well at D3",
+        "ArtiMech, fire Artemis Artillery at D5",
+        "WallMech, move C4\u2192E4"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -645,6 +689,18 @@
     ],
     [
       10,
+      3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
       3
     ]
   ],
@@ -2729,13 +2785,177 @@
           4
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|_REPAIR|attack",
+      "frequency": 8,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "_REPAIR",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Science_Gravwell|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Science_Gravwell",
+        "target": [
+          1,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 11,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Gravwell|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Science_Gravwell",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|_REPAIR|attack",
+      "frequency": 9,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "_REPAIR",
+        "target": [
+          4,
+          5
+        ]
+      }
     }
   ],
   "disabled_actions": [
     {
       "weapon_id": "Science_Gravwell",
-      "cause_pattern": "death|Science_Gravwell|attack|push_dir|Science_Gravwell|attack",
-      "expires_turn": 6,
+      "cause_pattern": "push_dir|Science_Gravwell|attack|status|Science_Gravwell|attack",
+      "expires_turn": 7,
       "strategic_override": false
     }
   ],
@@ -2995,9 +3215,49 @@
       "slot": 1,
       "mission_id": "",
       "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "research_id": "b630573bf2f1",
+      "last_kind": "mech"
+    },
+    {
+      "type": "Snowtank1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "resolved",
+      "result": null,
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "e53dd914fd67",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Scorpion1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 3,
       "attempts": 0,
-      "status": "pending",
-      "result": null
+      "status": "resolved",
+      "result": null,
+      "diff_field": "pos",
+      "diff_predicted": [
+        6,
+        4
+      ],
+      "diff_actual": [
+        2,
+        4
+      ],
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": []
