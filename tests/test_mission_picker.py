@@ -228,6 +228,108 @@ def test_tidal_no_flying_penalty_only_when_no_flying():
 
 
 # ---------------------------------------------------------------------------
+# High-threat × grid-power scaling (post-2026-04-27 District Z-1101 loss)
+# ---------------------------------------------------------------------------
+
+def _high_threat_with_grid_bonus() -> dict:
+    """Mission_Battle is tagged 'high_threat' in MISSION_ID_TAGS.
+
+    Pair it with a ⚡ grid bonus so the bonus value (+4 at low grid)
+    interacts with the new high-threat penalty curve.
+    """
+    return {
+        "region_id": 7,
+        "mission_id": "Mission_Battle",
+        "bonus_objective_ids": [BONUS_GRID],
+        "environment": "Env_Null",
+    }
+
+
+def _safe_no_threat_mission() -> dict:
+    """Untagged mission — no high_threat, no env penalty. Acts as the
+    'always-safe alternative' baseline for ranking tests."""
+    return {
+        "region_id": 8,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [BONUS_KILL_FIVE],
+        "environment": None,
+    }
+
+
+def test_high_threat_at_grid_4_low_margin_penalty():
+    """High-threat mission at grid=4 fires the new -8 penalty.
+
+    Pre-fix this was a flat -5 across all grids 1-4. The Pinnacle
+    2026-04-27 District Z-1101 loss happened at exactly this grid;
+    -8 here downranks against any non-high-threat alternative. The
+    mission can still be picked if all alternatives score worse —
+    Mission_Battle remains the right pick on a 1-mission island.
+    """
+    scored = score_mission(_high_threat_with_grid_bonus(),
+                           derive_squad_tags(RIFT_WALKERS_SQUAD),
+                           grid_power=4, mission_metadata={})
+    assert any("grid 4" in line and "low margin" in line
+               for line in scored["rationale_lines"])
+    # +4 (⚡ grid bonus at low grid) - 8 (high threat at 4) = -4
+    assert scored["score"] == -4
+
+
+def test_high_threat_at_grid_3_severe_penalty():
+    """High-threat at grid=3 fires -15. Combined with +4★⚡ this still
+    nets -11 — effectively veto unless every alternative scores worse."""
+    scored = score_mission(_high_threat_with_grid_bonus(),
+                           derive_squad_tags(RIFT_WALKERS_SQUAD),
+                           grid_power=3, mission_metadata={})
+    assert any("grid 3" in line and "severe penalty" in line
+               for line in scored["rationale_lines"])
+    assert scored["score"] == -11   # +4 - 15
+
+
+def test_high_threat_at_critical_grid_hard_veto():
+    """At grid≤2 a high-threat mission scores deeply negative — even a
+    +6 ★⚡⚡ stack couldn't offset -50."""
+    mission = _high_threat_with_grid_bonus()
+    scored = score_mission(mission, derive_squad_tags(RIFT_WALKERS_SQUAD),
+                           grid_power=2, mission_metadata={})
+    assert any("hard veto" in line for line in scored["rationale_lines"])
+    # +4 (⚡ grid bonus at low grid) - 50 (hard veto) = -46
+    assert scored["score"] == -46
+
+    # grid=1 still hard-veto.
+    scored1 = score_mission(mission, derive_squad_tags(RIFT_WALKERS_SQUAD),
+                            grid_power=1, mission_metadata={})
+    assert scored1["score"] == -46
+
+
+def test_high_threat_at_full_grid_unpenalized():
+    """At grid≥5 the high-threat tag fires no penalty."""
+    scored = score_mission(_high_threat_with_grid_bonus(),
+                           derive_squad_tags(RIFT_WALKERS_SQUAD),
+                           grid_power=7, mission_metadata={})
+    for line in scored["rationale_lines"]:
+        assert "high-threat" not in line
+    # +2 (⚡ at grid 7) — nothing else fires
+    assert scored["score"] == 2
+
+
+def test_high_threat_outranked_by_safe_pick_at_critical_grid():
+    """At grid=2, a safe untagged mission with weaker bonuses ranks
+    ABOVE a high-threat mission with stronger bonuses. This is the
+    regression that would have prevented today's District Z-1101 pick.
+    """
+    high_threat = _high_threat_with_grid_bonus()
+    safe        = _safe_no_threat_mission()
+    ranked = score_island_map([high_threat, safe], RIFT_WALKERS_SQUAD,
+                              grid_power=2, mission_metadata={})
+    assert ranked[0]["mission_id"] == "Mission_Generic"
+    assert ranked[1]["mission_id"] == "Mission_Battle"
+    safe_score = next(e["score"] for e in ranked if e["mission_id"] == "Mission_Generic")
+    ht_score = next(e["score"] for e in ranked if e["mission_id"] == "Mission_Battle")
+    assert safe_score >= 0
+    assert ht_score < -30
+
+
+# ---------------------------------------------------------------------------
 # Empty / no-op cases
 # ---------------------------------------------------------------------------
 

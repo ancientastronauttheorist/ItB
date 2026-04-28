@@ -460,9 +460,32 @@ def score_mission(
     if "train" in mission_tags and "train_defender" not in squad_tags:
         score -= 8
         rationale.append("-8  train mission, no train_defender in squad")
-    if "high_threat" in mission_tags and grid_power < 5:
-        score -= 5
-        rationale.append(f"-5  high-threat + low grid ({grid_power})")
+    # High-threat scaling. The flat -5 below grid-5 underweighted the
+    # actual cliff: at grid≤2 a high-threat mission has been the proximate
+    # cause of every recent timeline loss (Pinnacle 2026-04-27 District
+    # Z-1101 dropped grid 4→0 in two turns; squad had no per-turn DPS
+    # ceiling against escalating Mission_Infinite spawns). Steeper curve:
+    #   grid==4: -8   (current bonus values cap at +6, so a -8 only loses
+    #                   if the mission has no ★★⚡ stack worth pushing
+    #                   into a 4-grid risk)
+    #   grid==3: -15  (effectively veto unless every alternative is worse)
+    #   grid≤2:  -50  (hard veto — never picked when any non-high-threat
+    #                   mission is on the map)
+    # The previous -5 stays as the no-margin grid-4-to-5 floor for
+    # callers who shimmed in a mid-island map without grid context.
+    if "high_threat" in mission_tags:
+        if grid_power <= 2:
+            score -= 50
+            rationale.append(f"-50 high-threat + critical grid ({grid_power}) — hard veto")
+        elif grid_power == 3:
+            score -= 15
+            rationale.append(f"-15 high-threat + grid {grid_power} (severe penalty)")
+        elif grid_power == 4:
+            score -= 8
+            rationale.append(f"-8  high-threat + grid {grid_power} (low margin)")
+        elif grid_power < 5:
+            score -= 5
+            rationale.append(f"-5  high-threat + low grid ({grid_power})")
     if "volatile_vek" in mission_tags and "crowd_control" not in squad_tags:
         score -= 3
         rationale.append("-3  volatile-Vek mission, no crowd-control in squad")
