@@ -22,9 +22,82 @@ from typing import Any
 SESSION_DIR = Path(__file__).parent.parent.parent / "sessions"
 DEFAULT_SESSION_FILE = SESSION_DIR / "active_session.json"
 
+# Mirror of ``_SOFT_DISABLE_PER_RUN_CAP`` in ``src/loop/commands.py``. Kept
+# here to break what would otherwise be a circular import when
+# ``RunSession.from_dict`` needs to enforce the cap on session load. The two
+# constants must stay in sync — Fix B 2026-04-28 (load-time backfill).
+DISABLED_ACTIONS_CAP = 2
+
 # Module-level lock state
 _lock_handle = None
 _lock_path = None
+
+
+def _prune_disabled_actions_to_cap(
+    disabled_actions: list[dict],
+    cap: int,
+    reason: str = "load",
+    *,
+    log: bool = True,
+) -> list[dict]:
+    """Prune ``disabled_actions`` down to ``cap`` entries.
+
+    Sorts by confidence ascending so the LOWEST-confidence entries are
+    dropped first, preserving the most-trusted disables. Ties broken by
+    expiry (earliest-expiring drops first, since they were less re-flagged
+    or are about to lapse anyway) and by insertion order (stable; Python's
+    sort is stable, so equal-priority entries keep relative order).
+
+    Entries lack a stored ``confidence`` field today (`add_disabled_action`
+    doesn't persist it); for those we treat confidence as 0.0 — they all
+    tie on confidence and fall back to expiry. This makes legacy / pre-Fix-B
+    sessions prune deterministically (oldest-expiring first).
+
+    The function MUTATES the list in-place AND returns it for convenience.
+
+    ``reason`` is included in the per-drop log line so we can distinguish
+    load-time backfill from new-run wipes from future call sites.
+    """
+    if cap < 0:
+        cap = 0
+    if len(disabled_actions) <= cap:
+        return disabled_actions
+
+    # Pair each entry with its sort key + original index for stable ordering.
+    keyed = []
+    for idx, entry in enumerate(disabled_actions):
+        conf = entry.get("confidence")
+        if not isinstance(conf, (int, float)):
+            conf = 0.0
+        expires = entry.get("expires_turn", 0)
+        if not isinstance(expires, (int, float)):
+            expires = 0
+        # Higher confidence + later expiry = higher priority (keep). We sort
+        # ascending and DROP from the head, so invert by negating: smaller
+        # tuple = lower priority = drop first.
+        keyed.append((float(conf), float(expires), idx, entry))
+
+    # Sort ascending — lowest confidence, earliest expiry, earliest insertion
+    # at the front (= the drop pile).
+    keyed.sort(key=lambda t: (t[0], t[1], t[2]))
+
+    drop_count = len(disabled_actions) - cap
+    dropped = keyed[:drop_count]
+    kept = keyed[drop_count:]
+
+    if log:
+        for _conf, _exp, _idx, entry in dropped:
+            print(
+                f"[session_load] dropping stale disable: "
+                f"weapon={entry.get('weapon_id', '?')} "
+                f"confidence={entry.get('confidence', 'unset')} "
+                f"reason=\"{reason}\""
+            )
+
+    # Re-emit in original insertion order for stability across saves.
+    kept.sort(key=lambda t: t[2])
+    disabled_actions[:] = [entry for _c, _e, _i, entry in kept]
+    return disabled_actions
 
 
 def _acquire_lock(path: str | Path, timeout_s: float = 5.0):
@@ -520,6 +593,20 @@ class RunSession:
     @classmethod
     def from_dict(cls, d: dict) -> RunSession:
         sol_data = d.get("active_solution")
+
+        # Fix B 2026-04-28 — backfill the per-run cap on session load.
+        # The cap (`_SOFT_DISABLE_PER_RUN_CAP` in commands.py) was originally
+        # prospective only, leaving pre-existing entries untouched. Run 2
+        # then carried 4 stale Run-1 disables into a Run-2 squad mismatch,
+        # baking a -40k score floor into every plan. Pruning at load makes
+        # the cap a hard ceiling regardless of how the file got over it.
+        disabled = d.get("disabled_actions") or []
+        if len(disabled) > DISABLED_ACTIONS_CAP:
+            _prune_disabled_actions_to_cap(
+                disabled, DISABLED_ACTIONS_CAP,
+                reason="load_time_backfill",
+            )
+
         return cls(
             run_id=d.get("run_id", ""),
             squad=d.get("squad", ""),
@@ -544,7 +631,7 @@ class RunSession:
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
             tags=d.get("tags", []),
             failure_events_this_run=d.get("failure_events_this_run") or [],
-            disabled_actions=d.get("disabled_actions") or [],
+            disabled_actions=disabled,
             research_queue=d.get("research_queue") or [],
             diagnosis_queue=d.get("diagnosis_queue") or [],
         )

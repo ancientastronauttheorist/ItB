@@ -3723,6 +3723,21 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
     audit don't pollute the tuner training corpus.
     """
     session = RunSession.new_run(squad, achievements, difficulty, tags=tags)
+    # Fix B 2026-04-28 — explicit wipe of run-scoped soft-disable state.
+    # ``new_run`` already produces a fresh session via the dataclass default
+    # (disabled_actions=[]), but a future refactor that inherits prior
+    # session fields would silently carry stale disables across runs. The
+    # 2026-04-28 Run-2 defeat showed that's a -40k-score-floor bug in
+    # waiting; making the wipe explicit (and logged) is cheap insurance.
+    if session.disabled_actions:
+        for entry in list(session.disabled_actions):
+            print(
+                f"[new_run] dropping stale disable: "
+                f"weapon={entry.get('weapon_id', '?')} "
+                f"confidence={entry.get('confidence', 'unset')} "
+                f"reason=\"new_run_squad_change\""
+            )
+    session.disabled_actions = []
     session.save()
 
     # Write run manifest
