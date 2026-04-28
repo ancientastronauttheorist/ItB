@@ -503,7 +503,34 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Older recordings without the field deserialize with env_freeze=0 — no
 //   behavior change on the existing corpus, just unblocks future Pinnacle
 //   freeze missions. Pre-v25 rows archived to failure_db_snapshot_sim_v24.jsonl.
-pub const SIMULATOR_VERSION: u32 = 25;
+//
+// v26 (2026-04-27, Science_Gravwell single-tile pull):
+//   v20 added FULL_PULL to BOTH Brute_Grapple and Science_Gravwell, citing
+//   wiki phrasing "pulls its target towards you... not able to pull enemies
+//   into the Gravity Mech for bump damage". The wiki was ambiguous; the game
+//   Lua is authoritative. Brute_Grapple uses
+//     ret:AddCharge(Board:GetSimplePath(target, p1 + DIR_VECTORS[direction]),
+//                   FULL_DELAY)
+//   which IS a multi-tile drag → keeps FULL_PULL. But Science_Gravwell's
+//   GetSkillEffect (weapons_science.lua:115-124) only does
+//     local damage = SpaceDamage(p2, self.Damage, GetDirection(p1 - p2))
+//     ret:AddArtillery(damage,"effects/shot_pull_U.png")
+//   `SpaceDamage(loc, dmg, push_dir)` is a single 1-tile push — no AddCharge,
+//   no path-walk. Gravwell pulls its target ONE tile toward the mech, period.
+//   The v20 fix systematically over-predicted pull distance by N-1 tiles per
+//   cast; failure_db rows from the 2026-04-27 Pinnacle Robotics run (m13 t03
+//   Hornet predicted at (3,3)/hp=1 vs actual (2,3)/hp=2, plus several earlier
+//   push_dir / damage_amount desyncs on Science_Gravwell) all match the
+//   single-pull reading. Removed FULL_PULL from weapons.rs[41]; new tests
+//   `test_science_gravwell_is_single_tile_pull` and
+//   `test_science_gravwell_single_pull_long_distance` reproduce m13 t03 and
+//   prevent regression. Existing pre-v20 tests (`test_grav_well_pulls_target_
+//   toward_attacker`, `test_grav_well_no_pull_into_blocker`) updated to
+//   single-pull; obsolete v20 regression check `test_science_gravwell_pulls_
+//   to_adjacent` removed. Brute_Grapple unchanged (correctly full-pull per
+//   its own AddCharge Lua). Pre-v26 rows archived to
+//   failure_db_snapshot_sim_v25.jsonl.
+pub const SIMULATOR_VERSION: u32 = 26;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

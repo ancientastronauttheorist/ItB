@@ -3240,30 +3240,29 @@ mod tests {
 
     // ── Grav Well (Science_Gravwell) ───────────────────────────────────────────
     // Gravity Mech weapon: artillery (range ≥2) that pulls the targeted unit
-    // ALL the way to the tile adjacent to the attacker. No damage. Used to
-    // drag enemies into friendly attack lanes or onto hazardous terrain.
-    // Per wiki: "Artillery weapon that pulls its target towards you... not
-    // able to pull enemies into the Gravity Mech for bump damage." That last
-    // clause is exactly the "stop adjacent" semantic encoded by FULL_PULL.
+    // ONE TILE toward the attacker. No damage on a clear pull; bump damage if
+    // the destination is blocked. The Lua (weapons_science.lua:115-124) uses
+    // SpaceDamage with a directional push, NOT AddCharge — so this is single
+    // tile, unlike Brute_Grapple which is full-pull via AddCharge.
 
     #[test]
     fn test_grav_well_pulls_target_toward_attacker() {
-        // GravMech at (3,3) pulls target at (3,6) all the way to (3,4),
-        // adjacent to the mech.
+        // GravMech at (3,3) pulls target at (3,6) one tile toward mech → (3,5).
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceGravwell);
         let enemy_idx = add_enemy(&mut board, 99, 3, 6, 4);
 
         let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceGravwell, 3, 6);
         assert_eq!(board.units[enemy_idx].x, 3, "Stays in column");
-        assert_eq!(board.units[enemy_idx].y, 4,
-            "Pulled adjacent to attacker (6→4, stops at y=4 since mech is at y=3)");
+        assert_eq!(board.units[enemy_idx].y, 5,
+            "Single-tile pull (6→5, toward mech at y=3)");
         assert_eq!(board.units[enemy_idx].hp, 4, "No damage from Grav Well itself");
     }
 
     #[test]
     fn test_grav_well_no_pull_into_blocker() {
-        // Unit blocking the destination → both bump.
+        // Unit blocking the destination → both bump. Target at (3,6), blocker
+        // at (3,5). Pull tries 6→5 but (3,5) is blocked → both bump.
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceGravwell);
         let blocker = add_enemy(&mut board, 1, 3, 5, 3);
@@ -3275,18 +3274,60 @@ mod tests {
         assert_eq!(board.units[blocker].hp, 2, "Blocker bumped too");
     }
 
+    // ── Grav Well: live-game repro of m13 t03 desync ────────────────────────────
+    // Failure_db rows from a 2026-04-27 Pinnacle Robotics run show pulled units
+    // landing one tile FURTHER from the puller than the simulator predicted —
+    // i.e., the actual game pulled them only ONE tile, not all the way to
+    // mech-adjacent. Re-reading weapons_science.lua:115-124 confirms:
+    //
+    //   function Science_Gravwell:GetSkillEffect(p1,p2)
+    //       local ret = SkillEffect()
+    //       local damage = SpaceDamage(p2, self.Damage, GetDirection(p1 - p2))
+    //       damage.sAnimation = "airpush_"..GetDirection(p1 - p2)
+    //       ret:AddArtillery(damage,"effects/shot_pull_U.png")
+    //       return ret
+    //   end
+    //
+    // The Lua applies a single SpaceDamage with a directional push (toward the
+    // mech) at p2. SpaceDamage's third arg is a 1-tile push — there is NO
+    // AddCharge / GetSimplePath multi-tile drag here. Compare Brute_Grapple
+    // (weapons_brute.lua:339-389) which DOES use AddCharge to drag the target
+    // all the way to mech-adjacent.
+    //
+    // Wiki phrasing "pulls its target towards you" is ambiguous — the v20 fix
+    // assumed "all the way" but the Lua says single-tile. failure_db evidence
+    // (multiple push_dir / damage_amount desyncs on Science_Gravwell) confirms
+    // the Lua reading. Gravwell should NOT have FULL_PULL.
+
     #[test]
-    fn test_science_gravwell_pulls_to_adjacent() {
-        // Same as the basic Grav Well test but explicitly named per the
-        // FULL_PULL fix's regression checklist. Mech at (3,3), target at
-        // (3,7) — should walk all the way to (3,4).
+    fn test_science_gravwell_is_single_tile_pull() {
+        // Repro of failure_db m13 t03: GravMech at (5,3) fires at Hornet at
+        // (1,3). Per Lua, the Hornet should move ONE tile toward the mech
+        // (1,3 → 2,3) and take NO damage. Previously (v20-v25), FULL_PULL
+        // dragged the Hornet all the way to (4,3) adjacent to mech.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::ScienceGravwell);
+        let target = add_enemy(&mut board, 143, 1, 3, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceGravwell, 1, 3);
+        assert_eq!(board.units[target].x, 2,
+            "Single-tile pull: Hornet at x=1 moves +x once to x=2 (toward mech at x=5)");
+        assert_eq!(board.units[target].y, 3, "Stays in row");
+        assert_eq!(board.units[target].hp, 2,
+            "No damage: Lua SpaceDamage has self.Damage=0 and the 1-tile push lands on empty ground");
+    }
+
+    #[test]
+    fn test_science_gravwell_single_pull_long_distance() {
+        // Mech at (3,3), target at (3,7). Single-tile pull means target moves
+        // 7→6, not 7→4. No bump (lands on empty ground).
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceGravwell);
         let enemy_idx = add_enemy(&mut board, 99, 3, 7, 4);
         let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceGravwell, 3, 7);
-        assert_eq!(board.units[enemy_idx].y, 4,
-            "Grav Well pulls target all the way to mech-adjacent (7→4)");
-        assert_eq!(board.units[enemy_idx].hp, 4, "No damage during pull");
+        assert_eq!(board.units[enemy_idx].y, 6,
+            "Single-tile pull: target at y=7 moves to y=6, not all the way to y=4");
+        assert_eq!(board.units[enemy_idx].hp, 4, "No damage");
     }
 
     // ── Grappling Hook (Brute_Grapple) ─────────────────────────────────────────

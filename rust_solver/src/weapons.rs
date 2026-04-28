@@ -435,14 +435,21 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // range_max: 0 = unlimited (Pull fires axis-aligned any distance from range_min out).
     // Without this override, DEF's default range_max=1 makes the range (2..=1) empty
     // and Grav Well enumerates zero targets — solver would never fire it.
-    // Per wiki: "Artillery weapon that pulls its target towards you... not able
-    // to pull enemies into the Gravity Mech for bump damage". I.e., target is
-    // dragged to the tile adjacent to the mech (the mech itself is a blocker so
-    // the chain naturally halts there). Uses FULL_PULL flag — same multi-tile
-    // semantic as Brute_Grapple. Science_Pullmech (Attraction Pulse) does NOT
-    // get this flag and remains 1-tile.
+    //
+    // Single-tile pull (NOT FULL_PULL). Per weapons_science.lua:115-124:
+    //   local damage = SpaceDamage(p2, self.Damage, GetDirection(p1 - p2))
+    //   ret:AddArtillery(damage,"effects/shot_pull_U.png")
+    // SpaceDamage's third arg is a 1-tile push toward the mech; there is no
+    // AddCharge / GetSimplePath multi-tile drag. Gravwell pulls the targeted
+    // unit ONE tile toward the mech, period. Compare Brute_Grapple
+    // (weapons_brute.lua:339-389) which DOES use AddCharge to drag all the
+    // way — that's why Brute_Grapple has FULL_PULL and Gravwell does not.
+    // The v20 reading of the wiki ("pulls all the way") was wrong; the Lua
+    // is authoritative. Surfaced by 2026-04-27 Pinnacle run desyncs (m13 t03
+    // and many earlier rows: predicted pull-distance was systematically too
+    // large, often by N-1 tiles).
     w[41] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_min: 2, range_max: 0,
-        flags: f(WeaponFlags::FULL_PULL.bits()), ..DEF };
+        flags: C, ..DEF };
     // 42: Science_Repulse — Repulse
     w[42] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 43: Science_Swap — Teleporter
