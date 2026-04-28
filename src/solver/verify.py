@@ -272,7 +272,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   `mech_killed`).
 #
 #   Pre-v25 rows archived to failure_db_snapshot_sim_v24.jsonl.
-SIMULATOR_VERSION = 25
+#
+# v26 (2026-04-27, Science_Gravwell single-tile pull):
+#   v20 erroneously added FULL_PULL to Science_Gravwell based on wiki
+#   phrasing. Game Lua (weapons_science.lua:115-124) only does a single
+#   SpaceDamage with directional push — no AddCharge — so Gravwell pulls
+#   ONE tile, not all the way. Brute_Grapple (which DOES use AddCharge)
+#   keeps FULL_PULL. See rust_solver/src/lib.rs v26 block for full detail.
+#   Pre-v26 rows archived to failure_db_snapshot_sim_v25.jsonl.
+SIMULATOR_VERSION = 26
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
