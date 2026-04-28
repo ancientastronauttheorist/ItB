@@ -695,88 +695,109 @@ local function dump_state()
     -- "Hornet on Tidal tile" silent kill desync. Older bridges emit only 4
     -- fields; the Rust deserializer falls back to env_type when the 5th is
     -- missing.
+    --
+    -- environment_freeze (sim v25): list of [x,y] for Ice Storm tiles (vanilla
+    -- Env_SnowStorm, Acid=false). Applies Frozen=true to units at start of
+    -- enemy turn — non-lethal status, separate channel from env_danger so the
+    -- evaluator scores "lose a turn" rather than "die". NanoStorm
+    -- (Env_NanoStorm = Env_SnowStorm:new{Acid=true}) routes into env_danger
+    -- with kill=0, damage=1 (the existing non-lethal path handles 1 damage).
     state.environment_danger = {}
     state.environment_danger_v2 = {}
+    state.environment_freeze = {}
 
     -- Default all env_danger tiles to lethal (kill=1). Most hazards ARE
     -- lethal to ground units: Air Strike, Lightning, Cataclysm→chasm,
     -- Seismic→chasm, Tidal Waves→water. Non-lethal hazards (Wind Storm,
-    -- Sandstorm, SnowStorm) detected via LiveEnvironment field signatures
-    -- and get kill=0.
+    -- Sandstorm, NanoStorm) detected via class match / field signatures
+    -- and get kill=0. Vanilla Ice Storm bypasses env_danger entirely and
+    -- routes through env_freeze instead.
     local env_damage = 1
     local env_kill_default = true
     -- Default flying_immune is false. Set true for terrain-conversion
     -- env types when env_type detection lands on tidal/cataclysm/seismic.
     local env_flying_immune_default = false
+    -- When the env class is Env_SnowStorm with Acid=false, route IsEnvironmentDanger
+    -- tiles into environment_freeze instead of environment_danger. NanoStorm (Acid=true)
+    -- uses env_danger with non-lethal damage. Set during class-metatable detection below.
+    local route_to_freeze = false
 
-    -- Detect hazard type via LiveEnvironment field signatures:
-    --   WindDir       → Wind Storm (push, non-lethal)
-    --   Row           → Sandstorm (smoke, non-lethal)
-    --   Indices (only)→ SnowStorm/IceStorm (freeze, non-lethal)
-    --   Locations     → Lightning/Air Strike/Seismic (lethal)
-    --   Index (only)  → Tidal Wave/Cataclysm (lethal)
-    -- Fallback: try matching Lua class globals for Sandstorm edge case.
+    -- Class-metatable detection FIRES BEFORE field signatures: Env_SnowStorm
+    -- shares the `Locations` field with Lightning/Air Strike/Seismic, so the
+    -- old field-first heuristic flagged Ice Storm as kill=1 lethal. Walk the
+    -- metatable chain so subclasses (Env_NanoStorm extends Env_SnowStorm)
+    -- match too. Field signatures stay as a fallback for envs we don't
+    -- explicitly recognize.
     local env_type = "unknown"
     pcall(function()
         local mission = _ITB_CURRENT_MISSION
-        if mission and mission.LiveEnvironment then
-            local le = mission.LiveEnvironment
-            if le.WindDir ~= nil then
-                env_type = "wind"
-                env_kill_default = false
-            elseif le.Row ~= nil then
+        if not mission or not mission.LiveEnvironment then return end
+        local le = mission.LiveEnvironment
+
+        -- Walk metatable chain. For each link, check membership in our
+        -- known-env table. Stops at first match. `_G` lookup is safe — class
+        -- globals are always set before any LiveEnvironment instance exists.
+        local mt = getmetatable(le)
+        while mt do
+            local cls_table = mt.__index or mt
+            -- Env_SnowStorm: vanilla Ice Storm (Acid=false, freeze) OR Env_NanoStorm
+            -- which inherits from it (Acid=true, 1 acid damage). Distinguish by the
+            -- live instance's Acid flag — covers both directly-instantiated SnowStorms
+            -- and the Nano subclass without a separate metatable check.
+            if _G["Env_SnowStorm"] and cls_table == _G["Env_SnowStorm"] then
+                if le.Acid then
+                    -- NanoStorm: 1 damage + ACID, non-lethal, no freeze.
+                    -- ACID application itself is a separate gap — bridge
+                    -- doesn't carry per-tile-acid yet — but the 1-damage
+                    -- non-lethal path is correct for now.
+                    env_type = "nanostorm"
+                    env_kill_default = false
+                else
+                    -- Vanilla Ice Storm: 0 damage, Frozen=true.
+                    env_type = "snow"
+                    env_kill_default = false
+                    route_to_freeze = true
+                end
+                return
+            end
+            if _G["Env_Sandstorm"] and cls_table == _G["Env_Sandstorm"] then
                 env_type = "sandstorm"
                 env_kill_default = false
-            elseif le.Indices ~= nil then
-                env_type = "snow"
-                env_kill_default = false
-            elseif le.Locations ~= nil then
-                env_type = "lightning_or_airstrike"
-                -- Lightning + Air Strike + Satellite Rocket bypass flight.
-                env_flying_immune_default = false
-            elseif le.Index ~= nil then
-                env_type = "tidal_or_cataclysm"
-                -- Tidal Wave (water-conversion) and Cataclysm (chasm-
-                -- conversion) both spare effectively-flying units.
-                env_flying_immune_default = true
-            elseif le.StartEffect ~= nil then
-                env_type = "cataclysm_or_seismic"
-                -- Both convert tiles to chasm; flyers hover.
-                env_flying_immune_default = true
+                return
             end
-            -- Fallback class matching for Sandstorm (Row may be nil initially)
-            if env_type == "unknown" then
-                local cls = _G and _G["Env_Sandstorm"]
-                if cls then
-                    local mt = getmetatable(le)
-                    if mt and (mt == cls or mt.__index == cls) then
-                        env_type = "sandstorm"
-                        env_kill_default = false
-                    end
-                end
-            end
-            -- Fallback class matching for Ice/Snow Storm variants
-            if env_type == "unknown" then
-                for _, cls_name in ipairs({"Env_IceStorm", "Env_SnowStorm", "Env_Snow"}) do
-                    local cls = _G and _G[cls_name]
-                    if cls then
-                        local mt = getmetatable(le)
-                        if mt and (mt == cls or mt.__index == cls) then
-                            env_type = "snow"
-                            env_kill_default = false
-                            break
-                        end
-                    end
-                end
-            end
-            -- Diagnostic: log LiveEnvironment fields when type is still unknown
-            if env_type == "unknown" then
-                local fields = {}
-                pcall(function()
-                    for k, _ in pairs(le) do fields[#fields+1] = tostring(k) end
-                end)
-                log_bridge("[env] WARNING: unknown env_type. Fields: " .. table.concat(fields, ", "))
-            end
+            mt = getmetatable(cls_table)
+        end
+
+        -- Field-signature fallback for envs without an explicit class match
+        -- (mods, edge-case classes). Order tightened: WindDir/Row/Index/StartEffect
+        -- are unique enough; Locations is checked LAST since SnowStorm shares it.
+        if le.WindDir ~= nil then
+            env_type = "wind"
+            env_kill_default = false
+        elseif le.Row ~= nil then
+            env_type = "sandstorm"
+            env_kill_default = false
+        elseif le.Indices ~= nil then
+            -- No known vanilla env uses bare Indices — kept for mod compat.
+            env_type = "snow"
+            env_kill_default = false
+        elseif le.Index ~= nil then
+            env_type = "tidal_or_cataclysm"
+            env_flying_immune_default = true
+        elseif le.StartEffect ~= nil then
+            env_type = "cataclysm_or_seismic"
+            env_flying_immune_default = true
+        elseif le.Locations ~= nil then
+            -- After the Env_SnowStorm metatable check above, Locations now
+            -- means Lightning / Air Strike / Seismic.
+            env_type = "lightning_or_airstrike"
+            env_flying_immune_default = false
+        else
+            local fields = {}
+            pcall(function()
+                for k, _ in pairs(le) do fields[#fields+1] = tostring(k) end
+            end)
+            log_bridge("[env] WARNING: unknown env_type. Fields: " .. table.concat(fields, ", "))
         end
     end)
     state.env_type = env_type
@@ -806,7 +827,13 @@ local function dump_state()
         for x = 0, 7 do
             local ok, danger = pcall(function() return Board:IsEnvironmentDanger(Point(x, y)) end)
             if ok and danger then
-                add_danger(x, y)
+                if route_to_freeze then
+                    -- Vanilla Ice Storm: tiles freeze at start of enemy turn.
+                    -- Non-lethal status effect; bypasses env_danger entirely.
+                    state.environment_freeze[#state.environment_freeze + 1] = {x, y}
+                else
+                    add_danger(x, y)
+                end
             end
         end
     end

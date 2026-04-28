@@ -251,7 +251,28 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #     weapons_brute.lua:339-389. Mech stops at target-dir; no obstacle
 #     damage. Previously the no-pawn branch silently exited.
 #   Pre-v24 rows archived to failure_db_snapshot_sim_v23.jsonl.
-SIMULATOR_VERSION = 24
+# v25 (2026-04-27, Ice Storm freeze application):
+#   Bridge: class-metatable check now runs BEFORE field-signature heuristic
+#   in modloader.lua, so Env_SnowStorm no longer collides with
+#   Lightning/Air Strike on the shared `LiveEnvironment.Locations` field.
+#   Vanilla Ice Storm tiles (Acid=false) route into a new
+#   `environment_freeze` JSON channel; NanoStorm (Acid=true) takes the
+#   existing non-lethal env_danger path. New `Board.environment_freeze`
+#   set in Python and `Board::env_freeze: u64` bitset in Rust.
+#
+#   Simulator: at start of enemy turn (after env_danger), units on freeze
+#   tiles get Frozen=true. Shield blocks + consumed; already-frozen
+#   idempotent; buildings/mountains untouched. Frozen Vek skip their
+#   attacks (existing `if e.frozen()` guard), so damage prevention is
+#   captured automatically in the post-enemy state.
+#
+#   Evaluator: small forward-looking `enemy_on_danger`-magnitude reward
+#   for non-flying enemies on freeze tiles. Mech-on-freeze rides the
+#   existing `mech_self_frozen` cost (one lost turn, far less than
+#   `mech_killed`).
+#
+#   Pre-v25 rows archived to failure_db_snapshot_sim_v24.jsonl.
+SIMULATOR_VERSION = 25
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

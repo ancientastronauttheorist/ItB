@@ -24,6 +24,13 @@ pub struct JsonInput {
     pub spawning_tiles: Option<Vec<Vec<u8>>>,
     pub environment_danger: Option<Vec<Vec<u8>>>,
     pub environment_danger_v2: Option<Vec<Vec<u8>>>, // [[x, y, damage, kill_int, flying_immune?], ...]
+    /// Ice Storm freeze tiles (sim v25). List of [x, y]. Vanilla Env_SnowStorm
+    /// (Acid=false) routes here instead of `environment_danger`. Applied as
+    /// `Status::Frozen=true` on units at start of enemy turn — non-lethal.
+    /// NanoStorm (Env_NanoStorm = Env_SnowStorm:new{Acid=true}) does not use
+    /// this field; its 1-damage acid effect rides the existing non-lethal
+    /// `environment_danger_v2` path with kill_int=0.
+    pub environment_freeze: Option<Vec<Vec<u8>>>,
     /// Top-level env type tag from the bridge (e.g. "tidal_or_cataclysm",
     /// "cataclysm_or_seismic", "lightning_or_airstrike", "wind", "sandstorm",
     /// "snow"). Used as a back-compat fallback when v2 entries lack the 5th
@@ -399,6 +406,18 @@ pub fn board_from_json(json_str: &str)
     board.env_danger = env_danger;
     board.env_danger_kill = env_danger_kill;
     board.env_danger_flying_immune = env_danger_flying_immune;
+
+    // Ice Storm freeze tiles. Separate channel from env_danger — these tiles
+    // apply Frozen=true to units at start of enemy turn, no HP damage.
+    let mut env_freeze = 0u64;
+    if let Some(freeze) = &input.environment_freeze {
+        for f in freeze {
+            if f.len() >= 2 && f[0] < 8 && f[1] < 8 {
+                env_freeze |= 1u64 << xy_to_idx(f[0], f[1]);
+            }
+        }
+    }
+    board.env_freeze = env_freeze;
 
     // Teleporter pad pairs (Mission_Teleporter overlay from Board:AddTeleport)
     if let Some(pairs) = &input.teleporter_pairs {

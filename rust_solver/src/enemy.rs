@@ -318,6 +318,42 @@ pub fn simulate_enemy_attacks(
         }
     }
 
+    // Ice Storm freeze (sim v25). Fires at start of enemy turn — same step as
+    // env_danger per Lua source: Env_SnowStorm.Instant=true, ApplyEffect()
+    // queues SpaceDamage with iFrozen=1 iDamage=0 for all 9 marked tiles in
+    // a single batch (mission_snowstorm.lua:28-53). Frozen units have HP
+    // protected from the upcoming Vek attacks (the attack loop's
+    // `if e.frozen() || e.web() { continue; }` skip). Buildings and mountains
+    // are unaffected — Frozen is a unit status, terrain has no flag for it.
+    //
+    // Order vs env_danger: env_danger fires first so Lightning kills the
+    // unit before Ice Storm freezes its corpse. In practice Ice Storm and
+    // Lightning don't co-exist on the same mission (they're mutually exclusive
+    // env classes), so the order is a defensive convention rather than a
+    // tested invariant.
+    if board.env_freeze != 0 {
+        for tile_idx in 0usize..64 {
+            if board.env_freeze & (1u64 << tile_idx) == 0 { continue; }
+            let (x, y) = idx_to_xy(tile_idx);
+            if let Some(uidx) = board.unit_at(x, y) {
+                let unit = &mut board.units[uidx];
+                if unit.hp > 0 {
+                    if unit.shield() {
+                        // ITB shield rule: blocks one instance of damage OR
+                        // negative effect. Freeze is a negative effect, so
+                        // shield consumes and the unit stays unfrozen.
+                        unit.set_shield(false);
+                    } else if !unit.frozen() {
+                        // Already-frozen → idempotent (no double-flag); only
+                        // freshly-applied freeze sets the flag.
+                        unit.set_frozen(true);
+                    }
+                }
+            }
+            // Buildings/mountains/other terrain on this tile: untouched.
+        }
+    }
+
     // Egg hatch step: transform any surviving spider/spiderling egg into
     // its hatched live unit (sim v22). Runs AFTER fire tick + env_danger
     // so eggs killed by those still die without hatching, but BEFORE the

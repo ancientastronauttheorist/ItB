@@ -465,7 +465,45 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //     Previously sim_pull_or_swap silently exited in the no-pawn
 //     branch; now self-charges (FULL_PULL gated). No damage to obstacle.
 //   Pre-v24 rows archived to failure_db_snapshot_sim_v23.jsonl.
-pub const SIMULATOR_VERSION: u32 = 24;
+// v25 (2026-04-27, Ice Storm freeze application):
+//   Vanilla Env_SnowStorm tiles ("Ice Storm") were misclassified by the bridge
+//   as `lightning_or_airstrike` with kill=1 because Env_SnowStorm shares the
+//   `LiveEnvironment.Locations` field with Lightning/Air Strike, and the
+//   field-signature heuristic in modloader.lua:733 fired before the class-name
+//   fallback at line 760 — so Ice Storm tiles came across the wire as
+//   instant-kill Deadly Threats. Live consequence: Cryogenic Labs t1 score
+//   -158k with predicted_grid=0, mechs avoiding freeze tiles as if they were
+//   Air Strike, missing the freeze upside on enemies.
+//
+//   Bridge fix: class-metatable check (`Env_SnowStorm`) runs BEFORE field
+//   signatures and walks the inheritance chain. Vanilla SnowStorm
+//   (Acid=false) routes into the new `state.environment_freeze` channel —
+//   non-lethal, status-only. NanoStorm (Env_SnowStorm subclass with
+//   Acid=true) takes the existing non-lethal env_danger path
+//   (kill=0, damage=1). Field signatures stay as fallback for unrecognized
+//   classes; SnowStorm's Locations no longer leaks into the lightning branch.
+//
+//   Simulator: new `Board::env_freeze: u64` bitset. At start of enemy turn
+//   (right after env_danger application), every alive unit on a freeze tile
+//   gets `Frozen=true`. Shield blocks the freeze and is consumed (ITB shield
+//   rule: "blocks one instance of damage + negative effects"). Already-
+//   frozen units are idempotent. Buildings and mountains are untouched —
+//   Frozen is a unit status. Frozen Vek skip their attacks via the existing
+//   `if e.frozen() || e.web() { continue; }` guard, so damage prevention is
+//   captured naturally in the post-state.
+//
+//   Evaluator: small forward-looking `enemy_on_danger`-magnitude reward for
+//   non-flying enemies sitting on freeze tiles, signalling "push enemies
+//   here" pre-application. Mech-on-freeze cost rides the existing
+//   `mech_self_frozen` weight (-12000) — one lost turn, far less bad than
+//   the `mech_killed` magnitude that fires on real env_danger non-lethal
+//   tiles (sandstorm/wind/nano).
+//
+//   Wire: new optional `environment_freeze: Vec<[u8;2]>` on JsonInput.
+//   Older recordings without the field deserialize with env_freeze=0 — no
+//   behavior change on the existing corpus, just unblocks future Pinnacle
+//   freeze missions. Pre-v25 rows archived to failure_db_snapshot_sim_v24.jsonl.
+pub const SIMULATOR_VERSION: u32 = 25;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -212,8 +212,14 @@ ENVIRONMENT_TAGS: dict[str, list[str]] = {
     "Env_LightningStorm": ["env_lightning"],
     "Env_Cataclysm":    ["env_cataclysm"],
     "Env_Seismic":      ["env_cataclysm"],
+    # Vanilla Ice Storm. The in-game class is Env_SnowStorm; the display
+    # name "Ice Storm" comes from text_missions.lua:162 Env_SnowStorm_Name.
+    # The "Env_IceStorm" alias here used to be dead code — it never
+    # matched a real LiveEnvironment instance. Removed when the bridge
+    # classifier was rewritten in sim v25.
     "Env_SnowStorm":    ["defensive_freeze"],
-    "Env_IceStorm":     ["defensive_freeze"],
+    # NanoStorm (Detritus Acid variant): not a freeze; 1 damage + ACID.
+    "Env_NanoStorm":    ["env_acid"],
     "Env_Wind":         ["env_wind"],
     "Env_Null":         [],
 }

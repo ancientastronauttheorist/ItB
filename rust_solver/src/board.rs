@@ -294,6 +294,21 @@ pub struct Board {
     /// Subset of `env_danger_kill`. When a kill tile is NOT in this set,
     /// flying offers no protection.
     pub env_danger_flying_immune: u64,
+    /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
+    /// Env_SnowStorm). At start of enemy turn the simulator applies
+    /// Frozen=true to any alive unit standing on these tiles. Buildings
+    /// and mountains are unaffected (Frozen is a unit status). Shield
+    /// blocks the freeze and is consumed (per ITB shield rule:
+    /// "blocks one instance of damage + negative effects"). Already-
+    /// frozen units no-op (idempotent).
+    ///
+    /// Disjoint from `env_danger` — freeze tiles route here instead, so
+    /// the evaluator scores "lose a turn" via `mech_self_frozen` rather
+    /// than the "instant-kill or 1 dmg" branches that fire for env_danger.
+    /// NanoStorm (Acid=true SnowStorm subclass) is NOT here; it uses
+    /// env_danger with kill_int=0 since it deals 1 damage instead of
+    /// freezing.
+    pub env_freeze: u64,
     pub unique_buildings: u64,  // bitset: bit i = tile i is a mission objective building (Coal Plant, Power Generator, Emergency Batteries)
     pub grid_reward_buildings: u64, // bitset: subset of unique_buildings whose survival restores +1 Grid Power at mission end (Str_Power / Str_Battery / Mission_Solar). See evaluate.rs.
     pub blast_psion: bool,   // Blast Psion (Jelly_Explode1): all Vek explode on death
@@ -363,6 +378,7 @@ impl Default for Board {
             env_danger: 0,
             env_danger_kill: 0,
             env_danger_flying_immune: 0,
+            env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
             blast_psion: false,
@@ -481,6 +497,15 @@ impl Board {
     pub fn is_env_danger(&self, x: u8, y: u8) -> bool {
         let bit = 1u64 << xy_to_idx(x, y);
         self.env_danger & bit != 0
+    }
+
+    /// Is tile on the env_freeze bitset (Ice Storm)? Units standing here at
+    /// the start of the enemy turn get Frozen=true (shield blocks + consumed,
+    /// already-frozen idempotent, buildings/mountains unaffected).
+    #[inline]
+    pub fn is_env_freeze(&self, x: u8, y: u8) -> bool {
+        let bit = 1u64 << xy_to_idx(x, y);
+        self.env_freeze & bit != 0
     }
 
     /// Is tile on the env_danger_kill bitset (Deadly Threat / kill_int=1)?

@@ -637,6 +637,33 @@ pub fn evaluate(
         }
     }
 
+    // Ice Storm freeze tiles (sim v25). Pre-application reward signal: the
+    // simulator freezes units on these tiles BEFORE Vek attacks, but search
+    // commits actions before sim runs, so we need a forward-looking reward
+    // for getting an enemy onto a freeze tile. Reuses `enemy_on_danger`
+    // weight — the search bias is the same shape ("get enemy onto a tile
+    // where it'll be neutralized"), and avoiding a new tunable until the
+    // freeze branch has corpus data of its own.
+    //
+    // Mech penalty: NOT applied here. The simulator will set Frozen=true on
+    // the mech, and the existing `mech_self_frozen` branch (line ~700)
+    // captures the "lose a turn" cost. Crucially: a frozen mech is INVINCIBLE
+    // for that turn — far less bad than dying, so we deliberately avoid the
+    // `mech_killed`-magnitude penalty that the non-lethal env_danger branch
+    // above applies to wind/sand/nano damage tiles.
+    if board.env_freeze != 0 {
+        for i in 0..board.unit_count as usize {
+            let u = &board.units[i];
+            if !u.alive() { continue; }
+            if !board.is_env_freeze(u.x, u.y) { continue; }
+            if u.is_enemy() && !u.flying() {
+                // Flying enemies don't land on the freeze tile (effectively
+                // hover) — match the env_danger flying-skip convention.
+                score += scaled(weights.enemy_on_danger, ff, 0.20, 1.60);
+            }
+        }
+    }
+
     // ── Enemies on fire: SCALED (will take 1 damage next turn) ─────────
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];

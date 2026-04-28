@@ -197,6 +197,11 @@ class Board:
         self.environment_danger: set[tuple[int, int]] = set()
         self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
         # Maps (x,y) -> (damage, is_lethal)
+        # Ice Storm freeze tiles (Env_SnowStorm Acid=false). At start of enemy
+        # turn, units on these tiles get Frozen=true. Buildings/mountains are
+        # unaffected — frozen is a unit status. Separate from environment_danger
+        # so the evaluator can score "lose a turn" instead of "die".
+        self.environment_freeze: set[tuple[int, int]] = set()
         self.env_type: str = "unknown"
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
@@ -243,6 +248,7 @@ class Board:
         b.enemy_grid_save_expected = self.enemy_grid_save_expected
         b.environment_danger = set(self.environment_danger)
         b.environment_danger_v2 = dict(self.environment_danger_v2)
+        b.environment_freeze = set(self.environment_freeze)
         b.env_type = self.env_type
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
@@ -435,6 +441,12 @@ class Board:
                 board.environment_danger.add(pos)
                 if pos not in board.environment_danger_v2:
                     board.environment_danger_v2[pos] = (1, True)
+        # Ice Storm freeze tiles (sim v25). Vanilla Env_SnowStorm bypasses
+        # env_danger and lands here instead — applied as Frozen status by
+        # the simulator at start of enemy turn.
+        for ft in data.get("environment_freeze", []):
+            if isinstance(ft, (list, tuple)) and len(ft) >= 2 and ft[0] < 8 and ft[1] < 8:
+                board.environment_freeze.add((ft[0], ft[1]))
 
         # Units
         for ud in data.get("units", []):
