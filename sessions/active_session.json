@@ -6,55 +6,55 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 11,
+  "mission_index": 12,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 2,
-        "mech_type": "GravMech",
+        "mech_uid": 0,
+        "mech_type": "WallMech",
         "move_to": [
-          7,
-          4
+          1,
+          5
         ],
-        "weapon": "Science_Gravwell",
+        "weapon": "Brute_Grapple",
         "target": [
-          5,
-          4
+          1,
+          3
         ],
-        "description": "GravMech, fire Grav Well at D3"
+        "description": "WallMech, fire Grappling Hook at E7"
       },
       {
         "mech_uid": 1,
         "mech_type": "ArtiMech",
         "move_to": [
-          6,
-          4
+          1,
+          3
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          3,
-          4
-        ],
-        "description": "ArtiMech, fire Artemis Artillery at D5"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "WallMech",
-        "move_to": [
-          4,
+          5,
           3
         ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
+        "description": "ArtiMech, move F6\u2192E7, fire Artemis Artillery at E3"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "GravMech",
+        "move_to": [
+          0,
+          5
         ],
-        "description": "WallMech, move C4\u2192E4"
+        "weapon": "Science_Gravwell",
+        "target": [
+          3,
+          5
+        ],
+        "description": "GravMech, move D5\u2192C8, fire Grav Well at C5"
       }
     ],
-    "score": 63890.71452379227,
+    "score": 102008.57148834637,
     "turn": 4
   },
   "actions_executed": 0,
@@ -576,6 +576,50 @@
         "ArtiMech, fire Artemis Artillery at D5",
         "WallMech, move C4\u2192E4"
       ]
+    },
+    {
+      "timestamp": "2026-04-27T22:49:46.285237",
+      "turn": 1,
+      "label": "solve",
+      "score": 71268.57148834637,
+      "actions": [
+        "ArtiMech, fire Artemis Artillery at D7",
+        "WallMech, move E6\u2192D7, fire Grappling Hook at D5",
+        "GravMech, move G5\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:50:32.929951",
+      "turn": 2,
+      "label": "solve",
+      "score": 83247.619047619,
+      "actions": [
+        "WallMech, move D7\u2192C8, fire Grappling Hook at C6",
+        "GravMech, move E6\u2192B5, fire Grav Well at D5",
+        "ArtiMech, fire Artemis Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:52:10.730606",
+      "turn": 3,
+      "label": "solve",
+      "score": 86727.14291351182,
+      "actions": [
+        "WallMech, move C8\u2192C7, fire Grappling Hook at C5",
+        "ArtiMech, move D6\u2192F6, fire Artemis Artillery at F3",
+        "GravMech, move B5\u2192D5, fire Grav Well at D7"
+      ]
+    },
+    {
+      "timestamp": "2026-04-27T22:53:07.691697",
+      "turn": 4,
+      "label": "solve",
+      "score": 102008.57148834637,
+      "actions": [
+        "WallMech, fire Grappling Hook at E7",
+        "ArtiMech, move F6\u2192E7, fire Artemis Artillery at E3",
+        "GravMech, move D5\u2192C8, fire Grav Well at C5"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -701,6 +745,18 @@
     ],
     [
       11,
+      3
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      12,
+      2
+    ],
+    [
+      12,
       3
     ]
   ],
@@ -2949,12 +3005,93 @@
           5
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Grapple|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Brute_Grapple",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 12,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_Gravwell|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Science_Gravwell",
+        "target": [
+          3,
+          5
+        ]
+      }
     }
   ],
   "disabled_actions": [
     {
       "weapon_id": "Science_Gravwell",
-      "cause_pattern": "push_dir|Science_Gravwell|attack|status|Science_Gravwell|attack",
+      "cause_pattern": "damage_amount|Science_Gravwell|attack",
       "expires_turn": 7,
       "strategic_override": false
     }
@@ -3258,6 +3395,27 @@
         4
       ],
       "severity": "medium"
+    },
+    {
+      "type": "Hornet2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "",
+      "first_seen_turn": 4,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 3,
+        "diff_actual": 4
+      },
+      "diff_field": "hp",
+      "diff_predicted": 3,
+      "diff_actual": 4,
+      "severity": "low"
     }
   ],
   "diagnosis_queue": []

@@ -4,13 +4,13 @@
   "difficulty": 2,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-bd2d4e2",
+  "solver_version": "rust-0.1.0-870c22f",
   "weight_version": "v010",
-  "updated": "2026-04-27T22:47:17.405239",
+  "updated": "2026-04-27T22:55:12.340756",
   "created": "2026-04-25T18:55:32.234959",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 11,
-  "outcome_recorded_at": "2026-04-27T22:47:17.392833",
-  "outcome_notes": "Robotics Repair: Block 3 spawns + Coal Plant. Sim v25 first live test, no Ice Storm on this mission but no regressions."
+  "outcome_mission": 12,
+  "outcome_recorded_at": "2026-04-27T22:55:12.328263",
+  "outcome_notes": "Ice Forest: 1/2 bonuses (broke 5 buildings, missed kill-7). No Ice Storm hazard on this mission."
 }
