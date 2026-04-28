@@ -120,12 +120,19 @@ class ActiveSolution:
     actions: list[SolverAction]
     score: float
     turn: int  # which turn this solution is for
+    # Fingerprint of the unit roster (uid,x,y,hp tuples) the solver
+    # consumed when producing this plan. Used by cmd_auto_turn to
+    # detect stale-state reuse when bridge animations had not yet
+    # propagated unit deaths at solve time. Empty string for legacy
+    # / synthetic solutions where no fingerprint is available.
+    input_fingerprint: str = ""
 
     def to_dict(self) -> dict:
         return {
             "actions": [a.to_dict() for a in self.actions],
             "score": self.score,
             "turn": self.turn,
+            "input_fingerprint": self.input_fingerprint,
         }
 
     @classmethod
@@ -134,6 +141,7 @@ class ActiveSolution:
             actions=[SolverAction.from_dict(a) for a in d["actions"]],
             score=d["score"],
             turn=d["turn"],
+            input_fingerprint=d.get("input_fingerprint", ""),
         )
 
 
@@ -238,10 +246,12 @@ class RunSession:
 
     # --- Solution management ---
 
-    def set_solution(self, actions: list[SolverAction], score: float, turn: int):
+    def set_solution(self, actions: list[SolverAction], score: float,
+                     turn: int, input_fingerprint: str = ""):
         """Store a new solver solution. Resets execution counter."""
         self.active_solution = ActiveSolution(
-            actions=actions, score=score, turn=turn
+            actions=actions, score=score, turn=turn,
+            input_fingerprint=input_fingerprint,
         )
         self.actions_executed = 0
 

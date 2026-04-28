@@ -35,7 +35,9 @@ from src.control.executor import (
     recalibrate,
 )
 from src.capture.detect_grid import find_game_window, grid_from_window
-from src.bridge.protocol import is_bridge_active, refresh_bridge_state, BridgeError
+from src.bridge.protocol import (
+    is_bridge_active, refresh_bridge_state, read_state, BridgeError,
+)
 from src.bridge.reader import read_bridge_state
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
@@ -666,6 +668,34 @@ def _write_run_summary(session: RunSession, outcome: str) -> None:
 def _bv(x: int, y: int) -> str:
     """Bridge (x,y) to visual notation (e.g. 'C5'). Matches game board labels."""
     return f"{chr(72 - y)}{8 - x}"
+
+
+def _unit_roster_fingerprint(bridge_data: dict | None) -> str:
+    """Return a stable string fingerprint of the live unit roster.
+
+    Captures (uid, x, y, hp) for each entry in ``bridge_data["units"]``.
+    Used by cmd_auto_turn to detect bridge-state staleness — if cmd_solve
+    cached a solution against a roster snapshot that no longer matches the
+    current bridge state, the cached predicted_states are unreliable and
+    must not be reused for verify_action diffs.
+
+    Returns "" when bridge_data is missing or has no units.
+    """
+    if not bridge_data:
+        return ""
+    units = bridge_data.get("units") or []
+    if not units:
+        return ""
+    parts: list[str] = []
+    for u in units:
+        uid = u.get("uid")
+        if uid is None:
+            continue
+        parts.append(
+            f"{uid}:{u.get('x', -1)},{u.get('y', -1)}:{u.get('hp', 0)}"
+        )
+    parts.sort()
+    return "|".join(parts)
 
 
 def _enqueue_behavior_novelty(
@@ -1687,7 +1717,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         session.save()
         return result
 
-    # Store solution in session
+    # Store solution in session — stamp the fingerprint of the roster
+    # we solved against so cmd_auto_turn can detect stale cached
+    # solutions if a future call sees a different roster.
     solver_actions = []
     for a in solution.actions:
         solver_actions.append(SolverAction(
@@ -1698,7 +1730,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             target=a.target,
             description=a.description,
         ))
-    session.set_solution(solver_actions, solution.score, current_turn)
+    input_fp = _unit_roster_fingerprint(bridge_data)
+    session.set_solution(solver_actions, solution.score, current_turn,
+                         input_fingerprint=input_fp)
 
     # Build result
     result = {
@@ -4754,11 +4788,29 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         import time as _t
         poll_start = _t.time()
         read_result = cmd_read(profile=profile)
-        while not _ready(read_result) and _t.time() - poll_start < max_wait:
+        prev_fp: str | None = None
+        while _t.time() - poll_start < max_wait:
             phase = read_result.get("phase")
             # Terminal states — don't keep polling.
             if read_result.get("game_over") or phase in ("mission_end", "unknown"):
                 break
+            if _ready(read_result):
+                # State-stability check: bridge may report
+                # phase=combat_player + active_mechs>0 while still listing
+                # units that died during the just-finished enemy phase
+                # (animations propagate to the JSON dump on a separate
+                # tick). Require two consecutive reads with matching unit
+                # rosters before exiting. See feedback_enemy_turn_
+                # animation_window.md and m13 t03 phantom-uid retrospective.
+                _peek_data = (
+                    read_state() if is_bridge_active() else None
+                )
+                cur_fp = _unit_roster_fingerprint(_peek_data)
+                if prev_fp is not None and cur_fp == prev_fp:
+                    break
+                prev_fp = cur_fp
+            else:
+                prev_fp = None
             _t.sleep(1.5)
             read_result = cmd_read(profile=profile)
     else:
@@ -4778,6 +4830,25 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         }
         _print_result(result)
         return result
+
+    # Stale active_solution guard: if a previous auto_turn invocation
+    # cached a solution against a now-stale roster (the m13 t03 phantom-
+    # uid bug), drop it before we solve fresh. Any verify_action against
+    # the stale predicted_states would fire false-positive desyncs.
+    _stale_session = _load_session()
+    if _stale_session.active_solution is not None:
+        cached_fp = _stale_session.active_solution.input_fingerprint
+        cached_turn = _stale_session.active_solution.turn
+        cur_turn = read_result.get("turn", 0)
+        cur_data = read_state() if is_bridge_active() else None
+        cur_fp = _unit_roster_fingerprint(cur_data)
+        # Different turn → the next solve will overwrite it anyway;
+        # mismatched fingerprint on the same turn → stale cache.
+        if (cached_turn != cur_turn
+                or (cached_fp and cur_fp and cached_fp != cur_fp)):
+            _stale_session.active_solution = None
+            _stale_session.actions_executed = 0
+            _stale_session.save()
 
     # Research gate — pick up the flag cmd_read already set when
     # either (a) unknown_detector flagged name novelty or (b)
