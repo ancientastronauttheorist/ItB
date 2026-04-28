@@ -597,7 +597,39 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   solver thought Lifeless Basin's frozen Vek were permanently inert
 //   and under-priced threats to the grid: the proximate cause of the
 //   4-grid leak in run 20260425_185532_218 (sim_v29 → sim_v30 fix).
-pub const SIMULATOR_VERSION: u32 = 30;
+// v31 (2026-04-28) — Pinnacle Bot Leader weapon defs (SnowBossAtk +
+//   BossHeal). Per `scripts/missions/bosses/bot.lua`:
+//     • SnowBossAtk = SnowartAtk1:new{Damage = 2}  (line 67) — 3-tile T
+//       artillery (target + both perpendicular tiles for 2 damage each)
+//       per `weapons_snow.lua:120-135`. SnowBossAtk2 = same with damage 4.
+//     • BossHeal = SelfTarget:new{...}  (lines 28-41) — when boss is
+//       damaged at end of player turn, queues this skill instead of
+//       SnowBossAtk; on resolve, applies Shield to self IMMEDIATELY and
+//       queues +5 HP / remove-shield for the FOLLOWING enemy turn.
+//   Pre-v31 the simulator fell through to the Boss/Leader unknown-enemy
+//   fallback (3-dmg single-target Alpha melee), so plans against the Bot
+//   Leader mispredicted "deal 3 damage = boss almost dead" while the
+//   real game was 2 dmg × 3-tile splash + auto-shield. Implementation:
+//     1. Three new WIds (SnowBossAtk=119, SnowBossAtk2=120, BossHeal=121)
+//        with proper weapon defs in `rust_solver/src/weapons.rs`.
+//     2. `enemy_weapon_for_type`: BotBoss → SnowBossAtk,
+//        BotBoss2 → SnowBossAtk2.
+//     3. `sim_artillery` (player-side) + the enemy.rs Artillery arm now
+//        honor `WeaponFlags::AOE_PERP` (previously only `sim_melee` and the
+//        Projectile arm did) — required for the 3-tile T pattern.
+//     4. enemy.rs enemy-attack loop special-cases BossHeal: when the
+//        firing unit is BotBoss/BotBoss2, has BossHeal as weapon2, and is
+//        damaged (`hp < max_hp`), the dispatch wid is overridden to
+//        BossHeal and `apply_weapon_status` is called on the boss's own
+//        tile to set the SHIELD flag. Mirrors the Lua `BotBoss:GetWeapon`
+//        decision (skill index 2 vs 1).
+//   Out of scope (deferred to a future sim version): the queued next-turn
+//   +5 heal, which is outside the 1-turn solver horizon. Single-turn
+//   prediction now correctly models damage AND end-of-turn shield state;
+//   multi-turn lookahead can later add the pending-heal as a unit flag.
+//   Pre-v31 corpus archived as `failure_db_snapshot_sim_v30.jsonl` per
+//   CLAUDE.md rule 22.
+pub const SIMULATOR_VERSION: u32 = 31;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

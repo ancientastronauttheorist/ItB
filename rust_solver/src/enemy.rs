@@ -583,7 +583,28 @@ pub fn simulate_enemy_attacks(
         let orig = original_positions[ei];
 
         // Look up actual weapon type from enemy pawn type
-        let enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
+        let mut enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
+
+        // Bot Leader (BotBoss / BotBoss2) — Self-Repairing skill selection.
+        // Per `scripts/missions/bosses/bot.lua:59-65`, `BotBoss:GetWeapon()`
+        // returns skill index 2 (BossHeal) when `Pawn:IsDamaged()` and skill
+        // index 1 (SnowBossAtk / SnowBossAtk2) otherwise. The bridge always
+        // serializes `weapons[0]` into `unit.weapon` and `weapons[1]` into
+        // `unit.weapon2`, so we can't read the active skill straight off the
+        // unit. Mirror the boss's own decision instead: when the boss is
+        // damaged AND has BossHeal as its second skill, the queued attack is
+        // BossHeal — switch the dispatch wid so the SelfAoe arm fires the
+        // immediate self-shield (the queued next-turn heal is outside the
+        // 1-turn solver horizon — see lib.rs sim v31 notes).
+        {
+            let tname = enemy.type_name_str();
+            if (tname == "BotBoss" || tname == "BotBoss2")
+                && enemy.weapon2 == WeaponId(WId::BossHeal as u16)
+                && enemy.hp < enemy.max_hp
+            {
+                enemy_wid = WId::BossHeal;
+            }
+        }
         // Unknown-enemy fallback. Boss/Leader types default to a stronger
         // template (Alpha Firefly / Alpha Hornet = 3 dmg) because an
         // unmapped boss missing from `enemy_weapon_for_type` is far more
@@ -624,6 +645,21 @@ pub fn simulate_enemy_attacks(
         let weapon_behind = enemy.weapon_target_behind;
 
         let vh = board.vek_hormones;
+
+        // BossHeal special-case: Bot Leader's Self-Repairing skill applies
+        // Shield to self this enemy turn and queues a +5 heal for the
+        // FOLLOWING enemy turn (out of 1-turn solver horizon — see
+        // lib.rs sim v31 notes for rationale). Implementation:
+        // `apply_weapon_status` on the boss's own tile, which sets the
+        // SHIELD flag on the unit per BossHeal's `flags: SHIELD`.
+        // BossHeal does NOT consume the existing shield — `apply_weapon_status`
+        // handles the "shield blocks negative status without consuming" rule
+        // but Shield is itself a positive status, so it sets/refreshes
+        // unconditionally. No damage is applied (wdef.damage=0), no push.
+        if enemy_wid == WId::BossHeal {
+            apply_weapon_status(board, ex, ey, wdef);
+            continue;
+        }
 
         match wdef.weapon_type {
             WeaponType::Projectile => {
@@ -760,6 +796,32 @@ pub fn simulate_enemy_attacks(
                     if !in_bounds(tx_n, ty_n) { break; }
                     let d_n = enemy_hit_damage(board, tx_n as u8, ty_n as u8, damage, vh);
                     apply_damage(board, tx_n as u8, ty_n as u8, d_n, &mut result, DamageSource::Weapon);
+                }
+
+                // aoe_perpendicular: hit two tiles flanking the target
+                // perpendicular to firing direction. Used by SnowBossAtk /
+                // SnowBossAtk2 (Bot Leader's Vk8 Rockets Mk III/IV) — Lua
+                // SnowartAtk1:GetSkillEffect (weapons_snow.lua:120-135)
+                // damages p2 + p2+DIR_VECTORS[(dir+1)%4] + p2+DIR_VECTORS
+                // [(dir-1)%4]. The dir here is computed from the (offset) cardinal
+                // axis of attack, NOT the unit's facing — so we use dx_sign/dy_sign.
+                if wdef.aoe_perpendicular() {
+                    // Perp directions: rotate the firing axis 90° both ways.
+                    // Firing east-west (dy_sign==0): perps are (0,±1).
+                    // Firing north-south (dx_sign==0): perps are (±1,0).
+                    let perp: [(i8, i8); 2] = if dx_sign != 0 && dy_sign == 0 {
+                        [(0, 1), (0, -1)]
+                    } else {
+                        [(1, 0), (-1, 0)]
+                    };
+                    for &(pdx, pdy) in &perp {
+                        let px = new_tx + pdx;
+                        let py = new_ty + pdy;
+                        if !in_bounds(px, py) { continue; }
+                        let d_p = enemy_hit_damage(board, px as u8, py as u8, damage, vh);
+                        apply_damage(board, px as u8, py as u8, d_p, &mut result, DamageSource::Weapon);
+                        apply_weapon_status(board, px as u8, py as u8, wdef);
+                    }
                 }
 
                 // Spawn-artillery side effects: Spider (webb eggs) and
@@ -1800,5 +1862,146 @@ mod tests {
             .filter(|u| !u.frozen())
             .count();
         assert_eq!(thawed, 2, "exactly 2 thaw per enemy turn");
+    }
+
+    // ── Pinnacle Bot Leader (sim v31) ─────────────────────────────────────────
+
+    /// SnowBossAtk hits 3 tiles in a T-pattern (target + both perpendicular)
+    /// for 2 damage each. Per `bot.lua:67` SnowBossAtk inherits SnowartAtk1's
+    /// SkillEffect (weapons_snow.lua:120-135) which damages
+    /// p2 + p2+DIR_VECTORS[(dir+1)%4] + p2+DIR_VECTORS[(dir-1)%4].
+    #[test]
+    fn test_snow_boss_atk_hits_three_tiles() {
+        let mut board = Board::default();
+        // Bot Leader at (0,3) — full HP so it casts SnowBossAtk (not BossHeal).
+        // Targets (3,3): SnowartAtk1 fires east. dir=East (+x).
+        // Perp tiles: (3,2) and (3,4).
+        // Place 3 buildings at the 3 expected hit tiles.
+        for (bx, by) in [(3, 3), (3, 2), (3, 4)] {
+            board.tile_mut(bx, by).terrain = Terrain::Building;
+            board.tile_mut(bx, by).building_hp = 3; // 3 HP so 2 dmg leaves 1
+        }
+        let mut boss = Unit {
+            uid: 1, x: 0, y: 3, hp: 5, max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::HAS_QUEUED_ATTACK,
+            queued_target_x: 3, queued_target_y: 3,
+            weapon_damage: 2,
+            weapon: WeaponId(WId::SnowBossAtk as u16),
+            weapon2: WeaponId(WId::BossHeal as u16),
+            ..Default::default()
+        };
+        boss.set_type_name("BotBoss");
+        board.add_unit(boss);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        // All three buildings took 2 damage each → 1 HP remaining.
+        assert_eq!(board.tile(3, 3).building_hp, 1,
+            "center tile (3,3) should take 2 dmg from SnowBossAtk");
+        assert_eq!(board.tile(3, 2).building_hp, 1,
+            "perp tile (3,2) should take 2 dmg from SnowBossAtk");
+        assert_eq!(board.tile(3, 4).building_hp, 1,
+            "perp tile (3,4) should take 2 dmg from SnowBossAtk");
+    }
+
+    /// SnowBossAtk2 (BotBoss2): same shape, 4 damage per tile.
+    #[test]
+    fn test_snow_boss_atk2_hits_three_tiles_for_four_damage() {
+        let mut board = Board::default();
+        for (bx, by) in [(3, 3), (3, 2), (3, 4)] {
+            board.tile_mut(bx, by).terrain = Terrain::Building;
+            board.tile_mut(bx, by).building_hp = 5;
+        }
+        let mut boss = Unit {
+            uid: 1, x: 0, y: 3, hp: 6, max_hp: 6,
+            team: Team::Enemy,
+            flags: UnitFlags::HAS_QUEUED_ATTACK,
+            queued_target_x: 3, queued_target_y: 3,
+            weapon_damage: 4,
+            weapon: WeaponId(WId::SnowBossAtk2 as u16),
+            weapon2: WeaponId(WId::BossHeal as u16),
+            ..Default::default()
+        };
+        boss.set_type_name("BotBoss2");
+        board.add_unit(boss);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 3).building_hp, 1, "center (3,3): 5-4=1");
+        assert_eq!(board.tile(3, 2).building_hp, 1, "perp (3,2): 5-4=1");
+        assert_eq!(board.tile(3, 4).building_hp, 1, "perp (3,4): 5-4=1");
+    }
+
+    /// BossHeal applies Shield to self when boss is damaged. Per
+    /// `bot.lua:32-41`, `BossHeal:GetSkillEffect` calls `AddDamage(SpaceDamage(p1))`
+    /// with `iShield = 1` immediately. The detection in enemy.rs requires
+    /// type=BotBoss/BotBoss2, weapon2=BossHeal, and hp<max_hp; under those
+    /// conditions the dispatch wid is overridden to BossHeal and shield is
+    /// applied to the boss's own tile.
+    #[test]
+    fn test_boss_heal_applies_shield_when_damaged() {
+        let mut board = Board::default();
+        // Damaged boss (3/5 HP) — IsDamaged() is true → telegraphs BossHeal.
+        let mut boss = Unit {
+            uid: 1, x: 4, y: 4, hp: 3, max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::HAS_QUEUED_ATTACK,
+            // Bridge typically reports queued_target = self for SelfTarget skills.
+            queued_target_x: 4, queued_target_y: 4,
+            weapon_damage: 2, // bridge always reports weapons[0].Damage
+            weapon: WeaponId(WId::SnowBossAtk as u16),
+            weapon2: WeaponId(WId::BossHeal as u16),
+            ..Default::default()
+        };
+        boss.set_type_name("BotBoss");
+        let bidx = board.add_unit(boss);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[bidx].shield(),
+            "Damaged Bot Leader should apply Shield to itself via BossHeal");
+        assert_eq!(board.units[bidx].hp, 3,
+            "Boss HP unchanged (BossHeal deals 0 damage; queued +5 heal is NOT in 1-turn horizon)");
+    }
+
+    /// At full HP the boss does NOT cast BossHeal — `BotBoss:GetWeapon()`
+    /// returns 1 (SnowBossAtk) when not damaged. The detection condition
+    /// `hp < max_hp` is false, so the artillery arm fires normally.
+    #[test]
+    fn test_boss_does_not_heal_when_undamaged() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 3;
+        let mut boss = Unit {
+            uid: 1, x: 0, y: 4, hp: 5, max_hp: 5, // FULL HP
+            team: Team::Enemy,
+            flags: UnitFlags::HAS_QUEUED_ATTACK,
+            queued_target_x: 3, queued_target_y: 4,
+            weapon_damage: 2,
+            weapon: WeaponId(WId::SnowBossAtk as u16),
+            weapon2: WeaponId(WId::BossHeal as u16),
+            ..Default::default()
+        };
+        boss.set_type_name("BotBoss");
+        let bidx = board.add_unit(boss);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(!board.units[bidx].shield(),
+            "Undamaged boss should fire SnowBossAtk (no shield from BossHeal)");
+        assert_eq!(board.tile(3, 4).building_hp, 1,
+            "Building should take 2 dmg from SnowBossAtk center tile");
+    }
+
+    /// `enemy_weapon_for_type` mappings for the Bot Leader pawns.
+    #[test]
+    fn test_bot_leader_weapon_mapping() {
+        assert_eq!(enemy_weapon_for_type("BotBoss"), WId::SnowBossAtk);
+        assert_eq!(enemy_weapon_for_type("BotBoss2"), WId::SnowBossAtk2);
     }
 }

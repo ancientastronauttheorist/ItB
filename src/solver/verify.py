@@ -336,7 +336,38 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   the solver under-priced threats on Lifeless Basin / any
 #   Mission_Reactivation board because frozen Vek looked permanently
 #   inert — caused 4-grid leak documented at run 20260425_185532_218.
-SIMULATOR_VERSION = 30
+# v31 (2026-04-28) — Pinnacle Bot Leader weapon defs (SnowBossAtk +
+#   BossHeal). `scripts/missions/bosses/bot.lua`:
+#     • `SnowBossAtk = SnowartAtk1:new{Damage = 2}` (line 67) —
+#       3-tile T artillery (target + both perpendicular tiles for
+#       2 damage each) per `weapons_snow.lua:120-135`.
+#       `SnowBossAtk2 = same with damage 4` for BotBoss2.
+#     • `BossHeal = SelfTarget:new{...}` (lines 28-41) — when the boss
+#       is damaged at end of player turn, queues this skill instead of
+#       SnowBossAtk; applies Shield IMMEDIATELY and queues +5 HP /
+#       remove-shield for the FOLLOWING enemy turn.
+#   Pre-v31 the sim fell through to the Boss/Leader unknown-enemy
+#   fallback (3-dmg single-target Alpha melee) — plans against Bot
+#   Leader mispredicted "deal 3 dmg = boss almost dead" while the real
+#   game did 2 dmg × 3-tile splash + auto-shield. Rust changes:
+#     1. Three new WIds (SnowBossAtk=119, SnowBossAtk2=120, BossHeal=121).
+#     2. `enemy_weapon_for_type`: BotBoss → SnowBossAtk, BotBoss2 →
+#        SnowBossAtk2.
+#     3. `sim_artillery` (rust_solver/src/simulate.rs) and the enemy.rs
+#        Artillery arm now honor `WeaponFlags::AOE_PERP` for the 3-tile
+#        T pattern (previously only `sim_melee` + Projectile arm did).
+#     4. enemy.rs enemy-attack loop special-cases BossHeal: when the
+#        firing unit is BotBoss/BotBoss2, has BossHeal as weapon2, and
+#        is damaged (`hp < max_hp`), the dispatch wid is overridden to
+#        BossHeal and `apply_weapon_status` is called on the boss's own
+#        tile to set the SHIELD flag. Mirrors the Lua `BotBoss:GetWeapon`
+#        decision (skill index 2 vs 1).
+#   Out of scope: the queued next-turn +5 heal — outside the 1-turn
+#   solver horizon. Single-turn prediction now correctly models damage
+#   AND end-of-turn shield; multi-turn lookahead can later add the
+#   pending-heal as a unit flag.
+#   Pre-v31 corpus archived as failure_db_snapshot_sim_v30.jsonl.
+SIMULATOR_VERSION = 31
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

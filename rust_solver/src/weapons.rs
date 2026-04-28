@@ -308,9 +308,31 @@ pub enum WId {
     /// BlobBossSmall "Goo Attack" (Small Goo): same queued-damage pattern
     /// as BlobBossAtk per goo.lua:198-206 (`BlobBossAtkSmall = BlobBossAtk:new{...}`).
     BlobBossAtkSmall = 118,
+
+    /// Bot Leader (BotBoss) — Vk8 Rockets Mark III: 3-tile artillery T-pattern,
+    /// 2 damage to target + both perpendicular tiles. No push.
+    /// Per `scripts/missions/bosses/bot.lua:67`, `SnowBossAtk = SnowartAtk1:new{Damage = 2}`,
+    /// inheriting the 3-tile pattern from `SnowartAtk1:GetSkillEffect`
+    /// (weapons_snow.lua:120-135) which damages p2 + p2+(dir+1)%4 + p2+(dir-1)%4.
+    SnowBossAtk = 119,
+    /// Bot Leader Mk2 (BotBoss2) — Vk8 Rockets Mark IV: same 3-tile T-pattern,
+    /// 4 damage. Per `bot.lua:79`, `SnowBossAtk2 = SnowartAtk1:new{Damage = 4}`.
+    SnowBossAtk2 = 120,
+    /// Bot Leader's "Self-Repairing" passive — `BossHeal = SelfTarget:new{...}`
+    /// per `bot.lua:28-41`. When the boss is damaged at end of player turn, it
+    /// telegraphs BossHeal instead of SnowBossAtk (decided by `BotBoss:GetWeapon()`
+    /// returning skill index 2 vs 1 via `Pawn:IsDamaged()`). On the resolving
+    /// enemy turn the SkillEffect:
+    ///   • applies Shield to self IMMEDIATELY (`AddDamage` with iShield=1),
+    ///   • queues +5 HP + remove-shield for the FOLLOWING enemy turn
+    ///     (`AddQueuedDamage` with damage=-5 and iShield=-1).
+    /// This sim implements the immediate self-shield (sim v31). The queued
+    /// next-turn heal is outside the 1-turn horizon — see lib.rs sim v31 notes
+    /// for the design rationale.
+    BossHeal = 121,
 }
 
-pub const WEAPON_COUNT: usize = 119;
+pub const WEAPON_COUNT: usize = 122;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -669,6 +691,33 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[118] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::None,
         flags: f(WeaponFlags::QUEUED_DAMAGE_PERSISTS.bits()), ..DEF };
 
+    // 119: SnowBossAtk — Bot Leader's Vk8 Rockets Mark III. Per
+    // `bot.lua:67`, `SnowBossAtk = SnowartAtk1:new{Damage = 2}`. The
+    // SnowartAtk1 SkillEffect (weapons_snow.lua:120-135) damages 3 tiles in a
+    // T-pattern around p2: p2 (the targeted tile, AOE_CENTER from helper `f`)
+    // + the two perpendicular tiles to firing direction (AOE_PERP). Each tile
+    // takes `Damage` (2 here). No push, no status effects. range_min=2 so the
+    // boss can't fire at adjacent tiles.
+    w[119] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, damage_outer: 2,
+        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+    // 120: SnowBossAtk2 — Bot Leader Mk2's Vk8 Rockets Mark IV. Per
+    // `bot.lua:79`, `SnowBossAtk2 = SnowartAtk1:new{Damage = 4}`. Same shape
+    // as SnowBossAtk, just 4 damage instead of 2.
+    w[120] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, damage_outer: 4,
+        range_min: 2, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+    // 121: BossHeal — Bot Leader's Self-Repairing skill. Per `bot.lua:28-41`,
+    // `BossHeal = SelfTarget:new{Name = "Boss Heal"}` with a SkillEffect that
+    // applies Shield (iShield=1) immediately to p1 (=self) AND queues a -5
+    // damage / iShield=-1 (heal 5 + remove shield) for the FOLLOWING enemy
+    // turn. Modeled as a no-damage SelfAoe with only AOE_CENTER + SHIELD —
+    // the enemy-phase dispatch path special-cases BotBoss/BotBoss2 firing
+    // BossHeal (queued_target == self) to call `apply_weapon_status` on the
+    // boss's own tile, which sets the SHIELD flag. The next-turn heal is
+    // outside the 1-turn solver horizon and is intentionally NOT simulated;
+    // see lib.rs sim v31 notes.
+    w[121] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::None,
+        flags: f_nc(WeaponFlags::SHIELD.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -867,6 +916,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "BlobBossAtk" => WId::BlobBossAtk,
         "BlobBossAtkMed" => WId::BlobBossAtkMed,
         "BlobBossAtkSmall" => WId::BlobBossAtkSmall,
+        "SnowBossAtk" => WId::SnowBossAtk,
+        "SnowBossAtk2" => WId::SnowBossAtk2,
+        "BossHeal" => WId::BossHeal,
         _ => WId::None,
     }
 }
@@ -981,6 +1033,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BlobBossAtk => "BlobBossAtk",
         WId::BlobBossAtkMed => "BlobBossAtkMed",
         WId::BlobBossAtkSmall => "BlobBossAtkSmall",
+        WId::SnowBossAtk => "SnowBossAtk",
+        WId::SnowBossAtk2 => "SnowBossAtk2",
+        WId::BossHeal => "BossHeal",
         _ => "",
     }
 }
@@ -1039,6 +1094,18 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Snowart2" => WId::SnowartAtk2,
         "Burnbug1" => WId::BurnbugAtk1,
         "Burnbug2" => WId::BurnbugAtk2,
+        // Pinnacle finale boss — Bot Leader. Skill selection (SnowBossAtk vs
+        // BossHeal) is decided by Lua `BotBoss:GetWeapon()` based on
+        // `Pawn:IsDamaged()`; the bridge serializes the *selected* skill into
+        // the unit's weapon[0]/weapon[1] slots, but our `weapon_damage` always
+        // reflects weapons[0]'s Damage (=2 / =4) for both. The enemy-phase
+        // dispatcher disambiguates BossHeal vs SnowBossAtk by inspecting
+        // `unit.weapon` (=BossHeal when boss is damaged) — see enemy.rs.
+        // The default mapping points at the offensive skill; the BossHeal
+        // arm overrides via the dedicated detection block before
+        // weapon-type dispatch.
+        "BotBoss" => WId::SnowBossAtk,
+        "BotBoss2" => WId::SnowBossAtk2,
         // Minions
         "Spiderling1" | "Spiderling2" => WId::SpiderlingAtk1,
         s if s.starts_with("BlobMini") => WId::BlobAtk1,
@@ -1181,6 +1248,9 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BlobBossAtk => "Goo Attack",
         WId::BlobBossAtkMed => "Goo Attack (Med)",
         WId::BlobBossAtkSmall => "Goo Attack (Small)",
+        WId::SnowBossAtk => "Vk8 Rockets Mark III",
+        WId::SnowBossAtk2 => "Vk8 Rockets Mark IV",
+        WId::BossHeal => "Self-Repairing",
         _ => "Unknown",
     }
 }

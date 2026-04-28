@@ -1478,6 +1478,26 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             apply_weapon_status(board, nx as u8, ny as u8, wdef);
         }
     }
+
+    // AoE perpendicular: hit two tiles flanking the target perpendicular to
+    // firing direction. Used by SnowBossAtk / SnowartAtk family — Lua
+    // SnowartAtk1:GetSkillEffect (weapons_snow.lua:120-135) damages
+    // p2 + p2+DIR_VECTORS[(dir+1)%4] + p2+DIR_VECTORS[(dir-1)%4]. Each tile
+    // takes `wdef.damage`. Status effects (apply_weapon_status) propagate to
+    // the side tiles too. Mirrors the projectile-arm AOE_PERP handler in
+    // enemy.rs:660-690 (Alpha Centipede's Corrosive Vomit).
+    if wdef.aoe_perpendicular() {
+        if let Some(dir) = attack_dir {
+            for &perp in &[(dir + 1) % 4, (dir + 3) % 4] {
+                let (pdx, pdy) = DIRS[perp];
+                let px = tx as i8 + pdx;
+                let py = ty as i8 + pdy;
+                if !in_bounds(px, py) { continue; }
+                apply_damage(board, px as u8, py as u8, wdef.damage, result, DamageSource::Weapon);
+                apply_weapon_status(board, px as u8, py as u8, wdef);
+            }
+        }
+    }
 }
 
 // ── Self AoE ─────────────────────────────────────────────────────────────────
