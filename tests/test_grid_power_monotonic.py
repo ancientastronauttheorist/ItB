@@ -53,6 +53,59 @@ def test_grid_drop_is_always_penalized():
         assert higher > lower, f"grid={n+1} ({higher}) ≤ grid={n} ({lower})"
 
 
+def test_capacity_penalty_is_convex_in_gap():
+    """Capacity-loss penalty must penalize multi-grid bleeds super-linearly.
+
+    Regression for the "flat plateau" bug (Run-2/Run-3 Pinnacle bleed): each
+    grid in 4..=max was worth only 5000, so the solver willingly traded grid
+    for any tactical gain >5k, sliding from 6→2 across an island. Convex
+    capacity_penalty term ensures the marginal cost of the 2nd grid lost
+    exceeds the marginal cost of the 1st, etc.
+    """
+    w = EvalWeights()
+    # Marginal costs of dropping 1 grid: cost(g) = score(g+1) - score(g).
+    margins = []
+    for g in range(0, 7):
+        lower = evaluate(_board_at_grid(g), spawn_points=[], weights=w,
+                         current_turn=2, total_turns=5)
+        higher = evaluate(_board_at_grid(g + 1), spawn_points=[], weights=w,
+                          current_turn=2, total_turns=5)
+        margins.append(higher - lower)
+    # Marginal cost of dropping the Nth grid (counting down from full grid_max=7)
+    # must be non-decreasing as we drop further. margins[6] = 7→6 cost,
+    # margins[5] = 6→5, etc. Reverse so margins_desc[i] is "cost of i-th drop".
+    margins_desc = list(reversed(margins))
+    for i in range(1, len(margins_desc)):
+        assert margins_desc[i] >= margins_desc[i - 1], (
+            f"marginal cost of {i+1}-th grid drop ({margins_desc[i]:.0f}) is less "
+            f"than {i}-th drop ({margins_desc[i-1]:.0f}) — convexity violated. "
+            f"This is the flat-plateau bug; the convex term should sting more "
+            f"each step."
+        )
+
+
+def test_capacity_penalty_disabled_recovers_old_curve():
+    """Setting grid_capacity_penalty=0 disables the convex term entirely.
+
+    Lets the auto-tuner (or a session experiment) revert to the pre-fix
+    curve without code changes. Provides a clean A/B knob.
+    """
+    w_off = EvalWeights()
+    w_off.grid_capacity_penalty = 0.0
+    # With penalty off, grid=N+1 should beat grid=N by exactly w.grid_power
+    # (5000) for all N >= crisis_threshold (no urgency penalty either).
+    diff_5_6 = (evaluate(_board_at_grid(6), spawn_points=[], weights=w_off,
+                         current_turn=2, total_turns=5)
+                - evaluate(_board_at_grid(5), spawn_points=[], weights=w_off,
+                           current_turn=2, total_turns=5))
+    diff_6_7 = (evaluate(_board_at_grid(7), spawn_points=[], weights=w_off,
+                         current_turn=2, total_turns=5)
+                - evaluate(_board_at_grid(6), spawn_points=[], weights=w_off,
+                           current_turn=2, total_turns=5))
+    assert abs(diff_5_6 - 5000.0) < 1e-6
+    assert abs(diff_6_7 - 5000.0) < 1e-6
+
+
 def test_below_threshold_penalty_scales_with_urgency():
     """At crisis grid, the below-threshold penalty must be proportional to
     the urgency multiplier — more severe crisis → steeper penalty."""

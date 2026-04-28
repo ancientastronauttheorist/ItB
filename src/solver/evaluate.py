@@ -55,6 +55,16 @@ class EvalWeights:
     grid_urgency_high: float = 3.0      # grid_power == 2
     grid_urgency_medium: float = 3.0    # grid_power == 3
 
+    # Capacity-loss convex penalty: -(grid_power_max - eff_grid)^2 * coef.
+    # Penalizes the gap between current and full grid quadratically, so the
+    # 1st grid lost from full hurts moderately and each subsequent grid hurts
+    # disproportionately more. Layered ON TOP of the linear grid_power reward
+    # and the below-threshold urgency penalty — fixes the "flat plateau" at
+    # grid 4-7 where each grid was only worth grid_power=5000 (less than a
+    # single ⚡ first-turn kill), letting the solver bleed buffer for any
+    # tactical gain >5k. Mirrors rust_solver/src/evaluate.rs.
+    grid_capacity_penalty: float = 800.0
+
     # Achievement-specific (all default 0 — no effect in normal play)
     enemy_on_fire: float = 0
     enemy_pushed_into_enemy: float = 0
@@ -299,6 +309,15 @@ def evaluate(
     if eff_grid < crisis_threshold:
         gap = crisis_threshold - eff_grid
         score -= gap * w.grid_power * (grid_multiplier - 1.0)
+    # Capacity-loss penalty: convex in (grid_power_max - eff_grid). Adds
+    # early-warning sting to the previously-flat 4..=max plateau where each
+    # grid was only worth `grid_power=5000` (less than a single ⚡ first-turn
+    # kill), letting buffer bleed unchecked at high grid. Quadratic shape:
+    # 1-grid bleed mild, 2-grid bleed bites, 3-grid bleed strongly defensive.
+    # At full grid (gap=0) the term is 0; derivative is always positive so
+    # monotonicity in grid_power is preserved.
+    cap_gap = max(0.0, grid_max - eff_grid)
+    score -= (cap_gap ** 2) * w.grid_capacity_penalty
 
     # --- ENEMIES: SCALED (kills worth more early, less on final turn) ---
     # kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
@@ -518,6 +537,9 @@ def evaluate_breakdown(
     if eff_grid < crisis_threshold:
         gap = crisis_threshold - eff_grid
         grid_power_score -= gap * w.grid_power * (grid_multiplier - 1.0)
+    # Capacity-loss penalty mirrors evaluate(); see comment there.
+    cap_gap = max(0.0, grid_max - eff_grid)
+    grid_power_score -= (cap_gap ** 2) * w.grid_capacity_penalty
 
     # --- ENEMIES ---
     enemies_killed_score = kills * _scaled(w.enemy_killed, ff, 0.20, 1.60)

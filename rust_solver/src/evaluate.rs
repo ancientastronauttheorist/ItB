@@ -98,6 +98,16 @@ pub struct EvalWeights {
     pub grid_urgency_high: f64,      // grid_power == 2
     pub grid_urgency_medium: f64,    // grid_power == 3
 
+    // Capacity-loss convex penalty: -(grid_power_max - eff_grid)^2 * coef.
+    // Penalizes the *gap* between current and full grid quadratically, so the
+    // 1st grid lost from full hurts moderately and each subsequent grid hurts
+    // disproportionately more. Layered ON TOP of the linear `grid_power` reward
+    // and the below-threshold urgency penalty — fixes the "flat plateau" at
+    // grid 4-7 where each grid was worth only `grid_power` (5000) and the solver
+    // was happy to bleed buffer for any tactical gain >5k. Doesn't touch the
+    // urgency mechanism. coef=0 disables. See evaluator block for rationale.
+    pub grid_capacity_penalty: f64,
+
     // Pro-strategy weights
     pub threats_cleared: f64,        // reward per building threat neutralized
     pub body_block_bonus: f64,       // reward per mech absorbing a building threat
@@ -246,6 +256,7 @@ impl Default for EvalWeights {
             grid_urgency_critical: 5.0,
             grid_urgency_high: 3.0,
             grid_urgency_medium: 3.0,
+            grid_capacity_penalty: 800.0,
             // Achievement (all zero by default)
             enemy_on_fire: 0.0,
             enemy_pushed_into_enemy: 0.0,
@@ -425,6 +436,19 @@ pub fn evaluate(
         let gap = crisis_threshold - eff_grid;
         score -= gap * weights.grid_power * (grid_multiplier - 1.0);
     }
+    // Capacity-loss penalty: convex in (grid_power_max - eff_grid).
+    // Adds early-warning sting to the previously-flat 4..=max plateau (each
+    // grid in that range was only worth `grid_power=5000`, less than a single
+    // ⚡ kill on first turn). Quadratic shape means a 1-grid bleed from full
+    // is mild, a 2-grid bleed bites, and a 3-grid bleed strongly steers the
+    // solver toward defensive plays. At full grid (gap=0) the term is 0,
+    // preserving monotonicity (derivative wrt eff_grid is positive everywhere).
+    // Pinnacle Run-2 trace (2026-04-25 m04→m07): grid 5→2 across 4 missions,
+    // each turn's 1-grid bleed scored just 5000 lower than the safe alternative,
+    // easily overcome by enemy_killed*ff or threats_cleared. New term raises
+    // 3-grid-bleed cumulative cost from 15000 to ~22000.
+    let cap_gap = (board.grid_power_max as f64 - eff_grid).max(0.0);
+    score -= cap_gap * cap_gap * weights.grid_capacity_penalty;
 
     // ── Enemies: SCALED (kills worth more early, less on final turn) ────
     // kill_value = 500 * (0.20 + 1.60 * ff) → turn 1: 900, mid: 500, final: 100
