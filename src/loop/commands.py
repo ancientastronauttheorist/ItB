@@ -4470,6 +4470,17 @@ def _narrate_fuzzy(
         print(f"  INVESTIGATING [{status}]: {label}{tail}")
 
 
+# Cap on how many distinct weapons may be soft-disabled simultaneously
+# for the active squad. Sets a ceiling on auto-tuner blast radius — the
+# 2026-04-28 run caged 3/3 squad weapons in a single mission when the
+# threshold was 2; even with the new threshold of 3, a wave of upstream
+# sim drift could theoretically still reach 3+ weapons. This cap keeps
+# the squad playable: at most 2 simultaneously caged, the rest narrate.
+# Existing entries (already over the cap when this code first runs) are
+# left in place — the cap is prospective only.
+_SOFT_DISABLE_PER_RUN_CAP = 2
+
+
 def _maybe_soft_disable(
     session: RunSession,
     signal: dict,
@@ -4495,6 +4506,31 @@ def _maybe_soft_disable(
         return
     cause = signal.get("signature", "unknown")
     expires = turn + window
+
+    # Per-run cap (Fix #4 2026-04-28): if we already have N distinct
+    # weapons disabled and this would add a new one, log+skip rather
+    # than cage the rest of the squad. Re-flagging an already-disabled
+    # weapon (extending expiry / appending cause) bypasses the cap by
+    # definition — it doesn't grow the disabled set.
+    already = {e.get("weapon_id") for e in session.disabled_actions}
+    if weapon not in already and len(already) >= _SOFT_DISABLE_PER_RUN_CAP:
+        print(
+            f"  SOFT-DISABLE CAP: would have disabled {weapon} "
+            f"(cause={cause}, freq={signal.get('frequency')}, "
+            f"conf={signal.get('confidence')}) but {len(already)} weapons "
+            f"already caged ({sorted(already)}); narrating instead."
+        )
+        fired.append({
+            "weapon_id": weapon,
+            "cause": cause,
+            "expires_turn": expires,
+            "confidence": signal.get("confidence"),
+            "frequency": signal.get("frequency"),
+            "new_entry": False,
+            "skipped_by_cap": True,
+        })
+        return
+
     added = session.add_disabled_action(
         weapon_id=weapon, cause=cause, expires_turn=expires,
     )

@@ -126,16 +126,35 @@ def test_frequency_counts_prior_events_with_same_signature():
     assert sig["frequency"] == 2
 
 
-def test_tier_escalates_to_soft_disable_on_second_occurrence():
+def test_tier_escalates_to_soft_disable_on_third_occurrence():
+    ctx = {"weapon": "Prime_Shift", "sub_action": "attack"}
+    prior = [
+        {"signature": "push_dir|Prime_Shift|attack"},
+        {"signature": "push_dir|Prime_Shift|attack"},
+    ]
+    sig = fuzzy_detector.evaluate(
+        DiffResult(), _classification("push_dir"),
+        context=ctx, prior_events=prior,
+    )
+    # freq=2 (prior) + this firing = 3 → soft-disable threshold (Fix #4)
+    assert sig["proposed_tier"] == 2
+    # Confidence floor of 0.8 must be cleared at threshold=3.
+    assert sig["confidence"] >= 0.8
+    assert sig["confidence"] <= 0.9
+
+
+def test_tier_does_not_escalate_on_second_occurrence_after_fix4():
+    # Tightened threshold (2 → 3): two desyncs of the same signature must
+    # narrate, not cage the weapon. Regression guard for the 2026-04-28
+    # 3-of-3-weapons-caged run.
     ctx = {"weapon": "Prime_Shift", "sub_action": "attack"}
     prior = [{"signature": "push_dir|Prime_Shift|attack"}]
     sig = fuzzy_detector.evaluate(
         DiffResult(), _classification("push_dir"),
         context=ctx, prior_events=prior,
     )
-    # freq=1 (prior) + this firing = 2 → soft-disable threshold
-    assert sig["proposed_tier"] == 2
-    assert 0.5 <= sig["confidence"] <= 0.9
+    assert sig["proposed_tier"] == 4
+    assert sig["frequency"] == 1
 
 
 def test_tier_narrate_on_first_occurrence_of_weapon_drift():

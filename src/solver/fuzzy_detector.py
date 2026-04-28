@@ -47,11 +47,20 @@ _WEAPON_DRIFT_CATEGORIES = frozenset({
 })
 
 # Frequency at which a weapon-drift category escalates from narrate
-# (tier 4) to soft-disable (tier 2). Chosen conservative: two confirmed
-# desyncs in a single run on the same (weapon, category, sub_action)
-# signature is already strong evidence the sim is wrong, and three
-# would waste a whole turn before we reacted.
-_SOFT_DISABLE_THRESHOLD = 2
+# (tier 4) to soft-disable (tier 2). Tightened from 2 → 3 after the
+# 2026-04-28 run that flagged 3/3 squad weapons (Brute_Grapple,
+# Prime_Shift, Ranged_Artillerymech) on a single run; with threshold=2
+# any sim-drift wave caged the whole squad. Three confirmed desyncs on
+# the same (weapon, category, sub_action) signature is the new bar —
+# in line with the confidence formula `0.5 + 0.1 * frequency` reaching
+# the tier-2 confidence floor of 0.8 at exactly freq=3.
+_SOFT_DISABLE_THRESHOLD = 3
+
+# Confidence floor required to actually escalate to tier 2. The
+# frequency formula crosses this at threshold=3, so the two settings are
+# tied — but keeping the floor explicit guards against future formula
+# tweaks accidentally re-loosening the trigger.
+_SOFT_DISABLE_CONFIDENCE_FLOOR = 0.8
 
 
 def _signature(
@@ -138,6 +147,11 @@ def _propose_response(
         # Confidence grows with frequency but caps — a pattern seen 5x
         # isn't meaningfully more confident than 3x at tier-2 granularity.
         conf = min(0.5 + 0.1 * (frequency + 1), 0.9)
+        # Defence in depth: if the formula ever shifts and threshold-met
+        # firings come in below the floor, downgrade to narrate rather
+        # than soft-disable on weak evidence.
+        if conf < _SOFT_DISABLE_CONFIDENCE_FLOOR:
+            return 4, conf
         return 2, conf
 
     # Known model gap that's already tagged — narrate is all we can do
