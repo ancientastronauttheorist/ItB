@@ -1,0 +1,7 @@
+{
+  "mission_index": 8,
+  "mission_name": "Mission_AcidTank",
+  "result": "win",
+  "notes": "Disposal Site C secured, \u2b50\u2b50 bonus achieved (4 ACID kills). 500/500 civilians, all 3 pilots alive. First Detritus mission post modloader-fix (ca67d87) \u2014 no inter-mission crash.",
+  "recorded_at": "2026-04-29T17:58:20.583621"
+}

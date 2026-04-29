@@ -4,59 +4,73 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Disposal",
+  "current_mission": "Mission_AcidTank",
   "islands_completed": [],
-  "mission_index": 6,
+  "mission_index": 8,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "IgniteMech",
+        "mech_uid": 96,
+        "mech_type": "Acid_Tank",
         "move_to": [
-          3,
-          2
+          5,
+          5
         ],
-        "weapon": "Ranged_Ignite",
+        "weapon": "Acid_Tank_Attack",
         "target": [
-          6,
-          2
+          5,
+          4
         ],
-        "description": "IgniteMech, move D5\u2192F5, fire Ignite at F2"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "TeleMech",
-        "move_to": [
-          3,
-          6
-        ],
-        "weapon": "Science_Swap",
-        "target": [
-          2,
-          6
-        ],
-        "description": "TeleMech, move C2\u2192B5, fire Teleporter at B6"
+        "description": "Acid_Tank, move C1\u2192C3, fire A.C.I.D. Cannon at D3"
       },
       {
         "mech_uid": 0,
         "mech_type": "FlameMech",
         "move_to": [
-          6,
-          5
+          4,
+          4
         ],
         "weapon": "Prime_Flamethrower",
         "target": [
-          6,
+          5,
           4
         ],
-        "description": "FlameMech, move C4\u2192C2, fire Flamethrower at D2"
+        "description": "FlameMech, move C2\u2192D4, fire Flamethrower at D3"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "IgniteMech",
+        "move_to": [
+          4,
+          3
+        ],
+        "weapon": "Ranged_Ignite",
+        "target": [
+          7,
+          3
+        ],
+        "description": "IgniteMech, move E3\u2192E4, fire Ignite at E1"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "TeleMech",
+        "move_to": [
+          6,
+          3
+        ],
+        "weapon": "Science_Swap",
+        "target": [
+          6,
+          2
+        ],
+        "description": "TeleMech, move D2\u2192E2, fire Teleporter at F2"
       }
     ],
-    "score": 139472.14285714287,
+    "score": 125147.14285714284,
     "turn": 4,
-    "input_fingerprint": "0:4,5:2|105:4,4:2|107:6,4:2|109:6,1:1|1:3,4:3|2:6,5:1|92:2,3:2|94:3,5:1"
+    "input_fingerprint": "0:6,5:2|101:6,3:2|102:6,2:3|103:5,4:1|104:7,3:3|1:5,3:2|2:6,4:2|96:7,5:1"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -790,6 +804,65 @@
         "TeleMech, move C2\u2192B5, fire Teleporter at B6",
         "FlameMech, move C4\u2192C2, fire Flamethrower at D2"
       ]
+    },
+    {
+      "timestamp": "2026-04-29T17:42:24.478208",
+      "turn": 4,
+      "label": "solve",
+      "score": 139472.14285714287,
+      "actions": [
+        "IgniteMech, move D5\u2192F5, fire Ignite at F2",
+        "TeleMech, move C2\u2192B5, fire Teleporter at B6",
+        "FlameMech, move C4\u2192C2, fire Flamethrower at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-29T17:52:06.173503",
+      "turn": 1,
+      "label": "solve",
+      "score": 116857.14285714286,
+      "actions": [
+        "Acid_Tank, move D5\u2192D4, fire A.C.I.D. Cannon at D3",
+        "FlameMech, move E5\u2192E3, fire Flamethrower at E2",
+        "IgniteMech, move G6\u2192F5, fire Ignite at F1",
+        "TeleMech, move C7\u2192D7, fire Teleporter at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-04-29T17:53:22.343671",
+      "turn": 2,
+      "label": "solve",
+      "score": 131337.14285714304,
+      "actions": [
+        "Acid_Tank, move D4\u2192D2, fire A.C.I.D. Cannon at D3",
+        "TeleMech, move F6\u2192D4, fire Teleporter at D3",
+        "FlameMech, move E3\u2192C3, fire Flamethrower at D3",
+        "IgniteMech, fire Ignite at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-04-29T17:54:34.948578",
+      "turn": 3,
+      "label": "solve",
+      "score": 132077.14285714284,
+      "actions": [
+        "Acid_Tank, move D2\u2192C2, fire A.C.I.D. Cannon at C3",
+        "IgniteMech, move D4\u2192E3, fire Ignite at C3",
+        "FlameMech, move F2\u2192C2, fire Flamethrower at C3",
+        "TeleMech, move E2\u2192D2, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-04-29T17:55:36.146329",
+      "turn": 4,
+      "label": "solve",
+      "score": 125147.14285714284,
+      "actions": [
+        "Acid_Tank, move C1\u2192C3, fire A.C.I.D. Cannon at D3",
+        "FlameMech, move C2\u2192D4, fire Flamethrower at D3",
+        "IgniteMech, move E3\u2192E4, fire Ignite at E1",
+        "TeleMech, move D2\u2192E2, fire Teleporter at F2"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -871,6 +944,18 @@
     ],
     [
       6,
+      3
+    ],
+    [
+      8,
+      1
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      8,
       3
     ]
   ],
@@ -3162,9 +3247,288 @@
           4
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Science_Swap|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Science_Swap",
+        "target": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "damage_amount|Prime_Flamethrower|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Flamethrower",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 96,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 96,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 23,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 96,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Prime_Flamethrower|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Prime_Flamethrower",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|_REPAIR|attack",
+      "frequency": 20,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 3,
+        "turn": 3,
+        "weapon": "_REPAIR",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Acid_Tank_Attack|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 96,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Flamethrower|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Prime_Flamethrower",
+        "target": [
+          5,
+          4
+        ]
+      }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Prime_Flamethrower",
+      "cause_pattern": "damage_amount|Prime_Flamethrower|attack",
+      "expires_turn": 7,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
       "type": "JetMech",
@@ -3578,6 +3942,21 @@
       ],
       "severity": "medium",
       "resolved_method": "known_type_pos_diff_1tile"
+    },
+    {
+      "type": "Acid_Tank",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_AcidTank",
+      "first_seen_turn": 4,
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
+      "diff_field": "status.fire",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": []
