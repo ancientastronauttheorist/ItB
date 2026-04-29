@@ -110,11 +110,14 @@ Extended rules: `data/ref_game_mechanics.md`.
 
     Full spec: `docs/diagnosis_loop_design.md`. Live-run hardening retrospective: §15.1.
 
+25. **New-run setup is fixed: Easy difficulty + Advanced Edition ON + Balanced Roll squad.** Updated 2026-04-28 from prior "Always Hard" stance — the goal is earning the 70 achievements (9/70 done), and Hard tanked our completion rate. On every new game's setup screen: click **Easy**, ensure **Advanced Edition** toggle is ON, click **Balanced Roll** for the squad, then **Start**. When invoking `python3 game_loop.py new_run`, omit `--difficulty` (default 0 = Easy) or pass `--difficulty 0`. Don't fall back to Normal/Hard, including after defeats. Rationale: `feedback_playstyle.md`.
+
 ## Phase Protocols
 
 Each phase: read → act → verify. Detailed command semantics are in **Game Loop Command Reference** below.
 
-- **ISLAND_SELECT** (start of run): `python3 island_select.py` picks one of 4 corporations. Click its coord. Click through CEO intro. → ISLAND_MAP.
+- **NEW_GAME_SETUP** (very start of a new run, before ISLAND_SELECT): On the new-game screen, set **Difficulty: Easy** and ensure **Advanced Edition** content is toggled ON. Then click **Balanced Roll** for the squad (not the default, not Chaos Roll), then **Start**. See `feedback_playstyle.md`. When invoking `python3 game_loop.py new_run`, omit `--difficulty` (default 0 = Easy) or pass `--difficulty 0`.
+- **ISLAND_SELECT** (after the CEO intro): `python3 island_select.py` picks one of 4 corporations. Click its coord. Click through CEO intro. → ISLAND_MAP.
 - **ISLAND_MAP:** `game_loop.py read` → pick mission (prefer bonus objectives for the achievement target) → click mission on map → mission briefing → click preview or start button → DEPLOYMENT.
 - **DEPLOYMENT:** `game_loop.py read` prints valid deploy tiles with MCP coords. Click 3 in sequence (FORWARD, MID, SUPPORT recommendation). Click CONFIRM. → COMBAT_PLAYER_TURN.
 - **COMBAT_PLAYER_TURN:** `auto_turn --time-limit 10` → dispatch End Turn click at `(295, 215)` → loop. The next `auto_turn` blocks in Python until the next player turn or mission end. On game_over or empty solution, falls back to screenshot-based reasoning.
