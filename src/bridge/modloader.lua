@@ -1754,7 +1754,7 @@ if Mission_Teleporter and _orig_TeleporterStartMission then
         _ITB_TELEPORT_PAIRS = {}
         local original_AddTeleport = nil
         local rebound = false
-        local capture_fn = function(board_self, p1, p2, delay)
+        local capture_fn = function(board_self, p1, p2)
             -- Record the pair, then defer to the original engine method
             -- so the actual pad placement / animation still happens.
             local ok = pcall(function()
@@ -1773,7 +1773,15 @@ if Mission_Teleporter and _orig_TeleporterStartMission then
                 log_bridge("TELEPORT PAD capture: pair record failed (non-fatal)")
             end
             -- Always invoke the original — never swallow the pad placement.
-            return original_AddTeleport(board_self, p1, p2, delay)
+            -- C++ binding signature is `void AddTeleport(Board&, Point, Point)`
+            -- — exactly 3 args. Forwarding a 4th `delay` arg (even nil) tripped
+            -- C++ overload resolution with "No matching overload found" and
+            -- crashed ITB on the next mission load (observed on Detritus
+            -- 2026-04-29: Mission_Disposal ended, next Mission_Teleporter
+            -- mission's StartMission errored mid-AddTeleport and the game
+            -- terminated). Dropping the trailing arg matches the engine
+            -- signature exactly.
+            return original_AddTeleport(board_self, p1, p2)
         end
 
         -- Try to install the capture. If the C++ proxy rejects the
