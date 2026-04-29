@@ -1,8 +1,8 @@
 {
-  "version": "v010",
-  "parent": "v009",
-  "description": "Threat-weighted survivor penalty (enemy_threat_remaining=-800). Tilts target priority toward neutralizing high-damage enemies over flat low-threat kills. Motivating case: m05 t1 of 20260425_185532_218 — solver killed Spider/WebbEgg (0 dmg) and left Scorpion2 (3 dmg, 5 HP) untouched.",
-  "created": "2026-04-25",
+  "version": "v011",
+  "parent": "v010",
+  "description": "Invert bld_mult so buildings become MORE valuable as grid drops (was: less valuable). Old formula (floor=0.6, scale=0.4) gave 0.657x at grid=1 and 1.0x at grid=7 — directly opposite of survival pressure, since enemy_killed already gets +800% via grid_urgency_critical at grid<=1. New formula (floor=1.5, scale=-0.5) gives 1.43x at grid=1 and 1.0x at grid=7. Motivating losses: consecutive Old Town then Pinnacle Garden defeats where solver chose enemy kills over building defense at grid<=2.",
+  "created": "2026-04-28",
   "weights": {
     "building_alive": 10000,
     "building_hp": 2000,
@@ -46,8 +46,8 @@
     "building_objective_bonus": 8000,
     "grid_reward_building_bonus": 25000,
     "boss_killed_bonus": 8000,
-    "bld_grid_floor": 0.6,
-    "bld_grid_scale": 0.4,
+    "bld_grid_floor": 1.5,
+    "bld_grid_scale": -0.5,
     "bld_phase_floor": 1.0,
     "bld_phase_scale": 0.0,
     "building_preservation_threshold": 0.05,
