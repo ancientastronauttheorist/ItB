@@ -143,6 +143,122 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
     }
 }
 
+// ── apply_landing_effects ────────────────────────────────────────────────────
+
+/// Resolve the post-move landing pipeline at a unit's current tile: web-break
+/// (if the moved unit is an enemy webber), Fire pickup, ACID pickup, frozen-
+/// grounded-on-water → Ice, water/lava/chasm death (with Flying / Massive
+/// exemptions), Lava-ignites-flying, Old Earth Mine, Freeze Mine, and finally
+/// teleporter-pad swap. Caller must have already updated the unit's `x`/`y`
+/// to the destination tile; this function reads `board.units[idx].(x,y)` and
+/// resolves effects there.
+///
+/// Shared between `apply_throw` (Vice Fist relocation) and `sim_pull_or_swap`
+/// (Science_Swap Teleporter). Before this helper existed, swap silently
+/// skipped every landing effect except teleporter pads — making "swap a Vek
+/// into water/chasm/lava" invisible to the solver despite being the Swap
+/// Mech's primary kill mode. Confirmed via Lua scripts/weapons_science.lua:216
+/// (Science_Swap.GetSkillEffect calls AddTeleport, which routes through the
+/// engine's standard tile-landing pipeline) and the in-game tooltip
+/// "Swap places with a nearby tile".
+///
+/// Order matches `apply_throw`'s historical inline ordering exactly so that
+/// extracting the helper is a behaviour-preserving refactor on the throw
+/// path:
+///   1. break webs sourced FROM this unit (if enemy webber moved)
+///   2. Fire on tile → set unit fire (Flame Shielding exempts player mechs)
+///   3. ACID pool on tile → set unit acid, consume pool
+///   4. frozen non-flying + Water → tile becomes Ice, return early
+///   5. Water/Lava drown non-flying-non-Massive; Chasm kills any non-flying
+///   6. Lava + flying → ignite (Flame Shielding exempts player mechs)
+///   7. Old Earth Mine → instant kill, mine consumed
+///   8. Freeze Mine → freeze (or pop shield), mine consumed
+///   9. Teleporter pad → swap to partner if paired
+fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
+    let nx = board.units[unit_idx].x;
+    let ny = board.units[unit_idx].y;
+
+    // 1. Web break: enemy webber moved → unweb any mechs they were holding
+    if board.units[unit_idx].is_enemy() {
+        let webber_uid = board.units[unit_idx].uid;
+        break_web_from(board, webber_uid);
+    }
+
+    // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs)
+    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
+        && board.units[unit_idx].can_catch_fire()
+        && !(board.flame_shielding && board.units[unit_idx].is_player())
+    {
+        board.units[unit_idx].set_fire(true);
+    }
+
+    // 3. ACID pool: unit gains ACID, pool consumed
+    if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
+        if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
+            board.units[unit_idx].set_acid(true);
+        }
+        board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
+    }
+
+    // 4. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
+    // units fall through to the deadly-terrain check below — frozen cancels
+    // flight so they drown / fall normally.
+    let dest_terrain = board.tile(nx, ny).terrain;
+    if board.units[unit_idx].frozen() && !board.units[unit_idx].flying()
+        && dest_terrain == Terrain::Water {
+        board.tile_mut(nx, ny).terrain = Terrain::Ice;
+        board.tile_mut(nx, ny).set_cracked(false);
+        return;
+    }
+
+    // 5. Water / Lava / Chasm death.
+    // 6. Lava + flying → fire status (combined branch).
+    if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
+        let massive = board.units[unit_idx].massive();
+        match dest_terrain {
+            Terrain::Water | Terrain::Lava => {
+                if !massive {
+                    board.units[unit_idx].hp = 0;
+                }
+            }
+            Terrain::Chasm => {
+                board.units[unit_idx].hp = 0;
+            }
+            _ => {}
+        }
+    } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].effectively_flying()
+        && dest_terrain == Terrain::Lava {
+        if !board.units[unit_idx].shield()
+            && board.units[unit_idx].can_catch_fire()
+            && !(board.flame_shielding && board.units[unit_idx].is_player())
+        {
+            board.units[unit_idx].set_fire(true);
+        }
+    }
+
+    // 7-8. Mines.
+    if board.units[unit_idx].hp > 0 {
+        let tile = board.tile(nx, ny);
+        if tile.old_earth_mine() {
+            board.units[unit_idx].hp = 0;
+            if board.units[unit_idx].is_mech() {
+                result.mechs_killed += 1;
+            }
+            board.tile_mut(nx, ny).set_old_earth_mine(false);
+        } else if tile.freeze_mine() {
+            if !board.units[unit_idx].shield() {
+                board.units[unit_idx].set_frozen(true);
+            } else {
+                board.units[unit_idx].set_shield(false);
+            }
+            board.tile_mut(nx, ny).set_freeze_mine(false);
+        }
+    }
+
+    // 9. Teleporter pad: fires LAST, after terrain/mine resolution.
+    apply_teleport_on_land(board, unit_idx);
+}
+
 // ── Web break ────────────────────────────────────────────────────────────────
 
 /// Clear the WEB flag on any unit whose web_source_uid matches `src_uid`.
@@ -644,95 +760,13 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         }
     }
 
-    // Destination clear — teleport the target there
+    // Destination clear — teleport the target there, then resolve landing
+    // effects (web-break, fire/ACID pickup, water/lava/chasm death,
+    // lava-ignites-flying, mines, teleporter pad). See
+    // `apply_landing_effects` for the full ordered pipeline.
     board.units[unit_idx].x = nx;
     board.units[unit_idx].y = ny;
-
-    // Web break: enemy webber moved → unweb any mechs they were holding
-    if board.units[unit_idx].is_enemy() {
-        let pushed_uid = board.units[unit_idx].uid;
-        break_web_from(board, pushed_uid);
-    }
-
-    // Fire tile: thrown unit catches fire
-    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
-        && board.units[unit_idx].can_catch_fire()
-        && !(board.flame_shielding && board.units[unit_idx].is_player())
-    {
-        board.units[unit_idx].set_fire(true);
-    }
-
-    // ACID pool: unit gains ACID, pool consumed
-    if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
-        if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
-            board.units[unit_idx].set_acid(true);
-        }
-        board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
-    }
-
-    // Frozen GROUNDED unit on water → creates ice (not drowned — the ice
-    // shell sits on the water). Frozen FLYING units skip this: frozen cancels
-    // flight, so they fall through and drown per the deadly-terrain check
-    // below (unless Massive, which is drown-immune).
-    let dest_terrain = board.tile(nx, ny).terrain;
-    if board.units[unit_idx].frozen() && !board.units[unit_idx].flying()
-        && dest_terrain == Terrain::Water {
-        board.tile_mut(nx, ny).terrain = Terrain::Ice;
-        board.tile_mut(nx, ny).set_cracked(false);
-        return;
-    }
-
-    // Water/lava/chasm: kills non-flying ground units (Lava also sets fire on flying).
-    // Uses effectively_flying() = flying && !frozen, so a frozen flying unit
-    // is grounded here and drowns/falls like any other grounded unit.
-    // Massive prevents DROWNING in Water/Lava only — Massive does NOT save
-    // from Chasm (falling into a pit is a destroy, not a drown). Flying
-    // exempts from all three (unless frozen).
-    if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
-        let massive = board.units[unit_idx].massive();
-        match dest_terrain {
-            Terrain::Water | Terrain::Lava => {
-                if !massive {
-                    board.units[unit_idx].hp = 0;
-                }
-            }
-            Terrain::Chasm => {
-                board.units[unit_idx].hp = 0;
-            }
-            _ => {}
-        }
-    } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].effectively_flying()
-        && dest_terrain == Terrain::Lava {
-        if !board.units[unit_idx].shield()
-            && board.units[unit_idx].can_catch_fire()
-            && !(board.flame_shielding && board.units[unit_idx].is_player())
-        {
-            board.units[unit_idx].set_fire(true);
-        }
-    }
-
-    // Old Earth Mine: instant kill on thrown unit (bypasses shield), mine consumed.
-    // Mirrors apply_push's mine handling so throw and push paths agree.
-    if board.units[unit_idx].hp > 0 {
-        let tile = board.tile(nx, ny);
-        if tile.old_earth_mine() {
-            board.units[unit_idx].hp = 0;
-            if board.units[unit_idx].is_mech() {
-                result.mechs_killed += 1;
-            }
-            board.tile_mut(nx, ny).set_old_earth_mine(false);
-        } else if tile.freeze_mine() {
-            if !board.units[unit_idx].shield() {
-                board.units[unit_idx].set_frozen(true);
-            } else {
-                board.units[unit_idx].set_shield(false);
-            }
-            board.tile_mut(nx, ny).set_freeze_mine(false);
-        }
-    }
-
-    // Teleporter pad: fires LAST, after terrain/mine resolution.
-    apply_teleport_on_land(board, unit_idx);
+    apply_landing_effects(board, unit_idx, result);
 }
 
 // ── flip_queued_attack ───────────────────────────────────────────────────────
@@ -1205,7 +1239,21 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
             }
         }
     }
-    apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+
+    // Prime_Flamethrower "Damage units already on Fire" bonus. Lua applies
+    // FireDamage (=2) on top of base Damage (=0) when the target tile's
+    // pawn is on fire at firing time. The bonus must be evaluated BEFORE
+    // damage is applied (so a flame-on-fire-pawn deals 2 even though the
+    // pawn dies from this hit). Snapshot the pre-damage on_fire state.
+    let mut target_dmg = wdef.damage;
+    if wdef.burns_fire_targets() {
+        if let Some(uid) = board.unit_at(tx, ty) {
+            if board.units[uid].fire() {
+                target_dmg = target_dmg.saturating_add(2);
+            }
+        }
+    }
+    apply_damage(board, tx, ty, target_dmg, result, DamageSource::Weapon);
 
     // Chain weapon (Electric Whip): BFS through adjacent occupied tiles.
     // The shooter's own tile is excluded from the chain graph — in-game
@@ -1465,7 +1513,19 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
         }
     }
 
-    // Adjacent tile effects (push outward)
+    // Adjacent tile effects (push outward).
+    //
+    // Status effects (Fire/Smoke/Acid/Freeze/Shield) are applied to the
+    // CENTER tile only — see the `apply_weapon_status(board, tx, ty, wdef)`
+    // call earlier in this function. Adjacent tiles take damage_outer +
+    // push only. Lua confirms this for Vulcan Artillery (Ranged_Ignite,
+    // weapons_ranged.lua:305): the SkillEffect adds Fire (`iFire = 1`) at
+    // the center tile and `iPush = dir, damage = 0` at each cardinal-
+    // adjacent tile, with NO Fire status on the adjacents. In-game tooltip
+    // for Vulcan reads "Light THE TARGET on Fire and push adjacent tiles" —
+    // emphasis on "the target", not "5 tiles". Verified zero other Artillery
+    // weapons combine AOE_ADJACENT with a status flag (FIRE/ACID/FREEZE/
+    // SMOKE/SHIELD/WEB), so removing the call here has no other regressions.
     if wdef.aoe_adjacent() {
         for (i, &(dx, dy)) in DIRS.iter().enumerate() {
             let nx = tx as i8 + dx;
@@ -1475,7 +1535,6 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             if wdef.push == PushDir::Outward {
                 apply_push(board, nx as u8, ny as u8, i, result);
             }
-            apply_weapon_status(board, nx as u8, ny as u8, wdef);
         }
     }
 
@@ -1533,18 +1592,28 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
             board.units[target_idx].y = ay;
             board.units[attacker_idx].x = tx;
             board.units[attacker_idx].y = ty;
-            // Teleporter pads: either newly-landed unit may be on a pad.
-            // Apply in target→attacker order (matches push-chain ordering:
-            // the "other" unit resolves landing first).
-            apply_teleport_on_land(board, target_idx);
-            apply_teleport_on_land(board, attacker_idx);
+            // Landing effects on BOTH swapped units: terrain death (water/
+            // lava/chasm), fire pickup, ACID pickup, mine triggers,
+            // teleporter-pad relocation. Per Lua weapons_science.lua:216,
+            // Science_Swap.GetSkillEffect routes through AddTeleport which
+            // is move-classed: each swapped unit lands on its destination
+            // and triggers the standard tile-landing pipeline. Without
+            // this the solver was blind to the Swap Mech's primary kill
+            // mode ("swap a Vek into water/chasm/lava for a free kill").
+            // Order target→attacker matches push-chain ordering: the
+            // "other" unit resolves landing first.
+            apply_landing_effects(board, target_idx, result);
+            apply_landing_effects(board, attacker_idx, result);
         } else {
-            // Teleport to empty tile
+            // Teleport to empty flyer-passable tile (no swap partner). Lua:
+            // when destination has no pawn, AddTeleport fires once with the
+            // attacker as the only relocated unit. Landing effects still
+            // apply — useful for the Swap Mech (Flying) escaping ACID/fire
+            // by teleporting to clear ground.
             board.units[attacker_idx].x = tx;
             board.units[attacker_idx].y = ty;
-            apply_teleport_on_land(board, attacker_idx);
+            apply_landing_effects(board, attacker_idx, result);
         }
-        let _ = result; // no damage from swap
         return;
     }
 

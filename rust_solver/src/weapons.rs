@@ -71,6 +71,16 @@ bitflags! {
         /// the boss with Grappling Hook silently nullifies a 4-damage
         /// building hit and the solver mispredicts grid_power loss.
         const QUEUED_DAMAGE_PERSISTS = 1 << 21;
+        /// Weapon deals bonus damage to a target unit that is already on
+        /// Fire at firing time. Mirrors Lua Prime_Flamethrower's two-stage
+        /// damage: `Damage` (0 base) is dealt unconditionally, plus
+        /// `FireDamage` (2) if the target tile's pawn `IsFire()` BEFORE the
+        /// flame is applied. In-game tooltip: "Damage units already on
+        /// Fire". `sim_melee` adds 2 to the target-tile damage roll when
+        /// this flag is set and the unit at the target tile is on fire.
+        /// Currently only Prime_Flamethrower; upgraded multi-tile mode
+        /// (PathSize=2/3) is not modelled — base equip uses PathSize=1.
+        const BURNS_FIRE_TARGETS = 1 << 22;
     }
 }
 
@@ -111,6 +121,7 @@ impl WeaponDef {
     pub fn full_pull(&self) -> bool { self.flags.contains(WeaponFlags::FULL_PULL) }
     pub fn damage_scales_with_dist(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGE_SCALES_WITH_DIST) }
     pub fn queued_damage_persists(&self) -> bool { self.flags.contains(WeaponFlags::QUEUED_DAMAGE_PERSISTS) }
+    pub fn burns_fire_targets(&self) -> bool { self.flags.contains(WeaponFlags::BURNS_FIRE_TARGETS) }
 }
 
 /// Default weapon def (no-op).
@@ -386,8 +397,15 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::None, flags: C, ..DEF };
     // 5: Prime_Shift — Vice Fist (grab and toss target to tile behind attacker)
     w[5] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Throw, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
-    // 6: Prime_Flamethrower — Flamethrower
-    w[6] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward, flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 6: Prime_Flamethrower — Flamethrower.
+    // Lua weapons_prime.lua:653 — Damage=0, FireDamage=2, Push=1, PathSize=1
+    // (base equip; +1 per A/B upgrade — not modelled). The target tile gets
+    // Fire status and the end-of-line push; if the target's pawn is already
+    // on Fire AT firing time, the tile's damage becomes 0+FireDamage=2 (per
+    // BURNS_FIRE_TARGETS). In-game tooltip: "Push target tile and light
+    // tiles on Fire. Damage units already on Fire."
+    w[6] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
     // 7: Prime_Areablast — Area Blast
     w[7] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 8: Prime_Leap — Hydraulic Legs

@@ -707,7 +707,27 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // simplification used for BurnbugAtk1 / BurnbugAtk2 since unit ship.
 // Pre-v34 corpus archived as `failure_db_snapshot_sim_v33.jsonl` per
 // CLAUDE.md rule 22.
-pub const SIMULATOR_VERSION: u32 = 34;
+//
+// v35 (Flame Behemoths integration): three sim-semantics changes shipped
+// together since the Flame Behemoths squad surfaced all three gaps at once.
+//   1. Vulcan Artillery (Ranged_Ignite) no longer ignites the 4 cardinal
+//      adjacent tiles — only the center tile gets Fire status; adjacent
+//      tiles get push only. Confirmed via Lua weapons_ranged.lua:305 and
+//      the in-game tooltip "Light THE TARGET on Fire and push adjacent
+//      tiles". Pre-fix the solver over-credited Vulcan with 5-tile
+//      ignition.
+//   2. Science_Swap (Teleporter) now triggers the full landing pipeline
+//      on both swapped units (water/lava/chasm death, fire/ACID pickup,
+//      mines, teleporter pads) — previously only teleporter pads fired,
+//      making the Swap Mech's primary kill mode invisible to the solver.
+//      Refactored the inline post-move block from `apply_throw` into
+//      `apply_landing_effects` so throw and swap share one pipeline.
+//   3. Prime_Flamethrower (Flame Thrower) now deals +2 damage to a target
+//      that is already on Fire at firing time, matching the Lua semantic
+//      `Damage + FireDamage` and the in-game tooltip "Damage units already
+//      on Fire". Gated by the new `BURNS_FIRE_TARGETS` weapon flag.
+// Pre-v35 corpus archived as `failure_db_snapshot_sim_v34.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 35;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

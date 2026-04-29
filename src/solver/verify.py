@@ -422,7 +422,17 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # used for BurnbugAtk1 / BurnbugAtk2 since unit ship. Deferred to a
 # future bump. Pre-v34 corpus archived as
 # failure_db_snapshot_sim_v33.jsonl per CLAUDE.md rule 22.
-SIMULATOR_VERSION = 34
+#
+# v35 (Flame Behemoths integration, 2026-04-28): three sim-semantics
+# fixes shipped together: (1) Vulcan Artillery (Ranged_Ignite) ignites
+# CENTER tile only — adjacent tiles get push only, not Fire. (2)
+# Science_Swap now triggers the full landing pipeline (water/lava/chasm
+# death, fire/ACID pickup, mines) on both swapped units, sharing
+# `apply_landing_effects` with apply_throw. (3) Prime_Flamethrower now
+# deals +2 damage to targets that are already on Fire at firing time
+# (BURNS_FIRE_TARGETS flag). Pre-v35 corpus archived as
+# failure_db_snapshot_sim_v34.jsonl per CLAUDE.md rule 22.
+SIMULATOR_VERSION = 35
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
