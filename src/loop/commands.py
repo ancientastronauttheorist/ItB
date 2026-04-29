@@ -90,6 +90,30 @@ def _recording_dir(session: RunSession) -> Path:
     return run_dir
 
 
+# Difficulty label map (mirrors GameData.difficulty values)
+_DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
+
+
+def _read_save_file_difficulty(profile: str = "Alpha") -> int | None:
+    """Return the in-game difficulty (0/1/2/3) from the save file, or None.
+
+    Authoritative source for the live difficulty (see CLAUDE.md note on
+    Timeline Lost continuations: ``session.difficulty`` is stale Python
+    metadata and must be cross-checked against this value at the start
+    of each turn).
+    """
+    try:
+        state = load_game_state(profile)
+    except Exception:
+        return None
+    if state is None:
+        return None
+    diff = getattr(state, "difficulty", None)
+    if isinstance(diff, int):
+        return diff
+    return None
+
+
 def _visual_to_bridge(pos: str) -> tuple[int, int] | None:
     """Reverse of ``_bv``: 'C5' -> (3, 5). Returns None on malformed input."""
     if not isinstance(pos, str) or len(pos) < 2:
@@ -458,6 +482,56 @@ def _log_resist_probe(session: RunSession, board, bridge_data: dict) -> None:
     }
     with open(log_path, "a") as f:
         f.write(json.dumps(entry) + "\n")
+
+
+def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
+    """Detect a mission boundary from the bridge and bump ``mission_index``.
+
+    Without this, every mission in a multi-mission run shares ``mission_index=0``
+    and recordings collide on the ``m00_*`` prefix — the second mission's turn-0
+    board overwrites the first's, etc. (See run 20260428_165811_685 where
+    Mission_FreezeBots clobbered Mission_BotDefense's m00_turn_04_board.json.)
+
+    ``cmd_mission_end`` already bumps explicitly when called, but the harness
+    doesn't always call it (e.g. on Region Secured detected from a screenshot).
+    This auto-detect path is the safety net.
+
+    Bump rules:
+      - bridge mission_id empty       → no-op (between missions / loading)
+      - session.current_mission empty → first time we see a mission this run
+                                        (or post-cmd_mission_end re-entry).
+                                        Adopt the name; do NOT bump index —
+                                        ``mission_index`` already points at the
+                                        correct slot (0 for fresh runs, mi+1
+                                        for post-mission_end).
+      - same mission_id               → no-op
+      - different mission_id          → mission boundary missed by the harness.
+                                        Bump index, adopt new name, clear
+                                        per-mission soft-disable list (mirrors
+                                        ``RunSession.advance_mission``).
+
+    Returns True when an adopt-or-bump fired so the caller can ``session.save()``.
+    """
+    mission_id = (bridge_data.get("mission_id") or "").strip()
+    if not mission_id:
+        return False
+    if session.current_mission == mission_id:
+        return False
+    if not session.current_mission:
+        # First mission this run, or first read after cmd_mission_end cleared
+        # current_mission and pre-bumped mission_index. Just adopt the name.
+        session.current_mission = mission_id
+        return True
+    # Mission boundary the harness missed. Bump and reset per-mission state.
+    print(
+        f"[auto_advance_mission] mission boundary detected: "
+        f"{session.current_mission!r} -> {mission_id!r} "
+        f"(mission_index {session.mission_index} -> {session.mission_index + 1})"
+    )
+    session.current_mission = mission_id
+    session.mission_index += 1
+    session.disabled_actions = []
+    return True
 
 
 def _record_turn_state(session: RunSession, label: str, data: dict,
@@ -989,6 +1063,14 @@ def cmd_read(profile: str = "Alpha") -> dict:
             }
 
             session.current_turn = bridge_data.get("turn", 0)
+
+            # Auto-advance ``mission_index`` when we observe a mission boundary
+            # the harness didn't fire ``cmd_mission_end`` for. Must run BEFORE
+            # ``_record_turn_state`` / ``_log_resist_probe`` so the new mission's
+            # writes land under the bumped ``m{NN}_*`` prefix instead of
+            # overwriting the prior mission's recordings.
+            if _auto_advance_mission(session, bridge_data):
+                session.save()
 
             # Grid-defense resist probe: log aiSeed + telegraphed building
             # attacks each player-turn-start. No-op if the bridge didn't
@@ -3723,6 +3805,23 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
     audit don't pollute the tuner training corpus.
     """
     session = RunSession.new_run(squad, achievements, difficulty, tags=tags)
+    # Sync difficulty from save file when available — the --difficulty CLI
+    # flag is a default for the metadata, but the save file is authoritative
+    # once the game has written one (matches the cross-check in
+    # cmd_auto_turn). Falls through silently if the save file isn't readable
+    # (fresh install, no profile yet).
+    _live_diff = _read_save_file_difficulty()
+    if _live_diff is not None and _live_diff != session.difficulty:
+        _ses_label = _DIFFICULTY_LABELS.get(
+            session.difficulty, str(session.difficulty)
+        )
+        _save_label = _DIFFICULTY_LABELS.get(_live_diff, str(_live_diff))
+        print(
+            f"[new_run] difficulty synced from save file: "
+            f"{session.difficulty} ({_ses_label}) -> "
+            f"{_live_diff} ({_save_label})"
+        )
+        session.difficulty = _live_diff
     # Fix B 2026-04-28 — explicit wipe of run-scoped soft-disable state.
     # ``new_run`` already produces a fresh session via the dataclass default
     # (disabled_actions=[]), but a future refactor that inherits prior
@@ -3747,13 +3846,14 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
     logger.log_custom("New Run", (
         f"Squad: {squad}\n"
         f"Achievements: {achievements or 'none'}\n"
-        f"Difficulty: {difficulty}\n"
+        f"Difficulty: {session.difficulty}\n"
         f"Tags: {tags or 'none'}"
     ))
 
     result = {
         "run_id": session.run_id,
         "squad": squad,
+        "difficulty": session.difficulty,
         "achievements": achievements or [],
         "tags": tags or [],
     }
@@ -4941,6 +5041,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     print(f"\n{'='*50}")
     print(f"AUTO TURN {turn} (verify-after-every-sub-action)")
     print(f"{'='*50}")
+
+    # Difficulty cross-check — fires once per auto_turn call. Catches the
+    # Timeline-Lost-continuation case where session.difficulty is stale
+    # Python metadata that no longer matches the in-game UI. Save file is
+    # authoritative; we update session metadata in-memory so downstream
+    # writers (manifests, run summaries) record the correct value. See
+    # CLAUDE.md note on stale session.difficulty.
+    import sys as _sys
+    _live_diff = _read_save_file_difficulty(profile)
+    _diff_session = _load_session()
+    if (_live_diff is not None
+            and _diff_session.difficulty != _live_diff):
+        _ses_label = _DIFFICULTY_LABELS.get(
+            _diff_session.difficulty, str(_diff_session.difficulty)
+        )
+        _save_label = _DIFFICULTY_LABELS.get(_live_diff, str(_live_diff))
+        print(
+            f"[DIFFICULTY_MISMATCH] session={_diff_session.difficulty} "
+            f"({_ses_label}), save_file={_live_diff} ({_save_label}). "
+            f"Trusting save file.",
+            file=_sys.stderr,
+        )
+        _diff_session.difficulty = _live_diff
+        _diff_session.save()
 
     # 2. Solve
     solve_result = cmd_solve(profile=profile, time_limit=time_limit)

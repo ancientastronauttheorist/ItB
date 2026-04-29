@@ -83,6 +83,7 @@ local function _read_save_data()
     local result = {
         network = nil,
         networkMax = nil,
+        difficulty = nil,     -- GameData.difficulty (0=Easy, 1=Normal, 2=Hard, 3=Unfair)
         queued_shots = {},
         queued_targets = {},  -- [pawn_id] = {x, y} from piTarget (leap/melee landing tile)
         queued_skills = {},   -- [pawn_id] = iQueuedSkill (>=0 when an attack is actually queued)
@@ -106,6 +107,13 @@ local function _read_save_data()
     if net then result.network = tonumber(net) end
     local netMax = content:match('%["networkMax"%]%s*=%s*(%d+)')
     if netMax then result.networkMax = tonumber(netMax) end
+
+    -- In-game difficulty: 0=Easy, 1=Normal, 2=Hard, 3=Unfair. Authoritative
+    -- live value (the Python session.difficulty drifts after Timeline Lost
+    -- continuations). Allow negative just in case the game ever stores it
+    -- as -1 for "uninitialized".
+    local diff = content:match('%["difficulty"%]%s*=%s*(%-?%d+)')
+    if diff then result.difficulty = tonumber(diff) end
 
     -- RNG seeds — for grid-defense resist prediction probe.
     -- `seed` is the run-lifetime master seed (appears once, top-level GameData).
@@ -258,6 +266,12 @@ local function dump_state()
     state.grid_power = save_data.network or (GameData and GameData.network) or 0
     state.grid_power_max = save_data.networkMax or (GameData and GameData.networkMax) or 7
     state.timestamp = os.time()
+
+    -- In-game difficulty (0=Easy, 1=Normal, 2=Hard, 3=Unfair). Mirrors the
+    -- save-file source-of-truth so Python can cross-check session metadata
+    -- without parsing Lua. See cmd_auto_turn difficulty cross-check.
+    state.difficulty = save_data.difficulty
+        or (GameData and GameData.difficulty) or 0
 
     -- RNG seeds for grid-defense resist prediction probe. master_seed is the
     -- run-lifetime constant; mission_seeds is a {region_key -> aiSeed} map
