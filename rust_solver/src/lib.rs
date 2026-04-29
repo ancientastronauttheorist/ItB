@@ -671,7 +671,43 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // before the solver acts (mirrors Filler_Pawn's Filler_Attack design); we
 // observe the post-freeze board on next bridge read rather than simulating
 // the friendly fire ourselves.
-pub const SIMULATOR_VERSION: u32 = 33;
+//
+// v34 (2026-04-28): Burnbug Leader (BurnbugBoss / "Gastropod Leader")
+// modelling for the Archive Inc Corp HQ finale. Pre-v34 the simulator had
+// no PawnStats entry for `BurnbugBoss` and `enemy_weapon_for_type` returned
+// WId::None for it, falling through to the unknown-Boss fallback (3-dmg
+// single-target Alpha melee). The fallback got the damage approximately
+// right but completely missed the boss type's HP / move / Massive flags
+// and the weapon-specific FIRE status, leading to mech disable + grid 0
+// drain on a Corp HQ run. Adds:
+//   • `BurnbugBoss` PawnStats (HP not stored — bridge supplies live HP — but
+//     move_speed=3, ranged=1, massive=true, default_weapon=BurnbugAtkB)
+//     per `scripts/advanced/bosses/burnbug.lua:11-25`
+//     (Health=6, MoveSpeed=3, Ranged=1, Massive=true, Tier=BOSS).
+//   • `WId::BurnbugAtkB` (=123) + WeaponDef (Melee, 3 dmg, FIRE flag) per
+//     `scripts/advanced/bosses/burnbug.lua:28-38`
+//     (`BurnbugAtkB = BurnbugAtk1:new{Damage=3, BossFire=true, ...}`).
+//     Modeled identically to BurnbugAtk2 — both are
+//     `BurnbugAtk1:new{Damage=3}` derivatives. The cardinal-line grapple
+//     mechanics from `scripts/advanced/ae_weapons_enemy.lua:261-309` are
+//     simplified to a 1-tile melee with FIRE applied to the target,
+//     matching the existing BurnbugAtk1 / BurnbugAtk2 simplification.
+//   • `enemy_weapon_for_type`: BurnbugBoss → BurnbugAtkB.
+//   • `wid_from_str` / `wid_to_str` mappings + display name "Flaming
+//     Proboscis".
+// Out of scope: `BossFire = true` ignites all 4 cardinal tiles around the
+// boss when it fires (per Lua loop at lines 278-285). No existing weapon
+// def can express "primary attack + around-self status" in one entry —
+// would need a new flag + sim hook. The around-self trail's mech-on-fire
+// damage is bounded at 1/turn while the mech remains on a trail tile and
+// is dwarfed by the boss's 3-dmg primary attack, so the omission is a
+// known minor under-prediction (deferred). The full grapple-pull
+// mechanics (drag a hit pawn to the tile adjacent to the boss, OR
+// self-charge the boss to an obstacle) are also not modeled — same
+// simplification used for BurnbugAtk1 / BurnbugAtk2 since unit ship.
+// Pre-v34 corpus archived as `failure_db_snapshot_sim_v33.jsonl` per
+// CLAUDE.md rule 22.
+pub const SIMULATOR_VERSION: u32 = 34;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

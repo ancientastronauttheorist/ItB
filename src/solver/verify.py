@@ -397,7 +397,32 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # fires for any `is_player() && !is_mech()` unit, so no evaluator
 # change is needed once PawnStats is correct. Pre-v33 corpus archived
 # as failure_db_snapshot_sim_v32.jsonl per CLAUDE.md rule 22.
-SIMULATOR_VERSION = 33
+#
+# v34 (2026-04-28): Burnbug Leader (BurnbugBoss / "Gastropod Leader")
+# modelling for the Archive Inc Corp HQ finale. Pre-v34 BurnbugBoss had no
+# PawnStats entry and `enemy_weapon_for_type` returned WId::None,
+# falling through to the unknown-Boss fallback (3-dmg single-target Alpha
+# melee). Fallback got damage approximately right but missed the boss
+# type's HP / move / Massive flags and weapon-specific FIRE status,
+# leading to mech disable + grid drain on a Corp HQ loss. Adds:
+#   • `BurnbugBoss` PawnStats (move_speed=3, ranged=1, massive=true,
+#     default_weapon=BurnbugAtkB) per
+#     `scripts/advanced/bosses/burnbug.lua:11-25`.
+#   • `WId::BurnbugAtkB` (=123) + WeaponDef (Melee, 3 dmg, FIRE flag) per
+#     `scripts/advanced/bosses/burnbug.lua:28-38`. Modeled identically to
+#     BurnbugAtk2 — both inherit from BurnbugAtk1 with Damage=3. The
+#     cardinal-line grapple is simplified to a 1-tile melee with FIRE
+#     on the target, matching existing BurnbugAtk1 / BurnbugAtk2 sim.
+#   • `enemy_weapon_for_type`: BurnbugBoss → BurnbugAtkB.
+#   • `wid_from_str` / `wid_to_str` mappings + display name
+#     "Flaming Proboscis".
+# Out of scope: `BossFire = true` around-self fire trail (4 cardinal
+# tiles ignited around the boss when it fires per Lua line 278-285) and
+# the full grapple-pull / self-charge mechanics — same simplification
+# used for BurnbugAtk1 / BurnbugAtk2 since unit ship. Deferred to a
+# future bump. Pre-v34 corpus archived as
+# failure_db_snapshot_sim_v33.jsonl per CLAUDE.md rule 22.
+SIMULATOR_VERSION = 34
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

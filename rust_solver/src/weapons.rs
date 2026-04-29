@@ -339,9 +339,29 @@ pub enum WId {
     /// Mission_FreezeBots ("Pinnacle Garden"). Mirrors Filler_Pawn's
     /// Filler_Attack pattern (friendly NPC default weapon).
     PinnacleFreezeTank = 122,
+    /// Burnbug Leader (BurnbugBoss / "Gastropod Leader") — Flaming Proboscis.
+    /// Archive Inc Corp HQ finale boss. Per
+    /// `scripts/advanced/bosses/burnbug.lua:28-38`,
+    /// `BurnbugAtkB = BurnbugAtk1:new{ Damage = 3, BossFire = true, ... }`.
+    /// Inherits the BurnbugAtk1 grapple SkillEffect from
+    /// `scripts/advanced/ae_weapons_enemy.lua:261-309`: a cardinal projectile
+    /// that walks toward p2 until it hits a PATH_PROJECTILE blocker, deals
+    /// `Damage` to that tile, then either drags the hit pawn to the tile
+    /// adjacent to the boss OR self-charges the boss to the obstacle if the
+    /// blocker is impassable. We mirror the existing simplification used by
+    /// `BurnbugAtk1` / `BurnbugAtk2` (Melee + FIRE) — a 1-tile melee with
+    /// `Damage` and FIRE on the target. The boss-only `BossFire = true` adds
+    /// fire to the 4 cardinal tiles around the boss itself when it fires
+    /// (Lua loop at lines 278-285); this around-self fire trail is NOT
+    /// modeled in sim v34 because no existing weapon can express
+    /// "primary attack + around-self status" in one def. Out of scope and
+    /// noted as a deferred improvement (the mech-on-fire damage from the
+    /// trail is at most 1/turn while the mech is on a trail tile and is
+    /// dwarfed by the boss's 3-dmg primary attack).
+    BurnbugAtkB = 123,
 }
 
-pub const WEAPON_COUNT: usize = 123;
+pub const WEAPON_COUNT: usize = 124;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -737,6 +757,18 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[122] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::None, range_max: 0,
         flags: f(WeaponFlags::FREEZE.bits()), ..DEF };
 
+    // 123: BurnbugAtkB — Burnbug Leader's Flaming Proboscis. Per
+    // `scripts/advanced/bosses/burnbug.lua:28-38`,
+    // `BurnbugAtkB = BurnbugAtk1:new{ Damage = 3, BossFire = true, ... }`.
+    // Modeled identically to BurnbugAtk2 (Melee, 3 dmg, FIRE) since Atk2 is
+    // also a `BurnbugAtk1:new{Damage=3}` derivative — the cardinal-line
+    // grapple is approximated as a 1-tile melee with FIRE applied to the
+    // target. The `BossFire` around-self fire trail (4 cardinal tiles
+    // ignited around the boss when it fires) is intentionally not modeled
+    // here; see WId::BurnbugAtkB doc comment for rationale.
+    w[123] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -939,6 +971,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "SnowBossAtk2" => WId::SnowBossAtk2,
         "BossHeal" => WId::BossHeal,
         "Pinnacle_FreezeTank" => WId::PinnacleFreezeTank,
+        "BurnbugAtkB" => WId::BurnbugAtkB,
         _ => WId::None,
     }
 }
@@ -1057,6 +1090,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::SnowBossAtk2 => "SnowBossAtk2",
         WId::BossHeal => "BossHeal",
         WId::PinnacleFreezeTank => "Pinnacle_FreezeTank",
+        WId::BurnbugAtkB => "BurnbugAtkB",
         _ => "",
     }
 }
@@ -1157,6 +1191,10 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "BlobBoss" => WId::BlobBossAtk,
         "BlobBossMed" => WId::BlobBossAtkMed,
         "BlobBossSmall" => WId::BlobBossAtkSmall,
+        // Burnbug Leader (a.k.a. Gastropod Leader) — Archive Inc Corp HQ
+        // finale boss. SkillList = {"BurnbugAtkB"} per
+        // `scripts/advanced/bosses/burnbug.lua:17`.
+        "BurnbugBoss" => WId::BurnbugAtkB,
         _ => WId::None,
     }
 }
@@ -1272,6 +1310,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::SnowBossAtk => "Vk8 Rockets Mark III",
         WId::SnowBossAtk2 => "Vk8 Rockets Mark IV",
         WId::BossHeal => "Self-Repairing",
+        WId::BurnbugAtkB => "Flaming Proboscis",
         _ => "Unknown",
     }
 }

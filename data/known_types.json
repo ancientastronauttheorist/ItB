@@ -368,7 +368,9 @@
     "BlobBoss",
     "BlobBossMed",
     "BlobBossSmall",
-    "Freeze_Tank"
+    "Freeze_Tank",
+    "MirrorMech",
+    "BurnbugBoss"
   ],
   "observed_weapons": [
     "Acid_Tank_Attack",
@@ -422,7 +424,8 @@
     "BlobBossAtk",
     "BlobBossAtkMed",
     "BlobBossAtkSmall",
-    "Pinnacle_FreezeTank"
+    "Pinnacle_FreezeTank",
+    "BurnbugAtkB"
   ],
   "known_phases": [
     "between_missions",

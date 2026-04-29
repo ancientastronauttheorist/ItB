@@ -114,6 +114,11 @@ VEK_STATS = {
     "Snowart2":      PawnStats(move_speed=3, ranged=1),
     "Burnbug1":      PawnStats(move_speed=2, ranged=0),
     "Burnbug2":      PawnStats(move_speed=2, ranged=0),
+    # Burnbug Leader (a.k.a. Gastropod Leader) — Archive Inc Corp HQ finale boss.
+    # Per `scripts/advanced/bosses/burnbug.lua`: Health=6, MoveSpeed=3, Ranged=1,
+    # Massive=true, Tier=BOSS, SkillList={"BurnbugAtkB"}.
+    "BurnbugBoss":   PawnStats(move_speed=3, ranged=1, massive=True,
+                               default_weapon="BurnbugAtkB"),
     # Psions
     "Jelly_Health1": PawnStats(move_speed=2, flying=True, leader="LEADER_HEALTH", pushable=False),
     "Jelly_Armor1":  PawnStats(move_speed=2, flying=True, leader="LEADER_ARMOR", pushable=False),
