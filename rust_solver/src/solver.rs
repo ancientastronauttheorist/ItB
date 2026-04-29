@@ -730,6 +730,7 @@ fn search_recursive(
     weights: &EvalWeights,
     deadline: Instant,
     disabled_mask: u128,
+    allow_disabled_weapons: bool,
     weapons: &WeaponTable,
     best_score: &mut f64,
     best_actions: &mut Vec<MechAction>,
@@ -753,7 +754,25 @@ fn search_recursive(
         // Subtracted at terminal evaluation so the search retains its
         // normal comparisons between branches — we're biasing the
         // objective, not pruning branches.
-        let score = raw - soft_disable_penalty_so_far;
+        //
+        // Scale by `bld_mult` (same factor used for building scoring in
+        // `evaluate`) when in forced-use mode (Pass 2). At low grid the
+        // value of saving a building drops to bld_mult * building_alive
+        // (~6,000 at grid=0, bld_mult=0.6), and a flat 10,000 penalty
+        // would exceed it — flipping the choice back to pure-move and
+        // throwing the mission. Scaling preserves the documented
+        // invariant: "won't throw the mission for a single forced use."
+        // Pass 1 (`allow_disabled_weapons=false`) never reaches this
+        // path with non-zero penalty (disabled branches are pruned at
+        // enumeration), so the scaling is a no-op there.
+        let penalty_scale = if allow_disabled_weapons {
+            let eff_grid_eval = b_eval.grid_power as f64 + b_eval.enemy_grid_save_expected as f64;
+            let grid_health_eval = eff_grid_eval / (b_eval.grid_power_max as f64).max(1.0);
+            (weights.bld_grid_floor + weights.bld_grid_scale * grid_health_eval).max(0.1)
+        } else {
+            1.0
+        };
+        let score = raw - soft_disable_penalty_so_far * penalty_scale;
 
 
         if score > *best_score {
@@ -783,6 +802,7 @@ fn search_recursive(
             original_positions,
             spawn_points, max_actions, weights, deadline,
             disabled_mask,
+            allow_disabled_weapons,
             weapons,
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
@@ -798,13 +818,48 @@ fn search_recursive(
     for &(move_to, weapon_id, target) in &actions {
         if Instant::now() > deadline { return; }
 
+        // Soft-disable: a weapon in the session's disabled_actions mask has
+        // already desynced N times — its damage prediction is untrusted, so
+        // planning around it is a gamble. Two-pass search in `solve_turn`:
+        //
+        //   Pass 1 (`allow_disabled_weapons=false`): drop disabled-weapon
+        //     branches entirely. This is the default — when alternatives
+        //     exist, the solver picks a reliable plan. (Previously the
+        //     ONLY behavior; comment cited run 20260428_165811_685 where
+        //     a flat penalty was overridden by a 23k kill bonus and the
+        //     solver fired Ranged_Defensestrike anyway, then mech died.)
+        //
+        //   Pass 2 (`allow_disabled_weapons=true`): admit disabled-weapon
+        //     branches with `soft_disabled_penalty` accrued at terminal
+        //     evaluation. Run only when Pass 1 returned an empty/no-attack
+        //     plan AND the predicted outcome is critical (grid will drop
+        //     near 0). This is the "forced use" path — better to gamble
+        //     on a buggy weapon than concede the mission. Observed on
+        //     run 20260428_165811_685 turn 3 (Mission_Volatile): both
+        //     squad attack weapons were soft-disabled; Pass 1 produced a
+        //     pure-move plan that lost the run (grid 1→0, 4 buildings
+        //     destroyed); the Pass 2 plan would have saved 1 building by
+        //     firing Attract Shot at the building-threatening Scorpion.
+        //
+        // Bit index is the u8 representation of the WId variant.
+        let wid_bit = weapon_id as u8;
+        let is_disabled = weapon_id != WId::None && wid_bit < 128
+            && (disabled_mask >> wid_bit) & 1 != 0;
+        if is_disabled && !allow_disabled_weapons {
+            continue;
+        }
+
         let mut b_next = board.clone(); // ~800 byte memcpy
         let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target, weapons);
 
-        // Accumulate soft-disable penalty for blocked weapons. Bit index
-        // is the u8 representation of the WId variant.
-        let wid_bit = weapon_id as u8;
-        let penalty_add = if wid_bit < 128 && (disabled_mask >> wid_bit) & 1 != 0 {
+        // Accrue the soft-disable penalty per disabled-weapon use along the
+        // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
+        // here for disabled weapons (the `continue` above drops them), so
+        // accrual is a no-op. Pass 2 (`allow_disabled_weapons=true`)
+        // reaches here for disabled-weapon branches and accumulates the
+        // penalty — paid once at terminal evaluation, scaled by `bld_mult`
+        // so the cost stays proportional to building value at low grid.
+        let penalty_add: f64 = if is_disabled {
             weights.soft_disabled_penalty
         } else {
             0.0
@@ -823,6 +878,7 @@ fn search_recursive(
             original_positions,
             spawn_points, max_actions, weights, deadline,
             disabled_mask,
+            allow_disabled_weapons,
             weapons,
             best_score, best_actions,
             best_clean_score, best_clean_actions, initial_building_count,
@@ -975,48 +1031,118 @@ pub fn solve_turn(
     let initial_building_count = count_buildings(board);
 
     // Parallel search via rayon
-    let results: Vec<(f64, Vec<MechAction>, f64, Vec<MechAction>, bool)> = perm_mapped.par_iter().map(|mech_order| {
-        let mut best_score = f64::NEG_INFINITY;
-        let mut best_actions = Vec::new();
-        let mut best_clean_score = f64::NEG_INFINITY;
-        let mut best_clean_actions = Vec::new();
-        let mut actions_buf = Vec::new();
-        let mut top_k_out: Option<BoundedTopK> = None;
+    // Inner closure: run the parallel rayon search with a given allow flag.
+    // Returns (best_score, best_actions, best_clean_score, best_clean_actions, any_timed_out).
+    let run_pass = |allow: bool| -> (f64, Vec<MechAction>, f64, Vec<MechAction>, bool) {
+        let results: Vec<(f64, Vec<MechAction>, f64, Vec<MechAction>, bool)> = perm_mapped.par_iter().map(|mech_order| {
+            let mut best_score = f64::NEG_INFINITY;
+            let mut best_actions = Vec::new();
+            let mut best_clean_score = f64::NEG_INFINITY;
+            let mut best_clean_actions = Vec::new();
+            let mut actions_buf = Vec::new();
+            let mut top_k_out: Option<BoundedTopK> = None;
 
-        search_recursive(
-            board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0.0,
-            threat_tiles, building_threats, spawn_bits,
-            &original_positions,
-            spawn_points, effective_max, weights, deadline,
-            disabled_mask,
-            weapons,
-            &mut best_score, &mut best_actions,
-            &mut best_clean_score, &mut best_clean_actions, initial_building_count,
-            &psion_before,
-            &mut top_k_out,
-        );
+            search_recursive(
+                board, mech_order, 0,
+                &mut actions_buf, 0, 0, 0.0,
+                threat_tiles, building_threats, spawn_bits,
+                &original_positions,
+                spawn_points, effective_max, weights, deadline,
+                disabled_mask,
+                allow,
+                weapons,
+                &mut best_score, &mut best_actions,
+                &mut best_clean_score, &mut best_clean_actions, initial_building_count,
+                &psion_before,
+                &mut top_k_out,
+            );
 
-        let timed_out = Instant::now() > deadline;
-        (best_score, best_actions, best_clean_score, best_clean_actions, timed_out)
-    }).collect();
+            let timed_out = Instant::now() > deadline;
+            (best_score, best_actions, best_clean_score, best_clean_actions, timed_out)
+        }).collect();
 
-    // Find global best + global clean best
-    let mut best = Solution::empty();
-    let mut any_timed_out = false;
-    let mut global_clean_score = f64::NEG_INFINITY;
-    let mut global_clean_actions = Vec::new();
-    for (score, actions, clean_score, clean_actions, timed_out) in results {
-        if timed_out { any_timed_out = true; }
-        if score > best.score {
-            best.score = score;
-            best.actions = actions;
+        let mut bs = f64::NEG_INFINITY;
+        let mut ba: Vec<MechAction> = Vec::new();
+        let mut cs = f64::NEG_INFINITY;
+        let mut ca: Vec<MechAction> = Vec::new();
+        let mut any_to = false;
+        for (score, actions, clean_score, clean_actions, timed_out) in results {
+            if timed_out { any_to = true; }
+            if score > bs {
+                bs = score;
+                ba = actions;
+            }
+            if clean_score > cs {
+                cs = clean_score;
+                ca = clean_actions;
+            }
         }
-        if clean_score > global_clean_score {
-            global_clean_score = clean_score;
-            global_clean_actions = clean_actions;
+        (bs, ba, cs, ca, any_to)
+    };
+
+    // Pass 1: hard-skip soft-disabled weapons. This is the default; when
+    // alternatives exist, the solver picks a reliable plan.
+    let (mut best_score_v, mut best_actions_v, mut clean_score_v, mut clean_actions_v, mut any_timed_out) =
+        run_pass(false);
+
+    // Pass 2: only when Pass 1 produced no attacks AND the predicted
+    // outcome is critical (mission-loss territory). Admit disabled-weapon
+    // branches with the configured `soft_disabled_penalty` accrued at
+    // terminal evaluation. The penalty still biases away from disabled
+    // weapons, but if firing one saves enough buildings to beat pure-move
+    // (after penalty), it wins. This is the "forced use" path.
+    //
+    // Trigger conditions:
+    //   - At least one weapon in the disabled mask is on the active
+    //     squad (else Pass 2 is identical to Pass 1).
+    //   - Pass 1 plan has zero attacks (every action is move-only / skip).
+    //   - Pass 1 predicted outcome is grid-critical: predicted final
+    //     grid_power == 0, OR ≥ 2 buildings lost this turn (mission is
+    //     hemorrhaging — gambling on a bad weapon-prediction is acceptable).
+    //
+    // The grid_power == 0 / many-buildings-lost gate keeps Pass 2 from
+    // firing on routine "no attack opportunities" turns where hard-skip
+    // is genuinely correct (e.g., all enemies out of range).
+    let pass1_has_attack = best_actions_v.iter()
+        .any(|a| a.weapon != WId::None && a.weapon != WId::Repair);
+    if disabled_mask != 0 && !best_actions_v.is_empty() && !pass1_has_attack {
+        // Re-simulate Pass 1 plan to inspect predicted outcome.
+        let mut b_check = board.clone();
+        for action in &best_actions_v {
+            let mech_idx = match board.units.iter().position(|u| u.uid == action.mech_uid) {
+                Some(i) => i,
+                None => continue,
+            };
+            simulate_action(&mut b_check, mech_idx, action.move_to, action.weapon, action.target, weapons);
+        }
+        let buildings_before_enemy = count_buildings(&b_check);
+        simulate_enemy_attacks(&mut b_check, &original_positions, weapons);
+        let buildings_after_enemy = count_buildings(&b_check);
+        let buildings_lost = buildings_before_enemy - buildings_after_enemy;
+        let grid_critical = b_check.grid_power == 0 || buildings_lost >= 2;
+
+        if grid_critical {
+            let (bs2, ba2, cs2, ca2, to2) = run_pass(true);
+            if to2 { any_timed_out = true; }
+            // Take Pass 2 result if it strictly beats Pass 1 — penalty is
+            // already baked into bs2, so a higher score here means firing
+            // a disabled weapon is worth its predicted-cost-of-misprediction.
+            if bs2 > best_score_v {
+                best_score_v = bs2;
+                best_actions_v = ba2;
+            }
+            if cs2 > clean_score_v {
+                clean_score_v = cs2;
+                clean_actions_v = ca2;
+            }
         }
     }
+
+    let mut best = Solution::empty();
+    best.score = best_score_v;
+    best.actions = best_actions_v;
+    let global_clean_score = clean_score_v;
+    let global_clean_actions = clean_actions_v;
 
     // Two-stage filter: prefer clean plan if within threshold of best
     if global_clean_score > f64::NEG_INFINITY && !best.actions.is_empty() {
@@ -1121,6 +1247,12 @@ pub fn solve_turn_top_k(
             &original_positions,
             spawn_points, effective_max, weights, deadline,
             disabled_mask,
+            // Top-K (beam) path keeps the hard-skip default. The two-pass
+            // forced-use fallback in `solve_turn` is for the single-best
+            // plan only; expanding it into beam node generation would
+            // double the search budget across every depth without a
+            // matching benefit (beam already explores diverse plans).
+            false,
             weapons,
             &mut best_score, &mut best_actions,
             &mut best_clean_score, &mut best_clean_actions, initial_building_count,
