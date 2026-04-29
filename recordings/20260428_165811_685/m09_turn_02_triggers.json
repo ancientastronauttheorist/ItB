@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-29T18:01:17.766812",
+  "run_id": "20260428_165811_685",
+  "mission_index": 9,
+  "turn": 2,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_on_acid",
+        "tier": 4,
+        "severity": "high",
+        "details": "TeleMech moved to acid tile (5,3)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}
