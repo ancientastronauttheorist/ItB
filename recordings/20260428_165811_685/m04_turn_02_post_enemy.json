@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-04-28T21:48:22.755825",
+  "run_id": "20260428_165811_685",
+  "mission_index": 4,
+  "turn": 2,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "grid_power": 4,
+      "enemies_alive": 2,
+      "enemy_hp_total": 8,
+      "mechs_alive": 1,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 2,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "building_hp_total": 9,
+      "buildings_alive": 7,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 1,
+      "enemy_hp_total": 6,
+      "grid_power": 4,
+      "mech_hp": [
+        {
+          "hp": 1,
+          "max_hp": 3,
+          "type": "GuardMech",
+          "uid": 0
+        },
+        {
+          "hp": 0,
+          "max_hp": 3,
+          "type": "MirrorMech",
+          "uid": 1
+        },
+        {
+          "hp": 0,
+          "max_hp": 2,
+          "type": "IceMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 1
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 1,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 1,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "predicted_hp": 1,
+          "actual_hp": 2,
+          "diff": 1
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

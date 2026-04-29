@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-28T21:32:55.665841",
+  "run_id": "20260428_165811_685",
+  "mission_index": 2,
+  "turn": 2,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_on_danger",
+        "tier": 4,
+        "severity": "critical",
+        "details": "GuardMech moved to danger tile (5,4)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}
