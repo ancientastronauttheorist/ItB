@@ -367,7 +367,24 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 #   AND end-of-turn shield; multi-turn lookahead can later add the
 #   pending-heal as a unit flag.
 #   Pre-v31 corpus archived as failure_db_snapshot_sim_v30.jsonl.
-SIMULATOR_VERSION = 31
+#
+# v32 (2026-04-28): player-phase Grid Defense expected save. The 15%
+# resist roll fires for ALL building damage per text.lua:122 ("This
+# building resisted damage!"), including the player's own friendly fire.
+# Pre-v32 the simulator only modeled the enemy-phase save; player
+# weapons that clipped buildings (Cluster Artillery, push chains, etc.)
+# over-predicted grid loss by ~0.15 per hit. All 8 Ranged_Defensestrike
+# `grid_power` desyncs in failure_db over-predicted by exactly 1 — the
+# 1-resist-per-7-hits rate the 15% predicts. Fix: new
+# `Board.player_grid_save_expected` mirror of `enemy_grid_save_expected`,
+# accumulated in `simulate_action` (Rust) per
+# `result.grid_damage * grid_defense_pct / 100`, surfaced in
+# `evaluate::eff_grid`. The deterministic grid_power decrement is
+# unchanged — buildings still get destroyed in the sim — only the
+# evaluator's expectation is corrected so it stops over-penalizing
+# plans that incidentally clip a building. Pre-v32 corpus archived as
+# failure_db_snapshot_sim_v31.jsonl per CLAUDE.md rule 22.
+SIMULATOR_VERSION = 32
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

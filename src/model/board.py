@@ -194,6 +194,12 @@ class Board:
         # accumulated as float (buildings_destroyed * grid_defense_pct/100).
         # Read by evaluator to offset pessimistic post-enemy grid count.
         self.enemy_grid_save_expected: float = 0.0
+        # Mirror of enemy_grid_save_expected for player-phase friendly-fire
+        # building damage (sim v32+). The Rust simulator accumulates this in
+        # `simulate_action`; the Python evaluator (audit-only score_breakdown
+        # path) surfaces it in `eff_grid` for parity. Pure-Python search is
+        # gone — this field exists for breakdown reporting and unit tests.
+        self.player_grid_save_expected: float = 0.0
         self.environment_danger: set[tuple[int, int]] = set()
         self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
         # Maps (x,y) -> (damage, is_lethal)
@@ -246,6 +252,7 @@ class Board:
         b.grid_power_max = self.grid_power_max
         b.grid_defense_pct = self.grid_defense_pct
         b.enemy_grid_save_expected = self.enemy_grid_save_expected
+        b.player_grid_save_expected = self.player_grid_save_expected
         b.environment_danger = set(self.environment_danger)
         b.environment_danger_v2 = dict(self.environment_danger_v2)
         b.environment_freeze = set(self.environment_freeze)

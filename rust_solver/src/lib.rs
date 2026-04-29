@@ -167,6 +167,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "buildings_after_enemy": buildings_after,
             "buildings_destroyed_by_enemies": buildings_mid - buildings_after,
             "grid_power": board.grid_power,
+            "player_grid_save_expected": board.player_grid_save_expected,
+            "enemy_grid_save_expected": board.enemy_grid_save_expected,
             "mechs_alive": mechs_alive,
             "judo_hp": judo_hp,
             "kills": kills,
@@ -629,7 +631,25 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   multi-turn lookahead can later add the pending-heal as a unit flag.
 //   Pre-v31 corpus archived as `failure_db_snapshot_sim_v30.jsonl` per
 //   CLAUDE.md rule 22.
-pub const SIMULATOR_VERSION: u32 = 31;
+//
+// v32 (2026-04-28): player-phase Grid Defense expected save. Cluster
+// Artillery (Ranged_Defensestrike) and other player weapons that clipped
+// buildings were over-predicting grid loss by ~0.15 per friendly-fire
+// hit — the simulator only modeled the 15% resist roll on the enemy
+// phase. Per text.lua:122 ("This building resisted damage!") the roll
+// fires for ALL building damage instances, including the player's own.
+// All 8 Ranged_Defensestrike grid_power desyncs in failure_db.jsonl
+// over-predicted by 1 — exactly the 1-resist-per-7-hits rate the 15%
+// would predict. Fix: new `Board::player_grid_save_expected: f32` (mirror
+// of `enemy_grid_save_expected`), accumulated in `simulate_action` per
+// player action via `result.grid_damage * grid_defense_pct / 100`,
+// surfaced in `evaluate::eff_grid` alongside the enemy save. Doesn't
+// change deterministic grid_power decrements — the building still gets
+// destroyed in the sim — only gives the evaluator a calibrated
+// expectation so it stops over-penalizing plans that incidentally clip
+// a building. Pre-v32 corpus archived as
+// `failure_db_snapshot_sim_v31.jsonl` per CLAUDE.md rule 22.
+pub const SIMULATOR_VERSION: u32 = 32;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

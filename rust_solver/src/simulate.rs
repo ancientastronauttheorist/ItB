@@ -2072,6 +2072,17 @@ pub fn simulate_action(
     let mut result = simulate_move(board, mech_idx, move_to);
     let attack_result = simulate_attack(board, mech_idx, weapon_id, target, weapons);
     result.merge(&attack_result);
+    // Grid Defense: every grid point lost to PLAYER-phase building damage
+    // (friendly fire, push-bump into building) had a `grid_defense_pct`/100
+    // chance to resist. Mirrors enemy.rs::simulate_enemy_attacks line 1071,
+    // but accumulates per-action because player actions are dispatched one
+    // at a time through this entry point (solver.rs:853, lib.rs:110,
+    // turn_projection.rs:131). Enemy phase damage is NOT routed through
+    // simulate_action, so this can't double-count the enemy save.
+    if result.grid_damage > 0 {
+        let gd = board.grid_defense_pct as f32;
+        board.player_grid_save_expected += (result.grid_damage as f32) * (gd / 100.0);
+    }
     result
 }
 
@@ -4037,6 +4048,57 @@ mod tests {
             "-x neighbour pushed further in -x");
         // Repair still heals.
         assert_eq!(board.units[harold].hp, 3, "Repair heals 1 HP");
+    }
+
+    // sim v32: Grid Defense expected save fires for player-phase building
+    // damage too (per text.lua:122 "This building resisted damage!"). The
+    // simulator still destroys the building deterministically — what changes
+    // is `player_grid_save_expected` accumulating `grid_damage * gd / 100`
+    // for the evaluator. Pre-v32, plans clipping a building over-predicted
+    // grid loss by ~0.15 per friendly hit, biasing the solver against
+    // perfectly-acceptable plays. Mirrors the enemy.rs:1071 accumulator.
+    #[test]
+    fn test_player_grid_save_expected_accumulates_on_friendly_fire() {
+        let mut board = make_test_board();
+        // Titan Fist (Prime_Punchmech) at melee range into a 1-HP building.
+        // Routed through simulate_action so the wrapper's accumulator
+        // observes `result.grid_damage = 1`.
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(board.player_grid_save_expected, 0.0);
+        assert_eq!(board.grid_defense_pct, 15);
+
+        let result = simulate_action(&mut board, mech, (3, 3),
+                                     WId::PrimePunchmech, (3, 4), &WEAPONS);
+
+        // Building destroyed → grid_damage 1, grid_power -1, expected save
+        // accumulator gets exactly 0.15 (1 * 15/100).
+        assert!(result.grid_damage >= 1,
+                "expected ≥1 grid point lost, got {}", result.grid_damage);
+        assert!(board.grid_power < 7, "deterministic decrement still fires");
+        let expected = (result.grid_damage as f32) * 0.15;
+        assert!((board.player_grid_save_expected - expected).abs() < 1e-4,
+                "expected {} (= grid_damage {} × 0.15), got {}",
+                expected, result.grid_damage, board.player_grid_save_expected);
+        // Enemy-phase save is untouched by player actions.
+        assert_eq!(board.enemy_grid_save_expected, 0.0);
+    }
+
+    // Same path, no friendly fire → accumulator stays at 0. Guard against
+    // accidentally accumulating on every action regardless of grid_damage.
+    #[test]
+    fn test_player_grid_save_zero_when_no_friendly_fire() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        let _enemy = add_enemy(&mut board, 10, 3, 4, 3);
+
+        let _ = simulate_action(&mut board, mech, (3, 3),
+                                WId::PrimePunchmech, (3, 4), &WEAPONS);
+
+        assert_eq!(board.player_grid_save_expected, 0.0,
+                   "no building hit → no expected save accrual");
     }
 
     #[test]

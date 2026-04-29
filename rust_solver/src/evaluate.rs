@@ -351,10 +351,17 @@ pub fn evaluate(
     initial_building_threats: u64,
 ) -> f64 {
     // Effective grid = deterministic grid_power + expected Grid Defense
-    // save (fractional grid saved by the 15%-ish resist-chance). Used for
-    // urgency/game_over/scoring so the solver isn't pessimistic about
-    // buildings the game will actually save.
-    let eff_grid = board.grid_power as f64 + board.enemy_grid_save_expected as f64;
+    // save (fractional grid saved by the 15%-ish resist-chance) from BOTH
+    // phases:
+    //   • enemy_grid_save_expected: enemy-phase building hits (set by
+    //     simulate_enemy_attacks at end of phase).
+    //   • player_grid_save_expected: player-phase friendly-fire building
+    //     hits (accumulated in simulate_action; sim v32+).
+    // Used for urgency/game_over/scoring so the solver isn't pessimistic
+    // about buildings the game will actually save.
+    let eff_grid = board.grid_power as f64
+        + board.enemy_grid_save_expected as f64
+        + board.player_grid_save_expected as f64;
 
     // Game over: expected grid below half a point (≈ ≤0 actual).
     // Instead of flat -999999, use -500000 + normal score so the solver

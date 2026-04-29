@@ -235,10 +235,17 @@ def evaluate(
     w = weights or DEFAULT_WEIGHTS
 
     # Effective grid = deterministic grid_power + expected save from Grid
-    # Defense (fraction of buildings the enemy hit that the 15%-ish
-    # resist-chance blocks). Use this for urgency/game_over/scoring so the
-    # solver isn't pessimistic about buildings the game will actually save.
-    eff_grid = board.grid_power + getattr(board, "enemy_grid_save_expected", 0.0)
+    # Defense (fraction of buildings hit that the 15%-ish resist-chance
+    # blocks). Both phases contribute (sim v32+):
+    #   • enemy_grid_save_expected: enemy-phase building hits
+    #   • player_grid_save_expected: player-phase friendly-fire hits
+    # Use this for urgency/game_over/scoring so the solver isn't pessimistic
+    # about buildings the game will actually save.
+    eff_grid = (
+        board.grid_power
+        + getattr(board, "enemy_grid_save_expected", 0.0)
+        + getattr(board, "player_grid_save_expected", 0.0)
+    )
 
     # Game over: expected grid power below half a point (≈ ≤0 actual).
     # Graduated score: -500000 base + normal evaluation components.
@@ -486,8 +493,13 @@ def evaluate_breakdown(
     w = weights or DEFAULT_WEIGHTS
     ff = _future_factor(current_turn, total_turns, remaining_spawns)
 
-    # Effective grid = deterministic + expected Grid Defense save.
-    eff_grid = board.grid_power + getattr(board, "enemy_grid_save_expected", 0.0)
+    # Effective grid = deterministic + expected Grid Defense save (both
+    # enemy-phase and player-phase friendly-fire saves; sim v32+).
+    eff_grid = (
+        board.grid_power
+        + getattr(board, "enemy_grid_save_expected", 0.0)
+        + getattr(board, "player_grid_save_expected", 0.0)
+    )
 
     # --- GRID POWER URGENCY --- (raw grid, EvalWeights — see evaluate())
     grid_multiplier = 1.0
@@ -662,6 +674,7 @@ def evaluate_breakdown(
             "value": board.grid_power,
             "effective": eff_grid,
             "expected_save": getattr(board, "enemy_grid_save_expected", 0.0),
+            "expected_save_player": getattr(board, "player_grid_save_expected", 0.0),
             "score": grid_power_score,
         },
         "enemies_killed": {"count": kills, "score": enemies_killed_score},

@@ -280,6 +280,19 @@ pub struct Board {
     // Defense (buildings_destroyed * grid_defense_pct / 100). f32 because
     // it's a fractional expected value. Evaluator adds to grid_power.
     pub enemy_grid_save_expected: f32,
+    // Expected grid power saved during the simulated PLAYER phase via Grid
+    // Defense — i.e., the 15% resist roll fires on friendly-fire building
+    // damage too (per text.lua:122 "This building resisted damage!"). Pre-
+    // sim-v32 the simulator only modeled the enemy-phase save; plans that
+    // clipped buildings with Cluster Artillery / Ranged_Defensestrike etc.
+    // over-predicted grid loss by ~0.15 per friendly hit, biasing the solver
+    // toward grid-conservative plans that the actual game would survive.
+    // Accumulated in `simulate_action` (each player action's
+    // `result.grid_damage * gd / 100`); cleared on Board construction and
+    // never reset mid-search — solver.rs clones `board` per branch so each
+    // search subtree carries its own running total. Surfaces in evaluate.rs
+    // `eff_grid` alongside `enemy_grid_save_expected`.
+    pub player_grid_save_expected: f32,
     pub env_danger: u64,        // bitset: bit i = tile i is danger
     pub env_danger_kill: u64,   // bitset: bit i = tile i is lethal env (Deadly Threat: air strike, lightning, etc.)
     /// Bitset: bit i = tile i is a TERRAIN-CONVERSION lethal env (Tidal Wave →
@@ -383,6 +396,7 @@ impl Default for Board {
             grid_power_max: 7,
             grid_defense_pct: 15,
             enemy_grid_save_expected: 0.0,
+            player_grid_save_expected: 0.0,
             env_danger: 0,
             env_danger_kill: 0,
             env_danger_flying_immune: 0,

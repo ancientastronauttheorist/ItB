@@ -766,7 +766,9 @@ fn search_recursive(
         // path with non-zero penalty (disabled branches are pruned at
         // enumeration), so the scaling is a no-op there.
         let penalty_scale = if allow_disabled_weapons {
-            let eff_grid_eval = b_eval.grid_power as f64 + b_eval.enemy_grid_save_expected as f64;
+            let eff_grid_eval = b_eval.grid_power as f64
+                + b_eval.enemy_grid_save_expected as f64
+                + b_eval.player_grid_save_expected as f64;
             let grid_health_eval = eff_grid_eval / (b_eval.grid_power_max as f64).max(1.0);
             (weights.bld_grid_floor + weights.bld_grid_scale * grid_health_eval).max(0.1)
         } else {
