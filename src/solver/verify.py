@@ -384,7 +384,20 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # evaluator's expectation is corrected so it stops over-penalizing
 # plans that incidentally clip a building. Pre-v32 corpus archived as
 # failure_db_snapshot_sim_v31.jsonl per CLAUDE.md rule 22.
-SIMULATOR_VERSION = 32
+#
+# v33 (2026-04-28): Freeze Tank (Pinnacle Garden) modelling. Adds
+# `Freeze_Tank` PawnStats (move 4, ranged=1, pushable, default_weapon=
+# Pinnacle_FreezeTank) and `WId::PinnacleFreezeTank` (=122) with a
+# 0-damage projectile + FREEZE flag, mirroring Lua
+# `scripts/missions/snow/snow_helper.lua`. Pre-v33 Freeze_Tank was an
+# unknown pawn type and Pinnacle_FreezeTank fell through to WId::None
+# (DEF), so the solver gained zero credit for the Freeze Tank's
+# defensive freeze and could push/sacrifice it for free. The
+# friendly-NPC kill penalty path in `evaluate.rs:722-728` already
+# fires for any `is_player() && !is_mech()` unit, so no evaluator
+# change is needed once PawnStats is correct. Pre-v33 corpus archived
+# as failure_db_snapshot_sim_v32.jsonl per CLAUDE.md rule 22.
+SIMULATOR_VERSION = 33
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

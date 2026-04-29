@@ -649,7 +649,29 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // expectation so it stops over-penalizing plans that incidentally clip
 // a building. Pre-v32 corpus archived as
 // `failure_db_snapshot_sim_v31.jsonl` per CLAUDE.md rule 22.
-pub const SIMULATOR_VERSION: u32 = 32;
+//
+// v33 (2026-04-28): Freeze Tank (Pinnacle Garden) modelling. Mission_FreezeBots
+// spawns `Freeze_Tank` (HP=1, MoveSpeed=4, DefaultTeam=TEAM_PLAYER) per
+// `scripts/missions/snow/snow_helper.lua:2-13`. Pre-v33 the solver had no
+// PawnStats entry and `Pinnacle_FreezeTank` mapped to `WId::None` (DEF
+// weapon — 0-damage melee), so killing or losing the Freeze Tank to a
+// chain push was free in the score. Adds:
+//   • `Freeze_Tank` PawnStats (move 4, ranged=1, pushable=true,
+//     default_weapon=Pinnacle_FreezeTank) so move/push semantics are right.
+//   • `WId::PinnacleFreezeTank` (=122) + WeaponDef (Projectile, dmg 0,
+//     push None, FREEZE flag) so any phase-internal serialization round-trip
+//     keeps the weapon name. Per `weapons_base.lua:426-446` TankDefault
+//     defaults to RANGE_PROJECTILE; Lua override sets Damage=0, Push=0,
+//     Freeze=1.
+//   • `wid_from_str` / `wid_to_str` mappings.
+// Friendly-NPC kill penalty (-20000) already applied in `evaluate.rs:722-728`
+// because `is_player() && !is_mech()` — no evaluator change needed. Pre-v33
+// corpus archived as `failure_db_snapshot_sim_v32.jsonl` per CLAUDE.md rule
+// 22. The Freeze Tank's auto-fire happens at the start of the player turn
+// before the solver acts (mirrors Filler_Pawn's Filler_Attack design); we
+// observe the post-freeze board on next bridge read rather than simulating
+// the friendly fire ourselves.
+pub const SIMULATOR_VERSION: u32 = 33;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -330,9 +330,18 @@ pub enum WId {
     /// next-turn heal is outside the 1-turn horizon — see lib.rs sim v31 notes
     /// for the design rationale.
     BossHeal = 121,
+    /// Freeze Cannon — Freeze_Tank (Pinnacle Robotics friendly NPC) skill.
+    /// Per `scripts/missions/snow/snow_helper.lua:16-31`,
+    /// `Pinnacle_FreezeTank = TankDefault:new{ Damage=0, Push=0, Freeze=1 }`.
+    /// TankDefault inherits `Range = RANGE_PROJECTILE` (cardinal projectile,
+    /// hits first blocker), so this is a 0-damage projectile that freezes
+    /// the target. Used by the Freeze Tank to defend against enemies on
+    /// Mission_FreezeBots ("Pinnacle Garden"). Mirrors Filler_Pawn's
+    /// Filler_Attack pattern (friendly NPC default weapon).
+    PinnacleFreezeTank = 122,
 }
 
-pub const WEAPON_COUNT: usize = 122;
+pub const WEAPON_COUNT: usize = 123;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -718,6 +727,16 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[121] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::None,
         flags: f_nc(WeaponFlags::SHIELD.bits()), ..DEF };
 
+    // 122: Pinnacle_FreezeTank — Freeze Cannon. Per
+    // `scripts/missions/snow/snow_helper.lua:16-31`, a TankDefault projectile
+    // (Range=RANGE_PROJECTILE, fires axis-aligned, hits first blocker) with
+    // Damage=0, Push=0, Freeze=1. Friendly NPC defensive weapon that freezes
+    // the target without damaging it. range_max=0 (unlimited — projectile
+    // travels to first blocker). No self-freeze (that's a RangedIce-only
+    // hardcode in `sim_projectile`).
+    w[122] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::None, range_max: 0,
+        flags: f(WeaponFlags::FREEZE.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -919,6 +938,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "SnowBossAtk" => WId::SnowBossAtk,
         "SnowBossAtk2" => WId::SnowBossAtk2,
         "BossHeal" => WId::BossHeal,
+        "Pinnacle_FreezeTank" => WId::PinnacleFreezeTank,
         _ => WId::None,
     }
 }
@@ -1036,6 +1056,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::SnowBossAtk => "SnowBossAtk",
         WId::SnowBossAtk2 => "SnowBossAtk2",
         WId::BossHeal => "BossHeal",
+        WId::PinnacleFreezeTank => "Pinnacle_FreezeTank",
         _ => "",
     }
 }

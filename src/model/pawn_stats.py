@@ -141,6 +141,16 @@ NEUTRAL_STATS = {
     "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False),
     "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False),
     "Filler_Pawn":       PawnStats(move_speed=0, pushable=False),
+    # Freeze Tank (Pinnacle Robotics) — friendly NPC on Mission_FreezeBots
+    # ("Pinnacle Garden"). Per scripts/missions/snow/snow_helper.lua:
+    #   Health=1, MoveSpeed=4, SkillList={"Pinnacle_FreezeTank"},
+    #   DefaultTeam=TEAM_PLAYER, Corpse=false, Corporate=true.
+    # Wanders the board firing freeze projectiles at enemies. Mirrors the
+    # Filler_Pawn pattern (player-team NPC, not is_mech) so the evaluator
+    # applies the friendly_npc_killed (-20000) penalty rather than the
+    # mech_killed (-150000) one. Pushable per game (no Pushable=false flag).
+    "Freeze_Tank":       PawnStats(move_speed=4, ranged=1, pushable=True,
+                                   default_weapon="Pinnacle_FreezeTank"),
     "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False),
     "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
     "Archive_Tank":      PawnStats(move_speed=0, ranged=1),

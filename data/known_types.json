@@ -367,7 +367,8 @@
     "WebbEgg1",
     "BlobBoss",
     "BlobBossMed",
-    "BlobBossSmall"
+    "BlobBossSmall",
+    "Freeze_Tank"
   ],
   "observed_weapons": [
     "Acid_Tank_Attack",
@@ -420,7 +421,8 @@
     "WebeggHatch1",
     "BlobBossAtk",
     "BlobBossAtkMed",
-    "BlobBossAtkSmall"
+    "BlobBossAtkSmall",
+    "Pinnacle_FreezeTank"
   ],
   "known_phases": [
     "between_missions",
