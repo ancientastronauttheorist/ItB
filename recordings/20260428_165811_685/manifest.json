@@ -4,13 +4,13 @@
   "difficulty": 0,
   "achievement_targets": [],
   "tags": [],
-  "solver_version": "rust-0.1.0-c82ddd6",
+  "solver_version": "rust-0.1.0-84420dc",
   "weight_version": "v011",
-  "updated": "2026-04-29T17:31:01.170998",
+  "updated": "2026-04-29T17:41:04.254541",
   "created": "2026-04-28T16:58:11.701953",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 5,
-  "outcome_recorded_at": "2026-04-29T17:31:01.146746",
-  "outcome_notes": "Reclamation Zone secured. Bonus objective achieved (<3 grid damage). 500 civilians saved. First Flame Behemoths run on Detritus, sim v35 fixes live-tested."
+  "outcome_mission": 6,
+  "outcome_recorded_at": "2026-04-29T17:41:04.240434",
+  "outcome_notes": "Containment Zone D secured. Defend Disposal Unit \u2b50 achieved. Destroy all mountains failed. Lost pilot Collin Montes (Swap Mech) KIA. 43 civs lost (500\u2192457)."
 }

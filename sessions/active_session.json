@@ -4,9 +4,9 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Belt",
+  "current_mission": "Mission_Disposal",
   "islands_completed": [],
-  "mission_index": 5,
+  "mission_index": 6,
   "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
@@ -16,47 +16,47 @@
         "mech_type": "IgniteMech",
         "move_to": [
           3,
-          3
+          2
         ],
         "weapon": "Ranged_Ignite",
         "target": [
           6,
-          3
+          2
         ],
-        "description": "IgniteMech, move E7\u2192E5, fire Ignite at E2"
+        "description": "IgniteMech, move D5\u2192F5, fire Ignite at F2"
       },
       {
         "mech_uid": 2,
         "mech_type": "TeleMech",
         "move_to": [
-          4,
-          5
+          3,
+          6
         ],
         "weapon": "Science_Swap",
         "target": [
-          5,
-          5
+          2,
+          6
         ],
-        "description": "TeleMech, move D5\u2192C4, fire Teleporter at C3"
+        "description": "TeleMech, move C2\u2192B5, fire Teleporter at B6"
       },
       {
         "mech_uid": 0,
         "mech_type": "FlameMech",
         "move_to": [
-          3,
+          6,
           5
         ],
         "weapon": "Prime_Flamethrower",
         "target": [
-          4,
-          5
+          6,
+          4
         ],
-        "description": "FlameMech, move E6\u2192C5, fire Flamethrower at C4"
+        "description": "FlameMech, move C4\u2192C2, fire Flamethrower at D2"
       }
     ],
-    "score": 129517.14285714284,
+    "score": 139472.14285714287,
     "turn": 4,
-    "input_fingerprint": "0:2,3:2|101:6,2:3|1:1,3:3|2:3,4:2|99:5,5:2"
+    "input_fingerprint": "0:4,5:2|105:4,4:2|107:6,4:2|109:6,1:1|1:3,4:3|2:6,5:1|92:2,3:2|94:3,5:1"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -746,6 +746,50 @@
         "TeleMech, move D5\u2192C4, fire Teleporter at C3",
         "FlameMech, move E6\u2192C5, fire Flamethrower at C4"
       ]
+    },
+    {
+      "timestamp": "2026-04-29T17:36:26.572205",
+      "turn": 1,
+      "label": "solve",
+      "score": 122807.14285714284,
+      "actions": [
+        "TeleMech, move B5\u2192D3, fire Teleporter at E3",
+        "IgniteMech, move E5\u2192C6, fire Ignite at C3",
+        "FlameMech, move D6\u2192C4, fire Flamethrower at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-04-29T17:37:18.202505",
+      "turn": 2,
+      "label": "solve",
+      "score": 140457.1428571429,
+      "actions": [
+        "FlameMech, move C4\u2192D3, fire Flamethrower at E3",
+        "IgniteMech, move C6\u2192D5, fire Ignite at H5",
+        "TeleMech, move F3\u2192E3, fire Teleporter at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-29T17:38:12.082300",
+      "turn": 3,
+      "label": "solve",
+      "score": 142937.14285714287,
+      "actions": [
+        "FlameMech, move D3\u2192C4, fire Flamethrower at C5",
+        "IgniteMech, fire Ignite at A5",
+        "TeleMech, move E2\u2192C3, fire Teleporter at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-04-29T17:39:35.935701",
+      "turn": 4,
+      "label": "solve",
+      "score": 139472.14285714287,
+      "actions": [
+        "IgniteMech, move D5\u2192F5, fire Ignite at F2",
+        "TeleMech, move C2\u2192B5, fire Teleporter at B6",
+        "FlameMech, move C4\u2192C2, fire Flamethrower at D2"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -815,6 +859,18 @@
     ],
     [
       5,
+      3
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      6,
       3
     ]
   ],
@@ -3022,6 +3078,88 @@
         "target": [
           255,
           255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Prime_Flamethrower|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Flamethrower",
+        "target": [
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Science_Swap|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Science_Swap",
+        "target": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "damage_amount|Prime_Flamethrower|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Flamethrower",
+        "target": [
+          6,
+          4
         ]
       }
     }
