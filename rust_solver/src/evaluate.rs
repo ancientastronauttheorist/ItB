@@ -92,6 +92,14 @@ pub struct EvalWeights {
     pub mech_low_hp_risk: f64,       // 1HP mech near active enemy (binary, negative)
     pub friendly_npc_killed: f64,    // non-mech player unit killed (penalty)
     pub volatile_enemy_killed: f64,  // Volatile Vek killed (Weather Watch ⭐ bonus)
+    pub bigbomb_killed: f64,         // Renfield Bomb destroyed in Mission_Final_Cave —
+                                     // mission-failure penalty layered on top of the
+                                     // standard friendly_npc_killed term. The bomb's
+                                     // detonation is the win-condition; losing it ends
+                                     // the run. Default value chosen large enough to
+                                     // dominate any kill score, mirroring how
+                                     // building_objective_bonus dominates a normal
+                                     // building's grid_power value.
 
     // Grid urgency multipliers (applied to building scores)
     pub grid_urgency_critical: f64,  // grid_power <= 1
@@ -245,6 +253,8 @@ impl Default for EvalWeights {
             mech_low_hp_risk: -2000.0,
             friendly_npc_killed: -20000.0,  // 2x building value — never sacrifice NPCs for kills
             volatile_enemy_killed: -10000.0, // Volatile Vek must not die (Weather Watch ⭐)
+            bigbomb_killed: -200000.0,       // Renfield Bomb death = run failure;
+                                             // dwarfs every kill bonus on the board
             // Pro-strategy
             threats_cleared: 4000.0,
             body_block_bonus: 0.0,
@@ -309,6 +319,9 @@ pub struct PsionState {
     /// uid mirroring, so any alive tile's hp is the Dam's hp). Used for
     /// partial-credit dam_damage_dealt scoring.
     pub dam_hp: i8,
+    /// Renfield Bomb (Mission_Final_Cave) alive at snapshot time. Same
+    /// transition-scoring pattern: alive→dead pays `bigbomb_killed` once.
+    pub bigbomb: bool,
 }
 
 impl PsionState {
@@ -322,6 +335,7 @@ impl PsionState {
             boss: board.boss_alive,
             dam: board.dam_alive,
             dam_hp: dam_hp(board),
+            bigbomb: board.bigbomb_alive,
         }
     }
 }
@@ -590,6 +604,17 @@ pub fn evaluate(
         if damage_dealt > 0.0 {
             score += weights.dam_damage_dealt * damage_dealt;
         }
+    }
+
+    // ── Mission failure: Renfield Bomb destroyed ──
+    // Mission_Final_Cave win-condition: defend the BigBomb until it
+    // self-detonates. Losing it fails the run. The transition fires once
+    // per evaluate() call on the alive→dead edge. NOT scaled by future_factor:
+    // a dead bomb can't be revived next turn, and the penalty must dominate
+    // even on the final-turn floor (ff ≈ 0.05) so the solver never trades
+    // the bomb for any kill bonus.
+    if psion_before.bigbomb && !board.bigbomb_alive {
+        score += weights.bigbomb_killed;
     }
 
     // ── Mission bonus: "Kill N enemies" threshold cross ─────────────────

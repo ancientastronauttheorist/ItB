@@ -367,6 +367,12 @@ pub struct Board {
     pub dam_primary: Option<(u8, u8)>, // Coords of the Dam_Pawn's primary tile (the
                                 // one WITHOUT the EXTRA_TILE flag). Used to compute
                                 // the 14-tile flood offsets.
+    pub bigbomb_alive: bool,    // True while the Renfield Bomb (BigBomb) is on-board
+                                // with hp > 0. Mission_Final_Cave win-condition NPC —
+                                // losing it fails the mission. The transition
+                                // alive→dead is scored by `bigbomb_killed` in the
+                                // evaluator, on top of the standard friendly_npc
+                                // penalty. False on missions without a bomb.
     // Teleporter pad pairs for Mission_Teleporter (Detritus disposal missions).
     // Each entry = (x1, y1, x2, y2) — the two paired pads swap any unit that
     // ends movement on one of them. Bridge populates via the Board.AddTeleport
@@ -423,6 +429,7 @@ impl Default for Board {
             mission_kills_done: 0,
             dam_alive: false,
             dam_primary: None,
+            bigbomb_alive: false,
             teleporter_pairs: Vec::new(),
             bonus_dont_kill_types: Vec::new(),
         }
