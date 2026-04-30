@@ -46,3 +46,13 @@ def test_summary_honors_flying_immunity_for_environment_danger():
     summary = _capture_board_summary(board, data)
 
     assert summary["mechs_on_danger"] == []
+
+
+def test_summary_does_not_treat_spent_action_as_disabled():
+    data = _bridge_with_mech()
+    data["units"][0]["active"] = False
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mechs_disabled"] == []

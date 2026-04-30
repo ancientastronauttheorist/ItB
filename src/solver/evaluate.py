@@ -29,6 +29,7 @@ class EvalWeights:
     grid_power: float = 5000
     enemy_killed: float = 500
     enemy_hp_remaining: float = -100
+    enemy_threat_remaining: float = -100
     mech_killed: float = -150000
     mech_hp: float = 100
     mech_centrality: float = -5      # penalizes distance from center
@@ -53,6 +54,7 @@ class EvalWeights:
     mech_on_acid: float = -200        # mech on ACID pool (penalty)
     mech_low_hp_risk: float = -2000   # 1HP mech near active enemy (binary)
     friendly_npc_killed: float = -20000  # non-mech player unit killed (penalty)
+    volatile_enemy_killed: float = -10000  # protected Volatile Vek killed
     # Renfield Bomb destruction in Mission_Final_Cave — mission-failure
     # penalty layered on top of friendly_npc_killed. The bomb's detonation
     # is the win condition; losing it ends the run. Mirrors Rust default.

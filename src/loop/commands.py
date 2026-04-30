@@ -25,7 +25,7 @@ from src.capture.save_parser import (
 )
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
-from src.solver.solver import MechAction, replay_solution
+from src.solver.solver import MechAction, Solution, replay_solution
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.solver.evaluate import evaluate_threats
 from src.solver.plan_safety import audit_plan_safety, plan_requires_safety_block
@@ -66,6 +66,7 @@ def _get_logger(session: RunSession) -> DecisionLog:
 
 
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
+_SAFE_PLAN_CANDIDATE_LIMIT = 10
 
 
 def _atomic_json_write(filepath: Path, data: dict) -> None:
@@ -1081,8 +1082,6 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         disabled_reasons = []
         if getattr(m, "frozen", False):
             disabled_reasons.append("frozen")
-        if raw.get("active", getattr(m, "active", True)) is False:
-            disabled_reasons.append("inactive")
         if raw.get("can_move", True) is False and not getattr(m, "web", False):
             disabled_reasons.append("cannot_move")
         if disabled_reasons:
@@ -1118,6 +1117,143 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mechs_disabled": mechs_disabled,
         "mechs_webbed": mechs_webbed,
     }
+
+
+def _rust_result_to_solution(rust_result: dict | None,
+                             elapsed_seconds: float,
+                             active_mech_count: int) -> Solution | None:
+    """Convert a Rust solver JSON result into the Python solution shape."""
+    if not isinstance(rust_result, dict) or not rust_result.get("actions"):
+        return None
+
+    from src.model.weapons import weapon_name_to_id
+
+    rust_actions = []
+    for ra in rust_result["actions"]:
+        w_id = ra.get("weapon_id", "")
+        if not w_id:
+            w_id = weapon_name_to_id(ra.get("weapon", ""))
+        rust_actions.append(MechAction(
+            mech_uid=ra["mech_uid"],
+            mech_type=ra["mech_type"],
+            move_to=tuple(ra["move_to"]),
+            weapon=w_id,
+            target=tuple(ra["target"]),
+            description=ra["description"],
+        ))
+
+    stats = rust_result.get("stats") or {}
+    return Solution(
+        actions=rust_actions,
+        score=rust_result["score"],
+        elapsed_seconds=elapsed_seconds,
+        timed_out=stats.get("timed_out", False),
+        permutations_tried=stats.get("permutations_tried", 0),
+        total_permutations=stats.get("total_permutations", 0),
+        active_mech_count=active_mech_count,
+    )
+
+
+def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
+    """Convert a solver solution to the session's serializable action shape."""
+    return [
+        SolverAction(
+            mech_uid=a.mech_uid,
+            mech_type=a.mech_type,
+            move_to=a.move_to,
+            weapon=a.weapon,
+            target=a.target,
+            description=a.description,
+        )
+        for a in solution.actions
+    ]
+
+
+def _evaluate_solution_safety(board: Board,
+                              bridge_data: dict,
+                              solution: Solution,
+                              spawns: list[tuple[int, int]],
+                              current_turn: int,
+                              total_turns: int,
+                              remaining_spawns: int,
+                              weights=None) -> dict:
+    """Replay a candidate solution and audit irreversible-loss safety."""
+    enriched = replay_solution(
+        bridge_data, solution, spawns,
+        current_turn=current_turn,
+        total_turns=total_turns,
+        remaining_spawns=remaining_spawns,
+        weights=weights,
+    )
+    current_outcome = _capture_board_summary(board, bridge_data)
+    predicted_outcome = enriched["predicted_outcome"]
+    predicted_board_summary = dict(predicted_outcome)
+    final_board_data = enriched.get("final_board") or {}
+    if final_board_data:
+        final_board = Board.from_bridge_data(final_board_data)
+        predicted_board_summary = _capture_board_summary(
+            final_board, final_board_data
+        )
+        predicted_board_summary.update(predicted_outcome)
+    predicted_board_summary["pods_collected"] = sum(
+        int(r.get("pods_collected", 0) or 0)
+        for r in enriched.get("action_results", [])
+        if isinstance(r, dict)
+    )
+    plan_safety = audit_plan_safety(current_outcome, predicted_board_summary)
+    return {
+        "enriched": enriched,
+        "current_outcome": current_outcome,
+        "predicted_outcome": predicted_outcome,
+        "predicted_board_summary": predicted_board_summary,
+        "plan_safety": plan_safety,
+    }
+
+
+def _select_safe_plan_candidate(candidate_evals: list[dict]) -> dict | None:
+    """Prefer the first non-blocking candidate; preserve top plan if all are dirty."""
+    if not candidate_evals:
+        return None
+    for candidate in candidate_evals:
+        if not plan_requires_safety_block(candidate.get("plan_safety")):
+            return candidate
+    return candidate_evals[0]
+
+
+def _candidate_safety_summary(candidate_eval: dict) -> dict:
+    """Compact candidate audit data for solve recordings."""
+    solution = candidate_eval.get("solution")
+    plan_safety = candidate_eval.get("plan_safety") or {}
+    violations = []
+    for v in plan_safety.get("violations", []) or []:
+        violations.append({
+            "kind": v.get("kind"),
+            "blocking": bool(v.get("blocking")),
+            "current": v.get("current"),
+            "predicted": v.get("predicted"),
+        })
+    return {
+        "rank": candidate_eval.get("rank"),
+        "source": candidate_eval.get("source"),
+        "score": solution.score if solution is not None else None,
+        "chain_score": candidate_eval.get("chain_score"),
+        "status": plan_safety.get("status"),
+        "blocking": bool(plan_safety.get("blocking")),
+        "violations": violations,
+    }
+
+
+def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
+    """Return true for the harmless active-flag drift after a no-attack skip."""
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    for ud in unit_diffs:
+        if ud.get("uid") != mech_uid or ud.get("field") != "active":
+            return False
+    return True
 
 
 def _compute_deltas(predicted: dict, actual: dict) -> dict:
@@ -1887,6 +2023,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         print(f"  Environment danger: {len(environment_danger)} tiles")
 
     solution = None
+    selected_candidate_eval = None
+    candidate_safety_summaries: list[dict] = []
+    selected_candidate_rank = None
+    selected_candidate_source = None
+    candidate_count = 0
+    beam_chain_score = None
 
     # Load evaluation weights from active weight file
     weight_version = "default"
@@ -1900,6 +2042,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             weight_version = weight_data.get("version", "unknown")
         except (json.JSONDecodeError, IOError):
             pass
+    breakdown_weights = None
+    if eval_weights_dict:
+        from src.solver.evaluate import EvalWeights as _EW
+        breakdown_weights = _EW(**{k: v for k, v in eval_weights_dict.items()
+                                   if k in _EW.__dataclass_fields__})
 
     # Try Rust solver if bridge data available
     if bridge_data is not None:
@@ -1971,61 +2118,94 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             )
             _inject_bonus_obj(bridge_data)
             rust_start = _time.time()
-            beam_chain_score = None  # only set on beam>=1 path
+            candidate_specs = []
             if beam == 0:
-                rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
-                rust_result = _json.loads(rust_json)
+                solve_top_k = getattr(_rust, "solve_top_k", None)
+                if solve_top_k is None:
+                    rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
+                    candidate_specs.append({
+                        "rank": 0,
+                        "source": "top1",
+                        "rust_result": _json.loads(rust_json),
+                    })
+                else:
+                    top_k_json = solve_top_k(
+                        _json.dumps(bridge_data),
+                        time_limit,
+                        _SAFE_PLAN_CANDIDATE_LIMIT,
+                    )
+                    for idx, rust_result in enumerate(_json.loads(top_k_json) or []):
+                        candidate_specs.append({
+                            "rank": idx,
+                            "source": "top_k",
+                            "rust_result": rust_result,
+                        })
             else:
-                # solve_beam returns a JSON array of chain objects sorted
-                # by chain_score desc; we pick chains[0]. Empty array means
-                # no active mechs / no legal plans — normalize to the
-                # shape `solve` returns so the downstream code path stays
-                # single-branch.
+                # solve_beam returns chains sorted by chain_score. Solver 2.0
+                # audits the level-0 action plan from each chain before choosing.
                 chains_json = _rust.solve_beam(
                     _json.dumps(bridge_data), beam, 5, time_limit,
                 )
-                chains = _json.loads(chains_json)
-                if not chains:
-                    rust_result = {"actions": [], "score": float("-inf"),
-                                   "stats": {}, "applied_overrides": []}
-                else:
-                    top = chains[0]
-                    rust_result = top["level_0"]
-                    beam_chain_score = top["chain_score"]
+                for idx, chain in enumerate(_json.loads(chains_json) or []):
+                    candidate_specs.append({
+                        "rank": idx,
+                        "source": "beam",
+                        "rust_result": chain.get("level_0") or {},
+                        "chain_score": chain.get("chain_score"),
+                    })
             rust_elapsed = _time.time() - rust_start
+            candidate_count = len(candidate_specs)
 
-            if rust_result.get("actions"):
-                # Convert Rust result to Python Solution/MechAction objects
-                from src.solver.solver import Solution, MechAction
-                rust_actions = []
-                for ra in rust_result["actions"]:
-                    # Use weapon_id (internal ID like "Prime_Punchmech") for simulation,
-                    # not weapon (display name like "Titan Fist").
-                    # Fall back to display-name-to-ID lookup if weapon_id not present.
-                    w_id = ra.get("weapon_id", "")
-                    if not w_id:
-                        from src.model.weapons import weapon_name_to_id
-                        w_id = weapon_name_to_id(ra.get("weapon", ""))
-                    rust_actions.append(MechAction(
-                        mech_uid=ra["mech_uid"],
-                        mech_type=ra["mech_type"],
-                        move_to=tuple(ra["move_to"]),
-                        weapon=w_id,
-                        target=tuple(ra["target"]),
-                        description=ra["description"],
-                    ))
-                solution = Solution(
-                    actions=rust_actions,
-                    score=rust_result["score"],
-                    elapsed_seconds=rust_elapsed,
-                    timed_out=rust_result["stats"].get("timed_out", False),
-                    permutations_tried=rust_result["stats"].get("permutations_tried", 0),
-                    total_permutations=rust_result["stats"].get("total_permutations", 0),
-                    active_mech_count=len(active_mechs),
+            rem_spawns = (
+                bridge_data.get("remaining_spawns", 2**31 - 1)
+                if bridge_data else 2**31 - 1
+            )
+            total_turns = (
+                board.total_turns if hasattr(board, "total_turns") else 5
+            )
+            candidate_evals = []
+            for spec in candidate_specs:
+                candidate_solution = _rust_result_to_solution(
+                    spec.get("rust_result"), rust_elapsed, len(active_mechs)
                 )
+                if candidate_solution is None:
+                    continue
+                candidate_eval = {
+                    "rank": spec.get("rank"),
+                    "source": spec.get("source"),
+                    "chain_score": spec.get("chain_score"),
+                    "solution": candidate_solution,
+                }
+                candidate_eval.update(_evaluate_solution_safety(
+                    board, bridge_data, candidate_solution, spawns,
+                    current_turn=current_turn,
+                    total_turns=total_turns,
+                    remaining_spawns=rem_spawns,
+                    weights=breakdown_weights,
+                ))
+                candidate_evals.append(candidate_eval)
+
+            selected_candidate_eval = _select_safe_plan_candidate(candidate_evals)
+            candidate_safety_summaries = [
+                _candidate_safety_summary(c) for c in candidate_evals
+            ]
+            if selected_candidate_eval is not None:
+                solution = selected_candidate_eval["solution"]
+                selected_candidate_rank = selected_candidate_eval.get("rank")
+                selected_candidate_source = selected_candidate_eval.get("source")
+                beam_chain_score = selected_candidate_eval.get("chain_score")
                 print(f"  Rust solver: {rust_elapsed:.2f}s, score={solution.score:.0f}, "
                       f"{solution.permutations_tried}/{solution.total_permutations} permutations"
                       f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
+                if candidate_count > 1 and selected_candidate_rank not in (None, 0):
+                    print(f"  Selected safe candidate #{selected_candidate_rank + 1} "
+                          f"of {candidate_count}")
+                elif (candidate_count > 1
+                      and plan_requires_safety_block(
+                          selected_candidate_eval.get("plan_safety")
+                      )):
+                    print(f"  No clean candidate found among {candidate_count}; "
+                          "top candidate remains safety-blocked")
         except ImportError:
             print("  ERROR: Rust solver not available (itb_solver module not found)")
             print("  Build with: cd rust_solver && maturin develop --release")
@@ -2056,16 +2236,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     # Store solution in session — stamp the fingerprint of the roster
     # we solved against so cmd_auto_turn can detect stale cached
     # solutions if a future call sees a different roster.
-    solver_actions = []
-    for a in solution.actions:
-        solver_actions.append(SolverAction(
-            mech_uid=a.mech_uid,
-            mech_type=a.mech_type,
-            move_to=a.move_to,
-            weapon=a.weapon,
-            target=a.target,
-            description=a.description,
-        ))
+    solver_actions = _solver_actions_from_solution(solution)
     input_fp = _unit_roster_fingerprint(bridge_data)
     session.set_solution(solver_actions, solution.score, current_turn,
                          input_fingerprint=input_fp)
@@ -2096,37 +2267,30 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "actions": [a.description for a in solution.actions],
     })
 
-    # Replay solution for enriched recording data. Pass the active weights
-    # so score_breakdown in the recording reflects the values the solver
-    # actually searched under (not evaluate.py DEFAULT_WEIGHTS).
-    rem_spawns = bridge_data.get("remaining_spawns", 2**31 - 1) if bridge_data else 2**31 - 1
-    _breakdown_weights = None
-    if eval_weights_dict:
-        from src.solver.evaluate import EvalWeights as _EW
-        _breakdown_weights = _EW(**{k: v for k, v in eval_weights_dict.items()
-                                    if k in _EW.__dataclass_fields__})
-    enriched = replay_solution(bridge_data, solution, spawns,
-                               current_turn=current_turn,
-                               total_turns=board.total_turns if hasattr(board, 'total_turns') else 5,
-                               remaining_spawns=rem_spawns,
-                               weights=_breakdown_weights)
-    current_outcome = _capture_board_summary(board, bridge_data)
-    predicted_outcome = enriched["predicted_outcome"]
-    predicted_board_summary = dict(predicted_outcome)
-    final_board_data = enriched.get("final_board") or {}
-    if final_board_data:
-        final_board = Board.from_bridge_data(final_board_data)
-        predicted_board_summary = _capture_board_summary(
-            final_board, final_board_data
+    # Replay solution for enriched recording data. In Rust mode this was
+    # already done for candidate selection; keep the fallback for any future
+    # caller that constructs a solution without candidate metadata.
+    if selected_candidate_eval is None:
+        rem_spawns = (
+            bridge_data.get("remaining_spawns", 2**31 - 1)
+            if bridge_data else 2**31 - 1
         )
-        predicted_board_summary.update(predicted_outcome)
-    predicted_board_summary["pods_collected"] = sum(
-        int(r.get("pods_collected", 0) or 0)
-        for r in enriched.get("action_results", [])
-        if isinstance(r, dict)
-    )
-    plan_safety = audit_plan_safety(current_outcome, predicted_board_summary)
+        total_turns = board.total_turns if hasattr(board, "total_turns") else 5
+        selected_candidate_eval = _evaluate_solution_safety(
+            board, bridge_data, solution, spawns,
+            current_turn=current_turn,
+            total_turns=total_turns,
+            remaining_spawns=rem_spawns,
+            weights=breakdown_weights,
+        )
+    enriched = selected_candidate_eval["enriched"]
+    current_outcome = selected_candidate_eval["current_outcome"]
+    predicted_outcome = selected_candidate_eval["predicted_outcome"]
+    predicted_board_summary = selected_candidate_eval["predicted_board_summary"]
+    plan_safety = selected_candidate_eval["plan_safety"]
     result["plan_safety"] = plan_safety
+    result["candidate_count"] = candidate_count
+    result["selected_candidate_rank"] = selected_candidate_rank
 
     # Record solver output for replay/analysis (enriched format).
     # schema_version stamps the shape of this record so future beam
@@ -2160,6 +2324,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "weight_version": weight_version,
         "beam_mode": beam,
         "beam_chain_score": beam_chain_score,
+        "candidate_count": candidate_count,
+        "selected_candidate_rank": selected_candidate_rank,
+        "selected_candidate_source": selected_candidate_source,
+        "candidate_safety": candidate_safety_summaries,
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
         "current_outcome": current_outcome,
@@ -5449,6 +5617,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         has_move = (action.move_to and action.move_to != (-1, -1))
         is_repair = is_repair_action(action)
         has_attack = action_has_attack(action)
+        final_phase = "attack" if has_attack else "repair" if is_repair else "skip"
 
         # Check if mech is actually moving (not staying in place)
         if has_move:
@@ -5604,13 +5773,21 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         if actual_board and pred_post_attack:
             diff = diff_states(pred_post_attack, actual_board)
             if not diff.is_empty():
-                classification = classify_diff(diff, mech_uid=mech_uid, phase="attack")
+                if (final_phase == "skip"
+                        and _is_expected_skip_state_diff(diff, mech_uid)):
+                    print("  SKIP VERIFIED: PASS (active-state drift ignored)")
+                    done_uids.add(mech_uid)
+                    actions_completed += 1
+                    action_idx += 1
+                    continue
+                classification = classify_diff(diff, mech_uid=mech_uid,
+                                               phase=final_phase)
                 fuzzy_signal = fuzzy_detector.evaluate(
                     diff, classification,
                     context={
                         "mech_uid": mech_uid,
-                        "phase": "attack",
-                        "sub_action": "attack",
+                        "phase": final_phase,
+                        "sub_action": final_phase,
                         "action_index": actions_completed,
                         "turn": turn,
                         "weapon": action.weapon,
@@ -5619,12 +5796,13 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     prior_events=session.failure_events_this_run,
                 )
                 session.failure_events_this_run.append(fuzzy_signal)
-                _maybe_soft_disable(session, fuzzy_signal, turn,
-                                    fired=soft_disables_fired_this_turn,
-                                    run_id=session.run_id)
+                if final_phase != "skip":
+                    _maybe_soft_disable(session, fuzzy_signal, turn,
+                                        fired=soft_disables_fired_this_turn,
+                                        run_id=session.run_id)
                 _enqueue_behavior_novelty(session, diff, turn)
                 _log_sub_action_desync(
-                    session, "attack", actions_completed, mech_uid,
+                    session, final_phase, actions_completed, mech_uid,
                     pred_post_attack, actual_board, diff, classification, turn,
                     fuzzy_signal=fuzzy_signal,
                 )
@@ -5632,7 +5810,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     grid_drop_investigations, diff, classification,
                     pred_post_attack, actual_board,
                     context={
-                        "mech_uid": mech_uid, "sub_action": "attack",
+                        "mech_uid": mech_uid, "sub_action": final_phase,
                         "action_index": actions_completed,
                         "weapon": action.weapon,
                         "target": list(action.target),
@@ -5642,7 +5820,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     failure_db_id=(
                         f"{session.run_id or 'default'}_"
                         f"m{session.mission_index:02d}_t{turn:02d}_"
-                        f"per_sub_action_desync_attack_a{actions_completed}"
+                        f"per_sub_action_desync_{final_phase}_a{actions_completed}"
                     ),
                 )
                 # Skip re-solve if spawn-only on last action (new Vek emerged)
@@ -5655,7 +5833,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     and not diff.scalar_diffs
                 )
                 if spawn_new_only and is_last_action:
-                    print(f"  DESYNC action {actions_completed} attack: "
+                    print(f"  DESYNC action {actions_completed} {final_phase}: "
                           f"{diff.total_count()} diffs [spawn-only on last action, skipping re-solve]")
                     done_uids.add(mech_uid)
                     actions_completed += 1
@@ -5691,7 +5869,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         actions_completed += 1
                         continue  # restart loop with new solution
             else:
-                print(f"  ATTACK VERIFIED: PASS")
+                print(f"  {final_phase.upper()} VERIFIED: PASS")
 
         done_uids.add(mech_uid)
         actions_completed += 1
