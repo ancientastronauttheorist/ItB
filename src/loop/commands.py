@@ -531,7 +531,91 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
     session.current_mission = mission_id
     session.mission_index += 1
     session.disabled_actions = []
+    # The post-bump mission has its own terrain anchor; clear the prior
+    # fingerprint so the next ``cmd_read`` re-seeds without firing the
+    # stage-change detector against a stale (different-mission) reference.
+    session.last_terrain_fingerprint = None
+    session.terrain_stage_change_pending = False
     return True
+
+
+def _detect_terrain_stage_change(
+    session: RunSession,
+    bridge_data: dict,
+) -> dict | None:
+    """Detect mid-mission terrain stage swaps via structural fingerprinting.
+
+    Returns a dict describing the swap when one fires, or ``None`` on a
+    normal turn. Side-effects: always updates
+    ``session.last_terrain_fingerprint`` to the current turn; sets
+    ``session.terrain_stage_change_pending = True`` and records a
+    ``terrain_stage_change`` decision when a swap fires; persists the
+    session if either field changed.
+
+    See ``src/bridge/terrain_fingerprint.py`` for the hash + threshold
+    rationale. The threshold is intentionally conservative (>= 16 of 64
+    tiles changed structural class) so destroyed mountains, melted ice,
+    and one-off rubble conversions don't trip it.
+    """
+    from src.bridge.terrain_fingerprint import (
+        DEFAULT_CHANGE_THRESHOLD,
+        diff_count,
+        fingerprint_from_bridge_tiles,
+        fingerprint_from_session_dict,
+        fingerprint_to_session_dict,
+        is_stage_change,
+    )
+
+    tiles = bridge_data.get("tiles") or []
+    if not tiles:
+        return None
+
+    turn = bridge_data.get("turn", 0)
+    mission_index = session.mission_index
+
+    curr = fingerprint_from_bridge_tiles(
+        tiles, mission_index=mission_index, turn=turn,
+    )
+    prev = fingerprint_from_session_dict(session.last_terrain_fingerprint)
+
+    fired = is_stage_change(prev, curr)
+    payload: dict | None = None
+    if fired:
+        changed = diff_count(prev, curr)
+        payload = {
+            "mission_index": mission_index,
+            "mission": session.current_mission,
+            "prev_turn": prev.turn if prev else None,
+            "curr_turn": turn,
+            "prev_hash": prev.hash if prev else None,
+            "curr_hash": curr.hash,
+            "tiles_changed": changed,
+            "threshold": DEFAULT_CHANGE_THRESHOLD,
+        }
+        session.terrain_stage_change_pending = True
+        session.record_decision("terrain_stage_change", payload)
+        # Banner mirrors the RESEARCH GATE format so the harness picks
+        # it up out of the read output.
+        print("\n" + "!" * 60)
+        print("! TERRAIN STAGE CHANGE — mid-mission arena swap detected.")
+        print(
+            f"!   Mission: {session.current_mission} "
+            f"(index {mission_index})"
+        )
+        print(
+            f"!   Turn {prev.turn if prev else '?'} -> {turn}: "
+            f"{changed}/64 structural tiles changed "
+            f"(threshold {DEFAULT_CHANGE_THRESHOLD})."
+        )
+        print(
+            "!   Cached active_solution / predicted_states are stale; "
+            "downstream code should re-solve from the new board."
+        )
+        print("!" * 60)
+
+    session.last_terrain_fingerprint = fingerprint_to_session_dict(curr)
+    session.save()
+    return payload
 
 
 def _record_turn_state(session: RunSession, label: str, data: dict,
@@ -1071,6 +1155,27 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # overwriting the prior mission's recordings.
             if _auto_advance_mission(session, bridge_data):
                 session.save()
+
+            # Mid-mission terrain stage-change detection. Some final missions
+            # swap their arena partway through (volcano → caverns on
+            # Mission_Final). Without this, the solver keeps using stage-1
+            # terrain after the swap and predicted_states diverge from the
+            # actual board. Detection only — corrective action (re-init sim)
+            # is left to downstream code that consumes
+            # ``terrain_stage_change_pending`` / the result["terrain_stage_change"]
+            # signal. Must run AFTER _auto_advance_mission so a real mission
+            # boundary doesn't false-positive (the detector's mission_index
+            # gate filters cross-mission swaps).
+            try:
+                stage_change = _detect_terrain_stage_change(
+                    session, bridge_data,
+                )
+                if stage_change:
+                    result["terrain_stage_change"] = stage_change
+            except Exception as exc:
+                # Detector is observational — never break cmd_read on a
+                # fingerprint error. Surface in the result for debugging.
+                result["terrain_fingerprint_error"] = str(exc)
 
             # Grid-defense resist probe: log aiSeed + telegraphed building
             # attacks each player-turn-start. No-op if the bridge didn't
