@@ -726,8 +726,18 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //      that is already on Fire at firing time, matching the Lua semantic
 //      `Damage + FireDamage` and the in-game tooltip "Damage units already
 //      on Fire". Gated by the new `BURNS_FIRE_TARGETS` weapon flag.
-// Pre-v35 corpus archived as `failure_db_snapshot_sim_v34.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 35;
+// v36 — Two predictions changed:
+//   1. Renfield Bomb (BigBomb) tracked via Board.bigbomb_alive; the
+//      alive→dead transition pays `bigbomb_killed` (-200000 default) on
+//      Mission_Final_Cave. Friendly_npc_killed still fires; bigbomb_killed
+//      stacks on top to reflect that losing the bomb fails the run.
+//   2. `_REPAIR` plans now correctly resolve via `wid_from_str` →
+//      WId::Repair instead of falling through to WId::None. simulate_attack
+//      executes the repair branch (heal +1, clear fire/acid/frozen,
+//      set_active(false)). Repair-using boards now score with the heal
+//      properly modeled instead of being treated as a no-op.
+// Pre-v36 corpus archived as `failure_db_snapshot_sim_v35.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 36;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

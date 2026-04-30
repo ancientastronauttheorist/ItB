@@ -432,7 +432,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # deals +2 damage to targets that are already on Fire at firing time
 # (BURNS_FIRE_TARGETS flag). Pre-v35 corpus archived as
 # failure_db_snapshot_sim_v34.jsonl per CLAUDE.md rule 22.
-SIMULATOR_VERSION = 35
+# v36 — Two predictions changed: (1) Renfield Bomb (BigBomb) tracked via
+# Board.bigbomb_alive; alive→dead transition pays bigbomb_killed
+# (-200000 default) on Mission_Final_Cave, stacked on friendly_npc_killed.
+# (2) _REPAIR plans now resolve to WId::Repair (was WId::None) so
+# simulate_attack executes the repair branch (heal +1, clear status,
+# set_active(false)) instead of no-op. Pre-v36 corpus archived as
+# failure_db_snapshot_sim_v35.jsonl.
+SIMULATOR_VERSION = 36
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
