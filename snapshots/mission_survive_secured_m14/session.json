@@ -637,12 +637,6 @@
         "IgniteMech, move F4\u2192D5, fire Ignite at D2",
         "TeleMech, fire Teleporter at D3"
       ]
-    },
-    {
-      "timestamp": "2026-04-30T13:57:12.893587",
-      "turn": 4,
-      "label": "note",
-      "message": "Mission Chemical Field A secured: grid held 5/7, Coal Plant protected, spawn-block bonus missed at 2/3; Centipede1 research gate catalogued during turn 3."
     }
   ],
   "recorded_post_enemy_turns": [

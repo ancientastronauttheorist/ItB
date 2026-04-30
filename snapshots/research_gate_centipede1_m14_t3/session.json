@@ -7,58 +7,10 @@
   "current_mission": "Mission_Survive",
   "islands_completed": [],
   "mission_index": 14,
-  "last_mission_turn": 4,
-  "current_turn": 4,
+  "last_mission_turn": 3,
+  "current_turn": 3,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "FlameMech",
-        "move_to": [
-          6,
-          4
-        ],
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          5,
-          4
-        ],
-        "description": "FlameMech, move E4\u2192D2, fire Flamethrower at D3"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "IgniteMech",
-        "move_to": [
-          3,
-          4
-        ],
-        "weapon": "Ranged_Ignite",
-        "target": [
-          6,
-          4
-        ],
-        "description": "IgniteMech, move F4\u2192D5, fire Ignite at D2"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "TeleMech",
-        "move_to": [
-          5,
-          5
-        ],
-        "weapon": "Science_Swap",
-        "target": [
-          5,
-          4
-        ],
-        "description": "TeleMech, fire Teleporter at D3"
-      }
-    ],
-    "score": 166017.85714285713,
-    "turn": 4,
-    "input_fingerprint": "0:4,3:4|1:4,2:4|2:5,5:2|498:6,5:4|500:4,4:2|501:5,4:6"
-  },
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -615,34 +567,6 @@
         "IgniteMech, move F6\u2192E6, fire Ignite at E2",
         "TeleMech, move D6\u2192D4, fire Teleporter at D3"
       ]
-    },
-    {
-      "timestamp": "2026-04-30T13:52:40.461965",
-      "turn": 3,
-      "label": "solve",
-      "score": 174442.85714285713,
-      "actions": [
-        "FlameMech, move E5\u2192E4, fire Flamethrower at F4",
-        "IgniteMech, move E6\u2192F4, fire Ignite at H4",
-        "TeleMech, move D3\u2192C3, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:54:01.704929",
-      "turn": 4,
-      "label": "solve",
-      "score": 166017.85714285713,
-      "actions": [
-        "FlameMech, move E4\u2192D2, fire Flamethrower at D3",
-        "IgniteMech, move F4\u2192D5, fire Ignite at D2",
-        "TeleMech, fire Teleporter at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:57:12.893587",
-      "turn": 4,
-      "label": "note",
-      "message": "Mission Chemical Field A secured: grid held 5/7, Coal Plant protected, spawn-block bonus missed at 2/3; Centipede1 research gate catalogued during turn 3."
     }
   ],
   "recorded_post_enemy_turns": [
@@ -777,10 +701,6 @@
     [
       14,
       2
-    ],
-    [
-      14,
-      3
     ]
   ],
   "tags": [],
@@ -2431,38 +2351,9 @@
       "slot": null,
       "mission_id": "Mission_Survive",
       "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Centipede",
-            "hp": 0,
-            "move": 2,
-            "class_icons": [
-              "fire"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Centipede",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Centipede",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Centipede&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "891200ab040a",
-      "last_kind": "enemy"
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": [],
@@ -2470,7 +2361,7 @@
     "hash": "3ae91682cda5c1a1",
     "classes": "gwgbbgmmgggbbggmgwggggggwbbgggbgggggggbgwgggggggggggggwgwwwgwgww",
     "mission_index": 14,
-    "turn": 4
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }

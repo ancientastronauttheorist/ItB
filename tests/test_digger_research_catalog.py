@@ -1,4 +1,4 @@
-"""Regression tests for the Detritus Digger research gates."""
+"""Regression tests for live-mission research gates."""
 
 from __future__ import annotations
 
@@ -28,9 +28,25 @@ def test_known_types_catalogs_digger_and_rock_wall():
         assert pawn_type in observed
 
 
+def test_known_types_catalogs_centipede_bridge_tiers():
+    repo_root = Path(__file__).parent.parent
+    with open(repo_root / "data" / "known_types.json") as f:
+        known = json.load(f)
+    observed = set(known["observed_pawn_types"])
+    for pawn_type in ("Centipede1", "Centipede2"):
+        assert pawn_type in observed
+
+
 def test_digger_and_wall_do_not_trigger_research_gate():
     unknown_detector.reset_cache()
     board = _fake_board(["Digger1", "Digger2", "Wall"])
+    unknowns = unknown_detector.detect_unknowns(board)
+    assert unknowns["types"] == []
+
+
+def test_centipedes_do_not_trigger_research_gate():
+    unknown_detector.reset_cache()
+    board = _fake_board(["Centipede1", "Centipede2"])
     unknowns = unknown_detector.detect_unknowns(board)
     assert unknowns["types"] == []
 
@@ -43,3 +59,12 @@ def test_digger_and_wall_have_static_stats():
     assert d2.move_speed == 3
     assert wall.move_speed == 0
     assert wall.pushable is True
+
+
+def test_centipedes_have_static_stats():
+    c1 = get_pawn_stats("Centipede1")
+    c2 = get_pawn_stats("Centipede2")
+    assert c1.move_speed == 2
+    assert c2.move_speed == 2
+    assert c1.ranged == 1
+    assert c2.ranged == 1

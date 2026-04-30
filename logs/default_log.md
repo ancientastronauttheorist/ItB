@@ -315,3 +315,51 @@ End Turn [13:15:40]
 
 Phase: combat_player → **unknown** [13:21:34]
 
+Phase: combat_player → **combat_enemy** [13:41:16]
+
+Phase: combat_enemy → **combat_player** [13:43:36]
+
+### Solver Output [13:43:44]
+
+Score: 170393 | Threats: 2
+
+1. FlameMech, move C5→D4, fire Flamethrower at D5
+2. IgniteMech, move E5→F6, fire Ignite at F3
+3. TeleMech, repair
+
+End Turn [13:43:54]
+
+### Solver Output [13:44:57]
+
+Score: 165076 | Threats: 0
+
+1. FlameMech, move D4→E5, fire Flamethrower at E4
+2. IgniteMech, move F6→E6, fire Ignite at E2
+3. TeleMech, move D6→D4, fire Teleporter at D3
+
+End Turn [13:45:10]
+
+### Solver Output [13:52:40]
+
+Score: 174443 | Threats: 1
+
+1. FlameMech, move E5→E4, fire Flamethrower at F4
+2. IgniteMech, move E6→F4, fire Ignite at H4
+3. TeleMech, move D3→C3, repair
+
+End Turn [13:52:52]
+
+### Solver Output [13:54:01]
+
+Score: 166018 | Threats: 0
+
+1. FlameMech, move E4→D2, fire Flamethrower at D3
+2. IgniteMech, move F4→D5, fire Ignite at D2
+3. TeleMech, fire Teleporter at D3
+
+End Turn [13:54:14]
+
+#### Claude Note [13:57:12]
+
+Mission Chemical Field A secured: grid held 5/7, Coal Plant protected, spawn-block bonus missed at 2/3; Centipede1 research gate catalogued during turn 3.
+

@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-30T13:57:12.881629",
+  "label": "mission_survive_secured_m14",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Jelly_Health1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion2",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 6
+    }
+  ]
+}
