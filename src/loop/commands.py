@@ -27,6 +27,7 @@ from src.model.board import Board
 from src.model.weapons import get_weapon_name
 from src.solver.solver import MechAction, replay_solution
 from src.solver.evaluate import evaluate_threats
+from src.solver.plan_safety import audit_plan_safety, plan_requires_safety_block
 from src.control.executor import (
     plan_single_mech,
     plan_end_turn,
@@ -2005,6 +2006,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                                total_turns=board.total_turns if hasattr(board, 'total_turns') else 5,
                                remaining_spawns=rem_spawns,
                                weights=_breakdown_weights)
+    current_outcome = _capture_board_summary(board)
+    predicted_outcome = enriched["predicted_outcome"]
+    plan_safety = audit_plan_safety(current_outcome, predicted_outcome)
+    result["plan_safety"] = plan_safety
 
     # Record solver output for replay/analysis (enriched format).
     # schema_version stamps the shape of this record so future beam
@@ -2040,7 +2045,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "beam_chain_score": beam_chain_score,
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
-        "predicted_outcome": enriched["predicted_outcome"],
+        "current_outcome": current_outcome,
+        "predicted_outcome": predicted_outcome,
+        "plan_safety": plan_safety,
         "score_breakdown": enriched["score_breakdown"],
     }
     _record_turn_state(session, "solve", solve_data)
@@ -2049,6 +2056,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     print(f"\n=== SOLUTION (score: {solution.score:.0f}) ===")
     for i, a in enumerate(solution.actions):
         print(f"  Action {i}: {a.description}")
+    if plan_safety.get("blocking"):
+        print("\n! SAFETY BLOCK CANDIDATE — chosen plan predicts irreversible loss")
+        for v in plan_safety.get("violations", []):
+            print(f"!   {v.get('kind')}: {v.get('current')} -> {v.get('predicted')}")
     print(f"\n{len(solution.actions)} actions to execute. "
           f"Use 'execute <index>' for each.")
 
@@ -5047,7 +5058,8 @@ def _check_winnability(turn: int, score: float,
 
 
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
-                  wait_for_turn: bool = True, max_wait: float = 45.0) -> dict:
+                  wait_for_turn: bool = True, max_wait: float = 45.0,
+                  allow_dirty_plan: bool = False) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -5247,12 +5259,15 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     solve_file = run_dir / f"m{mi:02d}_turn_{turn:02d}_solve.json"
     predicted_states = []
     predicted_outcome: dict = {}
+    plan_safety: dict | None = None
     if solve_file.exists():
         try:
             with open(solve_file) as f:
                 solve_record = json.load(f)
             predicted_states = predicted_states_from_solve_record(solve_record)
-            predicted_outcome = (solve_record.get("data") or {}).get("predicted_outcome") or {}
+            solve_data = solve_record.get("data") or {}
+            predicted_outcome = solve_data.get("predicted_outcome") or {}
+            plan_safety = solve_data.get("plan_safety")
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -5267,6 +5282,31 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
     # Build action list from session solution
     actions = session.active_solution.actions if session.active_solution else []
+
+    if plan_requires_safety_block(plan_safety,
+                                  allow_dirty_plan=allow_dirty_plan):
+        result = {
+            "status": "SAFETY_BLOCKED",
+            "turn": turn,
+            "score": score,
+            "actions_planned": len(actions),
+            "actions": [a.description for a in actions],
+            "plan_safety": plan_safety,
+            "next_step": (
+                "Do not execute this plan normally. Run an emergency solve, "
+                "play manually, or rerun auto_turn with --allow-dirty-plan "
+                "only if the irreversible loss is accepted."
+            ),
+        }
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        print("\n! SAFETY BLOCK — refusing to execute predicted dirty plan")
+        for v in (plan_safety or {}).get("violations", []):
+            if v.get("blocking"):
+                print(f"!   {v.get('kind')}: {v.get('current')} -> {v.get('predicted')}")
+        _print_result(result)
+        return result
+
     done_uids: set[int] = set()
     re_solve_count = 0
     actions_completed = 0
