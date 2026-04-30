@@ -8,14 +8,25 @@ evaluation weights when targeting that achievement.
 
 ## Already Completed
 
+- [x] Island Secure (75.1%) -- Complete the first Corporate Island with the Rift Walkers squad
+- [x] Field Promotion (73.2%) -- Have a Pilot reach maximum level
 - [x] Victory (50.1%) -- Beat the game (any length)
 - [x] Watery Grave (68.1%) -- Drown 3 enemies in water in a single battle (Rift Walkers)
 - [x] Emerging Technologies (63.6%) -- Unlock a new Mech Squad
 - [x] Perfect Island (61.3%) -- Do not fail any objective on a single Corporate Island
 - [x] The Defenders (49.8%) -- Finish a Corporate Island without taking Building Damage
+- [x] Friends in High Places (49.8%) -- Spend 50 Reputation across all games
+- [x] Come Together (44.7%) -- Unlock 6 additional Pilots
+- [x] Good Samaritan (41.7%) -- Earn 9 Reputation from missions on a single Corporate Island
 - [x] Immovable Objects (41.7%) -- Block 100 Vek across all games (cumulative)
 - [x] Sustainable Energy (39.1%) -- Finish 3 Corporate Islands without dropping below 4 Grid Power
-- [x] Plus 2 more (likely Island Secure and Field Promotion -- verify with user)
+- [x] Humanity's Savior (27.8%) -- Rescue 100,000 civilians across all games
+- [x] Mass Displacement (23.0%) -- Push 3 enemies with single attack (Steel Judoka)
+- [x] Scorched Earth (20.5%) -- End battle with 12 tiles on Fire (Flame Behemoths)
+- [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
+- [x] Pacifist (16.6%) -- Kill less than 3 enemies in a battle (Frozen Titans)
+- [x] Unwitting Allies (14.2%) -- 4 enemies die from enemy fire (Steel Judoka)
+- [x] Unbreakable (10.2%) -- Mech Armor absorbs 5 damage in one battle (Steel Judoka)
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Achievement Checklist
 
-15 of 70 completed (authoritative source: `python3 game_loop.py achievements` → Steam Web API. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 55 remaining, sorted by global unlock % (easiest first).
+19 of 70 completed (latest local Steam library cache on 2026-04-30; refresh with `python3 game_loop.py achievements` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 51 remaining, sorted by global unlock % (easiest first).
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -12,7 +12,7 @@
 - [x] Come Together (44.7%) — Unlock 6 additional Pilots [cumulative]
 - [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
 - [ ] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
-- [ ] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
+- [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 
 ### Tier 2: Yellow Zone (20-40% — requires specific squad play or setup)
 - [ ] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
@@ -25,16 +25,16 @@
 - [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack [Steel Judoka]
 - [ ] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
-- [ ] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
+- [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
 - [ ] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times [cumulative]
 - [ ] There is No Try (20.2%) — Finish 3 islands without failing an objective
 
 ### Tier 3: Orange Zone (10-20% — deliberate setup needed)
 - [ ] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative]
 - [ ] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative]
-- [ ] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
+- [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
 - [ ] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths]
-- [ ] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
+- [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
 - [ ] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths]
 - [ ] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
 - [ ] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs]
@@ -77,7 +77,7 @@
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (15, from Steam Web API)
+### Already Completed (19, from Steam / local library cache)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -89,8 +89,12 @@
 - [x] Come Together (44.7%) — Unlock 6 additional Pilots
 - [x] Immovable Objects — Block 100 Vek across all games
 - [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
+- [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
+- [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire  [Flame Behemoths]
+- [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle  [Frozen Titans]
+- [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 

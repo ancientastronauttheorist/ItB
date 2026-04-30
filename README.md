@@ -1,8 +1,10 @@
 # Into the Breach Achievement Bot
 
-An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Claude is the control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
+An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **17 / 70 achievements earned** (live from Steam Web API via `python3 game_loop.py achievements`; see `TODO.md` for the checklist).
+Status: **19 / 70 achievements earned** (latest local Steam library cache on 2026-04-30; refresh with `python3 game_loop.py achievements` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
+
+Recent unlocks: **Good Samaritan** and **Scorched Earth** on 2026-04-30. The previous Solver 2.0 live-test bump also picked up **Cryo Expert** and **Pacifist** on 2026-04-28. See `TODO.md` for the checklist.
 
 ---
 
@@ -14,18 +16,29 @@ The game runs natively. State flows out through a Lua mod hook that writes `/tmp
 
 | Layer | Code | Role |
 |---|---|---|
-| 0 — Game loop | `game_loop.py` + `src/loop/` | Stateless CLI. Every invocation: load session → compute → save. Claude is the orchestrator. |
+| 0 — Game loop | `game_loop.py` + `src/loop/` | Stateless CLI. Every invocation: load session -> compute -> save. The agent is the orchestrator. |
 | 1 — State extraction | `src/bridge/` (primary), `src/capture/` (fallback save-file parser) | Bridge gives per-sub-action updates, targeted tiles, env hazards with kill flag, deployment zone. Save file only updates at turn boundaries. |
-| 2 — Game state | `src/model/` | `Board`, `Unit`, `WeaponDef` — the solver's single source of truth. |
-| 3 — Solver | `rust_solver/` (`itb_solver` PyO3 extension) + `src/solver/simulate.py` (Python parity) | Threat-response bounded permutation search with a ~50-field `EvalWeights`. |
-| 4 — Strategist | Distributed across `src/loop/commands.py` (`cmd_new_run`), `weights/active.json`, achievement metadata in `data/` | Picks weights, squad, island, shop choices per achievement target. Still largely manual; no per-achievement weight remapping yet. |
+| 2 — Game state | `src/model/` | `Board`, `Unit`, `WeaponDef` - the solver's single source of truth. |
+| 3 — Solver 2.0 | `rust_solver/` (`itb_solver` PyO3 extension) + thin Python wrappers in `src/solver/` | Rust is the only simulator and search engine. Python handles wrapping, audit breakdowns, verification, tuning, and research feedback. |
+| 4 — Strategist | `src/strategy/`, `src/loop/commands.py`, `weights/active.json`, achievement metadata in `data/` | Picks run setup, mission priority, shop behavior, and `EvalWeights` for achievement hunting. Current default: Easy + Advanced Edition + Balanced Roll. |
+
+### Solver 2.0
+
+Solver 2.0 is built around a stricter goal than "highest score this turn": avoid irreversible loss first, then optimize threats, kills, spawns, XP, and achievement shaping.
+
+- **Rust is authoritative.** `rust_solver/` owns search, enemy simulation, player-weapon simulation, projection, scoring, and replay. `src/solver/simulate.py` has been deleted; `src/solver/solver.py` is a small dataclass/wrapper layer around `itb_solver`.
+- **Candidate search is wider.** The loop asks Rust for top-K one-turn candidates and depth-2 beam chains (`solve_top_k`, `solve_beam`, `project_plan`) instead of trusting only the top raw-score plan.
+- **Plan safety gates bad wins.** Every candidate is replayed and checked for irreversible losses: grid power, building HP, objective buildings, pods, mech deaths, and unsafe self-damage. The first clean candidate wins, even if it scored slightly lower.
+- **Execution is closed-loop.** `auto_turn` executes move -> verify -> attack/repair -> verify through the bridge, re-solves after desyncs, and withholds End Turn on unexplained predicted-vs-actual grid drops.
+- **Unknowns stop the bot.** The research gate blocks solving past uncatalogued pawns, terrain, weapons, and screens. Recent live-loop catalog work includes Digger, Wall, Centipede, Wind Torrent, and AE psion/boss behavior.
+- **Failures feed the next version.** `recordings/failure_db.jsonl`, the fuzzy detector, the diagnosis queue, weapon override staging, regression boards, and `EvalWeights` tuning turn live mistakes into repeatable fixes.
 
 ### Self-healing research loop
 
 When `read` encounters an unknown pawn type, terrain, weapon, or UI screen, it returns `RESEARCH_REQUIRED`. The loop then:
 
 1. `research_next` emits an MCP capture plan (crop regions + Vision prompts).
-2. Claude dispatches the plan, runs Vision on each crop, submits JSON via `research_submit`.
+2. The agent dispatches the plan, runs Vision on each crop, submits JSON via `research_submit`.
 3. If confidence is low, community notes (Steam / Reddit) are fetched and attached via `research_attach_community`.
 4. Results land in `data/known_types.json`, `data/weapon_overrides_staged.jsonl`, and `data/weapon_penalty_log.json`.
 
@@ -38,6 +51,7 @@ Every desync between predicted and actual board writes a record to `recordings/f
 - `analyze` — pattern breakdowns by trigger, tier, severity, squad, island.
 - `tune` — random search + coordinate refinement on `EvalWeights`; objective is `mean_fixed_score − 100 × failure_count`.
 - `validate` — replays all recorded boards under two weight versions; gates deployment on ≤20% regression rate and zero critical building-loss regressions.
+- `diagnose_next` — drains one queued desync investigation, producing a rule match or an agent prompt for Rust-side simulator fixes.
 
 Tuned weights land in `weights/v{NNN}_{date}.json`; the deployed copy is `weights/active.json`.
 
@@ -88,7 +102,8 @@ bash scripts/install-hooks.sh
 
 ```bash
 # Start a new run
-python3 game_loop.py new_run rift_walkers --difficulty 2 --tags exploration
+python3 game_loop.py new_run balanced_roll --difficulty 0 --tags achievement
+# On the new-game screen: Easy, Advanced Edition ON, Balanced Roll, then Start
 
 # Typical combat turn (fully automated)
 python3 game_loop.py auto_turn --time-limit 10
@@ -143,6 +158,7 @@ tile_hover.py                Tile → MCP coord utility
 island_select.py             Island picker for island-select screen
 scrape_wiki.py               Wiki scraper (Playwright + Cloudflare bypass)
 CLAUDE.md                    Agent operational rules, protocols, phase playbook
+AGENTS.md                    Codex-compatible operational rules adapted from CLAUDE.md
 TODO.md                      Achievement checklist (70 total, tier-grouped)
 README.md                    This file
 
@@ -150,7 +166,7 @@ src/
   loop/        Session, logger, commands (the stateless CLI backing game_loop.py)
   bridge/      Lua ↔ Python IPC (protocol, reader, writer, modloader.lua)
   model/       Board, Unit, WeaponDef, PawnStats (60+ mechs, 50+ Vek, 100+ weapons)
-  solver/      Python parity simulator, evaluator, tuner, analysis, research gate
+  solver/      Python wrapper, evaluator, verifier, tuner, analysis, research gate
   control/     MCP click planners (grid_to_mcp, End Turn, weapon icons)
   capture/     Save-file fallback parser + window/grid detection
   strategy/    (placeholder — strategist logic currently lives in loop/commands.py)
@@ -173,7 +189,7 @@ recordings/    Per-run, per-turn board/solve/verify JSON + failure_db.jsonl
 logs/          Per-run decision log (markdown)
 sessions/      active_session.json (current run state)
 snapshots/     Labeled regression fixtures
-tests/         pytest suite (33 files); use `-m regression` for the slow corpus
+tests/         pytest suite (64 files); use `-m regression` for the slow corpus
 scripts/       install_modloader.sh, install-hooks.sh, regression.sh, migrate_failure_db.py, regenerate_known_types.py, replay_fuzzy_detector.py, probe_deploy_zone.py
 docs/          self_healing_loop_design.md, reference.md, lua_bridge_architecture.md, env_hazards_by_island.md, self_improvement_plan.md
 assets/        Game UI screenshots used for calibration
@@ -185,8 +201,8 @@ prompts/       Vision prompt templates for the research loop
 ## Coordinate conventions
 
 - **Bridge `(x, y)` → visual:** `Row = 8 - x`, `Col = chr(72 - y)`. Example: bridge `(3, 5)` = `C5`. **All communication uses A1–H8 visual notation.**
-- **MCP pixel coords:** `grid_to_mcp(x, y)` in `src/control/executor.py` auto-detects the game window via Quartz (calibrated <2px against all four corners on 2026-04-07). Never hardcode pixel coords — the window moves.
-- **UI anchors** (scaled to window size from a 1280×748 reference): End Turn `(95, 78)`, Repair `(111, 528)`, weapon slots `(191, 528)` / `(255, 528)`, Balanced Roll `(791, 530)`.
+- **MCP pixel coords:** `grid_to_mcp(x, y)` in `src/control/executor.py` auto-detects the game window via Quartz and uses the shared grid calibration. Never hardcode pixel coords - the window moves.
+- **UI anchors** (scaled to window size from a 1280×748 reference): End Turn `(95, 78)`, Repair `(105, 553)`, weapon slots `(181, 553)` / `(245, 553)`, Balanced Roll `(791, 530)`.
 
 ---
 
@@ -216,6 +232,6 @@ Acceptable failures are tracked in `tests/known_issues.json` (scoped by `"python
 - **Mouse clicks only for UI.** No keyboard shortcuts, no portrait clicks, no Tab — just tile centers and the End Turn button.
 - **Click tile centers, not sprites.** Sprites render 100–170 px above tile center; `grid_to_mcp` already handles this.
 - **Save file only updates at turn boundaries.** The bridge has no such limit; `verify_action` always re-reads fresh bridge state.
-- **Every process error becomes a permanent fix.** Mistakes update CLAUDE.md with a guard so they don't recur.
+- **Every process error becomes a permanent fix.** Mistakes update `AGENTS.md` / `CLAUDE.md` with a guard so they don't recur.
 
-See `CLAUDE.md` for the full operational rule set.
+See `AGENTS.md` for the current Codex operational rule set and `CLAUDE.md` for the original source instructions.
