@@ -297,6 +297,25 @@ class RunSession:
     # not produce a second entry.
     research_queue: list[dict] = field(default_factory=list)
 
+    # Last terrain structural fingerprint observed by ``cmd_read``. Used to
+    # detect mid-mission stage swaps (volcano → caverns on Mission_Final and
+    # similar two-stage finals). Stored as a plain dict so the session
+    # JSON round-trips without a custom (de)serializer:
+    #   {"hash": str, "classes": str, "mission_index": int, "turn": int}
+    # ``hash`` is sha256[:16] of ``classes``; ``classes`` is the row-major
+    # 64-char structural-terrain string. Cleared by ``_auto_advance_mission``
+    # implicitly via the mission_index check in ``is_stage_change`` —
+    # cross-mission swaps are expected and don't fire the detector.
+    last_terrain_fingerprint: dict | None = None
+
+    # Set to True for one read when a stage swap is detected (same
+    # mission_index, turn > prev.turn, structural diff above threshold).
+    # ``cmd_auto_turn`` checks this flag at entry; if set it forces a fresh
+    # solve from the post-swap board instead of trusting the cached
+    # active_solution / predicted_states (which were computed against the
+    # pre-swap terrain). The flag is consumed (cleared) by the next solve.
+    terrain_stage_change_pending: bool = False
+
     # Layer 3 of the diagnosis loop. Populated by `verify_action --diagnose`
     # (or with ITB_AUTO_DIAGNOSE=1). Pending entries are drained by the
     # harness via `game_loop.py diagnose_next` between turns — NEVER on the
@@ -587,6 +606,8 @@ class RunSession:
             "disabled_actions": self.disabled_actions,
             "research_queue": self.research_queue,
             "diagnosis_queue": self.diagnosis_queue,
+            "last_terrain_fingerprint": self.last_terrain_fingerprint,
+            "terrain_stage_change_pending": self.terrain_stage_change_pending,
         }
         return d
 
@@ -634,6 +655,10 @@ class RunSession:
             disabled_actions=disabled,
             research_queue=d.get("research_queue") or [],
             diagnosis_queue=d.get("diagnosis_queue") or [],
+            last_terrain_fingerprint=d.get("last_terrain_fingerprint"),
+            terrain_stage_change_pending=bool(
+                d.get("terrain_stage_change_pending", False)
+            ),
         )
 
     # --- Persistence with file locking ---
