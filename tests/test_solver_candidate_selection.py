@@ -1,4 +1,5 @@
 from src.loop.commands import (
+    _is_harmless_active_state_diff,
     _is_expected_skip_state_diff,
     _select_safe_plan_candidate,
 )
@@ -83,3 +84,30 @@ def test_skip_diff_with_tile_change_is_not_ignored():
     )
 
     assert _is_expected_skip_state_diff(diff, mech_uid=7) is False
+
+
+def test_prior_active_state_drift_is_harmless_for_completed_mech():
+    diff = DiffResult(unit_diffs=[
+        {"uid": 7, "type": "FlameMech", "field": "active",
+         "predicted": True, "actual": False},
+    ])
+
+    assert _is_harmless_active_state_diff(diff, allowed_uids={7}) is True
+
+
+def test_active_state_drift_for_unfinished_mech_is_not_ignored():
+    diff = DiffResult(unit_diffs=[
+        {"uid": 8, "type": "SwapMech", "field": "active",
+         "predicted": True, "actual": False},
+    ])
+
+    assert _is_harmless_active_state_diff(diff, allowed_uids={7}) is False
+
+
+def test_active_state_reactivation_is_not_harmless():
+    diff = DiffResult(unit_diffs=[
+        {"uid": 7, "type": "FlameMech", "field": "active",
+         "predicted": False, "actual": True},
+    ])
+
+    assert _is_harmless_active_state_diff(diff, allowed_uids={7}) is False

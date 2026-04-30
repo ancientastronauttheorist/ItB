@@ -361,6 +361,12 @@ pub(crate) fn get_weapon_targets(
             // doesn't explode into 64 identical actions.
             targets.push((mx, my));
         }
+        WeaponType::GlobalPush => {
+            // Support_Wind uses four fixed target zones at the board edges.
+            // One representative tile per direction is enough; each click
+            // triggers a global push independent of the caster's position.
+            targets.extend_from_slice(&SUPPORT_WIND_TARGETS);
+        }
         _ => {} // Passive, Deploy, TwoClick
     }
 
@@ -462,6 +468,11 @@ fn weapon_action_has_effect(
                 u.team == Team::Player
                     && (u.hp < u.max_hp || u.fire() || u.acid() || u.frozen())
             })
+        }
+        WeaponType::GlobalPush => {
+            // The firing mech itself is a pawn, so a live caster means the
+            // action has an effect. Keep this explicit for replay/test boards.
+            board.units.iter().any(|u| u.hp > 0)
         }
         // Leap/Swap/Deploy/TwoClick: positional or utility — don't filter
         _ => true,
@@ -672,6 +683,20 @@ fn prune_actions(
                                     if board.unit_at(nx as u8, ny as u8).is_some() {
                                         s -= 300;
                                     }
+                                }
+                            }
+                        }
+                    }
+                    // Global push (Wind Torrent): every pawn moves one tile
+                    // in the selected direction, so pre-penalize any pawn that
+                    // would bump a building. Full projection still owns exact
+                    // scoring; this just keeps pruning from liking grid-risky
+                    // candidates too much.
+                    WeaponType::GlobalPush => {
+                        if let Some(push_d) = support_wind_dir_from_target(target.0, target.1) {
+                            for u in board.units.iter().filter(|u| u.hp > 0) {
+                                if push_hits_building(u.x, u.y, push_d, board) {
+                                    s -= 300;
                                 }
                             }
                         }

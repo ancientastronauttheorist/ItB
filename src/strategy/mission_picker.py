@@ -139,6 +139,7 @@ WEAPON_TAGS: dict[str, list[str]] = {
     "Science_Confuse":   ["crowd_control"],
     # SUPPORT
     "Support_Repair":    ["repair"],
+    "Support_Wind":      ["crowd_control", "push_chain"],
     # PASSIVES
     "Passive_MassRepair": ["repair"],
     "Passive_HealingSmoke": ["repair", "crowd_control"],  # smoke disables Vek

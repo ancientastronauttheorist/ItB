@@ -15,6 +15,10 @@ def test_valid_weapon_and_board_target_is_attack():
     assert action_has_attack(_Action("Prime_Punchmech", (2, 3))) is True
 
 
+def test_support_wind_target_zone_is_attack():
+    assert action_has_attack(_Action("Support_Wind", (1, 3))) is True
+
+
 def test_unknown_weapon_with_sentinel_target_is_not_attack():
     assert action_has_attack(_Action("Unknown", (255, 255))) is False
 

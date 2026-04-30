@@ -104,6 +104,9 @@ pub enum WeaponType {
     /// TEAM_PLAYER pawn on the board to full HP, clears fire/acid/frozen,
     /// revives disabled mechs.
     HealAll = 12,
+    /// Support_Wind (Wind Torrent): fixed board-edge targeting chooses one
+    /// cardinal direction, then every pawn is pushed one tile in Lua scan order.
+    GlobalPush = 13,
 }
 
 impl WeaponType {
@@ -122,6 +125,7 @@ impl WeaponType {
             "passive" => WeaponType::Passive,
             "two_click" => WeaponType::TwoClick,
             "heal_all" => WeaponType::HealAll,
+            "global_push" => WeaponType::GlobalPush,
             _ => WeaponType::Melee,
         }
     }

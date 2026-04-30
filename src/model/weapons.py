@@ -23,6 +23,7 @@ class WeaponType(str, Enum):
     PULL = "pull"             # Pull target toward self
     TWO_CLICK = "two_click"   # Two-step targeting
     HEAL_ALL = "heal_all"     # Heals every player-team unit on the board
+    GLOBAL_PUSH = "global_push"  # Pushes every unit in one chosen direction
     PASSIVE = "passive"       # Always-on effect
 
 
@@ -396,6 +397,15 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Repair Drop", weapon_type="heal_all",
         damage=0, range_max=0, limited=1,
         targets_allies=True, building_damage=False,
+    ),
+    # Wind Torrent: AE any-class support weapon. Lua `Support_Wind` uses four
+    # fixed board-edge target zones; the clicked zone chooses a global direction
+    # and applies 0-damage push to every pawn in Lua scan order.
+    "Support_Wind": WeaponDef(
+        name="Wind Torrent", weapon_type="global_push",
+        damage=0, push="forward", range_max=0, limited=1,
+        targets_allies=True, building_damage=False,
+        upgrade_a="unlimited uses",
     ),
 
     # --- PASSIVE ABILITIES ---

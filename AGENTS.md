@@ -28,6 +28,8 @@ Earn all 70 achievements in Into the Breach autonomously. The game runs natively
 cd rust_solver && maturin build --release && \
   pip3 install --user --force-reinstall target/wheels/itb_solver-0.1.0-cp39-cp39-macosx_11_0_arm64.whl
 ```
+If `maturin` is not on `PATH`, use `python3 -m maturin build --release`
+from `rust_solver/` with the same `pip3 install` command.
 
 ## Execution Model
 

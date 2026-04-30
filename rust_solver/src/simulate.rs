@@ -1350,6 +1350,11 @@ pub fn simulate_weapon_with(
         WeaponType::Leap => sim_leap(board, attacker_idx, wdef, target_x, target_y, &mut result),
         WeaponType::Laser => sim_laser(board, ax, ay, wdef, attack_dir, &mut result),
         WeaponType::HealAll => sim_heal_all(board, &mut result),
+        WeaponType::GlobalPush => {
+            if let Some(dir) = support_wind_dir_from_target(target_x, target_y) {
+                sim_global_push(board, dir, &mut result);
+            }
+        }
         _ => {} // Passive, Deploy, TwoClick — no simulation
     }
 
@@ -2137,6 +2142,64 @@ fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
         u.set_fire(false);
         u.set_acid(false);
         u.set_frozen(false);
+    }
+}
+
+// ── Global Push (Wind Torrent) ────────────────────────────────────────────────
+
+/// Support_Wind (Wind Torrent): pushes every pawn one tile in the chosen
+/// direction. Lua first records every initial pawn-space in direction-specific
+/// scan order, then applies each `SpaceDamage(point, 0, dir)` sequentially.
+/// Precomputing the target list matches that behavior: a pawn moved onto a
+/// tile that was empty at cast time does not get a second, newly-created hit.
+fn sim_global_push(board: &mut Board, direction: usize, result: &mut ActionResult) {
+    let mut targets: Vec<(u8, u8)> = Vec::with_capacity(board.units.len());
+    match direction {
+        // DIR_LEFT: for i(row/y)=0..7, j(col/x)=0..7 -> Point(j,i)
+        3 => {
+            for y in 0..8u8 {
+                for x in 0..8u8 {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        // DIR_RIGHT: Point(7-j,i)
+        1 => {
+            for y in 0..8u8 {
+                for x in (0..8u8).rev() {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        // DIR_UP: Point(i,j)
+        2 => {
+            for x in 0..8u8 {
+                for y in 0..8u8 {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        // DIR_DOWN: Point(i,7-j)
+        0 => {
+            for x in 0..8u8 {
+                for y in (0..8u8).rev() {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        _ => return,
+    }
+
+    for (x, y) in targets {
+        apply_push(board, x, y, direction, result);
     }
 }
 
@@ -4060,6 +4123,53 @@ mod tests {
         let _ = simulate_weapon(&mut board, caster, WId::SupportRepair, 3, 3);
 
         assert_eq!(board.units[disabled].hp, 3, "Disabled mech revived to full HP");
+    }
+
+    #[test]
+    fn test_support_wind_pushes_every_unit_left() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 3, 3, 3, WId::SupportWind);
+        let enemy = add_enemy(&mut board, 99, 5, 3, 2);
+
+        let _ = simulate_weapon(&mut board, caster, WId::SupportWind, 1, 3);
+
+        assert_eq!((board.units[caster].x, board.units[caster].y), (2, 3));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 3));
+        assert_eq!(board.units[enemy].hp, 2, "zero-damage push only");
+    }
+
+    #[test]
+    fn test_support_wind_right_scan_order_moves_leading_unit_first() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 0, 0, 3, WId::SupportWind);
+        let trailing = add_enemy(&mut board, 10, 5, 3, 2);
+        let leading = add_enemy(&mut board, 11, 6, 3, 2);
+
+        let _ = simulate_weapon(&mut board, caster, WId::SupportWind, 5, 3);
+
+        assert_eq!((board.units[leading].x, board.units[leading].y), (7, 3));
+        assert_eq!((board.units[trailing].x, board.units[trailing].y), (6, 3));
+        assert_eq!(board.units[leading].hp, 2);
+        assert_eq!(board.units[trailing].hp, 2);
+        assert_eq!((board.units[caster].x, board.units[caster].y), (1, 0));
+    }
+
+    #[test]
+    fn test_support_wind_bump_into_building_costs_grid() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 6, 6, 3, WId::SupportWind);
+        let enemy = add_enemy(&mut board, 99, 3, 3, 2);
+        board.tile_mut(2, 3).terrain = Terrain::Building;
+        board.tile_mut(2, 3).building_hp = 1;
+        let grid_before = board.grid_power;
+
+        let result = simulate_weapon(&mut board, caster, WId::SupportWind, 1, 3);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 3));
+        assert_eq!(board.units[enemy].hp, 1);
+        assert_eq!(board.tile(2, 3).building_hp, 0);
+        assert_eq!(board.grid_power, grid_before - 1);
+        assert_eq!(result.grid_damage, 1);
     }
 
     // ── Force Amp (Passive_ForceAmp) ──────────────────────────────────────────

@@ -370,9 +370,14 @@ pub enum WId {
     /// trail is at most 1/turn while the mech is on a trail tile and is
     /// dwarfed by the boss's 3-dmg primary attack).
     BurnbugAtkB = 123,
+    /// Wind Torrent (`Support_Wind`): AE any-class support weapon. Targeting
+    /// uses four fixed 2x2 zones near the board edges; the clicked zone chooses
+    /// one global push direction and applies `SpaceDamage(point, 0, dir)` to
+    /// every pawn in scan order. Base weapon is single-use.
+    SupportWind = 124,
 }
 
-pub const WEAPON_COUNT: usize = 124;
+pub const WEAPON_COUNT: usize = 125;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -787,6 +792,21 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[123] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
         flags: f(WeaponFlags::FIRE.bits()), ..DEF };
 
+    // 124: Support_Wind — Wind Torrent. Per scripts/weapons_support.lua:434-537:
+    // ZoneTargeting=ZONE_CUSTOM with fixed edge-zone targets; clicked zone sets
+    // DIR_LEFT/RIGHT/UP/DOWN, then every current pawn receives zero damage plus
+    // a directional push in Lua scan order. No building damage except via bump.
+    w[124] = WeaponDef {
+        weapon_type: WeaponType::GlobalPush,
+        damage: 0, damage_outer: 0,
+        push: PushDir::Forward,
+        self_damage: 0,
+        range_min: 0, range_max: 0,
+        limited: 1,
+        path_size: 1,
+        flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
+    };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -811,6 +831,36 @@ pub fn weapon_def(id: WId) -> &'static WeaponDef {
 // — when no overrides are active they receive `&WEAPONS` directly (no alloc).
 
 pub type WeaponTable = [WeaponDef; WEAPON_COUNT];
+
+/// Representative target tiles for Support_Wind's four custom target zones.
+/// Lua accepts any tile in each 2x2 zone; one per direction keeps search small.
+pub const SUPPORT_WIND_TARGETS: [(u8, u8); 4] = [
+    (1, 3), // left zone  -> DIR_LEFT
+    (5, 3), // right zone -> DIR_RIGHT
+    (3, 1), // upper zone -> DIR_UP
+    (3, 5), // lower zone -> DIR_DOWN
+];
+
+/// Convert a Support_Wind target-zone tile into the Rust direction index.
+///
+/// Game Lua:
+///   x in {1,2} => DIR_LEFT,  x in {5,6} => DIR_RIGHT,
+///   y in {1,2} => DIR_UP,    y in {5,6} => DIR_DOWN.
+/// Rust DIRS are [(0,1), (1,0), (0,-1), (-1,0)], so right/left are 1/3
+/// and down/up are 0/2.
+pub fn support_wind_dir_from_target(x: u8, y: u8) -> Option<usize> {
+    if x == 1 || x == 2 {
+        Some(3)
+    } else if x == 5 || x == 6 {
+        Some(1)
+    } else if y == 1 || y == 2 {
+        Some(2)
+    } else if y == 5 || y == 6 {
+        Some(0)
+    } else {
+        None
+    }
+}
 
 /// Per-field patch applied on top of a base `WeaponDef`. Any `None` field is
 /// left untouched; flag bits set in `flags_set` are OR'd in and bits set in
@@ -990,6 +1040,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "BossHeal" => WId::BossHeal,
         "Pinnacle_FreezeTank" => WId::PinnacleFreezeTank,
         "BurnbugAtkB" => WId::BurnbugAtkB,
+        "Support_Wind" => WId::SupportWind,
+        // Upgraded Wind Torrent removes the use limit but keeps identical
+        // board effects. Treat it as the same simulator primitive.
+        "Support_Wind_A" => WId::SupportWind,
         // Repair sentinel — Python emits "_REPAIR" (matches wid_to_str inverse).
         // Without this case, replay_solution / score_plan / project_plan all
         // saw weapon_id="_REPAIR" plans as WId::None, skipping simulate_attack's
@@ -1119,6 +1173,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BossHeal => "BossHeal",
         WId::PinnacleFreezeTank => "Pinnacle_FreezeTank",
         WId::BurnbugAtkB => "BurnbugAtkB",
+        WId::SupportWind => "Support_Wind",
         _ => "",
     }
 }
@@ -1339,6 +1394,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::SnowBossAtk2 => "Vk8 Rockets Mark IV",
         WId::BossHeal => "Self-Repairing",
         WId::BurnbugAtkB => "Flaming Proboscis",
+        WId::SupportWind => "Wind Torrent",
         _ => "Unknown",
     }
 }
@@ -1448,6 +1504,25 @@ mod tests {
         assert_eq!(wid_from_str("Support_Repair"), WId::SupportRepair);
         assert_eq!(wid_to_str(WId::SupportRepair), "Support_Repair");
         assert_eq!(weapon_name(WId::SupportRepair), "Repair Drop");
+    }
+
+    #[test]
+    fn test_support_wind_def_and_target_zones() {
+        let w = weapon_def(WId::SupportWind);
+        assert_eq!(w.weapon_type, WeaponType::GlobalPush);
+        assert_eq!(w.damage, 0);
+        assert_eq!(w.push, PushDir::Forward);
+        assert_eq!(w.limited, 1);
+        assert!(w.targets_allies());
+        assert_eq!(wid_from_str("Support_Wind"), WId::SupportWind);
+        assert_eq!(wid_from_str("Support_Wind_A"), WId::SupportWind);
+        assert_eq!(wid_to_str(WId::SupportWind), "Support_Wind");
+        assert_eq!(weapon_name(WId::SupportWind), "Wind Torrent");
+        assert_eq!(support_wind_dir_from_target(1, 3), Some(3));
+        assert_eq!(support_wind_dir_from_target(5, 3), Some(1));
+        assert_eq!(support_wind_dir_from_target(3, 1), Some(2));
+        assert_eq!(support_wind_dir_from_target(3, 5), Some(0));
+        assert_eq!(support_wind_dir_from_target(3, 3), None);
     }
 
     #[test]

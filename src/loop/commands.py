@@ -1243,17 +1243,29 @@ def _candidate_safety_summary(candidate_eval: dict) -> dict:
     }
 
 
-def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
-    """Return true for the harmless active-flag drift after a no-attack skip."""
+def _is_harmless_active_state_diff(
+    diff,
+    allowed_uids: set[int] | None = None,
+) -> bool:
+    """Return true for harmless predicted-active -> actual-inactive drift."""
     unit_diffs = getattr(diff, "unit_diffs", []) or []
     if not unit_diffs:
         return False
     if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
         return False
     for ud in unit_diffs:
-        if ud.get("uid") != mech_uid or ud.get("field") != "active":
+        if ud.get("field") != "active":
+            return False
+        if allowed_uids is not None and ud.get("uid") not in allowed_uids:
+            return False
+        if ud.get("predicted") is not True or ud.get("actual") is not False:
             return False
     return True
+
+
+def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
+    """Return true for the harmless active-flag drift after a no-attack skip."""
+    return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
 
 
 def _compute_deltas(predicted: dict, actual: dict) -> dict:
@@ -5652,76 +5664,79 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             if actual_board and pred_post_move:
                 diff = diff_states(pred_post_move, actual_board)
                 if not diff.is_empty():
-                    classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
-                    fuzzy_signal = fuzzy_detector.evaluate(
-                        diff, classification,
-                        context={
-                            "mech_uid": mech_uid,
-                            "phase": "move",
-                            "sub_action": "move",
-                            "action_index": actions_completed,
-                            "turn": turn,
-                            "weapon": action.weapon,
-                            "target": list(action.target),
-                        },
-                        prior_events=(
-                            weapon_penalty_log.synthetic_prior_events()
-                            + session.failure_events_this_run
-                        ),
-                    )
-                    session.failure_events_this_run.append(fuzzy_signal)
-                    _maybe_soft_disable(session, fuzzy_signal, turn,
-                                        fired=soft_disables_fired_this_turn,
-                                        run_id=session.run_id)
-                    _enqueue_behavior_novelty(session, diff, turn)
-                    _log_sub_action_desync(
-                        session, "move", actions_completed, mech_uid,
-                        pred_post_move, actual_board, diff, classification, turn,
-                        fuzzy_signal=fuzzy_signal,
-                    )
-                    _maybe_flag_grid_drop(
-                        grid_drop_investigations, diff, classification,
-                        pred_post_move, actual_board,
-                        context={
-                            "mech_uid": mech_uid, "sub_action": "move",
-                            "action_index": actions_completed,
-                            "weapon": action.weapon,
-                            "target": list(action.target),
-                        },
-                        run_id=session.run_id or "default",
-                        turn=turn,
-                        failure_db_id=(
-                            f"{session.run_id or 'default'}_"
-                            f"m{session.mission_index:02d}_t{turn:02d}_"
-                            f"per_sub_action_desync_move_a{actions_completed}"
-                        ),
-                    )
-                    re_solve_count += 1
-                    # Re-solve: this mech has moved but not attacked
-                    if actual_data:
-                        new_actions, new_preds, new_score = _re_solve_partial(
-                            actual_board, actual_data, done_uids,
-                            mid_action_uid=mech_uid,
-                            time_limit=time_limit, session=session,
+                    if _is_harmless_active_state_diff(diff, allowed_uids=set(done_uids)):
+                        print("  MOVE VERIFIED: PASS (prior active-state drift ignored)")
+                    else:
+                        classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
+                        fuzzy_signal = fuzzy_detector.evaluate(
+                            diff, classification,
+                            context={
+                                "mech_uid": mech_uid,
+                                "phase": "move",
+                                "sub_action": "move",
+                                "action_index": actions_completed,
+                                "turn": turn,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            prior_events=(
+                                weapon_penalty_log.synthetic_prior_events()
+                                + session.failure_events_this_run
+                            ),
                         )
-                        if new_actions:
-                            print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
-                            # First action should be attack-only for mid_action mech
-                            solver_actions = []
-                            for a in new_actions:
-                                solver_actions.append(SolverAction(
-                                    mech_uid=a.mech_uid,
-                                    mech_type=a.mech_type,
-                                    move_to=a.move_to,
-                                    weapon=a.weapon,
-                                    target=a.target,
-                                    description=a.description,
-                                ))
-                            actions = solver_actions
-                            predicted_states = new_preds
-                            score = new_score
-                            action_idx = 0
-                            continue  # restart loop with new solution
+                        session.failure_events_this_run.append(fuzzy_signal)
+                        _maybe_soft_disable(session, fuzzy_signal, turn,
+                                            fired=soft_disables_fired_this_turn,
+                                            run_id=session.run_id)
+                        _enqueue_behavior_novelty(session, diff, turn)
+                        _log_sub_action_desync(
+                            session, "move", actions_completed, mech_uid,
+                            pred_post_move, actual_board, diff, classification, turn,
+                            fuzzy_signal=fuzzy_signal,
+                        )
+                        _maybe_flag_grid_drop(
+                            grid_drop_investigations, diff, classification,
+                            pred_post_move, actual_board,
+                            context={
+                                "mech_uid": mech_uid, "sub_action": "move",
+                                "action_index": actions_completed,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            run_id=session.run_id or "default",
+                            turn=turn,
+                            failure_db_id=(
+                                f"{session.run_id or 'default'}_"
+                                f"m{session.mission_index:02d}_t{turn:02d}_"
+                                f"per_sub_action_desync_move_a{actions_completed}"
+                            ),
+                        )
+                        re_solve_count += 1
+                        # Re-solve: this mech has moved but not attacked
+                        if actual_data:
+                            new_actions, new_preds, new_score = _re_solve_partial(
+                                actual_board, actual_data, done_uids,
+                                mid_action_uid=mech_uid,
+                                time_limit=time_limit, session=session,
+                            )
+                            if new_actions:
+                                print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
+                                # First action should be attack-only for mid_action mech
+                                solver_actions = []
+                                for a in new_actions:
+                                    solver_actions.append(SolverAction(
+                                        mech_uid=a.mech_uid,
+                                        mech_type=a.mech_type,
+                                        move_to=a.move_to,
+                                        weapon=a.weapon,
+                                        target=a.target,
+                                        description=a.description,
+                                    ))
+                                actions = solver_actions
+                                predicted_states = new_preds
+                                score = new_score
+                                action_idx = 0
+                                continue  # restart loop with new solution
                 else:
                     print(f"  MOVE VERIFIED: PASS")
 
@@ -5734,6 +5749,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             try:
                 ack = attack_mech(mech_uid, weapon_slot, action.target[0], action.target[1])
                 print(f"  ATTACK: {ack}")
+                if action.weapon == "Support_Wind":
+                    session.add_disabled_action(
+                        weapon_id="Support_Wind",
+                        cause="limited_use_spent",
+                        expires_turn=turn + 99,
+                        strategic_override=True,
+                    )
+                    session.save()
             except (TimeoutError, BridgeError) as e:
                 print(f"  ATTACK ERROR: {e}")
                 result = {"error": f"Attack {actions_completed}: {e}",
@@ -5773,101 +5796,103 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         if actual_board and pred_post_attack:
             diff = diff_states(pred_post_attack, actual_board)
             if not diff.is_empty():
-                if (final_phase == "skip"
-                        and _is_expected_skip_state_diff(diff, mech_uid)):
-                    print("  SKIP VERIFIED: PASS (active-state drift ignored)")
-                    done_uids.add(mech_uid)
-                    actions_completed += 1
-                    action_idx += 1
-                    continue
-                classification = classify_diff(diff, mech_uid=mech_uid,
-                                               phase=final_phase)
-                fuzzy_signal = fuzzy_detector.evaluate(
-                    diff, classification,
-                    context={
-                        "mech_uid": mech_uid,
-                        "phase": final_phase,
-                        "sub_action": final_phase,
-                        "action_index": actions_completed,
-                        "turn": turn,
-                        "weapon": action.weapon,
-                        "target": list(action.target),
-                    },
-                    prior_events=session.failure_events_this_run,
-                )
-                session.failure_events_this_run.append(fuzzy_signal)
-                if final_phase != "skip":
-                    _maybe_soft_disable(session, fuzzy_signal, turn,
-                                        fired=soft_disables_fired_this_turn,
-                                        run_id=session.run_id)
-                _enqueue_behavior_novelty(session, diff, turn)
-                _log_sub_action_desync(
-                    session, final_phase, actions_completed, mech_uid,
-                    pred_post_attack, actual_board, diff, classification, turn,
-                    fuzzy_signal=fuzzy_signal,
-                )
-                _maybe_flag_grid_drop(
-                    grid_drop_investigations, diff, classification,
-                    pred_post_attack, actual_board,
-                    context={
-                        "mech_uid": mech_uid, "sub_action": final_phase,
-                        "action_index": actions_completed,
-                        "weapon": action.weapon,
-                        "target": list(action.target),
-                    },
-                    run_id=session.run_id or "default",
-                    turn=turn,
-                    failure_db_id=(
-                        f"{session.run_id or 'default'}_"
-                        f"m{session.mission_index:02d}_t{turn:02d}_"
-                        f"per_sub_action_desync_{final_phase}_a{actions_completed}"
-                    ),
-                )
-                # Skip re-solve if spawn-only on last action (new Vek emerged)
-                is_last_action = (action_idx >= len(actions) - 1)
-                spawn_new_only = (
-                    diff.unit_diffs
-                    and all(ud.get("field") == "missing_in_predicted"
-                            for ud in diff.unit_diffs)
-                    and not diff.tile_diffs
-                    and not diff.scalar_diffs
-                )
-                if spawn_new_only and is_last_action:
-                    print(f"  DESYNC action {actions_completed} {final_phase}: "
-                          f"{diff.total_count()} diffs [spawn-only on last action, skipping re-solve]")
-                    done_uids.add(mech_uid)
-                    actions_completed += 1
-                    action_idx += 1
-                    continue
-
-                re_solve_count += 1
-                # Re-solve for remaining mechs
-                done_uids.add(mech_uid)
-                remaining = len(actions) - action_idx - 1
-                if remaining > 0 and actual_data:
-                    new_actions, new_preds, new_score = _re_solve_partial(
-                        actual_board, actual_data, done_uids,
-                        mid_action_uid=None,
-                        time_limit=time_limit, session=session,
+                allowed_active_drift_uids = set(done_uids)
+                if final_phase == "skip":
+                    allowed_active_drift_uids.add(mech_uid)
+                if _is_harmless_active_state_diff(
+                    diff, allowed_uids=allowed_active_drift_uids
+                ):
+                    print(f"  {final_phase.upper()} VERIFIED: PASS "
+                          "(active-state drift ignored)")
+                else:
+                    classification = classify_diff(diff, mech_uid=mech_uid,
+                                                   phase=final_phase)
+                    fuzzy_signal = fuzzy_detector.evaluate(
+                        diff, classification,
+                        context={
+                            "mech_uid": mech_uid,
+                            "phase": final_phase,
+                            "sub_action": final_phase,
+                            "action_index": actions_completed,
+                            "turn": turn,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
+                        },
+                        prior_events=session.failure_events_this_run,
                     )
-                    if new_actions:
-                        print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
-                        solver_actions = []
-                        for a in new_actions:
-                            solver_actions.append(SolverAction(
-                                mech_uid=a.mech_uid,
-                                mech_type=a.mech_type,
-                                move_to=a.move_to,
-                                weapon=a.weapon,
-                                target=a.target,
-                                description=a.description,
-                            ))
-                        actions = solver_actions
-                        predicted_states = new_preds
-                        score = new_score
-                        action_idx = 0
+                    session.failure_events_this_run.append(fuzzy_signal)
+                    if final_phase != "skip":
+                        _maybe_soft_disable(session, fuzzy_signal, turn,
+                                            fired=soft_disables_fired_this_turn,
+                                            run_id=session.run_id)
+                    _enqueue_behavior_novelty(session, diff, turn)
+                    _log_sub_action_desync(
+                        session, final_phase, actions_completed, mech_uid,
+                        pred_post_attack, actual_board, diff, classification, turn,
+                        fuzzy_signal=fuzzy_signal,
+                    )
+                    _maybe_flag_grid_drop(
+                        grid_drop_investigations, diff, classification,
+                        pred_post_attack, actual_board,
+                        context={
+                            "mech_uid": mech_uid, "sub_action": final_phase,
+                            "action_index": actions_completed,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
+                        },
+                        run_id=session.run_id or "default",
+                        turn=turn,
+                        failure_db_id=(
+                            f"{session.run_id or 'default'}_"
+                            f"m{session.mission_index:02d}_t{turn:02d}_"
+                            f"per_sub_action_desync_{final_phase}_a{actions_completed}"
+                        ),
+                    )
+                    # Skip re-solve if spawn-only on last action (new Vek emerged)
+                    is_last_action = (action_idx >= len(actions) - 1)
+                    spawn_new_only = (
+                        diff.unit_diffs
+                        and all(ud.get("field") == "missing_in_predicted"
+                                for ud in diff.unit_diffs)
+                        and not diff.tile_diffs
+                        and not diff.scalar_diffs
+                    )
+                    if spawn_new_only and is_last_action:
+                        print(f"  DESYNC action {actions_completed} {final_phase}: "
+                              f"{diff.total_count()} diffs [spawn-only on last action, skipping re-solve]")
+                        done_uids.add(mech_uid)
                         actions_completed += 1
-                        continue  # restart loop with new solution
+                        action_idx += 1
+                        continue
+
+                    re_solve_count += 1
+                    # Re-solve for remaining mechs
+                    done_uids.add(mech_uid)
+                    remaining = len(actions) - action_idx - 1
+                    if remaining > 0 and actual_data:
+                        new_actions, new_preds, new_score = _re_solve_partial(
+                            actual_board, actual_data, done_uids,
+                            mid_action_uid=None,
+                            time_limit=time_limit, session=session,
+                        )
+                        if new_actions:
+                            print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
+                            solver_actions = []
+                            for a in new_actions:
+                                solver_actions.append(SolverAction(
+                                    mech_uid=a.mech_uid,
+                                    mech_type=a.mech_type,
+                                    move_to=a.move_to,
+                                    weapon=a.weapon,
+                                    target=a.target,
+                                    description=a.description,
+                                ))
+                            actions = solver_actions
+                            predicted_states = new_preds
+                            score = new_score
+                            action_idx = 0
+                            actions_completed += 1
+                            continue  # restart loop with new solution
             else:
                 print(f"  {final_phase.upper()} VERIFIED: PASS")
 

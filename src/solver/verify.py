@@ -454,7 +454,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # simulate_enemy_attacks so eggs hatch on the NEXT enemy phase
 # (matching game's AddQueuedDamage from weapons_enemy.lua:857). Pre-v38
 # corpus archived as failure_db_snapshot_sim_v37.jsonl.
-SIMULATOR_VERSION = 38
+# v39 — Support_Wind / Wind Torrent is now modeled as an AE any-class
+# global-push support weapon with fixed edge-zone targeting and Lua scan-order
+# pawn pushes. Pre-v39 corpus archived as failure_db_snapshot_sim_v38.jsonl.
+SIMULATOR_VERSION = 39
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

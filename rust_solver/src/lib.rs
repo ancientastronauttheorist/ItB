@@ -775,8 +775,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //      train advance). Eggs now sit dormant until the next enemy
 //      phase, matching the game's AddQueuedDamage semantics from
 //      weapons_enemy.lua:857.
-// Pre-v38 corpus archived as `failure_db_snapshot_sim_v37.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 38;
+// v39 — Added Support_Wind / Wind Torrent modeling. The solver now recognizes
+//   `Support_Wind` as an AE any-class global-push support weapon, enumerates
+//   one representative target per fixed custom edge zone, and simulates the
+//   Lua scan-order push of every pawn in the selected direction. Pre-v39 corpus
+//   archived as `failure_db_snapshot_sim_v38.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 39;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
