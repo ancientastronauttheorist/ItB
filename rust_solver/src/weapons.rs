@@ -990,6 +990,16 @@ pub fn wid_from_str(s: &str) -> WId {
         "BossHeal" => WId::BossHeal,
         "Pinnacle_FreezeTank" => WId::PinnacleFreezeTank,
         "BurnbugAtkB" => WId::BurnbugAtkB,
+        // Repair sentinel — Python emits "_REPAIR" (matches wid_to_str inverse).
+        // Without this case, replay_solution / score_plan / project_plan all
+        // saw weapon_id="_REPAIR" plans as WId::None, skipping simulate_attack's
+        // Repair branch entirely (no heal, no set_active, no fire/acid clear).
+        // That predicted-vs-actual mismatch produced 24+ click_miss|_REPAIR|attack
+        // entries in failure_db.jsonl with predicted hp/active < actual.
+        "_REPAIR" => WId::Repair,
+        // Also accept "Repair" for symmetry with the executor's classify_weapon
+        // (which treats both as the repair flow).
+        "Repair" => WId::Repair,
         _ => WId::None,
     }
 }
@@ -1408,6 +1418,13 @@ mod tests {
         }
         // Repair maps to _REPAIR (Python convention)
         assert_eq!(wid_to_str(WId::Repair), "_REPAIR");
+        // ...and the inverse must round-trip — without this case, replay /
+        // score_plan / project_plan silently turn Repair plans into WId::None
+        // and predict the mech does nothing (no heal, stays active).
+        assert_eq!(wid_from_str("_REPAIR"), WId::Repair);
+        // "Repair" alias accepted for symmetry with the executor's
+        // classify_weapon (which treats both as the repair flow).
+        assert_eq!(wid_from_str("Repair"), WId::Repair);
         // None maps to empty string
         assert_eq!(wid_to_str(WId::None), "");
     }
