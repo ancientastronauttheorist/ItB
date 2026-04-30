@@ -490,7 +490,10 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
     Without this, every mission in a multi-mission run shares ``mission_index=0``
     and recordings collide on the ``m00_*`` prefix — the second mission's turn-0
     board overwrites the first's, etc. (See run 20260428_165811_685 where
-    Mission_FreezeBots clobbered Mission_BotDefense's m00_turn_04_board.json.)
+    Mission_FreezeBots clobbered Mission_BotDefense's m00_turn_04_board.json,
+    and the volcano final on the R.S.T. island missed its m## prefix entirely
+    because Mission_Final / a recurring template id collided with an earlier
+    mission of the same name on a previous island.)
 
     ``cmd_mission_end`` already bumps explicitly when called, but the harness
     doesn't always call it (e.g. on Region Secured detected from a screenshot).
@@ -504,7 +507,14 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
                                         ``mission_index`` already points at the
                                         correct slot (0 for fresh runs, mi+1
                                         for post-mission_end).
-      - same mission_id               → no-op
+      - same mission_id, turn regressed → SAME TEMPLATE, NEW INSTANCE
+                                        (e.g., Mission_Acid recurring across
+                                        islands). The bridge only emits
+                                        template ids; we proxy "new mission"
+                                        with a turn drop below the highest
+                                        turn we observed in this slot. Bump
+                                        index, reset per-mission state.
+      - same mission_id, no turn drop → no-op (every-turn read path).
       - different mission_id          → mission boundary missed by the harness.
                                         Bump index, adopt new name, clear
                                         per-mission soft-disable list (mirrors
@@ -515,12 +525,45 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
     mission_id = (bridge_data.get("mission_id") or "").strip()
     if not mission_id:
         return False
+    bridge_turn = bridge_data.get("turn", 0)
+    if not isinstance(bridge_turn, int):
+        try:
+            bridge_turn = int(bridge_turn)
+        except (TypeError, ValueError):
+            bridge_turn = 0
+
     if session.current_mission == mission_id:
+        # Same template id. Detect a fresh instance via turn regression — the
+        # bridge re-zeroes Game:GetTurnCount() at every mission start, so a
+        # drop below ``last_mission_turn`` while the template id matches means
+        # the harness missed cmd_mission_end AND the next mission happens to
+        # share the template name. Without this branch, the new mission's
+        # recordings collide with the prior one's m## prefix.
+        if (session.last_mission_turn >= 1
+                and bridge_turn < session.last_mission_turn):
+            print(
+                f"[auto_advance_mission] same-template boundary detected: "
+                f"{mission_id!r} turn {session.last_mission_turn} -> "
+                f"{bridge_turn} "
+                f"(mission_index {session.mission_index} -> "
+                f"{session.mission_index + 1})"
+            )
+            session.mission_index += 1
+            session.last_mission_turn = bridge_turn
+            session.disabled_actions = []
+            return True
+        # Track the high-water mark in-place for future regression checks.
+        # This is a non-structural side effect and intentionally does NOT
+        # signal a save (the field will be persisted by the next genuine
+        # session.save() — typically a few seconds later in cmd_read).
+        if bridge_turn > session.last_mission_turn:
+            session.last_mission_turn = bridge_turn
         return False
     if not session.current_mission:
         # First mission this run, or first read after cmd_mission_end cleared
         # current_mission and pre-bumped mission_index. Just adopt the name.
         session.current_mission = mission_id
+        session.last_mission_turn = bridge_turn
         return True
     # Mission boundary the harness missed. Bump and reset per-mission state.
     print(
@@ -530,6 +573,7 @@ def _auto_advance_mission(session: RunSession, bridge_data: dict) -> bool:
     )
     session.current_mission = mission_id
     session.mission_index += 1
+    session.last_mission_turn = bridge_turn
     session.disabled_actions = []
     return True
 
@@ -6661,6 +6705,7 @@ def cmd_mission_end(
     # Also reset per-mission blocklist state, mirroring ``advance_mission``.
     session.mission_index = mi + 1
     session.current_mission = ""
+    session.last_mission_turn = -1
     session.disabled_actions = []
     session.save()
     result["next_mission_index"] = session.mission_index
