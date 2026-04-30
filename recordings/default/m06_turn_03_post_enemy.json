@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-04-29T23:32:44.622735",
+  "run_id": "default",
+  "mission_index": 6,
+  "turn": 3,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 11,
+      "grid_power": 7,
+      "enemies_alive": 2,
+      "enemy_hp_total": 6,
+      "mechs_alive": 2,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "hp": 4,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "hp": 4,
+          "max_hp": 3
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "building_hp_total": 11,
+      "buildings_alive": 8,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 4,
+      "enemy_hp_total": 10,
+      "grid_power": 6,
+      "mech_hp": [
+        {
+          "hp": 4,
+          "max_hp": 3,
+          "type": "FlameMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "IgniteMech",
+          "uid": 1
+        },
+        {
+          "hp": 0,
+          "max_hp": 2,
+          "type": "TeleMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 2
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 1,
+      "enemies_alive_diff": -2,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "predicted_hp": 4,
+          "actual_hp": 4,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "predicted_hp": 3,
+          "actual_hp": 4,
+          "diff": 1
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

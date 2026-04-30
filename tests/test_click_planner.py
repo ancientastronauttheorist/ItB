@@ -23,8 +23,9 @@ class _FakeWindow:
 
 
 import src.control.executor as executor
+from src.capture.detect_grid import grid_from_window
 executor._cached_window = _FakeWindow()
-executor._cached_grid = object()  # any non-None sentinel
+executor._cached_grid = grid_from_window(_FakeWindow())
 
 from src.solver.solver import MechAction
 from src.control.executor import (

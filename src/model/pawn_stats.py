@@ -206,6 +206,9 @@ NEUTRAL_STATS = {
     "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False),
     "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False),
     "Filler_Pawn":       PawnStats(move_speed=0, pushable=False),
+    # Digger rock wall: bridge exposes the spawned rock as a neutral "Wall"
+    # pawn (1 HP, Move 0, no weapon) rather than terrain.
+    "Wall":              PawnStats(move_speed=0),
     # Freeze Tank (Pinnacle Robotics) — friendly NPC on Mission_FreezeBots
     # ("Pinnacle Garden"). Per scripts/missions/snow/snow_helper.lua:
     #   Health=1, MoveSpeed=4, SkillList={"Pinnacle_FreezeTank"},

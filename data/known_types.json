@@ -310,6 +310,8 @@
     "ChargeMech",
     "Crab1",
     "Crab2",
+    "Digger1",
+    "Digger2",
     "DStrikeMech",
     "Dam_Pawn",
     "Disposal_Unit",
@@ -381,6 +383,7 @@
     "Train_Damaged",
     "Train_Pawn",
     "Volatile_Vek",
+    "Wall",
     "WallMech",
     "WebbEgg1"
   ],

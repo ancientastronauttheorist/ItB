@@ -4,47 +4,13 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Disposal",
+  "current_mission": "Mission_Belt",
   "islands_completed": [],
-  "mission_index": 13,
-  "last_mission_turn": 0,
-  "current_turn": 0,
-  "phase": "unknown",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "FlameMech",
-        "move_to": [
-          6,
-          0
-        ],
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          6,
-          1
-        ],
-        "description": "FlameMech, fire Flamethrower at G2"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "IgniteMech",
-        "move_to": [
-          4,
-          3
-        ],
-        "weapon": "Ranged_Ignite",
-        "target": [
-          4,
-          0
-        ],
-        "description": "IgniteMech, fire Ignite at H4"
-      }
-    ],
-    "score": -8587.144645282198,
-    "turn": 4,
-    "input_fingerprint": "0:6,0:5|1:4,3:4|2:3,3:0|486:6,1:2|487:4,1:5|488:1,0:1"
-  },
+  "mission_index": 12,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -481,104 +447,6 @@
         "IgniteMech, move A6\u2192C6, fire Ignite at C4",
         "TeleMech, fire Teleporter at C5"
       ]
-    },
-    {
-      "timestamp": "2026-04-30T13:07:14.860200",
-      "turn": 1,
-      "label": "solve",
-      "score": 131209.42857916016,
-      "actions": [
-        "IgniteMech, move D7\u2192F5, fire Ignite at F2",
-        "TeleMech, fire Teleporter at C5",
-        "FlameMech, move E3\u2192F2, fire Flamethrower at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:07:38.277160",
-      "turn": 1,
-      "label": "solve",
-      "score": 131209.42857916016,
-      "actions": [
-        "IgniteMech, move D7\u2192F5, fire Ignite at F2",
-        "TeleMech, fire Teleporter at C5",
-        "FlameMech, move E3\u2192F2, fire Flamethrower at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:07:41.064897",
-      "turn": 1,
-      "label": "solve",
-      "score": 131209.42857916016,
-      "actions": [
-        "IgniteMech, move D7\u2192F5, fire Ignite at F2",
-        "TeleMech, fire Teleporter at C5",
-        "FlameMech, move E3\u2192F2, fire Flamethrower at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:09:56.493334",
-      "turn": 1,
-      "label": "note",
-      "message": "Turn 1 emergency: safety block after Digger Wall research. Expanded solve_top_k to 1000 candidates; all predicted grid_loss=2. Coal Plant objective survives. Accepting dirty solver plan with --allow-dirty-plan to keep bridge verification and preserve model data."
-    },
-    {
-      "timestamp": "2026-04-30T13:10:00.456618",
-      "turn": 1,
-      "label": "solve",
-      "score": 131209.42857916016,
-      "actions": [
-        "IgniteMech, move D7\u2192F5, fire Ignite at F2",
-        "TeleMech, fire Teleporter at C5",
-        "FlameMech, move E3\u2192F2, fire Flamethrower at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:11:47.213320",
-      "turn": 2,
-      "label": "solve",
-      "score": 108306.04763898959,
-      "actions": [
-        "FlameMech, move E5\u2192G5, fire Flamethrower at G6",
-        "IgniteMech, move F5\u2192E2, fire Ignite at H2",
-        "TeleMech, move C5\u2192E4, fire Teleporter at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:12:22.335867",
-      "turn": 2,
-      "label": "note",
-      "message": "Turn 2 emergency: expanded solve_top_k to 1000; best candidates all grid_loss=1, objective/pod/mech damage preserved. Accepting dirty plan with --allow-dirty-plan under bridge verification."
-    },
-    {
-      "timestamp": "2026-04-30T13:12:29.851804",
-      "turn": 2,
-      "label": "solve",
-      "score": 108306.04763898959,
-      "actions": [
-        "FlameMech, move E5\u2192G5, fire Flamethrower at G6",
-        "IgniteMech, move F5\u2192E2, fire Ignite at H2",
-        "TeleMech, move C5\u2192E4, fire Teleporter at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:14:04.349996",
-      "turn": 3,
-      "label": "solve",
-      "score": 71602.8553547178,
-      "actions": [
-        "FlameMech, move G5\u2192H2, fire Flamethrower at G2",
-        "IgniteMech, fire Ignite at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T13:15:33.207792",
-      "turn": 4,
-      "label": "solve",
-      "score": -8587.144645282198,
-      "actions": [
-        "FlameMech, fire Flamethrower at G2",
-        "IgniteMech, fire Ignite at H4"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -692,18 +560,6 @@
     ],
     [
       10,
-      3
-    ],
-    [
-      12,
-      1
-    ],
-    [
-      12,
-      2
-    ],
-    [
-      12,
       3
     ]
   ],
@@ -1746,114 +1602,6 @@
           5
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "mech_position_wrong",
-      "categories": [
-        "mech_position_wrong"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "mech_position_wrong|Ranged_Ignite|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Ranged_Ignite|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Science_Swap|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Science_Swap",
-        "target": [
-          3,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Science_Swap|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_Swap",
-        "target": [
-          5,
-          3
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -2317,44 +2065,17 @@
       "slot": null,
       "mission_id": "Mission_Belt",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Rock Wall",
-            "hp": 1,
-            "move": 0,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Rock Wall",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Rock+Wall",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Rock+Wall&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "b8aef5d909c0",
-      "last_kind": "enemy"
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "0c3357c2a1ac3c13",
-    "classes": "wbbwwggggggggmmmgbbggwmggggggggggbbgggggggggggbgggggmggwggwmmmgw",
-    "mission_index": 13,
-    "turn": 0
+    "hash": "d2e3adefa1d882ab",
+    "classes": "gwgggmmmggbbggmmggggggbmgbgggggmggggbwwwgbggbwgmgggggwgmggggggmm",
+    "mission_index": 12,
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }

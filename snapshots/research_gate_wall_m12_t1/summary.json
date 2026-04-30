@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-30T13:04:36.920578",
+  "label": "research_gate_wall_m12_t1",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Digger1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    }
+  ]
+}

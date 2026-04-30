@@ -4,12 +4,12 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Disposal",
+  "current_mission": "Mission_Belt",
   "islands_completed": [],
-  "mission_index": 13,
-  "last_mission_turn": 0,
-  "current_turn": 0,
-  "phase": "unknown",
+  "mission_index": 12,
+  "last_mission_turn": 4,
+  "current_turn": 4,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
@@ -2351,10 +2351,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "0c3357c2a1ac3c13",
-    "classes": "wbbwwggggggggmmmgbbggwmggggggggggbbgggggggggggbgggggmggwggwmmmgw",
-    "mission_index": 13,
-    "turn": 0
+    "hash": "78c1eae710b3313f",
+    "classes": "gwgggmmmggrbggmmggggggbmgrgggggmggggbwwwgbggbwgmgggggwgmggggggmm",
+    "mission_index": 12,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }

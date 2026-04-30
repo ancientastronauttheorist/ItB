@@ -1,0 +1,99 @@
+{
+  "timestamp": "2026-04-30T13:13:42.998946",
+  "run_id": "default",
+  "mission_index": 12,
+  "turn": 2,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 5,
+      "building_hp_total": 6,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 1,
+      "grid_power": 4,
+      "enemies_alive": 5,
+      "enemy_hp_total": 13,
+      "mechs_alive": 2,
+      "mech_hp_total": 10,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "hp": 5,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "hp": 5,
+          "max_hp": 3
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "pos": [
+            5,
+            3
+          ]
+        }
+      ]
+    },
+    "predicted_outcome": {
+      "building_hp_total": 6,
+      "buildings_alive": 5,
+      "buildings_destroyed_by_enemies": 1,
+      "enemies_alive": 2,
+      "enemy_hp_total": 6,
+      "grid_power": 4,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 3,
+          "type": "FlameMech",
+          "uid": 0
+        },
+        {
+          "hp": 5,
+          "max_hp": 3,
+          "type": "IgniteMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "TeleMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 3
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 3,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "predicted_hp": 5,
+          "actual_hp": 5,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "predicted_hp": 5,
+          "actual_hp": 5,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}
