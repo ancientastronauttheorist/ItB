@@ -373,7 +373,15 @@
     "BlobBossSmall",
     "Freeze_Tank",
     "MirrorMech",
-    "BurnbugBoss"
+    "BurnbugBoss",
+    "BigBomb",
+    "Blob1",
+    "Blob2",
+    "Blobber1",
+    "Blobber2",
+    "Crab1",
+    "Crab2",
+    "Jelly_Lava1"
   ],
   "observed_weapons": [
     "Acid_Tank_Attack",

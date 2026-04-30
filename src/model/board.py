@@ -236,6 +236,12 @@ class Board:
         # Dam_Pawn tile dies; the transition triggers trigger_dam_flood.
         self.dam_alive: bool = False
         self.dam_primary: tuple[int, int] | None = None
+        # Renfield Bomb state — Mission_Final_Cave win-condition NPC. True
+        # while at least one BigBomb pawn has hp > 0. The alive→dead
+        # transition pays `bigbomb_killed` in the evaluator (mission-failure
+        # penalty layered on top of friendly_npc_killed). Always False on
+        # missions without a bomb.
+        self.bigbomb_alive: bool = False
         # Teleporter pad pairs (Mission_Teleporter overlay from
         # Board:AddTeleport in mission_teleport.lua). Each entry =
         # (x1, y1, x2, y2). Empty on non-teleporter missions. Rust is
@@ -267,6 +273,7 @@ class Board:
         b.mission_kills_done = self.mission_kills_done
         b.dam_alive = self.dam_alive
         b.dam_primary = self.dam_primary
+        b.bigbomb_alive = self.bigbomb_alive
         b.teleporter_pairs = list(self.teleporter_pairs)
         return b
 
@@ -596,6 +603,15 @@ class Board:
             if u.type == "Dam_Pawn" and u.hp > 0 and not u.is_extra_tile:
                 board.dam_alive = True
                 board.dam_primary = (u.x, u.y)
+                break
+
+        # Detect Renfield Bomb (Mission_Final_Cave). BigBomb is a single-tile
+        # friendly NPC (DefaultTeam=TEAM_PLAYER, Neutral=true) that the Vek
+        # try to destroy; the win condition is keeping it alive until its
+        # turn-limit detonation. Mirrors Rust serde_bridge.rs.
+        for u in board.units:
+            if u.type == "BigBomb" and u.hp > 0:
+                board.bigbomb_alive = True
                 break
 
         # Detect Soldier Psion: alive Jelly_Health1 buffs all Vek +1 HP

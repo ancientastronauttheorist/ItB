@@ -163,6 +163,19 @@ NEUTRAL_STATS = {
     # 1 HP base (3 with +2 HP upgrade), Move 3, Normal mass, pushable.
     # Player-controlled same as a mech.
     "Acid_Tank":         PawnStats(move_speed=3, ranged=1),
+    # Renfield Bomb (Mission_Final_Cave / final caverns): friendly objective
+    # NPC that explodes on a fixed countdown to clear all enemies on the map.
+    # Per `scripts/missions/final/mission_final_two.lua:179-188`:
+    #   Health = 4, Neutral = true, Corpse = false, IgnoreFire = true,
+    #   MoveSpeed = 0, DefaultTeam = TEAM_PLAYER, IsPortrait = false.
+    # The bomb is the win-condition objective — defending it until detonation
+    # ends the mission. No SkillList: it never attacks, only sits and ticks
+    # down a turn-limit counter (`Mission_Final_Cave.TurnLimit + 2` per drop).
+    # Mirrors the Filler_Pawn pattern (player-team NPC, not is_mech) so the
+    # evaluator's `friendly_npc_killed` (-20000) penalty fires on death.
+    # `bigbomb_alive` (Rust Board) layers a much larger survival bonus on top
+    # since losing the bomb fails the mission.
+    "BigBomb":           PawnStats(move_speed=0, pushable=False, ignore_fire=True),
 }
 
 # Combined lookup

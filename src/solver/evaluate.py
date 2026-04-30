@@ -49,6 +49,10 @@ class EvalWeights:
     mech_on_acid: float = -200        # mech on ACID pool (penalty)
     mech_low_hp_risk: float = -2000   # 1HP mech near active enemy (binary)
     friendly_npc_killed: float = -20000  # non-mech player unit killed (penalty)
+    # Renfield Bomb destruction in Mission_Final_Cave — mission-failure
+    # penalty layered on top of friendly_npc_killed. The bomb's detonation
+    # is the win condition; losing it ends the run. Mirrors Rust default.
+    bigbomb_killed: float = -200000
 
     # Grid urgency multipliers (applied to building scores)
     grid_urgency_critical: float = 5.0  # grid_power <= 1
@@ -208,6 +212,7 @@ def evaluate(
     blast_psion_was_active: bool = False,
     soldier_psion_was_active: bool = False,
     dam_was_alive: bool = False,
+    bigbomb_was_alive: bool = False,
     current_turn: int = 0,
     total_turns: int = 5,
     remaining_spawns: int = 2**31 - 1,
@@ -346,6 +351,12 @@ def evaluate(
     # value on final turn; early turns get full flood-denial reward) ---
     if dam_was_alive and not getattr(board, 'dam_alive', False):
         score += _scaled(w.dam_destroyed, ff, 0.10, 0.90)
+
+    # --- RENFIELD BOMB DESTROYED: mission-failure penalty ---
+    # NOT scaled by future_factor — losing the bomb fails the run regardless
+    # of which turn the loss happens. Mirrors rust_solver/src/evaluate.rs.
+    if bigbomb_was_alive and not getattr(board, 'bigbomb_alive', False):
+        score += w.bigbomb_killed
 
     # --- "KILL N ENEMIES" BONUS: step function on threshold cross ---
     # Fires exactly once per mission, on the plan whose simulated kills push

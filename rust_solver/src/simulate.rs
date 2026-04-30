@@ -561,6 +561,22 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
+    // Renfield Bomb destruction: flip bigbomb_alive once the last BigBomb
+    // pawn drops to hp <= 0. The evaluator's PsionState.bigbomb captures
+    // the pre-action state and scores the alive→dead transition with
+    // `bigbomb_killed`. No flood/AOE side effect — the bomb's mission-end
+    // detonation is out of the 1-turn solver horizon (and irrelevant once
+    // it's dead). Idempotent via the bigbomb_alive gate.
+    if board.bigbomb_alive {
+        let bomb_dead = (0..board.unit_count as usize).all(|i| {
+            let u = &board.units[i];
+            u.type_name_str() != "BigBomb" || u.hp <= 0
+        });
+        if bomb_dead {
+            board.bigbomb_alive = false;
+        }
+    }
+
     // Web break: enemy webber killed → unweb any mechs they were holding.
     if let Some(idx) = board.any_unit_at(x, y) {
         let u = &board.units[idx];

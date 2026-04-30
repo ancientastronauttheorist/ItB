@@ -566,6 +566,21 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
+    // Detect Renfield Bomb (Mission_Final_Cave win-condition NPC). Single
+    // BigBomb pawn at (live HP > 0). Per mission_final_two.lua:179-188:
+    // Health=4, Neutral=true, Corpse=false, IgnoreFire=true, MoveSpeed=0,
+    // DefaultTeam=TEAM_PLAYER. Bridge surfaces it with team=Player, mech=false,
+    // so the friendly_npc_killed penalty already fires on death. The
+    // bigbomb_alive flag layers a much larger explicit kill penalty in the
+    // evaluator since losing the bomb fails the entire run.
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.type_name_str() == "BigBomb" && u.hp > 0 {
+            board.bigbomb_alive = true;
+            break;
+        }
+    }
+
     // Detect Blast Psion: if Jelly_Explode1 is alive, all Vek explode on death
     for i in 0..board.unit_count as usize {
         if board.units[i].type_name_str() == "Jelly_Explode1" && board.units[i].hp > 0 {
