@@ -439,7 +439,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # simulate_attack executes the repair branch (heal +1, clear status,
 # set_active(false)) instead of no-op. Pre-v36 corpus archived as
 # failure_db_snapshot_sim_v35.jsonl.
-SIMULATOR_VERSION = 36
+# v37 — Four new Psion aura hooks: (1) Jelly_Boss composite aura
+# (HEALTH+REGEN+EXPLODE simultaneously, dedup'd against Jelly_Health1),
+# (2) Jelly_Boost1 LEADER_BOOSTED gives Vek attacks +1 damage, (3)
+# Jelly_Fire1 LEADER_FIRE makes Vek immune to Fire AND creates Fire on
+# Vek death, (4) Jelly_Spider1 LEADER_SPIDER spawns WebbEgg1 on Vek
+# death. All four clear properly when the source Psion dies. Pre-v37
+# corpus archived as failure_db_snapshot_sim_v36.jsonl.
+SIMULATOR_VERSION = 37
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

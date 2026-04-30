@@ -737,7 +737,25 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //      set_active(false)). Repair-using boards now score with the heal
 //      properly modeled instead of being treated as a no-op.
 // Pre-v36 corpus archived as `failure_db_snapshot_sim_v35.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 36;
+// v37 — Four new Psion aura hooks change predictions on boards with
+// these enemies present:
+//   1. Jelly_Boss (Psion Abomination) — composite aura: +1 max_hp + regen
+//      heal + Vek-explode-on-death simultaneously. Reuses the existing
+//      soldier/regen/blast aura code paths via OR-gated triggers; the
+//      max_hp buff is dedup'd so Boss + Jelly_Health1 simultaneously
+//      alive does not double-stack.
+//   2. Jelly_Boost1 (LEADER_BOOSTED) — Vek weapon damage +1 while alive,
+//      excluding the Psion's own attacks. Applied at base_damage in
+//      enemy.rs:646-660.
+//   3. Jelly_Fire1 (LEADER_FIRE) — two parts: Vek immune to Fire damage
+//      (fire-tick block + every set_fire callsite gated on !fire_psion
+//      for Vek targets), AND Vek dying creates Fire on their tile (top
+//      of on_enemy_death, fire-hostable terrain only).
+//   4. Jelly_Spider1 (LEADER_SPIDER) — Vek dying spawns a WebbEgg1 on
+//      their tile (existing egg-spawn sim handles hatch).
+// All four flags clear properly when the source Psion dies.
+// Pre-v37 corpus archived as `failure_db_snapshot_sim_v36.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 37;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
