@@ -208,7 +208,7 @@ def replay_solution(
         "action_results":   data.get("action_results") or [],
         "predicted_states": data.get("predicted_states") or [],
         "predicted_outcome": data.get("predicted_outcome") or {},
+        "final_board":      final_board_data,
         "score_breakdown":  score_breakdown,
     }
-
 

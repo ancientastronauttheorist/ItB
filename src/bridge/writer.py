@@ -7,6 +7,7 @@ bridge is active.
 from __future__ import annotations
 
 from src.solver.solver import MechAction
+from src.solver.action_classification import action_has_attack, is_repair_action
 from src.model.board import Board
 from src.bridge.protocol import write_command, wait_for_ack
 
@@ -51,8 +52,8 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
       - Nothing       → SKIP (deactivates)
     """
     has_move = action.move_to and action.move_to != (-1, -1)
-    is_repair = action.weapon == "_REPAIR"
-    has_attack = action.weapon and action.target[0] >= 0 and not is_repair
+    is_repair = is_repair_action(action)
+    has_attack = action_has_attack(action)
 
     # Check if the mech is actually moving (not staying in place)
     if has_move:

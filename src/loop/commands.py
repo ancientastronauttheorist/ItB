@@ -26,6 +26,7 @@ from src.capture.save_parser import (
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
 from src.solver.solver import MechAction, replay_solution
+from src.solver.action_classification import action_has_attack, is_repair_action
 from src.solver.evaluate import evaluate_threats
 from src.solver.plan_safety import audit_plan_safety, plan_requires_safety_block
 from src.control.executor import (
@@ -991,28 +992,131 @@ def _auto_enqueue_mech_weapons(
 # --- Post-Enemy Analysis Helpers ---
 
 
-def _capture_board_summary(board: Board) -> dict:
+def _bridge_units_by_uid(bridge_data: dict | None) -> dict[int, dict]:
+    if not isinstance(bridge_data, dict):
+        return {}
+    units = bridge_data.get("units") or []
+    out: dict[int, dict] = {}
+    for u in units:
+        if not isinstance(u, dict):
+            continue
+        try:
+            out[int(u.get("uid"))] = u
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _environment_danger_info(board: Board,
+                             bridge_data: dict | None) -> dict[tuple[int, int], dict]:
+    """Return per-tile environment danger with lethality and flying immunity."""
+    danger: dict[tuple[int, int], dict] = {}
+    if isinstance(bridge_data, dict):
+        for dt in bridge_data.get("environment_danger_v2", []) or []:
+            if not isinstance(dt, (list, tuple)) or len(dt) < 4:
+                continue
+            try:
+                pos = (int(dt[0]), int(dt[1]))
+                danger[pos] = {
+                    "damage": int(dt[2]),
+                    "lethal": bool(int(dt[3])),
+                    "flying_immune": bool(int(dt[4])) if len(dt) >= 5 else False,
+                }
+            except (TypeError, ValueError):
+                continue
+
+    for pos, (damage, lethal) in board.environment_danger_v2.items():
+        danger.setdefault(pos, {
+            "damage": int(damage),
+            "lethal": bool(lethal),
+            "flying_immune": False,
+        })
+    for pos in board.environment_danger:
+        danger.setdefault(pos, {
+            "damage": 1,
+            "lethal": True,
+            "flying_immune": False,
+        })
+    return danger
+
+
+def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dict:
     """Extract a summary of the current board state for comparison."""
     buildings_alive = 0
     building_hp_total = 0
+    objective_buildings_alive = 0
+    objective_building_hp_total = 0
+    pods_present = 0
     for x in range(8):
         for y in range(8):
             t = board.tile(x, y)
+            if getattr(t, "has_pod", False):
+                pods_present += 1
             if t.terrain == "building" and t.building_hp > 0:
                 buildings_alive += 1
                 building_hp_total += t.building_hp
+                if getattr(t, "unique_building", False):
+                    objective_buildings_alive += 1
+                    objective_building_hp_total += t.building_hp
+
+    raw_units = _bridge_units_by_uid(bridge_data)
+    danger = _environment_danger_info(board, bridge_data)
+    mechs_on_danger = []
+    mechs_disabled = []
+    mechs_webbed = []
+    for m in board.mechs():
+        pos = (m.x, m.y)
+        danger_info = danger.get(pos)
+        if danger_info and danger_info.get("lethal"):
+            flying_spared = bool(m.flying and danger_info.get("flying_immune"))
+            if not flying_spared:
+                mechs_on_danger.append({
+                    "uid": m.uid,
+                    "type": m.type,
+                    "pos": [m.x, m.y],
+                    "damage": danger_info.get("damage", 1),
+                })
+
+        raw = raw_units.get(int(m.uid), {})
+        disabled_reasons = []
+        if getattr(m, "frozen", False):
+            disabled_reasons.append("frozen")
+        if raw.get("active", getattr(m, "active", True)) is False:
+            disabled_reasons.append("inactive")
+        if raw.get("can_move", True) is False and not getattr(m, "web", False):
+            disabled_reasons.append("cannot_move")
+        if disabled_reasons:
+            mechs_disabled.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+                "reasons": disabled_reasons,
+            })
+        if getattr(m, "web", False):
+            mechs_webbed.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
 
     return {
         "buildings_alive": buildings_alive,
         "building_hp_total": building_hp_total,
+        "objective_buildings_alive": objective_buildings_alive,
+        "objective_building_hp_total": objective_building_hp_total,
+        "pods_present": pods_present,
         "grid_power": board.grid_power,
         "enemies_alive": len(board.enemies()),
         "enemy_hp_total": sum(e.hp for e in board.enemies()),
         "mechs_alive": len([m for m in board.mechs() if m.hp > 0]),
+        "mech_hp_total": sum(m.hp for m in board.mechs()),
         "mech_hp": [
             {"uid": m.uid, "type": m.type, "hp": m.hp, "max_hp": m.max_hp}
             for m in board.mechs()
         ],
+        "mechs_on_danger": mechs_on_danger,
+        "mechs_disabled": mechs_disabled,
+        "mechs_webbed": mechs_webbed,
     }
 
 
@@ -2006,9 +2110,22 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                                total_turns=board.total_turns if hasattr(board, 'total_turns') else 5,
                                remaining_spawns=rem_spawns,
                                weights=_breakdown_weights)
-    current_outcome = _capture_board_summary(board)
+    current_outcome = _capture_board_summary(board, bridge_data)
     predicted_outcome = enriched["predicted_outcome"]
-    plan_safety = audit_plan_safety(current_outcome, predicted_outcome)
+    predicted_board_summary = dict(predicted_outcome)
+    final_board_data = enriched.get("final_board") or {}
+    if final_board_data:
+        final_board = Board.from_bridge_data(final_board_data)
+        predicted_board_summary = _capture_board_summary(
+            final_board, final_board_data
+        )
+        predicted_board_summary.update(predicted_outcome)
+    predicted_board_summary["pods_collected"] = sum(
+        int(r.get("pods_collected", 0) or 0)
+        for r in enriched.get("action_results", [])
+        if isinstance(r, dict)
+    )
+    plan_safety = audit_plan_safety(current_outcome, predicted_board_summary)
     result["plan_safety"] = plan_safety
 
     # Record solver output for replay/analysis (enriched format).
@@ -2047,6 +2164,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "predicted_states": enriched.get("predicted_states", []),
         "current_outcome": current_outcome,
         "predicted_outcome": predicted_outcome,
+        "predicted_board_summary": predicted_board_summary,
         "plan_safety": plan_safety,
         "score_breakdown": enriched["score_breakdown"],
     }
@@ -5329,8 +5447,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
         # Determine sub-action breakdown
         has_move = (action.move_to and action.move_to != (-1, -1))
-        is_repair = (action.weapon == "_REPAIR")
-        has_attack = (action.weapon and action.target[0] >= 0 and not is_repair)
+        is_repair = is_repair_action(action)
+        has_attack = action_has_attack(action)
 
         # Check if mech is actually moving (not staying in place)
         if has_move:

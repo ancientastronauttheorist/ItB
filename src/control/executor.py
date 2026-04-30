@@ -20,6 +20,7 @@ Coordinate systems:
 from __future__ import annotations
 
 from src.solver.solver import MechAction, Solution
+from src.solver.action_classification import action_has_attack, is_board_target
 from src.model.board import Board
 from src.capture.detect_grid import detect_grid, find_game_window, grid_from_window
 
@@ -309,7 +310,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "x": wx, "y": wy,
             "description": f"Arm {action.weapon}",
         })
-        if action.target and action.target[0] >= 0:
+        if is_board_target(action.target):
             plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for weapon arm"))
             tx, ty = grid_to_mcp(action.target[0], action.target[1])
             plan.append({
@@ -330,7 +331,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
         })
         plan.append(_wait_op(_WAIT_AFTER_MOVE, "wait for move animation"))
 
-    if action.weapon and action.target and action.target[0] >= 0:
+    if action_has_attack(action):
         wx, wy = _weapon_icon_pos(action.weapon, mech)
         plan.append({
             "type": "left_click",

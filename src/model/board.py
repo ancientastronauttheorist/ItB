@@ -445,7 +445,7 @@ class Board:
                 bt.acid = td.get("acid", False)
                 bt.frozen = td.get("frozen", False)
                 bt.cracked = td.get("cracked", False)
-                bt.has_pod = td.get("pod", False)
+                bt.has_pod = td.get("pod", td.get("has_pod", False))
                 bt.freeze_mine = td.get("freeze_mine", False)
                 bt.old_earth_mine = td.get("old_earth_mine", False)
                 if "conveyor" in td:
