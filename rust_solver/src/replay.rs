@@ -390,6 +390,52 @@ mod tests {
         // "(1 grid damage)" has no comma so it's not a coord pair.
     }
 
+    /// Regression: `_REPAIR` plans must heal +1 HP and deactivate the mech in
+    /// the predicted snapshot. Pre-fix `wid_from_str("_REPAIR")` returned
+    /// `WId::None`, so `simulate_attack` skipped the Repair branch entirely
+    /// and the predicted state showed (hp unchanged, active=true) while the
+    /// game produced (hp+1, active=false). That mismatch generated 24+
+    /// `click_miss|_REPAIR|attack` entries in failure_db.jsonl.
+    #[test]
+    fn replay_solution_repair_plan_predicts_heal_and_deactivate() {
+        // PunchMech at (4,4), HP 1/3, no enemies, no buildings. Plan: repair.
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "PunchMech", "x": 4, "y": 4,
+             "hp": 1, "max_hp": 3, "team": 1, "mech": true,
+             "move": 4, "active": true, "weapons": ["Prime_Punchmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        // move_to == current pos (no actual move), weapon_id _REPAIR, target self.
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [4, 4],
+          "weapon_id": "_REPAIR",
+          "target": [4, 4]
+        }]"#;
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let states = v["predicted_states"].as_array().unwrap();
+        assert_eq!(states.len(), 1, "one action → one predicted state");
+        let post_attack = &states[0]["post_attack"];
+        let units = post_attack["units"].as_array().unwrap();
+        let mech = units.iter().find(|u| u["uid"] == 1).expect("mech in snapshot");
+        assert_eq!(mech["hp"], 2,
+            "Repair must heal +1 HP in predicted snapshot (was {} pre-fix)",
+            mech["hp"]);
+        assert_eq!(mech["active"], false,
+            "Repair must clear active flag in predicted snapshot (was {} pre-fix)",
+            mech["active"]);
+    }
+
     #[test]
     fn replay_solution_empty_plan_returns_baseline_outcome() {
         // Minimal bridge JSON: a single mech, no enemies, no buildings.
