@@ -329,6 +329,10 @@ pub struct Board {
     pub soldier_psion: bool, // Soldier Psion (Jelly_Health1): all Vek +1 HP
     pub regen_psion: bool,   // Blood Psion (Jelly_Regen1): all Vek regen 1 HP/turn
     pub tyrant_psion: bool,  // Psion Tyrant (Jelly_Lava1): 1 dmg to all player units/turn
+    pub boss_psion: bool,    // Psion Abomination (Jelly_Boss): combined HEALTH + REGEN + EXPLODE aura
+    pub boost_psion: bool,   // Boost Psion (Jelly_Boost1, AE): +1 dmg to all Vek weapon attacks
+    pub fire_psion: bool,    // Fire Psion (Jelly_Fire1, AE): Vek immune to fire + Vek leave fire on tile when killed
+    pub spider_psion: bool,  // Spider Psion (Jelly_Spider1, AE): Vek leave a SpiderEgg (WebbEgg1) on tile when killed
     pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
@@ -414,6 +418,10 @@ impl Default for Board {
             soldier_psion: false,
             regen_psion: false,
             tyrant_psion: false,
+            boss_psion: false,
+            boost_psion: false,
+            fire_psion: false,
+            spider_psion: false,
             boss_alive: false,
             storm_generator: false,
             flame_shielding: false,

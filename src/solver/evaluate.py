@@ -43,6 +43,10 @@ class EvalWeights:
     psion_soldier: float = 4000
     psion_blood: float = 1600
     psion_tyrant: float = 2500
+    psion_boss: float = 5000     # Jelly_Boss (LEADER_BOSS) — bigger than soldier (3-in-1 aura)
+    psion_boost: float = 3000    # Jelly_Boost1 (AE LEADER_BOOSTED)
+    psion_fire: float = 2200     # Jelly_Fire1 (AE LEADER_FIRE)
+    psion_spider: float = 2200   # Jelly_Spider1 (AE LEADER_SPIDER)
 
     # Status effect bonuses
     enemy_on_fire_bonus: float = 100  # enemy on fire (1 dmg/turn)

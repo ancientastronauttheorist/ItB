@@ -64,10 +64,18 @@ fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionRes
         let ny = ny as u8;
 
         // Pre-check: is there an alive non-Psion enemy that could chain-explode?
-        let chain_check = if board.blast_psion {
+        // Both Blast Psion (Jelly_Explode1) and Psion Abomination (Jelly_Boss)
+        // grant the EXPLODE-on-death aura, so any of them being alive can chain.
+        // Boss is excluded from chaining itself (it doesn't explode on its own
+        // death — it's the source of the aura, not subject to it).
+        let chain_check = if board.blast_psion || board.boss_psion {
             board.unit_at(nx, ny).and_then(|idx| {
                 let u = &board.units[idx];
-                if u.is_enemy() && u.hp > 0 && u.type_name_str() != "Jelly_Explode1" {
+                let tname = u.type_name_str();
+                if u.is_enemy() && u.hp > 0
+                    && tname != "Jelly_Explode1"
+                    && tname != "Jelly_Boss"
+                {
                     Some(idx)
                 } else { None }
             })
@@ -79,9 +87,12 @@ fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionRes
         // Chain reaction: if that enemy just died, it also explodes
         if let Some(idx) = chain_check {
             if board.units[idx].hp <= 0 {
-                // Check if Blast Psion is still alive (killing it stops future explosions)
+                // Check if either explode-source is still alive (killing both
+                // stops future explosions).
                 let psion_alive = (0..board.unit_count as usize).any(|i| {
-                    board.units[i].type_name_str() == "Jelly_Explode1" && board.units[i].hp > 0
+                    let t = board.units[i].type_name_str();
+                    (t == "Jelly_Explode1" || t == "Jelly_Boss")
+                        && board.units[i].hp > 0
                 });
                 if psion_alive {
                     apply_death_explosion(board, nx, ny, result, depth + 1);
@@ -184,10 +195,15 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         break_web_from(board, webber_uid);
     }
 
-    // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs)
+    // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
+    //    Fire Psion grants Vek the same immunity).
+    let target_is_immune_vek = board.fire_psion
+        && board.units[unit_idx].is_enemy()
+        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
     if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
         && board.units[unit_idx].can_catch_fire()
         && !(board.flame_shielding && board.units[unit_idx].is_player())
+        && !target_is_immune_vek
     {
         board.units[unit_idx].set_fire(true);
     }
@@ -228,9 +244,13 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].effectively_flying()
         && dest_terrain == Terrain::Lava {
+        let target_is_immune_vek = board.fire_psion
+            && board.units[unit_idx].is_enemy()
+            && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
         if !board.units[unit_idx].shield()
             && board.units[unit_idx].can_catch_fire()
             && !(board.flame_shielding && board.units[unit_idx].is_player())
+            && !target_is_immune_vek
         {
             board.units[unit_idx].set_fire(true);
         }
@@ -294,6 +314,52 @@ pub(crate) fn on_enemy_death(
     idx: usize,
     result: &mut ActionResult,
 ) {
+    // Capture the dying unit's tile + type before any flag teardown — the
+    // AE Fire/Spider Psion on-death effects mutate the board AT this tile.
+    let dying_tname_owned: String = board.units[idx].type_name_str().to_string();
+    let dx = board.units[idx].x;
+    let dy = board.units[idx].y;
+
+    // ── Fire Psion (AE LEADER_FIRE) on-death fire ─────────────────────────
+    // While Fire Psion is alive, every Vek that dies leaves Fire on its tile.
+    // Excludes the Psion itself and the Boost/Spider/other AE psions per the
+    // standard "aura source is exempt" pattern. Fire is suppressed if the
+    // tile's terrain can't host fire (water/chasm/lava/ice — water becomes
+    // ACID-pool only via the dedicated path; chasm/lava ignore fire status).
+    // Mountains don't host fire either (the destroyed-mountain Rubble case
+    // can host fire, but live mountains are skipped to match the Lua rule
+    // SetFire only applies to ground-class tiles).
+    if board.fire_psion && dying_tname_owned != "Jelly_Fire1" {
+        // Tile filter: fire is meaningless on water/chasm/lava and on intact
+        // mountain. The set_on_fire flag is harmless on those tiles but we
+        // skip for hygiene + parity with apply_weapon_status's behavior.
+        let t = board.tile(dx, dy);
+        let fire_ok = matches!(
+            t.terrain,
+            Terrain::Ground | Terrain::Sand | Terrain::Forest | Terrain::Rubble
+                | Terrain::Ice | Terrain::Fire
+        );
+        if fire_ok {
+            board.tile_mut(dx, dy).set_smoke(false); // fire replaces smoke
+            board.tile_mut(dx, dy).set_on_fire(true);
+        }
+    }
+
+    // ── Spider Psion (AE LEADER_SPIDER) on-death egg ──────────────────────
+    // While Spider Psion is alive, every Vek that dies leaves a SpiderEgg
+    // (WebbEgg1) on its tile. The egg-hatch logic (per `project_egg_spawn_sim`)
+    // already turns this into a Spiderling at the next enemy phase. Excludes
+    // the Psion itself. ``spawn_enemy`` skips occupied tiles automatically —
+    // since the dying unit's hp is 0 the slot is technically still occupied
+    // by a corpse; we don't despawn until end-of-phase. To work around this
+    // we briefly mark the dying unit's coords as empty by zero-position'ing
+    // wouldn't be right; instead `spawn_enemy` rejects via `unit_at` lookup
+    // which only returns alive units (hp>0). Verify that's the case:
+    //   board.unit_at returns Some only when hp > 0 (see board.rs).
+    if board.spider_psion && dying_tname_owned != "Jelly_Spider1" {
+        crate::enemy::spawn_enemy(board, dx, dy, "WebbEgg1", 1);
+    }
+
     // Shell Psion killed: remove armor aura from all Vek
     if board.armor_psion && board.units[idx].type_name_str() == "Jelly_Armor1" {
         let other_alive = (0..board.unit_count as usize)
@@ -310,17 +376,44 @@ pub(crate) fn on_enemy_death(
         }
     }
 
-    // Soldier Psion killed: remove +1 HP from all Vek
+    // Soldier Psion killed: remove +1 HP from all Vek — but only if the Boss
+    // Psion (which also grants the HEALTH buff) isn't keeping the buff alive.
     if board.soldier_psion && board.units[idx].type_name_str() == "Jelly_Health1" {
         board.soldier_psion = false;
-        for j in 0..board.unit_count as usize {
-            if board.units[j].is_enemy() && board.units[j].hp > 0
-                && board.units[j].type_name_str() != "Jelly_Health1"
-            {
-                board.units[j].max_hp -= 1;
-                board.units[j].hp -= 1;
-                if board.units[j].hp <= 0 {
-                    result.enemies_killed += 1;
+        if !board.boss_psion {
+            for j in 0..board.unit_count as usize {
+                let tname = board.units[j].type_name_str();
+                if board.units[j].is_enemy() && board.units[j].hp > 0
+                    && tname != "Jelly_Health1"
+                    && tname != "Jelly_Boss"
+                {
+                    board.units[j].max_hp -= 1;
+                    board.units[j].hp -= 1;
+                    if board.units[j].hp <= 0 {
+                        result.enemies_killed += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    // Psion Abomination (Jelly_Boss) killed: tear down the LEADER_BOSS combined
+    // aura. REGEN + EXPLODE just clear via the flag flip; HEALTH (the +1 HP buff)
+    // reverses ONLY if the Soldier Psion isn't also keeping it alive.
+    if board.boss_psion && board.units[idx].type_name_str() == "Jelly_Boss" {
+        board.boss_psion = false;
+        if !board.soldier_psion {
+            for j in 0..board.unit_count as usize {
+                let tname = board.units[j].type_name_str();
+                if board.units[j].is_enemy() && board.units[j].hp > 0
+                    && tname != "Jelly_Health1"
+                    && tname != "Jelly_Boss"
+                {
+                    board.units[j].max_hp -= 1;
+                    board.units[j].hp -= 1;
+                    if board.units[j].hp <= 0 {
+                        result.enemies_killed += 1;
+                    }
                 }
             }
         }
@@ -334,6 +427,21 @@ pub(crate) fn on_enemy_death(
     // Psion Tyrant killed: stop mech damage
     if board.tyrant_psion && board.units[idx].type_name_str() == "Jelly_Lava1" {
         board.tyrant_psion = false;
+    }
+
+    // Boost Psion (AE) killed: stop +1 weapon damage to Vek attacks
+    if board.boost_psion && board.units[idx].type_name_str() == "Jelly_Boost1" {
+        board.boost_psion = false;
+    }
+
+    // Fire Psion (AE) killed: stop fire-immunity + on-death-fire
+    if board.fire_psion && board.units[idx].type_name_str() == "Jelly_Fire1" {
+        board.fire_psion = false;
+    }
+
+    // Spider Psion (AE) killed: stop on-death-egg-spawn
+    if board.spider_psion && board.units[idx].type_name_str() == "Jelly_Spider1" {
+        board.spider_psion = false;
     }
 
     // Boss killed: clear flag for kill bonus in evaluate
@@ -639,11 +747,16 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
 pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
 
-    // Pre-check: track alive non-Psion enemy for Blast Psion death explosion.
-    let death_check = if board.blast_psion {
+    // Pre-check: track alive non-Psion enemy for Blast Psion / Psion Abomination
+    // death explosion. Both auras share the same EXPLODE-on-death effect.
+    let death_check = if board.blast_psion || board.boss_psion {
         board.unit_at(x, y).and_then(|idx| {
             let u = &board.units[idx];
-            if u.is_enemy() && u.hp > 0 && u.type_name_str() != "Jelly_Explode1" {
+            let tname = u.type_name_str();
+            if u.is_enemy() && u.hp > 0
+                && tname != "Jelly_Explode1"
+                && tname != "Jelly_Boss"
+            {
                 Some(idx)
             } else { None }
         })
@@ -955,10 +1068,14 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         break_web_from(board, pushed_uid);
     }
 
-    // Fire tile: pushed unit catches fire
+    // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity)
+    let push_target_immune_vek = board.fire_psion
+        && board.units[unit_idx].is_enemy()
+        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
     if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
         && board.units[unit_idx].can_catch_fire()
         && !(board.flame_shielding && board.units[unit_idx].is_player())
+        && !push_target_immune_vek
     {
         board.units[unit_idx].set_fire(true);
     }
@@ -1004,8 +1121,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     if deadly_kill {
         let is_enemy = board.units[unit_idx].is_enemy();
         let has_acid = board.units[unit_idx].acid();
-        let can_explode = is_enemy && board.blast_psion
-            && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
+        let dying_tname = board.units[unit_idx].type_name_str();
+        let can_explode = is_enemy && (board.blast_psion || board.boss_psion)
+            && dying_tname != "Jelly_Explode1"
+            && dying_tname != "Jelly_Boss";
         let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
         let unit = &mut board.units[unit_idx];
         unit.hp = 0;
@@ -1030,8 +1149,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
             let is_enemy = board.units[unit_idx].is_enemy();
-            let can_explode = is_enemy && board.blast_psion
-                && board.units[unit_idx].type_name_str() != "Jelly_Explode1";
+            let dying_tname = board.units[unit_idx].type_name_str();
+            let can_explode = is_enemy && (board.blast_psion || board.boss_psion)
+                && dying_tname != "Jelly_Explode1"
+                && dying_tname != "Jelly_Boss";
             let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
             board.units[unit_idx].hp = 0;
             if is_enemy {
@@ -1119,16 +1240,22 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
         }
 
         if wdef.fire() {
+            // Compute Fire Psion immunity gating before grabbing the mut ref.
+            let fire_psion = board.fire_psion;
+            let target_is_immune_vek = fire_psion
+                && board.units[idx].is_enemy()
+                && board.units[idx].type_name_str() != "Jelly_Fire1";
             let u = &mut board.units[idx];
             if u.frozen() {
                 u.set_frozen(false); // fire on frozen: unfreeze AND catch fire
             }
             // Pilot_Rock (Ariadne) is fire-immune. Flame Shielding (squad-wide)
-            // also blocks fire-apply on player units; mirror the enemy-phase
-            // check here for consistency. Freeze-on-fire still unfreezes
+            // also blocks fire-apply on player units; Fire Psion grants the
+            // same immunity to other Vek. Freeze-on-fire still unfreezes
             // above because that mechanic is independent of fire application.
             if u.can_catch_fire()
                 && !(board.flame_shielding && u.is_player())
+                && !target_is_immune_vek
             {
                 u.set_fire(true);
             }

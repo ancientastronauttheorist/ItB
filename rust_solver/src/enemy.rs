@@ -22,7 +22,7 @@ use crate::simulate::{apply_damage, apply_push, apply_weapon_status};
 /// target = own tile (so the egg-skip treats it as "hatching, not
 /// attacking"). UID uses the 9000+ range to avoid colliding with
 /// bridge-provided UIDs.
-fn spawn_enemy(
+pub(crate) fn spawn_enemy(
     board: &mut Board,
     x: u8, y: u8,
     type_name: &str,
@@ -274,6 +274,18 @@ pub fn simulate_enemy_attacks(
                 board.units[i].set_fire(false);
                 continue;
             }
+            // Fire Psion (LEADER_FIRE, Jelly_Fire1): all Vek immune to fire
+            // damage while alive. The Fire Psion itself is exempt from this
+            // immunity per the standard "aura source isn't subject to its
+            // own aura" pattern, matching how Soldier Psion doesn't get
+            // its own +1 HP buff. Defensively clear the FIRE flag so a
+            // stale status doesn't tick once the Psion dies — the on-death
+            // cleanup re-enables fire damage normally.
+            if board.fire_psion && board.units[i].is_enemy()
+                && board.units[i].type_name_str() != "Jelly_Fire1"
+            {
+                continue;
+            }
             let x = board.units[i].x;
             let y = board.units[i].y;
             apply_damage(board, x, y, 1, &mut result, DamageSource::Fire);
@@ -316,12 +328,18 @@ pub fn simulate_enemy_attacks(
             board.units[i].type_name_str() == "Jelly_Health1" && board.units[i].hp > 0);
         if !alive {
             board.soldier_psion = false;
-            for i in 0..board.unit_count as usize {
-                if board.units[i].is_enemy() && board.units[i].hp > 0
-                    && board.units[i].type_name_str() != "Jelly_Health1"
-                {
-                    board.units[i].max_hp -= 1;
-                    board.units[i].hp -= 1;
+            // Only revert the +1 max_hp if the Boss Psion isn't ALSO providing
+            // the same HEALTH buff. When boss_psion is alive the buff stays.
+            if !board.boss_psion {
+                for i in 0..board.unit_count as usize {
+                    let tname = board.units[i].type_name_str();
+                    if board.units[i].is_enemy() && board.units[i].hp > 0
+                        && tname != "Jelly_Health1"
+                        && tname != "Jelly_Boss"
+                    {
+                        board.units[i].max_hp -= 1;
+                        board.units[i].hp -= 1;
+                    }
                 }
             }
         }
@@ -336,12 +354,57 @@ pub fn simulate_enemy_attacks(
             board.units[i].type_name_str() == "Jelly_Lava1" && board.units[i].hp > 0);
         if !alive { board.tyrant_psion = false; }
     }
+    // Psion Abomination (Jelly_Boss): combined HEALTH+REGEN+EXPLODE aura.
+    // On death, also reverse the +1 max_hp on remaining non-boss, non-soldier
+    // Vek — but ONLY if the Soldier Psion isn't also alive (the buff applies
+    // once total, so we keep it as long as one source remains).
+    if board.boss_psion {
+        let alive = (0..board.unit_count as usize).any(|i|
+            board.units[i].type_name_str() == "Jelly_Boss" && board.units[i].hp > 0);
+        if !alive {
+            board.boss_psion = false;
+            if !board.soldier_psion {
+                for i in 0..board.unit_count as usize {
+                    let tname = board.units[i].type_name_str();
+                    if board.units[i].is_enemy() && board.units[i].hp > 0
+                        && tname != "Jelly_Health1"
+                        && tname != "Jelly_Boss"
+                    {
+                        board.units[i].max_hp -= 1;
+                        board.units[i].hp -= 1;
+                    }
+                }
+            }
+        }
+    }
+    if board.boost_psion {
+        let alive = (0..board.unit_count as usize).any(|i|
+            board.units[i].type_name_str() == "Jelly_Boost1" && board.units[i].hp > 0);
+        if !alive { board.boost_psion = false; }
+    }
+    if board.fire_psion {
+        let alive = (0..board.unit_count as usize).any(|i|
+            board.units[i].type_name_str() == "Jelly_Fire1" && board.units[i].hp > 0);
+        if !alive { board.fire_psion = false; }
+    }
+    if board.spider_psion {
+        let alive = (0..board.unit_count as usize).any(|i|
+            board.units[i].type_name_str() == "Jelly_Spider1" && board.units[i].hp > 0);
+        if !alive { board.spider_psion = false; }
+    }
 
-    // Blood Psion regen: heal all non-Psion Vek by 1 (after fire, before attacks)
-    if board.regen_psion {
+    // Blood Psion regen: heal all non-Psion Vek by 1 (after fire, before attacks).
+    // Also fires for the Psion Abomination (Jelly_Boss), which has the LEADER_BOSS
+    // composite aura including REGEN. The boss itself is excluded from the heal
+    // (it has its own HP), as is the Blood Psion (which never heals itself).
+    if board.regen_psion || board.boss_psion {
         for i in 0..board.unit_count as usize {
             let u = &mut board.units[i];
-            if u.is_enemy() && u.hp > 0 && u.type_name_str() != "Jelly_Regen1" {
+            let tname = u.type_name_str();
+            if u.is_enemy() && u.hp > 0
+                && tname != "Jelly_Regen1"
+                && tname != "Jelly_Boss"
+            {
                 if u.hp < u.max_hp {
                     u.hp += 1;
                 }
@@ -633,11 +696,24 @@ pub fn simulate_enemy_attacks(
         };
 
         // Use bridge-provided damage if available, else weapon def
-        let base_damage = if enemy.weapon_damage > 0 {
+        let mut base_damage = if enemy.weapon_damage > 0 {
             enemy.weapon_damage
         } else {
             wdef.damage
         };
+        // Boost Psion (LEADER_BOOSTED, Jelly_Boost1): +1 damage to all Vek
+        // weapon attacks while alive. Excludes the Boost Psion itself per the
+        // standard "aura source is exempt" pattern (consistent with Soldier
+        // Psion's HP buff and Shell Psion's armor buff). Also skip the BossHeal
+        // self-shield no-op (zero damage) — adding 1 there would bump a 0-dmg
+        // shield-apply into a 1-dmg shield-apply, which isn't the intent.
+        let attacker_tname = enemy.type_name_str();
+        if board.boost_psion
+            && base_damage > 0
+            && attacker_tname != "Jelly_Boost1"
+        {
+            base_damage += 1;
+        }
         // Vek Hormones: +1 damage when enemy attacks hit other enemies
         // Applied per-hit below based on target occupant
         let damage = base_damage;
@@ -668,13 +744,18 @@ pub fn simulate_enemy_attacks(
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                     if wdef.fire() {
                         if let Some(idx) = board.unit_at(tx, ty) {
+                            let target_is_immune_vek = board.fire_psion
+                                && board.units[idx].is_enemy()
+                                && board.units[idx].type_name_str() != "Jelly_Fire1";
                             let u = &mut board.units[idx];
                             // Pilot_Rock is fire-immune; skip even the
                             // "unfreeze + catch fire" combo so Ariadne on
                             // ice stays frozen rather than becoming a
-                            // walking exception.
+                            // walking exception. Fire Psion grants Vek
+                            // immunity to fire-status application.
                             if !u.frozen() && u.can_catch_fire()
                                 && !(board.flame_shielding && u.is_player())
+                                && !target_is_immune_vek
                             {
                                 u.set_fire(true);
                             }
@@ -890,9 +971,13 @@ pub fn simulate_enemy_attacks(
                                 let fy = (ey as i8 + dy * i) as u8;
                                 board.tile_mut(fx, fy).set_on_fire(true);
                                 if let Some(idx) = board.unit_at(fx, fy) {
+                                    let target_is_immune_vek = board.fire_psion
+                                        && board.units[idx].is_enemy()
+                                        && board.units[idx].type_name_str() != "Jelly_Fire1";
                                     let u = &mut board.units[idx];
                                     if !u.frozen() && u.can_catch_fire()
                                         && !(board.flame_shielding && u.is_player())
+                                        && !target_is_immune_vek
                                     {
                                         u.set_fire(true);
                                     }

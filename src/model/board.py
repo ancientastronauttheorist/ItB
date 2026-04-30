@@ -212,6 +212,15 @@ class Board:
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
         self.soldier_psion_active: bool = False
+        # Sim v37: Psion Abomination + AE Psion auras. Tracked here for bridge
+        # parity / breakdown reporting only — the authoritative simulation
+        # lives in the Rust solver (rust_solver/src/{board,enemy,simulate,
+        # evaluate}.rs). Python `simulate.py` is a partial mirror used by tests
+        # and doesn't currently exercise these auras.
+        self.boss_psion_active: bool = False    # Jelly_Boss (LEADER_BOSS): HEALTH+REGEN+EXPLODE
+        self.boost_psion_active: bool = False   # Jelly_Boost1 (AE LEADER_BOOSTED)
+        self.fire_psion_active: bool = False    # Jelly_Fire1 (AE LEADER_FIRE)
+        self.spider_psion_active: bool = False  # Jelly_Spider1 (AE LEADER_SPIDER)
         # Passive_ForceAmp: any mech carrying this passive causes all Vek to
         # take +1 damage from bump-class sources (push collisions + spawn
         # blocking). Sentient enemies (Bot Leader) are exempt per the wiki.
@@ -266,6 +275,10 @@ class Board:
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
+        b.boss_psion_active = self.boss_psion_active
+        b.boost_psion_active = self.boost_psion_active
+        b.fire_psion_active = self.fire_psion_active
+        b.spider_psion_active = self.spider_psion_active
         b.force_amp = self.force_amp
         b.medical_supplies = self.medical_supplies
         b.mission_id = self.mission_id
@@ -618,11 +631,32 @@ class Board:
         board.soldier_psion_active = any(
             u.type == "Jelly_Health1" and u.hp > 0 for u in board.units
         )
-        if board.soldier_psion_active:
-            # Bridge sends hp already buffed but max_hp as base — adjust max_hp
+
+        # Detect Psion Abomination (Jelly_Boss): combined HEALTH+REGEN+EXPLODE
+        # aura. Includes the +1 HP buff that Soldier Psion provides — when
+        # both are alive the buff applies ONCE (no double-stack).
+        board.boss_psion_active = any(
+            u.type == "Jelly_Boss" and u.hp > 0 for u in board.units
+        )
+
+        if board.soldier_psion_active or board.boss_psion_active:
+            # Bridge sends hp already buffed but max_hp as base — adjust max_hp.
+            # Exclude both psion sources from the buff (their HP is intrinsic).
             for u in board.units:
-                if u.is_enemy and u.type != "Jelly_Health1":
+                if u.is_enemy and u.type not in ("Jelly_Health1", "Jelly_Boss"):
                     u.max_hp += 1
+
+        # Detect AE Psions (sim v37). Flags tracked for parity / breakdown;
+        # full simulation lives in Rust.
+        board.boost_psion_active = any(
+            u.type == "Jelly_Boost1" and u.hp > 0 for u in board.units
+        )
+        board.fire_psion_active = any(
+            u.type == "Jelly_Fire1" and u.hp > 0 for u in board.units
+        )
+        board.spider_psion_active = any(
+            u.type == "Jelly_Spider1" and u.hp > 0 for u in board.units
+        )
 
         # Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch.
         # Detect by checking if adjacent tiles appear in targeted_tiles (= rocket is

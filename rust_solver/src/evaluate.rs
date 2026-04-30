@@ -84,6 +84,10 @@ pub struct EvalWeights {
     pub psion_soldier: f64,
     pub psion_blood: f64,
     pub psion_tyrant: f64,
+    pub psion_boss: f64,    // Psion Abomination (Jelly_Boss): combined HEALTH+REGEN+EXPLODE
+    pub psion_boost: f64,   // Boost Psion (Jelly_Boost1, AE): +1 weapon dmg aura
+    pub psion_fire: f64,    // Fire Psion (Jelly_Fire1, AE): fire-immunity + on-death fire
+    pub psion_spider: f64,  // Spider Psion (Jelly_Spider1, AE): on-death egg spawn
 
     // Status effect bonuses
     pub enemy_on_fire_bonus: f64,    // enemy on fire (will take 1 dmg/turn)
@@ -246,6 +250,10 @@ impl Default for EvalWeights {
             psion_soldier: 4000.0,
             psion_blood: 1600.0,
             psion_tyrant: 2500.0,
+            psion_boss: 5000.0,    // bigger than soldier (4000) — 3-in-1 aura
+            psion_boost: 3000.0,
+            psion_fire: 2200.0,
+            psion_spider: 2200.0,
             // Status bonuses
             enemy_on_fire_bonus: 100.0,
             mech_on_acid: -200.0,
@@ -311,7 +319,11 @@ pub struct PsionState {
     pub soldier: bool,
     pub regen: bool,
     pub tyrant: bool,
-    pub boss: bool,
+    pub boss_psion: bool,   // Jelly_Boss (Psion Abomination) — HEALTH+REGEN+EXPLODE composite
+    pub boost: bool,        // Jelly_Boost1 (AE) — +1 dmg to Vek weapons
+    pub fire: bool,         // Jelly_Fire1 (AE) — fire-immunity + on-death fire
+    pub spider: bool,       // Jelly_Spider1 (AE) — on-death egg spawn
+    pub boss: bool,         // Generic boss-alive flag (any *Boss* enemy) — separate from boss_psion
     /// Not a Psion — but captured alongside Psion state for the same
     /// before→after transition-scoring pattern used by psion_* bonuses.
     pub dam: bool,
@@ -332,6 +344,10 @@ impl PsionState {
             soldier: board.soldier_psion,
             regen: board.regen_psion,
             tyrant: board.tyrant_psion,
+            boss_psion: board.boss_psion,
+            boost: board.boost_psion,
+            fire: board.fire_psion,
+            spider: board.spider_psion,
             boss: board.boss_alive,
             dam: board.dam_alive,
             dam_hp: dam_hp(board),
@@ -583,6 +599,18 @@ pub fn evaluate(
     }
     if psion_before.tyrant && !board.tyrant_psion {
         score += weights.psion_tyrant * ff;
+    }
+    if psion_before.boss_psion && !board.boss_psion {
+        score += weights.psion_boss * ff;
+    }
+    if psion_before.boost && !board.boost_psion {
+        score += weights.psion_boost * ff;
+    }
+    if psion_before.fire && !board.fire_psion {
+        score += weights.psion_fire * ff;
+    }
+    if psion_before.spider && !board.spider_psion {
+        score += weights.psion_spider * ff;
     }
 
     // ── Mission bonus: Old Earth Dam destroyed ──

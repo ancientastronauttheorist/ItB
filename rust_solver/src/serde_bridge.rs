@@ -614,10 +614,30 @@ pub fn board_from_json(json_str: &str)
             break;
         }
     }
-    if board.soldier_psion {
-        // Bridge sends HP already buffed but max_hp as base — adjust max_hp to match
+
+    // Detect Psion Abomination (Jelly_Boss): combined HEALTH + REGEN + EXPLODE
+    // aura. We set the flag here BEFORE the +1 HP application so the soldier
+    // branch can gate against double-stacking.
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Boss" && board.units[i].hp > 0 {
+            board.boss_psion = true;
+            break;
+        }
+    }
+
+    // Apply the HEALTH part of the aura: +1 max_hp to all OTHER Vek when
+    // either Soldier Psion or Boss Psion is alive. Both auras grant the same
+    // +1 HP buff, so when both are present the buff applies ONCE — not twice.
+    // The Lua source treats LEADER_HEALTH as a binary tag (Pawn:HasLeader):
+    // a Vek either has the buff or not. Mirror that here. Also exclude the
+    // boss itself from the buff (its base HP is already 5).
+    if board.soldier_psion || board.boss_psion {
         for i in 0..board.unit_count as usize {
-            if board.units[i].is_enemy() && board.units[i].type_name_str() != "Jelly_Health1" {
+            let tname = board.units[i].type_name_str();
+            if board.units[i].is_enemy()
+                && tname != "Jelly_Health1"
+                && tname != "Jelly_Boss"
+            {
                 board.units[i].max_hp += 1;
             }
         }
@@ -635,6 +655,30 @@ pub fn board_from_json(json_str: &str)
     for i in 0..board.unit_count as usize {
         if board.units[i].type_name_str() == "Jelly_Lava1" && board.units[i].hp > 0 {
             board.tyrant_psion = true;
+            break;
+        }
+    }
+
+    // Detect Boost Psion (Jelly_Boost1, AE): +1 damage to all Vek weapon attacks
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Boost1" && board.units[i].hp > 0 {
+            board.boost_psion = true;
+            break;
+        }
+    }
+
+    // Detect Fire Psion (Jelly_Fire1, AE): Vek fire-immune + leave fire on death
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Fire1" && board.units[i].hp > 0 {
+            board.fire_psion = true;
+            break;
+        }
+    }
+
+    // Detect Spider Psion (Jelly_Spider1, AE): Vek leave SpiderEgg on death
+    for i in 0..board.unit_count as usize {
+        if board.units[i].type_name_str() == "Jelly_Spider1" && board.units[i].hp > 0 {
+            board.spider_psion = true;
             break;
         }
     }
