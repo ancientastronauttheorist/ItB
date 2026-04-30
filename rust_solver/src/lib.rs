@@ -755,7 +755,28 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //      their tile (existing egg-spawn sim handles hatch).
 // All four flags clear properly when the source Psion dies.
 // Pre-v37 corpus archived as `failure_db_snapshot_sim_v36.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 37;
+// v38 — Two surgical fixes to v37's known follow-ups:
+//   1. Boss/Blast Psion EXPLODE-on-death now fires when a Vek dies via
+//      env_danger (lethal volcano eruption, lightning, tidal wave,
+//      cataclysm). Previously the explosion was dispatched only at
+//      caller sites in apply_damage / apply_push (deadly terrain) /
+//      mine paths; env_danger called on_enemy_death but skipped the
+//      explosion. Fix: apply_death_explosion is now pub(crate) and
+//      apply_env_danger dispatches it after on_enemy_death when
+//      blast_psion || boss_psion is alive. (v39 follow-up: centralize
+//      explosion into on_enemy_death so push-deadly + mine + ice-drown
+//      + dam-flood paths also fire it.)
+//   2. Spider Psion (LEADER_SPIDER) WebbEgg1 spawn deferred via
+//      Board.pending_spider_eggs queue. Previously the egg was spawned
+//      directly in on_enemy_death, but the enemy-phase hatch loop ran
+//      AFTER the spawn, so eggs hatched in the same enemy phase they
+//      were spawned. Fix: queue the (x,y) in on_enemy_death; drain at
+//      the END of simulate_enemy_attacks (after hatch loop, after
+//      train advance). Eggs now sit dormant until the next enemy
+//      phase, matching the game's AddQueuedDamage semantics from
+//      weapons_enemy.lua:857.
+// Pre-v38 corpus archived as `failure_db_snapshot_sim_v37.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 38;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

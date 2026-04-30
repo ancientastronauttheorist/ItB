@@ -446,7 +446,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Vek death, (4) Jelly_Spider1 LEADER_SPIDER spawns WebbEgg1 on Vek
 # death. All four clear properly when the source Psion dies. Pre-v37
 # corpus archived as failure_db_snapshot_sim_v36.jsonl.
-SIMULATOR_VERSION = 37
+# v38 — Two surgical fixes to v37 follow-ups: (1) Boss/Blast Psion
+# EXPLODE-on-death now fires on env_danger kills (apply_env_danger
+# dispatches apply_death_explosion after on_enemy_death when
+# blast/boss aura active); (2) Spider Psion WebbEgg1 spawn deferred via
+# Board.pending_spider_eggs queue, drained at end of
+# simulate_enemy_attacks so eggs hatch on the NEXT enemy phase
+# (matching game's AddQueuedDamage from weapons_enemy.lua:857). Pre-v38
+# corpus archived as failure_db_snapshot_sim_v37.jsonl.
+SIMULATOR_VERSION = 38
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
