@@ -143,3 +143,42 @@ def test_eval_weights_has_psion_spider():
     w = EvalWeights()
     assert hasattr(w, "psion_spider")
     assert w.psion_spider == 2200
+
+
+@pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
+def test_spider_psion_egg_does_not_hatch_in_same_enemy_phase():
+    """Sim v38: Vek dying mid-enemy-phase via env_danger → egg spawned, but
+    NOT hatched in the same phase.
+
+    Pre-v38: on_enemy_death's spawn_enemy fired immediately, then enemy.rs's
+    hatch loop transformed the just-placed WebbEgg1 into a Spiderling1
+    before the phase returned. That mismatched the game's
+    AddQueuedDamage-based hatch (weapons_enemy.lua:857), which defers
+    hatching to the NEXT enemy phase.
+
+    v38 fix: spawn is deferred via Board.pending_spider_eggs and drained
+    AFTER the hatch loop. Result: a WebbEgg1 must remain on the tile
+    after this single enemy phase resolves.
+    """
+    spider_psion = {
+        "uid": 1, "type": "Jelly_Spider1", "x": 7, "y": 0, "hp": 2,
+        "max_hp": 2, "team": 6, "mech": False, "move": 2, "active": False,
+        "weapons": [], "flying": True,
+    }
+    scorp = {
+        "uid": 2, "type": "Scorpion1", "x": 4, "y": 4, "hp": 1,
+        "max_hp": 2, "team": 6, "mech": False, "move": 3, "active": False,
+        "weapons": [],
+    }
+    b = _base_board([_mech(0, 7, 7), spider_psion, scorp])
+    # Lethal env_danger at scorp's tile triggers the on_enemy_death egg
+    # spawn DURING the enemy phase. Pre-v38 the egg would hatch into a
+    # Spiderling1 in the same phase; post-v38 it stays an egg.
+    b["environment_danger_v2"] = [[4, 4, 1, 1, 0]]
+    post = _project(b, [])
+    tile_unit = _unit_at(post, 4, 4)
+    assert tile_unit is not None, "Expected egg/spawn at scorp's tile"
+    assert "Egg" in tile_unit["type"], (
+        f"Egg must NOT hatch in the same enemy phase as spawn (v38). "
+        f"Got type={tile_unit['type']}"
+    )

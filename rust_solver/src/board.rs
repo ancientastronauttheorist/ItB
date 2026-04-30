@@ -394,6 +394,15 @@ pub struct Board {
     /// which fired on every Weather Watch kill regardless of whether the
     /// current mission's BonusObjs actually included BONUS_PROTECT_X.
     pub bonus_dont_kill_types: Vec<String>,
+    /// Queued Spider Psion egg spawns produced by `on_enemy_death` during
+    /// the current phase. Drained at the END of `simulate_enemy_attacks`
+    /// so eggs spawned mid-enemy-phase do NOT hatch in the same phase
+    /// (matches the game's `AddQueuedDamage`-driven hatch in
+    /// weapons_enemy.lua:857 — eggs hatch in the NEXT enemy phase).
+    /// Each entry = (x, y) of the Vek that just died. Cleared on Board
+    /// construction; the queue is short-lived (always drained before the
+    /// turn returns).
+    pub pending_spider_eggs: Vec<(u8, u8)>,
 }
 
 impl Default for Board {
@@ -440,6 +449,7 @@ impl Default for Board {
             bigbomb_alive: false,
             teleporter_pairs: Vec::new(),
             bonus_dont_kill_types: Vec::new(),
+            pending_spider_eggs: Vec::new(),
         }
     }
 }

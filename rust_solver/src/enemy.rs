@@ -154,6 +154,14 @@ fn apply_env_danger(
     }
     if let Some(idx) = enemy_died_idx {
         crate::simulate::on_enemy_death(board, idx, result);
+        // Boss / Blast Psion EXPLODE-on-death aura — env_danger kills bypass
+        // apply_damage's death-explosion site (simulate.rs:788), so we
+        // dispatch the explosion here when an aura source is alive. The
+        // dying Vek has hp=0 already; explosion damages 4 adjacent tiles.
+        // (sim v38 follow-up to v37 boss aura test failure.)
+        if board.blast_psion || board.boss_psion {
+            crate::simulate::apply_death_explosion(board, x, y, result, 0);
+        }
     }
 
     // Damage building if present (lethal destroys entirely, non-lethal does 1 HP)
@@ -1154,6 +1162,18 @@ pub fn simulate_enemy_attacks(
     // building loss by ~1 grid/turn at the 15% baseline.
     let gd = board.grid_defense_pct as f32;
     board.enemy_grid_save_expected = (buildings_destroyed as f32) * (gd / 100.0);
+
+    // Drain the Spider Psion pending-egg queue (sim v38). Eggs spawned by
+    // on_enemy_death during this enemy phase land here AFTER the hatch
+    // loop has run, so they sit dormant until the NEXT enemy phase
+    // (matching the game's AddQueuedDamage hatch behavior — see
+    // weapons_enemy.lua:857). spawn_enemy skips occupied tiles internally,
+    // so a Vek that moved onto the corpse's tile during the attack loop
+    // won't get displaced.
+    let pending = std::mem::take(&mut board.pending_spider_eggs);
+    for (x, y) in pending {
+        spawn_enemy(board, x, y, "WebbEgg1", 1);
+    }
 
     buildings_destroyed
 }

@@ -53,7 +53,14 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
     }
 }
 
-fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
+/// Boss/Blast Psion EXPLODE-on-death helper. Public to the crate so
+/// non-weapon kill paths (env_danger lethal kills, etc.) can dispatch the
+/// explosion themselves — `on_enemy_death` does NOT fire this; explosion
+/// dispatch is currently caller-side at apply_damage:788 (weapon kills),
+/// apply_push:1137,1164 (push-into-deadly-terrain, mine), and
+/// apply_env_danger (lethal env kills, since sim v38). See v39 follow-up
+/// to centralize so ice-drown / dam-flood / other latent paths are covered.
+pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
     if depth > 8 { return; } // safety limit for chain reactions
 
     for &(dx, dy) in &DIRS {
@@ -309,6 +316,13 @@ fn break_web_from(board: &mut Board, src_uid: u16) {
 /// +1 HP / Armor / regen / boosted damage that should have cleared.
 ///
 /// Caller invariant: the unit at ``idx`` has just had its HP set to 0.
+///
+/// NOTE: this helper does NOT dispatch the Boss/Blast Psion EXPLODE
+/// explosion. Explosion dispatch is currently caller-side at
+/// `apply_damage`:788 (weapon kills), `apply_push`:1137 + 1164
+/// (push-into-deadly-terrain, mine), and `apply_env_danger` (lethal env
+/// kills, since sim v38). See v39 follow-up to centralize so other latent
+/// paths (ice-drown, dam-flood) get covered too.
 pub(crate) fn on_enemy_death(
     board: &mut Board,
     idx: usize,
@@ -348,16 +362,24 @@ pub(crate) fn on_enemy_death(
     // ── Spider Psion (AE LEADER_SPIDER) on-death egg ──────────────────────
     // While Spider Psion is alive, every Vek that dies leaves a SpiderEgg
     // (WebbEgg1) on its tile. The egg-hatch logic (per `project_egg_spawn_sim`)
-    // already turns this into a Spiderling at the next enemy phase. Excludes
-    // the Psion itself. ``spawn_enemy`` skips occupied tiles automatically —
-    // since the dying unit's hp is 0 the slot is technically still occupied
-    // by a corpse; we don't despawn until end-of-phase. To work around this
-    // we briefly mark the dying unit's coords as empty by zero-position'ing
-    // wouldn't be right; instead `spawn_enemy` rejects via `unit_at` lookup
-    // which only returns alive units (hp>0). Verify that's the case:
-    //   board.unit_at returns Some only when hp > 0 (see board.rs).
+    // turns it into a Spiderling at the NEXT enemy phase. Excludes the
+    // Psion itself.
+    //
+    // sim v38: we DEFER the actual `spawn_enemy` call to a board-level
+    // queue (`pending_spider_eggs`) drained at the END of
+    // `simulate_enemy_attacks`. Pre-v38 we spawned the egg immediately,
+    // which caused this same-phase hatch chain when the Vek died during
+    // the enemy phase (env_danger / fire-tick / chain-reaction kill):
+    //   1. on_enemy_death → spawn_enemy → WebbEgg1 placed on board
+    //   2. enemy.rs:513 hatch loop runs (still in same enemy phase)
+    //   3. egg → Spiderling1 immediately
+    // Per game's Lua at weapons_enemy.lua:857, WebbEgg1 hatches via
+    // `AddQueuedDamage` — the egg DOES NOT hatch in the same enemy phase
+    // as the spawn. Deferring the spawn until after the hatch loop fixes
+    // this. (When the trigger is a player-phase weapon kill, hatching is
+    // a non-issue — the egg sits there until the next enemy phase.)
     if board.spider_psion && dying_tname_owned != "Jelly_Spider1" {
-        crate::enemy::spawn_enemy(board, dx, dy, "WebbEgg1", 1);
+        board.pending_spider_eggs.push((dx, dy));
     }
 
     // Shell Psion killed: remove armor aura from all Vek

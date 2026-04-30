@@ -257,6 +257,13 @@ class Board:
         # the authoritative simulator for combat; this field mirrors the
         # Rust shape so test fixtures and `replay_solution` harness agree.
         self.teleporter_pairs: list[tuple[int, int, int, int]] = []
+        # Sim v38: Spider Psion pending egg-spawn queue. Eggs queued by
+        # `on_enemy_death` during the enemy phase are drained at the END
+        # of the phase so they don't hatch in the same phase they spawn
+        # (matches game's AddQueuedDamage hatch in weapons_enemy.lua:857).
+        # Authoritative simulation lives in Rust; this field exists for
+        # board-state round-tripping (to_dict / from_dict / copy parity).
+        self.pending_spider_eggs: list[tuple[int, int]] = []
 
     def copy(self) -> Board:
         """Deep copy for search branching."""
@@ -288,6 +295,7 @@ class Board:
         b.dam_primary = self.dam_primary
         b.bigbomb_alive = self.bigbomb_alive
         b.teleporter_pairs = list(self.teleporter_pairs)
+        b.pending_spider_eggs = list(self.pending_spider_eggs)
         return b
 
     def tile(self, x: int, y: int) -> BoardTile:
