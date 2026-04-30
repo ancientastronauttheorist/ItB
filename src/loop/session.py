@@ -236,6 +236,17 @@ class RunSession:
     islands_completed: list[str] = field(default_factory=list)
     mission_index: int = 0  # incremented when current_mission changes
 
+    # Highest bridge ``turn`` value observed for the current mission slot.
+    # Used by ``_auto_advance_mission`` to detect "same template name, new
+    # mission instance" (e.g., Mission_Acid recurring across two islands,
+    # Mission_Final on the R.S.T. island finale after a regular Mission_Acid).
+    # The bridge only emits ``mission_id`` (a template id), so a turn
+    # regression — bridge turn < last_mission_turn while ``mission_id``
+    # matches ``current_mission`` — is the proxy for a fresh mission start.
+    # Reset to -1 on every mission boundary (new id adopted, or harness-missed
+    # boundary detected). -1 means "no turn yet observed for this slot".
+    last_mission_turn: int = -1
+
     # Free-form tags for run classification (e.g. ["audit"] for env audit
     # playthroughs that should be filtered out of the tuner training corpus).
     tags: list[str] = field(default_factory=list)
@@ -388,6 +399,7 @@ class RunSession:
         if mission_name and mission_name != self.current_mission:
             self.current_mission = mission_name
             self.mission_index += 1
+            self.last_mission_turn = -1
             self.disabled_actions = []
 
     # --- Decision tracking ---
@@ -588,6 +600,7 @@ class RunSession:
             "current_mission": self.current_mission,
             "islands_completed": self.islands_completed,
             "mission_index": self.mission_index,
+            "last_mission_turn": self.last_mission_turn,
             "current_turn": self.current_turn,
             "phase": self.phase,
             "active_solution": (
@@ -637,6 +650,7 @@ class RunSession:
             current_mission=d.get("current_mission", ""),
             islands_completed=d.get("islands_completed", []),
             mission_index=d.get("mission_index", 0),
+            last_mission_turn=d.get("last_mission_turn", -1),
             current_turn=d.get("current_turn", 0),
             phase=d.get("phase", "unknown"),
             active_solution=(
