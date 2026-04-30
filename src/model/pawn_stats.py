@@ -119,6 +119,19 @@ VEK_STATS = {
     # Massive=true, Tier=BOSS, SkillList={"BurnbugAtkB"}.
     "BurnbugBoss":   PawnStats(move_speed=3, ranged=1, massive=True,
                                default_weapon="BurnbugAtkB"),
+    # Pinnacle Bot Leader (Mission_BotBoss / Pinnacle Robotics finale).
+    # Per `scripts/missions/bosses/bot.lua`:
+    #   BotBoss: Health=5, MoveSpeed=3, Massive, SelfHeal, SkillList=
+    #     {"SnowBossAtk", "BossHeal"}. Skill 1 fires when full HP, skill 2
+    #     ("BossHeal") fires when damaged (`Pawn:IsDamaged()` branch in
+    #     BotBoss:GetWeapon). Bridge dispatch logic at
+    #     `rust_solver/src/enemy.rs:599-607` mirrors the lua selection.
+    #   BotBoss2: BotBoss:new{Health=6, SkillList={"SnowBossAtk2", "BossHeal"}}.
+    #     Phase-2 form with stronger Vk8 Rockets Mk IV.
+    "BotBoss":       PawnStats(move_speed=3, massive=True,
+                               default_weapon="SnowBossAtk"),
+    "BotBoss2":      PawnStats(move_speed=3, massive=True,
+                               default_weapon="SnowBossAtk2"),
     # Psions
     "Jelly_Health1": PawnStats(move_speed=2, flying=True, leader="LEADER_HEALTH", pushable=False),
     "Jelly_Armor1":  PawnStats(move_speed=2, flying=True, leader="LEADER_ARMOR", pushable=False),
@@ -132,6 +145,53 @@ VEK_STATS = {
     # Bosses
     "FireflyBoss":   PawnStats(move_speed=3, ranged=1, massive=True),
     "BeetleBoss":    PawnStats(move_speed=3, ranged=0, massive=True),
+    # Hornet Leader — Mission_HornetBoss (Hive Leader corp HQ) + appears in
+    # Mission_Final / Mission_Final_Cave BossList. Per
+    # `scripts/missions/bosses/hornet.lua:11-25`: Health=6, MoveSpeed=3,
+    # Massive, Flying, Ranged=1, SkillList={"HornetAtkB"} (Super Stinger:
+    # 3-tile line, 2 dmg per tile). Without this entry the engine treated
+    # HornetBoss as a default 3-move melee Vek instead of a 5-move-equivalent
+    # flying massive boss, mispredicting reachable threats every Final_Cave
+    # turn that spawned the Hornet Leader.
+    "HornetBoss":    PawnStats(move_speed=3, ranged=1, massive=True, flying=True,
+                               default_weapon="HornetAtkB"),
+    # Spider Leader — Mission_SpiderBoss. Per
+    # `scripts/missions/bosses/spider.lua:50-67`: Health=6, MoveSpeed=2,
+    # Massive, Jumper, IgnoreSmoke, Ranged=1, SkillList={} (passive — its
+    # SpiderBoss_Tooltip runs `Mission:FlyingSpawns(...,"SpiderlingEgg1")` to
+    # drop 3 eggs each turn). Already mapped to WId::SpiderAtk2 in
+    # rust_solver/src/weapons.rs::enemy_weapon_for_type.
+    "SpiderBoss":    PawnStats(move_speed=2, ranged=1, massive=True,
+                               jumper=True, ignore_smoke=True,
+                               default_weapon="SpiderAtk2"),
+    # Large Goo — Mission_BlobBoss. Per `scripts/missions/bosses/goo.lua`:
+    # BlobBoss: HP=3, Move=3, Massive, Ranged=0, SkillList={"BlobBossAtk"}
+    # (4-dmg adjacent squish). DeathSpawn=BlobBossMed (HP=2) → BlobBossSmall
+    # (HP=1) chain.
+    "BlobBoss":      PawnStats(move_speed=3, ranged=0, massive=True,
+                               default_weapon="BlobBossAtk"),
+    "BlobBossMed":   PawnStats(move_speed=3, ranged=0, massive=True,
+                               default_weapon="BlobBossAtkMed"),
+    "BlobBossSmall": PawnStats(move_speed=3, ranged=0, massive=True,
+                               default_weapon="BlobBossAtkSmall"),
+    # Shaman / Slug Leader — Mission_ShamanBoss. Per
+    # `scripts/advanced/bosses/shaman.lua:17-31`: Health=5, MoveSpeed=2,
+    # Massive, Ranged=1, VoidShockImmune, SkillList={"ShamanAtkB"} (drops a
+    # TotemB minion). Mapped to BeetleAtkB in rust enemy_weapon_for_type as
+    # the closest 4-dmg melee approximation.
+    "ShamanBoss":    PawnStats(move_speed=2, ranged=1, massive=True,
+                               default_weapon="ShamanAtkB"),
+    # Psion Abomination — Mission_JellyBoss (R.S.T. Corporate HQ finale).
+    # Per `scripts/missions/bosses/psion.lua:14-27`: Health=5, MoveSpeed=3,
+    # Flying, Leader=LEADER_BOSS, no offensive SkillList (Tooltip "Overpowered"
+    # is purely passive: all OTHER Vek gain +1 HP, Regeneration, and explode
+    # on death — i.e. stacks LEADER_HEALTH + LEADER_REGEN + LEADER_EXPLODE
+    # auras simultaneously). Pushable per game (no Pushable=false flag on
+    # the lua def). The Psion-aura combination is not yet wired in
+    # rust_solver — the boss is only registered to gate the unknown-pawn
+    # fallback. Aura simulation is a follow-up sim-version bump.
+    "Jelly_Boss":    PawnStats(move_speed=3, flying=True, leader="LEADER_BOSS",
+                               pushable=True),
     # Minor enemies
     "Spiderling1":   PawnStats(move_speed=3, minor=True, ranged=0),
     "Spiderling2":   PawnStats(move_speed=3, minor=True, ranged=0),
