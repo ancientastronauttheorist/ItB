@@ -7,59 +7,11 @@
   "current_mission": "Mission_AcidTank",
   "islands_completed": [],
   "mission_index": 16,
-  "last_mission_turn": 4,
-  "current_turn": 4,
+  "last_mission_turn": 2,
+  "current_turn": 2,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "FlameMech",
-        "move_to": [
-          6,
-          5
-        ],
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          6,
-          6
-        ],
-        "description": "FlameMech, move C4\u2192C2, fire Flamethrower at B2"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "IgniteMech",
-        "move_to": [
-          1,
-          4
-        ],
-        "weapon": "Ranged_Ignite",
-        "target": [
-          1,
-          0
-        ],
-        "description": "IgniteMech, move C8\u2192D7, fire Ignite at H7"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "TeleMech",
-        "move_to": [
-          2,
-          2
-        ],
-        "weapon": "Science_Swap",
-        "target": [
-          3,
-          2
-        ],
-        "description": "TeleMech, move C5\u2192F6, fire Teleporter at F5"
-      }
-    ],
-    "score": 37950.0,
-    "turn": 4,
-    "input_fingerprint": "direct-rust-turn4"
-  },
-  "actions_executed": 3,
+  "active_solution": null,
+  "actions_executed": 4,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
   "enemies_killed": 0,
@@ -735,24 +687,6 @@
       "turn": 4,
       "label": "note",
       "message": "Completed Venting Center: defended A.C.I.D. Launcher/Disposal Unit and protected Time Pod; failed Destroy all mountains; TeleMech killed in action after Turn 1 prediction gap; ended at 6/7 grid, +2 reputation, +1 reactor core from pod."
-    },
-    {
-      "timestamp": "2026-04-30T19:36:52.017414",
-      "turn": 2,
-      "label": "note",
-      "message": "The Heap T1: direct Rust top-1 plan used after cmd_solve/auto_turn hung; post-enemy bridge reached T2 at 4/7 grid despite interim enemy-phase read showing 0 threatened buildings. Need diagnose candidate safety/top_k hang and End Turn codex coords offset."
-    },
-    {
-      "timestamp": "2026-04-30T20:11:46.163942",
-      "turn": 4,
-      "label": "note",
-      "message": "The Heap mission secured at 2/7 grid. Protected Defense Lab, failed ACID kill bonus at 3/4. auto_turn post-End-Turn polling timed out on mission reward screen because bridge continued serving last combat_player board with active_mechs=0; needs mission-complete screen guard/fallback."
-    },
-    {
-      "timestamp": "2026-04-30T20:14:14.206989",
-      "turn": 4,
-      "label": "note",
-      "message": "Post-Heap reward flow: Ignite pilot promoted with +1 Mech Move. Dismissed promotion popup and returned to Detritus island map with 3 reputation, 2 cores, 2/7 grid."
     }
   ],
   "recorded_post_enemy_turns": [
@@ -2668,10 +2602,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "4e709303f760f3c2",
-    "classes": "wgggggggwgwwgbrgwgwwgbbgwgggggggwgbbggggwggggrbgwgwwggggwgwwgggg",
+    "hash": "91da11754ca94fa7",
+    "classes": "wgggggggwgwwgbrgwgwwgbbgwgggggggwgbbggggwggggbbgwgwwggggwgwwgggg",
     "mission_index": 16,
-    "turn": 4
+    "turn": 2
   },
   "terrain_stage_change_pending": false
 }

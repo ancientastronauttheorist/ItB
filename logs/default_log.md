@@ -450,3 +450,81 @@ End Turn [18:12:01]
 
 Completed Venting Center: defended A.C.I.D. Launcher/Disposal Unit and protected Time Pod; failed Destroy all mountains; TeleMech killed in action after Turn 1 prediction gap; ended at 6/7 grid, +2 reputation, +1 reactor core from pod.
 
+Phase: combat_enemy → **combat_player** [19:21:15]
+
+#### Action 0 [19:28:29]
+
+TeleMech, move D7→D5, fire Teleporter at D4 (0 clicks)
+
+#### Action 1 [19:29:04]
+
+Acid_Tank, move G5→G2 (0 clicks)
+
+#### Action 2 [19:29:29]
+
+IgniteMech, move G7→E8, fire Ignite at E3 (0 clicks)
+
+#### Action 3 [19:29:49]
+
+FlameMech, move C5→D2, fire Flamethrower at C2 (0 clicks)
+
+Phase: combat_player → **combat_enemy** [19:36:01]
+
+Phase: combat_enemy → **combat_player** [19:36:29]
+
+#### Claude Note [19:36:52]
+
+The Heap T1: direct Rust top-1 plan used after cmd_solve/auto_turn hung; post-enemy bridge reached T2 at 4/7 grid despite interim enemy-phase read showing 0 threatened buildings. Need diagnose candidate safety/top_k hang and End Turn codex coords offset.
+
+#### Action 0 [19:52:00]
+
+Acid_Tank, fire A.C.I.D. Cannon at G3 (0 clicks)
+
+#### Action 1 [19:52:38]
+
+IgniteMech, fire Ignite at C1 (0 clicks)
+
+#### Action 2 [19:53:40]
+
+FlameMech, move D2→C2, fire Flamethrower at C1 (0 clicks)
+
+#### Action 3 [19:54:44]
+
+TeleMech, move D4→B1, fire Teleporter at C1 (0 clicks)
+
+#### Action 0 [19:59:36]
+
+IgniteMech, move E8→C8, fire Ignite at C3 (0 clicks)
+
+#### Action 1 [20:00:42]
+
+FlameMech, move D2→C4, fire Flamethrower at C3 (0 clicks)
+
+#### Action 2 [20:02:23]
+
+Acid_Tank, move G2→D2 to block spawn (0 clicks)
+
+#### Action 3 [20:03:05]
+
+TeleMech, move C1→D5, fire Teleporter at C5 (0 clicks)
+
+#### Action 0 [20:07:37]
+
+FlameMech, move C4→C2, fire Flamethrower at B2 (0 clicks)
+
+#### Action 1 [20:09:08]
+
+IgniteMech, move C8→D7, fire Ignite at H7 (0 clicks)
+
+#### Action 2 [20:09:44]
+
+TeleMech, move C5→F6, fire Teleporter at F5 (0 clicks)
+
+#### Claude Note [20:11:46]
+
+The Heap mission secured at 2/7 grid. Protected Defense Lab, failed ACID kill bonus at 3/4. auto_turn post-End-Turn polling timed out on mission reward screen because bridge continued serving last combat_player board with active_mechs=0; needs mission-complete screen guard/fallback.
+
+#### Claude Note [20:14:14]
+
+Post-Heap reward flow: Ignite pilot promoted with +1 Mech Move. Dismissed promotion popup and returned to Detritus island map with 3 reputation, 2 cores, 2/7 grid.
+

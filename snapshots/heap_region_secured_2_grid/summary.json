@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-04-30T20:11:46.188909",
+  "label": "heap_region_secured_2_grid",
+  "turn": 4,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        0,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly2",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 6
+    },
+    {
+      "type": "Centipede1",
+      "pos": [
+        1,
+        1
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Centipede2",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 6
+    },
+    {
+      "type": "Jelly_Health1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

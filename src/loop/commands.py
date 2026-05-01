@@ -2157,29 +2157,25 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 inject_into_bridge as _inject_bonus_obj,
             )
             _inject_bonus_obj(bridge_data)
+
+            _record_turn_state(session, "solve_input", {
+                "schema_version": 1,
+                "simulator_version": _get_simulator_version(),
+                "solver_version": _get_solver_version(),
+                "time_limit": time_limit,
+                "beam_mode": beam,
+                "bridge_state": bridge_data,
+            }, turn_override=current_turn)
+
             rust_start = _time.time()
             candidate_specs = []
             if beam == 0:
-                solve_top_k = getattr(_rust, "solve_top_k", None)
-                if solve_top_k is None:
-                    rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
-                    candidate_specs.append({
-                        "rank": 0,
-                        "source": "top1",
-                        "rust_result": _json.loads(rust_json),
-                    })
-                else:
-                    top_k_json = solve_top_k(
-                        _json.dumps(bridge_data),
-                        time_limit,
-                        _SAFE_PLAN_CANDIDATE_LIMIT,
-                    )
-                    for idx, rust_result in enumerate(_json.loads(top_k_json) or []):
-                        candidate_specs.append({
-                            "rank": idx,
-                            "source": "top_k",
-                            "rust_result": rust_result,
-                        })
+                rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
+                candidate_specs.append({
+                    "rank": 0,
+                    "source": "top1",
+                    "rust_result": _json.loads(rust_json),
+                })
             else:
                 # solve_beam returns chains sorted by chain_score. Solver 2.0
                 # audits the level-0 action plan from each chain before choosing.

@@ -125,7 +125,7 @@ Each phase: read → act → verify. Detailed command semantics are in **Game Lo
 - **ISLAND_MAP:** `game_loop.py read` → pick mission (prefer bonus objectives for the achievement target) → click mission on map → mission briefing → click preview or start button → DEPLOYMENT.
 - **DEPLOYMENT:** `game_loop.py read` prints valid deploy tiles with MCP coords. Click 3 in sequence (FORWARD, MID, SUPPORT recommendation). Click CONFIRM. → COMBAT_PLAYER_TURN.
 - **COMBAT_PLAYER_TURN:** `auto_turn --time-limit 10` → dispatch the emitted End Turn click plan or run `click_end_turn` → loop. The next `auto_turn` blocks in Python until the next player turn or mission end. On game_over or empty solution, falls back to screenshot-based reasoning.
-- **MISSION_END:** screenshot reward screen → click reward → `snapshot <label>` → ISLAND_MAP (or ISLAND_COMPLETE if all missions done).
+- **MISSION_END:** screenshot reward screen → click reward → `snapshot <label>` → ISLAND_MAP (or ISLAND_COMPLETE if all missions done). If the screen visibly shows **Region Secured**, a promotion popup, or a reward panel while `auto_turn` / `read` keeps returning the previous `combat_player` board with `active_mechs=0`, treat the bridge as stale and follow this MISSION_END flow; do not keep polling or try another combat command.
 - **SHOP:** appears *only after winning a whole island* (4 missions + finale), not mid-island. Do NOT expect a shop between missions — grid repair opportunities come from time-pod rewards and island completions, full stop. Screenshot when it appears (neither save nor bridge distinguish shop from map). **GRID-FIRST RULE: spend ALL reputation on Grid Power until either (a) the shop has no Grid Power slot left or (b) reputation is exhausted.** Click the Grid Power supply repeatedly — once grid hits 7/7, the same slot becomes Overpower (permanent +Grid Defense %, capped at +25%). Both forms count as "buying grid power" — keep clicking until stars run out or the slot disappears. Only after grid is maxed out should you consider weapons/cores; in practice that means skipping them this shop. Rationale: `feedback_grid_buy_priority.md`. → ISLAND_MAP (next island) or RUN_END.
 - **RUN_END:** `snapshot run_end`. If defeat, analyze critical turns from decision log. Check achievement progress. Start new run with next target.
 
@@ -133,6 +133,7 @@ Each phase: read → act → verify. Detailed command semantics are in **Game Lo
 
 - **Unexpected screen:** screenshot, log to decision log, diagnose visually.
 - **State not updating:** `refresh_bridge_state`. If bridge dead, retry save-file verify up to 5× with 1.5s delay.
+- **Solve/auto_turn stall:** inspect the latest `recordings/<run_id>/mNN_turn_NN_solve_input.json` first. That file captures the exact Rust payload before solving starts, so reproduce with `itb_solver.solve` / `solve_top_k` / `solve_beam` from it. Do not rely on the next `*_board.json` after a stall; live recovery may have already executed actions or advanced animations, making that board post-action or stale.
 - **Grid power = 0:** log, snapshot, analyze.
 - **Crash/timeout:** fresh `cmd_read` + `cmd_solve`. Never resume an old solution.
 

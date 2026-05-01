@@ -741,18 +741,6 @@
       "turn": 2,
       "label": "note",
       "message": "The Heap T1: direct Rust top-1 plan used after cmd_solve/auto_turn hung; post-enemy bridge reached T2 at 4/7 grid despite interim enemy-phase read showing 0 threatened buildings. Need diagnose candidate safety/top_k hang and End Turn codex coords offset."
-    },
-    {
-      "timestamp": "2026-04-30T20:11:46.163942",
-      "turn": 4,
-      "label": "note",
-      "message": "The Heap mission secured at 2/7 grid. Protected Defense Lab, failed ACID kill bonus at 3/4. auto_turn post-End-Turn polling timed out on mission reward screen because bridge continued serving last combat_player board with active_mechs=0; needs mission-complete screen guard/fallback."
-    },
-    {
-      "timestamp": "2026-04-30T20:14:14.206989",
-      "turn": 4,
-      "label": "note",
-      "message": "Post-Heap reward flow: Ignite pilot promoted with +1 Mech Move. Dismissed promotion popup and returned to Detritus island map with 3 reputation, 2 cores, 2/7 grid."
     }
   ],
   "recorded_post_enemy_turns": [
