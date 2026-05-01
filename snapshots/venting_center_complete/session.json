@@ -715,12 +715,6 @@
         "FlameMech, move C5\u2192D5, fire Flamethrower at D4",
         "IgniteMech, fire Ignite at C5"
       ]
-    },
-    {
-      "timestamp": "2026-04-30T18:14:12.947248",
-      "turn": 4,
-      "label": "note",
-      "message": "Completed Venting Center: defended A.C.I.D. Launcher/Disposal Unit and protected Time Pod; failed Destroy all mountains; TeleMech killed in action after Turn 1 prediction gap; ended at 6/7 grid, +2 reputation, +1 reactor core from pod."
     }
   ],
   "recorded_post_enemy_turns": [

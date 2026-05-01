@@ -7,43 +7,43 @@
   "current_mission": "Mission_Disposal",
   "islands_completed": [],
   "mission_index": 15,
-  "last_mission_turn": 4,
-  "current_turn": 4,
+  "last_mission_turn": 2,
+  "current_turn": 2,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "FlameMech",
-        "move_to": [
-          3,
-          4
-        ],
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          4,
-          4
-        ],
-        "description": "FlameMech, move C5\u2192D5, fire Flamethrower at D4"
-      },
       {
         "mech_uid": 1,
         "mech_type": "IgniteMech",
         "move_to": [
           5,
-          5
+          4
         ],
         "weapon": "Ranged_Ignite",
         "target": [
           3,
-          5
+          4
         ],
-        "description": "IgniteMech, fire Ignite at C5"
+        "description": "IgniteMech, move F2\u2192D3, fire Ignite at D5"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "FlameMech",
+        "move_to": [
+          4,
+          4
+        ],
+        "weapon": "Prime_Flamethrower",
+        "target": [
+          3,
+          4
+        ],
+        "description": "FlameMech, move E3\u2192D4, fire Flamethrower at D5"
       }
     ],
-    "score": 11348.569640432077,
-    "turn": 4,
-    "input_fingerprint": "0:3,5:1|1:5,5:2|2:4,3:0|492:2,4:2|493:4,6:1|494:5,3:1|496:4,5:1|502:4,4:2"
+    "score": -32904.76369290127,
+    "turn": 2,
+    "input_fingerprint": "0:5,3:4|1:6,2:4|2:4,3:0|492:2,4:2|493:3,4:5|494:6,3:2|496:5,5:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -695,32 +695,6 @@
       "turn": 2,
       "label": "note",
       "message": "Turn 1 dirty override caused unexpected TeleMech death: replay predicted Tele hp2 after enemy phase, actual bridge had Tele hp0 at E4; post-enemy analysis also missed it. Continue mission from actual board, then diagnose."
-    },
-    {
-      "timestamp": "2026-04-30T18:10:50.530110",
-      "turn": 3,
-      "label": "solve",
-      "score": 78538.56964043208,
-      "actions": [
-        "FlameMech, fire Flamethrower at B5",
-        "IgniteMech, move D3\u2192C3, fire Ignite at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T18:11:53.330632",
-      "turn": 4,
-      "label": "solve",
-      "score": 11348.569640432077,
-      "actions": [
-        "FlameMech, move C5\u2192D5, fire Flamethrower at D4",
-        "IgniteMech, fire Ignite at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T18:14:12.947248",
-      "turn": 4,
-      "label": "note",
-      "message": "Completed Venting Center: defended A.C.I.D. Launcher/Disposal Unit and protected Time Pod; failed Destroy all mountains; TeleMech killed in action after Turn 1 prediction gap; ended at 6/7 grid, +2 reputation, +1 reactor core from pod."
     }
   ],
   "recorded_post_enemy_turns": [
@@ -863,14 +837,6 @@
     [
       15,
       1
-    ],
-    [
-      15,
-      2
-    ],
-    [
-      15,
-      3
     ]
   ],
   "tags": [],
@@ -2588,38 +2554,9 @@
       "slot": null,
       "mission_id": "Mission_Disposal",
       "first_seen_turn": 2,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "A.C.I.D. Launcher",
-            "hp": 0,
-            "move": 0,
-            "class_icons": [
-              "acid_launcher",
-              "weapon",
-              "armored"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": "Elijah Patel",
-            "weapon_slot_count": 1,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "A.C.I.D. Launcher",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=A.C.I.D.+Launcher",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=A.C.I.D.+Launcher&restrict_sr=1"
-          }
-        }
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "pos",
       "diff_predicted": [
         1,
@@ -2629,9 +2566,7 @@
         2,
         4
       ],
-      "severity": "medium",
-      "research_id": "c8f223eeedaf",
-      "last_kind": "enemy"
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
@@ -2639,7 +2574,7 @@
     "hash": "0c3357c2a1ac3c13",
     "classes": "wbbwwggggggggmmmgbbggwmggggggggggbbgggggggggggbgggggmggwggwmmmgw",
     "mission_index": 15,
-    "turn": 4
+    "turn": 2
   },
   "terrain_stage_change_pending": false
 }

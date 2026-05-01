@@ -1065,7 +1065,12 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     mechs_on_danger = []
     mechs_disabled = []
     mechs_webbed = []
-    for m in board.mechs():
+    player_mechs = [
+        m for m in board.units
+        if m.is_player and m.is_mech and not getattr(m, "is_extra_tile", False)
+    ]
+    live_player_mechs = [m for m in player_mechs if m.hp > 0]
+    for m in live_player_mechs:
         pos = (m.x, m.y)
         danger_info = danger.get(pos)
         if danger_info and danger_info.get("lethal"):
@@ -1107,11 +1112,16 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "grid_power": board.grid_power,
         "enemies_alive": len(board.enemies()),
         "enemy_hp_total": sum(e.hp for e in board.enemies()),
-        "mechs_alive": len([m for m in board.mechs() if m.hp > 0]),
-        "mech_hp_total": sum(m.hp for m in board.mechs()),
+        "mechs_alive": len(live_player_mechs),
+        "mech_hp_total": sum(max(0, m.hp) for m in player_mechs),
         "mech_hp": [
-            {"uid": m.uid, "type": m.type, "hp": m.hp, "max_hp": m.max_hp}
-            for m in board.mechs()
+            {
+                "uid": m.uid,
+                "type": m.type,
+                "hp": max(0, m.hp),
+                "max_hp": m.max_hp,
+            }
+            for m in player_mechs
         ],
         "mechs_on_danger": mechs_on_danger,
         "mechs_disabled": mechs_disabled,
@@ -1279,28 +1289,46 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         "enemies_alive_diff": actual["enemies_alive"] - predicted["enemies_alive"],
     }
 
-    # Per-mech HP comparison — match by UID for precision
+    # Per-mech HP comparison — match by UID for precision. Actual summaries can
+    # omit dead mechs in older recordings, so predicted-but-missing UIDs count
+    # as actual_hp=0 instead of silently disappearing from the diff.
     mech_deltas = []
     pred_mechs = {m["uid"]: m for m in predicted.get("mech_hp", [])}
+    actual_uids = set()
     for am in actual.get("mech_hp", []):
+        actual_uids.add(am["uid"])
         pm = pred_mechs.get(am["uid"])
         if pm:
+            predicted_hp = max(0, int(pm.get("hp", 0) or 0))
+            actual_hp = max(0, int(am.get("hp", 0) or 0))
             mech_deltas.append({
                 "uid": am["uid"],
                 "type": am["type"],
-                "predicted_hp": pm["hp"],
-                "actual_hp": am["hp"],
-                "diff": am["hp"] - pm["hp"],
+                "predicted_hp": predicted_hp,
+                "actual_hp": actual_hp,
+                "diff": actual_hp - predicted_hp,
             })
         else:
             # Mech in actual but not predicted (shouldn't happen normally)
+            actual_hp = max(0, int(am.get("hp", 0) or 0))
             mech_deltas.append({
                 "uid": am["uid"],
                 "type": am["type"],
                 "predicted_hp": 0,
-                "actual_hp": am["hp"],
-                "diff": am["hp"],
+                "actual_hp": actual_hp,
+                "diff": actual_hp,
             })
+    for uid, pm in pred_mechs.items():
+        if uid in actual_uids:
+            continue
+        predicted_hp = max(0, int(pm.get("hp", 0) or 0))
+        mech_deltas.append({
+            "uid": uid,
+            "type": pm.get("type", "?"),
+            "predicted_hp": predicted_hp,
+            "actual_hp": 0,
+            "diff": -predicted_hp,
+        })
     deltas["mech_hp_diff"] = mech_deltas
 
     # Human-readable unexpected events
@@ -3323,15 +3351,30 @@ def cmd_click_end_turn() -> dict:
     """
     recalibrate()
     batch = plan_end_turn()
+    codex_batch = [
+        c["codex_computer_use"]
+        for c in batch
+        if isinstance(c, dict) and c.get("codex_computer_use")
+    ]
     result = {
         "status": "PLAN",
         "batch": batch,
-        "next_step": "wait ~6s for enemy phase, then `read`",
+        "codex_computer_use_batch": codex_batch,
+        "next_step": (
+            "dispatch codex_computer_use_batch with Computer Use "
+            "(or legacy batch with screen-coordinate batch tools), wait ~6s "
+            "for enemy phase, then `read`"
+        ),
     }
     print(f"\n=== CLICK_END_TURN ===")
     for i, c in enumerate(batch):
-        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
-    print(f"Next: dispatch batch via computer_batch, wait ~6s, then `read`")
+        local = ""
+        if "window_x" in c and "window_y" in c:
+            local = f" | Codex window-local ({c['window_x']}, {c['window_y']})"
+        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}){local} "
+              f"-- {c['description']}")
+    print("Next: dispatch codex_computer_use_batch with Computer Use "
+          "(or legacy batch via computer_batch), wait ~6s, then `read`")
     _print_result(result)
     return result
 
@@ -4181,16 +4224,28 @@ def cmd_end_turn() -> dict:
         if ack.startswith("NEEDS_MCP_CLICK"):
             recalibrate()
             batch = plan_end_turn()
+            codex_batch = [
+                c["codex_computer_use"]
+                for c in batch
+                if isinstance(c, dict) and c.get("codex_computer_use")
+            ]
             result = {
                 "status": "PLAN",
                 "bridge_ack": ack,
                 "batch": batch,
-                "next_step": "dispatch batch via computer_batch, "
-                             "wait ~6s, then `read`",
+                "codex_computer_use_batch": codex_batch,
+                "next_step": (
+                    "dispatch codex_computer_use_batch with Computer Use "
+                    "(or legacy batch with screen-coordinate batch tools), "
+                    "wait ~6s, then `read`"
+                ),
             }
             print("  -> bridge SetActive done; emitting MCP click plan")
             for i, c in enumerate(batch):
-                print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) "
+                local = ""
+                if "window_x" in c and "window_y" in c:
+                    local = f" | Codex window-local ({c['window_x']}, {c['window_y']})"
+                print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}){local} "
                       f"-- {c['description']}")
         else:
             result = {"bridge": True, "ack": ack}
@@ -5925,6 +5980,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 "re_solves": re_solve_count,
                 "investigations": grid_drop_investigations,
                 "pending_end_turn_batch": end_result["batch"],
+                "pending_end_turn_codex_computer_use_batch": end_result.get(
+                    "codex_computer_use_batch", []
+                ),
                 "bridge_ack": end_result.get("bridge_ack"),
                 "next_step": (
                     "Resolve each investigation (see CLAUDE.md rule 22) "
@@ -5953,8 +6011,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "re_solves": re_solve_count,
             "bridge_ack": end_result.get("bridge_ack"),
             "batch": end_result["batch"],
-            "next_step": "dispatch batch via computer_batch, wait ~6s, "
-                         "then `read`",
+            "codex_computer_use_batch": end_result.get(
+                "codex_computer_use_batch", []
+            ),
+            "next_step": (
+                "dispatch codex_computer_use_batch with Computer Use "
+                "(or legacy batch with screen-coordinate batch tools), "
+                "wait ~6s, then `read`"
+            ),
             "fuzzy_detections": fuzzy_detections,
             "soft_disabled": list(session.disabled_actions),
             "soft_disables_fired_this_turn": soft_disables_fired_this_turn,

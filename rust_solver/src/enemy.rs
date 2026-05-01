@@ -1078,24 +1078,24 @@ pub fn simulate_enemy_attacks(
                         }
                     }
                 } else {
-                    // Standard single-tile melee: attack fixed queued target.
-                    // OOB guard: bridge can deliver off-board queued_target after
-                    // direction normalization (M04 2026-04-28 — cx=7,ddx=+1 → x=8).
-                    // Without this, apply_damage→tile_mut panics with index 69 OOB.
-                    if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
-                    let tx = qtx as u8;
-                    let ty = qty as u8;
-                    let curr_dist = (ex as i32 - tx as i32).abs() + (ey as i32 - ty as i32).abs();
-                    // Adjacency check: most melee weapons require the attacker
-                    // to still be next to the target. BlobBoss family
-                    // (QUEUED_DAMAGE_PERSISTS) is the exception — its Lua skill
-                    // (scripts/missions/bosses/goo.lua:172-187) registers
-                    // AddQueuedDamage(SpaceDamage(p2, 4)) BEFORE the optional
-                    // boss move, so the queued damage fires regardless of the
-                    // attacker's current position (e.g. pulled away by
-                    // Grappling Hook). Bounds check on (tx, ty) above is what
-                    // makes this safe to apply when curr_dist > 1.
-                    if curr_dist > 1 && !wdef.queued_damage_persists() { continue; }
+                    let (tx, ty) = if wdef.queued_damage_persists() {
+                        // BlobBoss family registers fixed queued damage before
+                        // movement. Keep the queued tile, with the same OOB guard
+                        // that protects bridge-normalized edge targets.
+                        if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
+                        (qtx as u8, qty as u8)
+                    } else {
+                        // Standard single-tile melee preserves the original
+                        // queued direction, then re-aims from the attacker's
+                        // current tile after pushes, swaps, and teleports.
+                        let dx = (qtx - orig.0 as i8).signum();
+                        let dy = (qty - orig.1 as i8).signum();
+                        if (dx != 0) == (dy != 0) { continue; }
+                        let tx = ex as i8 + dx;
+                        let ty = ey as i8 + dy;
+                        if !in_bounds(tx, ty) { continue; }
+                        (tx as u8, ty as u8)
+                    };
 
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
@@ -1307,6 +1307,35 @@ mod tests {
             pos[i] = (board.units[i].x, board.units[i].y);
         }
         pos
+    }
+
+    #[test]
+    fn test_displaced_standard_melee_reaims_from_current_position() {
+        let mut board = Board::default();
+        let tele_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 4,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let scorpion_idx = add_enemy_with_type(&mut board, 493, 4, 4, 6, "Scorpion2", 4, 2);
+        board.units[scorpion_idx].weapon_damage = 3;
+        board.units[scorpion_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let mut orig = default_orig_pos(&board);
+        orig[tele_idx] = (3, 5);
+        orig[scorpion_idx] = (4, 3);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(
+            board.units[tele_idx].hp <= 0,
+            "Scorpion2 should preserve original melee direction and hit E4"
+        );
     }
 
     #[test]

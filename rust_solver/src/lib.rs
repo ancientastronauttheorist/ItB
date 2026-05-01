@@ -780,7 +780,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   one representative target per fixed custom edge zone, and simulates the
 //   Lua scan-order push of every pawn in the selected direction. Pre-v39 corpus
 //   archived as `failure_db_snapshot_sim_v38.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 39;
+// v40 — Standard single-tile enemy melee re-aims from the attacker's current
+//   position using the original queued direction after displacement. BlobBoss
+//   queued-damage-persistence remains fixed-target. Fixes Venting Center T1
+//   Scorpion2 swap killing TeleMech at E4. Pre-v40 corpus archived as
+//   `failure_db_snapshot_sim_v39.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 40;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

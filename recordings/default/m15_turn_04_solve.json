@@ -1,0 +1,1481 @@
+{
+  "timestamp": "2026-04-30T18:11:53.330722",
+  "run_id": "default",
+  "mission_index": 15,
+  "turn": 4,
+  "label": "solve",
+  "data": {
+    "schema_version": 1,
+    "simulator_version": 39,
+    "score": 11348.569640432077,
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "FlameMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Flamethrower",
+        "weapon_id": "Prime_Flamethrower",
+        "target": [
+          4,
+          4
+        ],
+        "description": "FlameMech, move C5\u2192D5, fire Flamethrower at D4"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "IgniteMech",
+        "move_to": [
+          5,
+          5
+        ],
+        "weapon": "Ignite",
+        "weapon_id": "Ranged_Ignite",
+        "target": [
+          3,
+          5
+        ],
+        "description": "IgniteMech, fire Ignite at C5"
+      }
+    ],
+    "threats": 2,
+    "active_mechs": 3,
+    "spawn_points": [],
+    "search_stats": {
+      "elapsed_seconds": 0.007111072540283203,
+      "timed_out": false,
+      "permutations_tried": 2,
+      "total_permutations": 2,
+      "active_mech_count": 3
+    },
+    "weight_version": "v011",
+    "beam_mode": 0,
+    "beam_chain_score": null,
+    "candidate_count": 10,
+    "selected_candidate_rank": 0,
+    "selected_candidate_source": "top_k",
+    "candidate_safety": [
+      {
+        "rank": 0,
+        "source": "top_k",
+        "score": 11348.569640432077,
+        "chain_score": null,
+        "status": "WARN",
+        "blocking": false,
+        "violations": [
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 3,
+            "predicted": 2
+          }
+        ]
+      },
+      {
+        "rank": 1,
+        "source": "top_k",
+        "score": 11083.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      },
+      {
+        "rank": 2,
+        "source": "top_k",
+        "score": 11083.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      },
+      {
+        "rank": 3,
+        "source": "top_k",
+        "score": 11073.569640432077,
+        "chain_score": null,
+        "status": "WARN",
+        "blocking": false,
+        "violations": [
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 3,
+            "predicted": 2
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "source": "top_k",
+        "score": 11058.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      },
+      {
+        "rank": 5,
+        "source": "top_k",
+        "score": 10943.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      },
+      {
+        "rank": 6,
+        "source": "top_k",
+        "score": 10943.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      },
+      {
+        "rank": 7,
+        "source": "top_k",
+        "score": 10943.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      },
+      {
+        "rank": 8,
+        "source": "top_k",
+        "score": 10943.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      },
+      {
+        "rank": 9,
+        "source": "top_k",
+        "score": 10933.569640432077,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "violations": []
+      }
+    ],
+    "action_results": [
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 2,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0
+      },
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 1,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 1,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "spawns_blocked": 0
+      }
+    ],
+    "predicted_states": [
+      {
+        "post_attack": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 0,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 4
+            },
+            {
+              "acid": true,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "water",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 5
+            }
+          ],
+          "units": [
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "Disposal_Unit",
+              "uid": 492
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "FlameMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                4,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "TeleMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 6,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion2",
+              "uid": 493
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Health1",
+              "uid": 494
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": true,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 496
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                5,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Firefly1",
+              "uid": 502
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 0,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 4
+            },
+            {
+              "acid": true,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "water",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 5
+            }
+          ],
+          "units": [
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "Disposal_Unit",
+              "uid": 492
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 1,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "FlameMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                4,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "TeleMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 6,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion2",
+              "uid": 493
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Health1",
+              "uid": 494
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": true,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 496
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Firefly1",
+              "uid": 502
+            }
+          ]
+        }
+      },
+      {
+        "post_attack": {
+          "action_index": 1,
+          "grid_power": 6,
+          "mech_uid": 1,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": true,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 6,
+              "y": 4
+            },
+            {
+              "acid": true,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 6
+            }
+          ],
+          "units": [
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "Disposal_Unit",
+              "uid": 492
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "FlameMech",
+              "uid": 0
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                4,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "TeleMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 6,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion2",
+              "uid": 493
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Health1",
+              "uid": 494
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": true,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 496
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                5,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Firefly1",
+              "uid": 502
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 1,
+          "grid_power": 6,
+          "mech_uid": 1,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": true,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 6,
+              "y": 4
+            },
+            {
+              "acid": true,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 6
+            }
+          ],
+          "units": [
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "Disposal_Unit",
+              "uid": 492
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "FlameMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                4,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "TeleMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 6,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion2",
+              "uid": 493
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Health1",
+              "uid": 494
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": true,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 496
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                5,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Firefly1",
+              "uid": 502
+            }
+          ]
+        }
+      }
+    ],
+    "current_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 1,
+      "grid_power": 6,
+      "enemies_alive": 4,
+      "enemy_hp_total": 5,
+      "mechs_alive": 2,
+      "mech_hp_total": 3,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "hp": 1,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "hp": 2,
+          "max_hp": 3
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": []
+    },
+    "predicted_outcome": {
+      "building_hp_total": 10,
+      "buildings_alive": 7,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 0,
+      "enemy_hp_total": 0,
+      "grid_power": 6,
+      "mech_hp": [
+        {
+          "hp": 1,
+          "max_hp": 3,
+          "type": "FlameMech",
+          "uid": 0
+        },
+        {
+          "hp": 1,
+          "max_hp": 3,
+          "type": "IgniteMech",
+          "uid": 1
+        },
+        {
+          "hp": 0,
+          "max_hp": 2,
+          "type": "TeleMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 2
+    },
+    "predicted_board_summary": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 1,
+      "grid_power": 6,
+      "enemies_alive": 0,
+      "enemy_hp_total": 0,
+      "mechs_alive": 2,
+      "mech_hp_total": 2,
+      "mech_hp": [
+        {
+          "hp": 1,
+          "max_hp": 3,
+          "type": "FlameMech",
+          "uid": 0
+        },
+        {
+          "hp": 1,
+          "max_hp": 3,
+          "type": "IgniteMech",
+          "uid": 1
+        },
+        {
+          "hp": 0,
+          "max_hp": 2,
+          "type": "TeleMech",
+          "uid": 2
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "buildings_destroyed_by_enemies": 0,
+      "pods_collected": 0
+    },
+    "plan_safety": {
+      "status": "WARN",
+      "blocking": false,
+      "violations": [
+        {
+          "kind": "mech_hp_loss",
+          "current": 3,
+          "predicted": 2,
+          "blocking": false,
+          "message": "Predicted outcome loses mech HP.",
+          "delta": -1
+        }
+      ],
+      "compared": [
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "pods_present",
+        "mechs_alive",
+        "mech_hp_total",
+        "mechs_on_danger",
+        "mechs_disabled"
+      ],
+      "current": {
+        "grid_power": 6,
+        "buildings_alive": 7,
+        "building_hp_total": 10,
+        "objective_buildings_alive": 0,
+        "objective_building_hp_total": 0,
+        "pods_present": 1,
+        "mechs_alive": 2,
+        "mech_hp_total": 3,
+        "mechs_on_danger": [],
+        "mechs_disabled": []
+      },
+      "predicted": {
+        "grid_power": 6,
+        "buildings_alive": 7,
+        "building_hp_total": 10,
+        "objective_buildings_alive": 0,
+        "objective_building_hp_total": 0,
+        "pods_present": 1,
+        "mechs_alive": 2,
+        "mech_hp_total": 2,
+        "mechs_on_danger": [],
+        "mechs_disabled": []
+      }
+    },
+    "score_breakdown": {
+      "total": 123781.07142857142,
+      "grid_multiplier": 1.0,
+      "bld_mult": 1.0714285714285714,
+      "buildings_alive": {
+        "count": 7,
+        "score": 75000.0
+      },
+      "building_hp": {
+        "total": 10,
+        "score": 21428.571428571428
+      },
+      "objective_rep": {
+        "count": 0,
+        "score": 0.0
+      },
+      "objective_grid": {
+        "count": 0,
+        "score": 0.0
+      },
+      "grid_power": {
+        "value": 6,
+        "effective": 6.0,
+        "expected_save": 0.0,
+        "expected_save_player": 0.0,
+        "score": 29200.0
+      },
+      "enemies_killed": {
+        "count": 2,
+        "score": 600.0000000000001
+      },
+      "mission_kill_bonus": {
+        "target": 0,
+        "done_pre_turn": 0,
+        "kills_this_turn": 2,
+        "score": 0.0
+      },
+      "enemy_hp_remaining": {
+        "total": 0,
+        "score": -0.0
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 3,
+        "dead": 0,
+        "total_hp": 4,
+        "score": 152.5
+      },
+      "spawns_blocked": {
+        "count": 0,
+        "score": 0.0
+      },
+      "remaining_spawns": {
+        "count": 1,
+        "score": -2500.0
+      },
+      "pods": {
+        "uncollected": 1,
+        "proximity": 0,
+        "score": -100.0
+      }
+    }
+  }
+}

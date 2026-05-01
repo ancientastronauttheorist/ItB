@@ -170,11 +170,12 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.is_mech() {
+            let hp = u.hp.max(0);
             if u.hp > 0 { mechs_alive += 1; }
             mech_hp_list.push(json!({
                 "uid": u.uid,
                 "type": u.type_name_str(),
-                "hp": u.hp,
+                "hp": hp,
                 "max_hp": u.max_hp,
             }));
         } else if u.is_enemy() && u.hp > 0 {

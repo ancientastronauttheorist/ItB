@@ -11,6 +11,7 @@ Covers:
 8. plan_single_mech: passive → select only
 9. plan_single_mech: secondary weapon goes to slot 2
 10. plan_end_turn always emits one click at the End Turn position
+11. click plans expose Codex Computer Use window-local coordinates
 """
 
 # Mock window detection BEFORE importing the executor module so the
@@ -172,6 +173,30 @@ check("end_turn: 1 click", len(plan) == 1, plan)
 check("end_turn: at end-turn UI position",
       (plan[0]["x"], plan[0]["y"]) == _ui_end_turn())
 check("end_turn: type is left_click", plan[0]["type"] == "left_click")
+check("end_turn: has window-local coordinate metadata",
+      (plan[0]["window_x"], plan[0]["window_y"]) == (plan[0]["x"], plan[0]["y"]))
+check("end_turn: has codex computer use click",
+      plan[0]["codex_computer_use"]["coordinate_space"] == "window")
+
+# Test 11: non-zero window origin keeps legacy x/y global while exposing
+# Codex Computer Use coordinates as window-local.
+class _OffsetWindow:
+    x = 215
+    y = 32
+    width = 1280
+    height = 748
+
+
+executor._cached_window = _OffsetWindow()
+plan = plan_end_turn()
+check("end_turn: legacy global coord includes window origin",
+      (plan[0]["x"], plan[0]["y"]) == (310, 110), plan)
+check("end_turn: window-local coord strips window origin",
+      (plan[0]["window_x"], plan[0]["window_y"]) == (95, 78), plan)
+check("end_turn: codex click uses window-local coord",
+      (plan[0]["codex_computer_use"]["x"],
+       plan[0]["codex_computer_use"]["y"]) == (95, 78), plan)
+executor._cached_window = _FakeWindow()
 
 print(f"\n{passed}/{passed+failed} tests passed")
 if failed:

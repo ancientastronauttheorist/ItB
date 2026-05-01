@@ -12,7 +12,9 @@ Repair uses its own button, passives are no-ops.
 
 Coordinate systems:
   - Bridge coordinates: (0-7, 0-7) from the Lua bridge.
-  - MCP coordinates: screen pixels for the active control surface.
+  - Legacy MCP coordinates: global screen pixels used by the older batch
+    dispatcher.
+  - Codex Computer Use coordinates: window-local pixels from get_app_state().
   - ``grid_to_mcp`` delegates to the shared GridConfig calibration used by
     ``cmd_calibrate`` so deployment, tile_hover, and click planning agree.
 """
@@ -111,6 +113,36 @@ def _ui_pos(offset: tuple[int, int]) -> tuple[int, int]:
         int(round(win.x + offset[0] * sx)),
         int(round(win.y + offset[1] * sy)),
     )
+
+
+def to_window_local(x: int, y: int) -> tuple[int, int]:
+    """Convert legacy global screen coordinates to Codex window-local coords."""
+    win = _get_window()
+    return (int(round(x - win.x)), int(round(y - win.y)))
+
+
+def _annotate_click_op(op: dict) -> dict:
+    """Attach explicit coordinate-space metadata to legacy click ops."""
+    if op.get("type") != "left_click" or "x" not in op or "y" not in op:
+        return op
+    annotated = dict(op)
+    wx, wy = to_window_local(int(annotated["x"]), int(annotated["y"]))
+    annotated.setdefault("coordinate_space", "screen")
+    annotated["window_x"] = wx
+    annotated["window_y"] = wy
+    annotated["codex_computer_use"] = {
+        "type": annotated["type"],
+        "x": wx,
+        "y": wy,
+        "coordinate_space": "window",
+        "description": annotated.get("description", ""),
+    }
+    return annotated
+
+
+def annotate_click_plan(plan: list[dict]) -> list[dict]:
+    """Return a plan with both legacy screen and Codex window-local coords."""
+    return [_annotate_click_op(op) for op in plan]
 
 
 def _ui_weapon_slot_1() -> tuple[int, int]:
@@ -227,7 +259,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     # Passive weapons have no clickable target — just selecting the mech
     # is enough to "consume" the action from the Claude perspective.
     if weapon_type == "passive":
-        return plan
+        return annotate_click_plan(plan)
 
     # Repair: optional move, then click the Repair button.
     if weapon_type == "repair":
@@ -246,7 +278,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "x": rx, "y": ry,
             "description": "Click Repair button",
         })
-        return plan
+        return annotate_click_plan(plan)
 
     # Dash/leap weapons: arm the weapon, then click the destination.
     # The dash IS the move — there's no separate move click.
@@ -266,7 +298,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
                 "x": tx, "y": ty,
                 "description": f"Dash to ({action.target[0]},{action.target[1]})",
             })
-        return plan
+        return annotate_click_plan(plan)
 
     # Normal: optional move first, then arm weapon, then click target.
     plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
@@ -294,27 +326,27 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "description": f"Fire at ({action.target[0]},{action.target[1]})",
         })
 
-    return plan
+    return annotate_click_plan(plan)
 
 
 def plan_end_turn() -> list[dict]:
     """Plan a click for the End Turn button."""
     ex, ey = _ui_end_turn()
-    return [{
+    return annotate_click_plan([{
         "type": "left_click",
         "x": ex, "y": ey,
         "description": "Click End Turn",
-    }]
+    }])
 
 
 def plan_balanced_roll() -> list[dict]:
     """Plan a click for the Balanced Roll button on the squad-select screen."""
     bx, by = _ui_balanced_roll()
-    return [{
+    return annotate_click_plan([{
         "type": "left_click",
         "x": bx, "y": by,
         "description": "Click Balanced Roll",
-    }]
+    }])
 
 
 # --- Backward-Compatible Full-Solution Planning ---

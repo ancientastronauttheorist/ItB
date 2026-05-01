@@ -363,3 +363,90 @@ End Turn [13:54:14]
 
 Mission Chemical Field A secured: grid held 5/7, Coal Plant protected, spawn-block bonus missed at 2/3; Centipede1 research gate catalogued during turn 3.
 
+Phase: combat_player → **no_save** [17:38:45]
+
+Phase: no_save → **combat_enemy** [17:47:25]
+
+Phase: combat_enemy → **combat_player** [17:56:31]
+
+### Solver Output [17:56:35]
+
+Score: 109079 | Threats: 1
+
+1. TeleMech, move C5→D4, fire Teleporter at E4
+2. IgniteMech, move E5→F2, fire Ignite at D2
+3. FlameMech, move E7→E3, fire Flamethrower at D3
+
+### Solver Output [17:57:33]
+
+Score: 107079 | Threats: 1
+
+1. IgniteMech, move E5→F5, fire Ignite at F3
+2. TeleMech, move C5→D4, fire Teleporter at E4
+3. FlameMech, move E7→E3, fire Flamethrower at F3
+
+### Solver Output [17:59:08]
+
+Score: 109079 | Threats: 1
+
+1. TeleMech, move C5→D4, fire Teleporter at E4
+2. IgniteMech, move E5→F2, fire Ignite at D2
+3. FlameMech, move E7→E3, fire Flamethrower at D3
+
+#### Claude Note [18:01:33]
+
+Turn 1 Solver 2.0 safety block is a false positive: current summary counts Disposal_Unit as mech, predicted summary excludes it, but replay final_board keeps Disposal_Unit alive at D6 with 2 HP. Allowing dirty-plan override for this turn only.
+
+### Solver Output [18:01:35]
+
+Score: 109079 | Threats: 1
+
+1. TeleMech, move C5→D4, fire Teleporter at E4
+2. IgniteMech, move E5→F2, fire Ignite at D2
+3. FlameMech, move E7→E3, fire Flamethrower at D3
+
+End Turn [18:01:51]
+
+### Solver Output [18:06:01]
+
+Score: -32905 | Threats: 0
+
+1. IgniteMech, move F2→D3, fire Ignite at D5
+2. FlameMech, move E3→D4, fire Flamethrower at D5
+
+End Turn [18:06:11]
+
+#### Claude Note [18:07:42]
+
+Turn 1 dirty override caused unexpected TeleMech death: replay predicted Tele hp2 after enemy phase, actual bridge had Tele hp0 at E4; post-enemy analysis also missed it. Continue mission from actual board, then diagnose.
+
+Phase: combat_player → **combat_enemy** [18:10:33]
+
+Phase: combat_enemy → **combat_player** [18:10:47]
+
+### Solver Output [18:10:50]
+
+Score: 78539 | Threats: 1
+
+1. FlameMech, fire Flamethrower at B5
+2. IgniteMech, move D3→C3, fire Ignite at F3
+
+End Turn [18:10:59]
+
+Phase: combat_player → **combat_enemy** [18:11:38]
+
+Phase: combat_enemy → **combat_player** [18:11:48]
+
+### Solver Output [18:11:53]
+
+Score: 11349 | Threats: 2
+
+1. FlameMech, move C5→D5, fire Flamethrower at D4
+2. IgniteMech, fire Ignite at C5
+
+End Turn [18:12:01]
+
+#### Claude Note [18:14:12]
+
+Completed Venting Center: defended A.C.I.D. Launcher/Disposal Unit and protected Time Pod; failed Destroy all mountains; TeleMech killed in action after Turn 1 prediction gap; ended at 6/7 grid, +2 reputation, +1 reactor core from pod.
+
