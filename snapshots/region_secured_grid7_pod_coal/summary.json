@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-04-30T23:31:34.787094",
+  "label": "region_secured_grid7_pod_coal",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        0,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowart1",
+      "pos": [
+        7,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet2",
+      "pos": [
+        2,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Beetle2",
+      "pos": [
+        7,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    }
+  ]
+}

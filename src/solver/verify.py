@@ -467,7 +467,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Corporate HQ turn 4 predicted TeleMech HP 2→1 from an edge air-push;
 # live game left it at HP 2. On-board adjacent pushes still move units.
 # Pre-v41 corpus archived as failure_db_snapshot_sim_v40.jsonl.
-SIMULATOR_VERSION = 41
+# v42 — Instant terrain/mine deaths from push/swap/throw landing effects now
+# run enemy-death side effects, including Blast/Boss Psion death explosions,
+# Volatile decay, and psion aura teardown. Prime Flamethrower damage+push
+# kills defer Blast/Boss Psion explosion to the post-push corpse tile.
+# Replay snapshots also include all building tiles so Grid Defense and Blast
+# Psion building diffs are visible even when event telemetry is sparse.
+# Pre-v42 corpus archived as failure_db_snapshot_sim_v41.jsonl.
+SIMULATOR_VERSION = 42
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -594,9 +601,11 @@ def snapshot_after_action(
     """Capture a JSON-friendly board snapshot after a mech action mutates it.
 
     Captures EVERY unit (alive or dead) so diff_states can detect
-    death/spawn mismatches, but only the tiles touched by the action's
-    events (parsed from the events strings, plus a 1-tile buffer for
-    chain effects). The mech's current tile is always included.
+    death/spawn mismatches, but only a sparse set of tiles: the action's
+    events (parsed from the event strings), a 1-tile buffer for chain effects,
+    the mech's current tile, and every building tile. Buildings are included
+    globally because Grid Defense / Blast Psion interactions can damage a
+    building outside an event-derived neighborhood.
     """
     touched: set[tuple[int, int]] = set(parse_tiles_from_events(events))
 
@@ -615,6 +624,10 @@ def snapshot_after_action(
                 nx, ny = tx + dx, ty + dy
                 if 0 <= nx < 8 and 0 <= ny < 8:
                     expanded.add((nx, ny))
+    for x in range(8):
+        for y in range(8):
+            if board.tile(x, y).terrain == "building":
+                expanded.add((x, y))
 
     units_snapshot = []
     for u in board.units:

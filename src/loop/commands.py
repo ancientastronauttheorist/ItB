@@ -5270,6 +5270,20 @@ def _maybe_flag_grid_drop(
         td for td in getattr(diff, "tile_diffs", []) or []
         if td.get("field") == "building_hp"
     ]
+    actual_building_losses = [
+        td for td in building_tile_diffs
+        if int(td.get("actual") or 0) < int(td.get("predicted") or 0)
+    ]
+    favorable_grid_resist = bool(
+        grid_scalar
+        and int(grid_scalar.get("actual") or 0) > int(grid_scalar.get("predicted") or 0)
+    )
+    if favorable_grid_resist and not actual_building_losses:
+        print(
+            "  [grid-defense] actual grid exceeded prediction; "
+            "treating as benign Grid Defense resist, no investigation gate"
+        )
+        return
 
     # Write a minimal snapshot: predicted state + actual state + context.
     snap_label = f"grid_drop_{run_id}_t{turn:02d}_a{context.get('action_index', '?')}"

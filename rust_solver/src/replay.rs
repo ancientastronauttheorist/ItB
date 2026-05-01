@@ -226,8 +226,10 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
 
 /// Mirror `src/solver/verify.py::snapshot_after_action` (and
 /// `snapshot_after_move`). Captures every unit (alive or dead — diff
-/// engine needs death/spawn detection) and only the tiles touched by
-/// `events` + a 1-tile buffer + the mech's current tile.
+/// engine needs death/spawn detection) and the tiles touched by `events` +
+/// a 1-tile buffer + the mech's current tile + every building tile. Buildings
+/// are included globally because Grid Defense / Blast Psion interactions can
+/// damage a building outside the sparse event-derived neighborhood.
 fn capture_snapshot(
     board: &Board,
     action_index: usize,
@@ -257,6 +259,14 @@ fn capture_snapshot(
                 if (0..8).contains(&nx) && (0..8).contains(&ny) {
                     expanded.insert((nx as u8, ny as u8));
                 }
+            }
+        }
+    }
+    for x in 0..8u8 {
+        for y in 0..8u8 {
+            let t = board.tile(x, y);
+            if t.terrain == Terrain::Building {
+                expanded.insert((x, y));
             }
         }
     }

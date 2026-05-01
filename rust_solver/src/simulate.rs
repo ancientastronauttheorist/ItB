@@ -56,10 +56,9 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
 /// Boss/Blast Psion EXPLODE-on-death helper. Public to the crate so
 /// non-weapon kill paths (env_danger lethal kills, etc.) can dispatch the
 /// explosion themselves — `on_enemy_death` does NOT fire this; explosion
-/// dispatch is currently caller-side at apply_damage:788 (weapon kills),
-/// apply_push:1137,1164 (push-into-deadly-terrain, mine), and
-/// apply_env_danger (lethal env kills, since sim v38). See v39 follow-up
-/// to centralize so ice-drown / dam-flood / other latent paths are covered.
+/// dispatch is currently caller-side at apply_damage (weapon kills),
+/// `finish_instant_unit_death` (push/swap/throw terrain + mine kills), and
+/// apply_env_danger (lethal env kills, since sim v38).
 pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
     if depth > 8 { return; } // safety limit for chain reactions
 
@@ -241,11 +240,11 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         match dest_terrain {
             Terrain::Water | Terrain::Lava => {
                 if !massive {
-                    board.units[unit_idx].hp = 0;
+                    finish_instant_unit_death(board, unit_idx, result, nx, ny);
                 }
             }
             Terrain::Chasm => {
-                board.units[unit_idx].hp = 0;
+                finish_instant_unit_death(board, unit_idx, result, nx, ny);
             }
             _ => {}
         }
@@ -267,10 +266,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
     if board.units[unit_idx].hp > 0 {
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
-            board.units[unit_idx].hp = 0;
-            if board.units[unit_idx].is_mech() {
-                result.mechs_killed += 1;
-            }
+            finish_instant_unit_death(board, unit_idx, result, nx, ny);
             board.tile_mut(nx, ny).set_old_earth_mine(false);
         } else if tile.freeze_mine() {
             if !board.units[unit_idx].shield() {
@@ -470,6 +466,100 @@ pub(crate) fn on_enemy_death(
     if board.boss_alive && board.units[idx].type_name_str().contains("Boss") {
         board.boss_alive = false;
     }
+}
+
+/// Finish a non-damage instant death path after the caller has determined the
+/// unit dies at its current tile: drowning/falling from a push, swap, throw, or
+/// Old Earth Mine. This mirrors apply_damage_core's bookkeeping plus the
+/// caller-side Blast Psion / Volatile Vek explosions that instant-kill paths
+/// must dispatch themselves.
+fn finish_instant_unit_death(
+    board: &mut Board,
+    unit_idx: usize,
+    result: &mut ActionResult,
+    death_x: u8,
+    death_y: u8,
+) {
+    if board.units[unit_idx].hp <= 0 {
+        return;
+    }
+
+    let is_enemy = board.units[unit_idx].is_enemy();
+    let is_player = board.units[unit_idx].is_player();
+    let has_acid = board.units[unit_idx].acid();
+    let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
+    let dying_tname = board.units[unit_idx].type_name_str().to_string();
+    let can_explode = is_enemy
+        && (board.blast_psion || board.boss_psion)
+        && dying_tname != "Jelly_Explode1"
+        && dying_tname != "Jelly_Boss";
+    let death_terrain = board.tile(death_x, death_y).terrain;
+
+    board.units[unit_idx].hp = 0;
+
+    if is_enemy {
+        result.enemies_killed += 1;
+        on_enemy_death(board, unit_idx, result);
+        if is_volatile {
+            apply_volatile_decay(board, death_x, death_y, result, 0);
+        }
+        if can_explode {
+            apply_death_explosion(board, death_x, death_y, result, 0);
+        }
+    } else if is_player {
+        result.mechs_killed += 1;
+    }
+
+    // ACID units leave an acid pool/tile on normal ground and water. Lava/chasm
+    // consume it, matching the existing apply_damage_core behavior.
+    if has_acid && (!death_terrain.is_deadly_ground() || death_terrain == Terrain::Water) {
+        board.tile_mut(death_x, death_y).flags |= TileFlags::ACID;
+    }
+}
+
+/// Apply normal damage but defer Blast Psion explosion dispatch until the
+/// caller has resolved a simultaneous push. Used for single SpaceDamage-style
+/// damage+push hits where live game death effects occur from the final corpse
+/// tile rather than the pre-push damage tile.
+fn apply_damage_defer_death_explosion(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+) -> Option<usize> {
+    if damage == 0 { return None; }
+
+    let death_check = if board.blast_psion || board.boss_psion {
+        board.unit_at(x, y).and_then(|idx| {
+            let u = &board.units[idx];
+            let tname = u.type_name_str();
+            if u.is_enemy() && u.hp > 0
+                && tname != "Jelly_Explode1"
+                && tname != "Jelly_Boss"
+            {
+                Some(idx)
+            } else { None }
+        })
+    } else { None };
+
+    let volatile_check = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.is_enemy() && u.hp > 0 && u.is_volatile_vek() {
+            Some(idx)
+        } else { None }
+    });
+
+    apply_damage_core(board, x, y, damage, result, source);
+
+    if let Some(idx) = volatile_check {
+        if board.units[idx].hp <= 0 {
+            apply_volatile_decay(board, x, y, result, 0);
+        }
+    }
+
+    death_check.filter(|idx| board.units[*idx].hp <= 0)
 }
 
 
@@ -1141,53 +1231,12 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     };
 
     if deadly_kill {
-        let is_enemy = board.units[unit_idx].is_enemy();
-        let has_acid = board.units[unit_idx].acid();
-        let dying_tname = board.units[unit_idx].type_name_str();
-        let can_explode = is_enemy && (board.blast_psion || board.boss_psion)
-            && dying_tname != "Jelly_Explode1"
-            && dying_tname != "Jelly_Boss";
-        let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
-        let unit = &mut board.units[unit_idx];
-        unit.hp = 0;
-        if is_enemy {
-            result.enemies_killed += 1;
-            if is_volatile {
-                apply_volatile_decay(board, nx, ny, result, 0);
-            }
-            if can_explode {
-                apply_death_explosion(board, nx, ny, result, 0);
-            }
-        } else if unit.is_player() {
-            result.mechs_killed += 1;
-        }
-
-        // ACID unit drowns in water → water becomes ACID tile
-        if has_acid && dest_terrain == Terrain::Water {
-            board.tile_mut(nx, ny).flags |= TileFlags::ACID;
-        }
+        finish_instant_unit_death(board, unit_idx, result, nx, ny);
     } else {
         // Unit survived the push — check for Old Earth Mine (instant kill, bypasses shield)
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
-            let is_enemy = board.units[unit_idx].is_enemy();
-            let dying_tname = board.units[unit_idx].type_name_str();
-            let can_explode = is_enemy && (board.blast_psion || board.boss_psion)
-                && dying_tname != "Jelly_Explode1"
-                && dying_tname != "Jelly_Boss";
-            let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
-            board.units[unit_idx].hp = 0;
-            if is_enemy {
-                result.enemies_killed += 1;
-                if is_volatile {
-                    apply_volatile_decay(board, nx, ny, result, 0);
-                }
-                if can_explode {
-                    apply_death_explosion(board, nx, ny, result, 0);
-                }
-            } else if board.units[unit_idx].is_player() {
-                result.mechs_killed += 1;
-            }
+            finish_instant_unit_death(board, unit_idx, result, nx, ny);
             board.tile_mut(nx, ny).set_old_earth_mine(false);
         }
         // Freeze mine: pushed unit gets frozen, mine consumed
@@ -1423,7 +1472,17 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
             }
         }
     }
-    apply_damage(board, tx, ty, target_dmg, result, DamageSource::Weapon);
+    let defer_target_death_explosion = attack_dir.is_some()
+        && target_dmg > 0
+        && !matches!(wdef.push, PushDir::None | PushDir::Flip);
+    let deferred_death_explosion = if defer_target_death_explosion {
+        apply_damage_defer_death_explosion(
+            board, tx, ty, target_dmg, result, DamageSource::Weapon,
+        )
+    } else {
+        apply_damage(board, tx, ty, target_dmg, result, DamageSource::Weapon);
+        None
+    };
 
     // Chain weapon (Electric Whip): BFS through adjacent occupied tiles.
     // The shooter's own tile is excluded from the chain graph — in-game
@@ -1471,6 +1530,12 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
             }
             PushDir::Throw => apply_throw(board, ax, ay, tx, ty, dir, result),
             _ => {}
+        }
+
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
         }
 
         // AoE behind: hit tile behind target
@@ -2403,6 +2468,12 @@ mod tests {
             flags: UnitFlags::PUSHABLE,
             ..Default::default()
         })
+    }
+
+    fn add_enemy_type(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, type_name: &str) -> usize {
+        let idx = add_enemy(board, uid, x, y, hp);
+        board.units[idx].set_type_name(type_name);
+        idx
     }
 
     fn add_mech(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, weapon: WId) -> usize {
@@ -3496,6 +3567,49 @@ mod tests {
 
         assert_eq!(board.units[enemy].hp, 3, "zero-damage adjacent push stays non-damaging");
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 4));
+    }
+
+    #[test]
+    fn test_science_swap_water_kill_triggers_blast_psion_explosion() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        board.tile_mut(2, 1).terrain = Terrain::Water;
+        board.tile_mut(1, 1).terrain = Terrain::Building;
+        board.tile_mut(1, 1).building_hp = 1;
+
+        let mech_idx = add_mech(&mut board, 0, 2, 1, 2, WId::ScienceSwap);
+        let enemy = add_enemy(&mut board, 1, 2, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceSwap, 2, 2);
+
+        assert_eq!(board.units[enemy].hp, 0, "swapped enemy drowns on the mech's old water tile");
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (2, 1));
+        assert_eq!(board.units[mech_idx].hp, 1, "Blast Psion explosion damages adjacent Swap Mech");
+        assert_eq!(board.tile(1, 1).building_hp, 0, "Blast Psion explosion damages adjacent building");
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_flamethrower_kill_push_defers_blast_psion_explosion_to_final_tile() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        board.tile_mut(3, 6).terrain = Terrain::Building;
+        board.tile_mut(3, 6).building_hp = 2;
+
+        let mech_idx = add_mech(&mut board, 0, 2, 5, 5, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 2, 6, 1);
+        board.units[enemy].set_fire(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 2, 6);
+
+        assert_eq!(board.units[enemy].hp, -1, "burning target dies to Flamethrower bonus damage");
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (2, 7));
+        assert_eq!(board.units[mech_idx].hp, 5, "pre-push adjacent mech should not eat the explosion");
+        assert_eq!(board.tile(3, 6).building_hp, 2, "pre-push adjacent building should not eat the explosion");
+        assert_eq!(result.grid_damage, 0);
     }
 
     #[test]

@@ -788,7 +788,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v41 — Vulcan Artillery (Ranged_Ignite) zero-damage adjacent pushes no
 //   longer apply off-board edge-bump damage. Pre-v41 corpus archived as
 //   `failure_db_snapshot_sim_v40.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 41;
+// v42 — Instant terrain/mine deaths from push/swap/throw landing effects now
+//   run enemy-death side effects, including Blast/Boss Psion death explosions,
+//   Volatile decay, and psion aura teardown. Prime Flamethrower damage+push
+//   kills defer Blast/Boss Psion explosion to the post-push corpse tile.
+//   Replay snapshots also include all building tiles so Grid Defense and Blast
+//   Psion building diffs are visible even when event telemetry is sparse.
+//   Pre-v42 corpus archived as `failure_db_snapshot_sim_v41.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 42;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

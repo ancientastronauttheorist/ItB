@@ -120,6 +120,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 
 25. **New-run setup is fixed: Easy difficulty + Advanced Edition ON + Balanced Roll squad.** Updated 2026-04-28 from prior "Always Hard" stance — the goal is earning the 70 achievements (9/70 done), and Hard tanked our completion rate. On every new game's setup screen: click **Easy**, ensure **Advanced Edition** toggle is ON, click **Balanced Roll** for the squad, then **Start**. When invoking `python3 game_loop.py new_run`, omit `--difficulty` (default 0 = Easy) or pass `--difficulty 0`. Don't fall back to Normal/Hard, including after defeats. Rationale: `feedback_playstyle.md`.
 26. **Session lock discipline:** never run `game_loop.py read`, `status`, `solve`, `deploy_recommended`, `auto_turn`, `diagnose_next`, or other session-mutating game-loop commands in parallel. They share `sessions/active_session.json.lock`; run them one at a time, then parallelize only independent file reads or analysis commands.
+27. **No repo-wide Rust formatting during tactical fixes.** This Rust tree is not globally `cargo fmt`-clean; running `cargo fmt` rewrites many unrelated files and hides the simulator change under formatting noise. For live/debug fixes, keep Rust edits hand-scoped to touched hunks. Only run a repo-wide formatter as its own explicit cleanup task.
 
 ## Phase Protocols
 
