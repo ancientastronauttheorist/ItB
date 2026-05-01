@@ -20,6 +20,7 @@ phase strings known to the codebase.
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,28 @@ _REPO = Path(__file__).resolve().parent.parent.parent
 _KNOWN_TYPES_PATH = _REPO / "data" / "known_types.json"
 
 _CACHE: dict | None = None
+
+
+def _load_json_with_git_fallback(path: Path) -> dict | None:
+    """Load JSON from disk, falling back to HEAD when macOS file I/O stalls."""
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        pass
+
+    try:
+        rel = path.relative_to(_REPO).as_posix()
+        proc = subprocess.run(
+            ["git", "show", f"HEAD:{rel}"],
+            cwd=_REPO,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return json.loads(proc.stdout)
+    except Exception:
+        return None
 
 
 def _normalize_weapon(w: str) -> str:
@@ -52,10 +75,8 @@ def _load_known() -> dict:
             "phases": set(),
         }
         return _CACHE
-    try:
-        with open(_KNOWN_TYPES_PATH) as f:
-            doc = json.load(f)
-    except (json.JSONDecodeError, OSError):
+    doc = _load_json_with_git_fallback(_KNOWN_TYPES_PATH)
+    if doc is None:
         _CACHE = {
             "pawn_types": set(),
             "terrain_ids": set(),

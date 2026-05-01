@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-01T12:53:29.803187",
+  "label": "research_gate_hq_turn4",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "ScorpionBoss",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Beetle1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 1
+    }
+  ]
+}

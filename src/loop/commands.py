@@ -112,6 +112,16 @@ def _bridge_is_stale_post_mission(
         bridge_turn = int(bridge_data.get("turn", 0))
     except (TypeError, ValueError):
         bridge_turn = 0
+    if (
+        bridge_data.get("mission_id") in {"Mission_Final", "Mission_Final_Cave"}
+        and bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
+        and any(
+            bool(u.get("mech")) and bool(u.get("active"))
+            for u in bridge_data.get("units", []) or []
+            if isinstance(u, dict)
+        )
+    ):
+        return False
     return (
         bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
         and bridge_turn > 0
@@ -2276,6 +2286,63 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 candidate_evals.append(candidate_eval)
 
             selected_candidate_eval = _select_safe_plan_candidate(candidate_evals)
+            if (beam == 0
+                    and selected_candidate_eval is not None
+                    and plan_requires_safety_block(
+                        selected_candidate_eval.get("plan_safety")
+                    )):
+                # Emergency safety widening: the top-1 entry path can miss
+                # lower-ranked clean plans when the scorer strongly favors
+                # tactics that still concede grid. Do a wider top-K pass only
+                # after the normal candidate is blocked, then select the first
+                # clean plan if one exists.
+                wide_bridge_data = dict(bridge_data)
+                wide_bridge_data.pop("eval_weights", None)
+                wide_raw = _rust.solve_top_k(
+                    _json.dumps(wide_bridge_data), time_limit, 100,
+                )
+                wide_specs = []
+                for idx, rust_result in enumerate(_json.loads(wide_raw) or []):
+                    wide_specs.append({
+                        "rank": idx,
+                        "source": "top_k_safety",
+                        "rust_result": rust_result,
+                    })
+                wide_evals = []
+                for spec in wide_specs:
+                    candidate_solution = _rust_result_to_solution(
+                        spec.get("rust_result"), rust_elapsed, len(active_mechs)
+                    )
+                    if candidate_solution is None:
+                        continue
+                    candidate_eval = {
+                        "rank": spec.get("rank"),
+                        "source": spec.get("source"),
+                        "chain_score": None,
+                        "solution": candidate_solution,
+                    }
+                    candidate_eval.update(_evaluate_solution_safety(
+                        board, bridge_data, candidate_solution, spawns,
+                        current_turn=current_turn,
+                        total_turns=total_turns,
+                        remaining_spawns=rem_spawns,
+                        weights=breakdown_weights,
+                    ))
+                    wide_evals.append(candidate_eval)
+                    if not plan_requires_safety_block(
+                        candidate_eval.get("plan_safety")
+                    ):
+                        break
+                clean_wide = next(
+                    (c for c in wide_evals
+                     if not plan_requires_safety_block(c.get("plan_safety"))),
+                    None,
+                )
+                if clean_wide is not None:
+                    selected_candidate_eval = clean_wide
+                    candidate_evals = wide_evals
+                    candidate_count = len(wide_specs)
+
             candidate_safety_summaries = [
                 _candidate_safety_summary(c) for c in candidate_evals
             ]
@@ -6362,18 +6429,24 @@ def _deployable_mechs(board, session: RunSession) -> list[dict]:
     active solution. As a final fallback, use the standard player pawn IDs
     so the command remains useful on the deployment screen.
     """
-    live = [
-        {"uid": int(u.uid), "type": u.type}
+    live_by_uid = {
+        int(u.uid): {"uid": int(u.uid), "type": u.type}
         for u in board.units
         if u.is_mech and u.hp > 0
-    ]
-    if live:
-        return sorted(live, key=lambda m: m["uid"])
+    }
 
     recovered: dict[int, str] = {}
     if session.active_solution is not None:
         for action in session.active_solution.actions:
             recovered.setdefault(int(action.mech_uid), action.mech_type)
+    if live_by_uid and recovered:
+        merged = {
+            uid: live_by_uid.get(uid, {"uid": uid, "type": recovered[uid]})
+            for uid in sorted(recovered)
+        }
+        return list(merged.values())
+    if live_by_uid:
+        return [live_by_uid[uid] for uid in sorted(live_by_uid)]
     if recovered:
         return [
             {"uid": uid, "type": recovered[uid]}
