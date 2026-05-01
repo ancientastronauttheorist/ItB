@@ -1,10 +1,11 @@
-"""Step-function scoring for the "Kill N enemies" bonus objective.
+"""Progress + threshold scoring for the "Kill N enemies" bonus objective.
 
 BONUS_KILL_FIVE (mission.BonusObjs id=6) grants +1 rep star when the team
 kills at least N Vek in the mission (N = 5 Easy / 7 Normal/Hard). The
-evaluator fires the bonus exactly once — on the plan whose simulated kills
-cross the cumulative target (pre-turn kills_done < target AND
-post-turn kills_done + this_plan_kills ≥ target).
+evaluator rewards partial progress toward the target, then fires the full
+bonus exactly once — on the plan whose simulated kills cross the cumulative
+target (pre-turn kills_done < target AND post-turn kills_done +
+this_plan_kills ≥ target).
 
 This matters because without cumulative tracking the solver sees only
 per-turn kills scaled by enemy_killed (500 × future_factor) and has no
@@ -55,8 +56,8 @@ def test_bonus_does_not_fire_if_target_already_hit():
     no_kill = _score(b, kills=0)       # 7+0=7, target already hit
     # Only the per-turn kill_value should differentiate these — no
     # mission-kill bonus because the pre-turn count is already ≥ target.
-    # Per-turn kill_value is ~500 × scaled(ff) ≈ a few hundred, way less
-    # than the 15k bonus. Assert the diff is small.
+    # Only per-turn kill_value should differentiate these — progress and
+    # threshold bonuses are already consumed once the target was achieved.
     diff = extra_kill - no_kill
     assert diff < 5_000, (
         f"Bonus must not re-fire when target was already achieved. "
@@ -64,15 +65,16 @@ def test_bonus_does_not_fire_if_target_already_hit():
     )
 
 
-def test_bonus_does_not_fire_below_target():
-    """kills_done=2, target=7, plan kills 3 → 5<7 → no bonus."""
+def test_progress_scores_below_target_without_threshold_bonus():
+    """kills_done=2, target=7, plan kills 3 → progress, but no threshold."""
     b = _empty_board(kill_target=7, kills_done=2)
     with_3 = _score(b, kills=3)   # 2+3 = 5, below target
     with_0 = _score(b, kills=0)
     diff = with_3 - with_0
-    # 3 kills × per-turn kill_value ≈ 1500, no bonus.
-    assert diff < 5_000, (
-        f"Bonus should not fire below target. "
+    # 3 base kills plus progress shaping, but still far below the full
+    # threshold-cross bonus.
+    assert 4_000 < diff < 10_000, (
+        f"Progress should score below target without full threshold. "
         f"3kills={with_3}, 0kills={with_0}, diff={diff}"
     )
 
@@ -102,12 +104,17 @@ def test_breakdown_reports_kill_bonus():
     assert info["target"] == 7
     assert info["done_pre_turn"] == 5
     assert info["kills_this_turn"] == 3
+    assert info["progress_score"] > 0
+    assert info["threshold_score"] > 0
     assert info["score"] > 0
 
     b_below = _empty_board(kill_target=7, kills_done=2)
     bd_below = evaluate_breakdown(b_below, spawn_points=[], weights=EvalWeights(),
                                   current_turn=2, total_turns=5, kills=3)
-    assert bd_below["mission_kill_bonus"]["score"] == 0.0
+    below_info = bd_below["mission_kill_bonus"]
+    assert below_info["progress_score"] > 0
+    assert below_info["threshold_score"] == 0.0
+    assert below_info["score"] == below_info["progress_score"]
 
 
 def test_bridge_data_missing_fields_defaults_to_zero():

@@ -645,16 +645,23 @@ pub fn evaluate(
         score += weights.bigbomb_killed;
     }
 
-    // ── Mission bonus: "Kill N enemies" threshold cross ─────────────────
-    // Step function — fires exactly once per mission on the plan that
-    // pushes cumulative kills across the target. Pre-turn < target AND
-    // post-turn ≥ target is the cross condition. scaled() floor=0.25
-    // leaves a meaningful bonus even on the final turn since unlocking
-    // the rep star still matters.
+    // ── Mission bonus: "Kill N enemies" progress + threshold cross ───────
+    // Reward partial progress toward the cumulative target so early turns
+    // don't ignore the bonus until the exact threshold-cross turn. The full
+    // step reward still fires exactly once on the plan that reaches N kills.
     let kt = board.mission_kill_target as i32;
     if kt > 0 {
         let kd = board.mission_kills_done as i32;
-        if kd < kt && kd + kills >= kt {
+        let new_kills = kills.max(0);
+        if kd < kt && new_kills > 0 {
+            let progress_kills = ((kd + new_kills).min(kt) - kd).max(0);
+            if progress_kills > 0 {
+                let progress_ratio = progress_kills as f64 / kt as f64;
+                score += scaled(weights.mission_kill_bonus, ff, 0.10, 0.40)
+                    * progress_ratio;
+            }
+        }
+        if kd < kt && kd + new_kills >= kt {
             score += scaled(weights.mission_kill_bonus, ff, 0.25, 0.75);
         }
     }
@@ -1054,6 +1061,46 @@ mod tests {
         let s0 = evaluate(&b5, &[], &w, 0, 0, &p, 0);
         let s1 = evaluate(&b5, &[], &w, 2, 0, &p, 0);
         assert!((s1 - s0 - 200.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_kill_progress_scores_below_threshold() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 1;
+        b.total_turns = 5;
+        b.mission_kill_target = 5;
+        b.mission_kills_done = 0;
+
+        let no_kills = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let two_kills = evaluate(&b, &[], &w, 2, 0, &p, 0);
+
+        // 2 base kills on turn 1 = 1800. Progress shaping adds
+        // 15000 * 0.50 * (2/5) = 3000 before the full threshold bonus.
+        assert!((two_kills - no_kills - 4800.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_kill_threshold_still_fires_once() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 1;
+        b.total_turns = 5;
+        b.mission_kill_target = 5;
+        b.mission_kills_done = 4;
+
+        let no_kills = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let one_kill = evaluate(&b, &[], &w, 1, 0, &p, 0);
+
+        // 1 base kill = 900, progress shaping = 1500, threshold bonus = 15000.
+        assert!((one_kill - no_kills - 17400.0).abs() < 1.0);
+
+        b.mission_kills_done = 5;
+        let achieved_no_kills = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let achieved_one_kill = evaluate(&b, &[], &w, 1, 0, &p, 0);
+        assert!((achieved_one_kill - achieved_no_kills - 900.0).abs() < 1.0);
     }
 
     #[test]

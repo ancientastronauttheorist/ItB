@@ -211,6 +211,17 @@ def test_cmd_mission_end_no_commit_skips_helper(monkeypatch, tmp_path):
     assert out["next_mission_index"] == 1
 
 
+def test_cmd_mission_end_no_active_run_prints_error(monkeypatch, capsys):
+    s = RunSession()
+    monkeypatch.setattr(RunSession, "load", classmethod(lambda cls: s))
+
+    out = loop_commands.cmd_mission_end("win", no_commit=True)
+
+    captured = capsys.readouterr().out
+    assert out["error"].startswith("No active run")
+    assert "No active run" in captured
+
+
 def test_cmd_mission_end_default_invokes_helper(monkeypatch, tmp_path):
     s = _session()
     monkeypatch.setattr(RunSession, "load", classmethod(lambda cls: s))

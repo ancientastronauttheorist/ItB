@@ -95,6 +95,27 @@ def _recording_dir(session: RunSession) -> Path:
 
 # Difficulty label map (mirrors GameData.difficulty values)
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
+_POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
+_COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
+
+
+def _bridge_is_stale_post_mission(
+    save_phase: str,
+    bridge_data: dict | None,
+) -> bool:
+    """Return true when saveData has left combat but bridge still has a board."""
+    if save_phase not in _POST_MISSION_SAVE_PHASES:
+        return False
+    if not isinstance(bridge_data, dict):
+        return False
+    try:
+        bridge_turn = int(bridge_data.get("turn", 0))
+    except (TypeError, ValueError):
+        bridge_turn = 0
+    return (
+        bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
+        and bridge_turn > 0
+    )
 
 
 def _read_save_file_difficulty(profile: str = "Alpha") -> int | None:
@@ -1453,6 +1474,8 @@ def cmd_read(profile: str = "Alpha") -> dict:
     recalibrate()
 
     session = _load_session()
+    stale_bridge: dict | None = None
+    save_phase_from_stale_check: str | None = None
 
     # Try bridge first (direct Lua API access)
     if is_bridge_active():
@@ -1460,6 +1483,22 @@ def cmd_read(profile: str = "Alpha") -> dict:
         refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
+            save_phase = detect_game_phase(profile)
+            if _bridge_is_stale_post_mission(save_phase, bridge_data):
+                stale_bridge = {
+                    "source": "save_parser",
+                    "bridge_stale_ignored": True,
+                    "stale_bridge_phase": bridge_data.get("phase", "unknown"),
+                    "stale_bridge_turn": bridge_data.get("turn", 0),
+                    "note": (
+                        "Bridge still reports the previous combat board after "
+                        "mission end; using saveData phase."
+                    ),
+                }
+                save_phase_from_stale_check = save_phase
+            else:
+                save_phase_from_stale_check = save_phase
+        if board is not None and bridge_data is not None and stale_bridge is None:
             phase = bridge_data.get("phase", "unknown")
             old_phase = session.phase
             session.phase = phase
@@ -1790,12 +1829,14 @@ def cmd_read(profile: str = "Alpha") -> dict:
             return result
 
     # Fallback: detect phase from saveData.lua ONLY (no undoSave fallback)
-    phase = detect_game_phase(profile)
+    phase = save_phase_from_stale_check or detect_game_phase(profile)
 
     old_phase = session.phase
     session.phase = phase
 
     result = {"phase": phase}
+    if stale_bridge:
+        result.update(stale_bridge)
 
     if phase in ("combat_player", "combat_enemy"):
         state = load_game_state(profile)
@@ -1870,10 +1911,23 @@ def cmd_read(profile: str = "Alpha") -> dict:
         state = load_game_state(profile)
         if state:
             result["grid_power"] = f"{state.grid_power}/{state.grid_power_max}"
-        result["note"] = "Between missions (map/shop/island select). Use screenshot to determine exact screen."
+        if stale_bridge:
+            session.active_solution = None
+            session.actions_executed = 0
+            result["save_phase_note"] = (
+                "Between missions (map/shop/island select). Use screenshot "
+                "to determine exact screen."
+            )
+        else:
+            result["note"] = "Between missions (map/shop/island select). Use screenshot to determine exact screen."
 
     elif phase == "mission_ending":
-        result["note"] = "Mission is ending. Wait for reward screen."
+        if stale_bridge:
+            session.active_solution = None
+            session.actions_executed = 0
+            result["save_phase_note"] = "Mission is ending. Wait for reward screen."
+        else:
+            result["note"] = "Mission is ending. Wait for reward screen."
 
     elif phase == "no_save":
         result["note"] = "No save file found. Game may be on main menu or not running."
@@ -7328,11 +7382,15 @@ def cmd_mission_end(
     runs where you don't want every mission cluttering main).
     """
     if outcome not in ("win", "loss"):
-        return {"error": f"outcome must be 'win' or 'loss', got {outcome!r}"}
+        result = {"error": f"outcome must be 'win' or 'loss', got {outcome!r}"}
+        _print_result(result)
+        return result
 
     session = RunSession.load()
     if not session.run_id:
-        return {"error": "No active run. Start one with `new_run`."}
+        result = {"error": "No active run. Start one with `new_run`."}
+        _print_result(result)
+        return result
 
     run_dir = _recording_dir(session)
     mi = session.mission_index

@@ -86,9 +86,9 @@ class EvalWeights:
     # Old Earth Dam: +1 Rep + 14-tile flood. Turn-aware scaling in evaluate.
     dam_destroyed: float = 0
 
-    # "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Fires as a step
-    # function exactly once — on the plan that crosses the cumulative
-    # target. Solver will route kills to whichever turn reaches N fastest.
+    # "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Scores partial
+    # progress toward the target, then fires the full step bonus on the plan
+    # that crosses the cumulative target.
     mission_kill_bonus: float = 15000
 
     # Building protection
@@ -364,15 +364,19 @@ def evaluate(
     if bigbomb_was_alive and not getattr(board, 'bigbomb_alive', False):
         score += w.bigbomb_killed
 
-    # --- "KILL N ENEMIES" BONUS: step function on threshold cross ---
-    # Fires exactly once per mission, on the plan whose simulated kills push
-    # cumulative count to the target. Pre-turn < target AND post-turn ≥
-    # target is the cross condition. Scaled by future_factor so the bonus
-    # decays toward final turn (matches dam_destroyed pattern).
+    # --- "KILL N ENEMIES" BONUS: progress + threshold cross ---
+    # Partial progress matters early; the full step reward still fires once
+    # on the plan whose simulated kills push cumulative count to the target.
     kt = getattr(board, 'mission_kill_target', 0)
     if kt > 0:
         kd = getattr(board, 'mission_kills_done', 0)
-        if kd < kt and kd + kills >= kt:
+        new_kills = max(kills, 0)
+        if kd < kt and new_kills > 0:
+            progress_kills = max(min(kd + new_kills, kt) - kd, 0)
+            if progress_kills > 0:
+                progress_ratio = progress_kills / kt
+                score += _scaled(w.mission_kill_bonus, ff, 0.10, 0.40) * progress_ratio
+        if kd < kt and kd + new_kills >= kt:
             score += _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
 
     # --- ENVIRONMENT DANGER: SCALED ---
@@ -656,12 +660,22 @@ def evaluate_breakdown(
                         pods_proximity += 1
                         pods_score += w.pod_proximity
 
-    # Kill-N bonus: step function on cumulative-kill cross. See evaluate().
-    kill_n_score = 0.0
+    # Kill-N bonus: progress shaping plus cumulative-kill cross. See evaluate().
+    kill_n_progress_score = 0.0
+    kill_n_threshold_score = 0.0
     kt = getattr(board, 'mission_kill_target', 0)
     kd = getattr(board, 'mission_kills_done', 0)
-    if kt > 0 and kd < kt and kd + kills >= kt:
-        kill_n_score = _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+    new_kills = max(kills, 0)
+    if kt > 0 and kd < kt and new_kills > 0:
+        progress_kills = max(min(kd + new_kills, kt) - kd, 0)
+        if progress_kills > 0:
+            kill_n_progress_score = (
+                _scaled(w.mission_kill_bonus, ff, 0.10, 0.40)
+                * (progress_kills / kt)
+            )
+    if kt > 0 and kd < kt and kd + new_kills >= kt:
+        kill_n_threshold_score = _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+    kill_n_score = kill_n_progress_score + kill_n_threshold_score
 
     total = (buildings_score + building_hp_score
              + objective_rep_score + objective_grid_score
@@ -699,6 +713,8 @@ def evaluate_breakdown(
             "target": kt,
             "done_pre_turn": kd,
             "kills_this_turn": kills,
+            "progress_score": kill_n_progress_score,
+            "threshold_score": kill_n_threshold_score,
             "score": kill_n_score,
         },
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},

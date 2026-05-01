@@ -244,9 +244,14 @@ local function dump_state()
 
     local state = {}
 
-    -- Phase detection
+    -- Phase detection. Game:GetTeamTurn() can keep returning the last combat
+    -- team after MissionEnd, so require the active-mission cache too.
+    local in_active_mission = (_ITB_CURRENT_MISSION ~= nil)
+    state.in_active_mission = in_active_mission
     local team_turn = Game and Game:GetTeamTurn() or 0
-    if team_turn == 1 then
+    if not in_active_mission then
+        state.phase = "unknown"
+    elseif team_turn == 1 then
         state.phase = "combat_player"
     elseif team_turn == 6 then
         state.phase = "combat_enemy"
@@ -1720,6 +1725,7 @@ Mission.MissionEnd = function(self)
     _ITB_CURRENT_MISSION = nil
     _ITB_TELEPORT_PAIRS = {}
     _orig_MissionEnd(self)
+    pcall(dump_state)
 end
 
 -- Mission_Teleporter:StartMission — capture pad pairs.
