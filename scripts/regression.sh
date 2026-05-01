@@ -14,6 +14,7 @@ FRAMEWORK_DIR=$(dirname $(dirname $(dirname "$PYTHON_PREFIX")))
 echo "=== Rust regression (cargo test --no-default-features) ==="
 cd "$REPO/rust_solver"
 DYLD_FRAMEWORK_PATH="$FRAMEWORK_DIR" \
+    CARGO_INCREMENTAL=0 \
     cargo test --release --test regression --no-default-features -- --nocapture
 
 echo ""

@@ -528,3 +528,55 @@ The Heap mission secured at 2/7 grid. Protected Defense Lab, failed ACID kill bo
 
 Post-Heap reward flow: Ignite pilot promoted with +1 Mech Move. Dismissed promotion popup and returned to Detritus island map with 3 reputation, 2 cores, 2/7 grid.
 
+Phase: combat_player → **combat_enemy** [20:37:29]
+
+Phase: combat_enemy → **combat_player** [20:42:57]
+
+### Solver Output [20:43:02]
+
+Score: 82236 | Threats: 1
+
+1. TeleMech, move D6→B3, fire Teleporter at B2
+2. FlameMech, move E5→C3, fire Flamethrower at B3
+3. IgniteMech, move F6→E2, fire Ignite at A2
+
+End Turn [20:43:17]
+
+### Solver Output [20:44:45]
+
+Score: 107366 | Threats: 1
+
+1. IgniteMech, fire Ignite at E5
+2. TeleMech, move C2→D5, fire Teleporter at E5
+3. FlameMech, move C3→D6, fire Flamethrower at D5
+
+End Turn [20:44:57]
+
+### Solver Output [20:45:38]
+
+Score: 117041 | Threats: 1
+
+1. TeleMech, move E5→F3, fire Teleporter at F2
+2. IgniteMech, move E2→F5, fire Ignite at F3
+3. FlameMech, move D6→E3, fire Flamethrower at F3
+
+End Turn [20:45:50]
+
+### Solver Output [20:46:40]
+
+Score: 84086 | Threats: 0
+
+1. IgniteMech, fire Ignite at F2
+2. TeleMech, move F1→D4, fire Teleporter at D3
+3. FlameMech, move E3→F3, fire Flamethrower at F2
+
+End Turn [20:46:50]
+
+#### Claude Note [20:49:40]
+
+Corporate HQ secured at 2/7 grid; protected Corporate Tower, failed Destroy the Psion Abomination bonus; boss survived as expected by CEO warning. Turn 4 had Ranged_Ignite damage_amount desync, re-solved successfully and soft-disabled Ignite.
+
+#### Claude Note [20:54:07]
+
+Post-Corporate HQ shop: spent all 4 reputation on Grid Power, raising grid from 2/7 to 6/7; left island to next island selection.
+

@@ -81,6 +81,9 @@ bitflags! {
         /// Currently only Prime_Flamethrower; upgraded multi-tile mode
         /// (PathSize=2/3) is not modelled — base equip uses PathSize=1.
         const BURNS_FIRE_TARGETS = 1 << 22;
+        /// Zero-damage adjacent artillery pushes do not deal edge-bump damage
+        /// when the destination is off-board. Confirmed for Vulcan Artillery.
+        const NO_EDGE_BUMP_ADJACENT_PUSH = 1 << 23;
     }
 }
 
@@ -122,6 +125,7 @@ impl WeaponDef {
     pub fn damage_scales_with_dist(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGE_SCALES_WITH_DIST) }
     pub fn queued_damage_persists(&self) -> bool { self.flags.contains(WeaponFlags::QUEUED_DAMAGE_PERSISTS) }
     pub fn burns_fire_targets(&self) -> bool { self.flags.contains(WeaponFlags::BURNS_FIRE_TARGETS) }
+    pub fn no_edge_bump_adjacent_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH) }
 }
 
 /// Default weapon def (no-op).
@@ -517,7 +521,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
-        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 36: Ranged_Ice — Cryo-Launcher
     w[36] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, range_min: 2,
         flags: f(WeaponFlags::FREEZE.bits()), ..DEF };

@@ -1703,6 +1703,11 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             if !in_bounds(nx, ny) { continue; }
             apply_damage(board, nx as u8, ny as u8, wdef.damage_outer, result, DamageSource::Weapon);
             if wdef.push == PushDir::Outward {
+                if wdef.no_edge_bump_adjacent_push() && wdef.damage_outer == 0 {
+                    let bx = nx + dx;
+                    let by = ny + dy;
+                    if !in_bounds(bx, by) { continue; }
+                }
                 apply_push(board, nx as u8, ny as u8, i, result);
             }
         }
@@ -3468,6 +3473,30 @@ mod tests {
     // SiegeMech weapon: targets a CENTER tile (which is NOT damaged) and hits
     // the 4 cardinal-adjacent tiles with 1 damage + push outward. Used to
     // protect a building/objective by clearing enemies around it.
+
+    #[test]
+    fn test_ranged_ignite_adjacent_edge_push_does_not_bump() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 0, 3, WId::RangedIgnite);
+        let edge_enemy = add_enemy(&mut board, 1, 7, 2, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgnite, 6, 2);
+
+        assert_eq!(board.units[edge_enemy].hp, 3, "zero-damage air push must not edge-bump");
+        assert_eq!((board.units[edge_enemy].x, board.units[edge_enemy].y), (7, 2));
+    }
+
+    #[test]
+    fn test_ranged_ignite_adjacent_non_edge_push_still_moves() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 2, 3, WId::RangedIgnite);
+        let enemy = add_enemy(&mut board, 1, 5, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgnite, 4, 4);
+
+        assert_eq!(board.units[enemy].hp, 3, "zero-damage adjacent push stays non-damaging");
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 4));
+    }
 
     #[test]
     fn test_cluster_artillery_no_damage_to_center() {

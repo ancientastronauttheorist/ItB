@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-30T20:50:21.516989",
+  "label": "corporate_hq_secured_2_grid",
+  "turn": 4,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        7,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Boss",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Digger1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 4
+    }
+  ]
+}

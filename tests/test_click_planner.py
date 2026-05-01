@@ -190,12 +190,12 @@ class _OffsetWindow:
 executor._cached_window = _OffsetWindow()
 plan = plan_end_turn()
 check("end_turn: legacy global coord includes window origin",
-      (plan[0]["x"], plan[0]["y"]) == (310, 110), plan)
+      (plan[0]["x"], plan[0]["y"]) == (341, 152), plan)
 check("end_turn: window-local coord strips window origin",
-      (plan[0]["window_x"], plan[0]["window_y"]) == (95, 78), plan)
+      (plan[0]["window_x"], plan[0]["window_y"]) == (126, 120), plan)
 check("end_turn: codex click uses window-local coord",
       (plan[0]["codex_computer_use"]["x"],
-       plan[0]["codex_computer_use"]["y"]) == (95, 78), plan)
+       plan[0]["codex_computer_use"]["y"]) == (126, 120), plan)
 executor._cached_window = _FakeWindow()
 
 print(f"\n{passed}/{passed+failed} tests passed")

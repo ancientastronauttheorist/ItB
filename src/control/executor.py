@@ -89,7 +89,9 @@ def recalibrate():
 # Live-calibrated 2026-04-11 against Rift Walkers combat mech panel.
 # Slot 2 mirrors slot 1 horizontally inside the same weapon box; it
 # activates only when a mech has a second weapon (time pod upgrade).
-_UI_END_TURN = (95, 78)
+# Recalibrated 2026-04-30 from Corporate HQ: the Codex Computer Use
+# window-local center of the visible End Turn button was (126, 120).
+_UI_END_TURN = (126, 120)
 # Weapon/repair slot offsets re-calibrated 2026-04-23. Old values (191/255/111, 528)
 # missed the icons by ~25 px in Y and ~10 px in X. Empirical hover-verify
 # on Pinnacle Frozen Plains placed the Aerial Bombs icon center at image

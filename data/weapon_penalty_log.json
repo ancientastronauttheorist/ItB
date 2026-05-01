@@ -36,7 +36,7 @@
       "weapon_id": "Ranged_Defensestrike"
     },
     "damage_amount|Ranged_Ignite|attack": {
-      "count": 1,
+      "count": 2,
       "last_run_id": "",
       "weapon_id": "Ranged_Ignite"
     },

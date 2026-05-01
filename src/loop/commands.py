@@ -4524,6 +4524,15 @@ def cmd_calibrate() -> dict:
         "row_step": [round(grid.row_dx, 2), round(grid.row_dy, 2)],
         "col_step": [round(grid.col_dx, 2), round(grid.col_dy, 2)],
     }
+    end_turn_plan = plan_end_turn()[0]
+    result["ui_positions"] = {
+        "end_turn": {
+            "x": end_turn_plan["x"],
+            "y": end_turn_plan["y"],
+            "window_x": end_turn_plan["window_x"],
+            "window_y": end_turn_plan["window_y"],
+        }
+    }
 
     print(f"\n=== CALIBRATION ===")
     print(f"Window: x={win.x} y={win.y} w={win.width} h={win.height}")
@@ -4537,7 +4546,8 @@ def cmd_calibrate() -> dict:
         print(f"  save({sx},{sy}) -> MCP ({px:.0f}, {py:.0f})")
 
     print(f"\nUI positions:")
-    print(f"  End Turn: ({win.x + 95}, {win.y + 78})")
+    print(f"  End Turn: ({end_turn_plan['x']}, {end_turn_plan['y']}) "
+          f"| window-local ({end_turn_plan['window_x']}, {end_turn_plan['window_y']})")
     print(f"  Portrait 0: ({win.x + 50}, {win.y + 135})")
     print(f"  Portrait 1: ({win.x + 50}, {win.y + 195})")
     print(f"  Portrait 2: ({win.x + 50}, {win.y + 245})")
@@ -6269,6 +6279,148 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
     used by `cmd_read` to print hazard warnings.
     """
     return [(d["x"], d["y"]) for d in recommend_deploy_tiles(board, deploy_zone)]
+
+
+def _visual_tile(x: int, y: int) -> str:
+    return f"{chr(72 - y)}{8 - x}"
+
+
+def _deployable_mechs(board, session: RunSession) -> list[dict]:
+    """Return deployable mech uid/type pairs in prompt order.
+
+    During deployment the bridge may not list unplaced player pawns in
+    `units`; however their UIDs are stable through the run. Prefer live
+    bridge units when present, otherwise recover uid/type from the last
+    active solution. As a final fallback, use the standard player pawn IDs
+    so the command remains useful on the deployment screen.
+    """
+    live = [
+        {"uid": int(u.uid), "type": u.type}
+        for u in board.units
+        if u.is_mech and u.hp > 0
+    ]
+    if live:
+        return sorted(live, key=lambda m: m["uid"])
+
+    recovered: dict[int, str] = {}
+    if session.active_solution is not None:
+        for action in session.active_solution.actions:
+            recovered.setdefault(int(action.mech_uid), action.mech_type)
+    if recovered:
+        return [
+            {"uid": uid, "type": recovered[uid]}
+            for uid in sorted(recovered)
+        ]
+
+    return [
+        {"uid": 0, "type": "uid-0"},
+        {"uid": 1, "type": "uid-1"},
+        {"uid": 2, "type": "uid-2"},
+    ]
+
+
+def cmd_deploy_recommended(profile: str = "Alpha") -> dict:
+    """Deploy three mechs to the ranked deployment tiles via bridge DEPLOY.
+
+    This handles the flaky manual deployment strip by sending `DEPLOY uid x y`
+    directly through the Lua bridge. It intentionally does not click Confirm;
+    the caller should verify the on-screen placement, then click the visible
+    CONFIRM button.
+    """
+    if not is_bridge_active():
+        result = {"error": "Bridge not active — deploy_recommended requires bridge"}
+        _print_result(result)
+        return result
+
+    refresh_bridge_state()
+    board, bridge_data = read_bridge_state()
+    if board is None or bridge_data is None:
+        result = {"error": "Failed to read bridge state"}
+        _print_result(result)
+        return result
+
+    deploy_zone = bridge_data.get("deployment_zone", [])
+    turn = bridge_data.get("turn", -1)
+    if turn != 0 or not deploy_zone:
+        result = {
+            "error": "Not on deployment screen or no deployment zone available",
+            "turn": turn,
+            "phase": bridge_data.get("phase", "unknown"),
+        }
+        _print_result(result)
+        return result
+
+    ranked = recommend_deploy_tiles(board, deploy_zone)
+    if not ranked:
+        ranked = [
+            {"x": int(t[0]), "y": int(t[1]), "hazard": None,
+             "hazard_warning": False}
+            for t in deploy_zone[:3]
+        ]
+
+    session = _load_session()
+    mechs = _deployable_mechs(board, session)
+    deployments = []
+
+    print(f"\n=== DEPLOY_RECOMMENDED ({len(deploy_zone)} tiles available) ===")
+    if not any(u.is_mech for u in board.units):
+        print("  NOTE: bridge did not list unplaced mechs; using recovered/stable UIDs")
+
+    for mech, tile in zip(mechs[:3], ranked[:3]):
+        uid = mech["uid"]
+        dx, dy = int(tile["x"]), int(tile["y"])
+        visual = _visual_tile(dx, dy)
+        print(f"  Deploying {mech['type']} (uid={uid}) to {visual} ({dx},{dy})")
+        try:
+            ack = deploy_mech(uid, dx, dy)
+        except (TimeoutError, BridgeError) as e:
+            result = {
+                "error": f"Deploy failed for uid={uid}: {e}",
+                "deployments": deployments,
+            }
+            _print_result(result)
+            return result
+
+        entry = {
+            "uid": uid,
+            "mech_type": mech["type"],
+            "bridge": [dx, dy],
+            "visual": visual,
+            "hazard": tile.get("hazard"),
+            "hazard_warning": bool(tile.get("hazard_warning")),
+            "ack": ack,
+        }
+        deployments.append(entry)
+        print(f"    ACK: {ack}")
+
+    time.sleep(0.5)
+    refresh_bridge_state()
+    check_board, check_data = read_bridge_state()
+    actual_by_uid = {}
+    if check_board is not None:
+        actual_by_uid = {
+            int(u.uid): (int(u.x), int(u.y))
+            for u in check_board.units
+            if u.is_mech and u.hp > 0
+        }
+
+    all_verified = True
+    for entry in deployments:
+        actual = actual_by_uid.get(entry["uid"])
+        entry["actual_bridge"] = list(actual) if actual else None
+        entry["verified"] = actual == tuple(entry["bridge"])
+        all_verified = all_verified and bool(entry["verified"])
+        status = "PASS" if entry["verified"] else f"MISS actual={actual}"
+        print(f"    VERIFY {entry['mech_type']} {entry['visual']}: {status}")
+
+    result = {
+        "status": "OK" if all_verified else "WARN",
+        "deployments": deployments,
+        "next_step": "click the visible CONFIRM button, then run `auto_turn --time-limit 10`",
+        "phase": (check_data or bridge_data).get("phase", "unknown"),
+    }
+    _print_result(result)
+    return result
 
 
 def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,

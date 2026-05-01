@@ -48,6 +48,7 @@ from src.loop.commands import (
     cmd_click_action,
     cmd_click_end_turn,
     cmd_click_balanced_roll,
+    cmd_deploy_recommended,
     cmd_recommend_mission,
     cmd_research_attach_community,
     cmd_research_next,
@@ -345,6 +346,12 @@ def main():
         help="Plan a click for the Balanced Roll button on squad-select",
     )
 
+    p_deploy_recommended = sub.add_parser(
+        "deploy_recommended",
+        help="Deploy mechs to ranked deployment tiles via bridge",
+    )
+    p_deploy_recommended.add_argument("--profile", default="Alpha")
+
     # recommend_mission
     p_rec_mission = sub.add_parser(
         "recommend_mission",
@@ -526,6 +533,8 @@ def main():
         cmd_click_end_turn()
     elif args.command == "click_balanced_roll":
         cmd_click_balanced_roll()
+    elif args.command == "deploy_recommended":
+        cmd_deploy_recommended(profile=args.profile)
     elif args.command == "recommend_mission":
         cmd_recommend_mission(
             profile=args.profile,

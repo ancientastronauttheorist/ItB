@@ -785,7 +785,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   queued-damage-persistence remains fixed-target. Fixes Venting Center T1
 //   Scorpion2 swap killing TeleMech at E4. Pre-v40 corpus archived as
 //   `failure_db_snapshot_sim_v39.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 40;
+// v41 — Vulcan Artillery (Ranged_Ignite) zero-damage adjacent pushes no
+//   longer apply off-board edge-bump damage. Pre-v41 corpus archived as
+//   `failure_db_snapshot_sim_v40.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 41;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

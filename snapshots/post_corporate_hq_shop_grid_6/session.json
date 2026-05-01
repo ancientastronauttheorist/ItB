@@ -803,12 +803,6 @@
       "turn": 4,
       "label": "note",
       "message": "Corporate HQ secured at 2/7 grid; protected Corporate Tower, failed Destroy the Psion Abomination bonus; boss survived as expected by CEO warning. Turn 4 had Ranged_Ignite damage_amount desync, re-solved successfully and soft-disabled Ignite."
-    },
-    {
-      "timestamp": "2026-04-30T20:54:07.508999",
-      "turn": 4,
-      "label": "note",
-      "message": "Post-Corporate HQ shop: spent all 4 reputation on Grid Power, raising grid from 2/7 to 6/7; left island to next island selection."
     }
   ],
   "recorded_post_enemy_turns": [

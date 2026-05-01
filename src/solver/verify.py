@@ -462,7 +462,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # queued-damage-persistence remains fixed-target. Fixes Venting Center T1
 # Scorpion2 swap killing TeleMech at E4. Pre-v40 corpus archived as
 # failure_db_snapshot_sim_v39.jsonl.
-SIMULATOR_VERSION = 40
+# v41 — Vulcan Artillery (Ranged_Ignite) zero-damage adjacent pushes no
+# longer deal edge-bump damage when the outward destination is off-board.
+# Corporate HQ turn 4 predicted TeleMech HP 2→1 from an edge air-push;
+# live game left it at HP 2. On-board adjacent pushes still move units.
+# Pre-v41 corpus archived as failure_db_snapshot_sim_v40.jsonl.
+SIMULATOR_VERSION = 41
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
