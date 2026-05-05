@@ -483,12 +483,6 @@
         "WallMech, move C3\u2192A4, fire Grappling Hook at C4",
         "PulseMech, repair"
       ]
-    },
-    {
-      "timestamp": "2026-05-05T14:21:33.604892",
-      "turn": 4,
-      "label": "note",
-      "message": "Artifact Vaults secured after accepting turn 3 safety-block dirty plan; actual grid remained 4/7, both bonus objectives completed, WallMech pilot gained Technician."
     }
   ],
   "recorded_post_enemy_turns": [

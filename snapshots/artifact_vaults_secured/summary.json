@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-05T14:20:53.099678",
+  "label": "artifact_vaults_secured",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "ArchiveArtillery",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "WallMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

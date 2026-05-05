@@ -7,24 +7,38 @@
   "current_mission": "Mission_Artillery",
   "islands_completed": [],
   "mission_index": 7,
-  "last_mission_turn": 4,
-  "current_turn": 4,
-  "phase": "unknown",
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 1,
         "mech_type": "ArtiMech",
         "move_to": [
-          5,
-          3
+          2,
+          2
         ],
         "weapon": "Ranged_Artillerymech",
+        "target": [
+          7,
+          2
+        ],
+        "description": "ArtiMech, fire Artemis Artillery at F1"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "PulseMech",
+        "move_to": [
+          3,
+          3
+        ],
+        "weapon": "Science_Repulse",
         "target": [
           3,
           3
         ],
-        "description": "ArtiMech, move F3\u2192E3, fire Artemis Artillery at E5"
+        "description": "PulseMech, move C7\u2192E5, fire Repulse at E5"
       },
       {
         "mech_uid": 8,
@@ -35,43 +49,29 @@
         ],
         "weapon": "Archive_ArtShot",
         "target": [
-          3,
+          4,
           5
         ],
-        "description": "ArchiveArtillery, move B7\u2192C7, fire Old Earth Artillery at C5"
+        "description": "ArchiveArtillery, move B7\u2192C7, fire Old Earth Artillery at C4"
       },
       {
         "mech_uid": 0,
         "mech_type": "WallMech",
         "move_to": [
-          4,
-          7
+          5,
+          6
         ],
         "weapon": "Brute_Grapple",
         "target": [
-          4,
-          5
+          5,
+          2
         ],
-        "description": "WallMech, move C3\u2192A4, fire Grappling Hook at C4"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
-        "move_to": [
-          3,
-          1
-        ],
-        "weapon": "_REPAIR",
-        "target": [
-          3,
-          1
-        ],
-        "description": "PulseMech, repair"
+        "description": "WallMech, move C5\u2192B3, fire Grappling Hook at F3"
       }
     ],
-    "score": 132137.85714285716,
-    "turn": 4,
-    "input_fingerprint": "0:5,5:5|10:2,2:1|1:5,2:1|2:3,2:1|31:4,5:3|33:3,4:3|8:1,6:2"
+    "score": 99346.57145367347,
+    "turn": 1,
+    "input_fingerprint": "0:3,5:5|10:3,2:3|11:6,2:3|1:2,2:2|29:6,6:1|2:1,5:3|8:1,6:2|9:6,5:5"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -423,72 +423,6 @@
         "ArchiveArtillery, move B7\u2192C7, fire Old Earth Artillery at C4",
         "WallMech, move C5\u2192B3, fire Grappling Hook at F3"
       ]
-    },
-    {
-      "timestamp": "2026-05-05T13:58:53.265764",
-      "turn": 1,
-      "label": "solve",
-      "score": 99346.57145367347,
-      "actions": [
-        "ArtiMech, fire Artemis Artillery at F1",
-        "PulseMech, move C7\u2192E5, fire Repulse at E5",
-        "ArchiveArtillery, move B7\u2192C7, fire Old Earth Artillery at C4",
-        "WallMech, move C5\u2192B3, fire Grappling Hook at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T14:00:31.368021",
-      "turn": 2,
-      "label": "solve",
-      "score": 110172.85714285712,
-      "actions": [
-        "ArchiveArtillery, move C7\u2192B7, fire Old Earth Artillery at B3",
-        "ArtiMech, move F6\u2192G4, fire Artemis Artillery at C4",
-        "PulseMech, fire Repulse at E5",
-        "WallMech, fire Grappling Hook at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T14:01:47.314254",
-      "turn": 3,
-      "label": "solve",
-      "score": 129342.28587937355,
-      "actions": [
-        "ArtiMech, move G4\u2192F3, fire Artemis Artillery at C3",
-        "WallMech, move A4\u2192C3, fire Grappling Hook at E3",
-        "PulseMech, move E5\u2192F5, fire Repulse at F5",
-        "ArchiveArtillery, fire Old Earth Artillery at F7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T14:17:58.756877",
-      "turn": 3,
-      "label": "solve",
-      "score": 129342.28587937355,
-      "actions": [
-        "ArtiMech, move G4\u2192F3, fire Artemis Artillery at C3",
-        "WallMech, move A4\u2192C3, fire Grappling Hook at E3",
-        "PulseMech, move E5\u2192F5, fire Repulse at F5",
-        "ArchiveArtillery, fire Old Earth Artillery at F7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T14:19:04.946243",
-      "turn": 4,
-      "label": "solve",
-      "score": 132137.85714285716,
-      "actions": [
-        "ArtiMech, move F3\u2192E3, fire Artemis Artillery at E5",
-        "ArchiveArtillery, move B7\u2192C7, fire Old Earth Artillery at C5",
-        "WallMech, move C3\u2192A4, fire Grappling Hook at C4",
-        "PulseMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T14:21:33.604892",
-      "turn": 4,
-      "label": "note",
-      "message": "Artifact Vaults secured after accepting turn 3 safety-block dirty plan; actual grid remained 4/7, both bonus objectives completed, WallMech pilot gained Technician."
     }
   ],
   "recorded_post_enemy_turns": [
@@ -550,18 +484,6 @@
     ],
     [
       5,
-      3
-    ],
-    [
-      7,
-      1
-    ],
-    [
-      7,
-      2
-    ],
-    [
-      7,
       3
     ]
   ],
@@ -1042,87 +964,6 @@
           6
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "grid_power",
-      "categories": [
-        "grid_power"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "grid_power|Archive_ArtShot|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 8,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Archive_ArtShot",
-        "target": [
-          4,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Ranged_Artillerymech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          3,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|_REPAIR|repair",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "repair",
-        "sub_action": "repair",
-        "action_index": 3,
-        "turn": 4,
-        "weapon": "_REPAIR",
-        "target": [
-          3,
-          3
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -1510,10 +1351,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "2ef73987b167a8f5",
-    "classes": "mgggggggbggmbgggmggbbgbgmgggggbggggggggfgggfgrgwwggmgggwgggfggww",
+    "hash": "1e6b4ef034337bdb",
+    "classes": "mgggggggbggmbgggmfgbbgbgmggfggbgggggggffgggfgbgwwggmgggwgggfggww",
     "mission_index": 7,
-    "turn": 4
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }

@@ -541,8 +541,16 @@ local function dump_state()
 
                 -- Enemy attack data
                 if p:GetTeam() == TEAM_ENEMY then
+                    local qskill = save_data.queued_skills[pid]
                     local ok_sw, sw = pcall(function() return p:GetSelectedWeapon() end)
-                    if ok_sw and sw and sw > 0 then
+                    if qskill ~= nil then
+                        unit.has_queued_attack = qskill >= 0
+                        if ok_sw and sw and sw > 0 and not unit.has_queued_attack then
+                            log_bridge(string.format(
+                                "selected_weapon ignored for non-attacking %s/%d: GetSelectedWeapon=%s iQueuedSkill=%s",
+                                ptype or "?", pid, tostring(sw), tostring(qskill)))
+                        end
+                    elseif ok_sw and sw and sw > 0 then
                         unit.has_queued_attack = true
                     end
 
@@ -561,7 +569,6 @@ local function dump_state()
                         -- (1) Save-file piTarget (works for Leapers, Scorpions,
                         --     any melee/jumper pawn with AddQueuedMelee).
                         local qt = save_data.queued_targets[pid]
-                        local qskill = save_data.queued_skills[pid]
                         if qt and qskill and qskill >= 0
                                 and qt.x >= 0 and qt.y >= 0
                                 and qt.x <= 7 and qt.y <= 7 then

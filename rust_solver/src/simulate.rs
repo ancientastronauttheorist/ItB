@@ -291,11 +291,20 @@ fn break_web_from(board: &mut Board, src_uid: u16) {
     if src_uid == 0 { return; }
     for i in 0..board.unit_count as usize {
         if board.units[i].web() && board.units[i].web_source_uid == src_uid {
-            board.units[i].set_web(false);
-            if board.units[i].move_speed == 0 {
-                board.units[i].move_speed = board.units[i].base_move;
-            }
+            clear_unit_web(board, i);
         }
+    }
+}
+
+/// Clear a unit's own web status. A pushed webbed pawn breaks free even when
+/// the web source stays put; source movement/death is handled by
+/// `break_web_from`.
+fn clear_unit_web(board: &mut Board, unit_idx: usize) {
+    if !board.units[unit_idx].web() { return; }
+    board.units[unit_idx].set_web(false);
+    board.units[unit_idx].web_source_uid = 0;
+    if board.units[unit_idx].move_speed == 0 {
+        board.units[unit_idx].move_speed = board.units[unit_idx].base_move;
     }
 }
 
@@ -1070,6 +1079,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
         return;
     }
+
+    // Pushing a webbed pawn breaks the web even if the push bumps into an
+    // obstacle instead of moving the pawn.
+    clear_unit_web(board, unit_idx);
 
     let (dx, dy) = DIRS[direction];
     let nx_i = x as i8 + dx;
@@ -2399,6 +2412,7 @@ pub fn simulate_attack(
             unit.set_active(false);
             (unit.pilot_repairman(), unit.x, unit.y)
         };
+        board.tile_mut(rx, ry).set_on_fire(false);
         // Harold Schmidt (Pilot_Repairman) — Frenzied Repair: push all four
         // cardinal neighbours outward. Uses `apply_push` so push chains,
         // bump-into-building damage, drown/lava kills, and terrain
@@ -5586,17 +5600,48 @@ mod tests {
     #[test]
     fn test_web_survives_pad_swap() {
         // Pad swap is NOT a push; webbed units stay webbed after teleporting.
-        // Push-break path sets `.set_web(false)` on the pusher's webbing
-        // target; pad swap must not touch the web flag.
+        // Pad swap itself must not touch the web flag.
         let mut board = make_test_board();
         board.teleporter_pairs.push((3, 3, 6, 6));
-        let idx = add_enemy(&mut board, 1, 2, 3, 3);
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
         board.units[idx].set_web(true);
 
-        let mut result = ActionResult::default();
-        apply_push(&mut board, 2, 3, 1, &mut result); // push onto pad
+        apply_teleport_on_land(&mut board, idx);
         assert_eq!((board.units[idx].x, board.units[idx].y), (6, 6));
         assert!(board.units[idx].web(), "Pad swap must not break web");
+    }
+
+    #[test]
+    fn test_push_breaks_webbed_unit() {
+        let mut board = make_test_board();
+        let idx = add_mech(&mut board, 1, 3, 3, 3, WId::None);
+        board.units[idx].set_web(true);
+        board.units[idx].web_source_uid = 99;
+        board.units[idx].move_speed = 0;
+        board.units[idx].base_move = 3;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 1, &mut result);
+
+        assert_eq!((board.units[idx].x, board.units[idx].y), (4, 3));
+        assert!(!board.units[idx].web(), "Push must break the pushed unit's web");
+        assert_eq!(board.units[idx].web_source_uid, 0);
+        assert_eq!(board.units[idx].move_speed, board.units[idx].base_move);
+    }
+
+    #[test]
+    fn test_repair_extinguishes_current_tile_fire() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::Repair);
+        board.units[mech].hp = 1;
+        board.units[mech].set_fire(true);
+        board.tile_mut(3, 3).set_on_fire(true);
+
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair, (3, 3), &WEAPONS);
+
+        assert_eq!(board.units[mech].hp, 2);
+        assert!(!board.units[mech].fire(), "Repair clears unit fire");
+        assert!(!board.tile(3, 3).on_fire(), "Repair extinguishes the occupied tile");
     }
 
     #[test]

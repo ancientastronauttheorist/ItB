@@ -816,7 +816,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   path. Fixes Normal run 20260504_210332_088 m05 t01/t02 grid-loss
 //   underprediction. Pre-v46 corpus archived as
 //   `failure_db_snapshot_sim_v45.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 46;
+// v47 — Web/repair cleanup from Artifact Vaults: pushing a webbed pawn clears
+//   that pawn's own web_source_uid + WEB flag, and Repair extinguishes the
+//   occupied tile's fire as well as the unit fire status. Bridge attack-intent
+//   extraction also now trusts save iQueuedSkill over stale GetSelectedWeapon
+//   to avoid false phantom attacks. Pre-v47 corpus archived as
+//   `failure_db_snapshot_sim_v46.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 47;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
