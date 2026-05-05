@@ -400,6 +400,8 @@ local function dump_state()
                     tile.freeze_mine = true
                 elseif item == "Item_Mine" then
                     tile.old_earth_mine = true
+                elseif item == "Item_Repair_Mine" then
+                    tile.repair_platform = true
                 end
             end
 
@@ -966,6 +968,20 @@ local function dump_state()
             end
             if mission.KilledVek ~= nil then
                 state.mission_kills_done = mission.KilledVek
+            end
+        end
+    end)
+
+    -- Mission_Repair objective progress ("Use 3 Repair Platforms"). The
+    -- game increments RepairPickups from EVENT_REPAIR_PICKUP; any unit that
+    -- triggers Item_Repair_Mine counts. Expose both target and cumulative
+    -- progress so the solver can value using the remaining platforms.
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if mission and mission.ID == "Mission_Repair" then
+            state.repair_platform_target = 3
+            if mission.RepairPickups ~= nil then
+                state.repair_platforms_used = mission.RepairPickups
             end
         end
     end)

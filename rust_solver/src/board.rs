@@ -10,15 +10,16 @@ use crate::types::*;
 
 bitflags! {
     #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-    pub struct TileFlags: u8 {
-        const ON_FIRE     = 0b0000_0001;
-        const SMOKE       = 0b0000_0010;
-        const ACID        = 0b0000_0100;
-        const FROZEN      = 0b0000_1000;
-        const CRACKED     = 0b0001_0000;
-        const HAS_POD     = 0b0010_0000;
-        const FREEZE_MINE = 0b0100_0000;
-        const OLD_EARTH_MINE = 0b1000_0000;
+    pub struct TileFlags: u16 {
+        const ON_FIRE         = 0b0000_0000_0001;
+        const SMOKE           = 0b0000_0000_0010;
+        const ACID            = 0b0000_0000_0100;
+        const FROZEN          = 0b0000_0000_1000;
+        const CRACKED         = 0b0000_0001_0000;
+        const HAS_POD         = 0b0000_0010_0000;
+        const FREEZE_MINE     = 0b0000_0100_0000;
+        const OLD_EARTH_MINE  = 0b0000_1000_0000;
+        const REPAIR_PLATFORM = 0b0001_0000_0000;
     }
 }
 
@@ -42,6 +43,7 @@ impl Tile {
     pub fn has_pod(&self) -> bool { self.flags.contains(TileFlags::HAS_POD) }
     pub fn freeze_mine(&self) -> bool { self.flags.contains(TileFlags::FREEZE_MINE) }
     pub fn old_earth_mine(&self) -> bool { self.flags.contains(TileFlags::OLD_EARTH_MINE) }
+    pub fn repair_platform(&self) -> bool { self.flags.contains(TileFlags::REPAIR_PLATFORM) }
 
     pub fn set_on_fire(&mut self, v: bool) { self.flags.set(TileFlags::ON_FIRE, v); }
     pub fn set_smoke(&mut self, v: bool) { self.flags.set(TileFlags::SMOKE, v); }
@@ -50,6 +52,7 @@ impl Tile {
     pub fn set_has_pod(&mut self, v: bool) { self.flags.set(TileFlags::HAS_POD, v); }
     pub fn set_freeze_mine(&mut self, v: bool) { self.flags.set(TileFlags::FREEZE_MINE, v); }
     pub fn set_old_earth_mine(&mut self, v: bool) { self.flags.set(TileFlags::OLD_EARTH_MINE, v); }
+    pub fn set_repair_platform(&mut self, v: bool) { self.flags.set(TileFlags::REPAIR_PLATFORM, v); }
 
     pub fn is_building(&self) -> bool {
         self.terrain == Terrain::Building && self.building_hp > 0
@@ -365,6 +368,8 @@ pub struct Board {
     pub mission_kills_done: u8,    // Cumulative this-mission kills (mission.KilledVek).
                                 // Combined with the simulated turn's kills to decide
                                 // whether a plan crosses the kill target threshold.
+    pub repair_platform_target: u8, // Mission_Repair objective target (normally 3).
+    pub repair_platforms_used: u8,  // Cumulative EVENT_REPAIR_PICKUP count.
     pub dam_alive: bool,        // True while at least one Dam_Pawn has hp > 0. Flips
                                 // false exactly once when the last tile is destroyed —
                                 // the transition triggers trigger_dam_flood().
@@ -450,6 +455,8 @@ impl Default for Board {
             mission_id: String::new(),
             mission_kill_target: 0,
             mission_kills_done: 0,
+            repair_platform_target: 0,
+            repair_platforms_used: 0,
             dam_alive: false,
             dam_primary: None,
             bigbomb_alive: false,
@@ -631,6 +638,7 @@ pub struct ActionResult {
     pub mech_damage_taken: i32,
     pub mechs_killed: i32,
     pub pods_collected: i32,
+    pub repair_platforms_used: i32,
     pub spawns_blocked: i32,
     pub events: Vec<String>,
 }
@@ -646,6 +654,7 @@ impl ActionResult {
         self.mech_damage_taken += other.mech_damage_taken;
         self.mechs_killed += other.mechs_killed;
         self.pods_collected += other.pods_collected;
+        self.repair_platforms_used += other.repair_platforms_used;
         self.spawns_blocked += other.spawns_blocked;
         self.events.extend_from_slice(&other.events);
     }

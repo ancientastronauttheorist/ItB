@@ -267,6 +267,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
                 "mech_damage_taken": result.mech_damage_taken,
                 "spawns_blocked": result.spawns_blocked,
                 "pods_collected": result.pods_collected,
+                "repair_platforms_used": result.repair_platforms_used,
             },
             "projected_turn": projected.current_turn,
         });
@@ -822,7 +823,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   extraction also now trusts save iQueuedSkill over stale GetSelectedWeapon
 //   to avoid false phantom attacks. Pre-v47 corpus archived as
 //   `failure_db_snapshot_sim_v46.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 47;
+// v48 — Mission_Repair platforms (`Item_Repair_Mine`) now round-trip through
+//   bridge/Python/Rust tile state, heal via the engine's -10 item damage with
+//   a live-observed cap of at least 5 HP, consume on landing/push/swap/throw,
+//   and increment repair-platform objective progress. Pre-v48 corpus archived
+//   as `failure_db_snapshot_sim_v47.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 48;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

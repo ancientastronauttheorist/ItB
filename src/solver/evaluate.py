@@ -91,6 +91,11 @@ class EvalWeights:
     # that crosses the cumulative target.
     mission_kill_bonus: float = 15000
 
+    # Mission_Repair "Use 3 repair platforms" bonus. The Rust simulator
+    # increments board.repair_platforms_used when any unit triggers an
+    # Item_Repair_Mine tile.
+    mission_repair_bonus: float = 15000
+
     # Building protection
     mech_self_frozen: float = -12000
     building_bump_damage: float = -8000
@@ -405,6 +410,15 @@ def evaluate(
                 score += _scaled(w.mission_kill_bonus, ff, 0.10, 0.40) * progress_ratio
         if kd < kt and kd + new_kills >= kt:
             score += _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+
+    # --- "USE 3 REPAIR PLATFORMS" BONUS: cumulative progress + completion ---
+    rt = getattr(board, 'repair_platform_target', 0)
+    if rt > 0:
+        used = max(min(getattr(board, 'repair_platforms_used', 0), rt), 0)
+        if used > 0:
+            score += _scaled(w.mission_repair_bonus, ff, 0.10, 0.40) * (used / rt)
+        if used >= rt:
+            score += _scaled(w.mission_repair_bonus, ff, 0.25, 0.75)
 
     # --- ENVIRONMENT DANGER: SCALED ---
     # Lethal env (kill_int=1: Air Strike, Lightning, Cataclysm→chasm, Seismic,
@@ -732,13 +746,28 @@ def evaluate_breakdown(
         kill_n_threshold_score = _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
     kill_n_score = kill_n_progress_score + kill_n_threshold_score
 
+    repair_platform_progress_score = 0.0
+    repair_platform_threshold_score = 0.0
+    rt = getattr(board, 'repair_platform_target', 0)
+    rused = 0
+    if rt > 0:
+        rused = max(min(getattr(board, 'repair_platforms_used', 0), rt), 0)
+        if rused > 0:
+            repair_platform_progress_score = (
+                _scaled(w.mission_repair_bonus, ff, 0.10, 0.40)
+                * (rused / rt)
+            )
+        if rused >= rt:
+            repair_platform_threshold_score = _scaled(w.mission_repair_bonus, ff, 0.25, 0.75)
+    repair_platform_score = repair_platform_progress_score + repair_platform_threshold_score
+
     total = (buildings_score + building_hp_score
              + objective_rep_score + objective_grid_score
              + grid_power_score
              + enemies_killed_score + enemy_hp_score + mission_unit_score
              + danger_score
              + mech_score + spawns_score + remaining_spawn_score
-             + pods_score + kill_n_score)
+             + pods_score + kill_n_score + repair_platform_score)
 
     # Note: sanity check removed — evaluate() now requires turn params.
     # Use evaluate_breakdown only for debugging, not during search.
@@ -772,6 +801,13 @@ def evaluate_breakdown(
             "progress_score": kill_n_progress_score,
             "threshold_score": kill_n_threshold_score,
             "score": kill_n_score,
+        },
+        "mission_repair_bonus": {
+            "target": rt,
+            "used": rused,
+            "progress_score": repair_platform_progress_score,
+            "threshold_score": repair_platform_threshold_score,
+            "score": repair_platform_score,
         },
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
         "mission_unit_objectives": {

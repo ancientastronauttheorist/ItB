@@ -197,6 +197,10 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if tile.has_pod()         { t["has_pod"]           = json!(true); }
         if tile.freeze_mine()     { t["freeze_mine"]       = json!(true); }
         if tile.old_earth_mine()  { t["old_earth_mine"]    = json!(true); }
+        if tile.repair_platform() {
+            t["repair_platform"] = json!(true);
+            t["item"] = json!("Item_Repair_Mine");
+        }
         if tile.conveyor_dir >= 0 { t["conveyor"]          = json!(tile.conveyor_dir); }
         if (board.unique_buildings >> idx) & 1 != 0 {
             t["unique_building"] = json!(true);
@@ -297,6 +301,8 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "mission_id":            board.mission_id,
         "mission_kill_target":   board.mission_kill_target,
         "mission_kills_done":    board.mission_kills_done,
+        "repair_platform_target": board.repair_platform_target,
+        "repair_platforms_used":  board.repair_platforms_used,
         "bonus_objective_unit_types":   board.bonus_dont_kill_types,
         "destroy_objective_unit_types": board.destroy_objective_unit_types,
         "protect_objective_unit_types": board.protect_objective_unit_types,

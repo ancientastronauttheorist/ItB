@@ -184,6 +184,7 @@ class BoardTile:
     conveyor: int = -1       # -1 = not conveyor, 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)
     freeze_mine: bool = False  # freeze mine on this tile (freezes unit that stops here)
     old_earth_mine: bool = False  # old earth mine — kills any unit that stops here (bypasses shield)
+    repair_platform: bool = False  # Mission_Repair platform; full-heals then disappears
     unique_building: bool = False  # objective building (Coal Plant / Batteries / Generator)
     # Specific objective tag when unique_building=True (e.g. "Str_Power",
     # "Str_Battery", "Mission_Solar" for ⚡ grid-reward; "Str_Clinic",
@@ -257,6 +258,11 @@ class Board:
         # Combined with the simulated turn's kills to decide whether a plan
         # crosses the kill target threshold.
         self.mission_kills_done: int = 0
+        # Mission_Repair objective: use 3 repair platforms. Progress counts
+        # EVENT_REPAIR_PICKUP in Lua; the Rust simulator increments this when
+        # any live unit lands on an Item_Repair_Mine tile.
+        self.repair_platform_target: int = 0
+        self.repair_platforms_used: int = 0
         # Unit-based mission objectives. Some bonus objectives are pawns
         # rather than objective building tiles (Mission_Hacking's Hacking
         # Facility and Cannon Bot are the live example).
@@ -312,6 +318,8 @@ class Board:
         b.mission_id = self.mission_id
         b.mission_kill_target = self.mission_kill_target
         b.mission_kills_done = self.mission_kills_done
+        b.repair_platform_target = self.repair_platform_target
+        b.repair_platforms_used = self.repair_platforms_used
         b.destroy_objective_unit_types = list(self.destroy_objective_unit_types)
         b.protect_objective_unit_types = list(self.protect_objective_unit_types)
         b.dam_alive = self.dam_alive
@@ -475,6 +483,10 @@ class Board:
                 bt.has_pod = td.get("pod", td.get("has_pod", False))
                 bt.freeze_mine = td.get("freeze_mine", False)
                 bt.old_earth_mine = td.get("old_earth_mine", False)
+                bt.repair_platform = bool(
+                    td.get("repair_platform", False)
+                    or td.get("item") == "Item_Repair_Mine"
+                )
                 if "conveyor" in td:
                     bt.conveyor = td["conveyor"]
                 if bt.terrain == "building":
@@ -594,6 +606,14 @@ class Board:
             board.mission_kills_done = int(data.get("mission_kills_done", 0) or 0)
         except (TypeError, ValueError):
             board.mission_kills_done = 0
+        try:
+            board.repair_platform_target = int(data.get("repair_platform_target", 0) or 0)
+        except (TypeError, ValueError):
+            board.repair_platform_target = 0
+        try:
+            board.repair_platforms_used = int(data.get("repair_platforms_used", 0) or 0)
+        except (TypeError, ValueError):
+            board.repair_platforms_used = 0
         board.destroy_objective_unit_types = [
             s for s in data.get("destroy_objective_unit_types", []) or []
             if isinstance(s, str) and s
@@ -750,6 +770,8 @@ class Board:
                     c = sym.get(t.terrain, "?")
                     if t.freeze_mine:
                         c = "!"
+                    elif t.repair_platform:
+                        c = "+"
                     elif t.on_fire:
                         c = "*"
                     elif t.conveyor >= 0:

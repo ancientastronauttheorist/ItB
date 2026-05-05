@@ -179,6 +179,11 @@ pub struct EvalWeights {
     // pre-turn-below / post-turn-at-or-above check.
     pub mission_kill_bonus: f64,
 
+    // Mission_Repair "Use 3 repair platforms" bonus. Progress is carried on
+    // board.repair_platforms_used and increments when any unit triggers an
+    // Item_Repair_Mine tile.
+    pub mission_repair_bonus: f64,
+
     // Context-aware building multiplier knobs
     pub bld_grid_floor: f64,
     pub bld_grid_scale: f64,
@@ -304,6 +309,7 @@ impl Default for EvalWeights {
             mission_protect_unit_alive_bonus: 8000.0,
             mission_protect_unit_dead_penalty: -15000.0,
             mission_kill_bonus: 15000.0,
+            mission_repair_bonus: 15000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
             bld_phase_floor: 1.0,
@@ -710,6 +716,19 @@ pub fn evaluate(
         }
         if kd < kt && kd + new_kills >= kt {
             score += scaled(weights.mission_kill_bonus, ff, 0.25, 0.75);
+        }
+    }
+
+    // ── Mission bonus: "Use 3 repair platforms" progress + completion ───
+    let rt = board.repair_platform_target as i32;
+    if rt > 0 {
+        let used = (board.repair_platforms_used as i32).clamp(0, rt);
+        if used > 0 {
+            score += scaled(weights.mission_repair_bonus, ff, 0.10, 0.40)
+                * (used as f64 / rt as f64);
+        }
+        if used >= rt {
+            score += scaled(weights.mission_repair_bonus, ff, 0.25, 0.75);
         }
     }
 

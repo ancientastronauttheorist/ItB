@@ -76,6 +76,13 @@ The solver enforces these; use them when reviewing solver output or writing test
 - **Building:** 1 HP (objective buildings 2). Any damage destroys all on the tile. Reduces grid power by old HP.
 - **Ice:** intact → cracked → water (non-flying drowns).
 
+**Repair platforms:** Mission_Repair places `Item_Repair_Mine` tiles. Any live
+unit that lands on one triggers the item, heals by the engine's `SpaceDamage(-10)`
+(live captures show 3-max-HP mechs can become `5/3`), consumes the platform, and
+increments `repair_platforms_used` toward the 3-platform objective. It is not the
+mech Repair action; do not assume it clears Fire/ACID/Frozen unless a capture
+proves the engine does so.
+
 **Repair:** any mech can repair instead of attacking. +1 HP, clears Fire and ACID. Can't repair on smoke.
 
 Extended rules: `data/ref_game_mechanics.md`.

@@ -2354,6 +2354,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                             td["freeze_mine"] = True
                         if board.tile(bx, by).old_earth_mine:
                             td["old_earth_mine"] = True
+                        if board.tile(bx, by).repair_platform:
+                            td["repair_platform"] = True
+                            td["item"] = "Item_Repair_Mine"
             # Inject pilot_value per mech unit so the Rust search scores
             # pilot loss correctly. Lua exposes pilot_id; Python computes
             # the multiplier via _compute_pilot_value so Rust doesn't need
@@ -5305,6 +5308,9 @@ def _re_solve_partial(
                     td["freeze_mine"] = True
                 if board.tile(bx, by).old_earth_mine:
                     td["old_earth_mine"] = True
+                if board.tile(bx, by).repair_platform:
+                    td["repair_platform"] = True
+                    td["item"] = "Item_Repair_Mine"
 
     from src.model.board import _compute_pilot_value as _cpv
     for ud in bridge_data.get("units", []):

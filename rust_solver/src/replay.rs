@@ -82,6 +82,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                     "buildings_damaged": 0,
                     "mech_damage_taken": 0,
                     "pods_collected": 0,
+                    "repair_platforms_used": 0,
                     "spawns_blocked": 0,
                     "events": [format!("Mech UID {} not found", mech_uid)],
                 }));
@@ -119,6 +120,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             "mech_damage_taken":  attack_result.mech_damage_taken,
             "mechs_killed":       attack_result.mechs_killed,
             "pods_collected":     move_result.pods_collected,
+            "repair_platforms_used": move_result.repair_platforms_used + attack_result.repair_platforms_used,
             "spawns_blocked":     attack_result.spawns_blocked,
             "events":             all_events,
         }));

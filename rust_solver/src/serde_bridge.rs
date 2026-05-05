@@ -54,6 +54,11 @@ pub struct JsonInput {
     /// Cumulative this-mission kills (mission.KilledVek). Combined with the
     /// simulated turn's kills to decide whether a plan crosses the target.
     pub mission_kills_done: Option<u8>,
+    /// Mission_Repair objective target/progress. Repair platforms are
+    /// generic Item_Repair_Mine tiles; the game counts EVENT_REPAIR_PICKUP
+    /// from any unit toward this progress.
+    pub repair_platform_target: Option<u8>,
+    pub repair_platforms_used: Option<u8>,
     /// Phase 1 soft-disable blocklist — weapons the Python detector has
     /// flagged as drifting. Each entry's ``weapon_id`` becomes a bit in
     /// the ``disabled_mask`` returned by ``board_from_json``. Other
@@ -219,8 +224,10 @@ pub struct JsonTile {
     pub cracked: Option<bool>,
     pub pod: Option<bool>,
     pub has_pod: Option<bool>,
+    pub item: Option<String>,
     pub freeze_mine: Option<bool>,
     pub old_earth_mine: Option<bool>,
+    pub repair_platform: Option<bool>,
     pub building_hp: Option<u8>,
     pub population: Option<u8>,
     pub conveyor: Option<i8>,
@@ -331,6 +338,11 @@ pub fn board_from_json(json_str: &str)
             if jt.pod.unwrap_or(false) || jt.has_pod.unwrap_or(false) { flags |= TileFlags::HAS_POD; }
             if jt.freeze_mine.unwrap_or(false) { flags |= TileFlags::FREEZE_MINE; }
             if jt.old_earth_mine.unwrap_or(false) { flags |= TileFlags::OLD_EARTH_MINE; }
+            if jt.repair_platform.unwrap_or(false)
+                || jt.item.as_deref() == Some("Item_Repair_Mine")
+            {
+                flags |= TileFlags::REPAIR_PLATFORM;
+            }
             tile.flags = flags;
             tile.conveyor_dir = jt.conveyor.unwrap_or(-1);
 
@@ -569,6 +581,8 @@ pub fn board_from_json(json_str: &str)
     board.mission_id = input.mission_id.clone().unwrap_or_default();
     board.mission_kill_target = input.mission_kill_target.unwrap_or(0);
     board.mission_kills_done = input.mission_kills_done.unwrap_or(0);
+    board.repair_platform_target = input.repair_platform_target.unwrap_or(0);
+    board.repair_platforms_used = input.repair_platforms_used.unwrap_or(0);
 
     // Detect Old Earth Dam: populate dam_alive + dam_primary from the primary
     // tile entry (the one without EXTRA_TILE). Used by trigger_dam_flood at

@@ -499,7 +499,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # extraction also now trusts save iQueuedSkill over stale GetSelectedWeapon to
 # avoid false phantom attacks. Pre-v47 corpus archived as
 # failure_db_snapshot_sim_v46.jsonl.
-SIMULATOR_VERSION = 47
+# v48 — Mission_Repair platforms (`Item_Repair_Mine`) now round-trip through
+# bridge/Python/Rust tile state, heal via the engine's -10 item damage with a
+# live-observed cap of at least 5 HP, consume on landing/push/swap/throw, and
+# increment repair-platform objective progress. Pre-v48 corpus archived as
+# failure_db_snapshot_sim_v47.jsonl.
+SIMULATOR_VERSION = 48
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

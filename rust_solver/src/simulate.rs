@@ -165,10 +165,10 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
 /// Resolve the post-move landing pipeline at a unit's current tile: web-break
 /// (if the moved unit is an enemy webber), Fire pickup, ACID pickup, frozen-
 /// grounded-on-water → Ice, water/lava/chasm death (with Flying / Massive
-/// exemptions), Lava-ignites-flying, Old Earth Mine, Freeze Mine, and finally
-/// teleporter-pad swap. Caller must have already updated the unit's `x`/`y`
-/// to the destination tile; this function reads `board.units[idx].(x,y)` and
-/// resolves effects there.
+/// exemptions), Lava-ignites-flying, Old Earth Mine, Freeze Mine, repair
+/// platform, and finally teleporter-pad swap. Caller must have already
+/// updated the unit's `x`/`y` to the destination tile; this function reads
+/// `board.units[idx].(x,y)` and resolves effects there.
 ///
 /// Shared between `apply_throw` (Vice Fist relocation) and `sim_pull_or_swap`
 /// (Science_Swap Teleporter). Before this helper existed, swap silently
@@ -190,7 +190,29 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
 ///   6. Lava + flying → ignite (Flame Shielding exempts player mechs)
 ///   7. Old Earth Mine → instant kill, mine consumed
 ///   8. Freeze Mine → freeze (or pop shield), mine consumed
-///   9. Teleporter pad → swap to partner if paired
+///   9. Repair platform → heal by Item_Repair_Mine's -10 damage, consume
+///  10. Teleporter pad → swap to partner if paired
+fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
+    if board.units[unit_idx].hp <= 0 { return; }
+    let x = board.units[unit_idx].x;
+    let y = board.units[unit_idx].y;
+    if !board.tile(x, y).repair_platform() { return; }
+
+    board.tile_mut(x, y).set_repair_platform(false);
+    let before = board.units[unit_idx].hp;
+    // Lua defines Item_Repair_Mine as SpaceDamage(-10). Live Mission_Repair
+    // captures show 3-max-HP mechs healing up to 5/3, so model the engine's
+    // hard health cap as at least 5 while still allowing true >5 max-HP pawns.
+    let cap = board.units[unit_idx].max_hp.max(5);
+    board.units[unit_idx].hp = before.saturating_add(10).min(cap);
+    board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
+    result.repair_platforms_used += 1;
+    result.events.push(format!(
+        "repair_platform:{}:{}:{}->{}",
+        x, y, before, board.units[unit_idx].hp
+    ));
+}
+
 fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     let nx = board.units[unit_idx].x;
     let ny = board.units[unit_idx].y;
@@ -278,7 +300,11 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     }
 
-    // 9. Teleporter pad: fires LAST, after terrain/mine resolution.
+    // 9. Repair platform item: fires after terrain/mine resolution, before
+    // teleporter relocation consumes the unit's landing tile.
+    apply_repair_platform(board, unit_idx, result);
+
+    // 10. Teleporter pad: fires LAST, after terrain/mine/item resolution.
     apply_teleport_on_land(board, unit_idx);
 }
 
@@ -1266,8 +1292,12 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         }
     }
 
-    // Teleporter pad: fires LAST, after terrain-kill / mine / fire / acid
-    // have had a chance to mutate the unit (dead units don't swap).
+    // Repair platform item fires after terrain/mine resolution and before
+    // teleporter relocation consumes the landing tile.
+    apply_repair_platform(board, unit_idx, result);
+
+    // Teleporter pad: fires LAST, after terrain-kill / mine / item / fire /
+    // acid have had a chance to mutate the unit (dead units don't swap).
     apply_teleport_on_land(board, unit_idx);
 }
 
@@ -2375,6 +2405,13 @@ pub fn simulate_move(
         {
             board.units[mech_idx].set_fire(true);
         }
+    }
+
+    // Repair platform: generic Item_Repair_Mine tile. It heals by negative
+    // damage and is consumed; unlike the Repair action, Lua does not set
+    // explicit fire/acid/frozen removal flags.
+    if move_to != old_pos {
+        apply_repair_platform(board, mech_idx, &mut result);
     }
 
     // Teleporter pad: if the mech moved AND landed on a pad, swap with

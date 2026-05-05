@@ -143,6 +143,29 @@ def _read_old_earth_mines_from_save() -> set[tuple[int, int]]:
     return mines
 
 
+def _read_repair_pickups_from_save() -> int | None:
+    """Read Mission_Repair progress when the running modloader is older.
+
+    Lua bridge v48 emits this directly from mission.RepairPickups. This
+    fallback is intentionally conservative: if multiple completed missions
+    in the save contain RepairPickups, return None instead of guessing which
+    one is live.
+    """
+    save_path = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    )
+    try:
+        with open(save_path) as f:
+            content = f.read()
+    except OSError:
+        return None
+
+    matches = re.findall(r'\["RepairPickups"\]\s*=\s*(\d+)', content)
+    if len(matches) != 1:
+        return None
+    return int(matches[0])
+
+
 def _read_teleporter_pads_from_save() -> list[tuple[int, int, int, int]]:
     """Recover Mission_Teleporter pad pairs from the save file.
 
@@ -313,6 +336,17 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     # constructing the Board so downstream solvers see the right direction.
     if "units" in data:
         _normalize_queued_targets(data["units"])
+
+    # Mission_Repair progress (Use 3 Repair Platforms). Old live modloader
+    # builds already emit tile.item="Item_Repair_Mine" but not the progress
+    # scalar; supplement it from saveData.lua until the game is restarted with
+    # the updated bridge.
+    if data.get("mission_id") == "Mission_Repair":
+        data.setdefault("repair_platform_target", 3)
+        if "repair_platforms_used" not in data:
+            pickups = _read_repair_pickups_from_save()
+            if pickups is not None:
+                data["repair_platforms_used"] = pickups
 
     try:
         board = Board.from_bridge_data(data)
