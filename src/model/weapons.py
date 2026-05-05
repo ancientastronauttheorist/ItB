@@ -51,6 +51,7 @@ class WeaponDef:
     range_min: int = 1                 # Minimum range (artillery start)
     range_max: int = 1                 # Maximum range (0 = unlimited)
     path_size: int = 1                 # Tiles affected in line
+    path_damage: bool = False          # Damage each tile before artillery target
     # Status effects
     fire: bool = False
     acid: bool = False
@@ -541,6 +542,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     "CrabAtk2": WeaponDef(
         name="Alpha Crab Artillery", weapon_type="artillery",
         damage=3, range_min=2, path_size=2,
+    ),
+    "CrabAtkB": WeaponDef(
+        name="Raining Expulsions", weapon_type="artillery",
+        damage=2, damage_outer=1, range_min=2, path_damage=True,
     ),
 
     # ── Base Game Special ────────────────────────────────────────────

@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-05T01:23:02.567895",
+  "label": "m05_corporate_hq_shop_grid6_pause",
+  "turn": 4,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "WallMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "CrabBoss",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 1
+    }
+  ]
+}

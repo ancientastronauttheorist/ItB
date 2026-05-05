@@ -146,6 +146,14 @@ def test_crab1_crab2_already_registered() -> None:
         assert c.ranged == 1
 
 
+def test_crab_boss_registered() -> None:
+    """CrabBoss / Crab Leader is massive, move 3, and uses ranged artillery."""
+    c = get_pawn_stats("CrabBoss")
+    assert c.move_speed == 3
+    assert c.ranged == 1
+    assert c.massive is True
+
+
 def test_blob1_blob2_already_registered() -> None:
     """Blob1/Blob2 per `pawns.lua:608-636`: HP=1, MoveSpeed=0, Minor.
     Self-detonating: uses BlobAtk1 (1 dmg AoE_CENTER) / BlobAtk2 (alpha

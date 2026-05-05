@@ -1,0 +1,22 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/16ft30t",
+      "excerpt": "A community daily-discussion thread identifies Crab Leader as the leader variant of Crabs. Community comments discuss normal Crab attacks as dangerous multi-tile city threats, matching the observed boss targeting pattern.",
+      "confidence": 0.55
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/search/?q=Crab+Leader",
+      "excerpt": "Steam discussion search did not surface a precise mechanics thread for Crab Leader; no contradiction to the in-game tooltip was found.",
+      "confidence": 0.35
+    },
+    {
+      "source": "wiki",
+      "url": "https://intothebreach.fandom.com/wiki/Leaders",
+      "excerpt": "Wiki leader pages list boss/leader enemies as tougher mission targets; the in-game tooltip here confirms the display name Crab Leader and move 3.",
+      "confidence": 0.65
+    }
+  ]
+}

@@ -297,6 +297,9 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "mission_id":            board.mission_id,
         "mission_kill_target":   board.mission_kill_target,
         "mission_kills_done":    board.mission_kills_done,
+        "bonus_objective_unit_types":   board.bonus_dont_kill_types,
+        "destroy_objective_unit_types": board.destroy_objective_unit_types,
+        "protect_objective_unit_types": board.protect_objective_unit_types,
         "eval_weights":          json!({ "pseudo_threat_eval": true }),
     });
     serde_json::to_string(&out).unwrap_or_else(|_| "{}".to_string())
@@ -486,7 +489,10 @@ mod tests {
 
     #[test]
     fn test_board_to_json_roundtrip() {
-        let (board, spawn_points) = simple_board();
+        let (mut board, spawn_points) = simple_board();
+        board.bonus_dont_kill_types.push("Volatile_Vek".to_string());
+        board.destroy_objective_unit_types.push("Hacked_Building".to_string());
+        board.protect_objective_unit_types.push("Snowtank".to_string());
         let alive_before: usize = (0..board.unit_count as usize)
             .filter(|&i| board.units[i].alive()).count();
         let json_str = board_to_json(&board, &spawn_points);
@@ -497,6 +503,9 @@ mod tests {
         assert_eq!(alive_before, alive_after, "unit count must survive round-trip");
         assert_eq!(board.grid_power, b2.grid_power);
         assert_eq!(board.current_turn, b2.current_turn);
+        assert_eq!(b2.bonus_dont_kill_types, vec!["Volatile_Vek".to_string()]);
+        assert_eq!(b2.destroy_objective_unit_types, vec!["Hacked_Building".to_string()]);
+        assert_eq!(b2.protect_objective_unit_types, vec!["Snowtank".to_string()]);
         // Option C: round-trip must preserve the pseudo_threat_eval flag
         // that board_to_json injects.
         assert!(weights.pseudo_threat_eval,

@@ -78,6 +78,7 @@ VEK_STATS = {
     "Scarab2":       PawnStats(move_speed=3, ranged=1),
     "Crab1":         PawnStats(move_speed=3, ranged=1),
     "Crab2":         PawnStats(move_speed=3, ranged=1),
+    "CrabBoss":      PawnStats(move_speed=3, ranged=1, massive=True),
     "Centipede1":    PawnStats(move_speed=2, ranged=1),
     "Centipede2":    PawnStats(move_speed=2, ranged=1),
     "Digger1":       PawnStats(move_speed=3, ranged=0),

@@ -1136,6 +1136,39 @@ def _environment_danger_info(board: Board,
     return danger
 
 
+def _type_matches_any(name: str, patterns: list[str]) -> bool:
+    return any(p and p in name for p in patterns)
+
+
+def _protected_objective_patterns(board: Board,
+                                  bridge_data: dict | None) -> list[str]:
+    patterns = [
+        s for s in getattr(board, "protect_objective_unit_types", []) or []
+        if isinstance(s, str) and s
+    ]
+    if patterns:
+        return patterns
+
+    if isinstance(bridge_data, dict):
+        patterns = [
+            s for s in bridge_data.get("protect_objective_unit_types", []) or []
+            if isinstance(s, str) and s
+        ]
+        if patterns:
+            return patterns
+        mission_id = bridge_data.get("mission_id") or getattr(board, "mission_id", "")
+    else:
+        mission_id = getattr(board, "mission_id", "")
+
+    if not mission_id:
+        return []
+    try:
+        from src.solver.mission_unit_objectives import resolve_unit_objectives
+        return resolve_unit_objectives(mission_id).get("protect", [])
+    except Exception:
+        return []
+
+
 def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dict:
     """Extract a summary of the current board state for comparison."""
     buildings_alive = 0
@@ -1157,6 +1190,24 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
 
     raw_units = _bridge_units_by_uid(bridge_data)
     danger = _environment_danger_info(board, bridge_data)
+    protect_patterns = _protected_objective_patterns(board, bridge_data)
+    protected_objective_units = []
+    if protect_patterns:
+        for u in board.units:
+            if getattr(u, "is_extra_tile", False):
+                continue
+            if not _type_matches_any(u.type, protect_patterns):
+                continue
+            protected_objective_units.append({
+                "uid": u.uid,
+                "type": u.type,
+                "pos": [u.x, u.y],
+                "hp": max(0, u.hp),
+                "max_hp": u.max_hp,
+                "alive": u.hp > 0,
+                "frozen": bool(getattr(u, "frozen", False)),
+                "team": u.team,
+            })
     mechs_on_danger = []
     mechs_disabled = []
     mechs_webbed = []
@@ -1222,6 +1273,15 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mechs_on_danger": mechs_on_danger,
         "mechs_disabled": mechs_disabled,
         "mechs_webbed": mechs_webbed,
+        "mission_id": getattr(board, "mission_id", ""),
+        "protected_objective_units": protected_objective_units,
+        "protected_objective_units_alive": sum(
+            1 for u in protected_objective_units if u["alive"]
+        ),
+        "protected_objective_units_frozen": sum(
+            1 for u in protected_objective_units
+            if u["alive"] and u["frozen"]
+        ),
     }
 
 
@@ -1374,6 +1434,20 @@ def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
     return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
 
 
+def _repair_would_be_noop(board: Board | None, mech_uid: int) -> bool:
+    if board is None:
+        return False
+    mech = next((u for u in board.units if u.uid == mech_uid), None)
+    if mech is None:
+        return False
+    return (
+        mech.hp >= mech.max_hp
+        and not getattr(mech, "fire", False)
+        and not getattr(mech, "acid", False)
+        and not getattr(mech, "frozen", False)
+    )
+
+
 def _compute_deltas(predicted: dict, actual: dict) -> dict:
     """Compare predicted vs actual board state. Negative diff = worse than predicted."""
     deltas = {
@@ -1384,6 +1458,22 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         # (new spawns inflate actual count — that's expected, not a solver failure)
         "enemies_alive_diff": actual["enemies_alive"] - predicted["enemies_alive"],
     }
+    if (
+        "protected_objective_units_alive" in predicted
+        and "protected_objective_units_alive" in actual
+    ):
+        deltas["protected_objective_units_alive_diff"] = (
+            actual["protected_objective_units_alive"]
+            - predicted["protected_objective_units_alive"]
+        )
+    if (
+        "protected_objective_units_frozen" in predicted
+        and "protected_objective_units_frozen" in actual
+    ):
+        deltas["protected_objective_units_frozen_diff"] = (
+            actual["protected_objective_units_frozen"]
+            - predicted["protected_objective_units_frozen"]
+        )
 
     # Per-mech HP comparison — match by UID for precision. Actual summaries can
     # omit dead mechs in older recordings, so predicted-but-missing UIDs count
@@ -1435,6 +1525,12 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     if deltas["grid_power_diff"] < 0:
         unexpected.append(
             f"Grid power dropped by {-deltas['grid_power_diff']} unexpectedly")
+    if deltas.get("protected_objective_units_alive_diff", 0) < 0:
+        unexpected.append(
+            "Lost protected objective unit(s) unexpectedly")
+    if deltas.get("protected_objective_units_frozen_diff", 0) < 0:
+        unexpected.append(
+            "Protected objective unit(s) unexpectedly unfroze")
     for md in mech_deltas:
         if md["diff"] < 0:
             unexpected.append(
@@ -1476,7 +1572,10 @@ def _record_post_enemy(session: RunSession, board: Board,
         solve_record = json.load(f)
 
     solve_data = solve_record.get("data", {})
-    predicted = solve_data.get("predicted_outcome")
+    predicted = (
+        solve_data.get("predicted_board_summary")
+        or solve_data.get("predicted_outcome")
+    )
     if predicted is None:
         # Old-format recording without predictions — skip comparison
         return
@@ -5139,7 +5238,8 @@ def _re_solve_partial(
     mid_action_uid: int | None,
     time_limit: float,
     session: RunSession,
-) -> tuple[list, list, float]:
+    allow_dirty_plan: bool = False,
+) -> tuple[list, list, float, dict | None]:
     """Re-solve from actual board state with partial mech states.
 
     Args:
@@ -5151,7 +5251,7 @@ def _re_solve_partial(
         session: Session for weight loading.
 
     Returns:
-        (actions, predicted_states, score) from the new solve.
+        (actions, predicted_states, score, plan_safety) from the new solve.
         actions is a list of MechAction. predicted_states is the dual-snapshot
         list from replay_solution.
     """
@@ -5182,11 +5282,17 @@ def _re_solve_partial(
 
     # Load weights
     weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
+    weights_payload = None
+    breakdown_weights = None
     if weights_path.exists():
         try:
             with open(weights_path) as wf:
                 weight_data = _json.load(wf)
-            bridge_data["eval_weights"] = weight_data.get("weights")
+            weights_payload = weight_data.get("weights")
+            bridge_data["eval_weights"] = weights_payload
+            if isinstance(weights_payload, dict):
+                from src.solver.evaluate import EvalWeights as _EW
+                breakdown_weights = _EW.from_dict(weights_payload)
         except (ValueError, OSError):
             pass
 
@@ -5268,14 +5374,45 @@ def _re_solve_partial(
 
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
+            total_turns = bridge_data.get("total_turns", 5)
+            remaining_spawns = bridge_data.get("remaining_spawns", 2**31 - 1)
             enriched = _replay(bridge_data, solution, spawns,
                                current_turn=current_turn,
-                               total_turns=bridge_data.get("total_turns", 5))
-            return actions, enriched.get("predicted_states", []), score
+                               total_turns=total_turns,
+                               remaining_spawns=remaining_spawns,
+                               weights=breakdown_weights)
+            current_outcome = _capture_board_summary(board, bridge_data)
+            predicted_board_summary = dict(enriched.get("predicted_outcome") or {})
+            final_board_data = enriched.get("final_board") or {}
+            if final_board_data:
+                final_board = Board.from_bridge_data(final_board_data)
+                predicted_board_summary = _capture_board_summary(
+                    final_board, final_board_data
+                )
+                predicted_board_summary.update(enriched.get("predicted_outcome") or {})
+            predicted_board_summary["pods_collected"] = sum(
+                int(r.get("pods_collected", 0) or 0)
+                for r in enriched.get("action_results", [])
+                if isinstance(r, dict)
+            )
+            plan_safety = audit_plan_safety(
+                current_outcome, predicted_board_summary
+            )
+            if plan_requires_safety_block(
+                plan_safety, allow_dirty_plan=allow_dirty_plan
+            ):
+                print("  RE-SOLVE SAFETY BLOCK — refusing partial plan")
+                for v in plan_safety.get("violations", []):
+                    if v.get("blocking"):
+                        print(
+                            f"  ! {v.get('kind')}: "
+                            f"{v.get('current')} -> {v.get('predicted')}"
+                        )
+            return actions, enriched.get("predicted_states", []), score, plan_safety
     except Exception as e:
         print(f"  Re-solve error: {e}")
 
-    return [], [], float('-inf')
+    return [], [], float('-inf'), None
 
 
 def _resolve_weapon_slot_from_board(mech_uid: int, weapon_id: str, board: Board) -> int:
@@ -6104,11 +6241,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         re_solve_count += 1
                         # Re-solve: this mech has moved but not attacked
                         if actual_data:
-                            new_actions, new_preds, new_score = _re_solve_partial(
+                            new_actions, new_preds, new_score, new_safety = _re_solve_partial(
                                 actual_board, actual_data, done_uids,
                                 mid_action_uid=mech_uid,
                                 time_limit=time_limit, session=session,
+                                allow_dirty_plan=allow_dirty_plan,
                             )
+                            if plan_requires_safety_block(
+                                new_safety, allow_dirty_plan=allow_dirty_plan
+                            ):
+                                result = {
+                                    "status": "SAFETY_BLOCKED_RE_SOLVE",
+                                    "turn": turn,
+                                    "actions_completed": actions_completed,
+                                    "re_solves": re_solve_count,
+                                    "plan_safety": new_safety,
+                                    "actions": [a.description for a in new_actions],
+                                    "next_step": (
+                                        "Partial re-solve predicted a non-overridable "
+                                        "objective loss. Do not continue this turn "
+                                        "without a safer plan."
+                                    ),
+                                }
+                                _print_result(result)
+                                return result
                             if new_actions:
                                 print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
                                 # First action should be attack-only for mid_action mech
@@ -6157,8 +6313,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             if has_move:
                 pass  # move already done above
             try:
-                ack = repair_mech(mech_uid)
-                print(f"  REPAIR: {ack}")
+                if has_move:
+                    repair_board, _ = read_bridge_state()
+                else:
+                    refresh_bridge_state()
+                    repair_board, _ = read_bridge_state()
+                if _repair_would_be_noop(repair_board, mech_uid):
+                    ack = skip_mech(mech_uid)
+                    print(f"  SKIP (repair no-op): {ack}")
+                else:
+                    ack = repair_mech(mech_uid)
+                    print(f"  REPAIR: {ack}")
             except (TimeoutError, BridgeError) as e:
                 print(f"  REPAIR ERROR: {e}")
                 result = {"error": f"Repair {actions_completed}: {e}",
@@ -6260,11 +6425,30 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     done_uids.add(mech_uid)
                     remaining = len(actions) - action_idx - 1
                     if remaining > 0 and actual_data:
-                        new_actions, new_preds, new_score = _re_solve_partial(
+                        new_actions, new_preds, new_score, new_safety = _re_solve_partial(
                             actual_board, actual_data, done_uids,
                             mid_action_uid=None,
                             time_limit=time_limit, session=session,
+                            allow_dirty_plan=allow_dirty_plan,
                         )
+                        if plan_requires_safety_block(
+                            new_safety, allow_dirty_plan=allow_dirty_plan
+                        ):
+                            result = {
+                                "status": "SAFETY_BLOCKED_RE_SOLVE",
+                                "turn": turn,
+                                "actions_completed": actions_completed,
+                                "re_solves": re_solve_count,
+                                "plan_safety": new_safety,
+                                "actions": [a.description for a in new_actions],
+                                "next_step": (
+                                    "Partial re-solve predicted a non-overridable "
+                                    "objective loss. Do not continue this turn "
+                                    "without a safer plan."
+                                ),
+                            }
+                            _print_result(result)
+                            return result
                         if new_actions:
                             print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
                             solver_actions = []

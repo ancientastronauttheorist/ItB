@@ -1,0 +1,22 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/17d2oxu",
+      "excerpt": "Daily mission discussion describes Freeze and defend both robots as a Pinnacle mission where the Freeze Tank has 1 HP and 4 move; commenters emphasize freezing one robot, baiting robot attacks onto mechs, and using the Freeze Tank to freeze a city when it cannot freeze a robot.",
+      "confidence": 0.82
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/0/6929409304796921695/",
+      "excerpt": "Community discussion for this mission notes that laser bots can be baited into targeting multiple player-side units, including the Freeze Tank, and that preserving the robot objective may sometimes justify accepting minor city damage depending on priorities.",
+      "confidence": 0.74
+    },
+    {
+      "source": "wiki",
+      "url": "https://intothebreach.fandom.com/wiki/Allied_Units",
+      "excerpt": "Allied Units reference lists Freeze Tank as an active allied unit with 1 health, 4 move, and Freeze Cannon, which shoots a projectile that freezes targets.",
+      "confidence": 0.9
+    }
+  ]
+}

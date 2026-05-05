@@ -9,5 +9,9 @@
   "Mission_Hacking": {
     "destroy": ["Hacked_Building"],
     "protect": ["Snowtank1", "Snowtank1_Player"]
+  },
+  "Mission_FreezeBots": {
+    "destroy": [],
+    "protect": ["Snowtank", "Snowlaser"]
   }
 }

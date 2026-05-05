@@ -84,6 +84,48 @@ def test_summary_excludes_friendly_objective_units_from_mech_loss():
     ]
 
 
+def test_summary_tracks_protected_objective_units_from_mission_metadata():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_FreezeBots"
+    data["units"].extend([
+        {
+            "uid": 301,
+            "type": "Snowtank1",
+            "x": 1,
+            "y": 2,
+            "hp": 1,
+            "max_hp": 1,
+            "team": 6,
+            "mech": False,
+            "move": 4,
+            "weapons": [],
+            "frozen": True,
+        },
+        {
+            "uid": 302,
+            "type": "Snowlaser2",
+            "x": 2,
+            "y": 2,
+            "hp": 0,
+            "max_hp": 1,
+            "team": 6,
+            "mech": False,
+            "move": 4,
+            "weapons": [],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["protected_objective_units_alive"] == 1
+    assert summary["protected_objective_units_frozen"] == 1
+    assert [u["type"] for u in summary["protected_objective_units"]] == [
+        "Snowtank1",
+        "Snowlaser2",
+    ]
+
+
 def test_summary_keeps_dead_player_mechs_for_post_enemy_diff():
     data = _bridge_with_mech()
     data["units"][0]["hp"] = 0

@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-05-05T00:45:56.774226",
+  "label": "m04_central_cryonics_region_secured",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "Freeze_Tank",
+      "pos": [
+        4,
+        7
+      ],
+      "hp": 1
+    },
+    {
+      "type": "WallMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowtank1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

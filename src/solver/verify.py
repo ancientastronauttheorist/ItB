@@ -489,7 +489,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Lava in older bridge recordings. This prevents candidate audits from
 # resurrecting failed Coal Plant / Power objectives and stops false lava deaths
 # on Pinnacle ice. Pre-v45 corpus archived as failure_db_snapshot_sim_v44.jsonl.
-SIMULATOR_VERSION = 45
+# v46 — Crab Leader (`CrabBoss` / `CrabAtkB`) now maps to Raining Expulsions:
+# 2-damage artillery target plus 1 damage to every tile in the projectile path.
+# Fixes Normal run 20260504_210332_088 m05 t01/t02 grid-loss underprediction.
+# Pre-v46 corpus archived as failure_db_snapshot_sim_v45.jsonl.
+SIMULATOR_VERSION = 46
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

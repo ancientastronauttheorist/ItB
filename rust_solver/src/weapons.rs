@@ -92,6 +92,11 @@ bitflags! {
         /// projectile to the first blocker, then either pulls a hit pawn toward
         /// the attacker or pulls the attacker toward an object.
         const PROJECTILE_GRAPPLE = 1 << 25;
+        /// Artillery also damages every cardinal tile strictly between the
+        /// shooter and target. Crab Leader's "Raining Expulsions" deals 2 to
+        /// the target and 1 to the projectile path; normal Crab Artillery's
+        /// extra tile is behind the target and remains `path_size`.
+        const PATH_DAMAGE = 1 << 26;
     }
 }
 
@@ -136,6 +141,7 @@ impl WeaponDef {
     pub fn no_edge_bump_adjacent_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH) }
     pub fn fire_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::FIRE_BEHIND_SHOOTER) }
     pub fn projectile_grapple(&self) -> bool { self.flags.contains(WeaponFlags::PROJECTILE_GRAPPLE) }
+    pub fn path_damage(&self) -> bool { self.flags.contains(WeaponFlags::PATH_DAMAGE) }
 }
 
 /// Default weapon def (no-op).
@@ -392,9 +398,12 @@ pub enum WId {
     /// Vulcan Artillery with Backburn upgrade: base center fire + adjacent
     /// outward pushes, plus fire on the tile directly behind the shooter.
     RangedIgniteA = 125,
+    /// Crab Leader's "Raining Expulsions": 2 damage artillery target plus 1
+    /// damage to each tile in the projectile path before the target.
+    CrabAtkB = 126,
 }
 
-pub const WEAPON_COUNT: usize = 126;
+pub const WEAPON_COUNT: usize = 127;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -827,6 +836,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
     };
 
+    // 126: CrabAtkB — Crab Leader's Raining Expulsions. Per AE boss tooltip:
+    // 2 damage to the artillery target and 1 damage to every tile in the
+    // projectile path before that target.
+    w[126] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, damage_outer: 1,
+        range_min: 2, flags: f(WeaponFlags::PATH_DAMAGE.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -1015,6 +1030,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "ScarabAtk2" => WId::ScarabAtk2,
         "CrabAtk1" => WId::CrabAtk1,
         "CrabAtk2" => WId::CrabAtk2,
+        "CrabAtkB" => WId::CrabAtkB,
         "DiggerAtk1" => WId::DiggerAtk1,
         "BlobberAtk1" => WId::BlobberAtk1,
         "SpiderAtk1" => WId::SpiderAtk1,
@@ -1147,6 +1163,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScarabAtk2 => "ScarabAtk2",
         WId::CrabAtk1 => "CrabAtk1",
         WId::CrabAtk2 => "CrabAtk2",
+        WId::CrabAtkB => "CrabAtkB",
         WId::DiggerAtk1 => "DiggerAtk1",
         WId::BlobberAtk1 => "BlobberAtk1",
         WId::SpiderAtk1 => "SpiderAtk1",
@@ -1223,6 +1240,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Scarab2" => WId::ScarabAtk2,
         "Crab1" => WId::CrabAtk1,
         "Crab2" => WId::CrabAtk2,
+        "CrabBoss" => WId::CrabAtkB,
         "Digger1" => WId::DiggerAtk1,
         "Digger2" => WId::DiggerAtk2,
         "Blobber1" => WId::BlobberAtk1,
@@ -1373,6 +1391,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScarabAtk2 => "Alpha Scarab Shot",
         WId::CrabAtk1 => "Crab Artillery",
         WId::CrabAtk2 => "Alpha Crab Artillery",
+        WId::CrabAtkB => "Raining Expulsions",
         WId::DiggerAtk1 => "Digger Smash",
         WId::DiggerAtk2 => "Alpha Digger Smash",
         WId::BlobberAtk1 => "Blobber Launch",

@@ -884,6 +884,19 @@ pub fn simulate_enemy_attacks(
 
                 let tx = new_tx as u8;
                 let ty = new_ty as u8;
+
+                // Crab Leader's Raining Expulsions damages the artillery target
+                // plus each cardinal tile in the projectile path before p2.
+                if wdef.path_damage() && wdef.damage_outer > 0 {
+                    for step in 1..curr_range {
+                        let px = ex as i8 + dx_sign * step;
+                        let py = ey as i8 + dy_sign * step;
+                        if !in_bounds(px, py) { break; }
+                        let d_p = enemy_hit_damage(board, px as u8, py as u8, wdef.damage_outer, vh);
+                        apply_damage(board, px as u8, py as u8, d_p, &mut result, DamageSource::Weapon);
+                    }
+                }
+
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
 
@@ -1486,6 +1499,27 @@ mod tests {
     }
 
     #[test]
+    fn test_crab_leader_damages_target_and_projectile_path() {
+        let mut board = Board::default();
+        // Crab Leader at (4,2) targeting (4,6): path tiles are (4,3..5),
+        // target gets 2 damage, path gets 1 damage, tile past target is safe.
+        board.tile_mut(4, 4).terrain = Terrain::Building;
+        board.tile_mut(4, 4).building_hp = 1;
+        board.tile_mut(4, 6).terrain = Terrain::Building;
+        board.tile_mut(4, 6).building_hp = 2;
+        board.tile_mut(4, 7).terrain = Terrain::Building;
+        board.tile_mut(4, 7).building_hp = 1;
+        add_enemy_with_type(&mut board, 1, 4, 2, 6, "CrabBoss", 4, 6);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(4, 4).building_hp, 0, "Crab Leader should hit path tile");
+        assert_eq!(board.tile(4, 6).building_hp, 0, "Crab Leader should hit target for 2 damage");
+        assert_eq!(board.tile(4, 7).building_hp, 1, "Crab Leader should not hit beyond target");
+    }
+
+    #[test]
     fn test_blob_self_destructs_all_adjacent() {
         let mut board = Board::default();
         // Blob at (3,3) — self-AoE should hit self + 4 adjacent
@@ -1546,6 +1580,7 @@ mod tests {
         assert_eq!(enemy_weapon_for_type("Digger1"), WId::DiggerAtk1);
         assert_eq!(enemy_weapon_for_type("BlobMini"), WId::BlobAtk1);
         assert_eq!(enemy_weapon_for_type("Crab1"), WId::CrabAtk1);
+        assert_eq!(enemy_weapon_for_type("CrabBoss"), WId::CrabAtkB);
         assert_eq!(enemy_weapon_for_type("Unknown"), WId::None);
     }
 

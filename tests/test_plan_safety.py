@@ -67,6 +67,36 @@ def test_allow_dirty_plan_overrides_block():
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
 
 
+def test_allow_dirty_plan_does_not_override_protected_objective_loss():
+    audit = audit_plan_safety(
+        _summary(protected_objective_units_alive=2),
+        _summary(protected_objective_units_alive=1),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "protected_objective_unit_lost"
+
+
+def test_freezebots_protected_unit_unfreeze_blocks_plan():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FreezeBots",
+            protected_objective_units_alive=2,
+            protected_objective_units_frozen=2,
+        ),
+        _summary(
+            mission_id="Mission_FreezeBots",
+            protected_objective_units_alive=2,
+            protected_objective_units_frozen=1,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "protected_objective_unit_unfrozen"
+
+
 def test_missing_comparable_fields_is_unknown_not_blocked():
     audit = audit_plan_safety({}, {})
 

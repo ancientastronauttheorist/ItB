@@ -18,6 +18,12 @@ def test_mission_hacking_declares_destroy_and_protect_units():
     assert "Snowtank1_Player" in resolved["protect"]
 
 
+def test_mission_freezebots_protects_robot_units():
+    resolved = resolve_unit_objectives("Mission_FreezeBots")
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["Snowtank", "Snowlaser"]
+
+
 def test_unknown_mission_resolves_empty_lists():
     assert resolve_unit_objectives("Mission_NoSuch") == {
         "destroy": [],

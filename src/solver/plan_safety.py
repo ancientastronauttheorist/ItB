@@ -21,6 +21,16 @@ BLOCKING_KINDS = {
     "mech_on_danger",
     "mech_disabled",
     "bigbomb_lost",
+    "protected_objective_unit_lost",
+    "protected_objective_unit_unfrozen",
+}
+
+NON_OVERRIDABLE_KINDS = {
+    "bigbomb_lost",
+    "objective_building_destroyed",
+    "objective_building_hp_loss",
+    "protected_objective_unit_lost",
+    "protected_objective_unit_unfrozen",
 }
 
 
@@ -213,6 +223,43 @@ def audit_plan_safety(current: dict[str, Any],
                 "Predicted outcome destroys the Renfield Bomb.",
             ))
 
+    cur_protected = _int_or_none(current.get("protected_objective_units_alive"))
+    pred_protected = _int_or_none(predicted.get("protected_objective_units_alive"))
+    if cur_protected is not None and pred_protected is not None:
+        compared.append("protected_objective_units_alive")
+        if pred_protected < cur_protected:
+            violations.append(_violation(
+                "protected_objective_unit_lost",
+                cur_protected,
+                pred_protected,
+                "Predicted outcome destroys one or more protected objective units.",
+                {
+                    "current_units": _list_or_empty(current.get("protected_objective_units")),
+                    "predicted_units": _list_or_empty(predicted.get("protected_objective_units")),
+                },
+            ))
+
+    cur_frozen = _int_or_none(current.get("protected_objective_units_frozen"))
+    pred_frozen = _int_or_none(predicted.get("protected_objective_units_frozen"))
+    mission_id = current.get("mission_id") or predicted.get("mission_id")
+    if (
+        mission_id == "Mission_FreezeBots"
+        and cur_frozen is not None
+        and pred_frozen is not None
+    ):
+        compared.append("protected_objective_units_frozen")
+        if pred_frozen < cur_frozen:
+            violations.append(_violation(
+                "protected_objective_unit_unfrozen",
+                cur_frozen,
+                pred_frozen,
+                "Predicted outcome unfreezes one or more freeze-bot objective units.",
+                {
+                    "current_units": _list_or_empty(current.get("protected_objective_units")),
+                    "predicted_units": _list_or_empty(predicted.get("protected_objective_units")),
+                },
+            ))
+
     blocking = any(v.get("blocking") for v in violations)
     if blocking:
         status = "DIRTY"
@@ -240,6 +287,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_on_danger": _list_or_empty(current.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(current.get("mechs_disabled")),
             "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
+            "protected_objective_units_alive": cur_protected,
+            "protected_objective_units_frozen": cur_frozen,
         },
         "predicted": {
             "grid_power": pred_grid,
@@ -253,6 +302,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_on_danger": _list_or_empty(predicted.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(predicted.get("mechs_disabled")),
             "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
+            "protected_objective_units_alive": pred_protected,
+            "protected_objective_units_frozen": pred_frozen,
         },
     }
 
@@ -261,8 +312,13 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                                *,
                                allow_dirty_plan: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
-    if allow_dirty_plan:
-        return False
     if not isinstance(audit, dict):
         return False
+    if allow_dirty_plan:
+        return any(
+            isinstance(v, dict)
+            and v.get("blocking")
+            and v.get("kind") in NON_OVERRIDABLE_KINDS
+            for v in audit.get("violations", []) or []
+        )
     return bool(audit.get("blocking"))
