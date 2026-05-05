@@ -1647,8 +1647,16 @@
       "mission_id": "Mission_SnowBattle",
       "first_seen_turn": 1,
       "attempts": 13,
-      "status": "pending",
-      "result": null,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "stale_known_type_after_victory_review",
+        "kind": "behavior_novelty",
+        "attempts": 13,
+        "diff_field": "alive",
+        "diff_predicted": false,
+        "diff_actual": true
+      },
       "diff_field": "alive",
       "diff_predicted": false,
       "diff_actual": true,

@@ -112,6 +112,17 @@ def test_newly_disabled_mech_blocks_plan():
     assert audit["violations"][0]["kind"] == "mech_disabled"
 
 
+def test_predicted_bigbomb_loss_blocks_plan():
+    audit = audit_plan_safety(
+        _summary(bigbomb_alive=True),
+        _summary(bigbomb_alive=False),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert audit["violations"][0]["kind"] == "bigbomb_lost"
+
+
 def test_mech_hp_loss_warns_without_blocking():
     audit = audit_plan_safety(
         _summary(mech_hp_total=7),

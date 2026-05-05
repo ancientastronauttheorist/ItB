@@ -192,6 +192,62 @@ def drain_stale_behavior_novelty(session: RunSession) -> list[str]:
     return resolved
 
 
+def resolve_known_research_entries(
+    session: RunSession,
+    type_name: str,
+    *,
+    kind: str | None = None,
+    reason: str = "manual_resolved_known_type",
+) -> list[dict]:
+    """Manually resolve pending research entries for an already-known target.
+
+    This is the escape hatch for stale high-severity behavior entries whose
+    unit type has since been catalogued and whose evidence is preserved in the
+    diagnosis/failure corpus. It deliberately validates against
+    ``known_types.json`` so an unknown target cannot be papered over by typo.
+    """
+    from src.solver.unknown_detector import _load_known
+
+    known = _load_known()
+    known_pawn_types = known.get("pawn_types", set())
+    known_terrain = known.get("terrain_ids", set())
+    known_weapons = known.get("weapons", set())
+    known_weapons_norm = {w.replace("_", "") for w in known_weapons}
+    known_phases = known.get("phases", set())
+
+    if (type_name not in known_pawn_types
+            and type_name not in known_terrain
+            and type_name not in known_weapons
+            and type_name.replace("_", "") not in known_weapons_norm
+            and type_name not in known_phases):
+        raise ValueError(f"{type_name!r} is not present in known_types.json")
+
+    resolved: list[dict] = []
+    for entry in session.research_queue:
+        if entry.get("status") not in ("pending", "in_progress"):
+            continue
+        if kind is not None and entry.get("kind") != kind:
+            continue
+        if (entry.get("type") != type_name
+                and entry.get("terrain_id") != type_name):
+            continue
+        entry["status"] = "done"
+        entry["result"] = {
+            "source": "manual_resolved",
+            "reason": reason,
+            "kind": entry.get("kind"),
+            "attempts": entry.get("attempts", 0),
+            "diff_field": entry.get("diff_field"),
+            "diff_predicted": entry.get("diff_predicted"),
+            "diff_actual": entry.get("diff_actual"),
+        }
+        resolved.append(entry)
+
+    if resolved:
+        session.save()
+    return resolved
+
+
 # ── gate predicate ────────────────────────────────────────────────────────
 
 

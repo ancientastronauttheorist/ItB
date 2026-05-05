@@ -110,6 +110,16 @@ def test_jelly_boss_has_canonical_stats() -> None:
     assert s.default_weapon == ""
 
 
+def test_bigbomb_is_immobile_but_pushable() -> None:
+    """Renfield Bomb cannot move on its own, but live final-cave evidence
+    showed it can be pushed/bumped by player weapons such as Vulcan Artillery.
+    """
+    s = get_pawn_stats("BigBomb")
+    assert s.move_speed == 0
+    assert s.pushable is True
+    assert s.ignore_fire is True
+
+
 # ── Already-registered Mission_Final_Cave enemies (regression guards) ────
 
 

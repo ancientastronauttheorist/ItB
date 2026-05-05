@@ -1698,6 +1698,19 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
         }
     }
 
+    // Fire-behind-shooter: Vulcan Artillery Backburn upgrade lights the tile
+    // one step opposite the shot direction from the shooter's position.
+    if wdef.fire_behind_shooter() {
+        if let Some(dir) = attack_dir {
+            let (ddx, ddy) = DIRS[dir];
+            let bx = ax as i8 - ddx;
+            let by = ay as i8 - ddy;
+            if in_bounds(bx, by) {
+                apply_weapon_status(board, bx as u8, by as u8, wdef);
+            }
+        }
+    }
+
     // Center-tile push (mirrors projectile: status BEFORE push so the unit
     // picks up fire/smoke on the source tile before moving). Without this,
     // artillery with Forward/Backward push (e.g. Ranged_Rocket) fails to move
@@ -3567,6 +3580,27 @@ mod tests {
 
         assert_eq!(board.units[enemy].hp, 3, "zero-damage adjacent push stays non-damaging");
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 4));
+    }
+
+    #[test]
+    fn test_ranged_ignite_backburn_fires_behind_shooter_only() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedIgniteA);
+        let adjacent = add_enemy(&mut board, 1, 4, 5, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgniteA, 3, 5);
+
+        assert!(board.tile(3, 5).on_fire(), "target tile catches fire");
+        assert!(board.tile(3, 2).on_fire(), "Backburn lights tile behind shooter");
+        assert!(
+            !board.tile(4, 5).on_fire(),
+            "adjacent pushed tiles do not inherit Vulcan's fire status"
+        );
+        assert_eq!(
+            (board.units[adjacent].x, board.units[adjacent].y),
+            (5, 5),
+            "adjacent unit still gets pushed outward"
+        );
     }
 
     #[test]

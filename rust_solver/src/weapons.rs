@@ -84,6 +84,10 @@ bitflags! {
         /// Zero-damage adjacent artillery pushes do not deal edge-bump damage
         /// when the destination is off-board. Confirmed for Vulcan Artillery.
         const NO_EDGE_BUMP_ADJACENT_PUSH = 1 << 23;
+        /// Weapon lights the tile directly behind the shooter on fire.
+        /// Ranged_Ignite_A (Vulcan Artillery Backburn upgrade) uses this;
+        /// independent from FIRE, which still applies to the target tile.
+        const FIRE_BEHIND_SHOOTER = 1 << 24;
     }
 }
 
@@ -126,6 +130,7 @@ impl WeaponDef {
     pub fn queued_damage_persists(&self) -> bool { self.flags.contains(WeaponFlags::QUEUED_DAMAGE_PERSISTS) }
     pub fn burns_fire_targets(&self) -> bool { self.flags.contains(WeaponFlags::BURNS_FIRE_TARGETS) }
     pub fn no_edge_bump_adjacent_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH) }
+    pub fn fire_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::FIRE_BEHIND_SHOOTER) }
 }
 
 /// Default weapon def (no-op).
@@ -379,9 +384,12 @@ pub enum WId {
     /// one global push direction and applies `SpaceDamage(point, 0, dir)` to
     /// every pawn in scan order. Base weapon is single-use.
     SupportWind = 124,
+    /// Vulcan Artillery with Backburn upgrade: base center fire + adjacent
+    /// outward pushes, plus fire on the tile directly behind the shooter.
+    RangedIgniteA = 125,
 }
 
-pub const WEAPON_COUNT: usize = 125;
+pub const WEAPON_COUNT: usize = 126;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -522,6 +530,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+    // 125: Ranged_Ignite_A — Ignite with Backburn
+    w[125] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits() | WeaponFlags::FIRE_BEHIND_SHOOTER.bits()), ..DEF };
     // 36: Ranged_Ice — Cryo-Launcher
     w[36] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, range_min: 2,
         flags: f(WeaponFlags::FREEZE.bits()), ..DEF };
@@ -970,6 +981,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
         "Ranged_Ignite" => WId::RangedIgnite,
+        "Ranged_Ignite_A" => WId::RangedIgniteA,
+        "RangedIgniteA" => WId::RangedIgniteA,
         "Ranged_Ice" => WId::RangedIce,
         "Ranged_ScatterShot" => WId::RangedScatterShot,
         "Ranged_BackShot" => WId::RangedBackShot,
@@ -1102,6 +1115,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
         WId::RangedIgnite => "Ranged_Ignite",
+        WId::RangedIgniteA => "Ranged_Ignite_A",
         WId::RangedIce => "Ranged_Ice",
         WId::RangedScatterShot => "Ranged_ScatterShot",
         WId::RangedBackShot => "Ranged_BackShot",
@@ -1324,6 +1338,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::RangedDefensestrike => "Cluster Artillery",
         WId::RangedRocket => "Rocket Artillery",
         WId::RangedIgnite => "Ignite",
+        WId::RangedIgniteA => "Ignite",
         WId::RangedIce => "Cryo-Launcher",
         WId::RangedScatterShot => "Scatter Shot",
         WId::RangedBackShot => "Back Shot",

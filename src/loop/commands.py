@@ -97,6 +97,7 @@ def _recording_dir(session: RunSession) -> Path:
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
 _POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
 _COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
+_MODELED_UPGRADED_WEAPONS = {"Ranged_Ignite_A"}
 
 
 def _bridge_is_stale_post_mission(
@@ -146,6 +147,69 @@ def _read_save_file_difficulty(profile: str = "Alpha") -> int | None:
     if isinstance(diff, int):
         return diff
     return None
+
+
+def _enrich_bridge_mech_weapons_from_save(
+    bridge_data: dict | None,
+    profile: str = "Alpha",
+) -> list[dict]:
+    """Patch bridge mech weapon IDs with modeled upgraded loadout IDs.
+
+    The Lua bridge reports the pawn type's static ``SkillList``. That is
+    enough to fire by slot, but not enough for the solver when a powered
+    upgrade changes combat semantics while keeping the same slot. Use the
+    save-file loadout as a narrow overlay for upgraded weapons the Rust
+    simulator explicitly models.
+    """
+    if not isinstance(bridge_data, dict):
+        return []
+
+    state = load_game_state(profile)
+    if state is None or not state.weapons:
+        return []
+
+    updates: list[dict] = []
+    for unit in bridge_data.get("units", []) or []:
+        if not isinstance(unit, dict) or not unit.get("mech"):
+            continue
+        try:
+            uid = int(unit.get("uid", -1))
+        except (TypeError, ValueError):
+            continue
+        if uid < 0:
+            continue
+
+        weapons = unit.get("weapons")
+        if not isinstance(weapons, list):
+            weapons = []
+            unit["weapons"] = weapons
+
+        for slot in (0, 1):
+            loadout_idx = uid * 2 + slot
+            if loadout_idx >= len(state.weapons):
+                continue
+            upgraded = state.weapons[loadout_idx]
+            if upgraded not in _MODELED_UPGRADED_WEAPONS:
+                continue
+            base = upgraded[:-2] if upgraded.endswith(("_A", "_B")) else upgraded
+            while len(weapons) <= slot:
+                weapons.append("")
+            current = weapons[slot]
+            if current and current != base and current != upgraded:
+                continue
+            if current == upgraded:
+                continue
+            weapons[slot] = upgraded
+            updates.append({
+                "uid": uid,
+                "slot": slot,
+                "base": base,
+                "upgraded": upgraded,
+            })
+
+    if updates:
+        bridge_data["weapon_upgrade_overlays"] = updates
+    return updates
 
 
 def _visual_to_bridge(pos: str) -> tuple[int, int] | None:
@@ -1145,6 +1209,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "enemy_hp_total": sum(e.hp for e in board.enemies()),
         "mechs_alive": len(live_player_mechs),
         "mech_hp_total": sum(max(0, m.hp) for m in player_mechs),
+        "bigbomb_alive": bool(getattr(board, "bigbomb_alive", False)),
         "mech_hp": [
             {
                 "uid": m.uid,
@@ -2058,6 +2123,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
+            weapon_overlay_updates = _enrich_bridge_mech_weapons_from_save(
+                bridge_data, profile=profile,
+            )
+            if weapon_overlay_updates:
+                board = Board.from_bridge_data(bridge_data)
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
             # Extract environment danger tiles (tidal waves, air strikes, etc.)
@@ -2294,54 +2364,77 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 # Emergency safety widening: the top-1 entry path can miss
                 # lower-ranked clean plans when the scorer strongly favors
                 # tactics that still concede grid. Do a wider top-K pass only
-                # after the normal candidate is blocked, then select the first
-                # clean plan if one exists.
-                wide_bridge_data = dict(bridge_data)
-                wide_bridge_data.pop("eval_weights", None)
-                wide_raw = _rust.solve_top_k(
-                    _json.dumps(wide_bridge_data), time_limit, 100,
-                )
-                wide_specs = []
-                for idx, rust_result in enumerate(_json.loads(wide_raw) or []):
-                    wide_specs.append({
-                        "rank": idx,
-                        "source": "top_k_safety",
-                        "rust_result": rust_result,
-                    })
-                wide_evals = []
-                for spec in wide_specs:
-                    candidate_solution = _rust_result_to_solution(
-                        spec.get("rust_result"), rust_elapsed, len(active_mechs)
+                # after the normal candidate is blocked. The second pass
+                # temporarily removes soft-disabled weapons from the search
+                # payload; it does not mutate the session blocklist.
+                widening_attempts: list[dict] = []
+                wide_sources = [("top_k_safety", False)]
+                if session.disabled_actions:
+                    wide_sources.append(
+                        ("top_k_safety_ignore_soft_disables", True)
                     )
-                    if candidate_solution is None:
-                        continue
-                    candidate_eval = {
-                        "rank": spec.get("rank"),
-                        "source": spec.get("source"),
-                        "chain_score": None,
-                        "solution": candidate_solution,
-                    }
-                    candidate_eval.update(_evaluate_solution_safety(
-                        board, bridge_data, candidate_solution, spawns,
-                        current_turn=current_turn,
-                        total_turns=total_turns,
-                        remaining_spawns=rem_spawns,
-                        weights=breakdown_weights,
-                    ))
-                    wide_evals.append(candidate_eval)
-                    if not plan_requires_safety_block(
-                        candidate_eval.get("plan_safety")
-                    ):
+
+                for source, ignore_soft_disables in wide_sources:
+                    wide_bridge_data = dict(bridge_data)
+                    wide_bridge_data.pop("eval_weights", None)
+                    if ignore_soft_disables:
+                        wide_bridge_data.pop("disabled_actions", None)
+
+                    wide_raw = _rust.solve_top_k(
+                        _json.dumps(wide_bridge_data), time_limit, 100,
+                    )
+                    wide_specs = []
+                    for idx, rust_result in enumerate(_json.loads(wide_raw) or []):
+                        wide_specs.append({
+                            "rank": idx,
+                            "source": source,
+                            "rust_result": rust_result,
+                        })
+                    candidate_count = max(candidate_count, len(wide_specs))
+                    widening_attempts.append({
+                        "source": source,
+                        "candidate_count": len(wide_specs),
+                        "ignored_soft_disables": ignore_soft_disables,
+                    })
+
+                    wide_evals = []
+                    for spec in wide_specs:
+                        candidate_solution = _rust_result_to_solution(
+                            spec.get("rust_result"), rust_elapsed,
+                            len(active_mechs)
+                        )
+                        if candidate_solution is None:
+                            continue
+                        candidate_eval = {
+                            "rank": spec.get("rank"),
+                            "source": spec.get("source"),
+                            "chain_score": None,
+                            "solution": candidate_solution,
+                        }
+                        candidate_eval.update(_evaluate_solution_safety(
+                            board, bridge_data, candidate_solution, spawns,
+                            current_turn=current_turn,
+                            total_turns=total_turns,
+                            remaining_spawns=rem_spawns,
+                            weights=breakdown_weights,
+                        ))
+                        wide_evals.append(candidate_eval)
+                        if not plan_requires_safety_block(
+                            candidate_eval.get("plan_safety")
+                        ):
+                            break
+
+                    clean_wide = next(
+                        (c for c in wide_evals
+                         if not plan_requires_safety_block(c.get("plan_safety"))),
+                        None,
+                    )
+                    if clean_wide is not None:
+                        selected_candidate_eval = clean_wide
+                        candidate_evals = wide_evals
+                        selected_candidate_eval["safety_widening"] = widening_attempts
+                        candidate_count = len(wide_specs)
                         break
-                clean_wide = next(
-                    (c for c in wide_evals
-                     if not plan_requires_safety_block(c.get("plan_safety"))),
-                    None,
-                )
-                if clean_wide is not None:
-                    selected_candidate_eval = clean_wide
-                    candidate_evals = wide_evals
-                    candidate_count = len(wide_specs)
 
             candidate_safety_summaries = [
                 _candidate_safety_summary(c) for c in candidate_evals
@@ -2448,6 +2541,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     result["plan_safety"] = plan_safety
     result["candidate_count"] = candidate_count
     result["selected_candidate_rank"] = selected_candidate_rank
+    if selected_candidate_eval.get("safety_widening"):
+        result["safety_widening"] = selected_candidate_eval["safety_widening"]
 
     # Record solver output for replay/analysis (enriched format).
     # schema_version stamps the shape of this record so future beam
@@ -2485,6 +2580,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "selected_candidate_rank": selected_candidate_rank,
         "selected_candidate_source": selected_candidate_source,
         "candidate_safety": candidate_safety_summaries,
+        "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
         "current_outcome": current_outcome,
@@ -3663,6 +3759,7 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
         _print_result(result)
         return result
 
+    auto_resolved = orchestrator.drain_stale_behavior_novelty(session)
     plan = orchestrator.begin_research(session, board, ui=ui)
     if plan is None:
         session.save()
@@ -3672,10 +3769,14 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
             "pending": sum(1 for e in session.research_queue
                            if e.get("status") == "pending"),
         }
+        if auto_resolved:
+            result["auto_resolved"] = auto_resolved
         print(f"\n=== RESEARCH_NEXT ===")
         print(f"  No researchable entry on current board "
               f"(queue_len={result['queue_len']}, "
               f"pending={result['pending']})")
+        if auto_resolved:
+            print(f"  auto-resolved: {auto_resolved}")
         _print_result(result)
         return result
 
@@ -3684,6 +3785,8 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
         "status": "PLAN",
         **plan,
     }
+    if auto_resolved:
+        result["auto_resolved"] = auto_resolved
     target = plan["target"]
     print(f"\n=== RESEARCH_NEXT (research_id={plan['research_id']}) ===")
     print(f"  target: {target['type']} ({target['kind']}) at "
@@ -3692,6 +3795,48 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
     print(f"  crops: {[c['name'] for c in plan['plan']['crops']]}")
     print(f"  next: dispatch plan.batch → zoom each crop → Vision → "
           f"cmd_research_submit {plan['research_id']}")
+    _print_result(result)
+    return result
+
+
+def cmd_research_resolve(
+    target: str,
+    *,
+    kind: str | None = None,
+    reason: str = "manual_resolved_known_type",
+    profile: str = "Alpha",
+) -> dict:
+    """Mark stale research entries for a known target as resolved."""
+    from src.research import orchestrator
+
+    session = _load_session()
+    try:
+        resolved = orchestrator.resolve_known_research_entries(
+            session, target, kind=kind, reason=reason,
+        )
+    except ValueError as e:
+        result = {"error": str(e), "target": target}
+        _print_result(result)
+        return result
+
+    result = {
+        "status": "OK",
+        "target": target,
+        "kind": kind,
+        "resolved_count": len(resolved),
+        "resolved": [
+            {
+                "type": e.get("type", ""),
+                "terrain_id": e.get("terrain_id"),
+                "kind": e.get("kind"),
+                "attempts": e.get("attempts", 0),
+                "reason": (e.get("result") or {}).get("reason"),
+            }
+            for e in resolved
+        ],
+    }
+    print(f"\n=== RESEARCH_RESOLVE {target} ===")
+    print(f"  resolved: {len(resolved)}")
     _print_result(result)
     return result
 
@@ -5640,10 +5785,39 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _print_result(result)
         return result
     if read_result.get("active_mechs", 1) == 0:
+        save_phase = detect_game_phase(profile)
+        bridge_snapshot = read_state() if is_bridge_active() else {}
+        bridge_mission_id = (
+            bridge_snapshot.get("mission_id")
+            if isinstance(bridge_snapshot, dict) else None
+        )
+        if (save_phase in _POST_MISSION_SAVE_PHASES
+                or bridge_mission_id in {"Mission_Final", "Mission_Final_Cave"}):
+            terminal_session = _load_session()
+            terminal_session.active_solution = None
+            terminal_session.actions_executed = 0
+            terminal_session.save()
+            result = {
+                "status": "TERMINAL_OR_MISSION_END",
+                "phase": phase,
+                "save_phase": save_phase,
+                "bridge_mission_id": bridge_mission_id,
+                "active_mechs": 0,
+                "waited_seconds": max_wait if wait_for_turn else 0,
+                "next_step": (
+                    "Combat commands are paused because the bridge has no "
+                    "active mechs. Check the visible screen for Victory, "
+                    "Region Secured, rewards, or defeat before issuing more "
+                    "combat commands."
+                ),
+            }
+            _print_result(result)
+            return result
         result = {
             "error": "No active mechs after polling — animations still playing "
                      f"or all mechs dead. Waited {max_wait}s.",
             "phase": phase,
+            "save_phase": save_phase,
             "active_mechs": 0,
         }
         _print_result(result)
@@ -6420,14 +6594,19 @@ def _visual_tile(x: int, y: int) -> str:
     return f"{chr(72 - y)}{8 - x}"
 
 
-def _deployable_mechs(board, session: RunSession) -> list[dict]:
+def _deployable_mechs(
+    board,
+    session: RunSession,
+    profile: str = "Alpha",
+) -> list[dict]:
     """Return deployable mech uid/type pairs in prompt order.
 
     During deployment the bridge may not list unplaced player pawns in
     `units`; however their UIDs are stable through the run. Prefer live
-    bridge units when present, otherwise recover uid/type from the last
-    active solution. As a final fallback, use the standard player pawn IDs
-    so the command remains useful on the deployment screen.
+    bridge units when present, recover uid/type from the last active
+    solution, then supplement partial rosters from save-file current.mechs.
+    As a final fallback, use the standard player pawn IDs so the command
+    remains useful on the deployment screen.
     """
     live_by_uid = {
         int(u.uid): {"uid": int(u.uid), "type": u.type}
@@ -6439,25 +6618,29 @@ def _deployable_mechs(board, session: RunSession) -> list[dict]:
     if session.active_solution is not None:
         for action in session.active_solution.actions:
             recovered.setdefault(int(action.mech_uid), action.mech_type)
-    if live_by_uid and recovered:
-        merged = {
-            uid: live_by_uid.get(uid, {"uid": uid, "type": recovered[uid]})
-            for uid in sorted(recovered)
-        }
-        return list(merged.values())
-    if live_by_uid:
-        return [live_by_uid[uid] for uid in sorted(live_by_uid)]
-    if recovered:
-        return [
-            {"uid": uid, "type": recovered[uid]}
-            for uid in sorted(recovered)
-        ]
 
-    return [
-        {"uid": 0, "type": "uid-0"},
-        {"uid": 1, "type": "uid-1"},
-        {"uid": 2, "type": "uid-2"},
-    ]
+    save_types: dict[int, str] = {}
+    state = load_game_state(profile)
+    if state is not None:
+        for uid, mech_type in enumerate(state.mechs[:3]):
+            save_types[uid] = mech_type
+
+    uid_order = sorted(set(live_by_uid) | set(recovered) | set(save_types))
+    if len(uid_order) < 3:
+        uid_order = sorted(set(uid_order) | {0, 1, 2})
+
+    merged: list[dict] = []
+    for uid in uid_order:
+        if uid in live_by_uid:
+            merged.append(live_by_uid[uid])
+        else:
+            merged.append({
+                "uid": uid,
+                "type": recovered.get(uid) or save_types.get(uid) or f"uid-{uid}",
+            })
+        if len(merged) >= 3:
+            break
+    return merged
 
 
 def cmd_deploy_recommended(profile: str = "Alpha") -> dict:
@@ -6500,7 +6683,7 @@ def cmd_deploy_recommended(profile: str = "Alpha") -> dict:
         ]
 
     session = _load_session()
-    mechs = _deployable_mechs(board, session)
+    mechs = _deployable_mechs(board, session, profile=profile)
     deployments = []
 
     print(f"\n=== DEPLOY_RECOMMENDED ({len(deploy_zone)} tiles available) ===")

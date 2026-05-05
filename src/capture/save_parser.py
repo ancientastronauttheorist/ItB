@@ -210,6 +210,7 @@ class GameState:
     difficulty: int = 0
     squad_name: str = ""
     mechs: list[str] = field(default_factory=list)
+    weapons: list[str] = field(default_factory=list)
     active_mission: MissionState | None = None
 
 
@@ -597,6 +598,9 @@ def load_game_state(profile: str = "Alpha") -> GameState | None:
             mechs = current.get('mechs', [])
             if isinstance(mechs, list):
                 state.mechs = [m for m in mechs if isinstance(m, str)]
+            weapons = current.get('weapons', [])
+            if isinstance(weapons, list):
+                state.weapons = [w for w in weapons if isinstance(w, str)]
 
         state.active_mission = load_active_mission(profile)
         return state

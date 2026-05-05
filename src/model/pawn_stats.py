@@ -237,8 +237,9 @@ NEUTRAL_STATS = {
     # Mirrors the Filler_Pawn pattern (player-team NPC, not is_mech) so the
     # evaluator's `friendly_npc_killed` (-20000) penalty fires on death.
     # `bigbomb_alive` (Rust Board) layers a much larger survival bonus on top
-    # since losing the bomb fails the mission.
-    "BigBomb":           PawnStats(move_speed=0, pushable=False, ignore_fire=True),
+    # since losing the bomb fails the mission. Despite being immobile, live
+    # final-cave evidence showed it can be pushed/bumped by Vulcan Artillery.
+    "BigBomb":           PawnStats(move_speed=0, pushable=True, ignore_fire=True),
 }
 
 # Combined lookup

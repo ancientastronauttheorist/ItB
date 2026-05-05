@@ -795,7 +795,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Replay snapshots also include all building tiles so Grid Defense and Blast
 //   Psion building diffs are visible even when event telemetry is sparse.
 //   Pre-v42 corpus archived as `failure_db_snapshot_sim_v41.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 42;
+// v43 — Final-cave Renfield Bomb is pushable/bumpable, and Vulcan Artillery
+//   Backburn (`Ranged_Ignite_A`) lights the tile behind the shooter on fire.
+//   Pre-v43 corpus archived as `failure_db_snapshot_sim_v42.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 43;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

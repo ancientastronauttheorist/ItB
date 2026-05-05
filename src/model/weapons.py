@@ -313,6 +313,13 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="fire behind mech too",
         upgrade_b="+2 damage to center",
     ),
+    "Ranged_Ignite_A": WeaponDef(
+        name="Ignite", weapon_type="artillery",
+        damage=0, push="outward", fire=True, range_min=2,
+        aoe_adjacent=True,
+        upgrade_a="fire behind mech too",
+        upgrade_b="+2 damage to center",
+    ),
     "Ranged_Ice": WeaponDef(
         name="Cryo-Launcher", weapon_type="artillery",
         damage=0, freeze=True, range_min=2, self_damage=0,

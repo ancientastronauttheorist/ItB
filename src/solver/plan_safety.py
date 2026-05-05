@@ -20,6 +20,7 @@ BLOCKING_KINDS = {
     "mech_lost",
     "mech_on_danger",
     "mech_disabled",
+    "bigbomb_lost",
 }
 
 
@@ -200,6 +201,18 @@ def audit_plan_safety(current: dict[str, Any],
                 new_disabled,
             ))
 
+    cur_bigbomb = current.get("bigbomb_alive")
+    pred_bigbomb = predicted.get("bigbomb_alive")
+    if isinstance(cur_bigbomb, bool) and isinstance(pred_bigbomb, bool):
+        compared.append("bigbomb_alive")
+        if cur_bigbomb and not pred_bigbomb:
+            violations.append(_violation(
+                "bigbomb_lost",
+                cur_bigbomb,
+                pred_bigbomb,
+                "Predicted outcome destroys the Renfield Bomb.",
+            ))
+
     blocking = any(v.get("blocking") for v in violations)
     if blocking:
         status = "DIRTY"
@@ -226,6 +239,7 @@ def audit_plan_safety(current: dict[str, Any],
             "mech_hp_total": cur_mech_hp,
             "mechs_on_danger": _list_or_empty(current.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(current.get("mechs_disabled")),
+            "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
         },
         "predicted": {
             "grid_power": pred_grid,
@@ -238,6 +252,7 @@ def audit_plan_safety(current: dict[str, Any],
             "mech_hp_total": pred_mech_hp,
             "mechs_on_danger": _list_or_empty(predicted.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(predicted.get("mechs_disabled")),
+            "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
         },
     }
 

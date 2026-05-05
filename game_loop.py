@@ -53,6 +53,7 @@ from src.loop.commands import (
     cmd_research_attach_community,
     cmd_research_next,
     cmd_research_probe_mech,
+    cmd_research_resolve,
     cmd_research_submit,
     cmd_review_overrides,
     cmd_mine_overrides,
@@ -205,6 +206,22 @@ def main():
         help="Pick next research queue entry → emit capture plan",
     )
     p_research_next.add_argument("--profile", default="Alpha")
+
+    # research_resolve
+    p_research_resolve = sub.add_parser(
+        "research_resolve",
+        help="Mark stale research queue entries for a known target as done",
+    )
+    p_research_resolve.add_argument("target",
+                                    help="Known type/terrain/weapon to resolve")
+    p_research_resolve.add_argument("--profile", default="Alpha")
+    p_research_resolve.add_argument("--kind", default=None,
+                                    help="Optional queue kind filter")
+    p_research_resolve.add_argument(
+        "--reason",
+        default="manual_resolved_known_type",
+        help="Reason stored on the queue entry result",
+    )
 
     # research_submit
     p_research_submit = sub.add_parser(
@@ -542,6 +559,11 @@ def main():
         )
     elif args.command == "research_next":
         cmd_research_next(profile=args.profile)
+    elif args.command == "research_resolve":
+        cmd_research_resolve(
+            args.target, kind=args.kind, reason=args.reason,
+            profile=args.profile,
+        )
     elif args.command == "research_submit":
         cmd_research_submit(args.research_id, args.vision_json,
                             profile=args.profile,
