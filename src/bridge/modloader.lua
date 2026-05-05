@@ -15,11 +15,25 @@ local ACK_FILE   = "/tmp/itb_ack.txt"
 local ACK_TMP    = "/tmp/itb_ack.tmp"
 local LOG_FILE   = "/tmp/itb_bridge.log"
 
-local TERRAIN_NAMES = {
-    [0] = "ground", [1] = "building", [2] = "rubble", [3] = "water",
-    [4] = "mountain", [5] = "lava", [6] = "forest", [7] = "sand",
-    [8] = "ice", [9] = "chasm",
-}
+local TERRAIN_NAMES = {}
+
+local function add_terrain_name(global_name, fallback_id, name)
+    local id = _G[global_name]
+    if type(id) ~= "number" then id = fallback_id end
+    if type(id) == "number" then TERRAIN_NAMES[id] = name end
+end
+
+add_terrain_name("TERRAIN_ROAD", 0, "ground")
+add_terrain_name("TERRAIN_BUILDING", 1, "building")
+add_terrain_name("TERRAIN_RUBBLE", 2, "rubble")
+add_terrain_name("TERRAIN_WATER", 3, "water")
+add_terrain_name("TERRAIN_MOUNTAIN", 4, "mountain")
+add_terrain_name("TERRAIN_ICE", 5, "ice")
+add_terrain_name("TERRAIN_FOREST", 6, "forest")
+add_terrain_name("TERRAIN_SAND", 7, "sand")
+add_terrain_name("TERRAIN_HOLE", 9, "chasm")
+add_terrain_name("TERRAIN_ACID", 10, "acid")
+add_terrain_name("TERRAIN_LAVA", nil, "lava")
 
 local _poll_interval = 0.2  -- seconds between command polls
 local _last_poll = 0
@@ -354,7 +368,7 @@ local function dump_state()
             if belt_dir then tile.conveyor = belt_dir end
 
             -- Building data
-            if terrain_id == 1 then
+            if terrain_id == (_G.TERRAIN_BUILDING or 1) then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
                 if ok_h then tile.building_hp = hp end
                 -- Objective building (Coal Plant / Power Generator /
@@ -368,7 +382,7 @@ local function dump_state()
                     end
                 end
             -- Mountain data (2 = full, 1 = damaged, 0 = rubble)
-            elseif terrain_id == 4 then
+            elseif terrain_id == (_G.TERRAIN_MOUNTAIN or 4) then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
                 if ok_h then tile.building_hp = hp else tile.building_hp = 2 end
                 tile.population = 1

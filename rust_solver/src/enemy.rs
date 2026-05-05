@@ -7,7 +7,7 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::simulate::{apply_damage, apply_push, apply_weapon_status};
+use crate::simulate::{apply_damage, apply_push, apply_teleport_on_land, apply_weapon_status};
 
 /// Spawn a new enemy unit at (x, y). Used by Spider/Blobber artillery
 /// whose in-game effect is "create an egg / blob" at the telegraphed
@@ -748,6 +748,11 @@ pub fn simulate_enemy_attacks(
         match wdef.weapon_type {
             WeaponType::Projectile => {
                 if let Some((tx, ty)) = find_projectile_target(board, ex, ey, orig.0, orig.1, qtx, qty) {
+                    let hit_was_object = {
+                        let tile = board.tile(tx, ty);
+                        tile.terrain == Terrain::Mountain
+                            || (tile.terrain == Terrain::Building && tile.building_hp > 0)
+                    };
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                     if wdef.fire() {
@@ -779,6 +784,11 @@ pub fn simulate_enemy_attacks(
                             if !board.units[idx].pilot_soldier() {
                                 board.units[idx].web_source_uid = enemy_uid;
                             }
+                        }
+                    }
+                    if wdef.projectile_grapple() {
+                        if let Some(dir) = projectile_dir_from_queued(orig.0, orig.1, qtx, qty) {
+                            apply_projectile_grapple(board, ei, tx, ty, dir, hit_was_object, &mut result);
                         }
                     }
 
@@ -1283,6 +1293,70 @@ fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8,
     last_valid
 }
 
+fn projectile_dir_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<usize> {
+    let dx = (qtx - orig_x as i8).signum();
+    let dy = (qty - orig_y as i8).signum();
+    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) {
+        return None;
+    }
+    DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy)
+}
+
+fn apply_projectile_grapple(
+    board: &mut Board,
+    attacker_idx: usize,
+    hit_x: u8,
+    hit_y: u8,
+    dir: usize,
+    hit_was_object: bool,
+    result: &mut ActionResult,
+) {
+    if let Some(target_idx) = board.unit_at(hit_x, hit_y) {
+        if target_idx == attacker_idx
+            || board.units[target_idx].hp <= 0
+            || !board.units[target_idx].pushable()
+        {
+            return;
+        }
+
+        let pull_dir = opposite_dir(dir);
+        let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+        for _ in 0..8 {
+            let (cx, cy) = (board.units[target_idx].x, board.units[target_idx].y);
+            if (cx as i16 - ax as i16).abs() + (cy as i16 - ay as i16).abs() <= 1 {
+                break;
+            }
+            apply_push(board, cx, cy, pull_dir, result);
+            if board.units[target_idx].hp <= 0 {
+                break;
+            }
+            let (nx, ny) = (board.units[target_idx].x, board.units[target_idx].y);
+            if nx == cx && ny == cy {
+                break;
+            }
+        }
+        return;
+    }
+
+    if !hit_was_object {
+        return;
+    }
+
+    let (dx, dy) = DIRS[dir];
+    let stop_x = hit_x as i8 - dx;
+    let stop_y = hit_y as i8 - dy;
+    if !in_bounds(stop_x, stop_y) {
+        return;
+    }
+    let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+    if stop_x as u8 == ax && stop_y as u8 == ay {
+        return;
+    }
+    board.units[attacker_idx].x = stop_x as u8;
+    board.units[attacker_idx].y = stop_y as u8;
+    apply_teleport_on_land(board, attacker_idx);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1352,6 +1426,46 @@ mod tests {
 
         // Artillery should hit building at (4,0) directly, ignoring mountain
         assert_eq!(board.tile(4, 0).building_hp, 0, "Scarab artillery should hit building through mountain");
+    }
+
+    #[test]
+    fn test_gastropod_projectile_keeps_traveling_after_target_moves() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.tile_mut(1, 2).terrain = Terrain::Building;
+        board.tile_mut(1, 2).building_hp = 1;
+        add_enemy_with_type(&mut board, 99, 4, 2, 3, "Burnbug1", 3, 2);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(1, 2).building_hp, 0,
+            "Burnbug/Gastropod hook should travel past the vacated first tile");
+        assert_eq!(board.grid_power, 5,
+            "The F7 building loss from run 20260504_210332_088 m01 t01 must be predicted");
+    }
+
+    #[test]
+    fn test_gastropod_projectile_pulls_hit_unit_toward_attacker() {
+        let mut board = Board::default();
+        let target_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 1,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        add_enemy_with_type(&mut board, 99, 4, 2, 3, "Burnbug1", 3, 2);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[target_idx].hp, 2, "Hook deals 1 damage");
+        assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (3, 2),
+            "Hook pulls the hit pawn until adjacent to the Gastropod");
     }
 
     #[test]

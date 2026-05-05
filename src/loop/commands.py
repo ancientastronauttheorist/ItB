@@ -2291,6 +2291,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 inject_into_bridge as _inject_bonus_obj,
             )
             _inject_bonus_obj(bridge_data)
+            from src.solver.mission_unit_objectives import (
+                inject_into_bridge as _inject_unit_obj,
+            )
+            _inject_unit_obj(bridge_data)
 
             _record_turn_state(session, "solve_input", {
                 "schema_version": 1,
@@ -4585,7 +4589,15 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
     # once the game has written one (matches the cross-check in
     # cmd_auto_turn). Falls through silently if the save file isn't readable
     # (fresh install, no profile yet).
-    _live_diff = _read_save_file_difficulty()
+    # Only sync from an actual live saveData.lua phase. On the new-game setup
+    # screen there may be a stale undoSave.lua from the previous timeline; using
+    # that here silently rewrites explicit Normal/Hard evaluation runs back to
+    # the old save's difficulty.
+    _live_phase = detect_game_phase()
+    _live_diff = (
+        _read_save_file_difficulty()
+        if _live_phase != "no_save" else None
+    )
     if _live_diff is not None and _live_diff != session.difficulty:
         _ses_label = _DIFFICULTY_LABELS.get(
             session.difficulty, str(session.difficulty)
@@ -4928,6 +4940,10 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
         inject_into_bridge as _inject_bonus_obj,
     )
     _inject_bonus_obj(bd)
+    from src.solver.mission_unit_objectives import (
+        inject_into_bridge as _inject_unit_obj,
+    )
+    _inject_unit_obj(bd)
 
     # Sim v28: stamp `is_infinite_spawn` on replayed/tuned bridge_data so
     # the Rust solver's future_factor floor (0.5) kicks in on boss /
@@ -5211,6 +5227,10 @@ def _re_solve_partial(
         inject_into_bridge as _inject_bonus_obj,
     )
     _inject_bonus_obj(bridge_data)
+    from src.solver.mission_unit_objectives import (
+        inject_into_bridge as _inject_unit_obj,
+    )
+    _inject_unit_obj(bridge_data)
 
     try:
         import itb_solver as _rust

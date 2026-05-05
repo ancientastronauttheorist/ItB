@@ -394,6 +394,12 @@ pub struct Board {
     /// which fired on every Weather Watch kill regardless of whether the
     /// current mission's BonusObjs actually included BONUS_PROTECT_X.
     pub bonus_dont_kill_types: Vec<String>,
+    /// Unit-based mission objectives to destroy (e.g. Mission_Hacking's
+    /// Hacked_Building). Matched by type-name substring.
+    pub destroy_objective_unit_types: Vec<String>,
+    /// Unit-based mission objectives to protect even when they start on
+    /// enemy team before conversion (e.g. Mission_Hacking's Cannon Bot).
+    pub protect_objective_unit_types: Vec<String>,
     /// Queued Spider Psion egg spawns produced by `on_enemy_death` during
     /// the current phase. Drained at the END of `simulate_enemy_attacks`
     /// so eggs spawned mid-enemy-phase do NOT hatch in the same phase
@@ -449,6 +455,8 @@ impl Default for Board {
             bigbomb_alive: false,
             teleporter_pairs: Vec::new(),
             bonus_dont_kill_types: Vec::new(),
+            destroy_objective_unit_types: Vec::new(),
+            protect_objective_unit_types: Vec::new(),
             pending_spider_eggs: Vec::new(),
         }
     }

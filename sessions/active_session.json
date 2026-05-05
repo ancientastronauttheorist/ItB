@@ -1,16 +1,64 @@
 {
-  "run_id": "20260430_230740_117",
-  "squad": "Balanced_Roll",
+  "run_id": "20260504_210332_088",
+  "squad": "BalancedRoll",
   "achievement_targets": [],
-  "difficulty": 0,
+  "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Final_Cave",
+  "current_mission": "",
   "islands_completed": [],
-  "mission_index": 5,
-  "last_mission_turn": 4,
+  "mission_index": 2,
+  "last_mission_turn": -1,
   "current_turn": 4,
-  "phase": "combat_player",
-  "active_solution": null,
+  "phase": "unknown",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "WallMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "WallMech"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          2,
+          3
+        ],
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          7,
+          3
+        ],
+        "description": "ArtiMech, move D7\u2192E6, fire Artemis Artillery at E1"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "PulseMech",
+        "move_to": [
+          5,
+          2
+        ],
+        "weapon": "Science_Repulse",
+        "target": [
+          5,
+          2
+        ],
+        "description": "PulseMech, move D2\u2192F3, fire Repulse at F3"
+      }
+    ],
+    "score": 108544.28571428572,
+    "turn": 4,
+    "input_fingerprint": "0:3,4:4|116:5,5:2|117:5,4:2|118:5,1:3|119:7,4:3|1:1,4:1|2:6,4:2|99:6,3:1"
+  },
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -18,557 +66,91 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-30T23:09:24.155283",
+      "timestamp": "2026-05-04T21:13:06.693443",
       "turn": 1,
       "label": "solve",
-      "score": 157100.0,
+      "score": 102414.28571428571,
       "actions": [
-        "FlameMech, move C6\u2192A7, fire Flamethrower at B7",
-        "TeleMech, move C7\u2192E4, fire Teleporter at F4",
-        "IgniteMech, move F6\u2192F7, fire Ignite at F5"
+        "WallMech, move D6\u2192E6, fire Grappling Hook at E2",
+        "ArtiMech, fire Artemis Artillery at C3",
+        "PulseMech, move C5\u2192D5, fire Repulse at D5"
       ]
     },
     {
-      "timestamp": "2026-04-30T23:10:23.543106",
+      "timestamp": "2026-05-04T21:18:27.973471",
       "turn": 2,
       "label": "solve",
-      "score": 163072.71426955308,
+      "score": 92954.28571428564,
       "actions": [
-        "FlameMech, move A7\u2192C6",
-        "TeleMech, move F4\u2192F6, fire Teleporter at F7",
-        "IgniteMech, move E8\u2192D8, fire Ignite at D4"
+        "WallMech, move E6\u2192F6, fire Grappling Hook at F3",
+        "ArtiMech, move C7\u2192C6, fire Artemis Artillery at C3",
+        "PulseMech, fire Repulse at D5"
       ]
     },
     {
-      "timestamp": "2026-04-30T23:11:13.333106",
-      "turn": 2,
-      "label": "solve",
-      "score": 163059.3809362197,
-      "actions": [
-        "FlameMech, move A7\u2192A3, fire Flamethrower at B3",
-        "TeleMech, move F4\u2192F6, fire Teleporter at F7",
-        "IgniteMech, move E8\u2192D8, fire Ignite at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T23:13:56.520965",
-      "turn": 2,
-      "label": "solve",
-      "score": 163072.71426955308,
-      "actions": [
-        "FlameMech, move A7\u2192C6",
-        "TeleMech, move F4\u2192F6, fire Teleporter at F7",
-        "IgniteMech, move E8\u2192D8, fire Ignite at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T23:17:26.819370",
-      "turn": 2,
-      "label": "note",
-      "message": "Turn 2 grid-drop investigation grid_drop_20260430_230740_117_t02_a2 is favorable overprediction: predicted grid 6, actual grid 7, no building_hp_diffs. Proceeding with pending End Turn; follow-up needed on Ranged_Ignite death/grid overprediction after mission."
-    },
-    {
-      "timestamp": "2026-04-30T23:23:53.181977",
+      "timestamp": "2026-05-04T21:19:30.840013",
       "turn": 3,
       "label": "solve",
-      "score": 172312.7142695529,
+      "score": 122484.28571428571,
       "actions": [
-        "FlameMech, fire Flamethrower at D6",
-        "TeleMech, move F7\u2192F6, fire Teleporter at E6",
-        "IgniteMech, move D8\u2192E8, fire Ignite at E6"
+        "WallMech, move G7\u2192F6, fire Grappling Hook at F4",
+        "PulseMech, move E6\u2192B5, fire Repulse at B5",
+        "ArtiMech, move D5\u2192C6, fire Artemis Artillery at E6"
       ]
     },
     {
-      "timestamp": "2026-04-30T23:24:30.976471",
-      "turn": 3,
-      "label": "solve",
-      "score": 172312.7142695529,
-      "actions": [
-        "FlameMech, fire Flamethrower at D6",
-        "TeleMech, move F7\u2192F6, fire Teleporter at E6",
-        "IgniteMech, move D8\u2192E8, fire Ignite at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T23:25:34.110378",
-      "turn": 3,
-      "label": "solve",
-      "score": 172312.7142695529,
-      "actions": [
-        "FlameMech, fire Flamethrower at D6",
-        "TeleMech, move F7\u2192F6, fire Teleporter at E6",
-        "IgniteMech, move D8\u2192E8, fire Ignite at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T23:27:26.943872",
-      "turn": 3,
-      "label": "note",
-      "message": "Turn 3 grid-drop investigation grid_drop_20260430_230740_117_t03_a2 is favorable overprediction: predicted grid 6, actual grid 7, no building_hp_diffs. Explorer timed out during live turn; proceeding with pending End Turn and leaving Ranged_Ignite/grid metadata follow-up for after mission."
-    },
-    {
-      "timestamp": "2026-04-30T23:28:08.292279",
+      "timestamp": "2026-05-04T21:20:30.577485",
       "turn": 4,
       "label": "solve",
-      "score": 163842.7142695529,
+      "score": 99689.28571428571,
       "actions": [
-        "FlameMech, fire Flamethrower at B6",
-        "IgniteMech, fire Ignite at E1",
-        "TeleMech, fire Teleporter at F6"
+        "WallMech",
+        "ArtiMech, move C6\u2192A6, fire Artemis Artillery at A3",
+        "PulseMech, move B5\u2192E6, fire Repulse at E6"
       ]
     },
     {
-      "timestamp": "2026-04-30T23:28:28.585267",
-      "turn": 4,
-      "label": "solve",
-      "score": 163842.7142695529,
-      "actions": [
-        "FlameMech, fire Flamethrower at B6",
-        "IgniteMech, fire Ignite at E1",
-        "TeleMech, fire Teleporter at F6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T23:28:43.172123",
-      "turn": 4,
-      "label": "solve",
-      "score": 163842.7142695529,
-      "actions": [
-        "FlameMech, fire Flamethrower at B6",
-        "IgniteMech, fire Ignite at E1",
-        "TeleMech, fire Teleporter at F6"
-      ]
-    },
-    {
-      "timestamp": "2026-04-30T23:30:34.494491",
-      "turn": 4,
-      "label": "note",
-      "message": "Turn 4 investigations: t04_a0 appears to be grid-defense resist on predicted B5 building/grid damage; t04_a2 is real ordinary building damage at E7 with grid defense holding grid at 7/7. Current bridge read after all actions shows no threatened buildings, coal plant/pod still present, active mechs 0. Proceeding with final End Turn; post-mission follow-up: distinguish grid-defense resist from simulator defects and widen replay snapshot tile coverage."
-    },
-    {
-      "timestamp": "2026-05-01T12:10:58.606840",
+      "timestamp": "2026-05-04T21:58:29.547499",
       "turn": 1,
       "label": "solve",
-      "score": 129407.99997929164,
+      "score": 157221.42857142858,
       "actions": [
-        "TeleMech, fire Teleporter at D4",
-        "IgniteMech, move G5\u2192H5, fire Ignite at D5",
-        "FlameMech, move E6\u2192D6, fire Flamethrower at D5"
+        "ArtiMech, fire Artemis Artillery at F5",
+        "WallMech, move F5\u2192E3, fire Grappling Hook at C3",
+        "PulseMech, move E6\u2192D4, fire Repulse at D4"
       ]
     },
     {
-      "timestamp": "2026-05-01T12:11:23.689987",
-      "turn": 1,
-      "label": "solve",
-      "score": 129407.99997929164,
-      "actions": [
-        "TeleMech, fire Teleporter at D4",
-        "IgniteMech, move G5\u2192H5, fire Ignite at D5",
-        "FlameMech, move E6\u2192D6, fire Flamethrower at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:11:39.183321",
-      "turn": 1,
-      "label": "solve",
-      "score": 129207.99997929164,
-      "actions": [
-        "TeleMech, fire Teleporter at D4",
-        "IgniteMech, move G5\u2192H5, fire Ignite at D5",
-        "FlameMech, move E6\u2192E5, fire Flamethrower at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:11:39.769039",
-      "turn": 1,
-      "label": "solve",
-      "score": 129407.99997929164,
-      "actions": [
-        "TeleMech, fire Teleporter at D4",
-        "IgniteMech, move G5\u2192H5, fire Ignite at D5",
-        "FlameMech, move E6\u2192D6, fire Flamethrower at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:15:35.691612",
-      "turn": 1,
-      "label": "solve",
-      "score": 129407.99997929164,
-      "actions": [
-        "TeleMech, fire Teleporter at D4",
-        "IgniteMech, move G5\u2192H5, fire Ignite at D5",
-        "FlameMech, move E6\u2192D6, fire Flamethrower at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:16:19.922016",
-      "turn": 1,
-      "label": "solve",
-      "score": 129407.99997929164,
-      "actions": [
-        "TeleMech, fire Teleporter at D4",
-        "IgniteMech, move G5\u2192H5, fire Ignite at D5",
-        "FlameMech, move E6\u2192D6, fire Flamethrower at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:18:07.396997",
-      "turn": 1,
-      "label": "note",
-      "message": "Thermal Dampeners turn 1 safety block: no clean valid plan found among 1000 constrained top-k candidates; accepting best solver plan with --allow-dirty-plan after snapshot safety_block_turn1_thermal_dampeners."
-    },
-    {
-      "timestamp": "2026-05-01T12:18:11.471630",
-      "turn": 1,
-      "label": "solve",
-      "score": 129407.99997929164,
-      "actions": [
-        "TeleMech, fire Teleporter at D4",
-        "IgniteMech, move G5\u2192H5, fire Ignite at D5",
-        "FlameMech, move E6\u2192D6, fire Flamethrower at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:21:26.472032",
+      "timestamp": "2026-05-04T21:59:44.371602",
       "turn": 2,
       "label": "solve",
-      "score": 107605.61906642001,
+      "score": 154845.23809523828,
       "actions": [
-        "FlameMech, fire Flamethrower at F5",
-        "IgniteMech, move H5\u2192F7",
-        "TeleMech, fire Teleporter at E3"
+        "ArtiMech, fire Artemis Artillery at D3",
+        "WallMech, move F3\u2192E2, fire Grappling Hook at E6",
+        "PulseMech, move D5\u2192F3, fire Repulse at F3"
       ]
     },
     {
-      "timestamp": "2026-05-01T12:22:36.676847",
-      "turn": 2,
-      "label": "note",
-      "message": "Thermal Dampeners turn 2: no clean plan found across 1000 candidates. Clearing temporary Ranged_Ignite soft-disable because no-disabled solve predicts smaller irreversible loss than disabled solve."
-    },
-    {
-      "timestamp": "2026-05-01T12:22:40.853175",
-      "turn": 2,
-      "label": "solve",
-      "score": 135981.3333126251,
-      "actions": [
-        "FlameMech, fire Flamethrower at F5",
-        "TeleMech, move D3\u2192B6, fire Teleporter at B7",
-        "IgniteMech, move H5\u2192F7, fire Ignite at B7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:23:58.114326",
+      "timestamp": "2026-05-04T22:27:24.640251",
       "turn": 3,
       "label": "solve",
-      "score": 130978.00000858307,
+      "score": 115414.28571428572,
       "actions": [
-        "FlameMech",
-        "IgniteMech, move F7\u2192G7, fire Ignite at B7",
-        "TeleMech, fire Teleporter at B8"
+        "WallMech, move E2\u2192D4, fire Grappling Hook at F4",
+        "ArtiMech, move D6\u2192D7, fire Artemis Artillery at B7",
+        "PulseMech, move F3\u2192D3, fire Repulse at D3"
       ]
     },
     {
-      "timestamp": "2026-05-01T12:24:56.792005",
-      "turn": 3,
-      "label": "note",
-      "message": "Thermal Dampeners turn 3: no clean plan found across 1000 candidates; executing stable best solver plan with --allow-dirty-plan."
-    },
-    {
-      "timestamp": "2026-05-01T12:25:00.270548",
-      "turn": 3,
-      "label": "solve",
-      "score": 130978.00000858307,
-      "actions": [
-        "FlameMech",
-        "IgniteMech, move F7\u2192G7, fire Ignite at B7",
-        "TeleMech, fire Teleporter at B8"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:26:23.638339",
+      "timestamp": "2026-05-04T22:28:52.590457",
       "turn": 4,
       "label": "solve",
-      "score": -119365.85499681743,
+      "score": 108544.28571428572,
       "actions": [
-        "IgniteMech, move G7\u2192E7, fire Ignite at E5",
-        "FlameMech, move E5\u2192D5, fire Flamethrower at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:26:50.564204",
-      "turn": 4,
-      "label": "note",
-      "message": "Thermal Dampeners turn 4: Swap Mech destroyed and grid now 6/7 after turn 3. Seven building threats with two active mechs; executing best available solver plan with --allow-dirty-plan to preserve run."
-    },
-    {
-      "timestamp": "2026-05-01T12:26:54.335853",
-      "turn": 4,
-      "label": "solve",
-      "score": -119365.85499681743,
-      "actions": [
-        "IgniteMech, move G7\u2192E7, fire Ignite at E5",
-        "FlameMech, move E5\u2192D5, fire Flamethrower at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:35:41.638129",
-      "turn": 1,
-      "label": "solve",
-      "score": 112450.00000000001,
-      "actions": [
-        "IgniteMech, fire Ignite at C1",
-        "TeleMech, move C5\u2192E5, fire Teleporter at E4",
-        "FlameMech, move D5\u2192F4, fire Flamethrower at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:38:12.221261",
-      "turn": 2,
-      "label": "solve",
-      "score": -2201.3328078587638,
-      "actions": [
-        "FlameMech, repair",
-        "IgniteMech, move C6\u2192C7",
-        "TeleMech, move F3\u2192F5, fire Teleporter at G5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:40:22.882938",
-      "turn": 2,
-      "label": "note",
-      "message": "Snowstorm turn 2: safety block with Ranged_Ignite soft-disabled predicts grid 4->2. Emergency top-k found 54 clean candidates when clearing the temporary Ranged_Ignite soft-disable; clearing disabled_actions for this turn to preserve grid/objective."
-    },
-    {
-      "timestamp": "2026-05-01T12:40:32.506357",
-      "turn": 2,
-      "label": "solve",
-      "score": 113646.66666666661,
-      "actions": [
-        "IgniteMech, move C6\u2192E7, fire Ignite at E5",
-        "FlameMech, move D5\u2192F5, fire Flamethrower at G5",
-        "TeleMech, move F3\u2192B3, fire Teleporter at B2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:41:37.479286",
-      "turn": 3,
-      "label": "solve",
-      "score": 125020.00000000001,
-      "actions": [
-        "FlameMech, move F5\u2192G3, fire Flamethrower at G4",
-        "IgniteMech, move E7\u2192C7, fire Ignite at C4",
-        "TeleMech, move B2\u2192E4, fire Teleporter at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:42:39.175856",
-      "turn": 4,
-      "label": "solve",
-      "score": 80614.42875099182,
-      "actions": [
-        "IgniteMech, move C7\u2192D5, fire Ignite at G5",
-        "FlameMech, move G3\u2192F5, fire Flamethrower at E5",
-        "TeleMech, move D4\u2192C5, fire Teleporter at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:43:34.739294",
-      "turn": 4,
-      "label": "note",
-      "message": "Snowstorm turn 4: no clean plan found in 2000 top-k candidates across weight/disable variants. Best outcomes all predict grid 4->3 and building_hp 8->7 while preserving power generator; executing solver top plan with --allow-dirty-plan."
-    },
-    {
-      "timestamp": "2026-05-01T12:43:46.126287",
-      "turn": 4,
-      "label": "solve",
-      "score": 80614.42875099182,
-      "actions": [
-        "IgniteMech, move C7\u2192D5, fire Ignite at G5",
-        "FlameMech, move G3\u2192F5, fire Flamethrower at E5",
-        "TeleMech, move D4\u2192C5, fire Teleporter at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:48:11.862351",
-      "turn": 1,
-      "label": "solve",
-      "score": 123300.0,
-      "actions": [
-        "FlameMech, fire Flamethrower at G5",
-        "TeleMech, move F7\u2192F3, fire Teleporter at E3",
-        "IgniteMech, move C5\u2192D4, fire Ignite at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:51:34.519477",
-      "turn": 2,
-      "label": "solve",
-      "score": 120979.99999999994,
-      "actions": [
-        "FlameMech, fire Flamethrower at F5",
-        "IgniteMech",
-        "TeleMech, move E3\u2192C2, fire Teleporter at C1"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:52:26.102865",
-      "turn": 3,
-      "label": "solve",
-      "score": 140400.0,
-      "actions": [
-        "FlameMech, move F6\u2192F3, fire Flamethrower at G3",
-        "TeleMech, move C1\u2192D2, fire Teleporter at D3",
-        "IgniteMech, move D4\u2192C4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T12:54:39.129642",
-      "turn": 4,
-      "label": "solve",
-      "score": 129510.0,
-      "actions": [
-        "FlameMech, fire Flamethrower at F2",
-        "IgniteMech, move C4\u2192C5",
-        "TeleMech, fire Teleporter at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:02:45.118682",
-      "turn": 1,
-      "label": "solve",
-      "score": 145500.0,
-      "actions": [
-        "TeleMech, move G5\u2192E3, fire Teleporter at D3",
-        "FlameMech, move E5\u2192D2, fire Flamethrower at E2",
-        "IgniteMech, move F6\u2192C4, fire Ignite at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:03:57.104044",
-      "turn": 2,
-      "label": "solve",
-      "score": 146926.66666666686,
-      "actions": [
-        "FlameMech, move D2\u2192F2, fire Flamethrower at F3",
-        "IgniteMech, move C4\u2192E4, fire Ignite at G4",
-        "TeleMech, fire Teleporter at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:04:51.808126",
-      "turn": 3,
-      "label": "solve",
-      "score": 146820.0,
-      "actions": [
-        "IgniteMech, move E4\u2192C4, fire Ignite at E4",
-        "TeleMech, fire Teleporter at E2",
-        "FlameMech, move F2\u2192E1, fire Flamethrower at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:06:12.192824",
-      "turn": 4,
-      "label": "solve",
-      "score": 144365.57141964778,
-      "actions": [
-        "FlameMech, move E1\u2192D5, repair",
-        "TeleMech, move E2\u2192G4, fire Teleporter at G5",
-        "IgniteMech, move C4\u2192D4, fire Ignite at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:07:35.551685",
-      "turn": 4,
-      "label": "solve",
-      "score": 144365.57141964778,
-      "actions": [
-        "FlameMech, move E1\u2192D5, repair",
-        "TeleMech, move E2\u2192G4, fire Teleporter at G5",
-        "IgniteMech, move C4\u2192D4, fire Ignite at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:07:58.875227",
-      "turn": 4,
-      "label": "solve",
-      "score": 144365.57141964778,
-      "actions": [
-        "FlameMech, move E1\u2192D5, repair",
-        "TeleMech, move E2\u2192G4, fire Teleporter at G5",
-        "IgniteMech, move C4\u2192D4, fire Ignite at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:09:29.375199",
-      "turn": 4,
-      "label": "solve",
-      "score": 144365.57141964778,
-      "actions": [
-        "FlameMech, move E1\u2192D5, repair",
-        "TeleMech, move E2\u2192G4, fire Teleporter at G5",
-        "IgniteMech, move C4\u2192D4, fire Ignite at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:12:11.519230",
-      "turn": 1,
-      "label": "solve",
-      "score": 144500.0,
-      "actions": [
-        "IgniteMech, move D6\u2192D4, fire Ignite at D6",
-        "FlameMech, move F6\u2192F4, fire Flamethrower at E4",
-        "TeleMech, move E5\u2192G4, fire Teleporter at G3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:14:34.262748",
-      "turn": 2,
-      "label": "solve",
-      "score": 115026.6666666666,
-      "actions": [
-        "FlameMech, move F4\u2192C6, fire Flamethrower at C5",
-        "IgniteMech, fire Ignite at D6",
-        "TeleMech, move G3\u2192E4, fire Teleporter at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:15:56.842655",
-      "turn": 3,
-      "label": "solve",
-      "score": 58930.57142560824,
-      "actions": [
-        "FlameMech, move B6\u2192C3, fire Flamethrower at C2",
-        "IgniteMech, move E4\u2192B6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:17:26.938096",
-      "turn": 3,
-      "label": "solve",
-      "score": 59510.0,
-      "actions": [
-        "FlameMech, move B6\u2192C3, fire Flamethrower at C2",
-        "IgniteMech, move E4\u2192F8, fire Ignite at D8"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:18:17.396743",
-      "turn": 4,
-      "label": "solve",
-      "score": 47487.28572627477,
-      "actions": [
-        "IgniteMech, move F8\u2192E8, fire Ignite at E5",
-        "FlameMech, move C3\u2192E6, fire Flamethrower at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-01T13:18:47.208613",
-      "turn": 4,
-      "label": "solve",
-      "score": 47487.28572627477,
-      "actions": [
-        "IgniteMech, move F8\u2192E8, fire Ignite at E5",
-        "FlameMech, move C3\u2192E6, fire Flamethrower at D6"
+        "WallMech",
+        "ArtiMech, move D7\u2192E6, fire Artemis Artillery at E1",
+        "PulseMech, move D2\u2192F3, fire Repulse at F3"
       ]
     }
   ],
@@ -596,35 +178,11 @@
     [
       1,
       3
-    ],
-    [
-      2,
-      1
-    ],
-    [
-      2,
-      2
-    ],
-    [
-      2,
-      3
-    ],
-    [
-      3,
-      1
-    ],
-    [
-      3,
-      2
-    ],
-    [
-      3,
-      3
     ]
   ],
   "tags": [
-    "live",
-    "midrun"
+    "normal_eval",
+    "solver_v2"
   ],
   "failure_events_this_run": [
     {
@@ -635,317 +193,7 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "death|Science_Swap|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Science_Swap",
-        "target": [
-          4,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Ranged_Ignite|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          2,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death",
-        "grid_power"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Ranged_Ignite|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Prime_Flamethrower|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "grid_power",
-      "categories": [
-        "grid_power"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "grid_power|Ranged_Ignite|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          2,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "grid_power"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Prime_Flamethrower|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          2,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Ranged_Ignite|attack",
-      "frequency": 1,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          7,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "grid_power",
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Science_Swap|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 4,
-        "weapon": "Science_Swap",
-        "target": [
-          2,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Science_Swap|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Science_Swap",
-        "target": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Ranged_Ignite|attack",
-      "frequency": 2,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Prime_Flamethrower|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Prime_Flamethrower|attack",
+      "signature": "death|Brute_Grapple|attack",
       "frequency": 0,
       "asymmetry": [
         "enemy_survived_unexpectedly"
@@ -957,429 +205,38 @@
         "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Prime_Flamethrower|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          3,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Science_Swap|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Science_Swap",
-        "target": [
-          0,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Prime_Flamethrower|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          3,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "damage_amount",
-        "death",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Ranged_Ignite|attack",
-      "frequency": 3,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.9,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
         "action_index": 0,
         "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          7,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Prime_Flamethrower|attack",
-      "frequency": 3,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Ranged_Ignite|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          3,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Ranged_Ignite|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          4,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Ranged_Ignite|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          3,
-          1
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Prime_Flamethrower|attack",
-      "frequency": 4,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          3,
-          1
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Ranged_Ignite|attack",
-      "frequency": 4,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.9,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          4,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "spawn",
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Prime_Flamethrower|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          5,
-          1
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Prime_Flamethrower|attack",
-      "frequency": 5,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Prime_Flamethrower",
+        "weapon": "Brute_Grapple",
         "target": [
           6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Ranged_Ignite|attack",
-      "frequency": 3,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          4,
           3
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "tile_status",
+      "top_category": "death",
       "categories": [
-        "tile_status"
+        "death"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "tile_status|Ranged_Ignite|attack",
-      "frequency": 4,
-      "asymmetry": [],
+      "signature": "death|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.3,
+      "confidence": 0.4,
       "context": {
-        "mech_uid": 1,
+        "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          4,
-          1
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|_REPAIR|repair",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "repair",
-        "sub_action": "repair",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "_REPAIR",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Science_Repulse",
         "target": [
           3,
           4
@@ -1388,43 +245,46 @@
     },
     {
       "version": 1,
-      "top_category": "tile_status",
+      "top_category": "death",
       "categories": [
-        "tile_status"
+        "death"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "tile_status|Ranged_Ignite|attack",
-      "frequency": 5,
-      "asymmetry": [],
+      "signature": "death|Brute_Grapple|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.3,
+      "confidence": 0.4,
       "context": {
-        "mech_uid": 1,
+        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 2,
-        "turn": 4,
-        "weapon": "Ranged_Ignite",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Grapple",
         "target": [
-          4,
+          5,
           2
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "death",
       "categories": [
-        "damage_amount",
-        "tile_status"
+        "death"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Ranged_Ignite|attack",
-      "frequency": 1,
-      "asymmetry": [],
+      "signature": "death|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
@@ -1432,12 +292,12 @@
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Ranged_Artillerymech",
         "target": [
-          2,
-          4
+          3,
+          1
         ]
       }
     },
@@ -1449,61 +309,7 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Ranged_Ignite|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Science_Swap|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_Swap",
-        "target": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "push_dir",
-      "categories": [
-        "push_dir"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "push_dir|Ranged_Ignite|attack",
+      "signature": "damage_amount|Ranged_Artillerymech|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -1514,11 +320,69 @@
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 0,
-        "turn": 4,
-        "weapon": "Ranged_Ignite",
+        "turn": 1,
+        "weapon": "Ranged_Artillerymech",
         "target": [
           3,
-          3
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Artillerymech|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Repulse|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Science_Repulse",
+        "target": [
+          5,
+          4
         ]
       }
     }
@@ -1526,159 +390,22 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "FlameMech",
+      "type": "Hacked_Building",
       "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "Mission_SnowBattle",
-      "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Flame Mech",
-            "hp": 5,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": null,
-            "weapon_slot_count": 1,
-            "confidence": 0.8
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Flame Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Flame+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Flame+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "068ec48c4208",
-      "last_kind": "mech"
-    },
-    {
-      "type": "IgniteMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "Mission_SnowBattle",
-      "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Ignite Mech",
-            "hp": 5,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": null,
-            "weapon_slot_count": 1,
-            "confidence": 0.8
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Ignite Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Ignite+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Ignite+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "104886fe8222",
-      "last_kind": "mech"
-    },
-    {
-      "type": "TeleMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "Mission_SnowBattle",
-      "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Tele Mech",
-            "hp": 2,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": null,
-            "weapon_slot_count": 1,
-            "confidence": 0.8
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Tele Mech",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Tele+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Tele+Mech&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "7158ec2881d5",
-      "last_kind": "mech"
-    },
-    {
-      "type": "Snowlaser2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
+      "kind": null,
       "slot": null,
-      "mission_id": "Mission_SnowBattle",
-      "first_seen_turn": 1,
-      "attempts": 13,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "stale_known_type_after_victory_review",
-        "kind": "behavior_novelty",
-        "attempts": 13,
-        "diff_field": "alive",
-        "diff_predicted": false,
-        "diff_actual": true
-      },
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high"
-    },
-    {
-      "type": "Scarab1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_SnowBattle",
-      "first_seen_turn": 2,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Scarab",
-            "hp": 2,
-            "move": 3,
+            "name": "Hacking Facility",
+            "hp": 0,
+            "move": null,
             "class_icons": [],
-            "confidence": 1.0
+            "confidence": 0.7
           },
           "unit_status": {
             "kind": "enemy",
@@ -1690,294 +417,149 @@
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Scarab",
+          "target_name": "Hacking Facility",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Scarab",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Scarab&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hacking+Facility",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hacking+Facility&restrict_sr=1"
           }
         }
       },
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high",
-      "research_id": "11e921128ebc",
+      "research_id": "f3df4d6e8665",
       "last_kind": "enemy"
     },
     {
-      "type": "Hornet2",
+      "type": "WallMech",
       "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
       "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
+        "parsed": {
+          "name_tag": {
+            "name": "Hook Mech",
+            "hp": 0,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.7
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Ralph Karlsson",
+            "weapon_slot_count": 1,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Hook Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hook+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hook+Mech&restrict_sr=1"
+          }
+        }
       },
-      "research_id": "d751a4185637",
-      "last_kind": "enemy"
+      "research_id": "065dc171e853",
+      "last_kind": "mech"
     },
     {
-      "type": "Leaper2",
+      "type": "ArtiMech",
       "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
       "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "Scarab1",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "Spider1",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "",
-      "terrain_id": "building",
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "",
-      "terrain_id": "forest",
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "",
-      "terrain_id": "ground",
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "",
-      "terrain_id": "lava",
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "",
-      "terrain_id": "mountain",
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "",
-      "terrain_id": "water",
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_novelty_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "HornetAtk2",
-      "terrain_id": null,
-      "kind": "enemy_weapon",
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_weapon_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "LeaperAtk2",
-      "terrain_id": null,
-      "kind": "enemy_weapon",
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_weapon_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "ScarabAtk1",
-      "terrain_id": null,
-      "kind": "enemy_weapon",
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_weapon_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "SpiderAtk1",
-      "terrain_id": null,
-      "kind": "enemy_weapon",
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_weapon_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "combat_enemy",
-      "terrain_id": null,
-      "kind": "screen",
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_screen_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "Leaper2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 1,
-      "attempts": 4,
+      "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Alpha Leaper",
-            "hp": 3,
-            "move": 4,
+            "name": "Artillery Mech",
+            "hp": 0,
+            "move": null,
             "class_icons": [],
-            "confidence": 1.0
+            "confidence": 0.7
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": null,
+            "weapon_slot_count": 1,
+            "confidence": 0.8
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Artillery Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Artillery+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Artillery+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "e34296da6281",
+      "last_kind": "mech"
+    },
+    {
+      "type": "PulseMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Pulse Mech",
+            "hp": 0,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.7
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": null,
+            "weapon_slot_count": 1,
+            "confidence": 0.8
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Pulse Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Pulse+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Pulse+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "7f54ec781fb0",
+      "last_kind": "mech"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Gastropod",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [
+              "grappling_hook"
+            ],
+            "confidence": 0.8
           },
           "unit_status": {
             "kind": "enemy",
@@ -1989,52 +571,10 @@
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Alpha Leaper",
+          "target_name": "Gastropod",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Leaper",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Leaper&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "status.web",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "medium",
-      "research_id": "1925ec468c8f",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "WebbEgg1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Factory",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Webb Egg",
-            "hp": 1,
-            "move": 0,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Webb Egg",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Webb+Egg",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Webb+Egg&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Gastropod",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Gastropod&restrict_sr=1"
           }
         }
       },
@@ -2042,47 +582,72 @@
       "diff_predicted": false,
       "diff_actual": true,
       "severity": "high",
-      "research_id": "91ff0e52dba5",
+      "research_id": "57dee72c2cde",
       "last_kind": "enemy"
     },
     {
-      "type": "Jelly_Explode1",
+      "type": "Snowtank1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_SnowStorm",
+      "mission_id": "Mission_Hacking",
       "first_seen_turn": 1,
-      "attempts": 0,
+      "attempts": 1,
       "status": "done",
       "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 1,
-        "diff_actual": 2
+        "parsed": {
+          "name_tag": {
+            "name": "Gastropod",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [
+              "grappling_hook"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Gastropod",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Gastropod",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Gastropod&restrict_sr=1"
+          }
+        }
       },
-      "diff_field": "hp",
-      "diff_predicted": 1,
-      "diff_actual": 2,
-      "severity": "low"
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "a88970dd4800",
+      "last_kind": "enemy"
     },
     {
       "type": "Leaper1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_SnowStorm",
-      "first_seen_turn": 1,
-      "attempts": 5,
+      "mission_id": "Mission_Survive",
+      "first_seen_turn": 2,
+      "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
             "name": "Leaper",
-            "hp": 1,
+            "hp": 0,
             "move": 4,
-            "class_icons": [],
-            "confidence": 1.0
+            "class_icons": [
+              "web"
+            ],
+            "confidence": 0.8
           },
           "unit_status": {
             "kind": "enemy",
@@ -2105,165 +670,15 @@
       "diff_predicted": false,
       "diff_actual": true,
       "severity": "high",
-      "research_id": "cf6a9d01e3c6",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Beetle2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_SnowStorm",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Alpha Beetle",
-            "hp": 4,
-            "move": 2,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Alpha Beetle",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Beetle",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Beetle&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high",
-      "research_id": "59433c243a4e",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Hornet1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_SnowStorm",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 1,
-        "diff_actual": 2
-      },
-      "diff_field": "hp",
-      "diff_predicted": 1,
-      "diff_actual": 2,
-      "severity": "low"
-    },
-    {
-      "type": "Scarab2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_ScorpionBoss",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Alpha Scarab",
-            "hp": 4,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Alpha Scarab",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Scarab",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Scarab&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high",
-      "research_id": "51fbac18bf04",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "BigBomb",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Final_Cave",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Renfield Bomb",
-            "hp": 4,
-            "move": 0,
-            "class_icons": [
-              "objective",
-              "bomb"
-            ],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Renfield Bomb",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Renfield+Bomb",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Renfield+Bomb&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "hp",
-      "diff_predicted": 4,
-      "diff_actual": 3,
-      "severity": "low",
-      "research_id": "7fd21490cf39",
+      "research_id": "6f1f2c64f8de",
       "last_kind": "enemy"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "d548ef16cd887e79",
-    "classes": "wwgggggmwmgggbgmgbgggggggbggggwmggggwgmwgggbbggggbgwwgbggggwwwgg",
-    "mission_index": 5,
+    "hash": "09d34fe2093d22a0",
+    "classes": "lllllbbgllrbggggllgggggglbggggfglbgggbblwgggglllfgggllllgggglwww",
+    "mission_index": 2,
     "turn": 4
   },
   "terrain_stage_change_pending": false

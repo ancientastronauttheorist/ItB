@@ -90,6 +90,14 @@ pub struct JsonInput {
     /// removes the false-positive on Weather Watch boards where Volatiles
     /// aren't actually a protected objective).
     pub bonus_objective_unit_types: Option<Vec<String>>,
+    /// Unit objectives that should be destroyed for mission bonus credit.
+    /// Example: Mission_Hacking's Hacked_Building is a shielded enemy pawn,
+    /// not an objective building tile.
+    pub destroy_objective_unit_types: Option<Vec<String>>,
+    /// Unit objectives that should survive for mission bonus credit, even
+    /// when the bridge reports them as enemy-team before conversion.
+    /// Example: Mission_Hacking's Cannon Bot appears as Snowtank1.
+    pub protect_objective_unit_types: Option<Vec<String>>,
 }
 
 #[derive(Deserialize)]
@@ -201,6 +209,7 @@ fn parse_overlay_list(list: &[JsonWeaponOverride], source: OverlaySource) -> Vec
 pub struct JsonTile {
     pub x: u8,
     pub y: u8,
+    pub terrain_id: Option<u8>,
     pub terrain: Option<String>,
     pub fire: Option<bool>,
     pub smoke: Option<bool>,
@@ -306,7 +315,7 @@ pub fn board_from_json(json_str: &str)
         for jt in tiles {
             if jt.x >= 8 || jt.y >= 8 { continue; }
             let tile = board.tile_mut(jt.x, jt.y);
-            tile.terrain = Terrain::from_str(jt.terrain.as_deref().unwrap_or("ground"));
+            tile.terrain = Terrain::from_bridge_id(jt.terrain_id, jt.terrain.as_deref());
             // Mountains default to 2 HP if not specified (bridge doesn't send mountain HP)
             let default_hp = if tile.terrain == Terrain::Mountain { 2 } else { 0 };
             tile.building_hp = jt.building_hp.unwrap_or(default_hp);
@@ -440,6 +449,12 @@ pub fn board_from_json(json_str: &str)
     // penalty no-ops. See Board::bonus_dont_kill_types and JsonInput field.
     if let Some(types) = &input.bonus_objective_unit_types {
         board.bonus_dont_kill_types = types.iter().cloned().collect();
+    }
+    if let Some(types) = &input.destroy_objective_unit_types {
+        board.destroy_objective_unit_types = types.iter().cloned().collect();
+    }
+    if let Some(types) = &input.protect_objective_unit_types {
+        board.protect_objective_unit_types = types.iter().cloned().collect();
     }
 
     // Spawn points
@@ -801,4 +816,27 @@ pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry])
     };
 
     serde_json::to_string(&output).unwrap_or_else(|_| "{}".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Terrain;
+
+    #[test]
+    fn test_bridge_terrain_id_5_overrides_stale_lava_name_to_ice() {
+        let input = r#"{
+            "tiles": [
+                {"x": 5, "y": 5, "terrain": "lava", "terrain_id": 5}
+            ],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.tile(5, 5).terrain, Terrain::Ice);
+    }
 }

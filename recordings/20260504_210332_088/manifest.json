@@ -1,0 +1,19 @@
+{
+  "run_id": "20260504_210332_088",
+  "squad": "BalancedRoll",
+  "difficulty": 1,
+  "achievement_targets": [],
+  "tags": [
+    "normal_eval",
+    "solver_v2"
+  ],
+  "solver_version": "rust-0.1.0-3be8a54",
+  "weight_version": "v011",
+  "updated": "2026-05-04T22:30:52.976908",
+  "created": "2026-05-04T21:03:32.105121",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 1,
+  "outcome_recorded_at": "2026-05-04T22:30:52.958895",
+  "outcome_notes": "Normal mission 1 Silicate Plains secured. Completed Knock Mites off the Mechs and protected Time Pod; Coal Plant failed after unexpected objective building loss. Grid 4/7, civilians 804, simulator v44 Burnbug/Gastropod projectile-grapple fix applied mid-mission."
+}

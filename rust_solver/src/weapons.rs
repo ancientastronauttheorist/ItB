@@ -88,6 +88,10 @@ bitflags! {
         /// Ranged_Ignite_A (Vulcan Artillery Backburn upgrade) uses this;
         /// independent from FIRE, which still applies to the target tile.
         const FIRE_BEHIND_SHOOTER = 1 << 24;
+        /// Gastropod/Burnbug hook projectile. The shot travels like a normal
+        /// projectile to the first blocker, then either pulls a hit pawn toward
+        /// the attacker or pulls the attacker toward an object.
+        const PROJECTILE_GRAPPLE = 1 << 25;
     }
 }
 
@@ -131,6 +135,7 @@ impl WeaponDef {
     pub fn burns_fire_targets(&self) -> bool { self.flags.contains(WeaponFlags::BURNS_FIRE_TARGETS) }
     pub fn no_edge_bump_adjacent_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH) }
     pub fn fire_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::FIRE_BEHIND_SHOOTER) }
+    pub fn projectile_grapple(&self) -> bool { self.flags.contains(WeaponFlags::PROJECTILE_GRAPPLE) }
 }
 
 /// Default weapon def (no-op).
@@ -639,12 +644,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 71: MosquitoAtk2 — alpha melee, 3 dmg, applies smoke
     w[71] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
         flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
-    // 72: BurnbugAtk1 — melee, 1 dmg, sets fire
-    w[72] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1,
-        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
-    // 73: BurnbugAtk2 — alpha melee, 3 dmg, sets fire
-    w[73] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
-        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // 72: BurnbugAtk1 — Gastropod Hooked Proboscis: projectile grapple, 1 dmg.
+    w[72] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
+    // 73: BurnbugAtk2 — Alpha Gastropod Barbed Proboscis: projectile grapple, 3 dmg.
+    w[73] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
     // 74: SnowtankAtk1 — Pinnacle bot, melee, 1 dmg
     w[74] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
     // 75: SnowartAtk1 — Pinnacle bot, artillery, 1 dmg
@@ -666,10 +671,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[82] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, path_size: 3, flags: C, ..DEF };
     // 83: BurrowerAtk2 — alpha burrower, 2 dmg
     w[83] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, path_size: 3, flags: C, ..DEF };
-    // 84: GastropodAtk1 — ranged pull, 1 dmg, pulls self toward target
-    w[84] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0, flags: C, ..DEF };
-    // 85: GastropodAtk2 — alpha, 3 dmg
-    w[85] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0, flags: C, ..DEF };
+    // 84: GastropodAtk1 — ranged grapple, 1 dmg
+    w[84] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
+    // 85: GastropodAtk2 — alpha ranged grapple, 3 dmg
+    w[85] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
     // 86: StarfishAtk1 — melee, 1 dmg (diagonal attack in-game, solver treats as melee)
     w[86] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
     // 87: StarfishAtk2 — alpha, 2 dmg
@@ -798,14 +805,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 123: BurnbugAtkB — Burnbug Leader's Flaming Proboscis. Per
     // `scripts/advanced/bosses/burnbug.lua:28-38`,
     // `BurnbugAtkB = BurnbugAtk1:new{ Damage = 3, BossFire = true, ... }`.
-    // Modeled identically to BurnbugAtk2 (Melee, 3 dmg, FIRE) since Atk2 is
-    // also a `BurnbugAtk1:new{Damage=3}` derivative — the cardinal-line
-    // grapple is approximated as a 1-tile melee with FIRE applied to the
-    // target. The `BossFire` around-self fire trail (4 cardinal tiles
-    // ignited around the boss when it fires) is intentionally not modeled
-    // here; see WId::BurnbugAtkB doc comment for rationale.
-    w[123] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
-        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // The cardinal-line grapple is modeled via PROJECTILE_GRAPPLE. The
+    // `BossFire` around-self fire trail (4 cardinal tiles ignited around
+    // the boss when it fires) is still intentionally not modeled here; see
+    // WId::BurnbugAtkB doc comment for rationale.
+    w[123] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
 
     // 124: Support_Wind — Wind Torrent. Per scripts/weapons_support.lua:434-537:
     // ZoneTargeting=ZONE_CUSTOM with fixed edge-zone targets; clicked zone sets

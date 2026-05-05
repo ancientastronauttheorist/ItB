@@ -183,7 +183,11 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             Terrain::Fire     => "fire",
         };
         let mut t = json!({ "x": x, "y": y, "terrain": terrain_str });
-        if tile.building_hp > 0   { t["building_hp"]      = json!(tile.building_hp); }
+        if tile.terrain == Terrain::Building {
+            t["building_hp"] = json!(tile.building_hp);
+        } else if tile.building_hp > 0 {
+            t["building_hp"] = json!(tile.building_hp);
+        }
         if tile.population > 0    { t["population"]        = json!(tile.population); }
         if tile.on_fire()         { t["fire"]              = json!(true); }
         if tile.smoke()           { t["smoke"]             = json!(true); }
@@ -497,5 +501,31 @@ mod tests {
         // that board_to_json injects.
         assert!(weights.pseudo_threat_eval,
             "projected board_to_json must set eval_weights.pseudo_threat_eval=true");
+    }
+
+    #[test]
+    fn test_board_to_json_preserves_destroyed_unique_building_hp_zero() {
+        let (mut board, spawn_points) = simple_board();
+        let idx = xy_to_idx(4, 6);
+        board.tiles[idx].terrain = Terrain::Building;
+        board.tiles[idx].building_hp = 0;
+        board.unique_buildings |= 1u64 << idx;
+        board.grid_reward_buildings |= 1u64 << idx;
+
+        let json_str = board_to_json(&board, &spawn_points);
+        let value: serde_json::Value = serde_json::from_str(&json_str)
+            .expect("board_to_json emits valid json");
+        let tile = value["tiles"].as_array().unwrap().iter()
+            .find(|t| t["x"] == 4 && t["y"] == 6)
+            .expect("destroyed unique building tile is serialized");
+        assert_eq!(tile["terrain"], "building");
+        assert_eq!(tile["building_hp"], 0);
+        assert_eq!(tile["unique_building"], true);
+
+        let (roundtrip, _sp, _, _weights, _, _) = board_from_json(&json_str)
+            .expect("projected final board must round-trip");
+        assert_eq!(roundtrip.tiles[idx].terrain, Terrain::Building);
+        assert_eq!(roundtrip.tiles[idx].building_hp, 0);
+        assert_ne!(roundtrip.unique_buildings & (1u64 << idx), 0);
     }
 }

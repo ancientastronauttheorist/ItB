@@ -112,8 +112,8 @@ VEK_STATS = {
     "Snowtank2":     PawnStats(move_speed=3, ranged=0),
     "Snowart1":      PawnStats(move_speed=3, ranged=1),
     "Snowart2":      PawnStats(move_speed=3, ranged=1),
-    "Burnbug1":      PawnStats(move_speed=2, ranged=0),
-    "Burnbug2":      PawnStats(move_speed=2, ranged=0),
+    "Burnbug1":      PawnStats(move_speed=2, ranged=1),
+    "Burnbug2":      PawnStats(move_speed=2, ranged=1),
     # Burnbug Leader (a.k.a. Gastropod Leader) — Archive Inc Corp HQ finale boss.
     # Per `scripts/advanced/bosses/burnbug.lua`: Health=6, MoveSpeed=3, Ranged=1,
     # Massive=true, Tier=BOSS, SkillList={"BurnbugAtkB"}.

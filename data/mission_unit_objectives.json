@@ -1,0 +1,13 @@
+{
+  "_comment": "Per-mission unit objectives keyed by Lua mission.ID. `destroy` units should be killed for bonus objectives; `protect` units should survive even if the bridge reports them as enemy-team before conversion.",
+  "_format": {
+    "<Mission_ID>": {
+      "destroy": ["<pawn_type_substring>", "..."],
+      "protect": ["<pawn_type_substring>", "..."]
+    }
+  },
+  "Mission_Hacking": {
+    "destroy": ["Hacked_Building"],
+    "protect": ["Snowtank1", "Snowtank1_Player"]
+  }
+}

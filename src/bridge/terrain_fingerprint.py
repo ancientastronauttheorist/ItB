@@ -53,7 +53,7 @@ from dataclasses import dataclass
 # only once the engine swaps the terrain class itself.
 _KNOWN_TERRAIN_CLASSES = frozenset({
     "ground", "building", "rubble", "water", "mountain",
-    "lava", "forest", "sand", "ice", "chasm",
+    "lava", "forest", "sand", "ice", "chasm", "acid",
 })
 
 # Default threshold: at least 25% of the 64-tile board must change

@@ -98,6 +98,37 @@ def test_summary_keeps_dead_player_mechs_for_post_enemy_diff():
     ]
 
 
+def test_summary_treats_missing_hp_unique_building_as_destroyed_projection():
+    data = _bridge_with_mech()
+    data["tiles"].append({
+        "x": 4,
+        "y": 6,
+        "terrain": "building",
+        "unique_building": True,
+        "objective_name": "Str_Power",
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert board.tile(4, 6).building_hp == 0
+    assert summary["objective_buildings_alive"] == 0
+    assert summary["objective_building_hp_total"] == 0
+
+
+def test_bridge_terrain_id_overrides_stale_lava_name_for_ice():
+    data = _bridge_with_mech()
+    data["tiles"].append({
+        "x": 5,
+        "y": 5,
+        "terrain": "lava",
+        "terrain_id": 5,
+    })
+    board = Board.from_bridge_data(data)
+
+    assert board.tile(5, 5).terrain == "ice"
+
+
 def test_deltas_flags_predicted_mech_missing_from_actual_as_dead():
     predicted = {
         "buildings_alive": 7,

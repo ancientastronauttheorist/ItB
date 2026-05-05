@@ -40,6 +40,22 @@ impl Terrain {
         }
     }
 
+    pub fn from_bridge_id(id: Option<u8>, fallback_name: Option<&str>) -> Self {
+        match id {
+            Some(0) => Terrain::Ground,
+            Some(1) => Terrain::Building,
+            Some(2) => Terrain::Rubble,
+            Some(3) => Terrain::Water,
+            Some(4) => Terrain::Mountain,
+            Some(5) => Terrain::Ice,
+            Some(6) => Terrain::Forest,
+            Some(7) => Terrain::Sand,
+            Some(9) => Terrain::Chasm,
+            Some(10) => Terrain::Ground,
+            _ => Terrain::from_str(fallback_name.unwrap_or("ground")),
+        }
+    }
+
     /// Is this terrain deadly to non-flying ground units?
     pub fn is_deadly_ground(self) -> bool {
         matches!(self, Terrain::Water | Terrain::Chasm | Terrain::Lava)

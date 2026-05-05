@@ -13,10 +13,26 @@ from src.model.pawn_stats import get_pawn_stats, get_effective_move_speed
 
 
 # Terrain flags
-TERRAIN_PASSABLE = {"ground", "forest", "sand", "ice", "fire", "rubble"}
+TERRAIN_PASSABLE = {"ground", "forest", "sand", "ice", "fire", "rubble", "acid"}
 TERRAIN_BLOCKS_GROUND = {"water", "chasm", "lava", "mountain"}
 TERRAIN_BLOCKS_ALL = {"mountain"}  # blocks flying too (for projectiles)
 TERRAIN_DEADLY_GROUND = {"water", "chasm", "lava"}
+
+
+BRIDGE_TERRAIN_ID_MAP = {
+    # Engine/map-file terrain constants. The Lua bridge also sends a terrain
+    # string, but older bridge builds mislabeled id 5 as lava; id 5 is ice.
+    0: "ground",
+    1: "building",
+    2: "rubble",
+    3: "water",
+    4: "mountain",
+    5: "ice",
+    6: "forest",
+    7: "sand",
+    9: "chasm",
+    10: "acid",
+}
 
 
 # Pilot value lookup: multiplier on the mech_killed penalty reflecting
@@ -241,6 +257,11 @@ class Board:
         # Combined with the simulated turn's kills to decide whether a plan
         # crosses the kill target threshold.
         self.mission_kills_done: int = 0
+        # Unit-based mission objectives. Some bonus objectives are pawns
+        # rather than objective building tiles (Mission_Hacking's Hacking
+        # Facility and Cannon Bot are the live example).
+        self.destroy_objective_unit_types: list[str] = []
+        self.protect_objective_unit_types: list[str] = []
         # Old Earth Dam state — flipped to False exactly once when the last
         # Dam_Pawn tile dies; the transition triggers trigger_dam_flood.
         self.dam_alive: bool = False
@@ -291,6 +312,8 @@ class Board:
         b.mission_id = self.mission_id
         b.mission_kill_target = self.mission_kill_target
         b.mission_kills_done = self.mission_kills_done
+        b.destroy_objective_unit_types = list(self.destroy_objective_unit_types)
+        b.protect_objective_unit_types = list(self.protect_objective_unit_types)
         b.dam_alive = self.dam_alive
         b.dam_primary = self.dam_primary
         b.bigbomb_alive = self.bigbomb_alive
@@ -439,7 +462,11 @@ class Board:
             x, y = td["x"], td["y"]
             if 0 <= x < 8 and 0 <= y < 8:
                 bt = board.tile(x, y)
-                bt.terrain = td.get("terrain", "ground")
+                terrain_id = td.get("terrain_id")
+                bt.terrain = BRIDGE_TERRAIN_ID_MAP.get(
+                    terrain_id,
+                    td.get("terrain", "ground"),
+                )
                 bt.on_fire = td.get("fire", False)
                 bt.smoke = td.get("smoke", False)
                 bt.acid = td.get("acid", False)
@@ -451,10 +478,15 @@ class Board:
                 if "conveyor" in td:
                     bt.conveyor = td["conveyor"]
                 if bt.terrain == "building":
-                    bt.building_hp = td.get("building_hp", 1)
-                    bt.population = td.get("population", 1)
                     bt.unique_building = td.get("unique_building", False)
                     bt.objective_name = td.get("objective_name", "")
+                    if "building_hp" in td:
+                        bt.building_hp = td["building_hp"]
+                    elif bt.unique_building:
+                        bt.building_hp = 0
+                    else:
+                        bt.building_hp = 1
+                    bt.population = td.get("population", 1)
                 elif bt.terrain == "mountain":
                     # Mountains have 2 HP (bridge doesn't send mountain HP)
                     bt.building_hp = td.get("building_hp", 2)
@@ -562,6 +594,14 @@ class Board:
             board.mission_kills_done = int(data.get("mission_kills_done", 0) or 0)
         except (TypeError, ValueError):
             board.mission_kills_done = 0
+        board.destroy_objective_unit_types = [
+            s for s in data.get("destroy_objective_unit_types", []) or []
+            if isinstance(s, str) and s
+        ]
+        board.protect_objective_unit_types = [
+            s for s in data.get("protect_objective_unit_types", []) or []
+            if isinstance(s, str) and s
+        ]
 
         # Infer WEB status from Spider Egg adjacency.
         # Game rule (weapons_enemy.lua SpiderAtk1:GetSkillEffect):

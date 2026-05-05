@@ -477,7 +477,19 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v43 — Final-cave Renfield Bomb is pushable/bumpable, and Vulcan Artillery
 # Backburn (`Ranged_Ignite_A`) lights the tile behind the shooter on fire.
 # Pre-v43 corpus archived as failure_db_snapshot_sim_v42.jsonl.
-SIMULATOR_VERSION = 43
+# v44 — Burnbug/Gastropod proboscis attacks are projectile grapples rather
+# than one-tile melee. Vacated first target tiles no longer nullify the shot;
+# the hook travels to the first blocker, damages it, and pulls a hit pawn
+# toward the attacker or the attacker toward an object. Fixes Normal run
+# 20260504_210332_088 m01 t01 F7 grid loss. Pre-v44 corpus archived as
+# failure_db_snapshot_sim_v43.jsonl.
+# v45 — Projected final-board JSON now preserves `building_hp: 0` on
+# destroyed unique objective buildings. Bridge terrain parsing also trusts
+# engine terrain ids over stale strings, fixing id 5 = Ice being mislabeled as
+# Lava in older bridge recordings. This prevents candidate audits from
+# resurrecting failed Coal Plant / Power objectives and stops false lava deaths
+# on Pinnacle ice. Pre-v45 corpus archived as failure_db_snapshot_sim_v44.jsonl.
+SIMULATOR_VERSION = 45
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

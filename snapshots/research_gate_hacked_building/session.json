@@ -1,0 +1,81 @@
+{
+  "run_id": "20260504_210332_088",
+  "squad": "BalancedRoll",
+  "achievement_targets": [],
+  "difficulty": 1,
+  "current_island": "",
+  "current_mission": "Mission_Hacking",
+  "islands_completed": [],
+  "mission_index": 0,
+  "last_mission_turn": 0,
+  "current_turn": 0,
+  "phase": "combat_enemy",
+  "active_solution": null,
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [],
+  "recorded_post_enemy_turns": [],
+  "tags": [
+    "normal_eval",
+    "solver_v2"
+  ],
+  "failure_events_this_run": [],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "Hacked_Building",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "WallMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "ArtiMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "PulseMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "169344fba5f2a514",
+    "classes": "lwgbbgggblgbggbggwggggggglllfggmmwwwgbgmmglllggmmgglllfmmmgwllwm",
+    "mission_index": 0,
+    "turn": 0
+  },
+  "terrain_stage_change_pending": false
+}

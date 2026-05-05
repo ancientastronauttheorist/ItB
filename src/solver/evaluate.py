@@ -105,6 +105,12 @@ class EvalWeights:
     # allowlist.
     grid_reward_building_bonus: float = 25000
     boss_killed_bonus: float = 8000
+    # Unit objectives such as Mission_Hacking's Hacking Facility/Cannon Bot.
+    mission_destroy_unit_bonus: float = 15000
+    mission_destroy_unit_alive_penalty: float = -6000
+    mission_destroy_unit_shield_penalty: float = -3000
+    mission_protect_unit_alive_bonus: float = 8000
+    mission_protect_unit_dead_penalty: float = -15000
     bld_grid_floor: float = 0.6
     bld_grid_scale: float = 0.4
     bld_phase_floor: float = 1.0
@@ -208,6 +214,10 @@ def _future_factor(current_turn: int, total_turns: int, remaining_spawns: int = 
 def _scaled(base: float, ff: float, floor: float, scale: float) -> float:
     """Scale a weight: base * (floor + scale * future_factor)."""
     return base * (floor + scale * ff)
+
+
+def _type_matches_any(name: str, patterns: list[str]) -> bool:
+    return any(p and p in name for p in patterns)
 
 
 def evaluate(
@@ -344,6 +354,23 @@ def evaluate(
     for e in board.enemies():
         # damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
         score += e.hp * _scaled(w.enemy_hp_remaining, ff, 0.10, 0.90)
+
+    destroy_types = getattr(board, 'destroy_objective_unit_types', []) or []
+    protect_types = getattr(board, 'protect_objective_unit_types', []) or []
+    for u in board.units:
+        if destroy_types and _type_matches_any(u.type, destroy_types):
+            if u.hp > 0:
+                score += w.mission_destroy_unit_alive_penalty
+                if u.shield:
+                    score += w.mission_destroy_unit_shield_penalty
+            else:
+                score += w.mission_destroy_unit_bonus
+        if protect_types and _type_matches_any(u.type, protect_types):
+            score += (
+                w.mission_protect_unit_alive_bonus
+                if u.hp > 0
+                else w.mission_protect_unit_dead_penalty
+            )
 
     # --- BLAST PSION KILL BONUS: SCALED by future_factor ---
     if blast_psion_was_active and not board.blast_psion_active:
@@ -582,6 +609,34 @@ def evaluate_breakdown(
         enemy_hp_total += e.hp
     enemy_hp_score = enemy_hp_total * _scaled(w.enemy_hp_remaining, ff, 0.10, 0.90)
 
+    destroy_types = getattr(board, 'destroy_objective_unit_types', []) or []
+    protect_types = getattr(board, 'protect_objective_unit_types', []) or []
+    destroy_dead = 0
+    destroy_alive = 0
+    destroy_shielded = 0
+    protect_alive = 0
+    protect_dead = 0
+    for u in board.units:
+        if destroy_types and _type_matches_any(u.type, destroy_types):
+            if u.hp > 0:
+                destroy_alive += 1
+                if u.shield:
+                    destroy_shielded += 1
+            else:
+                destroy_dead += 1
+        if protect_types and _type_matches_any(u.type, protect_types):
+            if u.hp > 0:
+                protect_alive += 1
+            else:
+                protect_dead += 1
+    mission_unit_score = (
+        destroy_dead * w.mission_destroy_unit_bonus
+        + destroy_alive * w.mission_destroy_unit_alive_penalty
+        + destroy_shielded * w.mission_destroy_unit_shield_penalty
+        + protect_alive * w.mission_protect_unit_alive_bonus
+        + protect_dead * w.mission_protect_unit_dead_penalty
+    )
+
     # --- ENVIRONMENT DANGER ---
     # Lethal env (kill_int=1) bypasses flying — mirrors main evaluate() fix.
     danger_enemies_on = 0
@@ -680,7 +735,8 @@ def evaluate_breakdown(
     total = (buildings_score + building_hp_score
              + objective_rep_score + objective_grid_score
              + grid_power_score
-             + enemies_killed_score + enemy_hp_score + danger_score
+             + enemies_killed_score + enemy_hp_score + mission_unit_score
+             + danger_score
              + mech_score + spawns_score + remaining_spawn_score
              + pods_score + kill_n_score)
 
@@ -718,6 +774,14 @@ def evaluate_breakdown(
             "score": kill_n_score,
         },
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
+        "mission_unit_objectives": {
+            "destroy_dead": destroy_dead,
+            "destroy_alive": destroy_alive,
+            "destroy_shielded": destroy_shielded,
+            "protect_alive": protect_alive,
+            "protect_dead": protect_dead,
+            "score": mission_unit_score,
+        },
         "environment_danger": {
             "enemies_on": danger_enemies_on,
             "mechs_on": danger_mechs_on,

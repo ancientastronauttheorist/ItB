@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-04T22:30:39.987068",
+  "label": "mission_silicate_plains_normal_end",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "WallMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Burnbug1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        7,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

@@ -164,6 +164,15 @@ pub struct EvalWeights {
     // Boss kill bonus (mission objective: destroy the Hornet Leader, etc.)
     pub boss_killed_bonus: f64,
 
+    // Unit-based mission objectives. Some bonus objectives are pawns, not
+    // objective buildings: Mission_Hacking's Hacked_Building must die, and
+    // the Cannon Bot must survive while it is still reported as enemy-team.
+    pub mission_destroy_unit_bonus: f64,
+    pub mission_destroy_unit_alive_penalty: f64,
+    pub mission_destroy_unit_shield_penalty: f64,
+    pub mission_protect_unit_alive_bonus: f64,
+    pub mission_protect_unit_dead_penalty: f64,
+
     // "Kill N enemies" bonus (BONUS_KILL_FIVE). Step function that fires
     // exactly once per mission — on the plan whose cumulative kills cross
     // board.mission_kill_target. See the scoring block below for the
@@ -289,6 +298,11 @@ impl Default for EvalWeights {
             building_objective_bonus: 8000.0,
             grid_reward_building_bonus: 25000.0,
             boss_killed_bonus: 8000.0,
+            mission_destroy_unit_bonus: 15000.0,
+            mission_destroy_unit_alive_penalty: -6000.0,
+            mission_destroy_unit_shield_penalty: -3000.0,
+            mission_protect_unit_alive_bonus: 8000.0,
+            mission_protect_unit_dead_penalty: -15000.0,
             mission_kill_bonus: 15000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
@@ -366,6 +380,10 @@ fn dam_hp(board: &Board) -> i8 {
         }
     }
     0
+}
+
+fn type_matches_any(name: &str, patterns: &[String]) -> bool {
+    patterns.iter().any(|p| !p.is_empty() && name.contains(p.as_str()))
 }
 
 /// `kills` is passed explicitly because dead enemies are filtered from iteration.
@@ -509,8 +527,16 @@ pub fn evaluate(
     // protected" archetype enemies can ever be the bonus target) so a
     // mis-typed mission entry can't silently penalize unrelated kills.
     let bonus_active = !board.bonus_dont_kill_types.is_empty();
+    let destroy_unit_active = !board.destroy_objective_unit_types.is_empty();
+    let protect_unit_active = !board.protect_objective_unit_types.is_empty();
+    let mut destroy_unit_dead = 0i32;
+    let mut destroy_unit_alive = 0i32;
+    let mut destroy_unit_shielded = 0i32;
+    let mut protect_unit_alive = 0i32;
+    let mut protect_unit_dead = 0i32;
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
+        let name = u.type_name_str();
         if u.is_enemy() && u.alive() {
             // damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
             score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90) * enemy_urgency;
@@ -533,7 +559,6 @@ pub fn evaluate(
         // dead protected-type enemies on the post-state board — solver
         // clones the initial board each plan, so dead-at-end = killed-this-turn.
         if u.is_enemy() && !u.alive() && bonus_active {
-            let name = u.type_name_str();
             // Each entry is matched as a substring (mirrors is_volatile_vek's
             // contains() pattern) so "Volatile_Vek" catches "Volatile_Vek1",
             // "Volatile_Vek2" etc. without needing to enumerate variants.
@@ -544,8 +569,30 @@ pub fn evaluate(
                 }
             }
         }
+        if destroy_unit_active && type_matches_any(name, &board.destroy_objective_unit_types) {
+            if u.alive() {
+                destroy_unit_alive += 1;
+                if u.shield() {
+                    destroy_unit_shielded += 1;
+                }
+            } else {
+                destroy_unit_dead += 1;
+            }
+        }
+        if protect_unit_active && type_matches_any(name, &board.protect_objective_unit_types) {
+            if u.alive() {
+                protect_unit_alive += 1;
+            } else {
+                protect_unit_dead += 1;
+            }
+        }
     }
     score += volatile_dead as f64 * weights.volatile_enemy_killed;
+    score += destroy_unit_dead as f64 * weights.mission_destroy_unit_bonus;
+    score += destroy_unit_alive as f64 * weights.mission_destroy_unit_alive_penalty;
+    score += destroy_unit_shielded as f64 * weights.mission_destroy_unit_shield_penalty;
+    score += protect_unit_alive as f64 * weights.mission_protect_unit_alive_bonus;
+    score += protect_unit_dead as f64 * weights.mission_protect_unit_dead_penalty;
 
     // ── Threats cleared: reward neutralizing building threats ─────────
     // Compare initial building_threats bitset against post-attack survival.
@@ -1315,5 +1362,49 @@ mod tests {
         let s_unrelated_clean = evaluate(&other_clean, &[], &w, 0, 0, &p, 0);
         assert!((s_unrelated - s_unrelated_clean).abs() < 1.0,
             "non-matching enemy must not trigger penalty regardless of bonus list");
+    }
+
+    #[test]
+    fn test_mission_unit_objectives_score_destroy_and_protect() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut base = Board::default();
+        base.destroy_objective_unit_types.push("Hacked_Building".to_string());
+        base.protect_objective_unit_types.push("Snowtank1".to_string());
+
+        let mut facility = Unit {
+            uid: 1, x: 1, y: 4, hp: 1, max_hp: 1,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        facility.set_type_name("Hacked_Building");
+        facility.set_shield(true);
+        base.add_unit(facility);
+
+        let mut bot = Unit {
+            uid: 2, x: 3, y: 5, hp: 1, max_hp: 1,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        bot.set_type_name("Snowtank1");
+        base.add_unit(bot);
+
+        let shielded_alive = evaluate(&base, &[], &w, 0, 0, &p, 0);
+
+        let mut unshielded = base.clone();
+        unshielded.units[0].set_shield(false);
+        let unshielded_alive = evaluate(&unshielded, &[], &w, 0, 0, &p, 0);
+        assert!((unshielded_alive - shielded_alive - 3000.0).abs() < 1.0);
+
+        let mut destroyed = unshielded.clone();
+        destroyed.units[0].hp = 0;
+        let destroyed_score = evaluate(&destroyed, &[], &w, 0, 0, &p, 0);
+        assert!((destroyed_score - unshielded_alive - 21100.0).abs() < 1.0);
+
+        let mut bot_dead = destroyed.clone();
+        bot_dead.units[1].hp = 0;
+        let bot_dead_score = evaluate(&bot_dead, &[], &w, 0, 0, &p, 0);
+        assert!((destroyed_score - bot_dead_score - 22900.0).abs() < 1.0);
     }
 }

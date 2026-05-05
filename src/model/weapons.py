@@ -657,12 +657,12 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=3, range_min=2,
     ),
     "BurnbugAtk1": WeaponDef(
-        name="Burnbug Strike", weapon_type="melee",
-        damage=1, fire=True,
+        name="Hooked Proboscis", weapon_type="projectile",
+        damage=1, range_max=0,
     ),
     "BurnbugAtk2": WeaponDef(
-        name="Alpha Burnbug Strike", weapon_type="melee",
-        damage=3, fire=True,
+        name="Barbed Proboscis", weapon_type="projectile",
+        damage=3, range_max=0,
     ),
 
     # ── Bosses ───────────────────────────────────────────────────────

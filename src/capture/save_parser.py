@@ -27,11 +27,11 @@ TERRAIN_MAP = {
     2: "rubble",
     3: "water",
     4: "mountain",
-    5: "lava",
+    5: "ice",
     6: "forest",
     7: "sand",
-    8: "ice",
     9: "chasm",
+    10: "acid",
 }
 
 
