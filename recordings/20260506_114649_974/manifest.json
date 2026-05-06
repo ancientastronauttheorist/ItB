@@ -6,13 +6,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-a43047e",
+  "solver_version": "rust-0.1.0-9a59f90",
   "weight_version": "v011",
-  "updated": "2026-05-06T18:13:53.100065",
+  "updated": "2026-05-06T18:32:48.076486",
   "created": "2026-05-06T11:46:50.000085",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 14,
-  "outcome_recorded_at": "2026-05-06T18:13:53.080822",
-  "outcome_notes": "District Z-1001 secured: destroyed 2 Vek Egg Sacks, protected Emergency Batteries, grid full"
+  "outcome_mission": 15,
+  "outcome_recorded_at": "2026-05-06T18:32:48.050807",
+  "outcome_notes": "Glacier Cliff secured: less than 3 grid damage, Coal Plant protected, Time Pod recovered"
 }
