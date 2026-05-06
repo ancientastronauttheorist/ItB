@@ -207,6 +207,12 @@ VEK_STATS = {
 NEUTRAL_STATS = {
     "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False),
     "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False),
+    "Train_Armored":     PawnStats(move_speed=0, massive=True, armor=True,
+                                   pushable=False, ignore_fire=True,
+                                   ignore_smoke=True,
+                                   default_weapon="Armored_Train_Move"),
+    "Train_Armored_Damaged": PawnStats(move_speed=0, massive=True, armor=True,
+                                       pushable=False, ignore_fire=True),
     "Filler_Pawn":       PawnStats(move_speed=0, pushable=False),
     # Digger rock wall: bridge exposes the spawned rock as a neutral "Wall"
     # pawn (1 HP, Move 0, no weapon) rather than terrain.

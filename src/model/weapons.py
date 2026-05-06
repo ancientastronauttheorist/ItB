@@ -627,6 +627,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Smokescreen Whip", weapon_type="melee",
         damage=3, smoke=True,
     ),
+    "Armored_Train_Move": WeaponDef(
+        name="Armored Charge", weapon_type="passive",
+        damage=255,
+    ),
     "StarfishAtk1": WeaponDef(
         name="Starfish Slash", weapon_type="melee",
         damage=1,

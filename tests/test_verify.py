@@ -184,6 +184,23 @@ check("tile acid diff → model_gap_known subcategory",
       cls)
 
 # Test 12: click_miss subsumes other categories
+b = make_board(units=[mk_unit(1, "PunchMech", 0, 0)])
+b.tile(3, 3).repair_platform = True
+b.repair_platforms_used = 1
+snap = snapshot_after_action(b, 0, mech_uid=1, events=["repair platform at (3,3)"])
+b2 = make_board(units=[mk_unit(1, "PunchMech", 0, 0)])
+b2.tile(3, 3).repair_platform = False
+b2.repair_platforms_used = 2
+diff = diff_states(snap, b2)
+cls = classify_diff(diff, mech_uid=1)
+check("repair platform diffs → repair_platform",
+      cls["top_category"] == "repair_platform",
+      cls)
+check("repair platform scalar diff recorded",
+      any(d["field"] == "repair_platforms_used" for d in diff.scalar_diffs),
+      diff.scalar_diffs)
+
+# Test 13: click_miss subsumes other categories
 b = make_board(units=[mk_unit(1, "PunchMech", 4, 4, active=False, hp=3)])
 snap = snapshot_after_action(b, 0, mech_uid=1, events=[])
 # Mech still active AND took damage — click_miss should subsume damage_amount
@@ -193,7 +210,7 @@ cls = classify_diff(diff, mech_uid=1)
 check("click_miss subsumes other categories",
       cls["categories"] == ["click_miss"], cls)
 
-# Test 13: predicted_states_from_solve_record — pre-versioning records
+# Test 14: predicted_states_from_solve_record — pre-versioning records
 # (no schema_version field) still yield their predicted_states.
 pre_version_record = {
     "label": "solve",
@@ -206,7 +223,7 @@ states = predicted_states_from_solve_record(pre_version_record)
 check("pre-versioning record: predicted_states readable",
       len(states) == 1 and states[0]["post_attack"]["units"] == [])
 
-# Test 14: predicted_states_from_solve_record — explicit v1 record.
+# Test 15: predicted_states_from_solve_record — explicit v1 record.
 v1_record = {
     "label": "solve",
     "data": {
@@ -220,17 +237,17 @@ states = predicted_states_from_solve_record(v1_record)
 check("v1 record: predicted_states readable",
       len(states) == 2)
 
-# Test 15: predicted_states_from_solve_record — malformed record → [].
+# Test 16: predicted_states_from_solve_record — malformed record → [].
 check("malformed record (non-dict) returns empty list",
       predicted_states_from_solve_record(None) == [])
 check("malformed record (missing data) returns empty list",
       predicted_states_from_solve_record({"label": "solve"}) == [])
 
-# Test 16: schema constant matches the documented current version.
+# Test 17: schema constant matches the documented current version.
 check("SOLVE_RECORD_SCHEMA_VERSION == 1 (bump when shape changes)",
       SOLVE_RECORD_SCHEMA_VERSION == 1)
 
-# Test 17: unknown future schema version still yields any present
+# Test 18: unknown future schema version still yields any present
 # predicted_states (v2 keeps the field for backward reads per design).
 v2_forward_record = {
     "label": "solve",

@@ -74,6 +74,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                     "units": [],
                     "tiles_changed": [],
                     "grid_power": board.grid_power,
+                    "repair_platforms_used": board.repair_platforms_used,
                 });
                 action_results.push(json!({
                     "enemies_killed": 0,
@@ -313,6 +314,7 @@ fn capture_snapshot(
             "acid":         t.acid(),
             "smoke":        t.smoke(),
             "has_pod":      t.has_pod(),
+            "repair_platform": t.repair_platform(),
         }));
     }
 
@@ -323,6 +325,7 @@ fn capture_snapshot(
         "units":          units,
         "tiles_changed":  tiles_changed,
         "grid_power":     board.grid_power,
+        "repair_platforms_used": board.repair_platforms_used,
     })
 }
 

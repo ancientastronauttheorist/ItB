@@ -7,7 +7,7 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::simulate::{apply_damage, apply_push, apply_teleport_on_land, apply_weapon_status};
+use crate::simulate::{apply_damage, apply_push, apply_teleport_on_land, apply_weapon_status, on_enemy_death};
 
 /// Spawn a new enemy unit at (x, y). Used by Spider/Blobber artillery
 /// whose in-game effect is "create an egg / blob" at the telegraphed
@@ -1234,16 +1234,22 @@ pub fn simulate_enemy_attacks(
 ///
 /// Direction is inferred from the two tile entries sharing uid: forward =
 /// primary - extra (extra_tile is the caboose, primary is the locomotive).
-/// Train is destroyed if either entered tile is blocked by a mountain,
-/// building, or a non-train unit (including mechs and wrecks). Off-board
-/// destinations count as reaching the exit — train stays alive at its
-/// current position (not advanced off the board). Called once per turn.
+/// Normal Train_Pawn is destroyed if either entered tile is blocked by a
+/// mountain, building, or a non-train unit. Armored Train instead destroys
+/// everything in its two entered tiles and keeps moving (Lua
+/// Armored_Train_Move queues DAMAGE_DEATH on both tiles before charge).
+/// Off-board destinations count as reaching the exit — train stays alive at
+/// its current position (not advanced off the board). Called once per turn.
 pub fn simulate_train_advance(board: &mut Board) {
     let mut primary: Option<usize> = None;
     let mut extra: Option<usize> = None;
+    let mut armored_train = false;
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
-        if u.type_name_str() != "Train_Pawn" || u.hp <= 0 { continue; }
+        let tname = u.type_name_str();
+        if tname != "Train_Pawn" && tname != "Train_Armored" { continue; }
+        if u.hp <= 0 { continue; }
+        armored_train = tname == "Train_Armored";
         if u.is_extra_tile() { extra = Some(i); } else { primary = Some(i); }
     }
     let (p, e) = match (primary, extra) {
@@ -1273,6 +1279,10 @@ pub fn simulate_train_advance(board: &mut Board) {
             return;
         }
         let (nxu, nyu) = (*nx as u8, *ny as u8);
+        if armored_train {
+            destroy_armored_train_path_tile(board, nxu, nyu);
+            continue;
+        }
         let t = board.tile(nxu, nyu);
         if t.terrain == Terrain::Mountain || t.terrain == Terrain::Building {
             board.units[p].hp = 0;
@@ -1295,6 +1305,38 @@ pub fn simulate_train_advance(board: &mut Board) {
     board.units[p].y = (py + 2 * dy) as u8;
     board.units[e].x = (ex + 2 * dx) as u8;
     board.units[e].y = (ey + 2 * dy) as u8;
+}
+
+fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
+    let mut result = ActionResult::default();
+
+    if let Some(idx) = board.any_unit_at(x, y) {
+        let tname = board.units[idx].type_name_str();
+        if tname != "Train_Pawn" && tname != "Train_Armored" && tname != "Train_Armored_Damaged" {
+            if board.units[idx].hp > 0 {
+                board.units[idx].hp = 0;
+                if board.units[idx].is_enemy() {
+                    result.enemies_killed += 1;
+                    on_enemy_death(board, idx, &mut result);
+                }
+            }
+        }
+    }
+
+    let idx = xy_to_idx(x, y) as u64;
+    let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+        let lost = tile.building_hp;
+        tile.building_hp = 0;
+        if !is_unique {
+            tile.terrain = Terrain::Rubble;
+        }
+        board.grid_power = board.grid_power.saturating_sub(lost);
+    } else if tile.terrain == Terrain::Mountain {
+        tile.building_hp = 0;
+        tile.terrain = Terrain::Rubble;
+    }
 }
 
 /// Trace projectile from enemy position in queued direction.
@@ -1646,6 +1688,27 @@ mod tests {
         (p, e)
     }
 
+    fn add_armored_train(board: &mut Board, px: u8, py: u8, ex: u8, ey: u8) -> (usize, usize) {
+        let mut primary = Unit {
+            uid: 2525, x: px, y: py, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::ARMOR,
+            ..Default::default()
+        };
+        primary.set_type_name("Train_Armored");
+        let p = board.add_unit(primary);
+
+        let mut extra = Unit {
+            uid: 2525, x: ex, y: ey, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::ARMOR | UnitFlags::EXTRA_TILE,
+            ..Default::default()
+        };
+        extra.set_type_name("Train_Armored");
+        let e = board.add_unit(extra);
+        (p, e)
+    }
+
     #[test]
     fn test_train_advances_on_clear_path() {
         // Train at (4,7)+(4,6), forward direction (0,-1). Advances to (4,5)+(4,4).
@@ -1679,6 +1742,24 @@ mod tests {
         simulate_train_advance(&mut board);
         assert_eq!(board.units[p].hp, 0);
         assert_eq!(board.units[e].hp, 0);
+    }
+
+    #[test]
+    fn test_armored_train_kills_blocker_and_advances() {
+        let mut board = Board::default();
+        let (p, e) = add_armored_train(&mut board, 4, 6, 4, 7);
+        let vek = add_enemy_with_type(&mut board, 100, 4, 4, 3, "Scarab1", -1, -1);
+        board.tile_mut(4, 5).terrain = Terrain::Mountain;
+        board.tile_mut(4, 5).building_hp = 2;
+
+        simulate_train_advance(&mut board);
+
+        assert_eq!(board.units[p].hp, 1, "armored train primary survives");
+        assert_eq!(board.units[e].hp, 1, "armored train extra survives");
+        assert_eq!(board.units[vek].hp, 0, "blocker is destroyed");
+        assert_eq!(board.tile(4, 5).terrain, Terrain::Rubble, "mountain path tile is crushed");
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 4));
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 5));
     }
 
     #[test]

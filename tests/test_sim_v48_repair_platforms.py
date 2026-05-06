@@ -61,6 +61,37 @@ def test_repair_platform_heals_consumes_and_counts_objective_progress():
 
 
 @pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
+def test_repair_platform_caps_at_max_hp_plus_two_not_flat_five():
+    board = {
+        "grid_power": 5,
+        "grid_power_max": 7,
+        "turn": 1,
+        "total_turns": 5,
+        "mission_id": "Mission_Repair",
+        "repair_platform_target": 3,
+        "repair_platforms_used": 0,
+        "spawning_tiles": [],
+        "tiles": [{"x": 3, "y": 3, "terrain": "ground", "item": "Item_Repair_Mine"}],
+        "units": [{
+            "uid": 1, "type": "JetMech", "x": 3, "y": 2,
+            "hp": 4, "max_hp": 2, "team": 1, "mech": True,
+            "move": 5, "base_move": 5, "active": True,
+            "weapons": ["Brute_Jetmech"],
+        }],
+    }
+
+    _, post = _project(board, [{
+        "mech_uid": 1,
+        "move_to": [3, 3],
+        "weapon_id": "",
+        "target": [3, 3],
+    }])
+
+    unit = next(u for u in post["units"] if u["uid"] == 1)
+    assert unit["hp"] == 4
+
+
+@pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
 def test_repair_platform_roundtrips_when_unused():
     board = {
         "grid_power": 5,

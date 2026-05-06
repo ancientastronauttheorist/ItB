@@ -933,7 +933,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v53 - Python solve payloads copy static pawn Armor into Rust JSON when the
 //   Lua bridge omits it; this fixes Bouncer Leader damage predictions. Pre-v53
 //   corpus archived as `failure_db_snapshot_sim_v52.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 53;
+// v54 - Archive Armored Train (`Train_Armored`) advances like the normal train
+//   but destroys blockers in the two entered tiles instead of dying. Pre-v54
+//   corpus archived as `failure_db_snapshot_sim_v53.jsonl`.
+// v55 - Live Storage Vaults fixes: Rocket Artillery center-kill pushes now
+//   let dead targets bump live blockers and killed non-pushable targets bump
+//   static blockers; repair platforms cap overheal at max_hp+2. Pre-v55
+//   corpus archived as `failure_db_snapshot_sim_v54.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 55;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

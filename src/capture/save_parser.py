@@ -398,6 +398,12 @@ def extract_mission_state(
 
         terrain_id = tile_data.get('terrain', 0)
         grapple_t = tile_data.get('grapple_targets', [])
+        pod_value = tile_data.get('pod', 0)
+        # Save files use numeric pod states. Live/uncollected pods are `1`;
+        # recovered pods persist as `3` alongside `podReward`, and should not
+        # be treated as a live pod by fallback parsing.
+        has_live_pod = pod_value if isinstance(pod_value, bool) else pod_value == 1
+
         tile = Tile(
             x=loc.x, y=loc.y,
             terrain=TERRAIN_MAP.get(terrain_id, "unknown"),
@@ -407,7 +413,7 @@ def extract_mission_state(
             health_max=tile_data.get('health_max', 0),
             health_min=tile_data.get('health_min', 0),
             on_fire=bool(tile_data.get('fire', 0)),
-            has_pod=bool(tile_data.get('pod', 0)),
+            has_pod=bool(has_live_pod),
             unique=tile_data.get('unique', ''),
             grappled=bool(tile_data.get('grappled', 0)),
             grapple_targets=grapple_t if isinstance(grapple_t, list) else [],

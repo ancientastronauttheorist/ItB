@@ -201,9 +201,9 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
     board.tile_mut(x, y).set_repair_platform(false);
     let before = board.units[unit_idx].hp;
     // Lua defines Item_Repair_Mine as SpaceDamage(-10). Live Mission_Repair
-    // captures show 3-max-HP mechs healing up to 5/3, so model the engine's
-    // hard health cap as at least 5 while still allowing true >5 max-HP pawns.
-    let cap = board.units[unit_idx].max_hp.max(5);
+    // captures show 3-max-HP mechs healing up to 5/3 while a 2-max-HP Jet
+    // stayed at 4/2, matching an overheal cap of max_hp + 2.
+    let cap = board.units[unit_idx].max_hp.saturating_add(2);
     board.units[unit_idx].hp = before.saturating_add(10).min(cap);
     board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
     result.repair_platforms_used += 1;
@@ -1099,12 +1099,49 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
 
 // ── apply_push ───────────────────────────────────────────────────────────────
 
+#[derive(Clone, Copy)]
+struct PushPolicy {
+    dead_nonpushable_collides: bool,
+    dead_bumps_live_blocker: bool,
+}
+
+const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: false,
+};
+
+const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: true,
+    dead_bumps_live_blocker: true,
+};
+
 /// Push unit at (x, y) in direction. Damage+push are simultaneous; a
 /// corpse still pushes into static obstacles (building/mountain/edge) and
-/// takes/deals bump damage there. Exception: a dead corpse pushed INTO a
-/// live blocker unit is absorbed silently — no bump to either. See the
+/// takes/deals bump damage there. Exception: by default, a dead corpse pushed
+/// INTO a live blocker unit is absorbed silently — no bump to either. See the
 /// in-body comment on the unit-blocker branch for the snapshot citation.
 pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mut ActionResult) {
+    apply_push_with_policy(board, x, y, direction, result, DEFAULT_PUSH_POLICY);
+}
+
+fn apply_rocket_center_push(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+) {
+    apply_push_with_policy(board, x, y, direction, result, ROCKET_CENTER_PUSH_POLICY);
+}
+
+fn apply_push_with_policy(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+    policy: PushPolicy,
+) {
     // Find ANY unit (including dead) — simultaneous damage+push
     let unit_idx = match board.any_unit_at(x, y) {
         Some(idx) => idx,
@@ -1112,7 +1149,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     };
 
     // Non-pushable non-mechs are immune
-    if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
+    if !board.units[unit_idx].pushable()
+        && !board.units[unit_idx].is_mech()
+        && !(policy.dead_nonpushable_collides && board.units[unit_idx].hp <= 0)
+    {
         return;
     }
 
@@ -1204,6 +1244,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     if let Some(blocker_idx) = board.unit_at(nx, ny) {
         if blocker_idx != unit_idx {
             if board.units[unit_idx].hp <= 0 {
+                if policy.dead_bumps_live_blocker {
+                    apply_damage(board, nx, ny, 1, result, DamageSource::Bump);
+                    return;
+                }
                 // Dead pusher: corpse absorbed by live blocker, no bump.
                 return;
             }
@@ -1211,6 +1255,13 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
             apply_damage(board, nx, ny, 1, result, DamageSource::Bump);
             return;
         }
+    }
+
+    if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
+        // Rocket-center corpse semantics can still damage blockers, but a
+        // non-pushable corpse with open space behind does not need a visible
+        // position change.
+        return;
     }
 
     // Destination clear: only an actual tile change breaks the pushed unit's
@@ -1448,7 +1499,7 @@ pub fn simulate_weapon_with(
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
-        WeaponType::Artillery => sim_artillery(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
+        WeaponType::Artillery => sim_artillery(board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::SelfAoe => sim_self_aoe(board, ax, ay, wdef, &mut result),
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
         WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
@@ -1727,7 +1778,7 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
 // ── Artillery ────────────────────────────────────────────────────────────────
 
-fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     // Center damage
     if wdef.aoe_center() {
         apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
@@ -1779,7 +1830,13 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
     // static bystanders that actually got flung one tile.
     if let Some(dir) = attack_dir {
         match wdef.push {
-            PushDir::Forward if wdef.aoe_center()  => apply_push(board, tx, ty, dir, result),
+            PushDir::Forward if wdef.aoe_center()  => {
+                if weapon_id == WId::RangedRocket {
+                    apply_rocket_center_push(board, tx, ty, dir, result);
+                } else {
+                    apply_push(board, tx, ty, dir, result);
+                }
+            }
             PushDir::Backward if wdef.aoe_center() => apply_push(board, tx, ty, opposite_dir(dir), result),
             PushDir::Perpendicular => {
                 // Two side tiles outward. Perpendicular directions are
@@ -2699,6 +2756,36 @@ mod tests {
         })
     }
 
+    #[test]
+    fn test_repair_platform_overheal_cap_is_max_hp_plus_two() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).set_repair_platform(true);
+        let mech_idx = add_mech(&mut board, 1, 3, 2, 1, WId::PrimePunchmech);
+        board.units[mech_idx].max_hp = 3;
+
+        let result = simulate_move(&mut board, mech_idx, (3, 3));
+
+        assert_eq!(board.units[mech_idx].hp, 5, "1/3 mech overheals to 5/3");
+        assert_eq!(board.repair_platforms_used, 1);
+        assert_eq!(result.repair_platforms_used, 1);
+        assert!(
+            !board.tile(3, 3).repair_platform(),
+            "repair platform consumed on use"
+        );
+    }
+
+    #[test]
+    fn test_repair_platform_does_not_floor_two_hp_mech_to_five() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).set_repair_platform(true);
+        let mech_idx = add_mech(&mut board, 1, 3, 2, 4, WId::BruteJetmech);
+        board.units[mech_idx].max_hp = 2;
+
+        let _ = simulate_move(&mut board, mech_idx, (3, 3));
+
+        assert_eq!(board.units[mech_idx].hp, 4, "4/2 Jet stays capped at 4/2");
+    }
+
     fn add_decoy_building(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
         let idx = board.add_unit(Unit {
             uid, x, y, hp: 2, max_hp: 2,
@@ -3409,6 +3496,47 @@ mod tests {
             "building behind a killed Rocket target must take 1 bump damage"
         );
         assert_eq!(board.tile(3, 1).terrain, Terrain::Building);
+    }
+
+    #[test]
+    fn test_rocket_killed_target_bumps_live_mech_blocker() {
+        let mut board = make_test_board();
+        // Shooter west of target; forward push moves target east into Pulse.
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedRocket);
+        let _target = add_enemy(&mut board, 1, 3, 5, 2);
+        let pulse = add_mech(&mut board, 2, 3, 6, 1, WId::ScienceRepulse);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 5);
+
+        assert_eq!(
+            board.units[pulse].hp, 0,
+            "Rocket center corpse should bump and kill a 1-HP mech blocker"
+        );
+    }
+
+    #[test]
+    fn test_rocket_killed_nonpushable_target_bumps_building() {
+        let mut board = make_test_board();
+        board.grid_power = 7;
+        // Shooter south of target; forward push moves target north into a
+        // two-HP building. Non-pushable live targets are immune, but Rocket's
+        // killed center target still resolves the corpse bump.
+        let mech_idx = add_mech(&mut board, 0, 7, 5, 3, WId::RangedRocket);
+        let target = add_enemy_type(&mut board, 1, 5, 5, 2, "Jelly_Armor1");
+        board.units[target].flags.remove(UnitFlags::PUSHABLE);
+        board.tile_mut(4, 5).terrain = Terrain::Building;
+        board.tile_mut(4, 5).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 5, 5);
+
+        assert_eq!(
+            board.tile(4, 5).building_hp, 1,
+            "Rocket-killed non-pushable target should bump the building behind it"
+        );
+        assert_eq!(
+            board.grid_power, 7,
+            "damaging a non-unique 2-HP building should not drop grid until destroyed"
+        );
     }
 
     #[test]

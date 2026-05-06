@@ -522,7 +522,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v53 - Python solve payloads copy static pawn Armor into Rust JSON when the Lua
 # bridge omits it; this fixes Bouncer Leader damage predictions. Pre-v53 corpus
 # archived as failure_db_snapshot_sim_v52.jsonl.
-SIMULATOR_VERSION = 53
+# v54 - Archive Armored Train (`Train_Armored`) advances like the normal train
+# but destroys blockers in the two entered tiles instead of dying. Pre-v54
+# corpus archived as failure_db_snapshot_sim_v53.jsonl.
+# v55 - Live Storage Vaults fixes: Rocket Artillery center-kill pushes now let
+# dead targets bump live blockers and killed non-pushable targets bump static
+# blockers; repair platforms cap overheal at max_hp+2. Pre-v55 corpus archived
+# as failure_db_snapshot_sim_v54.jsonl.
+SIMULATOR_VERSION = 55
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -628,6 +635,7 @@ def snapshot_after_move(
             "acid": t.acid,
             "smoke": t.smoke,
             "has_pod": t.has_pod,
+            "repair_platform": getattr(t, "repair_platform", False),
         })
 
     return {
@@ -637,6 +645,7 @@ def snapshot_after_move(
         "units": units_snapshot,
         "tiles_changed": tiles_snapshot,
         "grid_power": board.grid_power,
+        "repair_platforms_used": getattr(board, "repair_platforms_used", 0),
     }
 
 
@@ -710,6 +719,7 @@ def snapshot_after_action(
             "acid": t.acid,
             "smoke": t.smoke,
             "has_pod": t.has_pod,
+            "repair_platform": getattr(t, "repair_platform", False),
         })
 
     return {
@@ -719,6 +729,7 @@ def snapshot_after_action(
         "units": units_snapshot,
         "tiles_changed": tiles_snapshot,
         "grid_power": board.grid_power,
+        "repair_platforms_used": getattr(board, "repair_platforms_used", 0),
     }
 
 
@@ -884,6 +895,7 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             ("acid", "acid"),
             ("smoke", "smoke"),
             ("has_pod", "has_pod"),
+            ("repair_platform", "repair_platform"),
         ):
             pv = pt.get(pred_field, False)
             av = getattr(at, actual_attr, False)
@@ -901,6 +913,16 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             "predicted": predicted.get("grid_power"),
             "actual": actual_board.grid_power,
         })
+    if (
+        "repair_platforms_used" in predicted
+        and predicted.get("repair_platforms_used")
+        != getattr(actual_board, "repair_platforms_used", 0)
+    ):
+        result.scalar_diffs.append({
+            "field": "repair_platforms_used",
+            "predicted": predicted.get("repair_platforms_used"),
+            "actual": getattr(actual_board, "repair_platforms_used", 0),
+        })
 
     return result
 
@@ -917,6 +939,7 @@ _CATEGORY_PRIORITY = [
     "status",
     "terrain",
     "tile_status",
+    "repair_platform",
     "spawn",
     "pod",
 ]
@@ -971,6 +994,8 @@ def classify_diff(diff: DiffResult, mech_uid: int = None, phase: str = "action")
             categories.add("grid_power")
         elif f == "has_pod":
             categories.add("pod")
+        elif f == "repair_platform":
+            categories.add("repair_platform")
         elif f in ("fire", "acid", "smoke"):
             categories.add("tile_status")
 
@@ -979,6 +1004,8 @@ def classify_diff(diff: DiffResult, mech_uid: int = None, phase: str = "action")
             categories.add("grid_power")
         elif sd["field"] == "spawning_tiles":
             categories.add("spawn")
+        elif sd["field"] == "repair_platforms_used":
+            categories.add("repair_platform")
 
     # Click_miss subsumes everything: if the mech never moved, nothing
     # downstream of it should have happened either.

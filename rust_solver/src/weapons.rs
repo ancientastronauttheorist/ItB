@@ -421,9 +421,12 @@ pub enum WId {
     /// and forward push on target plus the two perpendicular tiles, then the
     /// boss bounces backward.
     BouncerAtkB = 131,
+    /// Archive Armored Train objective: moves forward two tiles and destroys
+    /// blockers in the entered path. Simulated by enemy train-advance logic.
+    ArmoredTrainMove = 132,
 }
 
-pub const WEAPON_COUNT: usize = 132;
+pub const WEAPON_COUNT: usize = 133;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1117,6 +1120,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "FireflyAtkB" => WId::FireflyAtkB,
         "ScorpionAtkB" => WId::ScorpionAtkB,
         "BouncerAtkB" => WId::BouncerAtkB,
+        "Armored_Train_Move" => WId::ArmoredTrainMove,
         "Acid_Tank_Attack" => WId::AcidTankAtk,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
@@ -1268,6 +1272,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PinnacleFreezeTank => "Pinnacle_FreezeTank",
         WId::BurnbugAtkB => "BurnbugAtkB",
         WId::BouncerAtkB => "BouncerAtkB",
+        WId::ArmoredTrainMove => "Armored_Train_Move",
         WId::SupportWind => "Support_Wind",
         _ => "",
     }
@@ -1487,6 +1492,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::FireflyAtkB => "Firefly Boss Shot",
         WId::ScorpionAtkB => "Massive Spinneret",
         WId::BouncerAtkB => "Sweeping Horns",
+        WId::ArmoredTrainMove => "Armored Charge",
         WId::BeetleAtkB => "Flaming Abdomen",
         WId::SupportRepair => "Repair Drop",
         WId::AcidTankAtk => "A.C.I.D. Cannon",
@@ -1601,6 +1607,7 @@ mod tests {
         assert_eq!(wid_from_str("Deploy_TankShot2"), WId::DeployTankShot2);
         assert_eq!(wid_from_str("Trapped_Explode"), WId::TrappedExplode);
         assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
+        assert_eq!(wid_from_str("Armored_Train_Move"), WId::ArmoredTrainMove);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -1615,6 +1622,7 @@ mod tests {
             ("Deploy_TankShot", WId::DeployTankShot),
             ("Trapped_Explode", WId::TrappedExplode),
             ("BouncerAtkB", WId::BouncerAtkB),
+            ("Armored_Train_Move", WId::ArmoredTrainMove),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

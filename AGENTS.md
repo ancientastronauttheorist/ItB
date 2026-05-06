@@ -78,10 +78,12 @@ The solver enforces these; use them when reviewing solver output or writing test
 
 **Repair platforms:** Mission_Repair places `Item_Repair_Mine` tiles. Any live
 unit that lands on one triggers the item, heals by the engine's `SpaceDamage(-10)`
-(live captures show 3-max-HP mechs can become `5/3`), consumes the platform, and
-increments `repair_platforms_used` toward the 3-platform objective. It is not the
-mech Repair action; do not assume it clears Fire/ACID/Frozen unless a capture
-proves the engine does so.
+(live captures show 3-max-HP mechs can become `5/3`; 2-max-HP mechs cap at
+`4/2`, so model this as `max_hp + 2`, not a flat 5 HP), consumes the platform,
+and increments `repair_platforms_used` toward the 3-platform objective. Raw
+progress can exceed the objective target (for example `4/3`); clamp only in UI
+scoring/presentation. It is not the mech Repair action; do not assume it clears
+Fire/ACID/Frozen unless a capture proves the engine does so.
 
 **Repair:** any mech can repair instead of attacking. +1 HP, clears Fire and ACID. Can't repair on smoke.
 
@@ -143,6 +145,9 @@ Extended rules: `data/ref_game_mechanics.md`.
 39. **Controllable mission allies count if they have weapons.** Friendly non-mech units such as `Archive_Tank` can be READY and player-controlled even when `mech=false` in bridge JSON. If `read` shows a READY friendly with a weapon and the solver omits it, first check whether that weapon has a Rust `WId` mapping. `Deploy_TankShot` / Stock Cannon is a 0-damage projectile with forward push; ignoring it can turn a salvageable tank mission into a false grid-zero safety block.
 40. **Dirty frontier before dirty consent.** When a solve safety-blocks and reports `dirty_frontier`, inspect the tradeoff classes before asking to continue. The top raw-score dirty plan may not represent the best strategic compromise; compare options such as `grid_loss`, `mech_loss`, `building_loss`, and `objective_loss` explicitly, especially on Normal where a single dirty Turn 1 can cascade into timeline loss.
 41. **Lookahead frontier is diagnostic until promoted.** `project_plan_scenarios` returns bounded plausible next-turn enemy-intent scenarios: base `heuristic_requeue` plus a few high-value building retargets. `lookahead_frontier` in solve output previews worst projected recovery across those scenarios, and `robust_frontier` ranks tradeoffs by current score + worst next-turn score, but neither selects live actions yet. Treat both as evidence for dirty-plan triage and future robust-beam tuning, not as permission to bypass safety.
+42. **Rocket Artillery center-kill pushes are weapon-specific corpse bumps.** `Ranged_Rocket` center damage and forward push are simultaneous: if the center target dies, its corpse still resolves the Rocket center push. A dead pushable center target can bump a live blocker; a dead non-pushable center target can still bump static blockers such as buildings/mountains/edge before disappearing. Do not generalize this to every push: Cluster Artillery outer corpse absorption still has a regression test where a dead train corpse does not damage a live adjacent unit. Regression anchors: Easy run `20260506_114649_974`, Storage Vaults turn 1 Pulse mech death and turn 4 Jelly Armor building bump, simulator v55.
+43. **Bridge-executed combat does not guarantee Reset Turn is usable.** After `auto_turn` mutates the board through bridge commands, the visible Reset Turn button may hover but refuse to open a confirmation dialog. If a bad bridge plan executes, snapshot immediately, fresh-read/solve from the actual board, and only rely on Reset Turn if the UI visibly opens the confirm prompt.
+44. **Time pod recovery UI beats the crossed objective line.** Mission objective rows can look failed after a pod is collected, while the reward flow still shows `Pod Recovered` and the save has `podReward`. Treat the reward screen / save reward state as authoritative. In fallback parsing, numeric save pod state `1` means live/uncollected; recovered state `3` must not be treated as a live board pod.
 
 ## Phase Protocols
 
@@ -172,7 +177,7 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 **State reading:**
 - `read` — Bridge state (primary) or save file (fallback). Prints phase, board, threats, active mechs, deployment zone with MCP coords, env hazards. Auto-records to `recordings/<run_id>/`.
 - `status` — Quick summary: turn, grid, mech HP, threats, objectives.
-- `verify_action <index>` — Per-action diff: refreshes bridge, diffs actual vs the predicted snapshot captured during `replay_solution`, classifies (click_miss / death / damage_amount / push_dir / grid_power / status / terrain / tile_status / spawn / pod), writes desync to `recordings/<run_id>/failure_db.jsonl`. Never re-solves.
+- `verify_action <index>` — Per-action diff: refreshes bridge, diffs actual vs the predicted snapshot captured during `replay_solution`, classifies (click_miss / death / damage_amount / push_dir / grid_power / status / terrain / tile_status / repair_platform / spawn / pod), writes desync to `recordings/<run_id>/failure_db.jsonl`. Never re-solves.
 - `verify [index]` — Legacy save-parser-based path (retries 5×, 1.5s each). Superseded by `verify_action` in bridge mode.
 
 **Solving & recording:**
