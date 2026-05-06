@@ -940,7 +940,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   let dead targets bump live blockers and killed non-pushable targets bump
 //   static blockers; repair platforms cap overheal at max_hp+2. Pre-v55
 //   corpus archived as `failure_db_snapshot_sim_v54.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 55;
+// v56 - Science_Repulse_A (Shield Self) applies Shield to the firing Pulse
+//   Mech after Repulse resolves; loadout overlay now recognizes
+//   Science_Repulse_A/AB. Pre-v56 corpus archived as
+//   `failure_db_snapshot_sim_v55.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 56;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

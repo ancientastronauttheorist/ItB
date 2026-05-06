@@ -103,7 +103,12 @@ def _recording_dir(session: RunSession) -> Path:
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
 _POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
 _COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
-_MODELED_UPGRADED_WEAPONS = {"Ranged_Ignite_A", "Ranged_Artillerymech_A"}
+_MODELED_UPGRADED_WEAPONS = {
+    "Ranged_Ignite_A",
+    "Ranged_Artillerymech_A",
+    "Science_Repulse_A",
+    "Science_Repulse_AB",
+}
 
 
 def _bridge_is_stale_post_mission(
@@ -197,7 +202,11 @@ def _enrich_bridge_mech_weapons_from_save(
             upgraded = state.weapons[loadout_idx]
             if upgraded not in _MODELED_UPGRADED_WEAPONS:
                 continue
-            base = upgraded[:-2] if upgraded.endswith(("_A", "_B")) else upgraded
+            base = upgraded
+            for suffix in ("_AB", "_A", "_B"):
+                if upgraded.endswith(suffix):
+                    base = upgraded[:-len(suffix)]
+                    break
             while len(weapons) <= slot:
                 weapons.append("")
             current = weapons[slot]

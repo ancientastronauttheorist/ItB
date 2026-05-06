@@ -1940,6 +1940,11 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
         }
         apply_weapon_status(board, nx as u8, ny as u8, wdef);
     }
+    if wdef.shield_self() {
+        if let Some(idx) = board.unit_at(ax, ay) {
+            board.units[idx].set_shield(true);
+        }
+    }
 }
 
 fn apply_trapped_death_damage(
@@ -2754,6 +2759,26 @@ mod tests {
             move_speed: 3,
             ..Default::default()
         })
+    }
+
+    #[test]
+    fn test_repulse_shield_self_upgrade_shields_pulse_after_pushes() {
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 3, 3, 3, WId::ScienceRepulseA);
+        let enemy = add_enemy(&mut board, 10, 2, 3, 1);
+
+        let _ = simulate_weapon(&mut board, pulse, WId::ScienceRepulseA, 3, 3);
+
+        assert!(board.units[pulse].shield(), "Shield Self should shield Pulse");
+        assert_eq!(
+            (board.units[enemy].x, board.units[enemy].y),
+            (1, 3),
+            "Repulse_A should keep base adjacent outward push behavior"
+        );
+        assert!(
+            !board.units[enemy].shield(),
+            "Shield Self should not shield adjacent enemies"
+        );
     }
 
     #[test]

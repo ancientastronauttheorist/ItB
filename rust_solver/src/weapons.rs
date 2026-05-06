@@ -101,6 +101,9 @@ bitflags! {
         /// HP. Used by Artemis Artillery's Buildings Immune upgrade; push/bump
         /// damage remains physical collision damage and is handled separately.
         const BUILDING_IMMUNE = 1 << 27;
+        /// Weapon applies Shield to the firing unit as part of its effect.
+        /// Used by Repulse's Shield Self upgrade.
+        const SHIELD_SELF = 1 << 28;
     }
 }
 
@@ -147,6 +150,7 @@ impl WeaponDef {
     pub fn projectile_grapple(&self) -> bool { self.flags.contains(WeaponFlags::PROJECTILE_GRAPPLE) }
     pub fn path_damage(&self) -> bool { self.flags.contains(WeaponFlags::PATH_DAMAGE) }
     pub fn building_immune(&self) -> bool { self.flags.contains(WeaponFlags::BUILDING_IMMUNE) }
+    pub fn shield_self(&self) -> bool { self.flags.contains(WeaponFlags::SHIELD_SELF) }
 }
 
 /// Default weapon def (no-op).
@@ -424,9 +428,12 @@ pub enum WId {
     /// Archive Armored Train objective: moves forward two tiles and destroys
     /// blockers in the entered path. Simulated by enemy train-advance logic.
     ArmoredTrainMove = 132,
+    /// Repulse with Shield Self upgrade: pushes adjacent tiles like base
+    /// Repulse, then applies Shield to the Pulse Mech's own tile.
+    ScienceRepulseA = 133,
 }
 
-pub const WEAPON_COUNT: usize = 133;
+pub const WEAPON_COUNT: usize = 134;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -886,6 +893,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[131] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward,
         flags: f(WeaponFlags::PUSH_SELF.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
 
+    // 133: Science_Repulse_A — Repulse with Shield Self
+    w[133] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -1062,6 +1073,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_Pullmech" => WId::SciencePullmech,
         "Science_Gravwell" => WId::ScienceGravwell,
         "Science_Repulse" => WId::ScienceRepulse,
+        "Science_Repulse_A" => WId::ScienceRepulseA,
+        // Model the self-shield portion of the AB upgrade. Friendly/building
+        // shield remains conservative until building shields are modeled.
+        "Science_Repulse_AB" => WId::ScienceRepulseA,
         "Science_Swap" => WId::ScienceSwap,
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
@@ -1202,6 +1217,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::SciencePullmech => "Science_Pullmech",
         WId::ScienceGravwell => "Science_Gravwell",
         WId::ScienceRepulse => "Science_Repulse",
+        WId::ScienceRepulseA => "Science_Repulse_A",
         WId::ScienceSwap => "Science_Swap",
         WId::ScienceAcidShot => "Science_AcidShot",
         WId::ScienceShield => "Science_Shield",
@@ -1433,6 +1449,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::SciencePullmech => "Attract Shot",
         WId::ScienceGravwell => "Grav Well",
         WId::ScienceRepulse => "Repulse",
+        WId::ScienceRepulseA => "Repulse",
         WId::ScienceSwap => "Teleporter",
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",

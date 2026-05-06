@@ -529,7 +529,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # dead targets bump live blockers and killed non-pushable targets bump static
 # blockers; repair platforms cap overheal at max_hp+2. Pre-v55 corpus archived
 # as failure_db_snapshot_sim_v54.jsonl.
-SIMULATOR_VERSION = 55
+# v56 - Science_Repulse_A (Shield Self) applies Shield to the firing Pulse
+# Mech after Repulse resolves; loadout overlay now recognizes
+# Science_Repulse_A/AB. Pre-v56 corpus archived as
+# failure_db_snapshot_sim_v55.jsonl.
+SIMULATOR_VERSION = 56
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
