@@ -1470,6 +1470,191 @@ def _candidate_dirty_frontier(
     return sorted(frontier, key=_sort_key)[:limit]
 
 
+def _candidate_frontier_representatives(
+    candidate_evals: list[dict],
+    *,
+    limit: int = 5,
+) -> list[dict]:
+    """Choose one candidate eval per safety-tradeoff label."""
+    buckets: dict[str, dict] = {}
+    for candidate in candidate_evals:
+        label = safety_loss_profile(
+            candidate.get("plan_safety")
+        ).get("label", "unknown")
+        current = buckets.get(label)
+        rank = candidate.get("rank")
+        current_rank = current.get("rank") if isinstance(current, dict) else None
+        if (
+            current is None
+            or (isinstance(rank, int) and not isinstance(current_rank, int))
+            or (
+                isinstance(rank, int)
+                and isinstance(current_rank, int)
+                and rank < current_rank
+            )
+        ):
+            buckets[label] = candidate
+
+    def _sort_key(candidate: dict) -> tuple[int, int]:
+        rank = candidate.get("rank")
+        if isinstance(rank, int):
+            return (0, rank)
+        return (1, 10**9)
+
+    return sorted(buckets.values(), key=_sort_key)[:limit]
+
+
+def _solution_plan_payload(solution: Solution) -> list[dict]:
+    """Serialize a Solution for Rust project_plan / score_plan calls."""
+    return [{
+        "mech_uid": a.mech_uid,
+        "mech_type": a.mech_type,
+        "move_to": list(a.move_to),
+        "weapon_id": a.weapon,
+        "target": list(a.target),
+    } for a in solution.actions]
+
+
+def _prepare_projected_bridge(
+    projected_bridge: dict,
+    source_bridge: dict,
+    eval_weights_dict: dict | None,
+) -> dict:
+    """Carry solve-only metadata across a projected board JSON payload."""
+    out = dict(projected_bridge)
+    projected_weights = out.get("eval_weights")
+    weights = {}
+    if isinstance(eval_weights_dict, dict):
+        weights.update(eval_weights_dict)
+    elif isinstance(source_bridge.get("eval_weights"), dict):
+        weights.update(source_bridge["eval_weights"])
+    if isinstance(projected_weights, dict):
+        weights.update(projected_weights)
+    if weights:
+        out["eval_weights"] = weights
+
+    for key in (
+        "disabled_actions",
+        "weapon_overrides",
+        "weapon_overrides_runtime",
+    ):
+        if key in source_bridge and key not in out:
+            out[key] = source_bridge[key]
+    return out
+
+
+def _active_player_action_count(board: Board) -> int:
+    return sum(
+        1 for u in board.mechs()
+        if u.active and u.hp > 0 and (u.is_mech or u.weapon)
+    )
+
+
+def _candidate_lookahead_preview(
+    rust_module,
+    bridge_data: dict,
+    candidate_eval: dict,
+    spawns: list[tuple[int, int]],
+    *,
+    eval_weights_dict: dict | None,
+    breakdown_weights,
+    time_limit: float,
+) -> dict:
+    """Project a candidate once and solve the heuristic next-turn recovery."""
+    solution = candidate_eval.get("solution")
+    if solution is None:
+        return {"status": "NO_SOLUTION"}
+
+    base_summary = _candidate_safety_summary(candidate_eval)
+    label = (base_summary.get("loss_profile") or {}).get("label", "unknown")
+    preview = {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": candidate_eval.get("rank"),
+        "candidate_source": candidate_eval.get("source"),
+        "candidate_label": label,
+        "candidate_losses": (
+            base_summary.get("loss_profile") or {}
+        ).get("losses", {}),
+    }
+
+    try:
+        import json as _json
+        import time as _time
+
+        projected_raw = rust_module.project_plan(
+            _json.dumps(bridge_data),
+            _json.dumps(_solution_plan_payload(solution)),
+        )
+        projected = _json.loads(projected_raw)
+        projected_bridge = _json.loads(projected.get("board_json") or "{}")
+        projected_bridge = _prepare_projected_bridge(
+            projected_bridge, bridge_data, eval_weights_dict,
+        )
+        projected_board = Board.from_bridge_data(projected_bridge)
+        preview["projected_turn"] = projected.get(
+            "projected_turn", projected_bridge.get("turn")
+        )
+        preview["projected_action_result"] = projected.get("action_result", {})
+
+        if _active_player_action_count(projected_board) <= 0:
+            preview["status"] = "NO_ACTIVE_NEXT_TURN"
+            return preview
+
+        sub_time_limit = max(0.25, min(1.0, time_limit * 0.10))
+        start = _time.time()
+        sub_raw = rust_module.solve(
+            _json.dumps(projected_bridge),
+            sub_time_limit,
+        )
+        elapsed = _time.time() - start
+        sub_solution = _rust_result_to_solution(
+            _json.loads(sub_raw),
+            elapsed,
+            _active_player_action_count(projected_board),
+        )
+        if sub_solution is None:
+            preview["status"] = "NO_NEXT_PLAN"
+            preview["next_elapsed_seconds"] = elapsed
+            return preview
+
+        next_eval = _evaluate_solution_safety(
+            projected_board,
+            projected_bridge,
+            sub_solution,
+            spawns,
+            current_turn=projected_bridge.get("turn", 0),
+            total_turns=projected_bridge.get("total_turns", 5),
+            remaining_spawns=projected_bridge.get("remaining_spawns", 2**31 - 1),
+            weights=breakdown_weights,
+        )
+        next_safety = next_eval.get("plan_safety") or {}
+        preview.update({
+            "status": "OK",
+            "next_score": sub_solution.score,
+            "next_elapsed_seconds": elapsed,
+            "next_actions": [a.description for a in sub_solution.actions],
+            "next_plan_safety": {
+                "status": next_safety.get("status"),
+                "blocking": bool(next_safety.get("blocking")),
+                "loss_profile": safety_loss_profile(next_safety),
+                "violations": [
+                    {
+                        "kind": v.get("kind"),
+                        "current": v.get("current"),
+                        "predicted": v.get("predicted"),
+                        "blocking": bool(v.get("blocking")),
+                    }
+                    for v in next_safety.get("violations", []) or []
+                    if isinstance(v, dict)
+                ],
+            },
+        })
+    except Exception as exc:  # pragma: no cover - defensive live-run guard
+        preview["status"] = "ERROR"
+        preview["error"] = str(exc)
+    return preview
+
+
 def _is_harmless_active_state_diff(
     diff,
     allowed_uids: set[int] | None = None,
@@ -2360,6 +2545,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     selected_candidate_eval = None
     candidate_safety_summaries: list[dict] = []
     dirty_frontier: list[dict] = []
+    lookahead_frontier: list[dict] = []
     selected_candidate_rank = None
     selected_candidate_source = None
     candidate_count = 0
@@ -2612,6 +2798,27 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 _candidate_safety_summary(c) for c in summary_evals
             ]
             dirty_frontier = _candidate_dirty_frontier(candidate_safety_summaries)
+            if (
+                selected_candidate_eval is not None
+                and plan_requires_safety_block(
+                    selected_candidate_eval.get("plan_safety")
+                )
+                and summary_evals
+            ):
+                lookahead_frontier = [
+                    _candidate_lookahead_preview(
+                        _rust,
+                        bridge_data,
+                        candidate_eval,
+                        spawns,
+                        eval_weights_dict=eval_weights_dict,
+                        breakdown_weights=breakdown_weights,
+                        time_limit=time_limit,
+                    )
+                    for candidate_eval in _candidate_frontier_representatives(
+                        summary_evals
+                    )
+                ]
             if selected_candidate_eval is not None:
                 solution = selected_candidate_eval["solution"]
                 selected_candidate_rank = selected_candidate_eval.get("rank")
@@ -2716,6 +2923,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     result["selected_candidate_rank"] = selected_candidate_rank
     if dirty_frontier:
         result["dirty_frontier"] = dirty_frontier
+    if lookahead_frontier:
+        result["lookahead_frontier"] = lookahead_frontier
     if selected_candidate_eval.get("safety_widening"):
         result["safety_widening"] = selected_candidate_eval["safety_widening"]
 
@@ -2756,6 +2965,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "selected_candidate_source": selected_candidate_source,
         "candidate_safety": candidate_safety_summaries,
         "dirty_frontier": dirty_frontier,
+        "lookahead_frontier": lookahead_frontier,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
@@ -2787,6 +2997,22 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     f"{item.get('best_rank')} ({loss_text}); "
                     f"{item.get('count')} candidate(s)"
                 )
+        if lookahead_frontier:
+            print("! Heuristic next-turn recovery preview:")
+            for item in lookahead_frontier[:5]:
+                status = item.get("status")
+                label = item.get("candidate_label")
+                rank = item.get("candidate_rank")
+                if status == "OK":
+                    safety = item.get("next_plan_safety") or {}
+                    profile = safety.get("loss_profile") or {}
+                    print(
+                        f"!   {label} rank {rank}: next {safety.get('status')} "
+                        f"score {item.get('next_score'):.0f}, "
+                        f"{profile.get('label')}"
+                    )
+                else:
+                    print(f"!   {label} rank {rank}: {status}")
     print(f"\n{len(solution.actions)} actions to execute. "
           f"Use 'execute <index>' for each.")
 

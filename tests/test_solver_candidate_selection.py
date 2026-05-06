@@ -1,7 +1,9 @@
 from src.loop.commands import (
     _candidate_dirty_frontier,
+    _candidate_frontier_representatives,
     _is_harmless_active_state_diff,
     _is_expected_skip_state_diff,
+    _prepare_projected_bridge,
     _select_safe_plan_candidate,
 )
 from src.solver.verify import DiffResult
@@ -96,6 +98,56 @@ def test_dirty_frontier_keeps_best_candidate_per_tradeoff():
     assert frontier[0]["count"] == 2
     assert frontier[1]["best_rank"] == 1
     assert frontier[1]["losses"] == {"mechs_alive": 1}
+
+
+def test_frontier_representatives_pick_one_per_label():
+    def candidate(rank, label):
+        return {
+            "rank": rank,
+            "plan_safety": {
+                "status": "DIRTY",
+                "blocking": True,
+                "violations": [
+                    {
+                        "kind": "grid_damage" if label == "grid_loss" else "mech_lost",
+                        "current": 3,
+                        "predicted": 2,
+                        "delta": -1,
+                    },
+                ],
+            },
+        }
+
+    reps = _candidate_frontier_representatives([
+        candidate(3, "grid_loss"),
+        candidate(1, "mech_loss"),
+        candidate(0, "grid_loss"),
+    ])
+
+    assert [c["rank"] for c in reps] == [0, 1]
+
+
+def test_prepare_projected_bridge_preserves_solver_metadata():
+    projected = {
+        "tiles": [],
+        "units": [],
+        "eval_weights": {"pseudo_threat_eval": True},
+    }
+    source = {
+        "disabled_actions": [{"weapon_id": "Prime_Punchmech"}],
+        "weapon_overrides": [{"weapon_id": "Deploy_TankShot"}],
+    }
+
+    out = _prepare_projected_bridge(
+        projected,
+        source,
+        {"grid_power": 123.0},
+    )
+
+    assert out["eval_weights"]["grid_power"] == 123.0
+    assert out["eval_weights"]["pseudo_threat_eval"] is True
+    assert out["disabled_actions"] == source["disabled_actions"]
+    assert out["weapon_overrides"] == source["weapon_overrides"]
 
 
 def test_skip_active_state_diff_is_expected():
