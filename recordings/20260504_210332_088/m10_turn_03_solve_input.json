@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-05-05T19:14:03.708547",
+  "timestamp": "2026-05-05T19:28:30.036719",
   "run_id": "20260504_210332_088",
   "mission_index": 10,
-  "turn": 2,
+  "turn": 3,
   "label": "solve_input",
   "data": {
     "schema_version": 1,
-    "simulator_version": 49,
+    "simulator_version": 50,
     "solver_version": "rust-0.1.0-d4334e5",
     "time_limit": 10.0,
     "beam_mode": 0,
@@ -14,11 +14,11 @@
       "island_map_game_seen": "table",
       "spawning_tiles": [],
       "grid_power_max": 7,
-      "grid_power": 2,
+      "grid_power": 1,
       "island_map_probe": "scope_alive",
-      "turn": 2,
+      "turn": 3,
       "mission_id": "Mission_Tanks",
-      "master_seed": 958000026,
+      "master_seed": 990281486,
       "total_turns": 4,
       "island_map_debug": "skipped: in active mission",
       "environment_danger": [],
@@ -195,10 +195,9 @@
         },
         {
           "y": 3,
-          "terrain_id": 1,
-          "terrain": "building",
-          "building_hp": 1,
-          "x": 3
+          "x": 3,
+          "terrain_id": 2,
+          "terrain": "rubble"
         },
         {
           "y": 3,
@@ -343,9 +342,10 @@
         },
         {
           "y": 6,
-          "x": 2,
-          "terrain_id": 6,
-          "terrain": "forest"
+          "terrain_id": 0,
+          "terrain": "ground",
+          "fire": true,
+          "x": 2
         },
         {
           "y": 6,
@@ -441,28 +441,28 @@
           1
         ],
         [
-          3,
-          2
-        ],
-        [
-          3,
-          3
-        ],
-        [
           5,
-          3
+          1
+        ],
+        [
+          6,
+          1
         ],
         [
           3,
+          4
+        ],
+        [
+          2,
           6
         ]
       ],
       "phase": "combat_player",
-      "remaining_spawns": 1,
+      "remaining_spawns": 0,
       "mission_kills_done": 0,
       "units": [
         {
-          "web": true,
+          "web": false,
           "active": true,
           "base_move": 3,
           "hp": 4,
@@ -470,12 +470,11 @@
           "pilot_level": 2,
           "team": 1,
           "massive": true,
-          "web_source_uid": 43,
           "web_probes": {
-            "IsGrappled": true
+            "IsGrappled": false
           },
           "max_hp": 3,
-          "move": 0,
+          "move": 4,
           "weapons": [
             "Brute_Grapple"
           ],
@@ -533,7 +532,7 @@
           "web": false,
           "active": true,
           "base_move": 4,
-          "hp": 4,
+          "hp": 3,
           "flying": false,
           "pilot_level": 1,
           "team": 1,
@@ -551,9 +550,9 @@
             "skill1=8",
             "skill2=11"
           ],
-          "fire": false,
+          "fire": true,
           "y": 6,
-          "x": 3,
+          "x": 2,
           "acid": false,
           "shield": false,
           "type": "PulseMech",
@@ -567,7 +566,7 @@
           "web": false,
           "active": false,
           "shield": false,
-          "hp": 5,
+          "hp": 3,
           "weapon_push": 0,
           "flying": false,
           "team": 6,
@@ -579,15 +578,15 @@
           "move": 3,
           "x": 4,
           "queued_target": [
-            5,
-            3
+            3,
+            4
           ],
           "has_queued_attack": true,
           "weapons": [
             "ScorpionAtk2"
           ],
           "weapon_damage": 3,
-          "y": 3,
+          "y": 4,
           "uid": 41,
           "type": "Scorpion2",
           "base_move": 3,
@@ -611,9 +610,9 @@
           },
           "max_hp": 3,
           "move": 2,
-          "x": 4,
+          "x": 3,
           "queued_target": [
-            3,
+            2,
             6
           ],
           "has_queued_attack": true,
@@ -645,17 +644,17 @@
           },
           "max_hp": 3,
           "move": 3,
-          "x": 4,
+          "x": 3,
           "queued_target": [
-            4,
-            1
+            3,
+            4
           ],
           "has_queued_attack": true,
           "weapons": [
             "ScorpionAtk1"
           ],
           "weapon_damage": 1,
-          "y": 2,
+          "y": 3,
           "uid": 43,
           "type": "Scorpion1",
           "base_move": 3,
@@ -678,8 +677,8 @@
           "max_hp": 2,
           "move": 2,
           "weapons": [],
-          "x": 5,
-          "y": 4,
+          "x": 4,
+          "y": 5,
           "uid": 44,
           "type": "Jelly_Armor1",
           "base_move": 2,
@@ -710,7 +709,7 @@
             "ShamanAtk1"
           ],
           "weapon_damage": 0,
-          "y": 2,
+          "y": 4,
           "uid": 135,
           "type": "Shaman1",
           "base_move": 2,
@@ -734,17 +733,17 @@
           },
           "max_hp": 5,
           "move": 2,
-          "x": 6,
+          "x": 5,
           "queued_target": [
             5,
-            3
+            1
           ],
           "has_queued_attack": true,
           "weapons": [
             "FireflyAtk2"
           ],
           "weapon_damage": 3,
-          "y": 3,
+          "y": 2,
           "uid": 136,
           "type": "Firefly2",
           "base_move": 2,
@@ -768,18 +767,18 @@
           },
           "max_hp": 1,
           "move": 0,
-          "x": 3,
+          "x": 6,
           "queued_target": [
-            3,
-            3
+            5,
+            1
           ],
           "has_queued_attack": true,
           "weapons": [
             "TotemAtk1"
           ],
           "weapon_damage": 1,
-          "y": 2,
-          "uid": 163,
+          "y": 1,
+          "uid": 186,
           "type": "Totem1",
           "base_move": 0,
           "fire": false,
@@ -789,35 +788,8 @@
           "ranged": 0
         },
         {
-          "web": true,
-          "active": false,
-          "shield": false,
-          "hp": 1,
-          "flying": false,
-          "team": 1,
-          "web_source_uid": 41,
-          "web_probes": {
-            "IsGrappled": true
-          },
-          "max_hp": 1,
-          "move": 0,
-          "weapons": [
-            "Deploy_TankShot"
-          ],
-          "x": 5,
-          "y": 3,
-          "uid": 39,
-          "type": "Archive_Tank",
-          "base_move": 4,
-          "fire": false,
-          "mech": false,
-          "acid": false,
-          "frozen": false,
-          "ranged": 1
-        },
-        {
           "web": false,
-          "active": false,
+          "active": true,
           "shield": false,
           "hp": 1,
           "flying": false,
@@ -826,7 +798,7 @@
             "IsGrappled": false
           },
           "max_hp": 1,
-          "move": 0,
+          "move": 4,
           "weapons": [
             "Deploy_TankShot"
           ],
@@ -848,9 +820,9 @@
       "mission_seeds": {
         "region0": {
           "state": 0,
-          "turn": 2,
+          "turn": 3,
           "mission": "Mission1",
-          "ai_seed": 1059068293
+          "ai_seed": 1498343746
         },
         "region4": {
           "state": 4,
@@ -860,7 +832,7 @@
         }
       },
       "environment_danger_v2": [],
-      "timestamp": 1778026443,
+      "timestamp": 1778027309,
       "in_active_mission": true,
       "attack_order": [
         41,
@@ -868,7 +840,7 @@
         43,
         135,
         136,
-        163
+        186
       ],
       "is_infinite_spawn": true,
       "weapon_upgrade_overlays": [

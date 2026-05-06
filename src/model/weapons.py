@@ -278,6 +278,14 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=2, push="none", range_min=2,
         aoe_behind=True,  # hits target + tile behind in firing direction
     ),
+    "Deploy_TankShot": WeaponDef(
+        name="Stock Cannon", weapon_type="projectile",
+        damage=0, push="forward", range_max=0,
+    ),
+    "Deploy_TankShot2": WeaponDef(
+        name="Stock Cannon", weapon_type="projectile",
+        damage=2, push="forward", range_max=0,
+    ),
 
     # --- RANGED CLASS ---
 

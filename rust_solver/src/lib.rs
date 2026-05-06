@@ -832,7 +832,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   web when the pawn actually changes tiles; bumping into an obstacle leaves
 //   it webbed. Also models `Ranged_Artillerymech_A` direct building immunity.
 //   Pre-v49 corpus archived as `failure_db_snapshot_sim_v48.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 49;
+// v50 - Archive / Deploy Tank `Deploy_TankShot` is modeled as a controllable
+//   friendly projectile push weapon (0 damage, forward push), so Stock Cannon
+//   tanks participate in the solver search. Pre-v50 corpus archived as
+//   `failure_db_snapshot_sim_v49.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 50;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

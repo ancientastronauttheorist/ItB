@@ -409,9 +409,14 @@ pub enum WId {
     /// Artemis Artillery with Buildings Immune: same center damage and
     /// adjacent outward pushes, but direct damage to Grid Buildings is zero.
     RangedArtillerymechA = 127,
+    /// Archive / deployable tank Stock Cannon: projectile, 0 damage, pushes
+    /// the first blocker forward. Controllable friendly non-mech units use it.
+    DeployTankShot = 128,
+    /// Upgraded deployable tank Stock Cannon: same push, 2 direct damage.
+    DeployTankShot2 = 129,
 }
 
-pub const WEAPON_COUNT: usize = 128;
+pub const WEAPON_COUNT: usize = 130;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -540,6 +545,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 127: Ranged_Artillerymech_A — Artemis Artillery with Buildings Immune
     w[127] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Outward, range_min: 2,
         flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
+    // 128: Deploy_TankShot — Stock Cannon
+    w[128] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Forward, range_max: 0,
+        flags: C, ..DEF };
+    // 129: Deploy_TankShot2 — upgraded Stock Cannon
+    w[129] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0,
+        flags: C, ..DEF };
     // 32: Ranged_Rockthrow — Rock Launcher
     w[32] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Perpendicular, range_min: 2, flags: C, ..DEF };
     // 33: Ranged_Defensestrike — Cluster Artillery
@@ -1010,6 +1021,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Ranged_Artillerymech" => WId::RangedArtillerymech,
         "Ranged_Artillerymech_A" => WId::RangedArtillerymechA,
         "RangedArtillerymechA" => WId::RangedArtillerymechA,
+        "Deploy_TankShot" => WId::DeployTankShot,
+        "DeployTankShot" => WId::DeployTankShot,
+        "Deploy_TankShot2" => WId::DeployTankShot2,
+        "DeployTankShot2" => WId::DeployTankShot2,
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
@@ -1146,6 +1161,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ArchiveArtShot => "Archive_ArtShot",
         WId::RangedArtillerymech => "Ranged_Artillerymech",
         WId::RangedArtillerymechA => "Ranged_Artillerymech_A",
+        WId::DeployTankShot => "Deploy_TankShot",
+        WId::DeployTankShot2 => "Deploy_TankShot2",
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
@@ -1372,6 +1389,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ArchiveArtShot => "Old Earth Artillery",
         WId::RangedArtillerymech => "Artemis Artillery",
         WId::RangedArtillerymechA => "Artemis Artillery",
+        WId::DeployTankShot => "Stock Cannon",
+        WId::DeployTankShot2 => "Stock Cannon",
         WId::RangedRockthrow => "Rock Launcher",
         WId::RangedDefensestrike => "Cluster Artillery",
         WId::RangedRocket => "Rocket Artillery",
@@ -1501,6 +1520,19 @@ mod tests {
     }
 
     #[test]
+    fn test_deploy_tank_stock_cannon() {
+        let w = weapon_def(WId::DeployTankShot);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 0);
+        assert_eq!(w.push, PushDir::Forward);
+        assert_eq!(w.range_max, 0);
+
+        let upgraded = weapon_def(WId::DeployTankShot2);
+        assert_eq!(upgraded.damage, 2);
+        assert_eq!(upgraded.push, PushDir::Forward);
+    }
+
+    #[test]
     fn test_alpha_hornet_has_aoe_behind() {
         let w = weapon_def(WId::HornetAtk2);
         assert!(w.aoe_behind());
@@ -1525,6 +1557,8 @@ mod tests {
         assert_eq!(wid_from_str("Prime_Punchmech"), WId::PrimePunchmech);
         assert_eq!(wid_from_str("Ranged_Artillerymech"), WId::RangedArtillerymech);
         assert_eq!(wid_from_str("Ranged_Artillerymech_A"), WId::RangedArtillerymechA);
+        assert_eq!(wid_from_str("Deploy_TankShot"), WId::DeployTankShot);
+        assert_eq!(wid_from_str("Deploy_TankShot2"), WId::DeployTankShot2);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -1536,6 +1570,7 @@ mod tests {
             ("Brute_Tankmech", WId::BruteTankmech),
             ("Ranged_Artillerymech", WId::RangedArtillerymech),
             ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
+            ("Deploy_TankShot", WId::DeployTankShot),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

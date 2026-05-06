@@ -743,6 +743,8 @@ pub fn board_from_json(json_str: &str)
     }
 
     // Build the soft-disable bitmask: 1 bit per WId variant up to 127.
+    // Higher ids are valid simulator primitives, but the legacy mask cannot
+    // represent them; ignore rather than shifting by >=128.
     // Python-side ``session.disabled_actions`` is the source of truth —
     // we only consume the ``weapon_id`` string here. Unknown strings
     // resolve to ``WId::None`` via ``wid_from_str`` and are silently
@@ -751,7 +753,7 @@ pub fn board_from_json(json_str: &str)
     if let Some(list) = &input.disabled_actions {
         for entry in list {
             let wid = wid_from_str(&entry.weapon_id);
-            if wid != WId::None {
+            if wid != WId::None && (wid as u8) < 128 {
                 disabled_mask |= 1u128 << (wid as u8);
             }
         }
