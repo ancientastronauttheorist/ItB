@@ -4,61 +4,13 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_Reactivation",
   "islands_completed": [],
-  "mission_index": 15,
-  "last_mission_turn": -1,
-  "current_turn": 4,
-  "phase": "unknown",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          4,
-          5
-        ],
-        "weapon": "Brute_Jetmech",
-        "target": [
-          6,
-          5
-        ],
-        "description": "JetMech, move F6\u2192C4, fire Aerial Bombs at C2"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
-        "move_to": [
-          1,
-          5
-        ],
-        "weapon": "Ranged_Rocket",
-        "target": [
-          5,
-          5
-        ],
-        "description": "RocketMech, move D7\u2192C7, fire Rocket Artillery at C3"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
-        "move_to": [
-          5,
-          6
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "PulseMech"
-      }
-    ],
-    "score": 164440.0,
-    "turn": 4,
-    "input_fingerprint": "0:2,2:6|1:1,4:7|2:5,6:5|300:3,3:1|303:5,5:4"
-  },
+  "mission_index": 14,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -562,50 +514,6 @@
         "RocketMech, move D4\u2192C6, fire Rocket Artillery at G6",
         "PulseMech, move D7\u2192C8, fire Repulse at C8"
       ]
-    },
-    {
-      "timestamp": "2026-05-06T18:06:50.923350",
-      "turn": 1,
-      "label": "solve",
-      "score": 135850.0,
-      "actions": [
-        "JetMech, move E6\u2192E3, fire Aerial Bombs at C3",
-        "RocketMech, move F5\u2192D7, fire Rocket Artillery at D4",
-        "PulseMech, move B5\u2192A6, fire Repulse at A6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T18:08:01.441669",
-      "turn": 2,
-      "label": "solve",
-      "score": 166543.33333333352,
-      "actions": [
-        "JetMech, move C3\u2192D3",
-        "RocketMech, move D7\u2192B7, fire Rocket Artillery at B5",
-        "PulseMech, move A6\u2192B6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T18:09:15.483504",
-      "turn": 3,
-      "label": "solve",
-      "score": 170560.0,
-      "actions": [
-        "RocketMech, move B7\u2192D7, fire Rocket Artillery at D2",
-        "JetMech, move D3\u2192F4, fire Aerial Bombs at F6",
-        "PulseMech, move B6\u2192B3, fire Repulse at B3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T18:10:42.918194",
-      "turn": 4,
-      "label": "solve",
-      "score": 164440.0,
-      "actions": [
-        "JetMech, move F6\u2192C4, fire Aerial Bombs at C2",
-        "RocketMech, move D7\u2192C7, fire Rocket Artillery at C3",
-        "PulseMech"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -723,18 +631,6 @@
     ],
     [
       12,
-      3
-    ],
-    [
-      14,
-      1
-    ],
-    [
-      14,
-      2
-    ],
-    [
-      14,
       3
     ]
   ],
@@ -1219,33 +1115,6 @@
           4
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Unknown|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -1644,46 +1513,17 @@
       "slot": null,
       "mission_id": "Mission_Reactivation",
       "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Alpha Gastropod",
-            "hp": 0,
-            "move": 3,
-            "class_icons": [
-              "alpha"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Alpha Gastropod",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Gastropod",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Gastropod&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "9b14bc7d27ff",
-      "last_kind": "enemy"
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "7a7b33174551e51d",
-    "classes": "mfgbbbgfmgfgggfgmbggbmggmbggbbggmmgggfgmmmgggggmgggggggmgggfggmm",
+    "hash": "fd67a647bbbb0895",
+    "classes": "mfgbbbgfmgfgggfgmbggbmggmbggbbfgmmgggfgmmmgggggmgggggggmgggfggmm",
     "mission_index": 14,
-    "turn": 4
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }
