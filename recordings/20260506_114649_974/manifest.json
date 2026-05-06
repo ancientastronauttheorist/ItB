@@ -6,10 +6,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-efd5e36",
+  "solver_version": "rust-0.1.0-a43047e",
   "weight_version": "v011",
-  "updated": "2026-05-06T11:46:50.000062",
+  "updated": "2026-05-06T18:13:53.100065",
   "created": "2026-05-06T11:46:50.000085",
   "missions": [],
-  "outcome": null
+  "outcome": "win",
+  "outcome_mission": 14,
+  "outcome_recorded_at": "2026-05-06T18:13:53.080822",
+  "outcome_notes": "District Z-1001 secured: destroyed 2 Vek Egg Sacks, protected Emergency Batteries, grid full"
 }
