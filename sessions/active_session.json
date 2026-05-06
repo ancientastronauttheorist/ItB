@@ -4,11 +4,11 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_HornetBoss",
+  "current_mission": "Mission_SnowBattle",
   "islands_completed": [],
-  "mission_index": 12,
-  "last_mission_turn": 4,
-  "current_turn": 4,
+  "mission_index": 13,
+  "last_mission_turn": 0,
+  "current_turn": 0,
   "phase": "unknown",
   "active_solution": {
     "actions": [
@@ -1165,14 +1165,7 @@
       }
     }
   ],
-  "disabled_actions": [
-    {
-      "weapon_id": "Science_Repulse",
-      "cause_pattern": "death|Science_Repulse|attack",
-      "expires_turn": 6,
-      "strategic_override": false
-    }
-  ],
+  "disabled_actions": [],
   "research_queue": [
     {
       "type": "JetMech",
@@ -1564,10 +1557,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "a6deb2ef38c0492a",
-    "classes": "fggggggggbbgggbgggggbgbggbbgggbgggggggggfggggggffggfggggwwwwwwww",
-    "mission_index": 12,
-    "turn": 4
+    "hash": "7e8d6e13897f00ed",
+    "classes": "iiiwiiwigbbgggiiggggbbgigbgggfgggbgfggbggggggfbggggggggggggggggg",
+    "mission_index": 13,
+    "turn": 0
   },
   "terrain_stage_change_pending": false
 }
