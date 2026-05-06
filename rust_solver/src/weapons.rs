@@ -414,9 +414,12 @@ pub enum WId {
     DeployTankShot = 128,
     /// Upgraded deployable tank Stock Cannon: same push, 2 direct damage.
     DeployTankShot2 = 129,
+    /// Decoy Building Area Blast (Mission_Trapped): self-destructs, killing
+    /// itself and every adjacent non-building tile.
+    TrappedExplode = 130,
 }
 
-pub const WEAPON_COUNT: usize = 130;
+pub const WEAPON_COUNT: usize = 131;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -551,6 +554,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 129: Deploy_TankShot2 — upgraded Stock Cannon
     w[129] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0,
         flags: C, ..DEF };
+    // 130: Trapped_Explode — Decoy Building Area Blast.
+    // Bespoke DAMAGE_DEATH semantics live in simulate.rs; this SelfAoe def gives
+    // targeting/enumeration a single "click self" target.
+    w[130] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1,
+        flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 32: Ranged_Rockthrow — Rock Launcher
     w[32] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Perpendicular, range_min: 2, flags: C, ..DEF };
     // 33: Ranged_Defensestrike — Cluster Artillery
@@ -1025,6 +1033,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "DeployTankShot" => WId::DeployTankShot,
         "Deploy_TankShot2" => WId::DeployTankShot2,
         "DeployTankShot2" => WId::DeployTankShot2,
+        "Trapped_Explode" => WId::TrappedExplode,
+        "TrappedExplode" => WId::TrappedExplode,
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
@@ -1163,6 +1173,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedArtillerymechA => "Ranged_Artillerymech_A",
         WId::DeployTankShot => "Deploy_TankShot",
         WId::DeployTankShot2 => "Deploy_TankShot2",
+        WId::TrappedExplode => "Trapped_Explode",
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
@@ -1472,6 +1483,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BossHeal => "Self-Repairing",
         WId::BurnbugAtkB => "Flaming Proboscis",
         WId::SupportWind => "Wind Torrent",
+        WId::TrappedExplode => "Area Blast",
         _ => "Unknown",
     }
 }
@@ -1559,6 +1571,7 @@ mod tests {
         assert_eq!(wid_from_str("Ranged_Artillerymech_A"), WId::RangedArtillerymechA);
         assert_eq!(wid_from_str("Deploy_TankShot"), WId::DeployTankShot);
         assert_eq!(wid_from_str("Deploy_TankShot2"), WId::DeployTankShot2);
+        assert_eq!(wid_from_str("Trapped_Explode"), WId::TrappedExplode);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -1571,6 +1584,7 @@ mod tests {
             ("Ranged_Artillerymech", WId::RangedArtillerymech),
             ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
             ("Deploy_TankShot", WId::DeployTankShot),
+            ("Trapped_Explode", WId::TrappedExplode),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

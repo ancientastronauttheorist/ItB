@@ -286,6 +286,10 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Stock Cannon", weapon_type="projectile",
         damage=2, push="forward", range_max=0,
     ),
+    "Trapped_Explode": WeaponDef(
+        name="Area Blast", weapon_type="self_aoe",
+        damage=1, aoe_adjacent=True, aoe_center=True,
+    ),
 
     # --- RANGED CLASS ---
 

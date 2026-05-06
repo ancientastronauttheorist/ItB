@@ -1440,6 +1440,11 @@ pub fn simulate_weapon_with(
     // Melee targets ARE adjacent, so both helpers agree there.
     let attack_dir = cardinal_direction(ax, ay, target_x, target_y);
 
+    if weapon_id == WId::TrappedExplode {
+        sim_trapped_explode(board, attacker_idx, &mut result);
+        return result;
+    }
+
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
@@ -1877,6 +1882,141 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
             _ => {}
         }
         apply_weapon_status(board, nx as u8, ny as u8, wdef);
+    }
+}
+
+fn apply_trapped_death_damage(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+    damage_building: bool,
+) {
+    let mut killed_enemy_idx = None;
+    let mut killed_enemy_uid = 0u16;
+    let mut volatile = false;
+    let mut death_explosion = false;
+
+    if let Some(uidx) = board.unit_at(x, y) {
+        let unit = &mut board.units[uidx];
+        if unit.hp > 0 {
+            let prev_hp = unit.hp;
+            let tname = unit.type_name_str().to_string();
+            let is_enemy = unit.is_enemy();
+            let is_player_mech = unit.is_player() && unit.is_mech();
+            let has_acid = unit.acid();
+            volatile = is_enemy && unit.is_volatile_vek();
+            death_explosion = is_enemy
+                && (board.blast_psion || board.boss_psion)
+                && tname != "Jelly_Explode1"
+                && tname != "Jelly_Boss";
+            killed_enemy_uid = unit.uid;
+
+            unit.hp = 0;
+            unit.set_shield(false);
+            unit.set_frozen(false);
+
+            if is_enemy {
+                result.enemies_killed += 1;
+                result.enemy_damage_dealt += prev_hp as i32;
+                killed_enemy_idx = Some(uidx);
+            } else if is_player_mech {
+                result.mechs_killed += 1;
+                result.mech_damage_taken += prev_hp as i32;
+            }
+
+            if has_acid {
+                let terrain = board.tile(x, y).terrain;
+                if !terrain.is_deadly_ground() || terrain == Terrain::Water {
+                    board.tile_mut(x, y).flags |= TileFlags::ACID;
+                }
+            }
+        }
+    }
+
+    if let Some(idx) = killed_enemy_idx {
+        on_enemy_death(board, idx, result);
+        break_web_from(board, killed_enemy_uid);
+        if volatile {
+            apply_volatile_decay(board, x, y, result, 0);
+        }
+        if death_explosion {
+            apply_death_explosion(board, x, y, result, 0);
+        }
+    }
+
+    if board.tile(x, y).is_building() {
+        if !damage_building {
+            return;
+        }
+        let idx = xy_to_idx(x, y) as u64;
+        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+        let tile = board.tile_mut(x, y);
+        if tile.building_hp > 0 {
+            let lost = tile.building_hp;
+            tile.building_hp = 0;
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
+            result.buildings_damaged += lost as i32;
+            result.grid_damage += lost as i32;
+            result.buildings_lost += 1;
+            board.grid_power = board.grid_power.saturating_sub(lost);
+        }
+        return;
+    }
+
+    let terrain = board.tile(x, y).terrain;
+    match terrain {
+        Terrain::Mountain => {
+            let tile = board.tile_mut(x, y);
+            if tile.building_hp > 0 {
+                tile.building_hp = tile.building_hp.saturating_sub(1);
+                if tile.building_hp == 0 {
+                    tile.terrain = Terrain::Rubble;
+                }
+            }
+        }
+        Terrain::Ice => {
+            if board.tile(x, y).cracked() {
+                board.tile_mut(x, y).terrain = Terrain::Water;
+                board.tile_mut(x, y).set_cracked(false);
+            } else {
+                board.tile_mut(x, y).set_cracked(true);
+            }
+        }
+        Terrain::Ground => {
+            if board.tile(x, y).cracked() {
+                board.tile_mut(x, y).terrain = Terrain::Chasm;
+                board.tile_mut(x, y).set_cracked(false);
+            }
+        }
+        Terrain::Forest => {
+            board.tile_mut(x, y).set_on_fire(true);
+        }
+        Terrain::Sand => {
+            board.tile_mut(x, y).terrain = Terrain::Ground;
+            board.tile_mut(x, y).set_smoke(true);
+        }
+        _ => {}
+    }
+}
+
+fn sim_trapped_explode(board: &mut Board, attacker_idx: usize, result: &mut ActionResult) {
+    let ax = board.units[attacker_idx].x;
+    let ay = board.units[attacker_idx].y;
+    apply_trapped_death_damage(board, ax, ay, result, true);
+
+    for &(dx, dy) in &DIRS {
+        let nx = ax as i8 + dx;
+        let ny = ay as i8 + dy;
+        if !in_bounds(nx, ny) { continue; }
+        let tx = nx as u8;
+        let ty = ny as u8;
+        if board.tile(tx, ty).is_building() {
+            continue;
+        }
+        apply_trapped_death_damage(board, tx, ty, result, false);
     }
 }
 
@@ -2557,6 +2697,53 @@ mod tests {
             move_speed: 3,
             ..Default::default()
         })
+    }
+
+    fn add_decoy_building(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
+        let idx = board.add_unit(Unit {
+            uid, x, y, hp: 2, max_hp: 2,
+            team: Team::Player,
+            weapon: crate::board::WeaponId(WId::TrappedExplode as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Trapped_Building");
+        idx
+    }
+
+    #[test]
+    fn test_trapped_explode_kills_self_and_adjacent_units() {
+        let mut board = make_test_board();
+        let decoy = add_decoy_building(&mut board, 10, 3, 3);
+        let enemy = add_enemy(&mut board, 20, 3, 4, 5);
+        let mech = add_mech(&mut board, 30, 2, 3, 3, WId::PrimePunchmech);
+
+        let result = simulate_weapon(&mut board, decoy, WId::TrappedExplode, 3, 3);
+
+        assert_eq!(board.units[decoy].hp, 0);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(board.units[mech].hp, 0);
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mechs_killed, 1);
+    }
+
+    #[test]
+    fn test_trapped_explode_skips_adjacent_buildings() {
+        let mut board = make_test_board();
+        let decoy = add_decoy_building(&mut board, 10, 3, 3);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        board.tile_mut(4, 3).terrain = Terrain::Mountain;
+        board.tile_mut(4, 3).building_hp = 2;
+
+        let result = simulate_weapon(&mut board, decoy, WId::TrappedExplode, 3, 3);
+
+        assert_eq!(board.tile(3, 4).building_hp, 2);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(board.tile(4, 3).building_hp, 1);
     }
 
     #[test]

@@ -52,7 +52,9 @@
     "Combat_Mech",
     "Control_Mech",
     "Crab",
+    "Crab%20Leader",
     "Damage",
+    "Decoy%20Building",
     "Defense_Mech",
     "Detritus",
     "Difficulty",
@@ -65,6 +67,7 @@
     "Firefly_Leader",
     "Flame_Behemoths",
     "Flame_Mech",
+    "Freeze%20Tank",
     "Frozen_Titans",
     "Gastropod",
     "Gravity_Mech",
@@ -279,11 +282,11 @@
     "StarfishAtk2",
     "SupportRepair",
     "SupportWind",
+    "TrappedExplode",
     "TumblebugAtk1",
     "TumblebugAtk2"
   ],
   "terrain_enum": [
-    "Acid",
     "Building",
     "Chasm",
     "Fire",
@@ -297,7 +300,6 @@
     "Water"
   ],
   "terrain_ids": [
-    "acid",
     "building",
     "chasm",
     "fire",
@@ -408,6 +410,7 @@
     "TotemB",
     "Train_Damaged",
     "Train_Pawn",
+    "Trapped_Building",
     "Wall",
     "WallMech",
     "WebbEgg1"
@@ -450,6 +453,7 @@
     "Passive_Electric",
     "Passive_FlameImmune",
     "Passive_FriendlyFire",
+    "Pinnacle_FreezeTank",
     "Prime_Flamethrower",
     "Prime_Lasermech",
     "Prime_Lightning",
@@ -457,7 +461,6 @@
     "Prime_ShieldBash",
     "Prime_Shift",
     "Ranged_Artillerymech",
-    "Ranged_Artillerymech_A",
     "Ranged_Defensestrike",
     "Ranged_Ice",
     "Ranged_Ignite",
@@ -493,6 +496,7 @@
     "TotemAtk2",
     "TotemAtkB",
     "Train_Move",
+    "Trapped_Explode",
     "WebeggHatch1"
   ],
   "known_phases": [

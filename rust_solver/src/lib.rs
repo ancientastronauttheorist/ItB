@@ -923,7 +923,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   friendly projectile push weapon (0 damage, forward push), so Stock Cannon
 //   tanks participate in the solver search. Pre-v50 corpus archived as
 //   `failure_db_snapshot_sim_v49.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 50;
+// v51 - Mission_Trapped Decoy Building `Trapped_Explode` is modeled as an
+//   expendable player-team self-destruct: kills itself and adjacent
+//   non-building tiles while preserving neighboring buildings. Pre-v51 corpus
+//   archived as `failure_db_snapshot_sim_v50.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 51;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

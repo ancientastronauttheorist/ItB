@@ -512,7 +512,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # friendly projectile push weapon (0 damage, forward push), so Stock Cannon
 # tanks participate in the solver search. Pre-v50 corpus archived as
 # failure_db_snapshot_sim_v49.jsonl.
-SIMULATOR_VERSION = 50
+# v51 - Mission_Trapped Decoy Building `Trapped_Explode` is modeled as an
+# expendable player-team self-destruct: kills itself and adjacent non-building
+# tiles while preserving neighboring buildings. Pre-v51 corpus archived as
+# failure_db_snapshot_sim_v50.jsonl.
+SIMULATOR_VERSION = 51
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

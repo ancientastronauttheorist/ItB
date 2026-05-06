@@ -223,6 +223,11 @@ NEUTRAL_STATS = {
     "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False),
     "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
     "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
+    # Mission_Trapped Decoy Building: player-team, 2 HP, immobile,
+    # non-grid, non-pushable, self-destruct weapon.
+    "Trapped_Building":  PawnStats(move_speed=0, ranged=1, pushable=False,
+                                   ignore_smoke=True,
+                                   default_weapon="Trapped_Explode"),
     # A.C.I.D. Tank: single-use deployable NPC (time-pod / shop reward).
     # 1 HP base (3 with +2 HP upgrade), Move 3, Normal mass, pushable.
     # Player-controlled same as a mech.

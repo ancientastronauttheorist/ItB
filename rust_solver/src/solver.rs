@@ -506,9 +506,12 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         // (For MID_ACTION mechs, this is the "skip attack" option.)
         actions.push((pos, WId::None, (255, 255)));
 
-        // Smoke blocks ALL actions (attack + repair) — only move-only is valid
+        // Smoke blocks most pawn actions (attack + repair). Mission_Trapped
+        // Decoy Buildings have IgnoreSmoke=true in the Lua mission script, so
+        // they can still self-destruct from a smoked tile.
         let tile = board.tile(pos.0, pos.1);
-        if !tile.smoke() {
+        let ignores_smoke = unit.type_name_str() == "Trapped_Building";
+        if !tile.smoke() || ignores_smoke {
             // Primary weapon — filter out no-op fires (empty space, nothing affected)
             let w1_id = WId::from_raw(unit.weapon.0);
             if w1_id != WId::None {
@@ -1341,6 +1344,28 @@ mod top_k_tests {
     //! 1 already — but catching the regression here gives a sharper failure
     //! message than a byte-diff at the Python layer.
     use super::*;
+
+    #[test]
+    fn trapped_building_can_attack_from_smoke() {
+        let mut board = Board::default();
+        board.tile_mut(3, 3).set_smoke(true);
+        let idx = board.add_unit(Unit {
+            uid: 10,
+            x: 3,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::TrappedExplode as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Trapped_Building");
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(actions.iter().any(|a| a.1 == WId::TrappedExplode));
+    }
 
     #[test]
     fn bounded_top_k_basic_desc_ordering() {

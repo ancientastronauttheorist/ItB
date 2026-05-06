@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-06T13:19:12.289262",
+  "label": "tectonic_site_region_secured_mites_failed_pod_coal",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "Trapped_Building",
+      "pos": [
+        2,
+        7
+      ],
+      "hp": 2
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hornet1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    }
+  ]
+}

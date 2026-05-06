@@ -392,6 +392,12 @@ fn type_matches_any(name: &str, patterns: &[String]) -> bool {
     patterns.iter().any(|p| !p.is_empty() && name.contains(p.as_str()))
 }
 
+fn is_expendable_friendly_pawn(name: &str) -> bool {
+    // Mission_Trapped decoy buildings are player-controlled bombs. Their
+    // self-destruction is the intended mission mechanic, not an NPC casualty.
+    name == "Trapped_Building"
+}
+
 /// `kills` is passed explicitly because dead enemies are filtered from iteration.
 /// `spawn_points` are next turn's Vek spawn locations.
 /// `psion_before`: snapshot of Psion state before mech actions — used to detect kills.
@@ -758,6 +764,11 @@ pub fn evaluate(
             let u = &board.units[i];
             if !u.alive() { continue; }
             if !board.is_env_danger(u.x, u.y) { continue; }
+            if u.is_player() && !u.is_mech()
+                && is_expendable_friendly_pawn(u.type_name_str())
+            {
+                continue;
+            }
 
             let on_kill_tile = board.is_env_danger_kill(u.x, u.y);
             let on_flying_immune_kill = on_kill_tile
@@ -849,7 +860,7 @@ pub fn evaluate(
             // Non-mech player units (ArchiveArtillery, Filler_Pawn, etc.)
             // Killing them loses a body-blocker and often involves pushing
             // them into buildings. Penalize to prevent sacrifice.
-            if u.hp <= 0 {
+            if u.hp <= 0 && !is_expendable_friendly_pawn(u.type_name_str()) {
                 score += weights.friendly_npc_killed;
             }
             continue;

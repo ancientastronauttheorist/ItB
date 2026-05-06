@@ -225,6 +225,11 @@ def _type_matches_any(name: str, patterns: list[str]) -> bool:
     return any(p and p in name for p in patterns)
 
 
+def _is_expendable_friendly_pawn(name: str) -> bool:
+    # Mission_Trapped decoy buildings are intended self-destruct bombs.
+    return name == "Trapped_Building"
+
+
 def evaluate(
     board: Board,
     spawn_points: list[tuple[int, int]] = None,
@@ -441,6 +446,8 @@ def evaluate(
         for m in board.mechs():
             if m.hp <= 0:
                 continue
+            if not m.is_mech and _is_expendable_friendly_pawn(m.type):
+                continue
             pos = (m.x, m.y)
             if pos not in board.environment_danger:
                 continue
@@ -477,7 +484,7 @@ def evaluate(
     for m in board.mechs():
         if not m.is_mech:
             # Non-mech player unit (Filler_Pawn, ArchiveArtillery, etc.)
-            if m.hp <= 0:
+            if m.hp <= 0 and not _is_expendable_friendly_pawn(m.type):
                 score += w.friendly_npc_killed
             continue
         if m.hp <= 0:
