@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-06T18:19:45.979775",
+  "label": "research_gate_blobber_m15_t3",
+  "turn": 3,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        0
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowlaser1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Blobber1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}
