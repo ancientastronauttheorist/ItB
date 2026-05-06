@@ -198,12 +198,10 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 ///     (enemies_killed, mechs_killed, buildings_lost, grid_damage, ...).
 ///   - `spawn_points`: spawn tile list forwarded from the input board.
 ///
-/// Option C behaviour: enemies on the projected board have NO queued targets
-/// (`queued_target_x = -1`). The returned `board_json` injects
-/// `eval_weights.pseudo_threat_eval = true` so that `evaluate()` runs the
-/// queueless-threat augmentation (1.5× next_turn_threat_penalty per alive
-/// enemy that can reach a building) when the projected board is re-evaluated
-/// by a downstream solve call.
+/// Projection re-queues surviving enemies with the deterministic heuristic in
+/// `turn_projection.rs`. The returned `board_json` still injects
+/// `eval_weights.pseudo_threat_eval = true` so enemies without heuristic
+/// targets remain conservatively penalized by downstream solve calls.
 #[pyfunction]
 fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
     use crate::turn_projection::{project_plan as tp_project_plan, board_to_json};
@@ -272,6 +270,95 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             "projected_turn": projected.current_turn,
         });
         Ok(out.to_string())
+    })
+}
+
+/// Project a plan into a bounded set of plausible next-turn enemy-intent
+/// scenarios. Scenario 0 is the same heuristic requeue used by `project_plan`.
+/// Additional scenarios retarget one eligible enemy at a high-value reachable
+/// building, capped by `max_scenarios`.
+#[pyfunction]
+fn project_plan_scenarios(
+    py: Python<'_>,
+    bridge_json: &str,
+    plan_json: &str,
+    max_scenarios: usize,
+) -> PyResult<String> {
+    use crate::turn_projection::{
+        board_to_json,
+        project_plan_scenarios as tp_project_plan_scenarios,
+    };
+    use crate::solver::MechAction;
+    use crate::weapons::wid_from_str;
+
+    py.allow_threads(|| {
+        let (board, spawn_points, _danger, _weights, _disabled_mask, _overlay_entries) =
+            serde_bridge::board_from_json(bridge_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+
+        let overlay_pairs: Vec<(weapons::WId, weapons::PartialWeaponDef)> =
+            _overlay_entries.iter().map(|e| (e.wid, e.patch.clone())).collect();
+        let overlay_table = weapons::build_overlay_table(&overlay_pairs);
+        let weapons_table: &weapons::WeaponTable = match &overlay_table {
+            Some(t) => &**t,
+            None => &weapons::WEAPONS,
+        };
+
+        #[derive(serde::Deserialize)]
+        struct PlanAction {
+            mech_uid: u16,
+            #[serde(default)]
+            mech_type: String,
+            move_to: [u8; 2],
+            weapon_id: String,
+            target: [u8; 2],
+        }
+        let raw_plan: Vec<PlanAction> = serde_json::from_str(plan_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(
+                format!("plan parse: {}", e)))?;
+
+        let actions: Vec<MechAction> = raw_plan.iter().map(|a| MechAction {
+            mech_uid: a.mech_uid,
+            mech_type: a.mech_type.clone(),
+            move_to: (a.move_to[0], a.move_to[1]),
+            weapon: wid_from_str(&a.weapon_id),
+            target: (a.target[0], a.target[1]),
+            description: String::new(),
+        }).collect();
+
+        let spawn_json: Vec<serde_json::Value> = spawn_points.iter()
+            .map(|&(x, y)| serde_json::json!([x, y]))
+            .collect();
+
+        let scenarios = tp_project_plan_scenarios(
+            &board,
+            &actions,
+            &spawn_points,
+            weapons_table,
+            max_scenarios,
+        );
+        let scenario_json: Vec<serde_json::Value> = scenarios.iter().map(|s| {
+            serde_json::json!({
+                "label": s.label,
+                "board_json": board_to_json(&s.board, &spawn_points),
+                "spawn_points": spawn_json,
+                "action_result": {
+                    "enemies_killed": s.action_result.enemies_killed,
+                    "mechs_killed": s.action_result.mechs_killed,
+                    "buildings_lost": s.action_result.buildings_lost,
+                    "buildings_damaged": s.action_result.buildings_damaged,
+                    "grid_damage": s.action_result.grid_damage,
+                    "enemy_damage_dealt": s.action_result.enemy_damage_dealt,
+                    "mech_damage_taken": s.action_result.mech_damage_taken,
+                    "spawns_blocked": s.action_result.spawns_blocked,
+                    "pods_collected": s.action_result.pods_collected,
+                    "repair_platforms_used": s.action_result.repair_platforms_used,
+                },
+                "projected_turn": s.board.current_turn,
+            })
+        }).collect();
+
+        Ok(serde_json::json!({ "scenarios": scenario_json }).to_string())
     })
 }
 
@@ -933,6 +1020,7 @@ fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(solve_top_k, m)?)?;
     m.add_function(wrap_pyfunction!(score_plan, m)?)?;
     m.add_function(wrap_pyfunction!(project_plan, m)?)?;
+    m.add_function(wrap_pyfunction!(project_plan_scenarios, m)?)?;
     m.add_function(wrap_pyfunction!(solve_beam, m)?)?;
     m.add_function(wrap_pyfunction!(simulator_version, m)?)?;
     m.add_function(wrap_pyfunction!(replay_solution, m)?)?;

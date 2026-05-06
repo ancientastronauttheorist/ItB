@@ -3,6 +3,7 @@ from src.loop.commands import (
     _candidate_frontier_representatives,
     _is_harmless_active_state_diff,
     _is_expected_skip_state_diff,
+    _lookahead_result_sort_key,
     _prepare_projected_bridge,
     _select_safe_plan_candidate,
 )
@@ -148,6 +149,30 @@ def test_prepare_projected_bridge_preserves_solver_metadata():
     assert out["eval_weights"]["pseudo_threat_eval"] is True
     assert out["disabled_actions"] == source["disabled_actions"]
     assert out["weapon_overrides"] == source["weapon_overrides"]
+
+
+def test_lookahead_result_sort_key_orders_dirty_before_clean():
+    dirty = {
+        "status": "OK",
+        "next_score": 100.0,
+        "next_plan_safety": {
+            "blocking": True,
+            "loss_profile": {"non_overridable": False},
+        },
+    }
+    clean = {
+        "status": "OK",
+        "next_score": -100.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"non_overridable": False},
+        },
+    }
+    error = {"status": "ERROR"}
+
+    ordered = sorted([clean, dirty, error], key=_lookahead_result_sort_key)
+
+    assert ordered == [error, dirty, clean]
 
 
 def test_skip_active_state_diff_is_expected():

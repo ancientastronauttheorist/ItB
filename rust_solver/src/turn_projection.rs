@@ -28,6 +28,13 @@ use crate::solver::MechAction;
 use crate::types::{Terrain, idx_to_xy};
 use crate::weapons::WeaponTable;
 
+#[derive(Clone, Debug)]
+pub struct ProjectedScenario {
+    pub label: String,
+    pub board: Board,
+    pub action_result: ActionResult,
+}
+
 /// Assign a new queued target to each alive enemy based on closest reachable
 /// threat. Pure function over the board; does not consume any simulation
 /// state. Caller is responsible for clearing stale `queued_target_x/_y`
@@ -108,7 +115,7 @@ pub fn requeue_enemies_heuristic(board: &mut Board) {
     }
 }
 
-pub fn project_plan(
+fn apply_plan_and_enemy_phase(
     board: &Board,
     actions: &[MechAction],
     spawn_points: &[(u8, u8)],
@@ -128,14 +135,21 @@ pub fn project_plan(
             Some(i) => i,
             None => continue,
         };
-        let result = simulate_action(&mut b, mech_idx, action.move_to, action.weapon, action.target, weapons);
+        let result = simulate_action(
+            &mut b,
+            mech_idx,
+            action.move_to,
+            action.weapon,
+            action.target,
+            weapons,
+        );
         aggregate.merge(&result);
     }
     let _ = simulate_enemy_attacks(&mut b, &original_positions, weapons);
     if !spawn_points.is_empty() {
         apply_spawn_blocking(&mut b, spawn_points);
     }
-    // Clear fired queued attacks — subsequent re-queue populates new ones.
+    // Clear fired queued attacks — subsequent scenario re-queues populate new ones.
     for i in 0..b.unit_count as usize {
         let u = &mut b.units[i];
         if u.is_enemy() && u.hp > 0 {
@@ -144,8 +158,6 @@ pub fn project_plan(
             u.flags.set(UnitFlags::HAS_QUEUED_ATTACK, false);
         }
     }
-    // Option B: heuristic re-queue for surviving enemies.
-    requeue_enemies_heuristic(&mut b);
     // Reset player mechs for the next turn.
     for i in 0..b.unit_count as usize {
         let u = &mut b.units[i];
@@ -156,6 +168,154 @@ pub fn project_plan(
     }
     b.current_turn = b.current_turn.saturating_add(1);
     (b, aggregate)
+}
+
+pub fn project_plan(
+    board: &Board,
+    actions: &[MechAction],
+    spawn_points: &[(u8, u8)],
+    weapons: &WeaponTable,
+) -> (Board, ActionResult) {
+    let (mut b, aggregate) = apply_plan_and_enemy_phase(
+        board, actions, spawn_points, weapons,
+    );
+    // Option B: heuristic re-queue for surviving enemies.
+    requeue_enemies_heuristic(&mut b);
+    (b, aggregate)
+}
+
+pub fn project_plan_scenarios(
+    board: &Board,
+    actions: &[MechAction],
+    spawn_points: &[(u8, u8)],
+    weapons: &WeaponTable,
+    max_scenarios: usize,
+) -> Vec<ProjectedScenario> {
+    let max_scenarios = max_scenarios.max(1);
+    let (base, aggregate) = apply_plan_and_enemy_phase(
+        board, actions, spawn_points, weapons,
+    );
+    let mut scenarios = Vec::with_capacity(max_scenarios);
+
+    let mut heuristic = base.clone();
+    requeue_enemies_heuristic(&mut heuristic);
+    let mut signatures = vec![target_signature(&heuristic)];
+    scenarios.push(ProjectedScenario {
+        label: "heuristic_requeue".to_string(),
+        board: heuristic.clone(),
+        action_result: aggregate.clone(),
+    });
+
+    let mut retargets = building_retarget_candidates(&base);
+    retargets.sort_by(|a, b| {
+        // Higher building HP first, then closer targets, then stable uid/tile.
+        b.building_hp.cmp(&a.building_hp)
+            .then(a.distance.cmp(&b.distance))
+            .then(a.enemy_uid.cmp(&b.enemy_uid))
+            .then(a.tile_idx.cmp(&b.tile_idx))
+    });
+
+    for retarget in retargets {
+        if scenarios.len() >= max_scenarios {
+            break;
+        }
+        let mut variant = heuristic.clone();
+        let enemy_idx = match variant.units[..variant.unit_count as usize]
+            .iter()
+            .position(|u| u.uid == retarget.enemy_uid && u.alive())
+        {
+            Some(i) => i,
+            None => continue,
+        };
+        let enemy = &mut variant.units[enemy_idx];
+        if enemy.queued_target_x == retarget.x as i8
+            && enemy.queued_target_y == retarget.y as i8
+        {
+            continue;
+        }
+        enemy.queued_target_x = retarget.x as i8;
+        enemy.queued_target_y = retarget.y as i8;
+        enemy.flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let signature = target_signature(&variant);
+        if signatures.iter().any(|s| *s == signature) {
+            continue;
+        }
+        signatures.push(signature);
+        scenarios.push(ProjectedScenario {
+            label: format!(
+                "retarget_building_uid{}_{}_{}",
+                retarget.enemy_uid, retarget.x, retarget.y,
+            ),
+            board: variant,
+            action_result: aggregate.clone(),
+        });
+    }
+
+    scenarios
+}
+
+#[derive(Clone, Copy, Debug)]
+struct RetargetCandidate {
+    enemy_uid: u16,
+    x: u8,
+    y: u8,
+    tile_idx: usize,
+    distance: i32,
+    building_hp: u8,
+}
+
+fn building_retarget_candidates(board: &Board) -> Vec<RetargetCandidate> {
+    let n = board.unit_count as usize;
+    let mut out = Vec::new();
+    for ei in 0..n {
+        let e = &board.units[ei];
+        if !eligible_for_requeue(board, ei) {
+            continue;
+        }
+        let reach = e.move_speed as i32 + 4;
+        for idx in 0..64usize {
+            let tile = &board.tiles[idx];
+            if tile.terrain != Terrain::Building || tile.building_hp == 0 {
+                continue;
+            }
+            let (bx, by) = idx_to_xy(idx);
+            let dist = (e.x as i32 - bx as i32).abs()
+                + (e.y as i32 - by as i32).abs();
+            if dist == 0 || dist > reach {
+                continue;
+            }
+            out.push(RetargetCandidate {
+                enemy_uid: e.uid,
+                x: bx,
+                y: by,
+                tile_idx: idx,
+                distance: dist,
+                building_hp: tile.building_hp,
+            });
+        }
+    }
+    out
+}
+
+fn eligible_for_requeue(board: &Board, unit_idx: usize) -> bool {
+    let e = &board.units[unit_idx];
+    e.alive()
+        && e.is_enemy()
+        && !e.frozen()
+        && !e.web()
+        && !board.tile(e.x, e.y).smoke()
+}
+
+fn target_signature(board: &Board) -> Vec<(u16, i8, i8)> {
+    let mut sig = Vec::new();
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.alive() && u.is_enemy() {
+            sig.push((u.uid, u.queued_target_x, u.queued_target_y));
+        }
+    }
+    sig.sort_unstable();
+    sig
 }
 
 pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
@@ -467,7 +627,7 @@ mod tests {
         b.add_unit(mk_enemy(10, 4, 3, UnitFlags::FROZEN));
         b.add_unit(mk_enemy(11, 3, 4, UnitFlags::WEB));
         // Third enemy on a smoke tile.
-        let mut smoked = mk_enemy(12, 2, 3, UnitFlags::empty());
+        let smoked = mk_enemy(12, 2, 3, UnitFlags::empty());
         b.add_unit(smoked);
         b.tiles[xy_to_idx(2, 3)].set_smoke(true);
         // Re-apply frozen flag via set_frozen so filter sees it.
@@ -491,6 +651,60 @@ mod tests {
         let (p1, _) = project_plan(&board, &[], &spawn_points, &WEAPONS);
         let (p2, _) = project_plan(&p1, &[], &spawn_points, &WEAPONS);
         assert_eq!(p2.current_turn, initial + 2);
+    }
+
+    #[test]
+    fn test_project_plan_scenarios_includes_base_and_retarget() {
+        let mut b = Board::default();
+        b.total_turns = 5; b.current_turn = 1; b.remaining_spawns = 2;
+
+        let mut mech = Unit::default();
+        mech.uid = 0; mech.set_type_name("PunchMech");
+        mech.x = 1; mech.y = 1; mech.hp = 3; mech.max_hp = 3;
+        mech.team = Team::Player;
+        mech.flags = UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        mech.move_speed = 3; mech.base_move = 3;
+        b.add_unit(mech);
+
+        let mut enemy = Unit::default();
+        enemy.uid = 10; enemy.set_type_name("Hornet");
+        enemy.x = 4; enemy.y = 4; enemy.hp = 1; enemy.max_hp = 1;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.move_speed = 2; enemy.base_move = 2;
+        enemy.queued_target_x = -1; enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+
+        b.tiles[xy_to_idx(4, 3)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(4, 3)].building_hp = 1;
+        b.tiles[xy_to_idx(5, 4)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(5, 4)].building_hp = 2;
+
+        let scenarios = project_plan_scenarios(&b, &[], &[], &WEAPONS, 4);
+
+        assert!(scenarios.len() >= 2, "expected base + retarget scenarios");
+        assert_eq!(scenarios[0].label, "heuristic_requeue");
+        assert_eq!(scenarios[0].board.units[1].queued_target_x, 4);
+        assert_eq!(scenarios[0].board.units[1].queued_target_y, 3);
+        assert!(scenarios.iter().any(|s| {
+            s.label.starts_with("retarget_building_uid10_5_4")
+                && s.board.units[1].queued_target_x == 5
+                && s.board.units[1].queued_target_y == 4
+        }));
+    }
+
+    #[test]
+    fn test_project_plan_scenarios_is_bounded_and_deterministic() {
+        let (board, spawn_points) = simple_board();
+
+        let a = project_plan_scenarios(&board, &[], &spawn_points, &WEAPONS, 1);
+        let b = project_plan_scenarios(&board, &[], &spawn_points, &WEAPONS, 1);
+
+        assert_eq!(a.len(), 1);
+        assert_eq!(b.len(), 1);
+        assert_eq!(a[0].label, "heuristic_requeue");
+        assert_eq!(a[0].board.current_turn, b[0].board.current_turn);
+        assert_eq!(a[0].board.grid_power, b[0].board.grid_power);
     }
 
     #[test]

@@ -1550,6 +1550,52 @@ def _active_player_action_count(board: Board) -> int:
     )
 
 
+def _projected_scenarios(
+    rust_module,
+    bridge_data: dict,
+    solution: Solution,
+    *,
+    max_scenarios: int = 3,
+) -> list[dict]:
+    import json as _json
+
+    plan_json = _json.dumps(_solution_plan_payload(solution))
+    if hasattr(rust_module, "project_plan_scenarios"):
+        raw = rust_module.project_plan_scenarios(
+            _json.dumps(bridge_data),
+            plan_json,
+            max_scenarios,
+        )
+        scenarios = _json.loads(raw).get("scenarios", [])
+        if isinstance(scenarios, list) and scenarios:
+            return [
+                s for s in scenarios
+                if isinstance(s, dict) and isinstance(s.get("board_json"), str)
+            ][:max_scenarios]
+
+    projected_raw = rust_module.project_plan(
+        _json.dumps(bridge_data),
+        plan_json,
+    )
+    projected = _json.loads(projected_raw)
+    projected["label"] = "heuristic_requeue"
+    return [projected]
+
+
+def _lookahead_result_sort_key(item: dict) -> tuple[int, int, float]:
+    """Sort key where lower means a weaker projected recovery."""
+    if item.get("status") != "OK":
+        return (0, 0, float("-inf"))
+    safety = item.get("next_plan_safety") or {}
+    profile = safety.get("loss_profile") or {}
+    non_overridable = bool(profile.get("non_overridable"))
+    blocking = bool(safety.get("blocking"))
+    score = item.get("next_score")
+    if not isinstance(score, (int, float)):
+        score = float("-inf")
+    return (1, 0 if non_overridable else (1 if blocking else 2), float(score))
+
+
 def _candidate_lookahead_preview(
     rust_module,
     bridge_data: dict,
@@ -1581,74 +1627,105 @@ def _candidate_lookahead_preview(
         import json as _json
         import time as _time
 
-        projected_raw = rust_module.project_plan(
-            _json.dumps(bridge_data),
-            _json.dumps(_solution_plan_payload(solution)),
-        )
-        projected = _json.loads(projected_raw)
-        projected_bridge = _json.loads(projected.get("board_json") or "{}")
-        projected_bridge = _prepare_projected_bridge(
-            projected_bridge, bridge_data, eval_weights_dict,
-        )
-        projected_board = Board.from_bridge_data(projected_bridge)
-        preview["projected_turn"] = projected.get(
-            "projected_turn", projected_bridge.get("turn")
-        )
-        preview["projected_action_result"] = projected.get("action_result", {})
+        scenario_results = []
+        for scenario in _projected_scenarios(
+            rust_module,
+            bridge_data,
+            solution,
+            max_scenarios=3,
+        ):
+            scenario_label = scenario.get("label") or "heuristic_requeue"
+            projected_bridge = _json.loads(scenario.get("board_json") or "{}")
+            projected_bridge = _prepare_projected_bridge(
+                projected_bridge, bridge_data, eval_weights_dict,
+            )
+            projected_board = Board.from_bridge_data(projected_bridge)
+            scenario_preview = {
+                "scenario": scenario_label,
+                "projected_turn": scenario.get(
+                    "projected_turn", projected_bridge.get("turn")
+                ),
+                "projected_action_result": scenario.get("action_result", {}),
+            }
 
-        if _active_player_action_count(projected_board) <= 0:
-            preview["status"] = "NO_ACTIVE_NEXT_TURN"
+            if _active_player_action_count(projected_board) <= 0:
+                scenario_preview["status"] = "NO_ACTIVE_NEXT_TURN"
+                scenario_results.append(scenario_preview)
+                continue
+
+            sub_time_limit = max(0.25, min(1.0, time_limit * 0.10))
+            start = _time.time()
+            sub_raw = rust_module.solve(
+                _json.dumps(projected_bridge),
+                sub_time_limit,
+            )
+            elapsed = _time.time() - start
+            sub_solution = _rust_result_to_solution(
+                _json.loads(sub_raw),
+                elapsed,
+                _active_player_action_count(projected_board),
+            )
+            if sub_solution is None:
+                scenario_preview["status"] = "NO_NEXT_PLAN"
+                scenario_preview["next_elapsed_seconds"] = elapsed
+                scenario_results.append(scenario_preview)
+                continue
+
+            next_eval = _evaluate_solution_safety(
+                projected_board,
+                projected_bridge,
+                sub_solution,
+                spawns,
+                current_turn=projected_bridge.get("turn", 0),
+                total_turns=projected_bridge.get("total_turns", 5),
+                remaining_spawns=projected_bridge.get(
+                    "remaining_spawns", 2**31 - 1
+                ),
+                weights=breakdown_weights,
+            )
+            next_safety = next_eval.get("plan_safety") or {}
+            scenario_preview.update({
+                "status": "OK",
+                "next_score": sub_solution.score,
+                "next_elapsed_seconds": elapsed,
+                "next_actions": [a.description for a in sub_solution.actions],
+                "next_plan_safety": {
+                    "status": next_safety.get("status"),
+                    "blocking": bool(next_safety.get("blocking")),
+                    "loss_profile": safety_loss_profile(next_safety),
+                    "violations": [
+                        {
+                            "kind": v.get("kind"),
+                            "current": v.get("current"),
+                            "predicted": v.get("predicted"),
+                            "blocking": bool(v.get("blocking")),
+                        }
+                        for v in next_safety.get("violations", []) or []
+                        if isinstance(v, dict)
+                    ],
+                },
+            })
+            scenario_results.append(scenario_preview)
+
+        if not scenario_results:
+            preview["status"] = "NO_SCENARIOS"
             return preview
 
-        sub_time_limit = max(0.25, min(1.0, time_limit * 0.10))
-        start = _time.time()
-        sub_raw = rust_module.solve(
-            _json.dumps(projected_bridge),
-            sub_time_limit,
+        worst = sorted(scenario_results, key=_lookahead_result_sort_key)[0]
+        preview.update(
+            {
+                "status": worst.get("status"),
+                "scenario_count": len(scenario_results),
+                "scenario_results": scenario_results,
+                "worst_scenario": worst.get("scenario"),
+                "projected_turn": worst.get("projected_turn"),
+                "projected_action_result": worst.get("projected_action_result", {}),
+            }
         )
-        elapsed = _time.time() - start
-        sub_solution = _rust_result_to_solution(
-            _json.loads(sub_raw),
-            elapsed,
-            _active_player_action_count(projected_board),
-        )
-        if sub_solution is None:
-            preview["status"] = "NO_NEXT_PLAN"
-            preview["next_elapsed_seconds"] = elapsed
-            return preview
-
-        next_eval = _evaluate_solution_safety(
-            projected_board,
-            projected_bridge,
-            sub_solution,
-            spawns,
-            current_turn=projected_bridge.get("turn", 0),
-            total_turns=projected_bridge.get("total_turns", 5),
-            remaining_spawns=projected_bridge.get("remaining_spawns", 2**31 - 1),
-            weights=breakdown_weights,
-        )
-        next_safety = next_eval.get("plan_safety") or {}
-        preview.update({
-            "status": "OK",
-            "next_score": sub_solution.score,
-            "next_elapsed_seconds": elapsed,
-            "next_actions": [a.description for a in sub_solution.actions],
-            "next_plan_safety": {
-                "status": next_safety.get("status"),
-                "blocking": bool(next_safety.get("blocking")),
-                "loss_profile": safety_loss_profile(next_safety),
-                "violations": [
-                    {
-                        "kind": v.get("kind"),
-                        "current": v.get("current"),
-                        "predicted": v.get("predicted"),
-                        "blocking": bool(v.get("blocking")),
-                    }
-                    for v in next_safety.get("violations", []) or []
-                    if isinstance(v, dict)
-                ],
-            },
-        })
+        if worst.get("status") == "OK":
+            preview["next_score"] = worst.get("next_score")
+            preview["next_actions"] = worst.get("next_actions", [])
+            preview["next_plan_safety"] = worst.get("next_plan_safety", {})
     except Exception as exc:  # pragma: no cover - defensive live-run guard
         preview["status"] = "ERROR"
         preview["error"] = str(exc)
@@ -3009,10 +3086,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     print(
                         f"!   {label} rank {rank}: next {safety.get('status')} "
                         f"score {item.get('next_score'):.0f}, "
-                        f"{profile.get('label')}"
+                        f"{profile.get('label')} "
+                        f"worst={item.get('worst_scenario')}"
                     )
                 else:
-                    print(f"!   {label} rank {rank}: {status}")
+                    print(
+                        f"!   {label} rank {rank}: {status} "
+                        f"worst={item.get('worst_scenario')}"
+                    )
     print(f"\n{len(solution.actions)} actions to execute. "
           f"Use 'execute <index>' for each.")
 
