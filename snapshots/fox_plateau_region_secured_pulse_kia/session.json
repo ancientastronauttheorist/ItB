@@ -4,11 +4,11 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Holes",
+  "current_mission": "Mission_Crack",
   "islands_completed": [],
-  "mission_index": 3,
-  "last_mission_turn": 0,
-  "current_turn": 0,
+  "mission_index": 2,
+  "last_mission_turn": 4,
+  "current_turn": 4,
   "phase": "unknown",
   "active_solution": {
     "actions": [
@@ -296,7 +296,14 @@
       }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Science_Repulse",
+      "cause_pattern": "death|Science_Repulse|attack",
+      "expires_turn": 6,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
       "type": "JetMech",
@@ -378,10 +385,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "a1dcac106795244f",
-    "classes": "mmmgbbggmmbgbbggmbbgggggmggggggsbggccgssmggsggssmgcsssssmggsssss",
-    "mission_index": 3,
-    "turn": 0
+    "hash": "be7dfd093d438779",
+    "classes": "mgccbwmmmmbcgwgggbbcgbwgggccgggsggcsgbgmgbcgsggsgwccgggsmwgccggg",
+    "mission_index": 2,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }

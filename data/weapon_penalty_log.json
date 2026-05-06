@@ -120,6 +120,11 @@
       "last_run_id": "20260428_165811_685",
       "weapon_id": "Science_Pullmech"
     },
+    "death|Science_Repulse|attack": {
+      "count": 1,
+      "last_run_id": "20260506_114649_974",
+      "weapon_id": "Science_Repulse"
+    },
     "death|ScorpionAtk1|attack": {
       "count": 1,
       "last_run_id": "20260421_175627_753",

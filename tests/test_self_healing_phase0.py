@@ -196,6 +196,21 @@ def test_asymmetry_enemy_survived_unexpectedly():
     assert "enemy_survived_unexpectedly" in sig["asymmetry"]
 
 
+def test_enemy_survived_lethal_overprediction_soft_disables_immediately():
+    diff = DiffResult()
+    diff.unit_diffs = [{
+        "uid": 4, "type": "Scorpion1", "field": "alive",
+        "predicted": False, "actual": True,
+    }]
+    sig = fuzzy_detector.evaluate(
+        diff, _classification("death"),
+        context={"weapon": "Science_Repulse", "sub_action": "attack"},
+        prior_events=[],
+    )
+    assert sig["proposed_tier"] == 2
+    assert sig["confidence"] >= 0.8
+
+
 def test_asymmetry_mech_died_unexpectedly():
     diff = DiffResult()
     diff.unit_diffs = [{

@@ -1,0 +1,15 @@
+{
+  "run_id": "20260506_114649_974",
+  "squad": "Rusting Hulks",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [
+    "achievement"
+  ],
+  "solver_version": "rust-0.1.0-efd5e36",
+  "weight_version": "v011",
+  "updated": "2026-05-06T11:46:50.000062",
+  "created": "2026-05-06T11:46:50.000085",
+  "missions": [],
+  "outcome": null
+}

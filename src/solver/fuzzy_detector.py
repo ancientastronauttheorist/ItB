@@ -142,6 +142,12 @@ def _propose_response(
     if top in ("click_miss", "mech_position_wrong"):
         return 1, 0.8
 
+    # A lethal overprediction is more dangerous than a generic drift: the
+    # solver may keep trusting a disabled/webbing attacker is gone, then feed
+    # the same mech to it again next turn. Soft-disable immediately.
+    if top == "death" and "enemy_survived_unexpectedly" in asymmetry:
+        return 2, 0.8
+
     # Weapon-drift pattern with enough evidence to soft-disable.
     if top in _WEAPON_DRIFT_CATEGORIES and frequency + 1 >= _SOFT_DISABLE_THRESHOLD:
         # Confidence grows with frequency but caps — a pattern seen 5x
