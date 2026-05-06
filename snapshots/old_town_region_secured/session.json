@@ -4,9 +4,9 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_HornetBoss",
+  "current_mission": "Mission_Survive",
   "islands_completed": [],
-  "mission_index": 12,
+  "mission_index": 11,
   "last_mission_turn": 4,
   "current_turn": 4,
   "phase": "unknown",
@@ -16,48 +16,48 @@
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
-          7,
-          2
+          4,
+          3
         ],
         "weapon": "Brute_Jetmech",
         "target": [
-          5,
-          2
+          4,
+          5
         ],
-        "description": "JetMech, move H4\u2192F1, fire Aerial Bombs at F3"
+        "description": "JetMech, move C2\u2192E4, fire Aerial Bombs at C4"
       },
       {
         "mech_uid": 1,
         "mech_type": "RocketMech",
         "move_to": [
-          2,
-          5
+          6,
+          0
         ],
         "weapon": "Ranged_Rocket",
         "target": [
-          2,
-          1
+          6,
+          2
         ],
-        "description": "RocketMech, move D4\u2192C6, fire Rocket Artillery at G6"
+        "description": "RocketMech, move G3\u2192H2, fire Rocket Artillery at F2"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          0,
-          5
+          4,
+          3
         ],
         "weapon": "Science_Repulse",
         "target": [
-          0,
-          5
+          4,
+          3
         ],
-        "description": "PulseMech, move D7\u2192C8, fire Repulse at C8"
+        "description": "PulseMech, move F3\u2192E4, fire Repulse at E4"
       }
     ],
-    "score": 151345.0,
+    "score": 131155.0,
     "turn": 4,
-    "input_fingerprint": "0:4,0:3|1:4,4:7|275:1,5:1|276:2,1:1|277:3,3:1|278:6,2:3|2:1,4:2"
+    "input_fingerprint": "0:6,5:3|1:5,1:7|267:4,4:3|269:6,1:2|270:6,2:1|2:5,2:5"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -518,50 +518,6 @@
         "RocketMech, move G3\u2192H2, fire Rocket Artillery at F2",
         "PulseMech, move F3\u2192E4, fire Repulse at E4"
       ]
-    },
-    {
-      "timestamp": "2026-05-06T16:46:09.259621",
-      "turn": 1,
-      "label": "solve",
-      "score": 137600.0,
-      "actions": [
-        "PulseMech, move F6\u2192E3",
-        "RocketMech, move E5\u2192C3, fire Rocket Artillery at E3",
-        "JetMech, fire Aerial Bombs at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T16:46:52.382143",
-      "turn": 2,
-      "label": "solve",
-      "score": 152970.0000000002,
-      "actions": [
-        "JetMech, move E5\u2192C4, fire Aerial Bombs at A4",
-        "RocketMech, move C3\u2192D4, fire Rocket Artillery at B4",
-        "PulseMech, move F3\u2192C4, fire Repulse at C4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T16:47:40.362107",
-      "turn": 3,
-      "label": "solve",
-      "score": 153360.0,
-      "actions": [
-        "JetMech, move A4\u2192F4, fire Aerial Bombs at H4",
-        "RocketMech, move E4\u2192D4, fire Rocket Artillery at D7",
-        "PulseMech, move C4\u2192D7, fire Repulse at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T16:54:03.717241",
-      "turn": 4,
-      "label": "solve",
-      "score": 151345.0,
-      "actions": [
-        "JetMech, move H4\u2192F1, fire Aerial Bombs at F3",
-        "RocketMech, move D4\u2192C6, fire Rocket Artillery at G6",
-        "PulseMech, move D7\u2192C8, fire Repulse at C8"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -667,18 +623,6 @@
     ],
     [
       11,
-      3
-    ],
-    [
-      12,
-      1
-    ],
-    [
-      12,
-      2
-    ],
-    [
-      12,
       3
     ]
   ],
@@ -1134,45 +1078,9 @@
           6
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Science_Repulse|attack",
-      "frequency": 3,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Science_Repulse",
-        "target": [
-          1,
-          4
-        ]
-      }
     }
   ],
-  "disabled_actions": [
-    {
-      "weapon_id": "Science_Repulse",
-      "cause_pattern": "death|Science_Repulse|attack",
-      "expires_turn": 6,
-      "strategic_override": false
-    }
-  ],
+  "disabled_actions": [],
   "research_queue": [
     {
       "type": "JetMech",
@@ -1516,57 +1424,13 @@
         "diff_predicted": null,
         "diff_actual": null
       }
-    },
-    {
-      "type": "Crab1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_HornetBoss",
-      "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Crab",
-            "hp": 0,
-            "move": 3,
-            "class_icons": [
-              "armor_psion_buff"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Crab",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Crab",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Crab&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high",
-      "research_id": "dd302f898542",
-      "last_kind": "enemy"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "a6deb2ef38c0492a",
-    "classes": "fggggggggbbgggbgggggbgbggbbgggbgggggggggfggggggffggfggggwwwwwwww",
-    "mission_index": 12,
+    "hash": "dffad3364dfe4c8a",
+    "classes": "ggggggggggbbmmgffgbmmbggggmmbbggggggggggggggggfggggmmggggggmmggg",
+    "mission_index": 11,
     "turn": 4
   },
   "terrain_stage_change_pending": false

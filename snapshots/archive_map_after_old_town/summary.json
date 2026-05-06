@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T16:44:23.366686",
+  "label": "archive_map_after_old_town",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Mosquito1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 1
+    }
+  ]
+}
