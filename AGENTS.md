@@ -69,7 +69,7 @@ The solver enforces these; use them when reviewing solver output or writing test
 - **Smoke:** prevents attack AND repair. Cancels Vek attacks when on smoke tile at execution.
 - **Shield:** blocks one instance of damage + negative effects. Removed by direct damage.
 - **Armor:** −1 weapon damage (floor 0). No effect on push/fire/bump.
-- **Webbed:** can't move, can still attack. Breaks when pushed.
+- **Webbed:** can't move, can still attack. Breaks only when the unit actually changes tiles, or when the webber moves/dies. A blocked push/bump leaves the unit webbed.
 
 **Terrain HP:**
 - **Mountain:** 2 HP (2=full, 1=damaged, 0=rubble/walkable). Any weapon damage reduces by 1.
@@ -138,6 +138,8 @@ Extended rules: `data/ref_game_mechanics.md`.
 34. **Projectile-grapple attacks are line attacks, not melee.** Burnbug/Gastropod proboscis weapons (`BurnbugAtk1`, `BurnbugAtk2`, `BurnbugAtkB`, `GastropodAtk1`, `GastropodAtk2`) trace from the attacker's current tile along the original queued direction until the first projectile blocker, then damage that blocker and grapple: hit pawns are pulled toward the attacker, objects pull the attacker toward the object. A vacated first target tile does NOT cancel the shot. If an unexpected grid loss follows a moved Burnbug/Gastropod, first check for a building farther down that line. Regression anchor: Normal run `20260504_210332_088`, mission 1 turn 1, F7 `(1,2)` building loss fixed in simulator v44.
 35. **Trust engine terrain ids over stale terrain names.** Shipped map files and Lua constants have terrain id `5` = Ice, not Lava. Older bridge builds mislabeled id 5 as `"lava"`, causing false terrain-death predictions on Pinnacle ice and the Coal Plant loss chain in Normal run `20260504_210332_088`, mission 1 turn 2. Parser code must prefer `terrain_id` normalization when present; bridge Lua must derive `TERRAIN_NAMES` from engine globals (`TERRAIN_ICE`, `TERRAIN_LAVA`, etc.) instead of hand-maintaining numeric tables.
 36. **Enemy attack intent must be save-gated when available.** `GetSelectedWeapon() > 0` can stay nonzero on non-attacking Vek after movement/re-aim animation, causing Rust's missing-target phantom attack guard to invent false building damage. When `saveData.lua` exposes `iQueuedSkill`, bridge code must derive `has_queued_attack` from `iQueuedSkill >= 0` and only fall back to `GetSelectedWeapon()` when the save field is missing. Regression anchor: Normal run `20260504_210332_088`, mission 7 turn 3, Firefly1 uid `33` falsely threatened B5 and produced a false safety block; fixed in bridge + simulator v47.
+37. **Dirty-plan acceptance is single-use.** If the user accepts `--allow-dirty-plan`, that consent applies only to the reviewed plan. If a verify desync forces `auto_turn` to partially re-solve and the new plan predicts grid loss, building loss, mech death, or objective loss, stop with `SAFETY_BLOCKED` and ask again before executing the new line.
+38. **Buildings Immune weapon upgrades must be explicit.** The Lua bridge reports the pawn's base SkillList, so powered upgrades that change semantics need save-file overlays plus Rust `WId` support. `Ranged_Artillerymech_A` is Artemis Artillery with direct Grid Building damage set to zero; push/bump collision damage is still physical and can still hurt buildings. If a save loadout contains a new `_A` / `_B` / `_AB` weapon and the overlay drops it, add the upgraded ID before trusting the solve.
 
 ## Phase Protocols
 

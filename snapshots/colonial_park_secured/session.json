@@ -4,46 +4,60 @@
   "achievement_targets": [],
   "difficulty": 1,
   "current_island": "",
-  "current_mission": "Mission_Tanks",
+  "current_mission": "Mission_Mines",
   "islands_completed": [],
-  "mission_index": 10,
-  "last_mission_turn": 2,
-  "current_turn": 2,
-  "phase": "combat_player",
+  "mission_index": 9,
+  "last_mission_turn": 4,
+  "current_turn": 4,
+  "phase": "unknown",
   "active_solution": {
     "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "WallMech",
-        "move_to": [
-          4,
-          1
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "WallMech"
-      },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          2,
+          6,
+          3
+        ],
+        "weapon": "Science_Repulse",
+        "target": [
+          6,
+          3
+        ],
+        "description": "PulseMech, fire Repulse at E2"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          1,
+          4
+        ],
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          6,
+          4
+        ],
+        "description": "ArtiMech, move B7\u2192D7, fire Artemis Artillery at D2"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "WallMech",
+        "move_to": [
+          6,
           6
         ],
-        "weapon": "Unknown",
+        "weapon": "_REPAIR",
         "target": [
-          255,
-          255
+          6,
+          6
         ],
-        "description": "PulseMech, move B5\u2192B6"
+        "description": "WallMech, repair"
       }
     ],
-    "score": -483947.2358015834,
-    "turn": 2,
-    "input_fingerprint": "0:4,1:4|135:6,2:3|136:6,3:5|163:3,2:1|1:3,5:0|2:3,6:4|39:5,3:1|40:5,1:1|41:4,3:5|42:4,6:3|43:4,2:3|44:5,4:2"
+    "score": 85060.71428571429,
+    "turn": 4,
+    "input_fingerprint": "0:6,6:3|126:6,4:3|127:6,5:2|12:5,3:3|131:5,5:2|14:5,6:2|1:1,6:2|2:6,3:3"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -615,68 +629,6 @@
         "ArtiMech, move B7\u2192D7, fire Artemis Artillery at D2",
         "WallMech, repair"
       ]
-    },
-    {
-      "timestamp": "2026-05-05T18:33:20.801499",
-      "turn": 1,
-      "label": "solve",
-      "score": 104292.85714285716,
-      "actions": [
-        "PulseMech, move D6\u2192B5, fire Repulse at B5",
-        "ArtiMech, move C5\u2192A4, fire Artemis Artillery at F4",
-        "WallMech, move F6\u2192G4, fire Grappling Hook at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T18:35:48.388201",
-      "turn": 1,
-      "label": "solve",
-      "score": 104292.85714285716,
-      "actions": [
-        "PulseMech, move D6\u2192B5, fire Repulse at B5",
-        "ArtiMech, move C5\u2192A4, fire Artemis Artillery at F4",
-        "WallMech, move F6\u2192G4, fire Grappling Hook at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T18:37:17.957540",
-      "turn": 2,
-      "label": "solve",
-      "score": -483947.2358015834,
-      "actions": [
-        "WallMech",
-        "PulseMech, move B5\u2192B6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T19:07:48.884311",
-      "turn": 2,
-      "label": "solve",
-      "score": -483947.2358015834,
-      "actions": [
-        "WallMech",
-        "PulseMech, move B5\u2192B6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T19:08:25.184938",
-      "turn": 2,
-      "label": "solve",
-      "score": -483947.2358015834,
-      "actions": [
-        "WallMech",
-        "PulseMech, move B5\u2192B6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-05T19:08:32.120920",
-      "turn": 2,
-      "label": "solve",
-      "score": -483947.2358015834,
-      "actions": [
-        "WallMech",
-        "PulseMech, move B5\u2192B6"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -775,10 +727,6 @@
     [
       9,
       3
-    ],
-    [
-      10,
-      1
     ]
   ],
   "tags": [
@@ -1339,33 +1287,6 @@
           3
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Science_Repulse|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Science_Repulse",
-        "target": [
-          3,
-          6
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -1753,10 +1674,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "a642d56caaa596d4",
-    "classes": "gwwfgbbmgbwwgbbggbwwggfffggbbggfggggggggggggggggmggggffmmggmmgmm",
-    "mission_index": 10,
-    "turn": 2
+    "hash": "e1feda1529d01533",
+    "classes": "wwmmgwwwwgbbgfgwgfgggbmggggggbbggbmggggggmbggggfggggggggfggggggg",
+    "mission_index": 9,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }

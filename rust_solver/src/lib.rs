@@ -828,7 +828,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   a live-observed cap of at least 5 HP, consume on landing/push/swap/throw,
 //   and increment repair-platform objective progress. Pre-v48 corpus archived
 //   as `failure_db_snapshot_sim_v47.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 48;
+// v49 - Blocked pushes no longer clear a pawn's own web. The game only breaks
+//   web when the pawn actually changes tiles; bumping into an obstacle leaves
+//   it webbed. Also models `Ranged_Artillerymech_A` direct building immunity.
+//   Pre-v49 corpus archived as `failure_db_snapshot_sim_v48.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 49;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

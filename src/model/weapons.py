@@ -288,6 +288,13 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="no building damage",
         upgrade_b="+2 damage (total 3)",
     ),
+    "Ranged_Artillerymech_A": WeaponDef(
+        name="Artemis Artillery", weapon_type="artillery",
+        damage=1, damage_outer=0, push="outward", range_min=2,
+        aoe_adjacent=True,
+        upgrade_a="no building damage",
+        upgrade_b="+2 damage (total 3)",
+    ),
     "Ranged_Rockthrow": WeaponDef(
         name="Rock Launcher", weapon_type="artillery",
         damage=2, push="perpendicular", range_min=2,

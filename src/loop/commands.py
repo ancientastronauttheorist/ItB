@@ -97,7 +97,7 @@ def _recording_dir(session: RunSession) -> Path:
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
 _POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
 _COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
-_MODELED_UPGRADED_WEAPONS = {"Ranged_Ignite_A"}
+_MODELED_UPGRADED_WEAPONS = {"Ranged_Ignite_A", "Ranged_Artillerymech_A"}
 
 
 def _bridge_is_stale_post_mission(
@@ -6253,9 +6253,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 time_limit=time_limit, session=session,
                                 allow_dirty_plan=allow_dirty_plan,
                             )
-                            if plan_requires_safety_block(
-                                new_safety, allow_dirty_plan=allow_dirty_plan
-                            ):
+                            # A top-level dirty-plan acceptance applies only
+                            # to the exact plan the operator reviewed. After a
+                            # desync, a partial re-solve is a new plan and
+                            # must stop on hard safety loss for a fresh call.
+                            if plan_requires_safety_block(new_safety):
                                 result = {
                                     "status": "SAFETY_BLOCKED_RE_SOLVE",
                                     "turn": turn,
@@ -6437,9 +6439,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             time_limit=time_limit, session=session,
                             allow_dirty_plan=allow_dirty_plan,
                         )
-                        if plan_requires_safety_block(
-                            new_safety, allow_dirty_plan=allow_dirty_plan
-                        ):
+                        # A top-level dirty-plan acceptance applies only to
+                        # the exact plan the operator reviewed. After a
+                        # desync, a partial re-solve is a new plan and must
+                        # stop on hard safety loss for a fresh call.
+                        if plan_requires_safety_block(new_safety):
                             result = {
                                 "status": "SAFETY_BLOCKED_RE_SOLVE",
                                 "turn": turn,

@@ -97,6 +97,10 @@ bitflags! {
         /// the target and 1 to the projectile path; normal Crab Artillery's
         /// extra tile is behind the target and remains `path_size`.
         const PATH_DAMAGE = 1 << 26;
+        /// Direct weapon damage from this weapon does not reduce Grid Building
+        /// HP. Used by Artemis Artillery's Buildings Immune upgrade; push/bump
+        /// damage remains physical collision damage and is handled separately.
+        const BUILDING_IMMUNE = 1 << 27;
     }
 }
 
@@ -142,6 +146,7 @@ impl WeaponDef {
     pub fn fire_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::FIRE_BEHIND_SHOOTER) }
     pub fn projectile_grapple(&self) -> bool { self.flags.contains(WeaponFlags::PROJECTILE_GRAPPLE) }
     pub fn path_damage(&self) -> bool { self.flags.contains(WeaponFlags::PATH_DAMAGE) }
+    pub fn building_immune(&self) -> bool { self.flags.contains(WeaponFlags::BUILDING_IMMUNE) }
 }
 
 /// Default weapon def (no-op).
@@ -401,9 +406,12 @@ pub enum WId {
     /// Crab Leader's "Raining Expulsions": 2 damage artillery target plus 1
     /// damage to each tile in the projectile path before the target.
     CrabAtkB = 126,
+    /// Artemis Artillery with Buildings Immune: same center damage and
+    /// adjacent outward pushes, but direct damage to Grid Buildings is zero.
+    RangedArtillerymechA = 127,
 }
 
-pub const WEAPON_COUNT: usize = 127;
+pub const WEAPON_COUNT: usize = 128;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -529,6 +537,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 31: Ranged_Artillerymech — Artemis Artillery
     w[31] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Outward, range_min: 2,
         flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 127: Ranged_Artillerymech_A — Artemis Artillery with Buildings Immune
+    w[127] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Outward, range_min: 2,
+        flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
     // 32: Ranged_Rockthrow — Rock Launcher
     w[32] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Perpendicular, range_min: 2, flags: C, ..DEF };
     // 33: Ranged_Defensestrike — Cluster Artillery
@@ -997,6 +1008,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Bombrun" => WId::BruteBombrun,
         "Archive_ArtShot" => WId::ArchiveArtShot,
         "Ranged_Artillerymech" => WId::RangedArtillerymech,
+        "Ranged_Artillerymech_A" => WId::RangedArtillerymechA,
+        "RangedArtillerymechA" => WId::RangedArtillerymechA,
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
@@ -1132,6 +1145,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteBombrun => "Brute_Bombrun",
         WId::ArchiveArtShot => "Archive_ArtShot",
         WId::RangedArtillerymech => "Ranged_Artillerymech",
+        WId::RangedArtillerymechA => "Ranged_Artillerymech_A",
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
@@ -1357,6 +1371,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteBombrun => "Bombing Run",
         WId::ArchiveArtShot => "Old Earth Artillery",
         WId::RangedArtillerymech => "Artemis Artillery",
+        WId::RangedArtillerymechA => "Artemis Artillery",
         WId::RangedRockthrow => "Rock Launcher",
         WId::RangedDefensestrike => "Cluster Artillery",
         WId::RangedRocket => "Rocket Artillery",
@@ -1474,6 +1489,18 @@ mod tests {
     }
 
     #[test]
+    fn test_artemis_artillery_buildings_immune_upgrade() {
+        let w = weapon_def(WId::RangedArtillerymechA);
+        assert_eq!(w.weapon_type, WeaponType::Artillery);
+        assert_eq!(w.damage, 1);
+        assert_eq!(w.push, PushDir::Outward);
+        assert!(w.aoe_center());
+        assert!(w.aoe_adjacent());
+        assert!(w.building_immune());
+        assert_eq!(w.range_min, 2);
+    }
+
+    #[test]
     fn test_alpha_hornet_has_aoe_behind() {
         let w = weapon_def(WId::HornetAtk2);
         assert!(w.aoe_behind());
@@ -1497,6 +1524,7 @@ mod tests {
     fn test_string_to_wid_roundtrip() {
         assert_eq!(wid_from_str("Prime_Punchmech"), WId::PrimePunchmech);
         assert_eq!(wid_from_str("Ranged_Artillerymech"), WId::RangedArtillerymech);
+        assert_eq!(wid_from_str("Ranged_Artillerymech_A"), WId::RangedArtillerymechA);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -1507,6 +1535,7 @@ mod tests {
             ("Prime_Punchmech", WId::PrimePunchmech),
             ("Brute_Tankmech", WId::BruteTankmech),
             ("Ranged_Artillerymech", WId::RangedArtillerymech),
+            ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

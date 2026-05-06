@@ -937,6 +937,16 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
     }
 }
 
+fn apply_direct_weapon_damage(board: &mut Board, x: u8, y: u8, damage: u8, wdef: &WeaponDef, result: &mut ActionResult) {
+    if wdef.building_immune() {
+        let tile = board.tile(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            return;
+        }
+    }
+    apply_damage(board, x, y, damage, result, DamageSource::Weapon);
+}
+
 // ── apply_throw ──────────────────────────────────────────────────────────────
 
 /// Vice Fist: target at (tx, ty) is grabbed and tossed to the tile BEHIND the
@@ -1106,10 +1116,6 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         return;
     }
 
-    // Pushing a webbed pawn breaks the web even if the push bumps into an
-    // obstacle instead of moving the pawn.
-    clear_unit_web(board, unit_idx);
-
     let (dx, dy) = DIRS[direction];
     let nx_i = x as i8 + dx;
     let ny_i = y as i8 + dy;
@@ -1207,7 +1213,9 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         }
     }
 
-    // Destination clear — move the unit
+    // Destination clear: only an actual tile change breaks the pushed unit's
+    // own web. Blocked pushes bump in place and leave the grapple attached.
+    clear_unit_web(board, unit_idx);
     board.units[unit_idx].x = nx;
     board.units[unit_idx].y = ny;
 
@@ -1717,7 +1725,7 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     // Center damage
     if wdef.aoe_center() {
-        apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+        apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
     }
 
     // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
@@ -1798,7 +1806,7 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             let bx = tx as i8 + ddx;
             let by = ty as i8 + ddy;
             if in_bounds(bx, by) {
-                apply_damage(board, bx as u8, by as u8, wdef.damage, result, DamageSource::Weapon);
+                apply_direct_weapon_damage(board, bx as u8, by as u8, wdef.damage, wdef, result);
                 apply_weapon_status(board, bx as u8, by as u8, wdef);
             }
         }
@@ -1822,7 +1830,7 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if !in_bounds(nx, ny) { continue; }
-            apply_damage(board, nx as u8, ny as u8, wdef.damage_outer, result, DamageSource::Weapon);
+            apply_direct_weapon_damage(board, nx as u8, ny as u8, wdef.damage_outer, wdef, result);
             if wdef.push == PushDir::Outward {
                 if wdef.no_edge_bump_adjacent_push() && wdef.damage_outer == 0 {
                     let bx = nx + dx;
@@ -1848,7 +1856,7 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
                 let px = tx as i8 + pdx;
                 let py = ty as i8 + pdy;
                 if !in_bounds(px, py) { continue; }
-                apply_damage(board, px as u8, py as u8, wdef.damage, result, DamageSource::Weapon);
+                apply_direct_weapon_damage(board, px as u8, py as u8, wdef.damage, wdef, result);
                 apply_weapon_status(board, px as u8, py as u8, wdef);
             }
         }
@@ -3101,6 +3109,39 @@ mod tests {
                 y
             );
         }
+    }
+
+    #[test]
+    fn test_artemis_a_direct_building_damage_is_zero() {
+        let mut board = make_test_board();
+        board.grid_power = 5;
+        board.tile_mut(3, 5).terrain = Terrain::Building;
+        board.tile_mut(3, 5).building_hp = 1;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedArtillerymechA);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedArtillerymechA, 3, 5);
+
+        assert_eq!(board.tile(3, 5).building_hp, 1);
+        assert_eq!(board.tile(3, 5).terrain, Terrain::Building);
+        assert_eq!(board.grid_power, 5);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_artemis_a_push_bump_can_still_damage_building() {
+        let mut board = make_test_board();
+        board.grid_power = 5;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedArtillerymechA);
+        add_enemy(&mut board, 1, 3, 6, 2);
+        board.tile_mut(3, 7).terrain = Terrain::Building;
+        board.tile_mut(3, 7).building_hp = 1;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedArtillerymechA, 3, 5);
+
+        assert_eq!(board.tile(3, 7).building_hp, 0);
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(result.buildings_bump_damaged, 1);
     }
 
     // ── Ranged_Rocket: push-bump when target is killed by the rocket ─────────

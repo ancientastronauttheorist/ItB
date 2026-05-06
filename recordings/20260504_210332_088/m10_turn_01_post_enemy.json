@@ -1,0 +1,135 @@
+{
+  "timestamp": "2026-05-05T18:37:11.268041",
+  "run_id": "20260504_210332_088",
+  "mission_index": 10,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 9,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 1,
+      "grid_power": 4,
+      "enemies_alive": 7,
+      "enemy_hp_total": 22,
+      "mechs_alive": 2,
+      "mech_hp_total": 8,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "WallMech",
+          "hp": 4,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "ArtiMech",
+          "hp": 0,
+          "max_hp": 2
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "hp": 4,
+          "max_hp": 3
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [
+        {
+          "uid": 0,
+          "type": "WallMech",
+          "pos": [
+            4,
+            1
+          ]
+        }
+      ],
+      "mission_id": "Mission_Tanks",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0
+    },
+    "predicted_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 10,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 1,
+      "grid_power": 4,
+      "enemies_alive": 4,
+      "enemy_hp_total": 13,
+      "mechs_alive": 3,
+      "mech_hp_total": 10,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 3,
+          "type": "WallMech",
+          "uid": 0
+        },
+        {
+          "hp": 1,
+          "max_hp": 2,
+          "type": "ArtiMech",
+          "uid": 1
+        },
+        {
+          "hp": 4,
+          "max_hp": 3,
+          "type": "PulseMech",
+          "uid": 2
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_Tanks",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0,
+      "buildings_destroyed_by_enemies": 0,
+      "pods_collected": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": -1,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 3,
+      "protected_objective_units_alive_diff": 0,
+      "protected_objective_units_frozen_diff": 0,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "WallMech",
+          "predicted_hp": 5,
+          "actual_hp": 4,
+          "diff": -1
+        },
+        {
+          "uid": 1,
+          "type": "ArtiMech",
+          "predicted_hp": 1,
+          "actual_hp": 0,
+          "diff": -1
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "predicted_hp": 4,
+          "actual_hp": 4,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": [
+        "WallMech took 1 unexpected damage",
+        "ArtiMech took 1 unexpected damage"
+      ]
+    }
+  }
+}
