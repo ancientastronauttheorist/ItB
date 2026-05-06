@@ -1596,6 +1596,59 @@ def _lookahead_result_sort_key(item: dict) -> tuple[int, int, float]:
     return (1, 0 if non_overridable else (1 if blocking else 2), float(score))
 
 
+def _lookahead_robust_summary(item: dict) -> dict:
+    """Compact robust-score diagnostic for one lookahead frontier item."""
+    safety = item.get("next_plan_safety") or {}
+    profile = safety.get("loss_profile") or {}
+    if item.get("status") != "OK":
+        robust_status = "unresolved"
+    elif profile.get("non_overridable"):
+        robust_status = "objective_dirty"
+    elif safety.get("blocking"):
+        robust_status = "dirty"
+    else:
+        robust_status = "clean"
+
+    candidate_score = item.get("candidate_score")
+    next_score = item.get("next_score")
+    robust_score = None
+    if isinstance(candidate_score, (int, float)) and isinstance(next_score, (int, float)):
+        robust_score = float(candidate_score) + float(next_score)
+
+    return {
+        "candidate_label": item.get("candidate_label"),
+        "candidate_rank": item.get("candidate_rank"),
+        "candidate_source": item.get("candidate_source"),
+        "candidate_score": candidate_score,
+        "candidate_losses": item.get("candidate_losses", {}),
+        "scenario_count": item.get("scenario_count", 0),
+        "worst_scenario": item.get("worst_scenario"),
+        "next_score": next_score,
+        "next_loss_label": profile.get("label"),
+        "robust_status": robust_status,
+        "robust_score": robust_score,
+    }
+
+
+def _lookahead_robust_frontier(lookahead_frontier: list[dict]) -> list[dict]:
+    """Sort lookahead previews by robust recovery, best first."""
+    summaries = [_lookahead_robust_summary(item) for item in lookahead_frontier]
+
+    def _sort_key(item: dict) -> tuple[int, float]:
+        status_rank = {
+            "clean": 3,
+            "dirty": 2,
+            "objective_dirty": 1,
+            "unresolved": 0,
+        }.get(item.get("robust_status"), 0)
+        score = item.get("robust_score")
+        if not isinstance(score, (int, float)):
+            score = float("-inf")
+        return (status_rank, float(score))
+
+    return sorted(summaries, key=_sort_key, reverse=True)
+
+
 def _candidate_lookahead_preview(
     rust_module,
     bridge_data: dict,
@@ -1617,6 +1670,7 @@ def _candidate_lookahead_preview(
         "scenario": "heuristic_requeue",
         "candidate_rank": candidate_eval.get("rank"),
         "candidate_source": candidate_eval.get("source"),
+        "candidate_score": solution.score,
         "candidate_label": label,
         "candidate_losses": (
             base_summary.get("loss_profile") or {}
@@ -1726,9 +1780,11 @@ def _candidate_lookahead_preview(
             preview["next_score"] = worst.get("next_score")
             preview["next_actions"] = worst.get("next_actions", [])
             preview["next_plan_safety"] = worst.get("next_plan_safety", {})
+        preview["robust_summary"] = _lookahead_robust_summary(preview)
     except Exception as exc:  # pragma: no cover - defensive live-run guard
         preview["status"] = "ERROR"
         preview["error"] = str(exc)
+        preview["robust_summary"] = _lookahead_robust_summary(preview)
     return preview
 
 
@@ -2623,6 +2679,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     candidate_safety_summaries: list[dict] = []
     dirty_frontier: list[dict] = []
     lookahead_frontier: list[dict] = []
+    robust_frontier: list[dict] = []
     selected_candidate_rank = None
     selected_candidate_source = None
     candidate_count = 0
@@ -2896,6 +2953,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         summary_evals
                     )
                 ]
+                robust_frontier = _lookahead_robust_frontier(lookahead_frontier)
             if selected_candidate_eval is not None:
                 solution = selected_candidate_eval["solution"]
                 selected_candidate_rank = selected_candidate_eval.get("rank")
@@ -3002,6 +3060,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         result["dirty_frontier"] = dirty_frontier
     if lookahead_frontier:
         result["lookahead_frontier"] = lookahead_frontier
+    if robust_frontier:
+        result["robust_frontier"] = robust_frontier
     if selected_candidate_eval.get("safety_widening"):
         result["safety_widening"] = selected_candidate_eval["safety_widening"]
 
@@ -3043,6 +3103,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "candidate_safety": candidate_safety_summaries,
         "dirty_frontier": dirty_frontier,
         "lookahead_frontier": lookahead_frontier,
+        "robust_frontier": robust_frontier,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
@@ -3094,6 +3155,17 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         f"!   {label} rank {rank}: {status} "
                         f"worst={item.get('worst_scenario')}"
                     )
+        if robust_frontier:
+            print("! Robust frontier ranking:")
+            for item in robust_frontier[:5]:
+                score = item.get("robust_score")
+                score_text = f"{score:.0f}" if isinstance(score, (int, float)) else "n/a"
+                print(
+                    f"!   {item.get('candidate_label')} rank "
+                    f"{item.get('candidate_rank')}: "
+                    f"{item.get('robust_status')} robust={score_text} "
+                    f"worst={item.get('worst_scenario')}"
+                )
     print(f"\n{len(solution.actions)} actions to execute. "
           f"Use 'execute <index>' for each.")
 

@@ -4,6 +4,8 @@ from src.loop.commands import (
     _is_harmless_active_state_diff,
     _is_expected_skip_state_diff,
     _lookahead_result_sort_key,
+    _lookahead_robust_frontier,
+    _lookahead_robust_summary,
     _prepare_projected_bridge,
     _select_safe_plan_candidate,
 )
@@ -173,6 +175,72 @@ def test_lookahead_result_sort_key_orders_dirty_before_clean():
     ordered = sorted([clean, dirty, error], key=_lookahead_result_sort_key)
 
     assert ordered == [error, dirty, clean]
+
+
+def test_lookahead_robust_summary_combines_current_and_worst_next_score():
+    item = {
+        "status": "OK",
+        "candidate_label": "grid_loss",
+        "candidate_rank": 4,
+        "candidate_score": 1000.0,
+        "scenario_count": 3,
+        "worst_scenario": "retarget_building_uid10_4_3",
+        "next_score": -250.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"label": "clean", "non_overridable": False},
+        },
+    }
+
+    summary = _lookahead_robust_summary(item)
+
+    assert summary["robust_status"] == "clean"
+    assert summary["robust_score"] == 750.0
+    assert summary["next_loss_label"] == "clean"
+
+
+def test_lookahead_robust_frontier_sorts_by_status_then_score():
+    clean_low = {
+        "status": "OK",
+        "candidate_label": "grid_loss",
+        "candidate_rank": 0,
+        "candidate_score": 100.0,
+        "next_score": 10.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"label": "clean", "non_overridable": False},
+        },
+    }
+    dirty_high = {
+        "status": "OK",
+        "candidate_label": "mech_loss",
+        "candidate_rank": 1,
+        "candidate_score": 10_000.0,
+        "next_score": 10_000.0,
+        "next_plan_safety": {
+            "blocking": True,
+            "loss_profile": {"label": "grid_loss", "non_overridable": False},
+        },
+    }
+    clean_high = {
+        "status": "OK",
+        "candidate_label": "building_loss",
+        "candidate_rank": 2,
+        "candidate_score": 200.0,
+        "next_score": 20.0,
+        "next_plan_safety": {
+            "blocking": False,
+            "loss_profile": {"label": "clean", "non_overridable": False},
+        },
+    }
+
+    frontier = _lookahead_robust_frontier([clean_low, dirty_high, clean_high])
+
+    assert [item["candidate_label"] for item in frontier] == [
+        "building_loss",
+        "grid_loss",
+        "mech_loss",
+    ]
 
 
 def test_skip_active_state_diff_is_expected():
