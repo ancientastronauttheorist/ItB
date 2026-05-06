@@ -1,4 +1,8 @@
-from src.solver.plan_safety import audit_plan_safety, plan_requires_safety_block
+from src.solver.plan_safety import (
+    audit_plan_safety,
+    plan_requires_safety_block,
+    safety_loss_profile,
+)
 
 
 def _summary(grid=7, buildings=8, hp=14, **extra):
@@ -184,3 +188,30 @@ def test_collected_pod_drop_is_clean():
 
     assert audit["status"] == "CLEAN"
     assert plan_requires_safety_block(audit) is False
+
+
+def test_safety_loss_profile_names_grid_tradeoff():
+    audit = audit_plan_safety(
+        _summary(grid=4, buildings=8, hp=10, mechs_alive=3),
+        _summary(grid=3, buildings=8, hp=9, mechs_alive=3),
+    )
+
+    profile = safety_loss_profile(audit)
+
+    assert profile["label"] == "grid_loss"
+    assert profile["blocking"] is True
+    assert profile["losses"]["grid_power"] == 1
+    assert profile["losses"]["building_hp_total"] == 1
+
+
+def test_safety_loss_profile_names_mech_tradeoff():
+    audit = audit_plan_safety(
+        _summary(grid=4, buildings=8, hp=10, mechs_alive=3),
+        _summary(grid=4, buildings=8, hp=9, mechs_alive=2),
+    )
+
+    profile = safety_loss_profile(audit)
+
+    assert profile["label"] == "mech_loss"
+    assert profile["losses"]["building_hp_total"] == 1
+    assert profile["losses"]["mechs_alive"] == 1

@@ -1,4 +1,5 @@
 from src.loop.commands import (
+    _candidate_dirty_frontier,
     _is_harmless_active_state_diff,
     _is_expected_skip_state_diff,
     _select_safe_plan_candidate,
@@ -49,6 +50,52 @@ def test_safe_candidate_selection_accepts_warn_candidate():
     selected = _select_safe_plan_candidate(candidates)
 
     assert selected["rank"] == 1
+
+
+def test_dirty_frontier_keeps_best_candidate_per_tradeoff():
+    summaries = [
+        {
+            "rank": 0,
+            "source": "top_k_safety",
+            "score": 10.0,
+            "blocking": True,
+            "loss_profile": {
+                "label": "grid_loss",
+                "losses": {"grid_power": 1},
+            },
+            "violations": [{"kind": "grid_damage"}],
+        },
+        {
+            "rank": 1,
+            "source": "top_k_safety",
+            "score": 8.0,
+            "blocking": True,
+            "loss_profile": {
+                "label": "mech_loss",
+                "losses": {"mechs_alive": 1},
+            },
+            "violations": [{"kind": "mech_lost"}],
+        },
+        {
+            "rank": 2,
+            "source": "top_k_safety",
+            "score": 7.0,
+            "blocking": True,
+            "loss_profile": {
+                "label": "grid_loss",
+                "losses": {"grid_power": 1},
+            },
+            "violations": [{"kind": "grid_damage"}],
+        },
+    ]
+
+    frontier = _candidate_dirty_frontier(summaries)
+
+    assert [item["label"] for item in frontier] == ["grid_loss", "mech_loss"]
+    assert frontier[0]["best_rank"] == 0
+    assert frontier[0]["count"] == 2
+    assert frontier[1]["best_rank"] == 1
+    assert frontier[1]["losses"] == {"mechs_alive": 1}
 
 
 def test_skip_active_state_diff_is_expected():

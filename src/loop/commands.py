@@ -28,7 +28,11 @@ from src.model.weapons import get_weapon_name
 from src.solver.solver import MechAction, Solution, replay_solution
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.solver.evaluate import evaluate_threats
-from src.solver.plan_safety import audit_plan_safety, plan_requires_safety_block
+from src.solver.plan_safety import (
+    audit_plan_safety,
+    plan_requires_safety_block,
+    safety_loss_profile,
+)
 from src.control.executor import (
     plan_single_mech,
     plan_end_turn,
@@ -1390,6 +1394,7 @@ def _candidate_safety_summary(candidate_eval: dict) -> dict:
     """Compact candidate audit data for solve recordings."""
     solution = candidate_eval.get("solution")
     plan_safety = candidate_eval.get("plan_safety") or {}
+    loss_profile = safety_loss_profile(plan_safety)
     violations = []
     for v in plan_safety.get("violations", []) or []:
         violations.append({
@@ -1405,8 +1410,64 @@ def _candidate_safety_summary(candidate_eval: dict) -> dict:
         "chain_score": candidate_eval.get("chain_score"),
         "status": plan_safety.get("status"),
         "blocking": bool(plan_safety.get("blocking")),
+        "loss_profile": loss_profile,
         "violations": violations,
     }
+
+
+def _candidate_dirty_frontier(
+    candidate_summaries: list[dict],
+    *,
+    limit: int = 8,
+) -> list[dict]:
+    """Return the top raw-score representative for each safety tradeoff."""
+    buckets: dict[str, dict] = {}
+    for summary in candidate_summaries:
+        profile = summary.get("loss_profile") or {}
+        label = profile.get("label") or "unknown"
+        bucket = buckets.setdefault(label, {
+            "label": label,
+            "count": 0,
+            "best": None,
+        })
+        bucket["count"] += 1
+        best = bucket.get("best")
+        rank = summary.get("rank")
+        best_rank = best.get("rank") if isinstance(best, dict) else None
+        if (
+            best is None
+            or (isinstance(rank, int) and not isinstance(best_rank, int))
+            or (
+                isinstance(rank, int)
+                and isinstance(best_rank, int)
+                and rank < best_rank
+            )
+        ):
+            bucket["best"] = summary
+
+    frontier = []
+    for bucket in buckets.values():
+        best = bucket.get("best") or {}
+        profile = best.get("loss_profile") or {}
+        frontier.append({
+            "label": bucket.get("label"),
+            "count": bucket.get("count", 0),
+            "best_rank": best.get("rank"),
+            "best_source": best.get("source"),
+            "best_score": best.get("score"),
+            "chain_score": best.get("chain_score"),
+            "blocking": bool(best.get("blocking")),
+            "losses": profile.get("losses", {}),
+            "violations": best.get("violations", []),
+        })
+
+    def _sort_key(item: dict) -> tuple[int, int]:
+        rank = item.get("best_rank")
+        if isinstance(rank, int):
+            return (0, rank)
+        return (1, 10**9)
+
+    return sorted(frontier, key=_sort_key)[:limit]
 
 
 def _is_harmless_active_state_diff(
@@ -2298,6 +2359,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     solution = None
     selected_candidate_eval = None
     candidate_safety_summaries: list[dict] = []
+    dirty_frontier: list[dict] = []
     selected_candidate_rank = None
     selected_candidate_source = None
     candidate_count = 0
@@ -2440,6 +2502,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 board.total_turns if hasattr(board, "total_turns") else 5
             )
             candidate_evals = []
+            frontier_candidate_evals = []
             for spec in candidate_specs:
                 candidate_solution = _rust_result_to_solution(
                     spec.get("rust_result"), rust_elapsed, len(active_mechs)
@@ -2529,6 +2592,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                             candidate_eval.get("plan_safety")
                         ):
                             break
+                    if wide_evals and not frontier_candidate_evals:
+                        frontier_candidate_evals = wide_evals
 
                     clean_wide = next(
                         (c for c in wide_evals
@@ -2542,9 +2607,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         candidate_count = len(wide_specs)
                         break
 
+            summary_evals = frontier_candidate_evals or candidate_evals
             candidate_safety_summaries = [
-                _candidate_safety_summary(c) for c in candidate_evals
+                _candidate_safety_summary(c) for c in summary_evals
             ]
+            dirty_frontier = _candidate_dirty_frontier(candidate_safety_summaries)
             if selected_candidate_eval is not None:
                 solution = selected_candidate_eval["solution"]
                 selected_candidate_rank = selected_candidate_eval.get("rank")
@@ -2647,6 +2714,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     result["plan_safety"] = plan_safety
     result["candidate_count"] = candidate_count
     result["selected_candidate_rank"] = selected_candidate_rank
+    if dirty_frontier:
+        result["dirty_frontier"] = dirty_frontier
     if selected_candidate_eval.get("safety_widening"):
         result["safety_widening"] = selected_candidate_eval["safety_widening"]
 
@@ -2686,6 +2755,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "selected_candidate_rank": selected_candidate_rank,
         "selected_candidate_source": selected_candidate_source,
         "candidate_safety": candidate_safety_summaries,
+        "dirty_frontier": dirty_frontier,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
@@ -2705,6 +2775,18 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         print("\n! SAFETY BLOCK CANDIDATE — chosen plan predicts irreversible loss")
         for v in plan_safety.get("violations", []):
             print(f"!   {v.get('kind')}: {v.get('current')} -> {v.get('predicted')}")
+        if dirty_frontier:
+            print("! Dirty frontier:")
+            for item in dirty_frontier[:5]:
+                losses = item.get("losses") or {}
+                loss_text = ", ".join(
+                    f"{k} -{v}" for k, v in sorted(losses.items())
+                ) or "no quantified loss"
+                print(
+                    f"!   {item.get('label')}: best rank "
+                    f"{item.get('best_rank')} ({loss_text}); "
+                    f"{item.get('count')} candidate(s)"
+                )
     print(f"\n{len(solution.actions)} actions to execute. "
           f"Use 'execute <index>' for each.")
 

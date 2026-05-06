@@ -34,6 +34,23 @@ NON_OVERRIDABLE_KINDS = {
 }
 
 
+LOSS_KINDS = {
+    "grid_damage": "grid_power",
+    "building_destroyed": "buildings_alive",
+    "building_hp_loss": "building_hp_total",
+    "objective_building_destroyed": "objective_buildings_alive",
+    "objective_building_hp_loss": "objective_building_hp_total",
+    "pod_lost": "pods_present",
+    "mech_lost": "mechs_alive",
+    "mech_on_danger": "mechs_on_danger",
+    "mech_disabled": "mechs_disabled",
+    "bigbomb_lost": "bigbomb_alive",
+    "protected_objective_unit_lost": "protected_objective_units_alive",
+    "protected_objective_unit_unfrozen": "protected_objective_units_frozen",
+    "mech_hp_loss": "mech_hp_total",
+}
+
+
 def _int_or_none(value: Any) -> int | None:
     if isinstance(value, bool):
         return None
@@ -322,3 +339,80 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             for v in audit.get("violations", []) or []
         )
     return bool(audit.get("blocking"))
+
+
+def safety_loss_profile(audit: dict[str, Any] | None) -> dict[str, Any]:
+    """Summarize dirty-plan tradeoffs in a stable, machine-readable shape."""
+    if not isinstance(audit, dict):
+        return {
+            "label": "unknown",
+            "blocking": False,
+            "losses": {},
+            "non_overridable": False,
+        }
+
+    losses: dict[str, int] = {}
+    kinds: list[str] = []
+    non_overridable = False
+    for violation in audit.get("violations", []) or []:
+        if not isinstance(violation, dict):
+            continue
+        kind = violation.get("kind")
+        if not isinstance(kind, str):
+            continue
+        kinds.append(kind)
+        non_overridable = non_overridable or kind in NON_OVERRIDABLE_KINDS
+        metric = LOSS_KINDS.get(kind)
+        if metric is None:
+            continue
+        delta = violation.get("delta")
+        if isinstance(delta, int) and delta < 0:
+            amount = -delta
+        else:
+            current = violation.get("current")
+            predicted = violation.get("predicted")
+            amount = 1
+            if isinstance(current, int) and isinstance(predicted, int):
+                amount = max(1, current - predicted)
+        losses[metric] = losses.get(metric, 0) + amount
+
+    label = _profile_label(audit.get("status"), kinds, non_overridable)
+    return {
+        "label": label,
+        "blocking": bool(audit.get("blocking")),
+        "losses": losses,
+        "non_overridable": non_overridable,
+    }
+
+
+def _profile_label(status: Any,
+                   kinds: list[str],
+                   non_overridable: bool) -> str:
+    if status == "CLEAN":
+        return "clean"
+    if status == "WARN":
+        return "warning"
+    if status == "UNKNOWN":
+        return "unknown"
+    kind_set = set(kinds)
+    if non_overridable:
+        return "objective_loss"
+    if "grid_damage" in kind_set and "mech_lost" in kind_set:
+        return "grid_and_mech_loss"
+    if "grid_damage" in kind_set:
+        return "grid_loss"
+    if "building_destroyed" in kind_set:
+        return "building_loss"
+    if "mech_lost" in kind_set:
+        return "mech_loss"
+    if "building_hp_loss" in kind_set:
+        return "building_hp_loss"
+    if "mech_disabled" in kind_set or "mech_on_danger" in kind_set:
+        return "mech_disabled"
+    if "pod_lost" in kind_set:
+        return "pod_loss"
+    if "mech_hp_loss" in kind_set:
+        return "mech_hp_loss"
+    if kinds:
+        return "mixed_dirty"
+    return "unknown"
