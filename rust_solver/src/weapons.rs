@@ -417,9 +417,13 @@ pub enum WId {
     /// Decoy Building Area Blast (Mission_Trapped): self-destructs, killing
     /// itself and every adjacent non-building tile.
     TrappedExplode = 130,
+    /// Bouncer Leader's "Sweeping Horns": adjacent melee T-pattern, 2 damage
+    /// and forward push on target plus the two perpendicular tiles, then the
+    /// boss bounces backward.
+    BouncerAtkB = 131,
 }
 
-pub const WEAPON_COUNT: usize = 131;
+pub const WEAPON_COUNT: usize = 132;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -872,6 +876,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[126] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, damage_outer: 1,
         range_min: 2, flags: f(WeaponFlags::PATH_DAMAGE.bits()), ..DEF };
 
+    // 131: BouncerAtkB — Bouncer Leader's Sweeping Horns. Per
+    // scripts/advanced/bosses/bouncer.lua:46-58: target tile + two
+    // perpendicular side tiles take 2 damage and PushDir::Forward, while the
+    // boss receives a zero-damage push backward.
+    w[131] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward,
+        flags: f(WeaponFlags::PUSH_SELF.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -1105,6 +1116,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
         "ScorpionAtkB" => WId::ScorpionAtkB,
+        "BouncerAtkB" => WId::BouncerAtkB,
         "Acid_Tank_Attack" => WId::AcidTankAtk,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
@@ -1255,6 +1267,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BossHeal => "BossHeal",
         WId::PinnacleFreezeTank => "Pinnacle_FreezeTank",
         WId::BurnbugAtkB => "BurnbugAtkB",
+        WId::BouncerAtkB => "BouncerAtkB",
         WId::SupportWind => "Support_Wind",
         _ => "",
     }
@@ -1294,6 +1307,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         // Advanced Edition Vek
         "Bouncer1" => WId::BouncerAtk1,
         "Bouncer2" => WId::BouncerAtk2,
+        "BouncerBoss" => WId::BouncerAtkB,
         "Moth1" => WId::MothAtk1,
         "Moth2" => WId::MothAtk2,
         "Mosquito1" => WId::MosquitoAtk1,
@@ -1472,6 +1486,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
         WId::FireflyAtkB => "Firefly Boss Shot",
         WId::ScorpionAtkB => "Massive Spinneret",
+        WId::BouncerAtkB => "Sweeping Horns",
         WId::BeetleAtkB => "Flaming Abdomen",
         WId::SupportRepair => "Repair Drop",
         WId::AcidTankAtk => "A.C.I.D. Cannon",
@@ -1545,6 +1560,19 @@ mod tests {
     }
 
     #[test]
+    fn test_bouncer_boss_sweeping_horns_def() {
+        let w = weapon_def(WId::BouncerAtkB);
+        assert_eq!(w.weapon_type, WeaponType::Melee);
+        assert_eq!(w.damage, 2);
+        assert_eq!(w.push, PushDir::Forward);
+        assert!(w.push_self());
+        assert!(w.aoe_perpendicular());
+        assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
+        assert_eq!(enemy_weapon_for_type("BouncerBoss"), WId::BouncerAtkB);
+        assert_eq!(weapon_name(WId::BouncerAtkB), "Sweeping Horns");
+    }
+
+    #[test]
     fn test_alpha_hornet_has_aoe_behind() {
         let w = weapon_def(WId::HornetAtk2);
         assert!(w.aoe_behind());
@@ -1572,6 +1600,7 @@ mod tests {
         assert_eq!(wid_from_str("Deploy_TankShot"), WId::DeployTankShot);
         assert_eq!(wid_from_str("Deploy_TankShot2"), WId::DeployTankShot2);
         assert_eq!(wid_from_str("Trapped_Explode"), WId::TrappedExplode);
+        assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -1585,6 +1614,7 @@ mod tests {
             ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
             ("Deploy_TankShot", WId::DeployTankShot),
             ("Trapped_Explode", WId::TrappedExplode),
+            ("BouncerAtkB", WId::BouncerAtkB),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

@@ -1101,6 +1101,35 @@ pub fn simulate_enemy_attacks(
                         }
                     }
                 } else {
+                    if enemy_wid == WId::BouncerAtkB {
+                        let Some(dir) = projectile_dir_from_queued(orig.0, orig.1, qtx, qty) else {
+                            continue;
+                        };
+                        let (dx, dy) = DIRS[dir];
+                        let tx = ex as i8 + dx;
+                        let ty = ey as i8 + dy;
+                        if !in_bounds(tx, ty) { continue; }
+                        let (tx, ty) = (tx as u8, ty as u8);
+
+                        let d = enemy_hit_damage(board, tx, ty, damage, vh);
+                        apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                        apply_push(board, tx, ty, dir, &mut result);
+
+                        apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+
+                        for &perp in &[(dir + 1) % 4, (dir + 3) % 4] {
+                            let (pdx, pdy) = DIRS[perp];
+                            let px = tx as i8 + pdx;
+                            let py = ty as i8 + pdy;
+                            if !in_bounds(px, py) { continue; }
+                            let (px, py) = (px as u8, py as u8);
+                            let pd = enemy_hit_damage(board, px, py, damage, vh);
+                            apply_damage(board, px, py, pd, &mut result, DamageSource::Weapon);
+                            apply_push(board, px, py, dir, &mut result);
+                        }
+                        continue;
+                    }
+
                     let (tx, ty) = if wdef.queued_damage_persists() {
                         // BlobBoss family registers fixed queued damage before
                         // movement. Keep the queued tile, with the same OOB guard
@@ -2216,6 +2245,44 @@ mod tests {
         assert_eq!(board.tile(3, 3).building_hp, 1, "center (3,3): 5-4=1");
         assert_eq!(board.tile(3, 2).building_hp, 1, "perp (3,2): 5-4=1");
         assert_eq!(board.tile(3, 4).building_hp, 1, "perp (3,4): 5-4=1");
+    }
+
+    #[test]
+    fn test_bouncer_boss_enemy_attack_hits_t_pattern_and_bounces() {
+        let mut board = Board::default();
+        let center = board.add_unit(Unit {
+            uid: 20, x: 3, y: 4, hp: 4, max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let left = board.add_unit(Unit {
+            uid: 21, x: 2, y: 4, hp: 4, max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let right = board.add_unit(Unit {
+            uid: 22, x: 4, y: 4, hp: 4, max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let boss = add_enemy_with_type(&mut board, 10, 3, 3, 4, "BouncerBoss", 3, 4);
+        board.units[boss].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[boss].x, board.units[boss].y), (3, 2),
+            "Bouncer Leader should bounce backward after attacking");
+        assert_eq!((board.units[center].x, board.units[center].y), (3, 5));
+        assert_eq!(board.units[center].hp, 2);
+        assert_eq!((board.units[left].x, board.units[left].y), (2, 5));
+        assert_eq!(board.units[left].hp, 2);
+        assert_eq!((board.units[right].x, board.units[right].y), (4, 5));
+        assert_eq!(board.units[right].hp, 2);
     }
 
     /// BossHeal applies Shield to self when boss is damaged. Per

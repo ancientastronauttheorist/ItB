@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-06T14:04:29.052912",
+  "label": "corporate_hq_region_secured_both_objectives",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Health1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    }
+  ]
+}

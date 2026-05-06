@@ -2713,6 +2713,25 @@ mod tests {
     }
 
     #[test]
+    fn test_bouncer_boss_sweeping_horns_hits_t_pattern_and_bounces() {
+        let mut board = make_test_board();
+        let boss = add_enemy_type(&mut board, 10, 3, 3, 4, "BouncerBoss");
+        let center = add_mech(&mut board, 20, 3, 4, 4, WId::None);
+        let left = add_mech(&mut board, 21, 2, 4, 4, WId::None);
+        let right = add_mech(&mut board, 22, 4, 4, 4, WId::None);
+
+        let _ = simulate_weapon(&mut board, boss, WId::BouncerAtkB, 3, 4);
+
+        assert_eq!((board.units[boss].x, board.units[boss].y), (3, 2), "boss bounced backward");
+        assert_eq!((board.units[center].x, board.units[center].y), (3, 5));
+        assert_eq!(board.units[center].hp, 2);
+        assert_eq!((board.units[left].x, board.units[left].y), (2, 5));
+        assert_eq!(board.units[left].hp, 2);
+        assert_eq!((board.units[right].x, board.units[right].y), (4, 5));
+        assert_eq!(board.units[right].hp, 2);
+    }
+
+    #[test]
     fn test_trapped_explode_kills_self_and_adjacent_units() {
         let mut board = make_test_board();
         let decoy = add_decoy_building(&mut board, 10, 3, 3);

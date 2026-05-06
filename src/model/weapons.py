@@ -614,6 +614,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Energized Horns", weapon_type="melee",
         damage=3, push="forward", push_self=True,
     ),
+    "BouncerAtkB": WeaponDef(
+        name="Sweeping Horns", weapon_type="melee",
+        damage=2, push="forward", push_self=True,
+        aoe_perpendicular=True,
+    ),
     "MosquitoAtk1": WeaponDef(
         name="Smokescreen Whip", weapon_type="melee",
         damage=1, smoke=True,

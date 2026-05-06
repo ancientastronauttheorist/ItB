@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-05-06T13:30:06.644169",
+  "label": "the_rift_region_secured_both_objectives_achievement",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "BonusDebris",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 1
+    }
+  ]
+}

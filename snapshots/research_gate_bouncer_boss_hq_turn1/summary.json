@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-06T13:33:52.588655",
+  "label": "research_gate_bouncer_boss_hq_turn1",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "BouncerBoss",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

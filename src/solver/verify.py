@@ -516,7 +516,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # expendable player-team self-destruct: kills itself and adjacent non-building
 # tiles while preserving neighboring buildings. Pre-v51 corpus archived as
 # failure_db_snapshot_sim_v50.jsonl.
-SIMULATOR_VERSION = 51
+# v52 - Corporate HQ Bouncer Leader (`BouncerBoss` / `BouncerAtkB`) now maps to
+# Sweeping Horns: 2-damage forward-push T-pattern plus boss bounce-back.
+# Pre-v52 corpus archived as failure_db_snapshot_sim_v51.jsonl.
+# v53 - Python solve payloads copy static pawn Armor into Rust JSON when the Lua
+# bridge omits it; this fixes Bouncer Leader damage predictions. Pre-v53 corpus
+# archived as failure_db_snapshot_sim_v52.jsonl.
+SIMULATOR_VERSION = 53
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

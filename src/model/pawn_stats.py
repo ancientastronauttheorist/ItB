@@ -92,6 +92,7 @@ VEK_STATS = {
     # Advanced Edition Vek
     "Bouncer1":      PawnStats(move_speed=3, ranged=0),
     "Bouncer2":      PawnStats(move_speed=3, ranged=0),
+    "BouncerBoss":   PawnStats(move_speed=3, ranged=0, armor=True, massive=True, default_weapon="BouncerAtkB"),
     "Moth1":         PawnStats(move_speed=3, flying=True, ranged=1),
     "Moth2":         PawnStats(move_speed=3, flying=True, ranged=1),
     "Mosquito1":     PawnStats(move_speed=4, flying=True, ranged=0),
