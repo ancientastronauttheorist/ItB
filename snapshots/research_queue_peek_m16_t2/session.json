@@ -4,60 +4,60 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_BotDefense",
   "islands_completed": [],
-  "mission_index": 17,
-  "last_mission_turn": -1,
-  "current_turn": 4,
-  "phase": "unknown",
+  "mission_index": 16,
+  "last_mission_turn": 2,
+  "current_turn": 2,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
-          5,
-          0
+          7,
+          1
         ],
         "weapon": "Brute_Jetmech",
         "target": [
           5,
-          2
+          1
         ],
-        "description": "JetMech, move F1\u2192H3, fire Aerial Bombs at F3"
+        "description": "JetMech, move E3\u2192G1, fire Aerial Bombs at G3"
       },
       {
         "mech_uid": 1,
         "mech_type": "RocketMech",
         "move_to": [
-          1,
+          3,
           3
         ],
         "weapon": "Ranged_Rocket",
         "target": [
-          1,
-          5
+          3,
+          1
         ],
-        "description": "RocketMech, move F7\u2192E7, fire Rocket Artillery at C7"
+        "description": "RocketMech, move G4\u2192E5, fire Rocket Artillery at G5"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          4,
+          6,
           4
         ],
         "weapon": "Science_Repulse_A",
         "target": [
-          4,
+          6,
           4
         ],
-        "description": "PulseMech, move D7\u2192D4, fire Repulse at D4"
+        "description": "PulseMech, move B5\u2192D2, fire Repulse at D2"
       }
     ],
-    "score": 127990.0,
-    "turn": 4,
-    "input_fingerprint": "0:7,2:5|1:1,2:7|2:1,4:5|344:3,0:1|345:4,7:1|346:1,5:2|348:7,3:3|349:3,2:1|351:5,4:3|352:6,2:3|353:5,1:2"
+    "score": 117806.66666666658,
+    "turn": 2,
+    "input_fingerprint": "0:5,3:6|1:4,1:7|2:3,6:5|344:6,0:1|345:4,5:1|346:3,4:3|348:7,3:3|349:5,4:2|350:4,4:1|351:6,1:4|352:6,3:3"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -672,28 +672,6 @@
         "RocketMech, move G4\u2192E5, fire Rocket Artillery at G5",
         "PulseMech, move B5\u2192D2, fire Repulse at D2"
       ]
-    },
-    {
-      "timestamp": "2026-05-06T18:46:15.055008",
-      "turn": 3,
-      "label": "solve",
-      "score": 137590.0,
-      "actions": [
-        "JetMech, move G3\u2192H1, fire Aerial Bombs at F1",
-        "RocketMech, move E5\u2192F7, fire Rocket Artillery at D7",
-        "PulseMech, move D2\u2192D7, fire Repulse at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T18:47:51.344858",
-      "turn": 4,
-      "label": "solve",
-      "score": 127990.0,
-      "actions": [
-        "JetMech, move F1\u2192H3, fire Aerial Bombs at F3",
-        "RocketMech, move F7\u2192E7, fire Rocket Artillery at C7",
-        "PulseMech, move D7\u2192D4, fire Repulse at D4"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -840,14 +818,6 @@
     [
       16,
       1
-    ],
-    [
-      16,
-      2
-    ],
-    [
-      16,
-      3
     ]
   ],
   "tags": [
@@ -1901,14 +1871,8 @@
       "mission_id": "Mission_BotDefense",
       "first_seen_turn": 2,
       "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 2,
-        "diff_actual": 1
-      },
+      "status": "pending",
+      "result": null,
       "diff_field": "hp",
       "diff_predicted": 2,
       "diff_actual": 1,
@@ -1921,17 +1885,9 @@
       "slot": null,
       "mission_id": "Mission_BotDefense",
       "first_seen_turn": 2,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Stale Repulse_A damage desync marker; research_next reports no researchable Wall entry on the current board after Jelly_Regen1 auto-resolved.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "missing_in_actual",
-        "diff_predicted": "present",
-        "diff_actual": "absent"
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "missing_in_actual",
       "diff_predicted": "present",
       "diff_actual": "absent",
@@ -1940,10 +1896,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "66f75c876feeca4d",
-    "classes": "gbfgbbgggbggggfgfgiiiiiggiiggbiiiibggggggggggbgggggfggggggggfggg",
+    "hash": "7507f3e1d5c604e2",
+    "classes": "gbfgbbgggbfgggfgfgiiiiiggiiggbiiiibggggggggggbgggggfggggggggfggg",
     "mission_index": 16,
-    "turn": 4
+    "turn": 2
   },
   "terrain_stage_change_pending": false
 }
