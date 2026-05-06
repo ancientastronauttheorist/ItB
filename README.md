@@ -2,7 +2,7 @@
 
 An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **19 / 70 achievements earned** (latest local Steam library cache on 2026-04-30; refresh with `python3 game_loop.py achievements` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
+Status: **19 / 70 achievements earned** (latest local Steam library cache on 2026-04-30; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
 
 Recent unlocks: **Good Samaritan** and **Scorched Earth** on 2026-04-30. The previous Solver 2.0 live-test bump also picked up **Cryo Expert** and **Pacifist** on 2026-04-28. See `TODO.md` for the checklist.
 
@@ -20,7 +20,7 @@ The game runs natively. State flows out through a Lua mod hook that writes `/tmp
 | 1 — State extraction | `src/bridge/` (primary), `src/capture/` (fallback save-file parser) | Bridge gives per-sub-action updates, targeted tiles, env hazards with kill flag, deployment zone. Save file only updates at turn boundaries. |
 | 2 — Game state | `src/model/` | `Board`, `Unit`, `WeaponDef` - the solver's single source of truth. |
 | 3 — Solver 2.0 | `rust_solver/` (`itb_solver` PyO3 extension) + thin Python wrappers in `src/solver/` | Rust is the only simulator and search engine. Python handles wrapping, audit breakdowns, verification, tuning, and research feedback. |
-| 4 — Strategist | `src/strategy/`, `src/loop/commands.py`, `weights/active.json`, achievement metadata in `data/` | Picks run setup, mission priority, shop behavior, and `EvalWeights` for achievement hunting. Current default: Easy + Advanced Edition + Balanced Roll. |
+| 4 — Strategist | `src/strategy/`, `src/loop/commands.py`, `weights/active.json`, achievement metadata in `data/` | Picks run setup, mission priority, shop behavior, and `EvalWeights` for achievement hunting. Current default: Easy + Advanced Edition + achievement-aware named squad; Balanced Roll is reserved for solver-eval and random-squad targets. |
 
 ### Solver 2.0
 
@@ -94,7 +94,7 @@ bash scripts/install-hooks.sh
 
 ### Secrets
 
-`.env` (gitignored) holds `STEAM_API_KEY` and `STEAM_ID` for achievement queries.
+`.env` (gitignored) holds `STEAM_API_KEY` and `STEAM_ID` for achievement queries and local checklist sync.
 
 ---
 
@@ -102,8 +102,14 @@ bash scripts/install-hooks.sh
 
 ```bash
 # Start a new run
-python3 game_loop.py new_run balanced_roll --difficulty 0 --tags achievement
-# On the new-game screen: Easy, Advanced Edition ON, Balanced Roll, then Start
+python3 game_loop.py achievements --sync
+python3 game_loop.py recommend_squad --tags achievement
+python3 game_loop.py new_run auto --difficulty 0 --tags achievement
+# On the new-game screen: Easy, Advanced Edition ON, select the recommended squad, then Start
+#
+# Solver stress-test / random-squad mode:
+python3 game_loop.py new_run auto --mode solver_eval --difficulty 1 --tags solver_eval
+# On the new-game screen: click Balanced Roll, then Start
 
 # Typical combat turn (fully automated)
 python3 game_loop.py auto_turn --time-limit 10
@@ -139,8 +145,8 @@ All subcommands are stateless; session state lives in `sessions/active_session.j
 **Combat execution** — `auto_turn`, `auto_mission`, `click_action <i>`, `click_end_turn`, `click_balanced_roll`, `execute <i>`, `end_turn`
 **Research gate** — `research_next`, `research_submit <id> <json>`, `research_attach_community <id> <notes_json>`, `research_probe_mech <tile> [slot]`
 **Analysis & tuning** — `analyze`, `validate <old> <new>`, `tune`, `review_overrides`, `mine_overrides`
-**Run management** — `new_run <squad>`, `snapshot <label>`, `log <msg>`, `mission_end {win|loss}`, `annotate <run_id> <turn> <notes>`
-**Utilities** — `calibrate`, `achievements`
+**Run management** — `recommend_squad [squad]`, `new_run [squad|auto]`, `snapshot <label>`, `log <msg>`, `mission_end {win|loss}`, `annotate <run_id> <turn> <notes>`
+**Utilities** — `calibrate`, `achievements [--sync]`
 
 Standalone scripts:
 

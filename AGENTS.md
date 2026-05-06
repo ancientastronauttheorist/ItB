@@ -126,7 +126,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 
     Full spec: `docs/diagnosis_loop_design.md`. Live-run hardening retrospective: §15.1.
 
-25. **New-run setup is fixed: Easy difficulty + Advanced Edition ON + Balanced Roll squad.** Updated 2026-04-28 from prior "Always Hard" stance — the goal is earning the 70 achievements (9/70 done), and Hard tanked our completion rate. On every new game's setup screen: click **Easy**, ensure **Advanced Edition** toggle is ON, click **Balanced Roll** for the squad, then **Start**. When invoking `python3 game_loop.py new_run`, omit `--difficulty` (default 0 = Easy) or pass `--difficulty 0`. Don't fall back to Normal/Hard, including after defeats. Rationale: `feedback_playstyle.md`.
+25. **New-run setup is achievement-aware: Easy difficulty + Advanced Edition ON + the target squad.** Updated 2026-05-06 from the temporary Balanced Roll default. Balanced Roll remains correct for `--mode solver_eval` and random-squad achievements, but normal achievement hunting should first run `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`, then pick an actual unfinished squad via `python3 game_loop.py recommend_squad --tags achievement` / `python3 game_loop.py new_run auto --tags achievement`. On every new game's setup screen: click **Easy**, ensure **Advanced Edition** toggle is ON, select the recommended squad card (or click **Balanced Roll** only when the setup says so), then **Start**. When invoking `python3 game_loop.py new_run`, omit `--difficulty` (default 0 = Easy) or pass `--difficulty 0`. Don't fall back to Normal/Hard, including after defeats, unless the run is explicitly tagged as solver evaluation. Rationale: `feedback_playstyle.md` plus squad-locked achievement targeting.
 26. **Session lock discipline:** never run `game_loop.py read`, `status`, `solve`, `deploy_recommended`, `auto_turn`, `diagnose_next`, or other session-mutating game-loop commands in parallel. They share `sessions/active_session.json.lock`; run them one at a time, then parallelize only independent file reads or analysis commands.
 27. **No repo-wide Rust formatting during tactical fixes.** This Rust tree is not globally `cargo fmt`-clean; running `cargo fmt` rewrites many unrelated files and hides the simulator change under formatting noise. For live/debug fixes, keep Rust edits hand-scoped to touched hunks. Only run a repo-wide formatter as its own explicit cleanup task.
 28. **Do not chain session-mutating commands.** Even with `&&`, commands like `py_compile && game_loop.py read` make live logs harder to audit and can hide which step changed session state. Run formatting/compile checks and game-loop commands as separate terminal calls.
@@ -148,7 +148,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 
 Each phase: read → act → verify. Detailed command semantics are in **Game Loop Command Reference** below.
 
-- **NEW_GAME_SETUP** (very start of a new run, before ISLAND_SELECT): On the new-game screen, set **Difficulty: Easy** and ensure **Advanced Edition** content is toggled ON. Then click **Balanced Roll** for the squad (not the default, not Chaos Roll), then **Start**. See `feedback_playstyle.md`. When invoking `python3 game_loop.py new_run`, omit `--difficulty` (default 0 = Easy) or pass `--difficulty 0`.
+- **NEW_GAME_SETUP** (very start of a new run, before ISLAND_SELECT): Run `python3 game_loop.py achievements --sync` if Steam env keys are present, then `python3 game_loop.py recommend_squad --tags achievement` or initialize with `python3 game_loop.py new_run auto --tags achievement`. On the new-game screen, set **Difficulty: Easy**, ensure **Advanced Edition** content is toggled ON, select the recommended actual squad card, then **Start**. Use **Balanced Roll** only when `recommend_squad` / `new_run --mode solver_eval` / a random-squad achievement explicitly says to. See `feedback_playstyle.md`. When invoking `python3 game_loop.py new_run`, omit `--difficulty` (default 0 = Easy) or pass `--difficulty 0`.
 - **ISLAND_SELECT** (after the CEO intro): `python3 island_select.py` picks one of 4 corporations. Click its coord. Click through CEO intro. → ISLAND_MAP.
 - **ISLAND_MAP:** `game_loop.py read` → pick mission (prefer bonus objectives for the achievement target) → click mission on map → mission briefing → click preview or start button → DEPLOYMENT.
 - **DEPLOYMENT:** `game_loop.py deploy_recommended` → verify PASS for all placed mechs → click visible CONFIRM. If bridge deployment is unavailable, use `game_loop.py read` MCP coords and click 3 recommended tiles manually, then CONFIRM. → COMBAT_PLAYER_TURN.
@@ -183,7 +183,8 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 - `auto_turn [--time-limit N] [--no-wait] [--max-wait S]` — Full turn via bridge with per-sub-action verification. Polls at entry for `combat_player` phase **and** `active_mechs > 0` (up to `--max-wait` seconds, default 45; disable with `--no-wait`). Returns an MCP click plan for End Turn. On desync, re-solves from actual board with partial mech states (DONE = inactive, MID_ACTION = can_move=false, ACTIVE = full search).
 - `click_action <i>` — Pure planner for manual play. Emits a `computer_batch`-ready sequence for ONE mech action (select-tile, optional move, weapon icon, target). Handles dash weapons (skip move click), Repair (click Repair button), passives (no-op).
 - `click_end_turn` — Pure planner. Emits a single click on End Turn.
-- `click_balanced_roll` — Pure planner. Emits a single click on the Balanced Roll button on the squad-select screen. Dispatch before clicking Start so a Balanced Roll (unique mech classes, ≤4 weapons total) is seeded instead of the default squad.
+- `recommend_squad [squad|auto] [--achieve ...] [--mode achievement_hunt|solver_eval|random_squad|custom]` — Pure strategist. Uses `data/achievements_detailed.json` to choose a named squad for achievement hunting, or Balanced Roll for solver-eval/random-squad runs.
+- `click_balanced_roll` — Pure planner. Emits a single click on the Balanced Roll button on the squad-select screen. Dispatch before clicking Start only when the setup recommendation says Balanced Roll.
 - `deploy_recommended` — Bridge deployment helper. Sends `DEPLOY uid x y` for the ranked recommended tiles, verifies placed mech coordinates, and leaves only the visible CONFIRM click for Computer Use.
 - `execute <index>` / `end_turn` — Bridge-mode action commands. Used internally by `auto_turn`. In manual play, use `click_action` / `click_end_turn` instead.
 
@@ -197,13 +198,13 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 - `tune [--iterations N] [--min-boards N] [--time-limit N]` — Auto-tune EvalWeights. Hybrid objective: `mean_fixed_score − 100 * fired_failure_count`.
 
 **Run management:**
-- `new_run <squad> [--achieve X Y] [--difficulty N] [--tags audit ...]` — Initialize new session. Use `--tags audit` for environment-audit playthroughs (those failures stay out of the tuner corpus).
+- `new_run [squad|auto] [--achieve X Y] [--difficulty N] [--mode achievement_hunt|solver_eval|random_squad|custom] [--tags audit ...]` — Initialize new session. Omit the squad or pass `auto` to let `recommend_squad` choose the achievement-aware setup. Use `--tags audit` / `--mode solver_eval` for environment-audit playthroughs (those failures stay out of the tuner corpus).
 - `snapshot <label>` — Save current state for regression.
 - `log <message>` — Append reasoning to the decision log.
 
 ## Achievement Context
 
-Progress persists in session. 9/70 earned, 61 remaining across 4 difficulty tiers (Green >40%, Yellow 20–40%, Orange 10–20%, Red <10%).
+Progress persists in session. Local checklist currently tracks 19/70 earned, 51 remaining across 4 difficulty tiers (Green >40%, Yellow 20–40%, Orange 10–20%, Red <10%).
 
 - Squad-specific achievements need the matching squad — check `data/ref_achievement_strategies.md`.
 - Cumulative achievements (reputation, civilians, pilot reuse) accrue across runs.

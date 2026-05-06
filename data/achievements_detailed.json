@@ -5,7 +5,10 @@
     "advanced_edition": 15,
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
-    "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty."
+    "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
+    "last_steam_sync": "2026-05-06T11:44:19.852461",
+    "last_steam_total": 70,
+    "last_steam_unlocked": 19
   },
   "achievements": {
     "rift_walkers": [
@@ -184,7 +187,7 @@
         "description": "End a battle with 12 tiles on Fire with the Flame Behemoths squad",
         "type": "single_battle",
         "global_unlock_pct": 20.4,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Flamethrower (upgrade range) and Meteor Mech to set everything on fire. Bait enemy attacks on forests to create more fire. Upgrade Meteor Mech backburn. Focus on spreading fire, especially on last turn.",
         "setup": "Upgrade Flamethrower range. Forest-heavy maps. Archive island has forests.",
         "pitfalls": "Fire can be extinguished by smoke, water, ice. Maintain fire tiles until battle end."
@@ -206,7 +209,7 @@
         "description": "Shoot the Cryo-Launcher 4 times in a single battle with Frozen Titans",
         "type": "single_battle",
         "global_unlock_pct": 16.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Bethany Jones or Mafan (Zoltan) on Ice Mech prevents self-freeze, allowing repeated Cryo-Launcher use. Without them, must break free each turn (repair or get hit). 4 shots in one battle.",
         "setup": "Bethany Jones or Mafan pilot on Ice Mech. Shield prevents self-freeze.",
         "pitfalls": "Without shield pilot, self-freeze prevents consecutive shots. Must break free each turn."
@@ -226,7 +229,7 @@
         "description": "Kill less than 3 enemies in a single battle with Frozen Titans squad",
         "type": "single_battle",
         "global_unlock_pct": 16.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Focus on freezing, pushing, and blocking instead of killing. Use Cryo-Launcher to freeze threats. Push Vek away from buildings. Only kill when absolutely necessary. 0-2 kills allowed.",
         "setup": "Bethany/Mafan on Ice Mech. Easy difficulty. Defensive play.",
         "pitfalls": "Environmental kills count. Push kills (water/chasm) count. Be very careful."
@@ -690,7 +693,7 @@
         "description": "Earn 9 Reputation from missions on a single Corporate Island",
         "type": "single_island",
         "global_unlock_pct": 41.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Select 2-star missions exclusively (more reputation per mission). Complete all bonus objectives. 9 total reputation from one island.",
         "setup": "2-star missions on one island. Complete all objectives.",
         "pitfalls": "2-star missions are harder. Must complete all objectives."

@@ -53,6 +53,8 @@ from src.bridge.writer import (
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
 from src.loop import weapon_penalty_log
+from src.strategy.achievement_sync import sync_achievement_details
+from src.strategy.run_planner import recommend_squad_for_run
 
 SNAPSHOT_DIR = Path(__file__).parent.parent.parent / "snapshots"
 SAVE_DIR = Path.home() / "Library" / "Application Support" / "IntoTheBreach"
@@ -4162,10 +4164,8 @@ def cmd_click_end_turn() -> dict:
 def cmd_click_balanced_roll() -> dict:
     """Emit a click plan for the Balanced Roll button on squad-select.
 
-    Pure planner. Dispatch the batch via ``computer_batch`` before
-    clicking Start, so a Balanced Roll (no duplicate mech classes, max
-    4 weapons between them) is seeded instead of whatever squad is
-    currently shown.
+    Pure planner. Use it only when ``recommend_squad`` / ``new_run`` says
+    the setup is Balanced Roll (solver-eval or random-squad achievements).
     """
     recalibrate()
     batch = plan_balanced_roll()
@@ -4178,6 +4178,38 @@ def cmd_click_balanced_roll() -> dict:
     for i, c in enumerate(batch):
         print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
     print(f"Next: dispatch batch via computer_batch, then click Start")
+    _print_result(result)
+    return result
+
+
+def cmd_recommend_squad(
+    squad: str | None = None,
+    achievements: list[str] | None = None,
+    *,
+    tags: list[str] | None = None,
+    mode: str | None = None,
+) -> dict:
+    """Recommend the new-run squad/setup for the current run intent."""
+    rec = recommend_squad_for_run(
+        squad=squad,
+        achievements=achievements or [],
+        tags=tags or [],
+        mode=mode,
+    )
+    result = {"status": "OK", **rec.to_dict()}
+
+    print(f"\n=== RECOMMEND_SQUAD ===")
+    print(f"  mode:   {rec.mode}")
+    print(f"  squad:  {rec.squad}")
+    print(f"  reason: {rec.reason}")
+    if rec.requested_achievements:
+        print(f"  targets: {', '.join(rec.requested_achievements)}")
+    if rec.remaining_achievements:
+        print(f"  remaining in bucket: {', '.join(rec.remaining_achievements)}")
+    print(f"  setup:  {rec.ui_setup}")
+    for warning in rec.warnings:
+        print(f"  warning: {warning}")
+
     _print_result(result)
     return result
 
@@ -5138,15 +5170,24 @@ def cmd_status(profile: str = "Alpha") -> dict:
     return result
 
 
-def cmd_new_run(squad: str, achievements: list[str] = None,
-                difficulty: int = 0, tags: list[str] = None) -> dict:
+def cmd_new_run(squad: str | None = None, achievements: list[str] = None,
+                difficulty: int = 0, tags: list[str] = None,
+                mode: str | None = None) -> dict:
     """Initialize a new run session.
 
     ``tags`` flags the run for downstream filtering. Use ``["audit"]`` for
     environment-audit playthroughs so the failures generated during the
     audit don't pollute the tuner training corpus.
     """
-    session = RunSession.new_run(squad, achievements, difficulty, tags=tags)
+    setup = recommend_squad_for_run(
+        squad=squad,
+        achievements=achievements or [],
+        tags=tags or [],
+        mode=mode,
+    )
+    session = RunSession.new_run(
+        setup.squad, achievements, difficulty, tags=tags,
+    )
     # Sync difficulty from save file when available — the --difficulty CLI
     # flag is a default for the metadata, but the save file is authoritative
     # once the game has written one (matches the cross-check in
@@ -5194,7 +5235,9 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
 
     logger = DecisionLog(session.run_id)
     logger.log_custom("New Run", (
-        f"Squad: {squad}\n"
+        f"Squad: {setup.squad}\n"
+        f"Setup mode: {setup.mode}\n"
+        f"Setup reason: {setup.reason}\n"
         f"Achievements: {achievements or 'none'}\n"
         f"Difficulty: {session.difficulty}\n"
         f"Tags: {tags or 'none'}"
@@ -5202,17 +5245,23 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
 
     result = {
         "run_id": session.run_id,
-        "squad": squad,
+        "squad": setup.squad,
+        "setup": setup.to_dict(),
         "difficulty": session.difficulty,
         "achievements": achievements or [],
         "tags": tags or [],
     }
     print(f"\nNew run initialized: {session.run_id}")
-    print(f"  Squad: {squad}")
+    print(f"  Mode: {setup.mode}")
+    print(f"  Squad: {setup.squad}")
+    print(f"  Setup: {setup.ui_setup}")
+    print(f"  Reason: {setup.reason}")
     if achievements:
         print(f"  Targeting: {', '.join(achievements)}")
     if tags:
         print(f"  Tags: {', '.join(tags)}")
+    for warning in setup.warnings:
+        print(f"  Warning: {warning}")
 
     _print_result(result)
     return result
@@ -5284,8 +5333,13 @@ def cmd_log(message: str) -> dict:
 # --- Helpers ---
 
 
-def cmd_achievements() -> dict:
-    """Query Steam for current Into the Breach achievement status."""
+def cmd_achievements(sync_local: bool = False) -> dict:
+    """Query Steam for current Into the Breach achievement status.
+
+    When ``sync_local`` is true, also updates
+    ``data/achievements_detailed.json`` so ``recommend_squad`` plans from the
+    latest Steam state.
+    """
     import urllib.request
     from pathlib import Path
 
@@ -5329,10 +5383,28 @@ def cmd_achievements() -> dict:
         "unlocked_list": [a.get("name", a["apiname"]) for a in unlocked],
     }
 
+    if sync_local:
+        try:
+            result["sync"] = sync_achievement_details(achievements)
+        except Exception as e:
+            result["sync_error"] = str(e)
+
     print(f"\n=== STEAM ACHIEVEMENTS: {len(unlocked)}/{len(achievements)} ===\n")
     for a in sorted(unlocked, key=lambda x: x.get("unlocktime", 0)):
         print(f"  ✅ {a.get('name', a['apiname'])}")
     print(f"\n  ❌ {len(locked)} remaining\n")
+    if sync_local:
+        sync = result.get("sync")
+        if sync:
+            print("  Local achievement metadata synced:")
+            print(f"    file: {sync['path']}")
+            print(f"    matched: {sync['matched']}/{sync['local_total']}")
+            print(f"    completed: {sync['local_completed']}/{sync['local_total']}")
+            print(f"    changed flags: {sync['status_changed']}")
+            if sync.get("unmatched_local"):
+                print(f"    unmatched local names: {len(sync['unmatched_local'])}")
+        else:
+            print(f"  Local sync failed: {result.get('sync_error', 'unknown')}")
 
     _print_result(result)
     return result

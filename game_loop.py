@@ -13,7 +13,7 @@ Usage:
   python game_loop.py end_turn          # Plan clicks for End Turn button
   python game_loop.py status            # Quick state summary
 
-  python game_loop.py new_run <squad> [--achieve X Y]  # Start new run
+  python game_loop.py new_run [squad] [--achieve X Y]  # Start new run
   python game_loop.py snapshot <label>  # Save state for regression
   python game_loop.py log <message>     # Append to decision log
 
@@ -49,6 +49,7 @@ from src.loop.commands import (
     cmd_click_end_turn,
     cmd_click_balanced_roll,
     cmd_deploy_recommended,
+    cmd_recommend_squad,
     cmd_recommend_mission,
     cmd_research_attach_community,
     cmd_research_next,
@@ -360,8 +361,30 @@ def main():
     # click_balanced_roll
     sub.add_parser(
         "click_balanced_roll",
-        help="Plan a click for the Balanced Roll button on squad-select",
+        help="Plan a click for Balanced Roll on squad-select",
     )
+
+    # recommend_squad
+    p_rec_squad = sub.add_parser(
+        "recommend_squad",
+        help="Recommend a squad/setup for achievement hunt vs solver eval",
+    )
+    p_rec_squad.add_argument(
+        "squad",
+        nargs="?",
+        default=None,
+        help="Optional explicit squad name, or 'auto' for strategy selection",
+    )
+    p_rec_squad.add_argument("--achieve", nargs="*", default=[],
+                             help="Achievement targets")
+    p_rec_squad.add_argument(
+        "--mode",
+        choices=["achievement_hunt", "solver_eval", "random_squad", "custom"],
+        default=None,
+        help="Run setup mode. Defaults from tags/targets.",
+    )
+    p_rec_squad.add_argument("--tags", nargs="*", default=[],
+                             help="Run classification tags")
 
     p_deploy_recommended = sub.add_parser(
         "deploy_recommended",
@@ -392,10 +415,21 @@ def main():
 
     # new_run
     p_new = sub.add_parser("new_run", help="Initialize a new run session")
-    p_new.add_argument("squad", help="Squad name")
+    p_new.add_argument(
+        "squad",
+        nargs="?",
+        default=None,
+        help="Squad name, or omit/use 'auto' to pick for achievement hunting",
+    )
     p_new.add_argument("--achieve", nargs="*", default=[],
                        help="Achievement targets")
     p_new.add_argument("--difficulty", type=int, default=0)
+    p_new.add_argument(
+        "--mode",
+        choices=["achievement_hunt", "solver_eval", "random_squad", "custom"],
+        default=None,
+        help="Run setup mode. Use solver_eval to keep Balanced Roll.",
+    )
     p_new.add_argument("--tags", nargs="*", default=[],
                        help="Run classification tags (e.g. 'audit' to exclude "
                             "from tuner training corpus)")
@@ -413,7 +447,15 @@ def main():
     sub.add_parser("calibrate", help="Show detected window position and grid coordinates")
 
     # achievements
-    sub.add_parser("achievements", help="Query Steam for achievement progress")
+    p_achievements = sub.add_parser(
+        "achievements",
+        help="Query Steam for achievement progress",
+    )
+    p_achievements.add_argument(
+        "--sync",
+        action="store_true",
+        help="Update data/achievements_detailed.json from Steam results",
+    )
 
     # replay
     p_replay = sub.add_parser("replay",
@@ -552,6 +594,13 @@ def main():
         cmd_click_balanced_roll()
     elif args.command == "deploy_recommended":
         cmd_deploy_recommended(profile=args.profile)
+    elif args.command == "recommend_squad":
+        cmd_recommend_squad(
+            args.squad,
+            args.achieve,
+            tags=args.tags,
+            mode=args.mode,
+        )
     elif args.command == "recommend_mission":
         cmd_recommend_mission(
             profile=args.profile,
@@ -590,7 +639,13 @@ def main():
     elif args.command == "status":
         cmd_status(profile=args.profile)
     elif args.command == "new_run":
-        cmd_new_run(args.squad, args.achieve, args.difficulty, tags=args.tags)
+        cmd_new_run(
+            args.squad,
+            args.achieve,
+            args.difficulty,
+            tags=args.tags,
+            mode=args.mode,
+        )
     elif args.command == "snapshot":
         cmd_snapshot(args.label, profile=args.profile)
     elif args.command == "log":
@@ -598,7 +653,7 @@ def main():
     elif args.command == "calibrate":
         cmd_calibrate()
     elif args.command == "achievements":
-        cmd_achievements()
+        cmd_achievements(sync_local=args.sync)
     elif args.command == "replay":
         cmd_replay(args.run_id, args.turn, args.time_limit, mission=args.mission,
                    use_rust=not args.no_rust)
