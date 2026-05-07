@@ -85,8 +85,12 @@ VEK_STATS = {
     "Digger2":       PawnStats(move_speed=3, ranged=0),
     "Burrower1":     PawnStats(move_speed=4, ranged=0, pushable=False),
     "Burrower2":     PawnStats(move_speed=4, ranged=0, pushable=False),
-    "Spider1":       PawnStats(move_speed=2, ranged=0, pushable=False),
-    "Spider2":       PawnStats(move_speed=2, ranged=0, pushable=False),
+    # Normal/Alpha Spiders are pushable. A live Detritus capture
+    # (20260506_114649_974 m22 t04) had Repulse push Spider1 from E5 to E6;
+    # marking them non-pushable made Rust suppress that move and safety-block
+    # the partial re-solve.
+    "Spider1":       PawnStats(move_speed=2, ranged=0),
+    "Spider2":       PawnStats(move_speed=2, ranged=0),
     "Blobber1":      PawnStats(move_speed=2, ranged=1),
     "Blobber2":      PawnStats(move_speed=2, ranged=1),
     # Advanced Edition Vek

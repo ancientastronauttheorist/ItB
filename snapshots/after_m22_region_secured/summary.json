@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-05-07T12:54:53.532770",
+  "label": "after_m22_region_secured",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "Missile_Unit",
+      "pos": [
+        1,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        0
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 6
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Centipede2",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Spider1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Leaper2",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        0,
+        3
+      ],
+      "hp": 1
+    }
+  ]
+}

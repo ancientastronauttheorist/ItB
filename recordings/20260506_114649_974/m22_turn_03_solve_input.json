@@ -1,10 +1,15 @@
 {
-  "timestamp": "2026-05-07T12:36:34.682321",
+  "timestamp": "2026-05-07T12:36:40.884369",
   "run_id": "20260506_114649_974",
   "mission_index": 22,
-  "turn": 2,
-  "label": "board",
+  "turn": 3,
+  "label": "solve_input",
   "data": {
+    "schema_version": 1,
+    "simulator_version": 59,
+    "solver_version": "rust-0.1.0-747af73",
+    "time_limit": 10.0,
+    "beam_mode": 0,
     "bridge_state": {
       "island_map_game_seen": "table",
       "spawning_tiles": [
@@ -14,11 +19,11 @@
         ]
       ],
       "grid_power_max": 7,
-      "grid_power": 7,
+      "grid_power": 5,
       "island_map_probe": "scope_alive",
-      "turn": 2,
+      "turn": 3,
       "mission_id": "Mission_Missiles",
-      "master_seed": 1417999386,
+      "master_seed": 1766966320,
       "total_turns": 4,
       "island_map_debug": "skipped: in active mission",
       "environment_danger": [],
@@ -457,13 +462,13 @@
           5
         ]
       ],
-      "phase": "combat_enemy",
-      "remaining_spawns": 1,
+      "phase": "combat_player",
+      "remaining_spawns": 0,
       "mission_kills_done": 0,
       "units": [
         {
           "web": false,
-          "active": false,
+          "active": true,
           "shield": false,
           "hp": 2,
           "flying": false,
@@ -485,11 +490,13 @@
           "fire": false,
           "mech": false,
           "acid": false,
-          "frozen": false
+          "frozen": false,
+          "ranged": 1,
+          "pushable": false
         },
         {
           "web": false,
-          "active": false,
+          "active": true,
           "base_move": 4,
           "hp": 4,
           "flying": true,
@@ -516,18 +523,20 @@
           "type": "JetMech",
           "mech": true,
           "uid": 0,
-          "pilot_id": "Pilot_Original"
+          "pilot_id": "Pilot_Original",
+          "ranged": 0,
+          "pilot_value": 0.6
         },
         {
           "web": true,
-          "active": false,
+          "active": true,
           "base_move": 3,
           "hp": 6,
           "flying": false,
           "pilot_level": 2,
           "team": 1,
           "massive": true,
-          "web_source_uid": 642,
+          "web_source_uid": 689,
           "web_probes": {
             "IsGrappled": true
           },
@@ -550,11 +559,13 @@
           "type": "RocketMech",
           "mech": true,
           "uid": 1,
-          "pilot_id": "Pilot_Detritus"
+          "pilot_id": "Pilot_Detritus",
+          "ranged": 0,
+          "pilot_value": 0.85
         },
         {
           "web": false,
-          "active": false,
+          "active": true,
           "base_move": 4,
           "hp": 5,
           "flying": false,
@@ -567,7 +578,7 @@
           "max_hp": 3,
           "move": 5,
           "weapons": [
-            "Science_Repulse"
+            "Science_Repulse_A"
           ],
           "frozen": false,
           "pilot_skills": [
@@ -582,7 +593,9 @@
           "type": "PulseMech",
           "mech": true,
           "uid": 2,
-          "pilot_id": "Pilot_Repairman"
+          "pilot_id": "Pilot_Repairman",
+          "ranged": 0,
+          "pilot_value": 0.7
         },
         {
           "web": false,
@@ -600,8 +613,8 @@
           "move": 2,
           "x": 5,
           "queued_target": [
-            5,
-            1
+            4,
+            2
           ],
           "has_queued_attack": true,
           "weapons": [
@@ -615,7 +628,8 @@
           "fire": false,
           "mech": false,
           "acid": true,
-          "frozen": false
+          "frozen": false,
+          "ranged": 1
         },
         {
           "web": false,
@@ -644,7 +658,9 @@
           "fire": false,
           "mech": false,
           "acid": true,
-          "frozen": false
+          "frozen": false,
+          "ranged": 0,
+          "pushable": false
         },
         {
           "web": false,
@@ -654,18 +670,14 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
-          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 3,
           "move": 3,
+          "weapon_target_behind": false,
           "x": 5,
-          "queued_target": [
-            5,
-            2
-          ],
-          "has_queued_attack": true,
+          "has_queued_attack": false,
           "weapons": [
             "BouncerAtk1"
           ],
@@ -677,7 +689,8 @@
           "fire": false,
           "mech": false,
           "acid": false,
-          "frozen": false
+          "frozen": false,
+          "ranged": 0
         },
         {
           "web": false,
@@ -694,7 +707,7 @@
           "move": 4,
           "weapon_target_behind": false,
           "x": 5,
-          "has_queued_attack": true,
+          "has_queued_attack": false,
           "weapons": [
             "LeaperAtk2"
           ],
@@ -706,7 +719,8 @@
           "fire": false,
           "mech": false,
           "acid": false,
-          "frozen": false
+          "frozen": false,
+          "ranged": 0
         },
         {
           "web": false,
@@ -723,7 +737,7 @@
           "move": 4,
           "weapon_target_behind": false,
           "x": 6,
-          "has_queued_attack": true,
+          "has_queued_attack": false,
           "weapons": [
             "LeaperAtk1"
           ],
@@ -735,7 +749,8 @@
           "fire": false,
           "mech": false,
           "acid": false,
-          "frozen": false
+          "frozen": false,
+          "ranged": 0
         },
         {
           "web": false,
@@ -745,13 +760,17 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
+          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 1,
           "move": 0,
-          "weapon_target_behind": false,
           "x": 3,
+          "queued_target": [
+            3,
+            5
+          ],
           "has_queued_attack": true,
           "weapons": [
             "WebeggHatch1"
@@ -764,7 +783,8 @@
           "fire": false,
           "mech": false,
           "acid": false,
-          "frozen": false
+          "frozen": false,
+          "ranged": 0
         }
       ],
       "difficulty": 0,
@@ -779,100 +799,88 @@
         },
         "region2": {
           "state": 0,
-          "turn": 2,
+          "turn": 3,
           "mission": "Mission1",
-          "ai_seed": 1820384122
+          "ai_seed": 1741934747
         }
       },
       "environment_danger_v2": [],
-      "timestamp": 1778175394,
+      "timestamp": 1778175400,
       "in_active_mission": true,
       "attack_order": [
         622,
-        626,
-        642,
-        663,
         689
       ],
-      "is_infinite_spawn": true
-    },
-    "result_summary": {
-      "phase": "combat_enemy",
-      "source": "bridge",
-      "turn": 2,
-      "grid_power": "7/7",
-      "mechs": [
+      "is_infinite_spawn": true,
+      "weapon_upgrade_overlays": [
         {
-          "type": "Missile_Unit",
-          "pos": "E7",
-          "hp": "2/2",
-          "weapon": "Shield Barrage",
-          "status": "DONE"
-        },
-        {
-          "type": "JetMech",
-          "pos": "H3",
-          "hp": "4/2",
-          "weapon": "Aerial Bombs",
-          "status": "DONE"
-        },
-        {
-          "type": "RocketMech",
-          "pos": "D5",
-          "hp": "6/3",
-          "weapon": "Rocket Artillery",
-          "status": "DONE"
-        },
-        {
-          "type": "PulseMech",
-          "pos": "H4",
-          "hp": "5/3",
-          "weapon": "Repulse",
-          "status": "DONE"
+          "uid": 2,
+          "slot": 0,
+          "base": "Science_Repulse",
+          "upgraded": "Science_Repulse_A"
         }
       ],
-      "active_mechs": 0,
-      "enemies": [
+      "eval_weights": {
+        "building_alive": 10000,
+        "building_hp": 2000,
+        "grid_power": 5000,
+        "enemy_killed": 500,
+        "enemy_hp_remaining": -100,
+        "enemy_threat_remaining": -4000,
+        "mech_killed": -150000,
+        "mech_hp": 100,
+        "spawn_blocked": 3000,
+        "pod_uncollected": -100,
+        "pod_proximity": 50,
+        "enemy_on_danger": 800,
+        "threats_cleared": 4000,
+        "body_block_bonus": 0,
+        "building_coverage": 50,
+        "uncovered_building": -500,
+        "psion_blast": 2000,
+        "psion_shell": 1500,
+        "psion_soldier": 4000,
+        "psion_blood": 1600,
+        "psion_tyrant": 2500,
+        "enemy_on_fire_bonus": 100,
+        "mech_on_acid": -200,
+        "mech_low_hp_risk": -2000,
+        "friendly_npc_killed": -20000,
+        "perfect_defense_bonus": 6000,
+        "mech_sacrifice_at_critical": 0,
+        "grid_urgency_critical": 8.0,
+        "grid_urgency_high": 4.0,
+        "grid_urgency_medium": 3.0,
+        "enemy_on_fire": 0,
+        "enemy_pushed_into_enemy": 0,
+        "chain_damage": 0,
+        "smoke_placed": 0,
+        "tiles_frozen": 0,
+        "dam_destroyed": 8000,
+        "mission_kill_bonus": 15000,
+        "mech_self_frozen": -12000,
+        "building_bump_damage": -8000,
+        "building_objective_bonus": 8000,
+        "grid_reward_building_bonus": 25000,
+        "boss_killed_bonus": 8000,
+        "bld_grid_floor": 1.5,
+        "bld_grid_scale": -0.5,
+        "bld_phase_floor": 1.0,
+        "bld_phase_scale": 0.0,
+        "building_preservation_threshold": 0.05,
+        "dam_damage_dealt": 4000
+      },
+      "disabled_actions": [
         {
-          "type": "Centipede2",
-          "pos": "F3",
-          "hp": "5/5",
-          "target": " \u2192 G3"
-        },
-        {
-          "type": "Spider1",
-          "pos": "E5",
-          "hp": "1/2",
-          "target": ""
-        },
-        {
-          "type": "Bouncer1",
-          "pos": "E3",
-          "hp": "3/3",
-          "target": " \u2192 F3"
-        },
-        {
-          "type": "Leaper2",
-          "pos": "D3",
-          "hp": "3/3",
-          "target": ""
-        },
-        {
-          "type": "Leaper1",
-          "pos": "C2",
-          "hp": "1/1",
-          "target": ""
-        },
-        {
-          "type": "WebbEgg1",
-          "pos": "C5",
-          "hp": "1/1",
-          "target": ""
+          "weapon_id": "Missiles_OneDmg",
+          "cause_pattern": "death|Missiles_OneDmg|attack",
+          "expires_turn": 5,
+          "strategic_override": false
         }
       ],
-      "threatened_buildings": 0,
-      "targeted_tiles": 4,
-      "spawn_points": 1
+      "bonus_objective_unit_types": [],
+      "destroy_objective_unit_types": [],
+      "protect_objective_unit_types": []
     }
   }
 }

@@ -948,7 +948,15 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   `illegal_leap_landing:x:y:reason` replay event instead of letting
 //   diagnostic score_plan/replay inputs stack units on blocked tiles.
 //   Pre-v57 corpus archived as `failure_db_snapshot_sim_v56.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 59;
+// v58 - Detritus Contraption weapons are modeled as global non-source unit
+//   effects. Pre-v58 corpus archived as `failure_db_snapshot_sim_v57.jsonl`.
+// v59 - Detritus barrage targeting excludes the source tile and soft-disable
+//   masks cover WId >= 128. Pre-v59 corpus archived as
+//   `failure_db_snapshot_sim_v58.jsonl`.
+// v60 - Static Spider1/Spider2 pawn stats are pushable; solve payloads no
+//   longer inject false `pushable=false` for normal/alpha Spiders. Pre-v60
+//   corpus archived as `failure_db_snapshot_sim_v59.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 60;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
