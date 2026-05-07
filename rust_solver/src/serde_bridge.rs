@@ -525,7 +525,7 @@ pub fn board_from_json(json_str: &str)
                 (-1, -1)
             };
 
-            let move_speed = ju.move_speed.unwrap_or(3);
+            let move_speed = ju.move_speed.or(ju.base_move).unwrap_or(3);
             let mut unit = Unit {
                 uid: ju.uid.unwrap_or(board.unit_count as u16),
                 pawn_type: PawnType(0),
@@ -855,5 +855,51 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.tile(5, 5).terrain, Terrain::Ice);
+    }
+
+    #[test]
+    fn test_unit_move_speed_falls_back_to_base_move() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "JetMech",
+                    "x": 2,
+                    "y": 4,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 1,
+                    "mech": true,
+                    "active": true,
+                    "base_move": 4,
+                    "weapons": ["Brute_Jetmech"]
+                },
+                {
+                    "uid": 2,
+                    "type": "PulseMech",
+                    "x": 3,
+                    "y": 2,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "active": true,
+                    "move": 0,
+                    "base_move": 4,
+                    "weapons": ["Science_Repulse"]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.units[0].move_speed, 4);
+        assert_eq!(board.units[0].base_move, 4);
+        assert_eq!(board.units[1].move_speed, 0);
+        assert_eq!(board.units[1].base_move, 4);
     }
 }

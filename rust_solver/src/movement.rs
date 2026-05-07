@@ -25,6 +25,25 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     let mut result = Vec::with_capacity(20);
     result.push((ux, uy)); // always include current position
 
+    if flying {
+        for x in 0..8u8 {
+            for y in 0..8u8 {
+                if (x, y) == (ux, uy) {
+                    continue;
+                }
+                let dist = (x as i8 - ux as i8).unsigned_abs()
+                    + (y as i8 - uy as i8).unsigned_abs();
+                if dist > speed {
+                    continue;
+                }
+                if !board.is_blocked(x, y, true) {
+                    result.push((x, y));
+                }
+            }
+        }
+        return result;
+    }
+
     // BFS: visited[x*8+y] = min cost to reach, 255 = unvisited
     let mut visited = [255u8; 64];
     visited[xy_to_idx(ux, uy)] = 0;
@@ -247,6 +266,23 @@ mod tests {
         board.tile_mut(0, 1).terrain = Terrain::Water;
         let tiles = reachable_tiles(&board, idx);
         assert!(tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn test_flying_crosses_enemy_blockers() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, true);
+        let mut blocker = Unit::default();
+        blocker.uid = 2;
+        blocker.x = 1;
+        blocker.y = 0;
+        blocker.hp = 2;
+        blocker.team = Team::Enemy;
+        board.add_unit(blocker);
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(1, 0)));
+        assert!(tiles.contains(&(2, 0)));
+        assert!(tiles.contains(&(3, 0)));
     }
 
     #[test]
