@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/173q0mj",
+      "excerpt": "Daily discussion lists Alpha Firefly as Enemy, HP 5, Move 2, Enhanced Thorax, Damage 3, direct-line goo projectile.",
+      "confidence": 0.8
+    },
+    {
+      "source": "wiki",
+      "url": "https://intothebreach.fandom.com/wiki/Firefly",
+      "excerpt": "Firefly family page describes Fireflies as Vek that shoot projectiles in a direct line; Alpha Firefly is part of the alpha Vek set.",
+      "confidence": 0.7
+    }
+  ]
+}

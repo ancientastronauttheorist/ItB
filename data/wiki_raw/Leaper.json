@@ -130,5 +130,18 @@
     "Strategy": "Leapers are dangerous due to their webbing, high damage, and high mobility, but their low health makes them trivial for most starting Mechs to kill. Try to stay out of their movement range whenever possible, as it will force them to waste their web ability on grid buildings. Eliminate them as soon as you are able; preferably using collateral bump damage, or by moving another Vek to attack them."
   },
   "full_text": "Leaper\nDetails\nHealth\n1\nMove\n4\nSystems\nFangs\n(\nEnemy\n)\nEffect\nWeb a target, preparing to stab it for 3 damage.\nSpecial\nTemplate:Jumper\nThe\nLeaper\nis a\nVek\nfrom\nInto The Breach\n.\nDescription\n[\n]\nLeapers jump to their destination and avoid all obstacles in the way. After they move they will web an adjacent target and prepare to stab it during the enemy turn for 3 damage.\nLeapers cannot spawn alongside the\nScorpion\n.\nStrategy\n[\n]\nLeapers are dangerous due to their webbing, high damage, and high mobility, but their low health makes them trivial for most starting Mechs to kill. Try to stay out of their movement range whenever possible, as it will force them to waste their web ability on grid buildings. Eliminate them as soon as you are able; preferably using collateral bump damage, or by moving another Vek to attack them.\nv\n\u00b7\nd\n\u00b7\ne\nVek\nVek\nBeetle\n\u2022\nBlobber\n\u2022\nBurrower\n\u2022\nCentipede\n\u2022\nCrab\n\u2022\nDigger\n\u2022\nFirefly\n\u2022\nHornet\n\u2022\nLeaper\n\u2022\nScarab\n\u2022\nScorpion\n\u2022\nSpider\n\u2022\nVolatile Vek\nVek (Advanced Edition)\nBouncer\n\u2022\nGastropod\n\u2022\nMosquito\n\u2022\nMoth\n\u2022\nPlasmodia\n\u2022\nStarfish\n\u2022\nTumblebug\nAlpha Vek\nAlpha Beetle\n\u2022\nAlpha Blobber\n\u2022\nAlpha Burrower\n\u2022\nAlpha Centipede\n\u2022\nAlpha Crab\n\u2022\nAlpha Digger\n\u2022\nAlpha Firefly\n\u2022\nAlpha Hornet\n\u2022\nAlpha Leaper\n\u2022\nAlpha Scarab\n\u2022\nAlpha Scorpion\n\u2022\nAlpha Spider\nAlpha Vek (Advanced Edition)\nAlpha Bouncer\n\u2022\nAlpha Gastropod\n\u2022\nAlpha Mosquito\n\u2022\nAlpha Moth\n\u2022\nAlpha Plasmodia\n\u2022\nAlpha Starfish\n\u2022\nAlpha Tumblebug\nVek Psions\nBlast Psion\n\u2022\nBlood Psion\n\u2022\nShell Psion\n\u2022\nSoldier Psion\nVek Psions (Advanced Edition)\nArachnid Psion\n\u2022\nRaging Psion\n\u2022\nSmoldering Psion\nVek Minions\nBlob\n\u2022\nAlpha Blob\n\u2022\nSpiderling Egg\n\u2022\nSpiderling\n\u2022\nAlpha Spiderling\nVek Minions (Advanced Edition)\nSpore\n\u2022\nAlpha Spore\n\u2022\nVicious Spore\n\u2022\nBlob Leader\nVek Leaders\nBeetle Leader\n\u2022\nFirefly Leader\n\u2022\nHornet Leader\n\u2022\nLarge Goo\n(\nMedium Goo\n) (\nSmall Goo\n) \u2022\nPsion Abomination\n\u2022\nScorpion Leader\n\u2022\nSpider Leader\nVek Leaders (Advanced Edition)\nBlobber Leader\n\u2022\nBouncer Leader\n\u2022\nCentipede Leader\n\u2022\nCrab Leader\n\u2022\nGastropod Leader\n\u2022\nMosquito Leader\n\u2022\nPlasmodia Leader\n\u2022\nScarab Leader\n\u2022\nStarfish Leader\n\u2022\nTumblebug Leader",
-  "community_notes": []
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/search/?q=Leaper&restrict_sr=1",
+      "excerpt": "Community discussions identify Leapers as melee webbing Vek; basic Leaper is a 1 HP jumper with high movement.",
+      "confidence": 0.6
+    },
+    {
+      "source": "wiki",
+      "url": "https://intothebreach.fandom.com/wiki/Leaper",
+      "excerpt": "Leaper family page describes Leapers as jumping Vek that web adjacent targets with melee attacks.",
+      "confidence": 0.7
+    }
+  ]
 }

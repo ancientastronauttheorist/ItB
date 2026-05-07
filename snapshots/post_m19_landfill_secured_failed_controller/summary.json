@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-05-06T20:13:17.651654",
+  "label": "post_m19_landfill_secured_failed_controller",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Storm_Generator",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Spider1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly2",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer2",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Fire1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 1
+    }
+  ]
+}

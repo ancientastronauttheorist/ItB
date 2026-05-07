@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T20:15:59.406862",
+  "label": "research_gate_m20_t1_behavior_novelty",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Leaper1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer2",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 4
+    }
+  ]
+}

@@ -10,55 +10,7 @@
   "last_mission_turn": 1,
   "current_turn": 1,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          1,
-          6
-        ],
-        "weapon": "Brute_Jetmech",
-        "target": [
-          3,
-          6
-        ],
-        "description": "JetMech, move D6\u2192B7, fire Aerial Bombs at B5"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
-        "move_to": [
-          3,
-          2
-        ],
-        "weapon": "Science_Repulse_A",
-        "target": [
-          3,
-          2
-        ],
-        "description": "PulseMech, fire Repulse at F5"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
-        "move_to": [
-          3,
-          5
-        ],
-        "weapon": "Ranged_Rocket",
-        "target": [
-          3,
-          3
-        ],
-        "description": "RocketMech, fire Rocket Artillery at E5"
-      }
-    ],
-    "score": 84280.85717357909,
-    "turn": 1,
-    "input_fingerprint": "0:2,4:6|1:3,5:7|2:3,2:5|416:3,4:1|417:3,3:3|418:5,4:4"
-  },
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -843,28 +795,6 @@
         "JetMech, move D2\u2192C2, fire Aerial Bombs at C4",
         "PulseMech, fire Repulse at D6",
         "RocketMech, move E5\u2192C6, fire Rocket Artillery at F6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T20:17:25.395033",
-      "turn": 1,
-      "label": "solve",
-      "score": 84280.85717357909,
-      "actions": [
-        "JetMech, move D6\u2192B7, fire Aerial Bombs at B5",
-        "PulseMech, fire Repulse at F5",
-        "RocketMech, fire Rocket Artillery at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T20:17:44.254407",
-      "turn": 1,
-      "label": "solve",
-      "score": 84280.85717357909,
-      "actions": [
-        "JetMech, move D6\u2192B7, fire Aerial Bombs at B5",
-        "PulseMech, fire Repulse at F5",
-        "RocketMech, fire Rocket Artillery at E5"
       ]
     }
   ],
@@ -2655,40 +2585,13 @@
       "slot": null,
       "mission_id": "Mission_AcidStorm",
       "first_seen_turn": 4,
-      "attempts": 2,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Leaper",
-            "hp": 0,
-            "move": 4,
-            "class_icons": [],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Leaper",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Leaper",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Leaper&restrict_sr=1"
-          }
-        }
-      },
+      "attempts": 1,
+      "status": "pending",
+      "result": null,
       "diff_field": "status.web",
       "diff_predicted": false,
       "diff_actual": true,
-      "severity": "medium",
-      "research_id": "29d6e9916d88",
-      "last_kind": "enemy"
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
