@@ -964,7 +964,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   ordinary movement; v61 accidentally used the pre-move tile except on
 //   teleporter pads. Pre-v62 corpus archived as
 //   `failure_db_snapshot_sim_v61.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 62;
+// v63 - Partial re-solves now re-apply save-file upgraded weapon overlays so
+//   upgraded semantics such as Science_Repulse_A Shield Self remain predicted
+//   after an earlier turn desync. Pre-v63 corpus archived as
+//   `failure_db_snapshot_sim_v62.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 63;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

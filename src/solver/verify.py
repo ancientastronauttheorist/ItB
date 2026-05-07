@@ -551,7 +551,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v62 - Move-then-attack enumeration again targets from the post-move tile for
 # ordinary movement; v61 accidentally used the pre-move tile except on
 # teleporter pads. Pre-v62 corpus archived as failure_db_snapshot_sim_v61.jsonl.
-SIMULATOR_VERSION = 62
+# v63 - Partial re-solves now re-apply save-file upgraded weapon overlays so
+# upgraded semantics such as Science_Repulse_A Shield Self remain predicted
+# after an earlier turn desync. Pre-v63 corpus archived as
+# failure_db_snapshot_sim_v62.jsonl.
+SIMULATOR_VERSION = 63
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

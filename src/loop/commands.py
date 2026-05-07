@@ -5831,6 +5831,11 @@ def _re_solve_partial(
             # All others keep their current active/can_move state
         _infer_webb_egg_adjacency(bridge_data["units"])
 
+    # Keep partial re-solves semantically aligned with the initial live solve:
+    # the Lua bridge reports base SkillList IDs, while powered upgrades such as
+    # Science_Repulse_A change prediction semantics.
+    _enrich_bridge_mech_weapons_from_save(bridge_data)
+
     # Load weights
     weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
     weights_payload = None

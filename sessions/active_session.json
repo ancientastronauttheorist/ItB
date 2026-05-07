@@ -4,32 +4,60 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Teleporter",
+  "current_mission": "Mission_ScorpionBoss",
   "islands_completed": [],
-  "mission_index": 23,
-  "last_mission_turn": 4,
-  "current_turn": 4,
-  "phase": "unknown",
+  "mission_index": 24,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "RocketMech",
+        "move_to": [
+          5,
+          4
+        ],
+        "weapon": "Ranged_Rocket",
+        "target": [
+          3,
+          4
+        ],
+        "description": "RocketMech, move F5\u2192D3, fire Rocket Artillery at D5"
+      },
       {
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
           5,
-          4
+          5
         ],
         "weapon": "Brute_Jetmech",
         "target": [
-          5,
-          1
+          7,
+          5
         ],
-        "description": "JetMech, move G1\u2192D3, fire Aerial Bombs at G3"
+        "description": "JetMech, move D6\u2192C3, fire Aerial Bombs at C1"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "PulseMech",
+        "move_to": [
+          4,
+          2
+        ],
+        "weapon": "Science_Repulse_A",
+        "target": [
+          4,
+          2
+        ],
+        "description": "PulseMech, move E7\u2192F4, fire Repulse at F4"
       }
     ],
-    "score": 107571.28573380198,
-    "turn": 4,
-    "input_fingerprint": "0:7,1:5|1:3,5:6|2:5,3:5|735:7,5:1|736:4,2:3|737:7,3:3|738:5,2:3"
+    "score": 119000.0,
+    "turn": 1,
+    "input_fingerprint": "0:2,4:6|1:3,2:7|2:1,3:5|744:5,2:7|745:3,4:3|746:6,5:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -1122,6 +1150,17 @@
       "score": 107571.28573380198,
       "actions": [
         "JetMech, move G1\u2192D3, fire Aerial Bombs at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-07T13:52:33.895211",
+      "turn": 1,
+      "label": "solve",
+      "score": 119000.0,
+      "actions": [
+        "RocketMech, move F5\u2192D3, fire Rocket Artillery at D5",
+        "JetMech, move D6\u2192C3, fire Aerial Bombs at C1",
+        "PulseMech, move E7\u2192F4, fire Repulse at F4"
       ]
     }
   ],
@@ -2558,19 +2597,95 @@
           1
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "status|Ranged_Rocket|move",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 1,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Repulse|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Science_Repulse",
+        "target": [
+          4,
+          2
+        ]
+      }
     }
   ],
   "disabled_actions": [
     {
-      "weapon_id": "Ranged_Rocket",
-      "cause_pattern": "death|Ranged_Rocket|attack",
-      "expires_turn": 6,
-      "strategic_override": false
-    },
-    {
-      "weapon_id": "Science_Repulse_A",
-      "cause_pattern": "death|Science_Repulse_A|attack",
-      "expires_turn": 7,
+      "weapon_id": "Science_Repulse",
+      "cause_pattern": "status|Science_Repulse|attack",
+      "expires_turn": 4,
       "strategic_override": false
     }
   ],
@@ -3650,10 +3765,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "6ebbdbe4a11c2d6c",
-    "classes": "mggggggmmgbbgbgmggbbgbgmgggggggggggbgggggwgggwgggwwgwwgggggggggm",
-    "mission_index": 23,
-    "turn": 4
+    "hash": "690ac1fbcc117bb9",
+    "classes": "gggggggggbbggbmmgbbggbwmggggggmwgggggmmmwbggggggwwggggggwwwggggg",
+    "mission_index": 24,
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }
