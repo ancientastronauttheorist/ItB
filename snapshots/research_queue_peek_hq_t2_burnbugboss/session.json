@@ -4,12 +4,12 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_BurnbugBoss",
   "islands_completed": [],
-  "mission_index": 19,
-  "last_mission_turn": -1,
-  "current_turn": 4,
-  "phase": "unknown",
+  "mission_index": 18,
+  "last_mission_turn": 2,
+  "current_turn": 2,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
@@ -17,47 +17,47 @@
         "mech_type": "RocketMech",
         "move_to": [
           2,
-          1
+          6
         ],
         "weapon": "Ranged_Rocket",
         "target": [
           6,
-          1
+          6
         ],
-        "description": "RocketMech, move E6\u2192G6, fire Rocket Artillery at G2"
+        "description": "RocketMech, move C6\u2192B6, fire Rocket Artillery at B2"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
           6,
-          3
+          4
         ],
         "weapon": "Science_Repulse_A",
         "target": [
           6,
-          3
+          4
         ],
-        "description": "PulseMech, fire Repulse at E2"
+        "description": "PulseMech, move G3\u2192D2, fire Repulse at D2"
       },
       {
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
-          6,
-          4
+          7,
+          2
         ],
         "weapon": "Brute_Jetmech",
         "target": [
-          6,
-          6
+          5,
+          2
         ],
-        "description": "JetMech, move G3\u2192D2, fire Aerial Bombs at B2"
+        "description": "JetMech, move E3\u2192F1, fire Aerial Bombs at F3"
       }
     ],
-    "score": 146280.0,
-    "turn": 4,
-    "input_fingerprint": "0:5,1:4|1:2,3:7|2:6,3:5|380:6,4:1|411:5,3:5|412:6,1:3"
+    "score": 143040.00000000017,
+    "turn": 2,
+    "input_fingerprint": "0:5,3:5|1:2,5:7|2:5,1:5|380:6,3:5|383:6,6:3|410:1,6:1"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -760,28 +760,6 @@
         "PulseMech, move G3\u2192D2, fire Repulse at D2",
         "JetMech, move E3\u2192F1, fire Aerial Bombs at F3"
       ]
-    },
-    {
-      "timestamp": "2026-05-06T19:21:52.999065",
-      "turn": 3,
-      "label": "solve",
-      "score": 147420.0,
-      "actions": [
-        "JetMech, move F3\u2192E3, fire Aerial Bombs at G3",
-        "RocketMech, move B6\u2192E6, fire Rocket Artillery at E2",
-        "PulseMech, move D2\u2192E2, fire Repulse at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-06T19:23:09.560495",
-      "turn": 4,
-      "label": "solve",
-      "score": 146280.0,
-      "actions": [
-        "RocketMech, move E6\u2192G6, fire Rocket Artillery at G2",
-        "PulseMech, fire Repulse at E2",
-        "JetMech, move G3\u2192D2, fire Aerial Bombs at B2"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -952,14 +930,6 @@
     [
       18,
       1
-    ],
-    [
-      18,
-      2
-    ],
-    [
-      18,
-      3
     ]
   ],
   "tags": [
@@ -1581,35 +1551,6 @@
           2
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Science_Repulse_A|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Science_Repulse_A",
-        "target": [
-          6,
-          3
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -2210,50 +2151,21 @@
       "slot": null,
       "mission_id": "Mission_BurnbugBoss",
       "first_seen_turn": 2,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Gastropod Leader",
-            "hp": 0,
-            "move": 3,
-            "class_icons": [
-              "boss"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Gastropod Leader",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Gastropod+Leader",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Gastropod+Leader&restrict_sr=1"
-          }
-        }
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "status.fire",
       "diff_predicted": true,
       "diff_actual": false,
-      "severity": "medium",
-      "research_id": "e9109d5a68e1",
-      "last_kind": "enemy"
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "7cdfe8ae43e0a3da",
-    "classes": "mbbggbbmmgggggfmggggggggggbmmbggggbmmbggggggggggmggggggmmrggggrm",
+    "hash": "7964667e52f2f27f",
+    "classes": "mbbggbbmmgggggfmggggggggggbmmbggggbmmbggggggggggmggggggmmmggggmm",
     "mission_index": 18,
-    "turn": 4
+    "turn": 2
   },
   "terrain_stage_change_pending": false
 }

@@ -4,10 +4,10 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_BurnbugBoss",
   "islands_completed": [],
-  "mission_index": 19,
-  "last_mission_turn": -1,
+  "mission_index": 18,
+  "last_mission_turn": 4,
   "current_turn": 4,
   "phase": "unknown",
   "active_solution": {
@@ -1612,7 +1612,14 @@
       }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Science_Repulse_A",
+      "cause_pattern": "death|Science_Repulse_A|attack",
+      "expires_turn": 6,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
       "type": "JetMech",

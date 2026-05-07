@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T19:18:49.579645",
+  "label": "research_queue_peek_hq_t2_burnbugboss",
+  "turn": 2,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "BurnbugBoss",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Blobber1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 1
+    }
+  ]
+}
