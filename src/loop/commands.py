@@ -106,6 +106,9 @@ _COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
 _MODELED_UPGRADED_WEAPONS = {
     "Ranged_Ignite_A",
     "Ranged_Artillerymech_A",
+    "Ranged_Rocket_A",
+    "Ranged_Rocket_B",
+    "Ranged_Rocket_AB",
     "Science_Repulse_A",
     "Science_Repulse_AB",
 }

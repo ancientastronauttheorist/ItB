@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-07T14:20:41.648043",
+  "label": "corporate_hq_secured_v65",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "ScorpionBoss",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 6
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Centipede2",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 5
+    }
+  ]
+}

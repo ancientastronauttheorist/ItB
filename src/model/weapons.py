@@ -337,6 +337,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage (total 3)",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Ranged_Rocket_A": WeaponDef(
+        name="Rocket Artillery", weapon_type="artillery",
+        damage=3, push="forward", smoke_behind_shooter=True, range_min=2,
+        upgrade_a="+1 damage (total 3)",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Ranged_Rocket_B": WeaponDef(
+        name="Rocket Artillery", weapon_type="artillery",
+        damage=3, push="forward", smoke_behind_shooter=True, range_min=2,
+        upgrade_a="+1 damage (total 3)",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Ranged_Rocket_AB": WeaponDef(
+        name="Rocket Artillery", weapon_type="artillery",
+        damage=4, push="forward", smoke_behind_shooter=True, range_min=2,
+        upgrade_a="+1 damage (total 3)",
+        upgrade_b="+1 damage (total 3)",
+    ),
     "Ranged_Ignite": WeaponDef(
         name="Ignite", weapon_type="artillery",
         damage=0, push="outward", fire=True, range_min=2,

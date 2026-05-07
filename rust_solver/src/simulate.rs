@@ -1866,7 +1866,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     if let Some(dir) = attack_dir {
         match wdef.push {
             PushDir::Forward if wdef.aoe_center()  => {
-                if weapon_id == WId::RangedRocket {
+                if is_rocket_artillery(weapon_id) {
                     apply_rocket_center_push(board, tx, ty, dir, result);
                 } else {
                     apply_push(board, tx, ty, dir, result);
@@ -3712,6 +3712,22 @@ mod tests {
             "building behind a killed Rocket target must take 1 bump damage"
         );
         assert_eq!(board.tile(3, 1).terrain, Terrain::Building);
+    }
+
+    #[test]
+    fn test_upgraded_rocket_damage_plus_blocked_bump_kills_alpha_scorpion() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 5, 3, WId::RangedRocketA);
+        let scorpion = add_enemy_type(&mut board, 757, 2, 5, 4, "Scorpion2");
+        board.tile_mut(1, 5).terrain = Terrain::Mountain;
+        board.tile_mut(1, 5).building_hp = 2;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedRocketA, 2, 5);
+
+        assert_eq!(board.units[scorpion].hp, 0);
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.tile(1, 5).building_hp, 1);
+        assert!(board.tile(5, 5).smoke(), "upgraded Rocket still smokes behind shooter");
     }
 
     #[test]

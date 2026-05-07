@@ -563,7 +563,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # by that source, matching Scorpion Leader web cancellation when Rocket smoke
 # lands behind the shooter. Pre-v65 corpus archived as
 # failure_db_snapshot_sim_v64.jsonl.
-SIMULATOR_VERSION = 65
+# v66 - Save-file overlays now recognize Rocket Artillery damage upgrades
+# (`Ranged_Rocket_A/B/AB`), and Rust models their increased damage while
+# preserving Rocket-specific smoke and corpse-push behavior. Pre-v66 corpus
+# archived as failure_db_snapshot_sim_v65.jsonl.
+SIMULATOR_VERSION = 66
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

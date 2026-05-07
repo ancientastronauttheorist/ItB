@@ -146,3 +146,45 @@ def test_artemis_buildings_immune_overlay_from_save(monkeypatch):
         "upgraded": "Ranged_Artillerymech_A",
     }]
     assert bridge_data["units"][0]["weapons"] == ["Ranged_Artillerymech_A"]
+
+
+def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
+    for upgraded in ("Ranged_Rocket_A", "Ranged_Rocket_B", "Ranged_Rocket_AB"):
+        bridge_data = {
+            "units": [
+                {
+                    "uid": 1,
+                    "type": "RocketMech",
+                    "mech": True,
+                    "weapons": ["Ranged_Rocket", "Passive_Electric"],
+                }
+            ]
+        }
+
+        class FakeState:
+            weapons = [
+                "Brute_Jetmech",
+                "",
+                upgraded,
+                "Passive_Electric_A",
+                "Science_Repulse",
+                "",
+            ]
+
+        monkeypatch.setattr(
+            "src.loop.commands.load_game_state",
+            lambda profile="Alpha", state=FakeState(): state,
+        )
+
+        updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+        assert updates == [{
+            "uid": 1,
+            "slot": 0,
+            "base": "Ranged_Rocket",
+            "upgraded": upgraded,
+        }]
+        assert bridge_data["units"][0]["weapons"] == [
+            upgraded,
+            "Passive_Electric",
+        ]

@@ -4,60 +4,60 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Final",
+  "current_mission": "Mission_ScorpionBoss",
   "islands_completed": [],
-  "mission_index": 25,
-  "last_mission_turn": 2,
-  "current_turn": 2,
-  "phase": "combat_player",
+  "mission_index": 24,
+  "last_mission_turn": 4,
+  "current_turn": 4,
+  "phase": "unknown",
   "active_solution": {
     "actions": [
       {
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
-          3,
-          5
+          7,
+          4
         ],
-        "weapon": "Brute_Jetmech",
+        "weapon": "Unknown",
         "target": [
-          1,
-          5
+          255,
+          255
         ],
-        "description": "JetMech, move E3\u2192C5, fire Aerial Bombs at C7"
+        "description": "JetMech, move C3\u2192D1"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "PulseMech",
+        "move_to": [
+          6,
+          2
+        ],
+        "weapon": "Science_Repulse_A",
+        "target": [
+          6,
+          2
+        ],
+        "description": "PulseMech, move F4\u2192F2, fire Repulse at F2"
       },
       {
         "mech_uid": 1,
         "mech_type": "RocketMech",
         "move_to": [
           4,
-          5
+          4
         ],
         "weapon": "Ranged_Rocket",
         "target": [
-          2,
-          5
-        ],
-        "description": "RocketMech, move E6\u2192C4, fire Rocket Artillery at C6"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
-        "move_to": [
-          5,
+          6,
           4
         ],
-        "weapon": "Science_Repulse_A",
-        "target": [
-          5,
-          4
-        ],
-        "description": "PulseMech, fire Repulse at D3"
+        "description": "RocketMech, move E3\u2192D4, fire Rocket Artillery at D2"
       }
     ],
-    "score": 156380.00000000017,
-    "turn": 2,
-    "input_fingerprint": "0:5,3:6|1:2,3:7|2:5,4:5|751:6,5:4|757:2,5:5"
+    "score": 124335.0,
+    "turn": 4,
+    "input_fingerprint": "0:5,5:5|1:5,3:7|2:4,2:5|744:6,3:6|748:5,4:3|749:6,6:5"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -1194,28 +1194,6 @@
         "JetMech, move C3\u2192D1",
         "PulseMech, move F4\u2192F2, fire Repulse at F2",
         "RocketMech, move E3\u2192D4, fire Rocket Artillery at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-07T14:31:12.433951",
-      "turn": 1,
-      "label": "solve",
-      "score": 148400.0,
-      "actions": [
-        "PulseMech, move E6\u2192D3, fire Repulse at D3",
-        "RocketMech, move C6\u2192E6, fire Rocket Artillery at E3",
-        "JetMech, move D5\u2192G3, fire Aerial Bombs at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-07T14:32:35.700395",
-      "turn": 2,
-      "label": "solve",
-      "score": 156380.00000000017,
-      "actions": [
-        "JetMech, move E3\u2192C5, fire Aerial Bombs at C7",
-        "RocketMech, move E6\u2192C4, fire Rocket Artillery at C6",
-        "PulseMech, fire Repulse at D3"
       ]
     }
   ],
@@ -2800,33 +2778,6 @@
           6
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Ranged_Rocket|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Ranged_Rocket",
-        "target": [
-          2,
-          5
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -3902,37 +3853,14 @@
       "diff_predicted": 3,
       "diff_actual": 4,
       "severity": "low"
-    },
-    {
-      "type": "Scorpion2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Final",
-      "first_seen_turn": 2,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "known Alpha Scorpion; final turn 2 desync was Ranged_Rocket_A save overlay/Rust WId missing, fixed in simulator v66",
-        "kind": "behavior_novelty",
-        "attempts": 0,
-        "diff_field": "missing_in_actual",
-        "diff_predicted": "present",
-        "diff_actual": "absent"
-      },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "353087f727db8271",
-    "classes": "mmggbgggmmggmgbggwggggbggwwwgggwgbbgggbwggggggmggbbggggwwwwwggww",
-    "mission_index": 25,
-    "turn": 2
+    "hash": "690ac1fbcc117bb9",
+    "classes": "gggggggggbbggbmmgbbggbwmggggggmwgggggmmmwbggggggwwggggggwwwggggg",
+    "mission_index": 24,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }

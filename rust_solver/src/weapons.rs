@@ -436,9 +436,15 @@ pub enum WId {
     /// Detritus Contraption Missile Barrage: deals 1 weapon damage to every
     /// live unit. Friendly fire is intentional and objective-relevant.
     MissilesOneDmg = 135,
+    /// Rocket Artillery with one +1 Damage upgrade powered.
+    RangedRocketA = 136,
+    /// Rocket Artillery with the alternate +1 Damage upgrade powered.
+    RangedRocketB = 137,
+    /// Rocket Artillery with both +1 Damage upgrades powered.
+    RangedRocketAB = 138,
 }
 
-pub const WEAPON_COUNT: usize = 136;
+pub const WEAPON_COUNT: usize = 139;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -589,6 +595,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // NOT on the target tile. Use SMOKE_BEHIND_SHOOTER (handled in sim_artillery),
     // not SMOKE (which would smoke the target tile).
     w[34] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    // 136-138: Rocket Artillery +1 Damage upgrades. Both preserve Rocket's
+    // smoke-behind-shooter and center corpse-push semantics.
+    w[136] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    w[137] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    w[138] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, push: PushDir::Forward, range_min: 2,
         flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
@@ -964,6 +978,14 @@ pub fn support_wind_dir_from_target(x: u8, y: u8) -> Option<usize> {
     }
 }
 
+#[inline]
+pub fn is_rocket_artillery(id: WId) -> bool {
+    matches!(
+        id,
+        WId::RangedRocket | WId::RangedRocketA | WId::RangedRocketB | WId::RangedRocketAB
+    )
+}
+
 /// Per-field patch applied on top of a base `WeaponDef`. Any `None` field is
 /// left untouched; flag bits set in `flags_set` are OR'd in and bits set in
 /// `flags_clear` are removed. Flags are deltas so two independent fixes on the
@@ -1075,6 +1097,12 @@ pub fn wid_from_str(s: &str) -> WId {
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
+        "Ranged_Rocket_A" => WId::RangedRocketA,
+        "RangedRocketA" => WId::RangedRocketA,
+        "Ranged_Rocket_B" => WId::RangedRocketB,
+        "RangedRocketB" => WId::RangedRocketB,
+        "Ranged_Rocket_AB" => WId::RangedRocketAB,
+        "RangedRocketAB" => WId::RangedRocketAB,
         "Ranged_Ignite" => WId::RangedIgnite,
         "Ranged_Ignite_A" => WId::RangedIgniteA,
         "RangedIgniteA" => WId::RangedIgniteA,
@@ -1222,6 +1250,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
+        WId::RangedRocketA => "Ranged_Rocket_A",
+        WId::RangedRocketB => "Ranged_Rocket_B",
+        WId::RangedRocketAB => "Ranged_Rocket_AB",
         WId::RangedIgnite => "Ranged_Ignite",
         WId::RangedIgniteA => "Ranged_Ignite_A",
         WId::RangedIce => "Ranged_Ice",
@@ -1456,6 +1487,9 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::RangedRockthrow => "Rock Launcher",
         WId::RangedDefensestrike => "Cluster Artillery",
         WId::RangedRocket => "Rocket Artillery",
+        WId::RangedRocketA => "Rocket Artillery",
+        WId::RangedRocketB => "Rocket Artillery",
+        WId::RangedRocketAB => "Rocket Artillery",
         WId::RangedIgnite => "Ignite",
         WId::RangedIgniteA => "Ignite",
         WId::RangedIce => "Cryo-Launcher",
@@ -1601,6 +1635,35 @@ mod tests {
     }
 
     #[test]
+    fn test_rocket_artillery_damage_upgrades() {
+        let base = weapon_def(WId::RangedRocket);
+        assert_eq!(base.damage, 2);
+        assert_eq!(base.push, PushDir::Forward);
+        assert!(base.smoke_behind_shooter());
+
+        for upgraded in [WId::RangedRocketA, WId::RangedRocketB] {
+            let w = weapon_def(upgraded);
+            assert_eq!(w.weapon_type, WeaponType::Artillery);
+            assert_eq!(w.damage, 3);
+            assert_eq!(w.push, PushDir::Forward);
+            assert!(w.smoke_behind_shooter());
+            assert!(is_rocket_artillery(upgraded));
+        }
+
+        let both = weapon_def(WId::RangedRocketAB);
+        assert_eq!(both.damage, 4);
+        assert!(both.smoke_behind_shooter());
+
+        assert_eq!(wid_from_str("Ranged_Rocket_A"), WId::RangedRocketA);
+        assert_eq!(wid_from_str("Ranged_Rocket_B"), WId::RangedRocketB);
+        assert_eq!(wid_from_str("Ranged_Rocket_AB"), WId::RangedRocketAB);
+        assert_eq!(wid_to_str(WId::RangedRocketA), "Ranged_Rocket_A");
+        assert_eq!(wid_to_str(WId::RangedRocketB), "Ranged_Rocket_B");
+        assert_eq!(wid_to_str(WId::RangedRocketAB), "Ranged_Rocket_AB");
+        assert_eq!(weapon_name(WId::RangedRocketAB), "Rocket Artillery");
+    }
+
+    #[test]
     fn test_detritus_contraption_barrages() {
         let shield = weapon_def(WId::MissilesShield);
         assert_eq!(shield.weapon_type, WeaponType::GlobalUnitEffect);
@@ -1677,6 +1740,9 @@ mod tests {
             ("Brute_Tankmech", WId::BruteTankmech),
             ("Ranged_Artillerymech", WId::RangedArtillerymech),
             ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
+            ("Ranged_Rocket_A", WId::RangedRocketA),
+            ("Ranged_Rocket_B", WId::RangedRocketB),
+            ("Ranged_Rocket_AB", WId::RangedRocketAB),
             ("Deploy_TankShot", WId::DeployTankShot),
             ("Trapped_Explode", WId::TrappedExplode),
             ("Missiles_Shield", WId::MissilesShield),
