@@ -6,13 +6,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-26bd745",
+  "solver_version": "rust-0.1.0-da08c22",
   "weight_version": "v011",
-  "updated": "2026-05-06T19:12:21.244909",
+  "updated": "2026-05-06T19:25:32.102925",
   "created": "2026-05-06T11:46:50.000085",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 17,
-  "outcome_recorded_at": "2026-05-06T19:12:21.219771",
-  "outcome_notes": "Pinnacle Garden secured: less than 4 mech damage objective preserved; full grid; Gastropod research completed."
+  "outcome_mission": 18,
+  "outcome_recorded_at": "2026-05-06T19:25:32.077888",
+  "outcome_notes": "Corporate HQ secured: destroyed the Gastropod Leader and protected the Corporate Tower at full grid; Gastropod Leader research completed; Repulse_A kill desync recorded for follow-up."
 }
