@@ -7,58 +7,10 @@
   "current_mission": "Mission_Final",
   "islands_completed": [],
   "mission_index": 25,
-  "last_mission_turn": 2,
-  "current_turn": 2,
+  "last_mission_turn": 3,
+  "current_turn": 3,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          3,
-          5
-        ],
-        "weapon": "Brute_Jetmech",
-        "target": [
-          1,
-          5
-        ],
-        "description": "JetMech, move E3\u2192C5, fire Aerial Bombs at C7"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
-        "move_to": [
-          4,
-          5
-        ],
-        "weapon": "Ranged_Rocket",
-        "target": [
-          2,
-          5
-        ],
-        "description": "RocketMech, move E6\u2192C4, fire Rocket Artillery at C6"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
-        "move_to": [
-          5,
-          4
-        ],
-        "weapon": "Science_Repulse_A",
-        "target": [
-          5,
-          4
-        ],
-        "description": "PulseMech, fire Repulse at D3"
-      }
-    ],
-    "score": 156380.00000000017,
-    "turn": 2,
-    "input_fingerprint": "0:5,3:6|1:2,3:7|2:5,4:5|751:6,5:4|757:2,5:5"
-  },
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -3932,7 +3884,7 @@
     "hash": "353087f727db8271",
     "classes": "mmggbgggmmggmgbggwggggbggwwwgggwgbbgggbwggggggmggbbggggwwwwwggww",
     "mission_index": 25,
-    "turn": 2
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }
