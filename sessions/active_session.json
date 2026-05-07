@@ -4,60 +4,60 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_AcidStorm",
   "islands_completed": [],
   "mission_index": 19,
-  "last_mission_turn": -1,
+  "last_mission_turn": 4,
   "current_turn": 4,
   "phase": "unknown",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
+        "mech_uid": 0,
+        "mech_type": "JetMech",
         "move_to": [
-          2,
-          1
-        ],
-        "weapon": "Ranged_Rocket",
-        "target": [
           6,
-          1
+          5
         ],
-        "description": "RocketMech, move E6\u2192G6, fire Rocket Artillery at G2"
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          5
+        ],
+        "description": "JetMech, move D2\u2192C2, fire Aerial Bombs at C4"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          6,
-          3
+          2,
+          4
         ],
         "weapon": "Science_Repulse_A",
         "target": [
-          6,
-          3
-        ],
-        "description": "PulseMech, fire Repulse at E2"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          6,
+          2,
           4
         ],
-        "weapon": "Brute_Jetmech",
-        "target": [
-          6,
-          6
+        "description": "PulseMech, fire Repulse at D6"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "RocketMech",
+        "move_to": [
+          2,
+          5
         ],
-        "description": "JetMech, move G3\u2192D2, fire Aerial Bombs at B2"
+        "weapon": "Ranged_Rocket",
+        "target": [
+          2,
+          2
+        ],
+        "description": "RocketMech, move E5\u2192C6, fire Rocket Artillery at F6"
       }
     ],
-    "score": 146280.0,
+    "score": 98160.0,
     "turn": 4,
-    "input_fingerprint": "0:5,1:4|1:2,3:7|2:6,3:5|380:6,4:1|411:5,3:5|412:6,1:3"
+    "input_fingerprint": "0:6,4:5|1:3,3:7|2:2,4:5|419:1,6:3|422:5,3:2|469:5,5:5|501:5,4:4|537:2,1:1|538:6,2:2|539:2,5:1|571:2,3:1"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -782,6 +782,68 @@
         "PulseMech, fire Repulse at E2",
         "JetMech, move G3\u2192D2, fire Aerial Bombs at B2"
       ]
+    },
+    {
+      "timestamp": "2026-05-06T19:52:15.775437",
+      "turn": 1,
+      "label": "solve",
+      "score": 84950.0,
+      "actions": [
+        "PulseMech, move B6\u2192E6, fire Repulse at E6",
+        "RocketMech, fire Rocket Artillery at C2",
+        "JetMech, move C7\u2192D6, fire Aerial Bombs at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T19:54:00.931327",
+      "turn": 1,
+      "label": "solve",
+      "score": 84100.0,
+      "actions": [
+        "JetMech, fire Aerial Bombs at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T19:54:38.773944",
+      "turn": 1,
+      "label": "solve",
+      "score": 84100.0,
+      "actions": [
+        "JetMech, fire Aerial Bombs at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T20:00:49.176189",
+      "turn": 2,
+      "label": "solve",
+      "score": 93506.66666666658,
+      "actions": [
+        "JetMech, move D6\u2192F4, fire Aerial Bombs at F2",
+        "RocketMech, move C6\u2192E5, fire Rocket Artillery at G5",
+        "PulseMech, move E6\u2192D6, fire Repulse at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T20:03:24.797501",
+      "turn": 3,
+      "label": "solve",
+      "score": 117430.0,
+      "actions": [
+        "JetMech, fire Aerial Bombs at D2",
+        "RocketMech, fire Rocket Artillery at B5",
+        "PulseMech, fire Repulse at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T20:09:30.734192",
+      "turn": 4,
+      "label": "solve",
+      "score": 98160.0,
+      "actions": [
+        "JetMech, move D2\u2192C2, fire Aerial Bombs at C4",
+        "PulseMech, fire Repulse at D6",
+        "RocketMech, move E5\u2192C6, fire Rocket Artillery at F6"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -959,6 +1021,18 @@
     ],
     [
       18,
+      3
+    ],
+    [
+      19,
+      1
+    ],
+    [
+      19,
+      2
+    ],
+    [
+      19,
       3
     ]
   ],
@@ -1610,6 +1684,143 @@
           3
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Repulse_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Science_Repulse_A",
+        "target": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Repulse|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Science_Repulse",
+        "target": [
+          2,
+          4
+        ]
+      }
     }
   ],
   "disabled_actions": [],
@@ -2246,13 +2457,196 @@
       "severity": "medium",
       "research_id": "e9109d5a68e1",
       "last_kind": "enemy"
+    },
+    {
+      "type": "Storm_Generator",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_AcidStorm",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "ACID Storm Controller",
+            "hp": 0,
+            "move": 0,
+            "class_icons": [
+              "mission_objective"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "ACID Storm Controller",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=ACID+Storm+Controller",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=ACID+Storm+Controller&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "f32722b39acc",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "WebbEgg1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_AcidStorm",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Webb Egg",
+            "hp": 0,
+            "move": 0,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Webb Egg",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Webb+Egg",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Webb+Egg&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "3f6cd206099e",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Storm_Generator",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_AcidStorm",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "ACID Storm Controller",
+            "hp": 0,
+            "move": 0,
+            "class_icons": [
+              "mission_objective"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "ACID Storm Controller",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=ACID+Storm+Controller",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=ACID+Storm+Controller&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "status.web",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "medium",
+      "research_id": "98241abb60a3",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Firefly2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_AcidStorm",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Alpha Firefly",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Alpha Firefly",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Firefly",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Firefly&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "hp",
+      "diff_predicted": 3,
+      "diff_actual": 5,
+      "severity": "high",
+      "research_id": "0dacc61df0c0",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Leaper1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_AcidStorm",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "pending",
+      "result": null,
+      "diff_field": "status.web",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "7cdfe8ae43e0a3da",
-    "classes": "mbbggbbmmgggggfmggggggggggbmmbggggbmmbggggggggggmggggggmmrggggrm",
-    "mission_index": 18,
+    "hash": "a54db69f2f96ba51",
+    "classes": "mmgwbgmmmbgbbggmggggggggggbggbggggwwwwggggggggggmggggggmmmggggmm",
+    "mission_index": 19,
     "turn": 4
   },
   "terrain_stage_change_pending": false

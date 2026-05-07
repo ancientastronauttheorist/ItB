@@ -1,0 +1,132 @@
+{
+  "timestamp": "2026-05-06T20:03:22.416042",
+  "run_id": "20260506_114649_974",
+  "mission_index": 19,
+  "turn": 2,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 8,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 0,
+      "grid_power": 7,
+      "enemies_alive": 6,
+      "enemy_hp_total": 14,
+      "mechs_alive": 3,
+      "mech_hp_total": 17,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "hp": 5,
+          "max_hp": 2
+        },
+        {
+          "uid": 1,
+          "type": "RocketMech",
+          "hp": 7,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "hp": 5,
+          "max_hp": 3
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "pos": [
+            2,
+            4
+          ]
+        }
+      ],
+      "mission_id": "Mission_AcidStorm",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0
+    },
+    "predicted_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 8,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 0,
+      "grid_power": 7,
+      "enemies_alive": 5,
+      "enemy_hp_total": 12,
+      "mechs_alive": 3,
+      "mech_hp_total": 17,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 2,
+          "type": "JetMech",
+          "uid": 0
+        },
+        {
+          "hp": 7,
+          "max_hp": 3,
+          "type": "RocketMech",
+          "uid": 1
+        },
+        {
+          "hp": 5,
+          "max_hp": 3,
+          "type": "PulseMech",
+          "uid": 2
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_AcidStorm",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0,
+      "buildings_destroyed_by_enemies": 0,
+      "pods_collected": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 1,
+      "protected_objective_units_alive_diff": 0,
+      "protected_objective_units_frozen_diff": 0,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "predicted_hp": 5,
+          "actual_hp": 5,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "RocketMech",
+          "predicted_hp": 7,
+          "actual_hp": 7,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "predicted_hp": 5,
+          "actual_hp": 5,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

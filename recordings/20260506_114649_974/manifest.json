@@ -6,13 +6,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-da08c22",
+  "solver_version": "rust-0.1.0-38bde2a",
   "weight_version": "v011",
-  "updated": "2026-05-06T19:25:32.102925",
+  "updated": "2026-05-06T20:13:24.198474",
   "created": "2026-05-06T11:46:50.000085",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 18,
-  "outcome_recorded_at": "2026-05-06T19:25:32.077888",
-  "outcome_notes": "Corporate HQ secured: destroyed the Gastropod Leader and protected the Corporate Tower at full grid; Gastropod Leader research completed; Repulse_A kill desync recorded for follow-up."
+  "outcome_mission": 19,
+  "outcome_recorded_at": "2026-05-06T20:13:24.168842",
+  "outcome_notes": "Mission 19 The Landfill secured on Detritus with 0 grid damage; failed optional objective Destroy the ACID Storm Controller. Captured Storm_Generator/WebbEgg1/Firefly2 research and end snapshot for solver objective-priority analysis."
 }
