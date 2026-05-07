@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-05-06T21:47:36.123339",
+  "label": "disposal_vault_secured_pod_recovered",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        4,
+        7
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Fire1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Spider2",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Leaper2",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

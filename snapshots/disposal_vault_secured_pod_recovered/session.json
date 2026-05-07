@@ -4,11 +4,11 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Missiles",
+  "current_mission": "Mission_BeltRandom",
   "islands_completed": [],
-  "mission_index": 22,
-  "last_mission_turn": 0,
-  "current_turn": 0,
+  "mission_index": 21,
+  "last_mission_turn": 4,
+  "current_turn": 4,
   "phase": "unknown",
   "active_solution": {
     "actions": [
@@ -2092,7 +2092,14 @@
       }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Science_Repulse",
+      "cause_pattern": "status|Science_Repulse|attack",
+      "expires_turn": 4,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
       "type": "JetMech",
@@ -2988,10 +2995,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "f55c3e514509c776",
-    "classes": "gggggggggbbggbbggggggggggbgggggggggggbmggmbggmmwgmmgggwwggggggww",
-    "mission_index": 22,
-    "turn": 0
+    "hash": "da5cd6dd1d16d1a9",
+    "classes": "ggggggggggbwgbwgwgbwgbwgggggggggggggggggwgbwgbwgwggwggwggggggggg",
+    "mission_index": 21,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }
