@@ -944,7 +944,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mech after Repulse resolves; loadout overlay now recognizes
 //   Science_Repulse_A/AB. Pre-v56 corpus archived as
 //   `failure_db_snapshot_sim_v55.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 56;
+// v57 - Illegal Leap weapon landings no-op with an
+//   `illegal_leap_landing:x:y:reason` replay event instead of letting
+//   diagnostic score_plan/replay inputs stack units on blocked tiles.
+//   Pre-v57 corpus archived as `failure_db_snapshot_sim_v56.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 57;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

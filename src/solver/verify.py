@@ -533,7 +533,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Mech after Repulse resolves; loadout overlay now recognizes
 # Science_Repulse_A/AB. Pre-v56 corpus archived as
 # failure_db_snapshot_sim_v55.jsonl.
-SIMULATOR_VERSION = 56
+# v57 - Illegal Leap weapon landings no-op with an
+# `illegal_leap_landing:x:y:reason` replay event instead of letting diagnostic
+# score_plan/replay inputs stack units on blocked tiles. Pre-v57 corpus
+# archived as failure_db_snapshot_sim_v56.jsonl.
+SIMULATOR_VERSION = 57
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

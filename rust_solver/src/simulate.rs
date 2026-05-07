@@ -1496,6 +1496,18 @@ pub fn simulate_weapon_with(
         return result;
     }
 
+    if wdef.weapon_type == WeaponType::Leap {
+        if let Some(reason) = leap_landing_illegal_reason(
+            board, attacker_idx, target_x, target_y,
+        ) {
+            result.events.push(format!(
+                "illegal_leap_landing:{}:{}:{}",
+                target_x, target_y, reason
+            ));
+            return result;
+        }
+    }
+
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
@@ -2320,31 +2332,51 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
 
 // ── Leap ─────────────────────────────────────────────────────────────────────
 
+fn leap_landing_illegal_reason(
+    board: &Board,
+    attacker_idx: usize,
+    tx: u8,
+    ty: u8,
+) -> Option<&'static str> {
+    if tx >= 8 || ty >= 8 {
+        return Some("out_of_bounds");
+    }
+
+    let landing = board.tile(tx, ty);
+    if landing.terrain == Terrain::Mountain {
+        return Some("mountain");
+    }
+    if landing.terrain == Terrain::Building {
+        return Some("building");
+    }
+    if board.wreck_at(tx, ty) {
+        return Some("wreck");
+    }
+
+    let same_tile = tx == board.units[attacker_idx].x
+        && ty == board.units[attacker_idx].y;
+    if !same_tile && board.unit_at(tx, ty).is_some() {
+        return Some("unit");
+    }
+
+    None
+}
+
 fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, result: &mut ActionResult) {
     let old_x = board.units[attacker_idx].x;
     let old_y = board.units[attacker_idx].y;
 
-    // Defensive landing-legality check. Target enumeration in
-    // solver::get_weapon_targets already filters out mountains, buildings,
-    // wrecks, and occupied tiles via Board::is_blocked(…, flying=true), so a
-    // plan that reaches sim_leap with an illegal landing indicates a bug in
-    // the enumerator or a caller bypassing it. In debug builds we crash
-    // loudly so the upstream bug is obvious; in release we still execute
-    // the (now-silent) leap-through rather than corrupt state further.
-    debug_assert!(
-        {
-            let landing = board.tile(tx, ty);
-            let same_tile = tx == old_x && ty == old_y;
-            let occupied_by_other = board
-                .unit_at(tx, ty)
-                .map_or(false, |u| u != attacker_idx);
-            landing.terrain != Terrain::Mountain
-                && landing.terrain != Terrain::Building
-                && !board.wreck_at(tx, ty)
-                && (!occupied_by_other || same_tile)
-        },
-        "sim_leap: illegal landing tile ({tx}, {ty}) — enumerator should have filtered this"
-    );
+    // Target enumeration filters illegal leap landings during normal search,
+    // but diagnostic callers (`score_plan`, replaying a hand-written plan)
+    // can still pass an impossible landing. Treat it as an unfired action
+    // instead of creating overlapping units in the projected board.
+    if let Some(reason) = leap_landing_illegal_reason(board, attacker_idx, tx, ty) {
+        result.events.push(format!(
+            "illegal_leap_landing:{}:{}:{}",
+            tx, ty, reason
+        ));
+        return;
+    }
 
     board.units[attacker_idx].x = tx;
     board.units[attacker_idx].y = ty;
@@ -5136,6 +5168,39 @@ mod tests {
         let targets = leap_targets(&board, (3, 3));
         assert!(!targets.contains(&(3, 5)),
             "Enemy on landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_sim_noops_illegal_enemy_landing() {
+        // Diagnostic callers can bypass target enumeration with a hand-written
+        // plan. Illegal leap landings must not stack Jet onto a live enemy or
+        // apply transit smoke/damage from a shot that cannot fire in-game.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let transit_enemy = add_enemy(&mut board, 10, 3, 4, 3);
+        let landing_enemy = add_enemy(&mut board, 11, 3, 5, 3);
+
+        let result = simulate_weapon(&mut board, jet, WId::BruteJetmech, 3, 5);
+
+        assert_eq!(
+            (board.units[jet].x, board.units[jet].y),
+            (3, 3),
+            "illegal leap must leave Jet on its original tile"
+        );
+        assert_eq!(
+            (board.units[landing_enemy].x, board.units[landing_enemy].y),
+            (3, 5),
+            "landing enemy must remain alone on the blocked tile"
+        );
+        assert_eq!(
+            board.units[transit_enemy].hp, 3,
+            "unfireable Aerial Bombs must not damage the transit tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:3:5:unit"),
+            "illegal landing should be visible to replay diagnostics: {:?}",
+            result.events
+        );
     }
 
     #[test]
