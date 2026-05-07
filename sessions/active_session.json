@@ -4,60 +4,60 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_SnowStorm",
   "islands_completed": [],
   "mission_index": 17,
-  "last_mission_turn": -1,
+  "last_mission_turn": 4,
   "current_turn": 4,
   "phase": "unknown",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          5,
-          0
-        ],
-        "weapon": "Brute_Jetmech",
-        "target": [
-          5,
-          2
-        ],
-        "description": "JetMech, move F1\u2192H3, fire Aerial Bombs at F3"
-      },
-      {
         "mech_uid": 1,
         "mech_type": "RocketMech",
         "move_to": [
-          1,
-          3
+          2,
+          5
         ],
         "weapon": "Ranged_Rocket",
         "target": [
-          1,
+          7,
           5
         ],
-        "description": "RocketMech, move F7\u2192E7, fire Rocket Artillery at C7"
+        "description": "RocketMech, move D3\u2192C6, fire Rocket Artillery at C1"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          4,
+          5,
           4
         ],
         "weapon": "Science_Repulse_A",
         "target": [
-          4,
+          5,
           4
         ],
-        "description": "PulseMech, move D7\u2192D4, fire Repulse at D4"
+        "description": "PulseMech, move E2\u2192D3, fire Repulse at D3"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "JetMech",
+        "move_to": [
+          5,
+          5
+        ],
+        "weapon": "Brute_Jetmech",
+        "target": [
+          3,
+          5
+        ],
+        "description": "JetMech, move C2\u2192C3, fire Aerial Bombs at C5"
       }
     ],
-    "score": 127990.0,
+    "score": 120065.0,
     "turn": 4,
-    "input_fingerprint": "0:7,2:5|1:1,2:7|2:1,4:5|344:3,0:1|345:4,7:1|346:1,5:2|348:7,3:3|349:3,2:1|351:5,4:3|352:6,2:3|353:5,1:2"
+    "input_fingerprint": "0:6,5:6|1:5,4:7|294:4,2:4|295:5,2:3|2:6,3:3|356:4,5:2|357:3,3:3|358:5,5:1|359:6,6:1|361:7,5:3|362:7,3:3|369:3,1:1"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -694,6 +694,50 @@
         "RocketMech, move F7\u2192E7, fire Rocket Artillery at C7",
         "PulseMech, move D7\u2192D4, fire Repulse at D4"
       ]
+    },
+    {
+      "timestamp": "2026-05-06T18:58:37.502499",
+      "turn": 1,
+      "label": "solve",
+      "score": 133590.0,
+      "actions": [
+        "JetMech, move F5\u2192D3, fire Aerial Bombs at D5",
+        "RocketMech, move E6\u2192F5, fire Rocket Artillery at F2",
+        "PulseMech, move C5\u2192C1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T19:00:44.140895",
+      "turn": 2,
+      "label": "solve",
+      "score": 112869.99999999991,
+      "actions": [
+        "JetMech, move D5\u2192C4, fire Aerial Bombs at E4",
+        "RocketMech, move F5\u2192E2, fire Rocket Artillery at C2",
+        "PulseMech, move C1\u2192E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T19:03:12.790118",
+      "turn": 3,
+      "label": "solve",
+      "score": 131330.0,
+      "actions": [
+        "RocketMech, move E2\u2192D3, fire Rocket Artillery at B3",
+        "JetMech, move E4\u2192E2, fire Aerial Bombs at C2",
+        "PulseMech, move E3\u2192E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-06T19:06:11.921546",
+      "turn": 4,
+      "label": "solve",
+      "score": 120065.0,
+      "actions": [
+        "RocketMech, move D3\u2192C6, fire Rocket Artillery at C1",
+        "PulseMech, move E2\u2192D3, fire Repulse at D3",
+        "JetMech, move C2\u2192C3, fire Aerial Bombs at C5"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -847,6 +891,18 @@
     ],
     [
       16,
+      3
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      17,
+      2
+    ],
+    [
+      17,
       3
     ]
   ],
@@ -1386,9 +1442,72 @@
           4
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Rocket|attack",
+      "frequency": 2,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          7,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Science_Repulse",
+        "target": [
+          3,
+          5
+        ]
+      }
     }
   ],
-  "disabled_actions": [],
+  "disabled_actions": [
+    {
+      "weapon_id": "Ranged_Rocket",
+      "cause_pattern": "death|Ranged_Rocket|attack",
+      "expires_turn": 7,
+      "strategic_override": false
+    }
+  ],
   "research_queue": [
     {
       "type": "JetMech",
@@ -1936,13 +2055,55 @@
       "diff_predicted": "present",
       "diff_actual": "absent",
       "severity": "medium"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_SnowStorm",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Gastropod",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Gastropod",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Gastropod",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Gastropod&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "dd5b6095b042",
+      "last_kind": "enemy"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "66f75c876feeca4d",
-    "classes": "gbfgbbgggbggggfgfgiiiiiggiiggbiiiibggggggggggbgggggfggggggggfggg",
-    "mission_index": 16,
+    "hash": "0252220665c104eb",
+    "classes": "ggggggmmgbbfggbmgbmgggmmggggggmmmbggggbmmmggggggmbggggggmmggmggm",
+    "mission_index": 17,
     "turn": 4
   },
   "terrain_stage_change_pending": false

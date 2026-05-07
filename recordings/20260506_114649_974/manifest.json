@@ -6,13 +6,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-3183857",
+  "solver_version": "rust-0.1.0-26bd745",
   "weight_version": "v011",
-  "updated": "2026-05-06T18:52:08.084750",
+  "updated": "2026-05-06T19:12:21.244909",
   "created": "2026-05-06T11:46:50.000085",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 16,
-  "outcome_recorded_at": "2026-05-06T18:52:08.057120",
-  "outcome_notes": "Cold Storage secured: defended robots, protected Defense Lab, full grid"
+  "outcome_mission": 17,
+  "outcome_recorded_at": "2026-05-06T19:12:21.219771",
+  "outcome_notes": "Pinnacle Garden secured: less than 4 mech damage objective preserved; full grid; Gastropod research completed."
 }
