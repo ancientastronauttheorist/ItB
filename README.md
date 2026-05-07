@@ -2,9 +2,9 @@
 
 An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **19 / 70 achievements earned** (latest local Steam library cache on 2026-04-30; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
+Status: **23 / 70 achievements earned** (latest Steam sync on 2026-05-07; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
 
-Recent unlocks: **Good Samaritan** and **Scorched Earth** on 2026-04-30. The previous Solver 2.0 live-test bump also picked up **Cryo Expert** and **Pacifist** on 2026-04-28. See `TODO.md` for the checklist.
+Recent unlocks: **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. The previous Solver 2.0 live-test bumps picked up **Good Samaritan**, **Scorched Earth**, **Cryo Expert**, and **Pacifist**. See `TODO.md` for the checklist.
 
 ---
 

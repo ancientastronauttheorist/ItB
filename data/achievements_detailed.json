@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-06T11:44:19.852461",
+    "last_steam_sync": "2026-05-07T15:10:28.471165",
     "last_steam_total": 70,
-    "last_steam_unlocked": 19
+    "last_steam_unlocked": 23
   },
   "achievements": {
     "rift_walkers": [
@@ -49,7 +49,7 @@
         "description": "Overpower your Power Grid twice by earning or buying Power when full",
         "type": "single_run",
         "global_unlock_pct": 30.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Get Grid Power to max (7), then earn/buy 2 more power while already full. Prioritize grid power mission rewards and reputation purchases. Each overpower when full counts.",
         "setup": "Rusting Hulks, focus on building protection to keep grid full",
         "pitfalls": "Must earn power while ALREADY at max. Don't let buildings get damaged."
@@ -611,7 +611,7 @@
         "description": "Have 3 Pilots at maximum level simultaneously",
         "type": "single_run",
         "global_unlock_pct": 43.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Start with a max-level time traveler. Put low-level pilots on strong mechs for kills. 4-island run gives most XP. Damage-focused squad.",
         "setup": "4-island run. Damage-focused squad. Time-travel pilot with XP.",
         "pitfalls": "Hard to level all 3 in one run. May need multiple time-travel iterations."
@@ -631,7 +631,7 @@
         "description": "Have an individual Pilot fight the final battle 3 times across games",
         "type": "cumulative",
         "global_unlock_pct": 20.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Same pilot must reach the final Volcanic Hive battle 3 times across different runs. Time travel the same pilot repeatedly. 2-island runs are fastest.",
         "setup": "Time travel same pilot between runs. 2-island runs. Must reach final battle each time.",
         "pitfalls": "Pilot must survive to the final battle each run. Don't lose them."
@@ -683,7 +683,7 @@
         "description": "Earn or buy 10 Grid Power on a single Corporate Island",
         "type": "single_island",
         "global_unlock_pct": 20.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Prioritize grid power mission rewards. Use reputation to buy grid power. 10 power on one island (earned + bought combined).",
         "setup": "Island with grid power objectives. Spend reputation on power.",
         "pitfalls": "10 is a lot for one island. May not have enough opportunities."

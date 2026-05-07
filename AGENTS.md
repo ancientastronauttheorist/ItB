@@ -220,7 +220,7 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 
 ## Achievement Context
 
-Progress persists in session. Local checklist currently tracks 19/70 earned, 51 remaining across 4 difficulty tiers (Green >40%, Yellow 20–40%, Orange 10–20%, Red <10%).
+Progress persists in session. Local checklist currently tracks 23/70 earned, 47 remaining across 4 difficulty tiers (Green >40%, Yellow 20–40%, Orange 10–20%, Red <10%).
 
 - Squad-specific achievements need the matching squad — check `data/ref_achievement_strategies.md`.
 - Cumulative achievements (reputation, civilians, pilot reuse) accrue across runs.

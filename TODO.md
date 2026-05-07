@@ -2,7 +2,7 @@
 
 ## Achievement Checklist
 
-19 of 70 completed (latest local Steam library cache on 2026-04-30; refresh with `python3 game_loop.py achievements` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 51 remaining, sorted by global unlock % (easiest first).
+23 of 70 completed (latest Steam sync on 2026-05-07; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 47 remaining, sorted by global unlock % (easiest first).
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -11,22 +11,22 @@
 - [x] Friends in High Places (49.8%) — Spend 50 Reputation across all games [cumulative]
 - [x] Come Together (44.7%) — Unlock 6 additional Pilots [cumulative]
 - [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
-- [ ] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
+- [x] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
 - [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 
 ### Tier 2: Yellow Zone (20-40% — requires specific squad play or setup)
 - [ ] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
 - [ ] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
-- [ ] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
+- [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
 - [ ] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
 - [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
 - [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]
 - [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack [Steel Judoka]
-- [ ] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
+- [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
-- [ ] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times [cumulative]
+- [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times [cumulative]
 - [ ] There is No Try (20.2%) — Finish 3 islands without failing an objective
 
 ### Tier 3: Orange Zone (10-20% — deliberate setup needed)
@@ -77,7 +77,7 @@
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (19, from Steam / local library cache)
+### Already Completed (23, from Steam sync)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -87,12 +87,16 @@
 - [x] The Defenders — Finish a Corporate Island without Building Damage
 - [x] Friends in High Places (49.8%) — Spend 50 Reputation across games
 - [x] Come Together (44.7%) — Unlock 6 additional Pilots
+- [x] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
 - [x] Immovable Objects — Block 100 Vek across all games
 - [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
 - [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
+- [x] Overpowered (30.7%) — Overpower Grid twice when full
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
+- [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire  [Flame Behemoths]
+- [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle  [Frozen Titans]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
