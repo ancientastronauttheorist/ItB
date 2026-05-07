@@ -23,6 +23,24 @@
       "scope": "python",
       "reason": "Pinnacle Ice Forest t3 — RockartMech fires Rock Launcher at D6 with splash/push collateral against a 1HP building. Plan chosen is identical before and after the next_turn_threat_penalty addition (2026-04-22); penalty scales all alternatives equally so selection is unchanged. Crowded 6-enemy board with 1HP buildings everywhere; legitimately least-bad plan. Value-tuning territory, not a sim bug.",
       "acknowledged": "2026-04-22"
+    },
+    {
+      "run_id": "20260412_153824_454",
+      "mission": 0,
+      "turn": 3,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Historical Rift Walkers grid-1 board surfaced again during simulator v61 regression: current solver chooses Artemis Artillery E6->B6, damaging one building HP while leaving the already-destroyed TankMech state unchanged. This is a dirty least-bad/value-tuning case on an old failure board, not the Mission_Teleporter self-AoE targeting fix.",
+      "acknowledged": "2026-05-07"
+    },
+    {
+      "run_id": "20260421_121854_923",
+      "mission": 0,
+      "turn": 1,
+      "trigger": "self_damage_building",
+      "scope": "python",
+      "reason": "Historical Random Balanced board surfaced again during simulator v61 regression: current solver chooses Cluster Artillery plus Vice Fist collateral that reaches grid 0. The board is already a known dirty/value-tuning scenario around Ranged_Defensestrike and Prime_Shift collateral, unrelated to the Mission_Teleporter post-swap targeting change.",
+      "acknowledged": "2026-05-07"
     }
   ]
 }

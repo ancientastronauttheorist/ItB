@@ -956,7 +956,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v60 - Static Spider1/Spider2 pawn stats are pushable; solve payloads no
 //   longer inject false `pushable=false` for normal/alpha Spiders. Pre-v60
 //   corpus archived as `failure_db_snapshot_sim_v59.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 60;
+// v61 - Mission_Teleporter action enumeration now targets attacks from the
+//   post-pad-swap position, while invalid diagonal SelfAoe clicks no-op in
+//   replay/sim. Pre-v61 corpus archived as
+//   `failure_db_snapshot_sim_v60.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 61;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

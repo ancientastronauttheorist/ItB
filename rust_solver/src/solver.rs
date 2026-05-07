@@ -411,6 +411,27 @@ pub(crate) fn get_weapon_targets(
 
 type Action = ((u8, u8), WId, (u8, u8)); // (move_to, weapon, target)
 
+fn post_move_board_for_attack(board: &Board, mech_idx: usize, move_to: (u8, u8)) -> Option<Board> {
+    let unit = &board.units[mech_idx];
+    if move_to == (unit.x, unit.y) || board.teleport_partner(move_to.0, move_to.1).is_none() {
+        return None;
+    }
+
+    let mut b = board.clone();
+    simulate_move(&mut b, mech_idx, move_to);
+    Some(b)
+}
+
+fn attack_origin_after_move(board: &Board, mech_idx: usize, move_to: (u8, u8)) -> (u8, u8) {
+    let unit = &board.units[mech_idx];
+    if move_to != (unit.x, unit.y) {
+        if let Some(partner) = board.teleport_partner(move_to.0, move_to.1) {
+            return partner;
+        }
+    }
+    move_to
+}
+
 /// Check if a weapon action would have any effect on the board.
 /// Returns false when firing at empty space where no unit can be hit or pushed —
 /// the solver should prefer move-only/skip in that case. Conservative: returns
@@ -547,36 +568,50 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         // (For MID_ACTION mechs, this is the "skip attack" option.)
         actions.push((pos, WId::None, (255, 255)));
 
+        // Teleporter pads fire during the move phase. Attack targeting,
+        // smoke checks, and effect filtering must therefore use the post-swap
+        // board while the emitted move_to remains the pad tile to step onto.
+        let post_move_board = post_move_board_for_attack(board, mech_idx, pos);
+        let action_board = match &post_move_board {
+            Some(b) => b,
+            None => board,
+        };
+        let action_unit = &action_board.units[mech_idx];
+        if !action_unit.alive() {
+            continue;
+        }
+        let attack_pos = (action_unit.x, action_unit.y);
+
         // Smoke blocks most pawn actions (attack + repair). Mission_Trapped
         // Decoy Buildings have IgnoreSmoke=true in the Lua mission script, so
         // they can still self-destruct from a smoked tile.
-        let tile = board.tile(pos.0, pos.1);
-        let ignores_smoke = unit.type_name_str() == "Trapped_Building";
+        let tile = action_board.tile(attack_pos.0, attack_pos.1);
+        let ignores_smoke = action_unit.type_name_str() == "Trapped_Building";
         if !tile.smoke() || ignores_smoke {
             // Primary weapon — filter out no-op fires (empty space, nothing affected)
-            let w1_id = WId::from_raw(unit.weapon.0);
+            let w1_id = WId::from_raw(action_unit.weapon.0);
             if w1_id != WId::None {
                 let mech_from = (unit.x, unit.y);
-                for &target in &get_weapon_targets(board, pos.0, pos.1, w1_id, mech_from, weapons) {
-                    if weapon_action_has_effect(board, pos, w1_id, target, weapons) {
+                for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w1_id, mech_from, weapons) {
+                    if weapon_action_has_effect(action_board, attack_pos, w1_id, target, weapons) {
                         actions.push((pos, w1_id, target));
                     }
                 }
             }
 
             // Secondary weapon
-            let w2_id = WId::from_raw(unit.weapon2.0);
+            let w2_id = WId::from_raw(action_unit.weapon2.0);
             if w2_id != WId::None {
-                for &target in &get_weapon_targets(board, pos.0, pos.1, w2_id, (unit.x, unit.y), weapons) {
-                    if weapon_action_has_effect(board, pos, w2_id, target, weapons) {
+                for &target in &get_weapon_targets(action_board, attack_pos.0, attack_pos.1, w2_id, (unit.x, unit.y), weapons) {
+                    if weapon_action_has_effect(action_board, attack_pos, w2_id, target, weapons) {
                         actions.push((pos, w2_id, target));
                     }
                 }
             }
 
             // Repair (if damaged/on_fire/acid/frozen)
-            if unit.hp < unit.max_hp || unit.fire() || unit.acid() || unit.frozen() {
-                actions.push((pos, WId::Repair, pos));
+            if action_unit.hp < action_unit.max_hp || action_unit.fire() || action_unit.acid() || action_unit.frozen() {
+                actions.push((pos, WId::Repair, attack_pos));
             }
         }
     }
@@ -599,7 +634,7 @@ fn push_hits_building(x: u8, y: u8, direction: usize, board: &Board) -> bool {
 
 fn prune_actions(
     board: &Board,
-    _mech_idx: usize,
+    mech_idx: usize,
     actions: &mut Vec<Action>,
     threat_tiles: u64,       // bitset
     building_threats: u64,   // bitset
@@ -612,8 +647,9 @@ fn prune_actions(
     // Score each action by heuristic
     let mut scored: Vec<(i32, usize)> = actions.iter().enumerate().map(|(i, &(move_to, weapon_id, target))| {
         let mut s = 0i32;
+        let attack_origin = attack_origin_after_move(board, mech_idx, move_to);
 
-        let move_bit = 1u64 << xy_to_idx(move_to.0, move_to.1);
+        let move_bit = 1u64 << xy_to_idx(attack_origin.0, attack_origin.1);
 
         // Body-blocking a building threat
         if building_threats & move_bit != 0 { s += 200; }
@@ -640,7 +676,7 @@ fn prune_actions(
                     // Melee / Projectile / Charge / Laser: Forward push on the hit target
                     WeaponType::Melee | WeaponType::Projectile | WeaponType::Charge | WeaponType::Laser => {
                         if wdef.push == PushDir::Forward || wdef.push == PushDir::Backward || wdef.push == PushDir::Flip {
-                            if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                            if let Some(dir) = direction_between(attack_origin.0, attack_origin.1, target.0, target.1) {
                                 let push_dir = match wdef.push {
                                     PushDir::Forward => dir,
                                     PushDir::Backward | PushDir::Flip => (dir + 2) % 4,
@@ -652,7 +688,7 @@ fn prune_actions(
                             }
                         } else if wdef.push == PushDir::Outward {
                             // Projectile with outward push (e.g., Grav Cannon): push target outward
-                            if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                            if let Some(dir) = direction_between(attack_origin.0, attack_origin.1, target.0, target.1) {
                                 if push_hits_building(target.0, target.1, dir, board) {
                                     s -= 300;
                                 }
@@ -660,7 +696,7 @@ fn prune_actions(
                         }
                         // Also check AoE perpendicular tiles (e.g., Janus Cannon)
                         if wdef.aoe_perpendicular() {
-                            if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                            if let Some(dir) = direction_between(attack_origin.0, attack_origin.1, target.0, target.1) {
                                 for &perp in &[(dir + 1) % 4, (dir + 3) % 4] {
                                     let (pdx, pdy) = DIRS[perp];
                                     let px = target.0 as i8 + pdx;
@@ -679,7 +715,7 @@ fn prune_actions(
                     // adjacent tiles get pushed outward if aoe_adjacent
                     WeaponType::Artillery => {
                         // Center tile push
-                        if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                        if let Some(dir) = direction_between(attack_origin.0, attack_origin.1, target.0, target.1) {
                             if wdef.push == PushDir::Forward {
                                 if push_hits_building(target.0, target.1, dir, board) {
                                     s -= 300;
@@ -703,10 +739,11 @@ fn prune_actions(
                     }
                     // SelfAoe (e.g., Science Mech push): pushes all 4 adjacent tiles outward
                     WeaponType::SelfAoe => {
-                        // move_to is the mech position; adjacent tiles get pushed outward
+                        // attack_origin is the mech position after any pad swap;
+                        // adjacent tiles get pushed outward.
                         for (d, &(dx, dy)) in DIRS.iter().enumerate() {
-                            let nx = move_to.0 as i8 + dx;
-                            let ny = move_to.1 as i8 + dy;
+                            let nx = attack_origin.0 as i8 + dx;
+                            let ny = attack_origin.1 as i8 + dy;
                             if !in_bounds(nx, ny) { continue; }
                             let push_d = if wdef.push == PushDir::Outward { d } else { (d + 2) % 4 };
                             if push_hits_building(nx as u8, ny as u8, push_d, board) {
@@ -757,7 +794,7 @@ fn prune_actions(
         if spawn_bits != 0 && weapon_id != WId::None && weapon_id != WId::Repair && target.0 < 8 {
             if let Some(enemy_idx) = board.unit_at(target.0, target.1) {
                 if board.units[enemy_idx].is_enemy() {
-                    if let Some(dir) = direction_between(move_to.0, move_to.1, target.0, target.1) {
+                    if let Some(dir) = direction_between(attack_origin.0, attack_origin.1, target.0, target.1) {
                         if let Some(dest) = push_destination(target.0, target.1, dir, board) {
                             let dest_bit = 1u64 << xy_to_idx(dest.0, dest.1);
                             if spawn_bits & dest_bit != 0 { s += 60; }
@@ -1438,6 +1475,57 @@ mod top_k_tests {
         assert!(!actions.iter().any(|a| {
             a.1 == WId::MissilesOneDmg && a.2 == (1, 3)
         }));
+    }
+
+    #[test]
+    fn self_aoe_after_teleporter_targets_post_swap_tile() {
+        // Mission_Teleporter m23 turn 4: action enumeration used the pad tile
+        // as Repulse's click target even though the move phase swapped Pulse
+        // to the paired pad before ATTACK. That stale diagonal target spent the
+        // action without pushing the adjacent Bouncer.
+        let mut board = Board::default();
+        board.teleporter_pairs.push((4, 4, 5, 3));
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 5,
+            y: 4,
+            hp: 5,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceRepulseA as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE
+                | UnitFlags::CAN_MOVE,
+            move_speed: 4,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 738,
+            x: 5,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (4, 4) && a.1 == WId::ScienceRepulseA && a.2 == (5, 3)
+            }),
+            "Repulse after pad swap must click the post-teleport Pulse tile"
+        );
+        assert!(
+            !actions.iter().any(|a| {
+                a.0 == (4, 4) && a.1 == WId::ScienceRepulseA && a.2 == (4, 4)
+            }),
+            "Repulse must not keep the stale pre-teleport pad target"
+        );
     }
 
     #[test]

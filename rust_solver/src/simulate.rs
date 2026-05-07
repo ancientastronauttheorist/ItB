@@ -1512,7 +1512,16 @@ pub fn simulate_weapon_with(
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
         WeaponType::Artillery => sim_artillery(board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
-        WeaponType::SelfAoe => sim_self_aoe(board, ax, ay, wdef, &mut result),
+        WeaponType::SelfAoe => {
+            if self_aoe_target_in_area(ax, ay, target_x, target_y) {
+                sim_self_aoe(board, ax, ay, wdef, &mut result);
+            } else {
+                result.events.push(format!(
+                    "invalid_self_aoe_target:{}:{}:from:{}:{}",
+                    target_x, target_y, ax, ay
+                ));
+            }
+        },
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
         WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
         WeaponType::Leap => sim_leap(board, attacker_idx, wdef, target_x, target_y, &mut result),
@@ -1941,6 +1950,15 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
 }
 
 // ── Self AoE ─────────────────────────────────────────────────────────────────
+
+fn self_aoe_target_in_area(ax: u8, ay: u8, target_x: u8, target_y: u8) -> bool {
+    if target_x >= 8 || target_y >= 8 {
+        return false;
+    }
+    let dx = (target_x as i8 - ax as i8).abs();
+    let dy = (target_y as i8 - ay as i8).abs();
+    dx + dy <= 1
+}
 
 fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mut ActionResult) {
     for (i, &(dx, dy)) in DIRS.iter().enumerate() {
@@ -2868,6 +2886,33 @@ mod tests {
         assert!(
             !board.units[enemy].shield(),
             "Shield Self should not shield adjacent enemies"
+        );
+    }
+
+    #[test]
+    fn test_repulse_invalid_diagonal_target_noops() {
+        // Mission_Teleporter m23 turn 4: Pulse moved onto a pad at (4,4),
+        // teleported to (5,3), then the stale target (4,4) was diagonal from
+        // the actual source. pawn:FireWeapon accepted the command but produced
+        // no Repulse effect, so the sim must not invent a push or Shield Self.
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 5, 3, 3, WId::ScienceRepulseA);
+        let enemy = add_enemy(&mut board, 10, 5, 2, 3);
+
+        let result = simulate_weapon(&mut board, pulse, WId::ScienceRepulseA, 4, 4);
+
+        assert_eq!(
+            (board.units[enemy].x, board.units[enemy].y, board.units[enemy].hp),
+            (5, 2, 3),
+            "invalid diagonal Repulse target should not push or damage adjacent units"
+        );
+        assert!(
+            !board.units[pulse].shield(),
+            "invalid diagonal Repulse target should not apply Shield Self"
+        );
+        assert!(
+            result.events.iter().any(|e| e.starts_with("invalid_self_aoe_target")),
+            "invalid target should leave a replay/audit breadcrumb"
         );
     }
 

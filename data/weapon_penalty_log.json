@@ -111,7 +111,7 @@
       "weapon_id": "Ranged_Ignite"
     },
     "death|Ranged_Rocket|attack": {
-      "count": 2,
+      "count": 3,
       "last_run_id": "20260506_114649_974",
       "weapon_id": "Ranged_Rocket"
     },
@@ -131,7 +131,7 @@
       "weapon_id": "Science_Pullmech"
     },
     "death|Science_Repulse_A|attack": {
-      "count": 1,
+      "count": 2,
       "last_run_id": "20260506_114649_974",
       "weapon_id": "Science_Repulse_A"
     },

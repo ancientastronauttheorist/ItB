@@ -4,46 +4,32 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Missiles",
+  "current_mission": "Mission_Teleporter",
   "islands_completed": [],
-  "mission_index": 22,
+  "mission_index": 23,
   "last_mission_turn": 4,
   "current_turn": 4,
-  "phase": "unknown",
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
-      {
-        "mech_uid": 621,
-        "mech_type": "Missile_Unit",
-        "move_to": [
-          1,
-          3
-        ],
-        "weapon": "Missiles_OneDmg",
-        "target": [
-          6,
-          2
-        ],
-        "description": "Missile_Unit, fire Missile Barrage at F2"
-      },
       {
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
-          7,
-          2
+          5,
+          4
         ],
         "weapon": "Brute_Jetmech",
         "target": [
           5,
-          2
+          1
         ],
-        "description": "JetMech, move H3\u2192F1, fire Aerial Bombs at F3"
+        "description": "JetMech, move G1\u2192D3, fire Aerial Bombs at G3"
       }
     ],
-    "score": 103065.0,
+    "score": 107571.28573380198,
     "turn": 4,
-    "input_fingerprint": "0:5,0:4|1:3,4:6|2:4,3:5|621:1,3:2|622:6,2:4|624:2,3:1|626:3,2:3|642:6,3:1|663:2,5:1|690:6,4:1|691:1,4:1|728:0,3:1"
+    "input_fingerprint": "0:7,1:5|1:3,5:6|2:5,3:5|735:7,5:1|736:4,2:3|737:7,3:3|738:5,2:3"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -1075,6 +1061,59 @@
         "Missile_Unit, fire Missile Barrage at F2",
         "JetMech, move H3\u2192F1, fire Aerial Bombs at F3"
       ]
+    },
+    {
+      "timestamp": "2026-05-07T13:07:56.570306",
+      "turn": 1,
+      "label": "solve",
+      "score": 113207.14285714286,
+      "actions": [
+        "JetMech, move E5\u2192E1, fire Aerial Bombs at E3",
+        "RocketMech, move D6\u2192F5, fire Rocket Artillery at F3",
+        "PulseMech, fire Repulse at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-07T13:08:48.095245",
+      "turn": 2,
+      "label": "solve",
+      "score": 114253.80952380947,
+      "actions": [
+        "RocketMech, move F5\u2192F3, fire Rocket Artillery at D3",
+        "PulseMech, move C5\u2192D3, fire Repulse at D3",
+        "JetMech, move D4\u2192E1, fire Aerial Bombs at G1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-07T13:09:34.813878",
+      "turn": 3,
+      "label": "solve",
+      "score": 125077.14285714286,
+      "actions": [
+        "JetMech",
+        "RocketMech, move F3\u2192D5, fire Rocket Artillery at D1",
+        "PulseMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-07T13:10:29.543400",
+      "turn": 4,
+      "label": "solve",
+      "score": 103869.28571428571,
+      "actions": [
+        "RocketMech, move D5\u2192C5",
+        "PulseMech, move D3\u2192D4, fire Repulse at D4",
+        "JetMech, move G1\u2192F3, fire Aerial Bombs at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-07T13:27:52.371164",
+      "turn": 4,
+      "label": "solve",
+      "score": 107571.28573380198,
+      "actions": [
+        "JetMech, move G1\u2192D3, fire Aerial Bombs at G3"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -1288,6 +1327,18 @@
     ],
     [
       22,
+      3
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      23,
+      2
+    ],
+    [
+      23,
       3
     ]
   ],
@@ -2412,19 +2463,78 @@
           3
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Rocket|attack",
+      "frequency": 3,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          7,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Repulse_A|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Science_Repulse_A",
+        "target": [
+          4,
+          4
+        ]
+      }
     }
   ],
   "disabled_actions": [
     {
-      "weapon_id": "Missiles_OneDmg",
-      "cause_pattern": "death|Missiles_OneDmg|attack",
-      "expires_turn": 5,
+      "weapon_id": "Ranged_Rocket",
+      "cause_pattern": "death|Ranged_Rocket|attack",
+      "expires_turn": 6,
       "strategic_override": false
     },
     {
-      "weapon_id": "Science_Repulse",
-      "cause_pattern": "status|Science_Repulse|attack",
-      "expires_turn": 6,
+      "weapon_id": "Science_Repulse_A",
+      "cause_pattern": "death|Science_Repulse_A|attack",
+      "expires_turn": 7,
       "strategic_override": false
     }
   ],
@@ -3504,9 +3614,9 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "2b78ec63937f61d1",
-    "classes": "gggggggggbbggbbggggggggggbgggggggggggbmggmrggmmwgmrgggwwggggggww",
-    "mission_index": 22,
+    "hash": "6ebbdbe4a11c2d6c",
+    "classes": "mggggggmmgbbgbgmggbbgbgmgggggggggggbgggggwgggwgggwwgwwgggggggggm",
+    "mission_index": 23,
     "turn": 4
   },
   "terrain_stage_change_pending": false
