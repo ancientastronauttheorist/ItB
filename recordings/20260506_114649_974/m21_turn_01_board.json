@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-06T20:17:21.124820",
+  "timestamp": "2026-05-06T21:08:28.060832",
   "run_id": "20260506_114649_974",
   "mission_index": 21,
   "turn": 1,
@@ -9,12 +9,8 @@
       "island_map_game_seen": "table",
       "spawning_tiles": [
         [
-          7,
-          2
-        ],
-        [
-          7,
-          3
+          5,
+          4
         ]
       ],
       "grid_power_max": 7,
@@ -284,9 +280,10 @@
         },
         {
           "y": 4,
-          "x": 5,
           "terrain_id": 0,
-          "terrain": "ground"
+          "terrain": "ground",
+          "smoke": true,
+          "x": 5
         },
         {
           "y": 4,
@@ -463,41 +460,29 @@
       ],
       "targeted_tiles": [
         [
-          3,
-          1
-        ],
-        [
-          3,
-          2
-        ],
-        [
-          3,
-          3
-        ],
-        [
-          5,
-          3
-        ],
-        [
-          3,
-          4
+          2,
+          5
         ],
         [
           3,
           5
         ],
         [
-          5,
+          4,
           5
+        ],
+        [
+          6,
+          7
         ]
       ],
-      "phase": "combat_player",
+      "phase": "combat_enemy",
       "remaining_spawns": 1,
       "mission_kills_done": 0,
       "units": [
         {
           "web": false,
-          "active": true,
+          "active": false,
           "base_move": 4,
           "hp": 6,
           "flying": true,
@@ -518,7 +503,7 @@
           ],
           "fire": false,
           "y": 4,
-          "x": 2,
+          "x": 4,
           "acid": false,
           "shield": false,
           "type": "JetMech",
@@ -527,20 +512,19 @@
           "pilot_id": "Pilot_Original"
         },
         {
-          "web": true,
-          "active": true,
+          "web": false,
+          "active": false,
           "base_move": 3,
           "hp": 7,
           "flying": false,
           "pilot_level": 2,
           "team": 1,
           "massive": true,
-          "web_source_uid": 416,
           "web_probes": {
             "IsGrappled": true
           },
           "max_hp": 3,
-          "move": 0,
+          "move": 3,
           "weapons": [
             "Ranged_Rocket",
             "Passive_Electric"
@@ -551,8 +535,8 @@
             "skill2=8"
           ],
           "fire": false,
-          "y": 5,
-          "x": 3,
+          "y": 7,
+          "x": 5,
           "acid": false,
           "shield": false,
           "type": "RocketMech",
@@ -562,9 +546,9 @@
         },
         {
           "web": false,
-          "active": true,
+          "active": false,
           "base_move": 4,
-          "hp": 5,
+          "hp": 4,
           "flying": false,
           "pilot_level": 1,
           "team": 1,
@@ -583,7 +567,7 @@
             "skill2=8"
           ],
           "fire": false,
-          "y": 2,
+          "y": 1,
           "x": 3,
           "acid": false,
           "shield": false,
@@ -604,22 +588,22 @@
           "web_probes": {
             "IsGrappled": false
           },
-          "max_hp": 1,
-          "move": 4,
+          "max_hp": 3,
+          "move": 3,
           "x": 3,
           "queued_target": [
             3,
-            5
+            4
           ],
           "has_queued_attack": true,
           "weapons": [
-            "LeaperAtk1"
+            "BouncerAtk1"
           ],
-          "weapon_damage": 3,
-          "y": 4,
-          "uid": 416,
-          "type": "Leaper1",
-          "base_move": 4,
+          "weapon_damage": 1,
+          "y": 5,
+          "uid": 417,
+          "type": "Bouncer1",
+          "base_move": 3,
           "fire": false,
           "mech": false,
           "acid": false,
@@ -629,30 +613,20 @@
           "web": false,
           "active": false,
           "shield": false,
-          "hp": 3,
-          "weapon_push": 0,
-          "flying": false,
+          "hp": 2,
+          "flying": true,
           "team": 6,
-          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
-          "max_hp": 3,
-          "move": 3,
-          "x": 3,
-          "queued_target": [
-            3,
-            2
-          ],
-          "has_queued_attack": true,
-          "weapons": [
-            "BouncerAtk1"
-          ],
-          "weapon_damage": 1,
-          "y": 3,
-          "uid": 417,
-          "type": "Bouncer1",
-          "base_move": 3,
+          "max_hp": 2,
+          "move": 2,
+          "weapons": [],
+          "x": 6,
+          "y": 2,
+          "uid": 575,
+          "type": "Jelly_Fire1",
+          "base_move": 2,
           "fire": false,
           "mech": false,
           "acid": false,
@@ -666,26 +640,51 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
-          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 4,
-          "move": 3,
-          "x": 5,
-          "queued_target": [
-            5,
-            5
-          ],
+          "move": 2,
+          "weapon_target_behind": false,
+          "x": 6,
           "has_queued_attack": true,
           "weapons": [
-            "BouncerAtk2"
+            "SpiderAtk2"
           ],
-          "weapon_damage": 3,
+          "weapon_damage": 0,
           "y": 4,
-          "uid": 418,
-          "type": "Bouncer2",
-          "base_move": 3,
+          "uid": 576,
+          "type": "Spider2",
+          "base_move": 2,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 1,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 1,
+          "move": 0,
+          "weapon_target_behind": false,
+          "x": 6,
+          "has_queued_attack": true,
+          "weapons": [
+            "WebeggHatch1"
+          ],
+          "weapon_damage": 0,
+          "y": 7,
+          "uid": 583,
+          "type": "WebbEgg1",
+          "base_move": 0,
           "fire": false,
           "mech": false,
           "acid": false,
@@ -710,70 +709,73 @@
         }
       },
       "environment_danger_v2": [],
-      "timestamp": 1778116641,
+      "timestamp": 1778119707,
       "in_active_mission": true,
       "attack_order": [
-        416,
         417,
-        418
+        576,
+        583
       ],
       "is_infinite_spawn": true
     },
     "result_summary": {
-      "phase": "combat_player",
+      "phase": "combat_enemy",
       "source": "bridge",
       "turn": 1,
       "grid_power": "7/7",
       "mechs": [
         {
           "type": "JetMech",
-          "pos": "D6",
+          "pos": "D4",
           "hp": "6/2",
           "weapon": "Aerial Bombs",
-          "status": "READY"
+          "status": "DONE"
         },
         {
           "type": "RocketMech",
-          "pos": "C5",
+          "pos": "A3",
           "hp": "7/3",
           "weapon": "Rocket Artillery",
-          "status": "READY"
+          "status": "DONE"
         },
         {
           "type": "PulseMech",
-          "pos": "F5",
-          "hp": "5/3",
+          "pos": "G5",
+          "hp": "4/3",
           "weapon": "Repulse",
-          "status": "READY"
+          "status": "DONE"
         }
       ],
-      "active_mechs": 3,
+      "active_mechs": 0,
       "enemies": [
         {
-          "type": "Leaper1",
-          "pos": "D5",
-          "hp": "1/1",
-          "target": " \u2192 C5"
-        },
-        {
           "type": "Bouncer1",
-          "pos": "E5",
-          "hp": "3/3",
-          "target": " \u2192 F5"
+          "pos": "C5",
+          "hp": "1/3",
+          "target": " \u2192 D5"
         },
         {
-          "type": "Bouncer2",
-          "pos": "D3",
+          "type": "Jelly_Fire1",
+          "pos": "F2",
+          "hp": "2/2",
+          "target": ""
+        },
+        {
+          "type": "Spider2",
+          "pos": "D2",
           "hp": "4/4",
-          "target": " \u2192 C3"
+          "target": ""
+        },
+        {
+          "type": "WebbEgg1",
+          "pos": "A2",
+          "hp": "1/1",
+          "target": ""
         }
       ],
-      "threatened_buildings": 1,
-      "threats": [
-        "Building C3 by Bouncer2 at D3"
-      ],
-      "targeted_tiles": 7,
-      "spawn_points": 2
+      "threatened_buildings": 0,
+      "targeted_tiles": 4,
+      "spawn_points": 1
     }
   }
 }
