@@ -334,6 +334,21 @@ fn clear_unit_web(board: &mut Board, unit_idx: usize) {
     }
 }
 
+/// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
+/// the smoke-cancelled queued attack releases that grapple immediately.
+fn place_smoke(board: &mut Board, x: u8, y: u8) {
+    let tile = board.tile_mut(x, y);
+    tile.set_on_fire(false); // smoke replaces fire
+    tile.set_smoke(true);
+
+    if let Some(idx) = board.unit_at(x, y) {
+        if board.units[idx].is_enemy() {
+            let uid = board.units[idx].uid;
+            break_web_from(board, uid);
+        }
+    }
+}
+
 // ── apply_damage ─────────────────────────────────────────────────────────────
 
 /// Internal damage logic without death explosion processing.
@@ -1372,9 +1387,7 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
         tile.set_on_fire(true);
     }
     if wdef.smoke() {
-        let tile = board.tile_mut(x, y);
-        tile.set_on_fire(false); // smoke replaces fire
-        tile.set_smoke(true);
+        place_smoke(board, x, y);
     }
     if wdef.freeze() {
         let tile = board.tile_mut(x, y);
@@ -1822,9 +1835,7 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             let bx = ax as i8 - ddx;
             let by = ay as i8 - ddy;
             if in_bounds(bx, by) {
-                let tile = board.tile_mut(bx as u8, by as u8);
-                tile.set_on_fire(false); // smoke replaces fire
-                tile.set_smoke(true);
+                place_smoke(board, bx as u8, by as u8);
             }
         }
     }
@@ -3553,6 +3564,31 @@ mod tests {
             !board.tile(3, 6).smoke(),
             "target tile must NOT be smoked — Ranged_Rocket smokes behind the shooter, not the target"
         );
+    }
+
+    #[test]
+    fn test_smoking_web_source_breaks_current_grapple() {
+        // Corporate HQ regression: Rocket smoke lands behind the shooter on a
+        // Scorpion Leader's tile, cancelling its queued web and freeing Pulse.
+        let mut board = make_test_board();
+        let rocket = add_mech(&mut board, 0, 5, 3, 3, WId::RangedRocket);
+        let pulse = add_mech(&mut board, 2, 4, 2, 3, WId::ScienceRepulse);
+        let boss = add_enemy_type(&mut board, 744, 5, 2, 7, "ScorpionBoss");
+        let target = add_enemy(&mut board, 747, 5, 6, 3);
+
+        board.units[pulse].base_move = 3;
+        board.units[pulse].set_web(true);
+        board.units[pulse].web_source_uid = board.units[boss].uid;
+        board.units[pulse].move_speed = 0;
+        board.units[boss].weapon = crate::board::WeaponId(WId::ScorpionAtkB as u16);
+
+        let _ = simulate_weapon(&mut board, rocket, WId::RangedRocket, 5, 6);
+
+        assert_eq!(board.units[target].hp, 1, "rocket target should still take normal damage");
+        assert!(board.tile(5, 2).smoke(), "Rocket smoke should land on the web source tile");
+        assert!(!board.units[pulse].web(), "smoking the web source should release the grapple");
+        assert_eq!(board.units[pulse].web_source_uid, 0);
+        assert_eq!(board.units[pulse].move_speed, board.units[pulse].base_move);
     }
 
     #[test]

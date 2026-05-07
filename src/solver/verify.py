@@ -559,7 +559,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # hardening the "never move onto ACID voluntarily" operational rule and
 # avoiding bridge/status ambiguity after ACID-pool moves. Pre-v64 corpus
 # archived as failure_db_snapshot_sim_v63.jsonl.
-SIMULATOR_VERSION = 64
+# v65 - Smoke placed onto a queued web source immediately releases units webbed
+# by that source, matching Scorpion Leader web cancellation when Rocket smoke
+# lands behind the shooter. Pre-v65 corpus archived as
+# failure_db_snapshot_sim_v64.jsonl.
+SIMULATOR_VERSION = 65
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -972,7 +972,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   hardening the "never move onto ACID voluntarily" operational rule and
 //   avoiding bridge/status ambiguity after ACID-pool moves. Pre-v64 corpus
 //   archived as `failure_db_snapshot_sim_v63.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 64;
+// v65 - Smoke placed onto a queued web source immediately releases units webbed
+//   by that source, matching Scorpion Leader web cancellation when Rocket
+//   smoke lands behind the shooter. Pre-v65 corpus archived as
+//   `failure_db_snapshot_sim_v64.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 65;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
