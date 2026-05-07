@@ -580,7 +580,9 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         if !action_unit.alive() {
             continue;
         }
-        let attack_pos = (action_unit.x, action_unit.y);
+        // Normal moves attack from `pos`. Teleporter moves attack from the
+        // partner tile after the pad swap, represented by `action_board`.
+        let attack_pos = attack_origin_after_move(board, mech_idx, pos);
 
         // Smoke blocks most pawn actions (attack + repair). Mission_Trapped
         // Decoy Buildings have IgnoreSmoke=true in the Lua mission script, so
@@ -1525,6 +1527,47 @@ mod top_k_tests {
                 a.0 == (4, 4) && a.1 == WId::ScienceRepulseA && a.2 == (4, 4)
             }),
             "Repulse must not keep the stale pre-teleport pad target"
+        );
+    }
+
+    #[test]
+    fn moved_aerial_bombs_targets_from_post_move_tile() {
+        // Mission_Teleporter m23 turn 4 recovery: JetMech at G1 could move to
+        // D3, but Aerial Bombs still had to target from D3. Targeting G3 was
+        // only legal from the pre-move G1 tile and spent the bridge attack as a
+        // no-op click_miss.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 0,
+            x: 7,
+            y: 1,
+            hp: 5,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteJetmech as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::FLYING
+                | UnitFlags::ACTIVE
+                | UnitFlags::CAN_MOVE,
+            move_speed: 5,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            !actions.iter().any(|a| {
+                a.0 == (5, 4) && a.1 == WId::BruteJetmech && a.2 == (5, 1)
+            }),
+            "Aerial Bombs after G1->D3 must not keep pre-move target G3"
+        );
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (5, 4) && a.1 == WId::BruteJetmech && a.2 == (5, 2)
+            }),
+            "Aerial Bombs after G1->D3 should enumerate targets from D3"
         );
     }
 

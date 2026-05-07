@@ -960,7 +960,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   post-pad-swap position, while invalid diagonal SelfAoe clicks no-op in
 //   replay/sim. Pre-v61 corpus archived as
 //   `failure_db_snapshot_sim_v60.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 61;
+// v62 - Move-then-attack enumeration again targets from the post-move tile for
+//   ordinary movement; v61 accidentally used the pre-move tile except on
+//   teleporter pads. Pre-v62 corpus archived as
+//   `failure_db_snapshot_sim_v61.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 62;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

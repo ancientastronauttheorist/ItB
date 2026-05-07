@@ -548,7 +548,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v61 - Mission_Teleporter action enumeration now targets attacks from the
 # post-pad-swap position, while invalid diagonal SelfAoe clicks no-op in
 # replay/sim. Pre-v61 corpus archived as failure_db_snapshot_sim_v60.jsonl.
-SIMULATOR_VERSION = 61
+# v62 - Move-then-attack enumeration again targets from the post-move tile for
+# ordinary movement; v61 accidentally used the pre-move tile except on
+# teleporter pads. Pre-v62 corpus archived as failure_db_snapshot_sim_v61.jsonl.
+SIMULATOR_VERSION = 62
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

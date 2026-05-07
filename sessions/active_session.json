@@ -9,7 +9,7 @@
   "mission_index": 23,
   "last_mission_turn": 4,
   "current_turn": 4,
-  "phase": "combat_player",
+  "phase": "unknown",
   "active_solution": {
     "actions": [
       {
@@ -1108,6 +1108,15 @@
     },
     {
       "timestamp": "2026-05-07T13:27:52.371164",
+      "turn": 4,
+      "label": "solve",
+      "score": 107571.28573380198,
+      "actions": [
+        "JetMech, move G1\u2192D3, fire Aerial Bombs at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-07T13:33:33.094230",
       "turn": 4,
       "label": "solve",
       "score": 107571.28573380198,
@@ -2520,6 +2529,33 @@
         "target": [
           4,
           4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 4,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          5,
+          1
         ]
       }
     }

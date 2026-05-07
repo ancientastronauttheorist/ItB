@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-07T13:27:52.371282",
+  "timestamp": "2026-05-07T13:33:33.094288",
   "run_id": "20260506_114649_974",
   "mission_index": 23,
   "turn": 4,
@@ -29,7 +29,7 @@
     "active_mechs": 1,
     "spawn_points": [],
     "search_stats": {
-      "elapsed_seconds": 0.0006480216979980469,
+      "elapsed_seconds": 0.0031800270080566406,
       "timed_out": false,
       "permutations_tried": 1,
       "total_permutations": 1,
@@ -1676,7 +1676,7 @@
             },
             "status": "OK",
             "next_score": 86662.00009376662,
-            "next_elapsed_seconds": 0.026838064193725586,
+            "next_elapsed_seconds": 0.02751302719116211,
             "next_actions": [
               "JetMech, move G3\u2192G8",
               "RocketMech, move C5\u2192E5",
@@ -1741,7 +1741,7 @@
             },
             "status": "OK",
             "next_score": 126937.14285714287,
-            "next_elapsed_seconds": 0.025164127349853516,
+            "next_elapsed_seconds": 0.02682328224182129,
             "next_actions": [
               "JetMech",
               "PulseMech, move E3\u2192C4",
@@ -1785,7 +1785,7 @@
             },
             "status": "OK",
             "next_score": 125737.14285714287,
-            "next_elapsed_seconds": 0.023257732391357422,
+            "next_elapsed_seconds": 0.027054786682128906,
             "next_actions": [
               "JetMech",
               "PulseMech, move E3\u2192C4",
