@@ -24,6 +24,7 @@ class WeaponType(str, Enum):
     TWO_CLICK = "two_click"   # Two-step targeting
     HEAL_ALL = "heal_all"     # Heals every player-team unit on the board
     GLOBAL_PUSH = "global_push"  # Pushes every unit in one chosen direction
+    GLOBAL_UNIT_EFFECT = "global_unit_effect"  # Affects every live non-source unit on board
     PASSIVE = "passive"       # Always-on effect
 
 
@@ -289,6 +290,16 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Trapped_Explode": WeaponDef(
         name="Area Blast", weapon_type="self_aoe",
         damage=1, aoe_adjacent=True, aoe_center=True,
+    ),
+    "Missiles_Shield": WeaponDef(
+        name="Shield Barrage", weapon_type="global_unit_effect",
+        damage=0, shield=True, range_max=0, limited=2,
+        targets_allies=True, building_damage=False,
+    ),
+    "Missiles_OneDmg": WeaponDef(
+        name="Missile Barrage", weapon_type="global_unit_effect",
+        damage=1, range_max=0, limited=2,
+        targets_allies=True, building_damage=False,
     ),
 
     # --- RANGED CLASS ---

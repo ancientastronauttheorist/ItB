@@ -230,6 +230,11 @@ NEUTRAL_STATS = {
     "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False),
     "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
     "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
+    # Detritus Contraption (Mission_Missiles): immobile corporate mission
+    # ally with two global-use weapons, not pushable, smoke-immune.
+    "Missile_Unit":      PawnStats(move_speed=0, ranged=1, pushable=False,
+                                   ignore_smoke=True,
+                                   default_weapon="Missiles_Shield"),
     # Mission_Trapped Decoy Building: player-team, 2 HP, immobile,
     # non-grid, non-pushable, self-destruct weapon.
     "Trapped_Building":  PawnStats(move_speed=0, ranged=1, pushable=False,

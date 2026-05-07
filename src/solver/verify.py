@@ -537,7 +537,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # `illegal_leap_landing:x:y:reason` replay event instead of letting diagnostic
 # score_plan/replay inputs stack units on blocked tiles. Pre-v57 corpus
 # archived as failure_db_snapshot_sim_v56.jsonl.
-SIMULATOR_VERSION = 57
+SIMULATOR_VERSION = 59
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

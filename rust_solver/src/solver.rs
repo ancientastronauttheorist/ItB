@@ -16,6 +16,20 @@ use crate::simulate::*;
 use crate::enemy::*;
 use crate::evaluate::*;
 
+#[inline]
+fn disabled_mask_any(mask: DisabledMask) -> bool {
+    mask.iter().any(|&word| word != 0)
+}
+
+#[inline]
+fn disabled_mask_contains(mask: DisabledMask, weapon_id: WId) -> bool {
+    if weapon_id == WId::None {
+        return false;
+    }
+    let bit = weapon_id as usize;
+    bit < mask.len() * 128 && ((mask[bit / 128] >> (bit % 128)) & 1) != 0
+}
+
 // ── MechAction ───────────────────────────────────────────────────────────────
 
 #[derive(Clone, Debug)]
@@ -367,6 +381,26 @@ pub(crate) fn get_weapon_targets(
             // triggers a global push independent of the caster's position.
             targets.extend_from_slice(&SUPPORT_WIND_TARGETS);
         }
+        WeaponType::GlobalUnitEffect => {
+            // Support_Missiles is ZONE_ALL, but Lua GetTargetArea still
+            // requires clicking one live affected unit. For FriendlyFire
+            // variants (Detritus Contraption), the source tile is explicitly
+            // excluded; clicking it silently spends the action with no effect.
+            let mut fallback = None;
+            for u in &board.units {
+                if u.hp <= 0 || (u.x, u.y) == (mx, my) { continue; }
+                if u.is_enemy() {
+                    targets.push((u.x, u.y));
+                    return targets;
+                }
+                if wdef.targets_allies() && fallback.is_none() {
+                    fallback = Some((u.x, u.y));
+                }
+            }
+            if let Some(target) = fallback {
+                targets.push(target);
+            }
+        }
         _ => {} // Passive, Deploy, TwoClick
     }
 
@@ -473,6 +507,13 @@ fn weapon_action_has_effect(
             // The firing mech itself is a pawn, so a live caster means the
             // action has an effect. Keep this explicit for replay/test boards.
             board.units.iter().any(|u| u.hp > 0)
+        }
+        WeaponType::GlobalUnitEffect => {
+            if wdef.shield() {
+                board.units.iter().any(|u| u.hp > 0 && (u.x, u.y) != (mx, my) && !u.shield())
+            } else {
+                board.units.iter().any(|u| u.hp > 0 && (u.x, u.y) != (mx, my))
+            }
         }
         // Leap/Swap/Deploy/TwoClick: positional or utility — don't filter
         _ => true,
@@ -757,7 +798,7 @@ fn search_recursive(
     max_actions: usize,
     weights: &EvalWeights,
     deadline: Instant,
-    disabled_mask: u128,
+    disabled_mask: DisabledMask,
     allow_disabled_weapons: bool,
     weapons: &WeaponTable,
     best_score: &mut f64,
@@ -871,10 +912,7 @@ fn search_recursive(
         //     destroyed); the Pass 2 plan would have saved 1 building by
         //     firing Attract Shot at the building-threatening Scorpion.
         //
-        // Bit index is the u8 representation of the WId variant.
-        let wid_bit = weapon_id as u8;
-        let is_disabled = weapon_id != WId::None && wid_bit < 128
-            && (disabled_mask >> wid_bit) & 1 != 0;
+        let is_disabled = disabled_mask_contains(disabled_mask, weapon_id);
         if is_disabled && !allow_disabled_weapons {
             continue;
         }
@@ -1014,7 +1052,7 @@ pub fn solve_turn(
     time_limit_secs: f64,
     max_actions_per_mech: usize,
     weights: &EvalWeights,
-    disabled_mask: u128,
+    disabled_mask: DisabledMask,
     weapons: &WeaponTable,
 ) -> Solution {
     let active: Vec<usize> = (0..board.unit_count as usize)
@@ -1135,7 +1173,7 @@ pub fn solve_turn(
     // is genuinely correct (e.g., all enemies out of range).
     let pass1_has_attack = best_actions_v.iter()
         .any(|a| a.weapon != WId::None && a.weapon != WId::Repair);
-    if disabled_mask != 0 && !best_actions_v.is_empty() && !pass1_has_attack {
+    if disabled_mask_any(disabled_mask) && !best_actions_v.is_empty() && !pass1_has_attack {
         // Re-simulate Pass 1 plan to inspect predicted outcome.
         let mut b_check = board.clone();
         for action in &best_actions_v {
@@ -1209,7 +1247,7 @@ pub fn solve_turn_top_k(
     time_limit_secs: f64,
     max_actions_per_mech: usize,
     weights: &EvalWeights,
-    disabled_mask: u128,
+    disabled_mask: DisabledMask,
     weapons: &WeaponTable,
     k: usize,
 ) -> Vec<Solution> {
@@ -1365,6 +1403,41 @@ mod top_k_tests {
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(actions.iter().any(|a| a.1 == WId::TrappedExplode));
+    }
+
+    #[test]
+    fn detritus_global_effect_targets_live_non_source_unit() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 20,
+            x: 1,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::MissilesOneDmg as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 21,
+            x: 6,
+            y: 3,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(actions.iter().any(|a| {
+            a.1 == WId::MissilesOneDmg && a.2 == (6, 3)
+        }));
+        assert!(!actions.iter().any(|a| {
+            a.1 == WId::MissilesOneDmg && a.2 == (1, 3)
+        }));
     }
 
     #[test]

@@ -431,9 +431,14 @@ pub enum WId {
     /// Repulse with Shield Self upgrade: pushes adjacent tiles like base
     /// Repulse, then applies Shield to the Pulse Mech's own tile.
     ScienceRepulseA = 133,
+    /// Detritus Contraption Shield Barrage: applies Shield to every live unit.
+    MissilesShield = 134,
+    /// Detritus Contraption Missile Barrage: deals 1 weapon damage to every
+    /// live unit. Friendly fire is intentional and objective-relevant.
+    MissilesOneDmg = 135,
 }
 
-pub const WEAPON_COUNT: usize = 134;
+pub const WEAPON_COUNT: usize = 136;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -897,6 +902,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[133] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits()), ..DEF };
 
+    // 134: Missiles_Shield — Detritus Contraption Shield Barrage.
+    w[134] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 0, limited: 2,
+        flags: f_nc(WeaponFlags::SHIELD.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    // 135: Missiles_OneDmg — Detritus Contraption Missile Barrage.
+    w[135] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 1, limited: 2,
+        flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -1081,6 +1093,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
         "Science_Confuse" => WId::ScienceConfuse,
+        "Missiles_Shield" => WId::MissilesShield,
+        "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
         "ScorpionAtk2" => WId::ScorpionAtk2,
         "HornetAtk1" => WId::HornetAtk1,
@@ -1290,6 +1304,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BouncerAtkB => "BouncerAtkB",
         WId::ArmoredTrainMove => "Armored_Train_Move",
         WId::SupportWind => "Support_Wind",
+        WId::MissilesShield => "Missiles_Shield",
+        WId::MissilesOneDmg => "Missiles_OneDmg",
         _ => "",
     }
 }
@@ -1521,6 +1537,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BossHeal => "Self-Repairing",
         WId::BurnbugAtkB => "Flaming Proboscis",
         WId::SupportWind => "Wind Torrent",
+        WId::MissilesShield => "Shield Barrage",
+        WId::MissilesOneDmg => "Missile Barrage",
         WId::TrappedExplode => "Area Blast",
         _ => "Unknown",
     }
@@ -1583,6 +1601,29 @@ mod tests {
     }
 
     #[test]
+    fn test_detritus_contraption_barrages() {
+        let shield = weapon_def(WId::MissilesShield);
+        assert_eq!(shield.weapon_type, WeaponType::GlobalUnitEffect);
+        assert_eq!(shield.damage, 0);
+        assert!(shield.shield());
+        assert!(shield.targets_allies());
+        assert_eq!(shield.limited, 2);
+
+        let missile = weapon_def(WId::MissilesOneDmg);
+        assert_eq!(missile.weapon_type, WeaponType::GlobalUnitEffect);
+        assert_eq!(missile.damage, 1);
+        assert!(missile.targets_allies());
+        assert_eq!(missile.limited, 2);
+
+        assert_eq!(wid_from_str("Missiles_Shield"), WId::MissilesShield);
+        assert_eq!(wid_from_str("Missiles_OneDmg"), WId::MissilesOneDmg);
+        assert_eq!(wid_to_str(WId::MissilesShield), "Missiles_Shield");
+        assert_eq!(wid_to_str(WId::MissilesOneDmg), "Missiles_OneDmg");
+        assert_eq!(weapon_name(WId::MissilesShield), "Shield Barrage");
+        assert_eq!(weapon_name(WId::MissilesOneDmg), "Missile Barrage");
+    }
+
+    #[test]
     fn test_bouncer_boss_sweeping_horns_def() {
         let w = weapon_def(WId::BouncerAtkB);
         assert_eq!(w.weapon_type, WeaponType::Melee);
@@ -1638,6 +1679,8 @@ mod tests {
             ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
             ("Deploy_TankShot", WId::DeployTankShot),
             ("Trapped_Explode", WId::TrappedExplode),
+            ("Missiles_Shield", WId::MissilesShield),
+            ("Missiles_OneDmg", WId::MissilesOneDmg),
             ("BouncerAtkB", WId::BouncerAtkB),
             ("Armored_Train_Move", WId::ArmoredTrainMove),
             ("Science_Pullmech", WId::SciencePullmech),

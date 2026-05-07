@@ -296,7 +296,7 @@ fn pilot_flags_from_id(pilot_id: &str) -> crate::board::PilotFlags {
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
 
 pub fn board_from_json(json_str: &str)
-    -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>, EvalWeights, u128, Vec<OverlayEntry>), String>
+    -> Result<(Board, Vec<(u8, u8)>, Vec<(u8, u8)>, EvalWeights, DisabledMask, Vec<OverlayEntry>), String>
 {
     let input: JsonInput = serde_json::from_str(json_str)
         .map_err(|e| format!("JSON parse error: {}", e))?;
@@ -742,19 +742,18 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Build the soft-disable bitmask: 1 bit per WId variant up to 127.
-    // Higher ids are valid simulator primitives, but the legacy mask cannot
-    // represent them; ignore rather than shifting by >=128.
+    // Build the soft-disable bitmask: 1 bit per WId variant.
     // Python-side ``session.disabled_actions`` is the source of truth —
     // we only consume the ``weapon_id`` string here. Unknown strings
     // resolve to ``WId::None`` via ``wid_from_str`` and are silently
     // ignored (a typo in a weapon id can't brick the solve).
-    let mut disabled_mask: u128 = 0;
+    let mut disabled_mask: DisabledMask = [0; 2];
     if let Some(list) = &input.disabled_actions {
         for entry in list {
             let wid = wid_from_str(&entry.weapon_id);
-            if wid != WId::None && (wid as u8) < 128 {
-                disabled_mask |= 1u128 << (wid as u8);
+            let bit = wid as usize;
+            if wid != WId::None && bit < disabled_mask.len() * 128 {
+                disabled_mask[bit / 128] |= 1u128 << (bit % 128);
             }
         }
     }
@@ -901,5 +900,28 @@ mod tests {
         assert_eq!(board.units[0].base_move, 4);
         assert_eq!(board.units[1].move_speed, 0);
         assert_eq!(board.units[1].base_move, 4);
+    }
+
+    #[test]
+    fn test_disabled_mask_covers_high_weapon_ids() {
+        let input = r#"{
+            "tiles": [],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": [],
+            "disabled_actions": [
+                {"weapon_id": "Missiles_OneDmg"}
+            ]
+        }"#;
+
+        let (_board, _spawns, _danger, _weights, disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+        let bit = WId::MissilesOneDmg as usize;
+
+        assert_ne!(
+            disabled[bit / 128] & (1u128 << (bit % 128)),
+            0,
+            "WId 135 must be represented in the high disabled-mask word"
+        );
     }
 }

@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/16p77gp",
+      "excerpt": "Reddit daily discussion identifies Detritus Contraption as a mission unit whose objective requires using it four times; comments describe two uses that shield units and two uses that damage units.",
+      "confidence": 0.5
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/search/?q=Detritus+Contraption",
+      "excerpt": "Steam discussion search did not surface a specific Detritus Contraption mechanics thread in accessible results; no contradiction to local capture.",
+      "confidence": 0.5
+    }
+  ]
+}

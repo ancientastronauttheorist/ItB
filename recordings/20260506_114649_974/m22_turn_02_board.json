@@ -1,17 +1,26 @@
 {
-  "timestamp": "2026-05-07T11:51:17.325596",
+  "timestamp": "2026-05-07T12:15:16.062297",
   "run_id": "20260506_114649_974",
   "mission_index": 22,
-  "turn": 0,
+  "turn": 2,
   "label": "board",
   "data": {
     "bridge_state": {
       "island_map_game_seen": "table",
-      "spawning_tiles": [],
+      "spawning_tiles": [
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ]
+      ],
       "grid_power_max": 7,
       "grid_power": 7,
       "island_map_probe": "scope_alive",
-      "turn": 0,
+      "turn": 2,
       "mission_id": "Mission_Missiles",
       "master_seed": 1417999386,
       "total_turns": 4,
@@ -150,9 +159,10 @@
         },
         {
           "y": 2,
-          "x": 4,
           "terrain_id": 0,
-          "terrain": "ground"
+          "terrain": "ground",
+          "acid": true,
+          "x": 4
         },
         {
           "y": 2,
@@ -201,9 +211,10 @@
         },
         {
           "y": 3,
-          "x": 4,
           "terrain_id": 0,
-          "terrain": "ground"
+          "terrain": "ground",
+          "fire": true,
+          "x": 4
         },
         {
           "y": 3,
@@ -432,15 +443,19 @@
       ],
       "targeted_tiles": [
         [
-          1,
+          5,
           2
         ],
         [
-          1,
-          3
+          6,
+          2
         ],
         [
-          4,
+          7,
+          2
+        ],
+        [
+          5,
           3
         ],
         [
@@ -448,11 +463,11 @@
           4
         ],
         [
-          4,
-          5
+          5,
+          4
         ]
       ],
-      "phase": "combat_enemy",
+      "phase": "combat_player",
       "remaining_spawns": 1,
       "mission_kills_done": 0,
       "units": [
@@ -464,7 +479,7 @@
           "flying": false,
           "team": 1,
           "web_probes": {
-            "IsGrappled": false
+            "IsGrappled": true
           },
           "max_hp": 2,
           "move": 0,
@@ -484,18 +499,18 @@
         },
         {
           "web": false,
-          "active": false,
+          "active": true,
           "base_move": 4,
-          "hp": 6,
+          "hp": 5,
           "flying": true,
           "pilot_level": 2,
           "team": 1,
           "massive": true,
           "web_probes": {
-            "IsGrappled": true
+            "IsGrappled": false
           },
           "max_hp": 2,
-          "move": 4,
+          "move": 5,
           "weapons": [
             "Brute_Jetmech"
           ],
@@ -504,8 +519,8 @@
             "skill1=1"
           ],
           "fire": false,
-          "y": 4,
-          "x": 3,
+          "y": 3,
+          "x": 7,
           "acid": false,
           "shield": false,
           "type": "JetMech",
@@ -515,18 +530,18 @@
         },
         {
           "web": false,
-          "active": false,
+          "active": true,
           "base_move": 3,
-          "hp": 7,
+          "hp": 6,
           "flying": false,
           "pilot_level": 2,
           "team": 1,
           "massive": true,
           "web_probes": {
-            "IsGrappled": true
+            "IsGrappled": false
           },
           "max_hp": 3,
-          "move": 3,
+          "move": 4,
           "weapons": [
             "Ranged_Rocket",
             "Passive_Electric"
@@ -537,8 +552,8 @@
             "skill2=8"
           ],
           "fire": false,
-          "y": 5,
-          "x": 2,
+          "y": 7,
+          "x": 4,
           "acid": false,
           "shield": false,
           "type": "RocketMech",
@@ -548,7 +563,7 @@
         },
         {
           "web": false,
-          "active": false,
+          "active": true,
           "base_move": 4,
           "hp": 5,
           "flying": false,
@@ -569,10 +584,10 @@
             "skill2=8"
           ],
           "fire": false,
-          "y": 2,
-          "x": 3,
+          "y": 3,
+          "x": 2,
           "acid": false,
-          "shield": false,
+          "shield": true,
           "type": "PulseMech",
           "mech": true,
           "uid": 2,
@@ -586,14 +601,18 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
+          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 5,
           "move": 2,
-          "weapon_target_behind": false,
           "x": 6,
-          "has_queued_attack": false,
+          "queued_target": [
+            6,
+            2
+          ],
+          "has_queued_attack": true,
           "weapons": [
             "CentipedeAtk2"
           ],
@@ -619,9 +638,10 @@
           },
           "max_hp": 2,
           "move": 2,
+          "has_queued_attack": false,
           "weapons": [],
-          "x": 7,
-          "y": 1,
+          "x": 6,
+          "y": 0,
           "uid": 623,
           "type": "Jelly_Fire1",
           "base_move": 2,
@@ -644,8 +664,8 @@
           "max_hp": 2,
           "move": 2,
           "weapon_target_behind": false,
-          "x": 6,
-          "has_queued_attack": true,
+          "x": 4,
+          "has_queued_attack": false,
           "weapons": [
             "SpiderAtk1"
           ],
@@ -656,36 +676,7 @@
           "base_move": 2,
           "fire": false,
           "mech": false,
-          "acid": false,
-          "frozen": false
-        },
-        {
-          "web": false,
-          "active": false,
-          "shield": false,
-          "hp": 4,
-          "weapon_push": 0,
-          "flying": false,
-          "team": 6,
-          "web_probes": {
-            "IsGrappled": false
-          },
-          "max_hp": 4,
-          "move": 3,
-          "weapon_target_behind": false,
-          "x": 4,
-          "has_queued_attack": true,
-          "weapons": [
-            "BouncerAtk2"
-          ],
-          "weapon_damage": 3,
-          "y": 4,
-          "uid": 625,
-          "type": "Bouncer2",
-          "base_move": 3,
-          "fire": false,
-          "mech": false,
-          "acid": false,
+          "acid": true,
           "frozen": false
         },
         {
@@ -696,19 +687,23 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
+          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 3,
           "move": 3,
-          "weapon_target_behind": false,
           "x": 5,
+          "queued_target": [
+            5,
+            2
+          ],
           "has_queued_attack": true,
           "weapons": [
             "BouncerAtk1"
           ],
           "weapon_damage": 1,
-          "y": 4,
+          "y": 3,
           "uid": 626,
           "type": "Bouncer1",
           "base_move": 3,
@@ -725,20 +720,24 @@
           "weapon_push": 0,
           "flying": false,
           "team": 6,
+          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 1,
           "move": 0,
-          "weapon_target_behind": false,
-          "x": 2,
+          "x": 1,
+          "queued_target": [
+            1,
+            4
+          ],
           "has_queued_attack": true,
           "weapons": [
             "WebeggHatch1"
           ],
           "weapon_damage": 0,
           "y": 4,
-          "uid": 641,
+          "uid": 662,
           "type": "WebbEgg1",
           "base_move": 0,
           "fire": false,
@@ -758,249 +757,96 @@
           "ai_seed": 1530121355
         },
         "region2": {
-          "state": 4,
-          "turn": 0,
+          "state": 0,
+          "turn": 2,
           "mission": "Mission1",
-          "ai_seed": 1189919605
+          "ai_seed": 1820384122
         }
       },
       "environment_danger_v2": [],
-      "timestamp": 1778172677,
+      "timestamp": 1778174115,
       "in_active_mission": true,
       "attack_order": [
-        624,
-        625,
+        622,
         626,
-        641
-      ],
-      "deployment_zone": [
-        [
-          1,
-          4
-        ],
-        [
-          2,
-          1
-        ],
-        [
-          2,
-          2
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          3,
-          3
-        ],
-        [
-          3,
-          5
-        ],
-        [
-          3,
-          6
-        ]
+        662
       ],
       "is_infinite_spawn": true
     },
     "result_summary": {
-      "phase": "combat_enemy",
+      "phase": "combat_player",
       "source": "bridge",
-      "turn": 0,
+      "turn": 2,
       "grid_power": "7/7",
       "mechs": [
         {
           "type": "Missile_Unit",
           "pos": "E7",
           "hp": "2/2",
-          "weapon": "Missiles_Shield",
+          "weapon": "Shield Barrage",
           "status": "DONE"
         },
         {
           "type": "JetMech",
-          "pos": "D5",
-          "hp": "6/2",
+          "pos": "E1",
+          "hp": "5/2",
           "weapon": "Aerial Bombs",
-          "status": "DONE"
+          "status": "READY"
         },
         {
           "type": "RocketMech",
-          "pos": "C6",
-          "hp": "7/3",
+          "pos": "A4",
+          "hp": "6/3",
           "weapon": "Rocket Artillery",
-          "status": "DONE"
+          "status": "READY"
         },
         {
           "type": "PulseMech",
-          "pos": "F5",
+          "pos": "E6",
           "hp": "5/3",
           "weapon": "Repulse",
-          "status": "DONE"
+          "status": "READY"
         }
       ],
-      "active_mechs": 0,
+      "active_mechs": 3,
       "enemies": [
         {
           "type": "Centipede2",
           "pos": "E2",
           "hp": "5/5",
-          "target": ""
+          "target": " \u2192 F2"
         },
         {
           "type": "Jelly_Fire1",
-          "pos": "G1",
+          "pos": "H2",
           "hp": "2/2",
           "target": ""
         },
         {
           "type": "Spider1",
-          "pos": "D2",
+          "pos": "D4",
           "hp": "2/2",
           "target": ""
         },
         {
-          "type": "Bouncer2",
-          "pos": "D4",
-          "hp": "4/4",
-          "target": ""
-        },
-        {
           "type": "Bouncer1",
-          "pos": "D3",
+          "pos": "E3",
           "hp": "3/3",
-          "target": ""
+          "target": " \u2192 F3"
         },
         {
           "type": "WebbEgg1",
-          "pos": "D6",
+          "pos": "D7",
           "hp": "1/1",
-          "target": ""
+          "target": " \u2192 D7"
         }
       ],
-      "threatened_buildings": 0,
-      "targeted_tiles": 5,
-      "spawn_points": 0,
-      "unknowns": {
-        "types": [
-          "Missile_Unit"
-        ],
-        "terrain_ids": [],
-        "weapons": [
-          "Missiles_OneDmg",
-          "Missiles_Shield"
-        ],
-        "screens": []
-      },
-      "requires_research": true,
-      "deployment_zone": [
-        {
-          "bridge": "(1,4)",
-          "visual": "D7",
-          "mcp": [
-            749,
-            522
-          ],
-          "hazard": null
-        },
-        {
-          "bridge": "(2,1)",
-          "visual": "G6",
-          "mcp": [
-            612,
-            517
-          ],
-          "hazard": null
-        },
-        {
-          "bridge": "(2,2)",
-          "visual": "F6",
-          "mcp": [
-            642,
-            506
-          ],
-          "hazard": null
-        },
-        {
-          "bridge": "(2,3)",
-          "visual": "E6",
-          "mcp": [
-            671,
-            495
-          ],
-          "hazard": null
-        },
-        {
-          "bridge": "(2,6)",
-          "visual": "B6",
-          "mcp": [
-            760,
-            463
-          ],
-          "hazard": null
-        },
-        {
-          "bridge": "(3,3)",
-          "visual": "E5",
-          "mcp": [
-            623,
-            458
-          ],
-          "hazard": null
-        },
-        {
-          "bridge": "(3,5)",
-          "visual": "C5",
-          "mcp": [
-            682,
-            436
-          ],
-          "hazard": null
-        },
-        {
-          "bridge": "(3,6)",
-          "visual": "B5",
-          "mcp": [
-            711,
-            425
-          ],
-          "hazard": null
-        }
+      "threatened_buildings": 1,
+      "threats": [
+        "Building F3 by Bouncer1 at E3"
       ],
-      "recommended_deploy": [
-        {
-          "visual": "F6",
-          "mcp": [
-            642,
-            506
-          ],
-          "hazard": null,
-          "hazard_warning": false
-        },
-        {
-          "visual": "C5",
-          "mcp": [
-            682,
-            436
-          ],
-          "hazard": null,
-          "hazard_warning": false
-        },
-        {
-          "visual": "D7",
-          "mcp": [
-            749,
-            522
-          ],
-          "hazard": null,
-          "hazard_warning": false
-        }
-      ]
+      "targeted_tiles": 6,
+      "spawn_points": 2
     }
   }
 }

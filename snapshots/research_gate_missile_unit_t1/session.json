@@ -7,58 +7,10 @@
   "current_mission": "Mission_Missiles",
   "islands_completed": [],
   "mission_index": 22,
-  "last_mission_turn": 2,
-  "current_turn": 2,
+  "last_mission_turn": 1,
+  "current_turn": 1,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          7,
-          0
-        ],
-        "weapon": "Brute_Jetmech",
-        "target": [
-          5,
-          0
-        ],
-        "description": "JetMech, move E1\u2192H1, fire Aerial Bombs at H3"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
-        "move_to": [
-          3,
-          4
-        ],
-        "weapon": "Ranged_Rocket",
-        "target": [
-          1,
-          4
-        ],
-        "description": "RocketMech, move A4\u2192D5, fire Rocket Artillery at D7"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
-        "move_to": [
-          4,
-          0
-        ],
-        "weapon": "Science_Repulse_A",
-        "target": [
-          4,
-          0
-        ],
-        "description": "PulseMech, move E6\u2192H4, fire Repulse at H4"
-      }
-    ],
-    "score": 103728.00002050394,
-    "turn": 2,
-    "input_fingerprint": "0:7,3:5|1:4,7:6|2:2,3:5|621:1,3:2|622:6,3:5|623:6,0:2|624:4,4:2|626:5,3:3|662:1,4:1"
-  },
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -965,75 +917,6 @@
         "RocketMech, move A4\u2192A3, fire Rocket Artillery at G3",
         "PulseMech, move C4\u2192D5, fire Repulse at D5"
       ]
-    },
-    {
-      "timestamp": "2026-05-07T12:05:43.323470",
-      "turn": 1,
-      "label": "solve",
-      "score": 121100.0,
-      "actions": [
-        "Missile_Unit, fire Missile Barrage at E7",
-        "JetMech, move D5\u2192G6, fire Aerial Bombs at E6",
-        "PulseMech, move F5\u2192D5, fire Repulse at D5",
-        "RocketMech, move C6\u2192D6, fire Rocket Artillery at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-07T12:06:38.935477",
-      "turn": 1,
-      "label": "solve",
-      "score": 106350.0,
-      "actions": [
-        "PulseMech, fire Repulse at E6",
-        "JetMech, move D5\u2192E3, fire Aerial Bombs at E1",
-        "RocketMech, move C6\u2192D5, fire Rocket Artillery at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-07T12:06:58.143470",
-      "turn": 1,
-      "label": "solve",
-      "score": 106350.0,
-      "actions": [
-        "PulseMech, fire Repulse at E6",
-        "JetMech, move D5\u2192E3, fire Aerial Bombs at E1",
-        "RocketMech, move C6\u2192D5, fire Rocket Artillery at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-07T12:08:25.831393",
-      "turn": 2,
-      "label": "solve",
-      "score": 104484.66668717061,
-      "actions": [
-        "Missile_Unit, fire Missile Barrage at E7",
-        "RocketMech, move A4\u2192D5, fire Rocket Artillery at D7",
-        "JetMech, move E1\u2192H3, fire Aerial Bombs at H1",
-        "PulseMech, move E6\u2192E4, fire Repulse at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-07T12:14:57.660270",
-      "turn": 2,
-      "label": "solve",
-      "score": 104484.66668717061,
-      "actions": [
-        "Missile_Unit, fire Missile Barrage at E7",
-        "RocketMech, move A4\u2192D5, fire Rocket Artillery at D7",
-        "JetMech, move E1\u2192H3, fire Aerial Bombs at H1",
-        "PulseMech, move E6\u2192E4, fire Repulse at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-07T12:28:05.653594",
-      "turn": 2,
-      "label": "solve",
-      "score": 103728.00002050394,
-      "actions": [
-        "JetMech, move E1\u2192H1, fire Aerial Bombs at H3",
-        "RocketMech, move A4\u2192D5, fire Rocket Artillery at D7",
-        "PulseMech, move E6\u2192H4, fire Repulse at H4"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -1236,10 +1119,6 @@
     [
       21,
       3
-    ],
-    [
-      22,
-      1
     ]
   ],
   "tags": [
@@ -2163,134 +2042,9 @@
           255
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "damage_amount",
-        "death",
-        "status",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Missiles_OneDmg|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 621,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Missiles_OneDmg",
-        "target": [
-          1,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Science_Repulse|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Science_Repulse",
-        "target": [
-          2,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Science_Repulse_A|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Science_Repulse_A",
-        "target": [
-          2,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "damage_amount",
-        "death",
-        "status",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Missiles_OneDmg|attack",
-      "frequency": 1,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 621,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Missiles_OneDmg",
-        "target": [
-          1,
-          3
-        ]
-      }
     }
   ],
-  "disabled_actions": [
-    {
-      "weapon_id": "Missiles_OneDmg",
-      "cause_pattern": "death|Missiles_OneDmg|attack",
-      "expires_turn": 5,
-      "strategic_override": false
-    }
-  ],
+  "disabled_actions": [],
   "research_queue": [
     {
       "type": "JetMech",
@@ -3190,40 +2944,9 @@
       "slot": null,
       "mission_id": "Mission_Missiles",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Detritus Contraption",
-            "hp": 2,
-            "move": null,
-            "class_icons": [
-              "mission_unit",
-              "repair_disabled",
-              "shielded"
-            ],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "mech",
-            "pilot_name": "Torcasio",
-            "weapon_slot_count": 2,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Detritus Contraption",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Detritus+Contraption",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Detritus+Contraption&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "a8a97b62d363",
-      "last_kind": "enemy"
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     },
     {
       "type": "Missiles_OneDmg",
@@ -3232,15 +2955,9 @@
       "slot": null,
       "mission_id": "Mission_Missiles",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_weapon_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     },
     {
       "type": "Missiles_Shield",
@@ -3249,120 +2966,9 @@
       "slot": null,
       "mission_id": "Mission_Missiles",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "known_weapon_after_baseline_reload",
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "Missile_Unit",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Missiles",
-      "first_seen_turn": 1,
       "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 1,
-        "diff_actual": 2
-      },
-      "diff_field": "hp",
-      "diff_predicted": 1,
-      "diff_actual": 2,
-      "severity": "low"
-    },
-    {
-      "type": "Centipede2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Missiles",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 4,
-        "diff_actual": 5
-      },
-      "diff_field": "hp",
-      "diff_predicted": 4,
-      "diff_actual": 5,
-      "severity": "low"
-    },
-    {
-      "type": "Jelly_Fire1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Missiles",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 1,
-        "diff_actual": 2
-      },
-      "diff_field": "hp",
-      "diff_predicted": 1,
-      "diff_actual": 2,
-      "severity": "low"
-    },
-    {
-      "type": "Spider1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Missiles",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 1,
-        "diff_actual": 2
-      },
-      "diff_field": "hp",
-      "diff_predicted": 1,
-      "diff_actual": 2,
-      "severity": "low"
-    },
-    {
-      "type": "Bouncer2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Missiles",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 3,
-        "diff_actual": 4
-      },
-      "diff_field": "hp",
-      "diff_predicted": 3,
-      "diff_actual": 4,
-      "severity": "low"
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": [],
@@ -3370,7 +2976,7 @@
     "hash": "f55c3e514509c776",
     "classes": "gggggggggbbggbbggggggggggbgggggggggggbmggmbggmmwgmmgggwwggggggww",
     "mission_index": 22,
-    "turn": 2
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }

@@ -80,6 +80,11 @@
       "last_run_id": "20260424_011517_057",
       "weapon_id": "Brute_Tankmech"
     },
+    "death|Missiles_OneDmg|attack": {
+      "count": 1,
+      "last_run_id": "20260506_114649_974",
+      "weapon_id": "Missiles_OneDmg"
+    },
     "death|Prime_Lightning|attack": {
       "count": 2,
       "last_run_id": "20260425_185532_218",

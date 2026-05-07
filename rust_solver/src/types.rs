@@ -123,6 +123,9 @@ pub enum WeaponType {
     /// Support_Wind (Wind Torrent): fixed board-edge targeting chooses one
     /// cardinal direction, then every pawn is pushed one tile in Lua scan order.
     GlobalPush = 13,
+    /// Detritus Contraption barrages: ZONE_ALL targeting, applies damage or
+    /// shield to every live non-source unit on the board.
+    GlobalUnitEffect = 14,
 }
 
 impl WeaponType {
@@ -142,10 +145,15 @@ impl WeaponType {
             "two_click" => WeaponType::TwoClick,
             "heal_all" => WeaponType::HealAll,
             "global_push" => WeaponType::GlobalPush,
+            "global_unit_effect" => WeaponType::GlobalUnitEffect,
             _ => WeaponType::Melee,
         }
     }
 }
+
+/// Soft-disabled weapon bitset. Two words cover every current WId variant
+/// without aliasing ids >= 128 back onto lower weapon ids.
+pub type DisabledMask = [u128; 2];
 
 // ── Push Direction ───────────────────────────────────────────────────────────
 

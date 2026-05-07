@@ -1523,6 +1523,9 @@ pub fn simulate_weapon_with(
                 sim_global_push(board, dir, &mut result);
             }
         }
+        WeaponType::GlobalUnitEffect => sim_global_unit_effect(
+            board, wdef, (ax, ay), (target_x, target_y), &mut result,
+        ),
         _ => {} // Passive, Deploy, TwoClick — no simulation
     }
 
@@ -2571,6 +2574,61 @@ fn sim_global_push(board: &mut Board, direction: usize, result: &mut ActionResul
     }
 }
 
+// ── Global Unit Effect (Detritus Contraption) ───────────────────────────────
+
+/// Missiles_Shield / Missiles_OneDmg: affects every live non-source unit.
+/// Lua's Support_Missiles:GetTargetArea excludes the source tile even when
+/// FriendlyFire is true. FireWeapon also requires the clicked target to be in
+/// that target area; clicking the source consumes the action but emits no
+/// SpaceDamage. Lua builds the target list before applying each SpaceDamage,
+/// so a unit killed by an earlier missile is not reselected and buildings are
+/// untouched.
+fn sim_global_unit_effect(
+    board: &mut Board,
+    wdef: &WeaponDef,
+    source: (u8, u8),
+    target: (u8, u8),
+    result: &mut ActionResult,
+) {
+    let valid_target = board.unit_at(target.0, target.1)
+        .map(|idx| {
+            let unit = &board.units[idx];
+            unit.hp > 0 && if wdef.targets_allies() {
+                target != source
+            } else {
+                unit.is_enemy()
+            }
+        })
+        .unwrap_or(false);
+    if !valid_target {
+        return;
+    }
+
+    let targets: Vec<(u8, u8)> = board.units.iter()
+        .filter(|u| {
+            u.hp > 0 && if wdef.targets_allies() {
+                (u.x, u.y) != source
+            } else {
+                u.is_enemy()
+            }
+        })
+        .map(|u| (u.x, u.y))
+        .collect();
+
+    for (x, y) in targets {
+        if wdef.damage > 0 {
+            apply_damage(board, x, y, wdef.damage, result, DamageSource::Weapon);
+        }
+        if wdef.shield() {
+            if let Some(idx) = board.unit_at(x, y) {
+                if board.units[idx].hp > 0 {
+                    board.units[idx].set_shield(true);
+                }
+            }
+        }
+    }
+}
+
 // ── simulate_move / simulate_attack / simulate_action ───────────────────────
 //
 // Split into two phases so callers (replay.rs) can capture per-phase
@@ -3388,6 +3446,26 @@ mod tests {
         // Acid Projector does 0 damage, so shield NOT consumed. Status also blocked.
         assert!(!board.units[enemy_idx].acid(), "Shield should block ACID status");
         assert!(board.units[enemy_idx].shield(), "Shield should NOT be consumed by 0 damage");
+    }
+
+    #[test]
+    fn test_missile_barrage_excludes_source_and_requires_valid_target() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 0, 3, 3, 2, WId::MissilesOneDmg);
+        let ally = add_mech(&mut board, 1, 4, 3, 3, WId::None);
+        let enemy = add_enemy(&mut board, 2, 5, 3, 3);
+
+        let _ = simulate_weapon(&mut board, caster, WId::MissilesOneDmg, 5, 3);
+        assert_eq!(board.units[caster].hp, 2, "source tile is excluded by Support_Missiles");
+        assert_eq!(board.units[ally].hp, 2, "friendly non-source unit should be hit");
+        assert_eq!(board.units[enemy].hp, 2, "enemy unit should be hit");
+
+        let mut invalid = make_test_board();
+        let invalid_caster = add_mech(&mut invalid, 10, 3, 3, 2, WId::MissilesOneDmg);
+        let invalid_enemy = add_enemy(&mut invalid, 11, 5, 3, 3);
+        let _ = simulate_weapon(&mut invalid, invalid_caster, WId::MissilesOneDmg, 3, 3);
+        assert_eq!(invalid.units[invalid_caster].hp, 2, "source click should no-op");
+        assert_eq!(invalid.units[invalid_enemy].hp, 3, "source click should emit no missiles");
     }
 
     #[test]

@@ -948,7 +948,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   `illegal_leap_landing:x:y:reason` replay event instead of letting
 //   diagnostic score_plan/replay inputs stack units on blocked tiles.
 //   Pre-v57 corpus archived as `failure_db_snapshot_sim_v56.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 57;
+pub const SIMULATOR_VERSION: u32 = 59;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
