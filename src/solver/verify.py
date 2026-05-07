@@ -555,7 +555,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # upgraded semantics such as Science_Repulse_A Shield Self remain predicted
 # after an earlier turn desync. Pre-v63 corpus archived as
 # failure_db_snapshot_sim_v62.jsonl.
-SIMULATOR_VERSION = 63
+# v64 - Player movement enumeration treats ACID pools as non-stoppable tiles,
+# hardening the "never move onto ACID voluntarily" operational rule and
+# avoiding bridge/status ambiguity after ACID-pool moves. Pre-v64 corpus
+# archived as failure_db_snapshot_sim_v63.jsonl.
+SIMULATOR_VERSION = 64
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

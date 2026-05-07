@@ -968,7 +968,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   upgraded semantics such as Science_Repulse_A Shield Self remain predicted
 //   after an earlier turn desync. Pre-v63 corpus archived as
 //   `failure_db_snapshot_sim_v62.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 63;
+// v64 - Player movement enumeration treats ACID pools as non-stoppable tiles,
+//   hardening the "never move onto ACID voluntarily" operational rule and
+//   avoiding bridge/status ambiguity after ACID-pool moves. Pre-v64 corpus
+//   archived as `failure_db_snapshot_sim_v63.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 64;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

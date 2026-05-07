@@ -37,6 +37,9 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
                     continue;
                 }
                 if !board.is_blocked(x, y, true) {
+                    if unit.is_player() && board.tile(x, y).acid() {
+                        continue;
+                    }
                     result.push((x, y));
                 }
             }
@@ -93,6 +96,13 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
 
             // Ground units can't cross deadly terrain
             if !flying && tile.terrain.is_deadly_ground() {
+                continue;
+            }
+
+            // Operational rule: never voluntarily path a player unit onto
+            // ACID. The engine/bridge can disagree on whether the unit status
+            // is reflected immediately, so keep ACID stops out of search.
+            if unit.is_player() && tile.acid() {
                 continue;
             }
 
@@ -266,6 +276,22 @@ mod tests {
         board.tile_mut(0, 1).terrain = Terrain::Water;
         let tiles = reachable_tiles(&board, idx);
         assert!(tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn test_player_ground_avoids_acid_pool() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, false);
+        board.tile_mut(0, 1).set_acid(true);
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn test_player_flying_avoids_acid_pool() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, true);
+        board.tile_mut(0, 1).set_acid(true);
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(0, 1)));
     }
 
     #[test]
