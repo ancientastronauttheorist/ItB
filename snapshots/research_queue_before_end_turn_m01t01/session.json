@@ -1,0 +1,147 @@
+{
+  "run_id": "20260508_122657_124",
+  "squad": "Rusting Hulks",
+  "achievement_targets": [
+    "Perfect Battle",
+    "Stormy Weather"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "Mission_FreezeBots",
+  "islands_completed": [],
+  "mission_index": 1,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 98,
+        "mech_type": "Freeze_Tank",
+        "move_to": [
+          4,
+          5
+        ],
+        "weapon": "Pinnacle_FreezeTank",
+        "target": [
+          4,
+          4
+        ],
+        "description": "Freeze_Tank, move B6\u2192C4, fire Unknown at D4"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "JetMech",
+        "move_to": [
+          7,
+          5
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "JetMech, move B5\u2192C1"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "PulseMech",
+        "move_to": [
+          2,
+          1
+        ],
+        "weapon": "Science_Repulse",
+        "target": [
+          2,
+          1
+        ],
+        "description": "PulseMech, fire Repulse at G6"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "RocketMech",
+        "move_to": [
+          5,
+          3
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "RocketMech, move G4\u2192E3"
+      }
+    ],
+    "score": 127692.85714285713,
+    "turn": 1,
+    "input_fingerprint": "0:3,6:4|1:3,1:3|2:2,1:3|96:4,4:1|97:5,1:1|98:2,6:1"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-08T12:34:09.728568",
+      "turn": 1,
+      "label": "solve",
+      "score": 127692.85714285713,
+      "actions": [
+        "Freeze_Tank, move B6\u2192C4, fire Unknown at D4",
+        "JetMech, move B5\u2192C1",
+        "PulseMech, fire Repulse at G6",
+        "RocketMech, move G4\u2192E3"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "JetMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_FreezeBots",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "RocketMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_FreezeBots",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "PulseMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_FreezeBots",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "8e4f9e9555c63dcb",
+    "classes": "ggggggggggbbmmggggbmmbggggmmbbfgfgggfgggggggggfgggfmmggggggmmggg",
+    "mission_index": 1,
+    "turn": 1
+  },
+  "terrain_stage_change_pending": false
+}

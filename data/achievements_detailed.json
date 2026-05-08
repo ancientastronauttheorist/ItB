@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-07T15:10:28.471165",
+    "last_steam_sync": "2026-05-08T14:05:33.690609",
     "last_steam_total": 70,
-    "last_steam_unlocked": 23
+    "last_steam_unlocked": 24
   },
   "achievements": {
     "rift_walkers": [
@@ -69,7 +69,7 @@
         "description": "Take no Mech or Building Damage in a single battle with the Rusting Hulks squad",
         "type": "single_battle",
         "global_unlock_pct": 36.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Play defensively. Use smoke to cancel attacks. Position mechs where they won't be hit. Shield mechs when possible. Web prevention essential \u2014 Camila Vera helps. Choose 1-objective missions (shields on buildings).",
         "setup": "Rusting Hulks, easy difficulty, 1-objective mission with shielded buildings",
         "pitfalls": "ANY mech or building damage fails it. Repaired damage is still damage. Self-damage counts. Watch for splash damage."

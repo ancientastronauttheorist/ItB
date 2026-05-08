@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-08T13:40:24.159479",
+  "label": "m01_t01_ice_forest_perfect_battle_safety_block",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowart1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1",
+      "pos": [
+        7,
+        3
+      ],
+      "hp": 1
+    }
+  ]
+}

@@ -169,6 +169,21 @@ def test_mech_hp_loss_warns_without_blocking():
     assert audit["violations"][0]["kind"] == "mech_hp_loss"
 
 
+def test_mech_hp_loss_blocks_for_perfect_battle_mode():
+    audit = audit_plan_safety(
+        _summary(mech_hp_total=10),
+        _summary(mech_hp_total=8),
+        block_mech_hp_loss=True,
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["blocking"] is True
+    assert plan_requires_safety_block(audit) is True
+    assert audit["violations"][0]["kind"] == "mech_hp_loss"
+    assert audit["violations"][0]["blocking"] is True
+    assert safety_loss_profile(audit)["label"] == "mech_hp_loss"
+
+
 def test_uncollected_pod_loss_blocks_plan():
     audit = audit_plan_safety(
         _summary(pods_present=1),

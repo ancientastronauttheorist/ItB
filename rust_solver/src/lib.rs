@@ -980,7 +980,21 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   (`Ranged_Rocket_A/B/AB`), and Rust models their increased damage while
 //   preserving Rocket-specific smoke and corpse-push behavior. Pre-v66 corpus
 //   archived as `failure_db_snapshot_sim_v65.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 66;
+// v67 - Cannon-Bot (`SnowtankAtk1` / Cannon 8R Mark I) is a Firefly-style
+//   projectile that sets the hit target on fire, not a melee attack. This
+//   predicts Mission_FreezeBots line hits such as run 20260508_122657_124
+//   m01 t01 PulseMech fire damage. Pre-v67 corpus archived as
+//   `failure_db_snapshot_sim_v66.jsonl`.
+// v68 - AE Moths and Bouncers resolve queued recoil self-push plus forward
+//   target push in their normal enemy attack paths. This predicts Moth recoil
+//   bumping a blocking mech before artillery, as seen in run
+//   20260508_134925_472 m02 t02. Pre-v68 corpus archived as
+//   `failure_db_snapshot_sim_v67.jsonl`.
+// v69 - Mission_Trapped 2-HP Coal Plant building tiles are inferred as
+//   objective-style buildings when the bridge omits `unique_building`, so
+//   push-bump HP damage decrements grid power. Pre-v69 corpus archived as
+//   `failure_db_snapshot_sim_v68.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 69;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

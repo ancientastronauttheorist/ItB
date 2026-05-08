@@ -66,12 +66,13 @@ def _list_or_empty(value: Any) -> list[Any]:
 
 
 def _violation(kind: str, current: Any, predicted: Any,
-               message: str, details: Any | None = None) -> dict[str, Any]:
+               message: str, details: Any | None = None,
+               *, blocking: bool | None = None) -> dict[str, Any]:
     out = {
         "kind": kind,
         "current": current,
         "predicted": predicted,
-        "blocking": kind in BLOCKING_KINDS,
+        "blocking": kind in BLOCKING_KINDS if blocking is None else blocking,
         "message": message,
     }
     if isinstance(current, int) and isinstance(predicted, int):
@@ -82,7 +83,9 @@ def _violation(kind: str, current: Any, predicted: Any,
 
 
 def audit_plan_safety(current: dict[str, Any],
-                      predicted: dict[str, Any]) -> dict[str, Any]:
+                      predicted: dict[str, Any],
+                      *,
+                      block_mech_hp_loss: bool = False) -> dict[str, Any]:
     """Classify a plan by comparing current board value to prediction.
 
     ``current`` is a pre-action board summary. ``predicted`` is the detailed
@@ -193,7 +196,13 @@ def audit_plan_safety(current: dict[str, Any],
                 "mech_hp_loss",
                 cur_mech_hp,
                 pred_mech_hp,
-                "Predicted outcome loses mech HP.",
+                (
+                    "Predicted outcome loses mech HP, which blocks "
+                    "the active Perfect Battle target."
+                    if block_mech_hp_loss
+                    else "Predicted outcome loses mech HP."
+                ),
+                blocking=block_mech_hp_loss,
             ))
 
     if "mechs_on_danger" in current or "mechs_on_danger" in predicted:

@@ -12,6 +12,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 ACHIEVEMENTS_PATH = ROOT / "data" / "achievements_detailed.json"
+STEAM_LIBRARYCACHE_ROOT = (
+    Path.home() / "Library" / "Application Support" / "Steam" / "userdata"
+)
 
 
 _QUOTE_TRANSLATION = str.maketrans({
@@ -37,6 +40,92 @@ def steam_display_name(entry: dict[str, Any]) -> str:
         or entry.get("apiname")
         or ""
     ).strip()
+
+
+def _achievement_key(entry: dict[str, Any]) -> str:
+    apiname = str(entry.get("apiname") or entry.get("strID") or "").strip()
+    if apiname:
+        return f"id:{apiname}"
+    return f"name:{canonical_achievement_name(steam_display_name(entry))}"
+
+
+def load_steam_client_achievement_cache(
+    app_id: str = "590380",
+    *,
+    root: str | Path = STEAM_LIBRARYCACHE_ROOT,
+) -> dict[str, Any]:
+    """Read fresher achievement flags from Steam's local library cache.
+
+    The public Steam Web API can lag immediately after an unlock. The local
+    client cache updates quickly enough to confirm newly awarded achievements.
+    """
+    root = Path(root)
+    paths = sorted(root.glob(f"*/config/librarycache/{app_id}.json"))
+    if not paths:
+        return {"path": None, "achievements": [], "n_total": 0, "n_achieved": 0}
+
+    newest = max(paths, key=lambda p: p.stat().st_mtime)
+    raw = json.loads(newest.read_text())
+    sections = dict(raw) if isinstance(raw, list) else {}
+    achievements_section = sections.get("achievements", {})
+    data = achievements_section.get("data", {}) if isinstance(achievements_section, dict) else {}
+
+    rows: list[dict[str, Any]] = []
+    for source_key in ("vecHighlight", "vecUnachieved", "vecAchievedHidden"):
+        for entry in data.get(source_key, []) or []:
+            if not isinstance(entry, dict):
+                continue
+            rows.append({
+                "apiname": entry.get("strID"),
+                "name": entry.get("strName"),
+                "achieved": 1 if entry.get("bAchieved") else 0,
+                "unlocktime": entry.get("rtUnlocked", 0),
+                "source": "steam_client_cache",
+            })
+
+    return {
+        "path": str(newest),
+        "achievements": rows,
+        "n_total": int(data.get("nTotal") or 0),
+        "n_achieved": int(data.get("nAchieved") or 0),
+    }
+
+
+def merge_steam_client_cache(
+    steam_achievements: list[dict[str, Any]],
+    client_cache: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Merge local Steam client achieved flags into Web API achievement rows."""
+    merged = [dict(entry) for entry in steam_achievements]
+    by_key = {_achievement_key(entry): entry for entry in merged}
+    client_rows = client_cache.get("achievements") or []
+    marked = 0
+
+    for client in client_rows:
+        if client.get("achieved") != 1:
+            continue
+        keys = [
+            _achievement_key(client),
+            f"name:{canonical_achievement_name(steam_display_name(client))}",
+        ]
+        target = next((by_key[key] for key in keys if key in by_key), None)
+        if target is None:
+            continue
+        if target.get("achieved") != 1:
+            marked += 1
+        target["achieved"] = 1
+        if client.get("unlocktime"):
+            target["unlocktime"] = client["unlocktime"]
+        if client.get("name") and not target.get("name"):
+            target["name"] = client["name"]
+
+    summary = {
+        "path": client_cache.get("path"),
+        "client_total": client_cache.get("n_total", 0),
+        "client_achieved": client_cache.get("n_achieved", 0),
+        "local_flags_promoted": marked,
+    }
+    return merged, summary
 
 
 def sync_achievement_details(

@@ -884,6 +884,14 @@ pub fn simulate_enemy_attacks(
 
                 let tx = new_tx as u8;
                 let ty = new_ty as u8;
+                let attack_dir = DIRS.iter()
+                    .position(|&(ddx, ddy)| ddx == dx_sign && ddy == dy_sign);
+
+                if wdef.push_self() {
+                    if let Some(dir) = attack_dir {
+                        apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+                    }
+                }
 
                 // Crab Leader's Raining Expulsions damages the artillery target
                 // plus each cardinal tile in the projectile path before p2.
@@ -899,6 +907,11 @@ pub fn simulate_enemy_attacks(
 
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                if wdef.push == PushDir::Forward {
+                    if let Some(dir) = attack_dir {
+                        apply_push(board, tx, ty, dir, &mut result);
+                    }
+                }
 
                 // path_size > 1: also damage subsequent tiles in attack direction
                 // (e.g. Super Stinger's 3-tile line; Crab Artillery's 2-tile hit)
@@ -1130,12 +1143,12 @@ pub fn simulate_enemy_attacks(
                         continue;
                     }
 
-                    let (tx, ty) = if wdef.queued_damage_persists() {
+                    let (tx, ty, attack_dir) = if wdef.queued_damage_persists() {
                         // BlobBoss family registers fixed queued damage before
                         // movement. Keep the queued tile, with the same OOB guard
                         // that protects bridge-normalized edge targets.
                         if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
-                        (qtx as u8, qty as u8)
+                        (qtx as u8, qty as u8, None)
                     } else {
                         // Standard single-tile melee preserves the original
                         // queued direction, then re-aims from the attacker's
@@ -1146,11 +1159,22 @@ pub fn simulate_enemy_attacks(
                         let tx = ex as i8 + dx;
                         let ty = ey as i8 + dy;
                         if !in_bounds(tx, ty) { continue; }
-                        (tx as u8, ty as u8)
+                        let dir = DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy);
+                        (tx as u8, ty as u8, dir)
                     };
 
+                    if wdef.push_self() {
+                        if let Some(dir) = attack_dir {
+                            apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+                        }
+                    }
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    if wdef.push == PushDir::Forward {
+                        if let Some(dir) = attack_dir {
+                            apply_push(board, tx, ty, dir, &mut result);
+                        }
+                    }
                     apply_weapon_status(board, tx, ty, wdef);
                     if wdef.web() {
                         if let Some(idx) = board.unit_at(tx, ty) {
@@ -1550,6 +1574,61 @@ mod tests {
         assert_eq!(board.units[target_idx].hp, 2, "Hook deals 1 damage");
         assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (3, 2),
             "Hook pulls the hit pawn until adjacent to the Gastropod");
+    }
+
+    #[test]
+    fn test_snowtank_mark_i_projectile_hits_line_target_and_sets_fire() {
+        let mut board = Board::default();
+        let pulse_idx = add_mech_unit(&mut board, 2, 2, 1, 3);
+        add_enemy_with_type(&mut board, 97, 5, 1, 1, "Snowtank1", 4, 1);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[pulse_idx].hp, 2,
+            "Cannon-Bot projectile should travel past the empty queued tile and hit PulseMech");
+        assert!(board.units[pulse_idx].fire(),
+            "Cannon 8R Mark I should set the hit unit on fire");
+    }
+
+    #[test]
+    fn test_moth_artillery_self_bounce_bumps_blocking_mech() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        let pulse_idx = add_mech_unit(&mut board, 2, 5, 3, 3);
+        let moth_idx = add_enemy_with_type(&mut board, 314, 4, 3, 3, "Moth1", 1, 3);
+        board.units[moth_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.tile_mut(1, 3).terrain = Terrain::Building;
+        board.tile_mut(1, 3).building_hp = 2;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[pulse_idx].hp, 2,
+            "Moth recoil should bump the mech behind it before artillery lands");
+        assert_eq!(board.units[moth_idx].hp, 2,
+            "Blocked self-bounce should also bump the Moth");
+        assert_eq!((board.units[moth_idx].x, board.units[moth_idx].y), (4, 3),
+            "Blocked recoil leaves the Moth in place");
+        assert_eq!(board.tile(1, 3).building_hp, 1,
+            "Moth artillery still damages its queued target after recoil");
+    }
+
+    #[test]
+    fn test_bouncer_melee_self_bounce_and_target_push() {
+        let mut board = Board::default();
+        let target_idx = add_mech_unit(&mut board, 2, 4, 4, 3);
+        let bouncer_idx = add_enemy_with_type(&mut board, 315, 4, 3, 3, "Bouncer1", 4, 4);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[bouncer_idx].x, board.units[bouncer_idx].y), (4, 2),
+            "Bouncer should recoil before the horn hit resolves");
+        assert_eq!(board.units[target_idx].hp, 2, "Bouncer horn deals 1 damage");
+        assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (4, 5),
+            "Bouncer horn pushes the target forward");
     }
 
     #[test]

@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-08T12:35:13.078084",
+  "label": "research_queue_before_end_turn_m01t01",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "Freeze_Tank",
+      "pos": [
+        2,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowtank1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowtank1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 1
+    }
+  ]
+}

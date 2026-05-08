@@ -1,4 +1,5 @@
 from src.loop.commands import (
+    _blocks_mech_hp_loss_for_perfect_battle,
     _candidate_dirty_frontier,
     _candidate_frontier_representatives,
     _is_harmless_active_state_diff,
@@ -9,6 +10,7 @@ from src.loop.commands import (
     _prepare_projected_bridge,
     _select_safe_plan_candidate,
 )
+from src.loop.session import RunSession
 from src.solver.verify import DiffResult
 
 
@@ -46,6 +48,49 @@ def test_safe_candidate_selection_preserves_top_when_all_dirty():
     assert selected["rank"] == 0
 
 
+def test_dirty_candidate_selection_minimizes_mech_hp_with_same_blocking_loss():
+    def dirty(rank: int, mech_hp_total: int) -> dict:
+        return {
+            "rank": rank,
+            "plan_safety": {
+                "status": "DIRTY",
+                "blocking": True,
+                "violations": [
+                    {
+                        "kind": "grid_damage",
+                        "blocking": True,
+                        "current": 5,
+                        "predicted": 4,
+                        "delta": -1,
+                    },
+                    {
+                        "kind": "building_hp_loss",
+                        "blocking": True,
+                        "current": 5,
+                        "predicted": 4,
+                        "delta": -1,
+                    },
+                    {
+                        "kind": "mech_hp_loss",
+                        "blocking": False,
+                        "current": 7,
+                        "predicted": mech_hp_total,
+                        "delta": mech_hp_total - 7,
+                    },
+                ],
+                "current": {"mech_hp_total": 7},
+                "predicted": {"mech_hp_total": mech_hp_total},
+            },
+        }
+
+    selected = _select_safe_plan_candidate([
+        dirty(0, mech_hp_total=6),
+        dirty(110, mech_hp_total=7),
+    ])
+
+    assert selected["rank"] == 110
+
+
 def test_safe_candidate_selection_accepts_warn_candidate():
     candidates = [
         _candidate(0, blocking=True),
@@ -55,6 +100,26 @@ def test_safe_candidate_selection_accepts_warn_candidate():
     selected = _select_safe_plan_candidate(candidates)
 
     assert selected["rank"] == 1
+
+
+def test_perfect_battle_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch):
+    achievements_path = tmp_path / "achievements_detailed.json"
+    achievements_path.write_text(
+        '{"achievements": {"squad": [{"name": "Perfect Battle", "completed": false}]}}'
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.ACHIEVEMENTS_PATH",
+        achievements_path,
+    )
+    session = RunSession(achievement_targets=["Perfect Battle"])
+
+    assert _blocks_mech_hp_loss_for_perfect_battle(session) is True
+
+
+def test_non_perfect_battle_target_keeps_default_mech_hp_safety_mode():
+    session = RunSession(achievement_targets=["Stormy Weather"])
+
+    assert _blocks_mech_hp_loss_for_perfect_battle(session) is False
 
 
 def test_dirty_frontier_keeps_best_candidate_per_tradeoff():

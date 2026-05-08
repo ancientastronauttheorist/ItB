@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-08T14:31:18.367073",
+  "run_id": "20260508_134925_472",
+  "mission_index": 2,
+  "turn": 3,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "grid_power_drop_unexpected",
+        "tier": 1,
+        "severity": "high",
+        "details": "Predicted grid 6, actual 5 (-1)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}

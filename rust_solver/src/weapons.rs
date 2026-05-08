@@ -722,8 +722,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 73: BurnbugAtk2 — Alpha Gastropod Barbed Proboscis: projectile grapple, 3 dmg.
     w[73] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
         flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
-    // 74: SnowtankAtk1 — Pinnacle bot, melee, 1 dmg
-    w[74] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
+    // 74: SnowtankAtk1 — Cannon-Bot's Cannon 8R Mark I. Per
+    // scripts/weapons_snow.lua, this inherits FireflyAtk1's projectile
+    // SkillEffect and sets Fire=1.
+    w[74] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
+        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
     // 75: SnowartAtk1 — Pinnacle bot, artillery, 1 dmg
     w[75] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
     // 76: SnowartAtk2 — Pinnacle bot, alpha artillery, 3 dmg
@@ -1540,7 +1543,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::MosquitoAtk2 => "Alpha Smokescreen Whip",
         WId::BurnbugAtk1 => "Burnbug Strike",
         WId::BurnbugAtk2 => "Alpha Burnbug Strike",
-        WId::SnowtankAtk1 => "Snowtank Attack",
+        WId::SnowtankAtk1 => "Cannon 8R Mark I",
         WId::SnowtankAtk2 => "Cannon 8R Mark II",
         WId::SnowlaserAtk1 => "BKR Beam Mark I",
         WId::SnowlaserAtk2 => "BKR Beam Mark II",
@@ -1632,6 +1635,16 @@ mod tests {
         let upgraded = weapon_def(WId::DeployTankShot2);
         assert_eq!(upgraded.damage, 2);
         assert_eq!(upgraded.push, PushDir::Forward);
+    }
+
+    #[test]
+    fn test_snowtank_mark_i_is_projectile_fire() {
+        let w = weapon_def(WId::SnowtankAtk1);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 1);
+        assert_eq!(w.range_max, 0);
+        assert!(w.fire());
+        assert_eq!(weapon_name(WId::SnowtankAtk1), "Cannon 8R Mark I");
     }
 
     #[test]

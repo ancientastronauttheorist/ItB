@@ -707,8 +707,8 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
 
     # ── Pinnacle Bots ────────────────────────────────────────────────
     "SnowtankAtk1": WeaponDef(
-        name="Snowtank Attack", weapon_type="melee",
-        damage=1,
+        name="Cannon 8R Mark I", weapon_type="projectile",
+        damage=1, range_max=0, fire=True,
     ),
     "SnowartAtk1": WeaponDef(
         name="Snowart Shot", weapon_type="artillery",

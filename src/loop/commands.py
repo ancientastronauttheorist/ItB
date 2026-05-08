@@ -53,7 +53,12 @@ from src.bridge.writer import (
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
 from src.loop import weapon_penalty_log
-from src.strategy.achievement_sync import sync_achievement_details
+from src.strategy.achievement_sync import (
+    ACHIEVEMENTS_PATH,
+    load_steam_client_achievement_cache,
+    merge_steam_client_cache,
+    sync_achievement_details,
+)
 from src.strategy.run_planner import recommend_squad_for_run
 
 SNAPSHOT_DIR = Path(__file__).parent.parent.parent / "snapshots"
@@ -1353,6 +1358,39 @@ def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
     ]
 
 
+def _blocks_mech_hp_loss_for_perfect_battle(session: RunSession | None) -> bool:
+    """Return True when the active run treats any mech damage as a loss.
+
+    Normal ITB play can accept repairable mech damage, but Perfect Battle is
+    invalidated by any mech or building damage in the battle. Building damage is
+    already a global safety block; this flag promotes mech HP loss to the same
+    level only for runs that explicitly target Perfect Battle.
+    """
+    targets = getattr(session, "achievement_targets", None) or []
+    if not any(str(target).strip().lower() == "perfect battle"
+               for target in targets):
+        return False
+
+    try:
+        payload = json.loads(ACHIEVEMENTS_PATH.read_text())
+    except Exception:
+        return True
+
+    groups = payload.get("achievements", {})
+    if not isinstance(groups, dict):
+        return True
+
+    for achievements in groups.values():
+        if not isinstance(achievements, list):
+            continue
+        for achievement in achievements:
+            if not isinstance(achievement, dict):
+                continue
+            if str(achievement.get("name", "")).strip().lower() == "perfect battle":
+                return not bool(achievement.get("completed"))
+    return True
+
+
 def _evaluate_solution_safety(board: Board,
                               bridge_data: dict,
                               solution: Solution,
@@ -1360,7 +1398,9 @@ def _evaluate_solution_safety(board: Board,
                               current_turn: int,
                               total_turns: int,
                               remaining_spawns: int,
-                              weights=None) -> dict:
+                              weights=None,
+                              *,
+                              block_mech_hp_loss: bool = False) -> dict:
     """Replay a candidate solution and audit irreversible-loss safety."""
     enriched = replay_solution(
         bridge_data, solution, spawns,
@@ -1384,7 +1424,11 @@ def _evaluate_solution_safety(board: Board,
         for r in enriched.get("action_results", [])
         if isinstance(r, dict)
     )
-    plan_safety = audit_plan_safety(current_outcome, predicted_board_summary)
+    plan_safety = audit_plan_safety(
+        current_outcome,
+        predicted_board_summary,
+        block_mech_hp_loss=block_mech_hp_loss,
+    )
     return {
         "enriched": enriched,
         "current_outcome": current_outcome,
@@ -1394,14 +1438,57 @@ def _evaluate_solution_safety(board: Board,
     }
 
 
+def _dirty_candidate_blocking_signature(candidate_eval: dict) -> tuple:
+    """Stable identity for the irreversible loss class of a dirty candidate."""
+    profile = safety_loss_profile(candidate_eval.get("plan_safety"))
+    losses = profile.get("losses") or {}
+    blocking_losses = {
+        key: value
+        for key, value in losses.items()
+        if key != "mech_hp_total"
+    }
+    return (
+        profile.get("label"),
+        bool(profile.get("blocking")),
+        bool(profile.get("non_overridable")),
+        tuple(sorted(blocking_losses.items())),
+    )
+
+
+def _candidate_mech_hp_loss(candidate_eval: dict) -> int:
+    """Return non-fatal mech HP loss for tie-breaking dirty candidates."""
+    plan_safety = candidate_eval.get("plan_safety") or {}
+    current = plan_safety.get("current") or {}
+    predicted = plan_safety.get("predicted") or {}
+    cur_hp = current.get("mech_hp_total")
+    pred_hp = predicted.get("mech_hp_total")
+    if isinstance(cur_hp, int) and isinstance(pred_hp, int):
+        return max(0, cur_hp - pred_hp)
+    return 0
+
+
 def _select_safe_plan_candidate(candidate_evals: list[dict]) -> dict | None:
-    """Prefer the first non-blocking candidate; preserve top plan if all are dirty."""
+    """Prefer clean candidates; when all are dirty, minimize same-class collateral."""
     if not candidate_evals:
         return None
     for candidate in candidate_evals:
         if not plan_requires_safety_block(candidate.get("plan_safety")):
             return candidate
-    return candidate_evals[0]
+
+    top_signature = _dirty_candidate_blocking_signature(candidate_evals[0])
+    same_blocking_class = [
+        candidate for candidate in candidate_evals
+        if _dirty_candidate_blocking_signature(candidate) == top_signature
+    ]
+    return min(
+        same_blocking_class or candidate_evals,
+        key=lambda candidate: (
+            _candidate_mech_hp_loss(candidate),
+            candidate.get("rank")
+            if isinstance(candidate.get("rank"), int)
+            else 2**31,
+        ),
+    )
 
 
 def _candidate_safety_summary(candidate_eval: dict) -> dict:
@@ -1672,6 +1759,7 @@ def _candidate_lookahead_preview(
     eval_weights_dict: dict | None,
     breakdown_weights,
     time_limit: float,
+    block_mech_hp_loss: bool = False,
 ) -> dict:
     """Project a candidate once and solve the heuristic next-turn recovery."""
     solution = candidate_eval.get("solution")
@@ -1750,6 +1838,7 @@ def _candidate_lookahead_preview(
                     "remaining_spawns", 2**31 - 1
                 ),
                 weights=breakdown_weights,
+                block_mech_hp_loss=block_mech_hp_loss,
             )
             next_safety = next_eval.get("plan_safety") or {}
             scenario_preview.update({
@@ -2604,6 +2693,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
     session = _load_session()
     logger = _get_logger(session)
+    block_mech_hp_loss = _blocks_mech_hp_loss_for_perfect_battle(session)
 
     # Try bridge first (richer data: status effects, per-enemy targets)
     board = None
@@ -2857,6 +2947,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     total_turns=total_turns,
                     remaining_spawns=rem_spawns,
                     weights=breakdown_weights,
+                    block_mech_hp_loss=block_mech_hp_loss,
                 ))
                 candidate_evals.append(candidate_eval)
 
@@ -2886,7 +2977,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         wide_bridge_data.pop("disabled_actions", None)
 
                     wide_raw = _rust.solve_top_k(
-                        _json.dumps(wide_bridge_data), time_limit, 100,
+                        _json.dumps(wide_bridge_data), time_limit, 500,
                     )
                     wide_specs = []
                     for idx, rust_result in enumerate(_json.loads(wide_raw) or []):
@@ -2922,6 +3013,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                             total_turns=total_turns,
                             remaining_spawns=rem_spawns,
                             weights=breakdown_weights,
+                            block_mech_hp_loss=block_mech_hp_loss,
                         ))
                         wide_evals.append(candidate_eval)
                         if not plan_requires_safety_block(
@@ -2942,6 +3034,17 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         selected_candidate_eval["safety_widening"] = widening_attempts
                         candidate_count = len(wide_specs)
                         break
+                    least_bad_wide = _select_safe_plan_candidate(wide_evals)
+                    if (
+                        least_bad_wide is not None
+                        and plan_requires_safety_block(
+                            least_bad_wide.get("plan_safety")
+                        )
+                    ):
+                        selected_candidate_eval = least_bad_wide
+                        candidate_evals = wide_evals
+                        selected_candidate_eval["safety_widening"] = widening_attempts
+                        candidate_count = len(wide_specs)
 
             summary_evals = frontier_candidate_evals or candidate_evals
             candidate_safety_summaries = [
@@ -2964,6 +3067,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         eval_weights_dict=eval_weights_dict,
                         breakdown_weights=breakdown_weights,
                         time_limit=time_limit,
+                        block_mech_hp_loss=block_mech_hp_loss,
                     )
                     for candidate_eval in _candidate_frontier_representatives(
                         summary_evals
@@ -3063,6 +3167,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             total_turns=total_turns,
             remaining_spawns=rem_spawns,
             weights=breakdown_weights,
+            block_mech_hp_loss=block_mech_hp_loss,
         )
     enriched = selected_candidate_eval["enriched"]
     current_outcome = selected_candidate_eval["current_outcome"]
@@ -5387,6 +5492,14 @@ def cmd_achievements(sync_local: bool = False) -> dict:
         return result
 
     achievements = data.get("playerstats", {}).get("achievements", [])
+    client_cache_summary = None
+    try:
+        client_cache = load_steam_client_achievement_cache(app_id)
+        achievements, client_cache_summary = merge_steam_client_cache(
+            achievements, client_cache
+        )
+    except Exception as e:
+        client_cache_summary = {"error": str(e)}
     unlocked = [a for a in achievements if a.get("achieved") == 1]
     locked = [a for a in achievements if a.get("achieved") == 0]
 
@@ -5396,6 +5509,8 @@ def cmd_achievements(sync_local: bool = False) -> dict:
         "locked": len(locked),
         "unlocked_list": [a.get("name", a["apiname"]) for a in unlocked],
     }
+    if client_cache_summary:
+        result["steam_client_cache"] = client_cache_summary
 
     if sync_local:
         try:
@@ -5415,6 +5530,14 @@ def cmd_achievements(sync_local: bool = False) -> dict:
             print(f"    matched: {sync['matched']}/{sync['local_total']}")
             print(f"    completed: {sync['local_completed']}/{sync['local_total']}")
             print(f"    changed flags: {sync['status_changed']}")
+            cache = result.get("steam_client_cache") or {}
+            if cache and not cache.get("error"):
+                print(
+                    "    Steam client cache: "
+                    f"{cache.get('client_achieved', 0)}/"
+                    f"{cache.get('client_total', 0)}"
+                    f" (+{cache.get('local_flags_promoted', 0)} fresh)"
+                )
             if sync.get("unmatched_local"):
                 print(f"    unmatched local names: {len(sync['unmatched_local'])}")
         else:
@@ -5958,7 +6081,11 @@ def _re_solve_partial(
                 if isinstance(r, dict)
             )
             plan_safety = audit_plan_safety(
-                current_outcome, predicted_board_summary
+                current_outcome,
+                predicted_board_summary,
+                block_mech_hp_loss=(
+                    _blocks_mech_hp_loss_for_perfect_battle(session)
+                ),
             )
             if plan_requires_safety_block(
                 plan_safety, allow_dirty_plan=allow_dirty_plan

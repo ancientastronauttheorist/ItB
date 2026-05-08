@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-08T12:37:47.932808",
+  "label": "m01_t02_safety_block_after_mech_damage",
+  "turn": 2,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "Freeze_Tank",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        7,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowtank1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowtank1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 1
+    }
+  ]
+}

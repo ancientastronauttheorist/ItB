@@ -351,7 +351,14 @@ pub fn board_from_json(json_str: &str)
             // full set; `grid_reward_buildings` is the ⚡ subset whose
             // survival restores +1 Grid Power at mission end. See
             // evaluate.rs for why the two are scored differently.
-            if jt.unique_building.unwrap_or(false) {
+            // Mission_Trapped ("Protect the Coal Plant") exposes its 2-HP
+            // Coal Plant structures as plain building tiles in the bridge.
+            // Live engine still treats each HP lost as grid-power loss, so
+            // infer objective-style grid accounting for those tiles.
+            let inferred_unique = input.mission_id.as_deref() == Some("Mission_Trapped")
+                && tile.terrain == Terrain::Building
+                && tile.building_hp > 1;
+            if jt.unique_building.unwrap_or(false) || inferred_unique {
                 let idx = (jt.x as usize) * 8 + (jt.y as usize);
                 board.unique_buildings |= 1u64 << idx;
                 if let Some(name) = jt.objective_name.as_deref() {
@@ -854,6 +861,30 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.tile(5, 5).terrain, Terrain::Ice);
+    }
+
+    #[test]
+    fn test_mission_trapped_two_hp_buildings_use_unique_grid_accounting() {
+        let input = r#"{
+            "mission_id": "Mission_Trapped",
+            "tiles": [
+                {"x": 4, "y": 4, "terrain": "building", "terrain_id": 1, "building_hp": 2},
+                {"x": 1, "y": 1, "terrain": "building", "terrain_id": 1, "building_hp": 1}
+            ],
+            "units": [],
+            "grid_power": 6,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+        let coal_idx = (4usize * 8) + 4;
+        let normal_idx = (1usize * 8) + 1;
+
+        assert_ne!(board.unique_buildings & (1u64 << coal_idx), 0,
+            "Mission_Trapped 2-HP Coal Plant tiles need per-HP grid accounting");
+        assert_eq!(board.unique_buildings & (1u64 << normal_idx), 0,
+            "Regular 1-HP buildings on the same map should not be inferred unique");
     }
 
     #[test]
