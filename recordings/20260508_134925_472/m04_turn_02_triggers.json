@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-08T15:10:24.007961",
+  "run_id": "20260508_134925_472",
+  "mission_index": 4,
+  "turn": 2,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_on_danger",
+        "tier": 4,
+        "severity": "critical",
+        "details": "RocketMech moved to danger tile (4,1)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

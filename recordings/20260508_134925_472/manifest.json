@@ -9,13 +9,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-9e753ba",
+  "solver_version": "rust-0.1.0-c5425ac",
   "weight_version": "v011",
-  "updated": "2026-05-08T14:06:46.475597",
+  "updated": "2026-05-08T16:23:26.755529",
   "created": "2026-05-08T13:49:25.501391",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 0,
-  "outcome_recorded_at": "2026-05-08T14:06:46.456315",
-  "outcome_notes": "m01 Doomsday Point: Perfect Battle unlocked (Ach_Rust_A_3 via Steam client cache); Volatile Vek objective failed; Coal Plant protected; continue Rusting Hulks run for Stormy Weather."
+  "outcome_mission": 6,
+  "outcome_recorded_at": "2026-05-08T16:23:26.737812",
+  "outcome_notes": null
 }

@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-08T16:19:31.366429",
+  "label": "research_gate_m06_turn04_bouncer1",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "VIP_Truck",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "VIP_Truck",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        0,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    }
+  ]
+}

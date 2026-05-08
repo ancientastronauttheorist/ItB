@@ -581,7 +581,17 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # objective-style buildings when the bridge omits `unique_building`, so
 # push-bump HP damage decrements grid power. Pre-v69 corpus archived as
 # failure_db_snapshot_sim_v68.jsonl.
-SIMULATOR_VERSION = 69
+# v70 - Leap weapon target enumeration / replay no-op reject chasm landing
+# tiles. Live Aerial Bombs on a Cataclysm chasm tile click-missed instead of
+# moving JetMech or damaging the transit tile. Pre-v70 corpus archived as
+# failure_db_snapshot_sim_v69.jsonl.
+# v71 - Rocket Artillery center push does not add phantom map-edge bump
+# damage when the target has no tile to move into. Pre-v71 corpus archived as
+# failure_db_snapshot_sim_v70.jsonl.
+# v72 - ACID weapons acidify live occupied targets without creating an
+# immediate ground pool beneath them. Pre-v72 corpus archived as
+# failure_db_snapshot_sim_v71.jsonl.
+SIMULATOR_VERSION = 72
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1070,9 +1080,14 @@ def classify_diff(diff: DiffResult, mech_uid: int = None, phase: str = "action")
     subcategory = None
     model_gap = False
     for td in diff.tile_diffs:
-        if td["field"] == "acid":
+        if (
+            td["field"] == "acid"
+            and td.get("predicted") is False
+            and td.get("actual") is True
+        ):
             # ACID tile transfer (when an ACID Vek dies on a tile) is
-            # not modeled in Python sim. Tag it so the tuner ignores it.
+            # a historically known sim gap. Tag only the under-prediction
+            # direction so ACID pool over-predictions still surface.
             subcategory = "model_gap_known"
             model_gap = True
             break

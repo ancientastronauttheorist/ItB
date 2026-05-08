@@ -433,6 +433,7 @@
     "Train_Damaged",
     "Train_Pawn",
     "Trapped_Building",
+    "VIP_Truck",
     "Wall",
     "WallMech",
     "WebbEgg1"
@@ -527,6 +528,7 @@
     "TotemAtkB",
     "Train_Move",
     "Trapped_Explode",
+    "VIP_Truck_Move",
     "WebeggHatch1"
   ],
   "known_phases": [

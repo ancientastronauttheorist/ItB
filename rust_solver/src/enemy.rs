@@ -7,7 +7,14 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::simulate::{apply_damage, apply_push, apply_teleport_on_land, apply_weapon_status, on_enemy_death};
+use crate::simulate::{
+    apply_damage,
+    apply_push,
+    apply_teleport_on_land,
+    apply_weapon_status,
+    apply_weapon_status_with_impact_occupancy,
+    on_enemy_death,
+};
 
 /// Spawn a new enemy unit at (x, y). Used by Spider/Blobber artillery
 /// whose in-game effect is "create an egg / blob" at the telegraphed
@@ -753,6 +760,7 @@ pub fn simulate_enemy_attacks(
                         tile.terrain == Terrain::Mountain
                             || (tile.terrain == Terrain::Building && tile.building_hp > 0)
                     };
+                    let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                     if wdef.fire() {
@@ -776,7 +784,9 @@ pub fn simulate_enemy_attacks(
                         board.tile_mut(tx, ty).set_on_fire(true);
                     }
                     // ACID / WEB / other status effects on the primary target
-                    apply_weapon_status(board, tx, ty, wdef);
+                    apply_weapon_status_with_impact_occupancy(
+                        board, tx, ty, wdef, occupied_at_impact,
+                    );
                     if wdef.web() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             // Skip webber-uid tracking for Pilot_Soldier so
@@ -811,9 +821,12 @@ pub fn simulate_enemy_attacks(
                             if !in_bounds(nx, ny) { continue; }
                             let nxu = nx as u8;
                             let nyu = ny as u8;
+                            let occupied_at_impact = board.unit_at(nxu, nyu).is_some();
                             let d2 = enemy_hit_damage(board, nxu, nyu, damage, vh);
                             apply_damage(board, nxu, nyu, d2, &mut result, DamageSource::Weapon);
-                            apply_weapon_status(board, nxu, nyu, wdef);
+                            apply_weapon_status_with_impact_occupancy(
+                                board, nxu, nyu, wdef, occupied_at_impact,
+                            );
                             if wdef.web() {
                                 if let Some(idx) = board.unit_at(nxu, nyu) {
                                     if !board.units[idx].pilot_soldier() {
@@ -943,9 +956,12 @@ pub fn simulate_enemy_attacks(
                         let px = new_tx + pdx;
                         let py = new_ty + pdy;
                         if !in_bounds(px, py) { continue; }
+                        let occupied_at_impact = board.unit_at(px as u8, py as u8).is_some();
                         let d_p = enemy_hit_damage(board, px as u8, py as u8, damage, vh);
                         apply_damage(board, px as u8, py as u8, d_p, &mut result, DamageSource::Weapon);
-                        apply_weapon_status(board, px as u8, py as u8, wdef);
+                        apply_weapon_status_with_impact_occupancy(
+                            board, px as u8, py as u8, wdef, occupied_at_impact,
+                        );
                     }
                 }
 
@@ -1092,9 +1108,12 @@ pub fn simulate_enemy_attacks(
                     let tx1 = ex as i8 + dx;
                     let ty1 = ey as i8 + dy;
                     if in_bounds(tx1, ty1) {
+                        let occupied_at_impact = board.unit_at(tx1 as u8, ty1 as u8).is_some();
                         let d = enemy_hit_damage(board, tx1 as u8, ty1 as u8, damage, vh);
                         apply_damage(board, tx1 as u8, ty1 as u8, d, &mut result, DamageSource::Weapon);
-                        apply_weapon_status(board, tx1 as u8, ty1 as u8, wdef);
+                        apply_weapon_status_with_impact_occupancy(
+                            board, tx1 as u8, ty1 as u8, wdef, occupied_at_impact,
+                        );
                         if wdef.web() {
                             if let Some(idx) = board.unit_at(tx1 as u8, ty1 as u8) {
                                 board.units[idx].web_source_uid = enemy_uid;
@@ -1104,9 +1123,12 @@ pub fn simulate_enemy_attacks(
                     let tx2 = ex as i8 + dx * 2;
                     let ty2 = ey as i8 + dy * 2;
                     if in_bounds(tx2, ty2) {
+                        let occupied_at_impact = board.unit_at(tx2 as u8, ty2 as u8).is_some();
                         let d2 = enemy_hit_damage(board, tx2 as u8, ty2 as u8, damage, vh);
                         apply_damage(board, tx2 as u8, ty2 as u8, d2, &mut result, DamageSource::Weapon);
-                        apply_weapon_status(board, tx2 as u8, ty2 as u8, wdef);
+                        apply_weapon_status_with_impact_occupancy(
+                            board, tx2 as u8, ty2 as u8, wdef, occupied_at_impact,
+                        );
                         if wdef.web() {
                             if let Some(idx) = board.unit_at(tx2 as u8, ty2 as u8) {
                                 board.units[idx].web_source_uid = enemy_uid;
@@ -1168,6 +1190,7 @@ pub fn simulate_enemy_attacks(
                             apply_push(board, ex, ey, opposite_dir(dir), &mut result);
                         }
                     }
+                    let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                     if wdef.push == PushDir::Forward {
@@ -1175,7 +1198,9 @@ pub fn simulate_enemy_attacks(
                             apply_push(board, tx, ty, dir, &mut result);
                         }
                     }
-                    apply_weapon_status(board, tx, ty, wdef);
+                    apply_weapon_status_with_impact_occupancy(
+                        board, tx, ty, wdef, occupied_at_impact,
+                    );
                     if wdef.web() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             board.units[idx].web_source_uid = enemy_uid;

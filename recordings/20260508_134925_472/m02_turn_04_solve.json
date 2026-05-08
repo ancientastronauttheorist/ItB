@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-08T14:44:50.160567",
+  "timestamp": "2026-05-08T14:53:53.332500",
   "run_id": "20260508_134925_472",
   "mission_index": 2,
   "turn": 4,
@@ -89,8 +89,8 @@
     "active_mechs": 5,
     "spawn_points": [],
     "search_stats": {
-      "elapsed_seconds": 5.287238121032715,
-      "timed_out": false,
+      "elapsed_seconds": 10.005365133285522,
+      "timed_out": true,
       "permutations_tried": 120,
       "total_permutations": 120,
       "active_mech_count": 5
@@ -1407,7 +1407,7 @@
       {
         "rank": 42,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1438,7 +1438,7 @@
       {
         "rank": 43,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1469,7 +1469,7 @@
       {
         "rank": 44,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1500,7 +1500,7 @@
       {
         "rank": 45,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1531,7 +1531,7 @@
       {
         "rank": 46,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1562,7 +1562,7 @@
       {
         "rank": 47,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1593,7 +1593,7 @@
       {
         "rank": 48,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1624,7 +1624,7 @@
       {
         "rank": 49,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1655,7 +1655,7 @@
       {
         "rank": 50,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1686,7 +1686,7 @@
       {
         "rank": 51,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1717,7 +1717,7 @@
       {
         "rank": 52,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1748,7 +1748,7 @@
       {
         "rank": 53,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1779,7 +1779,7 @@
       {
         "rank": 54,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1810,7 +1810,7 @@
       {
         "rank": 55,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1841,7 +1841,7 @@
       {
         "rank": 56,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1872,7 +1872,7 @@
       {
         "rank": 57,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1903,7 +1903,7 @@
       {
         "rank": 58,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -1934,7 +1934,7 @@
       {
         "rank": 59,
         "source": "top_k_safety",
-        "score": 87850.5715131419,
+        "score": 87800.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4321,7 +4321,7 @@
       {
         "rank": 136,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4352,7 +4352,7 @@
       {
         "rank": 137,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4383,7 +4383,7 @@
       {
         "rank": 138,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4414,7 +4414,7 @@
       {
         "rank": 139,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4445,7 +4445,7 @@
       {
         "rank": 140,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4476,7 +4476,7 @@
       {
         "rank": 141,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4507,7 +4507,7 @@
       {
         "rank": 142,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4538,7 +4538,7 @@
       {
         "rank": 143,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4569,7 +4569,7 @@
       {
         "rank": 144,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4600,7 +4600,7 @@
       {
         "rank": 145,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4631,7 +4631,7 @@
       {
         "rank": 146,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4662,7 +4662,7 @@
       {
         "rank": 147,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4693,7 +4693,7 @@
       {
         "rank": 148,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4724,7 +4724,7 @@
       {
         "rank": 149,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4755,7 +4755,7 @@
       {
         "rank": 150,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4786,7 +4786,7 @@
       {
         "rank": 151,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4817,7 +4817,7 @@
       {
         "rank": 152,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4848,7 +4848,7 @@
       {
         "rank": 153,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4879,7 +4879,7 @@
       {
         "rank": 154,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4910,7 +4910,7 @@
       {
         "rank": 155,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4941,7 +4941,7 @@
       {
         "rank": 156,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -4972,7 +4972,7 @@
       {
         "rank": 157,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5003,7 +5003,7 @@
       {
         "rank": 158,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5034,7 +5034,7 @@
       {
         "rank": 159,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5065,7 +5065,7 @@
       {
         "rank": 160,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5096,7 +5096,7 @@
       {
         "rank": 161,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5127,7 +5127,7 @@
       {
         "rank": 162,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5158,7 +5158,7 @@
       {
         "rank": 163,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5189,7 +5189,7 @@
       {
         "rank": 164,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5220,7 +5220,7 @@
       {
         "rank": 165,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5251,7 +5251,7 @@
       {
         "rank": 166,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5282,7 +5282,7 @@
       {
         "rank": 167,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5313,7 +5313,7 @@
       {
         "rank": 168,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5344,7 +5344,7 @@
       {
         "rank": 169,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5375,7 +5375,7 @@
       {
         "rank": 170,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5406,7 +5406,7 @@
       {
         "rank": 171,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5437,7 +5437,7 @@
       {
         "rank": 172,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5468,7 +5468,7 @@
       {
         "rank": 173,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5499,7 +5499,7 @@
       {
         "rank": 174,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5530,7 +5530,7 @@
       {
         "rank": 175,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5561,7 +5561,7 @@
       {
         "rank": 176,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5592,7 +5592,7 @@
       {
         "rank": 177,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5623,7 +5623,7 @@
       {
         "rank": 178,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5654,7 +5654,7 @@
       {
         "rank": 179,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5685,7 +5685,7 @@
       {
         "rank": 180,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5716,7 +5716,7 @@
       {
         "rank": 181,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5747,7 +5747,7 @@
       {
         "rank": 182,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5778,7 +5778,7 @@
       {
         "rank": 183,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5809,7 +5809,7 @@
       {
         "rank": 184,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5840,7 +5840,7 @@
       {
         "rank": 185,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5871,7 +5871,7 @@
       {
         "rank": 186,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5902,7 +5902,7 @@
       {
         "rank": 187,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5933,7 +5933,7 @@
       {
         "rank": 188,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5964,7 +5964,7 @@
       {
         "rank": 189,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -5995,7 +5995,7 @@
       {
         "rank": 190,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6026,7 +6026,7 @@
       {
         "rank": 191,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6057,7 +6057,7 @@
       {
         "rank": 192,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6088,7 +6088,7 @@
       {
         "rank": 193,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6119,7 +6119,7 @@
       {
         "rank": 194,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6150,7 +6150,7 @@
       {
         "rank": 195,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6181,7 +6181,7 @@
       {
         "rank": 196,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6212,7 +6212,7 @@
       {
         "rank": 197,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6243,7 +6243,7 @@
       {
         "rank": 198,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6274,7 +6274,7 @@
       {
         "rank": 199,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6305,7 +6305,7 @@
       {
         "rank": 200,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6336,7 +6336,7 @@
       {
         "rank": 201,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6367,7 +6367,7 @@
       {
         "rank": 202,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6398,7 +6398,7 @@
       {
         "rank": 203,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6429,7 +6429,7 @@
       {
         "rank": 204,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6460,7 +6460,7 @@
       {
         "rank": 205,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6491,7 +6491,7 @@
       {
         "rank": 206,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6522,7 +6522,7 @@
       {
         "rank": 207,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6553,7 +6553,7 @@
       {
         "rank": 208,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6584,7 +6584,7 @@
       {
         "rank": 209,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6615,7 +6615,7 @@
       {
         "rank": 210,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6646,7 +6646,7 @@
       {
         "rank": 211,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6677,7 +6677,7 @@
       {
         "rank": 212,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6708,7 +6708,7 @@
       {
         "rank": 213,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6739,7 +6739,7 @@
       {
         "rank": 214,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6770,7 +6770,7 @@
       {
         "rank": 215,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6801,7 +6801,7 @@
       {
         "rank": 216,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6832,7 +6832,7 @@
       {
         "rank": 217,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6863,7 +6863,7 @@
       {
         "rank": 218,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6894,7 +6894,7 @@
       {
         "rank": 219,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6925,7 +6925,7 @@
       {
         "rank": 220,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6956,7 +6956,7 @@
       {
         "rank": 221,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -6987,7 +6987,7 @@
       {
         "rank": 222,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7018,7 +7018,7 @@
       {
         "rank": 223,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7049,7 +7049,7 @@
       {
         "rank": 224,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7080,7 +7080,7 @@
       {
         "rank": 225,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7111,7 +7111,7 @@
       {
         "rank": 226,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7142,7 +7142,7 @@
       {
         "rank": 227,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7173,7 +7173,7 @@
       {
         "rank": 228,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7204,7 +7204,7 @@
       {
         "rank": 229,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7235,7 +7235,7 @@
       {
         "rank": 230,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7266,7 +7266,7 @@
       {
         "rank": 231,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7297,7 +7297,7 @@
       {
         "rank": 232,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7328,7 +7328,7 @@
       {
         "rank": 233,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7359,7 +7359,7 @@
       {
         "rank": 234,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7390,7 +7390,7 @@
       {
         "rank": 235,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7421,7 +7421,7 @@
       {
         "rank": 236,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7452,7 +7452,7 @@
       {
         "rank": 237,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7483,7 +7483,7 @@
       {
         "rank": 238,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7514,7 +7514,7 @@
       {
         "rank": 239,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7545,7 +7545,7 @@
       {
         "rank": 240,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7576,7 +7576,7 @@
       {
         "rank": 241,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7607,7 +7607,7 @@
       {
         "rank": 242,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7638,7 +7638,7 @@
       {
         "rank": 243,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7669,7 +7669,7 @@
       {
         "rank": 244,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7700,7 +7700,7 @@
       {
         "rank": 245,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7731,7 +7731,7 @@
       {
         "rank": 246,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7762,7 +7762,7 @@
       {
         "rank": 247,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7793,7 +7793,7 @@
       {
         "rank": 248,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7824,7 +7824,7 @@
       {
         "rank": 249,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7855,7 +7855,7 @@
       {
         "rank": 250,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7886,7 +7886,7 @@
       {
         "rank": 251,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7917,7 +7917,7 @@
       {
         "rank": 252,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7948,7 +7948,7 @@
       {
         "rank": 253,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -7979,7 +7979,7 @@
       {
         "rank": 254,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8010,7 +8010,7 @@
       {
         "rank": 255,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8041,7 +8041,7 @@
       {
         "rank": 256,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8072,7 +8072,7 @@
       {
         "rank": 257,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8103,7 +8103,7 @@
       {
         "rank": 258,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8134,7 +8134,7 @@
       {
         "rank": 259,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8165,7 +8165,7 @@
       {
         "rank": 260,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8196,7 +8196,7 @@
       {
         "rank": 261,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8227,7 +8227,7 @@
       {
         "rank": 262,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8258,7 +8258,7 @@
       {
         "rank": 263,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8289,7 +8289,7 @@
       {
         "rank": 264,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8320,7 +8320,7 @@
       {
         "rank": 265,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8351,7 +8351,7 @@
       {
         "rank": 266,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8382,7 +8382,7 @@
       {
         "rank": 267,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8413,7 +8413,7 @@
       {
         "rank": 268,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -8444,7 +8444,7 @@
       {
         "rank": 269,
         "source": "top_k_safety",
-        "score": 87800.5715131419,
+        "score": 87385.5715131419,
         "chain_score": null,
         "status": "DIRTY",
         "blocking": true,
@@ -15663,7 +15663,7 @@
             },
             "status": "OK",
             "next_score": 118717.14285714287,
-            "next_elapsed_seconds": 0.3885798454284668,
+            "next_elapsed_seconds": 1.0006558895111084,
             "next_actions": [
               "Trapped_Building",
               "JetMech, fire Aerial Bombs at E3",
@@ -15699,7 +15699,7 @@
             },
             "status": "OK",
             "next_score": 118717.14285714287,
-            "next_elapsed_seconds": 0.3784067630767822,
+            "next_elapsed_seconds": 1.0006248950958252,
             "next_actions": [
               "Trapped_Building",
               "JetMech, fire Aerial Bombs at E3",
@@ -15735,7 +15735,7 @@
             },
             "status": "OK",
             "next_score": 118717.14285714287,
-            "next_elapsed_seconds": 0.3657972812652588,
+            "next_elapsed_seconds": 0.9499709606170654,
             "next_actions": [
               "Trapped_Building",
               "JetMech, fire Aerial Bombs at E3",

@@ -1118,16 +1118,19 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
 struct PushPolicy {
     dead_nonpushable_collides: bool,
     dead_bumps_live_blocker: bool,
+    edge_bump_damage: bool,
 }
 
 const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
+    edge_bump_damage: true,
 };
 
 const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: true,
     dead_bumps_live_blocker: true,
+    edge_bump_damage: false,
 };
 
 /// Push unit at (x, y) in direction. Damage+push are simultaneous; a
@@ -1177,7 +1180,9 @@ fn apply_push_with_policy(
 
     // Blocked by map edge
     if !in_bounds(nx_i, ny_i) {
-        apply_damage(board, x, y, 1, result, DamageSource::Bump);
+        if policy.edge_bump_damage {
+            apply_damage(board, x, y, 1, result, DamageSource::Bump);
+        }
         return;
     }
 
@@ -1380,6 +1385,20 @@ fn apply_push_with_policy(
 /// Apply a weapon's status effects to a tile and its occupant.
 /// Called AFTER damage and push — if damage broke a shield, status will land.
 pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
+    let occupied_at_impact = board.unit_at(x, y).is_some();
+    apply_weapon_status_with_impact_occupancy(board, x, y, wdef, occupied_at_impact);
+}
+
+/// Apply status with explicit pre-damage occupancy for ACID fall-to-feet logic.
+/// Damage can kill the occupant before status is applied; that should not turn a
+/// live-target ACID hit into an empty-tile pool.
+pub fn apply_weapon_status_with_impact_occupancy(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    wdef: &WeaponDef,
+    occupied_at_impact: bool,
+) {
     // ── Tile effects ──
     if wdef.fire() {
         let tile = board.tile_mut(x, y);
@@ -1402,13 +1421,22 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
         }
     }
     if wdef.acid() {
-        // Acid weapon on liquid/ground terrain creates a persistent
-        // A.C.I.D. Tile (water) or A.C.I.D. Pool (ground/rubble).
-        // Observed in game: Alpha Centipede Corrosive Vomit splash on
-        // water converts it to A.C.I.D. Tile.
-        let tile = board.tile_mut(x, y);
-        if matches!(tile.terrain, Terrain::Water | Terrain::Ground | Terrain::Rubble) {
-            tile.set_acid(true);
+        // Acid weapons apply ACID to live units, but do not create a ground
+        // pool underneath them until that ACID unit dies. If the status is
+        // blocked by shield/frozen, it "falls to feet" and acidifies the tile.
+        // Empty liquid/ground hits still create a persistent A.C.I.D. Tile/Pool.
+        let acid_falls_to_tile = match board.unit_at(x, y) {
+            Some(idx) => {
+                let u = &board.units[idx];
+                u.shield() || u.frozen()
+            }
+            None => !occupied_at_impact,
+        };
+        if acid_falls_to_tile {
+            let tile = board.tile_mut(x, y);
+            if matches!(tile.terrain, Terrain::Water | Terrain::Ground | Terrain::Rubble) {
+                tile.set_acid(true);
+            }
         }
     }
 
@@ -1447,7 +1475,9 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
             }
         }
         if wdef.acid() {
-            board.units[idx].set_acid(true);
+            if !board.units[idx].frozen() {
+                board.units[idx].set_acid(true);
+            }
         }
         if wdef.freeze() {
             let u = &mut board.units[idx];
@@ -1619,6 +1649,7 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
     let defer_target_death_explosion = attack_dir.is_some()
         && target_dmg > 0
         && !matches!(wdef.push, PushDir::None | PushDir::Flip);
+    let target_occupied_at_impact = board.unit_at(tx, ty).is_some();
     let deferred_death_explosion = if defer_target_death_explosion {
         apply_damage_defer_death_explosion(
             board, tx, ty, target_dmg, result, DamageSource::Weapon,
@@ -1662,7 +1693,9 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
 
     if let Some(dir) = attack_dir {
         // Apply weapon status BEFORE push (unit still at target tile)
-        apply_weapon_status(board, tx, ty, wdef);
+        apply_weapon_status_with_impact_occupancy(
+            board, tx, ty, wdef, target_occupied_at_impact,
+        );
 
         match wdef.push {
             PushDir::Forward => apply_push(board, tx, ty, dir, result),
@@ -1766,8 +1799,11 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         let hx = hit_x as u8;
         let hy = hit_y as u8;
         let dmg = projectile_damage(wdef, ax, ay, hx, hy);
+        let occupied_at_impact = board.unit_at(hx, hy).is_some();
         apply_damage(board, hx, hy, dmg, result, DamageSource::Weapon);
-        apply_weapon_status(board, hx, hy, wdef); // status BEFORE push (unit still here)
+        apply_weapon_status_with_impact_occupancy(
+            board, hx, hy, wdef, occupied_at_impact,
+        ); // status BEFORE push (unit still here)
         match wdef.push {
             PushDir::Forward => apply_push(board, hx, hy, dir, result),
             PushDir::Backward => apply_push(board, hx, hy, opposite_dir(dir), result),
@@ -1816,13 +1852,17 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 // ── Artillery ────────────────────────────────────────────────────────────────
 
 fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+    let center_occupied_at_impact = board.unit_at(tx, ty).is_some();
+
     // Center damage
     if wdef.aoe_center() {
         apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
     }
 
     // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
-    apply_weapon_status(board, tx, ty, wdef);
+    apply_weapon_status_with_impact_occupancy(
+        board, tx, ty, wdef, center_occupied_at_impact,
+    );
 
     // Smoke-behind-shooter: Rocket Artillery (Ranged_Rocket) places a single
     // smoke tile one step opposite the shot direction from the shooter's
@@ -1903,8 +1943,11 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             let bx = tx as i8 + ddx;
             let by = ty as i8 + ddy;
             if in_bounds(bx, by) {
+                let occupied_at_impact = board.unit_at(bx as u8, by as u8).is_some();
                 apply_direct_weapon_damage(board, bx as u8, by as u8, wdef.damage, wdef, result);
-                apply_weapon_status(board, bx as u8, by as u8, wdef);
+                apply_weapon_status_with_impact_occupancy(
+                    board, bx as u8, by as u8, wdef, occupied_at_impact,
+                );
             }
         }
     }
@@ -1953,8 +1996,11 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
                 let px = tx as i8 + pdx;
                 let py = ty as i8 + pdy;
                 if !in_bounds(px, py) { continue; }
+                let occupied_at_impact = board.unit_at(px as u8, py as u8).is_some();
                 apply_direct_weapon_damage(board, px as u8, py as u8, wdef.damage, wdef, result);
-                apply_weapon_status(board, px as u8, py as u8, wdef);
+                apply_weapon_status_with_impact_occupancy(
+                    board, px as u8, py as u8, wdef, occupied_at_impact,
+                );
             }
         }
     }
@@ -1976,13 +2022,16 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
         let nx = ax as i8 + dx;
         let ny = ay as i8 + dy;
         if !in_bounds(nx, ny) { continue; }
+        let occupied_at_impact = board.unit_at(nx as u8, ny as u8).is_some();
         apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
         match wdef.push {
             PushDir::Outward => apply_push(board, nx as u8, ny as u8, i, result),
             PushDir::Inward => apply_push(board, nx as u8, ny as u8, opposite_dir(i), result),
             _ => {}
         }
-        apply_weapon_status(board, nx as u8, ny as u8, wdef);
+        apply_weapon_status_with_impact_occupancy(
+            board, nx as u8, ny as u8, wdef, occupied_at_impact,
+        );
     }
     if wdef.shield_self() {
         if let Some(idx) = board.unit_at(ax, ay) {
@@ -2349,8 +2398,11 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
     // Damage hit target. Self-damage is only taken on impact (empty-tile
     // charges deal no recoil — see outer simulate() for the Charge skip).
     if let Some((hx, hy)) = hit {
+        let occupied_at_impact = board.unit_at(hx, hy).is_some();
         apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
-        apply_weapon_status(board, hx, hy, wdef); // status BEFORE push
+        apply_weapon_status_with_impact_occupancy(
+            board, hx, hy, wdef, occupied_at_impact,
+        ); // status BEFORE push
         if wdef.push == PushDir::Forward {
             apply_push(board, hx, hy, dir, result);
         }
@@ -2375,6 +2427,9 @@ fn leap_landing_illegal_reason(
     }
 
     let landing = board.tile(tx, ty);
+    if landing.terrain == Terrain::Chasm {
+        return Some("chasm");
+    }
     if landing.terrain == Terrain::Mountain {
         return Some("mountain");
     }
@@ -3477,6 +3532,40 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 4);
         // Acid Projector should apply ACID status to target
         assert!(board.units[enemy_idx].acid(), "Enemy should have ACID after Acid Projector");
+        assert!(
+            !board.tile(3, 4).acid(),
+            "Occupied ACID hits should not create an immediate ground pool"
+        );
+    }
+
+    #[test]
+    fn test_acid_tank_cannon_acids_unit_without_ground_pool() {
+        let mut board = make_test_board();
+        let tank_idx = add_mech(&mut board, 0, 3, 3, 1, WId::AcidTankAtk);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+
+        let _ = simulate_weapon(&mut board, tank_idx, WId::AcidTankAtk, 3, 4);
+
+        assert!(board.units[enemy_idx].acid(), "A.C.I.D. Cannon should acidify the target unit");
+        assert!(
+            !board.tile(3, 4).acid(),
+            "A.C.I.D. Cannon should not create a pool below a live target"
+        );
+    }
+
+    #[test]
+    fn test_lethal_acid_hit_on_non_acid_unit_does_not_create_pool() {
+        let mut board = make_test_board();
+        let centipede_weapon = add_mech(&mut board, 0, 3, 3, 3, WId::CentipedeAtk2);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 1);
+
+        let _ = simulate_weapon(&mut board, centipede_weapon, WId::CentipedeAtk2, 3, 4);
+
+        assert!(board.units[enemy_idx].hp <= 0, "Centipede hit should kill the 1 HP target");
+        assert!(
+            !board.tile(3, 4).acid(),
+            "A lethal ACID hit on a non-ACID live target should not synthesize a pool"
+        );
     }
 
     #[test]
@@ -3502,6 +3591,26 @@ mod tests {
         // Acid Projector does 0 damage, so shield NOT consumed. Status also blocked.
         assert!(!board.units[enemy_idx].acid(), "Shield should block ACID status");
         assert!(board.units[enemy_idx].shield(), "Shield should NOT be consumed by 0 damage");
+        assert!(
+            board.tile(3, 4).acid(),
+            "Blocked ACID should fall to the target's feet"
+        );
+    }
+
+    #[test]
+    fn test_acid_projector_frozen_target_falls_to_feet() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+        board.units[enemy_idx].set_frozen(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 4);
+
+        assert!(!board.units[enemy_idx].acid(), "Frozen target should not receive ACID status");
+        assert!(
+            board.tile(3, 4).acid(),
+            "ACID blocked by frozen status should fall to the tile"
+        );
     }
 
     #[test]
@@ -3728,6 +3837,21 @@ mod tests {
         assert_eq!(result.enemies_killed, 1);
         assert_eq!(board.tile(1, 5).building_hp, 1);
         assert!(board.tile(5, 5).smoke(), "upgraded Rocket still smokes behind shooter");
+    }
+
+    #[test]
+    fn test_rocket_live_edge_target_takes_damage_without_edge_bump() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 1, 1, 4, 3, WId::RangedRocket);
+        let moth = add_enemy_type(&mut board, 337, 7, 4, 3, "Moth1");
+        board.units[moth].flags.insert(UnitFlags::FLYING);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 7, 4);
+
+        assert_eq!(board.units[moth].hp, 1);
+        assert_eq!((board.units[moth].x, board.units[moth].y), (7, 4));
+        assert_eq!(result.enemies_killed, 0);
+        assert!(board.tile(0, 4).smoke(), "Rocket still smokes behind the shooter");
     }
 
     #[test]
@@ -5299,11 +5423,12 @@ mod tests {
 
     // ── Aerial Bombs (Brute_Jetmech) landing-tile legality gate ───────────────
     // In-game, Aerial Bombs is unfireable at a target whose landing tile is a
-    // mountain (any HP) or occupied by a unit, wreck, or building. Rubble and
-    // water/chasm/lava ARE legal (Jet Mech is Flying+Massive). The filter
-    // lives in solver::get_weapon_targets via Board::is_blocked(flying=true).
-    // Evidence: Steam/gamepressure/GameFAQs weapon references + Board::is_blocked
-    // logic (board.rs ~400). These tests pin the gate so we notice if it regresses.
+    // chasm, mountain (any HP), or occupied by a unit, wreck, or building.
+    // Rubble and water remain legal for Jet Mech. The filter lives in
+    // solver::get_weapon_targets plus sim_leap's diagnostic no-op guard.
+    // Regression anchor: Easy Rusting Hulks run 20260508_134925_472,
+    // Mission_Cataclysm turn 3 JetMech B5 -> B3 click_miss, where B3 was
+    // already Cataclysm chasm terrain.
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
         crate::solver::get_weapon_targets(
@@ -5346,6 +5471,18 @@ mod tests {
     }
 
     #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_chasm() {
+        // Cataclysm/seismic chasm landing tiles are not selectable for Aerial
+        // Bombs, even though Jet Mech itself is flying.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Chasm;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Chasm landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
     fn test_aerial_bombs_sim_noops_illegal_enemy_landing() {
         // Diagnostic callers can bypass target enumeration with a hand-written
         // plan. Illegal leap landings must not stack Jet onto a live enemy or
@@ -5374,6 +5511,34 @@ mod tests {
         assert!(
             result.events.iter().any(|e| e == "illegal_leap_landing:3:5:unit"),
             "illegal landing should be visible to replay diagnostics: {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_aerial_bombs_sim_noops_chasm_landing() {
+        // Diagnostic callers can bypass target enumeration. A chasm landing
+        // should behave like the live click_miss: no leap, no transit damage,
+        // and an explicit replay event.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let transit_enemy = add_enemy(&mut board, 10, 3, 4, 3);
+        board.tile_mut(3, 5).terrain = Terrain::Chasm;
+
+        let result = simulate_weapon(&mut board, jet, WId::BruteJetmech, 3, 5);
+
+        assert_eq!(
+            (board.units[jet].x, board.units[jet].y),
+            (3, 3),
+            "chasm leap must leave Jet on its original tile"
+        );
+        assert_eq!(
+            board.units[transit_enemy].hp, 3,
+            "unfireable chasm landing must not damage the transit tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:3:5:chasm"),
+            "chasm landing should be visible to replay diagnostics: {:?}",
             result.events
         );
     }

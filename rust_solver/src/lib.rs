@@ -994,7 +994,17 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   objective-style buildings when the bridge omits `unique_building`, so
 //   push-bump HP damage decrements grid power. Pre-v69 corpus archived as
 //   `failure_db_snapshot_sim_v68.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 69;
+// v70 - Leap weapon target enumeration / replay no-op reject chasm landing
+//   tiles. Live Aerial Bombs on a Cataclysm chasm tile click-missed instead of
+//   moving JetMech or damaging the transit tile. Pre-v70 corpus archived as
+//   `failure_db_snapshot_sim_v69.jsonl`.
+// v71 - Rocket Artillery center push does not add phantom map-edge bump
+//   damage when the target has no tile to move into. Pre-v71 corpus archived as
+//   `failure_db_snapshot_sim_v70.jsonl`.
+// v72 - ACID weapons acidify live occupied targets without creating an
+//   immediate ground pool beneath them. Pre-v72 corpus archived as
+//   `failure_db_snapshot_sim_v71.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 72;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
