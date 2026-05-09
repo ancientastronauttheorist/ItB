@@ -762,11 +762,10 @@ pub fn simulate_enemy_attacks(
         // self-shield no-op (zero damage) — adding 1 there would bump a 0-dmg
         // shield-apply into a 1-dmg shield-apply, which isn't the intent.
         let attacker_tname = enemy.type_name_str();
-        if board.boost_psion
-            && base_damage > 0
+        let boost_applies = board.boost_psion
             && enemy.receives_psion_aura()
-            && attacker_tname != "Jelly_Boost1"
-        {
+            && attacker_tname != "Jelly_Boost1";
+        if boost_applies && base_damage > 0 {
             base_damage += 1;
         }
         // Vek Hormones: +1 damage when enemy attacks hit other enemies
@@ -1035,6 +1034,9 @@ pub fn simulate_enemy_attacks(
                     WId::BlobberAtk2 => {
                         spawn_enemy(board, tx, ty, "Blob2", 1);
                     }
+                    WId::BlobberAtkB => {
+                        spawn_enemy(board, tx, ty, "BlobB", 2);
+                    }
                     _ => {}
                 }
             }
@@ -1121,11 +1123,19 @@ pub fn simulate_enemy_attacks(
                     apply_damage(board, ex, ey, damage, &mut result, DamageSource::Weapon);
                 }
                 if wdef.aoe_adjacent() {
+                    let mut adjacent_damage = if wdef.damage_outer > 0 {
+                        wdef.damage_outer
+                    } else {
+                        damage
+                    };
+                    if boost_applies && adjacent_damage > 0 {
+                        adjacent_damage += 1;
+                    }
                     for (i, &(dx, dy)) in DIRS.iter().enumerate() {
                         let nx = ex as i8 + dx;
                         let ny = ey as i8 + dy;
                         if in_bounds(nx, ny) {
-                            let d = enemy_hit_damage(board, nx as u8, ny as u8, damage, vh);
+                            let d = enemy_hit_damage(board, nx as u8, ny as u8, adjacent_damage, vh);
                             apply_damage(board, nx as u8, ny as u8, d, &mut result, DamageSource::Weapon);
                             // Push outward / inward per weapon def (Scorpion Leader's
                             // Massive Spinneret pushes every target away from itself).
@@ -1885,6 +1895,47 @@ mod tests {
     }
 
     #[test]
+    fn test_blobber_leader_spawns_blob_leader() {
+        let mut board = Board::default();
+        add_enemy_with_type(&mut board, 10, 3, 3, 5, "BlobberBoss", 3, 5);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let spawned = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].type_name_str() == "BlobB")
+            .expect("Blobber Leader should spawn BlobB");
+        assert_eq!((board.units[spawned].x, board.units[spawned].y), (3, 5));
+        assert_eq!(board.units[spawned].hp, 2);
+        assert_eq!(board.units[spawned].max_hp, 2);
+    }
+
+    #[test]
+    fn test_blob_leader_split_self_aoe_damage() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let mech_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 4,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        add_enemy_with_type(&mut board, 1, 3, 3, 2, "BlobB", 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[1].hp, 1, "Blob Leader should survive its 1 self damage");
+        assert_eq!(board.tile(3, 4).building_hp, 0, "adjacent building should take 2 damage");
+        assert_eq!(board.units[mech_idx].hp, 1, "adjacent mech should take 2 damage");
+    }
+
+    #[test]
     fn test_beetle_charge_from_distance() {
         let mut board = Board::default();
         // Beetle at (0,0) targeting (5,0) — charges from current position
@@ -1924,6 +1975,8 @@ mod tests {
         assert_eq!(enemy_weapon_for_type("Beetle1"), WId::BeetleAtk1);
         assert_eq!(enemy_weapon_for_type("Digger1"), WId::DiggerAtk1);
         assert_eq!(enemy_weapon_for_type("BlobMini"), WId::BlobAtk1);
+        assert_eq!(enemy_weapon_for_type("BlobB"), WId::BlobAtkB);
+        assert_eq!(enemy_weapon_for_type("BlobberBoss"), WId::BlobberAtkB);
         assert_eq!(enemy_weapon_for_type("Crab1"), WId::CrabAtk1);
         assert_eq!(enemy_weapon_for_type("CrabBoss"), WId::CrabAtkB);
         assert_eq!(enemy_weapon_for_type("Unknown"), WId::None);

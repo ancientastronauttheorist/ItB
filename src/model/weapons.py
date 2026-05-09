@@ -628,6 +628,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Blobber Launch", weapon_type="artillery",
         damage=0, spawns="Blob2",
     ),
+    "BlobberAtkB": WeaponDef(
+        name="Eruptive Growth", weapon_type="artillery",
+        damage=0, spawns="BlobB",
+    ),
     "SpiderAtk1": WeaponDef(
         name="Spider Egg", weapon_type="artillery",
         damage=0, spawns="WebbEgg1",
@@ -647,6 +651,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     "BlobAtk2": WeaponDef(
         name="Alpha Blob Explode", weapon_type="self_aoe",
         damage=2, aoe_adjacent=True, aoe_center=True,
+    ),
+    "BlobAtkB": WeaponDef(
+        name="Eruptive Guts", weapon_type="self_aoe",
+        damage=1, damage_outer=2, aoe_adjacent=True, aoe_center=True,
     ),
 
     # ── Advanced Edition Melee ───────────────────────────────────────

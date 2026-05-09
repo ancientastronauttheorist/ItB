@@ -452,9 +452,13 @@ pub enum WId {
     BruteJetmechB = 141,
     /// Aerial Bombs with both +1 Damage and +1 Range powered.
     BruteJetmechAB = 142,
+    /// Blobber Leader's Eruptive Growth: 0-damage artillery that spawns BlobB.
+    BlobberAtkB = 143,
+    /// Blob Leader's Eruptive Guts: 1 self damage, 2 damage to cardinal adjacent tiles.
+    BlobAtkB = 144,
 }
 
-pub const WEAPON_COUNT: usize = 143;
+pub const WEAPON_COUNT: usize = 145;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -837,6 +841,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 114: BlobAtk2 — alpha blob explode, 2 dmg center + 4 cardinal adjacent
     w[114] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 2, flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 143: BlobberAtkB — Blobber Leader artillery, spawns a Blob Leader.
+    w[143] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
+    // 144: BlobAtkB — Blob Leader explosion, 1 self damage + 2 adjacent.
+    w[144] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, damage_outer: 2,
+        flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
     // 115: Acid_Tank_Attack — A.C.I.D. Cannon (NPC tank deployable).
     // 0-damage cardinal projectile, infinite range (range_max=0), applies
@@ -1196,6 +1205,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "CentipedeAtk2" => WId::CentipedeAtk2,
         "DiggerAtk2" => WId::DiggerAtk2,
         "BlobberAtk2" => WId::BlobberAtk2,
+        "BlobberAtkB" => WId::BlobberAtkB,
         "SpiderAtk2" => WId::SpiderAtk2,
         "BurrowerAtk1" => WId::BurrowerAtk1,
         "BurrowerAtk2" => WId::BurrowerAtk2,
@@ -1215,6 +1225,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "Acid_Tank_Attack" => WId::AcidTankAtk,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
+        "BlobAtkB" => WId::BlobAtkB,
         "BlobBossAtk" => WId::BlobBossAtk,
         "BlobBossAtkMed" => WId::BlobBossAtkMed,
         "BlobBossAtkSmall" => WId::BlobBossAtkSmall,
@@ -1343,6 +1354,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::CentipedeAtk2 => "CentipedeAtk2",
         WId::DiggerAtk2 => "DiggerAtk2",
         WId::BlobberAtk2 => "BlobberAtk2",
+        WId::BlobberAtkB => "BlobberAtkB",
         WId::SpiderAtk2 => "SpiderAtk2",
         WId::BurrowerAtk1 => "BurrowerAtk1",
         WId::BurrowerAtk2 => "BurrowerAtk2",
@@ -1361,6 +1373,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::Repair => "_REPAIR",
         WId::SupportRepair => "Support_Repair",
         WId::BlobAtk2 => "BlobAtk2",
+        WId::BlobAtkB => "BlobAtkB",
         WId::AcidTankAtk => "Acid_Tank_Attack",
         WId::BlobBossAtk => "BlobBossAtk",
         WId::BlobBossAtkMed => "BlobBossAtkMed",
@@ -1406,6 +1419,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Digger2" => WId::DiggerAtk2,
         "Blobber1" => WId::BlobberAtk1,
         "Blobber2" => WId::BlobberAtk2,
+        "BlobberBoss" => WId::BlobberAtkB,
         "Spider1" => WId::SpiderAtk1,
         "Spider2" => WId::SpiderAtk2,
         "Burrower1" => WId::BurrowerAtk1,
@@ -1453,6 +1467,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         s if s.starts_with("BlobMini") => WId::BlobAtk1,
         s if s.starts_with("Blob1") => WId::BlobAtk1,
         s if s.starts_with("Blob2") => WId::BlobAtk2,
+        "BlobB" => WId::BlobAtkB,
         // Objective / special Vek
         "GlowingScorpion" => WId::ScorpionAtk1,
         // Bosses
@@ -1566,11 +1581,13 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::DiggerAtk2 => "Alpha Digger Smash",
         WId::BlobberAtk1 => "Blobber Launch",
         WId::BlobberAtk2 => "Alpha Blobber Launch",
+        WId::BlobberAtkB => "Eruptive Growth",
         WId::SpiderAtk1 => "Spider Egg",
         WId::SpiderAtk2 => "Alpha Spider Egg",
         WId::SpiderlingAtk1 => "Spiderling Bite",
         WId::BlobAtk1 => "Blob Explode",
         WId::BlobAtk2 => "Alpha Blob Explode",
+        WId::BlobAtkB => "Eruptive Guts",
         WId::BouncerAtk1 => "Energized Horns",
         WId::BouncerAtk2 => "Alpha Energized Horns",
         WId::MothAtk1 => "Repulsive Pellets",
@@ -1739,6 +1756,30 @@ mod tests {
         assert_eq!(wid_from_str("Brute_Jetmech_AB"), WId::BruteJetmechAB);
         assert_eq!(wid_to_str(WId::BruteJetmechB), "Brute_Jetmech_B");
         assert_eq!(weapon_name(WId::BruteJetmechAB), "Aerial Bombs");
+    }
+
+    #[test]
+    fn test_blobber_leader_package_defs() {
+        let launch = weapon_def(WId::BlobberAtkB);
+        assert_eq!(launch.weapon_type, WeaponType::Artillery);
+        assert_eq!(launch.damage, 0);
+        assert_eq!(launch.range_min, 1);
+
+        let blob = weapon_def(WId::BlobAtkB);
+        assert_eq!(blob.weapon_type, WeaponType::SelfAoe);
+        assert_eq!(blob.damage, 1);
+        assert_eq!(blob.damage_outer, 2);
+        assert!(blob.aoe_center());
+        assert!(blob.aoe_adjacent());
+
+        assert_eq!(wid_from_str("BlobberAtkB"), WId::BlobberAtkB);
+        assert_eq!(wid_from_str("BlobAtkB"), WId::BlobAtkB);
+        assert_eq!(wid_to_str(WId::BlobberAtkB), "BlobberAtkB");
+        assert_eq!(wid_to_str(WId::BlobAtkB), "BlobAtkB");
+        assert_eq!(enemy_weapon_for_type("BlobberBoss"), WId::BlobberAtkB);
+        assert_eq!(enemy_weapon_for_type("BlobB"), WId::BlobAtkB);
+        assert_eq!(weapon_name(WId::BlobberAtkB), "Eruptive Growth");
+        assert_eq!(weapon_name(WId::BlobAtkB), "Eruptive Guts");
     }
 
     #[test]

@@ -188,6 +188,11 @@ VEK_STATS = {
     # the closest 4-dmg melee approximation.
     "ShamanBoss":    PawnStats(move_speed=2, ranged=1, massive=True,
                                default_weapon="ShamanAtkB"),
+    # Blobber Leader - Mission_BlobberBoss. Per
+    # `scripts/advanced/bosses/blobber.lua:17-31`: Health=5, MoveSpeed=2,
+    # Massive, Ranged=1, SkillList={"BlobberAtkB"} (throws BlobB).
+    "BlobberBoss":   PawnStats(move_speed=2, ranged=1, massive=True,
+                               default_weapon="BlobberAtkB"),
     # Psion Abomination — Mission_JellyBoss (R.S.T. Corporate HQ finale).
     # Per `scripts/missions/bosses/psion.lua:14-27`: Health=5, MoveSpeed=3,
     # Flying, Leader=LEADER_BOSS, no offensive SkillList (Tooltip "Overpowered"
@@ -204,7 +209,8 @@ VEK_STATS = {
     "Spiderling2":   PawnStats(move_speed=3, minor=True, ranged=0),
     "Blob1":         PawnStats(move_speed=0, minor=True, ranged=0),
     "Blob2":         PawnStats(move_speed=0, minor=True, ranged=0),
-    "BlobB":         PawnStats(move_speed=0, minor=True, ranged=0),
+    "BlobB":         PawnStats(move_speed=0, minor=True, ranged=0,
+                               default_weapon="BlobAtkB"),
     "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),  # legacy alias
     "MantisEgg":     PawnStats(move_speed=0, minor=True, ranged=0),
     "WebbEgg1":      PawnStats(move_speed=0, minor=True, ranged=0, ignore_smoke=True),

@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/15jnucg",
+      "excerpt": "Reddit Daily Discussion: Blob includes discussion of the Blobber Leader blob and explicitly asks whether the leader-spawned blob is called a Blob Leader, corroborating the displayed name.",
+      "confidence": 0.5
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/0/3461598818984123405/",
+      "excerpt": "Steam bug-report discussion mentions the Blobber Leader explosive blob attack and notes the blob attack text says it explodes/kills itself while observed behavior is self-damage rather than immediate self-kill.",
+      "confidence": 0.5
+    }
+  ]
+}

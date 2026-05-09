@@ -1068,7 +1068,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   from save overlays. The +1 Range branch expands Jet Mech target search to
 //   2-3 cardinal tiles while preserving water/lava landing illegality.
 //   Pre-v86 corpus archived as `failure_db_snapshot_sim_v85.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 86;
+// v87 - Blobber Leader package (`BlobberBoss`, `BlobberAtkB`, `BlobB`,
+//   `BlobAtkB`) is modeled directly: boss artillery spawns 2-HP Blob Leaders,
+//   and enemy SelfAoe can use split inner/outer damage for BlobB's 1 self
+//   damage plus 2 adjacent damage. Pre-v87 corpus archived as
+//   `failure_db_snapshot_sim_v86.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 87;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
