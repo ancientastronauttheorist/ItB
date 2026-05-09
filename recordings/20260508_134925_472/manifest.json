@@ -9,13 +9,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-2d86131",
+  "solver_version": "rust-0.1.0-d3570da",
   "weight_version": "v011",
-  "updated": "2026-05-08T18:33:21.660698",
+  "updated": "2026-05-08T21:59:00.420028",
   "created": "2026-05-08T13:49:25.501391",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 9,
-  "outcome_recorded_at": "2026-05-08T18:33:21.625048",
-  "outcome_notes": null
+  "outcome_mission": 12,
+  "outcome_recorded_at": "2026-05-08T21:59:00.374287",
+  "outcome_notes": "Mission_Stasis secured at 3/7 grid after simulator v77 Burrower Slam fix; both bonus objectives failed (Mites, Coal Plant)."
 }

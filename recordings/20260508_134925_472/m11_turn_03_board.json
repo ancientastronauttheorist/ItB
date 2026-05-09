@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-05-08T21:09:41.647659",
+  "timestamp": "2026-05-08T21:14:37.154270",
   "run_id": "20260508_134925_472",
   "mission_index": 11,
-  "turn": 2,
+  "turn": 3,
   "label": "board",
   "data": {
     "bridge_state": {
@@ -11,7 +11,7 @@
       "grid_power_max": 7,
       "grid_power": 7,
       "island_map_probe": "scope_alive",
-      "turn": 2,
+      "turn": 3,
       "mission_id": "Mission_FreezeBldg",
       "master_seed": 1497396310,
       "total_turns": 4,
@@ -136,9 +136,10 @@
         },
         {
           "y": 2,
-          "x": 2,
           "terrain_id": 0,
-          "terrain": "ground"
+          "terrain": "ground",
+          "smoke": true,
+          "x": 2
         },
         {
           "y": 2,
@@ -348,6 +349,7 @@
           "y": 6,
           "terrain_id": 1,
           "terrain": "building",
+          "smoke": true,
           "building_hp": 2,
           "x": 3
         },
@@ -427,35 +429,35 @@
       ],
       "targeted_tiles": [
         [
+          3,
+          2
+        ],
+        [
+          4,
+          4
+        ],
+        [
           1,
-          1
+          6
         ],
         [
           2,
-          1
+          6
         ],
         [
           3,
-          1
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          5,
-          3
+          6
         ]
       ],
       "phase": "combat_enemy",
-      "remaining_spawns": 1,
+      "remaining_spawns": 0,
       "mission_kills_done": 0,
       "units": [
         {
           "web": true,
           "active": false,
           "base_move": 4,
-          "hp": 4,
+          "hp": 2,
           "flying": true,
           "pilot_level": 2,
           "team": 1,
@@ -475,7 +477,7 @@
           ],
           "fire": false,
           "y": 2,
-          "x": 4,
+          "x": 3,
           "acid": false,
           "shield": false,
           "type": "JetMech",
@@ -506,8 +508,8 @@
             "skill1=5"
           ],
           "fire": false,
-          "y": 3,
-          "x": 2,
+          "y": 2,
+          "x": 0,
           "acid": false,
           "shield": false,
           "type": "RocketMech",
@@ -519,12 +521,12 @@
           "web": true,
           "active": false,
           "base_move": 4,
-          "hp": 3,
+          "hp": 2,
           "flying": false,
           "pilot_level": 1,
           "team": 1,
           "massive": true,
-          "web_source_uid": 618,
+          "web_source_uid": 626,
           "web_probes": {
             "IsGrappled": true
           },
@@ -565,14 +567,14 @@
           "x": 2,
           "queued_target": [
             2,
-            3
+            4
           ],
           "has_queued_attack": true,
           "weapons": [
             "Burrower_Atk2"
           ],
           "weapon_damage": 2,
-          "y": 2,
+          "y": 5,
           "uid": 616,
           "type": "Burrower2",
           "base_move": 4,
@@ -597,15 +599,15 @@
           "move": 4,
           "x": 3,
           "queued_target": [
-            3,
-            4
+            2,
+            5
           ],
           "has_queued_attack": true,
           "weapons": [
             "MosquitoAtk2"
           ],
           "weapon_damage": 3,
-          "y": 3,
+          "y": 5,
           "uid": 617,
           "type": "Mosquito2",
           "base_move": 4,
@@ -615,7 +617,7 @@
           "frozen": false
         },
         {
-          "web": false,
+          "web": true,
           "active": false,
           "shield": false,
           "hp": 3,
@@ -623,22 +625,23 @@
           "flying": false,
           "team": 6,
           "weapon_target_behind": false,
+          "web_source_uid": 618,
           "web_probes": {
-            "IsGrappled": false
+            "IsGrappled": true
           },
           "max_hp": 3,
-          "move": 3,
+          "move": 0,
           "x": 4,
           "queued_target": [
-            4,
-            4
+            5,
+            2
           ],
           "has_queued_attack": true,
           "weapons": [
             "ScorpionAtk1"
           ],
           "weapon_damage": 1,
-          "y": 3,
+          "y": 2,
           "uid": 618,
           "type": "Scorpion1",
           "base_move": 3,
@@ -661,8 +664,8 @@
           "move": 2,
           "has_queued_attack": false,
           "weapons": [],
-          "x": 5,
-          "y": 4,
+          "x": 4,
+          "y": 5,
           "uid": 619,
           "type": "Jelly_Regen1",
           "base_move": 2,
@@ -704,22 +707,18 @@
           "web": false,
           "active": false,
           "shield": false,
-          "hp": 2,
+          "hp": 3,
           "weapon_push": 0,
           "flying": false,
           "team": 6,
-          "weapon_target_behind": false,
           "web_probes": {
             "IsGrappled": false
           },
           "max_hp": 3,
           "move": 3,
-          "x": 6,
-          "queued_target": [
-            5,
-            4
-          ],
-          "has_queued_attack": true,
+          "weapon_target_behind": false,
+          "x": 5,
+          "has_queued_attack": false,
           "weapons": [
             "ScorpionAtk1"
           ],
@@ -735,7 +734,36 @@
         },
         {
           "web": false,
-          "active": false,
+          "active": true,
+          "shield": false,
+          "hp": 1,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 1,
+          "move": 3,
+          "weapon_target_behind": false,
+          "x": 3,
+          "has_queued_attack": true,
+          "weapons": [
+            "SpiderlingAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 3,
+          "uid": 735,
+          "type": "Spiderling1",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": true,
           "shield": false,
           "hp": 1,
           "weapon_push": 0,
@@ -748,13 +776,12 @@
           "move": 0,
           "weapon_target_behind": false,
           "x": 4,
-          "has_queued_attack": true,
           "weapons": [
             "WebeggHatch1"
           ],
           "weapon_damage": 0,
-          "y": 1,
-          "uid": 734,
+          "y": 3,
+          "uid": 775,
           "type": "WebbEgg1",
           "base_move": 0,
           "fire": false,
@@ -769,9 +796,9 @@
       "mission_seeds": {
         "region4": {
           "state": 0,
-          "turn": 2,
+          "turn": 3,
           "mission": "Mission5",
-          "ai_seed": 370142092
+          "ai_seed": 1571010571
         },
         "region3": {
           "state": 4,
@@ -787,33 +814,32 @@
         }
       },
       "environment_danger_v2": [],
-      "timestamp": 1778292579,
+      "timestamp": 1778292875,
       "in_active_mission": true,
       "attack_order": [
         616,
         617,
         618,
-        626,
-        734
+        735
       ],
       "is_infinite_spawn": true
     },
     "result_summary": {
       "phase": "combat_enemy",
       "source": "bridge",
-      "turn": 2,
+      "turn": 3,
       "grid_power": "7/7",
       "mechs": [
         {
           "type": "JetMech",
-          "pos": "F4",
-          "hp": "4/2",
+          "pos": "F5",
+          "hp": "2/2",
           "weapon": "Aerial Bombs",
           "status": "DONE"
         },
         {
           "type": "RocketMech",
-          "pos": "E6",
+          "pos": "F8",
           "hp": "5/3",
           "weapon": "Rocket Artillery",
           "status": "DONE"
@@ -821,7 +847,7 @@
         {
           "type": "PulseMech",
           "pos": "E3",
-          "hp": "3/3",
+          "hp": "2/3",
           "weapon": "Repulse",
           "status": "DONE"
         }
@@ -830,25 +856,25 @@
       "enemies": [
         {
           "type": "Burrower2",
-          "pos": "F6",
+          "pos": "C6",
           "hp": "3/5",
-          "target": " \u2192 E6"
+          "target": " \u2192 D6"
         },
         {
           "type": "Mosquito2",
-          "pos": "E5",
+          "pos": "C5",
           "hp": "3/4",
-          "target": " \u2192 D5"
+          "target": " \u2192 C6"
         },
         {
           "type": "Scorpion1",
-          "pos": "E4",
+          "pos": "F4",
           "hp": "3/3",
-          "target": " \u2192 D4"
+          "target": " \u2192 F3"
         },
         {
           "type": "Jelly_Regen1",
-          "pos": "D3",
+          "pos": "C4",
           "hp": "1/2",
           "target": ""
         },
@@ -860,21 +886,24 @@
         },
         {
           "type": "Scorpion1",
-          "pos": "D2",
-          "hp": "2/3",
-          "target": " \u2192 D3"
+          "pos": "D3",
+          "hp": "3/3",
+          "target": ""
+        },
+        {
+          "type": "Spiderling1",
+          "pos": "E5",
+          "hp": "1/1",
+          "target": ""
         },
         {
           "type": "WebbEgg1",
-          "pos": "G4",
+          "pos": "E4",
           "hp": "1/1",
           "target": ""
         }
       ],
-      "threatened_buildings": 1,
-      "threats": [
-        "Building D4 by Scorpion1 at E4"
-      ],
+      "threatened_buildings": 0,
       "targeted_tiles": 5,
       "spawn_points": 0
     }

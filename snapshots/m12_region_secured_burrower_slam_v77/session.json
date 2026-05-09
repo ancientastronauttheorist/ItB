@@ -7,10 +7,10 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_Stasis",
   "islands_completed": [],
-  "mission_index": 13,
-  "last_mission_turn": -1,
+  "mission_index": 12,
+  "last_mission_turn": 4,
   "current_turn": 4,
   "phase": "unknown",
   "active_solution": {

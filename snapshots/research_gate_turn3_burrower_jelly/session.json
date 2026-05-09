@@ -7,60 +7,60 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_FreezeBldg",
   "islands_completed": [],
-  "mission_index": 13,
-  "last_mission_turn": -1,
-  "current_turn": 4,
-  "phase": "unknown",
+  "mission_index": 11,
+  "last_mission_turn": 3,
+  "current_turn": 3,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "RocketMech",
+        "move_to": [
+          0,
+          2
+        ],
+        "weapon": "Ranged_Rocket",
+        "target": [
+          4,
+          2
+        ],
+        "description": "RocketMech, move E6\u2192F8, fire Rocket Artillery at F4"
+      },
       {
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
-          6,
-          5
+          1,
+          2
         ],
         "weapon": "Brute_Jetmech",
         "target": [
-          6,
-          7
+          3,
+          2
         ],
-        "description": "JetMech, move F4\u2192C2, fire Aerial Bombs at A2"
+        "description": "JetMech, move F3\u2192F7, fire Aerial Bombs at F5"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          1,
-          5
+          5,
+          3
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Science_Repulse",
         "target": [
-          1,
-          5
+          5,
+          3
         ],
-        "description": "PulseMech, move B5\u2192C7, repair"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
-        "move_to": [
-          1,
-          4
-        ],
-        "weapon": "Ranged_Rocket",
-        "target": [
-          1,
-          6
-        ],
-        "description": "RocketMech, move F6\u2192D7, fire Rocket Artillery at B7"
+        "description": "PulseMech, fire Repulse at E3"
       }
     ],
-    "score": 73707.85714285714,
-    "turn": 4,
-    "input_fingerprint": "0:4,2:3|1:2,2:5|2:3,6:2|620:4,1:1|623:5,4:2|624:1,3:3|778:6,6:3"
+    "score": 137330.0,
+    "turn": 3,
+    "input_fingerprint": "0:4,2:4|1:2,3:5|2:5,3:3|616:2,2:3|617:3,3:3|618:4,3:3|619:5,4:1|625:4,6:2|626:6,4:2|734:4,1:1"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -751,78 +751,6 @@
         "JetMech, move F3\u2192F7, fire Aerial Bombs at F5",
         "PulseMech, fire Repulse at E3"
       ]
-    },
-    {
-      "timestamp": "2026-05-08T21:14:48.884525",
-      "turn": 4,
-      "label": "solve",
-      "score": 101238.42863590377,
-      "actions": [
-        "JetMech",
-        "RocketMech, move F8\u2192C7, fire Rocket Artillery at C5",
-        "PulseMech, fire Repulse at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-08T21:20:19.693715",
-      "turn": 4,
-      "label": "solve",
-      "score": 101238.42863590377,
-      "actions": [
-        "JetMech",
-        "RocketMech, move F8\u2192C7, fire Rocket Artillery at C5",
-        "PulseMech, fire Repulse at E3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-08T21:21:40.858386",
-      "turn": 4,
-      "label": "note",
-      "message": "Turn 4 dirty rank-0 manual execution: Action 0 JetMech skip produced active-only verify desync (pred active true, actual false). Board state/value unaffected; consciously continuing with reviewed dirty line."
-    },
-    {
-      "timestamp": "2026-05-08T21:30:52.527252",
-      "turn": 1,
-      "label": "solve",
-      "score": 144342.85714285713,
-      "actions": [
-        "RocketMech, move C6\u2192E5, fire Rocket Artillery at E3",
-        "JetMech, move D5\u2192E1, fire Aerial Bombs at E3",
-        "PulseMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-08T21:31:55.233522",
-      "turn": 2,
-      "label": "solve",
-      "score": 78396.1904761904,
-      "actions": [
-        "JetMech, move E3\u2192D3, fire Aerial Bombs at D5",
-        "RocketMech, move E5\u2192F6, fire Rocket Artillery at F3",
-        "PulseMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-08T21:55:46.378452",
-      "turn": 3,
-      "label": "solve",
-      "score": 86862.85714285714,
-      "actions": [
-        "RocketMech, fire Rocket Artillery at F4",
-        "PulseMech, fire Repulse at B5",
-        "JetMech, move D5\u2192F2, fire Aerial Bombs at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-08T21:57:18.676548",
-      "turn": 4,
-      "label": "solve",
-      "score": 73707.85714285714,
-      "actions": [
-        "JetMech, move F4\u2192C2, fire Aerial Bombs at A2",
-        "PulseMech, move B5\u2192C7, repair",
-        "RocketMech, move F6\u2192D7, fire Rocket Artillery at B7"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -949,22 +877,6 @@
     [
       11,
       2
-    ],
-    [
-      11,
-      3
-    ],
-    [
-      12,
-      1
-    ],
-    [
-      12,
-      2
-    ],
-    [
-      12,
-      3
     ]
   ],
   "tags": [
@@ -1545,60 +1457,6 @@
           3
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Brute_Jetmech|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Brute_Jetmech|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Brute_Jetmech",
-        "target": [
-          6,
-          7
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -2147,17 +2005,9 @@
       "slot": null,
       "mission_id": "Mission_FreezeBldg",
       "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Known Alpha Burrower already researched earlier in this mission; pending entry came from post-action prediction saying Burrower remained while live bridge read shows it absent after the executed Turn 3 line.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "missing_in_actual",
-        "diff_predicted": "present",
-        "diff_actual": "absent"
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "missing_in_actual",
       "diff_predicted": "present",
       "diff_actual": "absent",
@@ -2170,23 +2020,9 @@
       "slot": null,
       "mission_id": "Mission_FreezeBldg",
       "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Known Blood/Regeneration Psion type; live bridge read after Turn 3 desync shows no new enemy semantics, only a one-tile position diff from the partially re-solved action sequence.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "pos",
-        "diff_predicted": [
-          5,
-          4
-        ],
-        "diff_actual": [
-          5,
-          5
-        ]
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "pos",
       "diff_predicted": [
         5,
@@ -2196,40 +2032,15 @@
         5,
         5
       ],
-      "severity": "medium",
-      "research_id": "b49ae18d519a",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Burrower1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Stasis",
-      "first_seen_turn": 2,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Known Burrower type; research_next reports NO_WORK on current board, and pending entry is a behavior-novelty missing_in_actual diff after the Turn 2 re-solved action sequence.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "missing_in_actual",
-        "diff_predicted": "present",
-        "diff_actual": "absent"
-      },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
       "severity": "medium"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "86d0ecf00867ea44",
-    "classes": "ggbbggwiigggggrimbggggbmigggggggiggbgbmimmgggbmiwggggggiifggggwi",
-    "mission_index": 12,
-    "turn": 4
+    "hash": "87cfc48f293fc426",
+    "classes": "gfgggiiiggggbgiifbggggbiibggggbiiiigbgfgibiggggfggiwgggggggigggg",
+    "mission_index": 11,
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }
