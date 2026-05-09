@@ -605,7 +605,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # simulated movement/landing while preserving active non-egg grapples.
 # Pre-v76 corpus archived as
 # failure_db_snapshot_sim_v75.jsonl.
-SIMULATOR_VERSION = 76
+# v77 - BurrowerAtk1/BurrowerAtk2 melee slams damage the center target tile
+# plus the two perpendicular flank tiles. Pre-v77 corpus archived as
+# failure_db_snapshot_sim_v76.jsonl.
+SIMULATOR_VERSION = 77
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

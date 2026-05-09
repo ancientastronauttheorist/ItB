@@ -1242,6 +1242,28 @@ pub fn simulate_enemy_attacks(
                             apply_push(board, ex, ey, opposite_dir(dir), &mut result);
                         }
                     }
+                    if matches!(enemy_wid, WId::BurrowerAtk1 | WId::BurrowerAtk2) {
+                        if let Some(dir) = attack_dir {
+                            for &hit_dir in &[None, Some((dir + 1) % 4), Some((dir + 3) % 4)] {
+                                let (hx, hy) = if let Some(perp) = hit_dir {
+                                    let (pdx, pdy) = DIRS[perp];
+                                    let hx = tx as i8 + pdx;
+                                    let hy = ty as i8 + pdy;
+                                    if !in_bounds(hx, hy) { continue; }
+                                    (hx as u8, hy as u8)
+                                } else {
+                                    (tx, ty)
+                                };
+                                let occupied_at_impact = board.unit_at(hx, hy).is_some();
+                                let d = enemy_hit_damage(board, hx, hy, damage, vh);
+                                apply_damage(board, hx, hy, d, &mut result, DamageSource::Weapon);
+                                apply_weapon_status_with_impact_occupancy(
+                                    board, hx, hy, wdef, occupied_at_impact,
+                                );
+                            }
+                            continue;
+                        }
+                    }
                     let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
@@ -1595,6 +1617,37 @@ mod tests {
             board.units[tele_idx].hp <= 0,
             "Scorpion2 should preserve original melee direction and hit E4"
         );
+    }
+
+    #[test]
+    fn test_burrower_slam_hits_perpendicular_three_tile_row() {
+        for (type_name, center_hp, flank_hp, expected_center, expected_flank) in [
+            ("Burrower1", 2, 1, 1, 0),
+            ("Burrower2", 2, 2, 0, 0),
+        ] {
+            let mut board = Board::default();
+            // Live regression shape: Burrower at (5,4) attacks west toward
+            // center (4,4). The engine hits (4,4) plus flanks (4,3)/(4,5).
+            for (bx, by, hp) in [
+                (4, 4, center_hp),
+                (4, 3, flank_hp),
+                (4, 5, flank_hp),
+                (3, 4, 1),
+            ] {
+                board.tile_mut(bx, by).terrain = Terrain::Building;
+                board.tile_mut(bx, by).building_hp = hp;
+            }
+            let idx = add_enemy_with_type(&mut board, 24, 5, 4, 3, type_name, 4, 4);
+            board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(board.tile(4, 4).building_hp, expected_center, "{type_name} should damage the center tile");
+            assert_eq!(board.tile(4, 3).building_hp, expected_flank, "{type_name} should damage one perpendicular flank");
+            assert_eq!(board.tile(4, 5).building_hp, expected_flank, "{type_name} should damage the other perpendicular flank");
+            assert_eq!(board.tile(3, 4).building_hp, 1, "{type_name} should not hit a forward line tile");
+        }
     }
 
     #[test]
