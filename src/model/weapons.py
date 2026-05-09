@@ -668,6 +668,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Starfish Slash", weapon_type="melee",
         damage=2,
     ),
+    "StarfishAtkB1": WeaponDef(
+        name="Scored Appendages", weapon_type="self_aoe",
+        damage=3, push="outward",
+        aoe_center=False, aoe_adjacent=True,
+    ),
     "TumblebugAtk1": WeaponDef(
         name="Tumblebug Boulder", weapon_type="melee",
         damage=1,

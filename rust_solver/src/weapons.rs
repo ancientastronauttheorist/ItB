@@ -81,8 +81,9 @@ bitflags! {
         /// Currently only Prime_Flamethrower; upgraded multi-tile mode
         /// (PathSize=2/3) is not modelled — base equip uses PathSize=1.
         const BURNS_FIRE_TARGETS = 1 << 22;
-        /// Zero-damage adjacent artillery pushes do not deal edge-bump damage
-        /// when the destination is off-board. Confirmed for Vulcan Artillery.
+        /// Zero-damage adjacent pushes do not deal edge-bump damage when the
+        /// destination is off-board. Confirmed for Vulcan Artillery and
+        /// Repulse; on-board pushes still move/bump normally.
         const NO_EDGE_BUMP_ADJACENT_PUSH = 1 << 23;
         /// Weapon lights the tile directly behind the shooter on fire.
         /// Ranged_Ignite_A (Vulcan Artillery Backburn upgrade) uses this;
@@ -442,9 +443,12 @@ pub enum WId {
     RangedRocketB = 137,
     /// Rocket Artillery with both +1 Damage upgrades powered.
     RangedRocketAB = 138,
+    /// Starfish Leader's Scored Appendages: 3 damage on four diagonal
+    /// tiles plus zero-damage outward pushes on the four cardinal tiles.
+    StarfishAtkB1 = 139,
 }
 
-pub const WEAPON_COUNT: usize = 139;
+pub const WEAPON_COUNT: usize = 140;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -644,7 +648,8 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[41] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_min: 2, range_max: 0,
         flags: C, ..DEF };
     // 42: Science_Repulse — Repulse
-    w[42] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    w[42] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 43: Science_Swap — Teleporter
     w[43] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 1, flags: C, ..DEF };
     // 44: Science_AcidShot — Acid Projector
@@ -752,9 +757,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 85: GastropodAtk2 — alpha ranged grapple, 3 dmg
     w[85] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
         flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
-    // 86: StarfishAtk1 — melee, 1 dmg (diagonal attack in-game, solver treats as melee)
+    // 86: StarfishAtk1 — Brittle Appendages. The Starfish self-target
+    // diagonal damage pattern is special-cased in enemy.rs.
     w[86] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
-    // 87: StarfishAtk2 — alpha, 2 dmg
+    // 87: StarfishAtk2 — Alpha Starfish diagonal pattern, special-cased
+    // in enemy.rs.
     w[87] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: C, ..DEF };
     // 88: TumblebugAtk1 — melee, 1 dmg (creates boulder + attacks it)
     w[88] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
@@ -917,7 +924,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 133: Science_Repulse_A — Repulse with Shield Self
     w[133] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
-        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits()), ..DEF };
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
 
     // 134: Missiles_Shield — Detritus Contraption Shield Barrage.
     w[134] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 0, limited: 2,
@@ -925,6 +932,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 135: Missiles_OneDmg — Detritus Contraption Missile Barrage.
     w[135] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 1, limited: 2,
         flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+
+    // 139: StarfishAtkB1 — Starfish Leader's Scored Appendages.
+    // Lua `advanced/bosses/starfish.lua` self-targets the boss tile, then for
+    // each cardinal dir queues 3 damage on the corner tile
+    // `p1 + DIR[dir] + DIR[(dir+1)%4]` and a zero-damage push on
+    // `p1 + DIR[dir]`. The exact shape is implemented in enemy.rs.
+    w[139] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 3, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
@@ -1173,6 +1188,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "GastropodAtk2" => WId::GastropodAtk2,
         "StarfishAtk1" => WId::StarfishAtk1,
         "StarfishAtk2" => WId::StarfishAtk2,
+        "StarfishAtkB1" => WId::StarfishAtkB1,
         "TumblebugAtk1" => WId::TumblebugAtk1,
         "TumblebugAtk2" => WId::TumblebugAtk2,
         "PlasmodiaAtk1" => WId::PlasmodiaAtk1,
@@ -1316,6 +1332,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::GastropodAtk2 => "GastropodAtk2",
         WId::StarfishAtk1 => "StarfishAtk1",
         WId::StarfishAtk2 => "StarfishAtk2",
+        WId::StarfishAtkB1 => "StarfishAtkB1",
         WId::TumblebugAtk1 => "TumblebugAtk1",
         WId::TumblebugAtk2 => "TumblebugAtk2",
         WId::PlasmodiaAtk1 => "PlasmodiaAtk1",
@@ -1387,6 +1404,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Gastropod2" => WId::GastropodAtk2,
         "Starfish1" => WId::StarfishAtk1,
         "Starfish2" => WId::StarfishAtk2,
+        "StarfishBoss" => WId::StarfishAtkB1,
         "Tumblebug1" => WId::TumblebugAtk1,
         "Tumblebug2" => WId::TumblebugAtk2,
         "Plasmodia1" => WId::PlasmodiaAtk1,
@@ -1555,6 +1573,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::GastropodAtk2 => "Alpha Gastropod Grapple",
         WId::StarfishAtk1 => "Starfish Slash",
         WId::StarfishAtk2 => "Alpha Starfish Slash",
+        WId::StarfishAtkB1 => "Scored Appendages",
         WId::TumblebugAtk1 => "Tumblebug Boulder",
         WId::TumblebugAtk2 => "Alpha Tumblebug Boulder",
         WId::PlasmodiaAtk1 => "Plasmodia Spore",

@@ -105,6 +105,7 @@ VEK_STATS = {
     "Gastropod2":    PawnStats(move_speed=3, ranged=1),
     "Starfish1":     PawnStats(move_speed=3, ranged=0),
     "Starfish2":     PawnStats(move_speed=3, ranged=0),
+    "StarfishBoss":  PawnStats(move_speed=3, massive=True, ranged=0, default_weapon="StarfishAtkB1"),
     "Tumblebug1":    PawnStats(move_speed=3, ranged=0),
     "Tumblebug2":    PawnStats(move_speed=3, ranged=0),
     "Plasmodia1":    PawnStats(move_speed=2, ranged=1),

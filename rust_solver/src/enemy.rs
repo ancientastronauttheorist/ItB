@@ -82,6 +82,45 @@ fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: 
     base_damage
 }
 
+/// Starfish attacks are self-targeted queued appendage strikes:
+/// - normal/alpha Starfish damage the four diagonal tiles around themselves;
+/// - Starfish Leader additionally pushes the four cardinal adjacent tiles
+///   outward with zero damage.
+///
+/// Lua references:
+/// - scripts/advanced/ae_weapons_enemy.lua::StarfishAtk1
+/// - scripts/advanced/bosses/starfish.lua::StarfishAtkB1
+fn apply_starfish_appendages(
+    board: &mut Board,
+    ex: u8,
+    ey: u8,
+    damage: u8,
+    push_cardinals: bool,
+    vek_hormones: bool,
+    result: &mut ActionResult,
+) {
+    for dir in 0..DIRS.len() {
+        let (dx1, dy1) = DIRS[dir];
+        let (dx2, dy2) = DIRS[(dir + 1) % DIRS.len()];
+        let diag_x = ex as i8 + dx1 + dx2;
+        let diag_y = ey as i8 + dy1 + dy2;
+        if in_bounds(diag_x, diag_y) {
+            let x = diag_x as u8;
+            let y = diag_y as u8;
+            let d = enemy_hit_damage(board, x, y, damage, vek_hormones);
+            apply_damage(board, x, y, d, result, DamageSource::Weapon);
+        }
+
+        if push_cardinals {
+            let card_x = ex as i8 + dx1;
+            let card_y = ey as i8 + dy1;
+            if in_bounds(card_x, card_y) {
+                apply_push(board, card_x as u8, card_y as u8, dir, result);
+            }
+        }
+    }
+}
+
 /// Apply environment_danger damage to a tile.
 ///
 /// `lethal=true` (Deadly Threat: air strike, lightning, cataclysm, etc.) bypasses
@@ -736,6 +775,19 @@ pub fn simulate_enemy_attacks(
         let weapon_behind = enemy.weapon_target_behind;
 
         let vh = board.vek_hormones;
+
+        if matches!(enemy_wid, WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1) {
+            apply_starfish_appendages(
+                board,
+                ex,
+                ey,
+                damage,
+                enemy_wid == WId::StarfishAtkB1,
+                vh,
+                &mut result,
+            );
+            continue;
+        }
 
         // BossHeal special-case: Bot Leader's Self-Repairing skill applies
         // Shield to self this enemy turn and queues a +5 heal for the
@@ -1559,6 +1611,70 @@ mod tests {
 
         // Artillery should hit building at (4,0) directly, ignoring mountain
         assert_eq!(board.tile(4, 0).building_hp, 0, "Scarab artillery should hit building through mountain");
+    }
+
+    #[test]
+    fn test_starfish_hits_diagonal_tiles_only() {
+        let mut board = Board::default();
+        let idx = add_enemy_with_type(&mut board, 10, 3, 3, 2, "Starfish1", 3, 3);
+        board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        for &(x, y) in &[(4, 4), (4, 2), (2, 2), (2, 4)] {
+            board.tile_mut(x, y).terrain = Terrain::Building;
+            board.tile_mut(x, y).building_hp = 1;
+        }
+        for &(x, y) in &[(3, 4), (4, 3), (3, 2), (2, 3)] {
+            board.tile_mut(x, y).terrain = Terrain::Building;
+            board.tile_mut(x, y).building_hp = 1;
+        }
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        for &(x, y) in &[(4, 4), (4, 2), (2, 2), (2, 4)] {
+            assert_eq!(board.tile(x, y).building_hp, 0, "diagonal tile should be damaged");
+        }
+        for &(x, y) in &[(3, 4), (4, 3), (3, 2), (2, 3)] {
+            assert_eq!(board.tile(x, y).building_hp, 1, "cardinal tile should not be damaged");
+        }
+    }
+
+    #[test]
+    fn test_starfish_leader_diagonal_damage_and_cardinal_push() {
+        let mut board = Board::default();
+        let idx = add_enemy_with_type(&mut board, 20, 3, 3, 6, "StarfishBoss", 3, 3);
+        board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let pushed_idx = board.add_unit(Unit {
+            uid: 21,
+            x: 3,
+            y: 4,
+            hp: 4,
+            max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let diagonal_idx = board.add_unit(Unit {
+            uid: 22,
+            x: 4,
+            y: 4,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[pushed_idx].x, board.units[pushed_idx].y), (3, 5),
+            "cardinal adjacent unit should be pushed outward");
+        assert_eq!(board.units[pushed_idx].hp, 4,
+            "cardinal push is zero-damage unless it bumps");
+        assert_eq!(board.units[diagonal_idx].hp, 2,
+            "diagonal unit should take the leader's 3 damage");
     }
 
     #[test]

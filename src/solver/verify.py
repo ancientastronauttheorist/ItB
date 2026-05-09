@@ -591,7 +591,17 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v72 - ACID weapons acidify live occupied targets without creating an
 # immediate ground pool beneath them. Pre-v72 corpus archived as
 # failure_db_snapshot_sim_v71.jsonl.
-SIMULATOR_VERSION = 72
+# v73 - Starfish / Starfish Leader appendage attacks are self-targeted
+# diagonal damage patterns, with StarfishAtkB1 additionally pushing the
+# four cardinal adjacent tiles. Pre-v73 corpus archived as
+# failure_db_snapshot_sim_v72.jsonl.
+# v74 - Aerial Bombs rejects water/lava landing tiles. Live JetMech water
+# landings spend the attack as a no-op without damaging transit tiles.
+# Pre-v74 corpus archived as failure_db_snapshot_sim_v73.jsonl.
+# v75 - Repulse zero-damage adjacent pushes do not add phantom map-edge bump
+# damage when the outward destination is off-board. Pre-v75 corpus archived as
+# failure_db_snapshot_sim_v74.jsonl.
+SIMULATOR_VERSION = 75
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

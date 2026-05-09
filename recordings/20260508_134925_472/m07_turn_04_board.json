@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-08T16:57:51.609189",
+  "timestamp": "2026-05-08T17:42:03.528780",
   "run_id": "20260508_134925_472",
   "mission_index": 7,
   "turn": 4,
@@ -12,10 +12,9 @@
       "grid_power": 7,
       "island_map_probe": "scope_alive",
       "turn": 4,
-      "mission_id": "Mission_AcidTank",
       "master_seed": 580488002,
-      "total_turns": 4,
-      "island_map_debug": "skipped: in active mission",
+      "total_turns": 5,
+      "island_map_debug": "ok: 8 entries from 8 keys",
       "environment_danger": [],
       "tiles": [
         {
@@ -108,22 +107,23 @@
         },
         {
           "y": 1,
-          "x": 4,
           "terrain_id": 0,
-          "terrain": "ground"
+          "terrain": "ground",
+          "smoke": true,
+          "x": 4
         },
         {
           "y": 1,
           "terrain_id": 1,
           "terrain": "building",
-          "building_hp": 2,
+          "building_hp": 1,
           "x": 5
         },
         {
           "y": 1,
           "terrain_id": 1,
           "terrain": "building",
-          "building_hp": 2,
+          "building_hp": 1,
           "x": 6
         },
         {
@@ -211,9 +211,11 @@
         },
         {
           "y": 3,
-          "x": 4,
           "terrain_id": 0,
-          "terrain": "ground"
+          "terrain": "ground",
+          "smoke": true,
+          "acid": true,
+          "x": 4
         },
         {
           "y": 3,
@@ -439,31 +441,94 @@
           "x": 7
         }
       ],
-      "targeted_tiles": [
-        [
-          5,
-          1
-        ],
-        [
-          6,
-          1
-        ],
-        [
-          6,
-          2
-        ],
-        [
-          6,
-          3
-        ],
-        [
-          1,
-          4
-        ]
+      "targeted_tiles": [],
+      "phase": "unknown",
+      "island_index": 4,
+      "island_map": [
+        {
+          "mission_id": "Mission_Power",
+          "region_id": 1,
+          "environment": "Env_Null",
+          "boss": false,
+          "diff_mod": 2,
+          "bonus_objective_ids": [
+            8
+          ]
+        },
+        {
+          "mission_id": "Mission_Civilians",
+          "region_id": 2,
+          "environment": "Env_Null",
+          "boss": false,
+          "diff_mod": 0,
+          "bonus_objective_ids": []
+        },
+        {
+          "mission_id": "Mission_Survive",
+          "region_id": 3,
+          "environment": "Env_Null",
+          "asset_id": "Str_Battery",
+          "boss": false,
+          "diff_mod": 0,
+          "bonus_objective_ids": [
+            5,
+            1
+          ]
+        },
+        {
+          "mission_id": "Mission_Teleporter",
+          "region_id": 4,
+          "environment": "Env_Null",
+          "asset_id": "Str_Power",
+          "boss": false,
+          "diff_mod": 1,
+          "bonus_objective_ids": [
+            1
+          ]
+        },
+        {
+          "mission_id": "Mission_Disposal",
+          "region_id": 5,
+          "environment": "Env_Null",
+          "asset_id": "Str_Robotics",
+          "boss": false,
+          "diff_mod": 2,
+          "bonus_objective_ids": [
+            1
+          ]
+        },
+        {
+          "mission_id": "Mission_AcidTank",
+          "region_id": 6,
+          "environment": "Env_Null",
+          "boss": false,
+          "diff_mod": 0,
+          "bonus_objective_ids": []
+        },
+        {
+          "mission_id": "Mission_Acid",
+          "region_id": 7,
+          "environment": "Env_Null",
+          "asset_id": "Str_Nimbus",
+          "boss": false,
+          "diff_mod": 0,
+          "bonus_objective_ids": [
+            6,
+            1
+          ]
+        },
+        {
+          "mission_id": "Mission_StarfishBoss",
+          "region_id": 8,
+          "environment": "Env_Null",
+          "asset_id": "Str_Tower",
+          "boss": true,
+          "diff_mod": 0,
+          "bonus_objective_ids": [
+            1
+          ]
+        }
       ],
-      "phase": "combat_player",
-      "remaining_spawns": 1,
-      "mission_kills_done": 0,
       "units": [
         {
           "web": false,
@@ -492,7 +557,7 @@
         },
         {
           "web": false,
-          "active": true,
+          "active": false,
           "base_move": 4,
           "hp": 2,
           "flying": true,
@@ -513,7 +578,7 @@
           ],
           "fire": false,
           "y": 3,
-          "x": 3,
+          "x": 5,
           "acid": false,
           "shield": false,
           "type": "JetMech",
@@ -523,7 +588,7 @@
         },
         {
           "web": false,
-          "active": true,
+          "active": false,
           "base_move": 3,
           "hp": 3,
           "flying": false,
@@ -545,7 +610,7 @@
           ],
           "fire": false,
           "y": 2,
-          "x": 2,
+          "x": 4,
           "acid": false,
           "shield": false,
           "type": "RocketMech",
@@ -555,7 +620,7 @@
         },
         {
           "web": false,
-          "active": true,
+          "active": false,
           "base_move": 4,
           "hp": 3,
           "flying": false,
@@ -576,80 +641,14 @@
             "skill2=5"
           ],
           "fire": false,
-          "y": 5,
-          "x": 6,
+          "y": 4,
+          "x": 4,
           "acid": false,
           "shield": false,
           "type": "PulseMech",
           "mech": true,
           "uid": 2,
           "pilot_id": "Pilot_Rust"
-        },
-        {
-          "web": false,
-          "active": false,
-          "shield": false,
-          "hp": 2,
-          "weapon_push": 0,
-          "flying": false,
-          "team": 6,
-          "weapon_target_behind": false,
-          "web_probes": {
-            "IsGrappled": false
-          },
-          "max_hp": 2,
-          "move": 3,
-          "x": 4,
-          "queued_target": [
-            6,
-            3
-          ],
-          "has_queued_attack": true,
-          "weapons": [
-            "ScarabAtk1"
-          ],
-          "weapon_damage": 1,
-          "y": 3,
-          "uid": 405,
-          "type": "Scarab1",
-          "base_move": 3,
-          "fire": false,
-          "mech": false,
-          "acid": true,
-          "frozen": false
-        },
-        {
-          "web": false,
-          "active": false,
-          "shield": false,
-          "hp": 2,
-          "weapon_push": 0,
-          "flying": false,
-          "team": 6,
-          "weapon_target_behind": false,
-          "web_probes": {
-            "IsGrappled": false
-          },
-          "max_hp": 2,
-          "move": 3,
-          "x": 4,
-          "queued_target": [
-            1,
-            4
-          ],
-          "has_queued_attack": true,
-          "weapons": [
-            "ScarabAtk1"
-          ],
-          "weapon_damage": 1,
-          "y": 4,
-          "uid": 427,
-          "type": "Scarab1",
-          "base_move": 3,
-          "fire": false,
-          "mech": false,
-          "acid": false,
-          "frozen": false
         },
         {
           "web": false,
@@ -668,14 +667,14 @@
           "x": 6,
           "queued_target": [
             6,
-            1
+            2
           ],
           "has_queued_attack": true,
           "weapons": [
             "BouncerAtk1"
           ],
           "weapon_damage": 1,
-          "y": 2,
+          "y": 3,
           "uid": 428,
           "type": "Bouncer1",
           "base_move": 3,
@@ -736,86 +735,19 @@
         }
       },
       "environment_danger_v2": [],
-      "timestamp": 1778277471,
-      "in_active_mission": true,
+      "timestamp": 1778280081,
+      "in_active_mission": false,
       "attack_order": [
-        405,
-        427,
         428,
         429
       ],
-      "is_infinite_spawn": true
+      "is_infinite_spawn": false
     },
     "result_summary": {
-      "phase": "combat_player",
+      "phase": "unknown",
       "source": "bridge",
       "turn": 4,
-      "grid_power": "7/7",
-      "mechs": [
-        {
-          "type": "Acid_Tank",
-          "pos": "E1",
-          "hp": "1/1",
-          "weapon": "A.C.I.D. Cannon",
-          "status": "DONE"
-        },
-        {
-          "type": "JetMech",
-          "pos": "E5",
-          "hp": "2/2",
-          "weapon": "Aerial Bombs",
-          "status": "READY"
-        },
-        {
-          "type": "RocketMech",
-          "pos": "F6",
-          "hp": "3/3",
-          "weapon": "Rocket Artillery",
-          "status": "READY"
-        },
-        {
-          "type": "PulseMech",
-          "pos": "C2",
-          "hp": "3/3",
-          "weapon": "Repulse",
-          "status": "READY"
-        }
-      ],
-      "active_mechs": 3,
-      "enemies": [
-        {
-          "type": "Scarab1",
-          "pos": "E4",
-          "hp": "2/2",
-          "target": " \u2192 E2"
-        },
-        {
-          "type": "Scarab1",
-          "pos": "D4",
-          "hp": "2/2",
-          "target": " \u2192 D7"
-        },
-        {
-          "type": "Bouncer1",
-          "pos": "F2",
-          "hp": "3/3",
-          "target": " \u2192 G2"
-        },
-        {
-          "type": "Scorpion1",
-          "pos": "F3",
-          "hp": "3/3",
-          "target": " \u2192 G3"
-        }
-      ],
-      "threatened_buildings": 3,
-      "threats": [
-        "Building D7 by Scarab1 at D4",
-        "Building G2 by Bouncer1 at F2",
-        "Building G3 by Scorpion1 at F3"
-      ],
-      "targeted_tiles": 5,
-      "spawn_points": 0
+      "grid_power": "7/7"
     }
   }
 }

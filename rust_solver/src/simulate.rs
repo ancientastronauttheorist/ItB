@@ -1541,7 +1541,7 @@ pub fn simulate_weapon_with(
 
     if wdef.weapon_type == WeaponType::Leap {
         if let Some(reason) = leap_landing_illegal_reason(
-            board, attacker_idx, target_x, target_y,
+            board, attacker_idx, weapon_id, target_x, target_y,
         ) {
             result.events.push(format!(
                 "illegal_leap_landing:{}:{}:{}",
@@ -1567,7 +1567,7 @@ pub fn simulate_weapon_with(
         },
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
         WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
-        WeaponType::Leap => sim_leap(board, attacker_idx, wdef, target_x, target_y, &mut result),
+        WeaponType::Leap => sim_leap(board, attacker_idx, weapon_id, wdef, target_x, target_y, &mut result),
         WeaponType::Laser => sim_laser(board, ax, ay, wdef, attack_dir, &mut result),
         WeaponType::HealAll => sim_heal_all(board, &mut result),
         WeaponType::GlobalPush => {
@@ -2025,7 +2025,13 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
         let occupied_at_impact = board.unit_at(nx as u8, ny as u8).is_some();
         apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
         match wdef.push {
-            PushDir::Outward => apply_push(board, nx as u8, ny as u8, i, result),
+            PushDir::Outward => {
+                let bx = nx + dx;
+                let by = ny + dy;
+                if !(wdef.no_edge_bump_adjacent_push() && wdef.damage == 0 && !in_bounds(bx, by)) {
+                    apply_push(board, nx as u8, ny as u8, i, result);
+                }
+            }
             PushDir::Inward => apply_push(board, nx as u8, ny as u8, opposite_dir(i), result),
             _ => {}
         }
@@ -2419,6 +2425,7 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
 fn leap_landing_illegal_reason(
     board: &Board,
     attacker_idx: usize,
+    weapon_id: WId,
     tx: u8,
     ty: u8,
 ) -> Option<&'static str> {
@@ -2429,6 +2436,12 @@ fn leap_landing_illegal_reason(
     let landing = board.tile(tx, ty);
     if landing.terrain == Terrain::Chasm {
         return Some("chasm");
+    }
+    if weapon_id == WId::BruteJetmech && landing.terrain == Terrain::Water {
+        return Some("water");
+    }
+    if weapon_id == WId::BruteJetmech && landing.terrain == Terrain::Lava {
+        return Some("lava");
     }
     if landing.terrain == Terrain::Mountain {
         return Some("mountain");
@@ -2449,7 +2462,7 @@ fn leap_landing_illegal_reason(
     None
 }
 
-fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, result: &mut ActionResult) {
+fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &WeaponDef, tx: u8, ty: u8, result: &mut ActionResult) {
     let old_x = board.units[attacker_idx].x;
     let old_y = board.units[attacker_idx].y;
 
@@ -2457,7 +2470,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty
     // but diagnostic callers (`score_plan`, replaying a hand-written plan)
     // can still pass an impossible landing. Treat it as an unfired action
     // instead of creating overlapping units in the projected board.
-    if let Some(reason) = leap_landing_illegal_reason(board, attacker_idx, tx, ty) {
+    if let Some(reason) = leap_landing_illegal_reason(board, attacker_idx, weapon_id, tx, ty) {
         result.events.push(format!(
             "illegal_leap_landing:{}:{}:{}",
             tx, ty, reason
@@ -2980,6 +2993,26 @@ mod tests {
             result.events.iter().any(|e| e.starts_with("invalid_self_aoe_target")),
             "invalid target should leave a replay/audit breadcrumb"
         );
+    }
+
+    #[test]
+    fn test_repulse_edge_push_does_not_bump_off_board() {
+        // Live regression: Easy Rusting Hulks run 20260508_134925_472,
+        // Corporate HQ turn 3. PulseMech at D2 Repulsed a 1-HP Blobber at
+        // D1 toward the board edge; the engine pushed nowhere and dealt no
+        // phantom bump damage.
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 6, 4, 3, WId::ScienceRepulse);
+        let blobber = add_enemy_type(&mut board, 541, 7, 4, 1, "Blobber1");
+
+        let result = simulate_weapon(&mut board, pulse, WId::ScienceRepulse, 6, 4);
+
+        assert_eq!(
+            (board.units[blobber].x, board.units[blobber].y, board.units[blobber].hp),
+            (7, 4, 1),
+            "zero-damage Repulse edge push should not add off-board bump damage"
+        );
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]
@@ -3931,7 +3964,7 @@ mod tests {
         // Clone the default def and expand range so the leap covers 3 tiles.
         let upgraded = WEAPONS[WId::BruteJetmech as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &upgraded, 3, 6, &mut result);
+        sim_leap(&mut board, mech_idx, WId::BruteJetmech, &upgraded, 3, 6, &mut result);
 
         assert!(
             board.tile(3, 4).smoke(),
@@ -4005,7 +4038,7 @@ mod tests {
 
         let upgraded = WEAPONS[WId::BruteJetmech as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &upgraded, 3, 6, &mut result);
+        sim_leap(&mut board, mech_idx, WId::BruteJetmech, &upgraded, 3, 6, &mut result);
 
         assert_eq!(
             board.units[t1_enemy].hp, 2,
@@ -4039,7 +4072,7 @@ mod tests {
 
         let upgraded = WEAPONS[WId::PrimeLeap as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &upgraded, 3, 4, &mut result);
+        sim_leap(&mut board, mech_idx, WId::PrimeLeap, &upgraded, 3, 4, &mut result);
 
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
@@ -4068,7 +4101,7 @@ mod tests {
 
         let wdef = WEAPONS[WId::BruteBombrun as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &wdef, 3, 6, &mut result);
+        sim_leap(&mut board, mech_idx, WId::BruteBombrun, &wdef, 3, 6, &mut result);
 
         assert_eq!(
             board.units[t1_enemy].hp, 2,
@@ -5423,8 +5456,8 @@ mod tests {
 
     // ── Aerial Bombs (Brute_Jetmech) landing-tile legality gate ───────────────
     // In-game, Aerial Bombs is unfireable at a target whose landing tile is a
-    // chasm, mountain (any HP), or occupied by a unit, wreck, or building.
-    // Rubble and water remain legal for Jet Mech. The filter lives in
+    // water, lava, chasm, mountain (any HP), or occupied by a unit, wreck, or
+    // building. Rubble remains legal for Jet Mech. The filter lives in
     // solver::get_weapon_targets plus sim_leap's diagnostic no-op guard.
     // Regression anchor: Easy Rusting Hulks run 20260508_134925_472,
     // Mission_Cataclysm turn 3 JetMech B5 -> B3 click_miss, where B3 was
@@ -5544,6 +5577,33 @@ mod tests {
     }
 
     #[test]
+    fn test_aerial_bombs_sim_noops_water_landing() {
+        // Live regression: JetMech D7 -> B7 over a Blob at C7 click-missed
+        // because B7 was water. The attack must not damage the transit tile.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 1, 4, 3, WId::BruteJetmech);
+        let transit_enemy = add_enemy(&mut board, 10, 1, 5, 1);
+        board.tile_mut(1, 6).terrain = Terrain::Water;
+
+        let result = simulate_weapon(&mut board, jet, WId::BruteJetmech, 1, 6);
+
+        assert_eq!(
+            (board.units[jet].x, board.units[jet].y),
+            (1, 4),
+            "water leap must leave Jet on its original tile"
+        );
+        assert_eq!(
+            board.units[transit_enemy].hp, 1,
+            "unfireable water landing must not damage the transit tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:1:6:water"),
+            "water landing should be visible to replay diagnostics: {:?}",
+            result.events
+        );
+    }
+
+    #[test]
     fn test_aerial_bombs_enum_rejects_landing_on_full_mountain() {
         // Full-HP mountain (terrain=Mountain, hp=2) on the landing tile → illegal.
         let mut board = make_test_board();
@@ -5580,16 +5640,16 @@ mod tests {
     }
 
     #[test]
-    fn test_aerial_bombs_enum_allows_landing_on_water() {
-        // Jet Mech is Flying+Massive → can land on water without drowning.
-        // (sim_leap doesn't apply is_deadly_ground to the attacker; the
-        // enumerator passes flying=true which also skips deadly-terrain gate.)
+    fn test_aerial_bombs_enum_rejects_landing_on_water() {
+        // Jet Mech can normally move over water, but Brute_Jetmech's
+        // GetTargetArea rejects water landing tiles; live FireWeapon spends
+        // the action as a no-op when forced via bridge.
         let mut board = make_test_board();
         board.tile_mut(3, 5).terrain = Terrain::Water;
         let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
         let targets = leap_targets(&board, (3, 3));
-        assert!(targets.contains(&(3, 5)),
-            "Water must be a legal landing for flying Jet Mech — got {:?}", targets);
+        assert!(!targets.contains(&(3, 5)),
+            "Water must make Aerial Bombs landing illegal — got {:?}", targets);
     }
 
     #[test]

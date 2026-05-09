@@ -351,7 +351,13 @@ pub(crate) fn get_weapon_targets(
                     if cardinal_only && x != mx && y != my { continue; }
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r || dist > max_r { continue; }
-                    if board.tile(x, y).terrain == Terrain::Chasm { continue; }
+                    let landing_terrain = board.tile(x, y).terrain;
+                    if landing_terrain == Terrain::Chasm { continue; }
+                    if weapon_id == WId::BruteJetmech
+                        && matches!(landing_terrain, Terrain::Water | Terrain::Lava)
+                    {
+                        continue;
+                    }
                     if !board.is_blocked(x, y, true) { // leap uses flying passability except chasm landings
                         targets.push((x, y));
                     }

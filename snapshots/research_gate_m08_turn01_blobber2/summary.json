@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-08T17:53:54.458209",
+  "label": "research_gate_m08_turn01_blobber2",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Blobber2",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob2",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

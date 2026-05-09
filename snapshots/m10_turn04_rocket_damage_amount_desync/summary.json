@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-08T19:35:25.877471",
+  "label": "m10_turn04_rocket_damage_amount_desync",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Blobber1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        1,
+        3
+      ],
+      "hp": 1
+    }
+  ]
+}

@@ -9,13 +9,13 @@
   "tags": [
     "achievement"
   ],
-  "solver_version": "rust-0.1.0-c5425ac",
+  "solver_version": "rust-0.1.0-2d86131",
   "weight_version": "v011",
-  "updated": "2026-05-08T16:23:26.755529",
+  "updated": "2026-05-08T18:33:21.660698",
   "created": "2026-05-08T13:49:25.501391",
   "missions": [],
   "outcome": "win",
-  "outcome_mission": 6,
-  "outcome_recorded_at": "2026-05-08T16:23:26.737812",
+  "outcome_mission": 9,
+  "outcome_recorded_at": "2026-05-08T18:33:21.625048",
   "outcome_notes": null
 }
