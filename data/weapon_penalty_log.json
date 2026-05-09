@@ -110,6 +110,11 @@
       "last_run_id": "20260430_230740_117",
       "weapon_id": "Ranged_Ignite"
     },
+    "death|Ranged_Rocket_A|attack": {
+      "count": 1,
+      "last_run_id": "20260508_134925_472",
+      "weapon_id": "Ranged_Rocket_A"
+    },
     "death|Ranged_Rocket|attack": {
       "count": 4,
       "last_run_id": "20260508_134925_472",
@@ -201,8 +206,8 @@
       "weapon_id": "Brute_Grapple"
     },
     "status|Brute_Jetmech|attack": {
-      "count": 5,
-      "last_run_id": "20260506_114649_974",
+      "count": 7,
+      "last_run_id": "20260508_134925_472",
       "weapon_id": "Brute_Jetmech"
     },
     "status|Prime_Shift|attack": {

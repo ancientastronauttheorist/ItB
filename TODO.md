@@ -2,7 +2,7 @@
 
 ## Achievement Checklist
 
-23 of 70 completed (latest Steam sync on 2026-05-07; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 47 remaining, sorted by global unlock % (easiest first).
+25 of 70 completed (latest Steam sync on 2026-05-09; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 45 remaining, sorted by global unlock % (easiest first).
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -15,7 +15,7 @@
 - [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 
 ### Tier 2: Yellow Zone (20-40% — requires specific squad play or setup)
-- [ ] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
+- [x] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
 - [ ] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
 - [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
 - [ ] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
@@ -51,7 +51,7 @@
 
 ### Tier 4: Red Zone (<10% — hardest achievements, endgame goals)
 - [ ] Class Specialist (9.8%) — Beat game with 3 Mechs from same class in Custom
-- [ ] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
+- [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 - [ ] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs]
 - [ ] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random]
 - [ ] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
@@ -77,7 +77,7 @@
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (23, from Steam sync)
+### Already Completed (25, from Steam sync)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -92,6 +92,7 @@
 - [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
 - [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 - [x] Overpowered (30.7%) — Overpower Grid twice when full
+- [x] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle  [Rusting Hulks]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
@@ -101,6 +102,7 @@
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
+- [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 
 
 ## Development Phases

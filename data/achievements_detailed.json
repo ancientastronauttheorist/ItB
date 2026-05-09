@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-08T18:33:57.581814",
+    "last_steam_sync": "2026-05-09T00:29:25.460384",
     "last_steam_total": 70,
-    "last_steam_unlocked": 24
+    "last_steam_unlocked": 25
   },
   "achievements": {
     "rift_walkers": [
@@ -745,7 +745,7 @@
         "description": "Finish 3 Corporate Islands without equipping any new Pilots or weapons",
         "type": "single_run",
         "global_unlock_pct": 9.7,
-        "completed": false,
+        "completed": true,
         "strategy": "Don't equip any new weapons or pilots found during the run. Donate all finds. Spend reputation only on reactor cores and grid power.",
         "setup": "3-island run. Strong starting squad. Easy difficulty.",
         "pitfalls": "Cannot use any found equipment. Must rely entirely on starting loadout."
