@@ -647,7 +647,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # and enemy SelfAoe can use split inner/outer damage for BlobB's 1 self
 # damage plus 2 adjacent damage. Pre-v87 corpus archived as
 # failure_db_snapshot_sim_v86.jsonl.
-SIMULATOR_VERSION = 87
+# v88 - Ordinary burning ground does not ignite effectively-flying units on
+# move/push/swap/throw landing. Lava still ignites flying units through its
+# dedicated landing branch. Pre-v88 corpus archived as
+# failure_db_snapshot_sim_v87.jsonl.
+SIMULATOR_VERSION = 88
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
