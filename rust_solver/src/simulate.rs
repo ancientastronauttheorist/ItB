@@ -191,14 +191,12 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         break_web_from(board, webber_uid);
     }
 
-    // 2. Fire tile: grounded unit catches fire (Flame Shielding exempts
-    //    player mechs; Fire Psion grants Vek the same immunity). Flying units
-    //    ignore ordinary tile fire; lava has a separate flying ignition branch.
+    // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
+    //    Fire Psion grants Vek the same immunity).
     let target_is_immune_vek = board.fire_psion
         && board.units[unit_idx].receives_psion_aura()
         && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
     if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
-        && !board.units[unit_idx].effectively_flying()
         && board.units[unit_idx].can_catch_fire()
         && !(board.flame_shielding && board.units[unit_idx].is_player())
         && !target_is_immune_vek
@@ -1261,13 +1259,11 @@ fn apply_push_with_policy(
         break_web_from(board, pushed_uid);
     }
 
-    // Fire tile: grounded pushed unit catches fire (Fire Psion grants Vek
-    // immunity). Flying units ignore ordinary tile fire.
+    // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity)
     let push_target_immune_vek = board.fire_psion
         && board.units[unit_idx].receives_psion_aura()
         && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
     if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
-        && !board.units[unit_idx].effectively_flying()
         && board.units[unit_idx].can_catch_fire()
         && !(board.flame_shielding && board.units[unit_idx].is_player())
         && !push_target_immune_vek
@@ -2765,14 +2761,11 @@ pub fn simulate_move(
         }
     }
 
-    // Fire tile: grounded mech catches fire on arrival (if not shielded).
+    // Fire tile: mech catches fire on arrival (if not shielded).
     // Mirrors apply_push's fire-catch logic so move and push paths agree.
-    // Flying mechs ignore ordinary tile fire; lava remains special-cased in
-    // the shared landing pipeline.
     if move_to != old_pos {
         let tile = board.tile(move_to.0, move_to.1);
         if tile.on_fire() && board.units[mech_idx].hp > 0 && !board.units[mech_idx].shield()
-            && !board.units[mech_idx].effectively_flying()
             && board.units[mech_idx].can_catch_fire()
             && !(board.flame_shielding && board.units[mech_idx].is_player())
         {
@@ -3061,11 +3054,10 @@ mod tests {
     }
 
     #[test]
-    fn test_flying_mech_move_onto_fire_tile_does_not_ignite() {
+    fn test_flying_mech_move_onto_fire_tile_ignites() {
         // Live regression: Easy Rusting Hulks run 20260508_134925_472,
-        // Mission_Final_Cave turn 4. JetMech moved H3->F4 onto ordinary
-        // burning ground; the tile stayed burning, but the flying mech did
-        // not catch fire.
+        // Mission_Final_Cave turn 4. An immediate verify sampled before the
+        // fire status settled, but a fresh bridge read showed JetMech on fire.
         let mut board = make_test_board();
         board.tile_mut(3, 4).set_on_fire(true);
         let jet = add_mech(&mut board, 1, 3, 3, 2, WId::BruteJetmechB);
@@ -3075,8 +3067,8 @@ mod tests {
 
         assert_eq!((board.units[jet].x, board.units[jet].y), (3, 4));
         assert!(
-            !board.units[jet].fire(),
-            "Flying mech should not catch fire from ordinary burning ground"
+            board.units[jet].fire(),
+            "Flying mech should catch fire from ordinary burning ground once status settles"
         );
         assert!(board.tile(3, 4).on_fire(), "Ordinary tile fire remains on the tile");
     }
@@ -3773,7 +3765,7 @@ mod tests {
     }
 
     #[test]
-    fn test_push_flying_unit_onto_fire_tile_does_not_ignite() {
+    fn test_push_flying_unit_onto_fire_tile_ignites() {
         let mut board = make_test_board();
         board.tile_mut(3, 4).set_on_fire(true);
         let idx = add_enemy(&mut board, 1, 3, 3, 3);
@@ -3784,8 +3776,8 @@ mod tests {
 
         assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
         assert!(
-            !board.units[idx].fire(),
-            "Flying unit should not catch fire from ordinary burning ground"
+            board.units[idx].fire(),
+            "Flying unit should catch fire from ordinary burning ground"
         );
     }
 

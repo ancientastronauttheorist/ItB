@@ -1073,11 +1073,15 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and enemy SelfAoe can use split inner/outer damage for BlobB's 1 self
 //   damage plus 2 adjacent damage. Pre-v87 corpus archived as
 //   `failure_db_snapshot_sim_v86.jsonl`.
-// v88 - Ordinary burning ground does not ignite effectively-flying units on
-//   move/push/swap/throw landing. Lava still ignites flying units through its
-//   dedicated landing branch. Pre-v88 corpus archived as
+// v88 - Briefly treated ordinary burning ground as not igniting flying units;
+//   superseded by v89 after a settled bridge read proved the live desync was a
+//   verification timing issue. Pre-v88 corpus archived as
 //   `failure_db_snapshot_sim_v87.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 88;
+// v89 - Restores ordinary tile-fire ignition for flying units and pairs it
+//   with a Python auto_turn settle retry for transient predicted-true status
+//   diffs immediately after bridge sub-actions. Pre-v89 corpus archived as
+//   `failure_db_snapshot_sim_v88.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 89;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

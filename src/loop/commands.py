@@ -6619,6 +6619,44 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     from src.solver import fuzzy_detector
     from src.bridge.writer import _resolve_weapon_slot
 
+    def _is_transient_predicted_status_gain(diff) -> bool:
+        """True for status effects the sim predicts but bridge may settle late."""
+        if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+            return False
+        unit_diffs = getattr(diff, "unit_diffs", []) or []
+        if not unit_diffs:
+            return False
+        for ud in unit_diffs:
+            if not str(ud.get("field", "")).startswith("status."):
+                return False
+            if ud.get("predicted") is not True or ud.get("actual") is not False:
+                return False
+        return True
+
+    def _settle_transient_status_diff(predicted: dict, actual_board, actual_data, phase: str):
+        """Re-read briefly for bridge status effects that apply after command ACK."""
+        diff = diff_states(predicted, actual_board)
+        if diff.is_empty() or not _is_transient_predicted_status_gain(diff):
+            return actual_board, actual_data, diff
+
+        best_board, best_data, best_diff = actual_board, actual_data, diff
+        for attempt in range(3):
+            time.sleep(0.35)
+            refresh_bridge_state()
+            reread_board, reread_data = read_bridge_state()
+            if not reread_board:
+                continue
+            reread_diff = diff_states(predicted, reread_board)
+            if reread_diff.is_empty():
+                print(f"  {phase.upper()} VERIFIED: PASS (status settled after {attempt + 1} reread)")
+                return reread_board, reread_data, reread_diff
+            if reread_diff.total_count() < best_diff.total_count():
+                best_board, best_data, best_diff = reread_board, reread_data, reread_diff
+        if best_diff.total_count() < diff.total_count():
+            print(f"  {phase.upper()} verify: status diff partially settled "
+                  f"({diff.total_count()} -> {best_diff.total_count()})")
+        return best_board, best_data, best_diff
+
     if not is_bridge_active():
         result = {"error": "Bridge not active — auto_turn requires bridge"}
         _print_result(result)
@@ -6930,7 +6968,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             actual_board, actual_data = read_bridge_state()
 
             if actual_board and pred_post_move:
-                diff = diff_states(pred_post_move, actual_board)
+                actual_board, actual_data, diff = _settle_transient_status_diff(
+                    pred_post_move, actual_board, actual_data, "move"
+                )
                 if not diff.is_empty():
                     if _is_harmless_active_state_diff(diff, allowed_uids=set(done_uids)):
                         print("  MOVE VERIFIED: PASS (prior active-state drift ignored)")
@@ -7092,7 +7132,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         actual_board, actual_data = read_bridge_state()
 
         if actual_board and pred_post_attack:
-            diff = diff_states(pred_post_attack, actual_board)
+            actual_board, actual_data, diff = _settle_transient_status_diff(
+                pred_post_attack, actual_board, actual_data, final_phase
+            )
             if not diff.is_empty():
                 allowed_active_drift_uids = set(done_uids)
                 if final_phase == "skip":
