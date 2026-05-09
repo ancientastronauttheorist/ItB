@@ -2501,7 +2501,8 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # to verify, not cmd_verify, so the counter stays at 0).
             if (session.active_solution is not None
                     and bridge_data.get("turn", 0) > session.active_solution.turn
-                    and phase == "combat_player"):
+                    and phase == "combat_player"
+                    and bridge_data.get("active_mechs", 1) > 0):
                 _record_post_enemy(session, board, session.active_solution.turn)
                 session.active_solution = None  # consumed — prevents re-trigger
             elif (session.active_solution is not None

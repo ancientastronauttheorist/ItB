@@ -70,7 +70,7 @@ VEK_STATS = {
     "Firefly2":      PawnStats(move_speed=2, ranged=1),
     "Hornet1":       PawnStats(move_speed=5, flying=True, ranged=0),
     "Hornet2":       PawnStats(move_speed=5, flying=True, ranged=0),
-    "Leaper1":       PawnStats(move_speed=4, jumper=True, minor=True, ranged=0),
+    "Leaper1":       PawnStats(move_speed=4, jumper=True, ranged=0),
     "Leaper2":       PawnStats(move_speed=4, jumper=True, ranged=0),
     "Beetle1":       PawnStats(move_speed=2, ranged=0, massive=True),
     "Beetle2":       PawnStats(move_speed=2, ranged=0, massive=True),
@@ -140,15 +140,15 @@ VEK_STATS = {
     "BotBoss2":      PawnStats(move_speed=3, massive=True,
                                default_weapon="SnowBossAtk2"),
     # Psions
-    "Jelly_Health1": PawnStats(move_speed=2, flying=True, leader="LEADER_HEALTH", pushable=False),
-    "Jelly_Armor1":  PawnStats(move_speed=2, flying=True, leader="LEADER_ARMOR", pushable=False),
-    "Jelly_Regen1":  PawnStats(move_speed=2, flying=True, leader="LEADER_REGEN", pushable=False),
-    "Jelly_Explode1":PawnStats(move_speed=2, flying=True, leader="LEADER_EXPLODE", pushable=False),
-    "Jelly_Lava1":   PawnStats(move_speed=2, flying=True, leader="LEADER_TENTACLE", pushable=False),
+    "Jelly_Health1": PawnStats(move_speed=2, flying=True, leader="LEADER_HEALTH"),
+    "Jelly_Armor1":  PawnStats(move_speed=2, flying=True, leader="LEADER_ARMOR"),
+    "Jelly_Regen1":  PawnStats(move_speed=2, flying=True, leader="LEADER_REGEN"),
+    "Jelly_Explode1":PawnStats(move_speed=2, flying=True, leader="LEADER_EXPLODE"),
+    "Jelly_Lava1":   PawnStats(move_speed=2, flying=True, leader="LEADER_TENTACLE"),
     # Advanced Edition Psions
-    "Jelly_Boost1":  PawnStats(move_speed=2, flying=True, leader="LEADER_BOOST", pushable=False),
-    "Jelly_Fire1":   PawnStats(move_speed=2, flying=True, leader="LEADER_FIRE", pushable=False),
-    "Jelly_Spider1": PawnStats(move_speed=2, flying=True, leader="LEADER_SPIDER", pushable=False),
+    "Jelly_Boost1":  PawnStats(move_speed=2, flying=True, leader="LEADER_BOOST"),
+    "Jelly_Fire1":   PawnStats(move_speed=2, flying=True, leader="LEADER_FIRE"),
+    "Jelly_Spider1": PawnStats(move_speed=2, flying=True, leader="LEADER_SPIDER"),
     # Bosses
     "FireflyBoss":   PawnStats(move_speed=3, ranged=1, massive=True),
     "BeetleBoss":    PawnStats(move_speed=3, ranged=0, massive=True),
@@ -204,7 +204,14 @@ VEK_STATS = {
     "Spiderling2":   PawnStats(move_speed=3, minor=True, ranged=0),
     "Blob1":         PawnStats(move_speed=0, minor=True, ranged=0),
     "Blob2":         PawnStats(move_speed=0, minor=True, ranged=0),
+    "BlobB":         PawnStats(move_speed=0, minor=True, ranged=0),
     "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),  # legacy alias
+    "MantisEgg":     PawnStats(move_speed=0, minor=True, ranged=0),
+    "WebbEgg1":      PawnStats(move_speed=0, minor=True, ranged=0, ignore_smoke=True),
+    "Totem1":        PawnStats(move_speed=0, minor=True, ranged=1),
+    "Totem2":        PawnStats(move_speed=0, minor=True, ranged=1),
+    "TotemB":        PawnStats(move_speed=0, minor=True, ranged=1),
+    "SlugEgg1":      PawnStats(move_speed=0, minor=True, ranged=0),
     "ShellPsion1":   PawnStats(move_speed=2, flying=True, minor=True, leader="LEADER_TENTACLE"),
 }
 

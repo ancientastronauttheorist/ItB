@@ -12,7 +12,8 @@ use crate::movement::{direction_between, cardinal_direction};
 
 /// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
 /// Called when an enemy Vek dies while Blast Psion is alive on the board.
-/// Handles chain reactions (explosion kills another Vek → another explosion).
+/// Explosions caused by the Blast Psion aura do not recursively trigger the
+/// aura again; live captures show only the original death emits the burst.
 /// Volatile Vek's "Explosive Decay": 1 damage to all 4 adjacent tiles
 /// when it dies, for any cause. Bump-class damage (ignores armor, acid,
 /// shield, frozen — same rules the game applies to Volatile Guts).
@@ -60,7 +61,7 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
 /// `finish_instant_unit_death` (push/swap/throw terrain + mine kills), and
 /// apply_env_danger (lethal env kills, since sim v38).
 pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
-    if depth > 8 { return; } // safety limit for chain reactions
+    if depth > 0 { return; }
 
     for &(dx, dy) in &DIRS {
         let nx = x as i8 + dx;
@@ -69,42 +70,8 @@ pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mu
         let nx = nx as u8;
         let ny = ny as u8;
 
-        // Pre-check: is there an alive non-Psion enemy that could chain-explode?
-        // Both Blast Psion (Jelly_Explode1) and Psion Abomination (Jelly_Boss)
-        // grant the EXPLODE-on-death aura, so any of them being alive can chain.
-        // Boss is excluded from chaining itself (it doesn't explode on its own
-        // death — it's the source of the aura, not subject to it).
-        let chain_check = if board.blast_psion || board.boss_psion {
-            board.unit_at(nx, ny).and_then(|idx| {
-                let u = &board.units[idx];
-                let tname = u.type_name_str();
-                if u.is_enemy() && u.hp > 0
-                    && tname != "Jelly_Explode1"
-                    && tname != "Jelly_Boss"
-                {
-                    Some(idx)
-                } else { None }
-            })
-        } else { None };
-
         // Apply 1 bump damage (ignores armor/acid)
         apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
-
-        // Chain reaction: if that enemy just died, it also explodes
-        if let Some(idx) = chain_check {
-            if board.units[idx].hp <= 0 {
-                // Check if either explode-source is still alive (killing both
-                // stops future explosions).
-                let psion_alive = (0..board.unit_count as usize).any(|i| {
-                    let t = board.units[i].type_name_str();
-                    (t == "Jelly_Explode1" || t == "Jelly_Boss")
-                        && board.units[i].hp > 0
-                });
-                if psion_alive {
-                    apply_death_explosion(board, nx, ny, result, depth + 1);
-                }
-            }
-        }
     }
 }
 
@@ -227,7 +194,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
     // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity).
     let target_is_immune_vek = board.fire_psion
-        && board.units[unit_idx].is_enemy()
+        && board.units[unit_idx].receives_psion_aura()
         && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
     if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
         && board.units[unit_idx].can_catch_fire()
@@ -274,7 +241,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
     } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].effectively_flying()
         && dest_terrain == Terrain::Lava {
         let target_is_immune_vek = board.fire_psion
-            && board.units[unit_idx].is_enemy()
+            && board.units[unit_idx].receives_psion_aura()
             && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
         if !board.units[unit_idx].shield()
             && board.units[unit_idx].can_catch_fire()
@@ -394,7 +361,7 @@ pub(crate) fn on_enemy_death(
     // Mountains don't host fire either (the destroyed-mountain Rubble case
     // can host fire, but live mountains are skipped to match the Lua rule
     // SetFire only applies to ground-class tiles).
-    if board.fire_psion && dying_tname_owned != "Jelly_Fire1" {
+    if board.fire_psion && board.units[idx].receives_psion_aura() && dying_tname_owned != "Jelly_Fire1" {
         // Tile filter: fire is meaningless on water/chasm/lava and on intact
         // mountain. The set_on_fire flag is harmless on those tiles but we
         // skip for hygiene + parity with apply_weapon_status's behavior.
@@ -429,7 +396,7 @@ pub(crate) fn on_enemy_death(
     // as the spawn. Deferring the spawn until after the hatch loop fixes
     // this. (When the trigger is a player-phase weapon kill, hatching is
     // a non-issue — the egg sits there until the next enemy phase.)
-    if board.spider_psion && dying_tname_owned != "Jelly_Spider1" {
+    if board.spider_psion && board.units[idx].receives_psion_aura() && dying_tname_owned != "Jelly_Spider1" {
         board.pending_spider_eggs.push((dx, dy));
     }
 
@@ -456,7 +423,7 @@ pub(crate) fn on_enemy_death(
         if !board.boss_psion {
             for j in 0..board.unit_count as usize {
                 let tname = board.units[j].type_name_str();
-                if board.units[j].is_enemy() && board.units[j].hp > 0
+                if board.units[j].receives_psion_aura() && board.units[j].hp > 0
                     && tname != "Jelly_Health1"
                     && tname != "Jelly_Boss"
                 {
@@ -478,7 +445,7 @@ pub(crate) fn on_enemy_death(
         if !board.soldier_psion {
             for j in 0..board.unit_count as usize {
                 let tname = board.units[j].type_name_str();
-                if board.units[j].is_enemy() && board.units[j].hp > 0
+                if board.units[j].receives_psion_aura() && board.units[j].hp > 0
                     && tname != "Jelly_Health1"
                     && tname != "Jelly_Boss"
                 {
@@ -546,6 +513,7 @@ fn finish_instant_unit_death(
     let dying_tname = board.units[unit_idx].type_name_str().to_string();
     let can_explode = is_enemy
         && (board.blast_psion || board.boss_psion)
+        && board.units[unit_idx].receives_psion_aura()
         && dying_tname != "Jelly_Explode1"
         && dying_tname != "Jelly_Boss";
     let death_terrain = board.tile(death_x, death_y).terrain;
@@ -590,7 +558,7 @@ fn apply_damage_defer_death_explosion(
         board.unit_at(x, y).and_then(|idx| {
             let u = &board.units[idx];
             let tname = u.type_name_str();
-            if u.is_enemy() && u.hp > 0
+            if u.receives_psion_aura() && u.hp > 0
                 && tname != "Jelly_Explode1"
                 && tname != "Jelly_Boss"
             {
@@ -686,19 +654,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
-    // Damage building if present — incremental HP damage. All buildings take
-    // damage per-HP regardless of uniqueness (the push-damage path at
-    // apply_push already does this; weapon damage must match). Previously this
-    // branch treated non-unique buildings as all-or-nothing (any damage
-    // destroys the whole HP pool), which over-predicted damage against 2-HP
-    // non-objective buildings — e.g. Aerial Bombs transit tile hitting a
-    // 2-HP building: predicted 0 HP, actual 1 HP. See
-    // snapshots/grid_drop_20260424_144237_364_t01_a1.
-    //
-    // The is_unique flag still controls terrain transition at hp=0:
-    // objective buildings retain Terrain::Building (so they keep their
-    // objective identity for end-of-mission scoring) while regular buildings
-    // become Rubble.
+    // Damage building if present — incremental HP damage. Direct weapon and
+    // explosion damage drains current grid per building HP lost. Push/bump
+    // collision damage has its own non-unique multi-HP exception below.
     let mut bldg_hp_lost: u8 = 0;
     {
         let idx = xy_to_idx(x, y) as u64;
@@ -865,12 +823,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
 /// Convert a single tile to Water, drowning any non-flying non-massive unit
 /// standing on it. Idempotent: running on existing Water is a no-op.
 /// Mountains / Buildings are not flooded (game engine refuses to overwrite).
-///
-/// TODO(dam-integration): in-game, drown deaths DO trigger Blast Psion
-/// explosions. This helper uses direct `hp = 0` bypassing the explosion
-/// dispatch. Swap to a `apply_damage(..., source=Water)` routed path once
-/// the user verifies drown-credit semantics.
-pub fn flood_tile(board: &mut Board, x: u8, y: u8, _result: &mut ActionResult) {
+pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     if x >= 8 || y >= 8 { return; }
     let t = board.tile(x, y);
     if t.terrain == Terrain::Water { return; }
@@ -880,11 +833,12 @@ pub fn flood_tile(board: &mut Board, x: u8, y: u8, _result: &mut ActionResult) {
     board.tile_mut(x, y).set_cracked(false);
 
     if let Some(idx) = board.unit_at(x, y) {
-        let u = &board.units[idx];
-        if !u.effectively_flying() && !u.massive() {
-            board.units[idx].hp = 0;
-            // No enemies_killed increment — user verifying in-game whether
-            // flood kills credit pilot XP / achievements.
+        let drowns = {
+            let u = &board.units[idx];
+            u.hp > 0 && !u.effectively_flying() && !u.massive()
+        };
+        if drowns {
+            finish_instant_unit_death(board, idx, result, x, y);
         }
     }
 }
@@ -897,8 +851,8 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
         Some(p) => p,
         None => return,
     };
-    for x_off in 0i8..=1 {
-        for y_off in 1i8..=7 {
+    for y_off in 1i8..=7 {
+        for x_off in 0i8..=1 {
             let tx = px as i8 + x_off;
             let ty = py as i8 + y_off;
             if tx >= 0 && tx < 8 && ty >= 0 && ty < 8 {
@@ -920,7 +874,7 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
         board.unit_at(x, y).and_then(|idx| {
             let u = &board.units[idx];
             let tname = u.type_name_str();
-            if u.is_enemy() && u.hp > 0
+            if u.receives_psion_aura() && u.hp > 0
                 && tname != "Jelly_Explode1"
                 && tname != "Jelly_Boss"
             {
@@ -1023,7 +977,7 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
     //
     // Grid-power accounting mirrors apply_push: non-unique buildings
     // contribute ONE grid power regardless of HP, so bump only drops grid on
-    // full destruction. Unique buildings lose grid per HP.
+    // full destruction. Unique/inferred objective buildings lose grid per HP.
     if board.tile(nx, ny).terrain == Terrain::Building {
         let dest_idx = xy_to_idx(nx, ny) as u64;
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
@@ -1047,6 +1001,7 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
             } else {
                 result.buildings_damaged += 1;
                 if is_unique {
+                    result.grid_damage += 1;
                     board.grid_power = board.grid_power.saturating_sub(1);
                 }
             }
@@ -1213,9 +1168,8 @@ fn apply_push_with_policy(
     // Grid-power accounting: non-unique buildings contribute ONE grid power
     // regardless of their HP (a Residential 2-HP house provides +1 grid, not
     // +2). Bump damage only reduces grid_power when the building is fully
-    // destroyed (bhp → 0). Unique objective buildings (Coal Plant, Power
-    // Generator, Solar Farm, Batteries) have per-HP grid worth and decrement
-    // grid_power on every HP lost.
+    // destroyed (bhp -> 0). Unique/inferred objective buildings have per-HP
+    // grid worth and decrement grid_power on every HP lost.
     //
     // Regression: grid_drop_20260421_161809_372_t02_a0 (Taurus Cannon push
     // into bhp=2 Residential: actual bhp 2→1 with grid unchanged) and
@@ -1244,8 +1198,10 @@ fn apply_push_with_policy(
             } else {
                 result.buildings_damaged += 1;
                 // Non-unique multi-HP building: damaged but not destroyed →
-                // grid_power stays. Unique building: each HP is worth 1 grid.
+                // grid_power stays. Unique/inferred objective: each HP is
+                // worth 1 grid.
                 if is_unique {
+                    result.grid_damage += 1;
                     board.grid_power = board.grid_power.saturating_sub(1);
                 }
             }
@@ -1305,7 +1261,7 @@ fn apply_push_with_policy(
 
     // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity)
     let push_target_immune_vek = board.fire_psion
-        && board.units[unit_idx].is_enemy()
+        && board.units[unit_idx].receives_psion_aura()
         && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
     if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
         && board.units[unit_idx].can_catch_fire()
@@ -1462,7 +1418,7 @@ pub fn apply_weapon_status_with_impact_occupancy(
             // Compute Fire Psion immunity gating before grabbing the mut ref.
             let fire_psion = board.fire_psion;
             let target_is_immune_vek = fire_psion
-                && board.units[idx].is_enemy()
+                && board.units[idx].receives_psion_aura()
                 && board.units[idx].type_name_str() != "Jelly_Fire1";
             let u = &mut board.units[idx];
             if u.frozen() {
@@ -2074,6 +2030,7 @@ fn apply_trapped_death_damage(
             volatile = is_enemy && unit.is_volatile_vek();
             death_explosion = is_enemy
                 && (board.blast_psion || board.boss_psion)
+                && unit.receives_psion_aura()
                 && tname != "Jelly_Explode1"
                 && tname != "Jelly_Boss";
             killed_enemy_uid = unit.uid;
@@ -3215,7 +3172,7 @@ mod tests {
         let mut board = make_test_board();
         board.tile_mut(3, 4).terrain = Terrain::Building;
         board.tile_mut(3, 4).building_hp = 2;
-        // Mark as unique/objective building.
+        // Mark as a unique/objective-style building.
         let idx = xy_to_idx(3, 4) as u64;
         board.unique_buildings |= 1u64 << idx;
         let eidx = add_enemy(&mut board, 1, 3, 3, 3);
@@ -3225,7 +3182,27 @@ mod tests {
         assert_eq!(board.units[eidx].hp, 2);
         assert_eq!(board.tile(3, 4).building_hp, 1);
         assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
-        // Unique objective building: each HP is worth 1 grid.
+        // Unique/inferred objective building: each HP is worth 1 grid.
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_push_into_grid_reward_2hp_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = xy_to_idx(3, 4) as u64;
+        board.unique_buildings |= 1u64 << idx;
+        board.grid_reward_buildings |= 1u64 << idx;
+        let eidx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[eidx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(result.grid_damage, 1);
         assert_eq!(board.grid_power, 6);
     }
 
@@ -3246,6 +3223,45 @@ mod tests {
         assert_eq!(board.grid_power, 6);
         // Unit still took the bump.
         assert_eq!(board.units[idx].hp, 2);
+    }
+
+    #[test]
+    fn test_weapon_damage_multi_hp_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+
+        let mut first = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut first, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(first.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
+
+        let mut second = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut second, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+        assert_eq!(second.grid_damage, 1);
+        assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_weapon_damage_grid_reward_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = xy_to_idx(3, 4) as u64;
+        board.unique_buildings |= 1u64 << idx;
+        board.grid_reward_buildings |= 1u64 << idx;
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
     }
 
     #[test]
@@ -4545,6 +4561,92 @@ mod tests {
         assert_eq!(board.tile(1, 1).building_hp, 0, "Blast Psion explosion damages adjacent building");
         assert_eq!(result.enemies_killed, 1);
         assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_dam_flood_drowning_triggers_blast_psion_explosion() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        let drowned = add_enemy_type(&mut board, 91, 4, 4, 5, "Shaman2");
+        board.tile_mut(5, 4).terrain = Terrain::Building;
+        board.tile_mut(5, 4).building_hp = 2;
+
+        let mut result = ActionResult::default();
+        flood_tile(&mut board, 4, 4, &mut result);
+
+        assert_eq!(board.tile(4, 4).terrain, Terrain::Water);
+        assert_eq!(board.units[drowned].hp, 0, "dam flood drowns grounded Vek");
+        assert_eq!(
+            board.tile(5, 4).building_hp,
+            1,
+            "drowned Vek must emit its Blast Psion aura explosion"
+        );
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.grid_damage, 1, "direct blast damage drains grid per building HP");
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_dam_flood_minor_totem_does_not_receive_blast_psion_aura() {
+        let mut board = make_test_board();
+        board.grid_power = 7;
+        board.dam_primary = Some((3, 0));
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+
+        let rocket = add_mech(&mut board, 1, 3, 4, 3, WId::None);
+        let pulse = add_mech(&mut board, 2, 4, 2, 3, WId::None);
+        board.units[pulse].set_shield(true);
+
+        let totem = add_enemy_type(&mut board, 91, 4, 1, 1, "Totem2");
+        board.units[totem].flags.insert(UnitFlags::MINOR);
+        let burnbug = add_enemy_type(&mut board, 92, 4, 3, 4, "Burnbug2");
+        let shaman = add_enemy_type(&mut board, 93, 4, 4, 5, "Shaman2");
+
+        board.tile_mut(5, 4).terrain = Terrain::Building;
+        board.tile_mut(5, 4).building_hp = 2;
+
+        let mut result = ActionResult::default();
+        trigger_dam_flood(&mut board, &mut result);
+
+        assert_eq!(board.units[totem].hp, 0);
+        assert_eq!(board.units[burnbug].hp, 0);
+        assert_eq!(board.units[shaman].hp, 0);
+        assert_eq!(board.units[pulse].hp, 3, "only Burnbug's non-minor aura burst should pop Pulse shield");
+        assert!(!board.units[pulse].shield());
+        assert_eq!(board.units[rocket].hp, 2, "Shaman's non-minor aura burst damages Rocket");
+        assert_eq!(board.tile(5, 4).building_hp, 1, "Shaman's burst damages the Robotics Lab-style building");
+        assert_eq!(result.enemies_killed, 3);
+        assert_eq!(result.mech_damage_taken, 1);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_blast_psion_explosion_does_not_chain_aura_deaths() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        let first = add_enemy(&mut board, 1, 3, 3, 1);
+        let adjacent = add_enemy(&mut board, 2, 4, 3, 1);
+        board.tile_mut(5, 3).terrain = Terrain::Building;
+        board.tile_mut(5, 3).building_hp = 1;
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[first].hp, 0, "initial weapon kill dies");
+        assert_eq!(
+            board.units[adjacent].hp, 0,
+            "adjacent enemy dies to the first Blast Psion explosion"
+        );
+        assert_eq!(
+            board.tile(5, 3).building_hp, 1,
+            "enemy killed by Blast Psion explosion must not emit a second aura explosion"
+        );
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(result.grid_damage, 0);
     }
 
     #[test]

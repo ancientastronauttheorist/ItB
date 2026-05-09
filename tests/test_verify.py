@@ -9,10 +9,11 @@ Covers:
 6. diff_states: alive flip → death (and other diffs suppressed)
 7. diff_states: dead-mech equivalence (both dead = no diff)
 8. diff_states: mech still active when expected inactive → click_miss
-9. diff_states: building_hp diff → grid_power
-10. diff_states: tile fire flag diff → tile_status
-11. diff_states: tile acid diff → tile_status w/ model_gap_known subcategory
-12. classify_diff: click_miss subsumes other categories
+9. diff_states: building building_hp diff → grid_power
+10. diff_states: mountain building_hp diff → terrain
+11. diff_states: tile fire flag diff → tile_status
+12. diff_states: tile acid diff → tile_status w/ model_gap_known subcategory
+13. classify_diff: click_miss subsumes other categories
 """
 from src.solver.verify import (
     SOLVE_RECORD_SCHEMA_VERSION,
@@ -157,7 +158,21 @@ check("building_hp diff records building_hp field",
       any(d["field"] == "building_hp" for d in diff.tile_diffs),
       diff.tile_diffs)
 
-# Test 10: tile fire flag diff → tile_status
+# Test 10: mountain HP/rubble diff → terrain, not grid_power
+b = make_board(units=[mk_unit(1, "PunchMech", 0, 0)])
+b.tile(6, 5).terrain = "mountain"
+b.tile(6, 5).building_hp = 1
+snap = snapshot_after_action(b, 0, mech_uid=1, events=["damaged at (6,5)"])
+b2 = make_board(units=[mk_unit(1, "PunchMech", 0, 0)])
+b2.tile(6, 5).terrain = "rubble"
+b2.tile(6, 5).building_hp = 0
+diff = diff_states(snap, b2)
+cls = classify_diff(diff, mech_uid=1)
+check("mountain HP diff → terrain, not grid_power",
+      cls["top_category"] == "terrain" and "grid_power" not in cls["categories"],
+      cls)
+
+# Test 11: tile fire flag diff → tile_status
 b = make_board(units=[mk_unit(1, "PunchMech", 0, 0)])
 b.tile(3, 3).on_fire = False
 snap = snapshot_after_action(b, 0, mech_uid=1, events=["fire at (3,3)"])
@@ -169,7 +184,7 @@ check("tile fire diff → tile_status",
       cls["top_category"] == "tile_status",
       cls)
 
-# Test 11: tile acid diff → tile_status with model_gap_known subcategory
+# Test 12: tile acid diff → tile_status with model_gap_known subcategory
 b = make_board(units=[mk_unit(1, "PunchMech", 0, 0)])
 b.tile(3, 3).acid = False
 snap = snapshot_after_action(b, 0, mech_uid=1, events=["acid at (3,3)"])
@@ -183,7 +198,7 @@ check("tile acid diff → model_gap_known subcategory",
       cls["subcategory"] == "model_gap_known" and cls["model_gap"] is True,
       cls)
 
-# Test 12: click_miss subsumes other categories
+# Test 13: repair platform diffs → repair_platform
 b = make_board(units=[mk_unit(1, "PunchMech", 0, 0)])
 b.tile(3, 3).repair_platform = True
 b.repair_platforms_used = 1
@@ -200,7 +215,7 @@ check("repair platform scalar diff recorded",
       any(d["field"] == "repair_platforms_used" for d in diff.scalar_diffs),
       diff.scalar_diffs)
 
-# Test 13: click_miss subsumes other categories
+# Test 14: click_miss subsumes other categories
 b = make_board(units=[mk_unit(1, "PunchMech", 4, 4, active=False, hp=3)])
 snap = snapshot_after_action(b, 0, mech_uid=1, events=[])
 # Mech still active AND took damage — click_miss should subsume damage_amount
@@ -210,7 +225,7 @@ cls = classify_diff(diff, mech_uid=1)
 check("click_miss subsumes other categories",
       cls["categories"] == ["click_miss"], cls)
 
-# Test 14: predicted_states_from_solve_record — pre-versioning records
+# Test 15: predicted_states_from_solve_record — pre-versioning records
 # (no schema_version field) still yield their predicted_states.
 pre_version_record = {
     "label": "solve",
@@ -223,7 +238,7 @@ states = predicted_states_from_solve_record(pre_version_record)
 check("pre-versioning record: predicted_states readable",
       len(states) == 1 and states[0]["post_attack"]["units"] == [])
 
-# Test 15: predicted_states_from_solve_record — explicit v1 record.
+# Test 16: predicted_states_from_solve_record — explicit v1 record.
 v1_record = {
     "label": "solve",
     "data": {
@@ -237,17 +252,17 @@ states = predicted_states_from_solve_record(v1_record)
 check("v1 record: predicted_states readable",
       len(states) == 2)
 
-# Test 16: predicted_states_from_solve_record — malformed record → [].
+# Test 17: predicted_states_from_solve_record — malformed record → [].
 check("malformed record (non-dict) returns empty list",
       predicted_states_from_solve_record(None) == [])
 check("malformed record (missing data) returns empty list",
       predicted_states_from_solve_record({"label": "solve"}) == [])
 
-# Test 17: schema constant matches the documented current version.
+# Test 18: schema constant matches the documented current version.
 check("SOLVE_RECORD_SCHEMA_VERSION == 1 (bump when shape changes)",
       SOLVE_RECORD_SCHEMA_VERSION == 1)
 
-# Test 18: unknown future schema version still yields any present
+# Test 19: unknown future schema version still yields any present
 # predicted_states (v2 keeps the field for backward reads per design).
 v2_forward_record = {
     "label": "solve",

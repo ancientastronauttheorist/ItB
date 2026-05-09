@@ -254,6 +254,7 @@ pub struct JsonUnit {
     pub flying: Option<bool>,
     pub armor: Option<bool>,
     pub massive: Option<bool>,
+    pub minor: Option<bool>,
     pub pushable: Option<bool>,
     pub active: Option<bool>,
     pub shield: Option<bool>,
@@ -291,6 +292,29 @@ fn pilot_flags_from_id(pilot_id: &str) -> crate::board::PilotFlags {
         "Pilot_Repairman" => PilotFlags::REPAIRMAN,  // Harold Schmidt — Frenzied Repair
         _ => PilotFlags::empty(),
     }
+}
+
+fn known_minor_type(type_name: &str) -> bool {
+    matches!(
+        type_name,
+        "Blob1"
+            | "Blob2"
+            | "BlobB"
+            | "BlobMini"
+            | "MantisEgg"
+            | "WebbEgg1"
+            | "Spiderling1"
+            | "Spiderling2"
+            | "Totem1"
+            | "Totem2"
+            | "TotemB"
+            | "SlugEgg1"
+            | "Shield_Building"
+            | "Hacked_Building"
+            | "Storm_Generator"
+            | "AcidVat"
+            | "BonusDebris"
+    )
 }
 
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
@@ -361,10 +385,11 @@ pub fn board_from_json(json_str: &str)
             if jt.unique_building.unwrap_or(false) || inferred_unique {
                 let idx = (jt.x as usize) * 8 + (jt.y as usize);
                 board.unique_buildings |= 1u64 << idx;
-                if let Some(name) = jt.objective_name.as_deref() {
-                    if matches!(name, "Str_Power" | "Str_Battery" | "Mission_Solar") {
-                        board.grid_reward_buildings |= 1u64 << idx;
-                    }
+                let grid_reward_name = jt.objective_name.as_deref()
+                    .map(|name| matches!(name, "Str_Power" | "Str_Battery" | "Mission_Solar"))
+                    .unwrap_or(false);
+                if inferred_unique || grid_reward_name {
+                    board.grid_reward_buildings |= 1u64 << idx;
                 }
             }
         }
@@ -500,6 +525,7 @@ pub fn board_from_json(json_str: &str)
             if is_mech { flags |= UnitFlags::IS_MECH; }
             if ju.flying.unwrap_or(false) { flags |= UnitFlags::FLYING; }
             if ju.massive.unwrap_or(false) { flags |= UnitFlags::MASSIVE; }
+            if ju.minor.unwrap_or_else(|| known_minor_type(&ju.unit_type)) { flags |= UnitFlags::MINOR; }
             if ju.armor.unwrap_or(false) { flags |= UnitFlags::ARMOR; }
             if ju.pushable.unwrap_or(true) { flags |= UnitFlags::PUSHABLE; }
             if ju.ranged.unwrap_or(0) > 0 { flags |= UnitFlags::RANGED; }
@@ -623,7 +649,7 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Detect Blast Psion: if Jelly_Explode1 is alive, all Vek explode on death
+    // Detect Blast Psion: if Jelly_Explode1 is alive, all non-minor Vek explode on death
     for i in 0..board.unit_count as usize {
         if board.units[i].type_name_str() == "Jelly_Explode1" && board.units[i].hp > 0 {
             board.blast_psion = true;
@@ -631,7 +657,7 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Detect Shell Psion: if Jelly_Armor1 is alive, all Vek gain Armor
+    // Detect Shell Psion: if Jelly_Armor1 is alive, all non-minor Vek gain Armor
     for i in 0..board.unit_count as usize {
         if board.units[i].type_name_str() == "Jelly_Armor1" && board.units[i].hp > 0 {
             board.armor_psion = true;
@@ -643,13 +669,13 @@ pub fn board_from_json(json_str: &str)
         // reduced by 1." Explicitly excludes the Psion itself — Titan Fist
         // deals full damage to Jelly_Armor1.
         for i in 0..board.unit_count as usize {
-            if board.units[i].is_enemy() && board.units[i].type_name_str() != "Jelly_Armor1" {
+            if board.units[i].receives_psion_aura() && board.units[i].type_name_str() != "Jelly_Armor1" {
                 board.units[i].flags.set(UnitFlags::ARMOR, true);
             }
         }
     }
 
-    // Detect Soldier Psion (Jelly_Health1): all Vek +1 HP
+    // Detect Soldier Psion (Jelly_Health1): all non-minor Vek +1 HP
     for i in 0..board.unit_count as usize {
         if board.units[i].type_name_str() == "Jelly_Health1" && board.units[i].hp > 0 {
             board.soldier_psion = true;
@@ -667,7 +693,7 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Apply the HEALTH part of the aura: +1 max_hp to all OTHER Vek when
+    // Apply the HEALTH part of the aura: +1 max_hp to all OTHER non-minor Vek when
     // either Soldier Psion or Boss Psion is alive. Both auras grant the same
     // +1 HP buff, so when both are present the buff applies ONCE — not twice.
     // The Lua source treats LEADER_HEALTH as a binary tag (Pawn:HasLeader):
@@ -676,7 +702,7 @@ pub fn board_from_json(json_str: &str)
     if board.soldier_psion || board.boss_psion {
         for i in 0..board.unit_count as usize {
             let tname = board.units[i].type_name_str();
-            if board.units[i].is_enemy()
+            if board.units[i].receives_psion_aura()
                 && tname != "Jelly_Health1"
                 && tname != "Jelly_Boss"
             {
@@ -866,6 +892,25 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.tile(5, 5).terrain, Terrain::Ice);
+    }
+
+    #[test]
+    fn test_known_minor_types_inferred_for_old_recordings() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {"uid": 1, "type": "Totem2", "x": 4, "y": 1, "hp": 1, "max_hp": 1, "team": 6},
+                {"uid": 2, "type": "Leaper1", "x": 4, "y": 2, "hp": 1, "max_hp": 1, "team": 6}
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.units[0].minor(), "Totem2 old recordings should infer Minor=true");
+        assert!(!board.units[1].minor(), "ordinary Leaper1 is not a Minor Vek");
     }
 
     #[test]

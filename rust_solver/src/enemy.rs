@@ -205,7 +205,7 @@ fn apply_env_danger(
         // dispatch the explosion here when an aura source is alive. The
         // dying Vek has hp=0 already; explosion damages 4 adjacent tiles.
         // (sim v38 follow-up to v37 boss aura test failure.)
-        if board.blast_psion || board.boss_psion {
+        if (board.blast_psion || board.boss_psion) && board.units[idx].receives_psion_aura() {
             crate::simulate::apply_death_explosion(board, x, y, result, 0);
         }
     }
@@ -335,7 +335,7 @@ pub fn simulate_enemy_attacks(
             // its own +1 HP buff. Defensively clear the FIRE flag so a
             // stale status doesn't tick once the Psion dies — the on-death
             // cleanup re-enables fire damage normally.
-            if board.fire_psion && board.units[i].is_enemy()
+            if board.fire_psion && board.units[i].receives_psion_aura()
                 && board.units[i].type_name_str() != "Jelly_Fire1"
             {
                 continue;
@@ -387,7 +387,7 @@ pub fn simulate_enemy_attacks(
             if !board.boss_psion {
                 for i in 0..board.unit_count as usize {
                     let tname = board.units[i].type_name_str();
-                    if board.units[i].is_enemy() && board.units[i].hp > 0
+                    if board.units[i].receives_psion_aura() && board.units[i].hp > 0
                         && tname != "Jelly_Health1"
                         && tname != "Jelly_Boss"
                     {
@@ -420,7 +420,7 @@ pub fn simulate_enemy_attacks(
             if !board.soldier_psion {
                 for i in 0..board.unit_count as usize {
                     let tname = board.units[i].type_name_str();
-                    if board.units[i].is_enemy() && board.units[i].hp > 0
+                    if board.units[i].receives_psion_aura() && board.units[i].hp > 0
                         && tname != "Jelly_Health1"
                         && tname != "Jelly_Boss"
                     {
@@ -455,7 +455,7 @@ pub fn simulate_enemy_attacks(
         for i in 0..board.unit_count as usize {
             let u = &mut board.units[i];
             let tname = u.type_name_str();
-            if u.is_enemy() && u.hp > 0
+            if u.receives_psion_aura() && u.hp > 0
                 && tname != "Jelly_Regen1"
                 && tname != "Jelly_Boss"
             {
@@ -764,6 +764,7 @@ pub fn simulate_enemy_attacks(
         let attacker_tname = enemy.type_name_str();
         if board.boost_psion
             && base_damage > 0
+            && enemy.receives_psion_aura()
             && attacker_tname != "Jelly_Boost1"
         {
             base_damage += 1;
@@ -818,7 +819,7 @@ pub fn simulate_enemy_attacks(
                     if wdef.fire() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             let target_is_immune_vek = board.fire_psion
-                                && board.units[idx].is_enemy()
+                                && board.units[idx].receives_psion_aura()
                                 && board.units[idx].type_name_str() != "Jelly_Fire1";
                             let u = &mut board.units[idx];
                             // Pilot_Rock is fire-immune; skip even the
@@ -1084,7 +1085,7 @@ pub fn simulate_enemy_attacks(
                                 board.tile_mut(fx, fy).set_on_fire(true);
                                 if let Some(idx) = board.unit_at(fx, fy) {
                                     let target_is_immune_vek = board.fire_psion
-                                        && board.units[idx].is_enemy()
+                                        && board.units[idx].receives_psion_aura()
                                         && board.units[idx].type_name_str() != "Jelly_Fire1";
                                     let u = &mut board.units[idx];
                                     if !u.frozen() && u.can_catch_fire()

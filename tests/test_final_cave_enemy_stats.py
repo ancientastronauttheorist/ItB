@@ -182,13 +182,14 @@ def test_jelly_lava1_already_registered() -> None:
     MoveSpeed=2, Flying, Leader=LEADER_TENTACLE (passive: 1 dmg/turn
     to ALL player units — terrain-piercing, ignores smoke). The
     `tyrant_psion` Board flag is set by `serde_bridge.rs:634-640` and
-    the aura damage is applied by `enemy.rs:1031-1052`.
+    the aura damage is applied by `enemy.rs:1031-1052`. It inherits
+    default Pushable=true from `pawns.lua` / `global.lua`.
     """
     s = get_pawn_stats("Jelly_Lava1")
     assert s.move_speed == 2
     assert s.flying is True
     assert s.leader == "LEADER_TENTACLE"
-    assert s.pushable is False
+    assert s.pushable is True
 
 
 # ── Combined-table integrity guard ───────────────────────────────────────
@@ -238,5 +239,21 @@ def test_jelly_psion_family_complete() -> None:
     ]
     for j in expected:
         assert j in VEK_STATS, f"Missing {j} from VEK_STATS"
+
+
+def test_jelly_psion_family_pushable() -> None:
+    """Normal Psions inherit default Pushable=true in the shipped Lua.
+
+    Boss Psion is also pushable. Marking the small Psions non-pushable makes
+    Repulse/Rocket bump chains miss real building damage.
+    """
+    expected = [
+        "Jelly_Health1", "Jelly_Armor1", "Jelly_Regen1",
+        "Jelly_Explode1", "Jelly_Lava1",
+        "Jelly_Boost1", "Jelly_Fire1", "Jelly_Spider1",
+        "Jelly_Boss",
+    ]
+    for j in expected:
+        assert get_pawn_stats(j).pushable is True
         s = VEK_STATS[j]
         assert s.flying is True, f"{j} should be Flying per game lua"

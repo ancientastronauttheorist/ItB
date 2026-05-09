@@ -620,7 +620,25 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # score/replay reject illegal moves, smoke-blocked attacks, and invalid
 # weapon target areas instead of validating impossible hand-written plans.
 # Pre-v80 corpus archived as failure_db_snapshot_sim_v79.jsonl.
-SIMULATOR_VERSION = 80
+# v81 - Normal Psions (`Jelly_Health1` family, including Blast Psion) are
+# pushable. Solve payload enrichment no longer injects `pushable=false`,
+# allowing Repulse/Rocket bump damage into blockers. Pre-v81 corpus archived
+# as failure_db_snapshot_sim_v80.jsonl.
+# v82 - Blast Psion aura explosions do not recursively trigger additional
+# Blast Psion aura explosions from enemies killed by the first burst.
+# Pre-v82 corpus archived as failure_db_snapshot_sim_v81.jsonl.
+# v83 - Dam flood drowning uses the instant-death path, so drowned Vek emit
+# Blast Psion / Volatile side effects instead of raw `hp = 0`.
+# Pre-v83 corpus archived as failure_db_snapshot_sim_v82.jsonl.
+# v84 - Minor Vek carry a UnitFlags::MINOR marker and are excluded from Psion
+# aura bonuses (Blast/Boss death explosions, HP/armor/regen/fire/boost/spider
+# effects). Dam flood iteration now matches mission_dam.lua's y-major loop.
+# Pre-v84 corpus archived as failure_db_snapshot_sim_v83.jsonl.
+# v85 - Direct weapon/explosion damage to buildings drains current Grid Power
+# per building HP lost again; non-unique multi-HP bump/push collision damage
+# still drains only on destruction. Pre-v85 corpus archived as
+# failure_db_snapshot_sim_v84.jsonl.
+SIMULATOR_VERSION = 85
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -966,13 +984,15 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
         if not (0 <= x < 8 and 0 <= y < 8):
             continue
         at = actual_board.tile(x, y)
+        pred_terrain = pt.get("terrain")
+        actual_terrain = at.terrain
 
-        if pt.get("terrain") != at.terrain:
+        if pred_terrain != actual_terrain:
             result.tile_diffs.append({
                 "x": x, "y": y,
                 "field": "terrain",
-                "predicted": pt.get("terrain"),
-                "actual": at.terrain,
+                "predicted": pred_terrain,
+                "actual": actual_terrain,
             })
         if pt.get("building_hp", 0) != at.building_hp:
             result.tile_diffs.append({
@@ -980,6 +1000,8 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
                 "field": "building_hp",
                 "predicted": pt.get("building_hp", 0),
                 "actual": at.building_hp,
+                "predicted_terrain": pred_terrain,
+                "actual_terrain": actual_terrain,
             })
         for pred_field, actual_attr in (
             ("fire", "on_fire"),
@@ -1082,7 +1104,12 @@ def classify_diff(diff: DiffResult, mech_uid: int = None, phase: str = "action")
         if f == "terrain":
             categories.add("terrain")
         elif f == "building_hp":
-            categories.add("grid_power")
+            pred_terrain = td.get("predicted_terrain")
+            actual_terrain = td.get("actual_terrain")
+            if pred_terrain == "building" or actual_terrain == "building":
+                categories.add("grid_power")
+            else:
+                categories.add("terrain")
         elif f == "has_pod":
             categories.add("pod")
         elif f == "repair_platform":

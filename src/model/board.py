@@ -122,6 +122,7 @@ class Unit:
     pushable: bool
     weapon: str
     weapon2: str = ""
+    minor: bool = False
     active: bool = True  # can still act this turn
     # Base movement speed (used to restore move_speed when web breaks).
     # Defaults to move_speed if bridge omits base_move.
@@ -443,6 +444,7 @@ class Board:
                 massive=stats.massive,
                 armor=stats.armor,
                 pushable=stats.pushable,
+                minor=stats.minor,
                 weapon=pawn.primary_weapon,
                 weapon2=pawn.secondary_weapon,
                 active=pawn.active,
@@ -563,6 +565,7 @@ class Board:
                 massive=stats.massive,
                 armor=ud.get("armor", stats.armor),
                 pushable=stats.pushable,
+                minor=bool(ud.get("minor", stats.minor)),
                 weapon=primary,
                 weapon2=secondary,
                 active=ud.get("active", True),
@@ -683,7 +686,7 @@ class Board:
             # Hardened Carapace excludes the Psion itself — "all OTHER Vek
             # have incoming weapon damage reduced by 1."
             for u in board.units:
-                if u.is_enemy and u.type != "Jelly_Armor1":
+                if u.is_enemy and not u.minor and u.type != "Jelly_Armor1":
                     u.armor = True
 
         # Detect Old Earth Dam — record the primary tile (non-extra) for the
@@ -719,7 +722,7 @@ class Board:
             # Bridge sends hp already buffed but max_hp as base — adjust max_hp.
             # Exclude both psion sources from the buff (their HP is intrinsic).
             for u in board.units:
-                if u.is_enemy and u.type not in ("Jelly_Health1", "Jelly_Boss"):
+                if u.is_enemy and not u.minor and u.type not in ("Jelly_Health1", "Jelly_Boss"):
                     u.max_hp += 1
 
         # Detect AE Psions (sim v37). Flags tracked for parity / breakdown;

@@ -1046,7 +1046,25 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   score/replay reject illegal moves, smoke-blocked attacks, and invalid
 //   weapon target areas instead of validating impossible hand-written plans.
 //   Pre-v80 corpus archived as `failure_db_snapshot_sim_v79.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 80;
+// v81 - Normal Psions (`Jelly_Health1` family, including Blast Psion) are
+//   pushable. Solve payload enrichment no longer injects `pushable=false`,
+//   allowing Repulse/Rocket bump damage into blockers. Pre-v81 corpus archived
+//   as `failure_db_snapshot_sim_v80.jsonl`.
+// v82 - Blast Psion aura explosions do not recursively trigger additional
+//   Blast Psion aura explosions from enemies killed by the first burst.
+//   Pre-v82 corpus archived as `failure_db_snapshot_sim_v81.jsonl`.
+// v83 - Dam flood drowning uses the instant-death path, so drowned Vek emit
+//   Blast Psion / Volatile side effects instead of raw `hp = 0`.
+//   Pre-v83 corpus archived as `failure_db_snapshot_sim_v82.jsonl`.
+// v84 - Minor Vek carry a UnitFlags::MINOR marker and are excluded from Psion
+//   aura bonuses (Blast/Boss death explosions, HP/armor/regen/fire/boost/spider
+//   effects). Dam flood iteration now matches mission_dam.lua's y-major loop.
+//   Pre-v84 corpus archived as `failure_db_snapshot_sim_v83.jsonl`.
+// v85 - Direct weapon/explosion damage to buildings drains current Grid Power
+//   per building HP lost again; non-unique multi-HP bump/push collision damage
+//   still drains only on destruction. Pre-v85 corpus archived as
+//   `failure_db_snapshot_sim_v84.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 85;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -444,6 +444,7 @@ local function dump_state()
                     active = p:IsActive(),
                     move = p:GetMoveSpeed(),
                     base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed(),
+                    minor = pawn_def and pawn_def.Minor or false,
                 }
 
                 -- Pilot info (mechs only). Save-file-derived is the most
@@ -1200,6 +1201,34 @@ local function find_weapon_slot(pawn, weapon_id)
     return nil
 end
 
+local function tile_damage_snapshot(pt)
+    local snap = {}
+    local ok_t, terrain_id = pcall(function() return Board:GetTerrain(pt) end)
+    if ok_t then snap.terrain_id = terrain_id end
+    local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
+    if ok_h then snap.health = hp end
+    local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)
+    if ok_cr then snap.cracked = cracked and true or false end
+    return snap
+end
+
+local function tile_damage_changed(before, pt)
+    if before == nil then return false end
+    local ok_t, terrain_id = pcall(function() return Board:GetTerrain(pt) end)
+    if ok_t and before.terrain_id ~= nil and terrain_id ~= before.terrain_id then
+        return true
+    end
+    local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
+    if ok_h and before.health ~= nil and hp ~= before.health then
+        return true
+    end
+    local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)
+    if ok_cr and before.cracked ~= nil and (cracked and true or false) ~= before.cracked then
+        return true
+    end
+    return false
+end
+
 -- execute_weapon_by_slot: fire weapon using a 0-based slot index from
 -- the Python side (maps to 1-indexed Lua SkillList).
 -- This avoids name-matching issues where the solver's weapon ID doesn't
@@ -1221,6 +1250,25 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     end
     local wname = pawn_def.SkillList[slot]
     local source = pawn:GetSpace()
+    local is_transit_leap =
+        string.find(wname, "^Brute_Jetmech") ~= nil or
+        string.find(wname, "^Brute_Bombrun") ~= nil
+    local skill = is_transit_leap and _G[wname] or nil
+    local transit_before = nil
+    if skill and skill.Damage and skill.Damage > 0 then
+        local dx = tx - source.x
+        local dy = ty - source.y
+        local dist = math.abs(dx) + math.abs(dy)
+        if dist >= 2 and (dx == 0 or dy == 0) then
+            local sx = dx == 0 and 0 or (dx / math.abs(dx))
+            local sy = dy == 0 and 0 or (dy / math.abs(dy))
+            transit_before = {sx = sx, sy = sy, dist = dist, tiles = {}}
+            for k = 1, dist - 1 do
+                local tp = Point(source.x + sx * k, source.y + sy * k)
+                transit_before.tiles[k] = tile_damage_snapshot(tp)
+            end
+        end
+    end
     local ok, err = pcall(function()
         pawn:FireWeapon(Point(tx, ty), slot)
     end)
@@ -1250,11 +1298,8 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     -- NOT using skill:GetSkillEffect + Board:AddEffect: the comment at
     -- the top of this section records that path leaves Board:IsBusy()
     -- stuck true and broke the engine queue.
-    local is_transit_leap =
-        string.find(wname, "^Brute_Jetmech") ~= nil or
-        string.find(wname, "^Brute_Bombrun") ~= nil
     if is_transit_leap then
-        local skill = _G[wname]
+        skill = skill or _G[wname]
         if skill and skill.Damage and skill.Damage > 0 then
             local dx = tx - source.x
             local dy = ty - source.y
@@ -1266,6 +1311,7 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                 local sy = dy == 0 and 0 or (dy / math.abs(dy))
                 local dmg_applied = 0
                 local smoke_applied = 0
+                local engine_tile_damage_seen = 0
                 for k = 1, dist - 1 do
                     local nx = source.x + sx * k
                     local ny = source.y + sy * k
@@ -1275,15 +1321,23 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                     -- turn 1 and turn 2: acid-statused Firefly1 on
                     -- transit died after 1 of our manual + 1 of the
                     -- engine's damage, instead of surviving at HP=1).
-                    -- FireWeapon does NOT damage terrain (buildings /
-                    -- mountains on transit) and does NOT emit the
-                    -- tile's smoke/acid effect — both are still on us.
-                    -- So: apply damage ONLY to tiles without a live
-                    -- unit (FireWeapon handles those), and always
-                    -- apply smoke/acid flags via a damage=0 SpaceDamage.
+                    -- Some engine paths do apply transit terrain damage
+                    -- during FireWeapon, while older captures showed no
+                    -- terrain damage. Snapshot-before / compare-after keeps
+                    -- the workaround adaptive: apply synthetic damage only
+                    -- when FireWeapon left the tile's terrain state unchanged,
+                    -- and always apply smoke/acid via SpaceDamage.
                     local occupant = Board:GetPawn(tp)
                     local has_live = occupant ~= nil and not occupant:IsDead()
-                    local dmg_val = has_live and 0 or skill.Damage
+                    local before = nil
+                    if transit_before and transit_before.tiles then
+                        before = transit_before.tiles[k]
+                    end
+                    local engine_changed_tile = tile_damage_changed(before, tp)
+                    if engine_changed_tile then
+                        engine_tile_damage_seen = engine_tile_damage_seen + 1
+                    end
+                    local dmg_val = (has_live or engine_changed_tile) and 0 or skill.Damage
                     local sd = SpaceDamage(tp, dmg_val)
                     if skill.Smoke and skill.Smoke > 0 then
                         sd.iSmoke = skill.Smoke
@@ -1308,6 +1362,7 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                 log_bridge("TRANSIT: " .. wname ..
                            " dmg_applied=" .. dmg_applied ..
                            " smoke_applied=" .. smoke_applied ..
+                           " engine_tile_damage_seen=" .. engine_tile_damage_seen ..
                            " damage=" .. skill.Damage ..
                            " smoke=" .. tostring(skill.Smoke or 0))
             end

@@ -120,6 +120,10 @@ bitflags! {
         /// is -1, the simulator applies conservative phantom damage
         /// instead of silently skipping the attack.
         const HAS_QUEUED_ATTACK = 0b0100_0000_0000_0000;
+        /// Minor Vek spawned by other Vek. Minor units are enemies for threat
+        /// and collision purposes, but the engine does not apply Psion aura
+        /// bonuses to them.
+        const MINOR = 0b1000_0000_0000_0000;
     }
 }
 
@@ -200,6 +204,7 @@ impl Unit {
     pub fn can_move(&self) -> bool { self.flags.contains(UnitFlags::CAN_MOVE) }
     pub fn is_extra_tile(&self) -> bool { self.flags.contains(UnitFlags::EXTRA_TILE) }
     pub fn has_queued_attack(&self) -> bool { self.flags.contains(UnitFlags::HAS_QUEUED_ATTACK) }
+    pub fn minor(&self) -> bool { self.flags.contains(UnitFlags::MINOR) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -210,6 +215,7 @@ impl Unit {
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
+    pub fn receives_psion_aura(&self) -> bool { self.is_enemy() && !self.minor() }
     pub fn alive(&self) -> bool { self.hp > 0 }
 
     // Pilot-passive accessors. Enemies and neutrals never have these bits,
