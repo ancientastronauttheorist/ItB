@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from src.loop.commands import _enrich_bridge_mech_weapons_from_save
 
 
@@ -188,3 +190,79 @@ def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
             upgraded,
             "Passive_Electric",
         ]
+
+
+def test_powered_pawn_mods_overlay_when_current_weapons_stay_base(monkeypatch):
+    bridge_data = {
+        "units": [
+            {
+                "uid": 1,
+                "type": "RocketMech",
+                "mech": True,
+                "weapons": ["Ranged_Rocket", "Passive_Electric"],
+            },
+            {
+                "uid": 2,
+                "type": "PulseMech",
+                "mech": True,
+                "weapons": ["Science_Repulse"],
+            },
+        ]
+    }
+
+    class FakeState:
+        weapons = [
+            "Brute_Jetmech",
+            "",
+            "Ranged_Rocket",
+            "Passive_Electric_A",
+            "Science_Repulse",
+            "",
+        ]
+        active_mission = SimpleNamespace(pawns=[
+            SimpleNamespace(
+                pawn_id=1,
+                primary_weapon="Ranged_Rocket",
+                primary_mod1=[3, 3],
+                primary_mod2=[0, 0],
+                secondary_weapon="Passive_Electric",
+                secondary_mod1=[1, 1, 1],
+                secondary_mod2=[0],
+            ),
+            SimpleNamespace(
+                pawn_id=2,
+                primary_weapon="Science_Repulse",
+                primary_mod1=[3],
+                primary_mod2=[0, 0],
+                secondary_weapon="",
+                secondary_mod1=[],
+                secondary_mod2=[],
+            ),
+        ])
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+    assert updates == [
+        {
+            "uid": 1,
+            "slot": 0,
+            "base": "Ranged_Rocket",
+            "upgraded": "Ranged_Rocket_A",
+        },
+        {
+            "uid": 2,
+            "slot": 0,
+            "base": "Science_Repulse",
+            "upgraded": "Science_Repulse_A",
+        },
+    ]
+    assert bridge_data["units"][0]["weapons"] == [
+        "Ranged_Rocket_A",
+        "Passive_Electric",
+    ]
+    assert bridge_data["units"][1]["weapons"] == ["Science_Repulse_A"]

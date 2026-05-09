@@ -22,6 +22,9 @@ from src.capture.save_parser import (
     load_game_state,
     load_active_mission,
     detect_game_phase,
+    _MODELED_UPGRADED_WEAPONS,
+    _modeled_upgrade_from_save_mods,
+    _strip_upgrade_suffix,
 )
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
@@ -108,15 +111,48 @@ def _recording_dir(session: RunSession) -> Path:
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
 _POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
 _COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
-_MODELED_UPGRADED_WEAPONS = {
-    "Ranged_Ignite_A",
-    "Ranged_Artillerymech_A",
-    "Ranged_Rocket_A",
-    "Ranged_Rocket_B",
-    "Ranged_Rocket_AB",
-    "Science_Repulse_A",
-    "Science_Repulse_AB",
-}
+def _save_pawn_for_uid(state: object, uid: int) -> object | None:
+    active_mission = getattr(state, "active_mission", None)
+    pawns = getattr(active_mission, "pawns", None)
+    if not isinstance(pawns, list):
+        return None
+    for pawn in pawns:
+        try:
+            pawn_id = int(getattr(pawn, "pawn_id", -1))
+        except (TypeError, ValueError):
+            continue
+        if pawn_id == uid:
+            return pawn
+    return None
+
+
+def _upgraded_weapon_from_save(
+    state: object,
+    uid: int,
+    slot: int,
+) -> str | None:
+    weapons = getattr(state, "weapons", []) or []
+    if isinstance(weapons, list):
+        loadout_idx = uid * 2 + slot
+        if loadout_idx < len(weapons):
+            weapon_id = weapons[loadout_idx]
+            if weapon_id in _MODELED_UPGRADED_WEAPONS:
+                return weapon_id
+
+    pawn = _save_pawn_for_uid(state, uid)
+    if pawn is None:
+        return None
+    if slot == 0:
+        return _modeled_upgrade_from_save_mods(
+            getattr(pawn, "primary_weapon", ""),
+            getattr(pawn, "primary_mod1", []),
+            getattr(pawn, "primary_mod2", []),
+        )
+    return _modeled_upgrade_from_save_mods(
+        getattr(pawn, "secondary_weapon", ""),
+        getattr(pawn, "secondary_mod1", []),
+        getattr(pawn, "secondary_mod2", []),
+    )
 
 
 def _bridge_is_stale_post_mission(
@@ -184,7 +220,7 @@ def _enrich_bridge_mech_weapons_from_save(
         return []
 
     state = load_game_state(profile)
-    if state is None or not state.weapons:
+    if state is None:
         return []
 
     updates: list[dict] = []
@@ -204,17 +240,10 @@ def _enrich_bridge_mech_weapons_from_save(
             unit["weapons"] = weapons
 
         for slot in (0, 1):
-            loadout_idx = uid * 2 + slot
-            if loadout_idx >= len(state.weapons):
+            upgraded = _upgraded_weapon_from_save(state, uid, slot)
+            if not upgraded:
                 continue
-            upgraded = state.weapons[loadout_idx]
-            if upgraded not in _MODELED_UPGRADED_WEAPONS:
-                continue
-            base = upgraded
-            for suffix in ("_AB", "_A", "_B"):
-                if upgraded.endswith(suffix):
-                    base = upgraded[:-len(suffix)]
-                    break
+            base, _suffix = _strip_upgrade_suffix(upgraded)
             while len(weapons) <= slot:
                 weapons.append("")
             current = weapons[slot]

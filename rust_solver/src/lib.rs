@@ -1021,7 +1021,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v77 - BurrowerAtk1/BurrowerAtk2 melee slams damage the center target tile
 //   plus the two perpendicular flank tiles. Pre-v77 corpus archived as
 //   `failure_db_snapshot_sim_v76.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 77;
+// v78 - Save-file upgraded weapon overlays derive modeled upgraded IDs from
+//   pawn primary_mod*/secondary_mod* power pips when GameData.current.weapons
+//   stays on base weapon IDs. Pre-v78 corpus archived as
+//   `failure_db_snapshot_sim_v77.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 78;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

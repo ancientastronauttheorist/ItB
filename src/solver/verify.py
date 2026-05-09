@@ -608,7 +608,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v77 - BurrowerAtk1/BurrowerAtk2 melee slams damage the center target tile
 # plus the two perpendicular flank tiles. Pre-v77 corpus archived as
 # failure_db_snapshot_sim_v76.jsonl.
-SIMULATOR_VERSION = 77
+# v78 - Save-file upgraded weapon overlays derive modeled upgraded IDs from
+# pawn primary_mod*/secondary_mod* power pips when GameData.current.weapons
+# stays on base weapon IDs. Pre-v78 corpus archived as
+# failure_db_snapshot_sim_v77.jsonl.
+SIMULATOR_VERSION = 78
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
