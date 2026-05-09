@@ -538,4 +538,46 @@ mod tests {
         let jet = post_attack_units.iter().find(|u| u["uid"] == 0).unwrap();
         assert_eq!(jet["pos"], json!([3, 7]), "illegal smoke attack must not leap to target");
     }
+
+    #[test]
+    fn replay_solution_noops_off_axis_rocket_target() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "RocketMech", "x": 2, "y": 3,
+             "hp": 5, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true,
+             "weapons": ["Ranged_Rocket_A"]},
+            {"uid": 899, "type": "Burnbug1", "x": 4, "y": 5,
+             "hp": 3, "max_hp": 3, "team": 6, "weapons": ["BurnbugAtk1"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [2, 3],
+          "weapon_id": "Ranged_Rocket_A",
+          "target": [4, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let events = v["action_results"][0]["events"].as_array().unwrap();
+        assert!(
+            events.iter().any(|e| {
+                e.as_str()
+                    .is_some_and(|s| s.starts_with("illegal_weapon_target:4:5:"))
+            }),
+            "off-axis Rocket Artillery target should be reported as illegal"
+        );
+        let post_attack_units = v["predicted_states"][0]["post_attack"]["units"].as_array().unwrap();
+        let burnbug = post_attack_units.iter().find(|u| u["uid"] == 899).unwrap();
+        assert_eq!(burnbug["hp"], 3, "illegal off-axis rocket target must not damage Burnbug1");
+    }
 }

@@ -612,12 +612,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # pawn primary_mod*/secondary_mod* power pips when GameData.current.weapons
 # stays on base weapon IDs. Pre-v78 corpus archived as
 # failure_db_snapshot_sim_v77.jsonl.
-# v79 - Player artillery target enumeration is board-wide instead of
-# cardinal-only; standard ITB artillery can target off-axis tiles.
-# Diagnostic score/replay also reject illegal moves and smoke-blocked
-# attacks instead of validating impossible hand-written plans. Pre-v79
-# corpus archived as failure_db_snapshot_sim_v78.jsonl.
-SIMULATOR_VERSION = 79
+# v79 - Player artillery target enumeration briefly allowed off-axis targets;
+# reverted in v80 after live Rocket Artillery proved those bridge-accepted
+# targets no-op in-engine. Pre-v79 corpus archived as
+# failure_db_snapshot_sim_v78.jsonl.
+# v80 - Player artillery targeting is cardinal-only again, and diagnostic
+# score/replay reject illegal moves, smoke-blocked attacks, and invalid
+# weapon target areas instead of validating impossible hand-written plans.
+# Pre-v80 corpus archived as failure_db_snapshot_sim_v79.jsonl.
+SIMULATOR_VERSION = 80
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -2855,6 +2855,30 @@ pub fn simulate_attack(
         }
     }
 
+    // Diagnostic callers can hand us targets the UI would not offer. Treat
+    // them as no-ops with an explicit event instead of simulating impossible
+    // effects (for example Rocket Artillery off-axis targets).
+    if weapon_id != WId::None && weapon_id != WId::Repair {
+        let (sx, sy) = (board.units[mech_idx].x, board.units[mech_idx].y);
+        let legal_targets = crate::solver::get_weapon_targets(
+            board,
+            sx,
+            sy,
+            weapon_id,
+            (sx, sy),
+            weapons,
+        );
+        if !legal_targets.contains(&target) {
+            result.events.push(format!(
+                "illegal_weapon_target:{}:{}:{}",
+                target.0,
+                target.1,
+                weapon_name(weapon_id),
+            ));
+            return result;
+        }
+    }
+
     // Repair
     if weapon_id == WId::Repair {
         let (is_repairman, rx, ry) = {

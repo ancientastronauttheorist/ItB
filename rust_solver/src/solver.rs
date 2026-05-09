@@ -319,6 +319,7 @@ pub(crate) fn get_weapon_targets(
                 for y in 0..8u8 {
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r { continue; }
+                    if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     if tile.terrain == Terrain::Building && tile.building_hp > 0 { continue; }
                     targets.push((x, y));
@@ -1578,17 +1579,17 @@ mod top_k_tests {
     }
 
     #[test]
-    fn artillery_enumerates_off_axis_targets() {
-        // Standard ITB artillery can target any non-building tile in range,
-        // not only tiles sharing the firer's row or column. Regression anchor:
-        // Rusting Hulks Mission_Reactivation turn 2 needed RocketMech at C7
-        // to fire at the off-axis Mosquito on F5; the replay scored clean, but
-        // search missed it while artillery enumeration was cardinal-only.
+    fn rocket_artillery_rejects_off_axis_targets() {
+        // Live Rocket Artillery no-ops when FireWeapon is pointed off-axis.
+        // Keep player artillery enumeration cardinal-only so the solver
+        // doesn't choose bridge-accepted but effectless diagonal targets.
+        // Regression anchor: Rusting Hulks Mission_Reactivation turn 2 tried
+        // RocketMech E6 -> off-axis C4; live Burnbug1 survived untouched.
         let mut board = Board::default();
         let idx = board.add_unit(Unit {
             uid: 1,
-            x: 1,
-            y: 5,
+            x: 2,
+            y: 3,
             hp: 5,
             max_hp: 3,
             team: Team::Player,
@@ -1602,11 +1603,11 @@ mod top_k_tests {
             ..Default::default()
         });
         board.add_unit(Unit {
-            uid: 897,
-            x: 3,
-            y: 2,
-            hp: 2,
-            max_hp: 2,
+            uid: 899,
+            x: 4,
+            y: 5,
+            hp: 3,
+            max_hp: 3,
             team: Team::Enemy,
             flags: UnitFlags::PUSHABLE,
             ..Default::default()
@@ -1615,10 +1616,10 @@ mod top_k_tests {
         let actions = enumerate_actions(&board, idx, &WEAPONS);
 
         assert!(
-            actions.iter().any(|a| {
-                a.0 == (1, 5) && a.1 == WId::RangedRocketA && a.2 == (3, 2)
+            !actions.iter().any(|a| {
+                a.0 == (2, 3) && a.1 == WId::RangedRocketA && a.2 == (4, 5)
             }),
-            "Rocket artillery should enumerate off-axis target F5 from C7"
+            "Rocket artillery must not enumerate off-axis target C4 from E6"
         );
     }
 
