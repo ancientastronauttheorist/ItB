@@ -514,6 +514,61 @@ impl Board {
         None
     }
 
+    /// Infer Spider/Web Egg grapples from adjacency.
+    ///
+    /// The live bridge can miss or misattribute `IsGrappled()` for WebbEgg1
+    /// holds. The engine rule is tile-based: a living WebbEgg1 webs every
+    /// living unit in the four cardinal adjacent tiles. Keep this helper
+    /// authoritative so bridge loading and simulated landings agree.
+    pub fn refresh_webb_egg_grapples(&mut self) {
+        let mut eggs: [(u8, u8, u16); 16] = [(0, 0, 0); 16];
+        let mut egg_count = 0usize;
+        for i in 0..self.unit_count as usize {
+            let u = &self.units[i];
+            if u.hp > 0 && u.type_name_str() == "WebbEgg1" && egg_count < eggs.len() {
+                eggs[egg_count] = (u.x, u.y, u.uid);
+                egg_count += 1;
+            }
+        }
+
+        for &(ex, ey, egg_uid) in eggs[..egg_count].iter() {
+            for &(dx, dy) in &DIRS {
+                let nx = ex as i8 + dx;
+                let ny = ey as i8 + dy;
+                if !in_bounds(nx, ny) { continue; }
+                if let Some(idx) = self.unit_at(nx as u8, ny as u8) {
+                    if self.existing_web_source_still_holds(idx) {
+                        continue;
+                    }
+                    self.units[idx].set_web(true);
+                    self.units[idx].web_source_uid = egg_uid;
+                }
+            }
+        }
+    }
+
+    fn existing_web_source_still_holds(&self, unit_idx: usize) -> bool {
+        let unit = &self.units[unit_idx];
+        if !unit.web() || unit.web_source_uid == 0 {
+            return false;
+        }
+
+        let source_idx = (0..self.unit_count as usize).find(|&i| {
+            let src = &self.units[i];
+            src.uid == unit.web_source_uid && src.hp > 0
+        });
+        let Some(source_idx) = source_idx else {
+            return false;
+        };
+        let source = &self.units[source_idx];
+        if source.type_name_str() == "WebbEgg1" {
+            return false;
+        }
+
+        source.queued_target_x == unit.x as i8
+            && source.queued_target_y == unit.y as i8
+    }
+
     /// Teleporter partner: if (x, y) is a pad, return the coords of its
     /// paired pad. None if not a pad or no pairs on this board.
     ///

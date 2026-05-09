@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-08T19:55:51.528384",
+  "timestamp": "2026-05-08T20:02:55.195894",
   "run_id": "20260508_134925_472",
   "mission_index": 11,
   "turn": 1,
@@ -7,7 +7,7 @@
   "data": {
     "schema_version": 1,
     "simulator_version": 75,
-    "solver_version": "rust-0.1.0-2d86131",
+    "solver_version": "rust-0.1.0-569d597",
     "time_limit": 10.0,
     "beam_mode": 0,
     "bridge_state": {
@@ -716,7 +716,7 @@
         }
       },
       "environment_danger_v2": [],
-      "timestamp": 1778288151,
+      "timestamp": 1778288575,
       "in_active_mission": true,
       "attack_order": [
         616,

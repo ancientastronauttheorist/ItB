@@ -2615,17 +2615,39 @@ def _infer_webb_egg_adjacency(units: list) -> None:
     if not eggs:
         return
     by_pos = {(u.get("x"), u.get("y")): u for u in units}
+    by_uid = {u.get("uid"): u for u in units if u.get("uid") is not None}
+
+    def existing_source_still_holds(unit: dict) -> bool:
+        if not unit.get("web"):
+            return False
+        source_uid = unit.get("web_source_uid")
+        if not source_uid:
+            return False
+        source = by_uid.get(source_uid)
+        if not source or source.get("hp", 0) <= 0:
+            return False
+        if source.get("type") == "WebbEgg1":
+            return False
+        target = source.get("queued_target")
+        return (
+            isinstance(target, list)
+            and len(target) >= 2
+            and target[0] == unit.get("x")
+            and target[1] == unit.get("y")
+        )
+
     for egg in eggs:
         ex, ey = egg.get("x"), egg.get("y")
         for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
             neighbor = by_pos.get((ex + dx, ey + dy))
             if neighbor is None or neighbor.get("hp", 0) <= 0:
                 continue
-            # Adjacent egg is the AUTHORITATIVE webber — override any
-            # bridge-reported web_source_uid (Lua GetGrappler returns the
-            # wrong unit when a Scorpion is nearby alongside a WebbEgg,
-            # which lets the solver "break" the web by pushing the wrong
-            # enemy and incorrectly conclude the mech can move).
+            # Adjacent egg fills missing/stale web ownership, but do not steal
+            # a live Scorpion/Leaper-style grapple that is currently targeting
+            # this unit. Live m11t2 showed Pulse stayed webbed by Scorpion
+            # after an adjacent egg died.
+            if existing_source_still_holds(neighbor):
+                continue
             neighbor["web"] = True
             neighbor["web_source_uid"] = egg.get("uid", 0)
 

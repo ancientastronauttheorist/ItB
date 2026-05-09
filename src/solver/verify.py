@@ -601,7 +601,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v75 - Repulse zero-damage adjacent pushes do not add phantom map-edge bump
 # damage when the outward destination is off-board. Pre-v75 corpus archived as
 # failure_db_snapshot_sim_v74.jsonl.
-SIMULATOR_VERSION = 75
+# v76 - WebbEgg1 adjacency webs are inferred in Rust bridge loading and after
+# simulated movement/landing while preserving active non-egg grapples.
+# Pre-v76 corpus archived as
+# failure_db_snapshot_sim_v75.jsonl.
+SIMULATOR_VERSION = 76
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

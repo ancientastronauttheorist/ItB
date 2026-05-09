@@ -580,6 +580,11 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
+    // Bridge `IsGrappled()` can miss or misattribute Spider Egg webs.
+    // Mirror Python's `_infer_webb_egg_adjacency` so direct Rust solves and
+    // replay/score_plan calls receive the same authoritative egg source.
+    board.refresh_webb_egg_grapples();
+
     // Turn info
     board.current_turn = input.turn.unwrap_or(0);
     board.total_turns = input.total_turns.unwrap_or(5);
@@ -931,6 +936,101 @@ mod tests {
         assert_eq!(board.units[0].base_move, 4);
         assert_eq!(board.units[1].move_speed, 0);
         assert_eq!(board.units[1].base_move, 4);
+    }
+
+    #[test]
+    fn test_bridge_load_infers_webb_egg_adjacency_source_when_stale() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 2,
+                    "type": "PulseMech",
+                    "x": 5,
+                    "y": 3,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "web": true,
+                    "web_source_uid": 626,
+                    "weapons": ["Science_Repulse"]
+                },
+                {
+                    "uid": 674,
+                    "type": "WebbEgg1",
+                    "x": 5,
+                    "y": 2,
+                    "hp": 1,
+                    "max_hp": 1,
+                    "team": 6
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.units[0].web());
+        assert_eq!(
+            board.units[0].web_source_uid, 674,
+            "adjacent WebbEgg1 should override stale/misattributed bridge web source"
+        );
+    }
+
+    #[test]
+    fn test_bridge_load_preserves_active_non_egg_web_source() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 2,
+                    "type": "PulseMech",
+                    "x": 5,
+                    "y": 3,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 1,
+                    "mech": true,
+                    "web": true,
+                    "web_source_uid": 626,
+                    "weapons": ["Science_Repulse"]
+                },
+                {
+                    "uid": 626,
+                    "type": "Scorpion1",
+                    "x": 6,
+                    "y": 3,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 6,
+                    "has_queued_attack": true,
+                    "queued_target": [5, 3]
+                },
+                {
+                    "uid": 674,
+                    "type": "WebbEgg1",
+                    "x": 5,
+                    "y": 2,
+                    "hp": 1,
+                    "max_hp": 1,
+                    "team": 6
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.units[0].web());
+        assert_eq!(
+            board.units[0].web_source_uid, 626,
+            "active Scorpion grapple targeting the mech should keep ownership"
+        );
     }
 
     #[test]

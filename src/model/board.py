@@ -642,11 +642,19 @@ class Board:
                 neighbor = board.unit_at(nx, ny)
                 if neighbor is None or neighbor.hp <= 0:
                     continue
-                # Adjacent egg is the AUTHORITATIVE webber — override any
-                # bridge-reported web_source_uid (Lua GetGrappler can return
-                # the wrong enemy when a Scorpion is also nearby, which
-                # lets the solver "break" the web by pushing the wrong
-                # enemy and incorrectly conclude the mech can move).
+                source = next(
+                    (u for u in board.units
+                     if u.uid == neighbor.web_source_uid and u.hp > 0),
+                    None,
+                )
+                if (
+                    neighbor.web
+                    and source is not None
+                    and source.type != "WebbEgg1"
+                    and source.queued_target_x == neighbor.x
+                    and source.queued_target_y == neighbor.y
+                ):
+                    continue
                 neighbor.web = True
                 neighbor.web_source_uid = egg.uid
 

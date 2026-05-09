@@ -10,8 +10,8 @@
   "current_mission": "Mission_FreezeBldg",
   "islands_completed": [],
   "mission_index": 11,
-  "last_mission_turn": 1,
-  "current_turn": 1,
+  "last_mission_turn": 2,
+  "current_turn": 2,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -24,43 +24,43 @@
         ],
         "weapon": "Brute_Jetmech",
         "target": [
-          6,
-          0
+          4,
+          2
         ],
-        "description": "JetMech, move E5\u2192F2, fire Aerial Bombs at H2"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
-        "move_to": [
-          3,
-          3
-        ],
-        "weapon": "Ranged_Rocket",
-        "target": [
-          3,
-          5
-        ],
-        "description": "RocketMech, move C5\u2192E5, fire Rocket Artillery at C5"
+        "description": "JetMech, fire Aerial Bombs at F4"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          5,
-          3
+          6,
+          5
         ],
         "weapon": "Science_Repulse",
         "target": [
-          5,
+          6,
+          5
+        ],
+        "description": "PulseMech, move E3\u2192C2, fire Repulse at C2"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "RocketMech",
+        "move_to": [
+          2,
           3
         ],
-        "description": "PulseMech, move D6\u2192E3, fire Repulse at E3"
+        "weapon": "Ranged_Rocket",
+        "target": [
+          4,
+          3
+        ],
+        "description": "RocketMech, move E5\u2192E6, fire Rocket Artillery at E4"
       }
     ],
-    "score": 124709.14292774879,
-    "turn": 1,
-    "input_fingerprint": "0:3,3:4|1:3,5:5|2:2,4:3|616:3,2:5|617:6,1:4|618:5,4:3|619:5,5:2"
+    "score": 128425.80959441565,
+    "turn": 2,
+    "input_fingerprint": "0:6,2:4|1:3,3:5|2:5,3:3|616:1,3:4|617:4,3:2|618:3,5:3|619:4,5:1|625:5,5:2|626:6,3:3|674:5,2:1"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -676,6 +676,50 @@
         "RocketMech, move C5\u2192E5, fire Rocket Artillery at C5",
         "PulseMech, move D6\u2192E3, fire Repulse at E3"
       ]
+    },
+    {
+      "timestamp": "2026-05-08T20:03:10.578000",
+      "turn": 1,
+      "label": "solve",
+      "score": 124709.14292774879,
+      "actions": [
+        "JetMech, move E5\u2192F2, fire Aerial Bombs at H2",
+        "RocketMech, move C5\u2192E5, fire Rocket Artillery at C5",
+        "PulseMech, move D6\u2192E3, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T20:04:34.895770",
+      "turn": 2,
+      "label": "solve",
+      "score": 128425.80959441565,
+      "actions": [
+        "JetMech, move H2\u2192F2, fire Aerial Bombs at F4",
+        "PulseMech, move E3\u2192C2, fire Repulse at C2",
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T20:12:36.758437",
+      "turn": 2,
+      "label": "solve",
+      "score": 128425.80959441565,
+      "actions": [
+        "JetMech, move H2\u2192F2, fire Aerial Bombs at F4",
+        "PulseMech, move E3\u2192C2, fire Repulse at C2",
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T20:18:10.478155",
+      "turn": 2,
+      "label": "solve",
+      "score": 128425.80959441565,
+      "actions": [
+        "JetMech, fire Aerial Bombs at F4",
+        "PulseMech, move E3\u2192C2, fire Repulse at C2",
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E4"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -794,6 +838,10 @@
     [
       10,
       3
+    ],
+    [
+      11,
+      1
     ]
   ],
   "tags": [
@@ -1264,6 +1312,60 @@
         "target": [
           5,
           3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          2
         ]
       }
     }
@@ -1813,7 +1915,7 @@
     "hash": "b5c2c48e732a1885",
     "classes": "gfgggiiiggggbgiifbggggbiibggggbiiiigbgfgibiggggfggiigggggggigggg",
     "mission_index": 11,
-    "turn": 1
+    "turn": 2
   },
   "terrain_stage_change_pending": false
 }

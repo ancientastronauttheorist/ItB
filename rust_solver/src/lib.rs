@@ -1014,7 +1014,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v75 - Repulse zero-damage adjacent pushes do not add phantom map-edge bump
 //   damage when the outward destination is off-board. Pre-v75 corpus archived
 //   as `failure_db_snapshot_sim_v74.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 75;
+// v76 - WebbEgg1 adjacency webs are inferred in Rust bridge loading and after
+//   simulated movement/landing while preserving active non-egg grapples.
+//   Pre-v76 corpus archived as
+//   `failure_db_snapshot_sim_v75.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 76;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

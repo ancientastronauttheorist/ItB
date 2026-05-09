@@ -192,6 +192,7 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
 ///   8. Freeze Mine → freeze (or pop shield), mine consumed
 ///   9. Repair platform → heal by Item_Repair_Mine's -10 damage, consume
 ///  10. Teleporter pad → swap to partner if paired
+///  11. WebbEgg1 adjacency refresh → newly adjacent units become webbed
 fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     if board.units[unit_idx].hp <= 0 { return; }
     let x = board.units[unit_idx].x;
@@ -306,6 +307,10 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
 
     // 10. Teleporter pad: fires LAST, after terrain/mine/item resolution.
     apply_teleport_on_land(board, unit_idx);
+
+    // 11. Spider/Web Egg adjacency webs are tile-based and can apply after a
+    // unit lands beside an existing egg or after a teleporter swap.
+    board.refresh_webb_egg_grapples();
 }
 
 // ── Web break ────────────────────────────────────────────────────────────────
@@ -2737,7 +2742,7 @@ fn sim_global_unit_effect(
 // `simulate_action`; this is purely structural.
 
 /// Move phase only: position update, pod pickup, ACID transfer, mines,
-/// fire-tile catch, teleporter pad swap.
+/// fire-tile catch, teleporter pad swap, WebbEgg adjacency refresh.
 pub fn simulate_move(
     board: &mut Board,
     mech_idx: usize,
@@ -2820,6 +2825,8 @@ pub fn simulate_move(
     if move_to != old_pos {
         apply_teleport_on_land(board, mech_idx);
     }
+
+    board.refresh_webb_egg_grapples();
 
     result
 }
@@ -3731,6 +3738,69 @@ mod tests {
         assert!(!board.units[pulse].web(), "smoking the web source should release the grapple");
         assert_eq!(board.units[pulse].web_source_uid, 0);
         assert_eq!(board.units[pulse].move_speed, board.units[pulse].base_move);
+    }
+
+    #[test]
+    fn test_move_next_to_webb_egg_becomes_webbed() {
+        // Live Rusting Hulks regression: JetMech moved next to a WebbEgg1 and
+        // the engine immediately marked it webbed. The sim must refresh egg
+        // adjacency after movement, not only trust bridge status at turn read.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 6, 0, 2, WId::BruteJetmech);
+        board.units[jet].flags.insert(UnitFlags::CAN_MOVE);
+        let egg = add_enemy_type(&mut board, 674, 5, 2, 1, "WebbEgg1");
+
+        let _ = simulate_move(&mut board, jet, (6, 2));
+
+        assert!(board.units[jet].web(), "landing beside WebbEgg1 should web Jet");
+        assert_eq!(board.units[jet].web_source_uid, board.units[egg].uid);
+    }
+
+    #[test]
+    fn test_killing_webb_egg_releases_adjacency_web() {
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 6, 0, 2, WId::BruteJetmech);
+        let egg = add_enemy_type(&mut board, 674, 5, 2, 1, "WebbEgg1");
+        let _ = simulate_move(&mut board, jet, (6, 2));
+        assert!(board.units[jet].web());
+
+        let mut result = ActionResult::default();
+        let egg_pos = (board.units[egg].x, board.units[egg].y);
+        apply_damage(
+            &mut board, egg_pos.0, egg_pos.1, 1,
+            &mut result, DamageSource::Weapon,
+        );
+
+        assert!(!board.units[jet].web(), "dead egg should release adjacent web");
+        assert_eq!(board.units[jet].web_source_uid, 0);
+    }
+
+    #[test]
+    fn test_webb_egg_does_not_steal_active_scorpion_grapple() {
+        // Live m11t2: Pulse was adjacent to a WebbEgg, but the active grapple
+        // was from a Scorpion targeting Pulse. Killing the egg freed Jet but
+        // did not free Pulse.
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 5, 3, 3, WId::ScienceRepulse);
+        let scorpion = add_enemy_type(&mut board, 626, 6, 3, 3, "Scorpion1");
+        let egg = add_enemy_type(&mut board, 674, 5, 2, 1, "WebbEgg1");
+        board.units[pulse].set_web(true);
+        board.units[pulse].web_source_uid = board.units[scorpion].uid;
+        board.units[scorpion].queued_target_x = board.units[pulse].x as i8;
+        board.units[scorpion].queued_target_y = board.units[pulse].y as i8;
+
+        board.refresh_webb_egg_grapples();
+        assert_eq!(board.units[pulse].web_source_uid, board.units[scorpion].uid);
+
+        let mut result = ActionResult::default();
+        let egg_pos = (board.units[egg].x, board.units[egg].y);
+        apply_damage(
+            &mut board, egg_pos.0, egg_pos.1, 1,
+            &mut result, DamageSource::Weapon,
+        );
+
+        assert!(board.units[pulse].web(), "Scorpion web should survive egg death");
+        assert_eq!(board.units[pulse].web_source_uid, board.units[scorpion].uid);
     }
 
     #[test]
