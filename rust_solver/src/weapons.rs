@@ -446,9 +446,15 @@ pub enum WId {
     /// Starfish Leader's Scored Appendages: 3 damage on four diagonal
     /// tiles plus zero-damage outward pushes on the four cardinal tiles.
     StarfishAtkB1 = 139,
+    /// Aerial Bombs with +1 Damage powered.
+    BruteJetmechA = 140,
+    /// Aerial Bombs with +1 Range powered.
+    BruteJetmechB = 141,
+    /// Aerial Bombs with both +1 Damage and +1 Range powered.
+    BruteJetmechAB = 142,
 }
 
-pub const WEAPON_COUNT: usize = 140;
+pub const WEAPON_COUNT: usize = 143;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -512,6 +518,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[16] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     // 17: Brute_Jetmech — Aerial Bombs
     w[17] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, range_min: 2, range_max: 2, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 140: Brute_Jetmech_A — Aerial Bombs with +1 Damage
+    w[140] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, range_min: 2, range_max: 2, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 141: Brute_Jetmech_B — Aerial Bombs with +1 Range
+    w[141] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, range_min: 2, range_max: 3, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 142: Brute_Jetmech_AB — Aerial Bombs with both upgrades
+    w[142] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, range_min: 2, range_max: 3, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
     // 18: Brute_Mirrorshot — Mirror Shot
     w[18] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 19: Brute_Beetle — Ramming Engines
@@ -1090,6 +1102,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Smash" => WId::PrimeSmash,
         "Brute_Tankmech" => WId::BruteTankmech,
         "Brute_Jetmech" => WId::BruteJetmech,
+        "Brute_Jetmech_A" => WId::BruteJetmechA,
+        "Brute_Jetmech_B" => WId::BruteJetmechB,
+        "Brute_Jetmech_AB" => WId::BruteJetmechAB,
         "Brute_Mirrorshot" => WId::BruteMirrorshot,
         "Brute_Beetle" => WId::BruteBeetle,
         "Brute_Grapple" => WId::BruteGrapple,
@@ -1248,6 +1263,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeSmash => "Prime_Smash",
         WId::BruteTankmech => "Brute_Tankmech",
         WId::BruteJetmech => "Brute_Jetmech",
+        WId::BruteJetmechA => "Brute_Jetmech_A",
+        WId::BruteJetmechB => "Brute_Jetmech_B",
+        WId::BruteJetmechAB => "Brute_Jetmech_AB",
         WId::BruteMirrorshot => "Brute_Mirrorshot",
         WId::BruteBeetle => "Brute_Beetle",
         WId::BruteGrapple => "Brute_Grapple",
@@ -1487,7 +1505,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeSword => "Sword",
         WId::PrimeSmash => "Ground Smash",
         WId::BruteTankmech => "Taurus Cannon",
-        WId::BruteJetmech => "Aerial Bombs",
+        WId::BruteJetmech | WId::BruteJetmechA | WId::BruteJetmechB | WId::BruteJetmechAB => "Aerial Bombs",
         WId::BruteMirrorshot => "Mirror Shot",
         WId::BruteBeetle => "Ramming Engines",
         WId::BruteGrapple => "Grappling Hook",
@@ -1693,6 +1711,34 @@ mod tests {
         assert_eq!(wid_to_str(WId::RangedRocketB), "Ranged_Rocket_B");
         assert_eq!(wid_to_str(WId::RangedRocketAB), "Ranged_Rocket_AB");
         assert_eq!(weapon_name(WId::RangedRocketAB), "Rocket Artillery");
+    }
+
+    #[test]
+    fn test_aerial_bombs_upgrades() {
+        let damage = weapon_def(WId::BruteJetmechA);
+        assert_eq!(damage.weapon_type, WeaponType::Leap);
+        assert_eq!(damage.damage, 2);
+        assert_eq!(damage.range_min, 2);
+        assert_eq!(damage.range_max, 2);
+        assert!(damage.smoke());
+
+        let range = weapon_def(WId::BruteJetmechB);
+        assert_eq!(range.damage, 1);
+        assert_eq!(range.range_min, 2);
+        assert_eq!(range.range_max, 3);
+        assert!(range.smoke());
+
+        let both = weapon_def(WId::BruteJetmechAB);
+        assert_eq!(both.damage, 2);
+        assert_eq!(both.range_min, 2);
+        assert_eq!(both.range_max, 3);
+        assert!(both.smoke());
+
+        assert_eq!(wid_from_str("Brute_Jetmech_A"), WId::BruteJetmechA);
+        assert_eq!(wid_from_str("Brute_Jetmech_B"), WId::BruteJetmechB);
+        assert_eq!(wid_from_str("Brute_Jetmech_AB"), WId::BruteJetmechAB);
+        assert_eq!(wid_to_str(WId::BruteJetmechB), "Brute_Jetmech_B");
+        assert_eq!(weapon_name(WId::BruteJetmechAB), "Aerial Bombs");
     }
 
     #[test]

@@ -198,6 +198,21 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage (total 2)",
         upgrade_b="+1 range (total 3)",
     ),
+    "Brute_Jetmech_A": WeaponDef(
+        name="Aerial Bombs", weapon_type="leap",
+        damage=2, smoke=True, range_min=2, range_max=2,
+        aoe_center=False,
+    ),
+    "Brute_Jetmech_B": WeaponDef(
+        name="Aerial Bombs", weapon_type="leap",
+        damage=1, smoke=True, range_min=2, range_max=3,
+        aoe_center=False,
+    ),
+    "Brute_Jetmech_AB": WeaponDef(
+        name="Aerial Bombs", weapon_type="leap",
+        damage=2, smoke=True, range_min=2, range_max=3,
+        aoe_center=False,
+    ),
     "Brute_Mirrorshot": WeaponDef(
         name="Mirror Shot", weapon_type="projectile",
         damage=1, push="forward", range_max=0, aoe_behind=True,

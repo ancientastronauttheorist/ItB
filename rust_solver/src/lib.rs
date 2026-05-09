@@ -1064,7 +1064,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   per building HP lost again; non-unique multi-HP bump/push collision damage
 //   still drains only on destruction. Pre-v85 corpus archived as
 //   `failure_db_snapshot_sim_v84.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 85;
+// v86 - Aerial Bombs upgraded weapon IDs (`Brute_Jetmech_A/B/AB`) are modeled
+//   from save overlays. The +1 Range branch expands Jet Mech target search to
+//   2-3 cardinal tiles while preserving water/lava landing illegality.
+//   Pre-v86 corpus archived as `failure_db_snapshot_sim_v85.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 86;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

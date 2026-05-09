@@ -13,55 +13,7 @@
   "last_mission_turn": 1,
   "current_turn": 1,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          4,
-          2
-        ],
-        "weapon": "Brute_Jetmech_B",
-        "target": [
-          7,
-          2
-        ],
-        "description": "JetMech, move C6\u2192F4, fire Aerial Bombs at F1"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "RocketMech",
-        "move_to": [
-          3,
-          6
-        ],
-        "weapon": "Ranged_Rocket_A",
-        "target": [
-          5,
-          6
-        ],
-        "description": "RocketMech, fire Rocket Artillery at B3"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "PulseMech",
-        "move_to": [
-          4,
-          3
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "PulseMech, move E5\u2192E4"
-      }
-    ],
-    "score": 51972.00015200887,
-    "turn": 1,
-    "input_fingerprint": "0:2,5:4|1047:4,6:1|1047:4,7:1|1048:6,2:4|1049:4,5:3|1050:5,6:2|1051:7,1:4|1:3,6:5|2:3,3:3"
-  },
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -1104,45 +1056,6 @@
       "turn": 4,
       "label": "note",
       "message": "Selected Old Earth Park: High Threat Armored Train + Coal Plant. Risk accepted for Stormy Weather density and grid reward at 4/7."
-    },
-    {
-      "timestamp": "2026-05-09T13:58:57.266796",
-      "turn": 1,
-      "label": "note",
-      "message": "Research gate resolved for Starfish2 / Alpha Starfish on Old Earth Park turn 1; added exact bridge type Starfish2 to known_types before resuming combat."
-    },
-    {
-      "timestamp": "2026-05-09T13:59:08.670743",
-      "turn": 1,
-      "label": "solve",
-      "score": 51922.00015200887,
-      "actions": [
-        "RocketMech, move B5\u2192B7, fire Rocket Artillery at B3",
-        "PulseMech, move E5\u2192B6, fire Repulse at B6",
-        "JetMech, move D6\u2192F3, fire Aerial Bombs at F1"
-      ]
-    },
-    {
-      "timestamp": "2026-05-09T14:01:54.314998",
-      "turn": 1,
-      "label": "solve",
-      "score": 66142.00009376662,
-      "actions": [
-        "RocketMech, move B5\u2192B7, fire Rocket Artillery at B3",
-        "PulseMech, move E5\u2192B6, fire Repulse at B6",
-        "JetMech, move D6\u2192F3, fire Aerial Bombs at F1"
-      ]
-    },
-    {
-      "timestamp": "2026-05-09T14:10:29.691011",
-      "turn": 1,
-      "label": "solve",
-      "score": 51972.00015200887,
-      "actions": [
-        "JetMech, move C6\u2192F4, fire Aerial Bombs at F1",
-        "RocketMech, fire Rocket Artillery at B3",
-        "PulseMech, move E5\u2192E4"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -3178,38 +3091,9 @@
       "slot": null,
       "mission_id": "Mission_Armored_Train",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Alpha Starfish",
-            "hp": 0,
-            "move": 3,
-            "class_icons": [
-              "diagonal_attack"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Alpha Starfish",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Starfish",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Starfish&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "38e715618e9e",
-      "last_kind": "enemy"
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": [],

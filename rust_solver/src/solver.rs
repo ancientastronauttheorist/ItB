@@ -341,11 +341,20 @@ pub(crate) fn get_weapon_targets(
         WeaponType::Leap => {
             let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
             let min_r = if wdef.range_min == 0 { 1 } else { wdef.range_min };
+            let aerial_bombs = matches!(
+                weapon_id,
+                WId::BruteJetmech
+                    | WId::BruteJetmechA
+                    | WId::BruteJetmechB
+                    | WId::BruteJetmechAB
+            );
             // Fixed-distance leaps (Aerial Bombs: range_min == range_max) fly
             // over a straight cardinal line and land on the target, so the
-            // target must share a row or column with the attacker. Variable
-            // leaps (Hydraulic Legs) can land anywhere within range.
-            let cardinal_only = wdef.range_min > 0 && wdef.range_min == wdef.range_max;
+            // target must share a row or column with the attacker. Upgraded
+            // Aerial Bombs has a 2-3 tile range but is still cardinal-only.
+            // Variable leaps (Hydraulic Legs) can land anywhere within range.
+            let cardinal_only =
+                aerial_bombs || (wdef.range_min > 0 && wdef.range_min == wdef.range_max);
             for x in 0..8u8 {
                 for y in 0..8u8 {
                     if cardinal_only && x != mx && y != my { continue; }
@@ -353,9 +362,7 @@ pub(crate) fn get_weapon_targets(
                     if dist < min_r || dist > max_r { continue; }
                     let landing_terrain = board.tile(x, y).terrain;
                     if landing_terrain == Terrain::Chasm { continue; }
-                    if weapon_id == WId::BruteJetmech
-                        && matches!(landing_terrain, Terrain::Water | Terrain::Lava)
-                    {
+                    if aerial_bombs && matches!(landing_terrain, Terrain::Water | Terrain::Lava) {
                         continue;
                     }
                     if !board.is_blocked(x, y, true) { // leap uses flying passability except chasm landings

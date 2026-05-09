@@ -638,7 +638,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # per building HP lost again; non-unique multi-HP bump/push collision damage
 # still drains only on destruction. Pre-v85 corpus archived as
 # failure_db_snapshot_sim_v84.jsonl.
-SIMULATOR_VERSION = 85
+# v86 - Aerial Bombs upgraded weapon IDs (`Brute_Jetmech_A/B/AB`) are modeled
+# from save overlays. The +1 Range branch expands Jet Mech target search to
+# 2-3 cardinal tiles while preserving water/lava landing illegality.
+# Pre-v86 corpus archived as failure_db_snapshot_sim_v85.jsonl.
+SIMULATOR_VERSION = 86
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

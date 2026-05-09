@@ -35,6 +35,9 @@ TERRAIN_MAP = {
 }
 
 _MODELED_UPGRADED_WEAPONS = {
+    "Brute_Jetmech_A",
+    "Brute_Jetmech_B",
+    "Brute_Jetmech_AB",
     "Ranged_Ignite_A",
     "Ranged_Artillerymech_A",
     "Ranged_Rocket_A",

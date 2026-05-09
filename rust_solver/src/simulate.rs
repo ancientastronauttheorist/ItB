@@ -2399,10 +2399,17 @@ fn leap_landing_illegal_reason(
     if landing.terrain == Terrain::Chasm {
         return Some("chasm");
     }
-    if weapon_id == WId::BruteJetmech && landing.terrain == Terrain::Water {
+    let aerial_bombs = matches!(
+        weapon_id,
+        WId::BruteJetmech
+            | WId::BruteJetmechA
+            | WId::BruteJetmechB
+            | WId::BruteJetmechAB
+    );
+    if aerial_bombs && landing.terrain == Terrain::Water {
         return Some("water");
     }
-    if weapon_id == WId::BruteJetmech && landing.terrain == Terrain::Lava {
+    if aerial_bombs && landing.terrain == Terrain::Lava {
         return Some("lava");
     }
     if landing.terrain == Terrain::Mountain {
