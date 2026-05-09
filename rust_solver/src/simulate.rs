@@ -2842,6 +2842,19 @@ pub fn simulate_attack(
 ) -> ActionResult {
     let mut result = ActionResult::default();
 
+    // Smoke prevents attacks and repair. Solver enumeration normally filters
+    // these out, but diagnostic score/replay can receive hand-written plans.
+    if weapon_id != WId::None {
+        let (sx, sy, ignores_smoke) = {
+            let unit = &board.units[mech_idx];
+            (unit.x, unit.y, unit.type_name_str() == "Trapped_Building")
+        };
+        if board.tile(sx, sy).smoke() && !ignores_smoke {
+            result.events.push(format!("illegal_attack_smoke:{}:{}", sx, sy));
+            return result;
+        }
+    }
+
     // Repair
     if weapon_id == WId::Repair {
         let (is_repairman, rx, ry) = {

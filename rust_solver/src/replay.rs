@@ -13,8 +13,9 @@
 //! `snapshot_after_move` byte-for-byte: same field names, same types, same
 //! tile-sampling rule (touched tiles + 1-tile buffer).
 
-use crate::board::Board;
+use crate::board::{ActionResult, Board};
 use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
+use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
 use crate::simulate::{simulate_attack, simulate_move};
 use crate::turn_projection::board_to_json;
@@ -95,17 +96,35 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             }
         };
 
-        // Phase 1: move
-        let move_result = simulate_move(&mut board, mech_idx, (act.move_to[0], act.move_to[1]));
+        // Phase 1: move. Diagnostic replay accepts hand-authored plans, so
+        // validate moves before mutating; otherwise impossible plans can score
+        // as clean by walking through buildings, units, or out-of-range tiles.
+        let move_to = (act.move_to[0], act.move_to[1]);
+        let illegal_move = illegal_move_reason(&board, mech_idx, move_to);
+        let move_result = match illegal_move {
+            Some(reason) => {
+                let mut result = ActionResult::default();
+                result.events.push(format!(
+                    "illegal_move:{}:{}:{}",
+                    move_to.0, move_to.1, reason
+                ));
+                result
+            }
+            None => simulate_move(&mut board, mech_idx, move_to),
+        };
         let post_move_snap = capture_snapshot(
             &board, i, mech_uid, &move_result.events, "after_move",
         );
 
         // Phase 2: attack
         let wid = wid_from_str(&act.weapon_id);
-        let attack_result = simulate_attack(
-            &mut board, mech_idx, wid, (act.target[0], act.target[1]), weapons_table,
-        );
+        let attack_result = if illegal_move.is_some() {
+            ActionResult::default()
+        } else {
+            simulate_attack(
+                &mut board, mech_idx, wid, (act.target[0], act.target[1]), weapons_table,
+            )
+        };
         let mut all_events = move_result.events.clone();
         all_events.extend_from_slice(&attack_result.events);
         let post_attack_snap = capture_snapshot(
@@ -383,6 +402,7 @@ fn terrain_to_str(t: Terrain) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn parse_coords_extracts_pairs_and_filters_off_board() {
@@ -478,5 +498,44 @@ mod tests {
         assert_eq!(v["predicted_outcome"]["mechs_alive"], 1);
         assert_eq!(v["predicted_outcome"]["enemies_alive"], 0);
         assert!(v["final_board"].is_object());
+    }
+
+    #[test]
+    fn replay_solution_noops_attack_from_smoke() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 3, "y": 7, "terrain": "ground", "smoke": true}
+          ],
+          "units": [
+            {"uid": 0, "type": "JetMech", "x": 4, "y": 7,
+             "hp": 4, "max_hp": 2, "team": 1, "mech": true,
+             "flying": true, "move": 5, "active": true,
+             "weapons": ["Brute_Jetmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 7],
+          "weapon_id": "Brute_Jetmech",
+          "target": [3, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let events = v["action_results"][0]["events"].as_array().unwrap();
+        assert!(
+            events.iter().any(|e| e.as_str() == Some("illegal_attack_smoke:3:7")),
+            "smoked attack origin should be reported as an illegal diagnostic action"
+        );
+        let post_attack_units = v["predicted_states"][0]["post_attack"]["units"].as_array().unwrap();
+        let jet = post_attack_units.iter().find(|u| u["uid"] == 0).unwrap();
+        assert_eq!(jet["pos"], json!([3, 7]), "illegal smoke attack must not leap to target");
     }
 }

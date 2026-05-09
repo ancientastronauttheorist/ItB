@@ -137,6 +137,53 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     result
 }
 
+/// Explain why a requested move destination is not valid under the same
+/// movement rules used by action enumeration. Returns None for legal stops.
+pub fn illegal_move_reason(board: &Board, unit_idx: usize, move_to: (u8, u8)) -> Option<&'static str> {
+    if move_to.0 >= 8 || move_to.1 >= 8 {
+        return Some("out_of_bounds");
+    }
+
+    let unit = &board.units[unit_idx];
+    if move_to == (unit.x, unit.y) {
+        return None;
+    }
+    if !unit.can_move() {
+        return Some("unit_cannot_move");
+    }
+    if unit.web() {
+        return Some("webbed");
+    }
+    if unit.frozen() {
+        return Some("frozen");
+    }
+
+    if reachable_tiles(board, unit_idx).contains(&move_to) {
+        return None;
+    }
+
+    let tile = board.tile(move_to.0, move_to.1);
+    if tile.terrain == Terrain::Building {
+        return Some("blocked_building");
+    }
+    if tile.terrain == Terrain::Mountain {
+        return Some("blocked_mountain");
+    }
+    if !unit.flying() && tile.terrain.is_deadly_ground() {
+        return Some("deadly_ground");
+    }
+    if unit.is_player() && tile.acid() {
+        return Some("forbidden_acid");
+    }
+    if board.unit_at(move_to.0, move_to.1).is_some() {
+        return Some("blocked_unit");
+    }
+    if board.wreck_at(move_to.0, move_to.1) {
+        return Some("blocked_wreck");
+    }
+    Some("out_of_range")
+}
+
 /// Get adjacent tiles with direction index.
 /// Returns up to 4 entries: (nx, ny, dir_idx).
 pub fn adjacent(x: u8, y: u8) -> [(u8, u8, usize); 4] {
@@ -229,7 +276,7 @@ mod tests {
         if flying {
             unit.flags |= UnitFlags::FLYING;
         }
-        unit.flags |= UnitFlags::IS_MECH | UnitFlags::ACTIVE;
+        unit.flags |= UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::CAN_MOVE;
         let idx = board.add_unit(unit);
         (board, idx)
     }
@@ -292,6 +339,18 @@ mod tests {
         board.tile_mut(0, 1).set_acid(true);
         let tiles = reachable_tiles(&board, idx);
         assert!(!tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn illegal_move_reason_reports_building_destination() {
+        let (mut board, idx) = make_board_with_unit(3, 5, 3, false);
+        board.tile_mut(5, 2).terrain = Terrain::Building;
+        board.tile_mut(5, 2).building_hp = 1;
+
+        assert_eq!(
+            illegal_move_reason(&board, idx, (5, 2)),
+            Some("blocked_building")
+        );
     }
 
     #[test]

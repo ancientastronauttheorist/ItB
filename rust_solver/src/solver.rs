@@ -319,7 +319,6 @@ pub(crate) fn get_weapon_targets(
                 for y in 0..8u8 {
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r { continue; }
-                    if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     if tile.terrain == Terrain::Building && tile.building_hp > 0 { continue; }
                     targets.push((x, y));
@@ -1575,6 +1574,100 @@ mod top_k_tests {
                 a.0 == (5, 4) && a.1 == WId::BruteJetmech && a.2 == (5, 2)
             }),
             "Aerial Bombs after G1->D3 should enumerate targets from D3"
+        );
+    }
+
+    #[test]
+    fn artillery_enumerates_off_axis_targets() {
+        // Standard ITB artillery can target any non-building tile in range,
+        // not only tiles sharing the firer's row or column. Regression anchor:
+        // Rusting Hulks Mission_Reactivation turn 2 needed RocketMech at C7
+        // to fire at the off-axis Mosquito on F5; the replay scored clean, but
+        // search missed it while artillery enumeration was cardinal-only.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 1,
+            x: 1,
+            y: 5,
+            hp: 5,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedRocketA as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE
+                | UnitFlags::CAN_MOVE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 897,
+            x: 3,
+            y: 2,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (1, 5) && a.1 == WId::RangedRocketA && a.2 == (3, 2)
+            }),
+            "Rocket artillery should enumerate off-axis target F5 from C7"
+        );
+    }
+
+    #[test]
+    fn aerial_bombs_from_smoke_origin_is_not_enumerated() {
+        // Mission_Reactivation turn 2 diagnostic: a hand-written line put
+        // JetMech on smoked A5 then fired Aerial Bombs at C5. The solver was
+        // right to omit the attack; smoke cancels mech attacks from that tile.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 0,
+            x: 4,
+            y: 7,
+            hp: 4,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteJetmech as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::FLYING
+                | UnitFlags::ACTIVE
+                | UnitFlags::CAN_MOVE,
+            move_speed: 5,
+            ..Default::default()
+        });
+        board.tile_mut(3, 7).set_smoke(true);
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (3, 7) && a.1 == WId::None && a.2 == (255, 255)
+            }),
+            "Jet should still be allowed to move onto smoked A5"
+        );
+        assert!(
+            !actions.iter().any(|a| {
+                a.0 == (3, 7) && a.1 == WId::BruteJetmech && a.2 == (3, 5)
+            }),
+            "Aerial Bombs must not be available from a smoked attack origin"
+        );
+
+        board.tile_mut(3, 7).set_smoke(false);
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (3, 7) && a.1 == WId::BruteJetmech && a.2 == (3, 5)
+            }),
+            "Clearing smoke should restore the Aerial Bombs target"
         );
     }
 

@@ -60,6 +60,7 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
 fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
     use crate::enemy::simulate_enemy_attacks;
     use crate::evaluate::{evaluate, PsionState};
+    use crate::movement::illegal_move_reason;
     use crate::simulate::simulate_action;
     use crate::weapons::wid_from_str;
     use crate::types::{Terrain, xy_to_idx};
@@ -100,6 +101,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 
         let mut kills = 0i32;
         let mut bumps = 0i32;
+        let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
             let mech_idx = match mech_idx {
@@ -107,6 +109,13 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 None => continue,
             };
             let wid = wid_from_str(&act.weapon_id);
+            if let Some(reason) = illegal_move_reason(&board, mech_idx, (act.move_to[0], act.move_to[1])) {
+                illegal_events.push(format!(
+                    "illegal_move:{}:{}:{}",
+                    act.move_to[0], act.move_to[1], reason
+                ));
+                continue;
+            }
             let result = simulate_action(
                 &mut board, mech_idx,
                 (act.move_to[0], act.move_to[1]),
@@ -114,6 +123,9 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 (act.target[0], act.target[1]),
                 weapons_table,
             );
+            for event in result.events.iter().filter(|e| e.starts_with("illegal_")) {
+                illegal_events.push(event.clone());
+            }
             kills += result.enemies_killed as i32;
             bumps += result.buildings_bump_damaged as i32;
         }
@@ -181,6 +193,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "remaining_spawns": board.remaining_spawns,
             "building_threats_bits": format!("{:b}", building_threats),
             "building_bumps": bumps,
+            "illegal_events": illegal_events,
         });
         Ok(out.to_string())
     })
@@ -1025,7 +1038,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   pawn primary_mod*/secondary_mod* power pips when GameData.current.weapons
 //   stays on base weapon IDs. Pre-v78 corpus archived as
 //   `failure_db_snapshot_sim_v77.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 78;
+// v79 - Player artillery target enumeration is board-wide instead of
+//   cardinal-only; standard ITB artillery can target off-axis tiles.
+//   Diagnostic score/replay also reject illegal moves and smoke-blocked
+//   attacks instead of validating impossible hand-written plans. Pre-v79
+//   corpus archived as `failure_db_snapshot_sim_v78.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 79;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
