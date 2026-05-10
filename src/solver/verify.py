@@ -655,7 +655,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # with a Python auto_turn settle retry for transient predicted-true status
 # diffs immediately after bridge sub-actions. Pre-v89 corpus archived as
 # failure_db_snapshot_sim_v88.jsonl.
-SIMULATOR_VERSION = 89
+# v90 - Ramming Engines recoil/self-damage on sand now consumes the sand and
+# creates smoke, matching live Mission_Terratide turn 1 ChargeMech behavior.
+# Pre-v90 corpus archived as failure_db_snapshot_sim_v89.jsonl.
+# v91 - Diagnostic score_plan now applies spawn blocking after enemy attacks,
+# matching replay/project_plan and avoiding false-clean manual plan audits.
+# Pre-v91 corpus archived as failure_db_snapshot_sim_v90.jsonl.
+SIMULATOR_VERSION = 91
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -58,7 +58,7 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
 /// Diagnostic only — not used in the normal solve path.
 #[pyfunction]
 fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
-    use crate::enemy::simulate_enemy_attacks;
+    use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
     use crate::evaluate::{evaluate, PsionState};
     use crate::movement::illegal_move_reason;
     use crate::simulate::simulate_action;
@@ -135,6 +135,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .count() as i32;
 
         let _ = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+        apply_spawn_blocking(&mut board, &spawn_points);
 
         let buildings_after = board.tiles.iter()
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
@@ -1081,7 +1082,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   with a Python auto_turn settle retry for transient predicted-true status
 //   diffs immediately after bridge sub-actions. Pre-v89 corpus archived as
 //   `failure_db_snapshot_sim_v88.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 89;
+// v90 - Ramming Engines recoil/self-damage on sand now consumes the sand and
+//   creates smoke, matching live Mission_Terratide turn 1 ChargeMech behavior.
+//   Pre-v90 corpus archived as `failure_db_snapshot_sim_v89.jsonl`.
+// v91 - Diagnostic score_plan now applies spawn blocking after enemy attacks,
+//   matching replay/project_plan and avoiding false-clean manual plan audits.
+//   Pre-v91 corpus archived as `failure_db_snapshot_sim_v90.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 91;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
@@ -1183,4 +1190,55 @@ fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(simulator_version, m)?)?;
     m.add_function(wrap_pyfunction!(replay_solution, m)?)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::score_plan;
+    use pyo3::Python;
+
+    #[test]
+    fn score_plan_applies_spawn_blocking_after_repair() {
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            let bridge_json = r#"{
+                "mission_id": "Mission_Volatile",
+                "tiles": [],
+                "units": [
+                    {
+                        "uid": 2,
+                        "type": "ScienceMech",
+                        "x": 5,
+                        "y": 2,
+                        "hp": 1,
+                        "max_hp": 2,
+                        "team": 1,
+                        "mech": true,
+                        "active": true,
+                        "weapons": ["Science_Pullmech", "Science_Shield"]
+                    }
+                ],
+                "grid_power": 7,
+                "spawning_tiles": [[5, 2]]
+            }"#;
+            let plan_json = r#"[
+                {
+                    "mech_uid": 2,
+                    "move_to": [5, 2],
+                    "weapon_id": "_REPAIR",
+                    "target": [5, 2]
+                }
+            ]"#;
+
+            let raw = score_plan(py, bridge_json, plan_json).expect("score_plan succeeds");
+            let scored: serde_json::Value = serde_json::from_str(&raw).expect("valid score JSON");
+
+            assert_eq!(
+                scored["alive_mech_hp"].as_i64(),
+                Some(1),
+                "repair should heal to 2, then spawn blocking should deal 1 damage"
+            );
+            assert_eq!(scored["dead_mechs"].as_i64(), Some(0));
+        });
+    }
 }

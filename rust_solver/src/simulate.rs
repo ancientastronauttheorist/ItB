@@ -741,9 +741,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         // Unit does NOT immediately catch fire — happens at end-of-turn.
     }
 
-    // Sand: weapon damage → smoke (fire weapon → fire tile instead)
+    // Sand: weapon/self damage -> smoke (fire weapon -> fire tile instead)
     let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Sand && source == DamageSource::Weapon {
+    if tile.terrain == Terrain::Sand && matches!(source, DamageSource::Weapon | DamageSource::SelfDamage) {
         tile.terrain = Terrain::Ground;
         // Note: fire_weapon flag not yet threaded; default to smoke.
         // Correct fire-on-sand requires knowing if weapon has FIRE flag.
@@ -4329,6 +4329,20 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
         assert!(board.tile(3, 4).smoke(), "Sand should become smoke from weapon damage");
         assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Sand should become ground");
+    }
+
+    #[test]
+    fn test_charge_recoil_on_sand_creates_smoke() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteBeetle);
+        add_enemy(&mut board, 1, 3, 5, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteBeetle, 3, 5);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (3, 4));
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Ramming recoil should consume sand");
+        assert!(board.tile(3, 4).smoke(), "Ramming recoil on sand should create smoke");
     }
 
     #[test]
