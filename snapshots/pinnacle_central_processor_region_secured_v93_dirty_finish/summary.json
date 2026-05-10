@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-10T18:04:20.625946",
+  "label": "pinnacle_central_processor_region_secured_v93_dirty_finish",
+  "turn": 4,
+  "grid_power": 3,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowlaser1_Boom",
+      "pos": [
+        7,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1_Boom",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Spider1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    }
+  ]
+}

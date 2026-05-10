@@ -1,0 +1,38 @@
+{
+  "run_id": "20260510_000847_773",
+  "turn": 2,
+  "sub_action": "attack",
+  "action_index": 2,
+  "mech_uid": 2,
+  "weapon": "Science_Pullmech",
+  "target": [
+    4,
+    3
+  ],
+  "grid_power_diff": null,
+  "building_hp_diffs": [
+    {
+      "x": 3,
+      "y": 3,
+      "field": "building_hp",
+      "predicted": 1,
+      "actual": 0,
+      "predicted_terrain": "building",
+      "actual_terrain": "rubble"
+    }
+  ],
+  "failure_db_id": "20260510_000847_773_m09_t02_per_sub_action_desync_attack_a2",
+  "classification": {
+    "top_category": "death",
+    "categories": [
+      "damage_amount",
+      "death",
+      "grid_power",
+      "status",
+      "terrain",
+      "tile_status"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

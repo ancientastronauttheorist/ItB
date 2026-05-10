@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-09T00:29:25.460384",
+    "last_steam_sync": "2026-05-10T16:00:36.495311",
     "last_steam_total": 70,
-    "last_steam_unlocked": 25
+    "last_steam_unlocked": 26
   },
   "achievements": {
     "rift_walkers": [
@@ -81,7 +81,7 @@
         "description": "Kill an enemy by pulling it into yourself with the Zenith Guard squad",
         "type": "single_battle",
         "global_unlock_pct": 33.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Defense Mech's Attraction Pulse to pull a 1-HP enemy into the mech. Collision kills the enemy. Leapers (1 HP) are ideal targets. Damaged Hornets also work.",
         "setup": "Find a Leaper or 1-HP enemy. Position Defense Mech in line.",
         "pitfalls": "Enemy must die from the collision. Pull damage alone might not be enough if enemy has more HP."

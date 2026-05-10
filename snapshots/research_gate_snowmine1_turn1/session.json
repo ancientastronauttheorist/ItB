@@ -6,46 +6,60 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_BoomBots",
+  "current_mission": "Mission_BotDefense",
   "islands_completed": [],
-  "mission_index": 9,
-  "last_mission_turn": 4,
-  "current_turn": 4,
-  "phase": "unknown",
+  "mission_index": 8,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "LaserMech",
-        "move_to": [
-          3,
-          2
-        ],
-        "weapon": "_REPAIR",
-        "target": [
-          3,
-          2
-        ],
-        "description": "LaserMech, move E5\u2192F5, repair"
-      },
       {
         "mech_uid": 1,
         "mech_type": "ChargeMech",
         "move_to": [
-          6,
+          3,
           6
         ],
         "weapon": "Brute_Beetle",
         "target": [
-          6,
-          5
+          4,
+          6
         ],
-        "description": "ChargeMech, move C4\u2192B2, fire Ramming Engines at C2"
+        "description": "ChargeMech, fire Ramming Engines at B4"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "LaserMech",
+        "move_to": [
+          5,
+          3
+        ],
+        "weapon": "Prime_Lasermech",
+        "target": [
+          5,
+          2
+        ],
+        "description": "LaserMech, move D5\u2192E3, fire Burst Beam at F3"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ScienceMech",
+        "move_to": [
+          2,
+          6
+        ],
+        "weapon": "Science_Pullmech",
+        "target": [
+          5,
+          6
+        ],
+        "description": "ScienceMech, move E6\u2192B6, fire Attract Shot at B3"
       }
     ],
-    "score": -51144.42840375219,
-    "turn": 4,
-    "input_fingerprint": "0:3,3:2|1:4,5:2|221:7,2:1|222:4,3:1|226:6,5:3|227:5,4:3|228:6,2:2|2:4,4:0"
+    "score": 134128.57142857142,
+    "turn": 1,
+    "input_fingerprint": "0:3,4:5|193:7,3:1|194:7,6:1|195:6,6:2|196:5,2:3|1:3,6:3|2:2,3:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -412,107 +426,6 @@
         "LaserMech, move D5\u2192E3, fire Burst Beam at F3",
         "ScienceMech, move E6\u2192B6, fire Attract Shot at B3"
       ]
-    },
-    {
-      "timestamp": "2026-05-10T16:37:00.070546",
-      "turn": 2,
-      "label": "solve",
-      "score": 122608.57142857133,
-      "actions": [
-        "LaserMech, fire Burst Beam at D3",
-        "ScienceMech, move B6\u2192D3, fire Attract Shot at C3",
-        "ChargeMech, move B4\u2192B6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T16:38:37.479462",
-      "turn": 3,
-      "label": "solve",
-      "score": 125938.57142857142,
-      "actions": [
-        "LaserMech, move E3\u2192E4, fire Burst Beam at E3",
-        "ChargeMech, move B6\u2192B4",
-        "ScienceMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T16:40:16.944723",
-      "turn": 4,
-      "label": "solve",
-      "score": 121913.57142857142,
-      "actions": [
-        "LaserMech, move E4\u2192G5, fire Burst Beam at G4",
-        "ScienceMech, move D3\u2192E4, fire Attract Shot at E3",
-        "ChargeMech, move B4\u2192B3, fire Ramming Engines at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T16:55:59.759637",
-      "turn": 1,
-      "label": "solve",
-      "score": 156450.0,
-      "actions": [
-        "LaserMech, move C5\u2192B4, fire Burst Beam at B3",
-        "ChargeMech, move D6\u2192C4, fire Ramming Engines at D4",
-        "ScienceMech, move F5\u2192E7, fire Shield Projector at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T16:58:04.929192",
-      "turn": 2,
-      "label": "solve",
-      "score": 151002.85714285728,
-      "actions": [
-        "ChargeMech, move D4\u2192A4, fire Ramming Engines at B4",
-        "LaserMech, move C4\u2192E3, fire Burst Beam at E2",
-        "ScienceMech, move E6\u2192D4, fire Attract Shot at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T17:17:25.513276",
-      "turn": 2,
-      "label": "note",
-      "message": "v93 live investigation: Mission_BoomBots Science_Pullmech killed Snowart1_Boom; missing Explodes=true/Explosive Decay caused unpredicted E5 building loss, Science death, Laser fire. Patched *_Boom intrinsic decay with forest-fire effects; regression passed. Residual: exact old-line replay predicts grid 3 while fresh bridge remains grid 4 after E5 rubble, likely grid-accounting/timing wrinkle to revisit if it recurs."
-    },
-    {
-      "timestamp": "2026-05-10T17:18:19.169721",
-      "turn": 3,
-      "label": "solve",
-      "score": 104708.57142857142,
-      "actions": [
-        "LaserMech, move E3\u2192E5, repair",
-        "ChargeMech, move A4\u2192C4, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T17:19:36.263468",
-      "turn": 4,
-      "label": "solve",
-      "score": -51144.42840375219,
-      "actions": [
-        "LaserMech, move E5\u2192F5, repair",
-        "ChargeMech, move C4\u2192B2, fire Ramming Engines at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T17:20:26.396731",
-      "turn": 4,
-      "label": "solve",
-      "score": -21523.714160272066,
-      "actions": [
-        "LaserMech, move E5\u2192G2, fire Burst Beam at F2",
-        "ChargeMech, move C4\u2192B2, fire Ramming Engines at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T18:02:09.907542",
-      "turn": 4,
-      "label": "solve",
-      "score": -51144.42840375219,
-      "actions": [
-        "LaserMech, move E5\u2192F5, repair",
-        "ChargeMech, move C4\u2192B2, fire Ramming Engines at C2"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -570,30 +483,6 @@
     ],
     [
       6,
-      3
-    ],
-    [
-      8,
-      1
-    ],
-    [
-      8,
-      2
-    ],
-    [
-      8,
-      3
-    ],
-    [
-      9,
-      1
-    ],
-    [
-      9,
-      2
-    ],
-    [
-      9,
       3
     ]
   ],
@@ -821,95 +710,6 @@
           6
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Prime_Lasermech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          5,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Beetle|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Brute_Beetle",
-        "target": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "damage_amount",
-        "death",
-        "grid_power",
-        "status",
-        "terrain",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Science_Pullmech|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "mech_died_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_Pullmech",
-        "target": [
-          4,
-          3
-        ]
-      }
     }
   ],
   "disabled_actions": [],
@@ -1025,59 +825,9 @@
       "slot": null,
       "mission_id": "Mission_BotDefense",
       "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Mine-Bot",
-            "hp": 1,
-            "move": 0,
-            "class_icons": [],
-            "confidence": 1.0
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Mine-Bot",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Mine-Bot",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Mine-Bot&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium",
-      "research_id": "a70ff0912035",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Bouncer2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_BoomBots",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Bouncer2 is already catalogued in known_types and current-board research_next reports NO_WORK after turn-1 re-solve; resolving stale behavior_novelty queue item before End Turn.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "missing_in_actual",
-        "diff_predicted": "present",
-        "diff_actual": "absent"
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "missing_in_actual",
       "diff_predicted": "present",
       "diff_actual": "absent",
@@ -1086,10 +836,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "61847f337f65fe6e",
-    "classes": "ggbrbbimmgggggimmiggggiggigrbgimgggggfggmgbggbggmgggggggmmggggmm",
-    "mission_index": 9,
-    "turn": 4
+    "hash": "f409507af0a93d40",
+    "classes": "mmmmbbbmmggggggmfgbggbggggiggwfggibggbigiggggggiggggggfgmmgfgggg",
+    "mission_index": 8,
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }

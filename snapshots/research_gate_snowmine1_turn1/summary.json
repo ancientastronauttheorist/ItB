@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-10T16:20:32.840576",
+  "label": "research_gate_snowmine1_turn1",
+  "turn": 1,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "Snowmine1",
+      "pos": [
+        7,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowmine1",
+      "pos": [
+        7,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "LaserMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Spider1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    }
+  ]
+}

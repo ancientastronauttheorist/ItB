@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-10T00:34:59.745114",
+  "label": "m01_region_secured_razor_bay_v90",
+  "turn": 3,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Leaper1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        7,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 2
+    }
+  ]
+}

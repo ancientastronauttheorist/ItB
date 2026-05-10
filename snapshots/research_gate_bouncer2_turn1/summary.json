@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-05-10T16:56:27.257385",
+  "label": "research_gate_bouncer2_turn1",
+  "turn": 1,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowart1_Boom",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1_Boom",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1_Boom",
+      "pos": [
+        7,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1_Boom",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer2",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 3
+    }
+  ]
+}
