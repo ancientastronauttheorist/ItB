@@ -673,7 +673,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::ACID.bits()), ..DEF };
     // 45: Science_Shield — Shield Projector
     w[45] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, range_min: 2, limited: 2,
-        flags: f(WeaponFlags::SHIELD.bits()), ..DEF };
+        flags: f(WeaponFlags::SHIELD.bits() | WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 46: Science_Confuse — Confusion Ray
     w[46] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Flip, range_max: 0, flags: C, ..DEF };
 

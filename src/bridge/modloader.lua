@@ -358,6 +358,11 @@ local function dump_state()
             if ok_s and smoke then tile.smoke = true end
             local ok_a, acid = pcall(function() return Board:IsAcid(pt) end)
             if ok_a and acid then tile.acid = true end
+            local ok_sh, shield = pcall(function() return Board:IsShield(pt) end)
+            if not ok_sh then
+                ok_sh, shield = pcall(function() return Board:IsShielded(pt) end)
+            end
+            if ok_sh and shield then tile.shield = true end
             local ok_fr, frozen = pcall(function() return Board:IsFrozen(pt) end)
             if ok_fr and frozen then tile.frozen = true end
             local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)

@@ -661,7 +661,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v91 - Diagnostic score_plan now applies spawn blocking after enemy attacks,
 # matching replay/project_plan and avoiding false-clean manual plan audits.
 # Pre-v91 corpus archived as failure_db_snapshot_sim_v90.jsonl.
-SIMULATOR_VERSION = 91
+# v92 - Shield Projector can target and protect buildings, including its
+# second line tile; building shields are consumed before HP/grid damage.
+# Pre-v92 corpus archived as failure_db_snapshot_sim_v91.jsonl.
+SIMULATOR_VERSION = 92
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1088,7 +1088,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v91 - Diagnostic score_plan now applies spawn blocking after enemy attacks,
 //   matching replay/project_plan and avoiding false-clean manual plan audits.
 //   Pre-v91 corpus archived as `failure_db_snapshot_sim_v90.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 91;
+// v92 - Shield Projector can target and protect buildings, including its
+//   second line tile; building shields are consumed before HP/grid damage.
+//   Pre-v92 corpus archived as `failure_db_snapshot_sim_v91.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 92;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

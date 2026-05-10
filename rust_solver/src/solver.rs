@@ -321,7 +321,7 @@ pub(crate) fn get_weapon_targets(
                     if dist < min_r { continue; }
                     if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
-                    if tile.terrain == Terrain::Building && tile.building_hp > 0 { continue; }
+                    if tile.terrain == Terrain::Building && tile.building_hp > 0 && !wdef.shield() { continue; }
                     targets.push((x, y));
                 }
             }
@@ -472,6 +472,13 @@ fn weapon_action_has_effect(
         }
         false
     };
+    let shieldable_at = |x: u8, y: u8| {
+        if let Some(idx) = board.unit_at(x, y) {
+            return !board.units[idx].shield();
+        }
+        let tile = board.tile(x, y);
+        tile.is_building() && !tile.shield()
+    };
 
     match wdef.weapon_type {
         WeaponType::Melee => {
@@ -511,7 +518,33 @@ fn weapon_action_has_effect(
             }
             false
         }
-        WeaponType::Artillery => unit_at(target.0, target.1) || adj_has_unit(target.0, target.1),
+        WeaponType::Artillery => {
+            if wdef.shield() {
+                if shieldable_at(target.0, target.1) {
+                    return true;
+                }
+                if let Some(dir) = cardinal_direction(mx, my, target.0, target.1) {
+                    if wdef.aoe_behind() {
+                        let (dx, dy) = DIRS[dir];
+                        let bx = target.0 as i8 + dx;
+                        let by = target.1 as i8 + dy;
+                        if in_bounds(bx, by) && shieldable_at(bx as u8, by as u8) {
+                            return true;
+                        }
+                    }
+                    if wdef.aoe_adjacent() {
+                        for &(dx, dy) in &DIRS {
+                            let ax = target.0 as i8 + dx;
+                            let ay = target.1 as i8 + dy;
+                            if in_bounds(ax, ay) && shieldable_at(ax as u8, ay as u8) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            unit_at(target.0, target.1) || adj_has_unit(target.0, target.1)
+        },
         WeaponType::SelfAoe => unit_at(mx, my) || adj_has_unit(mx, my),
         WeaponType::Charge => {
             // Charges forward until it hits something
@@ -1627,6 +1660,72 @@ mod top_k_tests {
                 a.0 == (2, 3) && a.1 == WId::RangedRocketA && a.2 == (4, 5)
             }),
             "Rocket artillery must not enumerate off-axis target C4 from E6"
+        );
+    }
+
+    #[test]
+    fn shield_projector_enumerates_building_defense_targets() {
+        // Zenith Guard Corporate HQ dirty-chain deep dive: Defense Mech must be
+        // able to click a threatened building directly, or the empty tile before
+        // it when Shield Projector's second line tile is the useful shield.
+        let mut direct = Board::default();
+        let idx = direct.add_unit(Unit {
+            uid: 2,
+            x: 4,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceShield as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        {
+            let tile = direct.tile_mut(2, 3);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+
+        let actions = enumerate_actions(&direct, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (4, 3) && a.1 == WId::ScienceShield && a.2 == (2, 3)
+            }),
+            "Shield Projector should be able to target the live building at C5"
+        );
+
+        let mut line_tile = Board::default();
+        let idx = line_tile.add_unit(Unit {
+            uid: 2,
+            x: 4,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceShield as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        {
+            let tile = line_tile.tile_mut(1, 3);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+
+        let actions = enumerate_actions(&line_tile, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (4, 3) && a.1 == WId::ScienceShield && a.2 == (2, 3)
+            }),
+            "Shield Projector should keep the empty C5 target when B5 is shielded by the second line tile"
         );
     }
 

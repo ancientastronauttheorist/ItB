@@ -130,6 +130,7 @@ class Unit:
     # Status effects (populated by bridge; inferred by save parser)
     shield: bool = False
     acid: bool = False
+    shield: bool = False
     frozen: bool = False
     fire: bool = False
     web: bool = False
@@ -480,6 +481,7 @@ class Board:
                 bt.on_fire = td.get("fire", False)
                 bt.smoke = td.get("smoke", False)
                 bt.acid = td.get("acid", False)
+                bt.shield = td.get("shield", False)
                 bt.frozen = td.get("frozen", False)
                 bt.cracked = td.get("cracked", False)
                 bt.has_pod = td.get("pod", td.get("has_pod", False))

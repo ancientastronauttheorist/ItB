@@ -220,6 +220,7 @@ pub struct JsonTile {
     pub fire: Option<bool>,
     pub smoke: Option<bool>,
     pub acid: Option<bool>,
+    pub shield: Option<bool>,
     pub frozen: Option<bool>,
     pub cracked: Option<bool>,
     pub pod: Option<bool>,
@@ -357,6 +358,7 @@ pub fn board_from_json(json_str: &str)
             if jt.fire.unwrap_or(false) { flags |= TileFlags::ON_FIRE; }
             if jt.smoke.unwrap_or(false) { flags |= TileFlags::SMOKE; }
             if jt.acid.unwrap_or(false) { flags |= TileFlags::ACID; }
+            if jt.shield.unwrap_or(false) { flags |= TileFlags::SHIELD; }
             if jt.frozen.unwrap_or(false) { flags |= TileFlags::FROZEN; }
             if jt.cracked.unwrap_or(false) { flags |= TileFlags::CRACKED; }
             if jt.pod.unwrap_or(false) || jt.has_pod.unwrap_or(false) { flags |= TileFlags::HAS_POD; }

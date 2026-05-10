@@ -663,16 +663,23 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            let hp_lost = damage.min(tile.building_hp);
-            tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
-            if tile.building_hp == 0 && !is_unique {
-                tile.terrain = Terrain::Rubble;
-            }
-            bldg_hp_lost = hp_lost;
-            result.buildings_damaged += hp_lost as i32;
-            result.grid_damage += hp_lost as i32;
-            if tile.building_hp == 0 {
-                result.buildings_lost += 1;
+            if tile.shield() {
+                tile.set_shield(false);
+            } else {
+                let hp_lost = damage.min(tile.building_hp);
+                tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
+                if tile.building_hp == 0 {
+                    tile.set_shield(false);
+                    if !is_unique {
+                        tile.terrain = Terrain::Rubble;
+                    }
+                }
+                bldg_hp_lost = hp_lost;
+                result.buildings_damaged += hp_lost as i32;
+                result.grid_damage += hp_lost as i32;
+                if tile.building_hp == 0 {
+                    result.buildings_lost += 1;
+                }
             }
         }
     }
@@ -1398,6 +1405,13 @@ pub fn apply_weapon_status_with_impact_occupancy(
             if matches!(tile.terrain, Terrain::Water | Terrain::Ground | Terrain::Rubble) {
                 tile.set_acid(true);
             }
+        }
+    }
+
+    if wdef.shield() {
+        let tile = board.tile_mut(x, y);
+        if tile.is_building() {
+            tile.set_shield(true);
         }
     }
 
@@ -3623,6 +3637,55 @@ mod tests {
         apply_damage(&mut board, 3, 3, 5, &mut result, DamageSource::Weapon);
         assert_eq!(board.units[idx].hp, 2); // no damage
         assert!(!board.units[idx].shield()); // shield consumed
+    }
+
+    #[test]
+    fn test_shielded_building_absorbs_damage_before_grid_loss() {
+        let mut board = make_test_board();
+        board.grid_power = 4;
+        {
+            let tile = board.tile_mut(3, 3);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+            tile.set_shield(true);
+        }
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 3).building_hp, 1);
+        assert!(!board.tile(3, 3).shield());
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.buildings_damaged, 0);
+
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 3).building_hp, 0);
+        assert_eq!(board.grid_power, 3);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(result.buildings_damaged, 1);
+    }
+
+    #[test]
+    fn test_shield_projector_shields_building_target_and_line_tile() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 5, 3, 2, WId::ScienceShield);
+        for &(x, y) in &[(3, 3), (2, 3)] {
+            let tile = board.tile_mut(x, y);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+
+        let result = simulate_attack(&mut board, mech_idx, WId::ScienceShield, (3, 3), &WEAPONS);
+
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "building target should be legal for Shield Projector"
+        );
+        assert!(board.tile(3, 3).shield(), "target building should gain a shield");
+        assert!(board.tile(2, 3).shield(), "second line tile should gain a shield");
+        assert_eq!(board.tile(3, 3).building_hp, 1);
+        assert_eq!(board.tile(2, 3).building_hp, 1);
     }
 
     #[test]
