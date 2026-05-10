@@ -1091,7 +1091,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v92 - Shield Projector can target and protect buildings, including its
 //   second line tile; building shields are consumed before HP/grid damage.
 //   Pre-v92 corpus archived as `failure_db_snapshot_sim_v91.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 92;
+// v93 - Mission_BoomBots `*_Boom` Pinnacle bots now use intrinsic Explosive
+//   Decay on death, splashing adjacent buildings/mechs like Volatile Vek.
+//   Pre-v93 corpus archived as `failure_db_snapshot_sim_v92.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 93;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

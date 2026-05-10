@@ -664,7 +664,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v92 - Shield Projector can target and protect buildings, including its
 # second line tile; building shields are consumed before HP/grid damage.
 # Pre-v92 corpus archived as failure_db_snapshot_sim_v91.jsonl.
-SIMULATOR_VERSION = 92
+# v93 - Mission_BoomBots `*_Boom` Pinnacle bots now use intrinsic Explosive
+# Decay on death, splashing adjacent buildings/mechs like Volatile Vek.
+# Pre-v93 corpus archived as failure_db_snapshot_sim_v92.jsonl.
+SIMULATOR_VERSION = 93
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

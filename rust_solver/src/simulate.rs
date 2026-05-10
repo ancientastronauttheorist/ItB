@@ -15,8 +15,8 @@ use crate::movement::{direction_between, cardinal_direction};
 /// Explosions caused by the Blast Psion aura do not recursively trigger the
 /// aura again; live captures show only the original death emits the burst.
 /// Volatile Vek's "Explosive Decay": 1 damage to all 4 adjacent tiles
-/// when it dies, for any cause. Bump-class damage (ignores armor, acid,
-/// shield, frozen — same rules the game applies to Volatile Guts).
+/// when it dies, for any cause. Bump-class unit damage ignores armor/acid,
+/// and the explosion ignites damaged forest tiles.
 ///
 /// Per `data/vek.json` #262 the base-game Volatile Vek explodes for 1
 /// damage. Matches the Blast Psion aura in shape but is unit-intrinsic
@@ -35,6 +35,10 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
         let nx = nx as u8;
         let ny = ny as u8;
 
+        let status_blocked = board.unit_at(nx, ny)
+            .map(|idx| board.units[idx].shield() || board.units[idx].frozen())
+            .unwrap_or(false);
+
         // Track adjacent Volatile Vek for the chain check — if this 1
         // damage kills one, it explodes too.
         let chain_idx = board.unit_at(nx, ny).and_then(|idx| {
@@ -45,11 +49,37 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
         });
 
         apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
+        apply_explosive_decay_tile_effects(board, nx, ny, status_blocked);
 
         if let Some(idx) = chain_idx {
             if board.units[idx].hp <= 0 {
                 apply_volatile_decay(board, nx, ny, result, depth + 1);
             }
+        }
+    }
+}
+
+fn apply_explosive_decay_tile_effects(board: &mut Board, x: u8, y: u8, status_blocked: bool) {
+    if board.tile(x, y).terrain != Terrain::Forest {
+        return;
+    }
+
+    let tile = board.tile_mut(x, y);
+    tile.terrain = Terrain::Ground;
+    tile.set_smoke(false);
+    tile.set_on_fire(true);
+
+    if let Some(idx) = board.unit_at(x, y) {
+        let target_is_immune_vek = board.fire_psion
+            && board.units[idx].receives_psion_aura()
+            && board.units[idx].type_name_str() != "Jelly_Fire1";
+        if !status_blocked
+            && board.units[idx].hp > 0
+            && board.units[idx].can_catch_fire()
+            && !(board.flame_shielding && board.units[idx].is_player())
+            && !target_is_immune_vek
+        {
+            board.units[idx].set_fire(true);
         }
     }
 }
@@ -6907,6 +6937,10 @@ mod tests {
         idx
     }
 
+    fn add_boom_bot(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        add_enemy_type(board, uid, x, y, hp, "Snowart1_Boom")
+    }
+
     fn add_armored_mech(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
         let idx = add_mech(board, uid, x, y, hp, WId::None);
         board.units[idx].flags.insert(UnitFlags::ARMOR);
@@ -6938,6 +6972,51 @@ mod tests {
         assert_eq!(board.units[e].hp, 2);
         assert_eq!(board.units[w].hp, 2);
         assert_eq!(result.mech_damage_taken, 4);
+    }
+
+    #[test]
+    fn test_boom_bot_death_uses_volatile_decay() {
+        // Mission_BoomBots' Snow*1_Boom pawns have Explosive Decay. Killing
+        // one by bump/Attract must splash adjacent buildings and mechs.
+        let mut board = make_test_board();
+        let v = add_boom_bot(&mut board, 1, 3, 3, 1);
+        let mech = add_mech(&mut board, 2, 4, 3, 3, WId::None);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        board.grid_power = 4;
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Bump);
+
+        assert_eq!(board.units[v].hp, 0, "boom bot killed");
+        assert_eq!(board.units[mech].hp, 2, "adjacent mech takes decay splash");
+        assert_eq!(board.tile(3, 4).building_hp, 0, "adjacent building takes decay splash");
+        assert_eq!(board.grid_power, 3, "explosion building damage drains grid");
+    }
+
+    #[test]
+    fn test_boom_bot_attract_death_matches_central_processor_capture() {
+        let mut board = make_test_board();
+        let boom = add_boom_bot(&mut board, 1, 4, 3, 1);
+        let science = add_mech(&mut board, 2, 4, 4, 2, WId::SciencePullmech);
+        let laser = add_mech(&mut board, 3, 5, 3, 3, WId::PrimeLasermech);
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 1;
+        board.tile_mut(5, 3).terrain = Terrain::Forest;
+        board.grid_power = 4;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 4, 3, 0, &mut result);
+
+        assert_eq!(board.units[boom].hp, 0, "blocked pull kills the 1-HP Boom Bot");
+        assert_eq!(board.units[science].hp, 0, "Science takes bump plus decay splash");
+        assert_eq!(board.units[laser].hp, 2, "Laser takes adjacent decay splash");
+        assert!(board.units[laser].fire(), "Laser catches fire from the ignited forest");
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Rubble);
+        assert_eq!(board.tile(3, 3).building_hp, 0);
+        assert_eq!(board.tile(5, 3).terrain, Terrain::Ground);
+        assert!(board.tile(5, 3).on_fire(), "forest becomes a burning ground tile");
+        assert_eq!(board.grid_power, 3);
     }
 
     #[test]
