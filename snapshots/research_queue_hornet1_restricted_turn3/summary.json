@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-05-11T00:10:23.182249",
+  "label": "research_queue_hornet1_restricted_turn3",
+  "turn": 3,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hornet1",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    }
+  ]
+}

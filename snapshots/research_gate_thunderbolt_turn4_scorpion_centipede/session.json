@@ -6,11 +6,11 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Cataclysm",
+  "current_mission": "Mission_Force",
   "islands_completed": [],
-  "mission_index": 8,
-  "last_mission_turn": 2,
-  "current_turn": 3,
+  "mission_index": 5,
+  "last_mission_turn": 4,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -19,47 +19,47 @@
         "mech_type": "PunchMech",
         "move_to": [
           4,
-          4
-        ],
-        "weapon": "Prime_Punchmech_A",
-        "target": [
-          5,
-          4
-        ],
-        "description": "PunchMech, fire Titan Fist at D3"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "TankMech",
-        "move_to": [
-          3,
           3
         ],
-        "weapon": "Unknown",
+        "weapon": "Prime_Punchmech",
         "target": [
-          255,
-          255
+          5,
+          3
         ],
-        "description": "TankMech, move E4\u2192E5"
+        "description": "PunchMech, move C3\u2192E4, fire Titan Fist at E3"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
           4,
-          5
+          4
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          4,
-          2
+          6,
+          4
         ],
-        "description": "ArtiMech, fire Artemis Artillery at F4"
+        "description": "ArtiMech, move F3\u2192D4, fire Artemis Artillery at D2"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "TankMech",
+        "move_to": [
+          6,
+          5
+        ],
+        "weapon": "Brute_Tankmech",
+        "target": [
+          6,
+          4
+        ],
+        "description": "TankMech, move D5\u2192C2, fire Taurus Cannon at D2"
       }
     ],
-    "score": 138110.0,
-    "turn": 2,
-    "input_fingerprint": "0:4,4:3|1:4,3:3|2:4,5:2|684:4,2:1|697:4,6:3|698:5,4:3"
+    "score": 143120.0,
+    "turn": 4,
+    "input_fingerprint": "0:5,5:3|1:3,4:2|2:5,2:1|678:5,3:3|679:6,5:3|680:6,2:3"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -363,85 +363,6 @@
         "ArtiMech, move F3\u2192D4, fire Artemis Artillery at D2",
         "TankMech, move D5\u2192C2, fire Taurus Cannon at D2"
       ]
-    },
-    {
-      "timestamp": "2026-05-11T00:08:16.463215",
-      "turn": 1,
-      "label": "solve",
-      "score": 210100.0,
-      "actions": [
-        "ArtiMech, move D5\u2192G5, fire Artemis Artillery at G3",
-        "TankMech, move E6\u2192E7, fire Taurus Cannon at E6",
-        "PunchMech, move F5\u2192E5, fire Titan Fist at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:09:06.683713",
-      "turn": 2,
-      "label": "solve",
-      "score": 209246.6666666669,
-      "actions": [
-        "PunchMech, move E3\u2192F3, fire Titan Fist at F2",
-        "TankMech, move E7\u2192D6",
-        "ArtiMech, move G5\u2192F5, fire Artemis Artillery at F1"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:09:56.112074",
-      "turn": 3,
-      "label": "solve",
-      "score": 221460.0,
-      "actions": [
-        "PunchMech, move F3\u2192F2, repair",
-        "TankMech, move D6\u2192D5, fire Taurus Cannon at C5",
-        "ArtiMech, fire Artemis Artillery at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:15:12.910561",
-      "turn": 4,
-      "label": "solve",
-      "score": 222145.0,
-      "actions": [
-        "TankMech, move D5\u2192D7, fire Taurus Cannon at C7",
-        "ArtiMech, move F5\u2192G5, fire Artemis Artillery at G3",
-        "PunchMech, move F2\u2192E1, fire Titan Fist at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:23:12.654716",
-      "turn": 1,
-      "label": "solve",
-      "score": 138300.0,
-      "actions": [
-        "PunchMech, move E6\u2192E4, fire Titan Fist at F4",
-        "ArtiMech, move B5\u2192C4, fire Artemis Artillery at F4",
-        "TankMech, move D5\u2192E4, fire Taurus Cannon at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:25:50.170394",
-      "turn": 2,
-      "label": "solve",
-      "score": 138110.0,
-      "actions": [
-        "PunchMech, fire Titan Fist at D3",
-        "TankMech, move E4\u2192E5",
-        "ArtiMech, fire Artemis Artillery at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:27:42.207989",
-      "turn": 3,
-      "label": "terrain_stage_change",
-      "mission_index": 8,
-      "mission": "Mission_Cataclysm",
-      "prev_turn": 2,
-      "curr_turn": 3,
-      "prev_hash": "3e0d1d448ec9d8af",
-      "curr_hash": "b95cedc4065cc261",
-      "tiles_changed": 16,
-      "threshold": 16
     }
   ],
   "recorded_post_enemy_turns": [
@@ -512,22 +433,6 @@
     [
       5,
       3
-    ],
-    [
-      6,
-      1
-    ],
-    [
-      6,
-      2
-    ],
-    [
-      6,
-      3
-    ],
-    [
-      8,
-      1
     ]
   ],
   "tags": [
@@ -731,74 +636,9 @@
           5
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Ranged_Artillerymech|attack",
-      "frequency": 1,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          3,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Brute_Tankmech|attack",
-      "frequency": 2,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Brute_Tankmech",
-        "target": [
-          4,
-          2
-        ]
-      }
     }
   ],
-  "disabled_actions": [
-    {
-      "weapon_id": "Brute_Tankmech",
-      "cause_pattern": "death|Brute_Tankmech|attack",
-      "expires_turn": 4,
-      "strategic_override": false
-    }
-  ],
+  "disabled_actions": [],
   "research_queue": [
     {
       "type": "PunchMech",
@@ -931,23 +771,13 @@
       "slot": null,
       "mission_id": "Mission_Force",
       "first_seen_turn": 4,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Scorpion1 is already catalogued in data/known_types.json; turn-4 fuzzy behavior-novelty queue came from a low-confidence status/damage desync after re-solve, and the live capture coordinate selected non-target tiles under Codex coordinate caveat.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "missing_in_actual",
-        "diff_predicted": "present",
-        "diff_actual": "absent"
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "missing_in_actual",
       "diff_predicted": "present",
       "diff_actual": "absent",
-      "severity": "medium",
-      "research_id": "82deca16ca47",
-      "last_kind": "enemy"
+      "severity": "medium"
     },
     {
       "type": "Centipede1",
@@ -957,70 +787,20 @@
       "mission_id": "Mission_Force",
       "first_seen_turn": 4,
       "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 2,
-        "diff_actual": 1
-      },
+      "status": "pending",
+      "result": null,
       "diff_field": "hp",
       "diff_predicted": 2,
       "diff_actual": 1,
       "severity": "low"
-    },
-    {
-      "type": "Hornet1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Crack",
-      "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Hornet",
-            "hp": 0,
-            "move": 5,
-            "class_icons": [
-              "flying"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Hornet",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hornet",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hornet&restrict_sr=1"
-          }
-        }
-      },
-      "diff_field": "alive",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "high",
-      "research_id": "8e4b5006cec1",
-      "last_kind": "enemy"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "b95cedc4065cc261",
-    "classes": "mmmgggswmmbgsbswmbbggbswmbbgssswcccccccccccccccccccccccccccccccc",
-    "mission_index": 8,
-    "turn": 3
+    "hash": "4c833a1f2062eb83",
+    "classes": "mbggsggmbbgsbbmmggggbmmggggggggsgbggggsssmgggsssmmgggsssmgssssss",
+    "mission_index": 5,
+    "turn": 4
   },
-  "terrain_stage_change_pending": true
+  "terrain_stage_change_pending": false
 }

@@ -6,10 +6,10 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Cataclysm",
+  "current_mission": "Mission_Crack",
   "islands_completed": [],
-  "mission_index": 8,
-  "last_mission_turn": 2,
+  "mission_index": 6,
+  "last_mission_turn": 3,
   "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
@@ -18,48 +18,48 @@
         "mech_uid": 0,
         "mech_type": "PunchMech",
         "move_to": [
-          4,
-          4
+          6,
+          2
         ],
-        "weapon": "Prime_Punchmech_A",
+        "weapon": "_REPAIR",
         "target": [
-          5,
-          4
+          6,
+          2
         ],
-        "description": "PunchMech, fire Titan Fist at D3"
+        "description": "PunchMech, move F3\u2192F2, repair"
       },
       {
         "mech_uid": 1,
         "mech_type": "TankMech",
         "move_to": [
           3,
-          3
+          4
         ],
-        "weapon": "Unknown",
+        "weapon": "Brute_Tankmech",
         "target": [
-          255,
-          255
+          3,
+          5
         ],
-        "description": "TankMech, move E4\u2192E5"
+        "description": "TankMech, move D6\u2192D5, fire Taurus Cannon at C5"
       },
       {
         "mech_uid": 2,
         "mech_type": "ArtiMech",
         "move_to": [
-          4,
-          5
+          3,
+          2
         ],
         "weapon": "Ranged_Artillerymech",
         "target": [
-          4,
-          2
+          3,
+          6
         ],
-        "description": "ArtiMech, fire Artemis Artillery at F4"
+        "description": "ArtiMech, fire Artemis Artillery at B5"
       }
     ],
-    "score": 138110.0,
-    "turn": 2,
-    "input_fingerprint": "0:4,4:3|1:4,3:3|2:4,5:2|684:4,2:1|697:4,6:3|698:5,4:3"
+    "score": 221460.0,
+    "turn": 3,
+    "input_fingerprint": "0:5,2:2|1:2,4:3|2:3,2:2|689:3,6:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -396,52 +396,6 @@
         "TankMech, move D6\u2192D5, fire Taurus Cannon at C5",
         "ArtiMech, fire Artemis Artillery at B5"
       ]
-    },
-    {
-      "timestamp": "2026-05-11T00:15:12.910561",
-      "turn": 4,
-      "label": "solve",
-      "score": 222145.0,
-      "actions": [
-        "TankMech, move D5\u2192D7, fire Taurus Cannon at C7",
-        "ArtiMech, move F5\u2192G5, fire Artemis Artillery at G3",
-        "PunchMech, move F2\u2192E1, fire Titan Fist at E2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:23:12.654716",
-      "turn": 1,
-      "label": "solve",
-      "score": 138300.0,
-      "actions": [
-        "PunchMech, move E6\u2192E4, fire Titan Fist at F4",
-        "ArtiMech, move B5\u2192C4, fire Artemis Artillery at F4",
-        "TankMech, move D5\u2192E4, fire Taurus Cannon at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:25:50.170394",
-      "turn": 2,
-      "label": "solve",
-      "score": 138110.0,
-      "actions": [
-        "PunchMech, fire Titan Fist at D3",
-        "TankMech, move E4\u2192E5",
-        "ArtiMech, fire Artemis Artillery at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-11T00:27:42.207989",
-      "turn": 3,
-      "label": "terrain_stage_change",
-      "mission_index": 8,
-      "mission": "Mission_Cataclysm",
-      "prev_turn": 2,
-      "curr_turn": 3,
-      "prev_hash": "3e0d1d448ec9d8af",
-      "curr_hash": "b95cedc4065cc261",
-      "tiles_changed": 16,
-      "threshold": 16
     }
   ],
   "recorded_post_enemy_turns": [
@@ -520,14 +474,6 @@
     [
       6,
       2
-    ],
-    [
-      6,
-      3
-    ],
-    [
-      8,
-      1
     ]
   ],
   "tags": [
@@ -760,42 +706,13 @@
           6
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "death"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "death|Brute_Tankmech|attack",
-      "frequency": 2,
-      "asymmetry": [
-        "enemy_survived_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Brute_Tankmech",
-        "target": [
-          4,
-          2
-        ]
-      }
     }
   ],
   "disabled_actions": [
     {
-      "weapon_id": "Brute_Tankmech",
-      "cause_pattern": "death|Brute_Tankmech|attack",
-      "expires_turn": 4,
+      "weapon_id": "Ranged_Artillerymech",
+      "cause_pattern": "death|Ranged_Artillerymech|attack",
+      "expires_turn": 6,
       "strategic_override": false
     }
   ],
@@ -977,50 +894,21 @@
       "slot": null,
       "mission_id": "Mission_Crack",
       "first_seen_turn": 3,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Hornet",
-            "hp": 0,
-            "move": 5,
-            "class_icons": [
-              "flying"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Hornet",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hornet",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hornet&restrict_sr=1"
-          }
-        }
-      },
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
       "diff_field": "alive",
       "diff_predicted": false,
       "diff_actual": true,
-      "severity": "high",
-      "research_id": "8e4b5006cec1",
-      "last_kind": "enemy"
+      "severity": "high"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "b95cedc4065cc261",
-    "classes": "mmmgggswmmbgsbswmbbggbswmbbgssswcccccccccccccccccccccccccccccccc",
-    "mission_index": 8,
+    "hash": "3e435dd722647ac9",
+    "classes": "gbbggbbggggggsgggbbggbbggsgggggggbbggbbcsggcccccgggggggggggggggg",
+    "mission_index": 6,
     "turn": 3
   },
-  "terrain_stage_change_pending": true
+  "terrain_stage_change_pending": false
 }

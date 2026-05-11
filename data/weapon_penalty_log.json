@@ -91,8 +91,8 @@
       "weapon_id": "Brute_Jetmech"
     },
     "death|Brute_Tankmech|attack": {
-      "count": 1,
-      "last_run_id": "20260424_011517_057",
+      "count": 3,
+      "last_run_id": "20260510_213059_819",
       "weapon_id": "Brute_Tankmech"
     },
     "death|Missiles_OneDmg|attack": {
@@ -114,6 +114,11 @@
       "count": 5,
       "last_run_id": "20260421_015818_989",
       "weapon_id": "Prime_ShieldBash"
+    },
+    "death|Ranged_Artillerymech|attack": {
+      "count": 1,
+      "last_run_id": "20260510_213059_819",
+      "weapon_id": "Ranged_Artillerymech"
     },
     "death|Ranged_Defensestrike|attack": {
       "count": 1,
