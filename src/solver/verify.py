@@ -671,7 +671,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # now overlay from save data and skip friendly unit damage while preserving beam
 # decay through the friendly tile.
 # Pre-v94 corpus archived as failure_db_snapshot_sim_v93.jsonl.
-SIMULATOR_VERSION = 95
+# v95 - Titan Fist powered loadouts (`Prime_Punchmech_A` / `_B` / `_AB`) now
+# overlay from save data; Dash / Dash+Damage use Charge semantics and record
+# Ramming Speed candidate kills at distance >=5. Pre-v95 corpus archived as
+# failure_db_snapshot_sim_v94.jsonl.
+# v96 - Taurus Cannon direct edge pushes and Artemis adjacent edge pushes no
+# longer add off-board bump damage; on-board blocker bumps remain intact.
+# Pre-v96 corpus archived as failure_db_snapshot_sim_v95.jsonl.
+SIMULATOR_VERSION = 96
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

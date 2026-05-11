@@ -81,6 +81,7 @@ def _get_logger(session: RunSession) -> DecisionLog:
 
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
+_SAFETY_WIDENING_TOP_K = 1000
 
 
 def _atomic_json_write(filepath: Path, data: dict) -> None:
@@ -3012,24 +3013,19 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 # Emergency safety widening: the top-1 entry path can miss
                 # lower-ranked clean plans when the scorer strongly favors
                 # tactics that still concede grid. Do a wider top-K pass only
-                # after the normal candidate is blocked. The second pass
-                # temporarily removes soft-disabled weapons from the search
-                # payload; it does not mutate the session blocklist.
+                # after the normal candidate is blocked. Keep soft-disabled
+                # weapons pruned here too: once a live desync proves a weapon
+                # unreliable, re-admitting it as "emergency clean" can hide
+                # the exact loss the blocklist was meant to prevent.
                 widening_attempts: list[dict] = []
-                wide_sources = [("top_k_safety", False)]
-                if session.disabled_actions:
-                    wide_sources.append(
-                        ("top_k_safety_ignore_soft_disables", True)
-                    )
-
-                for source, ignore_soft_disables in wide_sources:
+                for source, ignore_soft_disables in [("top_k_safety", False)]:
                     wide_bridge_data = dict(bridge_data)
                     wide_bridge_data.pop("eval_weights", None)
-                    if ignore_soft_disables:
-                        wide_bridge_data.pop("disabled_actions", None)
 
                     wide_raw = _rust.solve_top_k(
-                        _json.dumps(wide_bridge_data), time_limit, 500,
+                        _json.dumps(wide_bridge_data),
+                        time_limit,
+                        _SAFETY_WIDENING_TOP_K,
                     )
                     wide_specs = []
                     for idx, rust_result in enumerate(_json.loads(wide_raw) or []):

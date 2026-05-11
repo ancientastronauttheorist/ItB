@@ -1130,6 +1130,12 @@ const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
 };
 
+const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: false,
+    edge_bump_damage: false,
+};
+
 /// Push unit at (x, y) in direction. Damage+push are simultaneous; a
 /// corpse still pushes into static obstacles (building/mountain/edge) and
 /// takes/deals bump damage there. Exception: by default, a dead corpse pushed
@@ -1809,9 +1815,14 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         apply_weapon_status_with_impact_occupancy(
             board, hx, hy, wdef, occupied_at_impact,
         ); // status BEFORE push (unit still here)
+        let policy = if wdef.no_edge_bump_direct_push() {
+            NO_EDGE_BUMP_PUSH_POLICY
+        } else {
+            DEFAULT_PUSH_POLICY
+        };
         match wdef.push {
-            PushDir::Forward => apply_push(board, hx, hy, dir, result),
-            PushDir::Backward => apply_push(board, hx, hy, opposite_dir(dir), result),
+            PushDir::Forward => apply_push_with_policy(board, hx, hy, dir, result, policy),
+            PushDir::Backward => apply_push_with_policy(board, hx, hy, opposite_dir(dir), result, policy),
             _ => {}
         }
     } else if let Some((mx, my)) = mountain_hit {
@@ -1913,11 +1924,19 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             PushDir::Forward if wdef.aoe_center()  => {
                 if is_rocket_artillery(weapon_id) {
                     apply_rocket_center_push(board, tx, ty, dir, result);
+                } else if wdef.no_edge_bump_direct_push() {
+                    apply_push_with_policy(board, tx, ty, dir, result, NO_EDGE_BUMP_PUSH_POLICY);
                 } else {
                     apply_push(board, tx, ty, dir, result);
                 }
             }
-            PushDir::Backward if wdef.aoe_center() => apply_push(board, tx, ty, opposite_dir(dir), result),
+            PushDir::Backward if wdef.aoe_center() => {
+                if wdef.no_edge_bump_direct_push() {
+                    apply_push_with_policy(board, tx, ty, opposite_dir(dir), result, NO_EDGE_BUMP_PUSH_POLICY);
+                } else {
+                    apply_push(board, tx, ty, opposite_dir(dir), result);
+                }
+            }
             PushDir::Perpendicular => {
                 // Two side tiles outward. Perpendicular directions are
                 // (dir + 1) % 4 and (dir + 3) % 4; each side pushes outward
@@ -4089,6 +4108,25 @@ mod tests {
     }
 
     #[test]
+    fn test_taurus_edge_push_does_not_add_bump_damage() {
+        // Live regression: Easy Rift Walkers run 20260510_213059_819,
+        // R.S.T. Mission_Cataclysm turn 1. Taurus hit a Scorpion already on
+        // the west edge; the engine dealt weapon damage but no off-board bump.
+        let mut board = make_test_board();
+        let tank = add_mech(&mut board, 0, 4, 3, 3, WId::BruteTankmech);
+        let scorpion = add_enemy_type(&mut board, 684, 4, 0, 2, "Scorpion1");
+
+        let result = simulate_weapon(&mut board, tank, WId::BruteTankmech, 4, 0);
+
+        assert_eq!(
+            (board.units[scorpion].x, board.units[scorpion].y, board.units[scorpion].hp),
+            (4, 0, 1),
+            "Taurus edge hit should deal weapon damage only"
+        );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
     fn test_artemis_a_direct_building_damage_is_zero() {
         let mut board = make_test_board();
         board.grid_power = 5;
@@ -4119,6 +4157,26 @@ mod tests {
         assert_eq!(board.grid_power, 4);
         assert_eq!(result.grid_damage, 1);
         assert_eq!(result.buildings_bump_damaged, 1);
+    }
+
+    #[test]
+    fn test_artemis_adjacent_edge_push_does_not_bump_off_board() {
+        // Live regression: Easy Rift Walkers run 20260510_213059_819,
+        // R.S.T. Mission_Crack turn 3. Artemis targeted B5, pushing a Hornet
+        // on adjacent A5 into the edge; the engine left it alive at 1 HP.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedArtillerymech);
+        let hornet = add_enemy_type(&mut board, 689, 3, 7, 1, "Hornet1");
+        board.units[hornet].flags.insert(UnitFlags::FLYING);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedArtillerymech, 3, 6);
+
+        assert_eq!(
+            (board.units[hornet].x, board.units[hornet].y, board.units[hornet].hp),
+            (3, 7, 1),
+            "Artemis adjacent edge push should not add off-board bump damage"
+        );
+        assert_eq!(result.enemies_killed, 0);
     }
 
     // ── Ranged_Rocket: push-bump when target is killed by the rocket ─────────

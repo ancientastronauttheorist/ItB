@@ -1102,7 +1102,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   now overlay from save data; Dash / Dash+Damage use Charge semantics and
 //   record Ramming Speed candidate kills at distance >=5.
 //   Pre-v95 corpus archived as `failure_db_snapshot_sim_v94.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 95;
+// v96 - Taurus Cannon direct edge pushes and Artemis adjacent edge pushes no
+//   longer add off-board bump damage; on-board blocker bumps remain intact.
+//   Pre-v96 corpus archived as `failure_db_snapshot_sim_v95.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 96;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

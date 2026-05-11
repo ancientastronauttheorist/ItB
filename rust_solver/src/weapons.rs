@@ -109,6 +109,9 @@ bitflags! {
         /// Ally Immune upgrade; terrain/building damage and damage decay still
         /// occur normally.
         const FRIENDLY_IMMUNE = 1 << 29;
+        /// Direct projectile/center-hit pushes from this weapon do not deal
+        /// off-board edge bump damage. On-board blockers still bump normally.
+        const NO_EDGE_BUMP_DIRECT_PUSH = 1 << 30;
     }
 }
 
@@ -157,6 +160,7 @@ impl WeaponDef {
     pub fn building_immune(&self) -> bool { self.flags.contains(WeaponFlags::BUILDING_IMMUNE) }
     pub fn shield_self(&self) -> bool { self.flags.contains(WeaponFlags::SHIELD_SELF) }
     pub fn friendly_immune(&self) -> bool { self.flags.contains(WeaponFlags::FRIENDLY_IMMUNE) }
+    pub fn no_edge_bump_direct_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_DIRECT_PUSH) }
 }
 
 /// Default weapon def (no-op).
@@ -548,7 +552,8 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[15] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::Outward, limited: 1, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
 
     // 16: Brute_Tankmech — Taurus Cannon
-    w[16] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[16] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0,
+        flags: f(WeaponFlags::NO_EDGE_BUMP_DIRECT_PUSH.bits()), ..DEF };
     // 17: Brute_Jetmech — Aerial Bombs
     w[17] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, range_min: 2, range_max: 2, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
     // 140: Brute_Jetmech_A — Aerial Bombs with +1 Damage
@@ -618,10 +623,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 31: Ranged_Artillerymech — Artemis Artillery
     w[31] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Outward, range_min: 2,
-        flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+        flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 127: Ranged_Artillerymech_A — Artemis Artillery with Buildings Immune
     w[127] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Outward, range_min: 2,
-        flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
+        flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::BUILDING_IMMUNE.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 128: Deploy_TankShot — Stock Cannon
     w[128] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Forward, range_max: 0,
         flags: C, ..DEF };
