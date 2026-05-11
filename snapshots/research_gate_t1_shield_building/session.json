@@ -9,58 +9,10 @@
   "current_mission": "Mission_Shields",
   "islands_completed": [],
   "mission_index": 10,
-  "last_mission_turn": 4,
-  "current_turn": 4,
-  "phase": "unknown",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "LaserMech",
-        "move_to": [
-          3,
-          5
-        ],
-        "weapon": "Prime_Lasermech",
-        "target": [
-          4,
-          5
-        ],
-        "description": "LaserMech, move F5\u2192C5, fire Burst Beam at C4"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "ChargeMech",
-        "move_to": [
-          3,
-          2
-        ],
-        "weapon": "_REPAIR",
-        "target": [
-          3,
-          2
-        ],
-        "description": "ChargeMech, move D5\u2192F5, repair"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "ScienceMech",
-        "move_to": [
-          3,
-          3
-        ],
-        "weapon": "_REPAIR",
-        "target": [
-          3,
-          3
-        ],
-        "description": "ScienceMech, move G2\u2192E5, repair"
-      }
-    ],
-    "score": 74691.42857142858,
-    "turn": 4,
-    "input_fingerprint": "0:3,2:5|1:3,4:2|234:5,5:2|236:5,1:3|237:4,2:3|2:6,1:1"
-  },
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -527,50 +479,6 @@
         "LaserMech, move E5\u2192F5, repair",
         "ChargeMech, move C4\u2192B2, fire Ramming Engines at C2"
       ]
-    },
-    {
-      "timestamp": "2026-05-10T18:39:32.951770",
-      "turn": 1,
-      "label": "solve",
-      "score": 41021.42857142858,
-      "actions": [
-        "ScienceMech, move D6\u2192F5, fire Attract Shot at E5",
-        "LaserMech, move B6\u2192E6, fire Burst Beam at E5",
-        "ChargeMech, fire Ramming Engines at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T18:43:11.220925",
-      "turn": 2,
-      "label": "solve",
-      "score": 87798.0952380952,
-      "actions": [
-        "LaserMech, move E6\u2192D6, fire Burst Beam at C6",
-        "ChargeMech, move D5\u2192D4, fire Ramming Engines at C4",
-        "ScienceMech, move F5\u2192G3, fire Attract Shot at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T18:45:10.669186",
-      "turn": 3,
-      "label": "solve",
-      "score": 104676.42857142858,
-      "actions": [
-        "LaserMech, move D6\u2192F5, fire Burst Beam at F4",
-        "ChargeMech, move C4\u2192D5, repair",
-        "ScienceMech, move G3\u2192G2, fire Shield Projector at B2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-10T18:47:10.463394",
-      "turn": 4,
-      "label": "solve",
-      "score": 74691.42857142858,
-      "actions": [
-        "LaserMech, move F5\u2192C5, fire Burst Beam at C4",
-        "ChargeMech, move D5\u2192F5, repair",
-        "ScienceMech, move G2\u2192E5, repair"
-      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -652,18 +560,6 @@
     ],
     [
       9,
-      3
-    ],
-    [
-      10,
-      1
-    ],
-    [
-      10,
-      2
-    ],
-    [
-      10,
       3
     ]
   ],
@@ -980,126 +876,9 @@
           3
         ]
       }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status",
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Prime_Lasermech|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Prime_Lasermech",
-        "target": [
-          3,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Beetle|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Brute_Beetle",
-        "target": [
-          3,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Brute_Beetle|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 2,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Brute_Beetle",
-        "target": [
-          4,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "terrain",
-      "categories": [
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "terrain|Science_Shield|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "Science_Shield",
-        "target": [
-          6,
-          6
-        ]
-      }
     }
   ],
-  "disabled_actions": [
-    {
-      "weapon_id": "Brute_Beetle",
-      "cause_pattern": "damage_amount|Brute_Beetle|attack",
-      "expires_turn": 5,
-      "strategic_override": false
-    }
-  ],
+  "disabled_actions": [],
   "research_queue": [
     {
       "type": "LaserMech",
@@ -1277,67 +1056,17 @@
       "slot": null,
       "mission_id": "Mission_Shields",
       "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Shield Generator",
-            "hp": 1,
-            "move": null,
-            "class_icons": [],
-            "confidence": 0.9
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Shield Generator",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Shield+Generator",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Shield+Generator&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "b9b4f0709f8c",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Crab2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Shields",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Known observed pawn type; research_next returned NO_WORK after Shield Generator turn 1 actions, so this stale pending entry should not block advancing.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "status.fire",
-        "diff_predicted": false,
-        "diff_actual": true
-      },
-      "diff_field": "status.fire",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "medium"
+      "attempts": 0,
+      "status": "pending",
+      "result": null
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "5b3040be382a61a2",
-    "classes": "mmbgiiwimmbgibgggmbggggggggggggggggmggggggggggbgmgggggbgmmgggggg",
+    "hash": "3f4668b76aff7c59",
+    "classes": "mmbgiiwimmbgibgggmbfgggggggfgggggggmggfgggfgggbgmgggggbgmmgggggg",
     "mission_index": 10,
-    "turn": 4
+    "turn": 1
   },
   "terrain_stage_change_pending": false
 }

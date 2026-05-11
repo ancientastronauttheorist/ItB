@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-10T18:49:42.516446",
+  "label": "m10_region_secured_glacier_cliff_shield_mastery",
+  "turn": 4,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 3
+    }
+  ]
+}

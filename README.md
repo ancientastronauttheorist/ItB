@@ -2,9 +2,11 @@
 
 An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **25 / 70 achievements earned** (latest Steam sync on 2026-05-09; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
+Status: **27 / 70 achievements earned** (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
 
-Recent unlocks: **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. The previous Solver 2.0 live-test bumps picked up **Good Samaritan**, **Scorched Earth**, **Cryo Expert**, and **Pacifist**. See `TODO.md` for the checklist.
+Recent unlocks: **Get Over Here** and **Shield Mastery** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. The previous Solver 2.0 live-test bumps picked up **Good Samaritan**, **Scorched Earth**, **Cryo Expert**, and **Pacifist**. See `TODO.md` for the checklist.
+
+Current live-run target: continue the Zenith Guard run opportunistically toward **Glittering C-Beam**. Next-run reminder: prioritize **Ramming Speed** with Rift Walkers, since it is the highest-ranked locked achievement by global unlock rate.
 
 ---
 

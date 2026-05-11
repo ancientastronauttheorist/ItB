@@ -1,5 +1,10 @@
 {
   "signatures": {
+    "damage_amount|Brute_Beetle|attack": {
+      "count": 1,
+      "last_run_id": "20260510_000847_773",
+      "weapon_id": "Brute_Beetle"
+    },
     "damage_amount|Brute_Jetmech|attack": {
       "count": 3,
       "last_run_id": "20260423_131700_144",

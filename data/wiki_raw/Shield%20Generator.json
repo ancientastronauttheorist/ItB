@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/1awa8ay/into_the_breach_daily_discussion_shield_generator/",
+      "excerpt": "Reddit daily discussion identifies Shield Generator as a Pinnacle AE mission: starting/newly spawned units, including buildings, begin shielded; destroying the generator removes active shields.",
+      "confidence": 0.9
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/0/3461597549837414830/?ctp=3",
+      "excerpt": "Steam Tactical Compendium notes that destroying the Pinnacle Shield Generator removes shields from all units, with a Mafan exception discussed by players.",
+      "confidence": 0.7
+    }
+  ]
+}

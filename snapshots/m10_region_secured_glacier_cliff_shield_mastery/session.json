@@ -11,7 +11,7 @@
   "mission_index": 10,
   "last_mission_turn": 4,
   "current_turn": 4,
-  "phase": "unknown",
+  "phase": "combat_player",
   "active_solution": {
     "actions": [
       {

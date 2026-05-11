@@ -2,7 +2,7 @@
 
 ## Achievement Checklist
 
-25 of 70 completed (latest Steam sync on 2026-05-09; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 45 remaining, sorted by global unlock % (easiest first).
+27 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 43 remaining, sorted by global unlock % (easiest first).
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -16,9 +16,9 @@
 
 ### Tier 2: Yellow Zone (20-40% — requires specific squad play or setup)
 - [x] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
-- [ ] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
+- [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
 - [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
-- [ ] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
+- [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
 - [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
 - [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]

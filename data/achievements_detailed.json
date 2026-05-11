@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-10T16:00:36.495311",
+    "last_steam_sync": "2026-05-10T18:50:14.299843",
     "last_steam_total": 70,
-    "last_steam_unlocked": 26
+    "last_steam_unlocked": 27
   },
   "achievements": {
     "rift_walkers": [
@@ -101,7 +101,7 @@
         "description": "Block damage with a Shield 4 times in a single battle with Zenith Guard",
         "type": "single_battle",
         "global_unlock_pct": 28.4,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Defense Mech's shield upgrade to repeatedly shield buildings/mechs that are about to be hit. Bethany Jones or Mafan (Zoltan) provides free shields each turn. 4 shield blocks in one battle.",
         "setup": "Shield upgrade on Defense Mech. Bethany pilot. Let enemies target shielded units.",
         "pitfalls": "Each shield blocks only once \u2014 need to re-apply. Need 4 separate instances."
