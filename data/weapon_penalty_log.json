@@ -1,7 +1,7 @@
 {
   "signatures": {
     "damage_amount|Brute_Beetle|attack": {
-      "count": 1,
+      "count": 4,
       "last_run_id": "20260510_000847_773",
       "weapon_id": "Brute_Beetle"
     },

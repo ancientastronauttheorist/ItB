@@ -2,7 +2,7 @@
 
 ## Achievement Checklist
 
-27 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 43 remaining, sorted by global unlock % (easiest first).
+28 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 42 remaining, sorted by global unlock % (easiest first).
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -38,7 +38,7 @@
 - [ ] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths]
 - [ ] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
 - [ ] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs]
-- [ ] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
+- [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
 - [ ] Untouchable (14.5%) — Finish island without Mech Damage
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire [Steel Judoka]
 - [ ] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg]
@@ -77,7 +77,7 @@
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (25, from Steam sync)
+### Already Completed (28, from Steam sync + live Zenith Guard confirmations)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -93,6 +93,8 @@
 - [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 - [x] Overpowered (30.7%) — Overpower Grid twice when full
 - [x] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle  [Rusting Hulks]
+- [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself  [Zenith Guard]
+- [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle  [Zenith Guard]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
@@ -100,6 +102,7 @@
 - [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle  [Frozen Titans]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
+- [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser  [Zenith Guard]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons

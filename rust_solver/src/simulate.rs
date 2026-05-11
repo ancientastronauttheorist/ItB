@@ -2597,7 +2597,13 @@ fn sim_laser(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Op
             break;
         }
 
-        apply_damage(board, nxu, nyu, dmg, result, DamageSource::Weapon);
+        let skip_friendly = wdef.friendly_immune()
+            && board.unit_at(nxu, nyu)
+                .map(|idx| board.units[idx].is_player())
+                .unwrap_or(false);
+        if !skip_friendly {
+            apply_damage(board, nxu, nyu, dmg, result, DamageSource::Weapon);
+        }
         dmg = dmg.saturating_sub(1).max(1); // damage floor = 1
     }
 }
@@ -3734,6 +3740,21 @@ mod tests {
         assert_eq!(board.units[0].hp, 7); // (1,0): 10-3
         assert_eq!(board.units[1].hp, 8); // (2,0): 10-2
         assert_eq!(board.units[2].hp, 9); // (3,0): 10-1
+    }
+
+    #[test]
+    fn test_laser_ally_immune_skips_friendly_damage_but_decays() {
+        let mut board = make_test_board();
+        add_enemy(&mut board, 1, 1, 0, 10);
+        let ally = add_mech(&mut board, 2, 2, 0, 3, WId::SciencePullmech);
+        add_enemy(&mut board, 3, 3, 0, 10);
+
+        let laser = add_mech(&mut board, 0, 0, 0, 3, WId::PrimeLasermechA);
+        let _ = simulate_weapon(&mut board, laser, WId::PrimeLasermechA, 1, 0);
+
+        assert_eq!(board.units[0].hp, 7, "first enemy takes 3 damage");
+        assert_eq!(board.units[ally].hp, 3, "ally is not damaged by Ally Immune");
+        assert_eq!(board.units[2].hp, 9, "beam still decays through ally tile");
     }
 
     #[test]

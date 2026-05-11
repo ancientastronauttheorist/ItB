@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-05-10T19:10:33.961891",
+  "label": "research_queue_peek_t1_spiderling_egg",
+  "turn": 1,
+  "grid_power": 3,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowart1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowtank1",
+      "pos": [
+        7,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        2,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Spider1",
+      "pos": [
+        3,
+        7
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        7,
+        3
+      ],
+      "hp": 2
+    }
+  ]
+}

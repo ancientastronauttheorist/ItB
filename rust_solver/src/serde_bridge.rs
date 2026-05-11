@@ -170,6 +170,7 @@ fn flag_from_name(name: &str) -> Option<WeaponFlags> {
         "CHARGE" => Some(WeaponFlags::CHARGE),
         "FLYING_CHARGE" => Some(WeaponFlags::FLYING_CHARGE),
         "PUSH_SELF" => Some(WeaponFlags::PUSH_SELF),
+        "FRIENDLY_IMMUNE" => Some(WeaponFlags::FRIENDLY_IMMUNE),
         "PATH_DAMAGE" => Some(WeaponFlags::PATH_DAMAGE),
         _ => None,
     }

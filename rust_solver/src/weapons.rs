@@ -105,6 +105,10 @@ bitflags! {
         /// Weapon applies Shield to the firing unit as part of its effect.
         /// Used by Repulse's Shield Self upgrade.
         const SHIELD_SELF = 1 << 28;
+        /// Direct weapon damage skips player-side units. Used by Burst Beam's
+        /// Ally Immune upgrade; terrain/building damage and damage decay still
+        /// occur normally.
+        const FRIENDLY_IMMUNE = 1 << 29;
     }
 }
 
@@ -152,6 +156,7 @@ impl WeaponDef {
     pub fn path_damage(&self) -> bool { self.flags.contains(WeaponFlags::PATH_DAMAGE) }
     pub fn building_immune(&self) -> bool { self.flags.contains(WeaponFlags::BUILDING_IMMUNE) }
     pub fn shield_self(&self) -> bool { self.flags.contains(WeaponFlags::SHIELD_SELF) }
+    pub fn friendly_immune(&self) -> bool { self.flags.contains(WeaponFlags::FRIENDLY_IMMUNE) }
 }
 
 /// Default weapon def (no-op).
@@ -456,9 +461,15 @@ pub enum WId {
     BlobberAtkB = 143,
     /// Blob Leader's Eruptive Guts: 1 self damage, 2 damage to cardinal adjacent tiles.
     BlobAtkB = 144,
+    /// Burst Beam with Ally Immune powered.
+    PrimeLasermechA = 145,
+    /// Burst Beam with +1 Damage powered.
+    PrimeLasermechB = 146,
+    /// Burst Beam with Ally Immune and +1 Damage powered.
+    PrimeLasermechAB = 147,
 }
 
-pub const WEAPON_COUNT: usize = 145;
+pub const WEAPON_COUNT: usize = 148;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -475,6 +486,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[2] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 3: Prime_Lasermech — Burst Beam
     w[3] = WeaponDef { weapon_type: WeaponType::Laser, damage: 3, range_max: 0, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    // 145-147: Prime_Lasermech upgrades — Burst Beam.
+    w[145] = WeaponDef { weapon_type: WeaponType::Laser, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
+    w[146] = WeaponDef { weapon_type: WeaponType::Laser, damage: 4, range_max: 0,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[147] = WeaponDef { weapon_type: WeaponType::Laser, damage: 4, range_max: 0,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
     // 4: Prime_ShieldBash — Spartan Shield (passive self-effect).
     // Empirically does 0 damage and no push: bridge dispatches it with target
     // (255,255) = no-target sentinel, and every desync shows target alive +
@@ -1097,6 +1115,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Punchmech" => WId::PrimePunchmech,
         "Prime_Lightning" => WId::PrimeLightning,
         "Prime_Lasermech" => WId::PrimeLasermech,
+        "Prime_Lasermech_A" => WId::PrimeLasermechA,
+        "Prime_Lasermech_B" => WId::PrimeLasermechB,
+        "Prime_Lasermech_AB" => WId::PrimeLasermechAB,
         "Prime_ShieldBash" => WId::PrimeShieldBash,
         "Prime_Shift" => WId::PrimeShift,
         "Prime_Flamethrower" => WId::PrimeFlamethrower,
@@ -1260,6 +1281,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimePunchmech => "Prime_Punchmech",
         WId::PrimeLightning => "Prime_Lightning",
         WId::PrimeLasermech => "Prime_Lasermech",
+        WId::PrimeLasermechA => "Prime_Lasermech_A",
+        WId::PrimeLasermechB => "Prime_Lasermech_B",
+        WId::PrimeLasermechAB => "Prime_Lasermech_AB",
         WId::PrimeShieldBash => "Prime_ShieldBash",
         WId::PrimeShift => "Prime_Shift",
         WId::PrimeFlamethrower => "Prime_Flamethrower",
@@ -1506,7 +1530,7 @@ pub fn weapon_name(id: WId) -> &'static str {
     match id {
         WId::PrimePunchmech => "Titan Fist",
         WId::PrimeLightning => "Chain Whip",
-        WId::PrimeLasermech => "Burst Beam",
+        WId::PrimeLasermech | WId::PrimeLasermechA | WId::PrimeLasermechB | WId::PrimeLasermechAB => "Burst Beam",
         WId::PrimeShieldBash => "Shield Bash",
         WId::PrimeShift => "Vice Fist",
         WId::PrimeFlamethrower => "Flamethrower",

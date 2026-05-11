@@ -108,6 +108,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="no friendly damage",
         upgrade_b="+1 starting damage (total 4)",
     ),
+    "Prime_Lasermech_A": WeaponDef(
+        name="Burst Beam", weapon_type="laser",
+        damage=3, range_max=0, targets_allies=True,
+        upgrade_a="no friendly damage",
+        upgrade_b="+1 starting damage (total 4)",
+    ),
+    "Prime_Lasermech_B": WeaponDef(
+        name="Burst Beam", weapon_type="laser",
+        damage=4, range_max=0, targets_allies=True,
+        upgrade_a="no friendly damage",
+        upgrade_b="+1 starting damage (total 4)",
+    ),
+    "Prime_Lasermech_AB": WeaponDef(
+        name="Burst Beam", weapon_type="laser",
+        damage=4, range_max=0, targets_allies=True,
+        upgrade_a="no friendly damage",
+        upgrade_b="+1 starting damage (total 4)",
+    ),
     "Prime_ShieldBash": WeaponDef(
         name="Spartan Shield", weapon_type="melee",
         damage=0, push="none",

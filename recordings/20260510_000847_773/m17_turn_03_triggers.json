@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-10T20:48:47.710267",
+  "run_id": "20260510_000847_773",
+  "mission_index": 17,
+  "turn": 3,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_destroyed",
+        "tier": 6,
+        "severity": "critical",
+        "details": "ChargeMech destroyed (HP=0)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

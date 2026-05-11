@@ -1094,7 +1094,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v93 - Mission_BoomBots `*_Boom` Pinnacle bots now use intrinsic Explosive
 //   Decay on death, splashing adjacent buildings/mechs like Volatile Vek.
 //   Pre-v93 corpus archived as `failure_db_snapshot_sim_v92.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 93;
+// v94 - Burst Beam powered Ally Immune loadouts (`Prime_Lasermech_A` / `_AB`)
+//   now overlay from save data and skip friendly unit damage while preserving
+//   beam decay through the friendly tile.
+//   Pre-v94 corpus archived as `failure_db_snapshot_sim_v93.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 94;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

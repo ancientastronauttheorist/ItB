@@ -667,7 +667,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v93 - Mission_BoomBots `*_Boom` Pinnacle bots now use intrinsic Explosive
 # Decay on death, splashing adjacent buildings/mechs like Volatile Vek.
 # Pre-v93 corpus archived as failure_db_snapshot_sim_v92.jsonl.
-SIMULATOR_VERSION = 93
+# v94 - Burst Beam powered Ally Immune loadouts (`Prime_Lasermech_A` / `_AB`)
+# now overlay from save data and skip friendly unit damage while preserving beam
+# decay through the friendly tile.
+# Pre-v94 corpus archived as failure_db_snapshot_sim_v93.jsonl.
+SIMULATOR_VERSION = 94
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

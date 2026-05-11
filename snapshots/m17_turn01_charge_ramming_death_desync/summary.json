@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-05-10T20:20:42.580901",
+  "label": "m17_turn01_charge_ramming_death_desync",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        1,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Storm_Generator",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Spider2",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Digger1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}
