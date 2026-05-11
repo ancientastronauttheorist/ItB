@@ -128,7 +128,7 @@ evaluation weights when targeting that achievement.
 - **Requirement:** Kill an enemy 5 or more tiles away with a Dash Punch with the Rift Walkers squad.
 - **Squad:** Rift Walkers (required)
 - **Strategy:** The Combat Mech's Titan Fist has a Dash upgrade that lets it charge any distance before punching. The mech must start 5+ tiles away from the target and dash to kill it. Target must die from the punch (2 base damage).
-- **Bot approach:** Requires Dash upgrade on Titan Fist (1 reactor core). The solver should look for enemies with 2 HP or less that are 5+ tiles in a straight line from the Combat Mech. Heavily reward this scenario.
+- **Bot approach:** Requires Dash upgrade on Titan Fist (2 reactor cores per shipped Lua). The solver should look for enemies with 2 HP or less that are 5+ tiles in a straight line from the Combat Mech. Heavily reward this scenario.
 - **Key weapons:** Titan Fist with Dash upgrade (Upgrade I)
 - **Ideal setup:** Normal difficulty, first island. Get Dash upgrade ASAP. Look for long open rows/columns.
 - **Estimated difficulty for bot:** Medium

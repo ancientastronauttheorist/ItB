@@ -6,7 +6,7 @@ Status: **28 / 70 achievements earned** (latest Steam sync on 2026-05-10; refres
 
 Recent unlocks: **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. The previous Solver 2.0 live-test bumps picked up **Good Samaritan**, **Scorched Earth**, **Cryo Expert**, and **Pacifist**. See `TODO.md` for the checklist.
 
-Current live-run milestone: the Zenith Guard run unlocked **Glittering C-Beam** on Detritus after simulator v94 taught Burst Beam's Ally Immune upgrade. Next target selection is pending a fresh global-ranking check; next-run reminder: keep **Ramming Speed** with Rift Walkers in mind.
+Current live-run milestone: **Ramming Speed** hunt is active with Rift Walkers on Easy + Advanced Edition. Simulator v95 now models Titan Fist's powered Dash Punch loadouts so the solver can pursue 5+ tile Dash Punch kills without manual overrides.
 
 ---
 

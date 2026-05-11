@@ -35,6 +35,9 @@ TERRAIN_MAP = {
 }
 
 _MODELED_UPGRADED_WEAPONS = {
+    "Prime_Punchmech_A",
+    "Prime_Punchmech_B",
+    "Prime_Punchmech_AB",
     "Prime_Lasermech_A",
     "Prime_Lasermech_B",
     "Prime_Lasermech_AB",

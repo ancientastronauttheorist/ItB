@@ -10,7 +10,7 @@
 | Artillery Mech | Ranged | 2 | 3 | Artemis Artillery | 1 | Artillery strike, damage tile + push adjacent |
 
 **Weapon Upgrades:**
-- Titan Fist: U1: Dash -- charge any distance before punching (1 core) | U2: +2 Damage (1 core)
+- Titan Fist: U1: Dash -- charge any distance before punching (2 cores) | U2: +2 Damage (3 cores)
 - Taurus Cannon: U1: +1 Damage (1 core) | U2: +1 Damage (1 core)
 - Artemis Artillery: U1: Buildings Immune (1 core) | U2: +2 Damage (1 core)
 

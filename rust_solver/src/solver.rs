@@ -681,6 +681,45 @@ fn push_hits_building(x: u8, y: u8, direction: usize, board: &Board) -> bool {
     board.tile(nx as u8, ny as u8).is_building()
 }
 
+fn charge_first_hit(
+    board: &Board,
+    origin: (u8, u8),
+    target: (u8, u8),
+    wdef: &WeaponDef,
+) -> Option<((u8, u8), u8, Option<usize>)> {
+    let dir = cardinal_direction(origin.0, origin.1, target.0, target.1)?;
+    let (dx, dy) = DIRS[dir];
+    for i in 1..8i8 {
+        let px = origin.0 as i8 + dx * i;
+        let py = origin.1 as i8 + dy * i;
+        if !in_bounds(px, py) { break; }
+        let x = px as u8;
+        let y = py as u8;
+        let tile = board.tile(x, y);
+        if tile.terrain == Terrain::Mountain { break; }
+        if tile.is_building() { return Some(((x, y), i as u8, None)); }
+        if !wdef.flying_charge() && tile.terrain.is_deadly_ground() { break; }
+        if let Some(idx) = board.unit_at(x, y) {
+            return Some(((x, y), i as u8, Some(idx)));
+        }
+    }
+    None
+}
+
+fn direct_weapon_damage_would_kill(unit: &Unit, wdef: &WeaponDef) -> bool {
+    if unit.shield() || unit.frozen() {
+        return false;
+    }
+    let mut damage = wdef.damage as i8;
+    if unit.armor() && damage > 0 {
+        damage -= 1;
+    }
+    if unit.acid() {
+        damage *= 2;
+    }
+    damage >= unit.hp
+}
+
 fn prune_actions(
     board: &Board,
     mech_idx: usize,
@@ -832,6 +871,30 @@ fn prune_actions(
                         }
                     }
                     _ => {}
+                }
+            }
+
+            if wdef.weapon_type == WeaponType::Charge {
+                if let Some((_hit, distance, Some(idx))) =
+                    charge_first_hit(board, attack_origin, target, wdef)
+                {
+                    let hit_unit = &board.units[idx];
+                    if hit_unit.is_enemy() {
+                        s += 10;
+                        if matches!(
+                            weapon_id,
+                            WId::PrimePunchmechA | WId::PrimePunchmechAB
+                        ) && distance >= 5
+                        {
+                            s += if direct_weapon_damage_would_kill(hit_unit, wdef) {
+                                900
+                            } else {
+                                120
+                            };
+                        }
+                    } else if hit_unit.is_player() {
+                        s -= 300;
+                    }
                 }
             }
         }
@@ -1524,6 +1587,45 @@ mod top_k_tests {
         assert!(!actions.iter().any(|a| {
             a.1 == WId::MissilesOneDmg && a.2 == (1, 3)
         }));
+    }
+
+    #[test]
+    fn titan_fist_dash_enumerates_direction_selector_for_long_target() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 0,
+            x: 1,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::PrimePunchmechA as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 100,
+            x: 6,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (1, 3) && a.1 == WId::PrimePunchmechA && a.2 == (2, 3)
+            }),
+            "Dash Punch should click the adjacent east direction selector"
+        );
     }
 
     #[test]

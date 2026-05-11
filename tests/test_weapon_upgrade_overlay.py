@@ -150,6 +150,44 @@ def test_artemis_buildings_immune_overlay_from_save(monkeypatch):
     assert bridge_data["units"][0]["weapons"] == ["Ranged_Artillerymech_A"]
 
 
+def test_titan_fist_dash_overlay_from_save(monkeypatch):
+    bridge_data = {
+        "units": [
+            {
+                "uid": 0,
+                "type": "PunchMech",
+                "mech": True,
+                "weapons": ["Prime_Punchmech"],
+            }
+        ]
+    }
+
+    class FakeState:
+        weapons = [
+            "Prime_Punchmech_A",
+            "",
+            "Brute_Tankmech",
+            "",
+            "Ranged_Artillerymech",
+            "",
+        ]
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+    assert updates == [{
+        "uid": 0,
+        "slot": 0,
+        "base": "Prime_Punchmech",
+        "upgraded": "Prime_Punchmech_A",
+    }]
+    assert bridge_data["units"][0]["weapons"] == ["Prime_Punchmech_A"]
+
+
 def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
     for upgraded in ("Ranged_Rocket_A", "Ranged_Rocket_B", "Ranged_Rocket_AB"):
         bridge_data = {

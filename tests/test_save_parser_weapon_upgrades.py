@@ -57,6 +57,57 @@ def test_extract_mission_state_overlays_modeled_weapon_mods():
     assert mission.pawns[0].primary_weapon == "Ranged_Rocket_A"
 
 
+def test_titan_fist_powered_mods_overlay():
+    mission = extract_mission_state(
+        {"sMission": "Mission_Test"},
+        {
+            "pawn_count": 3,
+            "pawn1": {
+                "id": 0,
+                "type": "PunchMech",
+                "location": Point(1, 1),
+                "health": 3,
+                "max_health": 3,
+                "iTeamId": 1,
+                "mech": True,
+                "primary": "Prime_Punchmech",
+                "primary_mod1": [2, 2],
+                "primary_mod2": [0, 0, 0],
+            },
+            "pawn2": {
+                "id": 1,
+                "type": "PunchMech",
+                "location": Point(2, 1),
+                "health": 3,
+                "max_health": 3,
+                "iTeamId": 1,
+                "mech": True,
+                "primary": "Prime_Punchmech",
+                "primary_mod1": [0, 0],
+                "primary_mod2": [3, 3, 3],
+            },
+            "pawn3": {
+                "id": 2,
+                "type": "PunchMech",
+                "location": Point(3, 1),
+                "health": 3,
+                "max_health": 3,
+                "iTeamId": 1,
+                "mech": True,
+                "primary": "Prime_Punchmech",
+                "primary_mod1": [2, 2],
+                "primary_mod2": [3, 3, 3],
+            },
+        },
+    )
+
+    assert [p.primary_weapon for p in mission.pawns] == [
+        "Prime_Punchmech_A",
+        "Prime_Punchmech_B",
+        "Prime_Punchmech_AB",
+    ]
+
+
 def test_load_game_state_overlays_squad_pawn_mods(tmp_path, monkeypatch):
     profile_dir = tmp_path / "profile_Test"
     profile_dir.mkdir()

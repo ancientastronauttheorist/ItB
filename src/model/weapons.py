@@ -96,6 +96,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+dash (charge before punch)",
         upgrade_b="+2 damage (total 4)",
     ),
+    "Prime_Punchmech_A": WeaponDef(
+        name="Titan Fist", weapon_type="charge",
+        damage=2, push="forward", charge=True, range_max=0,
+        upgrade_a="+dash (charge before punch)",
+        upgrade_b="+2 damage (total 4)",
+    ),
+    "Prime_Punchmech_B": WeaponDef(
+        name="Titan Fist", weapon_type="melee",
+        damage=4, push="forward",
+        upgrade_a="+dash (charge before punch)",
+        upgrade_b="+2 damage (total 4)",
+    ),
+    "Prime_Punchmech_AB": WeaponDef(
+        name="Titan Fist", weapon_type="charge",
+        damage=4, push="forward", charge=True, range_max=0,
+        upgrade_a="+dash (charge before punch)",
+        upgrade_b="+2 damage (total 4)",
+    ),
     "Prime_Lightning": WeaponDef(
         name="Chain Whip", weapon_type="melee",
         damage=2, chain=True, targets_allies=True,

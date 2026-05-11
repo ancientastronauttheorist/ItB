@@ -1571,7 +1571,7 @@ pub fn simulate_weapon_with(
             }
         },
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
-        WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
+        WeaponType::Charge => sim_charge(board, attacker_idx, weapon_id, wdef, attack_dir, &mut result),
         WeaponType::Leap => sim_leap(board, attacker_idx, weapon_id, wdef, target_x, target_y, &mut result),
         WeaponType::Laser => sim_laser(board, ax, ay, wdef, attack_dir, &mut result),
         WeaponType::HealAll => sim_heal_all(board, &mut result),
@@ -2343,7 +2343,7 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
 
 // ── Charge ───────────────────────────────────────────────────────────────────
 
-fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_charge(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
     let dir = match attack_dir {
         Some(d) => d,
         None => return,
@@ -2410,6 +2410,9 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
     // Damage hit target. Self-damage is only taken on impact (empty-tile
     // charges deal no recoil — see outer simulate() for the Charge skip).
     if let Some((hx, hy)) = hit {
+        let distance = (hx as i8 - ax as i8).unsigned_abs()
+            + (hy as i8 - ay as i8).unsigned_abs();
+        let kills_before = result.enemies_killed;
         let occupied_at_impact = board.unit_at(hx, hy).is_some();
         apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
         apply_weapon_status_with_impact_occupancy(
@@ -2422,6 +2425,15 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
             let ax = board.units[attacker_idx].x;
             let ay = board.units[attacker_idx].y;
             apply_damage(board, ax, ay, wdef.self_damage, result, DamageSource::SelfDamage);
+        }
+        if matches!(weapon_id, WId::PrimePunchmechA | WId::PrimePunchmechAB)
+            && distance >= 5
+            && result.enemies_killed > kills_before
+        {
+            result.events.push(format!(
+                "achievement_ramming_speed_dash_punch_kill:distance:{}:target:{}:{}",
+                distance, hx, hy
+            ));
         }
     }
 }
@@ -3571,6 +3583,39 @@ mod tests {
         // Mech HP unchanged (no self-damage on a plain Titan Fist hit on
         // empty ground).
         assert_eq!(board.units[mech_idx].hp, 5);
+    }
+
+    #[test]
+    fn test_titan_fist_dash_punch_charges_to_target_and_records_ramming_speed() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 3, 3, WId::PrimePunchmechA);
+        let enemy_idx = add_enemy(&mut board, 1, 6, 3, 2);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 2, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert!(board.units[enemy_idx].hp <= 0, "Dash Punch should kill the 2 HP target");
+        assert_eq!(result.enemies_killed, 1);
+        assert!(
+            result.events.iter().any(|e| {
+                e == "achievement_ramming_speed_dash_punch_kill:distance:5:target:6:3"
+            }),
+            "Expected Ramming Speed event, got {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_titan_fist_ab_dash_punch_uses_damage_upgrade() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 3, 3, WId::PrimePunchmechAB);
+        let enemy_idx = add_enemy(&mut board, 1, 6, 3, 4);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechAB, 2, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert!(board.units[enemy_idx].hp <= 0, "AB Dash Punch should deal 4 damage");
+        assert_eq!(result.enemies_killed, 1);
     }
 
     /// Reproduction via the bridge JSON path — the failing run actually

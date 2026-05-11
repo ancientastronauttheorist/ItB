@@ -81,6 +81,9 @@ def check(name, cond, *details):
 
 # Test 1: classify_weapon coverage
 check("classify normal", classify_weapon("Prime_Punchmech") == "normal")
+check("classify Titan Fist Dash", classify_weapon("Prime_Punchmech_A") == "dash")
+check("classify Titan Fist damage-only", classify_weapon("Prime_Punchmech_B") == "normal")
+check("classify Titan Fist Dash + damage", classify_weapon("Prime_Punchmech_AB") == "dash")
 check("classify dash (charge)", classify_weapon("Brute_Beetle") == "dash")
 check("classify dash (leap)", classify_weapon("Prime_Leap") == "dash")
 check("classify repair", classify_weapon("_REPAIR") == "repair")
@@ -131,6 +134,15 @@ a = mk_action(0, "ChargeMech", (2, 5), "Brute_Beetle", (2, 5))
 plan = plan_single_mech(a, b)
 check("dash: 3 clicks (select+arm+target)", len(clicks_only(plan)) == 3, plan)
 check("dash: no move click",
+      not any("Move to" in c.get("description", "") for c in plan), plan)
+
+# Test 5b: upgraded Titan Fist Dash uses the dash click flow.
+mech = mk_unit(0, "PunchMech", 1, 3, weapon="Prime_Punchmech_A")
+b = mk_board([mech])
+a = mk_action(0, "PunchMech", (1, 3), "Prime_Punchmech_A", (2, 3))
+plan = plan_single_mech(a, b)
+check("Titan Fist Dash: 3 clicks (select+arm+target)", len(clicks_only(plan)) == 3, plan)
+check("Titan Fist Dash: no move click",
       not any("Move to" in c.get("description", "") for c in plan), plan)
 
 # Test 6: repair with move

@@ -671,7 +671,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # now overlay from save data and skip friendly unit damage while preserving beam
 # decay through the friendly tile.
 # Pre-v94 corpus archived as failure_db_snapshot_sim_v93.jsonl.
-SIMULATOR_VERSION = 94
+SIMULATOR_VERSION = 95
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

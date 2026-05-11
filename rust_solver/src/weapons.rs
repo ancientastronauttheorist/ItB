@@ -467,9 +467,15 @@ pub enum WId {
     PrimeLasermechB = 146,
     /// Burst Beam with Ally Immune and +1 Damage powered.
     PrimeLasermechAB = 147,
+    /// Titan Fist with Dash powered.
+    PrimePunchmechA = 148,
+    /// Titan Fist with +2 Damage powered.
+    PrimePunchmechB = 149,
+    /// Titan Fist with Dash and +2 Damage powered.
+    PrimePunchmechAB = 150,
 }
 
-pub const WEAPON_COUNT: usize = 148;
+pub const WEAPON_COUNT: usize = 151;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -482,6 +488,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 1: Prime_Punchmech — Titan Fist
     w[1] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward, flags: C, ..DEF };
+    // 148-150: Prime_Punchmech upgrades — Dash turns Titan Fist into a charge
+    // direction selector, +2 Damage keeps the plain melee footprint.
+    w[148] = WeaponDef { weapon_type: WeaponType::Charge, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[149] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::Forward, flags: C, ..DEF };
+    w[150] = WeaponDef { weapon_type: WeaponType::Charge, damage: 4, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     // 2: Prime_Lightning — Chain Whip
     w[2] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 3: Prime_Lasermech — Burst Beam
@@ -1113,6 +1124,9 @@ pub fn build_overlay_table(overrides: &[(WId, PartialWeaponDef)]) -> Option<Box<
 pub fn wid_from_str(s: &str) -> WId {
     match s {
         "Prime_Punchmech" => WId::PrimePunchmech,
+        "Prime_Punchmech_A" => WId::PrimePunchmechA,
+        "Prime_Punchmech_B" => WId::PrimePunchmechB,
+        "Prime_Punchmech_AB" => WId::PrimePunchmechAB,
         "Prime_Lightning" => WId::PrimeLightning,
         "Prime_Lasermech" => WId::PrimeLasermech,
         "Prime_Lasermech_A" => WId::PrimeLasermechA,
@@ -1279,6 +1293,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
     match id {
         WId::None => "",
         WId::PrimePunchmech => "Prime_Punchmech",
+        WId::PrimePunchmechA => "Prime_Punchmech_A",
+        WId::PrimePunchmechB => "Prime_Punchmech_B",
+        WId::PrimePunchmechAB => "Prime_Punchmech_AB",
         WId::PrimeLightning => "Prime_Lightning",
         WId::PrimeLasermech => "Prime_Lasermech",
         WId::PrimeLasermechA => "Prime_Lasermech_A",
@@ -1528,7 +1545,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
 /// Get the display name for a weapon (for solution descriptions).
 pub fn weapon_name(id: WId) -> &'static str {
     match id {
-        WId::PrimePunchmech => "Titan Fist",
+        WId::PrimePunchmech | WId::PrimePunchmechA | WId::PrimePunchmechB | WId::PrimePunchmechAB => "Titan Fist",
         WId::PrimeLightning => "Chain Whip",
         WId::PrimeLasermech | WId::PrimeLasermechA | WId::PrimeLasermechB | WId::PrimeLasermechAB => "Burst Beam",
         WId::PrimeShieldBash => "Shield Bash",
@@ -1857,6 +1874,26 @@ mod tests {
     }
 
     #[test]
+    fn test_titan_fist_upgraded_defs() {
+        let dash = weapon_def(WId::PrimePunchmechA);
+        assert_eq!(dash.weapon_type, WeaponType::Charge);
+        assert_eq!(dash.damage, 2);
+        assert_eq!(dash.push, PushDir::Forward);
+        assert_eq!(dash.self_damage, 0);
+
+        let damage = weapon_def(WId::PrimePunchmechB);
+        assert_eq!(damage.weapon_type, WeaponType::Melee);
+        assert_eq!(damage.damage, 4);
+        assert_eq!(damage.push, PushDir::Forward);
+
+        let both = weapon_def(WId::PrimePunchmechAB);
+        assert_eq!(both.weapon_type, WeaponType::Charge);
+        assert_eq!(both.damage, 4);
+        assert_eq!(both.push, PushDir::Forward);
+        assert_eq!(weapon_name(WId::PrimePunchmechAB), "Titan Fist");
+    }
+
+    #[test]
     fn test_phase_cannon() {
         let w = weapon_def(WId::BrutePhaseShot);
         assert!(w.phase());
@@ -1880,6 +1917,9 @@ mod tests {
         // Every wid_from_str input should roundtrip through wid_to_str
         let pairs = [
             ("Prime_Punchmech", WId::PrimePunchmech),
+            ("Prime_Punchmech_A", WId::PrimePunchmechA),
+            ("Prime_Punchmech_B", WId::PrimePunchmechB),
+            ("Prime_Punchmech_AB", WId::PrimePunchmechAB),
             ("Brute_Tankmech", WId::BruteTankmech),
             ("Ranged_Artillerymech", WId::RangedArtillerymech),
             ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
