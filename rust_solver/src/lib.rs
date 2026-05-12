@@ -1145,7 +1145,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   save/bridge conveyor parsing no longer cross-pairs a tile loc with a
 //   later tile's custom sprite. Pre-v106 corpus archived as
 //   `failure_db_snapshot_sim_v105.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 106;
+// v107 - Conveyor belts move live units before Vek attacks on any map with
+//   live conveyor tiles, not just Mission_Belt. Pre-v107 corpus archived as
+//   `failure_db_snapshot_sim_v106.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 107;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

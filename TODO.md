@@ -4,7 +4,7 @@
 
 28 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 42 remaining, sorted by global unlock % (easiest first).
 
-Current Hard Victory hardening note: simulator v106 now moves Mission_Belt conveyor occupants before Vek attacks and fixes same-row conveyor parsing, matching the live Venting Fields turn-1 C7 building loss trace.
+Current Hard Victory hardening note: simulator v107 now moves any live conveyor-tile occupant before Vek attacks, not just `Mission_Belt` maps, matching the Detritus `Mission_Acid` conveyor exposure seen during Chemical Field A.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -166,7 +166,7 @@ Current Hard Victory hardening note: simulator v106 now moves Mission_Belt conve
 
 ### Environment Awareness
 - [x] **Tidal waves / air strikes / lightning**: Bridge provides `environment_danger` tiles via `Board:IsEnvironmentDanger()`. Solver avoids placing mechs on them, rewards pushing enemies onto them.
-- [x] **Conveyor belt direction**: Bridge regex extracts `conveyorN.png` direction (0-3); Rust `Board.conveyor_dir` per tile; deploy filter excludes conveyor tiles. Commit 1c6b38b (2026-04-24).
+- [x] **Conveyor belt direction**: Bridge regex extracts `conveyorN.png` direction (0-3); Rust `Board.conveyor_dir` per tile; deploy filter excludes conveyor tiles; enemy-phase belts apply on any live conveyor map, not only `Mission_Belt` (sim v107).
 - [x] **Teleporter pad pairing**: Lua hooks `Board.AddTeleport` to capture pairs; Rust `Board.teleporter_pairs` + `apply_teleport_on_land()` fires on move-end / push / throw. Sim v8, commit 456ba49 (2026-04-23).
 - [ ] **Windstorm direction**: No directional data in bridge. Need Lua extraction for R.S.T. island.
 - [ ] **Volcanic Hive patterns**: Lava flow / falling rocks / tentacles follow cycles (Random → Aimed → Area). Pattern prediction needed for final mission.

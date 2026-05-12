@@ -6,7 +6,7 @@ Status: **28 / 70 achievements earned** (latest Steam sync on 2026-05-10; refres
 
 Recent unlocks: **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. The previous Solver 2.0 live-test bumps picked up **Good Samaritan**, **Scorched Earth**, **Cryo Expert**, and **Pacifist**. See `TODO.md` for the checklist.
 
-Current live-run milestone: **Hard Victory** hunt is active with Rusting Hulks on Hard + Advanced Edition. Simulator v106 includes the recent Rusting Hulks hardening stack: Aerial Bombs forest-smoke / Morgan Boost handling, Mission_Wind rows no longer draining grid as direct damage, replay snapshots preserving Boosted status, Kai Miller's state-based full-HP Boost semantics, Arachnid Psion player-phase death eggs, and Mission_Belt conveyor movement before Vek attacks. Default plan is a 2-island win attempt with an explicit post-island-2 readiness check before the Volcanic Hive.
+Current live-run milestone: **Hard Victory** hunt is active with Rusting Hulks on Hard + Advanced Edition. Simulator v107 includes the recent Rusting Hulks hardening stack: Aerial Bombs forest-smoke / Morgan Boost handling, Mission_Wind rows no longer draining grid as direct damage, replay snapshots preserving Boosted status, Kai Miller's state-based full-HP Boost semantics, Arachnid Psion player-phase death eggs, and tile-driven conveyor movement before Vek attacks. Default plan is a 2-island win attempt with an explicit post-island-2 readiness check before the Volcanic Hive.
 
 ---
 
@@ -237,6 +237,7 @@ Acceptable failures are tracked in `tests/known_issues.json` (scoped by `"python
 ## Key design choices
 
 - **Trust the solver.** Manual overrides suppress the failure-db signal the tuner needs. The only exception is an empty solve result (timeout).
+- **Conveyors are tile-driven.** If the bridge exposes `conveyor` on any live tile, enemy-phase belts apply before Vek attacks even outside `Mission_Belt`.
 - **Mouse clicks only for UI.** No keyboard shortcuts, no portrait clicks, no Tab — just tile centers and the End Turn button.
 - **Click tile centers, not sprites.** Sprites render 100–170 px above tile center; `grid_to_mcp` already handles this.
 - **Save file only updates at turn boundaries.** The bridge has no such limit; `verify_action` always re-reads fresh bridge state.

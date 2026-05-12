@@ -716,7 +716,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # save/bridge conveyor parsing no longer cross-pairs a tile loc with a later
 # tile's custom sprite. Pre-v106 corpus archived as
 # failure_db_snapshot_sim_v105.jsonl.
-SIMULATOR_VERSION = 106
+# v107 - Conveyor belts move live units before Vek attacks on any map with
+# live conveyor tiles, not just Mission_Belt. Pre-v107 corpus archived as
+# failure_db_snapshot_sim_v106.jsonl.
+SIMULATOR_VERSION = 107
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -295,10 +295,9 @@ fn simulate_reactivation_thaw(board: &mut Board) {
     }
 }
 
-/// Mission_Belt conveyor effect: all live units standing on conveyor tiles are
-/// pushed one tile in the belt direction before Vek attacks resolve.
+/// Conveyor effect: all live units standing on conveyor tiles are pushed one
+/// tile in the belt direction before Vek attacks resolve.
 fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
-    if board.mission_id != "Mission_Belt" { return; }
     let mut moves: Vec<(usize, i16, u16, u8, u8)> = Vec::new();
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
@@ -553,9 +552,9 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    // Mission_Belt / conveyor yard environment. The conveyor icon resolves
-    // before Vek attacks, so moved Vek re-aim from their conveyor-shifted
-    // tile using the original queued direction below.
+    // Conveyor belts resolve before Vek attacks, so moved Vek re-aim from
+    // their conveyor-shifted tile using the original queued direction below.
+    // Some Detritus maps expose belts outside Mission_Belt.
     simulate_conveyor_belts(board, &mut result);
 
     // Egg hatch step: transform any surviving spider/spiderling egg into
@@ -1672,7 +1671,7 @@ mod tests {
     #[test]
     fn test_conveyor_moves_enemy_before_projectile_attack() {
         let mut board = Board::default();
-        board.mission_id = "Mission_Belt".to_string();
+        board.mission_id = "Mission_Acid".to_string();
         board.grid_power = 6;
         board.grid_power_max = 7;
         board.tile_mut(1, 5).terrain = Terrain::Building;
