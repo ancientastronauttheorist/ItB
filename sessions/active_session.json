@@ -6,61 +6,13 @@
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Cataclysm",
+  "current_mission": "",
   "islands_completed": [],
-  "mission_index": 8,
-  "last_mission_turn": 2,
+  "mission_index": 23,
+  "last_mission_turn": -1,
   "current_turn": 3,
   "phase": "combat_player",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 0,
-        "mech_type": "PunchMech",
-        "move_to": [
-          4,
-          4
-        ],
-        "weapon": "Prime_Punchmech_A",
-        "target": [
-          5,
-          4
-        ],
-        "description": "PunchMech, fire Titan Fist at D3"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "TankMech",
-        "move_to": [
-          3,
-          3
-        ],
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ],
-        "description": "TankMech, move E4\u2192E5"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "ArtiMech",
-        "move_to": [
-          4,
-          5
-        ],
-        "weapon": "Ranged_Artillerymech",
-        "target": [
-          4,
-          2
-        ],
-        "description": "ArtiMech, fire Artemis Artillery at F4"
-      }
-    ],
-    "score": 138110.0,
-    "turn": 2,
-    "input_fingerprint": "0:4,4:3|1:4,3:3|2:4,5:2|684:4,2:1|697:4,6:3|698:5,4:3"
-  },
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -442,6 +394,765 @@
       "curr_hash": "b95cedc4065cc261",
       "tiles_changed": 16,
       "threshold": 16
+    },
+    {
+      "timestamp": "2026-05-11T10:33:29.664816",
+      "turn": 1,
+      "label": "solve",
+      "score": 127150.0,
+      "actions": [
+        "PunchMech, move C5\u2192C2, fire Titan Fist at D2",
+        "TankMech, move B6\u2192E6, fire Taurus Cannon at E5",
+        "ArtiMech, fire Artemis Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T10:34:52.249315",
+      "turn": 2,
+      "label": "solve",
+      "score": 127923.33333333347,
+      "actions": [
+        "PunchMech, fire Titan Fist at D2",
+        "TankMech, move E6\u2192E5, fire Taurus Cannon at E4",
+        "ArtiMech, move D6\u2192C4, fire Artemis Artillery at C1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T10:36:07.928320",
+      "turn": 3,
+      "label": "solve",
+      "score": 131270.0,
+      "actions": [
+        "PunchMech, move C3\u2192E2, fire Titan Fist at D2",
+        "TankMech",
+        "ArtiMech, move C4\u2192E4, fire Artemis Artillery at E1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T10:37:15.372774",
+      "turn": 4,
+      "label": "solve",
+      "score": 122460.0,
+      "actions": [
+        "PunchMech, move E3\u2192C2, fire Titan Fist at D2",
+        "ArtiMech, move E4\u2192C3, fire Artemis Artillery at G3",
+        "TankMech, move E5\u2192E4, fire Taurus Cannon at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T11:01:18.124623",
+      "turn": 1,
+      "label": "solve",
+      "score": 116550.0,
+      "actions": [
+        "PunchMech, move D5\u2192E5",
+        "TankMech, move C6\u2192D6, fire Taurus Cannon at D5",
+        "ArtiMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T11:04:45.633410",
+      "turn": 3,
+      "label": "solve",
+      "score": 124290.0,
+      "actions": [
+        "PunchMech, move E5\u2192B6, fire Titan Fist at B5",
+        "TankMech, move D6\u2192C6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T11:12:05.715557",
+      "turn": 4,
+      "label": "solve",
+      "score": 39504.142927748806,
+      "actions": [
+        "PunchMech, fire Titan Fist at A6",
+        "TankMech, move C6\u2192D6, fire Taurus Cannon at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T14:44:55.628294",
+      "turn": 4,
+      "label": "solve",
+      "score": 39504.142927748806,
+      "actions": [
+        "PunchMech, fire Titan Fist at A6",
+        "TankMech, move C6\u2192D6, fire Taurus Cannon at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T14:45:30.876326",
+      "turn": 4,
+      "label": "solve",
+      "score": 39449.142927748806,
+      "actions": [
+        "TankMech, move C6\u2192D6, fire Taurus Cannon at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T14:48:04.208819",
+      "turn": 4,
+      "label": "solve",
+      "score": 39449.142927748806,
+      "actions": [
+        "TankMech, move C6\u2192D6, fire Taurus Cannon at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T15:34:51.993514",
+      "turn": 1,
+      "label": "solve",
+      "score": 152900.0,
+      "actions": [
+        "ArtiMech, move C5\u2192C2, fire Artemis Artillery at F2",
+        "TankMech, move G5\u2192H6, fire Taurus Cannon at H5",
+        "ArchiveArtillery, move D5\u2192C5, fire Old Earth Artillery at F5",
+        "PunchMech, move F6\u2192D5, fire Titan Fist at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T15:48:25.624496",
+      "turn": 2,
+      "label": "solve",
+      "score": 155420.0000000001,
+      "actions": [
+        "ArchiveArtillery, move C5\u2192C4, fire Old Earth Artillery at G4",
+        "ArtiMech, fire Artemis Artillery at F2",
+        "PunchMech, move D5\u2192F3, fire Titan Fist at F2",
+        "TankMech, move H6\u2192F8, fire Taurus Cannon at F7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T15:50:42.943975",
+      "turn": 3,
+      "label": "solve",
+      "score": 150260.0,
+      "actions": [
+        "ArchiveArtillery",
+        "PunchMech, move F3\u2192E1, fire Titan Fist at E2",
+        "TankMech",
+        "ArtiMech, move C2\u2192B4, fire Artemis Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T15:52:27.535870",
+      "turn": 4,
+      "label": "solve",
+      "score": 155455.0,
+      "actions": [
+        "ArchiveArtillery",
+        "PunchMech, move E2\u2192C3, fire Titan Fist at B3",
+        "TankMech, fire Taurus Cannon at F7",
+        "ArtiMech, move B4\u2192E4, fire Artemis Artillery at E1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T16:06:50.829377",
+      "turn": 1,
+      "label": "solve",
+      "score": 131100.0,
+      "actions": [
+        "PunchMech, move F6\u2192C6, fire Titan Fist at C5",
+        "ArtiMech, move D6\u2192F7, fire Artemis Artillery at F4",
+        "TankMech, move G5\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T16:09:00.534298",
+      "turn": 2,
+      "label": "solve",
+      "score": 136933.3333333335,
+      "actions": [
+        "PunchMech, fire Titan Fist at C3",
+        "ArtiMech, move F7\u2192F8, fire Artemis Artillery at F6",
+        "TankMech, move D6\u2192C3, fire Taurus Cannon at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T16:11:13.486376",
+      "turn": 3,
+      "label": "solve",
+      "score": 145600.0,
+      "actions": [
+        "PunchMech, move C4\u2192D2, fire Titan Fist at D3",
+        "TankMech, move C3\u2192C6, fire Taurus Cannon at D6",
+        "ArtiMech, move F8\u2192E6, fire Artemis Artillery at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T16:12:39.373506",
+      "turn": 3,
+      "label": "solve",
+      "score": 134597.71435836382,
+      "actions": [
+        "TankMech, move C3\u2192F2, fire Taurus Cannon at F3",
+        "ArtiMech, move F8\u2192E8, fire Artemis Artillery at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T17:16:03.966128",
+      "turn": 3,
+      "label": "solve",
+      "score": 134597.71435836382,
+      "actions": [
+        "TankMech, move C3\u2192F2, fire Taurus Cannon at F3",
+        "ArtiMech, move F8\u2192E8, fire Artemis Artillery at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T17:20:25.083706",
+      "turn": 4,
+      "label": "solve",
+      "score": 131716.42857142855,
+      "actions": [
+        "PunchMech, move D2\u2192C4, fire Titan Fist at B4",
+        "ArtiMech, move E8\u2192F6, fire Artemis Artillery at C6",
+        "TankMech, move F2\u2192H6, fire Taurus Cannon at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T17:30:48.878456",
+      "turn": 1,
+      "label": "solve",
+      "score": 102657.14285714284,
+      "actions": [
+        "TankMech, move C6\u2192F5, fire Taurus Cannon at F4",
+        "PunchMech, move E5\u2192F4, fire Titan Fist at F3",
+        "ArtiMech, move F6\u2192F2, fire Artemis Artillery at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T17:32:02.935147",
+      "turn": 2,
+      "label": "solve",
+      "score": 129860.47619047637,
+      "actions": [
+        "PunchMech, move F3\u2192E6, fire Titan Fist at E5",
+        "TankMech, move F5\u2192F4, fire Taurus Cannon at G4",
+        "ArtiMech, move F2\u2192E3, fire Artemis Artillery at H3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T17:33:33.405424",
+      "turn": 3,
+      "label": "solve",
+      "score": 91057.71435904503,
+      "actions": [
+        "PunchMech, fire Titan Fist at E5",
+        "TankMech, fire Taurus Cannon at F3",
+        "ArtiMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T17:35:00.123229",
+      "turn": 3,
+      "label": "solve",
+      "score": 91057.71435904503,
+      "actions": [
+        "PunchMech, fire Titan Fist at E5",
+        "TankMech, fire Taurus Cannon at F3",
+        "ArtiMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:12:30.558199",
+      "turn": 3,
+      "label": "solve",
+      "score": 91057.71435904503,
+      "actions": [
+        "PunchMech, fire Titan Fist at E5",
+        "TankMech, fire Taurus Cannon at F3",
+        "ArtiMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:16:35.601735",
+      "turn": 3,
+      "label": "solve",
+      "score": 83537.71435904503,
+      "actions": [
+        "TankMech, fire Taurus Cannon at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:22:07.876010",
+      "turn": 4,
+      "label": "solve",
+      "score": 9632.142857142855,
+      "actions": [
+        "TankMech, move F4\u2192E5, fire Taurus Cannon at E4",
+        "PunchMech, move E3\u2192C1, fire Titan Fist at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:35:17.344540",
+      "turn": 1,
+      "label": "solve",
+      "score": 135792.85714285716,
+      "actions": [
+        "PunchMech, move C5\u2192C7, fire Titan Fist at C6",
+        "TankMech, move D6\u2192G5, fire Taurus Cannon at G4",
+        "ArtiMech, move F6\u2192G3, fire Artemis Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:36:56.601581",
+      "turn": 2,
+      "label": "solve",
+      "score": 138502.85714285728,
+      "actions": [
+        "PunchMech, move C7\u2192D7, fire Titan Fist at D6",
+        "ArtiMech, move H6\u2192G7, fire Artemis Artillery at G2",
+        "TankMech, move G5\u2192H2, fire Taurus Cannon at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:40:00.292548",
+      "turn": 3,
+      "label": "solve",
+      "score": 151532.85714285716,
+      "actions": [
+        "PunchMech, move D6\u2192G5, fire Titan Fist at G4",
+        "TankMech",
+        "ArtiMech, move G7\u2192H7, fire Artemis Artillery at F7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:42:05.690356",
+      "turn": 4,
+      "label": "solve",
+      "score": 78957.000164611,
+      "actions": [
+        "PunchMech, move G4\u2192F7, fire Titan Fist at G7",
+        "TankMech, move H2\u2192G3",
+        "ArtiMech, move H7\u2192G5, fire Artemis Artillery at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:51:32.323861",
+      "turn": 4,
+      "label": "solve",
+      "score": 78957.000164611,
+      "actions": [
+        "PunchMech, move G4\u2192F7, fire Titan Fist at G7",
+        "TankMech, move H2\u2192G3",
+        "ArtiMech, move H7\u2192G5, fire Artemis Artillery at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T18:53:32.607540",
+      "turn": 4,
+      "label": "solve",
+      "score": 77372.000164611,
+      "actions": [
+        "TankMech, move H2\u2192G3",
+        "ArtiMech, move H7\u2192G7, fire Artemis Artillery at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:17:08.592666",
+      "turn": 4,
+      "label": "solve",
+      "score": 77372.000164611,
+      "actions": [
+        "TankMech, move H2\u2192G3",
+        "ArtiMech, move H7\u2192G7, fire Artemis Artillery at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:29:38.103974",
+      "turn": 4,
+      "label": "solve",
+      "score": 77372.000164611,
+      "actions": [
+        "TankMech, move H2\u2192G3",
+        "ArtiMech, move H7\u2192G7, fire Artemis Artillery at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:34:55.776871",
+      "turn": 1,
+      "label": "solve",
+      "score": 109050.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at F5",
+        "TankMech, move G5\u2192D5, fire Taurus Cannon at D4",
+        "ArtiMech, move E5\u2192H5, fire Artemis Artillery at H2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:36:06.073731",
+      "turn": 2,
+      "label": "solve",
+      "score": 135193.33333333343,
+      "actions": [
+        "PunchMech, move F6\u2192G5, fire Titan Fist at F5",
+        "ArtiMech, fire Artemis Artillery at E5",
+        "TankMech, move C5\u2192B3, fire Taurus Cannon at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:38:20.292420",
+      "turn": 3,
+      "label": "solve",
+      "score": 132060.0,
+      "actions": [
+        "PunchMech, move G5\u2192F5, fire Titan Fist at F6",
+        "TankMech, move B3\u2192C4, fire Taurus Cannon at D4",
+        "ArtiMech, move H5\u2192H4, fire Artemis Artillery at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:40:01.219878",
+      "turn": 4,
+      "label": "solve",
+      "score": 131475.0,
+      "actions": [
+        "PunchMech, move F5\u2192C6, repair",
+        "TankMech, move B4\u2192F6, fire Taurus Cannon at F7",
+        "ArtiMech, move H4\u2192G4, fire Artemis Artillery at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:56:09.300029",
+      "turn": 1,
+      "label": "solve",
+      "score": 144864.2857142857,
+      "actions": [
+        "TankMech, move C6\u2192E8",
+        "PunchMech, move E5\u2192E6, fire Titan Fist at D6",
+        "ArtiMech, move F6\u2192F4, fire Artemis Artillery at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T19:58:54.100150",
+      "turn": 2,
+      "label": "solve",
+      "score": 125788.57142857157,
+      "actions": [
+        "TankMech, move E8\u2192E5, fire Taurus Cannon at E4",
+        "PunchMech, move E6\u2192F3, fire Titan Fist at E3",
+        "ArtiMech, move F4\u2192E2, fire Artemis Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:01:29.333227",
+      "turn": 3,
+      "label": "solve",
+      "score": 169794.2857142857,
+      "actions": [
+        "TankMech, move E6\u2192D3, fire Taurus Cannon at E3",
+        "ArtiMech, move E2\u2192D2, fire Artemis Artillery at D6",
+        "PunchMech, move C3\u2192B2, fire Titan Fist at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:05:25.941667",
+      "turn": 4,
+      "label": "solve",
+      "score": 158524.2857142857,
+      "actions": [
+        "PunchMech, move B2\u2192E2, fire Titan Fist at E3",
+        "TankMech, move D3\u2192B4, fire Taurus Cannon at C4",
+        "ArtiMech, move D2\u2192C4, fire Artemis Artillery at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:16:55.395891",
+      "turn": 1,
+      "label": "solve",
+      "score": 120071.42857142858,
+      "actions": [
+        "ArtiMech, move C5\u2192C6, fire Artemis Artillery at F6",
+        "TankMech, move F6\u2192G4, fire Taurus Cannon at F4",
+        "PunchMech, move D6\u2192F7, fire Titan Fist at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:20:41.478886",
+      "turn": 2,
+      "label": "solve",
+      "score": 126911.4285714287,
+      "actions": [
+        "ArtiMech, move C6\u2192F6, fire Artemis Artillery at F4",
+        "TankMech, move H4\u2192F5, repair",
+        "PunchMech, move F4\u2192E2, fire Titan Fist at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:24:41.160995",
+      "turn": 3,
+      "label": "solve",
+      "score": 157211.42857142858,
+      "actions": [
+        "TankMech, move F5\u2192H5, fire Taurus Cannon at G5",
+        "ArtiMech, move F6\u2192F7, fire Artemis Artillery at F4",
+        "PunchMech, move C2\u2192F3, fire Titan Fist at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:29:39.108483",
+      "turn": 4,
+      "label": "solve",
+      "score": 115357.71437096596,
+      "actions": [
+        "PunchMech, move F5\u2192C6, fire Titan Fist at C7",
+        "ArtiMech, move F7\u2192E7, fire Artemis Artillery at E3",
+        "TankMech, move H5\u2192E3, fire Taurus Cannon at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:33:46.181009",
+      "turn": 4,
+      "label": "solve",
+      "score": 115357.71437096596,
+      "actions": [
+        "PunchMech, move F5\u2192C6, fire Titan Fist at C7",
+        "ArtiMech, move F7\u2192E7, fire Artemis Artillery at E3",
+        "TankMech, move H5\u2192E3, fire Taurus Cannon at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:46:44.808437",
+      "turn": 1,
+      "label": "solve",
+      "score": 129800.0,
+      "actions": [
+        "TankMech, move G5\u2192F5, fire Taurus Cannon at F4",
+        "ArtiMech, move D6\u2192E7, fire Artemis Artillery at E4",
+        "PunchMech, move E5\u2192E4, fire Titan Fist at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:52:42.486264",
+      "turn": 2,
+      "label": "solve",
+      "score": 144186.66666666683,
+      "actions": [
+        "ArtiMech, move E7\u2192D7, fire Artemis Artillery at D1",
+        "TankMech, move F5\u2192E3, fire Taurus Cannon at D3",
+        "PunchMech, move E5\u2192F5, fire Titan Fist at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T20:57:15.269682",
+      "turn": 4,
+      "label": "solve",
+      "score": -195104.14618216243,
+      "actions": [
+        "PunchMech, move F5\u2192D5, fire Titan Fist at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T21:02:43.957011",
+      "turn": 4,
+      "label": "solve",
+      "score": -195104.14618216243,
+      "actions": [
+        "PunchMech, move F5\u2192D5, fire Titan Fist at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T21:17:47.086953",
+      "turn": 1,
+      "label": "solve",
+      "score": 89450.0,
+      "actions": [
+        "ArtiMech, move E7\u2192B6, fire Artemis Artillery at B3",
+        "PunchMech, move F6\u2192F2, fire Titan Fist at E2",
+        "TankMech, fire Taurus Cannon at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T21:20:53.214850",
+      "turn": 2,
+      "label": "solve",
+      "score": 86369.99999999996,
+      "actions": [
+        "PunchMech, move C2\u2192F1, fire Titan Fist at F2",
+        "TankMech, move C5\u2192B2, fire Taurus Cannon at C2",
+        "ArtiMech, fire Artemis Artillery at B1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T21:24:44.072383",
+      "turn": 3,
+      "label": "solve",
+      "score": 100110.0,
+      "actions": [
+        "PunchMech, move F4\u2192G4, fire Titan Fist at G3",
+        "TankMech, move B3\u2192B2, fire Taurus Cannon at C2",
+        "ArtiMech, move B6\u2192A7, fire Artemis Artillery at F7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T21:28:20.425812",
+      "turn": 4,
+      "label": "solve",
+      "score": 94110.0,
+      "actions": [
+        "ArtiMech, move A7\u2192C7, fire Artemis Artillery at C2",
+        "TankMech, move A2\u2192C1, fire Taurus Cannon at C2",
+        "PunchMech, move G3\u2192G6, fire Titan Fist at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T22:11:41.918406",
+      "turn": 1,
+      "label": "solve",
+      "score": 124600.0,
+      "actions": [
+        "ArtiMech, move F6\u2192C5, fire Artemis Artillery at E5",
+        "PunchMech, move E5\u2192D4, fire Titan Fist at D5",
+        "TankMech, move D6\u2192G7, fire Taurus Cannon at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T22:16:47.257593",
+      "turn": 2,
+      "label": "solve",
+      "score": 127153.33333333343,
+      "actions": [
+        "TankMech, move G7\u2192F6, fire Taurus Cannon at G6",
+        "ArtiMech, move C5\u2192E3, repair",
+        "PunchMech, move D4\u2192B5, fire Titan Fist at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T22:23:16.481650",
+      "turn": 3,
+      "label": "solve",
+      "score": 133300.0,
+      "actions": [
+        "PunchMech, move C5\u2192C2, fire Titan Fist at D2",
+        "TankMech, repair",
+        "ArtiMech, move E3\u2192F4, fire Artemis Artillery at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T22:32:39.173011",
+      "turn": 4,
+      "label": "solve",
+      "score": 44910.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at D3",
+        "TankMech, move F6\u2192G5, fire Taurus Cannon at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T22:53:45.343675",
+      "turn": 4,
+      "label": "solve",
+      "score": 44910.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at D3",
+        "TankMech, move F6\u2192G5, fire Taurus Cannon at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T23:17:26.990715",
+      "turn": 1,
+      "label": "solve",
+      "score": 135650.0,
+      "actions": [
+        "PunchMech, move D5\u2192E3, fire Titan Fist at D3",
+        "TankMech, move F5\u2192G5, fire Taurus Cannon at G4",
+        "ArtiMech, move E6\u2192D5, fire Artemis Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T23:19:29.898254",
+      "turn": 2,
+      "label": "solve",
+      "score": 134286.66666666683,
+      "actions": [
+        "ArtiMech, move D5\u2192C3, fire Artemis Artillery at E3",
+        "TankMech, move G5\u2192F3, fire Taurus Cannon at E3",
+        "PunchMech, move G3\u2192F1, fire Titan Fist at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T23:21:43.354322",
+      "turn": 3,
+      "label": "solve",
+      "score": 133120.0,
+      "actions": [
+        "PunchMech, move F1\u2192G3, repair",
+        "TankMech, move F3\u2192F2, repair",
+        "ArtiMech, move C3\u2192B3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T23:23:44.555584",
+      "turn": 4,
+      "label": "solve",
+      "score": 129239.14292774882,
+      "actions": [
+        "PunchMech, move G3\u2192E3, fire Titan Fist at F3",
+        "TankMech, fire Taurus Cannon at G2",
+        "ArtiMech, move B3\u2192B4, fire Artemis Artillery at B1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T23:27:10.565612",
+      "turn": 4,
+      "label": "solve",
+      "score": 129239.14292774882,
+      "actions": [
+        "PunchMech, move G3\u2192E3, fire Titan Fist at F3",
+        "TankMech, fire Taurus Cannon at G2",
+        "ArtiMech, move B3\u2192B4, fire Artemis Artillery at B1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T23:40:59.447796",
+      "turn": 1,
+      "label": "solve",
+      "score": 123100.0,
+      "actions": [
+        "PunchMech, move E6\u2192C6, fire Titan Fist at B6",
+        "ArtiMech, move E5\u2192G5, fire Artemis Artillery at G3",
+        "TankMech, move D6\u2192E5, fire Taurus Cannon at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-11T23:42:25.820397",
+      "turn": 2,
+      "label": "solve",
+      "score": -84661.99804353717,
+      "actions": [
+        "TankMech, move E5\u2192E6, fire Taurus Cannon at D6",
+        "ArtiMech, move G5\u2192G7, fire Artemis Artillery at G1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-12T00:11:39.955735",
+      "turn": 2,
+      "label": "solve",
+      "score": -84661.99804353717,
+      "actions": [
+        "TankMech, move E5\u2192E6, fire Taurus Cannon at D6",
+        "ArtiMech, move G5\u2192G7, fire Artemis Artillery at G1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-12T00:13:55.636309",
+      "turn": 2,
+      "label": "solve",
+      "score": -160831.33092435196,
+      "actions": [
+        "ArtiMech, move G5\u2192G7, fire Artemis Artillery at G1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-12T00:14:57.811112",
+      "turn": 3,
+      "label": "solve",
+      "score": -232677.99691152573,
+      "actions": [
+        "TankMech, move E6\u2192E7, fire Taurus Cannon at D7",
+        "ArtiMech, fire Artemis Artillery at G5"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -528,6 +1239,150 @@
     [
       8,
       1
+    ],
+    [
+      9,
+      1
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      9,
+      3
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      12,
+      2
+    ],
+    [
+      12,
+      3
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      14,
+      1
+    ],
+    [
+      14,
+      2
+    ],
+    [
+      14,
+      3
+    ],
+    [
+      15,
+      1
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      15,
+      3
+    ],
+    [
+      16,
+      1
+    ],
+    [
+      16,
+      2
+    ],
+    [
+      16,
+      3
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      17,
+      2
+    ],
+    [
+      17,
+      3
+    ],
+    [
+      18,
+      1
+    ],
+    [
+      18,
+      2
+    ],
+    [
+      19,
+      1
+    ],
+    [
+      19,
+      2
+    ],
+    [
+      19,
+      3
+    ],
+    [
+      20,
+      1
+    ],
+    [
+      20,
+      2
+    ],
+    [
+      20,
+      3
+    ],
+    [
+      21,
+      1
+    ],
+    [
+      21,
+      2
     ]
   ],
   "tags": [
@@ -789,16 +1644,697 @@
           2
         ]
       }
-    }
-  ],
-  "disabled_actions": [
+    },
     {
-      "weapon_id": "Brute_Tankmech",
-      "cause_pattern": "death|Brute_Tankmech|attack",
-      "expires_turn": 4,
-      "strategic_override": false
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Tankmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Prime_Punchmech_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          2,
+          7
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "grid_power",
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Brute_Tankmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Tankmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          3,
+          0
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Prime_Punchmech_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Brute_Tankmech|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Tankmech|attack",
+      "frequency": 3,
+      "asymmetry": [
+        "mech_died_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Punchmech_A|move",
+      "frequency": 0,
+      "asymmetry": [
+        "mech_died_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          6,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Punchmech_A|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly",
+        "mech_died_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          6,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Tankmech|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          4,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Brute_Tankmech|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          6,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech_A|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Prime_Punchmech_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Punchmech_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Brute_Tankmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Tankmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Artillerymech_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Artillerymech_A",
+        "target": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Prime_Punchmech_A|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Punchmech_A",
+        "target": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Brute_Tankmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Artillerymech_A|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Artillerymech_A",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Prime_Punchmech_AB|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Punchmech_AB",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Tankmech|attack",
+      "frequency": 4,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          4,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Brute_Tankmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Tankmech",
+        "target": [
+          2,
+          4
+        ]
+      }
     }
   ],
+  "disabled_actions": [],
   "research_queue": [
     {
       "type": "PunchMech",
@@ -1013,14 +2549,347 @@
       "severity": "high",
       "research_id": "8e4b5006cec1",
       "last_kind": "enemy"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Filler",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Burnbug1 is already catalogued in data/known_types.json and modeled by Rust; research_next had no live researchable current-board target after the turn-4 actions, so this low-confidence spawn behavior_novelty queue entry is stale.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "missing_in_actual",
+        "diff_predicted": "present",
+        "diff_actual": "absent"
+      },
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium"
+    },
+    {
+      "type": "Jelly_Boss",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_JellyBoss",
+      "first_seen_turn": 4,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 4,
+        "diff_actual": 3
+      },
+      "diff_field": "hp",
+      "diff_predicted": 4,
+      "diff_actual": 3,
+      "severity": "low"
+    },
+    {
+      "type": "SpiderlingEgg1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Artillery",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Spiderling Egg",
+            "hp": 1,
+            "move": 0,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Spiderling Egg",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Spiderling+Egg",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Spiderling+Egg&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "missing_in_predicted",
+      "diff_predicted": "absent",
+      "diff_actual": "present",
+      "severity": "medium",
+      "research_id": "52ed4bc62b0f",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Firefly1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Dam",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Firefly",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Firefly",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Firefly",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Firefly&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "815a8f69ee0b",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Blobber1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Mines",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 3,
+        "diff_actual": 2
+      },
+      "diff_field": "hp",
+      "diff_predicted": 3,
+      "diff_actual": 2,
+      "severity": "low"
+    },
+    {
+      "type": "Crab2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Factory",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Crab2 is already catalogued in data/known_types.json and mapped in Rust; research_next reports NO_WORK, so clear stale pending queue entry before advancing.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "status.fire",
+        "diff_predicted": false,
+        "diff_actual": true
+      },
+      "diff_field": "status.fire",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "medium"
+    },
+    {
+      "type": "BotBoss2",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_BotBoss",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Bot Leader",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "repair_or_regen",
+              "mountain_damage",
+              "boss"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Bot Leader",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Bot+Leader",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Bot+Leader&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "9eb324e43e62",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Firefly2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_BotBoss",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Alpha Firefly",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [
+              "flying"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Alpha Firefly",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Firefly",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Firefly&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "c94f95387766",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "FireflyBoss",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Final_Cave",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Blob",
+            "hp": 0,
+            "move": 0,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Blob",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Blob",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Blob&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "7bf3a3857e15",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "FireflyBoss",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Final_Cave",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known exact type; current gate came from post-Tank push_dir desync while trying to finish Final Cave logging, no new unit identity data needed.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "pos",
+        "diff_predicted": [
+          2,
+          7
+        ],
+        "diff_actual": [
+          2,
+          6
+        ]
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        2,
+        7
+      ],
+      "diff_actual": [
+        2,
+        6
+      ],
+      "severity": "medium",
+      "research_id": "663a7ed11e02",
+      "last_kind": "enemy"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "b95cedc4065cc261",
-    "classes": "mmmgggswmmbgsbswmbbggbswmbbgssswcccccccccccccccccccccccccccccccc",
-    "mission_index": 8,
+    "hash": "b16393618b5a1463",
+    "classes": "mggwwgmwggbgggrwgggggwgggwgwggbggrgwgggggggggbgwwgbbgggmwwmmggmm",
+    "mission_index": 22,
     "turn": 3
   },
-  "terrain_stage_change_pending": true
+  "terrain_stage_change_pending": false
 }
