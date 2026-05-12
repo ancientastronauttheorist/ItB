@@ -753,6 +753,7 @@ pub fn evaluate(
     // bypasses flying, so a flying mech on such a tile IS killed by the simulator
     // (enemy.rs::apply_env_danger). Tidal Wave / Cataclysm / Seismic — flagged
     // env_danger_flying_immune — skip flyers; the simulator leaves them alive.
+    // Final Cave falling rocks are intentionally not flying-immune.
     // The flying skip here is correct for NON-lethal branches (wind/sand/snow
     // don't affect flying) AND for flying_immune-lethal branches; we explicitly
     // penalize flying mechs sitting on non-flying-immune kill_int=1 tiles as
@@ -777,6 +778,7 @@ pub fn evaluate(
             if u.is_player() && on_kill_tile {
                 // Flying mech on Tidal/Cataclysm/Seismic tile survives —
                 // skip the defensive death penalty (the simulator agrees).
+                // Final Cave falling rocks do not set this bit.
                 if u.effectively_flying() && on_flying_immune_kill {
                     continue;
                 }

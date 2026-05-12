@@ -1112,7 +1112,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   water/lava instead of stopping at water, and dead Dash Punch targets can
 //   still bump a live blocker behind them. Pre-v98 corpus archived as
 //   `failure_db_snapshot_sim_v97.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 98;
+// v99 - Final Cave Env_Final danger is falling-rock/tentacle death, not
+//   hoverable cataclysm chasm conversion; ignore stale flying_immune=1
+//   payloads on Mission_Final_Cave so flying mechs cannot stand on marked
+//   cave-collapse tiles. Pre-v99 corpus archived as
+//   `failure_db_snapshot_sim_v98.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 99;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

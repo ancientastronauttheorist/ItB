@@ -132,7 +132,8 @@ fn apply_starfish_appendages(
 /// (chasm rules + project convention). Buildings on the tile still take
 /// the lethal damage regardless. The bridge populates this per-tile via the
 /// 5th element of `environment_danger_v2` entries; missing → false (treat as
-/// pure Deadly Threat, preserving pre-fix behavior).
+/// pure Deadly Threat, preserving pre-fix behavior). Final Cave falling rocks
+/// are Deadly Threats, not hoverable chasm conversion.
 ///
 /// `lethal=false` (sandstorm, wind storm, snow storm) does 1 damage with
 /// bump-like semantics: ignored by armor/ACID, consumed by shield, skips

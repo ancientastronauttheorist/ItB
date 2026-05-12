@@ -1170,16 +1170,24 @@ def _environment_danger_info(board: Board,
                              bridge_data: dict | None) -> dict[tuple[int, int], dict]:
     """Return per-tile environment danger with lethality and flying immunity."""
     danger: dict[tuple[int, int], dict] = {}
+    mission_id = ""
+    if isinstance(bridge_data, dict):
+        mission_id = str(bridge_data.get("mission_id") or "")
+    mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    final_cave_env = mission_id == "Mission_Final_Cave"
     if isinstance(bridge_data, dict):
         for dt in bridge_data.get("environment_danger_v2", []) or []:
             if not isinstance(dt, (list, tuple)) or len(dt) < 4:
                 continue
             try:
                 pos = (int(dt[0]), int(dt[1]))
+                flying_immune = bool(int(dt[4])) if len(dt) >= 5 else False
+                if final_cave_env and bool(int(dt[3])):
+                    flying_immune = False
                 danger[pos] = {
                     "damage": int(dt[2]),
                     "lethal": bool(int(dt[3])),
-                    "flying_immune": bool(int(dt[4])) if len(dt) >= 5 else False,
+                    "flying_immune": flying_immune,
                 }
             except (TypeError, ValueError):
                 continue

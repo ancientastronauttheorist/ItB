@@ -739,8 +739,9 @@ local function dump_state()
     --   flying_immune=1 → terrain-conversion lethal (Tidal Wave, Cataclysm,
     --                     Seismic). Effectively-flying units survive
     --                     because water/chasm rules let them hover.
-    --                     Air Strike / Lightning / Satellite emit
-    --                     flying_immune=0 — those hit flyers too.
+    --                     Air Strike / Lightning / Satellite / Final Cave
+    --                     falling rocks emit flying_immune=0 — those hit
+    --                     flyers too.
     -- The 5th field landed at SIMULATOR_VERSION 19 (2026-04-25) closing the
     -- "Hornet on Tidal tile" silent kill desync. Older bridges emit only 4
     -- fields; the Rust deserializer falls back to env_type when the 5th is
@@ -783,6 +784,17 @@ local function dump_state()
         local mission = _ITB_CURRENT_MISSION
         if not mission or not mission.LiveEnvironment then return end
         local le = mission.LiveEnvironment
+        local mission_id = mission.ID or ""
+
+        -- Mission_Final_Cave uses Env_Final, whose marked tiles are falling
+        -- rock / tentacle death effects (SpaceDamage(..., DAMAGE_DEATH)),
+        -- not ordinary chasm conversion. Prospero/flying mechs die here.
+        if mission_id == "Mission_Final_Cave" then
+            env_type = "final_cave"
+            env_kill_default = true
+            env_flying_immune_default = false
+            return
+        end
 
         -- Walk metatable chain. For each link, check membership in our
         -- known-env table. Stops at first match. `_G` lookup is safe — class

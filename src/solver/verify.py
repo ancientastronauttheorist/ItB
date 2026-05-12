@@ -685,7 +685,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # water/lava instead of stopping at water, and dead Dash Punch targets can
 # still bump a live blocker behind them. Pre-v98 corpus archived as
 # failure_db_snapshot_sim_v97.jsonl.
-SIMULATOR_VERSION = 98
+# v99 - Final Cave Env_Final danger is falling-rock/tentacle death, not
+# hoverable cataclysm chasm conversion; stale flying_immune=1 payloads on
+# Mission_Final_Cave now still kill flying mechs. Pre-v99 corpus archived as
+# failure_db_snapshot_sim_v98.jsonl.
+SIMULATOR_VERSION = 99
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

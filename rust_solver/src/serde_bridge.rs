@@ -416,8 +416,9 @@ pub fn board_from_json(json_str: &str)
     //   kill_int != 0      → Deadly Threat (bypasses shield/frozen/armor/ACID)
     //   flying_immune != 0 → terrain-conversion lethal (Tidal Wave/Cataclysm/
     //                        Seismic): effectively-flying units survive.
-    //                        Air Strike / Lightning / Satellite Rocket leave
-    //                        this field 0 — they bypass flight.
+    //                        Air Strike / Lightning / Satellite Rocket /
+    //                        Final Cave falling rocks leave this field 0 —
+    //                        they bypass flight.
     // The 5th field is an optional addition introduced at SIMULATOR_VERSION 19
     // (Lua bridge 2026-04-25). Older recordings only have 4 fields; we infer
     // flying_immune from the top-level `env_type` tag when present, else
@@ -428,11 +429,15 @@ pub fn board_from_json(json_str: &str)
     // but never under-predicts air strike deaths.
     let mut env_danger_kill = 0u64;
     let mut env_danger_flying_immune = 0u64;
+    // Final Cave's marked tiles are Env_Final falling-rock/tentacle death
+    // effects, not ordinary chasm conversion. Treat stale bridge payloads that
+    // say flying_immune=1 as lethal to flyers anyway.
+    let final_cave_env = input.mission_id.as_deref() == Some("Mission_Final_Cave");
     // Back-compat fallback: when the 5th element is missing, look at the
     // top-level env_type to decide whether the lethal hazard is terrain-
     // conversion (flying_immune=true) or Deadly Threat (false).
     let env_type_flying_immune: Option<bool> = input.env_type.as_deref().map(|t| {
-        matches!(t,
+        !final_cave_env && matches!(t,
             "tidal_or_cataclysm"
             | "cataclysm_or_seismic"
             | "tidal"
@@ -447,7 +452,9 @@ pub fn board_from_json(json_str: &str)
                 env_danger |= bit;  // v2 entry is also a v1 danger tile
                 if entry[3] != 0 {
                     env_danger_kill |= bit;
-                    let flying_immune = if entry.len() >= 5 {
+                    let flying_immune = if final_cave_env {
+                        false
+                    } else if entry.len() >= 5 {
                         entry[4] != 0
                     } else {
                         // 4-field legacy entry — fall back to env_type

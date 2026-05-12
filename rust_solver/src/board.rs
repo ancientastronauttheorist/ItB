@@ -320,8 +320,9 @@ pub struct Board {
     /// (water-conversion is treated as a destroy, not a drown, and chasm
     /// always kills non-flying including Massive).
     ///
-    /// Air Strike / Lightning / Satellite Rocket are NOT in this set —
-    /// those bypass flight (bombs / lightning hit anything in the air).
+    /// Air Strike / Lightning / Satellite Rocket / Final Cave falling rocks
+    /// are NOT in this set — those bypass flight (bombs / lightning / rocks
+    /// hit anything in the air).
     /// Subset of `env_danger_kill`. When a kill tile is NOT in this set,
     /// flying offers no protection.
     pub env_danger_flying_immune: u64,

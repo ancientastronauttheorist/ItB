@@ -19,7 +19,7 @@
 - [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
 - [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
 - [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
-- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers] — active target; simulator v95 models Dash Punch
+- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers] — active target; simulator v99 models Dash Punch and Final Cave flyer danger
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
 - [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]
 - [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
