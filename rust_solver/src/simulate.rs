@@ -2636,6 +2636,11 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                 let nx = old_x as i8 + dx * step;
                 let ny = old_y as i8 + dy * step;
                 if !in_bounds(nx, ny) { continue; }
+                if wdef.smoke() && board.tile(nx as u8, ny as u8).terrain == Terrain::Forest {
+                    let tile = board.tile_mut(nx as u8, ny as u8);
+                    tile.terrain = Terrain::Ground;
+                    tile.set_on_fire(false);
+                }
                 apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
             }
         }
@@ -3035,7 +3040,8 @@ pub fn simulate_attack(
     // as a desync on WallMech, pawn movement rounds, etc.
     if weapon_id != WId::None {
         board.units[mech_idx].set_active(false);
-        board.units[mech_idx].set_boosted(false);
+        let finisher_boost = board.units[mech_idx].pilot_chemical() && result.enemies_killed > 0;
+        board.units[mech_idx].set_boosted(finisher_boost);
     }
     result
 }
@@ -4708,6 +4714,20 @@ mod tests {
     }
 
     #[test]
+    fn test_aerial_bombs_smoke_consumes_transit_forest_without_fire() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Forest;
+        add_enemy(&mut board, 1, 3, 4, 1);
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        let _ = simulate_action(&mut board, mech_idx, (3, 5), WId::BruteJetmech, (3, 5), &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Aerial Bombs consumes transit Forest");
+        assert!(board.tile(3, 4).smoke(), "Aerial Bombs still leaves smoke on the transit tile");
+        assert!(!board.tile(3, 4).on_fire(), "Aerial Bombs smoke prevents transit Forest ignition");
+    }
+
+    #[test]
     fn test_sand_becomes_smoke_on_weapon_damage() {
         let mut board = make_test_board();
         board.tile_mut(3, 4).terrain = Terrain::Sand;
@@ -6041,6 +6061,32 @@ mod tests {
         assert_eq!(board.units[harold].hp, 3, "Repair heals 1 HP");
     }
 
+    #[test]
+    fn test_pilot_chemical_gets_boost_after_enemy_kill() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let morgan = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        board.units[morgan].pilot_flags = PilotFlags::CHEMICAL;
+        add_enemy(&mut board, 10, 3, 4, 1);
+
+        let _ = simulate_action(&mut board, morgan, (3, 3), WId::PrimePunchmech, (3, 4), &WEAPONS);
+
+        assert!(board.units[morgan].boosted(), "Morgan should be boosted after killing an enemy");
+    }
+
+    #[test]
+    fn test_pilot_chemical_loses_existing_boost_without_kill() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let morgan = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        board.units[morgan].pilot_flags = PilotFlags::CHEMICAL;
+        board.units[morgan].set_boosted(true);
+
+        let _ = simulate_action(&mut board, morgan, (3, 3), WId::PrimePunchmech, (3, 4), &WEAPONS);
+
+        assert!(!board.units[morgan].boosted(), "Morgan's boost should be consumed when no enemy dies");
+    }
+
     // sim v32: Grid Defense expected save fires for player-phase building
     // damage too (per text.lua:122 "This building resisted damage!"). The
     // simulator still destroys the building deterministically — what changes
@@ -6706,6 +6752,46 @@ mod tests {
             "kill_int=0 leaves env_danger_kill clear");
         assert!(!board.is_env_danger_flying_immune(5, 5),
             "non-lethal tile is never flying-immune");
+    }
+
+    #[test]
+    fn test_mission_wind_markers_do_not_damage_buildings() {
+        // Hard Rusting Hulks run 20260512_104120_903, Mission_Wind turn 1:
+        // the bridge marked wind rows as non-lethal environment_danger_v2,
+        // including buildings at F7/C7. Wind pushes; it is not direct 1 HP
+        // building damage. Until WindDir is exported, keep these as
+        // non-damaging markers so clean boards do not safety-block on phantom
+        // grid loss.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+        use crate::types::xy_to_idx;
+
+        let json = r#"{
+          "mission_id": "Mission_Wind",
+          "tiles": [
+            {"x": 1, "y": 2, "terrain": "building", "terrain_id": 1, "building_hp": 1}
+          ],
+          "units": [],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[1, 2, 1, 0, 0]],
+          "env_type": "wind",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        let wind_bit = 1u64 << xy_to_idx(1, 2);
+        assert_eq!(board.env_wind & wind_bit, wind_bit);
+        assert!(!board.is_env_danger(1, 2),
+            "Mission_Wind markers must not enter direct env damage");
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(board.tile(1, 2).building_hp, 1);
     }
 
     #[test]

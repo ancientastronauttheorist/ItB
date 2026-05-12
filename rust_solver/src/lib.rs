@@ -1121,7 +1121,19 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and Python board parsing preserves live pushability overrides so Final Cave
 //   leaders are not predicted to move when Taurus/Artemis push them.
 //   Pre-v100 corpus archived as `failure_db_snapshot_sim_v99.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 100;
+// v101 - Aerial Bombs smoke consumes transit Forest tiles before damage, and
+//   Morgan Lejeune (Pilot_Chemical) gains Boost after enemy kills instead of
+//   always clearing Boost at action end. Pre-v101 corpus archived as
+//   `failure_db_snapshot_sim_v100.jsonl`.
+// v102 - Mission_Wind rows are no longer modeled as direct environment damage;
+//   the bridge marks them separately until it can export live WindDir for full
+//   push simulation. Pre-v102 corpus archived as
+//   `failure_db_snapshot_sim_v101.jsonl`.
+// v103 - Rust replay verification snapshots now include `status.boosted`, matching
+//   Python snapshots and preventing Kai/Morgan Boost from surfacing as false
+//   status/click_miss desyncs. Pre-v103 corpus archived as
+//   `failure_db_snapshot_sim_v102.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 103;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

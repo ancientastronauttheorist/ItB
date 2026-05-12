@@ -293,6 +293,7 @@ fn pilot_flags_from_id(pilot_id: &str) -> crate::board::PilotFlags {
         "Pilot_Soldier"   => PilotFlags::SOLDIER,    // Camila Vera — Evasion
         "Pilot_Rock"      => PilotFlags::ROCK,       // Ariadne — Rockman
         "Pilot_Repairman" => PilotFlags::REPAIRMAN,  // Harold Schmidt — Frenzied Repair
+        "Pilot_Chemical"  => PilotFlags::CHEMICAL,   // Morgan Lejeune — Finisher
         _ => PilotFlags::empty(),
     }
 }
@@ -475,9 +476,20 @@ pub fn board_from_json(json_str: &str)
             env_danger_flying_immune = env_danger;
         }
     }
+    let env_wind = if input.env_type.as_deref() == Some("wind") {
+        env_danger
+    } else {
+        0
+    };
+    if env_wind != 0 {
+        env_danger &= !env_wind;
+        env_danger_kill &= !env_wind;
+        env_danger_flying_immune &= !env_wind;
+    }
     board.env_danger = env_danger;
     board.env_danger_kill = env_danger_kill;
     board.env_danger_flying_immune = env_danger_flying_immune;
+    board.env_wind = env_wind;
 
     // Ice Storm freeze tiles. Separate channel from env_danger — these tiles
     // apply Frozen=true to units at start of enemy turn, no HP damage.

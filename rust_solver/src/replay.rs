@@ -317,6 +317,7 @@ fn capture_snapshot(
                 "frozen": u.frozen(),
                 "shield": u.shield(),
                 "web":    u.web(),
+                "boosted": u.boosted(),
             },
         }));
     }
@@ -470,6 +471,39 @@ mod tests {
         assert_eq!(mech["active"], false,
             "Repair must clear active flag in predicted snapshot (was {} pre-fix)",
             mech["active"]);
+    }
+
+    #[test]
+    fn replay_solution_snapshots_include_boosted_status() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 0, "type": "JetMech", "x": 2, "y": 3,
+             "hp": 2, "max_hp": 2, "team": 1, "mech": true,
+             "flying": true, "move": 5, "active": true, "boosted": true,
+             "weapons": ["Brute_Jetmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [2, 3],
+          "weapon_id": "None",
+          "target": [255, 255]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let post_attack_units = v["predicted_states"][0]["post_attack"]["units"].as_array().unwrap();
+        let jet = post_attack_units.iter().find(|u| u["uid"] == 0).unwrap();
+        assert_eq!(jet["status"]["boosted"], true,
+            "Replay snapshots must preserve Boosted so verify does not create false status diffs");
     }
 
     #[test]

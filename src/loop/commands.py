@@ -3030,15 +3030,19 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     )):
                 # Emergency safety widening: the top-1 entry path can miss
                 # lower-ranked clean plans when the scorer strongly favors
-                # tactics that still concede grid. Do a wider top-K pass only
-                # after the normal candidate is blocked. Keep soft-disabled
-                # weapons pruned here too: once a live desync proves a weapon
-                # unreliable, re-admitting it as "emergency clean" can hide
-                # the exact loss the blocklist was meant to prevent.
+                # tactics that still concede grid. First respect the current
+                # soft-disable mask; if every masked candidate is dirty, run a
+                # diagnostic no-mask pass so false-positive cages cannot force
+                # dirty consent when a clean line exists.
                 widening_attempts: list[dict] = []
-                for source, ignore_soft_disables in [("top_k_safety", False)]:
+                for source, ignore_soft_disables in [
+                    ("top_k_safety", False),
+                    ("top_k_safety_no_soft_disables", True),
+                ]:
                     wide_bridge_data = dict(bridge_data)
                     wide_bridge_data.pop("eval_weights", None)
+                    if ignore_soft_disables:
+                        wide_bridge_data.pop("disabled_actions", None)
 
                     wide_raw = _rust.solve_top_k(
                         _json.dumps(wide_bridge_data),

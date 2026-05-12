@@ -93,6 +93,9 @@ bitflags! {
         /// Harold Schmidt (Pilot_Repairman) — Frenzied Repair: the mech's
         /// Repair action also pushes all four adjacent tiles outward.
         const REPAIRMAN = 0b0000_0100;
+        /// Morgan Lejeune (Pilot_Chemical) — Finisher: killing an enemy boosts
+        /// this mech for its next action.
+        const CHEMICAL  = 0b0000_1000;
     }
 }
 
@@ -232,6 +235,7 @@ impl Unit {
     pub fn pilot_soldier(&self) -> bool { self.pilot_flags.contains(PilotFlags::SOLDIER) }
     pub fn pilot_rock(&self) -> bool { self.pilot_flags.contains(PilotFlags::ROCK) }
     pub fn pilot_repairman(&self) -> bool { self.pilot_flags.contains(PilotFlags::REPAIRMAN) }
+    pub fn pilot_chemical(&self) -> bool { self.pilot_flags.contains(PilotFlags::CHEMICAL) }
 
     /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and for
     /// any player unit when the squad has Flame Shielding (checked at the
@@ -326,6 +330,11 @@ pub struct Board {
     /// Subset of `env_danger_kill`. When a kill tile is NOT in this set,
     /// flying offers no protection.
     pub env_danger_flying_immune: u64,
+    /// Bitset: bit i = tile i is affected by Mission_Wind. Wind is a push
+    /// effect, not direct 1 HP environment damage; until the bridge exports the
+    /// live WindDir, the simulator treats these as non-damaging markers instead
+    /// of falsely draining grid from buildings on wind rows.
+    pub env_wind: u64,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
     /// Frozen=true to any alive unit standing on these tiles. Buildings
@@ -446,6 +455,7 @@ impl Default for Board {
             env_danger: 0,
             env_danger_kill: 0,
             env_danger_flying_immune: 0,
+            env_wind: 0,
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,

@@ -72,6 +72,24 @@ def test_three_desyncs_trigger_soft_disable():
     assert sig["confidence"] >= 0.8
 
 
+def test_repeated_status_desyncs_do_not_soft_disable():
+    """Status-only drift is too broad to cage a weapon.
+
+    Hard Rusting Hulks Mission_Wind turn 3 had clean Jet/Rocket lines hidden
+    by false soft-disables that came from repeated boosted/status noise.
+    """
+    prior = [
+        {"signature": "status|Brute_Jetmech|attack"},
+        {"signature": "status|Brute_Jetmech|attack"},
+    ]
+    sig = fuzzy_detector.evaluate(
+        DiffResult(), _classification("status"),
+        context=_ctx("Brute_Jetmech", "attack"), prior_events=prior,
+    )
+    assert sig["frequency"] == 2
+    assert sig["proposed_tier"] == 4
+
+
 def test_confidence_floor_satisfied_at_threshold():
     """Threshold=3 must produce conf ≥ floor (0.8) under the formula
     `0.5 + 0.1 * (freq+1)`. If a future formula tweak drops below the

@@ -19,7 +19,7 @@
 - [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
 - [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
 - [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
-- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers] — active target; simulator v100 models Dash Punch, Final Cave flyer danger, and Stable/guarding push immunity
+- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers] — paused while Hard Victory is active
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
 - [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]
 - [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
@@ -56,7 +56,7 @@
 - [ ] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random]
 - [ ] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
 - [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
-- [ ] Hard Victory (9.0%) — Beat game on Hard
+- [ ] Hard Victory (9.0%) — Beat game on Hard — active target with Rusting Hulks on Hard + Advanced Edition; prefer 2-island victory unless the island-2 readiness check says to take a third island for cores/grid/control
 - [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
 - [ ] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm]
