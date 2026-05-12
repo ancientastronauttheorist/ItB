@@ -134,6 +134,7 @@ class Unit:
     frozen: bool = False
     fire: bool = False
     web: bool = False
+    boosted: bool = False
     # UID of the enemy currently webbing this unit. -1 = no web / unknown.
     # When that enemy is pushed or killed, web breaks and move_speed restores.
     web_source_uid: int = -1
@@ -577,6 +578,7 @@ class Board:
                 frozen=ud.get("frozen", False),
                 fire=ud.get("fire", False),
                 web=ud.get("web", False),
+                boosted=ud.get("boosted", False),
                 web_source_uid=ud.get("web_source_uid", -1),
                 target_x=qt_x,
                 target_y=qt_y,

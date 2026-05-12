@@ -678,7 +678,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v96 - Taurus Cannon direct edge pushes and Artemis adjacent edge pushes no
 # longer add off-board bump damage; on-board blocker bumps remain intact.
 # Pre-v96 corpus archived as failure_db_snapshot_sim_v95.jsonl.
-SIMULATOR_VERSION = 96
+# v97 - Boosted unit status now enters solver payloads, adds +1 weapon damage
+# / repair healing, and is consumed on attack or repair.
+# Pre-v97 corpus archived as failure_db_snapshot_sim_v96.jsonl.
+# v98 - Titan Fist Dash follows Lua AddCharge/Projectile pathing through
+# water/lava instead of stopping at water, and dead Dash Punch targets can
+# still bump a live blocker behind them. Pre-v98 corpus archived as
+# failure_db_snapshot_sim_v97.jsonl.
+SIMULATOR_VERSION = 98
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -769,6 +776,7 @@ def snapshot_after_move(
                 "frozen": u.frozen,
                 "shield": u.shield,
                 "web": u.web,
+                "boosted": getattr(u, "boosted", False),
             },
         })
 
@@ -853,6 +861,7 @@ def snapshot_after_action(
                 "frozen": u.frozen,
                 "shield": u.shield,
                 "web": u.web,
+                "boosted": getattr(u, "boosted", False),
             },
         })
 
@@ -1007,7 +1016,7 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
                 })
 
         pu_status = pu.get("status", {})
-        for sf in ("fire", "acid", "frozen", "shield", "web"):
+        for sf in ("fire", "acid", "frozen", "shield", "web", "boosted"):
             pv = pu_status.get(sf, False)
             av = getattr(au, sf, False)
             if pv != av:

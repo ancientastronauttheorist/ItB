@@ -1105,7 +1105,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v96 - Taurus Cannon direct edge pushes and Artemis adjacent edge pushes no
 //   longer add off-board bump damage; on-board blocker bumps remain intact.
 //   Pre-v96 corpus archived as `failure_db_snapshot_sim_v95.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 96;
+// v97 - Boosted unit status now enters solver payloads, adds +1 weapon damage
+//   / repair healing, and is consumed on attack or repair.
+//   Pre-v97 corpus archived as `failure_db_snapshot_sim_v96.jsonl`.
+// v98 - Titan Fist Dash follows Lua AddCharge/Projectile pathing through
+//   water/lava instead of stopping at water, and dead Dash Punch targets can
+//   still bump a live blocker behind them. Pre-v98 corpus archived as
+//   `failure_db_snapshot_sim_v97.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 98;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

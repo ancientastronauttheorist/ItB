@@ -98,6 +98,7 @@ class Pawn:
     secondary_mod2: list = field(default_factory=list)
     secondary_powered: list = field(default_factory=list)
     secondary_damaged: bool = False
+    boosted: bool = False        # bBoosted — next ability gets +1 damage/heal
     # Attack intent
     target: Point | None = None      # piTarget - where they're aiming
     queued_shot: Point | None = None  # piQueuedShot - confirmed attack target
@@ -635,6 +636,7 @@ def extract_mission_state(
             secondary_mod2=secondary_mod2,
             secondary_powered=_get_list(pd, 'secondary_power'),
             secondary_damaged=bool(pd.get('secondary_damaged', False)),
+            boosted=bool(pd.get('bBoosted', False)),
             # Attack intents
             target=target if isinstance(target, Point) and target.x >= 0 else None,
             queued_shot=queued if isinstance(queued, Point) and queued.x >= 0 else None,

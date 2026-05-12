@@ -418,6 +418,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if u.frozen()                     { unit_val["frozen"]               = json!(true); }
         if u.fire()                       { unit_val["fire"]                 = json!(true); }
         if u.web()                        { unit_val["web"]                  = json!(true); }
+        if u.boosted()                    { unit_val["boosted"]              = json!(true); }
         if u.ranged()                     { unit_val["ranged"]               = json!(1u8); }
         if u.has_queued_attack()          { unit_val["has_queued_attack"]    = json!(true); }
         if u.is_extra_tile()              { unit_val["is_extra_tile"]        = json!(true); }

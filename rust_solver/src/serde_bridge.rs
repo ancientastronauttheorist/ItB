@@ -264,6 +264,7 @@ pub struct JsonUnit {
     pub frozen: Option<bool>,
     pub fire: Option<bool>,
     pub web: Option<bool>,
+    pub boosted: Option<bool>,
     pub web_source_uid: Option<u16>,
     pub has_queued_attack: Option<bool>,
     pub base_move: Option<u8>,
@@ -540,6 +541,7 @@ pub fn board_from_json(json_str: &str)
             if ju.frozen.unwrap_or(false) { flags |= UnitFlags::FROZEN; }
             if ju.fire.unwrap_or(false) { flags |= UnitFlags::FIRE; }
             if ju.web.unwrap_or(false) { flags |= UnitFlags::WEB; }
+            if ju.boosted.unwrap_or(false) { flags |= UnitFlags::BOOSTED; }
             if ju.has_queued_attack.unwrap_or(false) { flags |= UnitFlags::HAS_QUEUED_ATTACK; }
 
             // Weapons

@@ -98,7 +98,7 @@ bitflags! {
 
 bitflags! {
     #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-    pub struct UnitFlags: u16 {
+    pub struct UnitFlags: u32 {
         const IS_MECH  = 0b0000_0000_0001;
         const FLYING   = 0b0000_0000_0010;
         const MASSIVE  = 0b0000_0000_0100;
@@ -127,6 +127,9 @@ bitflags! {
         /// and collision purposes, but the engine does not apply Psion aura
         /// bonuses to them.
         const MINOR = 0b1000_0000_0000_0000;
+        /// Boosted status: the unit's next ability gets +1 weapon damage, and
+        /// Repair heals +1 extra HP. Consumed on attack or repair.
+        const BOOSTED = 0b0001_0000_0000_0000_0000;
     }
 }
 
@@ -208,6 +211,7 @@ impl Unit {
     pub fn is_extra_tile(&self) -> bool { self.flags.contains(UnitFlags::EXTRA_TILE) }
     pub fn has_queued_attack(&self) -> bool { self.flags.contains(UnitFlags::HAS_QUEUED_ATTACK) }
     pub fn minor(&self) -> bool { self.flags.contains(UnitFlags::MINOR) }
+    pub fn boosted(&self) -> bool { self.flags.contains(UnitFlags::BOOSTED) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -215,6 +219,7 @@ impl Unit {
     pub fn set_fire(&mut self, v: bool) { self.flags.set(UnitFlags::FIRE, v); }
     pub fn set_acid(&mut self, v: bool) { self.flags.set(UnitFlags::ACID, v); }
     pub fn set_web(&mut self, v: bool) { self.flags.set(UnitFlags::WEB, v); }
+    pub fn set_boosted(&mut self, v: bool) { self.flags.set(UnitFlags::BOOSTED, v); }
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }

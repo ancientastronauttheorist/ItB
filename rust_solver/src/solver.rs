@@ -685,6 +685,7 @@ fn charge_first_hit(
     board: &Board,
     origin: (u8, u8),
     target: (u8, u8),
+    weapon_id: WId,
     wdef: &WeaponDef,
 ) -> Option<((u8, u8), u8, Option<usize>)> {
     let dir = cardinal_direction(origin.0, origin.1, target.0, target.1)?;
@@ -698,12 +699,22 @@ fn charge_first_hit(
         let tile = board.tile(x, y);
         if tile.terrain == Terrain::Mountain { break; }
         if tile.is_building() { return Some(((x, y), i as u8, None)); }
-        if !wdef.flying_charge() && tile.terrain.is_deadly_ground() { break; }
+        if charge_terrain_blocks(weapon_id, wdef, tile.terrain) { break; }
         if let Some(idx) = board.unit_at(x, y) {
             return Some(((x, y), i as u8, Some(idx)));
         }
     }
     None
+}
+
+fn charge_terrain_blocks(weapon_id: WId, wdef: &WeaponDef, terrain: Terrain) -> bool {
+    if wdef.flying_charge() {
+        return false;
+    }
+    if matches!(weapon_id, WId::PrimePunchmechA | WId::PrimePunchmechAB) {
+        return terrain == Terrain::Chasm;
+    }
+    terrain.is_deadly_ground()
 }
 
 fn direct_weapon_damage_would_kill(unit: &Unit, wdef: &WeaponDef) -> bool {
@@ -876,7 +887,7 @@ fn prune_actions(
 
             if wdef.weapon_type == WeaponType::Charge {
                 if let Some((_hit, distance, Some(idx))) =
-                    charge_first_hit(board, attack_origin, target, wdef)
+                    charge_first_hit(board, attack_origin, target, weapon_id, wdef)
                 {
                     let hit_unit = &board.units[idx];
                     if hit_unit.is_enemy() {

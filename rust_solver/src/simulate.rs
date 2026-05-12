@@ -1130,6 +1130,12 @@ const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
 };
 
+const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+};
+
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
@@ -1536,7 +1542,23 @@ pub fn simulate_weapon_with(
     weapons: &WeaponTable,
 ) -> ActionResult {
     let mut result = ActionResult::default();
-    let wdef = &weapons[weapon_id as usize];
+    let base_wdef = &weapons[weapon_id as usize];
+    let mut boosted_wdef;
+    let wdef = if board.units[attacker_idx].boosted() {
+        boosted_wdef = *base_wdef;
+        if boosted_wdef.damage > 0 {
+            boosted_wdef.damage = boosted_wdef.damage.saturating_add(1);
+        }
+        if boosted_wdef.damage_outer > 0 {
+            boosted_wdef.damage_outer = boosted_wdef.damage_outer.saturating_add(1);
+        }
+        if boosted_wdef.self_damage > 0 {
+            boosted_wdef.self_damage = boosted_wdef.self_damage.saturating_add(1);
+        }
+        &boosted_wdef
+    } else {
+        base_wdef
+    };
 
     let ax = board.units[attacker_idx].x;
     let ay = board.units[attacker_idx].y;
@@ -1811,7 +1833,15 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         let hy = hit_y as u8;
         let dmg = projectile_damage(wdef, ax, ay, hx, hy);
         let occupied_at_impact = board.unit_at(hx, hy).is_some();
-        apply_damage(board, hx, hy, dmg, result, DamageSource::Weapon);
+        let defer_death_explosion = dmg > 0 && !matches!(wdef.push, PushDir::None | PushDir::Flip);
+        let deferred_death_explosion = if defer_death_explosion {
+            apply_damage_defer_death_explosion(
+                board, hx, hy, dmg, result, DamageSource::Weapon,
+            )
+        } else {
+            apply_damage(board, hx, hy, dmg, result, DamageSource::Weapon);
+            None
+        };
         apply_weapon_status_with_impact_occupancy(
             board, hx, hy, wdef, occupied_at_impact,
         ); // status BEFORE push (unit still here)
@@ -1824,6 +1854,11 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
             PushDir::Forward => apply_push_with_policy(board, hx, hy, dir, result, policy),
             PushDir::Backward => apply_push_with_policy(board, hx, hy, opposite_dir(dir), result, policy),
             _ => {}
+        }
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
         }
     } else if let Some((mx, my)) = mountain_hit {
         // Projectile struck a mountain with no prior target — damage it.
@@ -2391,7 +2426,7 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Wea
         let tile = board.tile(nxu, nyu);
         if tile.terrain == Terrain::Mountain { break; }
         if tile.is_building() { hit = Some((nxu, nyu)); break; }
-        if !wdef.flying_charge() && tile.terrain.is_deadly_ground() { break; }
+        if charge_terrain_blocks(weapon_id, wdef, tile.terrain) { break; }
         if board.unit_at(nxu, nyu).is_some() { hit = Some((nxu, nyu)); break; }
 
         path.push((nxu, nyu));
@@ -2433,12 +2468,30 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Wea
             + (hy as i8 - ay as i8).unsigned_abs();
         let kills_before = result.enemies_killed;
         let occupied_at_impact = board.unit_at(hx, hy).is_some();
-        apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+        let defer_death_explosion = wdef.damage > 0 && wdef.push == PushDir::Forward;
+        let deferred_death_explosion = if defer_death_explosion {
+            apply_damage_defer_death_explosion(
+                board, hx, hy, wdef.damage, result, DamageSource::Weapon,
+            )
+        } else {
+            apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+            None
+        };
         apply_weapon_status_with_impact_occupancy(
             board, hx, hy, wdef, occupied_at_impact,
         ); // status BEFORE push
         if wdef.push == PushDir::Forward {
-            apply_push(board, hx, hy, dir, result);
+            let policy = if matches!(weapon_id, WId::PrimePunchmechA | WId::PrimePunchmechAB) {
+                DASH_PUNCH_PUSH_POLICY
+            } else {
+                DEFAULT_PUSH_POLICY
+            };
+            apply_push_with_policy(board, hx, hy, dir, result, policy);
+        }
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
         }
         if wdef.self_damage > 0 {
             let ax = board.units[attacker_idx].x;
@@ -2455,6 +2508,16 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Wea
             ));
         }
     }
+}
+
+fn charge_terrain_blocks(weapon_id: WId, wdef: &WeaponDef, terrain: Terrain) -> bool {
+    if wdef.flying_charge() {
+        return false;
+    }
+    if matches!(weapon_id, WId::PrimePunchmechA | WId::PrimePunchmechAB) {
+        return terrain == Terrain::Chasm;
+    }
+    terrain.is_deadly_ground()
 }
 
 // ── Leap ─────────────────────────────────────────────────────────────────────
@@ -2928,10 +2991,12 @@ pub fn simulate_attack(
     if weapon_id == WId::Repair {
         let (is_repairman, rx, ry) = {
             let unit = &mut board.units[mech_idx];
-            unit.hp = unit.hp.min(unit.max_hp - 1) + 1; // heal 1
+            let heal: i8 = if unit.boosted() { 2 } else { 1 };
+            unit.hp = unit.hp.min(unit.max_hp - heal) + heal;
             unit.set_fire(false);
             unit.set_acid(false);
             unit.set_frozen(false);
+            unit.set_boosted(false);
             unit.set_active(false);
             (unit.pilot_repairman(), unit.x, unit.y)
         };
@@ -2970,6 +3035,7 @@ pub fn simulate_attack(
     // as a desync on WallMech, pawn movement rounds, etc.
     if weapon_id != WId::None {
         board.units[mech_idx].set_active(false);
+        board.units[mech_idx].set_boosted(false);
     }
     result
 }
@@ -3035,6 +3101,47 @@ mod tests {
             move_speed: 3,
             ..Default::default()
         })
+    }
+
+    #[test]
+    fn test_boosted_taurus_kills_pushed_hornet_and_explodes_from_final_tile() {
+        // R.S.T. Corporate HQ, run 20260510_213059_819 m10 turn 4:
+        // Fenrir/Kai's boosted Tank fired Taurus at a 2 HP Hornet. The live
+        // game applied Boost (+1 damage), pushed the corpse, then resolved the
+        // Psion Abomination death explosion from the corpse's final tile.
+        let mut board = make_test_board();
+        board.boss_psion = true;
+        board.tile_mut(3, 2).terrain = Terrain::Building;
+        board.tile_mut(3, 2).building_hp = 2;
+
+        let tank = add_mech(&mut board, 1, 2, 4, 3, WId::BruteTankmech);
+        board.units[tank].set_boosted(true);
+        let hornet = add_enemy_type(&mut board, 710, 2, 3, 2, "Hornet1");
+        let boss = add_enemy_type(&mut board, 706, 1, 2, 4, "Jelly_Boss");
+
+        let _ = simulate_action(
+            &mut board, tank, (2, 4), WId::BruteTankmech, (2, 3), &WEAPONS,
+        );
+
+        assert!(board.units[hornet].hp <= 0, "boosted Taurus kills 2 HP Hornet");
+        assert_eq!((board.units[hornet].x, board.units[hornet].y), (2, 2),
+            "dead pushable target is pushed before death explosion resolves");
+        assert_eq!(board.units[boss].hp, 3, "death explosion hits Jelly_Boss at F7");
+        assert_eq!(board.tile(3, 2).building_hp, 1, "death explosion damages F5 tower");
+        assert!(!board.units[tank].boosted(), "Boost is consumed by the attack");
+    }
+
+    #[test]
+    fn test_boosted_repair_heals_two_and_consumes_boost() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::Repair);
+        board.units[mech].hp = 1;
+        board.units[mech].set_boosted(true);
+
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair, (3, 3), &WEAPONS);
+
+        assert_eq!(board.units[mech].hp, 3, "boosted Repair heals 2 HP");
+        assert!(!board.units[mech].boosted(), "Boost is consumed by Repair");
     }
 
     #[test]
@@ -3635,6 +3742,41 @@ mod tests {
         assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
         assert!(board.units[enemy_idx].hp <= 0, "AB Dash Punch should deal 4 damage");
         assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_titan_fist_dash_crosses_water_before_first_blocker() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 3, 3, WId::PrimePunchmechA);
+        let enemy_idx = add_enemy(&mut board, 1, 6, 3, 2);
+        board.tile_mut(4, 3).terrain = Terrain::Water;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 3, 3);
+
+        assert_eq!(
+            (board.units[mech_idx].x, board.units[mech_idx].y),
+            (5, 3),
+            "Dash Punch should cross water instead of stopping before it"
+        );
+        assert!(board.units[enemy_idx].hp <= 0);
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_titan_fist_dash_dead_target_bumps_live_blocker() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 2, 3, WId::PrimePunchmechA);
+        let blob_idx = add_enemy(&mut board, 1, 1, 1, 1);
+        let arti_idx = add_mech(&mut board, 2, 1, 0, 2, WId::RangedArtillerymech);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 1, 1);
+
+        assert!(board.units[blob_idx].hp <= 0, "Dash target dies from the punch");
+        assert_eq!(
+            board.units[arti_idx].hp, 1,
+            "Dead Dash Punch target should still bump the live blocker behind it"
+        );
+        assert_eq!(result.mech_damage_taken, 1);
     }
 
     /// Reproduction via the bridge JSON path — the failing run actually

@@ -235,6 +235,16 @@ def _enrich_bridge_mech_weapons_from_save(
         if uid < 0:
             continue
 
+        if unit.get("active", True):
+            pawn = _save_pawn_for_uid(state, uid)
+            if pawn is not None and getattr(pawn, "boosted", False):
+                unit["boosted"] = True
+                updates.append({
+                    "uid": uid,
+                    "field": "boosted",
+                    "value": True,
+                })
+
         weapons = unit.get("weapons")
         if not isinstance(weapons, list):
             weapons = []

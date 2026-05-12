@@ -508,6 +508,8 @@ local function dump_state()
                 if ok_fi then unit.fire = fi end
                 local ok_fr, fr = pcall(function() return p:IsFrozen() end)
                 if ok_fr then unit.frozen = fr end
+                local ok_bo, boosted = pcall(function() return p:IsBoosted() end)
+                if ok_bo and boosted then unit.boosted = true end
                 -- Web/grapple detection: try multiple API method names.
                 -- IsGrappled() alone misses Spider-egg webs on mechs; probe
                 -- alternatives so either the Scorpion-grapple or the Spider-
