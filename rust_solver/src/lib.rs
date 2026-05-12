@@ -1133,7 +1133,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Python snapshots and preventing Kai/Morgan Boost from surfacing as false
 //   status/click_miss desyncs. Pre-v103 corpus archived as
 //   `failure_db_snapshot_sim_v102.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 103;
+// v104 - Kai Miller (Pilot_Arrogant) Boost is state-based: full-HP Kai remains
+//   Boosted after attacks and regains Boost after Repair/repair platforms,
+//   while damage below full HP clears Boost. Pre-v104 corpus archived as
+//   `failure_db_snapshot_sim_v103.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 104;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

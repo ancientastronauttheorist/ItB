@@ -8,6 +8,18 @@ use crate::board::*;
 use crate::weapons::*;
 use crate::movement::{direction_between, cardinal_direction};
 
+fn refresh_arrogant_boost(unit: &mut Unit) {
+    if unit.pilot_arrogant() {
+        unit.set_boosted(unit.hp > 0 && unit.hp >= unit.max_hp);
+    }
+}
+
+fn refresh_all_arrogant_boosts(board: &mut Board) {
+    for i in 0..board.unit_count as usize {
+        refresh_arrogant_boost(&mut board.units[i]);
+    }
+}
+
 // ── Blast Psion death explosion ──────────────────────────────────────────────
 
 /// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
@@ -203,6 +215,7 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
     // stayed at 4/2, matching an overheal cap of max_hp + 2.
     let cap = board.units[unit_idx].max_hp.saturating_add(2);
     board.units[unit_idx].hp = before.saturating_add(10).min(cap);
+    refresh_arrogant_boost(&mut board.units[unit_idx]);
     board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
     result.repair_platforms_used += 1;
     result.events.push(format!(
@@ -855,6 +868,8 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             break_web_from(board, dead_uid);
         }
     }
+
+    refresh_all_arrogant_boosts(board);
 }
 
 /// Convert a single tile to Water, drowning any non-flying non-massive unit
@@ -3002,6 +3017,7 @@ pub fn simulate_attack(
             unit.set_acid(false);
             unit.set_frozen(false);
             unit.set_boosted(false);
+            refresh_arrogant_boost(unit);
             unit.set_active(false);
             (unit.pilot_repairman(), unit.x, unit.y)
         };
@@ -3042,6 +3058,7 @@ pub fn simulate_attack(
         board.units[mech_idx].set_active(false);
         let finisher_boost = board.units[mech_idx].pilot_chemical() && result.enemies_killed > 0;
         board.units[mech_idx].set_boosted(finisher_boost);
+        refresh_arrogant_boost(&mut board.units[mech_idx]);
     }
     result
 }
@@ -6085,6 +6102,50 @@ mod tests {
         let _ = simulate_action(&mut board, morgan, (3, 3), WId::PrimePunchmech, (3, 4), &WEAPONS);
 
         assert!(!board.units[morgan].boosted(), "Morgan's boost should be consumed when no enemy dies");
+    }
+
+    #[test]
+    fn test_pilot_arrogant_regains_boost_after_repair_to_full_hp() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let kai = add_mech(&mut board, 0, 3, 3, 2, WId::BruteJetmech);
+        board.units[kai].pilot_flags = PilotFlags::ARROGANT;
+        board.units[kai].hp = 1;
+        board.units[kai].set_boosted(false);
+
+        let _ = simulate_action(&mut board, kai, (3, 3), WId::Repair, (255, 255), &WEAPONS);
+
+        assert_eq!(board.units[kai].hp, 2);
+        assert!(board.units[kai].boosted(), "Kai should be boosted again once Repair restores full HP");
+    }
+
+    #[test]
+    fn test_pilot_arrogant_stays_boosted_after_full_hp_attack() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let kai = add_mech(&mut board, 0, 3, 3, 2, WId::BruteJetmech);
+        board.units[kai].pilot_flags = PilotFlags::ARROGANT;
+        board.units[kai].set_boosted(true);
+
+        let _ = simulate_action(&mut board, kai, (3, 3), WId::BruteJetmech, (3, 5), &WEAPONS);
+
+        assert_eq!(board.units[kai].hp, 2);
+        assert!(board.units[kai].boosted(), "Kai's Boost is state-based while full HP, not consumed like generic Boost");
+    }
+
+    #[test]
+    fn test_pilot_arrogant_loses_boost_when_damaged() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let kai = add_mech(&mut board, 0, 3, 3, 2, WId::BruteJetmech);
+        board.units[kai].pilot_flags = PilotFlags::ARROGANT;
+        board.units[kai].set_boosted(true);
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[kai].hp, 1);
+        assert!(!board.units[kai].boosted(), "Kai should lose Boost below full HP");
     }
 
     // sim v32: Grid Defense expected save fires for player-phase building

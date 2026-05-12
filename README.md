@@ -6,7 +6,7 @@ Status: **28 / 70 achievements earned** (latest Steam sync on 2026-05-10; refres
 
 Recent unlocks: **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. The previous Solver 2.0 live-test bumps picked up **Good Samaritan**, **Scorched Earth**, **Cryo Expert**, and **Pacifist**. See `TODO.md` for the checklist.
 
-Current live-run milestone: **Hard Victory** hunt is active with Rusting Hulks on Hard + Advanced Edition. Simulator v103 includes the recent Rusting Hulks hardening stack: Aerial Bombs forest-smoke / Morgan Boost handling, Mission_Wind rows no longer draining grid as direct damage, and replay snapshots preserving Boosted status so Kai/Morgan verification does not trigger false dirty re-solves. Default plan is a 2-island win attempt with an explicit post-island-2 readiness check before the Volcanic Hive.
+Current live-run milestone: **Hard Victory** hunt is active with Rusting Hulks on Hard + Advanced Edition. Simulator v104 includes the recent Rusting Hulks hardening stack: Aerial Bombs forest-smoke / Morgan Boost handling, Mission_Wind rows no longer draining grid as direct damage, replay snapshots preserving Boosted status, and Kai Miller's state-based full-HP Boost semantics. Default plan is a 2-island win attempt with an explicit post-island-2 readiness check before the Volcanic Hive.
 
 ---
 

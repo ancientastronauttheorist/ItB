@@ -96,6 +96,9 @@ bitflags! {
         /// Morgan Lejeune (Pilot_Chemical) — Finisher: killing an enemy boosts
         /// this mech for its next action.
         const CHEMICAL  = 0b0000_1000;
+        /// Kai Miller (Pilot_Arrogant) — Opener: this mech is Boosted while
+        /// at full HP, and loses 1 Move while damaged.
+        const ARROGANT  = 0b0001_0000;
     }
 }
 
@@ -236,6 +239,7 @@ impl Unit {
     pub fn pilot_rock(&self) -> bool { self.pilot_flags.contains(PilotFlags::ROCK) }
     pub fn pilot_repairman(&self) -> bool { self.pilot_flags.contains(PilotFlags::REPAIRMAN) }
     pub fn pilot_chemical(&self) -> bool { self.pilot_flags.contains(PilotFlags::CHEMICAL) }
+    pub fn pilot_arrogant(&self) -> bool { self.pilot_flags.contains(PilotFlags::ARROGANT) }
 
     /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and for
     /// any player unit when the squad has Flame Shielding (checked at the

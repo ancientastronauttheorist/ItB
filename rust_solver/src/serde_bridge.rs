@@ -294,6 +294,7 @@ fn pilot_flags_from_id(pilot_id: &str) -> crate::board::PilotFlags {
         "Pilot_Rock"      => PilotFlags::ROCK,       // Ariadne — Rockman
         "Pilot_Repairman" => PilotFlags::REPAIRMAN,  // Harold Schmidt — Frenzied Repair
         "Pilot_Chemical"  => PilotFlags::CHEMICAL,   // Morgan Lejeune — Finisher
+        "Pilot_Arrogant"  => PilotFlags::ARROGANT,   // Kai Miller — Opener
         _ => PilotFlags::empty(),
     }
 }

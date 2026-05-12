@@ -704,7 +704,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Python snapshots and preventing Kai/Morgan Boost from surfacing as false
 # status/click_miss desyncs. Pre-v103 corpus archived as
 # failure_db_snapshot_sim_v102.jsonl.
-SIMULATOR_VERSION = 103
+# v104 - Kai Miller (Pilot_Arrogant) Boost is state-based: full-HP Kai remains
+# Boosted after attacks and regains Boost after Repair/repair platforms, while
+# damage below full HP clears Boost. Pre-v104 corpus archived as
+# failure_db_snapshot_sim_v103.jsonl.
+SIMULATOR_VERSION = 104
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

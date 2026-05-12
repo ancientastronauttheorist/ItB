@@ -529,6 +529,17 @@
         "RocketMech, move E8\u2192D8, fire Rocket Artillery at D4",
         "PulseMech, move E4\u2192E3, repair"
       ]
+    },
+    {
+      "timestamp": "2026-05-12T15:04:31.901492",
+      "turn": 4,
+      "label": "solve",
+      "score": 104943.4286468029,
+      "actions": [
+        "JetMech, repair",
+        "RocketMech, move E8\u2192D8, fire Rocket Artillery at D4",
+        "PulseMech, move E4\u2192E3, repair"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -1813,6 +1824,33 @@
         "target": [
           7,
           4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|_REPAIR|repair",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "repair",
+        "sub_action": "repair",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "_REPAIR",
+        "target": [
+          7,
+          3
         ]
       }
     }
