@@ -1,0 +1,21 @@
+{
+  "run_id": "20260512_104120_903",
+  "squad": "Rusting Hulks",
+  "difficulty": 2,
+  "achievement_targets": [
+    "Hard Victory"
+  ],
+  "tags": [
+    "hard_victory",
+    "solver_hardening"
+  ],
+  "solver_version": "rust-0.1.0-82c0bac",
+  "weight_version": "v011",
+  "updated": "2026-05-12T14:48:17.531129",
+  "created": "2026-05-12T10:41:20.935260",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 3,
+  "outcome_recorded_at": "2026-05-12T14:48:17.468342",
+  "outcome_notes": "Hard Victory Rusting Hulks island 1 mission 3: Restricted Area secured; accepted reviewed grid-loss line, v103 replay boosted fix prevented false dirty re-solve prompts."
+}

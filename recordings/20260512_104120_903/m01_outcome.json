@@ -1,0 +1,7 @@
+{
+  "mission_index": 1,
+  "mission_name": "Mission_Terraform",
+  "result": "win",
+  "notes": "Hard Victory Rusting Hulks run: Razor Shore / Mission_Terraform secured, Terraformer defended and time pod protected, but JetMech/Morgan KIA from final-turn fire after a safety-blocked partial re-solve; terraform grassland objective failed. Needs hardening: Terraformer mission ally omitted from solver action prose/enumeration and final-turn fire mech-loss warning was real.",
+  "recorded_at": "2026-05-12T12:02:32.554695"
+}
