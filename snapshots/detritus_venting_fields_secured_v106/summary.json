@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-12T16:45:44.043774",
+  "label": "detritus_venting_fields_secured_v106",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 1
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer2",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer2",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 4
+    }
+  ]
+}

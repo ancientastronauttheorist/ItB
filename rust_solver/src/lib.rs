@@ -1141,7 +1141,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   kills as SpiderlingEgg1 using live-style next pawn ids; enemy-phase eggs
 //   still drain after the hatch loop so they do not hatch in the same phase.
 //   Pre-v105 corpus archived as `failure_db_snapshot_sim_v104.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 105;
+// v106 - Mission_Belt conveyors move live units before Vek attacks, and
+//   save/bridge conveyor parsing no longer cross-pairs a tile loc with a
+//   later tile's custom sprite. Pre-v106 corpus archived as
+//   `failure_db_snapshot_sim_v105.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 106;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

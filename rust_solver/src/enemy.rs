@@ -295,6 +295,41 @@ fn simulate_reactivation_thaw(board: &mut Board) {
     }
 }
 
+/// Mission_Belt conveyor effect: all live units standing on conveyor tiles are
+/// pushed one tile in the belt direction before Vek attacks resolve.
+fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
+    if board.mission_id != "Mission_Belt" { return; }
+    let mut moves: Vec<(usize, i16, u16, u8, u8)> = Vec::new();
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.hp <= 0 { continue; }
+        let dir = board.tile(u.x, u.y).conveyor_dir;
+        if !(0i8..=3i8).contains(&dir) { continue; }
+        let (dx, dy) = DIRS[dir as usize];
+        let projection = u.x as i16 * dx as i16 + u.y as i16 * dy as i16;
+        moves.push((dir as usize, projection, u.uid, u.x, u.y));
+    }
+
+    // Front-to-back within each direction prevents same-direction belt chains
+    // from bumping into units that should move out of the way this tick.
+    moves.sort_by(|a, b| {
+        a.0.cmp(&b.0)
+            .then_with(|| b.1.cmp(&a.1))
+            .then_with(|| a.2.cmp(&b.2))
+    });
+
+    for (dir, _projection, uid, x, y) in moves {
+        let Some(idx) = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == uid)
+        else {
+            continue;
+        };
+        let u = &board.units[idx];
+        if u.hp <= 0 || u.x != x || u.y != y { continue; }
+        apply_push(board, x, y, dir, result);
+    }
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
 /// Processes in UID order. Returns buildings destroyed count.
 ///
@@ -517,6 +552,11 @@ pub fn simulate_enemy_attacks(
             // Buildings/mountains/other terrain on this tile: untouched.
         }
     }
+
+    // Mission_Belt / conveyor yard environment. The conveyor icon resolves
+    // before Vek attacks, so moved Vek re-aim from their conveyor-shifted
+    // tile using the original queued direction below.
+    simulate_conveyor_belts(board, &mut result);
 
     // Egg hatch step: transform any surviving spider/spiderling egg into
     // its hatched live unit (sim v22). Runs AFTER fire tick + env_danger
@@ -1627,6 +1667,30 @@ mod tests {
             board.units[tele_idx].hp <= 0,
             "Scorpion2 should preserve original melee direction and hit E4"
         );
+    }
+
+    #[test]
+    fn test_conveyor_moves_enemy_before_projectile_attack() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Belt".to_string();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(1, 5).terrain = Terrain::Building;
+        board.tile_mut(1, 5).building_hp = 1;
+        board.tile_mut(5, 5).conveyor_dir = 3; // bridge conveyor3: x - 1
+
+        let moth_idx = add_enemy_with_type(&mut board, 91, 5, 5, 3, "Moth1", 1, 5);
+        board.units[moth_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let mut orig = default_orig_pos(&board);
+        orig[moth_idx] = (4, 5);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[moth_idx].x, board.units[moth_idx].y), (5, 5),
+            "Moth should ride the belt, fire, then push itself back");
+        assert_eq!(board.tile(1, 5).building_hp, 0,
+            "conveyor-shifted Moth should re-line the C7 building shot");
+        assert_eq!(board.grid_power, 5);
     }
 
     #[test]

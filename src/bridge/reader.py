@@ -62,13 +62,27 @@ def _is_infinite_spawn_mission(mission_id: str) -> bool:
     return False
 
 
+def _parse_conveyor_belts_from_save_text(content: str) -> dict[tuple[int, int], int]:
+    """Parse conveyor sprites without crossing serialized tile entries."""
+    belts = {}
+    loc_re = re.compile(r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)')
+    custom_re = re.compile(r'\["custom"\]\s*=\s*"conveyor(\d+)\.png"')
+    for line in content.splitlines():
+        loc = loc_re.search(line)
+        custom = custom_re.search(line)
+        if not loc or not custom:
+            continue
+        x, y, d = int(loc.group(1)), int(loc.group(2)), int(custom.group(1))
+        belts[(x, y)] = d
+    return belts
+
+
 def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
     """Read conveyor belt data directly from the save file.
 
     Returns {(x, y): direction} where direction is 0-3.
     Direction: 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y).
     """
-    belts = {}
     save_path = os.path.expanduser(
         "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
     )
@@ -76,17 +90,8 @@ def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
         with open(save_path) as f:
             content = f.read()
     except OSError:
-        return belts
-
-    # Match: ["loc"] = Point( x, y ), ... ["custom"] = "conveyorN.png"
-    pattern = re.compile(
-        r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)'
-        r'.*?\["custom"\]\s*=\s*"conveyor(\d+)\.png"'
-    )
-    for m in pattern.finditer(content):
-        x, y, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
-        belts[(x, y)] = d
-    return belts
+        return {}
+    return _parse_conveyor_belts_from_save_text(content)
 
 
 def _read_freeze_mines_from_save() -> set[tuple[int, int]]:
@@ -355,6 +360,9 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         # (Python-side fallback until Lua modloader restart picks up native support)
         conveyor_belts = _read_conveyor_belts_from_save()
         if conveyor_belts:
+            for x in range(8):
+                for y in range(8):
+                    board.tile(x, y).conveyor = -1
             for (x, y), direction in conveyor_belts.items():
                 if 0 <= x < 8 and 0 <= y < 8:
                     board.tile(x, y).conveyor = direction

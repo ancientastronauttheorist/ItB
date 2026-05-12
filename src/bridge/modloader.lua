@@ -202,13 +202,13 @@ local function _read_save_data()
         end
     end
 
-    -- Conveyor belts: direction from custom tile sprites
-    for loc_x, loc_y, custom in content:gmatch(
-        '%["loc"%]%s*=%s*Point%(%s*(%d+)%s*,%s*(%d+)%s*%).-'
-        .. '%["custom"%]%s*=%s*"(conveyor%d+%.png)"'
-    ) do
-        local dir = custom:match("conveyor(%d+)")
-        if dir then
+    -- Conveyor belts: direction from custom tile sprites. Keep loc/custom on
+    -- the same serialized tile row; a cross-entry pattern can pair a plain
+    -- building loc with the next conveyor custom and create phantom belts.
+    for line in content:gmatch("[^\r\n]+") do
+        local loc_x, loc_y = line:match('%["loc"%]%s*=%s*Point%(%s*(%d+)%s*,%s*(%d+)%s*%)')
+        local dir = line:match('%["custom"%]%s*=%s*"conveyor(%d+)%.png"')
+        if loc_x and loc_y and dir then
             local key = loc_x .. "," .. loc_y
             result.conveyor_belts[key] = tonumber(dir)
         end
