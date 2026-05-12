@@ -1137,7 +1137,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Boosted after attacks and regains Boost after Repair/repair platforms,
 //   while damage below full HP clears Boost. Pre-v104 corpus archived as
 //   `failure_db_snapshot_sim_v103.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 104;
+// v105 - Arachnid Psion death eggs materialize immediately after player-phase
+//   kills as SpiderlingEgg1 using live-style next pawn ids; enemy-phase eggs
+//   still drain after the hatch loop so they do not hatch in the same phase.
+//   Pre-v105 corpus archived as `failure_db_snapshot_sim_v104.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 105;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

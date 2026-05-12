@@ -421,10 +421,10 @@ pub(crate) fn on_enemy_death(
     }
 
     // ── Spider Psion (AE LEADER_SPIDER) on-death egg ──────────────────────
-    // While Spider Psion is alive, every Vek that dies leaves a SpiderEgg
-    // (WebbEgg1) on its tile. The egg-hatch logic (per `project_egg_spawn_sim`)
-    // turns it into a Spiderling at the NEXT enemy phase. Excludes the
-    // Psion itself.
+    // While Spider Psion is alive, every Vek that dies leaves a Spiderling
+    // Egg (SpiderlingEgg1) on its tile. The egg-hatch logic (per
+    // `project_egg_spawn_sim`) turns it into a Spiderling at the NEXT enemy
+    // phase. Excludes the Psion itself.
     //
     // sim v38: we DEFER the actual `spawn_enemy` call to a board-level
     // queue (`pending_spider_eggs`) drained at the END of
@@ -530,6 +530,18 @@ pub(crate) fn on_enemy_death(
     // Boss killed: clear flag for kill bonus in evaluate
     if board.boss_alive && board.units[idx].type_name_str().contains("Boss") {
         board.boss_alive = false;
+    }
+}
+
+/// Materialize Spider Psion death eggs queued by `on_enemy_death`.
+///
+/// Player-phase kills need the egg on-board immediately for replay snapshots
+/// and partial re-solves. Enemy-phase kills call this only after the hatch
+/// loop, so newly-created eggs still wait until the next enemy phase.
+pub(crate) fn drain_pending_spider_eggs(board: &mut Board) {
+    let pending = std::mem::take(&mut board.pending_spider_eggs);
+    for (x, y) in pending {
+        crate::enemy::spawn_enemy(board, x, y, "SpiderlingEgg1", 1);
     }
 }
 
@@ -3034,6 +3046,7 @@ pub fn simulate_attack(
                 apply_push(board, nx as u8, ny as u8, i, &mut result);
             }
         }
+        drain_pending_spider_eggs(board);
         return result;
     }
 
@@ -3060,6 +3073,7 @@ pub fn simulate_attack(
         board.units[mech_idx].set_boosted(finisher_boost);
         refresh_arrogant_boost(&mut board.units[mech_idx]);
     }
+    drain_pending_spider_eggs(board);
     result
 }
 
@@ -4504,6 +4518,31 @@ mod tests {
             board.grid_power, 7,
             "damaging a non-unique 2-HP building should not drop grid until destroyed"
         );
+    }
+
+    #[test]
+    fn test_arachnid_psion_player_kill_spawns_spiderling_egg_immediately() {
+        // Live regression: Hard Rusting Hulks run 20260512_104120_903,
+        // R.S.T. Corporate HQ turn 4. Rocket at D8 fired at Firefly on D4;
+        // the corpse bumped the Arachnid Psion on D3, and the engine spawned
+        // SpiderlingEgg1 uid 84 on D4 before the next mech acted.
+        let mut board = make_test_board();
+        board.spider_psion = true;
+        let rocket = add_mech(&mut board, 1, 0, 4, 3, WId::RangedRocket);
+        let _firefly = add_enemy_type(&mut board, 78, 4, 4, 3, "Firefly1");
+        let psion = add_enemy_type(&mut board, 80, 5, 4, 2, "Jelly_Spider1");
+        board.units[psion].flags.insert(UnitFlags::FLYING);
+        let _hornet_a = add_enemy_type(&mut board, 82, 4, 5, 2, "Hornet1");
+        let _hornet_b = add_enemy_type(&mut board, 83, 4, 2, 2, "Hornet1");
+
+        let result = simulate_attack(&mut board, rocket, WId::RangedRocket, (4, 4), &WEAPONS);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.pending_spider_eggs.len(), 0);
+        let egg = board.unit_at(4, 4).expect("Arachnid Psion egg should spawn on death tile");
+        assert_eq!(board.units[egg].uid, 84);
+        assert_eq!(board.units[egg].type_name_str(), "SpiderlingEgg1");
+        assert_eq!(board.units[egg].hp, 1);
     }
 
     #[test]

@@ -4,6 +4,8 @@
 
 28 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 42 remaining, sorted by global unlock % (easiest first).
 
+Current Hard Victory hardening note: simulator v105 now materializes Arachnid Psion `SpiderlingEgg1` death eggs during player actions, matching the live Corporate HQ turn-4 Rocket kill and reducing false dirty re-solve prompts.
+
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level

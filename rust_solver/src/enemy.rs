@@ -27,8 +27,8 @@ use crate::simulate::{
 ///
 /// The spawned unit inherits safe defaults: 1 HP, move 0, queued
 /// target = own tile (so the egg-skip treats it as "hatching, not
-/// attacking"). UID uses the 9000+ range to avoid colliding with
-/// bridge-provided UIDs.
+/// attacking"). UID uses the next board-local pawn id, matching the
+/// engine's live bridge ids closely enough for per-action verification.
 pub(crate) fn spawn_enemy(
     board: &mut Board,
     x: u8, y: u8,
@@ -47,11 +47,12 @@ pub(crate) fn spawn_enemy(
         _ => return false,
     }
 
-    // Pick a fresh UID in the spawned-unit range. Keep counting up
-    // from 9000 to avoid duplicates within a single enemy phase.
-    let mut new_uid: u16 = 9000;
+    // Pick the next live-style pawn id. Earlier simulator versions used a
+    // 9000+ synthetic range, which kept search state collision-free but made
+    // bridge verification report false spawn diffs for player-phase spawns.
+    let mut new_uid: u16 = 1;
     for i in 0..board.unit_count as usize {
-        if board.units[i].uid >= new_uid { new_uid = board.units[i].uid + 1; }
+        new_uid = new_uid.max(board.units[i].uid.saturating_add(1));
     }
 
     let mut u = Unit {
@@ -1350,17 +1351,14 @@ pub fn simulate_enemy_attacks(
     let gd = board.grid_defense_pct as f32;
     board.enemy_grid_save_expected = (buildings_destroyed as f32) * (gd / 100.0);
 
-    // Drain the Spider Psion pending-egg queue (sim v38). Eggs spawned by
+    // Drain the Spider Psion pending-egg queue (sim v38/v105). Eggs spawned by
     // on_enemy_death during this enemy phase land here AFTER the hatch
     // loop has run, so they sit dormant until the NEXT enemy phase
     // (matching the game's AddQueuedDamage hatch behavior — see
     // weapons_enemy.lua:857). spawn_enemy skips occupied tiles internally,
     // so a Vek that moved onto the corpse's tile during the attack loop
     // won't get displaced.
-    let pending = std::mem::take(&mut board.pending_spider_eggs);
-    for (x, y) in pending {
-        spawn_enemy(board, x, y, "WebbEgg1", 1);
-    }
+    crate::simulate::drain_pending_spider_eggs(board);
 
     buildings_destroyed
 }

@@ -15,20 +15,6 @@
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "JetMech",
-        "move_to": [
-          7,
-          3
-        ],
-        "weapon": "_REPAIR",
-        "target": [
-          7,
-          3
-        ],
-        "description": "JetMech, repair"
-      },
-      {
         "mech_uid": 1,
         "mech_type": "RocketMech",
         "move_to": [
@@ -59,7 +45,7 @@
     ],
     "score": 104943.4286468029,
     "turn": 4,
-    "input_fingerprint": "0:7,3:1|1:0,3:5|2:4,3:1|78:4,4:3|80:5,4:2|82:4,5:2|83:4,2:2"
+    "input_fingerprint": "0:7,3:2|1:0,3:5|2:4,3:1|78:4,4:3|80:5,4:2|82:4,5:2|83:4,2:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -537,6 +523,16 @@
       "score": 104943.4286468029,
       "actions": [
         "JetMech, repair",
+        "RocketMech, move E8\u2192D8, fire Rocket Artillery at D4",
+        "PulseMech, move E4\u2192E3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-12T15:22:52.635248",
+      "turn": 4,
+      "label": "solve",
+      "score": 104943.4286468029,
+      "actions": [
         "RocketMech, move E8\u2192D8, fire Rocket Artillery at D4",
         "PulseMech, move E4\u2192E3, repair"
       ]
@@ -1851,6 +1847,33 @@
         "target": [
           7,
           3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          4,
+          4
         ]
       }
     }

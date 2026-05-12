@@ -708,7 +708,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Boosted after attacks and regains Boost after Repair/repair platforms, while
 # damage below full HP clears Boost. Pre-v104 corpus archived as
 # failure_db_snapshot_sim_v103.jsonl.
-SIMULATOR_VERSION = 104
+# v105 - Arachnid Psion death eggs materialize immediately after player-phase
+# kills as SpiderlingEgg1 using live-style next pawn ids; enemy-phase eggs
+# still drain after the hatch loop so they do not hatch in the same phase.
+# Pre-v105 corpus archived as failure_db_snapshot_sim_v104.jsonl.
+SIMULATOR_VERSION = 105
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

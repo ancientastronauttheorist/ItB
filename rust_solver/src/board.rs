@@ -364,7 +364,7 @@ pub struct Board {
     pub boss_psion: bool,    // Psion Abomination (Jelly_Boss): combined HEALTH + REGEN + EXPLODE aura
     pub boost_psion: bool,   // Boost Psion (Jelly_Boost1, AE): +1 dmg to all Vek weapon attacks
     pub fire_psion: bool,    // Fire Psion (Jelly_Fire1, AE): Vek immune to fire + Vek leave fire on tile when killed
-    pub spider_psion: bool,  // Spider Psion (Jelly_Spider1, AE): Vek leave a SpiderEgg (WebbEgg1) on tile when killed
+    pub spider_psion: bool,  // Spider Psion (Jelly_Spider1, AE): Vek leave a SpiderlingEgg1 on tile when killed
     pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
@@ -435,10 +435,11 @@ pub struct Board {
     /// enemy team before conversion (e.g. Mission_Hacking's Cannon Bot).
     pub protect_objective_unit_types: Vec<String>,
     /// Queued Spider Psion egg spawns produced by `on_enemy_death` during
-    /// the current phase. Drained at the END of `simulate_enemy_attacks`
-    /// so eggs spawned mid-enemy-phase do NOT hatch in the same phase
-    /// (matches the game's `AddQueuedDamage`-driven hatch in
-    /// weapons_enemy.lua:857 — eggs hatch in the NEXT enemy phase).
+    /// the current phase. Player-phase kills drain immediately after the
+    /// action so replay snapshots and partial re-solves see the egg. Enemy-
+    /// phase kills drain at the END of `simulate_enemy_attacks` so eggs
+    /// spawned mid-enemy-phase do NOT hatch in the same phase (matching the
+    /// game's `AddQueuedDamage`-driven hatch in weapons_enemy.lua:857).
     /// Each entry = (x, y) of the Vek that just died. Cleared on Board
     /// construction; the queue is short-lived (always drained before the
     /// turn returns).
