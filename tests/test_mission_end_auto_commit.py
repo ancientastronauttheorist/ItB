@@ -93,6 +93,9 @@ def test_auto_commit_happy_path(monkeypatch, tmp_path):
     assert out["commit"] == "abc1234"
     assert out["pushed"] is True
 
+    push_cmd = next(c for c in double.calls if c[3] == "push")
+    assert push_cmd[-2:] == ["origin", "HEAD"]
+
 
 # ── skip paths ───────────────────────────────────────────────────────────────
 

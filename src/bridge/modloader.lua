@@ -497,6 +497,28 @@ local function dump_state()
                     unit.massive = true
                 end
 
+                -- Stable / guarding units cannot be moved by push/teleport
+                -- effects even when their static pawn type is normally
+                -- pushable. Bridge this as live pushability because bosses and
+                -- mission units can gain the status dynamically.
+                local pushable = nil
+                if pawn_def and pawn_def.Pushable == false then
+                    pushable = false
+                end
+                local ok_g, guarding = pcall(function() return p:IsGuarding() end)
+                if ok_g then
+                    unit.guarding = guarding
+                    unit.stable = guarding
+                    if guarding then
+                        pushable = false
+                    elseif pushable == nil and pawn_def and pawn_def.Pushable ~= nil then
+                        pushable = pawn_def.Pushable ~= false
+                    end
+                end
+                if pushable ~= nil then
+                    unit.pushable = pushable
+                end
+
                 -- Status effects
                 local ok_f, fly = pcall(function() return p:IsFlying() end)
                 if ok_f then unit.flying = fly end

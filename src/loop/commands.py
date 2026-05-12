@@ -6543,6 +6543,11 @@ def _log_sub_action_desync(
     if fuzzy_signal is not None:
         desync_trigger["fuzzy_signal"] = fuzzy_signal
 
+    failure_id = (
+        f"{session.run_id or 'default'}_m{session.mission_index:02d}"
+        f"_t{solved_turn:02d}_per_sub_action_desync_{phase}_a{action_index}"
+    )
+
     append_to_failure_db(
         [desync_trigger],
         run_id=session.run_id or "default",
@@ -6558,6 +6563,23 @@ def _log_sub_action_desync(
             "tags": list(session.tags),
         },
     )
+    if os.environ.get("ITB_AUTO_DIAGNOSE") == "1":
+        enqueued = _enqueue_diagnosis(
+            session,
+            failure_id=failure_id,
+            diff_dict=diff_dict,
+            sim_version=_get_simulator_version(),
+            classification=classification,
+        )
+        if enqueued:
+            pending = sum(
+                1 for e in session.diagnosis_queue
+                if e.get("status") == "pending"
+            )
+            print(
+                f"  [auto-diagnose] enqueued {failure_id} — drain via "
+                f"`game_loop.py diagnose_next` (queue depth: {pending})"
+            )
     # Persist session so failure_events_this_run (appended at the hook
     # site just before this call) survives across CLI invocations.
     session.save()
@@ -8624,7 +8646,7 @@ def _mission_end_auto_commit(
 
     # Push is best-effort — commit locally even if push fails.
     push_result = subprocess.run(
-        ["git", "-C", str(repo), "push", "origin", "main"],
+        ["git", "-C", str(repo), "push", "origin", "HEAD"],
         capture_output=True, text=True,
     )
     pushed = push_result.returncode == 0

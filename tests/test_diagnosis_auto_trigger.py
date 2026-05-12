@@ -23,6 +23,7 @@ from pathlib import Path
 
 import pytest
 
+from src.loop import commands as loop_commands
 from src.loop.commands import _enqueue_diagnosis
 from src.loop.session import RunSession
 from src.solver.diagnosis import combined_diff_signature
@@ -81,6 +82,60 @@ def test_enqueue_appends_pending_entry(tmp_path):
     assert entry["diff_signature"] == combined_diff_signature(diff)
     assert entry["diagnose_status"] is None
     assert entry["enqueued_at"].endswith("Z")
+
+
+@pytest.mark.regression
+def test_auto_turn_sub_action_desync_can_enqueue_with_env(monkeypatch):
+    """Bridge-driven auto_turn desyncs should enter the same drainable queue.
+
+    Final Cave run 20260510_213059_819 surfaced a Taurus Cannon push_dir
+    mismatch that was written to failure_db but never appeared in
+    diagnose_queue, forcing manual research resolution instead of the normal
+    diagnosis loop. The hot path remains opt-in through ITB_AUTO_DIAGNOSE.
+    """
+
+    class _Diff:
+        def to_dict(self):
+            return _hp_diff()
+
+        def total_count(self):
+            return 1
+
+    s = RunSession(run_id="auto_diag_test", squad="Rift Walkers",
+                   mission_index=22)
+    s.tags = ["achievement"]
+    s.diagnosis_queue = []
+
+    monkeypatch.setenv("ITB_AUTO_DIAGNOSE", "1")
+    monkeypatch.setattr(loop_commands, "_record_turn_state", lambda *a, **k: None)
+    monkeypatch.setattr(loop_commands, "_get_weight_version", lambda: "vtest")
+    monkeypatch.setattr(loop_commands, "_get_solver_version", lambda: "rust-test")
+    monkeypatch.setattr(loop_commands, "_get_simulator_version", lambda: 99)
+    monkeypatch.setattr(RunSession, "save", lambda self, *a, **k: None)
+
+    from src.solver import analysis
+    monkeypatch.setattr(analysis, "append_to_failure_db", lambda *a, **k: 1)
+
+    loop_commands._log_sub_action_desync(
+        s,
+        phase="attack",
+        action_index=0,
+        mech_uid=1,
+        predicted={},
+        actual_board=None,
+        diff=_Diff(),
+        classification={"top_category": "push_dir", "categories": ["push_dir"]},
+        solved_turn=2,
+        fuzzy_signal={"signature": "push_dir|Brute_Tankmech|attack"},
+    )
+
+    assert len(s.diagnosis_queue) == 1
+    entry = s.diagnosis_queue[0]
+    assert entry["status"] == "pending"
+    assert entry["sim_version"] == 99
+    assert entry["failure_id"] == (
+        "auto_diag_test_m22_t02_per_sub_action_desync_attack_a0"
+    )
 
 
 @pytest.mark.regression

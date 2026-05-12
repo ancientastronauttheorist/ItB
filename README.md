@@ -6,7 +6,7 @@ Status: **28 / 70 achievements earned** (latest Steam sync on 2026-05-10; refres
 
 Recent unlocks: **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. The previous Solver 2.0 live-test bumps picked up **Good Samaritan**, **Scorched Earth**, **Cryo Expert**, and **Pacifist**. See `TODO.md` for the checklist.
 
-Current live-run milestone: **Ramming Speed** hunt is active with Rift Walkers on Easy + Advanced Edition. Simulator v99 models powered Titan Fist Dash Punch and Final Cave falling-rock danger correctly, so the solver can pursue 5+ tile Dash Punch kills without manual overrides or unsafe flyer assumptions.
+Current live-run milestone: **Ramming Speed** hunt is active with Rift Walkers on Easy + Advanced Edition. Simulator v100 models powered Titan Fist Dash Punch, Final Cave falling-rock danger, and live Stable/guarding push immunity, so the solver can pursue 5+ tile Dash Punch kills without manual overrides or unsafe flyer assumptions.
 
 ---
 

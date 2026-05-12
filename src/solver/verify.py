@@ -689,7 +689,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # hoverable cataclysm chasm conversion; stale flying_immune=1 payloads on
 # Mission_Final_Cave now still kill flying mechs. Pre-v99 corpus archived as
 # failure_db_snapshot_sim_v98.jsonl.
-SIMULATOR_VERSION = 99
+# v100 - Lua bridge exports live Stable/IsGuarding state as pushable=false, and
+# Python board parsing preserves live pushability overrides so Final Cave leaders
+# are not predicted to move when Taurus/Artemis push them. Pre-v100 corpus
+# archived as failure_db_snapshot_sim_v99.jsonl.
+SIMULATOR_VERSION = 100
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

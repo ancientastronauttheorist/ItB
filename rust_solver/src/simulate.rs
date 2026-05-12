@@ -4269,6 +4269,35 @@ mod tests {
     }
 
     #[test]
+    fn test_taurus_hits_stable_nonpushable_without_moving_target() {
+        // Live regression: Easy Rift Walkers run 20260510_213059_819,
+        // Final Cave turn 2. Taurus hit the B6 FireflyBoss for damage, but the
+        // engine's Stable/guarding state prevented the predicted push to A6.
+        let mut board = make_test_board();
+        let tank = add_mech(&mut board, 0, 2, 4, 3, WId::BruteTankmech);
+        let boss = board.add_unit(Unit {
+            uid: 1143,
+            x: 2,
+            y: 6,
+            hp: 6,
+            max_hp: 6,
+            team: Team::Enemy,
+            flags: UnitFlags::MASSIVE,
+            ..Default::default()
+        });
+        board.units[boss].set_type_name("FireflyBoss");
+
+        let result = simulate_weapon(&mut board, tank, WId::BruteTankmech, 2, 6);
+
+        assert_eq!(
+            (board.units[boss].x, board.units[boss].y, board.units[boss].hp),
+            (2, 6, 5),
+            "Stable/non-pushable FireflyBoss should take Taurus damage without moving"
+        );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
     fn test_artemis_a_direct_building_damage_is_zero() {
         let mut board = make_test_board();
         board.grid_power = 5;

@@ -926,6 +926,26 @@ mod tests {
     }
 
     #[test]
+    fn test_live_pushable_false_overrides_static_default() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {"uid": 1143, "type": "FireflyBoss", "x": 2, "y": 6, "hp": 1, "max_hp": 6, "team": 6, "massive": true, "pushable": false}
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(
+            !board.units[0].pushable(),
+            "live bridge pushable=false should make a Stable FireflyBoss immune to Taurus push"
+        );
+    }
+
+    #[test]
     fn test_mission_trapped_two_hp_buildings_use_unique_grid_accounting() {
         let input = r#"{
             "mission_id": "Mission_Trapped",

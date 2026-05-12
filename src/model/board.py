@@ -567,7 +567,7 @@ class Board:
                 flying=ud.get("flying", stats.flying),
                 massive=stats.massive,
                 armor=ud.get("armor", stats.armor),
-                pushable=stats.pushable,
+                pushable=ud.get("pushable", stats.pushable),
                 minor=bool(ud.get("minor", stats.minor)),
                 weapon=primary,
                 weapon2=secondary,

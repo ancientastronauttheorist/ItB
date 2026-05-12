@@ -1117,7 +1117,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   payloads on Mission_Final_Cave so flying mechs cannot stand on marked
 //   cave-collapse tiles. Pre-v99 corpus archived as
 //   `failure_db_snapshot_sim_v98.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 99;
+// v100 - Lua bridge exports live Stable/IsGuarding state as `pushable=false`,
+//   and Python board parsing preserves live pushability overrides so Final Cave
+//   leaders are not predicted to move when Taurus/Artemis push them.
+//   Pre-v100 corpus archived as `failure_db_snapshot_sim_v99.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 100;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
