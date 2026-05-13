@@ -727,7 +727,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # web and resolve landing effects, so Aerial Bombs catches fire when landing on
 # an already-burning Forest tile and consumes it to burning Ground. Pre-v109
 # corpus archived as failure_db_snapshot_sim_v108.jsonl.
-SIMULATOR_VERSION = 109
+# v110 - Aerial Bombs over an occupied transit tile applies occupant damage and
+# smoke without generic terrain damage, preserving sand under Pulse on D3 in
+# Hard Rusting Hulks run 20260512_181719_119 Mission_Holes turn 2. Pre-v110
+# corpus archived as failure_db_snapshot_sim_v109.jsonl.
+SIMULATOR_VERSION = 110
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

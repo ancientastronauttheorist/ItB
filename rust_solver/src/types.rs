@@ -199,6 +199,7 @@ pub enum DamageSource {
     Bump = 1,
     Fire = 2,
     SelfDamage = 3,
+    WeaponUnitOnly = 4,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────

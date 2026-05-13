@@ -1157,7 +1157,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   on an already-burning Forest tile and consumes it to burning Ground.
 //   Pre-v109 corpus archived as
 //   `failure_db_snapshot_sim_v108.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 109;
+// v110 - Aerial Bombs over an occupied transit tile applies occupant damage
+//   and smoke without generic terrain damage, preserving sand under Pulse on
+//   D3 in Hard Rusting Hulks run 20260512_181719_119 Mission_Holes turn 2.
+//   Pre-v110 corpus archived as
+//   `failure_db_snapshot_sim_v109.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 110;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

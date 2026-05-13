@@ -724,107 +724,109 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
-    // Damage building if present — incremental HP damage. Direct weapon and
-    // explosion damage drains current grid per building HP lost. Push/bump
-    // collision damage has its own non-unique multi-HP exception below.
-    let mut bldg_hp_lost: u8 = 0;
-    {
-        let idx = xy_to_idx(x, y) as u64;
-        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
-        let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            if tile.shield() {
-                tile.set_shield(false);
-            } else {
-                let hp_lost = damage.min(tile.building_hp);
-                tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
-                if tile.building_hp == 0 {
+    if source != DamageSource::WeaponUnitOnly {
+        // Damage building if present — incremental HP damage. Direct weapon and
+        // explosion damage drains current grid per building HP lost. Push/bump
+        // collision damage has its own non-unique multi-HP exception below.
+        let mut bldg_hp_lost: u8 = 0;
+        {
+            let idx = xy_to_idx(x, y) as u64;
+            let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+            let tile = board.tile_mut(x, y);
+            if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+                if tile.shield() {
                     tile.set_shield(false);
-                    if !is_unique {
-                        tile.terrain = Terrain::Rubble;
+                } else {
+                    let hp_lost = damage.min(tile.building_hp);
+                    tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
+                    if tile.building_hp == 0 {
+                        tile.set_shield(false);
+                        if !is_unique {
+                            tile.terrain = Terrain::Rubble;
+                        }
+                    }
+                    bldg_hp_lost = hp_lost;
+                    result.buildings_damaged += hp_lost as i32;
+                    result.grid_damage += hp_lost as i32;
+                    if tile.building_hp == 0 {
+                        result.buildings_lost += 1;
                     }
                 }
-                bldg_hp_lost = hp_lost;
-                result.buildings_damaged += hp_lost as i32;
-                result.grid_damage += hp_lost as i32;
+            }
+        }
+        if bldg_hp_lost > 0 {
+            board.grid_power = board.grid_power.saturating_sub(bldg_hp_lost);
+        }
+
+        // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
+        {
+            let tile = board.tile_mut(x, y);
+            if tile.terrain == Terrain::Mountain && tile.building_hp > 0 {
+                tile.building_hp = tile.building_hp.saturating_sub(1);
                 if tile.building_hp == 0 {
-                    result.buildings_lost += 1;
+                    tile.terrain = Terrain::Rubble;
                 }
             }
         }
-    }
-    if bldg_hp_lost > 0 {
-        board.grid_power = board.grid_power.saturating_sub(bldg_hp_lost);
-    }
 
-    // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
-    {
+        // Ice: intact → cracked → water
         let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Mountain && tile.building_hp > 0 {
-            tile.building_hp = tile.building_hp.saturating_sub(1);
-            if tile.building_hp == 0 {
-                tile.terrain = Terrain::Rubble;
+        if tile.terrain == Terrain::Ice {
+            if tile.cracked() || source == DamageSource::Fire {
+                tile.terrain = Terrain::Water;
+                tile.set_cracked(false);
+                // Non-flying unit drowns. effectively_flying() = flying && !frozen,
+                // so a frozen flying unit loses its flight and drowns here.
+                // Massive units survive drowning (drown-immunity applies to Water).
+                if let Some(idx) = board.unit_at(x, y) {
+                    let unit = &mut board.units[idx];
+                    if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
+                        unit.hp = 0;
+                        if unit.is_enemy() {
+                            result.enemies_killed += 1;
+                        }
+                    }
+                }
+            } else {
+                tile.set_cracked(true);
             }
         }
-    }
 
-    // Ice: intact → cracked → water
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Ice {
-        if tile.cracked() || source == DamageSource::Fire {
-            tile.terrain = Terrain::Water;
+        // Cracked ground: any damage turns the tile into a Chasm.
+        // The unit standing on it (if any) falls in and dies. Unlike drowning,
+        // Massive does NOT save from Chasm — falling into a pit is a destroy.
+        // Flying units are exempt via effectively_flying().
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Ground && tile.cracked() {
+            tile.terrain = Terrain::Chasm;
             tile.set_cracked(false);
-            // Non-flying unit drowns. effectively_flying() = flying && !frozen,
-            // so a frozen flying unit loses its flight and drowns here.
-            // Massive units survive drowning (drown-immunity applies to Water).
             if let Some(idx) = board.unit_at(x, y) {
                 let unit = &mut board.units[idx];
-                if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
+                if unit.hp > 0 && !unit.effectively_flying() {
                     unit.hp = 0;
                     if unit.is_enemy() {
                         result.enemies_killed += 1;
                     }
                 }
             }
-        } else {
-            tile.set_cracked(true);
         }
-    }
 
-    // Cracked ground: any damage turns the tile into a Chasm.
-    // The unit standing on it (if any) falls in and dies. Unlike drowning,
-    // Massive does NOT save from Chasm — falling into a pit is a destroy.
-    // Flying units are exempt via effectively_flying().
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Ground && tile.cracked() {
-        tile.terrain = Terrain::Chasm;
-        tile.set_cracked(false);
-        if let Some(idx) = board.unit_at(x, y) {
-            let unit = &mut board.units[idx];
-            if unit.hp > 0 && !unit.effectively_flying() {
-                unit.hp = 0;
-                if unit.is_enemy() {
-                    result.enemies_killed += 1;
-                }
-            }
+        // Forest: weapon damage ignites (NOT bump/push damage)
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Forest && source != DamageSource::Bump {
+            tile.set_on_fire(true);
+            // Tile stays Terrain::Forest with ON_FIRE flag.
+            // Unit does NOT immediately catch fire — happens at end-of-turn.
         }
-    }
 
-    // Forest: weapon damage ignites (NOT bump/push damage)
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Forest && source != DamageSource::Bump {
-        tile.set_on_fire(true);
-        // Tile stays Terrain::Forest with ON_FIRE flag.
-        // Unit does NOT immediately catch fire — happens at end-of-turn.
-    }
-
-    // Sand: weapon/self damage -> smoke (fire weapon -> fire tile instead)
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Sand && matches!(source, DamageSource::Weapon | DamageSource::SelfDamage) {
-        tile.terrain = Terrain::Ground;
-        // Note: fire_weapon flag not yet threaded; default to smoke.
-        // Correct fire-on-sand requires knowing if weapon has FIRE flag.
-        tile.set_smoke(true);
+        // Sand: weapon/self damage -> smoke (fire weapon -> fire tile instead)
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Sand && matches!(source, DamageSource::Weapon | DamageSource::SelfDamage) {
+            tile.terrain = Terrain::Ground;
+            // Note: fire_weapon flag not yet threaded; default to smoke.
+            // Correct fire-on-sand requires knowing if weapon has FIRE flag.
+            tile.set_smoke(true);
+        }
     }
 
     // ACID pool creation: unit with ACID dies → acid pool on tile
@@ -944,6 +946,8 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
 /// Apply damage to whatever is at (x, y), including Blast Psion death
 /// explosions and Volatile Vek decay.
 /// Source: Bump/Fire bypass armor and acid. Normal/Self respects them.
+/// WeaponUnitOnly mirrors weapon damage against occupants while leaving
+/// buildings/terrain unchanged.
 pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
 
@@ -2674,7 +2678,15 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                     tile.terrain = Terrain::Ground;
                     tile.set_on_fire(false);
                 }
-                apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
+                let source = if wdef.smoke() && board.unit_at(nx as u8, ny as u8).is_some() {
+                    // The bridge's adaptive Aerial Bombs workaround observes
+                    // engine unit damage on occupied transit tiles and then
+                    // applies only smoke, so terrain such as Sand is preserved.
+                    DamageSource::WeaponUnitOnly
+                } else {
+                    DamageSource::Weapon
+                };
+                apply_damage(board, nx as u8, ny as u8, wdef.damage, result, source);
             }
         }
     } else {
@@ -4843,6 +4855,25 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
         assert!(board.tile(3, 4).smoke(), "Sand should become smoke from weapon damage");
         assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Sand should become ground");
+    }
+
+    #[test]
+    fn test_aerial_bombs_occupied_sand_transit_preserves_sand() {
+        // Hard Rusting Hulks live run 20260512_181719_119, Mission_Holes
+        // turn 2: JetMech E3 -> C3 over shielded PulseMech on sandy D3.
+        // Live consumed Pulse's shield and placed smoke, but D3 stayed Sand.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+        let jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let pulse = add_mech(&mut board, 1, 3, 4, 3, WId::ScienceRepulse);
+        board.units[pulse].set_shield(true);
+
+        let _ = simulate_weapon(&mut board, jet, WId::BruteJetmech, 3, 5);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Sand, "Occupied Aerial Bombs transit sand is preserved");
+        assert!(board.tile(3, 4).smoke(), "Aerial Bombs still smokes occupied sand transit");
+        assert!(!board.units[pulse].shield(), "Aerial Bombs transit damage consumes the shield");
+        assert_eq!(board.units[pulse].hp, 3, "Shielded Pulse should not take HP damage");
     }
 
     #[test]
