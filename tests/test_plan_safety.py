@@ -146,6 +146,31 @@ def test_newly_disabled_mech_blocks_plan():
     assert audit["violations"][0]["kind"] == "mech_disabled"
 
 
+def test_new_acid_mech_blocks_plan():
+    audit = audit_plan_safety(
+        _summary(mechs_acid=[]),
+        _summary(mechs_acid=[
+            {"uid": 1, "type": "RocketMech", "pos": [5, 6]},
+        ]),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert audit["violations"][0]["kind"] == "mech_acid"
+    assert safety_loss_profile(audit)["label"] == "mech_disabled"
+
+
+def test_existing_acid_mech_does_not_block_again():
+    acid_mech = {"uid": 1, "type": "RocketMech", "pos": [5, 6]}
+    audit = audit_plan_safety(
+        _summary(mechs_acid=[acid_mech]),
+        _summary(mechs_acid=[acid_mech]),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
 def test_predicted_bigbomb_loss_blocks_plan():
     audit = audit_plan_safety(
         _summary(bigbomb_alive=True),

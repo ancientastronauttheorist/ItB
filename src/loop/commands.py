@@ -1282,6 +1282,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     mechs_on_danger = []
     mechs_disabled = []
     mechs_webbed = []
+    mechs_acid = []
     player_mechs = [
         m for m in board.units
         if m.is_player and m.is_mech and not getattr(m, "is_extra_tile", False)
@@ -1319,6 +1320,12 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 "type": m.type,
                 "pos": [m.x, m.y],
             })
+        if getattr(m, "acid", False):
+            mechs_acid.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
 
     return {
         "buildings_alive": buildings_alive,
@@ -1341,6 +1348,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
             }
             for m in player_mechs
         ],
+        "mechs_acid": mechs_acid,
         "mechs_on_danger": mechs_on_danger,
         "mechs_disabled": mechs_disabled,
         "mechs_webbed": mechs_webbed,

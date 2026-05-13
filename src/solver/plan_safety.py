@@ -18,6 +18,7 @@ BLOCKING_KINDS = {
     "objective_building_hp_loss",
     "pod_lost",
     "mech_lost",
+    "mech_acid",
     "mech_on_danger",
     "mech_disabled",
     "bigbomb_lost",
@@ -42,6 +43,7 @@ LOSS_KINDS = {
     "objective_building_hp_loss": "objective_building_hp_total",
     "pod_lost": "pods_present",
     "mech_lost": "mechs_alive",
+    "mech_acid": "mechs_acid",
     "mech_on_danger": "mechs_on_danger",
     "mech_disabled": "mechs_disabled",
     "bigbomb_lost": "bigbomb_alive",
@@ -205,6 +207,26 @@ def audit_plan_safety(current: dict[str, Any],
                 blocking=block_mech_hp_loss,
             ))
 
+    if "mechs_acid" in current or "mechs_acid" in predicted:
+        compared.append("mechs_acid")
+        current_acid_uids = {
+            item.get("uid")
+            for item in _list_or_empty(current.get("mechs_acid"))
+            if isinstance(item, dict)
+        }
+        new_acid = [
+            item for item in _list_or_empty(predicted.get("mechs_acid"))
+            if isinstance(item, dict) and item.get("uid") not in current_acid_uids
+        ]
+        if new_acid:
+            violations.append(_violation(
+                "mech_acid",
+                len(current_acid_uids),
+                len(current_acid_uids) + len(new_acid),
+                "Predicted plan leaves one or more additional mechs ACIDed.",
+                new_acid,
+            ))
+
     if "mechs_on_danger" in current or "mechs_on_danger" in predicted:
         compared.append("mechs_on_danger")
         danger_mechs = _list_or_empty(predicted.get("mechs_on_danger"))
@@ -310,6 +332,7 @@ def audit_plan_safety(current: dict[str, Any],
             "pods_present": cur_pods,
             "mechs_alive": cur_mechs,
             "mech_hp_total": cur_mech_hp,
+            "mechs_acid": _list_or_empty(current.get("mechs_acid")),
             "mechs_on_danger": _list_or_empty(current.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(current.get("mechs_disabled")),
             "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
@@ -325,6 +348,7 @@ def audit_plan_safety(current: dict[str, Any],
             "pods_present": pred_pods,
             "mechs_alive": pred_mechs,
             "mech_hp_total": pred_mech_hp,
+            "mechs_acid": _list_or_empty(predicted.get("mechs_acid")),
             "mechs_on_danger": _list_or_empty(predicted.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(predicted.get("mechs_disabled")),
             "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
@@ -416,7 +440,11 @@ def _profile_label(status: Any,
         return "mech_loss"
     if "building_hp_loss" in kind_set:
         return "building_hp_loss"
-    if "mech_disabled" in kind_set or "mech_on_danger" in kind_set:
+    if (
+        "mech_disabled" in kind_set
+        or "mech_on_danger" in kind_set
+        or "mech_acid" in kind_set
+    ):
         return "mech_disabled"
     if "pod_lost" in kind_set:
         return "pod_loss"
