@@ -1152,7 +1152,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   overhealing them; damaged units still use the max_hp+2 overheal cap. Also
 //   corrects dirty fallback solve reporting. Pre-v108 corpus archived as
 //   `failure_db_snapshot_sim_v107.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 108;
+// v109 - Leap attacks that relocate the firing unit now break that unit's own
+//   web and resolve landing effects, so Aerial Bombs catches fire when landing
+//   on an already-burning Forest tile and consumes it to burning Ground.
+//   Pre-v109 corpus archived as
+//   `failure_db_snapshot_sim_v108.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 109;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

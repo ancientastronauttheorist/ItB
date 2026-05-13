@@ -723,7 +723,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # overhealing them; damaged units still use the max_hp+2 overheal cap. Also
 # corrects dirty fallback solve reporting. Pre-v108 corpus archived as
 # failure_db_snapshot_sim_v107.jsonl.
-SIMULATOR_VERSION = 108
+# v109 - Leap attacks that relocate the firing unit now break that unit's own
+# web and resolve landing effects, so Aerial Bombs catches fire when landing on
+# an already-burning Forest tile and consumes it to burning Ground. Pre-v109
+# corpus archived as failure_db_snapshot_sim_v108.jsonl.
+SIMULATOR_VERSION = 109
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

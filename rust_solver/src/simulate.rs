@@ -227,6 +227,26 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
     ));
 }
 
+fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+    if !board.tile(x, y).on_fire() {
+        return;
+    }
+    if board.tile(x, y).terrain == Terrain::Forest {
+        board.tile_mut(x, y).terrain = Terrain::Ground;
+    }
+    let target_is_immune_vek = board.fire_psion
+        && board.units[unit_idx].receives_psion_aura()
+        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
+    if board.units[unit_idx].hp > 0
+        && !board.units[unit_idx].shield()
+        && board.units[unit_idx].can_catch_fire()
+        && !(board.flame_shielding && board.units[unit_idx].is_player())
+        && !target_is_immune_vek
+    {
+        board.units[unit_idx].set_fire(true);
+    }
+}
+
 fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     let nx = board.units[unit_idx].x;
     let ny = board.units[unit_idx].y;
@@ -238,17 +258,9 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
     }
 
     // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
-    //    Fire Psion grants Vek the same immunity).
-    let target_is_immune_vek = board.fire_psion
-        && board.units[unit_idx].receives_psion_aura()
-        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
-    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
-        && board.units[unit_idx].can_catch_fire()
-        && !(board.flame_shielding && board.units[unit_idx].is_player())
-        && !target_is_immune_vek
-    {
-        board.units[unit_idx].set_fire(true);
-    }
+    //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
+    //    to burning Ground when a unit lands on it.
+    apply_fire_tile_pickup(board, unit_idx, nx, ny);
 
     // 3. ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
@@ -1338,17 +1350,8 @@ fn apply_push_with_policy(
         break_web_from(board, pushed_uid);
     }
 
-    // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity)
-    let push_target_immune_vek = board.fire_psion
-        && board.units[unit_idx].receives_psion_aura()
-        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
-    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
-        && board.units[unit_idx].can_catch_fire()
-        && !(board.flame_shielding && board.units[unit_idx].is_player())
-        && !push_target_immune_vek
-    {
-        board.units[unit_idx].set_fire(true);
-    }
+    // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity).
+    apply_fire_tile_pickup(board, unit_idx, nx, ny);
 
     // ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
@@ -2689,11 +2692,17 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
         }
     }
 
-    // Teleporter pad: fires at the VERY END so weapon status (fire/smoke/ACID)
-    // lands on the leap target tile BEFORE the mech teleports away. Matches
-    // in-game behaviour: you aim Bombing Run at the pad, the bomb drops on
-    // the pad, then the mech swaps to the partner pad.
-    apply_teleport_on_land(board, attacker_idx);
+    // Landing pipeline: the attack movement still counts as a real tile
+    // change. A webbed mech that relocates via Aerial Bombs breaks free, then
+    // resolves fire/ACID/mines/repair/teleporter on the landing tile. This
+    // fires at the VERY END so weapon status (fire/smoke/ACID) lands on the
+    // leap target tile BEFORE the mech teleports away. Matches in-game
+    // behaviour: you aim Bombing Run at the pad, the bomb drops on the pad,
+    // then the mech swaps to the partner pad.
+    if (tx, ty) != (old_x, old_y) {
+        clear_unit_web(board, attacker_idx);
+        apply_landing_effects(board, attacker_idx, result);
+    }
 }
 
 // ── Laser ────────────────────────────────────────────────────────────────────
@@ -2943,13 +2952,7 @@ pub fn simulate_move(
     // Fire tile: mech catches fire on arrival (if not shielded).
     // Mirrors apply_push's fire-catch logic so move and push paths agree.
     if move_to != old_pos {
-        let tile = board.tile(move_to.0, move_to.1);
-        if tile.on_fire() && board.units[mech_idx].hp > 0 && !board.units[mech_idx].shield()
-            && board.units[mech_idx].can_catch_fire()
-            && !(board.flame_shielding && board.units[mech_idx].is_player())
-        {
-            board.units[mech_idx].set_fire(true);
-        }
+        apply_fire_tile_pickup(board, mech_idx, move_to.0, move_to.1);
     }
 
     // Repair platform: generic Item_Repair_Mine tile. It heals by negative
@@ -4797,11 +4800,37 @@ mod tests {
         add_enemy(&mut board, 1, 3, 4, 1);
         let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
 
-        let _ = simulate_action(&mut board, mech_idx, (3, 5), WId::BruteJetmech, (3, 5), &WEAPONS);
+        let _ = simulate_action(&mut board, mech_idx, (3, 3), WId::BruteJetmech, (3, 5), &WEAPONS);
 
         assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Aerial Bombs consumes transit Forest");
         assert!(board.tile(3, 4).smoke(), "Aerial Bombs still leaves smoke on the transit tile");
         assert!(!board.tile(3, 4).on_fire(), "Aerial Bombs smoke prevents transit Forest ignition");
+    }
+
+    #[test]
+    fn test_aerial_bombs_landing_resolves_fire_and_breaks_web() {
+        // Hard Rusting Hulks live run 20260512_181719_119, Mission_Survive
+        // turn 3: Rocket ignited a Forest landing tile at F2, then JetMech
+        // used Aerial Bombs while webbed and landed there at 1 HP. The engine
+        // cleared the web and set Jet on fire, so the next fire tick killed it.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 6, 4, 1, WId::BruteJetmech);
+        board.units[jet].set_web(true);
+        board.units[jet].web_source_uid = 99;
+        board.units[jet].move_speed = 0;
+        board.units[jet].base_move = 3;
+        board.tile_mut(6, 2).terrain = Terrain::Forest;
+        board.tile_mut(6, 2).set_on_fire(true);
+
+        let _ = simulate_action(&mut board, jet, (6, 4), WId::BruteJetmech, (6, 2), &WEAPONS);
+
+        assert_eq!((board.units[jet].x, board.units[jet].y), (6, 2));
+        assert!(board.units[jet].fire(), "Aerial Bombs landing on fire must ignite Jet");
+        assert!(!board.units[jet].web(), "Aerial Bombs tile change must break Jet's web");
+        assert_eq!(board.units[jet].web_source_uid, 0);
+        assert_eq!(board.units[jet].move_speed, 3);
+        assert_eq!(board.tile(6, 2).terrain, Terrain::Ground, "burning Forest landing is consumed");
+        assert!(board.tile(6, 2).on_fire(), "consumed landing tile remains on fire");
     }
 
     #[test]
