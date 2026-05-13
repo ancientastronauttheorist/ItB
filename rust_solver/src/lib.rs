@@ -1166,7 +1166,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   that same building is later destroyed, matching C4 in Hard Rusting Hulks
 //   run 20260512_181719_119 Mission_Holes turn 2. Pre-v111 corpus archived as
 //   `failure_db_snapshot_sim_v110.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 111;
+// v112 - Scarab Leader's Expectorating Glands is modeled as 4-damage artillery
+//   with zero-damage outward adjacent pushes, and synthetic default tiles now
+//   use conveyor_dir=-1 so no-belt tests do not pre-shift enemy attacks. Pre-v112
+//   corpus archived as `failure_db_snapshot_sim_v111.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 112;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

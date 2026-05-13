@@ -76,6 +76,7 @@ VEK_STATS = {
     "Beetle2":       PawnStats(move_speed=2, ranged=0, massive=True),
     "Scarab1":       PawnStats(move_speed=3, ranged=1),
     "Scarab2":       PawnStats(move_speed=3, ranged=1),
+    "ScarabBoss":    PawnStats(move_speed=3, ranged=1, massive=True, default_weapon="ScarabAtkB"),
     "Crab1":         PawnStats(move_speed=3, ranged=1),
     "Crab2":         PawnStats(move_speed=3, ranged=1),
     "CrabBoss":      PawnStats(move_speed=3, ranged=1, massive=True),

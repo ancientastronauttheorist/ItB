@@ -26,13 +26,25 @@ bitflags! {
 
 // ── Tile ─────────────────────────────────────────────────────────────────────
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 pub struct Tile {
     pub terrain: Terrain,
     pub building_hp: u8,
     pub population: u8,
     pub flags: TileFlags,
     pub conveyor_dir: i8, // -1 = none, 0-3 = direction (matches DIRS)
+}
+
+impl Default for Tile {
+    fn default() -> Self {
+        Tile {
+            terrain: Terrain::Ground,
+            building_hp: 0,
+            population: 0,
+            flags: TileFlags::empty(),
+            conveyor_dir: -1,
+        }
+    }
 }
 
 impl Tile {
@@ -761,6 +773,12 @@ mod tests {
     #[test]
     fn test_tile_size() {
         assert!(std::mem::size_of::<Tile>() <= 6, "Tile too large: {} bytes", std::mem::size_of::<Tile>());
+    }
+
+    #[test]
+    fn test_tile_default_has_no_conveyor() {
+        assert_eq!(Tile::default().conveyor_dir, -1);
+        assert_eq!(Board::default().tile(0, 0).conveyor_dir, -1);
     }
 
     #[test]

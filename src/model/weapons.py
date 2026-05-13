@@ -634,6 +634,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Scarab Shot", weapon_type="artillery",
         damage=3, range_min=2,
     ),
+    "ScarabAtkB": WeaponDef(
+        name="Expectorating Glands", weapon_type="artillery",
+        damage=4, push="outward", range_min=2,
+        aoe_adjacent=True,
+    ),
     "CrabAtk1": WeaponDef(
         name="Crab Artillery", weapon_type="artillery",
         damage=1, range_min=2, path_size=2,

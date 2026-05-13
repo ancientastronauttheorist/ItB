@@ -1053,6 +1053,32 @@ pub fn simulate_enemy_attacks(
                     }
                 }
 
+                // Scarab Leader's Expectorating Glands queues zero-damage
+                // outward pushes on the four tiles adjacent to the artillery
+                // target. Keep this generic for any future artillery with
+                // AOE_ADJACENT + PushDir::Outward.
+                if wdef.aoe_adjacent() {
+                    for (i, &(dx, dy)) in DIRS.iter().enumerate() {
+                        let nx = new_tx + dx;
+                        let ny = new_ty + dy;
+                        if !in_bounds(nx, ny) { continue; }
+                        let nxu = nx as u8;
+                        let nyu = ny as u8;
+                        if wdef.damage_outer > 0 {
+                            let d_adj = enemy_hit_damage(board, nxu, nyu, wdef.damage_outer, vh);
+                            apply_damage(board, nxu, nyu, d_adj, &mut result, DamageSource::Weapon);
+                        }
+                        if wdef.push == PushDir::Outward {
+                            if wdef.no_edge_bump_adjacent_push() && wdef.damage_outer == 0 {
+                                let bx = nx + dx;
+                                let by = ny + dy;
+                                if !in_bounds(bx, by) { continue; }
+                            }
+                            apply_push(board, nxu, nyu, i, &mut result);
+                        }
+                    }
+                }
+
                 // path_size > 1: also damage subsequent tiles in attack direction
                 // (e.g. Super Stinger's 3-tile line; Crab Artillery's 2-tile hit)
                 for i in 1..wdef.path_size as i8 {
@@ -1784,6 +1810,25 @@ mod tests {
 
         // Artillery should hit building at (4,0) directly, ignoring mountain
         assert_eq!(board.tile(4, 0).building_hp, 0, "Scarab artillery should hit building through mountain");
+    }
+
+    #[test]
+    fn test_scarab_boss_artillery_pushes_adjacent_tiles() {
+        let mut board = Board::default();
+        board.tile_mut(4, 0).terrain = Terrain::Building;
+        board.tile_mut(4, 0).building_hp = 2;
+
+        let boss = add_enemy_with_type(&mut board, 1, 0, 0, 6, "ScarabBoss", 4, 0);
+        board.units[boss].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let pushed = add_mech_unit(&mut board, 2, 5, 0, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(4, 0).building_hp, 0, "Scarab Leader artillery should deal 4 center damage");
+        assert_eq!((board.units[pushed].x, board.units[pushed].y), (6, 0),
+            "adjacent unit should be pushed outward from the artillery target");
+        assert_eq!(board.units[pushed].hp, 3, "adjacent push is zero-damage");
     }
 
     #[test]

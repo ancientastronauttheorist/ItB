@@ -477,9 +477,13 @@ pub enum WId {
     PrimePunchmechB = 149,
     /// Titan Fist with Dash and +2 Damage powered.
     PrimePunchmechAB = 150,
+    /// Scarab Leader's "Expectorating Glands": 4-damage artillery on the
+    /// target plus zero-damage outward pushes on the four cardinal adjacent
+    /// tiles.
+    ScarabAtkB = 151,
 }
 
-pub const WEAPON_COUNT: usize = 151;
+pub const WEAPON_COUNT: usize = 152;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -737,6 +741,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[57] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
     // 58: ScarabAtk2
     w[58] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, flags: C, ..DEF };
+    // 151: ScarabAtkB — Scarab Leader's Expectorating Glands. Per
+    // `scripts/advanced/bosses/scarab.lua`, LineArtillery deals 4 to the
+    // target tile, then queues zero-damage outward pushes on all four cardinal
+    // adjacent tiles.
+    w[151] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, push: PushDir::Outward,
+        range_min: 2, flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 59: CrabAtk1 — hits 2 tiles in line
     w[59] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, path_size: 2, flags: C, ..DEF };
     // 60: CrabAtk2 — hits 2 tiles in line
@@ -1219,6 +1229,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "CentipedeAtk1" => WId::CentipedeAtk1,
         "ScarabAtk1" => WId::ScarabAtk1,
         "ScarabAtk2" => WId::ScarabAtk2,
+        "ScarabAtkB" => WId::ScarabAtkB,
         "CrabAtk1" => WId::CrabAtk1,
         "CrabAtk2" => WId::CrabAtk2,
         "CrabAtkB" => WId::CrabAtkB,
@@ -1374,6 +1385,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::CentipedeAtk1 => "CentipedeAtk1",
         WId::ScarabAtk1 => "ScarabAtk1",
         WId::ScarabAtk2 => "ScarabAtk2",
+        WId::ScarabAtkB => "ScarabAtkB",
         WId::CrabAtk1 => "CrabAtk1",
         WId::CrabAtk2 => "CrabAtk2",
         WId::CrabAtkB => "CrabAtkB",
@@ -1458,6 +1470,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Centipede2" => WId::CentipedeAtk2,
         "Scarab1" => WId::ScarabAtk1,
         "Scarab2" => WId::ScarabAtk2,
+        "ScarabBoss" => WId::ScarabAtkB,
         "Crab1" => WId::CrabAtk1,
         "Crab2" => WId::CrabAtk2,
         "CrabBoss" => WId::CrabAtkB,
@@ -1620,6 +1633,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::CentipedeAtk2 => "Alpha Centipede Spit",
         WId::ScarabAtk1 => "Scarab Shot",
         WId::ScarabAtk2 => "Alpha Scarab Shot",
+        WId::ScarabAtkB => "Expectorating Glands",
         WId::CrabAtk1 => "Crab Artillery",
         WId::CrabAtk2 => "Alpha Crab Artillery",
         WId::CrabAtkB => "Raining Expulsions",
@@ -1865,6 +1879,19 @@ mod tests {
     }
 
     #[test]
+    fn test_scarab_boss_expectorating_glands_def() {
+        let w = weapon_def(WId::ScarabAtkB);
+        assert_eq!(w.weapon_type, WeaponType::Artillery);
+        assert_eq!(w.damage, 4);
+        assert_eq!(w.push, PushDir::Outward);
+        assert!(w.aoe_adjacent());
+        assert!(w.no_edge_bump_adjacent_push());
+        assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
+        assert_eq!(enemy_weapon_for_type("ScarabBoss"), WId::ScarabAtkB);
+        assert_eq!(weapon_name(WId::ScarabAtkB), "Expectorating Glands");
+    }
+
+    #[test]
     fn test_alpha_hornet_has_aoe_behind() {
         let w = weapon_def(WId::HornetAtk2);
         assert!(w.aoe_behind());
@@ -1914,6 +1941,7 @@ mod tests {
         assert_eq!(wid_from_str("Trapped_Explode"), WId::TrappedExplode);
         assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
         assert_eq!(wid_from_str("Armored_Train_Move"), WId::ArmoredTrainMove);
+        assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -1937,6 +1965,7 @@ mod tests {
             ("Missiles_OneDmg", WId::MissilesOneDmg),
             ("BouncerAtkB", WId::BouncerAtkB),
             ("Armored_Train_Move", WId::ArmoredTrainMove),
+            ("ScarabAtkB", WId::ScarabAtkB),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

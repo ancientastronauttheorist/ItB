@@ -20,6 +20,7 @@ Canonical stats sourced from the game's lua scripts under
   - `missions/bosses/spider.lua` (SpiderBoss)
   - `missions/bosses/goo.lua` (BlobBoss / BlobBossMed / BlobBossSmall)
   - `missions/bosses/psion.lua` (Jelly_Boss)
+  - `advanced/bosses/scarab.lua` (ScarabBoss)
   - `advanced/bosses/shaman.lua` (ShamanBoss)
 """
 from __future__ import annotations
@@ -108,6 +109,17 @@ def test_jelly_boss_has_canonical_stats() -> None:
     # bridge sends queued_target_x=-1, which the rust dispatcher's
     # passive-Vek skip handles at enemy.rs:514.
     assert s.default_weapon == ""
+
+
+def test_scarab_boss_has_canonical_stats() -> None:
+    """ScarabBoss per `advanced/bosses/scarab.lua:11-24`:
+    Health=6, MoveSpeed=3, Massive, Ranged=1, SkillList={"ScarabAtkB"}.
+    """
+    s = get_pawn_stats("ScarabBoss")
+    assert s.move_speed == 3
+    assert s.massive is True
+    assert s.ranged == 1
+    assert s.default_weapon == "ScarabAtkB"
 
 
 def test_bigbomb_is_immobile_but_pushable() -> None:
@@ -208,7 +220,7 @@ def test_no_boss_falls_through_to_default_pawnstats() -> None:
     # reverse drift.
     rust_mapped_bosses = [
         "ScorpionBoss", "FireflyBoss", "BeetleBoss", "HornetBoss",
-        "SpiderBoss", "ShamanBoss",
+        "SpiderBoss", "ShamanBoss", "ScarabBoss",
         "BlobBoss", "BlobBossMed", "BlobBossSmall",
         "BurnbugBoss",
         "BotBoss", "BotBoss2",  # Pinnacle Bot Leader phase 1 / 2
