@@ -1,3 +1,5 @@
+import json
+
 from src.loop import commands
 from src.loop.session import RunSession
 from src.model.board import Board, Unit
@@ -130,3 +132,63 @@ def test_post_enemy_settle_keeps_polling_favorable_resist_to_cap(monkeypatch):
     assert settled.grid_power == 5
     assert clock["t"] >= 1.0
     assert info["samples"] == 5
+
+
+def test_record_post_enemy_returns_investigation_gate(tmp_path, monkeypatch):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    solve_file = run_dir / "m11_turn_01_solve.json"
+    solve_file.write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 6,
+                "enemies_alive": 0,
+                "mech_hp": [],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    actual = _board(4)
+    result = commands._record_post_enemy(session, actual, 1)
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
+    assert result["deltas"]["grid_power_diff"] == -2
+    assert (run_dir / "m11_turn_01_post_enemy.json").exists()
+
+
+def test_final_post_enemy_audit_gate_backfills_missing_turn(tmp_path, monkeypatch):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "m11_turn_01_solve.json").write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 6,
+                "enemies_alive": 0,
+                "mech_hp": [],
+            },
+            "search_stats": {},
+        }
+    }))
+    actual = _board(4)
+    actual.mission_id = "Mission_Final"
+
+    result = commands._final_post_enemy_audit_gate(
+        session,
+        actual,
+        {"mission_id": "Mission_Final", "turn": 2},
+    )
+
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["source"] == "final_post_enemy_audit_gate"

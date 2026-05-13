@@ -1242,8 +1242,15 @@ def _protected_objective_patterns(board: Board,
 
 def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dict:
     """Extract a summary of the current board state for comparison."""
+    mission_id = (
+        bridge_data.get("mission_id")
+        if isinstance(bridge_data, dict) else None
+    ) or getattr(board, "mission_id", "")
+    is_final_cave = mission_id == "Mission_Final_Cave"
     buildings_alive = 0
     building_hp_total = 0
+    pylons_alive = 0
+    pylon_hp_total = 0
     objective_buildings_alive = 0
     objective_building_hp_total = 0
     pods_present = 0
@@ -1255,6 +1262,9 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
             if t.terrain == "building" and t.building_hp > 0:
                 buildings_alive += 1
                 building_hp_total += t.building_hp
+                if is_final_cave:
+                    pylons_alive += 1
+                    pylon_hp_total += t.building_hp
                 if getattr(t, "unique_building", False):
                     objective_buildings_alive += 1
                     objective_building_hp_total += t.building_hp
@@ -1330,6 +1340,8 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     return {
         "buildings_alive": buildings_alive,
         "building_hp_total": building_hp_total,
+        "pylons_alive": pylons_alive if is_final_cave else None,
+        "pylon_hp_total": pylon_hp_total if is_final_cave else None,
         "objective_buildings_alive": objective_buildings_alive,
         "objective_building_hp_total": objective_building_hp_total,
         "pods_present": pods_present,
@@ -1352,7 +1364,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mechs_on_danger": mechs_on_danger,
         "mechs_disabled": mechs_disabled,
         "mechs_webbed": mechs_webbed,
-        "mission_id": getattr(board, "mission_id", ""),
+        "mission_id": mission_id,
         "protected_objective_units": protected_objective_units,
         "protected_objective_units_alive": sum(
             1 for u in protected_objective_units if u["alive"]
@@ -2234,8 +2246,30 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     return deltas
 
 
+def _post_enemy_record_path(session: RunSession, solved_turn: int) -> Path:
+    run_dir = _recording_dir(session)
+    return run_dir / (
+        f"m{session.mission_index:02d}_turn_{solved_turn:02d}_post_enemy.json"
+    )
+
+
+def _post_enemy_needs_investigation(deltas: dict) -> bool:
+    """True when actual enemy-phase damage is worse than the prediction."""
+    return any(
+        int(deltas.get(key, 0) or 0) < 0
+        for key in (
+            "grid_power_diff",
+            "buildings_alive_diff",
+            "building_hp_diff",
+            "protected_objective_units_alive_diff",
+            "protected_objective_units_frozen_diff",
+        )
+    )
+
+
 def _record_post_enemy(session: RunSession, board: Board,
-                       solved_turn: int) -> None:
+                       solved_turn: int,
+                       bridge_data: dict | None = None) -> dict | None:
     """Record post-enemy board state and compare with solver predictions.
 
     Idempotent: if ``(mission_index, solved_turn)`` is already in
@@ -2250,17 +2284,32 @@ def _record_post_enemy(session: RunSession, board: Board,
 
     # Dedup guard.
     key = [mi, solved_turn]
-    if key in session.recorded_post_enemy_turns:
-        return
+    if key in session.recorded_post_enemy_turns and _post_enemy_record_path(
+        session, solved_turn
+    ).exists():
+        return {
+            "status": "POST_ENEMY_ALREADY_RECORDED",
+            "mission_index": mi,
+            "turn": solved_turn,
+            "blocking": False,
+        }
 
     # Load the solve recording from the solved turn (try new naming, fallback to old)
     solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
     if not solve_file.exists():
         solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
     if not solve_file.exists():
-        return
-
-    session.recorded_post_enemy_turns.append(key)
+        return {
+            "status": "POST_ENEMY_AUDIT_MISSING",
+            "mission_index": mi,
+            "turn": solved_turn,
+            "blocking": True,
+            "reason": "solve_record_missing",
+            "message": (
+                "Cannot compare the enemy phase because the solve record "
+                "for the just-finished turn is missing."
+            ),
+        }
 
     with open(solve_file) as f:
         solve_record = json.load(f)
@@ -2272,10 +2321,20 @@ def _record_post_enemy(session: RunSession, board: Board,
     )
     if predicted is None:
         # Old-format recording without predictions — skip comparison
-        return
+        return {
+            "status": "POST_ENEMY_AUDIT_MISSING",
+            "mission_index": mi,
+            "turn": solved_turn,
+            "blocking": True,
+            "reason": "prediction_missing",
+            "message": (
+                "Cannot compare the enemy phase because the solve record "
+                "has no predicted post-enemy board."
+            ),
+        }
 
     # Capture actual board state
-    actual = _capture_board_summary(board)
+    actual = _capture_board_summary(board, bridge_data)
 
     # Compute deltas
     deltas = _compute_deltas(predicted, actual)
@@ -2286,6 +2345,8 @@ def _record_post_enemy(session: RunSession, board: Board,
         "predicted_outcome": predicted,
         "deltas": deltas,
     }, turn_override=solved_turn)
+    if key not in session.recorded_post_enemy_turns:
+        session.recorded_post_enemy_turns.append(key)
 
     # Detect triggers
     triggers = detect_triggers(actual, predicted, deltas, solve_data, board)
@@ -2329,6 +2390,39 @@ def _record_post_enemy(session: RunSession, board: Board,
     else:
         print(f"\nPost-enemy analysis: no triggers (predictions matched)")
 
+    investigation_required = _post_enemy_needs_investigation(deltas)
+    status = (
+        "INVESTIGATE_POST_ENEMY"
+        if investigation_required else "POST_ENEMY_RECORDED"
+    )
+    result = {
+        "status": status,
+        "mission_index": mi,
+        "turn": solved_turn,
+        "blocking": investigation_required,
+        "actual_outcome": actual,
+        "predicted_outcome": predicted,
+        "deltas": deltas,
+        "triggers": triggers,
+        "next_step": (
+            "Investigate the enemy-phase prediction miss before solving or "
+            "advancing another final-island turn."
+            if investigation_required
+            else "Post-enemy prediction audit recorded."
+        ),
+    }
+    if investigation_required:
+        print("\n" + "!" * 60)
+        print("! POST-ENEMY INVESTIGATION GATE")
+        print(
+            f"!   Turn {solved_turn}: grid Δ {deltas.get('grid_power_diff')}, "
+            f"building HP Δ {deltas.get('building_hp_diff')}, "
+            f"buildings Δ {deltas.get('buildings_alive_diff')}"
+        )
+        print("!   Actual enemy phase was worse than predicted.")
+        print("!" * 60)
+    return result
+
 
 def _load_solve_prediction_for_turn(
     session: RunSession,
@@ -2353,6 +2447,76 @@ def _load_solve_prediction_for_turn(
         or solve_data.get("predicted_outcome")
     )
     return predicted if isinstance(predicted, dict) else None
+
+
+def _final_post_enemy_audit_gate(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict | None,
+) -> dict | None:
+    """Backfill or block on missing final-island post-enemy audits.
+
+    Final missions can briefly report ``mission_ending`` from the save while
+    the bridge is still in live combat. If that anomaly cleared the active
+    solution before ``*_post_enemy.json`` was written, the next turn must not
+    solve ahead without reconstructing the audit from the current board.
+    """
+    if not isinstance(bridge_data, dict):
+        return None
+    mission_id = bridge_data.get("mission_id") or getattr(board, "mission_id", "")
+    if mission_id not in {"Mission_Final", "Mission_Final_Cave"}:
+        return None
+    try:
+        current_turn = int(bridge_data.get("turn", 0) or 0)
+    except (TypeError, ValueError):
+        return None
+    if current_turn <= 1:
+        return None
+
+    solved_turn = current_turn - 1
+    run_dir = _recording_dir(session)
+    solve_file = run_dir / (
+        f"m{session.mission_index:02d}_turn_{solved_turn:02d}_solve.json"
+    )
+    if not solve_file.exists():
+        return None
+    post_file = _post_enemy_record_path(session, solved_turn)
+    if post_file.exists():
+        if os.environ.get("ITB_ALLOW_UNRESOLVED_POST_ENEMY") == "1":
+            return None
+        try:
+            with post_file.open() as f:
+                record = json.load(f)
+            deltas = ((record.get("data") or {}).get("deltas") or {})
+        except (OSError, json.JSONDecodeError):
+            deltas = {}
+        if _post_enemy_needs_investigation(deltas):
+            return {
+                "status": "INVESTIGATE_POST_ENEMY",
+                "mission_index": session.mission_index,
+                "turn": solved_turn,
+                "blocking": True,
+                "source": "final_post_enemy_audit_gate",
+                "deltas": deltas,
+                "next_step": (
+                    "A recorded final-island post-enemy audit is still worse "
+                    "than prediction. Investigate before solving ahead, or set "
+                    "ITB_ALLOW_UNRESOLVED_POST_ENEMY=1 for an explicit debug bypass."
+                ),
+            }
+        return None
+
+    result = _record_post_enemy(
+        session, board, solved_turn, bridge_data=bridge_data
+    )
+    if not isinstance(result, dict):
+        return None
+    if result.get("blocking"):
+        result = dict(result)
+        result["status"] = result.get("status") or "POST_ENEMY_AUDIT_BLOCKED"
+        result["source"] = "final_post_enemy_audit_gate"
+        return result
+    return None
 
 
 def _post_enemy_settle_fingerprint(board: Board, bridge_data: dict) -> tuple:
@@ -2540,6 +2704,14 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 result["grid_power"] = f"{board.grid_power}/{board.grid_power_max}"
                 if post_enemy_settle:
                     result["post_enemy_settle"] = post_enemy_settle
+
+            post_enemy_gate = _final_post_enemy_audit_gate(
+                session, board, bridge_data
+            )
+            if post_enemy_gate:
+                result["status"] = post_enemy_gate.get("status")
+                result["post_enemy_investigation"] = post_enemy_gate
+                result["next_step"] = post_enemy_gate.get("next_step")
 
             # Mid-mission terrain stage-change detection. Some final missions
             # swap their arena partway through (volcano → caverns on
@@ -2839,11 +3011,34 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     and bridge_data.get("turn", 0) > session.active_solution.turn
                     and phase == "combat_player"
                     and bridge_data.get("active_mechs", 1) > 0):
-                _record_post_enemy(session, board, session.active_solution.turn)
+                post_enemy_result = _record_post_enemy(
+                    session, board, session.active_solution.turn,
+                    bridge_data=bridge_data,
+                )
+                if (
+                    isinstance(post_enemy_result, dict)
+                    and post_enemy_result.get("blocking")
+                ):
+                    result["status"] = post_enemy_result.get("status")
+                    result["post_enemy_investigation"] = post_enemy_result
+                    result["next_step"] = post_enemy_result.get("next_step")
                 session.active_solution = None  # consumed — prevents re-trigger
             elif (session.active_solution is not None
                     and phase in ("between_missions", "mission_ending")):
-                # Mission ended — clear stale solution (no comparison possible)
+                # Mission ended. Try one final audit flush before clearing the
+                # solution; final-island save phases can say mission_ending
+                # while the bridge still has the live combat board.
+                post_enemy_result = _record_post_enemy(
+                    session, board, session.active_solution.turn,
+                    bridge_data=bridge_data,
+                )
+                if (
+                    isinstance(post_enemy_result, dict)
+                    and post_enemy_result.get("blocking")
+                ):
+                    result["status"] = post_enemy_result.get("status")
+                    result["post_enemy_investigation"] = post_enemy_result
+                    result["next_step"] = post_enemy_result.get("next_step")
                 session.active_solution = None
 
             session.save()
@@ -3121,6 +3316,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         board = Board.from_mission(m, state.grid_power, state.grid_power_max)
         spawns = [(p.x, p.y) for p in m.spawn_points]
         current_turn = m.current_turn
+
+    post_enemy_gate = _final_post_enemy_audit_gate(
+        session, board, bridge_data
+    )
+    if post_enemy_gate:
+        _print_result(post_enemy_gate)
+        session.save()
+        return post_enemy_gate
 
     # Check for active mechs (includes friendly controllable units like ArchiveArtillery)
     active_mechs = [mech for mech in board.mechs()
@@ -3565,6 +3768,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
     # Log
     threats = board.get_threatened_buildings()
+    from src.solver.threat_audit import capture_building_threats
+    initial_threats = capture_building_threats(board)
     logger.log_solver_output(
         solution.score,
         [a.description for a in solution.actions],
@@ -3630,6 +3835,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             "description": a.description,
         } for a in solution.actions],
         "threats": len(threats),
+        "initial_building_threats": initial_threats,
         "active_mechs": len(active_mechs),
         "spawn_points": spawns,
         "search_stats": {
@@ -3652,6 +3858,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
+        "replay_annotations": enriched.get("replay_annotations", []),
         "current_outcome": current_outcome,
         "predicted_outcome": predicted_outcome,
         "predicted_board_summary": predicted_board_summary,
@@ -7122,6 +7329,13 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     else:
         read_result = cmd_read(profile=profile)
 
+    if read_result.get("status") in {
+        "INVESTIGATE_POST_ENEMY",
+        "POST_ENEMY_AUDIT_MISSING",
+    }:
+        _print_result(read_result)
+        return read_result
+
     phase = read_result.get("phase")
     if phase != "combat_player":
         result = {"error": f"Not in combat_player phase: {phase}", "phase": phase}
@@ -7137,6 +7351,36 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         if (save_phase in _POST_MISSION_SAVE_PHASES
                 or bridge_mission_id in {"Mission_Final", "Mission_Final_Cave"}):
             terminal_session = _load_session()
+            post_enemy_result = None
+            if terminal_session.active_solution is not None:
+                try:
+                    refresh_bridge_state()
+                    final_board, final_data = read_bridge_state()
+                    if final_board is not None:
+                        post_enemy_result = _record_post_enemy(
+                            terminal_session,
+                            final_board,
+                            terminal_session.active_solution.turn,
+                            bridge_data=final_data,
+                        )
+                except Exception as exc:
+                    post_enemy_result = {
+                        "status": "POST_ENEMY_AUDIT_MISSING",
+                        "blocking": True,
+                        "reason": "terminal_flush_error",
+                        "message": str(exc),
+                    }
+                if (
+                    isinstance(post_enemy_result, dict)
+                    and post_enemy_result.get("blocking")
+                ):
+                    result = dict(post_enemy_result)
+                    result.setdefault("next_step", (
+                        "Investigate the missing/worse post-enemy audit before "
+                        "continuing from this terminal-looking final state."
+                    ))
+                    _print_result(result)
+                    return result
             terminal_session.active_solution = None
             terminal_session.actions_executed = 0
             terminal_session.save()
@@ -7275,6 +7519,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     predicted_states = []
     predicted_outcome: dict = {}
     plan_safety: dict | None = None
+    solve_data: dict = {}
     if solve_file.exists():
         try:
             with open(solve_file) as f:
@@ -7453,7 +7698,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                     "actions": [a.description for a in new_actions],
                                     "next_step": (
                                         "Partial re-solve predicted a non-overridable "
-                                        "objective loss. Do not continue this turn "
+                                        "safety loss. Do not continue this turn "
                                         "without a safer plan."
                                     ),
                                 }
@@ -7641,7 +7886,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 "actions": [a.description for a in new_actions],
                                 "next_step": (
                                     "Partial re-solve predicted a non-overridable "
-                                    "objective loss. Do not continue this turn "
+                                    "safety loss. Do not continue this turn "
                                     "without a safer plan."
                                 ),
                             }
@@ -7671,6 +7916,40 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         done_uids.add(mech_uid)
         actions_completed += 1
         action_idx += 1
+
+    threat_audit = None
+    try:
+        refresh_bridge_state()
+        audit_board, audit_data = read_bridge_state()
+        if audit_board is not None:
+            from src.solver.threat_audit import audit_threat_coverage
+            threat_audit = audit_threat_coverage(
+                solve_data.get("initial_building_threats") or [],
+                audit_board,
+            )
+            threat_audit["phase"] = (
+                audit_data.get("phase", "unknown")
+                if isinstance(audit_data, dict) else "unknown"
+            )
+            _record_turn_state(
+                session, "threat_audit", threat_audit,
+                turn_override=turn,
+            )
+            if threat_audit.get("entries"):
+                print("\nTHREAT COVERAGE AUDIT:")
+                for entry in threat_audit["entries"]:
+                    cov = entry.get("coverage") or {}
+                    attacker = entry.get("attacker") or {}
+                    print(
+                        f"  {entry.get('target_visual')}: "
+                        f"{attacker.get('type')} uid={attacker.get('uid')} "
+                        f"→ {cov.get('reason')}"
+                    )
+    except Exception as exc:
+        threat_audit = {
+            "status": "ERROR",
+            "error": str(exc),
+        }
 
     # 4. End turn
     end_result = cmd_end_turn()
@@ -7712,6 +7991,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 "solver_gap_events": solver_gap_events,
                 "research_queue_peek": _research_peek(session),
             }
+            if threat_audit is not None:
+                result["threat_audit"] = threat_audit
             if winnability_warning:
                 result["winnability_warning"] = winnability_warning
             _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
@@ -7743,6 +8024,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "solver_gap_events": solver_gap_events,
             "research_queue_peek": _research_peek(session),
         }
+        if threat_audit is not None:
+            result["threat_audit"] = threat_audit
         if winnability_warning:
             result["winnability_warning"] = winnability_warning
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
@@ -7774,6 +8057,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "solver_gap_events": solver_gap_events,
         "research_queue_peek": _research_peek(session),
     }
+    if threat_audit is not None:
+        result["threat_audit"] = threat_audit
     if winnability_warning:
         result["winnability_warning"] = winnability_warning
     _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,

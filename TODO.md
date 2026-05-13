@@ -4,7 +4,7 @@
 
 28 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 42 remaining, sorted by global unlock % (easiest first).
 
-Current Hard Victory hardening note: live-loop safety now treats delayed grid scalar updates as pending grid debt, waits for post-enemy grid/building fingerprints to settle before recording favorable reads, preserves active weights/soft-disable masks during safety widening, and splits dirty frontiers by loss magnitude. Simulator v108 treats Mission_Repair platforms as consuming/counting without overhealing units that were already at full HP, matching the Forgotten Hills `G4` PulseMech live capture; v107 also made live conveyor tiles move before Vek attacks outside `Mission_Belt`.
+Current Hard Victory hardening note: live-loop safety now treats delayed grid scalar updates as pending grid debt, waits for post-enemy grid/building fingerprints to settle before recording favorable reads, preserves active weights/soft-disable masks during safety widening, splits dirty frontiers by loss magnitude, blocks predicted timeline collapse even with dirty consent, backfills final-island post-enemy audits before solving ahead, and records a pre-End-Turn threat coverage audit for each initially threatened building/pylon.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -58,7 +58,7 @@ Current Hard Victory hardening note: live-loop safety now treats delayed grid sc
 - [ ] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random]
 - [ ] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
 - [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
-- [ ] Hard Victory (9.0%) — Beat game on Hard — active target with Rusting Hulks on Hard + Advanced Edition; prefer 2-island victory unless the island-2 readiness check says to take a third island for cores/grid/control
+- [ ] Hard Victory (9.0%) — Beat game on Hard — active target with Rusting Hulks on Hard + Advanced Edition; prefer a third island unless grid is full/near-full and Jet/Rocket/Pulse are actually Hive-ready
 - [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
 - [ ] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm]
@@ -169,6 +169,7 @@ Current Hard Victory hardening note: live-loop safety now treats delayed grid sc
 - [x] **Conveyor belt direction**: Bridge regex extracts `conveyorN.png` direction (0-3); Rust `Board.conveyor_dir` per tile; deploy filter excludes conveyor tiles; enemy-phase belts apply on any live conveyor map, not only `Mission_Belt` (sim v107).
 - [x] **Mission_Repair full-health platforms**: `Item_Repair_Mine` consumes and counts when a full-health mech lands on it, but HP does not overcap unless the unit was below max HP at trigger time (sim v108).
 - [x] **Delayed grid scalar debt**: Live-loop safety subtracts pending grid debt when building HP has dropped but `grid_power` has not caught up, and post-enemy reads poll briefly when a favorable grid/building sample exceeds the saved prediction. This prevents dirty plans from understating Hard grid loss.
+- [x] **Final-island safety gates**: Predicted `grid_power <= 0` is `grid_timeline_collapse` and cannot be overridden by ordinary dirty consent; `Mission_Final` / `Mission_Final_Cave` missing post-enemy audits are backfilled or gated before solving ahead; final-cave summaries expose `pylons_alive` / `pylon_hp_total`; and `auto_turn` records a pre-End-Turn threat coverage audit.
 - [x] **Teleporter pad pairing**: Lua hooks `Board.AddTeleport` to capture pairs; Rust `Board.teleporter_pairs` + `apply_teleport_on_land()` fires on move-end / push / throw. Sim v8, commit 456ba49 (2026-04-23).
 - [ ] **Windstorm direction**: No directional data in bridge. Need Lua extraction for R.S.T. island.
 - [ ] **Volcanic Hive patterns**: Lava flow / falling rocks / tentacles follow cycles (Random → Aimed → Area). Pattern prediction needed for final mission.

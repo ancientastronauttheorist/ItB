@@ -7,13 +7,17 @@ plan preserves irreversible value such as grid power and building HP.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 
 BLOCKING_KINDS = {
     "grid_damage",
+    "grid_timeline_collapse",
     "building_destroyed",
     "building_hp_loss",
+    "pylon_destroyed",
+    "pylon_hp_loss",
     "objective_building_destroyed",
     "objective_building_hp_loss",
     "pod_lost",
@@ -27,6 +31,7 @@ BLOCKING_KINDS = {
 }
 
 NON_OVERRIDABLE_KINDS = {
+    "grid_timeline_collapse",
     "bigbomb_lost",
     "objective_building_destroyed",
     "objective_building_hp_loss",
@@ -39,6 +44,8 @@ LOSS_KINDS = {
     "grid_damage": "grid_power",
     "building_destroyed": "buildings_alive",
     "building_hp_loss": "building_hp_total",
+    "pylon_destroyed": "pylons_alive",
+    "pylon_hp_loss": "pylon_hp_total",
     "objective_building_destroyed": "objective_buildings_alive",
     "objective_building_hp_loss": "objective_building_hp_total",
     "pod_lost": "pods_present",
@@ -112,6 +119,13 @@ def audit_plan_safety(current: dict[str, Any],
                 pred_grid,
                 "Predicted grid power drops before the next player turn.",
             ))
+        if pred_grid <= 0:
+            violations.append(_violation(
+                "grid_timeline_collapse",
+                cur_grid,
+                pred_grid,
+                "Predicted grid power reaches 0 before the next player turn.",
+            ))
 
     cur_alive = _int_or_none(current.get("buildings_alive"))
     pred_alive = _int_or_none(predicted.get("buildings_alive"))
@@ -135,6 +149,30 @@ def audit_plan_safety(current: dict[str, Any],
                 cur_hp,
                 pred_hp,
                 "Predicted outcome loses building HP even if grid power stays visible.",
+            ))
+
+    cur_pylons = _int_or_none(current.get("pylons_alive"))
+    pred_pylons = _int_or_none(predicted.get("pylons_alive"))
+    if cur_pylons is not None and pred_pylons is not None:
+        compared.append("pylons_alive")
+        if pred_pylons < cur_pylons:
+            violations.append(_violation(
+                "pylon_destroyed",
+                cur_pylons,
+                pred_pylons,
+                "Predicted final-cave outcome destroys one or more pylons.",
+            ))
+
+    cur_pylon_hp = _int_or_none(current.get("pylon_hp_total"))
+    pred_pylon_hp = _int_or_none(predicted.get("pylon_hp_total"))
+    if cur_pylon_hp is not None and pred_pylon_hp is not None:
+        compared.append("pylon_hp_total")
+        if pred_pylon_hp < cur_pylon_hp:
+            violations.append(_violation(
+                "pylon_hp_loss",
+                cur_pylon_hp,
+                pred_pylon_hp,
+                "Predicted final-cave outcome loses pylon HP.",
             ))
 
     cur_obj_alive = _int_or_none(current.get("objective_buildings_alive"))
@@ -327,6 +365,8 @@ def audit_plan_safety(current: dict[str, Any],
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
             "building_hp_total": cur_hp,
+            "pylons_alive": cur_pylons,
+            "pylon_hp_total": cur_pylon_hp,
             "objective_buildings_alive": cur_obj_alive,
             "objective_building_hp_total": cur_obj_hp,
             "pods_present": cur_pods,
@@ -343,6 +383,8 @@ def audit_plan_safety(current: dict[str, Any],
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,
             "building_hp_total": pred_hp,
+            "pylons_alive": pred_pylons,
+            "pylon_hp_total": pred_pylon_hp,
             "objective_buildings_alive": pred_obj_alive,
             "objective_building_hp_total": pred_obj_hp,
             "pods_present": pred_pods,
@@ -360,15 +402,24 @@ def audit_plan_safety(current: dict[str, Any],
 
 def plan_requires_safety_block(audit: dict[str, Any] | None,
                                *,
-                               allow_dirty_plan: bool = False) -> bool:
+                               allow_dirty_plan: bool = False,
+                               allow_timeline_collapse_debug: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
     if not isinstance(audit, dict):
         return False
     if allow_dirty_plan:
+        debug_collapse = (
+            allow_timeline_collapse_debug
+            or os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
+        )
         return any(
             isinstance(v, dict)
             and v.get("blocking")
             and v.get("kind") in NON_OVERRIDABLE_KINDS
+            and not (
+                debug_collapse
+                and v.get("kind") == "grid_timeline_collapse"
+            )
             for v in audit.get("violations", []) or []
         )
     return bool(audit.get("blocking"))
@@ -428,6 +479,10 @@ def _profile_label(status: Any,
     if status == "UNKNOWN":
         return "unknown"
     kind_set = set(kinds)
+    if "grid_timeline_collapse" in kind_set:
+        return "timeline_collapse"
+    if "pylon_destroyed" in kind_set or "pylon_hp_loss" in kind_set:
+        return "pylon_loss"
     if non_overridable:
         return "objective_loss"
     if "grid_damage" in kind_set and "mech_lost" in kind_set:

@@ -71,6 +71,55 @@ def test_allow_dirty_plan_overrides_block():
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
 
 
+def test_allow_dirty_plan_does_not_override_timeline_collapse():
+    audit = audit_plan_safety(
+        _summary(grid=1, buildings=8, hp=14),
+        _summary(grid=0, buildings=8, hp=14),
+    )
+
+    kinds = [v["kind"] for v in audit["violations"]]
+    assert "grid_damage" in kinds
+    assert "grid_timeline_collapse" in kinds
+    assert safety_loss_profile(audit)["label"] == "timeline_collapse"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
+def test_timeline_collapse_requires_explicit_debug_escape():
+    audit = audit_plan_safety(
+        _summary(grid=1, buildings=8, hp=14),
+        _summary(grid=0, buildings=8, hp=14),
+    )
+
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_timeline_collapse_debug=True,
+    ) is False
+
+
+def test_final_cave_pylon_loss_is_named():
+    audit = audit_plan_safety(
+        _summary(
+            grid=4,
+            buildings=7,
+            hp=14,
+            pylons_alive=7,
+            pylon_hp_total=14,
+        ),
+        _summary(
+            grid=3,
+            buildings=6,
+            hp=12,
+            pylons_alive=6,
+            pylon_hp_total=12,
+        ),
+    )
+
+    kinds = {v["kind"] for v in audit["violations"]}
+    assert {"pylon_destroyed", "pylon_hp_loss"} <= kinds
+    assert safety_loss_profile(audit)["label"] == "pylon_loss"
+
+
 def test_allow_dirty_plan_does_not_override_protected_objective_loss():
     audit = audit_plan_safety(
         _summary(protected_objective_units_alive=2),
