@@ -8,6 +8,7 @@ from src.loop.commands import (
     _lookahead_robust_frontier,
     _lookahead_robust_summary,
     _prepare_projected_bridge,
+    _select_candidate_by_rank,
     _select_safe_plan_candidate,
 )
 from src.loop.session import RunSession
@@ -100,6 +101,23 @@ def test_safe_candidate_selection_accepts_warn_candidate():
     selected = _select_safe_plan_candidate(candidates)
 
     assert selected["rank"] == 1
+
+
+def test_requested_candidate_selection_uses_exact_rank():
+    candidates = [
+        _candidate(0, blocking=True),
+        _candidate(3, blocking=True),
+    ]
+
+    selected = _select_candidate_by_rank(candidates, 3)
+
+    assert selected["rank"] == 3
+
+
+def test_requested_candidate_selection_missing_rank_returns_none():
+    candidates = [_candidate(0, blocking=True)]
+
+    assert _select_candidate_by_rank(candidates, 3) is None
 
 
 def test_perfect_battle_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch):

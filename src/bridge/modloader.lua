@@ -1270,6 +1270,68 @@ local function tile_damage_changed(before, pt)
     return false
 end
 
+local function path_profile_for_target_area(point, fallback)
+    if Pawn ~= nil then
+        local ok, prof = pcall(function() return Pawn:GetPathProf() end)
+        if ok and prof ~= nil then return prof end
+    end
+    if Board ~= nil and point ~= nil then
+        local ok_pawn, source_pawn = pcall(function()
+            return Board:GetPawn(point)
+        end)
+        if ok_pawn and source_pawn ~= nil then
+            local ok_prof, prof = pcall(function()
+                return source_pawn:GetPathProf()
+            end)
+            if ok_prof and prof ~= nil then return prof end
+        end
+    end
+    return fallback or PATH_FLYER or PATH_PROJECTILE
+end
+
+local function bridge_safe_jet_target_area(self, point)
+    local ret = PointList()
+    local path_prof = path_profile_for_target_area(point, PATH_FLYER)
+    for i = DIR_START, DIR_END do
+        for k = self.MinMove, self.Range do
+            local curr = DIR_VECTORS[i] * k + point
+            if not Board:IsBlocked(curr, path_prof) then
+                ret:push_back(curr)
+            end
+        end
+    end
+    return ret
+end
+
+local function install_safe_jet_target_area()
+    if _ITB_BRIDGE_SAFE_JET_TARGET_AREA then return end
+    local names = {
+        "Brute_Jetmech",
+        "Brute_Jetmech_A",
+        "Brute_Jetmech_B",
+        "Brute_Jetmech_AB",
+        "Brute_Bombrun",
+        "Brute_Bombrun_A",
+        "Brute_Bombrun_B",
+        "Brute_Bombrun_AB",
+        "Support_Smoke",
+        "Support_Smoke_A",
+        "Support_Smoke_B",
+        "Support_Smoke_AB",
+    }
+    local installed = 0
+    for _, name in ipairs(names) do
+        local skill = _G[name]
+        if skill ~= nil then
+            skill.GetTargetArea = bridge_safe_jet_target_area
+            installed = installed + 1
+        end
+    end
+    _ITB_BRIDGE_SAFE_JET_TARGET_AREA = true
+    log_bridge("SAFE TARGET AREA: patched Aerial Bombs family entries=" ..
+               installed)
+end
+
 -- execute_weapon_by_slot: fire weapon using a 0-based slot index from
 -- the Python side (maps to 1-indexed Lua SkillList).
 -- This avoids name-matching issues where the solver's weapon ID doesn't
@@ -1379,19 +1441,32 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                         engine_tile_damage_seen = engine_tile_damage_seen + 1
                     end
                     local dmg_val = (has_live or engine_changed_tile) and 0 or skill.Damage
-                    local sd = SpaceDamage(tp, dmg_val)
-                    if skill.Smoke and skill.Smoke > 0 then
-                        sd.iSmoke = skill.Smoke
+                    local smoke_val = skill.Smoke or 0
+                    local acid_val = skill.Acid or 0
+                    local used_direct_status = false
+                    local ok_d = false
+                    local err_d = nil
+                    if dmg_val == 0 and has_live and smoke_val > 0 and acid_val == 0 then
+                        ok_d, err_d = pcall(function()
+                            Board:SetSmoke(tp, true, true)
+                        end)
+                        used_direct_status = ok_d
                     end
-                    if skill.Acid and skill.Acid > 0 then
-                        sd.iAcid = skill.Acid
+                    if not used_direct_status then
+                        local sd = SpaceDamage(tp, dmg_val)
+                        if smoke_val > 0 then
+                            sd.iSmoke = smoke_val
+                        end
+                        if acid_val > 0 then
+                            sd.iAcid = acid_val
+                        end
+                        ok_d, err_d = pcall(function()
+                            Board:DamageSpace(sd)
+                        end)
                     end
-                    local ok_d, err_d = pcall(function()
-                        Board:DamageSpace(sd)
-                    end)
                     if ok_d then
                         if dmg_val > 0 then dmg_applied = dmg_applied + 1 end
-                        if skill.Smoke and skill.Smoke > 0 then
+                        if smoke_val > 0 then
                             smoke_applied = smoke_applied + 1
                         end
                     else
@@ -1978,6 +2053,7 @@ end
 pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
 pcall(function() os.remove(ACK_FILE) end)
+install_safe_jet_target_area()
 
 local _reload_count = (_ITB_BRIDGE_LOAD_COUNT or 0) + 1
 _ITB_BRIDGE_LOAD_COUNT = _reload_count

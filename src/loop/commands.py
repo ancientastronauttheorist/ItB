@@ -1678,6 +1678,19 @@ def _select_safe_plan_candidate(candidate_evals: list[dict]) -> dict | None:
     )
 
 
+def _select_candidate_by_rank(
+    candidate_evals: list[dict],
+    requested_rank: int | None,
+) -> dict | None:
+    """Return the exact solver candidate rank requested by the operator."""
+    if requested_rank is None:
+        return None
+    for candidate in candidate_evals:
+        if candidate.get("rank") == requested_rank:
+            return candidate
+    return None
+
+
 def _candidate_safety_summary(candidate_eval: dict) -> dict:
     """Compact candidate audit data for solve recordings."""
     solution = candidate_eval.get("solution")
@@ -3043,7 +3056,7 @@ def _check_wheel_sim_version() -> dict | None:
 
 
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
-              beam: int = 0) -> dict:
+              beam: int = 0, candidate_rank: int | None = None) -> dict:
     """Run solver on current board, store solution in session.
 
     Args:
@@ -3053,6 +3066,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
               score). 1 uses solve_beam(depth=1) which is equivalent to
               solve_top_k with K=5 — takes the top raw-score plan without the
               two-stage clean-plan filter. Other values raise ValueError.
+        candidate_rank: when set, use solve_top_k and store exactly that
+              reviewed raw-score candidate rank. Intended for dirty-frontier
+              triage after explicit operator consent; still safety-audited.
 
     Returns the chosen solution with actions and score. When beam>=1 the
     recording stamps `beam_mode` and `chain_score` so downstream analysis
@@ -3060,6 +3076,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     """
     if beam not in (0, 1, 2):
         return {"error": f"invalid beam value {beam!r}; must be 0, 1, or 2"}
+    if candidate_rank is not None and candidate_rank < 0:
+        return {"error": "invalid candidate_rank; must be non-negative"}
     # Refuse to solve against a stale wheel after a Rust rebuild.
     wheel_err = _check_wheel_sim_version()
     if wheel_err is not None:
@@ -3273,7 +3291,18 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
             rust_start = _time.time()
             candidate_specs = []
-            if beam == 0:
+            if candidate_rank is not None:
+                top_k = max(candidate_rank + 1, 1)
+                rust_json = _rust.solve_top_k(
+                    _json.dumps(bridge_data), time_limit, top_k,
+                )
+                for idx, rust_result in enumerate(_json.loads(rust_json) or []):
+                    candidate_specs.append({
+                        "rank": idx,
+                        "source": "top_k_requested",
+                        "rust_result": rust_result,
+                    })
+            elif beam == 0:
                 rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
                 candidate_specs.append({
                     "rank": 0,
@@ -3327,8 +3356,27 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 ))
                 candidate_evals.append(candidate_eval)
 
-            selected_candidate_eval = _select_safe_plan_candidate(candidate_evals)
-            if (beam == 0
+            if candidate_rank is not None:
+                selected_candidate_eval = _select_candidate_by_rank(
+                    candidate_evals, candidate_rank,
+                )
+                if selected_candidate_eval is None:
+                    result = {
+                        "error": "CANDIDATE_RANK_UNAVAILABLE",
+                        "requested_candidate_rank": candidate_rank,
+                        "candidate_count": candidate_count,
+                        "message": (
+                            "Requested solver candidate rank was not returned "
+                            "by solve_top_k for the current board."
+                        ),
+                    }
+                    _print_result(result)
+                    session.save()
+                    return result
+            else:
+                selected_candidate_eval = _select_safe_plan_candidate(candidate_evals)
+            if (candidate_rank is None
+                    and beam == 0
                     and selected_candidate_eval is not None
                     and plan_requires_safety_block(
                         selected_candidate_eval.get("plan_safety")
@@ -3456,7 +3504,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 selected_candidate_blocked = plan_requires_safety_block(
                     selected_candidate_eval.get("plan_safety")
                 )
-                if (candidate_count > 1
+                if candidate_rank is not None:
+                    print(f"  Selected requested candidate #{selected_candidate_rank + 1} "
+                          f"of {candidate_count}")
+                elif (candidate_count > 1
                         and selected_candidate_rank not in (None, 0)
                         and not selected_candidate_blocked):
                     print(f"  Selected safe candidate #{selected_candidate_rank + 1} "
@@ -6951,7 +7002,8 @@ def _check_winnability(turn: int, score: float,
 
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   wait_for_turn: bool = True, max_wait: float = 45.0,
-                  allow_dirty_plan: bool = False) -> dict:
+                  allow_dirty_plan: bool = False,
+                  candidate_rank: int | None = None) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -7187,7 +7239,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _diff_session.save()
 
     # 2. Solve
-    solve_result = cmd_solve(profile=profile, time_limit=time_limit)
+    solve_result = cmd_solve(
+        profile=profile,
+        time_limit=time_limit,
+        candidate_rank=candidate_rank,
+    )
     if "error" in solve_result:
         result = {"error": f"Solve: {solve_result['error']}", "turn": turn}
         _print_result(result)

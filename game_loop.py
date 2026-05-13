@@ -98,6 +98,9 @@ def main():
                               "plan whose chain_score (turn-1 + best turn-2) "
                               "is highest. 1 = depth-1 beam (skip the "
                               "clean-plan filter). Does not affect auto_turn.")
+    p_solve.add_argument("--candidate-rank", type=int, default=None,
+                         help="Select an exact solve_top_k candidate rank "
+                              "after reviewing dirty frontier tradeoffs.")
 
     # execute
     p_exec = sub.add_parser("execute", help="Plan clicks for one mech action")
@@ -483,6 +486,9 @@ def main():
     p_auto_turn.add_argument("--allow-dirty-plan", action="store_true",
                              help="Override Solver 2.0 safety block and execute "
                                   "a plan that predicts grid/building loss")
+    p_auto_turn.add_argument("--candidate-rank", type=int, default=None,
+                             help="Execute an exact solve_top_k candidate rank "
+                                  "after explicit dirty-line consent")
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",
@@ -564,7 +570,7 @@ def main():
         cmd_read(profile=args.profile)
     elif args.command == "solve":
         cmd_solve(profile=args.profile, time_limit=args.time_limit,
-                  beam=args.beam)
+                  beam=args.beam, candidate_rank=args.candidate_rank)
     elif args.command == "execute":
         cmd_execute(args.index, profile=args.profile)
     elif args.command == "verify":
@@ -660,7 +666,8 @@ def main():
     elif args.command == "auto_turn":
         cmd_auto_turn(profile=args.profile, time_limit=args.time_limit,
                       wait_for_turn=not args.no_wait, max_wait=args.max_wait,
-                      allow_dirty_plan=args.allow_dirty_plan)
+                      allow_dirty_plan=args.allow_dirty_plan,
+                      candidate_rank=args.candidate_rank)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)
