@@ -670,10 +670,9 @@ fn apply_damage_defer_death_explosion(
 /// Grid-power accounting for building HP changes.
 ///
 /// Non-unique multi-HP buildings have a live-engine wrinkle: a bump can reduce
-/// HP without moving the visible grid scalar, but if that same building is
-/// later destroyed, the prior bump HP loss is charged then. Store that latent
-/// debt on the board so the current simulated line carries it through enemy
-/// phase without changing immediate action verification.
+/// HP without moving the visible grid scalar. Store that latent debt on the
+/// board so immediate action verification can pass; the debt is charged when
+/// the enemy turn starts, or earlier if the same building is destroyed.
 pub(crate) fn settle_building_grid_loss(
     board: &mut Board,
     idx: usize,
@@ -698,6 +697,31 @@ pub(crate) fn settle_building_grid_loss(
         board.deferred_bump_grid_debt[idx] = 0;
     }
     grid_loss
+}
+
+/// Charge all pending non-unique multi-HP bump debt at enemy-turn start.
+///
+/// Live captures show the building HP loss appears immediately, while the grid
+/// meter can lag until the turn rolls. This keeps per-action verification
+/// tolerant without letting post-enemy projection miss the grid loss.
+pub(crate) fn flush_deferred_bump_grid_debt(
+    board: &mut Board,
+    result: &mut ActionResult,
+) -> u8 {
+    let mut total = 0u8;
+    for debt in board.deferred_bump_grid_debt.iter_mut() {
+        if *debt == 0 {
+            continue;
+        }
+        total = total.saturating_add(*debt);
+        *debt = 0;
+    }
+
+    if total > 0 {
+        result.grid_damage += total as i32;
+        board.grid_power = board.grid_power.saturating_sub(total);
+    }
+    total
 }
 
 
@@ -3554,6 +3578,52 @@ mod tests {
         assert_eq!(board.tile(3, 4).building_hp, 0);
         assert_eq!(second.grid_damage, 2);
         assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_deferred_nonunique_bump_debt_flushes_at_enemy_turn_start() {
+        let mut board = make_test_board();
+        board.grid_power = 4;
+        board.tile_mut(4, 6).terrain = Terrain::Building;
+        board.tile_mut(4, 6).building_hp = 2; // B4 visual
+        let firefly = add_enemy_type(&mut board, 884, 4, 5, 5, "Firefly2");
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 4, 5, 0, &mut first); // push into B4
+        assert_eq!(board.units[firefly].hp, 4);
+        assert_eq!(board.tile(4, 6).building_hp, 1);
+        assert_eq!(first.grid_damage, 0);
+        assert_eq!(board.grid_power, 4);
+
+        let original_positions = [(0u8, 0u8); 16];
+        crate::enemy::simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.tile(4, 6).building_hp, 1, "B4 survives at 1 HP");
+        assert_eq!(board.grid_power, 3, "deferred B4 grid debt is charged at enemy-turn start");
+        assert_eq!(board.deferred_bump_grid_debt[xy_to_idx(4, 6)], 0);
+    }
+
+    #[test]
+    fn test_deferred_nonunique_bump_debt_not_double_charged_after_destroy() {
+        let mut board = make_test_board();
+        board.grid_power = 7;
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut first);
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+
+        let mut second = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut second, DamageSource::Weapon);
+        assert_eq!(second.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
+
+        let original_positions = [(0u8, 0u8); 16];
+        crate::enemy::simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        assert_eq!(board.grid_power, 5, "enemy-turn flush must not charge cleared debt twice");
     }
 
     #[test]

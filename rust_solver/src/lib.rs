@@ -1174,7 +1174,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   into a clear tile, matching Hard Rusting Hulks run 20260513_144310_771
 //   Mission_Solar turn 3 where C2 -> C1 produced the live egg at C1. Pre-v113
 //   corpus archived as `failure_db_snapshot_sim_v112.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 113;
+// v114 - Deferred non-unique multi-HP bump grid debt flushes at enemy-turn
+//   start, matching Hard Rusting Hulks run 20260513_144310_771 Mission_Holes
+//   turn 2 where Rocket bumped B4 2->1, grid stayed 4 during player phase,
+//   then dropped to 3 by next player turn. Pre-v114 corpus archived as
+//   `failure_db_snapshot_sim_v113.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 114;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

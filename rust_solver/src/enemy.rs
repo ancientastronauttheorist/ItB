@@ -13,6 +13,7 @@ use crate::simulate::{
     apply_teleport_on_land,
     apply_weapon_status,
     apply_weapon_status_with_impact_occupancy,
+    flush_deferred_bump_grid_debt,
     on_enemy_death,
     settle_building_grid_loss,
 };
@@ -365,6 +366,7 @@ pub fn simulate_enemy_attacks(
 
     let mut buildings_destroyed = 0;
     let mut result = ActionResult::default();
+    flush_deferred_bump_grid_debt(board, &mut result);
 
     // Fire tick: burning units take 1 damage before attacks
     // Flame Shielding: player mechs immune to fire
