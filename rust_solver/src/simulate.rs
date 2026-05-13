@@ -560,6 +560,18 @@ pub(crate) fn drain_pending_spider_eggs(board: &mut Board) {
     }
 }
 
+fn retarget_pending_spider_egg(board: &mut Board, from_x: u8, from_y: u8, to_x: u8, to_y: u8) {
+    if (from_x, from_y) == (to_x, to_y) {
+        return;
+    }
+    for egg in board.pending_spider_eggs.iter_mut().rev() {
+        if *egg == (from_x, from_y) {
+            *egg = (to_x, to_y);
+            break;
+        }
+    }
+}
+
 /// Finish a non-damage instant death path after the caller has determined the
 /// unit dies at its current tile: drowning/falling from a push, swap, throw, or
 /// Old Earth Mine. This mirrors apply_damage_core's bookkeeping plus the
@@ -1404,11 +1416,16 @@ fn apply_push_with_policy(
         return;
     }
 
+    let retarget_death_egg = board.units[unit_idx].hp <= 0 && board.units[unit_idx].is_enemy();
+
     // Destination clear: only an actual tile change breaks the pushed unit's
     // own web. Blocked pushes bump in place and leave the grapple attached.
     clear_unit_web(board, unit_idx);
     board.units[unit_idx].x = nx;
     board.units[unit_idx].y = ny;
+    if retarget_death_egg {
+        retarget_pending_spider_egg(board, x, y, nx, ny);
+    }
 
     // Web break: enemy webber pushed → unweb any mechs they were holding.
     // Position change alone breaks the grapple (regardless of whether the
@@ -4681,6 +4698,32 @@ mod tests {
         assert_eq!(board.pending_spider_eggs.len(), 0);
         let egg = board.unit_at(4, 4).expect("Arachnid Psion egg should spawn on death tile");
         assert_eq!(board.units[egg].uid, 84);
+        assert_eq!(board.units[egg].type_name_str(), "SpiderlingEgg1");
+        assert_eq!(board.units[egg].hp, 1);
+    }
+
+    #[test]
+    fn test_arachnid_psion_egg_follows_rocket_killed_corpse_push() {
+        // Live regression: Hard Rusting Hulks run 20260513_144310_771,
+        // R.S.T. Mission_Solar turn 3. Rocket at C6 fired at Leaper on C2;
+        // the killed Leaper corpse moved to C1, and the engine spawned the
+        // SpiderlingEgg1 on C1 before the next mech acted.
+        let mut board = make_test_board();
+        board.spider_psion = true;
+        let rocket = add_mech(&mut board, 1, 2, 5, 3, WId::RangedRocket);
+        let target = add_enemy_type(&mut board, 878, 6, 5, 2, "Leaper2");
+        let psion = add_enemy_type(&mut board, 879, 5, 6, 2, "Jelly_Spider1");
+        board.units[psion].flags.insert(UnitFlags::FLYING);
+
+        let result = simulate_attack(&mut board, rocket, WId::RangedRocket, (6, 5), &WEAPONS);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!((board.units[target].x, board.units[target].y), (7, 5));
+        assert_eq!(board.units[target].hp, 0);
+        assert_eq!(board.pending_spider_eggs.len(), 0);
+        assert!(board.unit_at(6, 5).is_none(), "C2 should be empty after the corpse push");
+        let egg = board.unit_at(7, 5).expect("Arachnid Psion egg should follow the corpse to C1");
+        assert_eq!(board.units[egg].uid, 880);
         assert_eq!(board.units[egg].type_name_str(), "SpiderlingEgg1");
         assert_eq!(board.units[egg].hp, 1);
     }

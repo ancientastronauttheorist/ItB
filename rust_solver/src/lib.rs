@@ -1170,7 +1170,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   with zero-damage outward adjacent pushes, and synthetic default tiles now
 //   use conveyor_dir=-1 so no-belt tests do not pre-shift enemy attacks. Pre-v112
 //   corpus archived as `failure_db_snapshot_sim_v111.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 112;
+// v113 - Spider Psion death eggs follow a Rocket-killed corpse that is pushed
+//   into a clear tile, matching Hard Rusting Hulks run 20260513_144310_771
+//   Mission_Solar turn 3 where C2 -> C1 produced the live egg at C1. Pre-v113
+//   corpus archived as `failure_db_snapshot_sim_v112.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 113;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
