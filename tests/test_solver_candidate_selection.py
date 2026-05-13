@@ -168,6 +168,35 @@ def test_dirty_frontier_keeps_best_candidate_per_tradeoff():
     assert frontier[1]["losses"] == {"mechs_alive": 1}
 
 
+def test_dirty_frontier_splits_grid_loss_by_magnitude():
+    def summary(rank, grid_loss):
+        return {
+            "rank": rank,
+            "source": "top_k_safety",
+            "score": 100.0 - rank,
+            "blocking": True,
+            "loss_profile": {
+                "label": "grid_loss",
+                "blocking": True,
+                "losses": {"grid_power": grid_loss},
+            },
+            "violations": [{"kind": "grid_damage"}],
+        }
+
+    frontier = _candidate_dirty_frontier([
+        summary(0, 2),
+        summary(1, 1),
+        summary(2, 2),
+    ])
+
+    assert [item["losses"] for item in frontier] == [
+        {"grid_power": 2},
+        {"grid_power": 1},
+    ]
+    assert frontier[0]["count"] == 2
+    assert frontier[1]["count"] == 1
+
+
 def test_frontier_representatives_pick_one_per_label():
     def candidate(rank, label):
         return {
@@ -190,6 +219,33 @@ def test_frontier_representatives_pick_one_per_label():
         candidate(3, "grid_loss"),
         candidate(1, "mech_loss"),
         candidate(0, "grid_loss"),
+    ])
+
+    assert [c["rank"] for c in reps] == [0, 1]
+
+
+def test_frontier_representatives_split_same_label_by_loss_magnitude():
+    def candidate(rank, grid_loss):
+        return {
+            "rank": rank,
+            "plan_safety": {
+                "status": "DIRTY",
+                "blocking": True,
+                "violations": [
+                    {
+                        "kind": "grid_damage",
+                        "current": 5,
+                        "predicted": 5 - grid_loss,
+                        "delta": -grid_loss,
+                    },
+                ],
+            },
+        }
+
+    reps = _candidate_frontier_representatives([
+        candidate(0, 2),
+        candidate(1, 1),
+        candidate(2, 2),
     ])
 
     assert [c["rank"] for c in reps] == [0, 1]

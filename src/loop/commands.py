@@ -1356,6 +1356,124 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     }
 
 
+def _active_region_from_bridge_data(bridge_data: dict | None) -> str | None:
+    """Return the active save-region key for the current mission if exposed."""
+    if not isinstance(bridge_data, dict):
+        return None
+    mission_seeds = bridge_data.get("mission_seeds") or {}
+    if not isinstance(mission_seeds, dict):
+        return None
+    for region_key, info in mission_seeds.items():
+        if isinstance(info, dict) and info.get("state") == 0:
+            return str(region_key)
+    return None
+
+
+def _first_resist_entry_for_turn(
+    log_path: Path,
+    run_id: str,
+    region: str | None,
+    turn: int,
+) -> dict | None:
+    """Return the first resist-probe entry for a run/region/turn."""
+    if not log_path.exists():
+        return None
+    try:
+        with log_path.open() as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if obj.get("run_id") != run_id:
+                    continue
+                if region is not None and obj.get("region") != region:
+                    continue
+                if obj.get("turn") == turn:
+                    return obj
+    except OSError:
+        return None
+    return None
+
+
+def _current_building_hp_total(board: Board) -> int:
+    return sum(
+        board.tiles[x][y].building_hp
+        for x in range(8) for y in range(8)
+        if board.tiles[x][y].terrain == "building"
+        and board.tiles[x][y].building_hp > 0
+    )
+
+
+def _pending_grid_debt_from_turn_start(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict | None,
+) -> int:
+    """Detect delayed grid scalar updates after player building damage.
+
+    Some live reads show building HP already reduced while ``grid_power`` is
+    still at the turn-start value. The solver must account for that debt when
+    judging the post-enemy outcome, or it can understate a dirty plan's final
+    grid by one or more points.
+    """
+    if not isinstance(bridge_data, dict):
+        return 0
+    turn = bridge_data.get("turn")
+    if not isinstance(turn, int):
+        return 0
+    run_id = session.run_id or "default"
+    region = _active_region_from_bridge_data(bridge_data)
+    entry = _first_resist_entry_for_turn(
+        _recording_dir(session) / "resist_probe.jsonl",
+        run_id,
+        region,
+        turn,
+    )
+    if not isinstance(entry, dict):
+        return 0
+    start_grid = entry.get("grid_power")
+    building_hp_map = entry.get("building_hp_map")
+    if not isinstance(start_grid, int) or not isinstance(building_hp_map, dict):
+        return 0
+    start_hp = 0
+    for hp in building_hp_map.values():
+        try:
+            start_hp += max(0, int(hp))
+        except (TypeError, ValueError):
+            pass
+    current_hp = _current_building_hp_total(board)
+    hp_lost = max(0, start_hp - current_hp)
+    grid_lost = max(0, start_grid - int(board.grid_power))
+    return max(0, hp_lost - grid_lost)
+
+
+def _annotate_pending_grid_debt(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict | None,
+) -> int:
+    debt = _pending_grid_debt_from_turn_start(session, board, bridge_data)
+    if isinstance(bridge_data, dict):
+        if debt > 0:
+            bridge_data["_pending_grid_debt"] = debt
+        else:
+            bridge_data.pop("_pending_grid_debt", None)
+    return debt
+
+
+def _summary_with_pending_grid_debt(summary: dict, debt: int) -> dict:
+    if debt <= 0:
+        return summary
+    out = dict(summary)
+    gp = out.get("grid_power")
+    if isinstance(gp, int):
+        out["visible_grid_power"] = gp
+        out["pending_grid_debt"] = debt
+        out["grid_power"] = max(0, gp - debt)
+    return out
+
+
 def _rust_result_to_solution(rust_result: dict | None,
                              elapsed_seconds: float,
                              active_mech_count: int) -> Solution | None:
@@ -1472,6 +1590,19 @@ def _evaluate_solution_safety(board: Board,
         for r in enriched.get("action_results", [])
         if isinstance(r, dict)
     )
+    pending_debt = 0
+    if isinstance(bridge_data, dict):
+        try:
+            pending_debt = int(bridge_data.get("_pending_grid_debt") or 0)
+        except (TypeError, ValueError):
+            pending_debt = 0
+    if pending_debt > 0:
+        current_outcome = _summary_with_pending_grid_debt(
+            current_outcome, pending_debt
+        )
+        predicted_board_summary = _summary_with_pending_grid_debt(
+            predicted_board_summary, pending_debt
+        )
     plan_safety = audit_plan_safety(
         current_outcome,
         predicted_board_summary,
@@ -1570,12 +1701,19 @@ def _candidate_dirty_frontier(
     limit: int = 8,
 ) -> list[dict]:
     """Return the top raw-score representative for each safety tradeoff."""
-    buckets: dict[str, dict] = {}
+    buckets: dict[tuple, dict] = {}
     for summary in candidate_summaries:
         profile = summary.get("loss_profile") or {}
         label = profile.get("label") or "unknown"
-        bucket = buckets.setdefault(label, {
+        signature = (
+            label,
+            bool(profile.get("blocking")),
+            bool(profile.get("non_overridable")),
+            tuple(sorted((profile.get("losses") or {}).items())),
+        )
+        bucket = buckets.setdefault(signature, {
             "label": label,
+            "signature": signature,
             "count": 0,
             "best": None,
         })
@@ -1600,6 +1738,7 @@ def _candidate_dirty_frontier(
         profile = best.get("loss_profile") or {}
         frontier.append({
             "label": bucket.get("label"),
+            "loss_signature": list(bucket.get("signature", ())),
             "count": bucket.get("count", 0),
             "best_rank": best.get("rank"),
             "best_source": best.get("source"),
@@ -1624,13 +1763,17 @@ def _candidate_frontier_representatives(
     *,
     limit: int = 5,
 ) -> list[dict]:
-    """Choose one candidate eval per safety-tradeoff label."""
-    buckets: dict[str, dict] = {}
+    """Choose one candidate eval per safety-tradeoff signature."""
+    buckets: dict[tuple, dict] = {}
     for candidate in candidate_evals:
-        label = safety_loss_profile(
-            candidate.get("plan_safety")
-        ).get("label", "unknown")
-        current = buckets.get(label)
+        profile = safety_loss_profile(candidate.get("plan_safety"))
+        signature = (
+            profile.get("label", "unknown"),
+            bool(profile.get("blocking")),
+            bool(profile.get("non_overridable")),
+            tuple(sorted((profile.get("losses") or {}).items())),
+        )
+        current = buckets.get(signature)
         rank = candidate.get("rank")
         current_rank = current.get("rank") if isinstance(current, dict) else None
         if (
@@ -1642,7 +1785,7 @@ def _candidate_frontier_representatives(
                 and rank < current_rank
             )
         ):
-            buckets[label] = candidate
+            buckets[signature] = candidate
 
     def _sort_key(candidate: dict) -> tuple[int, int]:
         rank = candidate.get("rank")
@@ -2166,6 +2309,142 @@ def _record_post_enemy(session: RunSession, board: Board,
         print(f"\nPost-enemy analysis: no triggers (predictions matched)")
 
 
+def _load_solve_prediction_for_turn(
+    session: RunSession,
+    solved_turn: int,
+) -> dict | None:
+    """Load the saved post-enemy prediction for a solved turn."""
+    run_dir = _recording_dir(session)
+    mi = session.mission_index
+    solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
+    if not solve_file.exists():
+        solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
+    if not solve_file.exists():
+        return None
+    try:
+        with solve_file.open() as f:
+            solve_record = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    solve_data = solve_record.get("data", {})
+    predicted = (
+        solve_data.get("predicted_board_summary")
+        or solve_data.get("predicted_outcome")
+    )
+    return predicted if isinstance(predicted, dict) else None
+
+
+def _post_enemy_settle_fingerprint(board: Board, bridge_data: dict) -> tuple:
+    """Fingerprint board values that can settle after enemy animations."""
+    building_hp = tuple(
+        sorted(
+            (x, y, board.tiles[x][y].building_hp)
+            for x in range(8) for y in range(8)
+            if board.tiles[x][y].terrain == "building"
+            and board.tiles[x][y].building_hp > 0
+        )
+    )
+    units = tuple(
+        sorted(
+            (
+                u.uid, u.type, u.team, u.x, u.y, u.hp, u.max_hp,
+                bool(u.active), bool(u.fire), bool(u.web), bool(u.frozen),
+                getattr(u, "target_x", -1), getattr(u, "target_y", -1),
+            )
+            for u in board.units
+        )
+    )
+    return (
+        bridge_data.get("phase"),
+        bridge_data.get("turn"),
+        bridge_data.get("active_mechs"),
+        board.grid_power,
+        building_hp,
+        units,
+    )
+
+
+def _actual_exceeds_prediction(actual: dict, predicted: dict | None) -> bool:
+    """True when an actual post-enemy read looks better than predicted."""
+    if not isinstance(predicted, dict):
+        return False
+    for key in ("grid_power", "buildings_alive", "building_hp_total"):
+        av = actual.get(key)
+        pv = predicted.get(key)
+        if isinstance(av, int) and isinstance(pv, int) and av > pv:
+            return True
+    return False
+
+
+def _settle_post_enemy_board(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict,
+    solved_turn: int,
+    *,
+    max_wait: float = 3.0,
+    interval: float = 0.5,
+    read_fn=read_bridge_state,
+    refresh_fn=refresh_bridge_state,
+    sleep_fn=time.sleep,
+    now_fn=time.time,
+) -> tuple[Board, dict, dict | None]:
+    """Wait briefly for turn-boundary grid/building values to settle.
+
+    The Lua bridge can expose ``phase=combat_player`` and a fresh active
+    roster before scalar grid power catches up to building damage. If we record
+    post-enemy analysis in that window, a dirty or unexpected grid loss can be
+    misclassified as a Grid Defense resist. Polling here is scoped to the
+    just-finished solved turn and only delays post-enemy reads by a few seconds.
+    """
+    predicted = _load_solve_prediction_for_turn(session, solved_turn)
+    start = now_fn()
+    latest_board = board
+    latest_data = bridge_data
+    latest_fp = _post_enemy_settle_fingerprint(board, bridge_data)
+    samples = 1
+
+    while now_fn() - start < max_wait:
+        sleep_fn(interval)
+        try:
+            refresh_fn()
+            reread_board, reread_data = read_fn()
+        except Exception:
+            break
+        if reread_board is None or not isinstance(reread_data, dict):
+            break
+
+        # A phase/mission transition beats settlement; return the freshest
+        # board and let normal phase handling decide what to do next.
+        if reread_data.get("phase") != bridge_data.get("phase"):
+            latest_board, latest_data = reread_board, reread_data
+            samples += 1
+            break
+
+        latest_board, latest_data = reread_board, reread_data
+        samples += 1
+        fp = _post_enemy_settle_fingerprint(reread_board, reread_data)
+        actual = _capture_board_summary(reread_board, reread_data)
+        favorable = _actual_exceeds_prediction(actual, predicted)
+
+        # If the latest read no longer looks like a favorable surprise, two
+        # matching reads are enough. If it does look favorable, keep polling to
+        # the cap so delayed grid loss cannot masquerade as Grid Defense.
+        if fp == latest_fp and not favorable:
+            break
+        latest_fp = fp
+
+    elapsed = now_fn() - start
+    info = None
+    if samples > 1:
+        info = {
+            "samples": samples,
+            "elapsed_seconds": round(elapsed, 3),
+            "grid_power": latest_board.grid_power,
+        }
+    return latest_board, latest_data, info
+
+
 # --- State Reading Commands ---
 
 
@@ -2223,6 +2502,23 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # overwriting the prior mission's recordings.
             if _auto_advance_mission(session, bridge_data):
                 session.save()
+
+            post_enemy_settle = None
+            if (session.active_solution is not None
+                    and bridge_data.get("turn", 0) > session.active_solution.turn
+                    and phase == "combat_player"
+                    and bridge_data.get("active_mechs", 1) > 0):
+                board, bridge_data, post_enemy_settle = _settle_post_enemy_board(
+                    session, board, bridge_data, session.active_solution.turn
+                )
+                phase = bridge_data.get("phase", "unknown")
+                session.phase = phase
+                session.current_turn = bridge_data.get("turn", 0)
+                result["phase"] = phase
+                result["turn"] = bridge_data.get("turn", 0)
+                result["grid_power"] = f"{board.grid_power}/{board.grid_power_max}"
+                if post_enemy_settle:
+                    result["post_enemy_settle"] = post_enemy_settle
 
             # Mid-mission terrain stage-change detection. Some final missions
             # swap their arena partway through (volcano → caverns on
@@ -2930,6 +3226,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         ud.get("type", ""),
                         ud.get("pilot_level", 0),
                     )
+            _annotate_pending_grid_debt(session, board, bridge_data)
             # Self-healing loop Tier 2: forward the session's current
             # blocklist so the Rust solver biases scoring away from
             # soft-disabled weapons. Expiry was pruned at the start of
@@ -3030,19 +3327,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     )):
                 # Emergency safety widening: the top-1 entry path can miss
                 # lower-ranked clean plans when the scorer strongly favors
-                # tactics that still concede grid. First respect the current
-                # soft-disable mask; if every masked candidate is dirty, run a
-                # diagnostic no-mask pass so false-positive cages cannot force
-                # dirty consent when a clean line exists.
+                # tactics that still concede grid. Keep both the active weight
+                # bundle and the current soft-disable mask intact so widened
+                # candidates are ranked under the same tactical assumptions as
+                # the live solve.
                 widening_attempts: list[dict] = []
                 for source, ignore_soft_disables in [
                     ("top_k_safety", False),
-                    ("top_k_safety_no_soft_disables", True),
                 ]:
                     wide_bridge_data = dict(bridge_data)
-                    wide_bridge_data.pop("eval_weights", None)
-                    if ignore_soft_disables:
-                        wide_bridge_data.pop("disabled_actions", None)
 
                     wide_raw = _rust.solve_top_k(
                         _json.dumps(wide_bridge_data),
@@ -6071,6 +6364,7 @@ def _re_solve_partial(
                 ud.get("max_hp", 0), ud.get("type", ""),
                 ud.get("pilot_level", 0),
             )
+    _annotate_pending_grid_debt(session, board, bridge_data)
 
     # Forward the soft-disable blocklist on re-solves too, otherwise the
     # Rust solver could pick the disabled weapon again on the same turn
@@ -6152,6 +6446,17 @@ def _re_solve_partial(
                 for r in enriched.get("action_results", [])
                 if isinstance(r, dict)
             )
+            try:
+                pending_debt = int(bridge_data.get("_pending_grid_debt") or 0)
+            except (TypeError, ValueError):
+                pending_debt = 0
+            if pending_debt > 0:
+                current_outcome = _summary_with_pending_grid_debt(
+                    current_outcome, pending_debt
+                )
+                predicted_board_summary = _summary_with_pending_grid_debt(
+                    predicted_board_summary, pending_debt
+                )
             plan_safety = audit_plan_safety(
                 current_outcome,
                 predicted_board_summary,

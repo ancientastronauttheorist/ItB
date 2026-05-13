@@ -1,4 +1,12 @@
-from src.loop.commands import _capture_board_summary, _compute_deltas
+import json
+
+from src.loop.commands import (
+    _annotate_pending_grid_debt,
+    _capture_board_summary,
+    _compute_deltas,
+    _summary_with_pending_grid_debt,
+)
+from src.loop.session import RunSession
 from src.model.board import Board
 
 
@@ -201,3 +209,49 @@ def test_deltas_flags_predicted_mech_missing_from_actual_as_dead():
     assert deltas["unexpected_events"] == [
         "TeleMech took 2 unexpected damage"
     ]
+
+
+def test_pending_grid_debt_detects_delayed_grid_scalar(tmp_path, monkeypatch):
+    board = Board()
+    board.grid_power = 5
+    board.grid_power_max = 7
+    for x, y, hp in ((3, 4, 2), (4, 2, 1), (5, 6, 2)):
+        board.tile(x, y).terrain = "building"
+        board.tile(x, y).building_hp = hp
+    bridge_data = {
+        "turn": 2,
+        "mission_seeds": {
+            "region6": {"state": 0, "mission": "Mission4"}
+        },
+    }
+    log_path = tmp_path / "resist_probe.jsonl"
+    log_path.write_text(json.dumps({
+        "run_id": "run",
+        "region": "region6",
+        "turn": 2,
+        "grid_power": 5,
+        "building_hp_map": {
+            "D5": 2,
+            "F4": 2,
+            "B3": 2,
+        },
+    }) + "\n")
+    monkeypatch.setattr(
+        "src.loop.commands._recording_dir",
+        lambda session: tmp_path,
+    )
+
+    debt = _annotate_pending_grid_debt(
+        RunSession(run_id="run"),
+        board,
+        bridge_data,
+    )
+
+    assert debt == 1
+    assert bridge_data["_pending_grid_debt"] == 1
+    summary = _summary_with_pending_grid_debt(
+        {"grid_power": 5, "building_hp_total": 5},
+        debt,
+    )
+    assert summary["visible_grid_power"] == 5
+    assert summary["grid_power"] == 4
