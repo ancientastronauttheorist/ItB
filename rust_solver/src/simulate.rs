@@ -655,6 +655,39 @@ fn apply_damage_defer_death_explosion(
     death_check.filter(|idx| board.units[*idx].hp <= 0)
 }
 
+/// Grid-power accounting for building HP changes.
+///
+/// Non-unique multi-HP buildings have a live-engine wrinkle: a bump can reduce
+/// HP without moving the visible grid scalar, but if that same building is
+/// later destroyed, the prior bump HP loss is charged then. Store that latent
+/// debt on the board so the current simulated line carries it through enemy
+/// phase without changing immediate action verification.
+pub(crate) fn settle_building_grid_loss(
+    board: &mut Board,
+    idx: usize,
+    hp_lost: u8,
+    destroyed: bool,
+    is_unique: bool,
+    source: DamageSource,
+) -> u8 {
+    if hp_lost == 0 {
+        return 0;
+    }
+
+    if source == DamageSource::Bump && !is_unique && !destroyed {
+        board.deferred_bump_grid_debt[idx] =
+            board.deferred_bump_grid_debt[idx].saturating_add(hp_lost);
+        return 0;
+    }
+
+    let mut grid_loss = hp_lost;
+    if destroyed {
+        grid_loss = grid_loss.saturating_add(board.deferred_bump_grid_debt[idx]);
+        board.deferred_bump_grid_debt[idx] = 0;
+    }
+    grid_loss
+}
+
 
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
@@ -729,8 +762,11 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         // explosion damage drains current grid per building HP lost. Push/bump
         // collision damage has its own non-unique multi-HP exception below.
         let mut bldg_hp_lost: u8 = 0;
+        let mut bldg_destroyed = false;
+        let mut bldg_is_unique = false;
+        let mut bldg_idx = 0usize;
         {
-            let idx = xy_to_idx(x, y) as u64;
+            let idx = xy_to_idx(x, y);
             let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
             let tile = board.tile_mut(x, y);
             if tile.terrain == Terrain::Building && tile.building_hp > 0 {
@@ -751,11 +787,23 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     if tile.building_hp == 0 {
                         result.buildings_lost += 1;
                     }
+                    bldg_idx = idx;
+                    bldg_is_unique = is_unique;
+                    bldg_destroyed = tile.building_hp == 0;
                 }
             }
         }
         if bldg_hp_lost > 0 {
-            board.grid_power = board.grid_power.saturating_sub(bldg_hp_lost);
+            let grid_loss = settle_building_grid_loss(
+                board,
+                bldg_idx,
+                bldg_hp_lost,
+                bldg_destroyed,
+                bldg_is_unique,
+                source,
+            );
+            result.grid_damage += (grid_loss as i32) - (bldg_hp_lost as i32);
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
         }
 
         // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
@@ -1058,11 +1106,11 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
     // objective building (terrain=Building, hp=0, e.g. Emergency Batteries
     // after destruction) still blocks but takes no further damage.
     //
-    // Grid-power accounting mirrors apply_push: non-unique buildings
-    // contribute ONE grid power regardless of HP, so bump only drops grid on
-    // full destruction. Unique/inferred objective buildings lose grid per HP.
+    // Grid-power accounting mirrors apply_push: non-unique multi-HP buildings
+    // can defer bump grid loss until destruction. Unique/inferred objective
+    // buildings lose grid immediately per HP.
     if board.tile(nx, ny).terrain == Terrain::Building {
-        let dest_idx = xy_to_idx(nx, ny) as u64;
+        let dest_idx = xy_to_idx(nx, ny);
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
@@ -1072,22 +1120,32 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
             // That path may have already driven building_hp to 0, so the
             // outer `> 0` guard is stale. Use saturating_sub to avoid u8
             // underflow (debug panic / release wrap-to-255).
-            let bt = board.tile_mut(nx, ny);
-            bt.building_hp = bt.building_hp.saturating_sub(1);
-            if bt.building_hp == 0 {
-                if !is_unique {
+            let (hp_lost, destroyed) = {
+                let bt = board.tile_mut(nx, ny);
+                let old_hp = bt.building_hp;
+                bt.building_hp = bt.building_hp.saturating_sub(1);
+                let hp_lost = old_hp.saturating_sub(bt.building_hp);
+                let destroyed = old_hp > 0 && bt.building_hp == 0;
+                if destroyed && !is_unique {
                     bt.terrain = Terrain::Rubble;
                 }
-                result.grid_damage += 1;
+                (hp_lost, destroyed)
+            };
+            if destroyed {
                 result.buildings_lost += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
-            } else {
-                result.buildings_damaged += 1;
-                if is_unique {
-                    result.grid_damage += 1;
-                    board.grid_power = board.grid_power.saturating_sub(1);
-                }
+            } else if hp_lost > 0 {
+                result.buildings_damaged += hp_lost as i32;
             }
+            let grid_loss = settle_building_grid_loss(
+                board,
+                dest_idx,
+                hp_lost,
+                destroyed,
+                is_unique,
+                DamageSource::Bump,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
         } else {
             // Destroyed objective: bump the thrown unit only.
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
@@ -1260,18 +1318,17 @@ fn apply_push_with_policy(
     // Blocked by building — live building: BOTH take 1 bump.
     // Destroyed objective (terrain=Building, hp=0): only pushed unit bumps.
     //
-    // Grid-power accounting: non-unique buildings contribute ONE grid power
-    // regardless of their HP (a Residential 2-HP house provides +1 grid, not
-    // +2). Bump damage only reduces grid_power when the building is fully
-    // destroyed (bhp -> 0). Unique/inferred objective buildings have per-HP
-    // grid worth and decrement grid_power on every HP lost.
+    // Grid-power accounting: non-unique multi-HP buildings can defer bump
+    // grid loss until the building is fully destroyed (bhp -> 0). Unique /
+    // inferred objective buildings have per-HP grid worth and decrement
+    // grid_power on every HP lost.
     //
     // Regression: grid_drop_20260421_161809_372_t02_a0 (Taurus Cannon push
     // into bhp=2 Residential: actual bhp 2→1 with grid unchanged) and
     // m00_turn_03 Ranged_Rocket bump from commit 2a86ca1 (pred grid would be
     // 4 with old code, actual grid stayed 5).
     if board.tile(nx, ny).terrain == Terrain::Building {
-        let dest_idx = xy_to_idx(nx, ny) as u64;
+        let dest_idx = xy_to_idx(nx, ny);
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
@@ -1281,25 +1338,32 @@ fn apply_push_with_policy(
             // That path may have already driven building_hp to 0, so the
             // outer `> 0` guard is stale. Use saturating_sub to avoid u8
             // underflow (debug panic / release wrap-to-255).
-            let bt = board.tile_mut(nx, ny);
-            bt.building_hp = bt.building_hp.saturating_sub(1);
-            if bt.building_hp == 0 {
-                if !is_unique {
+            let (hp_lost, destroyed) = {
+                let bt = board.tile_mut(nx, ny);
+                let old_hp = bt.building_hp;
+                bt.building_hp = bt.building_hp.saturating_sub(1);
+                let hp_lost = old_hp.saturating_sub(bt.building_hp);
+                let destroyed = old_hp > 0 && bt.building_hp == 0;
+                if destroyed && !is_unique {
                     bt.terrain = Terrain::Rubble;
                 }
-                result.grid_damage += 1;
+                (hp_lost, destroyed)
+            };
+            if destroyed {
                 result.buildings_lost += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
-            } else {
-                result.buildings_damaged += 1;
-                // Non-unique multi-HP building: damaged but not destroyed →
-                // grid_power stays. Unique/inferred objective: each HP is
-                // worth 1 grid.
-                if is_unique {
-                    result.grid_damage += 1;
-                    board.grid_power = board.grid_power.saturating_sub(1);
-                }
+            } else if hp_lost > 0 {
+                result.buildings_damaged += hp_lost as i32;
             }
+            let grid_loss = settle_building_grid_loss(
+                board,
+                dest_idx,
+                hp_lost,
+                destroyed,
+                is_unique,
+                DamageSource::Bump,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
         } else {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
         }
@@ -3431,11 +3495,10 @@ mod tests {
     // Regression: snapshots grid_drop_20260421_161809_372_t02_a0 and t03_a1
     // plus the Ranged_Rocket bump trace from commit 2a86ca1.
     //
-    // Non-unique multi-HP buildings (e.g. 2-HP Residential) contribute a
-    // single grid power regardless of HP. A bump that damages but does NOT
-    // destroy them must leave grid_power alone — only full destruction
-    // (bhp → 0) drops grid. Unique/objective buildings keep per-HP grid
-    // accounting (verified by the following unique-building test).
+    // A bump that damages a non-unique multi-HP building but does NOT destroy
+    // it must leave grid_power alone. If that same building later dies, the
+    // delayed bump HP loss is charged then. Unique/objective buildings keep
+    // immediate per-HP grid accounting.
     #[test]
     fn test_push_into_nonunique_2hp_building_preserves_grid() {
         let mut board = make_test_board();
@@ -3453,6 +3516,47 @@ mod tests {
         // CRITICAL: grid_power unchanged because the non-unique building
         // was damaged, not destroyed.
         assert_eq!(board.grid_power, 7);
+    }
+
+    #[test]
+    fn test_deferred_nonunique_bump_debt_charged_on_later_destroy() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut first);
+        assert_eq!(board.units[idx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(first.grid_damage, 0);
+        assert_eq!(board.grid_power, 7);
+
+        let mut second = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut second, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(second.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_second_bump_collects_deferred_nonunique_grid_debt() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut first);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(first.grid_damage, 0);
+        assert_eq!(board.grid_power, 7);
+
+        let mut second = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut second);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(second.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
     }
 
     #[test]

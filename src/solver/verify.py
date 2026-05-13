@@ -731,7 +731,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # smoke without generic terrain damage, preserving sand under Pulse on D3 in
 # Hard Rusting Hulks run 20260512_181719_119 Mission_Holes turn 2. Pre-v110
 # corpus archived as failure_db_snapshot_sim_v109.jsonl.
-SIMULATOR_VERSION = 110
+# v111 - Non-unique multi-HP building bump damage can defer grid loss until
+# that same building is later destroyed, matching C4 in Hard Rusting Hulks run
+# 20260512_181719_119 Mission_Holes turn 2. Pre-v111 corpus archived as
+# failure_db_snapshot_sim_v110.jsonl.
+SIMULATOR_VERSION = 111
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

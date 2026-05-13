@@ -14,6 +14,7 @@ use crate::simulate::{
     apply_weapon_status,
     apply_weapon_status_with_impact_occupancy,
     on_enemy_death,
+    settle_building_grid_loss,
 };
 
 /// Spawn a new enemy unit at (x, y). Used by Spider/Blobber artillery
@@ -213,19 +214,37 @@ fn apply_env_danger(
     }
 
     // Damage building if present (lethal destroys entirely, non-lethal does 1 HP)
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-        let dmg = if lethal { tile.building_hp } else { 1 };
-        let old_hp = tile.building_hp;
-        tile.building_hp = tile.building_hp.saturating_sub(dmg);
-        let lost = old_hp - tile.building_hp;
-        result.buildings_damaged += lost as i32;
-        result.grid_damage += lost as i32;
-        if tile.building_hp == 0 {
-            tile.terrain = Terrain::Rubble;
-            result.buildings_lost += 1;
+    let idx = xy_to_idx(x, y);
+    let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+    let mut lost = 0u8;
+    let mut destroyed = false;
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            let dmg = if lethal { tile.building_hp } else { 1 };
+            let old_hp = tile.building_hp;
+            tile.building_hp = tile.building_hp.saturating_sub(dmg);
+            lost = old_hp - tile.building_hp;
+            result.buildings_damaged += lost as i32;
+            result.grid_damage += lost as i32;
+            if tile.building_hp == 0 {
+                tile.terrain = Terrain::Rubble;
+                result.buildings_lost += 1;
+                destroyed = true;
+            }
         }
-        board.grid_power = board.grid_power.saturating_sub(lost);
+    }
+    if lost > 0 {
+        let grid_loss = settle_building_grid_loss(
+            board,
+            idx,
+            lost,
+            destroyed,
+            is_unique,
+            DamageSource::Weapon,
+        );
+        result.grid_damage += (grid_loss as i32) - (lost as i32);
+        board.grid_power = board.grid_power.saturating_sub(grid_loss);
     }
 }
 
@@ -707,19 +726,34 @@ pub fn simulate_enemy_attacks(
                         uid, type_str);
                 }
                 if let Some((bx, by, _)) = best {
-                    let tile = board.tile_mut(bx, by);
-                    let old_hp = tile.building_hp;
-                    let applied = (dmg as u8).min(old_hp);
-                    tile.building_hp = old_hp - applied;
-                    let lost = old_hp - tile.building_hp;
-                    result.buildings_damaged += lost as i32;
-                    result.grid_damage += lost as i32;
-                    if tile.building_hp == 0 {
-                        tile.terrain = Terrain::Rubble;
-                        result.buildings_lost += 1;
-                    }
-                    board.grid_power = board.grid_power.saturating_sub(lost);
-                    buildings_destroyed += lost as i32;
+                    let idx = xy_to_idx(bx, by);
+                    let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+                    let (lost, destroyed) = {
+                        let tile = board.tile_mut(bx, by);
+                        let old_hp = tile.building_hp;
+                        let applied = (dmg as u8).min(old_hp);
+                        tile.building_hp = old_hp - applied;
+                        let lost = old_hp - tile.building_hp;
+                        result.buildings_damaged += lost as i32;
+                        result.grid_damage += lost as i32;
+                        let destroyed = tile.building_hp == 0;
+                        if destroyed {
+                            tile.terrain = Terrain::Rubble;
+                            result.buildings_lost += 1;
+                        }
+                        (lost, destroyed)
+                    };
+                    let grid_loss = settle_building_grid_loss(
+                        board,
+                        idx,
+                        lost,
+                        destroyed,
+                        is_unique,
+                        DamageSource::Weapon,
+                    );
+                    result.grid_damage += (grid_loss as i32) - (lost as i32);
+                    board.grid_power = board.grid_power.saturating_sub(grid_loss);
+                    buildings_destroyed += grid_loss as i32;
                 }
             }
             continue;
@@ -1495,19 +1529,32 @@ fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
         }
     }
 
-    let idx = xy_to_idx(x, y) as u64;
+    let idx = xy_to_idx(x, y);
     let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-        let lost = tile.building_hp;
-        tile.building_hp = 0;
-        if !is_unique {
+    let mut lost = 0u8;
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            lost = tile.building_hp;
+            tile.building_hp = 0;
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
+        } else if tile.terrain == Terrain::Mountain {
+            tile.building_hp = 0;
             tile.terrain = Terrain::Rubble;
         }
-        board.grid_power = board.grid_power.saturating_sub(lost);
-    } else if tile.terrain == Terrain::Mountain {
-        tile.building_hp = 0;
-        tile.terrain = Terrain::Rubble;
+    }
+    if lost > 0 {
+        let grid_loss = settle_building_grid_loss(
+            board,
+            idx,
+            lost,
+            true,
+            is_unique,
+            DamageSource::Weapon,
+        );
+        board.grid_power = board.grid_power.saturating_sub(grid_loss);
     }
 }
 

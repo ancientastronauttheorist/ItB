@@ -1162,7 +1162,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   D3 in Hard Rusting Hulks run 20260512_181719_119 Mission_Holes turn 2.
 //   Pre-v110 corpus archived as
 //   `failure_db_snapshot_sim_v109.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 110;
+// v111 - Non-unique multi-HP building bump damage can defer grid loss until
+//   that same building is later destroyed, matching C4 in Hard Rusting Hulks
+//   run 20260512_181719_119 Mission_Holes turn 2. Pre-v111 corpus archived as
+//   `failure_db_snapshot_sim_v110.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 111;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
