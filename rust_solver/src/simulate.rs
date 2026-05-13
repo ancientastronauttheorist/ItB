@@ -211,10 +211,13 @@ fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut Action
     board.tile_mut(x, y).set_repair_platform(false);
     let before = board.units[unit_idx].hp;
     // Lua defines Item_Repair_Mine as SpaceDamage(-10). Live Mission_Repair
-    // captures show 3-max-HP mechs healing up to 5/3 while a 2-max-HP Jet
-    // stayed at 4/2, matching an overheal cap of max_hp + 2.
-    let cap = board.units[unit_idx].max_hp.saturating_add(2);
-    board.units[unit_idx].hp = before.saturating_add(10).min(cap);
+    // captures show damaged 3-max-HP mechs healing up to 5/3 while a 2-max-HP
+    // Jet stayed at 4/2, matching an overheal cap of max_hp + 2. A full-health
+    // mech still consumes/counts the platform, but does not gain extra HP.
+    if before < board.units[unit_idx].max_hp {
+        let cap = board.units[unit_idx].max_hp.saturating_add(2);
+        board.units[unit_idx].hp = before.saturating_add(10).min(cap);
+    }
     refresh_arrogant_boost(&mut board.units[unit_idx]);
     board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
     result.repair_platforms_used += 1;
@@ -3276,6 +3279,24 @@ mod tests {
         let _ = simulate_move(&mut board, mech_idx, (3, 3));
 
         assert_eq!(board.units[mech_idx].hp, 4, "4/2 Jet stays capped at 4/2");
+    }
+
+    #[test]
+    fn test_repair_platform_full_health_mech_does_not_overheal() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).set_repair_platform(true);
+        let mech_idx = add_mech(&mut board, 1, 3, 2, 3, WId::ScienceRepulse);
+        board.units[mech_idx].max_hp = 3;
+
+        let result = simulate_move(&mut board, mech_idx, (3, 3));
+
+        assert_eq!(board.units[mech_idx].hp, 3, "3/3 mech consumes platform without overheal");
+        assert_eq!(board.repair_platforms_used, 1);
+        assert_eq!(result.repair_platforms_used, 1);
+        assert!(
+            !board.tile(3, 3).repair_platform(),
+            "repair platform consumed even when full-health mech gets no HP"
+        );
     }
 
     #[test]

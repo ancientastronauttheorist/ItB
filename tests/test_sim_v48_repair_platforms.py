@@ -92,6 +92,42 @@ def test_repair_platform_caps_at_max_hp_plus_two_not_flat_five():
 
 
 @pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
+def test_repair_platform_full_health_mech_counts_without_overheal():
+    board = {
+        "grid_power": 5,
+        "grid_power_max": 7,
+        "turn": 1,
+        "total_turns": 5,
+        "mission_id": "Mission_Repair",
+        "repair_platform_target": 3,
+        "repair_platforms_used": 5,
+        "spawning_tiles": [],
+        "tiles": [{"x": 4, "y": 1, "terrain": "ground", "item": "Item_Repair_Mine"}],
+        "units": [{
+            "uid": 2, "type": "PulseMech", "x": 4, "y": 0,
+            "hp": 3, "max_hp": 3, "team": 1, "mech": True,
+            "move": 4, "base_move": 4, "active": True,
+            "weapons": ["Science_Repulse"],
+        }],
+    }
+
+    out, post = _project(board, [{
+        "mech_uid": 2,
+        "move_to": [4, 1],
+        "weapon_id": "",
+        "target": [4, 1],
+    }])
+
+    unit = next(u for u in post["units"] if u["uid"] == 2)
+    assert unit["hp"] == 3
+    assert post["repair_platforms_used"] == 6
+    assert out["action_result"]["repair_platforms_used"] == 1
+    tile = next((t for t in post["tiles"] if t["x"] == 4 and t["y"] == 1), {})
+    assert not tile.get("repair_platform", False)
+    assert tile.get("item") != "Item_Repair_Mine"
+
+
+@pytest.mark.skipif(not _HAVE_WHEEL, reason="itb_solver wheel not installed")
 def test_repair_platform_roundtrips_when_unused():
     board = {
         "grid_power": 5,

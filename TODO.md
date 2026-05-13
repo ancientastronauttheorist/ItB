@@ -4,7 +4,7 @@
 
 28 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 42 remaining, sorted by global unlock % (easiest first).
 
-Current Hard Victory hardening note: simulator v107 now moves any live conveyor-tile occupant before Vek attacks, not just `Mission_Belt` maps, matching the Detritus `Mission_Acid` conveyor exposure seen during Chemical Field A.
+Current Hard Victory hardening note: simulator v108 now treats Mission_Repair platforms as consuming/counting without overhealing units that were already at full HP, matching the Forgotten Hills `G4` PulseMech live capture; v107 also made live conveyor tiles move before Vek attacks outside `Mission_Belt`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -167,6 +167,7 @@ Current Hard Victory hardening note: simulator v107 now moves any live conveyor-
 ### Environment Awareness
 - [x] **Tidal waves / air strikes / lightning**: Bridge provides `environment_danger` tiles via `Board:IsEnvironmentDanger()`. Solver avoids placing mechs on them, rewards pushing enemies onto them.
 - [x] **Conveyor belt direction**: Bridge regex extracts `conveyorN.png` direction (0-3); Rust `Board.conveyor_dir` per tile; deploy filter excludes conveyor tiles; enemy-phase belts apply on any live conveyor map, not only `Mission_Belt` (sim v107).
+- [x] **Mission_Repair full-health platforms**: `Item_Repair_Mine` consumes and counts when a full-health mech lands on it, but HP does not overcap unless the unit was below max HP at trigger time (sim v108).
 - [x] **Teleporter pad pairing**: Lua hooks `Board.AddTeleport` to capture pairs; Rust `Board.teleporter_pairs` + `apply_teleport_on_land()` fires on move-end / push / throw. Sim v8, commit 456ba49 (2026-04-23).
 - [ ] **Windstorm direction**: No directional data in bridge. Need Lua extraction for R.S.T. island.
 - [ ] **Volcanic Hive patterns**: Lava flow / falling rocks / tentacles follow cycles (Random → Aimed → Area). Pattern prediction needed for final mission.

@@ -78,12 +78,14 @@ The solver enforces these; use them when reviewing solver output or writing test
 
 **Repair platforms:** Mission_Repair places `Item_Repair_Mine` tiles. Any live
 unit that lands on one triggers the item, heals by the engine's `SpaceDamage(-10)`
-(live captures show 3-max-HP mechs can become `5/3`; 2-max-HP mechs cap at
-`4/2`, so model this as `max_hp + 2`, not a flat 5 HP), consumes the platform,
-and increments `repair_platforms_used` toward the 3-platform objective. Raw
-progress can exceed the objective target (for example `4/3`); clamp only in UI
-scoring/presentation. It is not the mech Repair action; do not assume it clears
-Fire/ACID/Frozen unless a capture proves the engine does so.
+(live captures show damaged 3-max-HP mechs can become `5/3`; 2-max-HP mechs cap
+at `4/2`, so model this as `max_hp + 2`, not a flat 5 HP), consumes the platform,
+and increments `repair_platforms_used` toward the 3-platform objective. If the
+unit is already at or above max HP when it lands, the platform still consumes and
+counts but does not add overheal. Raw progress can exceed the objective target
+(for example `4/3`); clamp only in UI scoring/presentation. It is not the mech
+Repair action; do not assume it clears Fire/ACID/Frozen unless a capture proves
+the engine does so.
 
 **Repair:** any mech can repair instead of attacking. +1 HP, clears Fire and ACID. Can't repair on smoke.
 
@@ -217,6 +219,7 @@ Extended rules: `data/ref_game_mechanics.md`.
 111. **Arachnid Psion death eggs appear during player actions.** `Jelly_Spider1` makes every other non-minor Vek death create a live `SpiderlingEgg1` on the death tile immediately, before the next mech acts. Player-phase replay snapshots and partial re-solves must materialize that egg with the engine-style next pawn UID; enemy-phase deaths still defer egg placement until after the hatch loop so fresh eggs do not hatch in the same enemy phase. Regression anchor: Hard Rusting Hulks run `20260512_104120_903`, Corporate HQ turn 4: Rocket D8 hit Firefly at D4, the corpse bumped Arachnid Psion at D3, and live spawned `SpiderlingEgg1` uid 84 at D4; fixed in simulator v105.
 112. **Mission_Belt conveyors fire before Vek attacks.** Conveyor tiles push live units one tile before queued enemy attacks resolve, and moved Vek re-aim from their conveyor-shifted tile while preserving the original queued direction. Save/bridge conveyor parsers must keep `loc` and `custom="conveyorN.png"` on the same serialized map row; cross-entry regexes can create phantom belts on buildings and miss the real belt that moves the attacker. Regression anchor: Hard Rusting Hulks run `20260512_104120_903`, Detritus Venting Fields turn 1: the F3 Moth on bridge `(5,5)` rode conveyor3 to F4 `(4,5)` before firing and destroyed C7 `(1,5)`; fixed in simulator v106.
 113. **Conveyors are tile-driven, not mission-id-driven.** Detritus conveyor tiles can appear outside `Mission_Belt`, including `Mission_Acid`; if any live tile has `conveyor >= 0`, the enemy phase must apply the belt tick before Vek attacks. Do not gate conveyor simulation solely on `mission_id == "Mission_Belt"`. Regression anchor: Hard Rusting Hulks run `20260512_104120_903`, Chemical Field A turn 2 had live conveyors in `Mission_Acid`; generalized in simulator v107.
+114. **Repair platforms do not overheal full-health units.** `Item_Repair_Mine` still consumes and increments `repair_platforms_used` when a full or already-overcapped unit lands on it, but HP stays unchanged unless the unit was below max HP at trigger time. Damaged units can still overheal up to `max_hp + 2`. Regression anchor: Hard Rusting Hulks run `20260512_181719_119`, Forgotten Hills turn 2 PulseMech moved to `G4` at `3/3`; live consumed the platform and counted progress but left Pulse at `3/3` instead of predicted `5/3`; fixed in simulator v108.
 
 ## Phase Protocols
 

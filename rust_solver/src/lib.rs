@@ -1148,7 +1148,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v107 - Conveyor belts move live units before Vek attacks on any map with
 //   live conveyor tiles, not just Mission_Belt. Pre-v107 corpus archived as
 //   `failure_db_snapshot_sim_v106.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 107;
+// v108 - Mission_Repair platforms consume/count for full-health units without
+//   overhealing them; damaged units still use the max_hp+2 overheal cap. Also
+//   corrects dirty fallback solve reporting. Pre-v108 corpus archived as
+//   `failure_db_snapshot_sim_v107.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 108;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

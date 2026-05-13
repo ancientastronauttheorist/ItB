@@ -3152,13 +3152,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 print(f"  Rust solver: {rust_elapsed:.2f}s, score={solution.score:.0f}, "
                       f"{solution.permutations_tried}/{solution.total_permutations} permutations"
                       f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
-                if candidate_count > 1 and selected_candidate_rank not in (None, 0):
+                selected_candidate_blocked = plan_requires_safety_block(
+                    selected_candidate_eval.get("plan_safety")
+                )
+                if (candidate_count > 1
+                        and selected_candidate_rank not in (None, 0)
+                        and not selected_candidate_blocked):
                     print(f"  Selected safe candidate #{selected_candidate_rank + 1} "
                           f"of {candidate_count}")
-                elif (candidate_count > 1
-                      and plan_requires_safety_block(
-                          selected_candidate_eval.get("plan_safety")
-                      )):
+                elif candidate_count > 1 and selected_candidate_blocked:
                     print(f"  No clean candidate found among {candidate_count}; "
                           "top candidate remains safety-blocked")
         except ImportError:
