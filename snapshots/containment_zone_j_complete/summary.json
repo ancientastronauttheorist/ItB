@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-14T00:10:42.081125",
+  "label": "containment_zone_j_complete",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        0,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer2",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

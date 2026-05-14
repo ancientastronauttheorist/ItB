@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-14T00:24:51.299883",
+  "label": "detritus_island_complete_pre_shop",
+  "turn": 4,
+  "grid_power": 2,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        4,
+        7
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "ScarabBoss",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Leaper2",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    }
+  ]
+}

@@ -11,7 +11,7 @@
   "mission_index": 6,
   "last_mission_turn": -1,
   "current_turn": 4,
-  "phase": "combat_player",
+  "phase": "unknown",
   "active_solution": {
     "actions": [
       {
@@ -423,12 +423,6 @@
         "RocketMech, move A4\u2192A5, fire Rocket Artillery at E5",
         "PulseMech, move D4\u2192C7, repair"
       ]
-    },
-    {
-      "timestamp": "2026-05-14T00:30:55.161528",
-      "turn": 4,
-      "label": "note",
-      "message": "Paused at island select after Detritus island. Visible UI is authoritative over stale combat bridge: 0 reputation, grid repaired to 6/7 via four Grid Power buys, Rusting Hulks alive, next step choose island two for Hard Victory."
     }
   ],
   "recorded_post_enemy_turns": [

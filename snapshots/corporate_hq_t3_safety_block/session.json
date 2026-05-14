@@ -6,11 +6,11 @@
   ],
   "difficulty": 2,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_ScarabBoss",
   "islands_completed": [],
-  "mission_index": 6,
-  "last_mission_turn": -1,
-  "current_turn": 4,
+  "mission_index": 5,
+  "last_mission_turn": 3,
+  "current_turn": 3,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
@@ -18,48 +18,48 @@
         "mech_uid": 0,
         "mech_type": "JetMech",
         "move_to": [
-          5,
-          1
+          7,
+          5
         ],
         "weapon": "Brute_Jetmech",
         "target": [
           5,
-          3
+          5
         ],
-        "description": "JetMech, move C3\u2192G3, fire Aerial Bombs at E3"
+        "description": "JetMech, move B3\u2192C1, fire Aerial Bombs at C3"
       },
       {
         "mech_uid": 1,
         "mech_type": "RocketMech",
         "move_to": [
-          3,
+          4,
           7
         ],
         "weapon": "Ranged_Rocket",
         "target": [
-          3,
-          3
+          4,
+          5
         ],
-        "description": "RocketMech, move A4\u2192A5, fire Rocket Artillery at E5"
+        "description": "RocketMech, move B2\u2192A4, fire Rocket Artillery at C4"
       },
       {
         "mech_uid": 2,
         "mech_type": "PulseMech",
         "move_to": [
-          1,
-          5
+          4,
+          4
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Science_Repulse",
         "target": [
-          1,
-          5
+          4,
+          4
         ],
-        "description": "PulseMech, move D4\u2192C7, repair"
+        "description": "PulseMech, fire Repulse at D4"
       }
     ],
-    "score": 89101.42857142858,
-    "turn": 4,
-    "input_fingerprint": "0:5,5:1|1919:2,4:4|1922:3,3:3|1926:5,2:2|1:4,7:3|2:4,4:2"
+    "score": 72528.00036774363,
+    "turn": 3,
+    "input_fingerprint": "0:5,6:2|1919:3,5:4|1922:5,4:3|1924:6,5:1|1925:4,5:4|1:6,6:3|2:4,4:3"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -401,34 +401,6 @@
         "RocketMech, move B2\u2192A4, fire Rocket Artillery at C4",
         "PulseMech, fire Repulse at D4"
       ]
-    },
-    {
-      "timestamp": "2026-05-14T00:19:09.421922",
-      "turn": 3,
-      "label": "solve",
-      "score": 72528.00036774363,
-      "actions": [
-        "JetMech, move B3\u2192C1, fire Aerial Bombs at C3",
-        "RocketMech, move B2\u2192A4, fire Rocket Artillery at C4",
-        "PulseMech, fire Repulse at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-14T00:20:52.965418",
-      "turn": 4,
-      "label": "solve",
-      "score": 89101.42857142858,
-      "actions": [
-        "JetMech, move C3\u2192G3, fire Aerial Bombs at E3",
-        "RocketMech, move A4\u2192A5, fire Rocket Artillery at E5",
-        "PulseMech, move D4\u2192C7, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-14T00:30:55.161528",
-      "turn": 4,
-      "label": "note",
-      "message": "Paused at island select after Detritus island. Visible UI is authoritative over stale combat bridge: 0 reputation, grid repaired to 6/7 via four Grid Power buys, Rusting Hulks alive, next step choose island two for Hard Victory."
     }
   ],
   "recorded_post_enemy_turns": [
@@ -483,10 +455,6 @@
     [
       5,
       2
-    ],
-    [
-      5,
-      3
     ]
   ],
   "post_enemy_block": null,
@@ -494,8 +462,7 @@
     "8936480b3581368d",
     "645f5e297e5c601a",
     "ad5bc5f6efe6cd92",
-    "fc5391d9a27ad869",
-    "57704f7abb8242a9"
+    "fc5391d9a27ad869"
   ],
   "tags": [
     "achievement",
@@ -852,10 +819,10 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "d59384a28b2dddc9",
-    "classes": "mbbmggbgmgggggbgmgggggggmgmrggbgggmbggbgggggggggmggggggwmmggggww",
+    "hash": "9d4ca34b7b9e41ba",
+    "classes": "mbbmggbgmgggggbgmgggggggmgmbggbgggmbggbgggggggggmggggggwmmggggww",
     "mission_index": 5,
-    "turn": 4
+    "turn": 3
   },
   "terrain_stage_change_pending": false
 }

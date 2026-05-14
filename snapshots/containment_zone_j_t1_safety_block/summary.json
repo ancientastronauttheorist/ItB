@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-13T23:45:23.749707",
+  "label": "containment_zone_j_t1_safety_block",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "BonusDebris",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "BonusDebris",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    }
+  ]
+}
