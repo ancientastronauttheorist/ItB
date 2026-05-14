@@ -35,12 +35,45 @@ def _unit_record(u: Unit) -> dict[str, Any]:
     }
 
 
+def _hatch_destination(board: Board, x: int, y: int) -> tuple[int, int] | None:
+    """Mirror Rust's live-style spider-egg sPawn fallback order."""
+    for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
+        hx, hy = x + dx, y + dy
+        if not board.in_bounds(hx, hy):
+            continue
+        if board.unit_at(hx, hy) is not None or board.wreck_at(hx, hy):
+            continue
+        tile = board.tile(hx, hy)
+        if tile.terrain == "building" and tile.building_hp > 0:
+            return hx, hy
+        if tile.terrain in {"ground", "sand", "forest", "rubble", "fire", "ice"}:
+            return hx, hy
+    return None
+
+
 def capture_building_threats(board: Board) -> list[dict[str, Any]]:
     """Capture enemy threats aimed at live buildings in A1-H8 terms."""
     out: list[dict[str, Any]] = []
     for tx, ty, attacker in board.get_threatened_buildings():
         tile = board.tile(tx, ty)
         out.append({
+            "target": [int(tx), int(ty)],
+            "target_visual": _visual(int(tx), int(ty)),
+            "target_hp": int(tile.building_hp),
+            "attacker": _unit_record(attacker),
+        })
+    for attacker in board.units:
+        if attacker.hp <= 0 or attacker.type not in {"WebbEgg1", "SpiderlingEgg1"}:
+            continue
+        dest = _hatch_destination(board, int(attacker.x), int(attacker.y))
+        if dest is None:
+            continue
+        tx, ty = dest
+        tile = board.tile(tx, ty)
+        if tile.terrain != "building" or tile.building_hp <= 0:
+            continue
+        out.append({
+            "threat_kind": "hatch_projected_building",
             "target": [int(tx), int(ty)],
             "target_visual": _visual(int(tx), int(ty)),
             "target_hp": int(tile.building_hp),
@@ -75,6 +108,14 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
         return "attacker_smoked", "attacker is standing in smoke"
     if not _live_building(board, tx, ty):
         return "target_no_longer_building", "original target is no longer a live building"
+
+    if threat.get("threat_kind") == "hatch_projected_building":
+        if attacker.type not in {"WebbEgg1", "SpiderlingEgg1"}:
+            return "attacker_transformed", "egg already hatched or changed type"
+        dest = _hatch_destination(board, int(attacker.x), int(attacker.y))
+        if dest == (tx, ty):
+            return "still_threatened_hatch", "egg still hatches onto the building"
+        return "hatch_retargeted", "egg hatch fallback no longer selects the building"
 
     old_pos = attacker_info.get("pos") or [-1, -1]
     moved = [int(attacker.x), int(attacker.y)] != [int(old_pos[0]), int(old_pos[1])]

@@ -28,6 +28,29 @@ def _enemy(uid=10, x=4, y=4, tx=4, ty=2, hp=3):
     )
 
 
+def _egg(uid=11, x=2, y=3, hp=1):
+    return Unit(
+        uid=uid,
+        type="WebbEgg1",
+        x=x,
+        y=y,
+        hp=hp,
+        max_hp=1,
+        team=6,
+        is_mech=False,
+        move_speed=0,
+        flying=False,
+        massive=False,
+        armor=False,
+        pushable=True,
+        weapon="WebeggHatch1",
+        active=False,
+        target_x=x,
+        target_y=y,
+        has_queued_attack=True,
+    )
+
+
 def _board(attacker=None):
     board = Board()
     tile = board.tile(4, 2)
@@ -82,3 +105,47 @@ def test_threat_audit_retargeted_nonbuilding():
     audit = audit_threat_coverage(initial, after)
 
     assert audit["entries"][0]["coverage"]["reason"] == "retargeted_nonbuilding"
+
+
+def test_capture_building_threats_includes_egg_hatch_building():
+    board = Board()
+    board.tile(2, 2).terrain = "building"
+    board.tile(2, 2).building_hp = 2
+    board.units.append(_egg(x=2, y=3))
+
+    threats = capture_building_threats(board)
+
+    assert threats[0]["threat_kind"] == "hatch_projected_building"
+    assert threats[0]["target"] == [2, 2]
+    assert threats[0]["target_visual"] == "F6"
+
+
+def test_threat_audit_hatching_egg_still_threatened_warns():
+    board = Board()
+    board.tile(2, 2).terrain = "building"
+    board.tile(2, 2).building_hp = 2
+    board.units.append(_egg(x=2, y=3))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened_hatch"
+
+
+def test_threat_audit_hatch_clears_when_egg_killed():
+    board = Board()
+    board.tile(2, 2).terrain = "building"
+    board.tile(2, 2).building_hp = 2
+    board.units.append(_egg(x=2, y=3))
+    initial = capture_building_threats(board)
+
+    after = Board()
+    after.tile(2, 2).terrain = "building"
+    after.tile(2, 2).building_hp = 2
+    after.units.append(_egg(x=2, y=3, hp=0))
+    audit = audit_threat_coverage(initial, after)
+
+    assert audit["status"] == "OK"
+    assert audit["entries"][0]["coverage"]["reason"] == "attacker_killed"

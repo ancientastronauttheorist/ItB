@@ -10,6 +10,7 @@ The decision log records every action for post-run analysis.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -32,6 +33,7 @@ from src.solver.solver import MechAction, Solution, replay_solution
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.solver.evaluate import evaluate_threats
 from src.solver.plan_safety import (
+    NON_OVERRIDABLE_KINDS,
     audit_plan_safety,
     plan_requires_safety_block,
     safety_loss_profile,
@@ -82,6 +84,17 @@ def _get_logger(session: RunSession) -> DecisionLog:
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
 _SAFETY_WIDENING_TOP_K = 1000
+_HARD_STOP_STATUSES = {
+    "INVESTIGATE",
+    "INVESTIGATE_POST_ENEMY",
+    "POST_ENEMY_AUDIT_MISSING",
+    "SAFETY_BLOCKED",
+    "SAFETY_BLOCKED_RE_SOLVE",
+    "THREAT_AUDIT_BLOCKED",
+    "DIRTY_CONSENT_REQUIRED",
+    "DIRTY_CONSENT_REJECTED",
+    "TERMINAL_OR_MISSION_END",
+}
 
 
 def _atomic_json_write(filepath: Path, data: dict) -> None:
@@ -106,6 +119,256 @@ def _recording_dir(session: RunSession) -> Path:
     run_dir = RECORDING_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     return run_dir
+
+
+def _active_post_enemy_block(session: RunSession) -> dict | None:
+    """Return a normalized unresolved post-enemy hard stop, if any."""
+    block = session.post_enemy_block
+    if not isinstance(block, dict):
+        return None
+    if os.environ.get("ITB_ALLOW_UNRESOLVED_POST_ENEMY") == "1":
+        return None
+    result = dict(block)
+    result.setdefault("status", "INVESTIGATE_POST_ENEMY")
+    result.setdefault("blocking", True)
+    result.setdefault("source", "session_post_enemy_block")
+    result.setdefault("next_step", (
+        "Resolve this post-enemy investigation before solving, executing, "
+        "or emitting another End Turn plan. Use `research_next`/diagnosis "
+        "or `resolve_post_enemy_block --reason ...` after the miss is understood."
+    ))
+    return result
+
+
+def _post_enemy_block_result(session: RunSession) -> dict | None:
+    block = _active_post_enemy_block(session)
+    if block is None:
+        return None
+    return {
+        "status": block.get("status", "INVESTIGATE_POST_ENEMY"),
+        "blocking": True,
+        "source": block.get("source", "session_post_enemy_block"),
+        "post_enemy_investigation": block,
+        "mission_index": block.get("mission_index"),
+        "turn": block.get("turn"),
+        "deltas": block.get("deltas", {}),
+        "next_step": block.get("next_step"),
+    }
+
+
+def _attach_post_enemy_block(result: dict, session: RunSession) -> None:
+    """Annotate read/status-style results without hiding their payload."""
+    block = _post_enemy_block_result(session)
+    if block is None:
+        return
+    result.setdefault("status", block["status"])
+    result.setdefault("blocking", True)
+    result.setdefault("post_enemy_investigation", block["post_enemy_investigation"])
+    result.setdefault("next_step", block["next_step"])
+
+
+def _install_post_enemy_block(
+    session: RunSession,
+    result: dict,
+    *,
+    record_path: Path | None = None,
+) -> dict:
+    """Persist a worse-than-predicted post-enemy audit as a hard stop."""
+    block_id = (
+        f"{session.run_id or 'default'}_m{int(result.get('mission_index', 0)):02d}"
+        f"_t{int(result.get('turn', 0)):02d}_post_enemy"
+    )
+    block = {
+        "id": block_id,
+        "status": result.get("status", "INVESTIGATE_POST_ENEMY"),
+        "blocking": True,
+        "run_id": session.run_id or "default",
+        "mission_index": result.get("mission_index", session.mission_index),
+        "turn": result.get("turn"),
+        "created_at": datetime.now().isoformat(),
+        "source": result.get("source", "record_post_enemy"),
+        "record_path": str(record_path) if record_path is not None else None,
+        "reason": result.get("reason"),
+        "deltas": result.get("deltas", {}),
+        "triggers": result.get("triggers", []),
+        "actual_outcome": result.get("actual_outcome"),
+        "predicted_outcome": result.get("predicted_outcome"),
+        "next_step": (
+            "Investigate this enemy-phase prediction miss before solving, "
+            "executing, or emitting another End Turn plan. Clear only after "
+            "the simulator/process cause is understood."
+        ),
+    }
+    session.post_enemy_block = block
+    return block
+
+
+def _hard_stop_result(status: str, **extra) -> dict:
+    result = {
+        "status": status,
+        "blocking": True,
+        "next_step": (
+            "Stop live combat commands and resolve the hard stop before "
+            "continuing."
+        ),
+    }
+    result.update(extra)
+    return result
+
+
+def _is_hard_stop_status(status: object) -> bool:
+    return isinstance(status, str) and (
+        status in _HARD_STOP_STATUSES
+        or status.startswith("INVESTIGATE")
+        or status.startswith("SAFETY_BLOCKED")
+    )
+
+
+def _threat_audit_requires_block(
+    threat_audit: dict | None,
+    plan_safety: dict | None,
+    session: RunSession,
+) -> bool:
+    """Block End Turn when the pre-click audit still sees protected damage."""
+    if not isinstance(threat_audit, dict):
+        return False
+    if int(threat_audit.get("still_threatened_count") or 0) <= 0:
+        return False
+    safety = plan_safety if isinstance(plan_safety, dict) else {}
+    cur_grid = ((safety.get("current") or {}).get("grid_power")
+                if isinstance(safety, dict) else None)
+    low_grid = isinstance(cur_grid, int) and cur_grid <= 2
+    dirty = bool(safety.get("blocking"))
+    mission = session.current_mission or ""
+    final_or_hq = (
+        mission in {"Mission_Final", "Mission_Final_Cave"}
+        or "Boss" in mission
+    )
+    return low_grid or dirty or final_or_hq
+
+
+def _end_turn_click_plan_result(*, bridge_ack: str | None = None) -> dict:
+    recalibrate()
+    batch = plan_end_turn()
+    codex_batch = [
+        c["codex_computer_use"]
+        for c in batch
+        if isinstance(c, dict) and c.get("codex_computer_use")
+    ]
+    result = {
+        "status": "PLAN",
+        "batch": batch,
+        "codex_computer_use_batch": codex_batch,
+        "next_step": (
+            "dispatch codex_computer_use_batch with Computer Use "
+            "(or legacy batch with screen-coordinate batch tools), "
+            "wait ~6s, then `read`"
+        ),
+    }
+    if bridge_ack is not None:
+        result["bridge_ack"] = bridge_ack
+    return result
+
+
+def _dirty_consent_id(
+    session: RunSession,
+    turn: int,
+    plan_safety: dict | None,
+    actions: list[SolverAction],
+    *,
+    candidate_rank: int | None = None,
+) -> str:
+    active = session.active_solution
+    payload = {
+        "run_id": session.run_id or "default",
+        "mission_index": session.mission_index,
+        "turn": turn,
+        "input_fingerprint": active.input_fingerprint if active else "",
+        "candidate_rank": candidate_rank,
+        "loss_profile": safety_loss_profile(plan_safety),
+        "actions": [a.to_dict() for a in actions],
+    }
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def _dirty_consent_gate(
+    session: RunSession,
+    *,
+    turn: int,
+    plan_safety: dict | None,
+    actions: list[SolverAction],
+    candidate_rank: int | None,
+    provided_id: str | None,
+) -> dict | None:
+    if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
+        return None
+    expected = _dirty_consent_id(
+        session, turn, plan_safety, actions, candidate_rank=candidate_rank
+    )
+    profile = safety_loss_profile(plan_safety)
+    kinds = {
+        v.get("kind")
+        for v in plan_safety.get("violations", []) or []
+        if isinstance(v, dict)
+    }
+    debug_collapse = os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
+    non_overridable = sorted(
+        k for k in kinds
+        if k in NON_OVERRIDABLE_KINDS
+        and not (k == "grid_timeline_collapse" and debug_collapse)
+    )
+    if non_overridable:
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REJECTED",
+            dirty_consent_id=expected,
+            loss_profile=profile,
+            plan_safety=plan_safety,
+            reason=(
+                "dirty consent cannot override non-overridable loss kinds: "
+                + ", ".join(non_overridable)
+            ),
+        )
+    hard_target = (
+        "hard_victory" in {str(t).lower() for t in (session.tags or [])}
+        or "hard victory" in {
+            str(t).strip().lower() for t in (session.achievement_targets or [])
+        }
+    )
+    if hard_target and "grid_timeline_collapse" in kinds:
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REJECTED",
+            dirty_consent_id=expected,
+            loss_profile=profile,
+            plan_safety=plan_safety,
+            reason=(
+                "Hard Victory achievement runs cannot dirty-consent through "
+                "predicted timeline collapse."
+            ),
+        )
+    if provided_id != expected:
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REQUIRED",
+            dirty_consent_id=expected,
+            provided_dirty_consent_id=provided_id,
+            loss_profile=profile,
+            plan_safety=plan_safety,
+            actions=[a.description for a in actions],
+            next_step=(
+                "Review the exact loss profile and rerun with "
+                f"`--allow-dirty-plan --dirty-consent-id {expected}` only "
+                "if this specific line is accepted."
+            ),
+        )
+    if expected in session.dirty_consent_used:
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REJECTED",
+            dirty_consent_id=expected,
+            loss_profile=profile,
+            reason="dirty consent token was already consumed",
+        )
+    session.dirty_consent_used.append(expected)
+    return None
 
 
 # Difficulty label map (mirrors GameData.difficulty values)
@@ -1293,6 +1556,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     mechs_disabled = []
     mechs_webbed = []
     mechs_acid = []
+    mechs_fire = []
     player_mechs = [
         m for m in board.units
         if m.is_player and m.is_mech and not getattr(m, "is_extra_tile", False)
@@ -1336,6 +1600,12 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 "type": m.type,
                 "pos": [m.x, m.y],
             })
+        if getattr(m, "fire", False):
+            mechs_fire.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
 
     return {
         "buildings_alive": buildings_alive,
@@ -1361,6 +1631,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
             for m in player_mechs
         ],
         "mechs_acid": mechs_acid,
+        "mechs_fire": mechs_fire,
         "mechs_on_danger": mechs_on_danger,
         "mechs_disabled": mechs_disabled,
         "mechs_webbed": mechs_webbed,
@@ -1577,6 +1848,19 @@ def _blocks_mech_hp_loss_for_perfect_battle(session: RunSession | None) -> bool:
     return True
 
 
+def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
+    """Hard/Hard Victory runs should not accept new fire/web status debt."""
+    if session is None:
+        return False
+    targets = {str(t).strip().lower() for t in (session.achievement_targets or [])}
+    tags = {str(t).strip().lower() for t in (session.tags or [])}
+    return (
+        int(getattr(session, "difficulty", 0) or 0) >= 2
+        or "hard victory" in targets
+        or "hard_victory" in tags
+    )
+
+
 def _evaluate_solution_safety(board: Board,
                               bridge_data: dict,
                               solution: Solution,
@@ -1586,7 +1870,8 @@ def _evaluate_solution_safety(board: Board,
                               remaining_spawns: int,
                               weights=None,
                               *,
-                              block_mech_hp_loss: bool = False) -> dict:
+                              block_mech_hp_loss: bool = False,
+                              block_mech_status_loss: bool = False) -> dict:
     """Replay a candidate solution and audit irreversible-loss safety."""
     enriched = replay_solution(
         bridge_data, solution, spawns,
@@ -1627,6 +1912,7 @@ def _evaluate_solution_safety(board: Board,
         current_outcome,
         predicted_board_summary,
         block_mech_hp_loss=block_mech_hp_loss,
+        block_mech_status_loss=block_mech_status_loss,
     )
     return {
         "enriched": enriched,
@@ -1984,6 +2270,7 @@ def _candidate_lookahead_preview(
     breakdown_weights,
     time_limit: float,
     block_mech_hp_loss: bool = False,
+    block_mech_status_loss: bool = False,
 ) -> dict:
     """Project a candidate once and solve the heuristic next-turn recovery."""
     solution = candidate_eval.get("solution")
@@ -2063,6 +2350,7 @@ def _candidate_lookahead_preview(
                 ),
                 weights=breakdown_weights,
                 block_mech_hp_loss=block_mech_hp_loss,
+                block_mech_status_loss=block_mech_status_loss,
             )
             next_safety = next_eval.get("plan_safety") or {}
             scenario_preview.update({
@@ -2287,6 +2575,13 @@ def _record_post_enemy(session: RunSession, board: Board,
     if key in session.recorded_post_enemy_turns and _post_enemy_record_path(
         session, solved_turn
     ).exists():
+        block = _active_post_enemy_block(session)
+        if (
+            block is not None
+            and block.get("mission_index") == mi
+            and block.get("turn") == solved_turn
+        ):
+            return block
         return {
             "status": "POST_ENEMY_ALREADY_RECORDED",
             "mission_index": mi,
@@ -2299,7 +2594,7 @@ def _record_post_enemy(session: RunSession, board: Board,
     if not solve_file.exists():
         solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
     if not solve_file.exists():
-        return {
+        result = {
             "status": "POST_ENEMY_AUDIT_MISSING",
             "mission_index": mi,
             "turn": solved_turn,
@@ -2310,6 +2605,8 @@ def _record_post_enemy(session: RunSession, board: Board,
                 "for the just-finished turn is missing."
             ),
         }
+        _install_post_enemy_block(session, result)
+        return result
 
     with open(solve_file) as f:
         solve_record = json.load(f)
@@ -2321,7 +2618,7 @@ def _record_post_enemy(session: RunSession, board: Board,
     )
     if predicted is None:
         # Old-format recording without predictions — skip comparison
-        return {
+        result = {
             "status": "POST_ENEMY_AUDIT_MISSING",
             "mission_index": mi,
             "turn": solved_turn,
@@ -2332,6 +2629,8 @@ def _record_post_enemy(session: RunSession, board: Board,
                 "has no predicted post-enemy board."
             ),
         }
+        _install_post_enemy_block(session, result)
+        return result
 
     # Capture actual board state
     actual = _capture_board_summary(board, bridge_data)
@@ -2412,6 +2711,9 @@ def _record_post_enemy(session: RunSession, board: Board,
         ),
     }
     if investigation_required:
+        result["post_enemy_block"] = _install_post_enemy_block(
+            session, result, record_path=_post_enemy_record_path(session, solved_turn)
+        )
         print("\n" + "!" * 60)
         print("! POST-ENEMY INVESTIGATION GATE")
         print(
@@ -3041,6 +3343,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
                     result["next_step"] = post_enemy_result.get("next_step")
                 session.active_solution = None
 
+            _attach_post_enemy_block(result, session)
             session.save()
             _print_result(result)
             return result
@@ -3059,6 +3362,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
         state = load_game_state(profile)
         if state is None or state.active_mission is None:
             result["error"] = "Phase is combat but no mission data loaded"
+            _attach_post_enemy_block(result, session)
             session.save()
             _print_result(result)
             return result
@@ -3154,6 +3458,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
         logger = _get_logger(session)
         logger.log_phase_transition(old_phase, phase)
 
+    _attach_post_enemy_block(result, session)
     session.save()
     _print_result(result)
     return result
@@ -3281,7 +3586,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
     session = _load_session()
     logger = _get_logger(session)
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
     block_mech_hp_loss = _blocks_mech_hp_loss_for_perfect_battle(session)
+    block_mech_status_loss = _blocks_mech_status_loss_for_run(session)
 
     # Try bridge first (richer data: status effects, per-enemy targets)
     board = None
@@ -3556,6 +3866,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     remaining_spawns=rem_spawns,
                     weights=breakdown_weights,
                     block_mech_hp_loss=block_mech_hp_loss,
+                    block_mech_status_loss=block_mech_status_loss,
                 ))
                 candidate_evals.append(candidate_eval)
 
@@ -3636,6 +3947,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                             remaining_spawns=rem_spawns,
                             weights=breakdown_weights,
                             block_mech_hp_loss=block_mech_hp_loss,
+                            block_mech_status_loss=block_mech_status_loss,
                         ))
                         wide_evals.append(candidate_eval)
                         if not plan_requires_safety_block(
@@ -3690,6 +4002,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         breakdown_weights=breakdown_weights,
                         time_limit=time_limit,
                         block_mech_hp_loss=block_mech_hp_loss,
+                        block_mech_status_loss=block_mech_status_loss,
                     )
                     for candidate_eval in _candidate_frontier_representatives(
                         summary_evals
@@ -3797,6 +4110,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             remaining_spawns=rem_spawns,
             weights=breakdown_weights,
             block_mech_hp_loss=block_mech_hp_loss,
+            block_mech_status_loss=block_mech_status_loss,
         )
     enriched = selected_candidate_eval["enriched"]
     current_outcome = selected_candidate_eval["current_outcome"]
@@ -3806,6 +4120,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     result["plan_safety"] = plan_safety
     result["candidate_count"] = candidate_count
     result["selected_candidate_rank"] = selected_candidate_rank
+    if isinstance(plan_safety, dict) and plan_safety.get("blocking"):
+        result["dirty_consent_id"] = _dirty_consent_id(
+            session,
+            current_turn,
+            plan_safety,
+            solver_actions,
+            candidate_rank=selected_candidate_rank,
+        )
     if dirty_frontier:
         result["dirty_frontier"] = dirty_frontier
     if lookahead_frontier:
@@ -3934,6 +4256,10 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
     """
     session = _load_session()
     logger = _get_logger(session)
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
 
     # Get action from stored solution
     action = session.get_action(action_index)
@@ -4794,6 +5120,10 @@ def cmd_click_action(action_index: int) -> dict:
     from where the mech actually ended up.
     """
     session = _load_session()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
 
     if not session.active_solution:
         result = {"status": "ERROR", "error": "No active solution"}
@@ -4881,6 +5211,11 @@ def cmd_click_end_turn() -> dict:
     for the enemy phase to finish (~6s), then calls ``read`` to detect
     the new phase.
     """
+    session = _load_session()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
     recalibrate()
     batch = plan_end_turn()
     codex_batch = [
@@ -5813,7 +6148,14 @@ def cmd_end_turn() -> dict:
     """
     session = _load_session()
     logger = _get_logger(session)
-    logger.log_end_turn()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
+    logger.log_custom("End Turn Plan", (
+        "End Turn click plan requested. This records plan emission only; "
+        "the external Computer Use click is logged by the harness."
+    ))
 
     # Bridge mode: the Lua END_TURN handler SetActives all player pawns for
     # solver-state consistency but cannot actually advance the turn without
@@ -5916,6 +6258,44 @@ def cmd_status(profile: str = "Alpha") -> dict:
             threats = board.get_threatened_buildings()
             result["threatened_buildings"] = len(threats)
 
+    _attach_post_enemy_block(result, session)
+    _print_result(result)
+    return result
+
+
+def cmd_resolve_post_enemy_block(reason: str) -> dict:
+    """Clear the persistent post-enemy hard stop after investigation."""
+    session = _load_session()
+    block = _active_post_enemy_block(session)
+    if block is None:
+        result = {
+            "status": "NO_BLOCK",
+            "message": "No unresolved post-enemy investigation block.",
+        }
+        _print_result(result)
+        return result
+    if not reason or not reason.strip():
+        result = {
+            "status": "ERROR",
+            "error": "A non-empty --reason is required to clear the block.",
+        }
+        _print_result(result)
+        return result
+    resolved = dict(session.post_enemy_block or block)
+    resolved["resolved_at"] = datetime.now().isoformat()
+    resolved["resolve_reason"] = reason.strip()
+    session.record_decision("resolve_post_enemy_block", {
+        "block": resolved,
+    })
+    session.post_enemy_block = None
+    session.save()
+    result = {
+        "status": "RESOLVED",
+        "resolved_block": resolved,
+        "next_step": (
+            "Run a fresh read/solve from the current board before continuing."
+        ),
+    }
     _print_result(result)
     return result
 
@@ -5929,10 +6309,12 @@ def cmd_new_run(squad: str | None = None, achievements: list[str] = None,
     environment-audit playthroughs so the failures generated during the
     audit don't pollute the tuner training corpus.
     """
+    achievements = list(achievements or [])
+    tags = list(tags or [])
     setup = recommend_squad_for_run(
         squad=squad,
-        achievements=achievements or [],
-        tags=tags or [],
+        achievements=achievements,
+        tags=tags,
         mode=mode,
     )
     session = RunSession.new_run(
@@ -5963,6 +6345,19 @@ def cmd_new_run(squad: str | None = None, achievements: list[str] = None,
             f"{_live_diff} ({_save_label})"
         )
         session.difficulty = _live_diff
+    if (
+        mode != "solver_eval"
+        and setup.squad == "Rusting Hulks"
+        and session.difficulty == 2
+        and ("achievement" in tags or "hard_victory" in tags or not achievements)
+        and not any(a.strip().lower() == "hard victory" for a in achievements)
+    ):
+        achievements.append("Hard Victory")
+        session.achievement_targets = achievements
+        if "hard_victory" not in tags:
+            tags.append("hard_victory")
+            session.tags = tags
+        print("[new_run] Hard Rusting Hulks target stamped: Hard Victory")
     # Fix B 2026-04-28 — explicit wipe of run-scoped soft-disable state.
     # ``new_run`` already produces a fresh session via the dataclass default
     # (disabled_actions=[]), but a future refactor that inherits prior
@@ -5998,8 +6393,8 @@ def cmd_new_run(squad: str | None = None, achievements: list[str] = None,
         "squad": setup.squad,
         "setup": setup.to_dict(),
         "difficulty": session.difficulty,
-        "achievements": achievements or [],
-        "tags": tags or [],
+        "achievements": achievements,
+        "tags": tags,
     }
     print(f"\nNew run initialized: {session.run_id}")
     print(f"  Mode: {setup.mode}")
@@ -6729,6 +7124,9 @@ def _re_solve_partial(
                 block_mech_hp_loss=(
                     _blocks_mech_hp_loss_for_perfect_battle(session)
                 ),
+                block_mech_status_loss=(
+                    _blocks_mech_status_loss_for_run(session)
+                ),
             )
             if plan_requires_safety_block(
                 plan_safety, allow_dirty_plan=allow_dirty_plan
@@ -6784,6 +7182,26 @@ def _research_peek(session: RunSession, limit: int = 3) -> list[dict]:
             if len(out) >= limit:
                 break
     return out
+
+
+def cmd_research_peek(limit: int = 5) -> dict:
+    """Read-only view of the research queue head.
+
+    This intentionally does not replace ``research_next``; it exists so the
+    operator does not try the nonexistent ``research_queue_peek`` command.
+    """
+    session = _load_session()
+    result = {
+        "status": "OK",
+        "queue_len": len(session.research_queue),
+        "pending": sum(
+            1 for e in session.research_queue
+            if e.get("status", "pending") == "pending"
+        ),
+        "research_queue_peek": _research_peek(session, limit=max(1, limit)),
+    }
+    _print_result(result)
+    return result
 
 
 def _narrate_fuzzy(
@@ -7210,7 +7628,8 @@ def _check_winnability(turn: int, score: float,
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   wait_for_turn: bool = True, max_wait: float = 45.0,
                   allow_dirty_plan: bool = False,
-                  candidate_rank: int | None = None) -> dict:
+                  candidate_rank: int | None = None,
+                  dirty_consent_id: str | None = None) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -7329,10 +7748,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     else:
         read_result = cmd_read(profile=profile)
 
-    if read_result.get("status") in {
-        "INVESTIGATE_POST_ENEMY",
-        "POST_ENEMY_AUDIT_MISSING",
-    }:
+    if _is_hard_stop_status(read_result.get("status")):
         _print_result(read_result)
         return read_result
 
@@ -7543,8 +7959,25 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     # Build action list from session solution
     actions = session.active_solution.actions if session.active_solution else []
 
+    if allow_dirty_plan and isinstance(plan_safety, dict) and plan_safety.get("blocking"):
+        consent_error = _dirty_consent_gate(
+            session,
+            turn=turn,
+            plan_safety=plan_safety,
+            actions=actions,
+            candidate_rank=candidate_rank,
+            provided_id=dirty_consent_id,
+        )
+        if consent_error is not None:
+            _print_result(consent_error)
+            return consent_error
+        session.save()
+
     if plan_requires_safety_block(plan_safety,
                                   allow_dirty_plan=allow_dirty_plan):
+        consent_id = _dirty_consent_id(
+            session, turn, plan_safety, actions, candidate_rank=candidate_rank
+        ) if isinstance(plan_safety, dict) else None
         result = {
             "status": "SAFETY_BLOCKED",
             "turn": turn,
@@ -7552,10 +7985,12 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "actions_planned": len(actions),
             "actions": [a.description for a in actions],
             "plan_safety": plan_safety,
+            "dirty_consent_id": consent_id,
             "next_step": (
                 "Do not execute this plan normally. Run an emergency solve, "
                 "play manually, or rerun auto_turn with --allow-dirty-plan "
-                "only if the irreversible loss is accepted."
+                "and the exact dirty_consent_id only if the irreversible "
+                "loss is accepted."
             ),
         }
         if winnability_warning:
@@ -7951,6 +8386,78 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "error": str(exc),
         }
 
+    fuzzy_detections = session.failure_events_this_run[pre_turn_event_count:]
+    solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
+
+    if grid_drop_investigations:
+        pending_plan = _end_turn_click_plan_result()
+        result = {
+            "status": "INVESTIGATE",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "investigations": grid_drop_investigations,
+            "pending_end_turn_batch": pending_plan["batch"],
+            "pending_end_turn_codex_computer_use_batch": pending_plan.get(
+                "codex_computer_use_batch", []
+            ),
+            "bridge_ack": None,
+            "next_step": (
+                "Resolve each investigation before dispatching the held "
+                "End Turn click. No bridge END_TURN side effect was sent."
+            ),
+            "fuzzy_detections": fuzzy_detections,
+            "soft_disabled": list(session.disabled_actions),
+            "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+            "unknowns_flagged": unknowns_flagged,
+            "solver_gap_events": solver_gap_events,
+            "research_queue_peek": _research_peek(session),
+        }
+        if threat_audit is not None:
+            result["threat_audit"] = threat_audit
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                       unknowns_flagged,
+                       research_peek=result["research_queue_peek"])
+        _print_result(result)
+        return result
+
+    if _threat_audit_requires_block(threat_audit, plan_safety, session):
+        pending_plan = _end_turn_click_plan_result()
+        result = {
+            "status": "THREAT_AUDIT_BLOCKED",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "threat_audit": threat_audit,
+            "held_end_turn_batch": pending_plan["batch"],
+            "held_end_turn_codex_computer_use_batch": pending_plan.get(
+                "codex_computer_use_batch", []
+            ),
+            "plan_safety": plan_safety,
+            "next_step": (
+                "Threat audit still sees a building/pylon threat on a "
+                "critical/HQ/final dirty state. Do not click End Turn until "
+                "this is reviewed or resolved."
+            ),
+            "fuzzy_detections": fuzzy_detections,
+            "soft_disabled": list(session.disabled_actions),
+            "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+            "unknowns_flagged": unknowns_flagged,
+            "solver_gap_events": solver_gap_events,
+            "research_queue_peek": _research_peek(session),
+        }
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                       unknowns_flagged,
+                       research_peek=result["research_queue_peek"])
+        _print_result(result)
+        return result
+
     # 4. End turn
     end_result = cmd_end_turn()
     if "error" in end_result:
@@ -7959,48 +8466,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _print_result(result)
         return result
 
-    fuzzy_detections = session.failure_events_this_run[pre_turn_event_count:]
-    solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
-
     if end_result.get("status") == "PLAN":
-        # Grid-drop investigation gate — fire-now per CLAUDE.md rule 22. The
-        # bridge has already deactivated mechs via SetActive, but the MCP
-        # End Turn click is withheld: the caller must resolve every queued
-        # investigation (or choose to skip) before sending the batch.
-        if grid_drop_investigations:
-            result = {
-                "status": "INVESTIGATE",
-                "turn": turn,
-                "actions_completed": actions_completed,
-                "score": score,
-                "re_solves": re_solve_count,
-                "investigations": grid_drop_investigations,
-                "pending_end_turn_batch": end_result["batch"],
-                "pending_end_turn_codex_computer_use_batch": end_result.get(
-                    "codex_computer_use_batch", []
-                ),
-                "bridge_ack": end_result.get("bridge_ack"),
-                "next_step": (
-                    "Resolve each investigation (see CLAUDE.md rule 22) "
-                    "before dispatching pending_end_turn_batch."
-                ),
-                "fuzzy_detections": fuzzy_detections,
-                "soft_disabled": list(session.disabled_actions),
-                "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
-                "unknowns_flagged": unknowns_flagged,
-                "solver_gap_events": solver_gap_events,
-                "research_queue_peek": _research_peek(session),
-            }
-            if threat_audit is not None:
-                result["threat_audit"] = threat_audit
-            if winnability_warning:
-                result["winnability_warning"] = winnability_warning
-            _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
-                           unknowns_flagged,
-                           research_peek=result["research_queue_peek"])
-            _print_result(result)
-            return result
-
         result = {
             "status": "PLAN",
             "turn": turn,
@@ -8532,6 +8998,21 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
             if "error" in turn_result:
                 result = {"error": turn_result["error"],
                           "turns_completed": turns_completed}
+                _print_result(result)
+                return result
+
+            status = turn_result.get("status")
+            if status != "ok":
+                result = {
+                    "status": "AUTO_MISSION_PAUSED",
+                    "turns_completed": turns_completed,
+                    "turn_result": turn_result,
+                    "next_step": (
+                        "auto_mission stops on any non-ok auto_turn result. "
+                        "Handle the UI click, safety block, investigation, "
+                        "or terminal screen manually before resuming."
+                    ),
+                }
                 _print_result(result)
                 return result
 

@@ -2567,6 +2567,67 @@ mod tests {
     }
 
     #[test]
+    fn test_webb_egg_hatch_fallback_skips_occupied_first_tile() {
+        let mut board = Board::default();
+        let mut blocker = Unit {
+            uid: 2, x: 3, y: 2, hp: 3, max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        };
+        blocker.set_type_name("JetMech");
+        board.add_unit(blocker);
+        board.grid_power = 5;
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 1;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 3, 3, 1, "WebbEgg1", 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[egg_idx].x, board.units[egg_idx].y), (4, 3),
+            "occupied y-1 tile should be skipped in favor of x+1 fallback");
+        assert_eq!(board.grid_power, 4);
+    }
+
+    #[test]
+    fn test_webb_egg_hatch_skips_shielded_building() {
+        let mut board = Board::default();
+        board.grid_power = 5;
+        board.tile_mut(2, 2).terrain = Terrain::Building;
+        board.tile_mut(2, 2).building_hp = 2;
+        board.tile_mut(2, 2).set_shield(true);
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 1;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 2, 3, 1, "WebbEgg1", 2, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[egg_idx].x, board.units[egg_idx].y), (3, 3),
+            "shielded first building should not be selected as sPawn fallback");
+        assert_eq!(board.tile(2, 2).building_hp, 2,
+            "shielded skipped building should be preserved");
+        assert_eq!(board.tile(3, 3).building_hp, 0);
+        assert_eq!(board.grid_power, 4);
+    }
+
+    #[test]
+    fn test_webb_egg_hatch_all_adjacent_invalid_stays_on_egg_tile() {
+        let mut board = Board::default();
+        board.tile_mut(0, 1).terrain = Terrain::Water;
+        board.tile_mut(1, 0).terrain = Terrain::Chasm;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 0, 0, 1, "WebbEgg1", 0, 0);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling1");
+        assert_eq!((board.units[egg_idx].x, board.units[egg_idx].y), (0, 0),
+            "if every adjacent fallback tile is invalid, only the type flips");
+    }
+
+    #[test]
     fn test_alpha_spider_egg_hatches_into_regular_spiderling() {
         // Verified against game Lua source 2026-04-25:
         //   weapons_enemy.lua:815 `SpiderAtk2 = SpiderAtk1:new{...}` does

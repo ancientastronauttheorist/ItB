@@ -108,6 +108,89 @@ def test_session_set_solution_records_fingerprint():
     assert s2.active_solution.input_fingerprint == "xyz"
 
 
+def test_dirty_consent_token_is_exact_and_single_use():
+    s = RunSession(run_id="r", difficulty=2, tags=["achievement"])
+    s.mission_index = 4
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "grid_damage",
+            "current": 5,
+            "predicted": 4,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=3)
+    missing = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=None,
+    )
+    assert missing["status"] == "DIRTY_CONSENT_REQUIRED"
+    assert missing["dirty_consent_id"] == token
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+    )
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+    reused = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+    )
+    assert reused["status"] == "DIRTY_CONSENT_REJECTED"
+
+
+def test_dirty_consent_rejects_non_overridable_without_consuming_token():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.mission_index = 12
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "pylon_hp_loss",
+            "current": 2,
+            "predicted": 1,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=1)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=1,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "pylon_hp_loss" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
 # ---------------------------------------------------------------------------
 # cmd_auto_turn entry-point invalidation logic.
 #

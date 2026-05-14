@@ -274,6 +274,16 @@ class RunSession:
     # list in JSON to round-trip cleanly through to_dict / from_dict.
     recorded_post_enemy_turns: list[list[int]] = field(default_factory=list)
 
+    # Persistent hard stop for worse-than-predicted post-enemy audits. A
+    # single cmd_read may discover the miss, but later commands must still
+    # refuse solve/End Turn until the harness explicitly resolves it.
+    post_enemy_block: dict | None = None
+
+    # Dirty-plan consent tokens are exact to a board fingerprint + selected
+    # action/loss profile and are consumed once. This prevents a stale
+    # --allow-dirty-plan from carrying across a re-solve or later turn.
+    dirty_consent_used: list[str] = field(default_factory=list)
+
     # Self-healing loop Phase 0 instrumentation. Each desync fired by
     # ``cmd_auto_turn`` appends the ``fuzzy_detector.evaluate`` output here,
     # producing an in-memory frequency window the Phase 1 detector can
@@ -614,6 +624,8 @@ class RunSession:
             "turns_played": self.turns_played,
             "decisions": self.decisions,
             "recorded_post_enemy_turns": self.recorded_post_enemy_turns,
+            "post_enemy_block": self.post_enemy_block,
+            "dirty_consent_used": self.dirty_consent_used,
             "tags": self.tags,
             "failure_events_this_run": self.failure_events_this_run,
             "disabled_actions": self.disabled_actions,
@@ -664,6 +676,8 @@ class RunSession:
             turns_played=d.get("turns_played", 0),
             decisions=d.get("decisions", []),
             recorded_post_enemy_turns=d.get("recorded_post_enemy_turns", []),
+            post_enemy_block=d.get("post_enemy_block"),
+            dirty_consent_used=d.get("dirty_consent_used") or [],
             tags=d.get("tags", []),
             failure_events_this_run=d.get("failure_events_this_run") or [],
             disabled_actions=disabled,

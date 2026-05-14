@@ -23,6 +23,8 @@ BLOCKING_KINDS = {
     "pod_lost",
     "mech_lost",
     "mech_acid",
+    "mech_fire",
+    "mech_webbed",
     "mech_on_danger",
     "mech_disabled",
     "bigbomb_lost",
@@ -32,6 +34,8 @@ BLOCKING_KINDS = {
 
 NON_OVERRIDABLE_KINDS = {
     "grid_timeline_collapse",
+    "pylon_destroyed",
+    "pylon_hp_loss",
     "bigbomb_lost",
     "objective_building_destroyed",
     "objective_building_hp_loss",
@@ -51,6 +55,8 @@ LOSS_KINDS = {
     "pod_lost": "pods_present",
     "mech_lost": "mechs_alive",
     "mech_acid": "mechs_acid",
+    "mech_fire": "mechs_fire",
+    "mech_webbed": "mechs_webbed",
     "mech_on_danger": "mechs_on_danger",
     "mech_disabled": "mechs_disabled",
     "bigbomb_lost": "bigbomb_alive",
@@ -94,7 +100,8 @@ def _violation(kind: str, current: Any, predicted: Any,
 def audit_plan_safety(current: dict[str, Any],
                       predicted: dict[str, Any],
                       *,
-                      block_mech_hp_loss: bool = False) -> dict[str, Any]:
+                      block_mech_hp_loss: bool = False,
+                      block_mech_status_loss: bool = False) -> dict[str, Any]:
     """Classify a plan by comparing current board value to prediction.
 
     ``current`` is a pre-action board summary. ``predicted`` is the detailed
@@ -265,6 +272,48 @@ def audit_plan_safety(current: dict[str, Any],
                 new_acid,
             ))
 
+    if "mechs_fire" in current or "mechs_fire" in predicted:
+        compared.append("mechs_fire")
+        current_fire_uids = {
+            item.get("uid")
+            for item in _list_or_empty(current.get("mechs_fire"))
+            if isinstance(item, dict)
+        }
+        new_fire = [
+            item for item in _list_or_empty(predicted.get("mechs_fire"))
+            if isinstance(item, dict) and item.get("uid") not in current_fire_uids
+        ]
+        if new_fire:
+            violations.append(_violation(
+                "mech_fire",
+                len(current_fire_uids),
+                len(current_fire_uids) + len(new_fire),
+                "Predicted plan leaves one or more additional mechs on Fire.",
+                new_fire,
+                blocking=block_mech_status_loss,
+            ))
+
+    if "mechs_webbed" in current or "mechs_webbed" in predicted:
+        compared.append("mechs_webbed")
+        current_web_uids = {
+            item.get("uid")
+            for item in _list_or_empty(current.get("mechs_webbed"))
+            if isinstance(item, dict)
+        }
+        new_web = [
+            item for item in _list_or_empty(predicted.get("mechs_webbed"))
+            if isinstance(item, dict) and item.get("uid") not in current_web_uids
+        ]
+        if new_web:
+            violations.append(_violation(
+                "mech_webbed",
+                len(current_web_uids),
+                len(current_web_uids) + len(new_web),
+                "Predicted plan leaves one or more additional mechs webbed.",
+                new_web,
+                blocking=block_mech_status_loss,
+            ))
+
     if "mechs_on_danger" in current or "mechs_on_danger" in predicted:
         compared.append("mechs_on_danger")
         danger_mechs = _list_or_empty(predicted.get("mechs_on_danger"))
@@ -373,6 +422,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_alive": cur_mechs,
             "mech_hp_total": cur_mech_hp,
             "mechs_acid": _list_or_empty(current.get("mechs_acid")),
+            "mechs_fire": _list_or_empty(current.get("mechs_fire")),
+            "mechs_webbed": _list_or_empty(current.get("mechs_webbed")),
             "mechs_on_danger": _list_or_empty(current.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(current.get("mechs_disabled")),
             "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
@@ -391,6 +442,8 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_alive": pred_mechs,
             "mech_hp_total": pred_mech_hp,
             "mechs_acid": _list_or_empty(predicted.get("mechs_acid")),
+            "mechs_fire": _list_or_empty(predicted.get("mechs_fire")),
+            "mechs_webbed": _list_or_empty(predicted.get("mechs_webbed")),
             "mechs_on_danger": _list_or_empty(predicted.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(predicted.get("mechs_disabled")),
             "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
@@ -406,7 +459,9 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                                allow_timeline_collapse_debug: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
     if not isinstance(audit, dict):
-        return False
+        return True
+    if audit.get("status") == "UNKNOWN":
+        return True
     if allow_dirty_plan:
         debug_collapse = (
             allow_timeline_collapse_debug
@@ -499,6 +554,8 @@ def _profile_label(status: Any,
         "mech_disabled" in kind_set
         or "mech_on_danger" in kind_set
         or "mech_acid" in kind_set
+        or "mech_fire" in kind_set
+        or "mech_webbed" in kind_set
     ):
         return "mech_disabled"
     if "pod_lost" in kind_set:

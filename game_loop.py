@@ -54,8 +54,10 @@ from src.loop.commands import (
     cmd_research_attach_community,
     cmd_research_next,
     cmd_research_probe_mech,
+    cmd_research_peek,
     cmd_research_resolve,
     cmd_research_submit,
+    cmd_resolve_post_enemy_block,
     cmd_review_overrides,
     cmd_mine_overrides,
     cmd_end_turn,
@@ -211,6 +213,13 @@ def main():
     )
     p_research_next.add_argument("--profile", default="Alpha")
 
+    # research_peek
+    p_research_peek = sub.add_parser(
+        "research_peek",
+        help="Read-only view of the current research queue head",
+    )
+    p_research_peek.add_argument("--limit", type=int, default=5)
+
     # research_resolve
     p_research_resolve = sub.add_parser(
         "research_resolve",
@@ -260,6 +269,17 @@ def main():
              "{url, excerpt, confidence} values. See community_fetch.normalize_notes.",
     )
     p_research_attach.add_argument("--profile", default="Alpha")
+
+    # resolve_post_enemy_block
+    p_resolve_post = sub.add_parser(
+        "resolve_post_enemy_block",
+        help="Clear an unresolved post-enemy investigation after review",
+    )
+    p_resolve_post.add_argument(
+        "--reason",
+        required=True,
+        help="What was investigated/fixed; stored in the decision log",
+    )
 
     # research_probe_mech
     p_research_probe_mech = sub.add_parser(
@@ -489,6 +509,8 @@ def main():
     p_auto_turn.add_argument("--candidate-rank", type=int, default=None,
                              help="Execute an exact solve_top_k candidate rank "
                                   "after explicit dirty-line consent")
+    p_auto_turn.add_argument("--dirty-consent-id", default=None,
+                             help="Exact one-use token emitted by a safety block")
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",
@@ -614,6 +636,8 @@ def main():
         )
     elif args.command == "research_next":
         cmd_research_next(profile=args.profile)
+    elif args.command == "research_peek":
+        cmd_research_peek(limit=args.limit)
     elif args.command == "research_resolve":
         cmd_research_resolve(
             args.target, kind=args.kind, reason=args.reason,
@@ -629,6 +653,8 @@ def main():
         cmd_research_attach_community(
             args.research_id, args.notes_json, profile=args.profile,
         )
+    elif args.command == "resolve_post_enemy_block":
+        cmd_resolve_post_enemy_block(args.reason)
     elif args.command == "review_overrides":
         cmd_review_overrides(args.sub_action, args.index, force=args.force)
     elif args.command == "mine_overrides":
@@ -667,7 +693,8 @@ def main():
         cmd_auto_turn(profile=args.profile, time_limit=args.time_limit,
                       wait_for_turn=not args.no_wait, max_wait=args.max_wait,
                       allow_dirty_plan=args.allow_dirty_plan,
-                      candidate_rank=args.candidate_rank)
+                      candidate_rank=args.candidate_rank,
+                      dirty_consent_id=args.dirty_consent_id)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)

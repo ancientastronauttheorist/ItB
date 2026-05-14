@@ -160,7 +160,33 @@ def test_record_post_enemy_returns_investigation_gate(tmp_path, monkeypatch):
     assert result["status"] == "INVESTIGATE_POST_ENEMY"
     assert result["blocking"] is True
     assert result["deltas"]["grid_power_diff"] == -2
+    assert session.post_enemy_block is not None
+    assert session.post_enemy_block["turn"] == 1
+    assert session.post_enemy_block["deltas"]["grid_power_diff"] == -2
     assert (run_dir / "m11_turn_01_post_enemy.json").exists()
+
+
+def test_post_enemy_block_round_trips_and_blocks_commands(tmp_path, monkeypatch):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 2
+    block = commands._install_post_enemy_block(
+        session,
+        {
+            "status": "INVESTIGATE_POST_ENEMY",
+            "mission_index": 2,
+            "turn": 3,
+            "deltas": {"grid_power_diff": -1},
+        },
+    )
+
+    restored = RunSession.from_dict(session.to_dict())
+    assert restored.post_enemy_block == block
+
+    result = commands._post_enemy_block_result(restored)
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
+    assert result["turn"] == 3
 
 
 def test_final_post_enemy_audit_gate_backfills_missing_turn(tmp_path, monkeypatch):

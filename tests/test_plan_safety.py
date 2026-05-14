@@ -118,6 +118,7 @@ def test_final_cave_pylon_loss_is_named():
     kinds = {v["kind"] for v in audit["violations"]}
     assert {"pylon_destroyed", "pylon_hp_loss"} <= kinds
     assert safety_loss_profile(audit)["label"] == "pylon_loss"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
 
 
 def test_allow_dirty_plan_does_not_override_protected_objective_loss():
@@ -150,12 +151,13 @@ def test_freezebots_protected_unit_unfreeze_blocks_plan():
     assert audit["violations"][0]["kind"] == "protected_objective_unit_unfrozen"
 
 
-def test_missing_comparable_fields_is_unknown_not_blocked():
+def test_missing_comparable_fields_is_unknown_and_blocks():
     audit = audit_plan_safety({}, {})
 
     assert audit["status"] == "UNKNOWN"
     assert audit["blocking"] is False
-    assert plan_requires_safety_block(audit) is False
+    assert plan_requires_safety_block(audit) is True
+    assert plan_requires_safety_block(None) is True
 
 
 def test_predicted_mech_loss_blocks_plan():
@@ -218,6 +220,30 @@ def test_existing_acid_mech_does_not_block_again():
 
     assert audit["status"] == "CLEAN"
     assert plan_requires_safety_block(audit) is False
+
+
+def test_new_fire_and_web_warn_by_default_but_can_block_for_hard_target():
+    fire = {"uid": 1, "type": "JetMech", "pos": [2, 3]}
+    web = {"uid": 2, "type": "PulseMech", "pos": [4, 4]}
+    audit = audit_plan_safety(
+        _summary(mechs_fire=[], mechs_webbed=[]),
+        _summary(mechs_fire=[fire], mechs_webbed=[web]),
+    )
+
+    assert audit["status"] == "WARN"
+    assert plan_requires_safety_block(audit) is False
+    assert {v["kind"] for v in audit["violations"]} == {
+        "mech_fire",
+        "mech_webbed",
+    }
+
+    hard_audit = audit_plan_safety(
+        _summary(mechs_fire=[], mechs_webbed=[]),
+        _summary(mechs_fire=[fire], mechs_webbed=[web]),
+        block_mech_status_loss=True,
+    )
+    assert hard_audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(hard_audit) is True
 
 
 def test_predicted_bigbomb_loss_blocks_plan():
