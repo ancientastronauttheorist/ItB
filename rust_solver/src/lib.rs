@@ -1179,7 +1179,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   turn 2 where Rocket bumped B4 2->1, grid stayed 4 during player phase,
 //   then dropped to 3 by next player turn. Pre-v114 corpus archived as
 //   `failure_db_snapshot_sim_v113.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 114;
+// v115 - WebbEgg / SpiderlingEgg hatch uses live-style `sPawn` adjacent fallback
+//   instead of in-place mutation; if the destination is a live building, the
+//   building is destroyed and full HP drains grid. Matches Hard Rusting Hulks
+//   run 20260513_144310_771 Mission_FireflyBoss turn 2, where E6 hatched onto
+//   F6 and destroyed a 2-HP building. Pre-v115 corpus archived as
+//   `failure_db_snapshot_sim_v114.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 115;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -349,6 +349,33 @@ fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
     }
 }
 
+fn hatch_spawn_destination(board: &Board, x: u8, y: u8) -> Option<(u8, u8)> {
+    // Live HQ capture: a WebbEgg at E6 hatched onto adjacent F6, destroying a
+    // 2-HP building. The Lua skill queues `sPawn` at the occupied egg tile, and
+    // the engine's hidden fallback picked bridge `(x, y-1)` first.
+    let hatch_dirs: [(i8, i8); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+    for &(dx, dy) in &hatch_dirs {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if !in_bounds(nx, ny) {
+            continue;
+        }
+        let hx = nx as u8;
+        let hy = ny as u8;
+        if board.unit_at(hx, hy).is_some() || board.wreck_at(hx, hy) {
+            continue;
+        }
+        let tile = board.tile(hx, hy);
+        match tile.terrain {
+            Terrain::Building if tile.building_hp > 0 && !tile.shield() => return Some((hx, hy)),
+            Terrain::Ground | Terrain::Sand | Terrain::Forest
+            | Terrain::Rubble | Terrain::Fire | Terrain::Ice => return Some((hx, hy)),
+            _ => {}
+        }
+    }
+    None
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
 /// Processes in UID order. Returns buildings destroyed count.
 ///
@@ -579,7 +606,7 @@ pub fn simulate_enemy_attacks(
     simulate_conveyor_belts(board, &mut result);
 
     // Egg hatch step: transform any surviving spider/spiderling egg into
-    // its hatched live unit (sim v22). Runs AFTER fire tick + env_danger
+    // its hatched live unit (sim v22/v115). Runs AFTER fire tick + env_danger
     // so eggs killed by those still die without hatching, but BEFORE the
     // attack loop so the hatched Spiderling participates in the unit
     // census the loop snapshots. The fresh hatchling has no queued
@@ -625,7 +652,10 @@ pub fn simulate_enemy_attacks(
     // Spiderling — every spider-bonus mission produced a desync row in
     // failure_db. Surfaced by the 20260425_185532_218 Archive run, where
     // 2-3 eggs piled up over turns 2-3 and were predicted as eggs but
-    // played as a Spiderling wall on turns 3-4.
+    // played as a Spiderling wall on turns 3-4. A later Hard HQ capture
+    // showed the engine's `sPawn` fallback placing the hatchling adjacent
+    // to the occupied egg tile; if that destination is a live building, it
+    // is destroyed before the Spiderling appears there.
     for i in 0..board.unit_count as usize {
         if board.units[i].hp <= 0 { continue; }
         let new_type: Option<&'static str> = {
@@ -641,6 +671,20 @@ pub fn simulate_enemy_attacks(
             }
         };
         if let Some(target_type) = new_type {
+            let hatch_to = {
+                let u = &board.units[i];
+                hatch_spawn_destination(board, u.x, u.y)
+            };
+            if let Some((hx, hy)) = hatch_to {
+                let hp = board.tile(hx, hy).building_hp;
+                if hp > 0 {
+                    apply_damage(board, hx, hy, hp, &mut result, DamageSource::Weapon);
+                }
+                if board.tile(hx, hy).building_hp == 0 {
+                    board.units[i].x = hx;
+                    board.units[i].y = hy;
+                }
+            }
             let u = &mut board.units[i];
             u.set_type_name(target_type);
             // Spiderling stats (data/ref_vek_bestiary.md, pawn_stats.py).
@@ -2470,11 +2514,12 @@ mod tests {
             "Egg should not self-damage on its turn (hatching, not attacking)");
     }
 
-    /// Sim v22 hatch step: a WebbEgg present at the start of the enemy
-    /// phase transforms into a Spiderling in-place. The hatchling has
-    /// no queued attack on its hatch turn (real-game: bite happens turn
-    /// after hatch), so its own tile is not damaged. The unit's
-    /// type_name flips, move_speed/weapon are bound to Spiderling stats.
+    /// Sim v22/v115 hatch step: a WebbEgg present at the start of the enemy
+    /// phase transforms into a Spiderling. The hatchling has no queued attack
+    /// on its hatch turn (real-game: bite happens turn after hatch), so its
+    /// own tile is not damaged. The unit's type_name flips, move_speed/weapon
+    /// are bound to Spiderling stats, and live-style `sPawn` fallback can place
+    /// it adjacent to the occupied egg tile.
     #[test]
     fn test_webb_egg_hatches_into_spiderling() {
         let mut board = Board::default();
@@ -2487,10 +2532,38 @@ mod tests {
             "WebbEgg1 should hatch into Spiderling1");
         assert_eq!(u.hp, 1, "hatched Spiderling inherits 1 HP");
         assert_eq!(u.move_speed, 3, "Spiderling has move_speed=3 per pawn_stats");
+        assert_eq!((u.x, u.y), (3, 2),
+            "sPawn fallback should prefer bridge y-1 from the occupied egg tile");
         assert!(!u.has_queued_attack(),
             "fresh hatchling has no queued attack on its hatch turn");
         assert_eq!(u.queued_target_x, -1,
             "queued_target cleared so phantom-attack guard `continue`s");
+    }
+
+    #[test]
+    fn test_webb_egg_hatches_onto_adjacent_building() {
+        // Hard Rusting Hulks HQ regression: WebbEgg1 at visual E6 (bridge 2,3)
+        // hatched onto adjacent F6 (bridge 2,2), destroying a 2-HP building and
+        // draining exactly 2 grid before the next player turn.
+        let mut board = Board::default();
+        board.grid_power = 4;
+        board.tile_mut(2, 2).terrain = Terrain::Building;
+        board.tile_mut(2, 2).building_hp = 2;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 2, 3, 1, "WebbEgg1", 2, 3);
+
+        let orig = default_orig_pos(&board);
+        let grid_damage = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let u = &board.units[egg_idx];
+        assert_eq!(u.type_name_str(), "Spiderling1");
+        assert_eq!((u.x, u.y), (2, 2),
+            "hatchling should occupy the adjacent building tile the live game selected");
+        assert_eq!(board.tile(2, 2).building_hp, 0);
+        assert_eq!(board.tile(2, 2).terrain, Terrain::Rubble);
+        assert_eq!(board.grid_power, 2);
+        assert_eq!(grid_damage, 2);
+        assert!(!u.has_queued_attack(),
+            "fresh hatchling still does not bite on the hatch turn");
     }
 
     #[test]
