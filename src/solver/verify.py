@@ -793,7 +793,17 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260516_120646_726, HQ turn 1, BlobBoss B3->B2 retargeted A3->A2 and
 # Scarab G3->G2 retargeted G6->G5. Pre-v124 corpus archived as
 # failure_db_snapshot_sim_v123.jsonl.
-SIMULATOR_VERSION = 124
+# v125 - Blast Psion / Psion Abomination death explosions chain through
+# eligible non-minor Vek killed by a prior aura burst; minor pawns remain
+# aura-immune. Regression anchor: Ramming Speed run 20260516_120646_726,
+# R.S.T. Perimeter turn 2, Dash Punch killed Burnbug at C4, whose burst
+# killed Moth B4 / Leaper C3 and live secondary bursts destroyed B3.
+# Pre-v125 corpus archived as failure_db_snapshot_sim_v124.jsonl.
+# v126 - Mission_Disposal A.C.I.D. Launcher (`Disposal_Attack`) is modeled as a
+# controllable player-side mission ally weapon: artillery target, lethal acid
+# cross, and mountain-clear terrain conversion. Pre-v126 corpus archived as
+# failure_db_snapshot_sim_v125.jsonl.
+SIMULATOR_VERSION = 126
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

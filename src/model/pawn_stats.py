@@ -259,6 +259,12 @@ NEUTRAL_STATS = {
     "Missile_Unit":      PawnStats(move_speed=0, ranged=1, pushable=False,
                                    ignore_smoke=True,
                                    default_weapon="Missiles_Shield"),
+    # A.C.I.D. Launcher (Mission_Disposal): immobile corporate mission ally.
+    # It fires an ignore-smoke artillery cross that instant-kills/acidifies
+    # the target area and clears mountains.
+    "Disposal_Unit":     PawnStats(move_speed=0, ranged=1, pushable=False,
+                                   ignore_smoke=True,
+                                   default_weapon="Disposal_Attack"),
     # Mission_Trapped Decoy Building: player-team, 2 HP, immobile,
     # non-grid, non-pushable, self-destruct weapon.
     "Trapped_Building":  PawnStats(move_speed=0, ranged=1, pushable=False,

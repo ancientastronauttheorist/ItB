@@ -23,3 +23,14 @@ def test_turn_zero_bridge_not_treated_as_stale_deployment():
     bridge = {"phase": "combat_player", "turn": 0}
 
     assert not _bridge_is_stale_post_mission("between_missions", bridge)
+
+
+def test_turn_one_active_mission_bridge_beats_save_lag():
+    bridge = {
+        "phase": "combat_player",
+        "turn": 1,
+        "in_active_mission": True,
+        "mission_id": "Mission_SnowStorm",
+    }
+
+    assert not _bridge_is_stale_post_mission("between_missions", bridge)

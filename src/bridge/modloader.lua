@@ -104,6 +104,7 @@ local function _read_save_data()
         queued_skills = {},   -- [pawn_id] = iQueuedSkill (>=0 when an attack is actually queued)
         conveyor_belts = {},
         pilots = {},  -- [pawn_id] = {id=..., level=..., skill1=..., skill2=...}
+        pawn_max_health = {},  -- [pawn_id] = max_health
         master_seed = nil,    -- GameData.seed — run-lifetime master RNG seed
         mission_seeds = {},   -- [region_key] = aiSeed — per-mission per-turn PRNG snapshot
     }
@@ -195,6 +196,10 @@ local function _read_save_data()
             if qsk then
                 result.queued_skills[pid_n] = tonumber(qsk)
             end
+            local mh = block:match('%["max_health"%]%s*=%s*(%d+)')
+            if mh then
+                result.pawn_max_health[pid_n] = tonumber(mh)
+            end
             -- Pilot: nested table inside the pawn block
             local pilot_block = block:match('%["pilot"%]%s*=%s*(%b{})')
             if pilot_block then
@@ -226,6 +231,24 @@ local function _read_save_data()
     end
 
     return result
+end
+
+local function get_pawn_max_health(pawn, uid, save_data)
+    local fn = pawn.GetMaxHealth
+    if type(fn) == "function" then
+        local ok, mh = pcall(function() return fn(pawn) end)
+        if ok and type(mh) == "number" and mh > 0 then
+            return mh
+        end
+    end
+
+    local saved = save_data and save_data.pawn_max_health and save_data.pawn_max_health[uid]
+    if type(saved) == "number" and saved > 0 then
+        return saved
+    end
+
+    local pawn_def = _G[pawn:GetType()]
+    return (pawn_def and pawn_def.Health) or pawn:GetHealth()
 end
 
 local function normalize_queued_target(raw, origin, current_x, current_y)
@@ -1652,18 +1675,69 @@ local function execute_command(cmd_str)
         local pos = pawn:GetSpace()
         local method = "unknown"
         local ok, err = pcall(function()
-            local repair_skill = _G["Skill_Repair"]
-            if repair_skill and repair_skill.GetSkillEffect then
-                local effect = repair_skill:GetSkillEffect(pos, pos)
-                Board:AddEffect(effect)
-                method = "skill"
-                return
-            end
-            -- Fallback: SpaceDamage with iRepair
-            local sd = SpaceDamage(pos, 0)
-            sd.iRepair = 1
+            local effect_remove = _G["EFFECT_REMOVE"] or 2
+            local boosted = false
+            local ok_bo, bo = pcall(function() return pawn:IsBoosted() end)
+            if ok_bo and bo then boosted = true end
+            local save_data = _read_save_data()
+            local hp = pawn:GetHealth()
+            local max_hp = get_pawn_max_health(pawn, uid, save_data)
+            local heal = boosted and 2 or 1
+            local new_hp = math.min(hp, max_hp - heal) + heal
+
+            -- Board:AddEffect(Skill_Repair:GetSkillEffect(...)) can ACK while
+            -- doing nothing from the bridge command context. Mutate HP/status
+            -- directly so verify sees the live board update.
+            local hp_set = false
+            local ok_set_health, did_set_health = pcall(function()
+                local fn = pawn.SetHealth
+                if type(fn) == "function" then
+                    fn(pawn, new_hp)
+                    return true
+                end
+                return false
+            end)
+            hp_set = ok_set_health and did_set_health
+
+            local sd = SpaceDamage(pos, hp_set and 0 or -heal)
+            sd.iFire = effect_remove
+            sd.iAcid = effect_remove
+            sd.iFrozen = effect_remove
+            sd.iInjure = effect_remove
             Board:DamageSpace(sd)
-            method = "fallback"
+
+            -- Direct SpaceDamage is not a normal ability use, so consume Boost
+            -- manually. Kai's Arrogant Boost is state-based and returns if the
+            -- repair leaves the mech at full HP.
+            local save_pilot = save_data.pilots[uid]
+            local is_kai = save_pilot and save_pilot.id == "Pilot_Arrogant"
+            local desired_boosted = is_kai and new_hp >= max_hp
+            if boosted or desired_boosted then
+                for _, mname in ipairs({"SetBoosted", "SetBoost"}) do
+                    local ok_set, did_set = pcall(function()
+                        local fn = pawn[mname]
+                        if type(fn) == "function" then
+                            fn(pawn, desired_boosted)
+                            return true
+                        end
+                        return false
+                    end)
+                    if ok_set and did_set then break end
+                end
+            end
+
+            local is_repairman = save_pilot and save_pilot.id == "Pilot_Repairman"
+            local ok_power, has_power = pcall(function()
+                return pawn:IsAbility("Power_Repair")
+            end)
+            if ok_power and has_power then is_repairman = true end
+            if is_repairman then
+                for i = DIR_START, DIR_END do
+                    local adj = pos + DIR_VECTORS[i]
+                    Board:DamageSpace(SpaceDamage(adj, 0, i))
+                end
+            end
+            method = boosted and "direct_repair_boosted" or "direct_repair"
         end)
         if not ok then
             write_ack("ERROR: Repair failed: " .. tostring(err))

@@ -74,7 +74,7 @@ def _mech_base_hp(mech_type: str) -> int:
         "PunchMech": 3, "TankMech": 2, "ArtiMech": 2,
         "ChargeMech": 3, "IceMech": 2, "LeapMech": 2, "PierceMech": 2,
         "BeamMech": 2, "FireMech": 3, "MineMech": 3,
-        "JetMech": 2, "RocketMech": 2, "PulseMech": 2, "GuardMech": 3,
+        "JetMech": 2, "RocketMech": 3, "PulseMech": 3, "GuardMech": 3,
         "LaserMech": 2, "ScienceMech": 2, "CannonMech": 3, "BoulderMech": 3,
         "SwapMech": 2, "WallMech": 2, "DamMech": 3, "ElectricMech": 2,
         "NanoMech": 2,

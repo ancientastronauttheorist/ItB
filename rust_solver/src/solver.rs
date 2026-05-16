@@ -418,6 +418,20 @@ pub(crate) fn get_weapon_targets(
                 }
             }
         }
+        WeaponType::Disposal => {
+            // Grenade_Base artillery can target any board tile except the
+            // firing tile. The custom effect handles buildings/terrain/units.
+            for x in 0..8u8 {
+                for y in 0..8u8 {
+                    if (x, y) == (mx, my) { continue; }
+                    let dist = (x as i8 - mx as i8).unsigned_abs()
+                        + (y as i8 - my as i8).unsigned_abs();
+                    if dist >= wdef.range_min && (wdef.range_max == 0 || dist <= wdef.range_max) {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
         _ => {} // Passive, Deploy, TwoClick
     }
 
@@ -597,6 +611,13 @@ fn weapon_action_has_effect(
                 }))
                 .unwrap_or(false)
         }
+        WeaponType::Disposal => {
+            disposal_cross_tiles(target.0, target.1).iter().any(|&(x, y)| {
+                if unit_at(x, y) { return true; }
+                let tile = board.tile(x, y);
+                tile.terrain == Terrain::Mountain || !tile.acid()
+            })
+        }
         // Leap/Swap/Deploy/TwoClick: positional or utility — don't filter
         _ => true,
     }
@@ -649,7 +670,8 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         // Decoy Buildings have IgnoreSmoke=true in the Lua mission script, so
         // they can still self-destruct from a smoked tile.
         let tile = action_board.tile(attack_pos.0, attack_pos.1);
-        let ignores_smoke = action_unit.type_name_str() == "Trapped_Building";
+        let ignores_smoke = action_unit.type_name_str() == "Trapped_Building"
+            || action_unit.type_name_str() == "Disposal_Unit";
         if !tile.smoke() || ignores_smoke {
             // Primary weapon — filter out no-op fires (empty space, nothing affected)
             let w1_id = WId::from_raw(action_unit.weapon.0);

@@ -200,6 +200,8 @@ def classify_weapon(weapon_id: str) -> str:
         # picks the firing mech's own tile as the target (see Rust
         # get_weapon_targets WeaponType::HealAll), which is always clickable.
         return "normal"
+    if wdef.weapon_type in ("global_unit_effect", "disposal"):
+        return "normal"
     return "normal"
 
 

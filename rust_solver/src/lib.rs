@@ -1227,7 +1227,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260516_120646_726, HQ turn 1, BlobBoss B3->B2 retargeted A3->A2 and
 //   Scarab G3->G2 retargeted G6->G5. Pre-v124 corpus archived as
 //   `failure_db_snapshot_sim_v123.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 124;
+// v125 - Blast Psion explosions chain through eligible non-minor Vek.
+// v126 - Mission_Disposal A.C.I.D. Launcher (`Disposal_Attack`) is modeled as
+//   a controllable player-side mission ally weapon: artillery target, lethal
+//   acid cross, and mountain-clear terrain conversion. Pre-v126 corpus
+//   archived as `failure_db_snapshot_sim_v125.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 126;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

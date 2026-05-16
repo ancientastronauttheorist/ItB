@@ -486,9 +486,12 @@ pub enum WId {
     /// Mission_Terraform structure weapon: click one adjacent direction tile,
     /// then eradicate a 3x2 rectangle immediately in front of the Terraformer.
     TerraformerAttack = 152,
+    /// Mission_Disposal A.C.I.D. Launcher: artillery target, instant-kill
+    /// acid cross, clears mountains to road.
+    DisposalAttack = 153,
 }
 
-pub const WEAPON_COUNT: usize = 153;
+pub const WEAPON_COUNT: usize = 154;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1018,6 +1021,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // adjacent tile chooses direction; bespoke 3x2 lethal/sand sweep in simulate.rs.
     w[152] = WeaponDef { weapon_type: WeaponType::Terraformer, damage: 0, range_min: 1, range_max: 1,
         flags: C, ..DEF };
+    // 153: Disposal_Attack — Mission_Disposal A.C.I.D. Launcher. Bespoke
+    // artillery cross in simulate.rs: instant-kill units, acidify affected
+    // non-mountain tiles, and clear mountains to road/ground.
+    w[153] = WeaponDef { weapon_type: WeaponType::Disposal, damage: 0, range_min: 1, range_max: 0,
+        flags: f_nc(WeaponFlags::ACID.bits() | WeaponFlags::AOE_CENTER.bits() | WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
@@ -1097,6 +1105,21 @@ pub fn terraformer_sweep_tiles(ax: u8, ay: u8, target_x: u8, target_y: u8) -> Op
     }
 
     Some(tiles)
+}
+
+/// Mission_Disposal A.C.I.D. Launcher footprint: target tile plus the four
+/// cardinal adjacent tiles, clipped to the board.
+pub fn disposal_cross_tiles(target_x: u8, target_y: u8) -> Vec<(u8, u8)> {
+    let mut tiles = Vec::with_capacity(5);
+    tiles.push((target_x, target_y));
+    for &(dx, dy) in &DIRS {
+        let x = target_x as i8 + dx;
+        let y = target_y as i8 + dy;
+        if in_bounds(x, y) {
+            tiles.push((x as u8, y as u8));
+        }
+    }
+    tiles
 }
 
 #[inline]
@@ -1225,6 +1248,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "Trapped_Explode" => WId::TrappedExplode,
         "TrappedExplode" => WId::TrappedExplode,
         "Terraformer_Attack" => WId::TerraformerAttack,
+        "Disposal_Attack" => WId::DisposalAttack,
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
@@ -1394,6 +1418,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::DeployTankShot2 => "Deploy_TankShot2",
         WId::TrappedExplode => "Trapped_Explode",
         WId::TerraformerAttack => "Terraformer_Attack",
+        WId::DisposalAttack => "Disposal_Attack",
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
@@ -1736,6 +1761,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::MissilesOneDmg => "Missile Barrage",
         WId::TrappedExplode => "Area Blast",
         WId::TerraformerAttack => "Terraformer",
+        WId::DisposalAttack => "Disintegrator",
         _ => "Unknown",
     }
 }
@@ -1963,6 +1989,20 @@ mod tests {
     }
 
     #[test]
+    fn test_disposal_attack_def() {
+        let w = weapon_def(WId::DisposalAttack);
+        assert_eq!(w.weapon_type, WeaponType::Disposal);
+        assert_eq!(w.range_min, 1);
+        assert_eq!(w.range_max, 0);
+        assert!(w.acid());
+        assert!(w.aoe_center());
+        assert!(w.aoe_adjacent());
+        assert_eq!(wid_from_str("Disposal_Attack"), WId::DisposalAttack);
+        assert_eq!(wid_to_str(WId::DisposalAttack), "Disposal_Attack");
+        assert_eq!(weapon_name(WId::DisposalAttack), "Disintegrator");
+    }
+
+    #[test]
     fn test_alpha_hornet_has_aoe_behind() {
         let w = weapon_def(WId::HornetAtk2);
         assert!(w.aoe_behind());
@@ -2038,6 +2078,7 @@ mod tests {
             ("Armored_Train_Move", WId::ArmoredTrainMove),
             ("ScarabAtkB", WId::ScarabAtkB),
             ("Terraformer_Attack", WId::TerraformerAttack),
+            ("Disposal_Attack", WId::DisposalAttack),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

@@ -571,6 +571,10 @@ pub fn board_from_json(json_str: &str)
             if ju.web.unwrap_or(false) { flags |= UnitFlags::WEB; }
             if ju.boosted.unwrap_or(false) { flags |= UnitFlags::BOOSTED; }
             if ju.has_queued_attack.unwrap_or(false) { flags |= UnitFlags::HAS_QUEUED_ATTACK; }
+            if ju.unit_type == "Disposal_Unit" {
+                flags.remove(UnitFlags::PUSHABLE);
+                flags |= UnitFlags::RANGED;
+            }
 
             // Weapons
             let mut weapon = crate::board::WeaponId::NONE;
@@ -582,6 +586,9 @@ pub fn board_from_json(json_str: &str)
                 if weapons.len() > 1 {
                     weapon2 = crate::board::WeaponId(wid_from_str(&weapons[1]) as u16);
                 }
+            }
+            if ju.unit_type == "Disposal_Unit" && weapon.0 == 0 {
+                weapon = crate::board::WeaponId(WId::DisposalAttack as u16);
             }
 
             // Queued target

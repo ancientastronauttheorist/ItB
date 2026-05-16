@@ -24,8 +24,8 @@ fn refresh_all_arrogant_boosts(board: &mut Board) {
 
 /// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
 /// Called when an enemy Vek dies while Blast Psion is alive on the board.
-/// Explosions caused by the Blast Psion aura do not recursively trigger the
-/// aura again; live captures show only the original death emits the burst.
+/// Eligible non-minor Vek killed by the burst can emit their own Blast Psion
+/// explosion; minor pawns still do not receive the aura.
 /// Volatile Vek's "Explosive Decay": 1 damage to all 4 adjacent tiles
 /// when it dies, for any cause. Bump-class unit damage ignores armor/acid,
 /// and the explosion ignites damaged forest tiles.
@@ -103,7 +103,7 @@ fn apply_explosive_decay_tile_effects(board: &mut Board, x: u8, y: u8, status_bl
 /// `finish_instant_unit_death` (push/swap/throw terrain + mine kills), and
 /// apply_env_danger (lethal env kills, since sim v38).
 pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
-    if depth > 0 { return; }
+    if depth > 8 { return; }
 
     for &(dx, dy) in &DIRS {
         let nx = x as i8 + dx;
@@ -112,9 +112,34 @@ pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mu
         let nx = nx as u8;
         let ny = ny as u8;
 
+        let chain_idx = blast_explosion_chain_candidate(board, nx, ny);
         // Apply 1 bump damage (ignores armor/acid)
         apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
+        if let Some(idx) = chain_idx {
+            if board.units[idx].hp <= 0 {
+                apply_death_explosion(board, nx, ny, result, depth + 1);
+            }
+        }
     }
+}
+
+fn blast_explosion_chain_candidate(board: &Board, x: u8, y: u8) -> Option<usize> {
+    if !board.blast_psion && !board.boss_psion {
+        return None;
+    }
+    board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        let tname = u.type_name_str();
+        if u.receives_psion_aura()
+            && u.hp > 0
+            && tname != "Jelly_Explode1"
+            && tname != "Jelly_Boss"
+        {
+            Some(idx)
+        } else {
+            None
+        }
+    })
 }
 
 fn apply_bombrock_explosion(
@@ -2016,6 +2041,7 @@ pub fn simulate_weapon_with(
             board, wdef, (ax, ay), (target_x, target_y), &mut result,
         ),
         WeaponType::Terraformer => sim_terraformer(board, ax, ay, target_x, target_y, &mut result),
+        WeaponType::Disposal => sim_disposal(board, target_x, target_y, &mut result),
         _ => {} // Passive, Deploy, TwoClick — no simulation
     }
 
@@ -2115,6 +2141,40 @@ fn sim_terraformer(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, result: &m
 
     for (x, y) in tiles {
         apply_terraformer_tile(board, x, y, result);
+    }
+}
+
+// ── Disposal A.C.I.D. Launcher ───────────────────────────────────────────────
+
+fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    if let Some(idx) = board.unit_at(x, y) {
+        let hp_before = board.units[idx].hp.max(0) as i32;
+        let was_enemy = board.units[idx].is_enemy();
+        let was_player = board.units[idx].is_player();
+        finish_instant_unit_death(board, idx, result, x, y);
+        if hp_before > 0 && board.units[idx].hp <= 0 {
+            if was_enemy {
+                result.enemy_damage_dealt += hp_before;
+            } else if was_player {
+                result.mech_damage_taken += hp_before;
+            }
+        }
+    }
+
+    let tile = board.tile_mut(x, y);
+    tile.set_acid(true);
+    tile.set_cracked(false);
+    tile.set_smoke(false);
+    tile.set_on_fire(false);
+    if tile.terrain == Terrain::Mountain {
+        tile.terrain = Terrain::Ground;
+        tile.building_hp = 0;
+    }
+}
+
+fn sim_disposal(board: &mut Board, tx: u8, ty: u8, result: &mut ActionResult) {
+    for (x, y) in disposal_cross_tiles(tx, ty) {
+        apply_disposal_tile(board, x, y, result);
     }
 }
 
@@ -3633,6 +3693,35 @@ mod tests {
         assert!(!board.tile(7, 2).grass());
         assert_eq!(board.tile(7, 3).terrain, Terrain::Mountain);
         assert!(board.tile(7, 3).grass());
+    }
+
+    #[test]
+    fn test_disposal_attack_kills_acid_cross_and_clears_mountains() {
+        let mut board = make_test_board();
+        let launcher = add_mission_ally(&mut board, 260, 1, 1, 2, WId::DisposalAttack, "Disposal_Unit");
+        let center = add_enemy(&mut board, 261, 4, 4, 2);
+        let adjacent = add_enemy(&mut board, 262, 4, 5, 1);
+        let diagonal_safe = add_enemy(&mut board, 263, 5, 5, 1);
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        board.tile_mut(5, 4).terrain = Terrain::Forest;
+        board.tile_mut(5, 4).set_on_fire(true);
+        board.tile_mut(4, 3).set_smoke(true);
+
+        let result = simulate_weapon(&mut board, launcher, WId::DisposalAttack, 4, 4);
+
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(board.units[center].hp, 0);
+        assert_eq!(board.units[adjacent].hp, 0);
+        assert_eq!(board.units[diagonal_safe].hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        for (x, y) in disposal_cross_tiles(4, 4) {
+            assert!(board.tile(x, y).acid(), "expected acid at ({},{})", x, y);
+        }
+        assert!(!board.tile(5, 4).on_fire());
+        assert!(!board.tile(4, 3).smoke());
+        assert!(!board.tile(5, 5).acid());
     }
 
     #[test]
@@ -5926,6 +6015,7 @@ mod tests {
         let drowned = add_enemy_type(&mut board, 91, 4, 4, 5, "Shaman2");
         board.tile_mut(5, 4).terrain = Terrain::Building;
         board.tile_mut(5, 4).building_hp = 2;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 4);
 
         let mut result = ActionResult::default();
         flood_tile(&mut board, 4, 4, &mut result);
@@ -5952,6 +6042,8 @@ mod tests {
 
         let rocket = add_mech(&mut board, 1, 3, 4, 3, WId::None);
         let pulse = add_mech(&mut board, 2, 4, 2, 3, WId::None);
+        board.units[rocket].flags.insert(UnitFlags::MASSIVE);
+        board.units[pulse].flags.insert(UnitFlags::MASSIVE);
         board.units[pulse].set_shield(true);
 
         let totem = add_enemy_type(&mut board, 91, 4, 1, 1, "Totem2");
@@ -5961,6 +6053,7 @@ mod tests {
 
         board.tile_mut(5, 4).terrain = Terrain::Building;
         board.tile_mut(5, 4).building_hp = 2;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 4);
 
         let mut result = ActionResult::default();
         trigger_dam_flood(&mut board, &mut result);
@@ -5979,7 +6072,7 @@ mod tests {
     }
 
     #[test]
-    fn test_blast_psion_explosion_does_not_chain_aura_deaths() {
+    fn test_blast_psion_explosion_chains_through_eligible_aura_deaths() {
         let mut board = make_test_board();
         board.blast_psion = true;
         add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
@@ -5997,11 +6090,34 @@ mod tests {
             "adjacent enemy dies to the first Blast Psion explosion"
         );
         assert_eq!(
-            board.tile(5, 3).building_hp, 1,
-            "enemy killed by Blast Psion explosion must not emit a second aura explosion"
+            board.tile(5, 3).building_hp, 0,
+            "enemy killed by Blast Psion explosion emits a second eligible aura explosion"
         );
         assert_eq!(result.enemies_killed, 2);
-        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_titan_fist_dash_blast_psion_chain_hits_secondary_building() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 5, 1, 1, "Jelly_Explode1");
+        let mech_idx = add_mech(&mut board, 0, 4, 2, 3, WId::PrimePunchmechA);
+        let burnbug = add_enemy_type(&mut board, 1, 4, 5, 2, "Burnbug1");
+        let moth = add_enemy_type(&mut board, 2, 4, 6, 1, "Moth1");
+        let leaper = add_enemy_type(&mut board, 3, 5, 5, 1, "Leaper1");
+        board.tile_mut(5, 6).terrain = Terrain::Building;
+        board.tile_mut(5, 6).building_hp = 1;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 6);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 4, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (4, 4));
+        assert!(board.units[burnbug].hp <= 0, "Dash Punch kills the first blocker at C4");
+        assert!(board.units[moth].hp <= 0, "Burnbug's burst kills adjacent Moth at B4");
+        assert!(board.units[leaper].hp <= 0, "Burnbug's burst kills adjacent Leaper at C3");
+        assert_eq!(board.tile(5, 6).building_hp, 0, "secondary B4/C3 bursts damage B3");
+        assert_eq!(result.grid_damage, 1);
     }
 
     #[test]

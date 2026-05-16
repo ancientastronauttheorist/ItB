@@ -30,6 +30,10 @@
     "destroy": [],
     "protect": ["Terraformer"]
   },
+  "Mission_Disposal": {
+    "destroy": [],
+    "protect": ["Disposal_Unit"]
+  },
   "Mission_BeetleBoss": {
     "destroy": ["BeetleBoss"],
     "protect": []

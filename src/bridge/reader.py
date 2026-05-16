@@ -171,6 +171,172 @@ def _read_repair_pickups_from_save() -> int | None:
     return int(matches[0])
 
 
+def _parse_mech_stat_overlays_from_save_text(content: str) -> dict[int, dict]:
+    """Return save-backed mech stat records keyed by pawn uid.
+
+    The live Lua bridge can report a pawn definition's base max HP while the
+    save file already has the effective in-mission max_health from pilot perks
+    and powered +Health upgrades. Parse only narrow scalar fields here; never
+    use save health for live HP because it can lag after bridge actions.
+    """
+    records: dict[int, dict] = {}
+    pawn_re = re.compile(
+        r'\["pawn\d+"\]\s*=\s*\{(?P<body>.*?)(?=\n\n\["pawn\d+"\]|\n\n\["blocked"|\n\n\["spawn|\n\n\["zones"|\n\n\["tags"|$)',
+        re.S,
+    )
+    for match in pawn_re.finditer(content):
+        body = match.group("body")
+        if '["mech"] = true' not in body:
+            continue
+
+        uid_m = re.search(r'\["id"\]\s*=\s*(-?\d+)', body)
+        if not uid_m:
+            continue
+        uid = int(uid_m.group(1))
+        rec: dict = {}
+
+        type_m = re.search(r'\["type"\]\s*=\s*"([^"]*)"', body)
+        if type_m:
+            rec["type"] = type_m.group(1)
+
+        max_hp_m = re.search(r'\["max_health"\]\s*=\s*(-?\d+)', body)
+        if max_hp_m:
+            rec["max_hp"] = int(max_hp_m.group(1))
+
+        health_power_m = re.search(r'\["healthPower"\]\s*=\s*\{\s*(-?\d+)', body)
+        if health_power_m:
+            rec["health_power"] = int(health_power_m.group(1))
+
+        pilot_m = re.search(r'\["pilot"\]\s*=\s*\{(?P<pilot>.*?)\},', body, re.S)
+        if pilot_m:
+            pilot = pilot_m.group("pilot")
+            for save_key, out_key in (
+                ("id", "pilot_id"),
+                ("name", "pilot_name"),
+                ("name_id", "pilot_name_id"),
+            ):
+                val_m = re.search(
+                    rf'\["{save_key}"\]\s*=\s*"([^"]*)"', pilot,
+                )
+                if val_m:
+                    rec[out_key] = val_m.group(1)
+            for save_key, out_key in (
+                ("skill1", "pilot_skill1"),
+                ("skill2", "pilot_skill2"),
+                ("level", "pilot_level"),
+            ):
+                val_m = re.search(rf'\["{save_key}"\]\s*=\s*(-?\d+)', pilot)
+                if val_m:
+                    rec[out_key] = int(val_m.group(1))
+
+        records[uid] = rec
+    return records
+
+
+def _read_mech_stat_overlays_from_save() -> dict[int, dict]:
+    save_path = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    )
+    try:
+        with open(save_path) as f:
+            content = f.read()
+    except OSError:
+        return {}
+    return _parse_mech_stat_overlays_from_save_text(content)
+
+
+def _visual_coord(x: int, y: int) -> str:
+    if 0 <= x < 8 and 0 <= y < 8:
+        return f"{chr(ord('H') - y)}{8 - x}"
+    return "??"
+
+
+def _unit_visual_coord(unit: dict) -> str:
+    try:
+        return _visual_coord(int(unit.get("x", -1)), int(unit.get("y", -1)))
+    except (TypeError, ValueError):
+        return "??"
+
+
+def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
+    """Patch bridge mech max_hp with saveData effective max_health.
+
+    This is intentionally Python-side so it helps immediately without a game
+    restart. It also records calibration requests for pilot screenshots when a
+    bridge/base stat disagrees with save-backed effective stats.
+    """
+    if not isinstance(data, dict):
+        return []
+    overlays = _read_mech_stat_overlays_from_save()
+    if not overlays:
+        return []
+
+    updates: list[dict] = []
+    calibration: list[dict] = []
+    for unit in data.get("units", []) or []:
+        if not isinstance(unit, dict) or not unit.get("mech"):
+            continue
+        try:
+            uid = int(unit.get("uid", -1))
+        except (TypeError, ValueError):
+            continue
+        rec = overlays.get(uid)
+        if not rec:
+            continue
+        rec_type = rec.get("type")
+        if rec_type and unit.get("type") and rec_type != unit.get("type"):
+            continue
+
+        for key in ("pilot_id", "pilot_name", "pilot_name_id", "pilot_level"):
+            if rec.get(key) not in (None, ""):
+                unit.setdefault(key, rec[key])
+
+        raw_skills = list(unit.get("pilot_skills", []) or [])
+        for save_key, label in (
+            ("pilot_skill1", "skill1"),
+            ("pilot_skill2", "skill2"),
+        ):
+            val = rec.get(save_key)
+            if isinstance(val, int) and val != 0:
+                token = f"{label}={val}"
+                if token not in raw_skills:
+                    raw_skills.append(token)
+        if raw_skills:
+            unit["pilot_skills"] = raw_skills
+
+        save_max = rec.get("max_hp")
+        if not isinstance(save_max, int) or save_max <= 0:
+            continue
+        old_max = unit.get("max_hp")
+        if old_max == save_max:
+            continue
+        unit["bridge_reported_max_hp"] = old_max
+        unit["max_hp"] = save_max
+        update = {
+            "uid": uid,
+            "type": unit.get("type", ""),
+            "pos": _unit_visual_coord(unit),
+            "bridge_max_hp": old_max,
+            "save_max_hp": save_max,
+            "pilot_id": unit.get("pilot_id", ""),
+            "pilot_name": unit.get("pilot_name", ""),
+            "pilot_skills": list(unit.get("pilot_skills", []) or []),
+            "health_power": rec.get("health_power"),
+        }
+        updates.append(update)
+        calibration.append({
+            **update,
+            "reason": "bridge max_hp differed from saveData max_health",
+            "capture_hint": "hover/select the visible pilot panel when tactically safe",
+        })
+
+    if updates:
+        data["mech_stat_overlays"] = updates
+    if calibration:
+        data["pilot_calibration_requests"] = calibration
+    return updates
+
+
 def _active_region_keys(data: dict) -> list[str]:
     """Return save-region keys that look like the currently live mission."""
     seeds = data.get("mission_seeds") or {}
@@ -476,6 +642,11 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                 if pos in grass_tiles:
                     td["grass"] = True
                     td.setdefault("custom", "ground_grass.png")
+
+    # SaveData carries effective mech max_health after pilot perks and powered
+    # +Health upgrades. Overlay before Board construction so live reads,
+    # verification, and Rust solver payloads agree on true max HP.
+    _apply_save_mech_stat_overlays(data)
 
     try:
         board = Board.from_bridge_data(data)

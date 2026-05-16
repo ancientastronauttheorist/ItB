@@ -25,6 +25,7 @@ class WeaponType(str, Enum):
     HEAL_ALL = "heal_all"     # Heals every player-team unit on the board
     GLOBAL_PUSH = "global_push"  # Pushes every unit in one chosen direction
     GLOBAL_UNIT_EFFECT = "global_unit_effect"  # Affects every live non-source unit on board
+    DISPOSAL = "disposal"       # Mission_Disposal A.C.I.D. Launcher cross
     PASSIVE = "passive"       # Always-on effect
 
 
@@ -351,6 +352,10 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Missile Barrage", weapon_type="global_unit_effect",
         damage=1, range_max=0, limited=2,
         targets_allies=True, building_damage=False,
+    ),
+    "Disposal_Attack": WeaponDef(
+        name="Disintegrator", weapon_type="disposal",
+        damage=0, acid=True, range_max=0, aoe_adjacent=True,
     ),
 
     # --- RANGED CLASS ---

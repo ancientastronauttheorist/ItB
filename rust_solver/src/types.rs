@@ -129,6 +129,9 @@ pub enum WeaponType {
     /// Mission_Terraform's Terraformer: adjacent direction selector, then a
     /// 3x2 lethal terrain-conversion sweep in front of the structure.
     Terraformer = 15,
+    /// Mission_Disposal's A.C.I.D. Launcher: artillery target with a
+    /// cross-shaped instant-kill acid footprint that clears mountains.
+    Disposal = 16,
 }
 
 impl WeaponType {
@@ -150,6 +153,7 @@ impl WeaponType {
             "global_push" => WeaponType::GlobalPush,
             "global_unit_effect" => WeaponType::GlobalUnitEffect,
             "terraformer" => WeaponType::Terraformer,
+            "disposal" => WeaponType::Disposal,
             _ => WeaponType::Melee,
         }
     }
