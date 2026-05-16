@@ -341,13 +341,7 @@ pub(crate) fn get_weapon_targets(
         WeaponType::Leap => {
             let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
             let min_r = if wdef.range_min == 0 { 1 } else { wdef.range_min };
-            let aerial_bombs = matches!(
-                weapon_id,
-                WId::BruteJetmech
-                    | WId::BruteJetmechA
-                    | WId::BruteJetmechB
-                    | WId::BruteJetmechAB
-            );
+            let aerial_bombs = is_aerial_bombs(weapon_id);
             // Fixed-distance leaps (Aerial Bombs: range_min == range_max) fly
             // over a straight cardinal line and land on the target, so the
             // target must share a row or column with the attacker. Upgraded
@@ -681,6 +675,63 @@ fn push_hits_building(x: u8, y: u8, direction: usize, board: &Board) -> bool {
     board.tile(nx as u8, ny as u8).is_building()
 }
 
+fn is_aerial_bombs(weapon_id: WId) -> bool {
+    matches!(
+        weapon_id,
+        WId::BruteJetmech
+            | WId::BruteJetmechA
+            | WId::BruteJetmechB
+            | WId::BruteJetmechAB
+    )
+}
+
+fn aerial_bombs_transit_smoke_score(
+    board: &Board,
+    origin: (u8, u8),
+    target: (u8, u8),
+    weapon_id: WId,
+    wdef: &WeaponDef,
+) -> i32 {
+    if !is_aerial_bombs(weapon_id) || !wdef.smoke() {
+        return 0;
+    }
+    let Some(dir) = cardinal_direction(origin.0, origin.1, target.0, target.1) else {
+        return 0;
+    };
+    let (dx, dy) = DIRS[dir];
+    let mut x = origin.0 as i8 + dx;
+    let mut y = origin.1 as i8 + dy;
+    let target_i = (target.0 as i8, target.1 as i8);
+    let mut score = 0;
+
+    while in_bounds(x, y) && (x, y) != target_i {
+        let ux = x as u8;
+        let uy = y as u8;
+        if let Some(idx) = board.unit_at(ux, uy) {
+            let u = &board.units[idx];
+            if u.is_enemy()
+                && u.alive()
+                && u.queued_target_x >= 0
+                && !u.frozen()
+                && !board.tile(ux, uy).smoke()
+            {
+                score += if u.queued_target_x < 8 && u.queued_target_y >= 0 && u.queued_target_y < 8 {
+                    let target_tile = board.tile(u.queued_target_x as u8, u.queued_target_y as u8);
+                    if target_tile.is_building() { 420 } else { 180 }
+                } else if u.has_queued_attack() {
+                    180
+                } else {
+                    0
+                };
+            }
+        }
+        x += dx;
+        y += dy;
+    }
+
+    score
+}
+
 fn charge_first_hit(
     board: &Board,
     origin: (u8, u8),
@@ -770,6 +821,13 @@ fn prune_actions(
             // When a push is blocked by a building, both the unit and building take
             // 1 bump damage — losing grid power. Apply -300 per building at risk.
             let wdef = &weapons[weapon_id as usize];
+            s += aerial_bombs_transit_smoke_score(
+                board,
+                attack_origin,
+                target,
+                weapon_id,
+                wdef,
+            );
             if wdef.push != PushDir::None {
                 match wdef.weapon_type {
                     // Melee / Projectile / Charge / Laser: Forward push on the hit target
@@ -1888,6 +1946,76 @@ mod top_k_tests {
                 a.0 == (3, 7) && a.1 == WId::BruteJetmech && a.2 == (3, 5)
             }),
             "Clearing smoke should restore the Aerial Bombs target"
+        );
+    }
+
+    #[test]
+    fn aerial_bombs_transit_smoke_building_threat_survives_pruning() {
+        // Hard Rusting Hulks 20260513_230944_542, Forgotten Hills turn 4:
+        // Jet E6->B5 firing at B3 smokes the B4 Bouncer and cancels its A4
+        // building attack. With four active units, the live search prunes to
+        // 25 actions per unit; this line must be scored like a threat answer.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 0,
+            x: 2,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteJetmech as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::FLYING
+                | UnitFlags::ACTIVE
+                | UnitFlags::CAN_MOVE,
+            move_speed: 4,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 100,
+            x: 4,
+            y: 6,
+            hp: 4,
+            max_hp: 4,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE | UnitFlags::HAS_QUEUED_ATTACK,
+            queued_target_x: 4,
+            queued_target_y: 7,
+            ..Default::default()
+        });
+        {
+            let tile = board.tile_mut(4, 7);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+
+        let (threat_tiles, building_threats) = precompute_threats(&board);
+        let mut actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (3, 6) && a.1 == WId::BruteJetmech && a.2 == (5, 6)
+            }),
+            "Jet E6->B5, Aerial Bombs at B3 should be legal before pruning"
+        );
+
+        prune_actions(
+            &board,
+            idx,
+            &mut actions,
+            threat_tiles,
+            building_threats,
+            0,
+            25,
+            &WEAPONS,
+        );
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (3, 6) && a.1 == WId::BruteJetmech && a.2 == (5, 6)
+            }),
+            "transit smoke over the B4 attacker must survive the four-unit pruning cap"
         );
     }
 
