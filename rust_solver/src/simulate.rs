@@ -607,9 +607,21 @@ pub(crate) fn on_enemy_death(
         board.tyrant_psion = false;
     }
 
-    // Boost Psion (AE) killed: stop +1 weapon damage to Vek attacks
+    // Boost Psion (AE) killed: stop +1 weapon damage to Vek attacks and clear
+    // the visible Boosted status the engine removes from all surviving Vek.
     if board.boost_psion && board.units[idx].type_name_str() == "Jelly_Boost1" {
-        board.boost_psion = false;
+        let other_alive = (0..board.unit_count as usize)
+            .any(|j| j != idx
+                && board.units[j].type_name_str() == "Jelly_Boost1"
+                && board.units[j].hp > 0);
+        if !other_alive {
+            board.boost_psion = false;
+            for j in 0..board.unit_count as usize {
+                if board.units[j].is_enemy() {
+                    board.units[j].set_boosted(false);
+                }
+            }
+        }
     }
 
     // Fire Psion (AE) killed: stop fire-immunity + on-death-fire
@@ -6687,6 +6699,29 @@ mod tests {
             "Grunt loses +1 aura HP after Psion dies (3 -> 2)");
         assert_eq!(board.units[grunt_idx].max_hp, 2,
             "Grunt max_hp also reduced");
+    }
+
+    #[test]
+    fn test_boost_psion_death_clears_boosted_status_on_surviving_vek() {
+        // Detritus Mission_Disposal turn 1, run 20260516_120646_726:
+        // Taurus killed Jelly_Boost1 at F4. Live immediately removed the
+        // Boosted status from Spider E4 and Leapers F3/D4; pre-fix Rust only
+        // cleared board.boost_psion and verify flagged a status desync.
+        let mut board = make_test_board();
+        board.boost_psion = true;
+        let psion_idx = add_enemy_type(&mut board, 1, 4, 2, 2, "Jelly_Boost1");
+        let spider_idx = add_enemy_type(&mut board, 2, 4, 3, 2, "Spider1");
+        let leaper_idx = add_enemy_type(&mut board, 3, 5, 2, 2, "Leaper2");
+        board.units[spider_idx].set_boosted(true);
+        board.units[leaper_idx].set_boosted(true);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 4, 2, 2, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[psion_idx].hp, 0);
+        assert!(!board.boost_psion);
+        assert!(!board.units[spider_idx].boosted());
+        assert!(!board.units[leaper_idx].boosted());
     }
 
     // ── Storm Generator (Passive_Electric — Rusting Hulks / Detritus) ─────────

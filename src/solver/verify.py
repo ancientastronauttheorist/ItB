@@ -803,7 +803,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # controllable player-side mission ally weapon: artillery target, lethal acid
 # cross, and mountain-clear terrain conversion. Pre-v126 corpus archived as
 # failure_db_snapshot_sim_v125.jsonl.
-SIMULATOR_VERSION = 126
+# v127 - Killing the last Boost Psion clears the visible Boosted status from
+# all surviving Vek immediately. Regression anchor: Ramming Speed run
+# 20260516_120646_726, Detritus Teleport Facility turn 1, Tank F6 fired at F5
+# and killed Jelly_Boost1 at F4; live cleared Boosted from E4/F3/D4.
+# Pre-v127 corpus archived as failure_db_snapshot_sim_v126.jsonl.
+SIMULATOR_VERSION = 127
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
