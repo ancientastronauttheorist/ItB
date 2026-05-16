@@ -30,6 +30,29 @@ fn disabled_mask_contains(mask: DisabledMask, weapon_id: WId) -> bool {
     bit < mask.len() * 128 && ((mask[bit / 128] >> (bit % 128)) & 1) != 0
 }
 
+fn mission_missiles_action_bonus(board: &Board, actions: &[MechAction]) -> f64 {
+    if board.mission_id != "Mission_Missiles" {
+        return 0.0;
+    }
+    let mut saw_contraption = false;
+    let mut used_contraption = false;
+    for action in actions {
+        if action.mech_type == "Missile_Unit" {
+            saw_contraption = true;
+            if matches!(action.weapon, WId::MissilesShield | WId::MissilesOneDmg) {
+                used_contraption = true;
+            }
+        }
+    }
+    if used_contraption {
+        60000.0
+    } else if saw_contraption {
+        -60000.0
+    } else {
+        0.0
+    }
+}
+
 // ── MechAction ───────────────────────────────────────────────────────────────
 
 #[derive(Clone, Debug)]
@@ -1103,7 +1126,8 @@ fn search_recursive(
         } else {
             1.0
         };
-        let score = raw - soft_disable_penalty_so_far * penalty_scale;
+        let mission_action_bonus = mission_missiles_action_bonus(&b_eval, actions_so_far);
+        let score = raw + mission_action_bonus - soft_disable_penalty_so_far * penalty_scale;
 
 
         if score > *best_score {
@@ -1698,6 +1722,56 @@ mod top_k_tests {
         assert!(!actions.iter().any(|a| {
             a.1 == WId::MissilesOneDmg && a.2 == (1, 3)
         }));
+    }
+
+    #[test]
+    fn mission_missiles_prefers_contraption_use_over_skip() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Missiles".to_string();
+        board.grid_power = 3;
+        board.grid_power_max = 7;
+        let idx = board.add_unit(Unit {
+            uid: 20,
+            x: 1,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::MissilesShield as u16),
+            weapon2: WeaponId(WId::MissilesOneDmg as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Missile_Unit");
+        board.add_unit(Unit {
+            uid: 21,
+            x: 6,
+            y: 3,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let solution = solve_turn(
+            &board,
+            &[],
+            1.0,
+            25,
+            &EvalWeights::default(),
+            [0; 2],
+            &WEAPONS,
+        );
+
+        assert!(
+            solution.actions.iter().any(|a| {
+                a.mech_type == "Missile_Unit"
+                    && matches!(a.weapon, WId::MissilesShield | WId::MissilesOneDmg)
+            }),
+            "Mission_Missiles should spend a Detritus Contraption shot instead of skipping"
+        );
     }
 
     #[test]
