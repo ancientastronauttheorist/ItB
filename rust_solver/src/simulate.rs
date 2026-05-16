@@ -172,10 +172,10 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
 // ── apply_landing_effects ────────────────────────────────────────────────────
 
 /// Resolve the post-move landing pipeline at a unit's current tile: web-break
-/// (if the moved unit is an enemy webber), Fire pickup, ACID pickup, frozen-
-/// grounded-on-water → Ice, water/lava/chasm death (with Flying / Massive
-/// exemptions), Lava-ignites-flying, Old Earth Mine, Freeze Mine, repair
-/// platform, and finally teleporter-pad swap. Caller must have already
+/// (if the moved unit is an enemy webber), smoke extinguish, Fire pickup, ACID
+/// pickup, frozen-grounded-on-water → Ice, water/lava/chasm death (with Flying
+/// / Massive exemptions), Lava-ignites-flying, Old Earth Mine, Freeze Mine,
+/// repair platform, and finally teleporter-pad swap. Caller must have already
 /// updated the unit's `x`/`y` to the destination tile; this function reads
 /// `board.units[idx].(x,y)` and resolves effects there.
 ///
@@ -192,16 +192,17 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
 /// extracting the helper is a behaviour-preserving refactor on the throw
 /// path:
 ///   1. break webs sourced FROM this unit (if enemy webber moved)
-///   2. Fire on tile → set unit fire (Flame Shielding exempts player mechs)
-///   3. ACID pool on tile → set unit acid, consume pool
-///   4. frozen non-flying + Water → tile becomes Ice, return early
-///   5. Water/Lava drown non-flying-non-Massive; Chasm kills any non-flying
-///   6. Lava + flying → ignite (Flame Shielding exempts player mechs)
-///   7. Old Earth Mine → instant kill, mine consumed
-///   8. Freeze Mine → freeze (or pop shield), mine consumed
-///   9. Repair platform → heal by Item_Repair_Mine's -10 damage, consume
-///  10. Teleporter pad → swap to partner if paired
-///  11. WebbEgg1 adjacency refresh → newly adjacent units become webbed
+///   2. Smoke on tile → clear unit fire
+///   3. Fire on tile → set unit fire (Flame Shielding exempts player mechs)
+///   4. ACID pool on tile → set unit acid, consume pool
+///   5. frozen non-flying + Water → tile becomes Ice, return early
+///   6. Water/Lava drown non-flying-non-Massive; Chasm kills any non-flying
+///   7. Lava + flying → ignite (Flame Shielding exempts player mechs)
+///   8. Old Earth Mine → instant kill, mine consumed
+///   9. Freeze Mine → freeze (or pop shield), mine consumed
+///  10. Repair platform → heal by Item_Repair_Mine's -10 damage, consume
+///  11. Teleporter pad → swap to partner if paired
+///  12. WebbEgg1 adjacency refresh → newly adjacent units become webbed
 fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     if board.units[unit_idx].hp <= 0 { return; }
     let x = board.units[unit_idx].x;
@@ -247,6 +248,12 @@ fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
     }
 }
 
+fn apply_smoke_tile_extinguish(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+    if board.tile(x, y).smoke() && board.units[unit_idx].fire() {
+        board.units[unit_idx].set_fire(false);
+    }
+}
+
 fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     let nx = board.units[unit_idx].x;
     let ny = board.units[unit_idx].y;
@@ -257,12 +264,15 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         break_web_from(board, webber_uid);
     }
 
-    // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
+    // 2. Smoke tile: carried unit fire is extinguished on landing.
+    apply_smoke_tile_extinguish(board, unit_idx, nx, ny);
+
+    // 3. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
     //    to burning Ground when a unit lands on it.
     apply_fire_tile_pickup(board, unit_idx, nx, ny);
 
-    // 3. ACID pool: unit gains ACID, pool consumed
+    // 4. ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
         if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
             board.units[unit_idx].set_acid(true);
@@ -270,7 +280,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // 4. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
+    // 5. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
     // units fall through to the deadly-terrain check below — frozen cancels
     // flight so they drown / fall normally.
     let dest_terrain = board.tile(nx, ny).terrain;
@@ -281,8 +291,8 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         return;
     }
 
-    // 5. Water / Lava / Chasm death.
-    // 6. Lava + flying → fire status (combined branch).
+    // 6. Water / Lava / Chasm death.
+    // 7. Lava + flying → fire status (combined branch).
     if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
         let massive = board.units[unit_idx].massive();
         match dest_terrain {
@@ -310,7 +320,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     }
 
-    // 7-8. Mines.
+    // 8-9. Mines.
     if board.units[unit_idx].hp > 0 {
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
@@ -326,14 +336,14 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     }
 
-    // 9. Repair platform item: fires after terrain/mine resolution, before
+    // 10. Repair platform item: fires after terrain/mine resolution, before
     // teleporter relocation consumes the unit's landing tile.
     apply_repair_platform(board, unit_idx, result);
 
-    // 10. Teleporter pad: fires LAST, after terrain/mine/item resolution.
+    // 11. Teleporter pad: fires LAST, after terrain/mine/item resolution.
     apply_teleport_on_land(board, unit_idx);
 
-    // 11. Spider/Web Egg adjacency webs are tile-based and can apply after a
+    // 12. Spider/Web Egg adjacency webs are tile-based and can apply after a
     // unit lands beside an existing egg or after a teleporter swap.
     board.refresh_webb_egg_grapples();
 }
@@ -5034,6 +5044,24 @@ mod tests {
         assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Aerial Bombs consumes transit Forest");
         assert!(board.tile(3, 4).smoke(), "Aerial Bombs still leaves smoke on the transit tile");
         assert!(!board.tile(3, 4).on_fire(), "Aerial Bombs smoke prevents transit Forest ignition");
+    }
+
+    #[test]
+    fn test_aerial_bombs_landing_on_smoke_extinguishes_carried_fire() {
+        // Hard Rusting Hulks run 20260513_230944_542, Mission_Airstrike turn 2:
+        // Jet was on fire at H3 and Aerial-Bombed to an already-smoked F3.
+        // The bridge reported Jet's fire cleared after landing.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 5, 0, 3, WId::BruteJetmech);
+        board.units[jet].set_fire(true);
+        board.tile_mut(5, 2).set_smoke(true);
+
+        let _ = simulate_action(&mut board, jet, (5, 0), WId::BruteJetmech, (5, 2), &WEAPONS);
+
+        assert_eq!((board.units[jet].x, board.units[jet].y), (5, 2));
+        assert!(!board.units[jet].fire(), "landing on smoke must extinguish carried fire");
+        assert!(board.tile(5, 1).smoke(), "Aerial Bombs still smokes the transit tile");
+        assert!(board.tile(5, 2).smoke(), "pre-existing landing smoke should remain");
     }
 
     #[test]

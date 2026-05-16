@@ -1185,7 +1185,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   run 20260513_144310_771 Mission_FireflyBoss turn 2, where E6 hatched onto
 //   F6 and destroyed a 2-HP building. Pre-v115 corpus archived as
 //   `failure_db_snapshot_sim_v114.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 115;
+// v116 - Landing on smoke extinguishes carried unit fire. Matches Hard Rusting
+//   Hulks run 20260513_230944_542 Mission_Airstrike turn 2, where Jet used
+//   Aerial Bombs from H3 to already-smoked F3 and live cleared fire while the
+//   simulator kept it. Pre-v116 corpus archived as
+//   `failure_db_snapshot_sim_v115.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 116;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
