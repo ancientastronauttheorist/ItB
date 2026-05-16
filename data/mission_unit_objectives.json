@@ -13,5 +13,57 @@
   "Mission_FreezeBots": {
     "destroy": [],
     "protect": ["Snowtank", "Snowlaser"]
+  },
+  "Mission_Bomb": {
+    "destroy": [],
+    "protect": ["ProtoBomb"]
+  },
+  "Mission_Train": {
+    "destroy": [],
+    "protect": ["Train"]
+  },
+  "Mission_Armored_Train": {
+    "destroy": [],
+    "protect": ["Train"]
+  },
+  "Mission_Terraform": {
+    "destroy": [],
+    "protect": ["Terraformer"]
+  },
+  "Mission_BeetleBoss": {
+    "destroy": ["BeetleBoss"],
+    "protect": []
+  },
+  "Mission_BlobBoss": {
+    "destroy": ["BlobBoss"],
+    "protect": []
+  },
+  "Mission_BotBoss": {
+    "destroy": ["BotBoss"],
+    "protect": []
+  },
+  "Mission_FireflyBoss": {
+    "destroy": ["FireflyBoss"],
+    "protect": []
+  },
+  "Mission_HornetBoss": {
+    "destroy": ["HornetBoss"],
+    "protect": []
+  },
+  "Mission_JellyBoss": {
+    "destroy": ["Jelly_Boss"],
+    "protect": []
+  },
+  "Mission_ScorpionBoss": {
+    "destroy": ["ScorpionBoss"],
+    "protect": []
+  },
+  "Mission_SlugBoss": {
+    "destroy": ["SlugBoss"],
+    "protect": []
+  },
+  "Mission_SpiderBoss": {
+    "destroy": ["SpiderBoss"],
+    "protect": []
   }
 }

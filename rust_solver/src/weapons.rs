@@ -481,9 +481,12 @@ pub enum WId {
     /// target plus zero-damage outward pushes on the four cardinal adjacent
     /// tiles.
     ScarabAtkB = 151,
+    /// Mission_Terraform structure weapon: click one adjacent direction tile,
+    /// then eradicate a 3x2 rectangle immediately in front of the Terraformer.
+    TerraformerAttack = 152,
 }
 
-pub const WEAPON_COUNT: usize = 152;
+pub const WEAPON_COUNT: usize = 153;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -1008,6 +1011,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[139] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 3, push: PushDir::Outward,
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
+    // 152: Terraformer_Attack — Mission_Terraform structure weapon. The clicked
+    // adjacent tile chooses direction; bespoke 3x2 lethal/sand sweep in simulate.rs.
+    w[152] = WeaponDef { weapon_type: WeaponType::Terraformer, damage: 0, range_min: 1, range_max: 1,
+        flags: C, ..DEF };
+
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
 
@@ -1061,6 +1069,31 @@ pub fn support_wind_dir_from_target(x: u8, y: u8) -> Option<usize> {
     } else {
         None
     }
+}
+
+/// Mission_Terraform Terraformer_Attack footprint. Lua starts one perpendicular
+/// tile to the right of the clicked adjacent target, sweeps three tiles across,
+/// then repeats one tile deeper in the clicked direction.
+pub fn terraformer_sweep_tiles(ax: u8, ay: u8, target_x: u8, target_y: u8) -> Option<Vec<(u8, u8)>> {
+    let dir = crate::movement::direction_between(ax, ay, target_x, target_y)?;
+    let (fdx, fdy) = DIRS[dir];
+    let (rdx, rdy) = DIRS[(dir + 1) % 4];
+    let (ldx, ldy) = DIRS[(dir + 3) % 4];
+    let mut tiles = Vec::with_capacity(6);
+
+    for i in 0..=1i8 {
+        let mut x = target_x as i8 + fdx * i + rdx;
+        let mut y = target_y as i8 + fdy * i + rdy;
+        for _ in 0..=2 {
+            if in_bounds(x, y) {
+                tiles.push((x as u8, y as u8));
+            }
+            x += ldx;
+            y += ldy;
+        }
+    }
+
+    Some(tiles)
 }
 
 #[inline]
@@ -1188,6 +1221,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "DeployTankShot2" => WId::DeployTankShot2,
         "Trapped_Explode" => WId::TrappedExplode,
         "TrappedExplode" => WId::TrappedExplode,
+        "Terraformer_Attack" => WId::TerraformerAttack,
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
@@ -1267,6 +1301,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "StarfishAtk1" => WId::StarfishAtk1,
         "StarfishAtk2" => WId::StarfishAtk2,
         "StarfishAtkB1" => WId::StarfishAtkB1,
+        "DungAtk1" => WId::TumblebugAtk1,
+        "DungAtk2" => WId::TumblebugAtk2,
         "TumblebugAtk1" => WId::TumblebugAtk1,
         "TumblebugAtk2" => WId::TumblebugAtk2,
         "PlasmodiaAtk1" => WId::PlasmodiaAtk1,
@@ -1354,6 +1390,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::DeployTankShot => "Deploy_TankShot",
         WId::DeployTankShot2 => "Deploy_TankShot2",
         WId::TrappedExplode => "Trapped_Explode",
+        WId::TerraformerAttack => "Terraformer_Attack",
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
@@ -1498,6 +1535,8 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Starfish1" => WId::StarfishAtk1,
         "Starfish2" => WId::StarfishAtk2,
         "StarfishBoss" => WId::StarfishAtkB1,
+        "Dung1" => WId::TumblebugAtk1,
+        "Dung2" => WId::TumblebugAtk2,
         "Tumblebug1" => WId::TumblebugAtk1,
         "Tumblebug2" => WId::TumblebugAtk2,
         "Plasmodia1" => WId::PlasmodiaAtk1,
@@ -1693,6 +1732,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::MissilesShield => "Shield Barrage",
         WId::MissilesOneDmg => "Missile Barrage",
         WId::TrappedExplode => "Area Blast",
+        WId::TerraformerAttack => "Terraformer",
         _ => "Unknown",
     }
 }
@@ -1868,6 +1908,14 @@ mod tests {
     }
 
     #[test]
+    fn test_tumblebug_live_lua_dung_aliases() {
+        assert_eq!(wid_from_str("DungAtk1"), WId::TumblebugAtk1);
+        assert_eq!(wid_from_str("DungAtk2"), WId::TumblebugAtk2);
+        assert_eq!(enemy_weapon_for_type("Dung1"), WId::TumblebugAtk1);
+        assert_eq!(enemy_weapon_for_type("Dung2"), WId::TumblebugAtk2);
+    }
+
+    #[test]
     fn test_bouncer_boss_sweeping_horns_def() {
         let w = weapon_def(WId::BouncerAtkB);
         assert_eq!(w.weapon_type, WeaponType::Melee);
@@ -1891,6 +1939,24 @@ mod tests {
         assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
         assert_eq!(enemy_weapon_for_type("ScarabBoss"), WId::ScarabAtkB);
         assert_eq!(weapon_name(WId::ScarabAtkB), "Expectorating Glands");
+    }
+
+    #[test]
+    fn test_terraformer_attack_def_and_footprint() {
+        let w = weapon_def(WId::TerraformerAttack);
+        assert_eq!(w.weapon_type, WeaponType::Terraformer);
+        assert_eq!(w.range_min, 1);
+        assert_eq!(w.range_max, 1);
+        assert_eq!(wid_from_str("Terraformer_Attack"), WId::TerraformerAttack);
+        assert_eq!(wid_to_str(WId::TerraformerAttack), "Terraformer_Attack");
+        assert_eq!(weapon_name(WId::TerraformerAttack), "Terraformer");
+
+        let tiles = terraformer_sweep_tiles(5, 3, 6, 3).expect("adjacent target");
+        assert_eq!(
+            tiles,
+            vec![(6, 2), (6, 3), (6, 4), (7, 2), (7, 3), (7, 4)]
+        );
+        assert!(terraformer_sweep_tiles(5, 3, 5, 5).is_none());
     }
 
     #[test]
@@ -1968,6 +2034,7 @@ mod tests {
             ("BouncerAtkB", WId::BouncerAtkB),
             ("Armored_Train_Move", WId::ArmoredTrainMove),
             ("ScarabAtkB", WId::ScarabAtkB),
+            ("Terraformer_Attack", WId::TerraformerAttack),
             ("Science_Pullmech", WId::SciencePullmech),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),

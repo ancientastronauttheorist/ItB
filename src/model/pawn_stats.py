@@ -107,6 +107,8 @@ VEK_STATS = {
     "Starfish1":     PawnStats(move_speed=3, ranged=0),
     "Starfish2":     PawnStats(move_speed=3, ranged=0),
     "StarfishBoss":  PawnStats(move_speed=3, massive=True, ranged=0, default_weapon="StarfishAtkB1"),
+    "Dung1":         PawnStats(move_speed=3, ranged=0),
+    "Dung2":         PawnStats(move_speed=3, ranged=0),
     "Tumblebug1":    PawnStats(move_speed=3, ranged=0),
     "Tumblebug2":    PawnStats(move_speed=3, ranged=0),
     "Plasmodia1":    PawnStats(move_speed=2, ranged=1),
@@ -233,6 +235,9 @@ NEUTRAL_STATS = {
     "Train_Armored_Damaged": PawnStats(move_speed=0, massive=True, armor=True,
                                        pushable=False, ignore_fire=True),
     "Filler_Pawn":       PawnStats(move_speed=0, pushable=False),
+    # Tumblebug explosive boulder. The live bridge exposes this as a neutral
+    # pawn (1 HP, Move 0) with the engine's Explodes flag.
+    "BombRock":          PawnStats(move_speed=0),
     # Digger rock wall: bridge exposes the spawned rock as a neutral "Wall"
     # pawn (1 HP, Move 0, no weapon) rather than terrain.
     "Wall":              PawnStats(move_speed=0),

@@ -409,6 +409,15 @@ pub(crate) fn get_weapon_targets(
                 targets.push(target);
             }
         }
+        WeaponType::Terraformer => {
+            for &(dx, dy) in &DIRS {
+                let nx = mx as i8 + dx;
+                let ny = my as i8 + dy;
+                if in_bounds(nx, ny) {
+                    targets.push((nx as u8, ny as u8));
+                }
+            }
+        }
         _ => {} // Passive, Deploy, TwoClick
     }
 
@@ -576,6 +585,17 @@ fn weapon_action_has_effect(
             } else {
                 board.units.iter().any(|u| u.hp > 0 && (u.x, u.y) != (mx, my))
             }
+        }
+        WeaponType::Terraformer => {
+            terraformer_sweep_tiles(mx, my, target.0, target.1)
+                .map(|tiles| tiles.iter().any(|&(x, y)| {
+                    if unit_at(x, y) { return true; }
+                    let tile = board.tile(x, y);
+                    tile.smoke()
+                        || tile.on_fire()
+                        || (!matches!(tile.terrain, Terrain::Mountain | Terrain::Sand))
+                }))
+                .unwrap_or(false)
         }
         // Leap/Swap/Deploy/TwoClick: positional or utility — don't filter
         _ => true,

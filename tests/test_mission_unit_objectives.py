@@ -24,6 +24,41 @@ def test_mission_freezebots_protects_robot_units():
     assert resolved["protect"] == ["Snowtank", "Snowlaser"]
 
 
+def test_mission_bomb_protects_proto_bombs():
+    resolved = resolve_unit_objectives("Mission_Bomb")
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["ProtoBomb"]
+
+
+def test_train_missions_protect_train_units():
+    assert resolve_unit_objectives("Mission_Train")["protect"] == ["Train"]
+    assert resolve_unit_objectives("Mission_Armored_Train")["protect"] == ["Train"]
+
+
+def test_mission_terraform_protects_terraformer():
+    resolved = resolve_unit_objectives("Mission_Terraform")
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["Terraformer"]
+
+
+def test_boss_missions_destroy_the_leader_units():
+    cases = {
+        "Mission_BeetleBoss": "BeetleBoss",
+        "Mission_BlobBoss": "BlobBoss",
+        "Mission_BotBoss": "BotBoss",
+        "Mission_FireflyBoss": "FireflyBoss",
+        "Mission_HornetBoss": "HornetBoss",
+        "Mission_JellyBoss": "Jelly_Boss",
+        "Mission_ScorpionBoss": "ScorpionBoss",
+        "Mission_SlugBoss": "SlugBoss",
+        "Mission_SpiderBoss": "SpiderBoss",
+    }
+    for mission_id, pawn_type in cases.items():
+        resolved = resolve_unit_objectives(mission_id)
+        assert resolved["destroy"] == [pawn_type]
+        assert resolved["protect"] == []
+
+
 def test_unknown_mission_resolves_empty_lists():
     assert resolve_unit_objectives("Mission_NoSuch") == {
         "destroy": [],

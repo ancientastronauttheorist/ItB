@@ -134,6 +134,46 @@ def test_summary_tracks_protected_objective_units_from_mission_metadata():
     ]
 
 
+def test_summary_tracks_proto_bombs_from_mission_metadata():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Bomb"
+    data["units"].extend([
+        {
+            "uid": 401,
+            "type": "ProtoBomb",
+            "x": 3,
+            "y": 4,
+            "hp": 1,
+            "max_hp": 1,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+        {
+            "uid": 402,
+            "type": "ProtoBomb",
+            "x": 4,
+            "y": 2,
+            "hp": 0,
+            "max_hp": 1,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["protected_objective_units_alive"] == 1
+    assert [u["type"] for u in summary["protected_objective_units"]] == [
+        "ProtoBomb",
+        "ProtoBomb",
+    ]
+
+
 def test_summary_keeps_dead_player_mechs_for_post_enemy_diff():
     data = _bridge_with_mech()
     data["units"][0]["hp"] = 0

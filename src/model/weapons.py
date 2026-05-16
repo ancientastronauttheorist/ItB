@@ -745,6 +745,14 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Tumblebug Boulder", weapon_type="melee",
         damage=3,
     ),
+    "DungAtk1": WeaponDef(
+        name="Tumblebug Boulder", weapon_type="melee",
+        damage=1,
+    ),
+    "DungAtk2": WeaponDef(
+        name="Alpha Tumblebug Boulder", weapon_type="melee",
+        damage=3,
+    ),
 
     # ── Advanced Edition Artillery ───────────────────────────────────
     "MothAtk1": WeaponDef(

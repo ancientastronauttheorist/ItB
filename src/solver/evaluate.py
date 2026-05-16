@@ -96,6 +96,10 @@ class EvalWeights:
     # Item_Repair_Mine tile.
     mission_repair_bonus: float = 15000
 
+    # Mission_Terraform "Terraform the grassland back to desert" objective.
+    # Negative penalty per custom grassland tile still present after the plan.
+    mission_terraform_grass_remaining: float = -2500
+
     # Building protection
     mech_self_frozen: float = -12000
     building_bump_damage: float = -8000
@@ -424,6 +428,16 @@ def evaluate(
             score += _scaled(w.mission_repair_bonus, ff, 0.10, 0.40) * (used / rt)
         if used >= rt:
             score += _scaled(w.mission_repair_bonus, ff, 0.25, 0.75)
+
+    # --- MISSION_TERRAFORM: remaining custom grassland objective debt ---
+    if getattr(board, 'mission_id', '') == 'Mission_Terraform':
+        grass_remaining = sum(
+            1
+            for x in range(8)
+            for y in range(8)
+            if getattr(board.tile(x, y), 'grass', False)
+        )
+        score += grass_remaining * w.mission_terraform_grass_remaining
 
     # --- ENVIRONMENT DANGER: SCALED ---
     # Lethal env (kill_int=1: Air Strike, Lightning, Cataclysm→chasm, Seismic,
@@ -768,13 +782,25 @@ def evaluate_breakdown(
             repair_platform_threshold_score = _scaled(w.mission_repair_bonus, ff, 0.25, 0.75)
     repair_platform_score = repair_platform_progress_score + repair_platform_threshold_score
 
+    grass_remaining = 0
+    terraform_grass_score = 0.0
+    if getattr(board, 'mission_id', '') == 'Mission_Terraform':
+        grass_remaining = sum(
+            1
+            for x in range(8)
+            for y in range(8)
+            if getattr(board.tile(x, y), 'grass', False)
+        )
+        terraform_grass_score = grass_remaining * w.mission_terraform_grass_remaining
+
     total = (buildings_score + building_hp_score
              + objective_rep_score + objective_grid_score
              + grid_power_score
              + enemies_killed_score + enemy_hp_score + mission_unit_score
              + danger_score
              + mech_score + spawns_score + remaining_spawn_score
-             + pods_score + kill_n_score + repair_platform_score)
+             + pods_score + kill_n_score + repair_platform_score
+             + terraform_grass_score)
 
     # Note: sanity check removed — evaluate() now requires turn params.
     # Use evaluate_breakdown only for debugging, not during search.
@@ -815,6 +841,10 @@ def evaluate_breakdown(
             "progress_score": repair_platform_progress_score,
             "threshold_score": repair_platform_threshold_score,
             "score": repair_platform_score,
+        },
+        "mission_terraform_grass": {
+            "remaining": grass_remaining,
+            "score": terraform_grass_score,
         },
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
         "mission_unit_objectives": {

@@ -9,6 +9,7 @@ use crate::board::*;
 use crate::weapons::*;
 use crate::simulate::{
     apply_damage,
+    apply_damage_with_bombrock_exclusion,
     apply_push,
     apply_push_no_edge_bump,
     apply_teleport_on_land,
@@ -1427,9 +1428,29 @@ pub fn simulate_enemy_attacks(
                             continue;
                         }
                     }
+                    let target_had_mech = board.unit_at(tx, ty)
+                        .is_some_and(|idx| board.units[idx].is_mech());
+                    let target_was_mountain = board.tile(tx, ty).terrain == Terrain::Mountain;
                     let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
-                    apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    if matches!(enemy_wid, WId::TumblebugAtk1 | WId::TumblebugAtk2) {
+                        apply_damage_with_bombrock_exclusion(
+                            board,
+                            tx,
+                            ty,
+                            d,
+                            &mut result,
+                            DamageSource::Weapon,
+                            Some((ex, ey)),
+                        );
+                    } else {
+                        apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    }
+                    if wdef.queued_damage_persists() && target_was_mountain {
+                        // BlobBossAtk queues a second identical hit against
+                        // mountains, destroying a full mountain in one squish.
+                        apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    }
                     if wdef.push == PushDir::Forward {
                         if let Some(dir) = attack_dir {
                             apply_push(board, tx, ty, dir, &mut result);
@@ -1441,6 +1462,19 @@ pub fn simulate_enemy_attacks(
                     if wdef.web() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             board.units[idx].web_source_uid = enemy_uid;
+                        }
+                    }
+                    if wdef.queued_damage_persists()
+                        && !target_had_mech
+                        && board.units[ei].hp > 0
+                        && board.unit_at(tx, ty).is_none()
+                    {
+                        let tile = board.tile(tx, ty);
+                        if !matches!(tile.terrain, Terrain::Building | Terrain::Mountain)
+                            && !tile.terrain.is_deadly_ground()
+                        {
+                            board.units[ei].x = tx;
+                            board.units[ei].y = ty;
                         }
                     }
                 }
@@ -2175,6 +2209,35 @@ mod tests {
         assert_eq!(board.units[1].hp, 1, "Blob Leader should survive its 1 self damage");
         assert_eq!(board.tile(3, 4).building_hp, 0, "adjacent building should take 2 damage");
         assert_eq!(board.units[mech_idx].hp, 1, "adjacent mech should take 2 damage");
+    }
+
+    #[test]
+    fn test_blob_boss_squish_moves_into_destroyed_building() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        add_enemy_with_type(&mut board, 20, 3, 3, 3, "BlobBoss", 3, 4);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!((board.units[0].x, board.units[0].y), (3, 4));
+    }
+
+    #[test]
+    fn test_blob_boss_squish_destroys_full_mountain() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        add_enemy_with_type(&mut board, 21, 3, 3, 3, "BlobBoss", 3, 4);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!((board.units[0].x, board.units[0].y), (3, 4));
     }
 
     #[test]

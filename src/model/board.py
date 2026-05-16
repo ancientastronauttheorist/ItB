@@ -188,6 +188,7 @@ class BoardTile:
     freeze_mine: bool = False  # freeze mine on this tile (freezes unit that stops here)
     old_earth_mine: bool = False  # old earth mine — kills any unit that stops here (bypasses shield)
     repair_platform: bool = False  # Mission_Repair platform; full-heals then disappears
+    grass: bool = False  # Mission_Terraform custom grassland objective tile
     unique_building: bool = False  # objective building (Coal Plant / Batteries / Generator)
     # Specific objective tag when unique_building=True (e.g. "Str_Power",
     # "Str_Battery", "Mission_Solar" for ⚡ grid-reward; "Str_Clinic",
@@ -491,6 +492,10 @@ class Board:
                 bt.repair_platform = bool(
                     td.get("repair_platform", False)
                     or td.get("item") == "Item_Repair_Mine"
+                )
+                bt.grass = bool(
+                    td.get("grass", False)
+                    or td.get("custom") == "ground_grass.png"
                 )
                 if "conveyor" in td:
                     bt.conveyor = td["conveyor"]

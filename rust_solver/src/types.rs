@@ -126,6 +126,9 @@ pub enum WeaponType {
     /// Detritus Contraption barrages: ZONE_ALL targeting, applies damage or
     /// shield to every live non-source unit on the board.
     GlobalUnitEffect = 14,
+    /// Mission_Terraform's Terraformer: adjacent direction selector, then a
+    /// 3x2 lethal terrain-conversion sweep in front of the structure.
+    Terraformer = 15,
 }
 
 impl WeaponType {
@@ -146,6 +149,7 @@ impl WeaponType {
             "heal_all" => WeaponType::HealAll,
             "global_push" => WeaponType::GlobalPush,
             "global_unit_effect" => WeaponType::GlobalUnitEffect,
+            "terraformer" => WeaponType::Terraformer,
             _ => WeaponType::Melee,
         }
     }

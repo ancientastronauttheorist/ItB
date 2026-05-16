@@ -117,6 +117,26 @@ pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mu
     }
 }
 
+fn apply_bombrock_explosion(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+    exclude: Option<(u8, u8)>,
+    depth: u8,
+) {
+    if depth > 8 { return; }
+
+    for &(dx, dy) in &DIRS {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if nx < 0 || nx >= 8 || ny < 0 || ny >= 8 { continue; }
+        let (nx, ny) = (nx as u8, ny as u8);
+        if exclude == Some((nx, ny)) { continue; }
+        apply_damage_inner(board, nx, ny, 1, result, DamageSource::Bump, None, depth + 1);
+    }
+}
+
 // ── Teleporter pad swap (Mission_Teleporter) ─────────────────────────────────
 
 /// End-of-movement teleporter-pad swap. Called from every call site that
@@ -166,6 +186,24 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
             board.units[other_idx].x = ux;
             board.units[other_idx].y = uy;
         }
+    }
+}
+
+/// Resolve Time Pod contact when a unit lands on a tile. Player mechs collect
+/// pods; every other live unit destroys the pod without collection credit.
+#[inline]
+fn apply_pod_on_land(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
+    if board.units[unit_idx].hp <= 0 { return; }
+    let x = board.units[unit_idx].x;
+    let y = board.units[unit_idx].y;
+    if !board.tile(x, y).has_pod() { return; }
+
+    board.tile_mut(x, y).set_has_pod(false);
+    if board.units[unit_idx].is_player() && board.units[unit_idx].is_mech() {
+        result.pods_collected += 1;
+        result.events.push(format!("pod_collected:{}:{}", x, y));
+    } else {
+        result.events.push(format!("pod_destroyed_by_landing:{}:{}", x, y));
     }
 }
 
@@ -420,6 +458,13 @@ pub(crate) fn on_enemy_death(
     let dx = board.units[idx].x;
     let dy = board.units[idx].y;
 
+    if let Some((child_type, child_hp, child_weapon)) =
+        blob_boss_death_spawn(&dying_tname_owned)
+    {
+        spawn_blob_boss_children(board, dx, dy, board.units[idx].uid, &dying_tname_owned,
+                                child_type, child_hp, child_weapon, result);
+    }
+
     // ── Fire Psion (AE LEADER_FIRE) on-death fire ─────────────────────────
     // While Fire Psion is alive, every Vek that dies leaves Fire on its tile.
     // Excludes the Psion itself and the Boost/Spider/other AE psions per the
@@ -556,6 +601,146 @@ pub(crate) fn on_enemy_death(
     if board.boss_alive && board.units[idx].type_name_str().contains("Boss") {
         board.boss_alive = false;
     }
+}
+
+fn blob_boss_death_spawn(name: &str) -> Option<(&'static str, i8, WId)> {
+    match name {
+        "BlobBoss" => Some(("BlobBossMed", 2, WId::BlobBossAtkMed)),
+        "BlobBossMed" => Some(("BlobBossSmall", 1, WId::BlobBossAtkSmall)),
+        _ => None,
+    }
+}
+
+fn spawn_blob_boss_children(
+    board: &mut Board,
+    death_x: u8,
+    death_y: u8,
+    parent_uid: u16,
+    parent_type: &str,
+    child_type: &str,
+    child_hp: i8,
+    child_weapon: WId,
+    result: &mut ActionResult,
+) {
+    let mut spawned = 0u8;
+    let mut primary = blob_boss_split_candidates(board, death_x, death_y, 1, 2);
+    let mut backup = blob_boss_split_candidates(board, death_x, death_y, 3, 4);
+
+    while spawned < 2 {
+        let loc = if !primary.is_empty() {
+            Some(primary.remove(0))
+        } else if !backup.is_empty() {
+            Some(backup.remove(0))
+        } else {
+            None
+        };
+        let Some((sx, sy)) = loc else { break; };
+        if !spawn_blob_boss_child(board, sx, sy, child_type, child_hp, child_weapon) {
+            continue;
+        }
+        spawned += 1;
+        result.events.push(format!(
+            "blob_split:{}:{}:{}:{}->{}:{}:{}",
+            parent_uid, parent_type, death_x, death_y, child_type, sx, sy
+        ));
+        // The first child now occupies its tile, so the second child must not
+        // reuse that candidate if it was also present in the backup list.
+        primary.retain(|&p| p != (sx, sy));
+        backup.retain(|&p| p != (sx, sy));
+    }
+}
+
+fn blob_boss_split_candidates(
+    board: &Board,
+    cx: u8,
+    cy: u8,
+    min_dist: u8,
+    max_dist: u8,
+) -> Vec<(u8, u8)> {
+    let mut out = Vec::new();
+    let size = 4i8;
+    let corner_x = cx as i8 - size;
+    let corner_y = cy as i8 - size;
+    // Lua general_DiamondTarget scans the surrounding square row-major from
+    // center - (size,size), then filters to the Manhattan diamond. The real
+    // Goo split uses random_removal from this list; the simulator takes the
+    // first valid deterministic representatives so searches are reproducible.
+    for y in corner_y..=(corner_y + size * 2) {
+        for x in corner_x..=(corner_x + size * 2) {
+            if !in_bounds(x, y) {
+                continue;
+            }
+            let ux = x as u8;
+            let uy = y as u8;
+            if (ux, uy) == (cx, cy) {
+                continue;
+            }
+            let dist = (x - cx as i8).unsigned_abs() + (y - cy as i8).unsigned_abs();
+            if dist < min_dist || dist > max_dist {
+                continue;
+            }
+            if board.is_blocked(ux, uy, false) {
+                continue;
+            }
+            out.push((ux, uy));
+        }
+    }
+    out
+}
+
+fn spawn_blob_boss_child(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    child_type: &str,
+    base_hp: i8,
+    child_weapon: WId,
+) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+    if board.unit_at(x, y).is_some() || board.wreck_at(x, y) {
+        return false;
+    }
+    if board.is_blocked(x, y, false) {
+        return false;
+    }
+
+    let mut hp = base_hp;
+    let mut max_hp = base_hp;
+    if board.soldier_psion || board.boss_psion {
+        hp += 1;
+        max_hp += 1;
+    }
+
+    let mut new_uid: u16 = 1;
+    for i in 0..board.unit_count as usize {
+        new_uid = new_uid.max(board.units[i].uid.saturating_add(1));
+    }
+
+    let mut flags = UnitFlags::PUSHABLE | UnitFlags::MASSIVE;
+    if board.armor_psion {
+        flags.insert(UnitFlags::ARMOR);
+    }
+
+    let mut unit = Unit {
+        uid: new_uid,
+        x,
+        y,
+        hp,
+        max_hp,
+        team: Team::Enemy,
+        move_speed: 3,
+        base_move: 3,
+        flags,
+        weapon: WeaponId(child_weapon as u16),
+        queued_target_x: -1,
+        queued_target_y: -1,
+        ..Unit::default()
+    };
+    unit.set_type_name(child_type);
+    board.add_unit(unit);
+    true
 }
 
 /// Materialize Spider Psion death eggs queued by `on_enemy_death`.
@@ -804,6 +989,13 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     if source != DamageSource::WeaponUnitOnly {
+        // Time Pods are fragile map objects: direct tile damage destroys them
+        // unless they were already collected by a player mech landing.
+        if damage > 0 && board.tile(x, y).has_pod() {
+            board.tile_mut(x, y).set_has_pod(false);
+            result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
+        }
+
         // Damage building if present — incremental HP damage. Direct weapon and
         // explosion damage drains current grid per building HP lost. Push/bump
         // collision damage has its own non-unique multi-HP exception below.
@@ -1043,6 +1235,31 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
 /// WeaponUnitOnly mirrors weapon damage against occupants while leaving
 /// buildings/terrain unchanged.
 pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
+    apply_damage_inner(board, x, y, damage, result, source, None, 0);
+}
+
+pub fn apply_damage_with_bombrock_exclusion(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+    exclude: Option<(u8, u8)>,
+) {
+    apply_damage_inner(board, x, y, damage, result, source, exclude, 0);
+}
+
+fn apply_damage_inner(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+    bombrock_exclude: Option<(u8, u8)>,
+    bombrock_depth: u8,
+) {
     if damage == 0 { return; }
 
     // Pre-check: track alive non-Psion enemy for Blast Psion / Psion Abomination
@@ -1068,8 +1285,32 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
         } else { None }
     });
 
+    // Tumblebug BombRock / Unstable Boulder is a neutral 1 HP pawn with the
+    // engine's Explodes flag: destroying it deals 1 bump-class damage to
+    // cardinal-adjacent tiles. Tumblebugs exclude their own source tile when
+    // detonating the queued boulder.
+    let bombrock_check = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.hp > 0 && u.type_name_str() == "BombRock" {
+            Some(idx)
+        } else { None }
+    });
+
     // Apply core damage
     apply_damage_core(board, x, y, damage, result, source);
+
+    if let Some(idx) = bombrock_check {
+        if board.units[idx].hp <= 0 {
+            apply_bombrock_explosion(
+                board,
+                x,
+                y,
+                result,
+                bombrock_exclude,
+                bombrock_depth,
+            );
+        }
+    }
 
     // Volatile Vek decay fires first — it's a tier-0 unit effect. If the
     // ensuing damage kills a Blast Psion–tagged enemy that was adjacent,
@@ -1470,6 +1711,7 @@ fn apply_push_with_policy(
     if retarget_death_egg {
         retarget_pending_spider_egg(board, x, y, nx, ny);
     }
+    apply_pod_on_land(board, unit_idx, result);
 
     // Web break: enemy webber pushed → unweb any mechs they were holding.
     // Position change alone breaks the grapple (regardless of whether the
@@ -1773,6 +2015,7 @@ pub fn simulate_weapon_with(
         WeaponType::GlobalUnitEffect => sim_global_unit_effect(
             board, wdef, (ax, ay), (target_x, target_y), &mut result,
         ),
+        WeaponType::Terraformer => sim_terraformer(board, ax, ay, target_x, target_y, &mut result),
         _ => {} // Passive, Deploy, TwoClick — no simulation
     }
 
@@ -1803,6 +2046,76 @@ pub fn simulate_weapon_with(
     }
 
     result
+}
+
+// ── Terraformer ────────────────────────────────────────────────────────────────
+
+fn apply_terraformer_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    if let Some(idx) = board.unit_at(x, y) {
+        let hp_before = board.units[idx].hp.max(0) as i32;
+        let was_enemy = board.units[idx].is_enemy();
+        let was_player = board.units[idx].is_player();
+        finish_instant_unit_death(board, idx, result, x, y);
+        if hp_before > 0 && board.units[idx].hp <= 0 {
+            if was_enemy {
+                result.enemy_damage_dealt += hp_before;
+            } else if was_player {
+                result.mech_damage_taken += hp_before;
+            }
+        }
+    }
+
+    if board.tile(x, y).terrain == Terrain::Building && board.tile(x, y).building_hp > 0 {
+        let idx = xy_to_idx(x, y);
+        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+        let hp_lost = {
+            let tile = board.tile_mut(x, y);
+            let lost = tile.building_hp;
+            tile.building_hp = 0;
+            tile.set_shield(false);
+            lost
+        };
+        if hp_lost > 0 {
+            result.buildings_damaged += hp_lost as i32;
+            result.buildings_lost += 1;
+            let grid_loss = settle_building_grid_loss(
+                board,
+                idx,
+                hp_lost,
+                true,
+                is_unique,
+                DamageSource::Weapon,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
+        }
+    }
+
+    let terrain = board.tile(x, y).terrain;
+    let tile = board.tile_mut(x, y);
+    tile.set_smoke(false);
+    tile.set_on_fire(false);
+    tile.set_cracked(false);
+    if terrain != Terrain::Mountain {
+        tile.terrain = Terrain::Sand;
+        tile.building_hp = 0;
+        tile.set_grass(false);
+    }
+
+    if let Some(idx) = board.unit_at(x, y) {
+        board.units[idx].set_fire(false);
+    }
+}
+
+fn sim_terraformer(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, result: &mut ActionResult) {
+    let Some(tiles) = terraformer_sweep_tiles(ax, ay, tx, ty) else {
+        result.events.push(format!("invalid_terraformer_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    };
+
+    for (x, y) in tiles {
+        apply_terraformer_tile(board, x, y, result);
+    }
 }
 
 // ── Melee ────────────────────────────────────────────────────────────────────
@@ -3043,14 +3356,7 @@ pub fn simulate_move(
     board.units[mech_idx].x = move_to.0;
     board.units[mech_idx].y = move_to.1;
 
-    // Collect pod
-    {
-        let tile = board.tile_mut(move_to.0, move_to.1);
-        if tile.has_pod() {
-            tile.set_has_pod(false);
-            result.pods_collected += 1;
-        }
-    }
+    apply_pod_on_land(board, mech_idx, &mut result);
 
     // ACID pool pickup: mech gains ACID, pool consumed
     {
@@ -3281,6 +3587,52 @@ mod tests {
             move_speed: 3,
             ..Default::default()
         })
+    }
+
+    fn add_mission_ally(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, weapon: WId, type_name: &str) -> usize {
+        let idx = board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Player,
+            weapon: crate::board::WeaponId(weapon as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            base_move: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name(type_name);
+        idx
+    }
+
+    #[test]
+    fn test_terraformer_attack_kills_six_tile_sweep_and_sands_ground() {
+        let mut board = make_test_board();
+        let terraformer = add_mission_ally(&mut board, 245, 5, 3, 2, WId::TerraformerAttack, "Terraformer");
+        let moth = add_enemy(&mut board, 246, 6, 3, 3);
+        let blob = add_enemy(&mut board, 247, 7, 2, 1);
+        let safe = add_enemy(&mut board, 248, 5, 5, 1);
+        board.tile_mut(6, 3).set_smoke(true);
+        board.tile_mut(6, 3).set_grass(true);
+        board.tile_mut(7, 2).terrain = Terrain::Forest;
+        board.tile_mut(7, 2).set_on_fire(true);
+        board.tile_mut(7, 2).set_grass(true);
+        board.tile_mut(7, 3).terrain = Terrain::Mountain;
+        board.tile_mut(7, 3).building_hp = 2;
+        board.tile_mut(7, 3).set_grass(true);
+
+        let result = simulate_weapon(&mut board, terraformer, WId::TerraformerAttack, 6, 3);
+
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(board.units[moth].hp, 0);
+        assert_eq!(board.units[blob].hp, 0);
+        assert_eq!(board.units[safe].hp, 1);
+        assert_eq!(board.tile(6, 3).terrain, Terrain::Sand);
+        assert!(!board.tile(6, 3).smoke());
+        assert!(!board.tile(6, 3).grass());
+        assert_eq!(board.tile(7, 2).terrain, Terrain::Sand);
+        assert!(!board.tile(7, 2).on_fire());
+        assert!(!board.tile(7, 2).grass());
+        assert_eq!(board.tile(7, 3).terrain, Terrain::Mountain);
+        assert!(board.tile(7, 3).grass());
     }
 
     #[test]
@@ -3535,6 +3887,48 @@ mod tests {
         apply_push(&mut board, 3, 3, 0, &mut result); // push N into water
         assert_eq!(board.units[idx].hp, 0);
         assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_push_enemy_onto_time_pod_destroys_without_collecting() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_has_pod(true);
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
+        assert!(!board.tile(3, 4).has_pod());
+        assert_eq!(result.pods_collected, 0);
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_landing:3:4"));
+    }
+
+    #[test]
+    fn test_push_mech_onto_time_pod_collects() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_has_pod(true);
+        let idx = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
+        assert!(!board.tile(3, 4).has_pod());
+        assert_eq!(result.pods_collected, 1);
+    }
+
+    #[test]
+    fn test_direct_damage_to_time_pod_destroys_without_collecting() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_has_pod(true);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut result, DamageSource::Weapon);
+
+        assert!(!board.tile(3, 4).has_pod());
+        assert_eq!(result.pods_collected, 0);
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_damage:3:4"));
     }
 
     #[test]
@@ -4816,6 +5210,109 @@ mod tests {
         assert_eq!(board.units[egg].uid, 880);
         assert_eq!(board.units[egg].type_name_str(), "SpiderlingEgg1");
         assert_eq!(board.units[egg].hp, 1);
+    }
+
+    #[test]
+    fn test_blob_boss_death_spawns_two_medium_goos() {
+        let mut board = make_test_board();
+        let _boss = add_enemy_type(&mut board, 200, 4, 4, 1, "BlobBoss");
+        board.units[0].flags.insert(UnitFlags::MASSIVE);
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(result.enemies_killed, 1);
+        let children: Vec<_> = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossMed")
+            .collect();
+        assert_eq!(children.len(), 2);
+        assert_eq!((children[0].x, children[0].y), (4, 2));
+        assert_eq!((children[1].x, children[1].y), (3, 3));
+        for child in children {
+            assert_eq!(child.hp, 2);
+            assert_eq!(child.max_hp, 2);
+            assert_eq!(child.move_speed, 3);
+            assert_eq!(child.base_move, 3);
+            assert!(child.massive());
+            assert!(child.pushable());
+            assert!(!child.has_queued_attack());
+            assert_eq!(child.queued_target_x, -1);
+            assert_eq!(child.weapon, WeaponId(WId::BlobBossAtkMed as u16));
+        }
+        assert!(result.events.iter().any(|e| e.contains("blob_split:200:BlobBoss")));
+    }
+
+    #[test]
+    fn test_medium_goo_splits_and_small_goo_does_not() {
+        let mut board = make_test_board();
+        let _med = add_enemy_type(&mut board, 201, 4, 4, 1, "BlobBossMed");
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+
+        let smalls = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossSmall")
+            .count();
+        assert_eq!(smalls, 2);
+
+        let mut board = make_test_board();
+        let _small = add_enemy_type(&mut board, 202, 4, 4, 1, "BlobBossSmall");
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+        assert_eq!(board.unit_count, 1, "Small Goo should not split further");
+    }
+
+    #[test]
+    fn test_blob_boss_split_uses_backup_radius_when_primary_blocked() {
+        let mut board = make_test_board();
+        for x in 0u8..8 {
+            for y in 0u8..8 {
+                let dist = (x as i8 - 4).unsigned_abs() + (y as i8 - 4).unsigned_abs();
+                if (1..=2).contains(&dist) {
+                    board.tile_mut(x, y).terrain = Terrain::Water;
+                }
+            }
+        }
+        let _boss = add_enemy_type(&mut board, 203, 4, 4, 1, "BlobBoss");
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+
+        let children: Vec<_> = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossMed")
+            .collect();
+        assert_eq!(children.len(), 2);
+        for child in children {
+            let dist = (child.x as i8 - 4).unsigned_abs()
+                + (child.y as i8 - 4).unsigned_abs();
+            assert!(
+                (3..=4).contains(&dist),
+                "child at ({}, {}) should use backup radius",
+                child.x,
+                child.y
+            );
+        }
+    }
+
+    #[test]
+    fn test_blob_boss_instant_death_still_splits() {
+        let mut board = make_test_board();
+        let _boss = add_enemy_type(&mut board, 204, 4, 4, 1, "BlobBoss");
+        board.units[0].flags.insert(UnitFlags::MASSIVE);
+        board.tile_mut(4, 5).terrain = Terrain::Chasm;
+        let mut result = ActionResult::default();
+
+        apply_push(&mut board, 4, 4, 0, &mut result);
+
+        assert_eq!(result.enemies_killed, 1);
+        let children = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossMed")
+            .count();
+        assert_eq!(children, 2);
     }
 
     #[test]

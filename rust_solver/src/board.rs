@@ -21,6 +21,7 @@ bitflags! {
         const OLD_EARTH_MINE  = 0b0000_1000_0000;
         const REPAIR_PLATFORM = 0b0001_0000_0000;
         const SHIELD          = 0b0010_0000_0000;
+        const GRASS           = 0b0100_0000_0000;
     }
 }
 
@@ -58,6 +59,7 @@ impl Tile {
     pub fn old_earth_mine(&self) -> bool { self.flags.contains(TileFlags::OLD_EARTH_MINE) }
     pub fn repair_platform(&self) -> bool { self.flags.contains(TileFlags::REPAIR_PLATFORM) }
     pub fn shield(&self) -> bool { self.flags.contains(TileFlags::SHIELD) }
+    pub fn grass(&self) -> bool { self.flags.contains(TileFlags::GRASS) }
 
     pub fn set_on_fire(&mut self, v: bool) { self.flags.set(TileFlags::ON_FIRE, v); }
     pub fn set_smoke(&mut self, v: bool) { self.flags.set(TileFlags::SMOKE, v); }
@@ -68,6 +70,7 @@ impl Tile {
     pub fn set_old_earth_mine(&mut self, v: bool) { self.flags.set(TileFlags::OLD_EARTH_MINE, v); }
     pub fn set_repair_platform(&mut self, v: bool) { self.flags.set(TileFlags::REPAIR_PLATFORM, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(TileFlags::SHIELD, v); }
+    pub fn set_grass(&mut self, v: bool) { self.flags.set(TileFlags::GRASS, v); }
 
     pub fn is_building(&self) -> bool {
         self.terrain == Terrain::Building && self.building_hp > 0

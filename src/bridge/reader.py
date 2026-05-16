@@ -171,6 +171,112 @@ def _read_repair_pickups_from_save() -> int | None:
     return int(matches[0])
 
 
+def _active_region_keys(data: dict) -> list[str]:
+    """Return save-region keys that look like the currently live mission."""
+    seeds = data.get("mission_seeds") or {}
+    if not isinstance(seeds, dict):
+        return []
+    current_turn = data.get("turn")
+    exact: list[str] = []
+    active: list[str] = []
+    for key, info in seeds.items():
+        if not isinstance(info, dict):
+            continue
+        if info.get("state") != 0:
+            continue
+        active.append(key)
+        if current_turn is None or info.get("turn") == current_turn:
+            exact.append(key)
+    return exact or active
+
+
+def _region_blocks(content: str) -> dict[str, str]:
+    """Slice saveData.lua into RegionData.regionN blocks."""
+    matches = list(re.finditer(r'\["(region\d+)"\]\s*=\s*\{', content))
+    blocks: dict[str, str] = {}
+    for i, match in enumerate(matches):
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(content)
+        blocks[match.group(1)] = content[match.start():end]
+    return blocks
+
+
+def _grass_tiles_from_region_blocks(
+    blocks: dict[str, str],
+    region_keys: set[str],
+) -> set[tuple[int, int]]:
+    tiles: set[tuple[int, int]] = set()
+    for key in region_keys:
+        block = blocks.get(key, "")
+        for line in block.splitlines():
+            loc = re.search(
+                r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)',
+                line,
+            )
+            custom = re.search(r'\["custom"\]\s*=\s*"([^"]+)"', line)
+            if not loc or not custom:
+                continue
+            if custom.group(1) == "ground_grass.png":
+                tiles.add((int(loc.group(1)), int(loc.group(2))))
+    return tiles
+
+
+def _read_terraform_grass_tiles_from_save(data: dict) -> set[tuple[int, int]]:
+    """Read active Mission_Terraform custom grassland tiles from saveData.lua.
+
+    The engine stores grassland as ordinary terrain plus the custom sprite
+    ``ground_grass.png``. The bridge terrain id alone reports this as generic
+    ground/water/sand, so we supplement the live payload from the active save
+    region only.
+    """
+    if data.get("mission_id") != "Mission_Terraform":
+        return set()
+    region_keys = set(_active_region_keys(data))
+    if not region_keys:
+        return set()
+
+    base = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
+    )
+    for filename in ("saveData.lua", "undoSave.lua"):
+        try:
+            with open(os.path.join(base, filename)) as f:
+                content = f.read()
+        except OSError:
+            continue
+        blocks = _region_blocks(content)
+        tiles = _grass_tiles_from_region_blocks(blocks, region_keys)
+        if tiles:
+            return tiles
+    return set()
+
+
+def _safe_to_overlay_save_grass(data: dict) -> bool:
+    """Only use save grass at a fresh player-turn boundary.
+
+    saveData.lua does not update after every bridge action. If we overlaid
+    save-derived grass mid-turn, a partial re-solve after the Terraformer fired
+    could see already-cleared grass as still present.
+    """
+    if data.get("phase") != "combat_player":
+        return False
+    actors = [
+        u for u in data.get("units", []) or []
+        if u.get("team") == 1
+        and int(u.get("hp", 0) or 0) > 0
+        and u.get("weapons")
+    ]
+    if not actors:
+        return False
+    active_count = data.get("active_mechs")
+    if active_count is not None:
+        try:
+            if int(active_count) != len(actors):
+                return False
+        except (TypeError, ValueError):
+            return False
+    return all(bool(u.get("active", False)) for u in actors)
+
+
 def _read_teleporter_pads_from_save() -> list[tuple[int, int, int, int]]:
     """Recover Mission_Teleporter pad pairs from the save file.
 
@@ -352,6 +458,19 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
             pickups = _read_repair_pickups_from_save()
             if pickups is not None:
                 data["repair_platforms_used"] = pickups
+
+    if (data.get("mission_id") == "Mission_Terraform"
+            and _safe_to_overlay_save_grass(data)):
+        grass_tiles = _read_terraform_grass_tiles_from_save(data)
+        if grass_tiles:
+            data["terraform_grass_tiles"] = [
+                [x, y] for x, y in sorted(grass_tiles)
+            ]
+            for td in data.get("tiles", []):
+                pos = (td.get("x"), td.get("y"))
+                if pos in grass_tiles:
+                    td["grass"] = True
+                    td.setdefault("custom", "ground_grass.png")
 
     try:
         board = Board.from_bridge_data(data)

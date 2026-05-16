@@ -1196,7 +1196,30 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Beetle shoved Rocket B3->B4, then Bouncer hit B4 and pushed the KIA
 //   Rocket to C4. Pre-v117 corpus archived as
 //   `failure_db_snapshot_sim_v116.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 117;
+// v118 - Mission_Terraform's controllable Terraformer_Attack is modeled as a
+//   3x2 instant-kill terrain-conversion sweep, so active Terraformer units are
+//   included in solver actor permutations. Pre-v118 corpus archived as
+//   `failure_db_snapshot_sim_v117.jsonl`.
+// v119 - Mission_Terraform custom grassland is tracked as a tile flag and
+//   scored as remaining objective debt; Terraformer sweeps clear the flag.
+//   Pre-v119 corpus archived as `failure_db_snapshot_sim_v118.jsonl`.
+// v120 - Live AE Lua ids `Dung1` / `Dung2` and `DungAtk1` / `DungAtk2`
+//   map onto the existing Tumblebug weapon model. Pre-v120 corpus archived
+//   as `failure_db_snapshot_sim_v119.jsonl`.
+// v121 - BombRock / Unstable Boulder is catalogued as a neutral explosive
+//   Tumblebug boulder; destroying it deals 1 adjacent bump-class damage, while
+//   Tumblebug self-detonation excludes the source tile. Pre-v121 corpus
+//   archived as `failure_db_snapshot_sim_v120.jsonl`.
+// v122 - Time Pods are fragile map objects: player mech landing collects,
+//   while enemy/non-mech landing or direct tile damage destroys without
+//   collection credit. Pre-v122 corpus archived as
+//   `failure_db_snapshot_sim_v121.jsonl`.
+// v123 - BlobBoss death split materializes Large Goo -> 2 Medium Goo and
+//   Medium Goo -> 2 Small Goo using deterministic Lua-diamond candidate
+//   selection; Goo queued attacks also destroy full mountains and move into
+//   non-mech targets when the squish clears the tile. Pre-v123 corpus
+//   archived as `failure_db_snapshot_sim_v122.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 123;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

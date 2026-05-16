@@ -230,6 +230,8 @@ pub struct JsonTile {
     pub freeze_mine: Option<bool>,
     pub old_earth_mine: Option<bool>,
     pub repair_platform: Option<bool>,
+    pub grass: Option<bool>,
+    pub custom: Option<String>,
     pub building_hp: Option<u8>,
     pub population: Option<u8>,
     pub conveyor: Option<i8>,
@@ -318,6 +320,7 @@ fn known_minor_type(type_name: &str) -> bool {
             | "Hacked_Building"
             | "Storm_Generator"
             | "AcidVat"
+            | "BombRock"
             | "BonusDebris"
     )
 }
@@ -372,6 +375,11 @@ pub fn board_from_json(json_str: &str)
                 || jt.item.as_deref() == Some("Item_Repair_Mine")
             {
                 flags |= TileFlags::REPAIR_PLATFORM;
+            }
+            if jt.grass.unwrap_or(false)
+                || jt.custom.as_deref() == Some("ground_grass.png")
+            {
+                flags |= TileFlags::GRASS;
             }
             tile.flags = flags;
             tile.conveyor_dir = jt.conveyor.unwrap_or(-1);
@@ -917,6 +925,26 @@ mod tests {
             board_from_json(input).expect("bridge json parses");
 
         assert_eq!(board.tile(5, 5).terrain, Terrain::Ice);
+    }
+
+    #[test]
+    fn test_bridge_grass_custom_sets_tile_flag() {
+        let input = r#"{
+            "mission_id": "Mission_Terraform",
+            "tiles": [
+                {"x": 3, "y": 3, "terrain": "ground", "grass": true},
+                {"x": 4, "y": 4, "terrain": "water", "custom": "ground_grass.png"}
+            ],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.tile(3, 3).grass());
+        assert!(board.tile(4, 4).grass());
     }
 
     #[test]

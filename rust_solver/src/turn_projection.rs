@@ -357,6 +357,10 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if tile.has_pod()         { t["has_pod"]           = json!(true); }
         if tile.freeze_mine()     { t["freeze_mine"]       = json!(true); }
         if tile.old_earth_mine()  { t["old_earth_mine"]    = json!(true); }
+        if tile.grass() {
+            t["grass"] = json!(true);
+            t["custom"] = json!("ground_grass.png");
+        }
         if tile.repair_platform() {
             t["repair_platform"] = json!(true);
             t["item"] = json!("Item_Repair_Mine");

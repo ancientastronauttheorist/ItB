@@ -183,6 +183,10 @@ pub struct EvalWeights {
     // board.repair_platforms_used and increments when any unit triggers an
     // Item_Repair_Mine tile.
     pub mission_repair_bonus: f64,
+    // Mission_Terraform "Terraform the grassland back to desert" objective.
+    // Negative penalty per custom grassland tile still present after the plan.
+    // Grassland is a save/custom-sprite marker, not a distinct terrain id.
+    pub mission_terraform_grass_remaining: f64,
 
     // Context-aware building multiplier knobs
     pub bld_grid_floor: f64,
@@ -310,6 +314,7 @@ impl Default for EvalWeights {
             mission_protect_unit_dead_penalty: -15000.0,
             mission_kill_bonus: 15000.0,
             mission_repair_bonus: 15000.0,
+            mission_terraform_grass_remaining: -2500.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
             bld_phase_floor: 1.0,
@@ -735,6 +740,18 @@ pub fn evaluate(
         }
         if used >= rt {
             score += scaled(weights.mission_repair_bonus, ff, 0.25, 0.75);
+        }
+    }
+
+    // ── Mission bonus: Terraform remaining grassland ─────────────────
+    // Mission_Terraform grassland is serialized as custom `ground_grass.png`
+    // on otherwise ordinary terrain. Penalize every remaining grass marker so
+    // the Terraformer chooses unique sweeps instead of spending repeats solely
+    // for kills/threats.
+    if board.mission_id == "Mission_Terraform" {
+        let grass_remaining = board.tiles.iter().filter(|t| t.grass()).count();
+        if grass_remaining > 0 {
+            score += grass_remaining as f64 * weights.mission_terraform_grass_remaining;
         }
     }
 
@@ -1438,5 +1455,25 @@ mod tests {
         bot_dead.units[1].hp = 0;
         let bot_dead_score = evaluate(&bot_dead, &[], &w, 0, 0, &p, 0);
         assert!((destroyed_score - bot_dead_score - 22900.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_terraform_remaining_grass_penalty() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut with_grass = Board::default();
+        with_grass.mission_id = "Mission_Terraform".to_string();
+        with_grass.tile_mut(3, 3).set_grass(true);
+        with_grass.tile_mut(4, 4).set_grass(true);
+
+        let mut cleared = with_grass.clone();
+        cleared.tile_mut(3, 3).set_grass(false);
+        cleared.tile_mut(4, 4).set_grass(false);
+
+        let s_with_grass = evaluate(&with_grass, &[], &w, 0, 0, &p, 0);
+        let s_cleared = evaluate(&cleared, &[], &w, 0, 0, &p, 0);
+
+        assert!((s_cleared - s_with_grass - 5000.0).abs() < 1.0);
     }
 }
