@@ -1330,8 +1330,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "StarfishAtkB1" => WId::StarfishAtkB1,
         "DungAtk1" => WId::TumblebugAtk1,
         "DungAtk2" => WId::TumblebugAtk2,
+        "DungAtkB" => WId::TumblebugAtk2,
         "TumblebugAtk1" => WId::TumblebugAtk1,
         "TumblebugAtk2" => WId::TumblebugAtk2,
+        "TumblebugAtkB" => WId::TumblebugAtk2,
         "PlasmodiaAtk1" => WId::PlasmodiaAtk1,
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
@@ -1565,8 +1567,10 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "StarfishBoss" => WId::StarfishAtkB1,
         "Dung1" => WId::TumblebugAtk1,
         "Dung2" => WId::TumblebugAtk2,
+        "DungBoss" => WId::TumblebugAtk2,
         "Tumblebug1" => WId::TumblebugAtk1,
         "Tumblebug2" => WId::TumblebugAtk2,
+        "TumblebugBoss" => WId::TumblebugAtk2,
         "Plasmodia1" => WId::PlasmodiaAtk1,
         "Plasmodia2" => WId::PlasmodiaAtk2,
         // Pinnacle bots
@@ -1940,8 +1944,10 @@ mod tests {
     fn test_tumblebug_live_lua_dung_aliases() {
         assert_eq!(wid_from_str("DungAtk1"), WId::TumblebugAtk1);
         assert_eq!(wid_from_str("DungAtk2"), WId::TumblebugAtk2);
+        assert_eq!(wid_from_str("DungAtkB"), WId::TumblebugAtk2);
         assert_eq!(enemy_weapon_for_type("Dung1"), WId::TumblebugAtk1);
         assert_eq!(enemy_weapon_for_type("Dung2"), WId::TumblebugAtk2);
+        assert_eq!(enemy_weapon_for_type("DungBoss"), WId::TumblebugAtk2);
     }
 
     #[test]

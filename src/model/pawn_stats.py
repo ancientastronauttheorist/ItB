@@ -109,8 +109,10 @@ VEK_STATS = {
     "StarfishBoss":  PawnStats(move_speed=3, massive=True, ranged=0, default_weapon="StarfishAtkB1"),
     "Dung1":         PawnStats(move_speed=3, ranged=0),
     "Dung2":         PawnStats(move_speed=3, ranged=0),
+    "DungBoss":      PawnStats(move_speed=3, ranged=0, massive=True, default_weapon="DungAtkB"),
     "Tumblebug1":    PawnStats(move_speed=3, ranged=0),
     "Tumblebug2":    PawnStats(move_speed=3, ranged=0),
+    "TumblebugBoss": PawnStats(move_speed=3, ranged=0, massive=True, default_weapon="DungAtkB"),
     "Plasmodia1":    PawnStats(move_speed=2, ranged=1),
     "Plasmodia2":    PawnStats(move_speed=2, ranged=1),
     # Objective / special Vek

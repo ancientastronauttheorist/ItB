@@ -42,10 +42,10 @@ def test_known_types_catalogs_tumblebug_live_lua_aliases():
     with open(repo_root / "data" / "known_types.json") as f:
         known = json.load(f)
     observed = set(known["observed_pawn_types"])
-    for pawn_type in ("Dung1", "Dung2", "BombRock"):
+    for pawn_type in ("Dung1", "Dung2", "DungBoss", "BombRock"):
         assert pawn_type in observed
     weapons = set(known["observed_weapons"])
-    for weapon_id in ("DungAtk1", "DungAtk2"):
+    for weapon_id in ("DungAtk1", "DungAtk2", "DungAtkB"):
         assert weapon_id in weapons
 
 
@@ -65,9 +65,10 @@ def test_centipedes_do_not_trigger_research_gate():
 
 def test_tumblebug_live_lua_aliases_do_not_trigger_research_gate():
     unknown_detector.reset_cache()
-    board = _fake_board(["Dung1", "Dung2", "BombRock"])
+    board = _fake_board(["Dung1", "Dung2", "DungBoss", "BombRock"])
     board.units[0].weapon = "DungAtk1"
     board.units[1].weapon = "DungAtk2"
+    board.units[2].weapon = "DungAtkB"
     unknowns = unknown_detector.detect_unknowns(board)
     assert unknowns["types"] == []
     assert unknowns["weapons"] == []
@@ -95,10 +96,15 @@ def test_centipedes_have_static_stats():
 def test_tumblebug_live_lua_aliases_have_static_stats():
     d1 = get_pawn_stats("Dung1")
     d2 = get_pawn_stats("Dung2")
+    boss = get_pawn_stats("DungBoss")
     bombrock = get_pawn_stats("BombRock")
     assert d1.move_speed == 3
     assert d2.move_speed == 3
+    assert boss.move_speed == 3
     assert d1.ranged == 0
     assert d2.ranged == 0
+    assert boss.ranged == 0
+    assert boss.massive is True
+    assert boss.default_weapon == "DungAtkB"
     assert bombrock.move_speed == 0
     assert bombrock.pushable is True

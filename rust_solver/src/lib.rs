@@ -1242,7 +1242,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   enemy-phase belt tick. Conveyor movement is gated to Mission_Belt and
 //   Mission_BeltRandom. Pre-v129 corpus archived as
 //   `failure_db_snapshot_sim_v128.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 129;
+// v130 - Live AE Tumblebug Leader ids `DungBoss` / `DungAtkB` map onto the
+//   existing Alpha Tumblebug boulder attack model (3-damage queued
+//   boulder/tile hit; boulders are already exposed by the bridge). Pre-v130
+//   corpus archived as `failure_db_snapshot_sim_v129.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 130;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
