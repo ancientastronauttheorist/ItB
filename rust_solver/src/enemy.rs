@@ -317,9 +317,18 @@ fn simulate_reactivation_thaw(board: &mut Board) {
     }
 }
 
-/// Conveyor effect: all live units standing on conveyor tiles are pushed one
-/// tile in the belt direction before Vek attacks resolve.
+fn active_conveyor_mission(board: &Board) -> bool {
+    matches!(board.mission_id.as_str(), "Mission_Belt" | "Mission_BeltRandom")
+}
+
+/// Conveyor effect: on active conveyor missions, all live units standing on
+/// conveyor tiles are pushed one tile in the belt direction before Vek attacks
+/// resolve. Some Detritus maps store decorative conveyor sprites in save data
+/// without running an enemy-phase belt environment, so gate on mission id.
 fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
+    if !active_conveyor_mission(board) {
+        return;
+    }
     let mut moves: Vec<(usize, i16, u16, u8, u8)> = Vec::new();
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
@@ -602,9 +611,9 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    // Conveyor belts resolve before Vek attacks, so moved Vek re-aim from
-    // their conveyor-shifted tile using the original queued direction below.
-    // Some Detritus maps expose belts outside Mission_Belt.
+    // Conveyor belts resolve before Vek attacks on active belt missions, so
+    // moved Vek re-aim from their conveyor-shifted tile using the original
+    // queued direction below.
     simulate_conveyor_belts(board, &mut result);
 
     // Egg hatch step: transform any surviving spider/spiderling egg into
@@ -1881,7 +1890,7 @@ mod tests {
     #[test]
     fn test_conveyor_moves_enemy_before_projectile_attack() {
         let mut board = Board::default();
-        board.mission_id = "Mission_Acid".to_string();
+        board.mission_id = "Mission_Belt".to_string();
         board.grid_power = 6;
         board.grid_power_max = 7;
         board.tile_mut(1, 5).terrain = Terrain::Building;
@@ -1900,6 +1909,35 @@ mod tests {
         assert_eq!(board.tile(1, 5).building_hp, 0,
             "conveyor-shifted Moth should re-line the C7 building shot");
         assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_mission_missiles_decorative_conveyor_does_not_move_enemy_attack() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Missiles".to_string();
+        board.grid_power = 3;
+        board.grid_power_max = 7;
+        board.tile_mut(4, 6).terrain = Terrain::Building;
+        board.tile_mut(4, 6).building_hp = 2;
+        board.tile_mut(3, 6).conveyor_dir = 0;
+
+        let mosquito_idx = add_enemy_with_type(&mut board, 1426, 3, 6, 4, "Mosquito2", 4, 6);
+        board.units[mosquito_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            (board.units[mosquito_idx].x, board.units[mosquito_idx].y),
+            (3, 6),
+            "decorative Landfill conveyor sprite at B5 should not move Mosquito2"
+        );
+        assert_eq!(
+            board.tile(4, 6).building_hp,
+            0,
+            "B4 building should be hit when Mission_Missiles has Env_Null"
+        );
+        assert_eq!(board.grid_power, 1);
     }
 
     #[test]

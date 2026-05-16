@@ -254,16 +254,7 @@ def _threat_audit_requires_block(
         )
         if int(threat_audit.get("still_threatened_count") or 0) <= pylon_losses:
             return False
-    cur_grid = ((safety.get("current") or {}).get("grid_power")
-                if isinstance(safety, dict) else None)
-    low_grid = isinstance(cur_grid, int) and cur_grid <= 2
-    dirty = bool(safety.get("blocking"))
-    mission = session.current_mission or ""
-    final_or_hq = (
-        mission in {"Mission_Final", "Mission_Final_Cave"}
-        or "Boss" in mission
-    )
-    return low_grid or dirty or final_or_hq
+    return True
 
 
 def _end_turn_click_plan_result(*, bridge_ack: str | None = None) -> dict:
@@ -8583,8 +8574,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             ),
             "plan_safety": plan_safety,
             "next_step": (
-                "Threat audit still sees a building/pylon threat on a "
-                "critical/HQ/final dirty state. Do not click End Turn until "
+                "Threat audit still sees an unresolved building/pylon threat. "
+                "Do not click End Turn until "
                 "this is reviewed or resolved."
             ),
             "fuzzy_detections": fuzzy_detections,

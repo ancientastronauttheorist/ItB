@@ -813,7 +813,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Ramming Speed run 20260516_120646_726, Detritus Teleport Facility turn 3,
 # Disposal fired at G3 and dissolved the adjacent G4 building.
 # Pre-v128 corpus archived as failure_db_snapshot_sim_v127.jsonl.
-SIMULATOR_VERSION = 128
+# v129 - Decorative conveyor sprites on Env_Null missions do not run an
+# enemy-phase belt tick. Gate conveyor movement to Mission_Belt/BeltRandom so
+# Mission_Missiles Landfill B5 Mosquito2 still destroys B4. Pre-v129 corpus
+# archived as failure_db_snapshot_sim_v128.jsonl.
+SIMULATOR_VERSION = 129
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

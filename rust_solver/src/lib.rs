@@ -1238,7 +1238,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v128 - Disposal_Attack dissolves building tiles inside its acid cross, not
 //   only units/mountains/status. Pre-v128 corpus archived as
 //   `failure_db_snapshot_sim_v127.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 128;
+// v129 - Decorative conveyor sprites on Env_Null missions do not run an
+//   enemy-phase belt tick. Conveyor movement is gated to Mission_Belt and
+//   Mission_BeltRandom. Pre-v129 corpus archived as
+//   `failure_db_snapshot_sim_v128.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 129;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

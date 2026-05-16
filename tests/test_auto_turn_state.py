@@ -380,6 +380,21 @@ def test_threat_audit_allows_expected_final_cave_emergency_pylon_loss():
     ) is True
 
 
+def test_threat_audit_blocks_unresolved_building_threat_on_normal_grid():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.current_mission = "Mission_Missiles"
+    safety = {
+        "status": "CLEAN",
+        "blocking": False,
+        "current": {"grid_power": 3},
+        "predicted": {"grid_power": 3},
+    }
+
+    assert cmd_mod._threat_audit_requires_block(
+        {"still_threatened_count": 1}, safety, s
+    ) is True
+
+
 # ---------------------------------------------------------------------------
 # cmd_auto_turn entry-point invalidation logic.
 #
