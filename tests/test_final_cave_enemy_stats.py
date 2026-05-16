@@ -25,6 +25,9 @@ Canonical stats sourced from the game's lua scripts under
 """
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from src.model.pawn_stats import (
     ALL_PAWN_STATS,
     VEK_STATS,
@@ -232,6 +235,14 @@ def test_no_boss_falls_through_to_default_pawnstats() -> None:
         "(move_speed=3, ranged=0, not massive/flying), corrupting reach "
         "predictions and grid-defense heuristics."
     )
+
+
+def test_known_types_catalogs_blob_boss_split_family() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    with open(repo_root / "data" / "known_types.json") as f:
+        known = json.load(f)
+    observed = set(known.get("observed_pawn_types", []))
+    assert {"BlobBoss", "BlobBossMed", "BlobBossSmall"} <= observed
 
 
 def test_jelly_psion_family_complete() -> None:
