@@ -115,6 +115,52 @@ def test_normalize_queued_targets_nulls_oob():
         reader_mod._read_queued_origins_from_save = orig
 
 
+def test_normalize_queued_targets_preserves_full_offset():
+    """A moved queued attacker keeps the full same-axis piQueuedShot offset."""
+    from src.bridge.reader import _normalize_queued_targets
+    import src.bridge.reader as reader_mod
+
+    orig = reader_mod._read_queued_origins_from_save
+    try:
+        reader_mod._read_queued_origins_from_save = lambda: {
+            1029: (5, 6),  # BlobBoss B3 origin
+            1030: (5, 1),  # Scarab G3 origin
+        }
+        units = [
+            {"uid": 1029, "x": 6, "y": 6, "queued_target": [5, 7]},
+            {"uid": 1030, "x": 6, "y": 1, "queued_target": [2, 1]},
+        ]
+        _normalize_queued_targets(units)
+        assert units[0]["queued_target"] == [6, 7], units[0]
+        assert units[1]["queued_target"] == [3, 1], units[1]
+    finally:
+        reader_mod._read_queued_origins_from_save = orig
+
+
+def test_normalize_queued_targets_skips_bridge_normalized_payload():
+    """New Lua bridge payloads are already shifted and must not double-shift."""
+    from src.bridge.reader import _normalize_queued_targets
+    import src.bridge.reader as reader_mod
+
+    orig = reader_mod._read_queued_origins_from_save
+    try:
+        reader_mod._read_queued_origins_from_save = lambda: {
+            1029: (5, 6),
+        }
+        units = [{
+            "uid": 1029,
+            "x": 6,
+            "y": 6,
+            "queued_origin": [5, 6],
+            "queued_target": [6, 7],
+            "queued_target_normalized": True,
+        }]
+        _normalize_queued_targets(units)
+        assert units[0]["queued_target"] == [6, 7], units[0]
+    finally:
+        reader_mod._read_queued_origins_from_save = orig
+
+
 if __name__ == "__main__":
     test_rust_solve_does_not_panic_on_oob_queued_target()
     print("PASS: rust solve no panic on OOB queued_target")
@@ -122,3 +168,7 @@ if __name__ == "__main__":
     print("PASS: python Board.get_threatened_buildings no IndexError")
     test_normalize_queued_targets_nulls_oob()
     print("PASS: _normalize_queued_targets nulls off-board coords")
+    test_normalize_queued_targets_preserves_full_offset()
+    print("PASS: _normalize_queued_targets preserves full same-axis offset")
+    test_normalize_queued_targets_skips_bridge_normalized_payload()
+    print("PASS: _normalize_queued_targets skips bridge-normalized payload")

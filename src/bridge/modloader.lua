@@ -99,6 +99,7 @@ local function _read_save_data()
         networkMax = nil,
         difficulty = nil,     -- GameData.difficulty (0=Easy, 1=Normal, 2=Hard, 3=Unfair)
         queued_shots = {},
+        queued_origins = {},  -- [pawn_id] = {x, y} from piOrigin (attack queue source)
         queued_targets = {},  -- [pawn_id] = {x, y} from piTarget (leap/melee landing tile)
         queued_skills = {},   -- [pawn_id] = iQueuedSkill (>=0 when an attack is actually queued)
         conveyor_belts = {},
@@ -168,6 +169,16 @@ local function _read_save_data()
                     result.queued_shots[pid_n] = {x = tonumber(qsx), y = tonumber(qsy)}
                 end
             end
+            -- Origin of the queued attack. piQueuedShot is stored relative
+            -- to this point; if a Vek is pushed mid-turn, the live target
+            -- shifts by current_position + (piQueuedShot - piOrigin).
+            local qo = block:match('%["piOrigin"%]%s*=%s*Point%s*%(([^%)]+)%)')
+            if qo then
+                local qox, qoy = qo:match('(%-?%d+)%s*,%s*(%-?%d+)')
+                if qox and qoy then
+                    result.queued_origins[pid_n] = {x = tonumber(qox), y = tonumber(qoy)}
+                end
+            end
             -- piTarget (leap landing tile, melee target, move-style queued attacks).
             -- Populated for Leapers and other Jumper pawns when piQueuedShot is
             -- (-1,-1). Also populated for non-queued pawns (stale last-target),
@@ -215,6 +226,17 @@ local function _read_save_data()
     end
 
     return result
+end
+
+local function normalize_queued_target(raw, origin, current_x, current_y)
+    if not raw then return nil, false end
+    if not origin then return {raw.x, raw.y}, false end
+    local nx = current_x + (raw.x - origin.x)
+    local ny = current_y + (raw.y - origin.y)
+    if nx < 0 or nx > 7 or ny < 0 or ny > 7 then
+        return nil, true
+    end
+    return {nx, ny}, true
 end
 
 --------------------------------------------------------------------
@@ -593,9 +615,19 @@ local function dump_state()
                     -- gate the piTarget read on iQueuedSkill >= 0 because the
                     -- save stores piTarget as a stale last-target even on
                     -- pawns that have no queued skill this turn.
+                    local qorigin = save_data.queued_origins[pid]
+                    if qorigin then
+                        unit.queued_origin = {qorigin.x, qorigin.y}
+                    end
                     local qs = save_data.queued_shots[pid]
                     if qs and qs.x >= 0 and qs.y >= 0 then
-                        unit.queued_target = {qs.x, qs.y}
+                        unit.queued_target_raw = {qs.x, qs.y}
+                        local normalized, did_normalize =
+                            normalize_queued_target(qs, qorigin, unit.x, unit.y)
+                        unit.queued_target = normalized
+                        if did_normalize then
+                            unit.queued_target_normalized = true
+                        end
                     elseif unit.has_queued_attack then
                         local resolved_via = nil
                         -- (1) Save-file piTarget (works for Leapers, Scorpions,

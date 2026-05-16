@@ -678,7 +678,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   M13 turn 4 (Mission_BlobBoss finale) lost the run when WallMech's
 //   Grappling Hook pulled BlobBoss D6→E6 and the simulator predicted no
 //   D5 hit, while the real game still applied BlobBossAtk's queued 4
-//   damage at D5 — the 2-HP Corp Tower fell, grid 2→0, defeat. Per
+//   damage — the 2-HP Corp Tower fell, grid 2→0, defeat. Per
 //   `scripts/missions/bosses/goo.lua:172-187`, BlobBossAtk:GetSkillEffect
 //   calls AddQueuedDamage(SpaceDamage(p2, 4)) BEFORE adding the optional
 //   move; the queued damage is registered against the target tile and
@@ -884,7 +884,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   archived as `failure_db_snapshot_sim_v38.jsonl`.
 // v40 — Standard single-tile enemy melee re-aims from the attacker's current
 //   position using the original queued direction after displacement. BlobBoss
-//   queued-damage-persistence remains fixed-target. Fixes Venting Center T1
+//   still uses its v29 queued-damage path. Fixes Venting Center T1
 //   Scorpion2 swap killing TeleMech at E4. Pre-v40 corpus archived as
 //   `failure_db_snapshot_sim_v39.jsonl`.
 // v41 — Vulcan Artillery (Ranged_Ignite) zero-damage adjacent pushes no
@@ -1219,7 +1219,15 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   selection; Goo queued attacks also destroy full mountains and move into
 //   non-mech targets when the squish clears the tile. Pre-v123 corpus
 //   archived as `failure_db_snapshot_sim_v122.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 123;
+// v124 - Moved queued attackers preserve the original attacker-relative target
+//   offset. BlobBoss queued-damage persistence now shifts with the Goo after
+//   pushes/pulls/swaps instead of treating piQueuedShot as an absolute tile;
+//   bridge payloads also expose piOrigin and normalize piQueuedShot when the
+//   Vek has already moved. Regression anchor: Ramming Speed run
+//   20260516_120646_726, HQ turn 1, BlobBoss B3->B2 retargeted A3->A2 and
+//   Scarab G3->G2 retargeted G6->G5. Pre-v124 corpus archived as
+//   `failure_db_snapshot_sim_v123.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 124;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

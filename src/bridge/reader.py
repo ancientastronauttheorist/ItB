@@ -330,9 +330,9 @@ def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
     piQueuedShot is stored relative to piOrigin (the attacker's position
     when the attack was queued), not the attacker's current position. If
     the attacker moved between queueing and firing, the bridge's raw
-    queued_target (= piQueuedShot) gives a bogus non-cardinal vector from
-    the current position. Pair it with piOrigin to recover the true
-    cardinal direction: direction = piQueuedShot - piOrigin.
+    queued_target (= piQueuedShot) gives a stale absolute tile. Pair it
+    with piOrigin to recover the attack offset: offset = piQueuedShot -
+    piOrigin.
 
     Returns {uid: (piOrigin_x, piOrigin_y)}.
     """
@@ -369,46 +369,51 @@ def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
 def _normalize_queued_targets(bridge_units: list) -> None:
     """Rewrite ``queued_target`` on each unit so the solver invariant holds.
 
-    Invariant: ``queued_target - current_position`` yields a unit cardinal
-    vector. The raw bridge value is piQueuedShot, which is relative to
-    piOrigin (attacker's position when queued), not current position. If
-    the attacker moved between queueing and firing, the delta becomes
-    non-cardinal (e.g. Centipede at E8 with piQueuedShot C7 after moving
-    from D7: raw delta (+1, +2)).
+    Invariant: ``queued_target`` is the tile the attack will hit from the
+    unit's current position. The raw bridge value can be piQueuedShot,
+    which is relative to piOrigin (attacker's position when queued), not
+    current position. If the attacker moved between queueing and firing,
+    the target shifts by the same displacement.
 
     For each unit with a queued_target: look up piOrigin from the save
-    file, compute direction = piQueuedShot - piOrigin, then rewrite
-    queued_target = current_position + direction. Mutates bridge_units
+    file, compute offset = piQueuedShot - piOrigin, then rewrite
+    queued_target = current_position + offset. Mutates bridge_units
     in place.
     """
-    origins = _read_queued_origins_from_save()
-    if not origins:
-        return
+    origins: dict[int, tuple[int, int]] | None = None
     for u in bridge_units:
+        if u.get("queued_target_normalized"):
+            continue
         qt = u.get("queued_target")
         if not qt or len(qt) != 2:
             continue
         qx, qy = qt[0], qt[1]
         if qx < 0 or qy < 0:
             continue
-        uid = u.get("uid")
-        origin = origins.get(uid)
+        origin_payload = u.get("queued_origin")
+        origin = None
+        if origin_payload and len(origin_payload) == 2:
+            origin = (origin_payload[0], origin_payload[1])
+        else:
+            if origins is None:
+                origins = _read_queued_origins_from_save()
+            uid = u.get("uid")
+            origin = origins.get(uid)
         if origin is None:
             continue
         ox, oy = origin
-        # Direction from piOrigin to piQueuedShot. Expected to be a unit
-        # cardinal vector; if not, leave alone (modloader bug to fix).
+        # Offset from piOrigin to piQueuedShot. It may be a full same-axis
+        # distance for artillery/projectiles; only diagonal offsets are not
+        # valid queued line attacks here.
         ddx = qx - ox
         ddy = qy - oy
         if ddx != 0 and ddy != 0:
             continue  # shouldn't happen per game rules
-        if ddx == 0 and ddy == 0:
-            continue  # self-target (e.g. WebbEgg hatch); leave as is
         cx, cy = u.get("x", -1), u.get("y", -1)
         if cx < 0 or cy < 0:
             continue
-        # Normalize to one-step-in-direction so the solver's standard
-        # direction computation (queued_target - current_pos) works.
+        # Normalize to the current target tile so solver/replay offset
+        # computations match the live board.
         nx, ny = cx + ddx, cy + ddy
         # Guard against off-board normalized targets (M04 OOB bug 2026-04-28:
         # Vek at cx=7,ddx=+1 produced queued_target.x=8 → Rust tile_mut OOB

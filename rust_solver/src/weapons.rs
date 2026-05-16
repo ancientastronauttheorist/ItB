@@ -65,8 +65,10 @@ bitflags! {
         /// `BlobBossAtk:GetSkillEffect` (scripts/missions/bosses/goo.lua:172-187)
         /// where `AddQueuedDamage(SpaceDamage(p2, 4))` is appended to the
         /// SkillEffect *before* the optional move; the engine evaluates the
-        /// queued damage on the next enemy turn at p2 even if the boss has
-        /// since been pushed/pulled out of adjacency. Used for goo bosses
+        /// queued damage on the next enemy turn even if the boss has since
+        /// been pushed/pulled out of adjacency. The p2 target is translated
+        /// by the original attacker-relative offset when the boss moves. Used
+        /// for goo bosses
         /// (BlobBoss / BlobBossMed / BlobBossSmall) — without this, pulling
         /// the boss with Grappling Hook silently nullifies a 4-damage
         /// building hit and the solver mispredicts grid_power loss.
@@ -907,7 +909,8 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // queued target with 4 damage. The Lua skill registers the queued
     // damage on p2 BEFORE any optional move (goo.lua:172-187), so the
     // damage fires regardless of whether the boss is adjacent at the time
-    // of attack — modelled via the QUEUED_DAMAGE_PERSISTS flag.
+    // of attack. p2 still shifts by the original attacker-relative offset
+    // when the boss is moved — modelled via the QUEUED_DAMAGE_PERSISTS flag.
     // Empirically all three sizes deal 4 damage (BlobBossAtk:GetSkillEffect
     // is shared by Med/Small via Skill:new{} inheritance).
     w[116] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::None,

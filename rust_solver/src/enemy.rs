@@ -1378,11 +1378,16 @@ pub fn simulate_enemy_attacks(
                     }
 
                     let (tx, ty, attack_dir) = if wdef.queued_damage_persists() {
-                        // BlobBoss family registers fixed queued damage before
-                        // movement. Keep the queued tile, with the same OOB guard
-                        // that protects bridge-normalized edge targets.
-                        if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
-                        (qtx as u8, qty as u8, None)
+                        // BlobBoss family registers queued damage before movement,
+                        // but live captures show p2 is still interpreted as the
+                        // original attacker-relative offset. A pushed Goo keeps
+                        // firing; the target tile shifts by the same displacement.
+                        let offset_x = qtx - orig.0 as i8;
+                        let offset_y = qty - orig.1 as i8;
+                        let new_tx = ex as i8 + offset_x;
+                        let new_ty = ey as i8 + offset_y;
+                        if !in_bounds(new_tx, new_ty) { continue; }
+                        (new_tx as u8, new_ty as u8, None)
                     } else {
                         // Standard single-tile melee preserves the original
                         // queued direction, then re-aims from the attacker's
@@ -1676,9 +1681,9 @@ fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8,
 
     // Compute direction from ORIGINAL position to queued target.
     // Preserves cardinal attack direction after mech pushes.
-    // INVARIANT: queued_target is the first tile in the attack direction
-    // from the original position (bridge normalizes piQueuedShot against
-    // piOrigin), so the delta is always a unit cardinal vector.
+    // INVARIANT: queued_target is relative to the original position (bridge
+    // normalizes piQueuedShot against piOrigin when reading a mid-turn board).
+    // The delta may be a full same-row/column offset; signum recovers direction.
     let dx = (qtx - orig_x as i8).signum();
     let dy = (qty - orig_y as i8).signum();
 
@@ -1824,6 +1829,53 @@ mod tests {
             board.units[tele_idx].hp <= 0,
             "Scorpion2 should preserve original melee direction and hit E4"
         );
+    }
+
+    #[test]
+    fn test_displaced_blob_boss_retargets_queued_damage_by_offset() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(5, 7).terrain = Terrain::Building;
+        board.tile_mut(5, 7).building_hp = 2;
+        board.tile_mut(6, 7).terrain = Terrain::Building;
+        board.tile_mut(6, 7).building_hp = 2;
+
+        // Live Ramming Speed regression: Large Goo was queued B3 -> A3, then
+        // got pushed to B2 and attacked A2.
+        let goo_idx = add_enemy_with_type(&mut board, 1029, 6, 6, 3, "BlobBoss", 5, 7);
+        board.units[goo_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let mut orig = default_orig_pos(&board);
+        orig[goo_idx] = (5, 6);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(5, 7).building_hp, 2, "old A3 target should survive");
+        assert_eq!(board.tile(6, 7).building_hp, 0, "shifted A2 target should be hit");
+    }
+
+    #[test]
+    fn test_displaced_scarab_artillery_retargets_by_full_offset() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(2, 1).terrain = Terrain::Building;
+        board.tile_mut(2, 1).building_hp = 1;
+        board.tile_mut(3, 1).terrain = Terrain::Building;
+        board.tile_mut(3, 1).building_hp = 1;
+
+        // Same live board: Scarab shifted G3 -> G2, so G6 shifted to G5.
+        let scarab_idx = add_enemy_with_type(&mut board, 1030, 6, 1, 2, "Scarab1", 2, 1);
+        board.units[scarab_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let mut orig = default_orig_pos(&board);
+        orig[scarab_idx] = (5, 1);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(2, 1).building_hp, 1, "old G6 target should survive");
+        assert_eq!(board.tile(3, 1).building_hp, 0, "shifted G5 target should be hit");
     }
 
     #[test]
