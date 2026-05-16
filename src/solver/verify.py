@@ -808,7 +808,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260516_120646_726, Detritus Teleport Facility turn 1, Tank F6 fired at F5
 # and killed Jelly_Boost1 at F4; live cleared Boosted from E4/F3/D4.
 # Pre-v127 corpus archived as failure_db_snapshot_sim_v126.jsonl.
-SIMULATOR_VERSION = 127
+# v128 - Disposal_Attack dissolves building tiles in its acid cross, matching
+# the A.C.I.D. Launcher live Lua `DAMAGE_DEATH` footprint. Regression anchor:
+# Ramming Speed run 20260516_120646_726, Detritus Teleport Facility turn 3,
+# Disposal fired at G3 and dissolved the adjacent G4 building.
+# Pre-v128 corpus archived as failure_db_snapshot_sim_v127.jsonl.
+SIMULATOR_VERSION = 128
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

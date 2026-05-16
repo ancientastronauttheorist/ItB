@@ -52,6 +52,94 @@ def _bridge(turn: int = 3) -> dict:
     }
 
 
+def test_post_enemy_settle_waits_for_ready_player_actors(monkeypatch):
+    inactive = _board(5)
+    inactive.units[0].active = False
+    ready = _board(3)
+    reads = iter([
+        (inactive, {"phase": "combat_player", "turn": 3}),
+        (ready, {"phase": "combat_player", "turn": 3}),
+        (ready, {"phase": "combat_player", "turn": 3}),
+    ])
+    clock = {"t": 0.0}
+
+    monkeypatch.setattr(
+        commands,
+        "_load_solve_prediction_for_turn",
+        lambda session, turn: {
+            "grid_power": 3,
+            "buildings_alive": 6,
+            "building_hp_total": 7,
+        },
+    )
+
+    def sleep(dt):
+        clock["t"] += dt
+
+    settled, data, info = commands._settle_post_enemy_board(
+        RunSession(run_id="test"),
+        inactive,
+        {"phase": "combat_player", "turn": 3},
+        solved_turn=2,
+        max_wait=2.0,
+        interval=0.25,
+        read_fn=lambda: next(reads),
+        refresh_fn=lambda: None,
+        sleep_fn=sleep,
+        now_fn=lambda: clock["t"],
+    )
+
+    assert settled.grid_power == 3
+    assert commands._active_player_action_count(settled) == 1
+    assert data["phase"] == "combat_player"
+    assert info["samples"] == 4
+
+
+def test_post_enemy_settle_waits_when_buildings_worse_but_grid_not_yet(monkeypatch):
+    stale = _board(5)
+    stale.tiles[1][6].terrain = "rubble"
+    stale.tiles[1][6].building_hp = 0
+    fresh = _board(3)
+    fresh.tiles[1][6].terrain = "rubble"
+    fresh.tiles[1][6].building_hp = 0
+    reads = iter([
+        (stale, _bridge()),
+        (stale, _bridge()),
+        (fresh, _bridge()),
+        (fresh, _bridge()),
+    ])
+    clock = {"t": 0.0}
+
+    monkeypatch.setattr(
+        commands,
+        "_load_solve_prediction_for_turn",
+        lambda session, turn: {
+            "grid_power": 5,
+            "buildings_alive": 6,
+            "building_hp_total": 8,
+        },
+    )
+
+    def sleep(dt):
+        clock["t"] += dt
+
+    settled, _data, info = commands._settle_post_enemy_board(
+        RunSession(run_id="test"),
+        stale,
+        _bridge(),
+        solved_turn=2,
+        max_wait=2.0,
+        interval=0.25,
+        read_fn=lambda: next(reads),
+        refresh_fn=lambda: None,
+        sleep_fn=sleep,
+        now_fn=lambda: clock["t"],
+    )
+
+    assert settled.grid_power == 3
+    assert info["samples"] == 5
+
+
 def test_post_enemy_settle_waits_past_stale_favorable_grid(monkeypatch):
     stale = _board(5)
     fresh = _board(2)

@@ -2173,6 +2173,35 @@ fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResul
         }
     }
 
+    if board.tile(x, y).terrain == Terrain::Building && board.tile(x, y).building_hp > 0 {
+        let idx = xy_to_idx(x, y);
+        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+        let hp_lost = {
+            let tile = board.tile_mut(x, y);
+            let lost = tile.building_hp;
+            tile.building_hp = 0;
+            tile.set_shield(false);
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
+            lost
+        };
+        if hp_lost > 0 {
+            result.buildings_damaged += hp_lost as i32;
+            result.buildings_lost += 1;
+            let grid_loss = settle_building_grid_loss(
+                board,
+                idx,
+                hp_lost,
+                true,
+                is_unique,
+                DamageSource::Weapon,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
+        }
+    }
+
     let tile = board.tile_mut(x, y);
     tile.set_acid(true);
     tile.set_cracked(false);
@@ -3716,6 +3745,8 @@ mod tests {
         let diagonal_safe = add_enemy(&mut board, 263, 5, 5, 1);
         board.tile_mut(3, 4).terrain = Terrain::Mountain;
         board.tile_mut(3, 4).building_hp = 2;
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 2;
         board.tile_mut(5, 4).terrain = Terrain::Forest;
         board.tile_mut(5, 4).set_on_fire(true);
         board.tile_mut(4, 3).set_smoke(true);
@@ -3728,6 +3759,11 @@ mod tests {
         assert_eq!(board.units[diagonal_safe].hp, 1);
         assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
         assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Rubble);
+        assert_eq!(board.tile(4, 3).building_hp, 0);
+        assert_eq!(result.buildings_lost, 1);
+        assert_eq!(result.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
         for (x, y) in disposal_cross_tiles(4, 4) {
             assert!(board.tile(x, y).acid(), "expected acid at ({},{})", x, y);
         }

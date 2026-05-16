@@ -1235,7 +1235,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v127 - Killing the last Boost Psion clears the visible Boosted status from
 //   all surviving Vek immediately. Pre-v127 corpus archived as
 //   `failure_db_snapshot_sim_v126.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 127;
+// v128 - Disposal_Attack dissolves building tiles inside its acid cross, not
+//   only units/mountains/status. Pre-v128 corpus archived as
+//   `failure_db_snapshot_sim_v127.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 128;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

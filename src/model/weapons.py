@@ -25,7 +25,7 @@ class WeaponType(str, Enum):
     HEAL_ALL = "heal_all"     # Heals every player-team unit on the board
     GLOBAL_PUSH = "global_push"  # Pushes every unit in one chosen direction
     GLOBAL_UNIT_EFFECT = "global_unit_effect"  # Affects every live non-source unit on board
-    DISPOSAL = "disposal"       # Mission_Disposal A.C.I.D. Launcher cross
+    DISPOSAL = "disposal"       # Mission_Disposal lethal A.C.I.D. Launcher cross
     PASSIVE = "passive"       # Always-on effect
 
 

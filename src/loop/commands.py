@@ -2220,6 +2220,15 @@ def _active_player_action_count(board: Board) -> int:
     )
 
 
+def _post_enemy_ready_for_audit(board: Board, bridge_data: dict | None) -> bool:
+    """True once the next player turn has fully activated controllable actors."""
+    if not isinstance(bridge_data, dict):
+        return False
+    if bridge_data.get("phase") != "combat_player":
+        return False
+    return _active_player_action_count(board) > 0
+
+
 def _projected_scenarios(
     rust_module,
     bridge_data: dict,
@@ -2922,6 +2931,24 @@ def _actual_exceeds_prediction(actual: dict, predicted: dict | None) -> bool:
     return False
 
 
+def _pending_grid_loss_settlement(actual: dict, predicted: dict | None) -> bool:
+    """True when building loss is visible but grid loss may still be delayed."""
+    if not isinstance(predicted, dict):
+        return False
+    av_grid = actual.get("grid_power")
+    pv_grid = predicted.get("grid_power")
+    if not (isinstance(av_grid, int) and isinstance(pv_grid, int)):
+        return False
+    building_worse = False
+    for key in ("buildings_alive", "building_hp_total"):
+        av = actual.get(key)
+        pv = predicted.get(key)
+        if isinstance(av, int) and isinstance(pv, int) and av < pv:
+            building_worse = True
+            break
+    return building_worse and av_grid >= pv_grid
+
+
 def _settle_post_enemy_board(
     session: RunSession,
     board: Board,
@@ -2937,11 +2964,12 @@ def _settle_post_enemy_board(
 ) -> tuple[Board, dict, dict | None]:
     """Wait briefly for turn-boundary grid/building values to settle.
 
-    The Lua bridge can expose ``phase=combat_player`` and a fresh active
-    roster before scalar grid power catches up to building damage. If we record
-    post-enemy analysis in that window, a dirty or unexpected grid loss can be
-    misclassified as a Grid Defense resist. Polling here is scoped to the
-    just-finished solved turn and only delays post-enemy reads by a few seconds.
+    The Lua bridge can expose ``phase=combat_player`` before controllable
+    actors are READY and before scalar grid power catches up to building
+    damage. If we record post-enemy analysis in that window, a dirty or
+    unexpected grid loss can be misclassified as a Grid Defense resist. Polling
+    here is scoped to the just-finished solved turn and only delays post-enemy
+    reads by a few seconds.
     """
     predicted = _load_solve_prediction_for_turn(session, solved_turn)
     start = now_fn()
@@ -2969,14 +2997,19 @@ def _settle_post_enemy_board(
 
         latest_board, latest_data = reread_board, reread_data
         samples += 1
+        if not _post_enemy_ready_for_audit(reread_board, reread_data):
+            latest_fp = _post_enemy_settle_fingerprint(reread_board, reread_data)
+            continue
         fp = _post_enemy_settle_fingerprint(reread_board, reread_data)
         actual = _capture_board_summary(reread_board, reread_data)
         favorable = _actual_exceeds_prediction(actual, predicted)
+        pending_grid_loss = _pending_grid_loss_settlement(actual, predicted)
 
         # If the latest read no longer looks like a favorable surprise, two
-        # matching reads are enough. If it does look favorable, keep polling to
-        # the cap so delayed grid loss cannot masquerade as Grid Defense.
-        if fp == latest_fp and not favorable:
+        # matching reads are enough. If it does look favorable, or building
+        # loss is visible while grid has not caught up, keep polling to the cap
+        # so delayed grid loss cannot masquerade as Grid Defense.
+        if fp == latest_fp and not favorable and not pending_grid_loss:
             break
         latest_fp = fp
 
@@ -3058,8 +3091,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
             post_enemy_settle = None
             if (session.active_solution is not None
                     and bridge_data.get("turn", 0) > session.active_solution.turn
-                    and phase == "combat_player"
-                    and bridge_data.get("active_mechs", 1) > 0):
+                    and _post_enemy_ready_for_audit(board, bridge_data)):
                 board, bridge_data, post_enemy_settle = _settle_post_enemy_board(
                     session, board, bridge_data, session.active_solution.turn
                 )
@@ -3376,8 +3408,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # to verify, not cmd_verify, so the counter stays at 0).
             if (session.active_solution is not None
                     and bridge_data.get("turn", 0) > session.active_solution.turn
-                    and phase == "combat_player"
-                    and bridge_data.get("active_mechs", 1) > 0):
+                    and _post_enemy_ready_for_audit(board, bridge_data)):
                 post_enemy_result = _record_post_enemy(
                     session, board, session.active_solution.turn,
                     bridge_data=bridge_data,
