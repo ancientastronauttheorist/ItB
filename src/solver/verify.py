@@ -758,7 +758,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Hulks run 20260513_230944_542 Mission_Airstrike turn 2, where Jet used Aerial
 # Bombs from H3 to already-smoked F3 and live cleared fire while the simulator
 # kept it. Pre-v116 corpus archived as failure_db_snapshot_sim_v115.jsonl.
-SIMULATOR_VERSION = 116
+# v117 - Beetle charge attacks push their hit target forward, and Bouncer
+# self-recoil into the board edge does not deal self-bump damage. Matches Hard
+# Rusting Hulks run 20260513_230944_542 Mission_Airstrike turn 4: Beetle shoved
+# Rocket B3->B4, then Bouncer hit B4 and pushed the KIA Rocket to C4. Pre-v117
+# corpus archived as failure_db_snapshot_sim_v116.jsonl.
+SIMULATOR_VERSION = 117
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

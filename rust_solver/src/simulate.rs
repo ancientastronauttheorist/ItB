@@ -1301,6 +1301,16 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     apply_push_with_policy(board, x, y, direction, result, DEFAULT_PUSH_POLICY);
 }
 
+pub(crate) fn apply_push_no_edge_bump(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+) {
+    apply_push_with_policy(board, x, y, direction, result, NO_EDGE_BUMP_PUSH_POLICY);
+}
+
 fn apply_rocket_center_push(
     board: &mut Board,
     x: u8,

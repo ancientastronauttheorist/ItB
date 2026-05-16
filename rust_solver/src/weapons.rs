@@ -727,9 +727,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 51: LeaperAtk1
     w[51] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, flags: f(WeaponFlags::WEB.bits()), ..DEF };
     // 52: BeetleAtk1
-    w[52] = WeaponDef { weapon_type: WeaponType::Charge, damage: 1, flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
+    w[52] = WeaponDef { weapon_type: WeaponType::Charge, damage: 1, push: PushDir::Forward,
+        flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
     // 53: BeetleAtk2
-    w[53] = WeaponDef { weapon_type: WeaponType::Charge, damage: 3, flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
+    w[53] = WeaponDef { weapon_type: WeaponType::Charge, damage: 3, push: PushDir::Forward,
+        flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
     // 54: FireflyAtk1
     w[54] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0, flags: C, ..DEF };
     // 55: FireflyAtk2

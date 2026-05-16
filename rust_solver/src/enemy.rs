@@ -10,6 +10,7 @@ use crate::weapons::*;
 use crate::simulate::{
     apply_damage,
     apply_push,
+    apply_push_no_edge_bump,
     apply_teleport_on_land,
     apply_weapon_status,
     apply_weapon_status_with_impact_occupancy,
@@ -1075,7 +1076,7 @@ pub fn simulate_enemy_attacks(
 
                 if wdef.push_self() {
                     if let Some(dir) = attack_dir {
-                        apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+                        apply_push_no_edge_bump(board, ex, ey, opposite_dir(dir), &mut result);
                     }
                 }
 
@@ -1397,7 +1398,11 @@ pub fn simulate_enemy_attacks(
 
                     if wdef.push_self() {
                         if let Some(dir) = attack_dir {
-                            apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+                            if matches!(enemy_wid, WId::BouncerAtk1 | WId::BouncerAtk2) {
+                                apply_push_no_edge_bump(board, ex, ey, opposite_dir(dir), &mut result);
+                            } else {
+                                apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+                            }
                         }
                     }
                     if matches!(enemy_wid, WId::BurrowerAtk1 | WId::BurrowerAtk2) {
@@ -2034,6 +2039,43 @@ mod tests {
         assert_eq!(board.units[target_idx].hp, 2, "Bouncer horn deals 1 damage");
         assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (4, 5),
             "Bouncer horn pushes the target forward");
+    }
+
+    #[test]
+    fn test_beetle_charge_pushes_target_forward() {
+        let mut board = Board::default();
+        let target_idx = add_mech_unit(&mut board, 2, 5, 6, 2);
+        let beetle_idx = add_enemy_with_type(&mut board, 46, 6, 6, 4, "Beetle1", 5, 6);
+        board.units[beetle_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[target_idx].hp, 1, "Beetle should deal 1 charge damage");
+        assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (4, 6),
+            "Beetle charge should push the hit target forward");
+    }
+
+    #[test]
+    fn test_beetle_push_into_bouncer_chain_kills_rocket() {
+        let mut board = Board::default();
+        let rocket_idx = add_mech_unit(&mut board, 1, 5, 6, 2);
+        let beetle_idx = add_enemy_with_type(&mut board, 46, 6, 6, 4, "Beetle1", 5, 6);
+        let bouncer_idx = add_enemy_with_type(&mut board, 47, 4, 7, 1, "Bouncer2", 3, 6);
+        board.units[beetle_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[bouncer_idx].weapon_damage = 3;
+
+        let mut orig = default_orig_pos(&board);
+        orig[bouncer_idx] = (3, 7);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[rocket_idx].hp <= 0,
+            "Beetle B3->B4 displacement should let the alpha Bouncer kill Rocket");
+        assert_eq!((board.units[rocket_idx].x, board.units[rocket_idx].y), (4, 5),
+            "Bouncer should push the killed Rocket onward to C4");
+        assert_eq!(board.units[bouncer_idx].hp, 1,
+            "Bouncer edge recoil should not self-bump to death");
     }
 
     #[test]

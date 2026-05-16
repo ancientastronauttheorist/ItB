@@ -1190,7 +1190,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Aerial Bombs from H3 to already-smoked F3 and live cleared fire while the
 //   simulator kept it. Pre-v116 corpus archived as
 //   `failure_db_snapshot_sim_v115.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 116;
+// v117 - Beetle charge attacks push their hit target forward, and Bouncer
+//   self-recoil into the board edge does not deal self-bump damage. Matches
+//   Hard Rusting Hulks run 20260513_230944_542 Mission_Airstrike turn 4:
+//   Beetle shoved Rocket B3->B4, then Bouncer hit B4 and pushed the KIA
+//   Rocket to C4. Pre-v117 corpus archived as
+//   `failure_db_snapshot_sim_v116.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 117;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
