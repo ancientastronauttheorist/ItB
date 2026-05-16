@@ -33,8 +33,11 @@ from src.solver.solver import MechAction, Solution, replay_solution
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.solver.evaluate import evaluate_threats
 from src.solver.plan_safety import (
+    FINAL_CAVE_EMERGENCY_PYLON_KINDS,
     NON_OVERRIDABLE_KINDS,
     audit_plan_safety,
+    final_cave_emergency_pylon_loss_allowed,
+    final_cave_resist_gamble_allowed,
     plan_requires_safety_block,
     safety_loss_profile,
 )
@@ -235,6 +238,22 @@ def _threat_audit_requires_block(
     if int(threat_audit.get("still_threatened_count") or 0) <= 0:
         return False
     safety = plan_safety if isinstance(plan_safety, dict) else {}
+    if final_cave_emergency_pylon_loss_allowed(safety):
+        current = safety.get("current") if isinstance(safety.get("current"), dict) else {}
+        predicted = (
+            safety.get("predicted")
+            if isinstance(safety.get("predicted"), dict)
+            else {}
+        )
+        cur_pylons = current.get("pylons_alive")
+        pred_pylons = predicted.get("pylons_alive")
+        pylon_losses = (
+            cur_pylons - pred_pylons
+            if isinstance(cur_pylons, int) and isinstance(pred_pylons, int)
+            else 0
+        )
+        if int(threat_audit.get("still_threatened_count") or 0) <= pylon_losses:
+            return False
     cur_grid = ((safety.get("current") or {}).get("grid_power")
                 if isinstance(safety, dict) else None)
     low_grid = isinstance(cur_grid, int) and cur_grid <= 2
@@ -313,10 +332,21 @@ def _dirty_consent_gate(
         if isinstance(v, dict)
     }
     debug_collapse = os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
+    allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(plan_safety)
+    allow_final_cave_resist = final_cave_resist_gamble_allowed(plan_safety)
     non_overridable = sorted(
         k for k in kinds
         if k in NON_OVERRIDABLE_KINDS
         and not (k == "grid_timeline_collapse" and debug_collapse)
+        and not (k == "grid_timeline_collapse" and allow_final_cave_resist)
+        and not (
+            allow_final_cave_pylon
+            and k in FINAL_CAVE_EMERGENCY_PYLON_KINDS
+        )
+        and not (
+            allow_final_cave_resist
+            and k in FINAL_CAVE_EMERGENCY_PYLON_KINDS
+        )
     )
     if non_overridable:
         return _hard_stop_result(
@@ -335,7 +365,11 @@ def _dirty_consent_gate(
             str(t).strip().lower() for t in (session.achievement_targets or [])
         }
     )
-    if hard_target and "grid_timeline_collapse" in kinds:
+    if (
+        hard_target
+        and "grid_timeline_collapse" in kinds
+        and not allow_final_cave_resist
+    ):
         return _hard_stop_result(
             "DIRTY_CONSENT_REJECTED",
             dirty_consent_id=expected,
@@ -440,6 +474,17 @@ def _bridge_is_stale_post_mission(
             for u in bridge_data.get("units", []) or []
             if isinstance(u, dict)
         )
+    ):
+        return False
+    # Mission-start save lag: immediately after confirming deployment, saveData
+    # can still look between-missions while the live bridge has already entered
+    # the next combat. Do not discard a fresh turn-0/turn-1 active-mission bridge
+    # board as stale post-mission residue.
+    if (
+        bridge_data.get("in_active_mission") is True
+        and bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
+        and bridge_turn <= 1
+        and bridge_data.get("mission_id")
     ):
         return False
     return (
@@ -1509,6 +1554,18 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         bridge_data.get("mission_id")
         if isinstance(bridge_data, dict) else None
     ) or getattr(board, "mission_id", "")
+    turn = (
+        bridge_data.get("turn")
+        if isinstance(bridge_data, dict) else None
+    )
+    if not isinstance(turn, int):
+        turn = getattr(board, "current_turn", None)
+    total_turns = (
+        bridge_data.get("total_turns")
+        if isinstance(bridge_data, dict) else None
+    )
+    if not isinstance(total_turns, int):
+        total_turns = getattr(board, "total_turns", None)
     is_final_cave = mission_id == "Mission_Final_Cave"
     buildings_alive = 0
     building_hp_total = 0
@@ -1636,6 +1693,8 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mechs_disabled": mechs_disabled,
         "mechs_webbed": mechs_webbed,
         "mission_id": mission_id,
+        "turn": turn if isinstance(turn, int) else None,
+        "total_turns": total_turns if isinstance(total_turns, int) else None,
         "protected_objective_units": protected_objective_units,
         "protected_objective_units_alive": sum(
             1 for u in protected_objective_units if u["alive"]
@@ -2979,6 +3038,12 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 "turn": bridge_data.get("turn", 0),
                 "grid_power": f"{board.grid_power}/{board.grid_power_max}",
             }
+            if bridge_data.get("mech_stat_overlays"):
+                result["mech_stat_overlays"] = bridge_data["mech_stat_overlays"]
+            if bridge_data.get("pilot_calibration_requests"):
+                result["pilot_calibration_requests"] = (
+                    bridge_data["pilot_calibration_requests"]
+                )
 
             session.current_turn = bridge_data.get("turn", 0)
 
@@ -3902,10 +3967,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 # candidates are ranked under the same tactical assumptions as
                 # the live solve.
                 widening_attempts: list[dict] = []
-                for source, ignore_soft_disables in [
-                    ("top_k_safety", False),
-                ]:
+                widening_sources = [("top_k_safety", False)]
+                if session.disabled_actions:
+                    widening_sources.append(
+                        ("top_k_safety_no_soft_disable", True)
+                    )
+                for source, ignore_soft_disables in widening_sources:
                     wide_bridge_data = dict(bridge_data)
+                    if ignore_soft_disables:
+                        wide_bridge_data["disabled_actions"] = []
 
                     wide_raw = _rust.solve_top_k(
                         _json.dumps(wide_bridge_data),
@@ -4120,6 +4190,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     result["plan_safety"] = plan_safety
     result["candidate_count"] = candidate_count
     result["selected_candidate_rank"] = selected_candidate_rank
+    result["selected_candidate_source"] = selected_candidate_source
+    if final_cave_resist_gamble_allowed(plan_safety):
+        result["final_cave_resist_gamble"] = True
     if isinstance(plan_safety, dict) and plan_safety.get("blocking"):
         result["dirty_consent_id"] = _dirty_consent_id(
             session,
@@ -7947,6 +8020,19 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         except (json.JSONDecodeError, OSError):
             pass
 
+    selected_candidate_rank = solve_result.get("selected_candidate_rank")
+    if not isinstance(selected_candidate_rank, int):
+        selected_candidate_rank = solve_data.get("selected_candidate_rank")
+    if not isinstance(selected_candidate_rank, int):
+        selected_candidate_rank = candidate_rank
+    selected_candidate_source = (
+        solve_result.get("selected_candidate_source")
+        or solve_data.get("selected_candidate_source")
+    )
+    candidate_count = solve_result.get("candidate_count")
+    if not isinstance(candidate_count, int):
+        candidate_count = solve_data.get("candidate_count")
+
     # Pre-turn-1 winnability check — if the solver scored catastrophically low
     # AND grid power is forecast to drop ≥2 on turn 1, the position is most
     # likely unwinnable. Surface a loud banner so the operator can forfeit
@@ -7965,7 +8051,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             turn=turn,
             plan_safety=plan_safety,
             actions=actions,
-            candidate_rank=candidate_rank,
+            candidate_rank=selected_candidate_rank,
             provided_id=dirty_consent_id,
         )
         if consent_error is not None:
@@ -7976,12 +8062,19 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     if plan_requires_safety_block(plan_safety,
                                   allow_dirty_plan=allow_dirty_plan):
         consent_id = _dirty_consent_id(
-            session, turn, plan_safety, actions, candidate_rank=candidate_rank
+            session,
+            turn,
+            plan_safety,
+            actions,
+            candidate_rank=selected_candidate_rank,
         ) if isinstance(plan_safety, dict) else None
         result = {
             "status": "SAFETY_BLOCKED",
             "turn": turn,
             "score": score,
+            "candidate_count": candidate_count,
+            "selected_candidate_rank": selected_candidate_rank,
+            "selected_candidate_source": selected_candidate_source,
             "actions_planned": len(actions),
             "actions": [a.description for a in actions],
             "plan_safety": plan_safety,
@@ -7993,6 +8086,26 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 "loss is accepted."
             ),
         }
+        for key in (
+            "dirty_frontier",
+            "lookahead_frontier",
+            "robust_frontier",
+            "safety_widening",
+        ):
+            value = solve_result.get(key)
+            if value is None:
+                value = solve_data.get(key)
+            if value:
+                result[key] = value
+        if final_cave_resist_gamble_allowed(plan_safety):
+            result["final_cave_resist_gamble"] = True
+            result["next_step"] = (
+                "This is a last-turn final-cave resist gamble. Review the "
+                "dirty_frontier for the lowest pylon-loss candidate, then "
+                "rerun auto_turn with --candidate-rank, --allow-dirty-plan, "
+                "and the exact dirty_consent_id only if that resist line is "
+                "explicitly accepted."
+            )
         if winnability_warning:
             result["winnability_warning"] = winnability_warning
         print("\n! SAFETY BLOCK — refusing to execute predicted dirty plan")

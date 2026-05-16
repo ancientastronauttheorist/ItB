@@ -191,6 +191,195 @@ def test_dirty_consent_rejects_non_overridable_without_consuming_token():
     assert token not in s.dirty_consent_used
 
 
+def test_dirty_consent_accepts_final_cave_emergency_pylon_loss():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.mission_index = 24
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "grid_damage",
+                "current": 6,
+                "predicted": 4,
+                "blocking": True,
+                "delta": -2,
+            },
+            {
+                "kind": "pylon_destroyed",
+                "current": 7,
+                "predicted": 6,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "pylon_hp_loss",
+                "current": 14,
+                "predicted": 12,
+                "blocking": True,
+                "delta": -2,
+            },
+        ],
+        "current": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 6,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+        },
+        "predicted": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 4,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=0)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_final_cave_resist_gamble():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.mission_index = 24
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "grid_damage",
+                "current": 4,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -4,
+            },
+            {
+                "kind": "grid_timeline_collapse",
+                "current": 4,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -4,
+            },
+            {
+                "kind": "pylon_destroyed",
+                "current": 6,
+                "predicted": 4,
+                "blocking": True,
+                "delta": -2,
+            },
+            {
+                "kind": "pylon_hp_loss",
+                "current": 12,
+                "predicted": 8,
+                "blocking": True,
+                "delta": -4,
+            },
+        ],
+        "current": {
+            "mission_id": "Mission_Final_Cave",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 4,
+            "pylons_alive": 6,
+            "pylon_hp_total": 12,
+            "mechs_alive": 3,
+            "mech_hp_total": 9,
+            "bigbomb_alive": True,
+        },
+        "predicted": {
+            "mission_id": "Mission_Final_Cave",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 0,
+            "pylons_alive": 4,
+            "pylon_hp_total": 8,
+            "mechs_alive": 3,
+            "mech_hp_total": 9,
+            "bigbomb_alive": True,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=493)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=493,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_threat_audit_allows_expected_final_cave_emergency_pylon_loss():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.current_mission = "Mission_Final_Cave"
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": "pylon_destroyed", "blocking": True},
+            {"kind": "pylon_hp_loss", "blocking": True},
+        ],
+        "current": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 6,
+            "pylons_alive": 7,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+        },
+        "predicted": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 4,
+            "pylons_alive": 6,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+
+    assert cmd_mod._threat_audit_requires_block(
+        {"still_threatened_count": 1}, safety, s
+    ) is False
+    assert cmd_mod._threat_audit_requires_block(
+        {"still_threatened_count": 2}, safety, s
+    ) is True
+
+
 # ---------------------------------------------------------------------------
 # cmd_auto_turn entry-point invalidation logic.
 #

@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-28 of 70 completed (latest Steam sync on 2026-05-10; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 42 remaining, sorted by global unlock % (easiest first).
+30 of 70 completed (latest Steam sync on 2026-05-16; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 40 remaining, sorted by global unlock % (easiest first).
 
-Current Hard Victory hardening note: live-loop safety now treats delayed grid scalar updates as pending grid debt, waits for post-enemy grid/building fingerprints to settle before recording favorable reads, preserves active weights/soft-disable masks during safety widening, splits dirty frontiers by loss magnitude, blocks predicted timeline collapse even with dirty consent, backfills final-island post-enemy audits before solving ahead, and records a pre-End-Turn threat coverage audit for each initially threatened building/pylon.
+Current Hard Victory hardening note: Hard Victory is complete with Rusting Hulks on Hard + Advanced Edition. Live-loop safety now treats delayed grid scalar updates as pending grid debt, waits for post-enemy grid/building fingerprints to settle before recording favorable reads, preserves active weights/soft-disable masks during safety widening, splits dirty frontiers by loss magnitude, carries those frontiers through `auto_turn` safety blocks, gates final-cave resist gambles to exact-token last-turn exceptions, backfills final-island post-enemy audits before solving ahead, and records a pre-End-Turn threat coverage audit for each initially threatened building/pylon.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -21,7 +21,7 @@ Current Hard Victory hardening note: live-loop safety now treats delayed grid sc
 - [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
 - [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
 - [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
-- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers] — paused while Hard Victory is active
+- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
 - [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]
 - [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
@@ -38,7 +38,7 @@ Current Hard Victory hardening note: live-loop safety now treats delayed grid sc
 - [ ] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
 - [ ] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths]
-- [ ] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
+- [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
 - [ ] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs]
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
 - [ ] Untouchable (14.5%) — Finish island without Mech Damage
@@ -58,7 +58,7 @@ Current Hard Victory hardening note: live-loop safety now treats delayed grid sc
 - [ ] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random]
 - [ ] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
 - [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
-- [ ] Hard Victory (9.0%) — Beat game on Hard — active target with Rusting Hulks on Hard + Advanced Edition; prefer a third island unless grid is full/near-full and Jet/Rocket/Pulse are actually Hive-ready
+- [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
 - [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
 - [ ] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm]
@@ -79,7 +79,7 @@ Current Hard Victory hardening note: live-loop safety now treats delayed grid sc
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (28, from Steam sync + live Zenith Guard confirmations)
+### Already Completed (30, from Steam sync + live confirmations)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -104,10 +104,12 @@ Current Hard Victory hardening note: live-loop safety now treats delayed grid sc
 - [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle  [Frozen Titans]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
+- [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle  [Rusting Hulks]
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser  [Zenith Guard]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
+- [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
 
 
 ## Development Phases

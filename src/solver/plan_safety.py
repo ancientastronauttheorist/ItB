@@ -43,6 +43,28 @@ NON_OVERRIDABLE_KINDS = {
     "protected_objective_unit_unfrozen",
 }
 
+FINAL_CAVE_EMERGENCY_PYLON_KINDS = {
+    "pylon_destroyed",
+    "pylon_hp_loss",
+}
+
+FINAL_CAVE_EMERGENCY_ALLOWED_KINDS = {
+    "grid_damage",
+    "building_destroyed",
+    "building_hp_loss",
+    "pylon_destroyed",
+    "pylon_hp_loss",
+}
+
+FINAL_CAVE_RESIST_GAMBLE_ALLOWED_KINDS = {
+    "grid_damage",
+    "grid_timeline_collapse",
+    "building_destroyed",
+    "building_hp_loss",
+    "pylon_destroyed",
+    "pylon_hp_loss",
+}
+
 
 LOSS_KINDS = {
     "grid_damage": "grid_power",
@@ -377,6 +399,10 @@ def audit_plan_safety(current: dict[str, Any],
     cur_frozen = _int_or_none(current.get("protected_objective_units_frozen"))
     pred_frozen = _int_or_none(predicted.get("protected_objective_units_frozen"))
     mission_id = current.get("mission_id") or predicted.get("mission_id")
+    cur_turn = _int_or_none(current.get("turn"))
+    pred_turn = _int_or_none(predicted.get("turn"))
+    cur_total_turns = _int_or_none(current.get("total_turns"))
+    pred_total_turns = _int_or_none(predicted.get("total_turns"))
     if (
         mission_id == "Mission_FreezeBots"
         and cur_frozen is not None
@@ -411,6 +437,9 @@ def audit_plan_safety(current: dict[str, Any],
         "violations": violations,
         "compared": compared,
         "current": {
+            "mission_id": mission_id,
+            "turn": cur_turn,
+            "total_turns": cur_total_turns,
             "grid_power": cur_grid,
             "buildings_alive": cur_alive,
             "building_hp_total": cur_hp,
@@ -431,6 +460,9 @@ def audit_plan_safety(current: dict[str, Any],
             "protected_objective_units_frozen": cur_frozen,
         },
         "predicted": {
+            "mission_id": mission_id,
+            "turn": pred_turn,
+            "total_turns": pred_total_turns,
             "grid_power": pred_grid,
             "buildings_alive": pred_alive,
             "building_hp_total": pred_hp,
@@ -467,6 +499,8 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             allow_timeline_collapse_debug
             or os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
         )
+        allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(audit)
+        allow_final_cave_resist = final_cave_resist_gamble_allowed(audit)
         return any(
             isinstance(v, dict)
             and v.get("blocking")
@@ -475,9 +509,144 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                 debug_collapse
                 and v.get("kind") == "grid_timeline_collapse"
             )
+            and not (
+                allow_final_cave_pylon
+                and v.get("kind") in FINAL_CAVE_EMERGENCY_PYLON_KINDS
+            )
+            and not (
+                allow_final_cave_resist
+                and v.get("kind") in FINAL_CAVE_RESIST_GAMBLE_ALLOWED_KINDS
+            )
             for v in audit.get("violations", []) or []
         )
     return bool(audit.get("blocking"))
+
+
+def final_cave_emergency_pylon_loss_allowed(
+    audit: dict[str, Any] | None,
+) -> bool:
+    """Return whether exact dirty consent may override final-cave pylon loss."""
+    if not isinstance(audit, dict) or audit.get("status") != "DIRTY":
+        return False
+    current = audit.get("current") if isinstance(audit.get("current"), dict) else {}
+    predicted = (
+        audit.get("predicted") if isinstance(audit.get("predicted"), dict) else {}
+    )
+    mission_id = current.get("mission_id") or predicted.get("mission_id")
+    if mission_id != "Mission_Final_Cave":
+        return False
+
+    kinds = {
+        v.get("kind")
+        for v in audit.get("violations", []) or []
+        if isinstance(v, dict) and v.get("blocking")
+    }
+    if not kinds:
+        return False
+    if not kinds & FINAL_CAVE_EMERGENCY_PYLON_KINDS:
+        return False
+    if not kinds <= FINAL_CAVE_EMERGENCY_ALLOWED_KINDS:
+        return False
+
+    pred_grid = _int_or_none(predicted.get("grid_power"))
+    if pred_grid is None or pred_grid <= 0:
+        return False
+    if predicted.get("bigbomb_alive") is not True:
+        return False
+
+    cur_mechs = _int_or_none(current.get("mechs_alive"))
+    pred_mechs = _int_or_none(predicted.get("mechs_alive"))
+    if cur_mechs is None or pred_mechs is None or pred_mechs < cur_mechs:
+        return False
+
+    cur_mech_hp = _int_or_none(current.get("mech_hp_total"))
+    pred_mech_hp = _int_or_none(predicted.get("mech_hp_total"))
+    if cur_mech_hp is None or pred_mech_hp is None or pred_mech_hp < cur_mech_hp:
+        return False
+
+    for key in (
+        "mechs_acid",
+        "mechs_fire",
+        "mechs_webbed",
+        "mechs_on_danger",
+        "mechs_disabled",
+    ):
+        if _list_or_empty(predicted.get(key)):
+            return False
+    return True
+
+
+def final_cave_resist_gamble_allowed(
+    audit: dict[str, Any] | None,
+) -> bool:
+    """Return whether exact dirty consent may attempt a final-cave resist win.
+
+    This is the narrow Hail Mary exception: on the last Renfield Bomb turn, a
+    reviewed plan can be executed even when the deterministic model predicts
+    grid collapse, provided the bomb and all mechs survive and the only
+    blocking losses are ordinary final-cave pylons/buildings/grid.
+    """
+    if not isinstance(audit, dict) or audit.get("status") != "DIRTY":
+        return False
+    current = audit.get("current") if isinstance(audit.get("current"), dict) else {}
+    predicted = (
+        audit.get("predicted") if isinstance(audit.get("predicted"), dict) else {}
+    )
+    mission_id = current.get("mission_id") or predicted.get("mission_id")
+    if mission_id != "Mission_Final_Cave":
+        return False
+
+    turn = _int_or_none(current.get("turn")) or _int_or_none(predicted.get("turn"))
+    total_turns = (
+        _int_or_none(current.get("total_turns"))
+        or _int_or_none(predicted.get("total_turns"))
+    )
+    if turn is None or total_turns is None or turn < total_turns:
+        return False
+
+    kinds = {
+        v.get("kind")
+        for v in audit.get("violations", []) or []
+        if isinstance(v, dict) and v.get("blocking")
+    }
+    if "grid_timeline_collapse" not in kinds:
+        return False
+    if not kinds <= FINAL_CAVE_RESIST_GAMBLE_ALLOWED_KINDS:
+        return False
+
+    pred_grid = _int_or_none(predicted.get("grid_power"))
+    if pred_grid is None or pred_grid > 0:
+        return False
+    if predicted.get("bigbomb_alive") is not True:
+        return False
+
+    cur_mechs = _int_or_none(current.get("mechs_alive"))
+    pred_mechs = _int_or_none(predicted.get("mechs_alive"))
+    if cur_mechs is None or pred_mechs is None or pred_mechs < cur_mechs:
+        return False
+
+    cur_mech_hp = _int_or_none(current.get("mech_hp_total"))
+    pred_mech_hp = _int_or_none(predicted.get("mech_hp_total"))
+    if cur_mech_hp is None or pred_mech_hp is None or pred_mech_hp < cur_mech_hp:
+        return False
+
+    pred_pylons = _int_or_none(predicted.get("pylons_alive"))
+    if pred_pylons is not None and pred_pylons <= 0:
+        return False
+    pred_pylon_hp = _int_or_none(predicted.get("pylon_hp_total"))
+    if pred_pylon_hp is not None and pred_pylon_hp <= 0:
+        return False
+
+    for key in (
+        "mechs_acid",
+        "mechs_fire",
+        "mechs_webbed",
+        "mechs_on_danger",
+        "mechs_disabled",
+    ):
+        if _list_or_empty(predicted.get(key)):
+            return False
+    return True
 
 
 def safety_loss_profile(audit: dict[str, Any] | None) -> dict[str, Any]:

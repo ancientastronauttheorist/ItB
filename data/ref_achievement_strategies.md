@@ -25,8 +25,10 @@ evaluation weights when targeting that achievement.
 - [x] Scorched Earth (20.5%) -- End battle with 12 tiles on Fire (Flame Behemoths)
 - [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
 - [x] Pacifist (16.6%) -- Kill less than 3 enemies in a battle (Frozen Titans)
+- [x] Stormy Weather (15.4%) -- 12 Electric Smoke damage in one battle (Rusting Hulks)
 - [x] Unwitting Allies (14.2%) -- 4 enemies die from enemy fire (Steel Judoka)
 - [x] Unbreakable (10.2%) -- Mech Armor absorbs 5 damage in one battle (Steel Judoka)
+- [x] Hard Victory (9.0%) -- Beat the game on Hard
 
 ---
 
@@ -259,10 +261,11 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium-Hard
 
 ### Stormy Weather (15.4%)
+- **Status:** Completed 2026-05-16 during Rusting Hulks run `20260513_230944_542`.
 - **Requirement:** Deal 12 damage with Electric Smoke in a single battle with the Rusting Hulks squad.
 - **Squad:** Rusting Hulks (required)
 - **Strategy:** The Storm Generator passive makes smoke deal 1 damage (2 with upgrade) to enemies each turn. Spread smoke aggressively over multiple turns. Each enemy standing in smoke takes damage at the start of their turn. Need to accumulate 12 total smoke damage in one 5-turn battle.
-- **Bot approach:** Maximize smoke coverage on enemy tiles. The solver should prioritize placing smoke on enemies even over killing them. Track total smoke damage. Upgrade Storm Generator (+1 damage) to need fewer instances.
+- **Bot approach:** Maximize smoke coverage on enemy tiles and let smoke ticks finish low-HP enemies when grid/objectives are safe. Track total smoke damage. Upgrade Storm Generator (+1 damage) to need fewer instances.
 - **Key weapons:** Storm Generator (passive, upgraded to +1 damage), Aerial Bombs (Jet Mech, creates smoke), Rocket Artillery (creates smoke behind shooter)
 - **Ideal setup:** Normal difficulty, second or third island with more enemies. Upgrade Storm Generator first. +1 Range on Jet Mech helps cover more enemies.
 - **Estimated difficulty for bot:** Medium
@@ -421,11 +424,12 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Hard
 
 ### Hard Victory (9.0%)
+- **Status:** Completed 2026-05-16 with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`.
 - **Requirement:** Beat the game on Hard difficulty (any length).
 - **Squad:** Any (strong squad recommended)
-- **Strategy:** Hard mode has more enemies, higher HP enemies, and tougher conditions. Play a strong squad (Rusting Hulks or Steel Judoka) and use the bot's optimal play.
-- **Bot approach:** Standard solver play but on Hard. May need stronger evaluation weights and deeper search. The solver should be more conservative with building protection.
-- **Ideal setup:** Hard difficulty, 2-island run for shortest path to victory. Rusting Hulks recommended (smoke negates enemy strength).
+- **Strategy:** Hard mode has more enemies, higher HP enemies, and tougher conditions. Play a strong squad (Rusting Hulks or Steel Judoka), protect grid early, and enter the Hive with enough cores/control to answer four-threat overloads.
+- **Bot approach:** Use the Hard safety stack: deep top-K frontier review on dirty turns, post-enemy audits before advancing, exact dirty-consent tokens, and final-cave resist-gamble handling only on the last bomb turn.
+- **Ideal setup:** Hard difficulty with Rusting Hulks remains strong, but prefer a 3-island run unless the 2-island kit is genuinely Hive-ready. The completed 2-island Rusting Hulks run won, but final cave turn 4 required the rank-493 resist line `Jet A3->A6/A4`, `Rocket F3->F1`, `Pulse E1->D5/D5` after no grid-positive candidate existed.
 - **Estimated difficulty for bot:** Hard
 
 ### Powered Blast (8.8%)

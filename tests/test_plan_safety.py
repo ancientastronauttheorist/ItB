@@ -1,5 +1,7 @@
 from src.solver.plan_safety import (
     audit_plan_safety,
+    final_cave_emergency_pylon_loss_allowed,
+    final_cave_resist_gamble_allowed,
     plan_requires_safety_block,
     safety_loss_profile,
 )
@@ -97,6 +99,108 @@ def test_timeline_collapse_requires_explicit_debug_escape():
     ) is False
 
 
+def test_final_cave_resist_gamble_can_be_dirty_consented_on_last_turn():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=4,
+            total_turns=4,
+            grid=4,
+            buildings=6,
+            hp=12,
+            pylons_alive=6,
+            pylon_hp_total=12,
+            mechs_alive=3,
+            mech_hp_total=9,
+            bigbomb_alive=True,
+        ),
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=4,
+            total_turns=4,
+            grid=0,
+            buildings=4,
+            hp=8,
+            pylons_alive=4,
+            pylon_hp_total=8,
+            mechs_alive=3,
+            mech_hp_total=9,
+            bigbomb_alive=True,
+        ),
+    )
+
+    assert final_cave_resist_gamble_allowed(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
+
+
+def test_final_cave_resist_gamble_rejects_before_last_turn():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=3,
+            total_turns=4,
+            grid=4,
+            buildings=6,
+            hp=12,
+            pylons_alive=6,
+            pylon_hp_total=12,
+            mechs_alive=3,
+            mech_hp_total=9,
+            bigbomb_alive=True,
+        ),
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=3,
+            total_turns=4,
+            grid=0,
+            buildings=4,
+            hp=8,
+            pylons_alive=4,
+            pylon_hp_total=8,
+            mechs_alive=3,
+            mech_hp_total=9,
+            bigbomb_alive=True,
+        ),
+    )
+
+    assert final_cave_resist_gamble_allowed(audit) is False
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
+def test_final_cave_resist_gamble_rejects_bomb_loss():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=4,
+            total_turns=4,
+            grid=4,
+            buildings=6,
+            hp=12,
+            pylons_alive=6,
+            pylon_hp_total=12,
+            mechs_alive=3,
+            mech_hp_total=9,
+            bigbomb_alive=True,
+        ),
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=4,
+            total_turns=4,
+            grid=0,
+            buildings=4,
+            hp=8,
+            pylons_alive=4,
+            pylon_hp_total=8,
+            mechs_alive=3,
+            mech_hp_total=9,
+            bigbomb_alive=False,
+        ),
+    )
+
+    assert final_cave_resist_gamble_allowed(audit) is False
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
 def test_final_cave_pylon_loss_is_named():
     audit = audit_plan_safety(
         _summary(
@@ -118,6 +222,66 @@ def test_final_cave_pylon_loss_is_named():
     kinds = {v["kind"] for v in audit["violations"]}
     assert {"pylon_destroyed", "pylon_hp_loss"} <= kinds
     assert safety_loss_profile(audit)["label"] == "pylon_loss"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
+def test_final_cave_emergency_pylon_loss_can_be_dirty_consented():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Final_Cave",
+            grid=6,
+            buildings=7,
+            hp=14,
+            pylons_alive=7,
+            pylon_hp_total=14,
+            mechs_alive=3,
+            mech_hp_total=10,
+            bigbomb_alive=True,
+        ),
+        _summary(
+            mission_id="Mission_Final_Cave",
+            grid=4,
+            buildings=6,
+            hp=12,
+            pylons_alive=6,
+            pylon_hp_total=12,
+            mechs_alive=3,
+            mech_hp_total=10,
+            bigbomb_alive=True,
+        ),
+    )
+
+    assert final_cave_emergency_pylon_loss_allowed(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
+
+
+def test_final_cave_emergency_pylon_loss_rejects_mech_hp_debt():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Final_Cave",
+            grid=6,
+            buildings=7,
+            hp=14,
+            pylons_alive=7,
+            pylon_hp_total=14,
+            mechs_alive=3,
+            mech_hp_total=10,
+            bigbomb_alive=True,
+        ),
+        _summary(
+            mission_id="Mission_Final_Cave",
+            grid=4,
+            buildings=6,
+            hp=12,
+            pylons_alive=6,
+            pylon_hp_total=12,
+            mechs_alive=3,
+            mech_hp_total=9,
+            bigbomb_alive=True,
+        ),
+    )
+
+    assert final_cave_emergency_pylon_loss_allowed(audit) is False
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
 
 
