@@ -1246,7 +1246,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   existing Alpha Tumblebug boulder attack model (3-damage queued
 //   boulder/tile hit; boulders are already exposed by the bridge). Pre-v130
 //   corpus archived as `failure_db_snapshot_sim_v129.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 130;
+// v131 - BombRock death explosions fire immediately on damage+push weapons
+//   instead of being swallowed by the deferred corpse-push path; dead
+//   BombRocks do not push onward as corpses. Pre-v131 corpus archived as
+//   `failure_db_snapshot_sim_v130.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 131;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

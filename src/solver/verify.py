@@ -821,7 +821,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # existing Alpha Tumblebug boulder attack model; bridge already exposes the
 # spawned Unstable Boulders as units. Pre-v130 corpus archived as
 # failure_db_snapshot_sim_v129.jsonl.
-SIMULATOR_VERSION = 130
+# v131 - BombRock death explosions fire immediately on damage+push weapons
+# instead of being swallowed by the deferred corpse-push path; dead BombRocks
+# do not push onward as corpses. Pre-v131 corpus archived as
+# failure_db_snapshot_sim_v130.jsonl.
+SIMULATOR_VERSION = 131
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

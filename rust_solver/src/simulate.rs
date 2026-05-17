@@ -888,7 +888,23 @@ fn apply_damage_defer_death_explosion(
         } else { None }
     });
 
+    // BombRock explosions are not a corpse-position death aura: live
+    // Unstable Boulders detonate from the tile that took damage, before
+    // a push weapon can shove the dead boulder onward.
+    let bombrock_check = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.hp > 0 && u.type_name_str() == "BombRock" {
+            Some(idx)
+        } else { None }
+    });
+
     apply_damage_core(board, x, y, damage, result, source);
+
+    if let Some(idx) = bombrock_check {
+        if board.units[idx].hp <= 0 {
+            apply_bombrock_explosion(board, x, y, result, None, 0);
+        }
+    }
 
     if let Some(idx) = volatile_check {
         if board.units[idx].hp <= 0 {
@@ -1612,6 +1628,12 @@ fn apply_push_with_policy(
         Some(idx) => idx,
         None => return,
     };
+
+    // BombRocks explode as soon as they are destroyed. The dead boulder does
+    // not continue as a pushable corpse for Taurus/Rocket-style damage+push.
+    if board.units[unit_idx].hp <= 0 && board.units[unit_idx].type_name_str() == "BombRock" {
+        return;
+    }
 
     // Non-pushable non-mechs are immune
     if !board.units[unit_idx].pushable()
@@ -3704,6 +3726,21 @@ mod tests {
         idx
     }
 
+    fn add_bombrock(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
+        let idx = board.add_unit(Unit {
+            uid,
+            x,
+            y,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Neutral,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("BombRock");
+        idx
+    }
+
     #[test]
     fn test_terraformer_attack_kills_six_tile_sweep_and_sands_ground() {
         let mut board = make_test_board();
@@ -5081,6 +5118,50 @@ mod tests {
             "Taurus edge hit should deal weapon damage only"
         );
         assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_taurus_killed_bombrock_explodes_before_push_and_chains() {
+        // Corporate HQ / Tumblebug Leader turn 2: Tank at C7 fired Taurus at a
+        // C6 BombRock with another BombRock at C5. Live exploded from C6 before
+        // any corpse push, damaging Tank C7 and D6, then chained through C5 to
+        // damage D5.
+        let mut board = make_test_board();
+        let tank = add_mech(&mut board, 0, 1, 5, 3, WId::BruteTankmech);
+        let rock_c6 = add_bombrock(&mut board, 1745, 2, 5);
+        let rock_c5 = add_bombrock(&mut board, 1744, 3, 5);
+
+        {
+            let d6 = board.tile_mut(2, 4);
+            d6.terrain = Terrain::Building;
+            d6.building_hp = 1;
+        }
+        {
+            let d5 = board.tile_mut(3, 4);
+            d5.terrain = Terrain::Building;
+            d5.building_hp = 2;
+        }
+
+        let _result = simulate_action(
+            &mut board,
+            tank,
+            (1, 5),
+            WId::BruteTankmech,
+            (2, 5),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[tank].hp, 2, "C6 BombRock explosion hits Tank at C7");
+        assert!(board.units[rock_c6].hp <= 0, "directly hit C6 BombRock dies");
+        assert!(board.units[rock_c5].hp <= 0, "C5 BombRock dies from chain explosion");
+        assert_eq!(
+            (board.units[rock_c6].x, board.units[rock_c6].y),
+            (2, 5),
+            "dead BombRock should not be pushed as a corpse"
+        );
+        assert_eq!(board.tile(2, 4).building_hp, 0, "C6 explosion destroys D6 building");
+        assert_eq!(board.tile(2, 4).terrain, Terrain::Rubble, "D6 becomes rubble");
+        assert_eq!(board.tile(3, 4).building_hp, 1, "C5 chain explosion damages D5 building");
     }
 
     #[test]
