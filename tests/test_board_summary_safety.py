@@ -295,3 +295,71 @@ def test_pending_grid_debt_detects_delayed_grid_scalar(tmp_path, monkeypatch):
     )
     assert summary["visible_grid_power"] == 5
     assert summary["grid_power"] == 4
+
+
+def test_pending_grid_debt_ignores_stale_same_region_turn(tmp_path, monkeypatch):
+    board = Board()
+    board.grid_power = 7
+    board.grid_power_max = 7
+    for x, y, hp in ((1, 2, 1), (1, 6, 1), (2, 6, 1), (4, 3, 2), (5, 3, 2), (5, 6, 1)):
+        board.tile(x, y).terrain = "building"
+        board.tile(x, y).building_hp = hp
+    bridge_data = {
+        "turn": 1,
+        "mission_id": "Mission_Disposal",
+        "master_seed": 113578278,
+        "mission_seeds": {
+            "region1": {"state": 0, "mission": "Mission1"}
+        },
+    }
+    log_path = tmp_path / "resist_probe.jsonl"
+    log_path.write_text(
+        json.dumps({
+            "run_id": "run",
+            "mission_id": "Mission_Tides",
+            "region": "region1",
+            "mission_slot": "Mission3",
+            "turn": 1,
+            "master_seed": 814802298,
+            "grid_power": 5,
+            "building_hp_map": {
+                "C8": 1,
+                "B8": 1,
+                "C7": 1,
+                "B7": 1,
+                "G6": 2,
+                "F6": 2,
+                "B5": 1,
+                "B4": 2,
+            },
+        }) + "\n" + json.dumps({
+            "run_id": "run",
+            "mission_id": "Mission_Disposal",
+            "region": "region1",
+            "mission_slot": "Mission1",
+            "turn": 1,
+            "master_seed": 113578278,
+            "grid_power": 7,
+            "building_hp_map": {
+                "F7": 1,
+                "B7": 1,
+                "B6": 1,
+                "E4": 2,
+                "E3": 2,
+                "B3": 1,
+            },
+        }) + "\n"
+    )
+    monkeypatch.setattr(
+        "src.loop.commands._recording_dir",
+        lambda session: tmp_path,
+    )
+
+    debt = _annotate_pending_grid_debt(
+        RunSession(run_id="run"),
+        board,
+        bridge_data,
+    )
+
+    assert debt == 0
+    assert "_pending_grid_debt" not in bridge_data

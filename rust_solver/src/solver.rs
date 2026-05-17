@@ -1814,6 +1814,95 @@ mod top_k_tests {
     }
 
     #[test]
+    fn artemis_artillery_rejects_off_axis_targets() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 2,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedArtillerymech as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 2214,
+            x: 6,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::RangedArtillerymech,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(
+            !targets.contains(&(6, 2)),
+            "Artemis D6->F2 is off-axis and live FireWeapon spends an effectless shot"
+        );
+        assert!(
+            targets.contains(&(2, 2)),
+            "Artemis should still target cardinal F6 from D6"
+        );
+    }
+
+    #[test]
+    fn rock_accelerator_rejects_off_axis_targets() {
+        // Rock Accelerator is implemented in the Artillery simulator arm, but
+        // its live target area is a straight cardinal line rather than an
+        // Artemis-style arc. See docs/research/blitzkrieg_boulder_mech.md.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 2,
+            y: 5,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedRockthrow as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::RangedRockthrow,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(
+            !targets.contains(&(6, 3)),
+            "Rock Accelerator must not target off-axis E2 from C6"
+        );
+        assert!(
+            targets.contains(&(2, 3)),
+            "Rock Accelerator should still target cardinal E6 from C6"
+        );
+    }
+
+    #[test]
     fn self_aoe_after_teleporter_targets_post_swap_tile() {
         // Mission_Teleporter m23 turn 4: action enumeration used the pad tile
         // as Repulse's click target even though the move phase swapped Pulse
@@ -1908,8 +1997,8 @@ mod top_k_tests {
     #[test]
     fn rocket_artillery_rejects_off_axis_targets() {
         // Live Rocket Artillery no-ops when FireWeapon is pointed off-axis.
-        // Keep player artillery enumeration cardinal-only so the solver
-        // doesn't choose bridge-accepted but effectless diagonal targets.
+        // Keep Rocket-specific enumeration cardinal-only so the solver doesn't
+        // choose bridge-accepted but effectless diagonal targets.
         // Regression anchor: Rusting Hulks Mission_Reactivation turn 2 tried
         // RocketMech E6 -> off-axis C4; live Burnbug1 survived untouched.
         let mut board = Board::default();

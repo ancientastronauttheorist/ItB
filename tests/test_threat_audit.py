@@ -5,10 +5,10 @@ from src.solver.threat_audit import (
 )
 
 
-def _enemy(uid=10, x=4, y=4, tx=4, ty=2, hp=3):
+def _enemy(uid=10, pawn_type="Firefly1", x=4, y=4, tx=4, ty=2, hp=3):
     return Unit(
         uid=uid,
-        type="Firefly1",
+        type=pawn_type,
         x=x,
         y=y,
         hp=hp,
@@ -86,6 +86,18 @@ def test_threat_audit_attacker_smoked():
     audit = audit_threat_coverage(initial, after)
 
     assert audit["entries"][0]["coverage"]["reason"] == "attacker_smoked"
+
+
+def test_threat_audit_attacker_will_die_to_fire():
+    initial = capture_building_threats(_board(_enemy(pawn_type="Leaper1", hp=1)))
+    after = _board(_enemy(pawn_type="Leaper1", hp=1))
+    after.units[0].fire = True
+
+    audit = audit_threat_coverage(initial, after)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == "attacker_will_die_to_fire"
 
 
 def test_threat_audit_still_threatened_warns():

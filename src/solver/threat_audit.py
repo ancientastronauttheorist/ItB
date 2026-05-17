@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.model.board import Board, Unit
+from src.model.pawn_stats import get_pawn_stats
 
 
 def _visual(x: int, y: int) -> str:
@@ -93,6 +94,23 @@ def _live_building(board: Board, x: int, y: int) -> bool:
     return tile.terrain == "building" and tile.building_hp > 0
 
 
+def _will_die_to_fire_before_attack(board: Board, attacker: Unit) -> bool:
+    """True when the enemy-phase fire tick should kill this attacker first."""
+    if not getattr(attacker, "fire", False) or attacker.hp > 1:
+        return False
+    if getattr(attacker, "shield", False) or getattr(attacker, "frozen", False):
+        return False
+    if get_pawn_stats(attacker.type).ignore_fire:
+        return False
+    if (
+        attacker.team == 6
+        and getattr(board, "fire_psion_active", False)
+        and attacker.type != "Jelly_Fire1"
+    ):
+        return False
+    return True
+
+
 def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
     attacker_info = threat.get("attacker") or {}
     uid = attacker_info.get("uid")
@@ -106,6 +124,8 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
         return "attacker_frozen", "attacker is frozen"
     if _tile_smoke(board, int(attacker.x), int(attacker.y)):
         return "attacker_smoked", "attacker is standing in smoke"
+    if _will_die_to_fire_before_attack(board, attacker):
+        return "attacker_will_die_to_fire", "attacker will burn before attacking"
     if not _live_building(board, tx, ty):
         return "target_no_longer_building", "original target is no longer a live building"
 

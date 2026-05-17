@@ -3570,7 +3570,7 @@ pub fn simulate_attack(
 
     // Diagnostic callers can hand us targets the UI would not offer. Treat
     // them as no-ops with an explicit event instead of simulating impossible
-    // effects (for example Rocket Artillery off-axis targets).
+    // effects (for example player artillery off-axis targets).
     if weapon_id != WId::None && weapon_id != WId::Repair {
         let (sx, sy) = (board.units[mech_idx].x, board.units[mech_idx].y);
         let legal_targets = crate::solver::get_weapon_targets(
@@ -5245,6 +5245,33 @@ mod tests {
             "Artemis adjacent edge push should not add off-board bump damage"
         );
         assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_artemis_off_axis_target_is_illegal_noop() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 2, 4, 2, WId::RangedArtillerymech);
+        let firefly = add_enemy_type(&mut board, 2214, 6, 3, 5, "Firefly2");
+        let crab = add_enemy_type(&mut board, 2217, 6, 2, 3, "Crab1");
+
+        let result = simulate_attack(
+            &mut board,
+            mech_idx,
+            WId::RangedArtillerymech,
+            (6, 2),
+            &WEAPONS,
+        );
+
+        assert!(
+            result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "Artemis D6->F2 should be rejected as off-axis"
+        );
+        assert_eq!(board.units[crab].hp, 3);
+        assert_eq!(
+            (board.units[firefly].x, board.units[firefly].y),
+            (6, 3),
+            "off-axis Artemis no-op should not push the adjacent Firefly"
+        );
     }
 
     // ── Ranged_Rocket: push-bump when target is killed by the rocket ─────────

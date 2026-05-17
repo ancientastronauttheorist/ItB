@@ -828,7 +828,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v132 - Weapon damage that ignites Forest consumes it to burning Ground
 # immediately, matching live Prime Punch hits on forest-occupied enemies.
 # Pre-v132 corpus archived as failure_db_snapshot_sim_v131.jsonl.
-SIMULATOR_VERSION = 132
+# v133 - Directionless Artemis-style artillery was temporarily broadened to
+# board-wide targeting; live D6->F2 proved that off-axis FireWeapon no-ops.
+# Pre-v133 corpus archived as failure_db_snapshot_sim_v132.jsonl.
+# v134 - Restore player artillery target areas to cardinal-only, including
+# Artemis. Diagnostic replay now rejects off-axis Artemis shots as illegal
+# no-ops. Pre-v134 corpus archived as failure_db_snapshot_sim_v133.jsonl.
+SIMULATOR_VERSION = 134
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

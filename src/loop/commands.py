@@ -1715,8 +1715,12 @@ def _first_resist_entry_for_turn(
     run_id: str,
     region: str | None,
     turn: int,
+    *,
+    mission_id: str | None = None,
+    master_seed: int | None = None,
+    mission_slot: str | None = None,
 ) -> dict | None:
-    """Return the first resist-probe entry for a run/region/turn."""
+    """Return the first resist-probe entry for the current mission turn."""
     if not log_path.exists():
         return None
     try:
@@ -1728,9 +1732,27 @@ def _first_resist_entry_for_turn(
                     continue
                 if obj.get("run_id") != run_id:
                     continue
-                if region is not None and obj.get("region") != region:
+                if obj.get("region") != region:
                     continue
                 if obj.get("turn") == turn:
+                    if (
+                        mission_id is not None
+                        and "mission_id" in obj
+                        and obj.get("mission_id") != mission_id
+                    ):
+                        continue
+                    if (
+                        master_seed is not None
+                        and "master_seed" in obj
+                        and obj.get("master_seed") != master_seed
+                    ):
+                        continue
+                    if (
+                        mission_slot is not None
+                        and "mission_slot" in obj
+                        and obj.get("mission_slot") != mission_slot
+                    ):
+                        continue
                     return obj
     except OSError:
         return None
@@ -1770,6 +1792,17 @@ def _pending_grid_debt_from_turn_start(
         run_id,
         region,
         turn,
+        mission_id=bridge_data.get("mission_id"),
+        master_seed=bridge_data.get("master_seed"),
+        mission_slot=(
+            bridge_data.get("mission_seeds", {})
+            .get(region, {})
+            .get("mission")
+            if region is not None
+            and isinstance(bridge_data.get("mission_seeds"), dict)
+            and isinstance(bridge_data.get("mission_seeds", {}).get(region), dict)
+            else None
+        ),
     )
     if not isinstance(entry, dict):
         return 0
