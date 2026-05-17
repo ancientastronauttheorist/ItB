@@ -3660,6 +3660,49 @@ def _infer_webb_egg_adjacency(units: list) -> None:
             neighbor["web_source_uid"] = egg.get("uid", 0)
 
 
+WEB_SOURCE_WEAPONS = {
+    "ScorpionAtk1",
+    "ScorpionAtk2",
+    "ScorpionAtkB",
+    "LeaperAtk1",
+    "LeaperAtk2",
+    "MosquitoAtkB",
+}
+
+
+def _infer_grapple_probe_webs(units: list) -> None:
+    """Treat bridge `web_probes.IsGrappled` as authoritative WEB status."""
+    if not units:
+        return
+    web_sources_by_target = {}
+    for unit in units:
+        if unit.get("team") != 6 or unit.get("hp", 0) <= 0:
+            continue
+        weapons = unit.get("weapons") or []
+        if not weapons or weapons[0] not in WEB_SOURCE_WEAPONS:
+            continue
+        target = unit.get("queued_target")
+        if not isinstance(target, list) or len(target) < 2:
+            continue
+        web_sources_by_target.setdefault((target[0], target[1]), []).append(unit)
+
+    for unit in units:
+        probes = unit.get("web_probes")
+        if not (isinstance(probes, dict) and probes.get("IsGrappled") is True):
+            continue
+        unit["web"] = True
+        if unit.get("web_source_uid"):
+            continue
+        candidates = web_sources_by_target.get((unit.get("x"), unit.get("y")), [])
+        if candidates:
+            unit["web_source_uid"] = candidates[0].get("uid", 0)
+
+
+def _infer_dynamic_webs(units: list) -> None:
+    _infer_grapple_probe_webs(units)
+    _infer_webb_egg_adjacency(units)
+
+
 def _check_wheel_sim_version() -> dict | None:
     """Return an error dict iff the installed Rust wheel's SIMULATOR_VERSION
     disagrees with the Python constant. Returns None when OK or unchecked.
@@ -3876,7 +3919,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         if k in u and isinstance(u[k], int) and u[k] > 255:
                             u[k] = 255
 
-                _infer_webb_egg_adjacency(bridge_data["units"])
+                _infer_dynamic_webs(bridge_data["units"])
             # Inject custom weights into bridge data for Rust solver
             if eval_weights_dict:
                 bridge_data["eval_weights"] = eval_weights_dict
@@ -6848,7 +6891,7 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
                 u.setdefault("armor", True)
             if not stats.pushable:
                 u["pushable"] = False
-        _infer_webb_egg_adjacency(bd["units"])
+        _infer_dynamic_webs(bd["units"])
 
     # Inject weights
     if weights:
@@ -7141,7 +7184,7 @@ def _re_solve_partial(
                 u["active"] = True
                 u["can_move"] = False
             # All others keep their current active/can_move state
-        _infer_webb_egg_adjacency(bridge_data["units"])
+        _infer_dynamic_webs(bridge_data["units"])
 
     # Keep partial re-solves semantically aligned with the initial live solve:
     # the Lua bridge reports base SkillList IDs, while powered upgrades such as

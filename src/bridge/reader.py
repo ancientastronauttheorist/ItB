@@ -590,6 +590,55 @@ def _normalize_queued_targets(bridge_units: list) -> None:
             u["queued_target"] = None
 
 
+WEB_SOURCE_WEAPONS = {
+    "ScorpionAtk1",
+    "ScorpionAtk2",
+    "ScorpionAtkB",
+    "LeaperAtk1",
+    "LeaperAtk2",
+    "MosquitoAtkB",
+}
+
+
+def _is_grapple_probe_active(unit: dict) -> bool:
+    probes = unit.get("web_probes")
+    return isinstance(probes, dict) and probes.get("IsGrappled") is True
+
+
+def _recover_grapple_probe_webs(bridge_units: list) -> None:
+    """Recover current-turn grapples that old bridge fallback code cleared.
+
+    The live Lua bridge probes `IsGrappled()` correctly, but older fallback
+    source detection cleared `unit.web` when it did not know a web weapon, which
+    missed Mosquito Leader's `MosquitoAtkB`. Preserve the engine probe and infer
+    ownership from an alive queued web attack targeting the unit's tile.
+    """
+    if not bridge_units:
+        return
+
+    web_sources_by_target: dict[tuple[int, int], list[dict]] = {}
+    for unit in bridge_units:
+        if unit.get("team") != 6 or unit.get("hp", 0) <= 0:
+            continue
+        weapons = unit.get("weapons") or []
+        if not weapons or weapons[0] not in WEB_SOURCE_WEAPONS:
+            continue
+        target = unit.get("queued_target")
+        if not isinstance(target, list) or len(target) < 2:
+            continue
+        web_sources_by_target.setdefault((target[0], target[1]), []).append(unit)
+
+    for unit in bridge_units:
+        if not _is_grapple_probe_active(unit):
+            continue
+        unit["web"] = True
+        if unit.get("web_source_uid"):
+            continue
+        candidates = web_sources_by_target.get((unit.get("x"), unit.get("y")), [])
+        if candidates:
+            unit["web_source_uid"] = candidates[0].get("uid", 0)
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -618,6 +667,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     # constructing the Board so downstream solvers see the right direction.
     if "units" in data:
         _normalize_queued_targets(data["units"])
+        _recover_grapple_probe_webs(data["units"])
 
     # Mission_Repair progress (Use 3 Repair Platforms). Old live modloader
     # builds already emit tile.item="Item_Repair_Mine" but not the progress

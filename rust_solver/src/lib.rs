@@ -1272,7 +1272,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   after its perpendicular side pushes, matching Mission_BoomBots where the
 //   side Boom Tank is shoved out before the killed center bot explodes.
 //   Pre-v138 corpus archived as `failure_db_snapshot_sim_v137.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 140;
+// v141 - Mosquito Leader `MosquitoBoss` / `MosquitoAtkB` modeled as
+//   shield-piercing smoke+web instant kill. Pre-v141 corpus archived as
+//   `failure_db_snapshot_sim_v140.jsonl`.
+// v142 - Raw `web_probes.IsGrappled=true` is authoritative even when older
+//   bridge fallback cleared `web=false`; infer queued web source ownership.
+//   Pre-v142 corpus archived as `failure_db_snapshot_sim_v141.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 142;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

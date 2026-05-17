@@ -243,6 +243,12 @@ pub struct JsonTile {
 }
 
 #[derive(Deserialize)]
+pub struct JsonWebProbes {
+    #[serde(rename = "IsGrappled")]
+    pub is_grappled: Option<bool>,
+}
+
+#[derive(Deserialize)]
 pub struct JsonUnit {
     pub uid: Option<u16>,
     #[serde(rename = "type")]
@@ -266,6 +272,7 @@ pub struct JsonUnit {
     pub frozen: Option<bool>,
     pub fire: Option<bool>,
     pub web: Option<bool>,
+    pub web_probes: Option<JsonWebProbes>,
     pub boosted: Option<bool>,
     pub web_source_uid: Option<u16>,
     pub has_queued_attack: Option<bool>,
@@ -568,7 +575,11 @@ pub fn board_from_json(json_str: &str)
             if ju.acid.unwrap_or(false) { flags |= UnitFlags::ACID; }
             if ju.frozen.unwrap_or(false) { flags |= UnitFlags::FROZEN; }
             if ju.fire.unwrap_or(false) { flags |= UnitFlags::FIRE; }
-            if ju.web.unwrap_or(false) { flags |= UnitFlags::WEB; }
+            let probe_web = ju.web_probes
+                .as_ref()
+                .and_then(|p| p.is_grappled)
+                .unwrap_or(false);
+            if ju.web.unwrap_or(false) || probe_web { flags |= UnitFlags::WEB; }
             if ju.boosted.unwrap_or(false) { flags |= UnitFlags::BOOSTED; }
             if ju.has_queued_attack.unwrap_or(false) { flags |= UnitFlags::HAS_QUEUED_ATTACK; }
             if ju.unit_type == "Disposal_Unit" {
@@ -629,6 +640,33 @@ pub fn board_from_json(json_str: &str)
 
             unit.set_type_name(&ju.unit_type);
             board.add_unit(unit);
+        }
+    }
+
+    // Fill missing web ownership from alive queued web attacks. Older bridge
+    // fallback code cleared Mosquito Leader grapples because `MosquitoAtkB` was
+    // absent from its source table, but the raw IsGrappled probe is still true.
+    for idx in 0..board.unit_count as usize {
+        if !board.units[idx].web() || board.units[idx].web_source_uid != 0 {
+            continue;
+        }
+        let (ux, uy) = (board.units[idx].x, board.units[idx].y);
+        let mut source_uid = 0;
+        for src_idx in 0..board.unit_count as usize {
+            let src = board.units[src_idx];
+            if src.team != Team::Enemy || src.hp <= 0 {
+                continue;
+            }
+            if src.queued_target_x != ux as i8 || src.queued_target_y != uy as i8 {
+                continue;
+            }
+            if WEAPONS[src.weapon.0 as usize].web() {
+                source_uid = src.uid;
+                break;
+            }
+        }
+        if source_uid != 0 {
+            board.units[idx].web_source_uid = source_uid;
         }
     }
 
@@ -1155,6 +1193,51 @@ mod tests {
         assert_eq!(
             board.units[0].web_source_uid, 626,
             "active Scorpion grapple targeting the mech should keep ownership"
+        );
+    }
+
+    #[test]
+    fn test_bridge_load_recovers_grapple_probe_web_source() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 2,
+                    "type": "RockartMech",
+                    "x": 3,
+                    "y": 6,
+                    "hp": 2,
+                    "max_hp": 2,
+                    "team": 1,
+                    "mech": true,
+                    "web": false,
+                    "web_probes": {"IsGrappled": true},
+                    "weapons": ["Ranged_Rockthrow"]
+                },
+                {
+                    "uid": 2791,
+                    "type": "MosquitoBoss",
+                    "x": 4,
+                    "y": 6,
+                    "hp": 5,
+                    "max_hp": 5,
+                    "team": 6,
+                    "weapons": ["MosquitoAtkB"],
+                    "has_queued_attack": true,
+                    "queued_target": [3, 6]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.units[0].web());
+        assert_eq!(
+            board.units[0].web_source_uid, 2791,
+            "queued Mosquito Leader grapple should own the recovered web"
         );
     }
 

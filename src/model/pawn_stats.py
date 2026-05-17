@@ -102,6 +102,7 @@ VEK_STATS = {
     "Moth2":         PawnStats(move_speed=3, flying=True, ranged=1),
     "Mosquito1":     PawnStats(move_speed=4, flying=True, ranged=0),
     "Mosquito2":     PawnStats(move_speed=4, flying=True, ranged=0),
+    "MosquitoBoss":  PawnStats(move_speed=4, flying=True, ranged=0, massive=True, default_weapon="MosquitoAtkB"),
     "Gastropod1":    PawnStats(move_speed=2, ranged=1),
     "Gastropod2":    PawnStats(move_speed=3, ranged=1),
     "Starfish1":     PawnStats(move_speed=3, ranged=0),

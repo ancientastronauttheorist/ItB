@@ -768,7 +768,7 @@ local function dump_state()
     -- so the solver needs to know which enemy unwebs the unit. If no webber is
     -- found (all dead), clear the stale web flag entirely.
     local WEB_WEAPONS = {ScorpionAtk1=true, ScorpionAtk2=true, ScorpionAtkB=true,
-                         LeaperAtk1=true, LeaperAtk2=true}
+                         LeaperAtk1=true, LeaperAtk2=true, MosquitoAtkB=true}
     for _, u in ipairs(state.units) do
         if u.web and not u.web_source_uid then
             local best_uid, best_dist = nil, 999

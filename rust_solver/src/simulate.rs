@@ -4301,7 +4301,7 @@ mod tests {
         assert_eq!(board.units[enemy].hp, 2);
         assert!(board.units[enemy].fire());
         assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
-        assert!(board.tile(4, 3).fire());
+        assert!(board.tile(4, 3).on_fire());
         assert_eq!(result.enemies_killed, 0);
     }
 

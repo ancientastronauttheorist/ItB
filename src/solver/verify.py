@@ -847,7 +847,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # after its perpendicular side pushes, matching Mission_BoomBots where the
 # side Boom Tank is shoved out before the killed center bot explodes.
 # Pre-v138 corpus archived as failure_db_snapshot_sim_v137.jsonl.
-SIMULATOR_VERSION = 140
+SIMULATOR_VERSION = 142
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

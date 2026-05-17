@@ -75,6 +75,63 @@ pub(crate) fn spawn_enemy(
     true
 }
 
+fn apply_mosquito_boss_attack(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    {
+        let tile = board.tile_mut(x, y);
+        tile.set_on_fire(false);
+        tile.set_smoke(true);
+    }
+
+    if let Some(idx) = board.unit_at(x, y) {
+        let old_hp = board.units[idx].hp.max(0) as i32;
+        let was_enemy = board.units[idx].is_enemy();
+        let was_player = board.units[idx].is_player();
+        board.units[idx].set_shield(false);
+        board.units[idx].set_frozen(false);
+        board.units[idx].hp = 0;
+        if was_enemy {
+            result.enemy_damage_dealt += old_hp;
+            result.enemies_killed += 1;
+            on_enemy_death(board, idx, result);
+        } else if was_player {
+            result.mech_damage_taken += old_hp;
+            result.mechs_killed += 1;
+        }
+    }
+
+    let tile_idx = xy_to_idx(x, y);
+    let is_unique = (board.unique_buildings & (1u64 << tile_idx)) != 0;
+    let mut hp_lost = 0u8;
+    let mut destroyed = false;
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            hp_lost = tile.building_hp;
+            tile.building_hp = 0;
+            tile.set_shield(false);
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
+            destroyed = true;
+        }
+    }
+    if hp_lost > 0 {
+        result.buildings_damaged += hp_lost as i32;
+        result.buildings_lost += 1;
+        result.grid_damage += hp_lost as i32;
+        let grid_loss = settle_building_grid_loss(
+            board,
+            tile_idx,
+            hp_lost,
+            destroyed,
+            is_unique,
+            DamageSource::Weapon,
+        );
+        result.grid_damage += (grid_loss as i32) - (hp_lost as i32);
+        board.grid_power = board.grid_power.saturating_sub(grid_loss);
+    }
+}
+
 /// Get effective damage for an enemy hit at a tile (Vek Hormones adds +1 vs other enemies).
 fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: bool) -> u8 {
     if vek_hormones {
@@ -1441,6 +1498,10 @@ pub fn simulate_enemy_attacks(
                             }
                             continue;
                         }
+                    }
+                    if enemy_wid == WId::MosquitoAtkB {
+                        apply_mosquito_boss_attack(board, tx, ty, &mut result);
+                        continue;
                     }
                     let target_had_mech = board.unit_at(tx, ty)
                         .is_some_and(|idx| board.units[idx].is_mech());
@@ -3241,10 +3302,38 @@ mod tests {
             "Building should take 2 dmg from SnowBossAtk center tile");
     }
 
+    #[test]
+    fn test_mosquito_leader_kills_through_shield_and_smokes_target() {
+        let mut board = Board::default();
+        let mut target = Unit {
+            uid: 2,
+            x: 4,
+            y: 5,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        };
+        target.set_shield(true);
+        let tidx = board.add_unit(target);
+
+        let boss = add_enemy_with_type(&mut board, 1, 4, 4, 5, "MosquitoBoss", 4, 5);
+        board.units[boss].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[tidx].hp, 0, "Mosquito Leader kill bypasses shield");
+        assert!(!board.units[tidx].shield(), "bypassed shield is removed with the dead unit");
+        assert!(board.tile(4, 5).smoke(), "Cloudburst Tentacles smokes the target tile");
+    }
+
     /// `enemy_weapon_for_type` mappings for the Bot Leader pawns.
     #[test]
     fn test_bot_leader_weapon_mapping() {
         assert_eq!(enemy_weapon_for_type("BotBoss"), WId::SnowBossAtk);
         assert_eq!(enemy_weapon_for_type("BotBoss2"), WId::SnowBossAtk2);
+        assert_eq!(enemy_weapon_for_type("MosquitoBoss"), WId::MosquitoAtkB);
     }
 }

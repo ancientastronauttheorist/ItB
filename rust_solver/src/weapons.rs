@@ -495,9 +495,11 @@ pub enum WId {
     PrimeLightningB = 155,
     /// Chain Whip with Building Chain and +1 Damage powered.
     PrimeLightningAB = 156,
+    /// Mosquito Leader's Cloudburst Tentacles: smoke/web target, then instant-kill.
+    MosquitoAtkB = 157,
 }
 
-pub const WEAPON_COUNT: usize = 157;
+pub const WEAPON_COUNT: usize = 158;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -858,6 +860,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[91] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
     // 92: FireflyAtkB — Firefly Boss, projectile, 4 dmg
     w[92] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, range_max: 0, flags: C, ..DEF };
+    // 157: MosquitoAtkB — Mosquito Leader's Cloudburst Tentacles.
+    // Special instant-kill semantics live in enemy.rs so the attack bypasses
+    // Shield/Frozen like the engine's DAMAGE_DEATH-style leader strike while
+    // still leaving smoke/web metadata visible to targeting/status helpers.
+    w[157] = WeaponDef { weapon_type: WeaponType::Melee, damage: 255,
+        flags: f(WeaponFlags::SMOKE.bits() | WeaponFlags::WEB.bits()), ..DEF };
 
     // 107: ScorpionAtkB — Scorpion Leader's Massive Spinneret.
     // Self-AOE: 2 damage to all 4 cardinal adjacent tiles, pushes outward,
@@ -1325,6 +1333,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "MothAtk2" => WId::MothAtk2,
         "MosquitoAtk1" => WId::MosquitoAtk1,
         "MosquitoAtk2" => WId::MosquitoAtk2,
+        "MosquitoAtkB" => WId::MosquitoAtkB,
         "BurnbugAtk1" => WId::BurnbugAtk1,
         "BurnbugAtk2" => WId::BurnbugAtk2,
         "SnowtankAtk1" => WId::SnowtankAtk1,
@@ -1490,6 +1499,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::MothAtk2 => "MothAtk2",
         WId::MosquitoAtk1 => "MosquitoAtk1",
         WId::MosquitoAtk2 => "MosquitoAtk2",
+        WId::MosquitoAtkB => "MosquitoAtkB",
         WId::BurnbugAtk1 => "BurnbugAtk1",
         WId::BurnbugAtk2 => "BurnbugAtk2",
         WId::SnowtankAtk1 => "SnowtankAtk1",
@@ -1581,6 +1591,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Moth2" => WId::MothAtk2,
         "Mosquito1" => WId::MosquitoAtk1,
         "Mosquito2" => WId::MosquitoAtk2,
+        "MosquitoBoss" => WId::MosquitoAtkB,
         "Gastropod1" => WId::GastropodAtk1,
         "Gastropod2" => WId::GastropodAtk2,
         "Starfish1" => WId::StarfishAtk1,
@@ -1748,6 +1759,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::MothAtk2 => "Alpha Repulsive Pellets",
         WId::MosquitoAtk1 => "Smokescreen Whip",
         WId::MosquitoAtk2 => "Alpha Smokescreen Whip",
+        WId::MosquitoAtkB => "Cloudburst Tentacles",
         WId::BurnbugAtk1 => "Burnbug Strike",
         WId::BurnbugAtk2 => "Alpha Burnbug Strike",
         WId::SnowtankAtk1 => "Cannon 8R Mark I",
