@@ -825,7 +825,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # instead of being swallowed by the deferred corpse-push path; dead BombRocks
 # do not push onward as corpses. Pre-v131 corpus archived as
 # failure_db_snapshot_sim_v130.jsonl.
-SIMULATOR_VERSION = 131
+# v132 - Weapon damage that ignites Forest consumes it to burning Ground
+# immediately, matching live Prime Punch hits on forest-occupied enemies.
+# Pre-v132 corpus archived as failure_db_snapshot_sim_v131.jsonl.
+SIMULATOR_VERSION = 132
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

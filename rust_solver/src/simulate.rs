@@ -1153,8 +1153,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         // Forest: weapon damage ignites (NOT bump/push damage)
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Forest && source != DamageSource::Bump {
+            tile.terrain = Terrain::Ground;
             tile.set_on_fire(true);
-            // Tile stays Terrain::Forest with ON_FIRE flag.
+            // Live consumes the forest immediately: the tile becomes burning Ground.
             // Unit does NOT immediately catch fire — happens at end-of-turn.
         }
 
@@ -5746,7 +5747,7 @@ mod tests {
     }
 
     #[test]
-    fn test_forest_ignites_on_weapon_damage() {
+    fn test_forest_consumed_on_weapon_damage() {
         let mut board = make_test_board();
         board.tile_mut(3, 4).terrain = Terrain::Forest;
         add_enemy(&mut board, 1, 3, 4, 3);
@@ -5754,7 +5755,7 @@ mod tests {
 
         let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
         assert!(board.tile(3, 4).on_fire(), "Forest should ignite from weapon damage");
-        assert_eq!(board.tile(3, 4).terrain, Terrain::Forest, "Terrain should stay Forest");
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Burning forest should become Ground");
     }
 
     #[test]

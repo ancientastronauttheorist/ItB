@@ -1250,7 +1250,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   instead of being swallowed by the deferred corpse-push path; dead
 //   BombRocks do not push onward as corpses. Pre-v131 corpus archived as
 //   `failure_db_snapshot_sim_v130.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 131;
+// v132 - Weapon damage that ignites Forest consumes it to burning Ground
+//   immediately, matching live Prime Punch hits on forest-occupied enemies.
+//   Pre-v132 corpus archived as `failure_db_snapshot_sim_v131.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 132;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
