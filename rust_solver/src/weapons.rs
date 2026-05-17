@@ -114,6 +114,9 @@ bitflags! {
         /// Direct projectile/center-hit pushes from this weapon do not deal
         /// off-board edge bump damage. On-board blockers still bump normally.
         const NO_EDGE_BUMP_DIRECT_PUSH = 1 << 30;
+        /// Weapon applies Shield to player-team units it affects, but not to
+        /// enemies. Used by Area Shift's Shield Ally upgrade.
+        const SHIELD_ALLIES = 1u32 << 31;
     }
 }
 
@@ -163,6 +166,7 @@ impl WeaponDef {
     pub fn shield_self(&self) -> bool { self.flags.contains(WeaponFlags::SHIELD_SELF) }
     pub fn friendly_immune(&self) -> bool { self.flags.contains(WeaponFlags::FRIENDLY_IMMUNE) }
     pub fn no_edge_bump_direct_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_DIRECT_PUSH) }
+    pub fn shield_allies(&self) -> bool { self.flags.contains(WeaponFlags::SHIELD_ALLIES) }
 }
 
 /// Default weapon def (no-op).
@@ -497,9 +501,29 @@ pub enum WId {
     PrimeLightningAB = 156,
     /// Mosquito Leader's Cloudburst Tentacles: smoke/web target, then instant-kill.
     MosquitoAtkB = 157,
+    /// Arachnophiles — Bulk Mech's Ricochet Rocket. The live bridge currently
+    /// fires two-click weapons through Pawn:FireWeapon(target, slot), which
+    /// executes the first-click projectile effect only. Model that executable
+    /// subset until the bridge grows a second-click protocol.
+    BruteTcRicochet = 158,
+    BruteTcRicochetA = 159,
+    BruteTcRicochetB = 160,
+    BruteTcRicochetAB = 161,
+    /// Arachnophiles — Arachnoid Injector and spawned Arachnoid attacks.
+    RangedArachnoid = 162,
+    RangedArachnoidA = 163,
+    RangedArachnoidB = 164,
+    RangedArachnoidAB = 165,
+    DeployUnitAracnoidAtk = 166,
+    DeployUnitAracnoidAtkB = 167,
+    /// Arachnophiles — Slide Mech's Area Shift.
+    ScienceMassShift = 168,
+    ScienceMassShiftA = 169,
+    ScienceMassShiftB = 170,
+    ScienceMassShiftAB = 171,
 }
 
-pub const WEAPON_COUNT: usize = 158;
+pub const WEAPON_COUNT: usize = 172;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -867,6 +891,45 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[157] = WeaponDef { weapon_type: WeaponType::Melee, damage: 255,
         flags: f(WeaponFlags::SMOKE.bits() | WeaponFlags::WEB.bits()), ..DEF };
 
+    // 158-161: Brute_TC_Ricochet — Ricochet Rocket. This is a two-click Lua
+    // weapon, but the bridge's Pawn:FireWeapon(target, slot) route can only
+    // execute the first-click projectile. Keep the simulator aligned with the
+    // executable bridge effect: one projectile, first blocker takes damage and
+    // forward push. Upgrade B zeros friendly damage but still pushes allies.
+    w[158] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+        range_max: 0, flags: C, ..DEF };
+    w[159] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+        range_max: 0, flags: C, ..DEF };
+    w[160] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+        range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
+    w[161] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+        range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
+
+    // 162-165: Ranged_Arachnoid — Arachnoid Injector. Bespoke spawn-on-kill
+    // semantics live in simulate.rs; the definition supplies artillery damage
+    // and range. B/AB spawn Arachnoids whose self-destruct melee applies ACID.
+    w[162] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
+    w[163] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
+    w[164] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
+    w[165] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
+    // 166-167: DeployUnit_AracnoidAtk — spawned Arachnoid melee. Self-kill is
+    // special-cased so sacrificing an Arachnoid is not scored as a mech death.
+    w[166] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
+        flags: C, ..DEF };
+    w[167] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
+        flags: f(WeaponFlags::ACID.bits()), ..DEF };
+
+    // 168-171: Science_MassShift — Area Shift. Directional five-tile push
+    // (front, self, both sides, back) is bespoke in simulate.rs.
+    w[168] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[169] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::SHIELD_SELF.bits()), ..DEF };
+    w[170] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::SHIELD_ALLIES.bits()), ..DEF };
+    w[171] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::SHIELD_SELF.bits() | WeaponFlags::SHIELD_ALLIES.bits()), ..DEF };
+
     // 107: ScorpionAtkB — Scorpion Leader's Massive Spinneret.
     // Self-AOE: 2 damage to all 4 cardinal adjacent tiles, pushes outward,
     // webs each target. Game Lua: scripts/missions/bosses/scorpion.lua
@@ -1153,6 +1216,34 @@ pub fn is_rocket_artillery(id: WId) -> bool {
     )
 }
 
+#[inline]
+pub fn is_arachnoid_injector(id: WId) -> bool {
+    matches!(
+        id,
+        WId::RangedArachnoid | WId::RangedArachnoidA
+            | WId::RangedArachnoidB | WId::RangedArachnoidAB
+    )
+}
+
+#[inline]
+pub fn arachnoid_injector_spawns_acid_attack(id: WId) -> bool {
+    matches!(id, WId::RangedArachnoidB | WId::RangedArachnoidAB)
+}
+
+#[inline]
+pub fn is_arachnoid_attack(id: WId) -> bool {
+    matches!(id, WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB)
+}
+
+#[inline]
+pub fn is_mass_shift(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceMassShift | WId::ScienceMassShiftA
+            | WId::ScienceMassShiftB | WId::ScienceMassShiftAB
+    )
+}
+
 /// Per-field patch applied on top of a base `WeaponDef`. Any `None` field is
 /// left untouched; flag bits set in `flags_set` are OR'd in and bits set in
 /// `flags_clear` are removed. Flags are deltas so two independent fixes on the
@@ -1263,6 +1354,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Sniper" => WId::BruteSniper,
         "Brute_Splitshot" => WId::BruteSplitshot,
         "Brute_Bombrun" => WId::BruteBombrun,
+        "Brute_TC_Ricochet" => WId::BruteTcRicochet,
+        "Brute_TC_Ricochet_A" => WId::BruteTcRicochetA,
+        "Brute_TC_Ricochet_B" => WId::BruteTcRicochetB,
+        "Brute_TC_Ricochet_AB" => WId::BruteTcRicochetAB,
         "Archive_ArtShot" => WId::ArchiveArtShot,
         "Ranged_Artillerymech" => WId::RangedArtillerymech,
         "Ranged_Artillerymech_A" => WId::RangedArtillerymechA,
@@ -1291,6 +1386,12 @@ pub fn wid_from_str(s: &str) -> WId {
         "Ranged_ScatterShot" => WId::RangedScatterShot,
         "Ranged_BackShot" => WId::RangedBackShot,
         "Ranged_Wide" => WId::RangedWide,
+        "Ranged_Arachnoid" => WId::RangedArachnoid,
+        "Ranged_Arachnoid_A" => WId::RangedArachnoidA,
+        "Ranged_Arachnoid_B" => WId::RangedArachnoidB,
+        "Ranged_Arachnoid_AB" => WId::RangedArachnoidAB,
+        "DeployUnit_AracnoidAtk" => WId::DeployUnitAracnoidAtk,
+        "DeployUnit_AracnoidAtkB" => WId::DeployUnitAracnoidAtkB,
         "Science_Pullmech" => WId::SciencePullmech,
         "Science_Gravwell" => WId::ScienceGravwell,
         "Science_Repulse" => WId::ScienceRepulse,
@@ -1302,6 +1403,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
         "Science_Confuse" => WId::ScienceConfuse,
+        "Science_MassShift" => WId::ScienceMassShift,
+        "Science_MassShift_A" => WId::ScienceMassShiftA,
+        "Science_MassShift_B" => WId::ScienceMassShiftB,
+        "Science_MassShift_AB" => WId::ScienceMassShiftAB,
         "Missiles_Shield" => WId::MissilesShield,
         "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
@@ -1443,6 +1548,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteSniper => "Brute_Sniper",
         WId::BruteSplitshot => "Brute_Splitshot",
         WId::BruteBombrun => "Brute_Bombrun",
+        WId::BruteTcRicochet => "Brute_TC_Ricochet",
+        WId::BruteTcRicochetA => "Brute_TC_Ricochet_A",
+        WId::BruteTcRicochetB => "Brute_TC_Ricochet_B",
+        WId::BruteTcRicochetAB => "Brute_TC_Ricochet_AB",
         WId::ArchiveArtShot => "Archive_ArtShot",
         WId::RangedArtillerymech => "Ranged_Artillerymech",
         WId::RangedArtillerymechA => "Ranged_Artillerymech_A",
@@ -1463,6 +1572,12 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedScatterShot => "Ranged_ScatterShot",
         WId::RangedBackShot => "Ranged_BackShot",
         WId::RangedWide => "Ranged_Wide",
+        WId::RangedArachnoid => "Ranged_Arachnoid",
+        WId::RangedArachnoidA => "Ranged_Arachnoid_A",
+        WId::RangedArachnoidB => "Ranged_Arachnoid_B",
+        WId::RangedArachnoidAB => "Ranged_Arachnoid_AB",
+        WId::DeployUnitAracnoidAtk => "DeployUnit_AracnoidAtk",
+        WId::DeployUnitAracnoidAtkB => "DeployUnit_AracnoidAtkB",
         WId::SciencePullmech => "Science_Pullmech",
         WId::ScienceGravwell => "Science_Gravwell",
         WId::ScienceRepulse => "Science_Repulse",
@@ -1471,6 +1586,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceAcidShot => "Science_AcidShot",
         WId::ScienceShield => "Science_Shield",
         WId::ScienceConfuse => "Science_Confuse",
+        WId::ScienceMassShift => "Science_MassShift",
+        WId::ScienceMassShiftA => "Science_MassShift_A",
+        WId::ScienceMassShiftB => "Science_MassShift_B",
+        WId::ScienceMassShiftAB => "Science_MassShift_AB",
         WId::ScorpionAtk1 => "ScorpionAtk1",
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
@@ -1697,6 +1816,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteSniper => "Sniper Rifle",
         WId::BruteSplitshot => "Split Shot",
         WId::BruteBombrun => "Bombing Run",
+        WId::BruteTcRicochet | WId::BruteTcRicochetA
+            | WId::BruteTcRicochetB | WId::BruteTcRicochetAB => "Ricochet Rocket",
         WId::ArchiveArtShot => "Old Earth Artillery",
         WId::RangedArtillerymech => "Artemis Artillery",
         WId::RangedArtillerymechA => "Artemis Artillery",
@@ -1714,6 +1835,9 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::RangedScatterShot => "Scatter Shot",
         WId::RangedBackShot => "Back Shot",
         WId::RangedWide => "Overpower",
+        WId::RangedArachnoid | WId::RangedArachnoidA
+            | WId::RangedArachnoidB | WId::RangedArachnoidAB => "Arachnoid Injector",
+        WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB => "Arachnoid Bite",
         WId::SciencePullmech => "Attract Shot",
         WId::ScienceGravwell => "Grav Well",
         WId::ScienceRepulse => "Repulse",
@@ -1722,6 +1846,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
+        WId::ScienceMassShift | WId::ScienceMassShiftA
+            | WId::ScienceMassShiftB | WId::ScienceMassShiftAB => "Area Shift",
         WId::Repair => "Repair",
         WId::ScorpionAtk1 => "Scorpion Strike",
         WId::ScorpionAtk2 => "Alpha Scorpion Strike",
@@ -1822,6 +1948,40 @@ mod tests {
         assert_eq!(w.damage, 1);
         assert_eq!(w.push, PushDir::Forward);
         assert_eq!(w.range_max, 0); // unlimited
+    }
+
+    #[test]
+    fn test_arachnophiles_weapon_defs_and_mappings() {
+        let ricochet = weapon_def(WId::BruteTcRicochet);
+        assert_eq!(ricochet.weapon_type, WeaponType::Projectile);
+        assert_eq!(ricochet.damage, 1);
+        assert_eq!(ricochet.push, PushDir::Forward);
+        assert_eq!(weapon_def(WId::BruteTcRicochetA).damage, 2);
+        assert!(weapon_def(WId::BruteTcRicochetB).friendly_immune());
+
+        let injector = weapon_def(WId::RangedArachnoid);
+        assert_eq!(injector.weapon_type, WeaponType::Artillery);
+        assert_eq!(injector.damage, 1);
+        assert!(is_arachnoid_injector(WId::RangedArachnoidAB));
+        assert!(arachnoid_injector_spawns_acid_attack(WId::RangedArachnoidB));
+
+        let bite = weapon_def(WId::DeployUnitAracnoidAtkB);
+        assert_eq!(bite.weapon_type, WeaponType::Melee);
+        assert!(bite.acid());
+        assert!(is_arachnoid_attack(WId::DeployUnitAracnoidAtk));
+
+        let shift = weapon_def(WId::ScienceMassShiftAB);
+        assert_eq!(shift.weapon_type, WeaponType::SelfAoe);
+        assert!(shift.shield_self());
+        assert!(shift.shield_allies());
+        assert!(is_mass_shift(WId::ScienceMassShift));
+
+        assert_eq!(wid_from_str("Brute_TC_Ricochet"), WId::BruteTcRicochet);
+        assert_eq!(wid_from_str("Ranged_Arachnoid_B"), WId::RangedArachnoidB);
+        assert_eq!(wid_from_str("DeployUnit_AracnoidAtk"), WId::DeployUnitAracnoidAtk);
+        assert_eq!(wid_from_str("Science_MassShift_AB"), WId::ScienceMassShiftAB);
+        assert_eq!(wid_to_str(WId::RangedArachnoidAB), "Ranged_Arachnoid_AB");
+        assert_eq!(weapon_name(WId::ScienceMassShift), "Area Shift");
     }
 
     #[test]

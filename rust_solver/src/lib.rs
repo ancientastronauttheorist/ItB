@@ -1278,7 +1278,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v142 - Raw `web_probes.IsGrappled=true` is authoritative even when older
 //   bridge fallback cleared `web=false`; infer queued web source ownership.
 //   Pre-v142 corpus archived as `failure_db_snapshot_sim_v141.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 142;
+// v143 - Arachnophiles base kit modeled: bridge-executable Ricochet Rocket,
+//   Arachnoid Injector spawn-on-kill, spawned Arachnoid bite, and Area Shift.
+//   Pre-v143 corpus archived as `failure_db_snapshot_sim_v142.jsonl`.
+// v144 - Prime Flamethrower killed-target pushes can corpse-bump live blockers,
+//   matching Perfect Strategy run 20260517_175633_388 Mission_Teleporter turn 4.
+//   Cluster Artillery outer corpse absorption remains unchanged. Pre-v144 corpus
+//   archived as `failure_db_snapshot_sim_v143.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 144;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

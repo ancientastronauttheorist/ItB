@@ -341,6 +341,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 use (total 2)",
         upgrade_b="+2 damage (total 3)",
     ),
+    "Brute_TC_Ricochet": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=1, push="forward", range_max=0, targets_allies=True,
+        upgrade_a="+1 damage to both targets (total 2)",
+        upgrade_b="no friendly damage",
+    ),
+    "Brute_TC_Ricochet_A": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=2, push="forward", range_max=0, targets_allies=True,
+    ),
+    "Brute_TC_Ricochet_B": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=1, push="forward", range_max=0, targets_allies=True,
+    ),
+    "Brute_TC_Ricochet_AB": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=2, push="forward", range_max=0, targets_allies=True,
+    ),
 
     # --- MISSION-SPECIFIC ---
 
@@ -468,6 +486,32 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 use (total 2)",
         upgrade_b="+1 damage (total 3)",
     ),
+    "DeployUnit_AracnoidAtk": WeaponDef(
+        name="Arachnoid Bite", weapon_type="melee",
+        damage=1, push="forward", self_damage=99,
+    ),
+    "DeployUnit_AracnoidAtkB": WeaponDef(
+        name="Arachnoid Bite", weapon_type="melee",
+        damage=1, push="forward", acid=True, self_damage=99,
+    ),
+    "Ranged_Arachnoid": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=1, range_min=2, spawns="DeployUnit_Aracnoid",
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="spawned Arachnoid attacks apply ACID",
+    ),
+    "Ranged_Arachnoid_A": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=2, range_min=2, spawns="DeployUnit_Aracnoid",
+    ),
+    "Ranged_Arachnoid_B": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=1, range_min=2, spawns="DeployUnit_AracnoidB",
+    ),
+    "Ranged_Arachnoid_AB": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=2, range_min=2, spawns="DeployUnit_AracnoidB",
+    ),
 
     # --- SCIENCE CLASS ---
 
@@ -513,6 +557,28 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Science_Confuse": WeaponDef(
         name="Confusion Ray", weapon_type="projectile",
         damage=0, push="flip", range_max=0,
+    ),
+    "Science_MassShift": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False,
+        upgrade_a="shield self",
+        upgrade_b="shield affected allies",
+    ),
+    "Science_MassShift_A": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False, shield=True,
+    ),
+    "Science_MassShift_B": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False, shield=True,
+    ),
+    "Science_MassShift_AB": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False, shield=True,
     ),
 
     # --- ANY CLASS / SUPPORT ---

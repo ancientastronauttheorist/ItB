@@ -340,11 +340,12 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::Artillery => {
             let min_r = wdef.range_min;
+            let omnidirectional = is_arachnoid_injector(weapon_id);
             for x in 0..8u8 {
                 for y in 0..8u8 {
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r { continue; }
-                    if x != mx && y != my { continue; } // axis-aligned only
+                    if !omnidirectional && x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
                     if tile.terrain == Terrain::Building && tile.building_hp > 0 && !wdef.shield() { continue; }
                     targets.push((x, y));
@@ -352,7 +353,17 @@ pub(crate) fn get_weapon_targets(
             }
         }
         WeaponType::SelfAoe => {
-            targets.push((mx, my));
+            if is_mass_shift(weapon_id) {
+                for &(dx, dy) in &DIRS {
+                    let nx = mx as i8 + dx;
+                    let ny = my as i8 + dy;
+                    if in_bounds(nx, ny) {
+                        targets.push((nx as u8, ny as u8));
+                    }
+                }
+            } else {
+                targets.push((mx, my));
+            }
         }
         WeaponType::Charge => {
             for &(dx, dy) in &DIRS {

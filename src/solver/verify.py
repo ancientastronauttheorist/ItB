@@ -847,7 +847,14 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # after its perpendicular side pushes, matching Mission_BoomBots where the
 # side Boom Tank is shoved out before the killed center bot explodes.
 # Pre-v138 corpus archived as failure_db_snapshot_sim_v137.jsonl.
-SIMULATOR_VERSION = 142
+# v143 - Arachnophiles base kit modeled: bridge-executable Ricochet Rocket,
+# Arachnoid Injector spawn-on-kill, spawned Arachnoid bite, and Area Shift.
+# Pre-v143 corpus archived as failure_db_snapshot_sim_v142.jsonl.
+# v144 - Prime Flamethrower killed-target pushes can corpse-bump live blockers,
+# matching Perfect Strategy run 20260517_175633_388 Mission_Teleporter turn 4.
+# Cluster Artillery outer corpse absorption remains unchanged. Pre-v144 corpus
+# archived as failure_db_snapshot_sim_v143.jsonl.
+SIMULATOR_VERSION = 144
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

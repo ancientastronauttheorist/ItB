@@ -825,6 +825,57 @@ fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
     true
 }
 
+fn spawn_arachnoid(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    acid_attack: bool,
+    result: &mut ActionResult,
+) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+    if board.unit_at(x, y).is_some() {
+        return false;
+    }
+
+    let terrain = board.tile(x, y).terrain;
+    if matches!(terrain, Terrain::Mountain | Terrain::Building)
+        || terrain.is_deadly_ground()
+    {
+        return false;
+    }
+
+    let weapon = if acid_attack {
+        WId::DeployUnitAracnoidAtkB
+    } else {
+        WId::DeployUnitAracnoidAtk
+    };
+    let mut unit = Unit {
+        uid: next_spawn_uid(board),
+        x,
+        y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Player,
+        move_speed: 3,
+        base_move: 3,
+        flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+        weapon: WeaponId(weapon as u16),
+        queued_target_x: -1,
+        queued_target_y: -1,
+        ..Unit::default()
+    };
+    unit.set_type_name(if acid_attack {
+        "DeployUnit_AracnoidB"
+    } else {
+        "DeployUnit_Aracnoid"
+    });
+    let idx = board.add_unit(unit);
+    apply_landing_effects(board, idx, result);
+    true
+}
+
 /// Materialize Spider Psion death eggs queued by `on_enemy_death`.
 ///
 /// Player-phase kills need the egg on-board immediately for replay snapshots
@@ -1649,6 +1700,12 @@ const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
 };
 
+const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+};
+
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
@@ -2119,9 +2176,31 @@ pub fn simulate_weapon_with(
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
+        WeaponType::Artillery if is_arachnoid_injector(weapon_id) => {
+            sim_arachnoid_injector(
+                board,
+                weapon_id,
+                wdef,
+                ax,
+                ay,
+                target_x,
+                target_y,
+                attack_dir,
+                &mut result,
+            )
+        }
         WeaponType::Artillery => sim_artillery(board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::SelfAoe => {
-            if self_aoe_target_in_area(ax, ay, target_x, target_y) {
+            if is_mass_shift(weapon_id) {
+                if let Some(dir) = direction_between(ax, ay, target_x, target_y) {
+                    sim_mass_shift(board, ax, ay, wdef, dir, &mut result);
+                } else {
+                    result.events.push(format!(
+                        "invalid_mass_shift_target:{}:{}:from:{}:{}",
+                        target_x, target_y, ax, ay
+                    ));
+                }
+            } else if self_aoe_target_in_area(ax, ay, target_x, target_y) {
                 sim_self_aoe(board, ax, ay, wdef, &mut result);
             } else {
                 result.events.push(format!(
@@ -2146,6 +2225,10 @@ pub fn simulate_weapon_with(
         WeaponType::Terraformer => sim_terraformer(board, ax, ay, target_x, target_y, &mut result),
         WeaponType::Disposal => sim_disposal(board, target_x, target_y, &mut result),
         _ => {} // Passive, Deploy, TwoClick — no simulation
+    }
+
+    if is_arachnoid_attack(weapon_id) {
+        board.units[attacker_idx].hp = 0;
     }
 
     // Self damage. Skipped for Charge weapons — sim_charge applies it inline
@@ -2409,7 +2492,13 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
         );
 
         match wdef.push {
-            PushDir::Forward => apply_push(board, tx, ty, dir, result),
+            PushDir::Forward => {
+                if wdef.burns_fire_targets() {
+                    apply_push_with_policy(board, tx, ty, dir, result, FLAMETHROWER_PUSH_POLICY);
+                } else {
+                    apply_push(board, tx, ty, dir, result);
+                }
+            }
             PushDir::Flip => flip_queued_attack(board, tx, ty),
             PushDir::Backward => apply_push(board, tx, ty, opposite_dir(dir), result),
             PushDir::Perpendicular => apply_push(board, tx, ty, (dir + 1) % 4, result),
@@ -2511,8 +2600,14 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         let hy = hit_y as u8;
         let dmg = projectile_damage(wdef, ax, ay, hx, hy);
         let occupied_at_impact = board.unit_at(hx, hy).is_some();
+        let skip_friendly_damage = wdef.friendly_immune()
+            && board.unit_at(hx, hy)
+                .map(|idx| board.units[idx].is_player())
+                .unwrap_or(false);
         let defer_death_explosion = dmg > 0 && !matches!(wdef.push, PushDir::None | PushDir::Flip);
-        let deferred_death_explosion = if defer_death_explosion {
+        let deferred_death_explosion = if skip_friendly_damage {
+            None
+        } else if defer_death_explosion {
             apply_damage_defer_death_explosion(
                 board, hx, hy, dmg, result, DamageSource::Weapon,
             )
@@ -2802,7 +2897,120 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
     }
 }
 
+fn sim_arachnoid_injector(
+    board: &mut Board,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let target_before = board.unit_at(tx, ty);
+    let spawn_allowed = target_before
+        .map(|idx| !board.units[idx].is_mech())
+        .unwrap_or(false);
+
+    sim_artillery(board, weapon_id, wdef, ax, ay, tx, ty, attack_dir, result);
+
+    if !spawn_allowed {
+        return;
+    }
+    let Some(idx) = target_before else {
+        return;
+    };
+    if board.units[idx].hp > 0 {
+        return;
+    }
+
+    // The engine replaces the killed target with the Arachnoid pawn. Dead
+    // units remain in Rust's fixed unit array for collision replay, so move
+    // this corpse off-board before spawning or its wreck would falsely block
+    // the new friendly unit and the vacated tile later in the same turn.
+    board.units[idx].x = 8;
+    board.units[idx].y = 8;
+    let acid_attack = arachnoid_injector_spawns_acid_attack(weapon_id);
+    spawn_arachnoid(board, tx, ty, acid_attack, result);
+}
+
 // ── Self AoE ─────────────────────────────────────────────────────────────────
+
+fn apply_mass_shift_tile(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    dir: usize,
+    is_self: bool,
+    wdef: &WeaponDef,
+    result: &mut ActionResult,
+) {
+    if let Some(idx) = board.unit_at(x, y) {
+        if (is_self && wdef.shield_self())
+            || (!is_self && wdef.shield_allies() && board.units[idx].is_player())
+        {
+            board.units[idx].set_shield(true);
+        }
+    }
+    apply_damage(board, x, y, wdef.damage, result, DamageSource::Weapon);
+    apply_push(board, x, y, dir, result);
+}
+
+fn sim_mass_shift(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    wdef: &WeaponDef,
+    dir: usize,
+    result: &mut ActionResult,
+) {
+    let (fdx, fdy) = DIRS[dir];
+    let side_a = (dir + 1) % 4;
+    let side_b = (dir + 3) % 4;
+    let back = opposite_dir(dir);
+    let (adx, ady) = DIRS[side_a];
+    let (bdx, bdy) = DIRS[side_b];
+    let (rdx, rdy) = DIRS[back];
+
+    let front = (ax as i8 + fdx, ay as i8 + fdy);
+    if in_bounds(front.0, front.1) {
+        apply_mass_shift_tile(board, front.0 as u8, front.1 as u8, dir, false, wdef, result);
+    }
+
+    apply_mass_shift_tile(board, ax, ay, dir, true, wdef, result);
+
+    let side_a_tile = (ax as i8 + adx, ay as i8 + ady);
+    if in_bounds(side_a_tile.0, side_a_tile.1) {
+        apply_mass_shift_tile(
+            board,
+            side_a_tile.0 as u8,
+            side_a_tile.1 as u8,
+            dir,
+            false,
+            wdef,
+            result,
+        );
+    }
+
+    let side_b_tile = (ax as i8 + bdx, ay as i8 + bdy);
+    if in_bounds(side_b_tile.0, side_b_tile.1) {
+        apply_mass_shift_tile(
+            board,
+            side_b_tile.0 as u8,
+            side_b_tile.1 as u8,
+            dir,
+            false,
+            wdef,
+            result,
+        );
+    }
+
+    let rear = (ax as i8 + rdx, ay as i8 + rdy);
+    if in_bounds(rear.0, rear.1) {
+        apply_mass_shift_tile(board, rear.0 as u8, rear.1 as u8, dir, false, wdef, result);
+    }
+}
 
 fn self_aoe_target_in_area(ax: u8, ay: u8, target_x: u8, target_y: u8) -> bool {
     if target_x >= 8 || target_y >= 8 {
@@ -3886,6 +4094,71 @@ mod tests {
         });
         board.units[idx].set_type_name("BombRock");
         idx
+    }
+
+    #[test]
+    fn test_arachnoid_injector_kill_spawns_active_arachnoid() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 10, 3, 1, 3, WId::RangedArachnoid);
+        let target = add_enemy(&mut board, 11, 3, 3, 1);
+        board.units[target].set_type_name("Leaper1");
+
+        let result = simulate_weapon(&mut board, mech, WId::RangedArachnoid, 3, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[target].hp, 0);
+        assert_eq!((board.units[target].x, board.units[target].y), (8, 8));
+        let spawned = board.unit_at(3, 3).expect("Arachnoid should spawn on kill tile");
+        assert_eq!(board.units[spawned].team, Team::Player);
+        assert_eq!(board.units[spawned].type_name_str(), "DeployUnit_Aracnoid");
+        assert_eq!(board.units[spawned].weapon, WeaponId(WId::DeployUnitAracnoidAtk as u16));
+        assert!(board.units[spawned].active());
+        assert!(!board.wreck_at(3, 3));
+    }
+
+    #[test]
+    fn test_spawned_arachnoid_attack_pushes_and_self_destructs_without_mech_loss() {
+        let mut board = make_test_board();
+        let arachnoid = board.add_unit(Unit {
+            uid: 20,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            move_speed: 3,
+            base_move: 3,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::DeployUnitAracnoidAtk as u16),
+            ..Default::default()
+        });
+        board.units[arachnoid].set_type_name("DeployUnit_Aracnoid");
+        let target = add_enemy(&mut board, 21, 3, 4, 2);
+
+        let result = simulate_weapon(&mut board, arachnoid, WId::DeployUnitAracnoidAtk, 3, 4);
+
+        assert_eq!(board.units[target].hp, 1);
+        assert_eq!((board.units[target].x, board.units[target].y), (3, 5));
+        assert_eq!(board.units[arachnoid].hp, 0);
+        assert_eq!(result.mechs_killed, 0);
+    }
+
+    #[test]
+    fn test_area_shift_pushes_self_and_adjacent_tiles_in_clicked_direction() {
+        let mut board = make_test_board();
+        let slide = add_mech(&mut board, 30, 3, 3, 2, WId::ScienceMassShift);
+        let front = add_enemy(&mut board, 31, 3, 4, 2);
+        let right = add_enemy(&mut board, 32, 4, 3, 2);
+        let left = add_enemy(&mut board, 33, 2, 3, 2);
+        let rear = add_enemy(&mut board, 34, 3, 2, 2);
+
+        simulate_weapon(&mut board, slide, WId::ScienceMassShift, 3, 4);
+
+        assert_eq!((board.units[front].x, board.units[front].y), (3, 5));
+        assert_eq!((board.units[slide].x, board.units[slide].y), (3, 4));
+        assert_eq!((board.units[right].x, board.units[right].y), (4, 4));
+        assert_eq!((board.units[left].x, board.units[left].y), (2, 4));
+        assert_eq!((board.units[rear].x, board.units[rear].y), (3, 3));
     }
 
     #[test]
@@ -6600,6 +6873,25 @@ mod tests {
         assert_eq!(board.units[mech_idx].hp, 5, "pre-push adjacent mech should not eat the explosion");
         assert_eq!(board.tile(3, 6).building_hp, 2, "pre-push adjacent building should not eat the explosion");
         assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_flamethrower_killed_target_bumps_live_mech_blocker() {
+        // Regression: Perfect Strategy run 20260517_175633_388,
+        // Mission_Teleporter turn 4. FlameMech at D5 fires at burning
+        // Scorpion1 on E5; the killed Scorpion corpse is still pushed into
+        // TeleMech on F5, killing the 1-HP mech. This is Flamethrower-specific
+        // and must not change Cluster Artillery's outer corpse absorption.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 4, 3, WId::PrimeFlamethrower);
+        let scorpion = add_enemy_type(&mut board, 3088, 3, 3, 2, "Scorpion1");
+        board.units[scorpion].set_fire(true);
+        let tele = add_mech(&mut board, 2, 3, 2, 1, WId::ScienceSwap);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 3, 3);
+
+        assert_eq!(board.units[scorpion].hp, 0, "burning target dies to Flamethrower bonus damage");
+        assert_eq!(board.units[tele].hp, 0, "killed Flamethrower target should corpse-bump the live mech blocker");
     }
 
     #[test]
