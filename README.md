@@ -2,11 +2,11 @@
 
 An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **30 / 70 achievements earned** (latest Steam sync on 2026-05-16; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
+Status: **33 / 70 achievements earned** (latest Steam sync on 2026-05-17; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
 
-Recent unlocks: **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
+Recent unlocks: **Chain Attack**, **Ramming Speed**, and **Squads Victory** on 2026-05-17; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
 
-Current live-run milestone: **Hard Victory completed** with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`. The final cave retrospective (`docs/final_cave_hard_rusting_hulks_retrospective.md`) turned the H8 finish into two live-loop fixes: `auto_turn` now carries the full dirty frontier through safety blocks, and last-turn final-cave resist gambles are exact-token exceptions instead of ordinary dirty consent. Future Hard Rusting Hulks attempts should prefer a third island unless grid, cores, Jet/Rocket/Pulse control, and pilot HP are genuinely Hive-ready.
+Current live-run milestone: **Chain Attack completed** with Blitzkrieg in run `20260517_105759_344`; Steam confirmed the squad's Chain Whip finally threaded a 10-tile chain. The same victory also advanced the cumulative **Squads Victory** achievement. Previous milestone: **Hard Victory completed** with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`.
 
 ---
 

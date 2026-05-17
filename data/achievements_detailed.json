@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-10T21:30:29.687646",
+    "last_steam_sync": "2026-05-17T16:54:36.647907",
     "last_steam_total": 70,
-    "last_steam_unlocked": 28
+    "last_steam_unlocked": 33
   },
   "achievements": {
     "rift_walkers": [
@@ -27,7 +27,7 @@
         "description": "Kill an enemy 5+ tiles away with a Dash Punch with Rift Walkers squad",
         "type": "single_battle",
         "global_unlock_pct": 28.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Combat Mech's Titan Fist to Dash Punch (2 reactor cores). Position 5+ tiles from a low-HP enemy (Hornets at 2 HP ideal). Dash through open tiles to punch the target. Mountains/walls deal collision damage for the kill.",
         "setup": "Need Dash upgrade (2 cores). Target Hornets or damaged enemies.",
         "pitfalls": "Must be exactly 5+ tiles away. Obstacles in path block the dash."
@@ -59,7 +59,7 @@
         "description": "Deal 12 damage with Electric Smoke in a single battle with Rusting Hulks",
         "type": "single_battle",
         "global_unlock_pct": 15.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Storm Generator deals 1 damage to each enemy in smoke at end of enemy turn. Need 12 total smoke-damage instances. Use Jet Mech and Rocket Mech to create lots of smoke. Keep enemies alive in smoke. Upgrade Storm Generator (3 cores). Later turns with more enemies are better.",
         "setup": "Upgrade Storm Generator. Missions with many enemies. Don't kill Vek \u2014 keep them in smoke.",
         "pitfalls": "Killing Vek removes them from smoke. Need to balance damage vs keeping enemies alive."
@@ -113,7 +113,7 @@
         "description": "Have the Chain Whip attack chain through 10 tiles with Blitzkrieg squad",
         "type": "single_battle",
         "global_unlock_pct": 24.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Electric Whip chains through ALL connected adjacent units/objects. Spider eggs, boulders, your own mechs, AND Vek all count as chain links. Spider Leader mission ideal \u2014 spiderlings everywhere. Upgrade whip for range. Position your mechs in the chain.",
         "setup": "Upgrade Electric Whip. Spider Leader mission for many small targets. Position all units adjacently.",
         "pitfalls": "Chain damages everything including allies. Plan for friendly fire damage."
@@ -507,7 +507,7 @@
         "description": "Beat the game on Hard (any length)",
         "type": "single_run",
         "global_unlock_pct": 9.0,
-        "completed": false,
+        "completed": true,
         "strategy": "Strong squad required. Ice Mech custom squad strategy is effective. 2-island run to minimize risk. Experienced time-travel pilot.",
         "setup": "Hard difficulty. Strong squad. 2-island run.",
         "pitfalls": "More Alphas, more enemies, less grid power. Significantly harder than Normal."
@@ -527,7 +527,7 @@
         "description": "Beat the game with 4 different Squads (any length)",
         "type": "cumulative",
         "global_unlock_pct": 18.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Win with 4 different squads across multiple runs. Start with easier squads. Cumulative \u2014 doesn't need to be same run.",
         "setup": "Multiple runs with different squads. Easy difficulty fine.",
         "pitfalls": "None \u2014 straightforward cumulative."

@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-30 of 70 completed (latest Steam sync on 2026-05-16; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 40 remaining, sorted by global unlock % (easiest first).
+33 of 70 completed (latest Steam sync on 2026-05-17; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 37 remaining, sorted by global unlock % (easiest first).
 
-Current Hard Victory hardening note: Hard Victory is complete with Rusting Hulks on Hard + Advanced Edition. Live-loop safety now treats delayed grid scalar updates as pending grid debt, waits for post-enemy grid/building fingerprints to settle before recording favorable reads, preserves active weights/soft-disable masks during safety widening, splits dirty frontiers by loss magnitude, carries those frontiers through `auto_turn` safety blocks, gates final-cave resist gambles to exact-token last-turn exceptions, backfills final-island post-enemy audits before solving ahead, and records a pre-End-Turn threat coverage audit for each initially threatened building/pylon.
+Current Blitzkrieg note: Chain Attack is complete in run `20260517_105759_344`, confirmed by the 2026-05-17 Steam sync after a full Blitzkrieg victory with Building Chain powered. The same sync also promoted Ramming Speed and Squads Victory. Previous Hard Victory hardening remains in `docs/final_cave_hard_rusting_hulks_retrospective.md`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -21,9 +21,9 @@ Current Hard Victory hardening note: Hard Victory is complete with Rusting Hulks
 - [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
 - [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
 - [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
-- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
+- [x] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
-- [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]
+- [x] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg] — completed in run `20260517_105759_344`
 - [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
@@ -32,7 +32,7 @@ Current Hard Victory hardening note: Hard Victory is complete with Rusting Hulks
 - [ ] There is No Try (20.2%) — Finish 3 islands without failing an objective
 
 ### Tier 3: Orange Zone (10-20% — deliberate setup needed)
-- [ ] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative]
+- [x] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative] — completed with the Blitzkrieg victory in run `20260517_105759_344`
 - [ ] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative]
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
 - [ ] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths]
