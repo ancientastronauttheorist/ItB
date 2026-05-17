@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-05-17T15:11:53.351145",
+  "run_id": "20260517_105759_344",
+  "mission_index": 17,
+  "turn": 2,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 2,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          2,
+          3
+        ],
+        "target_visual": "E6",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 2637,
+          "type": "Burrower2",
+          "pos": [
+            3,
+            3
+          ],
+          "visual": "E5",
+          "hp": 3,
+          "max_hp": 5,
+          "weapon_id": "Burrower_Atk2",
+          "target": [
+            2,
+            3
+          ],
+          "target_visual": "E6",
+          "queued_target": [
+            2,
+            3
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      },
+      {
+        "target": [
+          4,
+          1
+        ],
+        "target_visual": "G4",
+        "target_hp": 1,
+        "attacker": {
+          "uid": 2644,
+          "type": "Mosquito1",
+          "pos": [
+            4,
+            2
+          ],
+          "visual": "F4",
+          "hp": 2,
+          "max_hp": 2,
+          "weapon_id": "MosquitoAtk1",
+          "target": [
+            4,
+            1
+          ],
+          "target_visual": "G4",
+          "queued_target": [
+            4,
+            1
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}

@@ -1259,7 +1259,20 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v134 - Restore player artillery target areas to cardinal-only, including
 //   Artemis. Diagnostic replay now rejects off-axis Artemis shots as illegal
 //   no-ops. Pre-v134 corpus archived as `failure_db_snapshot_sim_v133.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 134;
+// v135 - Rock Accelerator materializes a neutral 1 HP RockThrown on empty
+//   target tiles, matching Blitzkrieg run 20260517_105759_344 Mission_Train
+//   turn 3. Pre-v135 corpus archived as `failure_db_snapshot_sim_v134.jsonl`.
+// v136 - RockThrown spawned during active Mission_AcidStorm inherits ACID
+//   immediately, matching Blitzkrieg run 20260517_105759_344 The Wasteland
+//   turn 1. Pre-v136 corpus archived as `failure_db_snapshot_sim_v135.jsonl`.
+// v137 - Repair/Repair Drop during active Mission_AcidStorm leaves player
+//   units ACIDed after healing, matching The Wasteland turn 2. Pre-v137
+//   corpus archived as `failure_db_snapshot_sim_v136.jsonl`.
+// v138 - Rock Launcher defers Boom Bot / Volatile center death decay until
+//   after its perpendicular side pushes, matching Mission_BoomBots where the
+//   side Boom Tank is shoved out before the killed center bot explodes.
+//   Pre-v138 corpus archived as `failure_db_snapshot_sim_v137.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 140;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

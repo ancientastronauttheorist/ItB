@@ -1,0 +1,2580 @@
+{
+  "run_id": "20260517_105759_344",
+  "squad": "Blitzkrieg",
+  "achievement_targets": [
+    "Chain Attack"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "Mission_Crack",
+  "islands_completed": [],
+  "mission_index": 17,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "ElectricMech",
+        "move_to": [
+          3,
+          5
+        ],
+        "weapon": "Prime_Lightning_A",
+        "target": [
+          3,
+          6
+        ],
+        "description": "ElectricMech, move C6\u2192C5, fire Chain Whip at B5"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "WallMech",
+        "move_to": [
+          5,
+          6
+        ],
+        "weapon": "Brute_Grapple",
+        "target": [
+          5,
+          4
+        ],
+        "description": "WallMech, move B5\u2192B3, fire Grappling Hook at D3"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "RockartMech",
+        "move_to": [
+          4,
+          2
+        ],
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          4,
+          5
+        ],
+        "description": "RockartMech, move D5\u2192F4, fire Rock Launcher at C4"
+      }
+    ],
+    "score": 119537.71430267606,
+    "turn": 1,
+    "input_fingerprint": "0:2,5:5|1:3,6:3|2635:5,4:2|2636:6,3:2|2637:4,5:5|2:3,4:2"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-17T11:03:21.490164",
+      "turn": 1,
+      "label": "solve",
+      "score": 175392.85714285713,
+      "actions": [
+        "WallMech, move F6\u2192G4, fire Grappling Hook at C4",
+        "ElectricMech, move C5\u2192C3, fire Chain Whip at C2",
+        "RockartMech, move E5\u2192C5, fire Rock Launcher at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T11:04:50.861113",
+      "turn": 2,
+      "label": "solve",
+      "score": 183082.85714285713,
+      "actions": [
+        "ElectricMech, move C3\u2192E3, repair",
+        "WallMech, move G4\u2192H4",
+        "RockartMech, move C5\u2192E6, fire Rock Launcher at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T11:06:13.431225",
+      "turn": 3,
+      "label": "solve",
+      "score": 88857.85714285713,
+      "actions": [
+        "RockartMech, move E6\u2192D7, fire Rock Launcher at D2",
+        "WallMech, move H4\u2192F4, fire Grappling Hook at F2",
+        "ElectricMech, move E3\u2192D3, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T11:18:55.968704",
+      "turn": 3,
+      "label": "solve",
+      "score": 88857.85714285713,
+      "actions": [
+        "RockartMech, move E6\u2192D7, fire Rock Launcher at D2",
+        "WallMech, move H4\u2192F4, fire Grappling Hook at F2",
+        "ElectricMech, move E3\u2192D3, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T11:19:27.156240",
+      "turn": 3,
+      "label": "solve",
+      "score": 88857.85714285713,
+      "actions": [
+        "RockartMech, move E6\u2192D7, fire Rock Launcher at D2",
+        "WallMech, move H4\u2192F4, fire Grappling Hook at F2",
+        "ElectricMech, move E3\u2192D3, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T11:52:37.795362",
+      "turn": 3,
+      "label": "solve",
+      "score": 88857.85714285713,
+      "actions": [
+        "ElectricMech, move E3\u2192D3, fire Chain Whip at C3",
+        "WallMech, move H4\u2192F4, fire Grappling Hook at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T11:59:25.529676",
+      "turn": 1,
+      "label": "solve",
+      "score": 120728.57142857142,
+      "actions": [
+        "ElectricMech, move F5\u2192E6",
+        "WallMech, move D5\u2192D2",
+        "RockartMech, fire Rock Launcher at F5",
+        "Disposal_Unit, fire Disintegrator at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:06:32.234871",
+      "turn": 2,
+      "label": "solve",
+      "score": 128595.23809523821,
+      "actions": [
+        "RockartMech, move B5\u2192C6, fire Rock Launcher at C2",
+        "WallMech, move E2\u2192F2, fire Grappling Hook at F5",
+        "ElectricMech, move E6\u2192F4, fire Chain Whip at F3",
+        "Disposal_Unit, fire Disintegrator at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:07:22.209771",
+      "turn": 3,
+      "label": "solve",
+      "score": 141348.57142857142,
+      "actions": [
+        "Disposal_Unit, fire Disintegrator at H6",
+        "WallMech, repair",
+        "ElectricMech, move F4\u2192F3, fire Chain Whip at F2",
+        "RockartMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:13:18.339413",
+      "turn": 4,
+      "label": "solve",
+      "score": 139143.57142857142,
+      "actions": [
+        "ElectricMech, move F3\u2192F5",
+        "WallMech, move F2\u2192F4, repair",
+        "Disposal_Unit, fire Disintegrator at F2",
+        "RockartMech, move C6\u2192D5, fire Rock Launcher at B5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:16:52.222083",
+      "turn": 1,
+      "label": "solve",
+      "score": 109721.42857142857,
+      "actions": [
+        "ElectricMech, move G5\u2192H3, fire Chain Whip at G3",
+        "RockartMech, move G7\u2192H6, fire Rock Launcher at E6",
+        "WallMech, fire Grappling Hook at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:21:07.118969",
+      "turn": 2,
+      "label": "solve",
+      "score": 111014.76190476186,
+      "actions": [
+        "RockartMech, move H6\u2192F5, fire Rock Launcher at F3",
+        "WallMech, move E4\u2192E3, repair",
+        "ElectricMech, move H3\u2192F2, fire Chain Whip at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:24:07.736777",
+      "turn": 2,
+      "label": "solve",
+      "score": 99398.1904912789,
+      "actions": [
+        "ElectricMech, move H3\u2192G5, fire Chain Whip at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:25:52.469452",
+      "turn": 2,
+      "label": "solve",
+      "score": 99398.1904912789,
+      "actions": [
+        "ElectricMech, move H3\u2192G5, fire Chain Whip at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:26:56.311137",
+      "turn": 3,
+      "label": "solve",
+      "score": 122831.42857142857,
+      "actions": [
+        "WallMech, move E3\u2192D4, repair",
+        "ElectricMech, move G5\u2192D5, fire Chain Whip at D4",
+        "RockartMech, move F5\u2192G5, fire Rock Launcher at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:28:06.893774",
+      "turn": 4,
+      "label": "solve",
+      "score": 119921.42857142857,
+      "actions": [
+        "WallMech, move D4\u2192F5, repair",
+        "RockartMech, fire Rock Launcher at C5",
+        "ElectricMech, move D5\u2192D4, fire Chain Whip at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:32:03.774230",
+      "turn": 1,
+      "label": "solve",
+      "score": 168664.2857142857,
+      "actions": [
+        "RockartMech, move D6\u2192D7, fire Rock Launcher at F3",
+        "ElectricMech, move E5\u2192D6, fire Chain Whip at D7",
+        "WallMech, fire Grappling Hook at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:35:58.516560",
+      "turn": 2,
+      "label": "solve",
+      "score": 170667.61904761917,
+      "actions": [
+        "ElectricMech, move E3\u2192C2, fire Chain Whip at B2",
+        "WallMech",
+        "RockartMech, move D7\u2192D8, fire Rock Launcher at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:36:42.859407",
+      "turn": 3,
+      "label": "solve",
+      "score": 167974.2857142857,
+      "actions": [
+        "WallMech, fire Grappling Hook at F5",
+        "ElectricMech, fire Chain Whip at D2",
+        "RockartMech, fire Rock Launcher at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:37:21.216472",
+      "turn": 4,
+      "label": "solve",
+      "score": 171914.2857142857,
+      "actions": [
+        "ElectricMech, move B2\u2192C2, repair",
+        "WallMech, repair",
+        "RockartMech, move D8\u2192G8, fire Rock Launcher at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:40:33.614910",
+      "turn": 1,
+      "label": "solve",
+      "score": 118650.0,
+      "actions": [
+        "ElectricMech, move C5\u2192B3, fire Chain Whip at B2",
+        "WallMech, move E5\u2192D4, fire Grappling Hook at B4",
+        "RockartMech, move C7\u2192C6, fire Rock Launcher at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:41:17.612254",
+      "turn": 2,
+      "label": "solve",
+      "score": 125410.00000000009,
+      "actions": [
+        "ElectricMech, move B3\u2192C2, fire Chain Whip at D2",
+        "RockartMech, move C6\u2192E7, fire Rock Launcher at E4",
+        "WallMech, move E4\u2192E3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:42:53.336616",
+      "turn": 3,
+      "label": "solve",
+      "score": 126350.0,
+      "actions": [
+        "ElectricMech, fire Chain Whip at C3",
+        "WallMech, move E3\u2192F2, fire Grappling Hook at C2",
+        "RockartMech, move E7\u2192E4, fire Rock Launcher at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:43:44.569907",
+      "turn": 4,
+      "label": "solve",
+      "score": 152570.0,
+      "actions": [
+        "RockartMech, move E4\u2192E6, fire Rock Launcher at E2",
+        "ElectricMech, move E2\u2192C1, fire Chain Whip at C2",
+        "WallMech, move F2\u2192E1, fire Grappling Hook at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:49:50.565062",
+      "turn": 1,
+      "label": "solve",
+      "score": 148800.0,
+      "actions": [
+        "WallMech",
+        "RockartMech, move C6\u2192F6, fire Rock Launcher at D6",
+        "ElectricMech, move D4\u2192F3, fire Chain Whip at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:50:31.857524",
+      "turn": 2,
+      "label": "solve",
+      "score": 147772.71427551354,
+      "actions": [
+        "WallMech, move E6\u2192H6, fire Grappling Hook at F6",
+        "RockartMech, move G6\u2192E6, fire Rock Launcher at E3",
+        "ElectricMech, move G3\u2192F6, fire Chain Whip at F7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:51:57.020694",
+      "turn": 2,
+      "label": "solve",
+      "score": 147772.71427551354,
+      "actions": [
+        "WallMech, move E6\u2192H6, fire Grappling Hook at F6",
+        "RockartMech, move G6\u2192E6, fire Rock Launcher at E3",
+        "ElectricMech, move G3\u2192F6, fire Chain Whip at F7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:52:15.957443",
+      "turn": 2,
+      "label": "solve",
+      "score": 147772.71427551354,
+      "actions": [
+        "WallMech, move E6\u2192H6, fire Grappling Hook at F6",
+        "RockartMech, move G6\u2192E6, fire Rock Launcher at E3",
+        "ElectricMech, move G3\u2192F6, fire Chain Whip at F7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:53:15.318433",
+      "turn": 3,
+      "label": "solve",
+      "score": 156179.85714304447,
+      "actions": [
+        "RockartMech, fire Rock Launcher at G6",
+        "WallMech, fire Grappling Hook at F6",
+        "ElectricMech, move G6\u2192G5, fire Chain Whip at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:54:15.414892",
+      "turn": 3,
+      "label": "solve",
+      "score": 156179.85714304447,
+      "actions": [
+        "RockartMech, fire Rock Launcher at G6",
+        "WallMech, fire Grappling Hook at F6",
+        "ElectricMech, move G6\u2192G5, fire Chain Whip at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:54:28.743723",
+      "turn": 3,
+      "label": "solve",
+      "score": 156179.85714304447,
+      "actions": [
+        "RockartMech, fire Rock Launcher at G6",
+        "WallMech, fire Grappling Hook at F6",
+        "ElectricMech, move G6\u2192G5, fire Chain Whip at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:55:42.142398",
+      "turn": 4,
+      "label": "solve",
+      "score": 118040.57144340448,
+      "actions": [
+        "ElectricMech, move G5\u2192F2, fire Chain Whip at F3",
+        "WallMech, move H6\u2192F6",
+        "RockartMech, move E6\u2192F8, fire Rock Launcher at C8"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:56:03.684819",
+      "turn": 4,
+      "label": "solve",
+      "score": 118040.57144340448,
+      "actions": [
+        "ElectricMech, move G5\u2192F2, fire Chain Whip at F3",
+        "WallMech, move H6\u2192F6",
+        "RockartMech, move E6\u2192F8, fire Rock Launcher at C8"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:56:21.857990",
+      "turn": 4,
+      "label": "solve",
+      "score": 118040.57144340448,
+      "actions": [
+        "ElectricMech, move G5\u2192F2, fire Chain Whip at F3",
+        "WallMech, move H6\u2192F6",
+        "RockartMech, move E6\u2192F8, fire Rock Launcher at C8"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:58:19.353020",
+      "turn": 1,
+      "label": "solve",
+      "score": 162928.57142857142,
+      "actions": [
+        "ElectricMech, fire Chain Whip at B5",
+        "WallMech, move F6\u2192D4, fire Grappling Hook at D6",
+        "RockartMech, move D5\u2192D1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:58:55.555297",
+      "turn": 2,
+      "label": "solve",
+      "score": 153608.57142857142,
+      "actions": [
+        "ElectricMech, fire Chain Whip at D5",
+        "WallMech, repair",
+        "RockartMech, move D1\u2192B2, fire Rock Launcher at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T12:59:35.848316",
+      "turn": 3,
+      "label": "solve",
+      "score": 160333.57142857142,
+      "actions": [
+        "WallMech, move D4\u2192D5",
+        "RockartMech, move B2\u2192A5, fire Rock Launcher at A3",
+        "ElectricMech, move C5\u2192C4, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:01:52.181431",
+      "turn": 1,
+      "label": "solve",
+      "score": 137078.57142857142,
+      "actions": [
+        "WallMech, move F5\u2192G4, fire Grappling Hook at D4",
+        "ElectricMech, move E6\u2192G5, fire Chain Whip at G4",
+        "RockartMech, fire Rock Launcher at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:02:39.143520",
+      "turn": 2,
+      "label": "solve",
+      "score": 138371.90476190488,
+      "actions": [
+        "ElectricMech, move G5\u2192G3",
+        "WallMech, fire Grappling Hook at D4",
+        "RockartMech, move C5\u2192D4, fire Rock Launcher at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:06:29.075673",
+      "turn": 3,
+      "label": "solve",
+      "score": 141098.57142857142,
+      "actions": [
+        "RockartMech, fire Rock Launcher at F4",
+        "WallMech, fire Grappling Hook at E4",
+        "Archive_Tank, move E3\u2192E4, fire Stock Cannon at F4",
+        "ElectricMech, move G3\u2192F3, fire Chain Whip at F2",
+        "Archive_Tank, move C3\u2192D2, fire Stock Cannon at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:07:29.527974",
+      "turn": 4,
+      "label": "solve",
+      "score": 137218.57142857142,
+      "actions": [
+        "ElectricMech, move F3\u2192C4, fire Chain Whip at B4",
+        "WallMech, move G4\u2192F4, repair",
+        "RockartMech, move D4\u2192C6, fire Rock Launcher at C2",
+        "Archive_Tank, move E4\u2192C3, fire Stock Cannon at C2",
+        "Archive_Tank, move E2\u2192C2, fire Stock Cannon at C1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:14:45.177200",
+      "turn": 1,
+      "label": "solve",
+      "score": 152314.2857142857,
+      "actions": [
+        "WallMech, move F5\u2192E4, fire Grappling Hook at C4",
+        "ElectricMech, move D5\u2192E5, fire Chain Whip at E4",
+        "RockartMech, move G6\u2192F5, fire Rock Launcher at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:15:32.170919",
+      "turn": 2,
+      "label": "solve",
+      "score": 164070.9523809525,
+      "actions": [
+        "ElectricMech, move E5\u2192D3, fire Chain Whip at D2",
+        "RockartMech, fire Rock Launcher at D5",
+        "WallMech, move E4\u2192F4, fire Grappling Hook at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:16:09.423737",
+      "turn": 3,
+      "label": "solve",
+      "score": 152684.2857142857,
+      "actions": [
+        "ElectricMech, fire Chain Whip at D2",
+        "WallMech, repair",
+        "RockartMech, move F5\u2192F2, fire Rock Launcher at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:16:47.486104",
+      "turn": 4,
+      "label": "solve",
+      "score": 156484.2857142857,
+      "actions": [
+        "ElectricMech, move D4\u2192E4, repair",
+        "WallMech, move F4\u2192G5, fire Grappling Hook at E5",
+        "RockartMech, move F2\u2192D4, fire Rock Launcher at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:20:09.265397",
+      "turn": 1,
+      "label": "solve",
+      "score": 143950.0,
+      "actions": [
+        "ElectricMech, move D5\u2192F3, fire Chain Whip at F2",
+        "RockartMech, move F5\u2192F6, fire Rock Launcher at F4",
+        "WallMech, move E6\u2192C4, fire Grappling Hook at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:20:44.804869",
+      "turn": 2,
+      "label": "solve",
+      "score": 158653.33333333355,
+      "actions": [
+        "WallMech, move C4\u2192D3, repair",
+        "RockartMech, move F6\u2192D5, fire Rock Launcher at F5",
+        "ElectricMech, move F3\u2192E5, fire Chain Whip at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:21:22.803383",
+      "turn": 3,
+      "label": "solve",
+      "score": 154500.0,
+      "actions": [
+        "ElectricMech, repair",
+        "WallMech, move D3\u2192C3, repair",
+        "RockartMech, move D5\u2192D4, fire Rock Launcher at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:21:56.151006",
+      "turn": 4,
+      "label": "solve",
+      "score": 147400.0,
+      "actions": [
+        "ElectricMech, move E5\u2192D3, fire Chain Whip at D2",
+        "WallMech",
+        "RockartMech, move D4\u2192D5, fire Rock Launcher at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:26:15.579649",
+      "turn": 1,
+      "label": "solve",
+      "score": 113064.85714329992,
+      "actions": [
+        "ElectricMech, move E5\u2192F5, fire Chain Whip at G5",
+        "RockartMech, move C6\u2192D6, fire Rock Launcher at D4",
+        "WallMech, move F6\u2192D5, fire Grappling Hook at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:27:25.714339",
+      "turn": 1,
+      "label": "solve",
+      "score": 113064.85714329992,
+      "actions": [
+        "ElectricMech, move E5\u2192F5, fire Chain Whip at G5",
+        "RockartMech, move C6\u2192D6, fire Rock Launcher at D4",
+        "WallMech, move F6\u2192D5, fire Grappling Hook at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:27:52.706968",
+      "turn": 1,
+      "label": "solve",
+      "score": 113064.85714329992,
+      "actions": [
+        "ElectricMech, move E5\u2192F5, fire Chain Whip at G5",
+        "RockartMech, move C6\u2192D6, fire Rock Launcher at D4",
+        "WallMech, move F6\u2192D5, fire Grappling Hook at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:40:19.592232",
+      "turn": 2,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260517_105759_344_m12_t01_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "blocking": true,
+        "run_id": "20260517_105759_344",
+        "mission_index": 12,
+        "turn": 1,
+        "created_at": "2026-05-17T13:31:49.557595",
+        "source": "record_post_enemy",
+        "record_path": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260517_105759_344/m12_turn_01_post_enemy.json",
+        "reason": null,
+        "deltas": {
+          "buildings_alive_diff": -1,
+          "building_hp_diff": -1,
+          "grid_power_diff": -1,
+          "enemies_alive_diff": 2,
+          "protected_objective_units_alive_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "mech_hp_diff": [
+            {
+              "uid": 0,
+              "type": "ElectricMech",
+              "predicted_hp": 5,
+              "actual_hp": 5,
+              "diff": 0
+            },
+            {
+              "uid": 1,
+              "type": "WallMech",
+              "predicted_hp": 3,
+              "actual_hp": 3,
+              "diff": 0
+            },
+            {
+              "uid": 2,
+              "type": "RockartMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            }
+          ],
+          "unexpected_events": [
+            "Lost 1 unexpected building(s)",
+            "Grid power dropped by 1 unexpectedly"
+          ]
+        },
+        "triggers": [
+          {
+            "trigger": "building_lost_unexpected",
+            "tier": 1,
+            "severity": "critical",
+            "details": "Predicted 7 buildings, actual 6 (-1)"
+          },
+          {
+            "trigger": "grid_power_drop_unexpected",
+            "tier": 1,
+            "severity": "high",
+            "details": "Predicted grid 6, actual 5 (-1)"
+          },
+          {
+            "trigger": "self_damage_building",
+            "tier": 4,
+            "severity": "critical",
+            "details": "Action 1 (RockartMech) damaged 1 building HP, destroyed 0 buildings"
+          }
+        ],
+        "actual_outcome": {
+          "buildings_alive": 6,
+          "building_hp_total": 8,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "grid_power": 5,
+          "enemies_alive": 5,
+          "enemy_hp_total": 9,
+          "mechs_alive": 3,
+          "mech_hp_total": 10,
+          "bigbomb_alive": false,
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "ElectricMech",
+              "hp": 5,
+              "max_hp": 5
+            },
+            {
+              "uid": 1,
+              "type": "WallMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 2,
+              "type": "RockartMech",
+              "hp": 2,
+              "max_hp": 2
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [
+            {
+              "uid": 0,
+              "type": "ElectricMech",
+              "pos": [
+                3,
+                3
+              ]
+            }
+          ],
+          "mission_id": "Mission_BoomBots",
+          "turn": 2,
+          "total_turns": 4,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0
+        },
+        "predicted_outcome": {
+          "buildings_alive": 7,
+          "building_hp_total": 9,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "grid_power": 6,
+          "enemies_alive": 3,
+          "enemy_hp_total": 7,
+          "mechs_alive": 3,
+          "mech_hp_total": 10,
+          "bigbomb_alive": false,
+          "mech_hp": [
+            {
+              "hp": 5,
+              "max_hp": 5,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "hp": 3,
+              "max_hp": 3,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "hp": 2,
+              "max_hp": 2,
+              "type": "RockartMech",
+              "uid": 2
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mission_id": "Mission_BoomBots",
+          "turn": 1,
+          "total_turns": 4,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "buildings_destroyed_by_enemies": 0,
+          "pods_collected": 0
+        },
+        "next_step": "Investigate this enemy-phase prediction miss before solving, executing, or emitting another End Turn plan. Clear only after the simulator/process cause is understood.",
+        "resolved_at": "2026-05-17T13:40:19.592217",
+        "resolve_reason": "Investigated Mission_BoomBots turn 1 miss: Rock Launcher incorrectly killed the side Snowtank1_Boom via center Boom Bot decay before perpendicular side pushes. Patched simulator v138 to defer Rock Launcher center Boom/Volatile decay until after side pushes; replay now keeps the side Boom Tank alive, explaining the extra enemy-phase building/grid loss."
+      }
+    },
+    {
+      "timestamp": "2026-05-17T13:40:26.799368",
+      "turn": 2,
+      "label": "solve",
+      "score": 93640.47619047613,
+      "actions": [
+        "WallMech, move D5\u2192E3, fire Grappling Hook at C3",
+        "ElectricMech, fire Chain Whip at E4",
+        "RockartMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:41:47.640484",
+      "turn": 3,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260517_105759_344_m12_t02_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "blocking": true,
+        "run_id": "20260517_105759_344",
+        "mission_index": 12,
+        "turn": 2,
+        "created_at": "2026-05-17T13:41:20.177528",
+        "source": "record_post_enemy",
+        "record_path": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260517_105759_344/m12_turn_02_post_enemy.json",
+        "reason": null,
+        "deltas": {
+          "buildings_alive_diff": 0,
+          "building_hp_diff": -1,
+          "grid_power_diff": -1,
+          "enemies_alive_diff": 1,
+          "protected_objective_units_alive_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "mech_hp_diff": [
+            {
+              "uid": 0,
+              "type": "ElectricMech",
+              "predicted_hp": 5,
+              "actual_hp": 5,
+              "diff": 0
+            },
+            {
+              "uid": 1,
+              "type": "WallMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            },
+            {
+              "uid": 2,
+              "type": "RockartMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            }
+          ],
+          "unexpected_events": [
+            "Grid power dropped by 1 unexpectedly"
+          ]
+        },
+        "triggers": [
+          {
+            "trigger": "grid_power_drop_unexpected",
+            "tier": 1,
+            "severity": "high",
+            "details": "Predicted grid 5, actual 4 (-1)"
+          }
+        ],
+        "actual_outcome": {
+          "buildings_alive": 6,
+          "building_hp_total": 7,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "grid_power": 4,
+          "enemies_alive": 4,
+          "enemy_hp_total": 5,
+          "mechs_alive": 3,
+          "mech_hp_total": 9,
+          "bigbomb_alive": false,
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "ElectricMech",
+              "hp": 5,
+              "max_hp": 5
+            },
+            {
+              "uid": 1,
+              "type": "WallMech",
+              "hp": 2,
+              "max_hp": 3
+            },
+            {
+              "uid": 2,
+              "type": "RockartMech",
+              "hp": 2,
+              "max_hp": 2
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mission_id": "Mission_BoomBots",
+          "turn": 3,
+          "total_turns": 4,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0
+        },
+        "predicted_outcome": {
+          "buildings_alive": 6,
+          "building_hp_total": 8,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "grid_power": 5,
+          "enemies_alive": 3,
+          "enemy_hp_total": 3,
+          "mechs_alive": 3,
+          "mech_hp_total": 9,
+          "bigbomb_alive": false,
+          "mech_hp": [
+            {
+              "hp": 5,
+              "max_hp": 5,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "hp": 2,
+              "max_hp": 3,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "hp": 2,
+              "max_hp": 2,
+              "type": "RockartMech",
+              "uid": 2
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mission_id": "Mission_BoomBots",
+          "turn": 2,
+          "total_turns": 4,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "buildings_destroyed_by_enemies": 0,
+          "pods_collected": 0
+        },
+        "next_step": "Investigate this enemy-phase prediction miss before solving, executing, or emitting another End Turn plan. Clear only after the simulator/process cause is understood.",
+        "resolved_at": "2026-05-17T13:41:47.640448",
+        "resolve_reason": "Investigated Mission_BoomBots turn 2 miss: player actions verified cleanly, then a surviving Snowtank1_Boom with no initial building threat moved from G6 to G5 during enemy activity and re-aimed into the G4 building, causing one unexpected building HP/grid loss. This is the known Boom Bot non-queued enemy movement projection gap recorded in AGENTS.md; continue from fresh Turn 3 grid 4/7 board."
+      }
+    },
+    {
+      "timestamp": "2026-05-17T13:41:57.438787",
+      "turn": 3,
+      "label": "solve",
+      "score": 109317.14285714287,
+      "actions": [
+        "WallMech, move E3\u2192F6, fire Grappling Hook at F4",
+        "ElectricMech, move E5\u2192E3, fire Chain Whip at E2",
+        "RockartMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:42:38.962717",
+      "turn": 4,
+      "label": "solve",
+      "score": 106162.14285714287,
+      "actions": [
+        "ElectricMech, fire Chain Whip at D3",
+        "WallMech, fire Grappling Hook at F4",
+        "RockartMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:46:05.579125",
+      "turn": 1,
+      "label": "solve",
+      "score": 77907.14285714284,
+      "actions": [
+        "ElectricMech, move D6\u2192D3, fire Chain Whip at C3",
+        "RockartMech, move C7\u2192F8, fire Rock Launcher at F4",
+        "WallMech, move F7\u2192H8, fire Grappling Hook at H4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:48:28.884461",
+      "turn": 2,
+      "label": "solve",
+      "score": 99087.14285714275,
+      "actions": [
+        "ElectricMech, move D3\u2192E4, fire Chain Whip at D4",
+        "WallMech, move H8\u2192E7",
+        "RockartMech, move F8\u2192D7, fire Rock Launcher at G7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:49:13.214519",
+      "turn": 3,
+      "label": "solve",
+      "score": 141912.14285714284,
+      "actions": [
+        "RockartMech, move D7\u2192F7, fire Rock Launcher at F3",
+        "WallMech, move E7\u2192E3",
+        "ElectricMech, fire Chain Whip at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:49:42.926553",
+      "turn": 4,
+      "label": "solve",
+      "score": 140782.14285714284,
+      "actions": [
+        "ElectricMech",
+        "WallMech, move E3\u2192D4, repair",
+        "RockartMech, move F7\u2192E7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:52:22.952713",
+      "turn": 1,
+      "label": "solve",
+      "score": 94364.28571428572,
+      "actions": [
+        "ElectricMech, move E5\u2192D2, fire Chain Whip at C2",
+        "WallMech, move C6\u2192F6, fire Grappling Hook at F4",
+        "RockartMech, fire Rock Launcher at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:52:45.390114",
+      "turn": 1,
+      "label": "solve",
+      "score": 94364.28571428572,
+      "actions": [
+        "ElectricMech, move E5\u2192D2, fire Chain Whip at C2",
+        "WallMech, move C6\u2192F6, fire Grappling Hook at F4",
+        "RockartMech, fire Rock Launcher at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:53:14.317907",
+      "turn": 1,
+      "label": "solve",
+      "score": 94364.28571428572,
+      "actions": [
+        "ElectricMech, move E5\u2192D2, fire Chain Whip at C2",
+        "WallMech, move C6\u2192F6, fire Grappling Hook at F4",
+        "RockartMech, fire Rock Launcher at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T13:56:55.749860",
+      "turn": 2,
+      "label": "solve",
+      "score": 111064.28571428565,
+      "actions": [
+        "WallMech, move F6\u2192D6, fire Grappling Hook at D3",
+        "RockartMech, move B5\u2192A6, fire Rock Launcher at E6",
+        "ElectricMech, move D2\u2192E3, fire Chain Whip at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:16:59.517016",
+      "turn": 3,
+      "label": "solve",
+      "score": 73022.00009887558,
+      "actions": [
+        "ElectricMech, move E3\u2192D2, fire Chain Whip at E2",
+        "WallMech, fire Grappling Hook at D2",
+        "RockartMech, fire Rock Launcher at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:17:29.681651",
+      "turn": 3,
+      "label": "solve",
+      "score": 73022.00009887558,
+      "actions": [
+        "ElectricMech, move E3\u2192D2, fire Chain Whip at E2",
+        "WallMech, fire Grappling Hook at D2",
+        "RockartMech, fire Rock Launcher at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:17:57.625428",
+      "turn": 3,
+      "label": "note",
+      "message": "Turn 3 dirty consent 72f69720aa3ddc48 executed with all action verifies PASS. Threat audit still shows Moth2 targeting G7; this is the reviewed/predicted grid/building loss for the dirty line, so proceed to End Turn under user standing dirty-line consent."
+    },
+    {
+      "timestamp": "2026-05-17T14:18:33.491460",
+      "turn": 4,
+      "label": "solve",
+      "score": 107829.28571428572,
+      "actions": [
+        "RockartMech, move A6\u2192C8, fire Rock Launcher at C6",
+        "WallMech, repair",
+        "ElectricMech, fire Chain Whip at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:31:43.211698",
+      "turn": 4,
+      "label": "note",
+      "message": "Turn 4 Chain Whip desync resolved before End Turn: root cause was save overlay treating primary_power={1} as Prime_Lightning_A. Live weapon is base Prime_Lightning, so F7 Bouncer surviving and threatening E7 is expected. v140 parser/sim fix installed; all mechs are DONE and only the known E7 hit remains, so proceed to End Turn from actual board at grid 4/7."
+    },
+    {
+      "timestamp": "2026-05-17T14:34:43.438126",
+      "turn": 1,
+      "label": "solve",
+      "score": 102840.0,
+      "actions": [
+        "ElectricMech, move E5\u2192C3, fire Chain Whip at C4",
+        "RockartMech, move D6\u2192C6, fire Rock Launcher at E6",
+        "WallMech, move C5\u2192D6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:35:47.503709",
+      "turn": 1,
+      "label": "note",
+      "message": "Glacier Cliff turn 1 Chain Whip spawn desync reviewed: only SpiderlingEgg1 uid mismatch at C4 (predicted uid 2560, actual uid 2595). Board/objectives/grid matched, no soft disable, re-solve completed and threat audit OK. Treat as harmless spawn identity drift; proceed End Turn."
+    },
+    {
+      "timestamp": "2026-05-17T14:36:23.617990",
+      "turn": 2,
+      "label": "solve",
+      "score": 110320.00000000016,
+      "actions": [
+        "WallMech, fire Grappling Hook at C3",
+        "RockartMech, move C6\u2192E8, fire Rock Launcher at E3",
+        "ElectricMech, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:37:22.960420",
+      "turn": 2,
+      "label": "note",
+      "message": "Glacier Cliff turn 2 threat-audit hold reviewed: Ice Storm environment_freeze includes F4 attacker (4,2), E6 attacker (2,3), and G4 target (4,1). Solver predicts grid/buildings/objective intact; threat audit does not account for pre-attack freeze timing. Proceed End Turn."
+    },
+    {
+      "timestamp": "2026-05-17T14:39:11.859505",
+      "turn": 3,
+      "label": "solve",
+      "score": 120340.0,
+      "actions": [
+        "ElectricMech, fire Chain Whip at C3",
+        "WallMech, repair",
+        "RockartMech, move E8\u2192D8, fire Rock Launcher at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:43:10.641512",
+      "turn": 3,
+      "label": "solve",
+      "score": 117940.0,
+      "actions": [
+        "WallMech, repair",
+        "RockartMech, move E8\u2192D8, fire Rock Launcher at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:43:50.626456",
+      "turn": 4,
+      "label": "solve",
+      "score": 117210.0,
+      "actions": [
+        "ElectricMech, fire Chain Whip at D4",
+        "WallMech, move C5\u2192D7",
+        "RockartMech, move D8\u2192F7, fire Rock Launcher at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:57:12.832936",
+      "turn": 1,
+      "label": "solve",
+      "score": 142171.42857142858,
+      "actions": [
+        "ElectricMech, move C6\u2192E5, fire Chain Whip at D5",
+        "RockartMech, move E6\u2192D3, fire Rock Launcher at F3",
+        "WallMech, fire Grappling Hook at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T14:59:38.306037",
+      "turn": 2,
+      "label": "solve",
+      "score": 142134.7619047621,
+      "actions": [
+        "RockartMech, move D3\u2192E6, fire Rock Launcher at E3",
+        "ElectricMech, move E5\u2192F3, fire Chain Whip at E3",
+        "WallMech, move F5\u2192D4, fire Grappling Hook at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T15:00:39.785746",
+      "turn": 3,
+      "label": "solve",
+      "score": 153671.42857142858,
+      "actions": [
+        "WallMech, move D4\u2192B3, fire Grappling Hook at D3",
+        "RockartMech, move E6\u2192C6, fire Rock Launcher at C3",
+        "ElectricMech, move F3\u2192C2, fire Chain Whip at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T15:01:30.925991",
+      "turn": 4,
+      "label": "solve",
+      "score": 152501.42857142858,
+      "actions": [
+        "ElectricMech, repair",
+        "WallMech, move A3\u2192D2, fire Grappling Hook at F2",
+        "RockartMech, move C6\u2192E7, fire Rock Launcher at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T15:08:26.610781",
+      "turn": 1,
+      "label": "solve",
+      "score": 119537.71430267606,
+      "actions": [
+        "ElectricMech, move C6\u2192C5, fire Chain Whip at B5",
+        "WallMech, move B5\u2192B3, fire Grappling Hook at D3",
+        "RockartMech, move D5\u2192F4, fire Rock Launcher at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T15:09:34.268498",
+      "turn": 1,
+      "label": "solve",
+      "score": 119537.71430267606,
+      "actions": [
+        "ElectricMech, move C6\u2192C5, fire Chain Whip at B5",
+        "WallMech, move B5\u2192B3, fire Grappling Hook at D3",
+        "RockartMech, move D5\u2192F4, fire Rock Launcher at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-17T15:10:13.292561",
+      "turn": 1,
+      "label": "solve",
+      "score": 119537.71430267606,
+      "actions": [
+        "ElectricMech, move C6\u2192C5, fire Chain Whip at B5",
+        "WallMech, move B5\u2192B3, fire Grappling Hook at D3",
+        "RockartMech, move D5\u2192F4, fire Rock Launcher at C4"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      1
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      4,
+      3
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      6,
+      3
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      8,
+      1
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      9,
+      1
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      9,
+      3
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
+      3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      12,
+      2
+    ],
+    [
+      12,
+      3
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      14,
+      1
+    ],
+    [
+      14,
+      2
+    ],
+    [
+      14,
+      3
+    ],
+    [
+      15,
+      1
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      15,
+      3
+    ],
+    [
+      16,
+      1
+    ],
+    [
+      16,
+      2
+    ],
+    [
+      16,
+      3
+    ]
+  ],
+  "post_enemy_block": null,
+  "dirty_consent_used": [
+    "d51202540be1bd7b",
+    "5bb59566c1d70f37",
+    "90ebd7df94e453df",
+    "653a6ed73e123f06",
+    "bb567329d8ed96b1",
+    "0617a6ce7c11dc86",
+    "72f69720aa3ddc48",
+    "1b5a92454b8b4b90"
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Ranged_Rockthrow|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Ranged_Rockthrow|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Lightning|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Prime_Lightning",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Rockthrow|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|_REPAIR|repair",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "repair",
+        "sub_action": "repair",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "_REPAIR",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Prime_Lightning|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Prime_Lightning",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Prime_Lightning|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "mech_position_wrong",
+      "categories": [
+        "mech_position_wrong",
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "mech_position_wrong|Ranged_Rockthrow|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Lightning|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Grapple|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Brute_Grapple",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Grapple|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Brute_Grapple",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Deploy_TankShot|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2470,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 4,
+        "turn": 4,
+        "weapon": "Deploy_TankShot",
+        "target": [
+          7,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Lightning|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Prime_Lightning",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Rockthrow|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Prime_Lightning|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Grapple|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Brute_Grapple",
+        "target": [
+          4,
+          0
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Lightning|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Prime_Lightning",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death",
+        "status",
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Prime_Lightning_A|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Prime_Lightning_A",
+        "target": [
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Prime_Lightning|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Lightning",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "spawn",
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Prime_Lightning|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Lightning",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Ranged_Rockthrow|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Rockthrow",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Prime_Lightning_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Lightning_A",
+        "target": [
+          3,
+          6
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "ElectricMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "known Blitzkrieg mech; stale current-board research queue entry",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "WallMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "known Blitzkrieg mech; stale current-board research queue entry",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "RockartMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "known Blitzkrieg mech; stale current-board research queue entry",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "RockThrown",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Train",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "known Boulder Mech projectile/boulder object spawned by Ranged_Rockthrow",
+        "kind": "behavior_novelty",
+        "attempts": 0,
+        "diff_field": "missing_in_predicted",
+        "diff_predicted": "absent",
+        "diff_actual": "present"
+      },
+      "diff_field": "missing_in_predicted",
+      "diff_predicted": "absent",
+      "diff_actual": "present",
+      "severity": "medium"
+    },
+    {
+      "type": "Mosquito1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Acid",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Mosquito",
+            "hp": 0,
+            "move": 4,
+            "class_icons": [
+              "flying"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Mosquito",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Mosquito",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Mosquito&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        1,
+        4
+      ],
+      "diff_actual": [
+        3,
+        2
+      ],
+      "severity": "medium",
+      "research_id": "fa22f57df12f",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Bouncer1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Tanks",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Bouncer",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Bouncer",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Bouncer",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Bouncer&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "status.web",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "medium",
+      "research_id": "da8186332445",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Firefly1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Tanks",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Firefly",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Firefly",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Firefly",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Firefly&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "6b9fb5e42615",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Snowtank1_Boom",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_BoomBots",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Boom Bot",
+            "hp": 1,
+            "move": 3,
+            "class_icons": [
+              "death_effect"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Boom Bot",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Boom+Bot",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Boom+Bot&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "e87cbccee47c",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "SpiderlingEgg1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Reactivation",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Spiderling Egg",
+            "hp": 0,
+            "move": 0,
+            "class_icons": [
+              "hatches_into_spiderling"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Spiderling Egg",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Spiderling+Egg",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Spiderling+Egg&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium",
+      "research_id": "910e96036c8c",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Starfish2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_FreezeMines",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Alpha Starfish",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "flying",
+              "self_shield",
+              "projectile_attack"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Alpha Starfish",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Starfish",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Starfish&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "3f0b4be24d44",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Spiderling1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_SnowStorm",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Spiderling",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "webber"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Spiderling",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Spiderling",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Spiderling&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "status.fire",
+      "diff_predicted": true,
+      "diff_actual": false,
+      "severity": "medium",
+      "research_id": "ca761dc767b4",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "CrabBoss",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_CrabBoss",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Crab Leader",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "boss"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Crab Leader",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Crab+Leader",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Crab+Leader&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "status.fire",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "medium",
+      "research_id": "bd8628fa3f00",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Burrower2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Crack",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium"
+    }
+  ],
+  "diagnosis_queue": [
+    {
+      "failure_id": "20260517_105759_344_m01_t03_per_action_desync_a0",
+      "diff_signature": "78139f37a772ae7d",
+      "sim_version": 134,
+      "enqueued_at": "2026-05-17T16:30:55.341159Z",
+      "status": "done",
+      "diagnose_status": "needs_agent",
+      "rule_id": null,
+      "markdown": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260517_105759_344/diagnoses/20260517_105759_344_m01_t03_per_action_desync_a0.md"
+    },
+    {
+      "failure_id": "20260517_105759_344_m01_t03_per_action_desync_a0",
+      "diff_signature": "78139f37a772ae7d",
+      "sim_version": 135,
+      "enqueued_at": "2026-05-17T16:52:10.453369Z",
+      "status": "done",
+      "diagnose_status": "needs_agent",
+      "rule_id": null,
+      "markdown": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260517_105759_344/diagnoses/20260517_105759_344_m01_t03_per_action_desync_a0.md"
+    },
+    {
+      "failure_id": "20260517_105759_344_m14_t01_per_action_desync_a0",
+      "diff_signature": "23127c8f3fae7a27",
+      "sim_version": 138,
+      "enqueued_at": "2026-05-17T18:55:11.915835Z",
+      "status": "done",
+      "diagnose_status": "rejected",
+      "rule_id": null,
+      "markdown": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260517_105759_344/diagnoses/20260517_105759_344_m14_t01_per_action_desync_a0.md"
+    }
+  ],
+  "last_terrain_fingerprint": {
+    "hash": "0895b258868354fc",
+    "classes": "mbbmmggggsggggbggsbbgggggggggggsgbggggbgsggmgggggggggggmggggggmm",
+    "mission_index": 17,
+    "turn": 1
+  },
+  "terrain_stage_change_pending": false
+}

@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-17T15:15:50.534485",
+  "label": "thunderbolt_t3_post_dirty_research_hold",
+  "turn": 3,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "ElectricMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "WallMech",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RockartMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Burrower2",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Burrower1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    }
+  ]
+}

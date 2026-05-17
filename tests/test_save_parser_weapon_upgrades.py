@@ -34,6 +34,30 @@ def test_partial_upgrade_mod_group_does_not_overlay():
     assert mission.pawns[0].primary_weapon == "Ranged_Rocket"
 
 
+def test_primary_power_does_not_overlay_upgrade_suffix():
+    mission = extract_mission_state(
+        {"sMission": "Mission_Test"},
+        {
+            "pawn_count": 1,
+            "pawn1": {
+                "id": 1,
+                "type": "ElectricMech",
+                "location": Point(2, 2),
+                "health": 5,
+                "max_health": 5,
+                "iTeamId": 1,
+                "mech": True,
+                "primary": "Prime_Lightning",
+                "primary_power": [1],
+                "primary_mod1": [0],
+                "primary_mod2": [0, 0, 0],
+            },
+        },
+    )
+
+    assert mission.pawns[0].primary_weapon == "Prime_Lightning"
+
+
 def test_extract_mission_state_overlays_modeled_weapon_mods():
     mission = extract_mission_state(
         {"sMission": "Mission_Test"},

@@ -121,6 +121,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="chains through buildings safely",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Prime_Lightning_A": WeaponDef(
+        name="Chain Whip", weapon_type="melee",
+        damage=2, chain=True, targets_allies=True, building_damage=False,
+        upgrade_a="chains through buildings safely",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_Lightning_B": WeaponDef(
+        name="Chain Whip", weapon_type="melee",
+        damage=3, chain=True, targets_allies=True,
+        upgrade_a="chains through buildings safely",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_Lightning_AB": WeaponDef(
+        name="Chain Whip", weapon_type="melee",
+        damage=3, chain=True, targets_allies=True, building_damage=False,
+        upgrade_a="chains through buildings safely",
+        upgrade_b="+1 damage (total 3)",
+    ),
     "Prime_Lasermech": WeaponDef(
         name="Burst Beam", weapon_type="laser",
         damage=3, range_max=0, targets_allies=True,

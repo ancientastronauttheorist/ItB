@@ -489,9 +489,15 @@ pub enum WId {
     /// Mission_Disposal A.C.I.D. Launcher: artillery target, instant-kill
     /// acid cross, clears mountains to road.
     DisposalAttack = 153,
+    /// Chain Whip with Building Chain powered.
+    PrimeLightningA = 154,
+    /// Chain Whip with +1 Damage powered.
+    PrimeLightningB = 155,
+    /// Chain Whip with Building Chain and +1 Damage powered.
+    PrimeLightningAB = 156,
 }
 
-pub const WEAPON_COUNT: usize = 154;
+pub const WEAPON_COUNT: usize = 157;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -511,6 +517,15 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[150] = WeaponDef { weapon_type: WeaponType::Charge, damage: 4, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     // 2: Prime_Lightning — Chain Whip
     w[2] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    // 154-156: Chain Whip upgrades.
+    // Building Chain uses buildings as zero-damage chain nodes; the simulator
+    // keys that behavior off BUILDING_IMMUNE in the CHAIN branch.
+    w[154] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2,
+        flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
+    w[155] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
+        flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[156] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
+        flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
     // 3: Prime_Lasermech — Burst Beam
     w[3] = WeaponDef { weapon_type: WeaponType::Laser, damage: 3, range_max: 0, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 145-147: Prime_Lasermech upgrades — Burst Beam.
@@ -1204,6 +1219,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Punchmech_B" => WId::PrimePunchmechB,
         "Prime_Punchmech_AB" => WId::PrimePunchmechAB,
         "Prime_Lightning" => WId::PrimeLightning,
+        "Prime_Lightning_A" => WId::PrimeLightningA,
+        "Prime_Lightning_B" => WId::PrimeLightningB,
+        "Prime_Lightning_AB" => WId::PrimeLightningAB,
         "Prime_Lasermech" => WId::PrimeLasermech,
         "Prime_Lasermech_A" => WId::PrimeLasermechA,
         "Prime_Lasermech_B" => WId::PrimeLasermechB,
@@ -1380,6 +1398,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimePunchmechB => "Prime_Punchmech_B",
         WId::PrimePunchmechAB => "Prime_Punchmech_AB",
         WId::PrimeLightning => "Prime_Lightning",
+        WId::PrimeLightningA => "Prime_Lightning_A",
+        WId::PrimeLightningB => "Prime_Lightning_B",
+        WId::PrimeLightningAB => "Prime_Lightning_AB",
         WId::PrimeLasermech => "Prime_Lasermech",
         WId::PrimeLasermechA => "Prime_Lasermech_A",
         WId::PrimeLasermechB => "Prime_Lasermech_B",
@@ -1637,7 +1658,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
 pub fn weapon_name(id: WId) -> &'static str {
     match id {
         WId::PrimePunchmech | WId::PrimePunchmechA | WId::PrimePunchmechB | WId::PrimePunchmechAB => "Titan Fist",
-        WId::PrimeLightning => "Chain Whip",
+        WId::PrimeLightning | WId::PrimeLightningA | WId::PrimeLightningB | WId::PrimeLightningAB => "Chain Whip",
         WId::PrimeLasermech | WId::PrimeLasermechA | WId::PrimeLasermechB | WId::PrimeLasermechAB => "Burst Beam",
         WId::PrimeShieldBash => "Shield Bash",
         WId::PrimeShift => "Vice Fist",
@@ -2049,8 +2070,34 @@ mod tests {
     }
 
     #[test]
+    fn test_chain_whip_upgrades() {
+        let base = weapon_def(WId::PrimeLightning);
+        assert_eq!(base.damage, 2);
+        assert!(base.chain());
+        assert!(!base.building_immune());
+
+        let building_chain = weapon_def(WId::PrimeLightningA);
+        assert_eq!(building_chain.damage, 2);
+        assert!(building_chain.chain());
+        assert!(building_chain.building_immune());
+
+        let damage = weapon_def(WId::PrimeLightningB);
+        assert_eq!(damage.damage, 3);
+        assert!(damage.chain());
+        assert!(!damage.building_immune());
+
+        let both = weapon_def(WId::PrimeLightningAB);
+        assert_eq!(both.damage, 3);
+        assert!(both.chain());
+        assert!(both.building_immune());
+    }
+
+    #[test]
     fn test_string_to_wid_roundtrip() {
         assert_eq!(wid_from_str("Prime_Punchmech"), WId::PrimePunchmech);
+        assert_eq!(wid_from_str("Prime_Lightning_A"), WId::PrimeLightningA);
+        assert_eq!(wid_from_str("Prime_Lightning_B"), WId::PrimeLightningB);
+        assert_eq!(wid_from_str("Prime_Lightning_AB"), WId::PrimeLightningAB);
         assert_eq!(wid_from_str("Ranged_Artillerymech"), WId::RangedArtillerymech);
         assert_eq!(wid_from_str("Ranged_Artillerymech_A"), WId::RangedArtillerymechA);
         assert_eq!(wid_from_str("Deploy_TankShot"), WId::DeployTankShot);
@@ -2070,6 +2117,10 @@ mod tests {
             ("Prime_Punchmech_A", WId::PrimePunchmechA),
             ("Prime_Punchmech_B", WId::PrimePunchmechB),
             ("Prime_Punchmech_AB", WId::PrimePunchmechAB),
+            ("Prime_Lightning", WId::PrimeLightning),
+            ("Prime_Lightning_A", WId::PrimeLightningA),
+            ("Prime_Lightning_B", WId::PrimeLightningB),
+            ("Prime_Lightning_AB", WId::PrimeLightningAB),
             ("Brute_Tankmech", WId::BruteTankmech),
             ("Ranged_Artillerymech", WId::RangedArtillerymech),
             ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),

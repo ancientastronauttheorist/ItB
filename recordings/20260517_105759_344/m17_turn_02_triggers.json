@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-17T15:12:36.411843",
+  "run_id": "20260517_105759_344",
+  "mission_index": 17,
+  "turn": 2,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_on_danger",
+        "tier": 4,
+        "severity": "critical",
+        "details": "ElectricMech moved to danger tile (2,4)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

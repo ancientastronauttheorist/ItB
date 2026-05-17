@@ -780,6 +780,51 @@ fn spawn_blob_boss_child(
     true
 }
 
+fn next_spawn_uid(board: &Board) -> u16 {
+    let mut new_uid: u16 = 1;
+    for i in 0..board.unit_count as usize {
+        new_uid = new_uid.max(board.units[i].uid.saturating_add(1));
+    }
+    new_uid
+}
+
+fn acid_storm_active(board: &Board) -> bool {
+    board.mission_id == "Mission_AcidStorm"
+        && board.units[..board.unit_count as usize]
+            .iter()
+            .any(|u| u.hp > 0 && u.type_name_str() == "Storm_Generator")
+}
+
+fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+    if board.is_blocked(x, y, false) {
+        return false;
+    }
+
+    let mut unit = Unit {
+        uid: next_spawn_uid(board),
+        x,
+        y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Neutral,
+        move_speed: 0,
+        base_move: 0,
+        flags: UnitFlags::PUSHABLE,
+        queued_target_x: -1,
+        queued_target_y: -1,
+        ..Unit::default()
+    };
+    unit.set_type_name("RockThrown");
+    if acid_storm_active(board) {
+        unit.set_acid(true);
+    }
+    board.add_unit(unit);
+    true
+}
+
 /// Materialize Spider Psion death eggs queued by `on_enemy_death`.
 ///
 /// Player-phase kills need the egg on-board immediately for replay snapshots
@@ -1041,7 +1086,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
-    if source != DamageSource::WeaponUnitOnly {
+    if source != DamageSource::WeaponUnitOnly && source != DamageSource::ChainWhip {
         // Time Pods are fragile map objects: direct tile damage destroys them
         // unless they were already collected by a player mech landing.
         if damage > 0 && board.tile(x, y).has_pod() {
@@ -1169,6 +1214,28 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         }
     }
 
+    // Chain Whip is not generic tile damage: it leaves Ice/Sand/Pods/etc.
+    // alone, but live captures show it ignites Forest under a zapped pawn.
+    if source == DamageSource::ChainWhip {
+        let ignited = {
+            let tile = board.tile_mut(x, y);
+            if tile.terrain == Terrain::Forest {
+                tile.terrain = Terrain::Ground;
+                tile.set_on_fire(true);
+                true
+            } else {
+                false
+            }
+        };
+        if ignited {
+            if let Some(idx) = board.unit_at(x, y) {
+                if board.units[idx].hp > 0 {
+                    board.units[idx].set_fire(true);
+                }
+            }
+        }
+    }
+
     // ACID pool creation: unit with ACID dies → acid pool on tile
     if let Some(idx) = board.any_unit_at(x, y) {
         let unit = &board.units[idx];
@@ -1287,7 +1354,8 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
 /// explosions and Volatile Vek decay.
 /// Source: Bump/Fire bypass armor and acid. Normal/Self respects them.
 /// WeaponUnitOnly mirrors weapon damage against occupants while leaving
-/// buildings/terrain unchanged.
+/// buildings/terrain unchanged. ChainWhip is unit-only except for igniting
+/// Forest under a hit pawn.
 pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     apply_damage_inner(board, x, y, damage, result, source, None, 0);
 }
@@ -2278,46 +2346,57 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
             }
         }
     }
-    let defer_target_death_explosion = attack_dir.is_some()
+    let target_occupied_at_impact = board.unit_at(tx, ty).is_some();
+    let defer_target_death_explosion = !wdef.chain()
+        && attack_dir.is_some()
         && target_dmg > 0
         && !matches!(wdef.push, PushDir::None | PushDir::Flip);
-    let target_occupied_at_impact = board.unit_at(tx, ty).is_some();
     let deferred_death_explosion = if defer_target_death_explosion {
         apply_damage_defer_death_explosion(
             board, tx, ty, target_dmg, result, DamageSource::Weapon,
         )
-    } else {
+    } else if !wdef.chain() {
         apply_damage(board, tx, ty, target_dmg, result, DamageSource::Weapon);
+        None
+    } else {
         None
     };
 
-    // Chain weapon (Electric Whip): BFS through adjacent occupied tiles.
-    // The shooter's own tile is excluded from the chain graph — in-game
-    // Electric Whip never damages its own mech even when the chain would
-    // loop back adjacent. Seed `visited` with both target and attacker so
-    // the BFS cannot re-enter the source.
+    // Chain weapon (Electric Whip): BFS through adjacent pawns, and with
+    // Building Chain powered, through live Grid Buildings as zero-damage
+    // nodes. Lua's Prime_Lightning only emits SpaceDamage for pawns/building
+    // chain nodes; it does not damage terrain such as Ice under the pawn.
+    // Live captures show it still ignites Forest under a hit pawn.
+    // The shooter's own tile is excluded from the graph.
     if wdef.chain() {
         let mut visited = 0u64;
-        visited |= 1u64 << xy_to_idx(tx, ty);
         visited |= 1u64 << xy_to_idx(ax, ay);
         let mut queue: Vec<(u8, u8)> = vec![(tx, ty)];
         let mut head = 0;
         while head < queue.len() {
             let (cx, cy) = queue[head];
             head += 1;
+            let bit = 1u64 << xy_to_idx(cx, cy);
+            if visited & bit != 0 { continue; }
+            visited |= bit;
+
+            let has_pawn = board.unit_at(cx, cy).is_some();
+            let chain_building = wdef.building_immune() && board.tile(cx, cy).is_building();
+            if !has_pawn && !chain_building {
+                continue;
+            }
+
+            if has_pawn {
+                apply_damage(board, cx, cy, wdef.damage, result, DamageSource::ChainWhip);
+            }
+
             for &(dx, dy) in &DIRS {
                 let nx = cx as i8 + dx;
                 let ny = cy as i8 + dy;
                 if !in_bounds(nx, ny) { continue; }
-                let (nxu, nyu) = (nx as u8, ny as u8);
-                let bit = 1u64 << xy_to_idx(nxu, nyu);
-                if visited & bit != 0 { continue; }
-                visited |= bit;
-                // Chain doesn't pass through buildings (no Building Chain upgrade yet)
-                if board.tile(nxu, nyu).is_building() { continue; }
-                if board.unit_at(nxu, nyu).is_some() {
-                    apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
-                    queue.push((nxu, nyu));
+                let next_bit = 1u64 << xy_to_idx(nx as u8, ny as u8);
+                if visited & next_bit == 0 {
+                    queue.push((nx as u8, ny as u8));
                 }
             }
         }
@@ -2503,10 +2582,55 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
 fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     let center_occupied_at_impact = board.unit_at(tx, ty).is_some();
+    let center_blocked_at_impact = board.is_blocked(tx, ty, false);
+    let rockthrow_defer_center_death_effects = weapon_id == WId::RangedRockthrow
+        && matches!(wdef.push, PushDir::Perpendicular);
+    let center_volatile_idx = if rockthrow_defer_center_death_effects {
+        board.unit_at(tx, ty).and_then(|idx| {
+            let u = &board.units[idx];
+            if u.is_enemy() && u.hp > 0 && u.is_volatile_vek() {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+    } else {
+        None
+    };
+    let center_blast_idx = if rockthrow_defer_center_death_effects
+        && (board.blast_psion || board.boss_psion)
+    {
+        board.unit_at(tx, ty).and_then(|idx| {
+            let u = &board.units[idx];
+            let tname = u.type_name_str();
+            if u.receives_psion_aura() && u.hp > 0
+                && tname != "Jelly_Explode1"
+                && tname != "Jelly_Boss"
+            {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+    } else {
+        None
+    };
+    let mut deferred_center_volatile_decay = false;
+    let mut deferred_center_blast_explosion = false;
 
     // Center damage
     if wdef.aoe_center() {
-        apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+        if center_volatile_idx.is_some() || center_blast_idx.is_some() {
+            apply_damage_core(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+            deferred_center_volatile_decay = center_volatile_idx
+                .map(|idx| board.units[idx].hp <= 0)
+                .unwrap_or(false);
+            deferred_center_blast_explosion = center_blast_idx
+                .map(|idx| board.units[idx].hp <= 0)
+                .unwrap_or(false);
+        } else {
+            apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+        }
     }
 
     // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
@@ -2592,6 +2716,20 @@ fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay
             }
             _ => {}
         }
+    }
+
+    if deferred_center_volatile_decay {
+        apply_volatile_decay(board, tx, ty, result, 0);
+    }
+    if deferred_center_blast_explosion {
+        apply_death_explosion(board, tx, ty, result, 0);
+    }
+
+    // Rock Accelerator leaves a neutral boulder on an empty target tile after
+    // impact. The pre-impact blocked check prevents replacing mountains,
+    // buildings, units, wrecks, or deadly terrain cleared by the shot.
+    if weapon_id == WId::RangedRockthrow && !center_blocked_at_impact {
+        spawn_rock_thrown(board, tx, ty);
     }
 
     // Behind tile damage (Old Earth Artillery)
@@ -3330,6 +3468,7 @@ fn sim_laser(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Op
 /// the next turn tick.
 fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
     let mut seen: Vec<u16> = Vec::with_capacity(8);
+    let storm_active = acid_storm_active(board);
     for i in 0..board.units.len() {
         let u = &board.units[i];
         if u.team != Team::Player || seen.contains(&u.uid) {
@@ -3341,6 +3480,9 @@ fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
         u.set_fire(false);
         u.set_acid(false);
         u.set_frozen(false);
+        if storm_active {
+            u.set_acid(true);
+        }
     }
 }
 
@@ -3594,6 +3736,7 @@ pub fn simulate_attack(
 
     // Repair
     if weapon_id == WId::Repair {
+        let storm_active = acid_storm_active(board);
         let (is_repairman, rx, ry) = {
             let unit = &mut board.units[mech_idx];
             let heal: i8 = if unit.boosted() { 2 } else { 1 };
@@ -3601,6 +3744,9 @@ pub fn simulate_attack(
             unit.set_fire(false);
             unit.set_acid(false);
             unit.set_frozen(false);
+            if storm_active {
+                unit.set_acid(true);
+            }
             unit.set_boosted(false);
             refresh_arrogant_boost(unit);
             unit.set_active(false);
@@ -3849,6 +3995,23 @@ mod tests {
 
         assert_eq!(board.units[mech].hp, 3, "boosted Repair heals 2 HP");
         assert!(!board.units[mech].boosted(), "Boost is consumed by Repair");
+    }
+
+    #[test]
+    fn test_repair_keeps_acid_during_active_acid_storm() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_AcidStorm".to_string();
+        add_enemy_type(&mut board, 99, 2, 1, 3, "Storm_Generator");
+        let mech = add_mech(&mut board, 1, 3, 3, 2, WId::Repair);
+        board.units[mech].set_acid(true);
+
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair, (3, 3), &WEAPONS);
+
+        assert_eq!(board.units[mech].hp, 3, "Repair still heals in ACID Storm");
+        assert!(
+            board.units[mech].acid(),
+            "active ACID Storm should immediately keep repaired units ACIDed"
+        );
     }
 
     #[test]
@@ -4104,6 +4267,63 @@ mod tests {
         assert!(!board.tile(3, 4).has_pod());
         assert_eq!(result.pods_collected, 0);
         assert!(result.events.iter().any(|e| e == "pod_destroyed_by_damage:3:4"));
+    }
+
+    #[test]
+    fn test_chain_whip_does_not_break_ice_under_target() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 5, 3, 5, WId::PrimeLightning);
+        board.tile_mut(4, 3).terrain = Terrain::Ice;
+        board.tile_mut(4, 3).set_cracked(true);
+        let starfish = add_enemy_type(&mut board, 2588, 4, 3, 4, "Starfish2");
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightning, (4, 3), &WEAPONS);
+
+        assert_eq!(board.units[starfish].hp, 2);
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ice);
+        assert!(board.tile(4, 3).cracked());
+        assert_eq!(result.enemies_killed, 0);
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "adjacent pawn target should be legal"
+        );
+    }
+
+    #[test]
+    fn test_chain_whip_ignites_forest_under_hit_pawn() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 5, 3, 5, WId::PrimeLightning);
+        board.tile_mut(4, 3).terrain = Terrain::Forest;
+        let enemy = add_enemy_type(&mut board, 2588, 4, 3, 4, "Starfish2");
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightning, (4, 3), &WEAPONS);
+
+        assert_eq!(board.units[enemy].hp, 2);
+        assert!(board.units[enemy].fire());
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
+        assert!(board.tile(4, 3).fire());
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_chain_whip_building_chain_uses_zero_damage_building_node() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 4, 4, 5, WId::PrimeLightningA);
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 1;
+        board.grid_power = 4;
+        let chained = add_enemy(&mut board, 2588, 4, 2, 4);
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightningA, (4, 3), &WEAPONS);
+
+        assert_eq!(board.units[chained].hp, 2);
+        assert_eq!(board.tile(4, 3).building_hp, 1);
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 0);
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "Building Chain should make adjacent buildings legal targets"
+        );
     }
 
     #[test]
@@ -4982,6 +5202,90 @@ mod tests {
         assert!(
             !board.tile(3, 6).smoke(),
             "target tile must NOT be smoked — Ranged_Rocket smokes behind the shooter, not the target"
+        );
+    }
+
+    #[test]
+    fn test_rock_accelerator_spawns_rock_on_empty_target() {
+        // Live Blitzkrieg regression: RockartMech fired Rock Launcher at an
+        // empty D2 and the bridge materialized a neutral RockThrown there.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        let rock = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|u| u.type_name_str() == "RockThrown")
+            .expect("Rock Accelerator should spawn a RockThrown on an empty target");
+        assert_eq!((rock.x, rock.y), (6, 4));
+        assert_eq!(rock.team, Team::Neutral);
+        assert_eq!((rock.hp, rock.max_hp), (1, 1));
+        assert_eq!(rock.move_speed, 0);
+        assert!(rock.pushable());
+    }
+
+    #[test]
+    fn test_rock_accelerator_does_not_spawn_on_preblocked_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+        board.tile_mut(6, 4).terrain = Terrain::Mountain;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        assert!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .all(|u| u.type_name_str() != "RockThrown"),
+            "Rock Accelerator should not replace a pre-impact blocker"
+        );
+    }
+
+    #[test]
+    fn test_rock_accelerator_defers_boom_bot_decay_until_after_side_pushes() {
+        // Mission_BoomBots capture: Rock Launcher kills a center Boom Bot while
+        // a second Boom Bot is on a perpendicular side tile. The side bot is
+        // pushed out before Explosive Decay resolves, so it survives.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 4, 2, WId::RangedRockthrow);
+        let center = add_enemy_type(&mut board, 1, 4, 4, 1, "Snowlaser1_Boom");
+        let side = add_enemy_type(&mut board, 2, 4, 3, 1, "Snowtank1_Boom");
+        board.tile_mut(4, 5).terrain = Terrain::Building;
+        board.tile_mut(4, 5).building_hp = 2;
+        board.grid_power = 7;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 4, 4);
+
+        assert_eq!(board.units[center].hp, -1, "center Boom Bot dies to Rock Launcher");
+        assert_eq!(
+            (board.units[side].x, board.units[side].y, board.units[side].hp),
+            (4, 2, 1),
+            "perpendicular side Boom Bot is pushed out of decay range before the center explosion"
+        );
+        assert_eq!(
+            board.tile(4, 5).building_hp,
+            1,
+            "center Explosive Decay still damages adjacent buildings after the side push"
+        );
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_rock_accelerator_spawn_inherits_active_acid_storm() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_AcidStorm".to_string();
+        add_enemy_type(&mut board, 99, 2, 1, 3, "Storm_Generator");
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        let rock = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|u| u.type_name_str() == "RockThrown")
+            .expect("Rock Accelerator should spawn a RockThrown on an empty target");
+        assert!(
+            rock.acid(),
+            "ACID Storm should immediately acidify newly spawned RockThrown"
         );
     }
 

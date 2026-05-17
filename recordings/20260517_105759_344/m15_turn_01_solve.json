@@ -1,0 +1,6349 @@
+{
+  "timestamp": "2026-05-17T14:34:43.438181",
+  "run_id": "20260517_105759_344",
+  "mission_index": 15,
+  "turn": 1,
+  "label": "solve",
+  "data": {
+    "schema_version": 1,
+    "simulator_version": 140,
+    "score": 102840.0,
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "ElectricMech",
+        "move_to": [
+          5,
+          5
+        ],
+        "weapon": "Chain Whip",
+        "weapon_id": "Prime_Lightning",
+        "target": [
+          4,
+          5
+        ],
+        "description": "ElectricMech, move E5\u2192C3, fire Chain Whip at C4"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "RockartMech",
+        "move_to": [
+          2,
+          5
+        ],
+        "weapon": "Rock Launcher",
+        "weapon_id": "Ranged_Rockthrow",
+        "target": [
+          2,
+          3
+        ],
+        "description": "RockartMech, move D6\u2192C6, fire Rock Launcher at E6"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "WallMech",
+        "move_to": [
+          2,
+          4
+        ],
+        "weapon": "_REPAIR",
+        "weapon_id": "_REPAIR",
+        "target": [
+          2,
+          4
+        ],
+        "description": "WallMech, move C5\u2192D6, repair"
+      }
+    ],
+    "threats": 1,
+    "initial_building_threats": [
+      {
+        "target": [
+          1,
+          3
+        ],
+        "target_visual": "E7",
+        "target_hp": 1,
+        "attacker": {
+          "uid": 2558,
+          "type": "Leaper1",
+          "pos": [
+            2,
+            3
+          ],
+          "visual": "E6",
+          "hp": 1,
+          "max_hp": 1,
+          "weapon_id": "LeaperAtk1",
+          "target": [
+            1,
+            3
+          ],
+          "target_visual": "E7",
+          "queued_target": [
+            1,
+            3
+          ],
+          "has_queued_attack": true
+        }
+      }
+    ],
+    "active_mechs": 3,
+    "spawn_points": [
+      [
+        7,
+        3
+      ],
+      [
+        6,
+        5
+      ]
+    ],
+    "search_stats": {
+      "elapsed_seconds": 0.019021034240722656,
+      "timed_out": false,
+      "permutations_tried": 6,
+      "total_permutations": 6,
+      "active_mech_count": 3
+    },
+    "weight_version": "v011",
+    "beam_mode": 0,
+    "beam_chain_score": null,
+    "candidate_count": 1000,
+    "selected_candidate_rank": 150,
+    "selected_candidate_source": "top_k_safety",
+    "candidate_safety": [
+      {
+        "rank": 0,
+        "source": "top_k_safety",
+        "score": 103530.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 1,
+        "source": "top_k_safety",
+        "score": 103530.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "source": "top_k_safety",
+        "score": 103530.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "source": "top_k_safety",
+        "score": 103530.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "source": "top_k_safety",
+        "score": 103530.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "source": "top_k_safety",
+        "score": 103530.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 11,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 12,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 13,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 14,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 15,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 16,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 17,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 18,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 19,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 20,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 21,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 22,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 23,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 24,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 25,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 26,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 27,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 28,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 29,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 30,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 31,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 32,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 33,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 34,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 35,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 36,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 37,
+        "source": "top_k_safety",
+        "score": 103480.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 38,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 39,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 40,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 41,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 42,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 43,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 44,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 45,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 46,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 47,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 48,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 49,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 50,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 51,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 52,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 53,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 54,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 55,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 56,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 57,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 58,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 59,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 60,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 61,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 62,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 63,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 64,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 65,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 66,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 67,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 68,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 69,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 70,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 71,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 72,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 73,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 74,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 75,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 76,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 77,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 78,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 79,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 80,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 81,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 82,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 83,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 84,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 85,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 86,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 87,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 88,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 89,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 90,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 91,
+        "source": "top_k_safety",
+        "score": 103430.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 92,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 93,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 94,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 95,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 96,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 97,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 98,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 99,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 100,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 101,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 102,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 103,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 104,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 105,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 106,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 107,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 108,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 109,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 110,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 111,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 112,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 113,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 114,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 115,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 116,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 117,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 118,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 119,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 120,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 121,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 122,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 123,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 124,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 125,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 126,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 127,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 128,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 129,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 130,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 131,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 132,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 133,
+        "source": "top_k_safety",
+        "score": 103380.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 134,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 135,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 136,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 137,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 138,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 139,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 140,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 141,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 142,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 143,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 144,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 145,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 146,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 147,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 148,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 149,
+        "source": "top_k_safety",
+        "score": 103330.0,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "pod_loss",
+          "blocking": true,
+          "losses": {
+            "pods_present": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "rank": 150,
+        "source": "top_k_safety",
+        "score": 102840.0,
+        "chain_score": null,
+        "status": "CLEAN",
+        "blocking": false,
+        "loss_profile": {
+          "label": "clean",
+          "blocking": false,
+          "losses": {},
+          "non_overridable": false
+        },
+        "violations": []
+      }
+    ],
+    "dirty_frontier": [
+      {
+        "label": "pod_loss",
+        "loss_signature": [
+          "pod_loss",
+          true,
+          false,
+          [
+            [
+              "pods_present",
+              1
+            ]
+          ]
+        ],
+        "count": 142,
+        "best_rank": 0,
+        "best_source": "top_k_safety",
+        "best_score": 103530.0,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "pods_present": 1
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          }
+        ]
+      },
+      {
+        "label": "pod_loss",
+        "loss_signature": [
+          "pod_loss",
+          true,
+          false,
+          [
+            [
+              "mech_hp_total",
+              1
+            ],
+            [
+              "pods_present",
+              1
+            ]
+          ]
+        ],
+        "count": 8,
+        "best_rank": 98,
+        "best_source": "top_k_safety",
+        "best_score": 103380.0,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "pods_present": 1,
+          "mech_hp_total": 1
+        },
+        "violations": [
+          {
+            "kind": "pod_lost",
+            "blocking": true,
+            "current": 1,
+            "predicted": 0
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "label": "clean",
+        "loss_signature": [
+          "clean",
+          false,
+          false,
+          []
+        ],
+        "count": 1,
+        "best_rank": 150,
+        "best_source": "top_k_safety",
+        "best_score": 102840.0,
+        "chain_score": null,
+        "blocking": false,
+        "losses": {},
+        "violations": []
+      }
+    ],
+    "lookahead_frontier": [],
+    "robust_frontier": [],
+    "safety_widening": [
+      {
+        "source": "top_k_safety",
+        "candidate_count": 1000,
+        "ignored_soft_disables": false
+      }
+    ],
+    "action_results": [
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 4,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 1,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "repair_platforms_used": 0,
+        "spawns_blocked": 0
+      },
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 2,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "repair_platforms_used": 0,
+        "spawns_blocked": 0
+      },
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 0,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "repair_platforms_used": 0,
+        "spawns_blocked": 0
+      }
+    ],
+    "predicted_states": [
+      {
+        "post_attack": {
+          "action_index": 0,
+          "grid_power": 3,
+          "mech_uid": 0,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": true,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 4,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 5,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 6,
+              "y": 6
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Spider1",
+              "uid": 2556
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2557
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2558
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Starfish2",
+              "uid": 2559
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2560
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 0,
+          "grid_power": 3,
+          "mech_uid": 0,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "forest",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 4,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 5,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 6,
+              "y": 6
+            }
+          ],
+          "units": [
+            {
+              "active": true,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": true
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Spider1",
+              "uid": 2556
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2557
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2558
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 4,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Starfish2",
+              "uid": 2559
+            }
+          ]
+        }
+      },
+      {
+        "post_attack": {
+          "action_index": 1,
+          "grid_power": 3,
+          "mech_uid": 2,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 3,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                2,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Spider1",
+              "uid": 2556
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2557
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2558
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Starfish2",
+              "uid": 2559
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2560
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2561
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 1,
+          "grid_power": 3,
+          "mech_uid": 2,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 3,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                2,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Spider1",
+              "uid": 2556
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2557
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2558
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Starfish2",
+              "uid": 2559
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2560
+            }
+          ]
+        }
+      },
+      {
+        "post_attack": {
+          "action_index": 2,
+          "grid_power": 3,
+          "mech_uid": 1,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                2,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Spider1",
+              "uid": 2556
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2557
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2558
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Starfish2",
+              "uid": 2559
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2560
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2561
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 2,
+          "grid_power": 3,
+          "mech_uid": 1,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                2,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                2,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Jelly_Spider1",
+              "uid": 2556
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2557
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Leaper1",
+              "uid": 2558
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": true,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Starfish2",
+              "uid": 2559
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2560
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "SpiderlingEgg1",
+              "uid": 2561
+            }
+          ]
+        }
+      }
+    ],
+    "replay_annotations": [],
+    "current_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "pylons_alive": null,
+      "pylon_hp_total": null,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 1,
+      "grid_power": 3,
+      "enemies_alive": 4,
+      "enemy_hp_total": 8,
+      "mechs_alive": 3,
+      "mech_hp_total": 10,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "hp": 5,
+          "max_hp": 5
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "mechs_acid": [],
+      "mechs_fire": [],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "pos": [
+            3,
+            5
+          ]
+        }
+      ],
+      "mission_id": "Mission_SnowStorm",
+      "turn": 1,
+      "total_turns": 4,
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0
+    },
+    "predicted_outcome": {
+      "building_hp_total": 10,
+      "buildings_alive": 7,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 4,
+      "enemy_hp_total": 5,
+      "grid_power": 3,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 5,
+          "type": "ElectricMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "WallMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "RockartMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 3,
+      "bigbomb_alive": false
+    },
+    "predicted_board_summary": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "pylons_alive": null,
+      "pylon_hp_total": null,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 1,
+      "grid_power": 3,
+      "enemies_alive": 4,
+      "enemy_hp_total": 5,
+      "mechs_alive": 3,
+      "mech_hp_total": 10,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 5,
+          "type": "ElectricMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "WallMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "RockartMech",
+          "uid": 2
+        }
+      ],
+      "mechs_acid": [],
+      "mechs_fire": [],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_SnowStorm",
+      "turn": 1,
+      "total_turns": 4,
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0,
+      "buildings_destroyed_by_enemies": 0,
+      "pods_collected": 0
+    },
+    "plan_safety": {
+      "status": "CLEAN",
+      "blocking": false,
+      "violations": [],
+      "compared": [
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "pods_present",
+        "mechs_alive",
+        "mech_hp_total",
+        "mechs_acid",
+        "mechs_fire",
+        "mechs_webbed",
+        "mechs_on_danger",
+        "mechs_disabled",
+        "bigbomb_alive",
+        "protected_objective_units_alive"
+      ],
+      "current": {
+        "mission_id": "Mission_SnowStorm",
+        "turn": 1,
+        "total_turns": 4,
+        "grid_power": 3,
+        "buildings_alive": 7,
+        "building_hp_total": 10,
+        "pylons_alive": null,
+        "pylon_hp_total": null,
+        "objective_buildings_alive": 1,
+        "objective_building_hp_total": 1,
+        "pods_present": 1,
+        "mechs_alive": 3,
+        "mech_hp_total": 10,
+        "mechs_acid": [],
+        "mechs_fire": [],
+        "mechs_webbed": [
+          {
+            "uid": 1,
+            "type": "WallMech",
+            "pos": [
+              3,
+              5
+            ]
+          }
+        ],
+        "mechs_on_danger": [],
+        "mechs_disabled": [],
+        "bigbomb_alive": false,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      },
+      "predicted": {
+        "mission_id": "Mission_SnowStorm",
+        "turn": 1,
+        "total_turns": 4,
+        "grid_power": 3,
+        "buildings_alive": 7,
+        "building_hp_total": 10,
+        "pylons_alive": null,
+        "pylon_hp_total": null,
+        "objective_buildings_alive": 1,
+        "objective_building_hp_total": 1,
+        "pods_present": 1,
+        "mechs_alive": 3,
+        "mech_hp_total": 10,
+        "mechs_acid": [],
+        "mechs_fire": [],
+        "mechs_webbed": [],
+        "mechs_on_danger": [],
+        "mechs_disabled": [],
+        "bigbomb_alive": false,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      }
+    },
+    "score_breakdown": {
+      "total": 110360.0,
+      "grid_multiplier": 3.0,
+      "bld_mult": 1.2857142857142858,
+      "buildings_alive": {
+        "count": 7,
+        "score": 90000.0
+      },
+      "building_hp": {
+        "total": 10,
+        "score": 25714.285714285717
+      },
+      "objective_rep": {
+        "count": 1,
+        "score": 10285.714285714286
+      },
+      "objective_grid": {
+        "count": 0,
+        "score": 0.0
+      },
+      "grid_power": {
+        "value": 3,
+        "effective": 3.0,
+        "expected_save": 0.0,
+        "expected_save_player": 0.0,
+        "score": -7800.0
+      },
+      "enemies_killed": {
+        "count": 2,
+        "score": 1800.0
+      },
+      "mission_kill_bonus": {
+        "target": 0,
+        "done_pre_turn": 0,
+        "kills_this_turn": 2,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "mission_repair_bonus": {
+        "target": 0,
+        "used": 0,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "mission_terraform_grass": {
+        "remaining": 0,
+        "score": 0.0
+      },
+      "enemy_hp_remaining": {
+        "total": 5,
+        "score": -500.0
+      },
+      "mission_unit_objectives": {
+        "destroy_dead": 0,
+        "destroy_alive": 0,
+        "destroy_shielded": 0,
+        "protect_alive": 0,
+        "protect_dead": 0,
+        "score": 0
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 3,
+        "dead": 0,
+        "total_hp": 10,
+        "score": 960.0
+      },
+      "spawns_blocked": {
+        "count": 0,
+        "score": 0.0
+      },
+      "remaining_spawns": {
+        "count": 1,
+        "score": -10000.0
+      },
+      "pods": {
+        "uncollected": 1,
+        "proximity": 0,
+        "score": -100.0
+      }
+    }
+  }
+}

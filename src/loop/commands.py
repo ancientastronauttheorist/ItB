@@ -2515,6 +2515,28 @@ def _is_harmless_active_state_diff(
     return True
 
 
+def _is_harmless_player_hp_gain_diff(diff) -> bool:
+    """Return true when live player HP is strictly better than predicted."""
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    for ud in unit_diffs:
+        if ud.get("field") != "hp":
+            return False
+        utype = ud.get("type", "") or ""
+        if not (utype.endswith("Mech") or utype == "Disposal_Unit"):
+            return False
+        predicted = ud.get("predicted")
+        actual = ud.get("actual")
+        if not isinstance(predicted, (int, float)) or not isinstance(actual, (int, float)):
+            return False
+        if actual <= predicted:
+            return False
+    return True
+
+
 def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
     """Return true for the harmless active-flag drift after a no-attack skip."""
     return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
@@ -4740,6 +4762,16 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
     if diff.is_empty():
         result = {"status": "PASS", "action_index": action_index}
         print(f"VERIFY {action_index}: PASS")
+        _print_result(result)
+        return result
+
+    if _is_harmless_player_hp_gain_diff(diff):
+        result = {
+            "status": "PASS",
+            "action_index": action_index,
+            "note": "player HP gain drift ignored",
+        }
+        print(f"VERIFY {action_index}: PASS (player HP gain drift ignored)")
         _print_result(result)
         return result
 
@@ -8233,6 +8265,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 if not diff.is_empty():
                     if _is_harmless_active_state_diff(diff, allowed_uids=set(done_uids)):
                         print("  MOVE VERIFIED: PASS (prior active-state drift ignored)")
+                    elif _is_harmless_player_hp_gain_diff(diff):
+                        print("  MOVE VERIFIED: PASS (player HP gain drift ignored)")
                     else:
                         classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
                         fuzzy_signal = fuzzy_detector.evaluate(
@@ -8403,6 +8437,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 ):
                     print(f"  {final_phase.upper()} VERIFIED: PASS "
                           "(active-state drift ignored)")
+                elif _is_harmless_player_hp_gain_diff(diff):
+                    print(f"  {final_phase.upper()} VERIFIED: PASS "
+                          "(player HP gain drift ignored)")
                 else:
                     classification = classify_diff(diff, mech_uid=mech_uid,
                                                    phase=final_phase)

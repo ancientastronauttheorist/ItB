@@ -38,6 +38,9 @@ _MODELED_UPGRADED_WEAPONS = {
     "Prime_Punchmech_A",
     "Prime_Punchmech_B",
     "Prime_Punchmech_AB",
+    "Prime_Lightning_A",
+    "Prime_Lightning_B",
+    "Prime_Lightning_AB",
     "Prime_Lasermech_A",
     "Prime_Lasermech_B",
     "Prime_Lasermech_AB",
@@ -340,9 +343,11 @@ def _modeled_upgrade_from_save_mods(
 ) -> str | None:
     if not base_weapon:
         return None
+    if base_weapon in _MODELED_UPGRADED_WEAPONS:
+        return base_weapon
+    candidates: list[str] = []
     powered_a = _upgrade_group_fully_powered(mod1_state)
     powered_b = _upgrade_group_fully_powered(mod2_state)
-    candidates: list[str] = []
     if powered_a and powered_b:
         candidates.append(f"{base_weapon}_AB")
     if powered_a:

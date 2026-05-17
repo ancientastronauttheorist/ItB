@@ -834,7 +834,20 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v134 - Restore player artillery target areas to cardinal-only, including
 # Artemis. Diagnostic replay now rejects off-axis Artemis shots as illegal
 # no-ops. Pre-v134 corpus archived as failure_db_snapshot_sim_v133.jsonl.
-SIMULATOR_VERSION = 134
+# v135 - Rock Accelerator materializes a neutral 1 HP RockThrown on empty
+# target tiles, matching Blitzkrieg run 20260517_105759_344 Mission_Train
+# turn 3. Pre-v135 corpus archived as failure_db_snapshot_sim_v134.jsonl.
+# v136 - RockThrown spawned during active Mission_AcidStorm inherits ACID
+# immediately, matching Blitzkrieg run 20260517_105759_344 The Wasteland
+# turn 1. Pre-v136 corpus archived as failure_db_snapshot_sim_v135.jsonl.
+# v137 - Repair/Repair Drop during active Mission_AcidStorm leaves player
+# units ACIDed after healing, matching The Wasteland turn 2. Pre-v137
+# corpus archived as failure_db_snapshot_sim_v136.jsonl.
+# v138 - Rock Launcher defers Boom Bot / Volatile center death decay until
+# after its perpendicular side pushes, matching Mission_BoomBots where the
+# side Boom Tank is shoved out before the killed center bot explodes.
+# Pre-v138 corpus archived as failure_db_snapshot_sim_v137.jsonl.
+SIMULATOR_VERSION = 140
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1067,6 +1080,37 @@ class DiffResult:
         }
 
 
+_UNSTABLE_SPAWN_IDENTITY_TYPES = {"RockThrown"}
+
+
+def _normalize_unstable_spawn_uids(pred_units: dict, actual_units: dict) -> None:
+    """Pair engine-assigned spawn UIDs with simulator-assigned UIDs in-place."""
+    actual_by_identity: dict[tuple, list[int]] = {}
+    for uid, au in actual_units.items():
+        if au.type not in _UNSTABLE_SPAWN_IDENTITY_TYPES:
+            continue
+        actual_by_identity.setdefault((au.type, au.x, au.y), []).append(uid)
+
+    for pred_uid, pu in list(pred_units.items()):
+        ptype = pu.get("type")
+        if ptype not in _UNSTABLE_SPAWN_IDENTITY_TYPES:
+            continue
+        if pred_uid in actual_units:
+            continue
+        pos = pu.get("pos", [-1, -1])
+        if len(pos) != 2:
+            continue
+        key = (ptype, pos[0], pos[1])
+        actual_uids = actual_by_identity.get(key, [])
+        if len(actual_uids) != 1:
+            continue
+        actual_uid = actual_uids[0]
+        if actual_uid in pred_units:
+            continue
+        actual_units[pred_uid] = actual_units.pop(actual_uid)
+        actual_by_identity[key] = []
+
+
 def diff_states(predicted: dict, actual_board) -> DiffResult:
     """Diff a predicted snapshot dict against an actual Board object.
 
@@ -1078,6 +1122,7 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
 
     pred_units = {u["uid"]: u for u in predicted.get("units", [])}
     actual_units = {u.uid: u for u in actual_board.units}
+    _normalize_unstable_spawn_uids(pred_units, actual_units)
 
     for uid in set(pred_units) | set(actual_units):
         pu = pred_units.get(uid)

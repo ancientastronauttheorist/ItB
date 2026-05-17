@@ -256,11 +256,13 @@ pub(crate) fn get_weapon_targets(
                     let nxu = nx as u8;
                     let nyu = ny as u8;
                     let has_unit = board.unit_at(nxu, nyu).is_some();
+                    let tile = board.tile(nxu, nyu);
                     if has_unit { path_has_unit = true; }
                     if has_unit || path_has_unit {
                         targets.push((nxu, nyu));
+                    } else if wdef.chain() && wdef.building_immune() && tile.is_building() {
+                        targets.push((nxu, nyu));
                     } else if wdef.push != PushDir::None {
-                        let tile = board.tile(nxu, nyu);
                         if !(tile.terrain == Terrain::Building && tile.building_hp > 0) {
                             targets.push((nxu, nyu));
                         }
@@ -526,6 +528,10 @@ fn weapon_action_has_effect(
             // line from move_to to target counts as an effect — the spear
             // damages every tile it passes through.
             if unit_at(target.0, target.1) { return true; }
+            let target_tile = board.tile(target.0, target.1);
+            if wdef.chain() && wdef.building_immune() && target_tile.is_building() {
+                return true;
+            }
             if wdef.path_size > 1 || wdef.range_max > 1 {
                 let dx_diff = target.0 as i8 - mx as i8;
                 let dy_diff = target.1 as i8 - my as i8;
