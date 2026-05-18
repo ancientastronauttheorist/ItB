@@ -59,6 +59,12 @@ pub struct JsonInput {
     /// from any unit toward this progress.
     pub repair_platform_target: Option<u8>,
     pub repair_platforms_used: Option<u8>,
+    /// Mission_FreezeBldg objective metadata. The bridge already marks each
+    /// tile's live `frozen` flag; Python supplements this static objective tile
+    /// list from saveData so the evaluator can distinguish objective buildings
+    /// from incidental frozen terrain without a modloader restart.
+    pub freeze_building_target: Option<u8>,
+    pub freeze_building_tiles: Option<Vec<Vec<u8>>>,
     /// Phase 1 soft-disable blocklist — weapons the Python detector has
     /// flagged as drifting. Each entry's ``weapon_id`` becomes a bit in
     /// the ``disabled_mask`` returned by ``board_from_json``. Other
@@ -531,6 +537,18 @@ pub fn board_from_json(json_str: &str)
         }
     }
     board.env_freeze = env_freeze;
+
+    // Mission_FreezeBldg frozen-building objective tiles.
+    if let Some(target) = input.freeze_building_target {
+        board.freeze_building_target = target;
+    }
+    if let Some(tiles) = &input.freeze_building_tiles {
+        for entry in tiles {
+            if entry.len() >= 2 && entry[0] < 8 && entry[1] < 8 {
+                board.freeze_building_tiles |= 1u64 << xy_to_idx(entry[0], entry[1]);
+            }
+        }
+    }
 
     // Teleporter pad pairs (Mission_Teleporter overlay from Board:AddTeleport)
     if let Some(pairs) = &input.teleporter_pairs {

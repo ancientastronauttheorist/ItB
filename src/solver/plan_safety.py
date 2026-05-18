@@ -31,6 +31,7 @@ BLOCKING_KINDS = {
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
     "mech_damage_objective_failed",
+    "freeze_building_objective_failed",
 }
 
 NON_OVERRIDABLE_KINDS = {
@@ -43,6 +44,7 @@ NON_OVERRIDABLE_KINDS = {
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
     "mech_damage_objective_failed",
+    "freeze_building_objective_failed",
 }
 
 FINAL_CAVE_EMERGENCY_PYLON_KINDS = {
@@ -88,6 +90,7 @@ LOSS_KINDS = {
     "protected_objective_unit_unfrozen": "protected_objective_units_frozen",
     "mech_hp_loss": "mech_hp_total",
     "mech_damage_objective_failed": "mech_damage_taken_total",
+    "freeze_building_objective_failed": "freeze_buildings_thawed",
 }
 
 
@@ -449,6 +452,47 @@ def audit_plan_safety(current: dict[str, Any],
                 },
             ))
 
+    cur_freeze_target = _int_or_none(current.get("freeze_building_target"))
+    pred_freeze_target = _int_or_none(predicted.get("freeze_building_target"))
+    freeze_target = cur_freeze_target or pred_freeze_target
+    cur_freeze_thawed = _int_or_none(current.get("freeze_buildings_thawed"))
+    pred_freeze_thawed = _int_or_none(predicted.get("freeze_buildings_thawed"))
+    cur_freeze_alive = _int_or_none(current.get("freeze_buildings_alive"))
+    pred_freeze_alive = _int_or_none(predicted.get("freeze_buildings_alive"))
+    if (
+        mission_id == "Mission_FreezeBldg"
+        and freeze_target is not None
+        and pred_freeze_thawed is not None
+    ):
+        compared.append("freeze_building_target")
+        compared.append("freeze_buildings_thawed")
+        if pred_freeze_alive is not None:
+            compared.append("freeze_buildings_alive")
+        final_turn = (
+            cur_turn is not None
+            and cur_total_turns is not None
+            and cur_turn >= cur_total_turns
+        ) or (
+            pred_turn is not None
+            and pred_total_turns is not None
+            and pred_turn >= pred_total_turns
+        )
+        impossible = pred_freeze_alive is not None and pred_freeze_alive < freeze_target
+        if impossible or (final_turn and pred_freeze_thawed < freeze_target):
+            violations.append(_violation(
+                "freeze_building_objective_failed",
+                cur_freeze_thawed if cur_freeze_thawed is not None else 0,
+                pred_freeze_thawed,
+                "Predicted outcome cannot complete the frozen-building thaw objective.",
+                {
+                    "target": freeze_target,
+                    "current_alive": cur_freeze_alive,
+                    "predicted_alive": pred_freeze_alive,
+                    "current_buildings": _list_or_empty(current.get("freeze_buildings")),
+                    "predicted_buildings": _list_or_empty(predicted.get("freeze_buildings")),
+                },
+            ))
+
     blocking = any(v.get("blocking") for v in violations)
     if blocking:
         status = "DIRTY"
@@ -488,6 +532,9 @@ def audit_plan_safety(current: dict[str, Any],
             "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
             "protected_objective_units_alive": cur_protected,
             "protected_objective_units_frozen": cur_frozen,
+            "freeze_building_target": cur_freeze_target,
+            "freeze_buildings_alive": cur_freeze_alive,
+            "freeze_buildings_thawed": cur_freeze_thawed,
         },
         "predicted": {
             "mission_id": mission_id,
@@ -513,6 +560,9 @@ def audit_plan_safety(current: dict[str, Any],
             "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
             "protected_objective_units_alive": pred_protected,
             "protected_objective_units_frozen": pred_frozen,
+            "freeze_building_target": pred_freeze_target,
+            "freeze_buildings_alive": pred_freeze_alive,
+            "freeze_buildings_thawed": pred_freeze_thawed,
         },
     }
 

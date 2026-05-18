@@ -492,6 +492,81 @@ def test_mech_damage_objective_allows_staying_below_limit():
     assert [v["kind"] for v in audit["violations"]] == ["mech_hp_loss"]
 
 
+def test_freeze_building_objective_blocks_final_under_target():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FreezeBldg",
+            turn=4,
+            total_turns=4,
+            freeze_building_target=5,
+            freeze_buildings_alive=5,
+            freeze_buildings_thawed=2,
+        ),
+        _summary(
+            mission_id="Mission_FreezeBldg",
+            turn=4,
+            total_turns=4,
+            freeze_building_target=5,
+            freeze_buildings_alive=5,
+            freeze_buildings_thawed=4,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "freeze_building_objective_failed"
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_freeze_building_objective_blocks_destroyed_target_before_final():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FreezeBldg",
+            turn=2,
+            total_turns=4,
+            freeze_building_target=5,
+            freeze_buildings_alive=5,
+            freeze_buildings_thawed=2,
+        ),
+        _summary(
+            mission_id="Mission_FreezeBldg",
+            turn=2,
+            total_turns=4,
+            freeze_building_target=5,
+            freeze_buildings_alive=4,
+            freeze_buildings_thawed=2,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "freeze_building_objective_failed"
+
+
+def test_freeze_building_objective_allows_incomplete_nonfinal_progress():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_FreezeBldg",
+            turn=2,
+            total_turns=4,
+            freeze_building_target=5,
+            freeze_buildings_alive=5,
+            freeze_buildings_thawed=1,
+        ),
+        _summary(
+            mission_id="Mission_FreezeBldg",
+            turn=2,
+            total_turns=4,
+            freeze_building_target=5,
+            freeze_buildings_alive=5,
+            freeze_buildings_thawed=2,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
 def test_uncollected_pod_loss_blocks_plan():
     audit = audit_plan_safety(
         _summary(pods_present=1),

@@ -9,7 +9,7 @@ import json
 import os
 import re
 
-from src.capture.save_parser import SAVE_DIR, parse_save_file
+from src.capture.save_parser import SAVE_DIR, Point, parse_save_file
 from src.model.board import Board
 from src.bridge.protocol import read_state
 
@@ -95,42 +95,48 @@ def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
     return _parse_conveyor_belts_from_save_text(content)
 
 
-def _read_active_bonus_objective_ids_from_save() -> list[int]:
-    """Return active mission BonusObjs from saveData.lua.
+def _read_active_save_mission() -> dict | None:
+    """Return the active mission record from saveData.lua, if resolvable.
 
     The Lua bridge emits the full island map only between missions. During
-    combat, the active mission's chosen BonusObjs still live in saveData under
-    GAME.Missions[<region mission slot>], while RegionData tells us which slot
-    is currently being fought.
+    combat, RegionData tells us which GAME.Missions slot is currently being
+    fought. SaveData does not update every sub-action, so callers should only
+    use static mission metadata or fields where save staleness is acceptable.
     """
     save_path = SAVE_DIR / "profile_Alpha" / "saveData.lua"
     if not save_path.exists():
-        return []
+        return None
     try:
         data = parse_save_file(save_path)
     except Exception:
-        return []
+        return None
 
     region_data = data.get("RegionData", {})
     if not isinstance(region_data, dict):
-        return []
+        return None
     battle_region = region_data.get("iBattleRegion", -1)
     if not isinstance(battle_region, int) or battle_region < 0:
-        return []
+        return None
     region = region_data.get(f"region{battle_region}", {})
     if not isinstance(region, dict):
-        return []
+        return None
     mission_slot = region.get("mission", "")
     if not isinstance(mission_slot, str):
-        return []
+        return None
     match = re.fullmatch(r"Mission(\d+)", mission_slot)
     if not match:
-        return []
+        return None
 
     missions = data.get("GAME", {}).get("Missions", {})
     if not isinstance(missions, dict):
-        return []
+        return None
     mission = missions.get(int(match.group(1)), {})
+    return mission if isinstance(mission, dict) else None
+
+
+def _read_active_bonus_objective_ids_from_save() -> list[int]:
+    """Return active mission BonusObjs from saveData.lua."""
+    mission = _read_active_save_mission()
     if not isinstance(mission, dict):
         return []
     bonus_objs = mission.get("BonusObjs", {})
@@ -148,6 +154,39 @@ def _read_active_bonus_objective_ids_from_save() -> list[int]:
     for value in values:
         if isinstance(value, int):
             out.append(value)
+    return out
+
+
+def _read_freeze_building_objective_tiles_from_save() -> set[tuple[int, int]]:
+    """Read Mission_FreezeBldg's static frozen-building objective tiles.
+
+    Live bridge tile.frozen flags tell us which buildings remain frozen after
+    each action. SaveData supplies the mission's original Buildings list, which
+    is stable enough to use mid-turn and avoids requiring a modloader restart.
+    """
+    mission = _read_active_save_mission()
+    if not isinstance(mission, dict):
+        return set()
+    mission_id = mission.get("ID") or mission.get("Class")
+    if mission_id != "Mission_FreezeBldg":
+        return set()
+    buildings = mission.get("Buildings", {})
+    out: set[tuple[int, int]] = set()
+    if isinstance(buildings, dict):
+        values = buildings.values()
+    elif isinstance(buildings, (list, tuple)):
+        values = buildings
+    else:
+        return out
+    for point in values:
+        if isinstance(point, Point):
+            x, y = point.x, point.y
+        elif isinstance(point, (list, tuple)) and len(point) >= 2:
+            x, y = point[0], point[1]
+        else:
+            continue
+        if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+            out.add((x, y))
     return out
 
 
@@ -754,6 +793,14 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
                 if pos in grass_tiles:
                     td["grass"] = True
                     td.setdefault("custom", "ground_grass.png")
+
+    if data.get("mission_id") == "Mission_FreezeBldg":
+        freeze_building_tiles = _read_freeze_building_objective_tiles_from_save()
+        if freeze_building_tiles:
+            data.setdefault("freeze_building_target", 5)
+            data["freeze_building_tiles"] = [
+                [x, y] for x, y in sorted(freeze_building_tiles)
+            ]
 
     # SaveData carries effective mech max_health after pilot perks and powered
     # +Health upgrades. Overlay before Board construction so live reads,

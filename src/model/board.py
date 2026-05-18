@@ -267,6 +267,10 @@ class Board:
         # any live unit lands on an Item_Repair_Mine tile.
         self.repair_platform_target: int = 0
         self.repair_platforms_used: int = 0
+        # Mission_FreezeBldg objective: static building list plus target count.
+        # Live progress is represented by those tiles' frozen flags.
+        self.freeze_building_target: int = 0
+        self.freeze_building_tiles: set[tuple[int, int]] = set()
         # Unit-based mission objectives. Some bonus objectives are pawns
         # rather than objective building tiles (Mission_Hacking's Hacking
         # Facility and Cannon Bot are the live example).
@@ -324,6 +328,8 @@ class Board:
         b.mission_kills_done = self.mission_kills_done
         b.repair_platform_target = self.repair_platform_target
         b.repair_platforms_used = self.repair_platforms_used
+        b.freeze_building_target = self.freeze_building_target
+        b.freeze_building_tiles = set(self.freeze_building_tiles)
         b.destroy_objective_unit_types = list(self.destroy_objective_unit_types)
         b.protect_objective_unit_types = list(self.protect_objective_unit_types)
         b.dam_alive = self.dam_alive
@@ -626,6 +632,20 @@ class Board:
             board.repair_platforms_used = int(data.get("repair_platforms_used", 0) or 0)
         except (TypeError, ValueError):
             board.repair_platforms_used = 0
+        try:
+            board.freeze_building_target = int(data.get("freeze_building_target", 0) or 0)
+        except (TypeError, ValueError):
+            board.freeze_building_target = 0
+        board.freeze_building_tiles = set()
+        for p in data.get("freeze_building_tiles", []) or []:
+            if not isinstance(p, (list, tuple)) or len(p) < 2:
+                continue
+            try:
+                x, y = int(p[0]), int(p[1])
+            except (TypeError, ValueError):
+                continue
+            if 0 <= x < 8 and 0 <= y < 8:
+                board.freeze_building_tiles.add((x, y))
         board.destroy_objective_unit_types = [
             s for s in data.get("destroy_objective_unit_types", []) or []
             if isinstance(s, str) and s

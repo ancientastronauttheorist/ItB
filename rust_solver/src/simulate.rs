@@ -1068,6 +1068,21 @@ pub(crate) fn flush_deferred_bump_grid_debt(
     total
 }
 
+pub(crate) fn thaw_frozen_building(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+) -> bool {
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Building && tile.building_hp > 0 && tile.frozen() {
+        tile.set_frozen(false);
+        result.events.push(format!("building_thawed:{}:{}", x, y));
+        return true;
+    }
+    false
+}
+
 
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
@@ -1159,6 +1174,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             if tile.terrain == Terrain::Building && tile.building_hp > 0 {
                 if tile.shield() {
                     tile.set_shield(false);
+                } else if tile.frozen() {
+                    tile.set_frozen(false);
+                    result.events.push(format!("building_thawed:{}:{}", x, y));
                 } else {
                     let hp_lost = damage.min(tile.building_hp);
                     tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
@@ -1574,6 +1592,9 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
+            if thaw_frozen_building(board, nx, ny, result) {
+                return;
+            }
             result.buildings_bump_damaged += 1;
             // Guard: apply_damage above can trigger volatile decay / blast
             // psion chains that damage adjacent tiles, including (nx, ny).
@@ -1814,6 +1835,9 @@ fn apply_push_with_policy(
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
+            if thaw_frozen_building(board, nx, ny, result) {
+                return;
+            }
             result.buildings_bump_damaged += 1;
             // Guard: apply_damage above can trigger volatile decay / blast
             // psion chains that damage adjacent tiles, including (nx, ny).
@@ -2278,6 +2302,9 @@ fn apply_terraformer_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionRe
     }
 
     if board.tile(x, y).terrain == Terrain::Building && board.tile(x, y).building_hp > 0 {
+        if thaw_frozen_building(board, x, y, result) {
+            return;
+        }
         let idx = xy_to_idx(x, y);
         let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
         let hp_lost = {
@@ -2348,6 +2375,9 @@ fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResul
     }
 
     if board.tile(x, y).terrain == Terrain::Building && board.tile(x, y).building_hp > 0 {
+        if thaw_frozen_building(board, x, y, result) {
+            return;
+        }
         let idx = xy_to_idx(x, y);
         let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
         let hp_lost = {
@@ -3113,6 +3143,9 @@ fn apply_trapped_death_damage(
 
     if board.tile(x, y).is_building() {
         if !damage_building {
+            return;
+        }
+        if thaw_frozen_building(board, x, y, result) {
             return;
         }
         let idx = xy_to_idx(x, y) as u64;
@@ -5785,6 +5818,27 @@ mod tests {
         assert_eq!(board.tile(3, 5).terrain, Terrain::Building);
         assert_eq!(board.grid_power, 5);
         assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_weapon_damage_thaws_frozen_building_without_grid_loss() {
+        let mut board = make_test_board();
+        board.grid_power = 6;
+        let mech_idx = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        board.tile_mut(3, 4).set_frozen(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert!(!board.tile(3, 4).frozen());
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.buildings_damaged, 0);
+        assert_eq!(result.buildings_lost, 0);
+        assert!(result.events.iter().any(|e| e == "building_thawed:3:4"));
     }
 
     #[test]

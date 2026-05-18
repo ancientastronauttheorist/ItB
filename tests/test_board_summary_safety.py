@@ -127,6 +127,49 @@ def test_summary_omits_mech_damage_objective_without_bonus_id():
     assert summary["mech_damage_objective_limit"] is None
 
 
+def test_summary_tracks_freeze_building_objective_progress():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_FreezeBldg"
+    data["freeze_building_target"] = 3
+    data["freeze_building_tiles"] = [[1, 1], [2, 1], [3, 1]]
+    data["tiles"].extend([
+        {
+            "x": 1,
+            "y": 1,
+            "terrain": "building",
+            "building_hp": 1,
+            "frozen": True,
+        },
+        {
+            "x": 2,
+            "y": 1,
+            "terrain": "building",
+            "building_hp": 1,
+            "frozen": False,
+        },
+        {
+            "x": 3,
+            "y": 1,
+            "terrain": "rubble",
+            "building_hp": 0,
+            "frozen": False,
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["freeze_building_target"] == 3
+    assert summary["freeze_buildings_alive"] == 2
+    assert summary["freeze_buildings_frozen"] == 1
+    assert summary["freeze_buildings_thawed"] == 1
+    assert summary["freeze_buildings"] == [
+        {"pos": [1, 1], "alive": True, "frozen": True, "hp": 1},
+        {"pos": [2, 1], "alive": True, "frozen": False, "hp": 1},
+        {"pos": [3, 1], "alive": False, "frozen": False, "hp": 0},
+    ]
+
+
 def test_summary_tracks_protected_objective_units_from_mission_metadata():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_FreezeBots"

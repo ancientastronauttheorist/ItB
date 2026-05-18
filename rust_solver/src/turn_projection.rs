@@ -434,6 +434,14 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         units.push(unit_val);
     }
     let spawning_tiles: Vec<Vec<u8>> = spawn_points.iter().map(|&(x, y)| vec![x, y]).collect();
+    let mut freeze_building_tiles: Vec<Vec<u8>> = Vec::new();
+    let mut freeze_bits = board.freeze_building_tiles;
+    while freeze_bits != 0 {
+        let bit_idx = freeze_bits.trailing_zeros() as usize;
+        freeze_bits &= freeze_bits - 1;
+        let (x, y) = idx_to_xy(bit_idx);
+        freeze_building_tiles.push(vec![x, y]);
+    }
     let mut env_danger_v2: Vec<Vec<u8>> = Vec::new();
     for idx in 0..64usize {
         let bit = 1u64 << idx;
@@ -468,6 +476,8 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "mission_kills_done":    board.mission_kills_done,
         "repair_platform_target": board.repair_platform_target,
         "repair_platforms_used":  board.repair_platforms_used,
+        "freeze_building_target": board.freeze_building_target,
+        "freeze_building_tiles":  freeze_building_tiles,
         "bonus_objective_unit_types":   board.bonus_dont_kill_types,
         "destroy_objective_unit_types": board.destroy_objective_unit_types,
         "protect_objective_unit_types": board.protect_objective_unit_types,

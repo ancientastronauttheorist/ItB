@@ -1586,6 +1586,18 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     objective_buildings_alive = 0
     objective_building_hp_total = 0
     pods_present = 0
+    freeze_building_target = 0
+    freeze_buildings_alive = 0
+    freeze_buildings_frozen = 0
+    freeze_buildings_thawed = 0
+    freeze_buildings = []
+    try:
+        freeze_building_target = int(
+            getattr(board, "freeze_building_target", 0) or 0
+        )
+    except (TypeError, ValueError):
+        freeze_building_target = 0
+    freeze_building_tiles = getattr(board, "freeze_building_tiles", set()) or set()
     for x in range(8):
         for y in range(8):
             t = board.tile(x, y)
@@ -1600,6 +1612,21 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 if getattr(t, "unique_building", False):
                     objective_buildings_alive += 1
                     objective_building_hp_total += t.building_hp
+            if (x, y) in freeze_building_tiles:
+                alive = t.terrain == "building" and t.building_hp > 0
+                frozen = bool(getattr(t, "frozen", False))
+                if alive:
+                    freeze_buildings_alive += 1
+                    if frozen:
+                        freeze_buildings_frozen += 1
+                    else:
+                        freeze_buildings_thawed += 1
+                freeze_buildings.append({
+                    "pos": [x, y],
+                    "alive": alive,
+                    "frozen": frozen,
+                    "hp": max(0, int(getattr(t, "building_hp", 0) or 0)),
+                })
 
     raw_units = _bridge_units_by_uid(bridge_data)
     danger = _environment_danger_info(board, bridge_data)
@@ -1699,6 +1726,31 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "objective_buildings_alive": objective_buildings_alive,
         "objective_building_hp_total": objective_building_hp_total,
         "pods_present": pods_present,
+        "freeze_building_target": (
+            freeze_building_target
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings_alive": (
+            freeze_buildings_alive
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings_frozen": (
+            freeze_buildings_frozen
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings_thawed": (
+            freeze_buildings_thawed
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings": (
+            freeze_buildings
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else []
+        ),
         "grid_power": board.grid_power,
         "enemies_alive": len(board.enemies()),
         "enemy_hp_total": sum(e.hp for e in board.enemies()),

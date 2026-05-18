@@ -64,6 +64,7 @@ impl Tile {
     pub fn set_on_fire(&mut self, v: bool) { self.flags.set(TileFlags::ON_FIRE, v); }
     pub fn set_smoke(&mut self, v: bool) { self.flags.set(TileFlags::SMOKE, v); }
     pub fn set_acid(&mut self, v: bool) { self.flags.set(TileFlags::ACID, v); }
+    pub fn set_frozen(&mut self, v: bool) { self.flags.set(TileFlags::FROZEN, v); }
     pub fn set_cracked(&mut self, v: bool) { self.flags.set(TileFlags::CRACKED, v); }
     pub fn set_has_pod(&mut self, v: bool) { self.flags.set(TileFlags::HAS_POD, v); }
     pub fn set_freeze_mine(&mut self, v: bool) { self.flags.set(TileFlags::FREEZE_MINE, v); }
@@ -371,6 +372,8 @@ pub struct Board {
     pub env_freeze: u64,
     pub unique_buildings: u64,  // bitset: bit i = tile i is a mission objective building (Coal Plant, Power Generator, Emergency Batteries)
     pub grid_reward_buildings: u64, // bitset: subset of unique_buildings whose survival restores +1 Grid Power at mission end (Str_Power / Str_Battery / Mission_Solar). See evaluate.rs.
+    pub freeze_building_tiles: u64, // bitset: Mission_FreezeBldg buildings that start frozen and count toward "Break 5 buildings out of the ice"
+    pub freeze_building_target: u8, // Mission_FreezeBldg thaw target (normally 5); 0 when inactive.
     /// Per-tile grid debt from non-unique multi-HP buildings damaged by
     /// bump/push collision. Live grid can remain unchanged at the first bump,
     /// then charge the earlier HP loss if the same building is later
@@ -484,6 +487,8 @@ impl Default for Board {
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
+            freeze_building_tiles: 0,
+            freeze_building_target: 0,
             deferred_bump_grid_debt: [0; 64],
             blast_psion: false,
             armor_psion: false,

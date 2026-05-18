@@ -1289,7 +1289,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   flying_immune=1 env_danger_v2 payloads so bombs/lightning kill flying mechs;
 //   terrain-conversion missions keep flyer immunity. Pre-v145 corpus archived
 //   as `failure_db_snapshot_sim_v144.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 145;
+// - v146: frozen buildings thaw on damage instead of taking building/grid
+//   damage, and Mission_FreezeBldg objective tiles are scored from live thaw
+//   state. Pre-v146 corpus archived as `failure_db_snapshot_sim_v145.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 146;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

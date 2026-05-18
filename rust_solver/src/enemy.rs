@@ -18,6 +18,7 @@ use crate::simulate::{
     flush_deferred_bump_grid_debt,
     on_enemy_death,
     settle_building_grid_loss,
+    thaw_frozen_building,
 };
 
 /// Spawn a new enemy unit at (x, y). Used by Spider/Blobber artillery
@@ -106,13 +107,18 @@ fn apply_mosquito_boss_attack(board: &mut Board, x: u8, y: u8, result: &mut Acti
     {
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            hp_lost = tile.building_hp;
-            tile.building_hp = 0;
-            tile.set_shield(false);
-            if !is_unique {
-                tile.terrain = Terrain::Rubble;
+            if tile.frozen() {
+                tile.set_frozen(false);
+                result.events.push(format!("building_thawed:{}:{}", x, y));
+            } else {
+                hp_lost = tile.building_hp;
+                tile.building_hp = 0;
+                tile.set_shield(false);
+                if !is_unique {
+                    tile.terrain = Terrain::Rubble;
+                }
+                destroyed = true;
             }
-            destroyed = true;
         }
     }
     if hp_lost > 0 {
@@ -281,16 +287,21 @@ fn apply_env_danger(
     {
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            let dmg = if lethal { tile.building_hp } else { 1 };
-            let old_hp = tile.building_hp;
-            tile.building_hp = tile.building_hp.saturating_sub(dmg);
-            lost = old_hp - tile.building_hp;
-            result.buildings_damaged += lost as i32;
-            result.grid_damage += lost as i32;
-            if tile.building_hp == 0 {
-                tile.terrain = Terrain::Rubble;
-                result.buildings_lost += 1;
-                destroyed = true;
+            if tile.frozen() {
+                tile.set_frozen(false);
+                result.events.push(format!("building_thawed:{}:{}", x, y));
+            } else {
+                let dmg = if lethal { tile.building_hp } else { 1 };
+                let old_hp = tile.building_hp;
+                tile.building_hp = tile.building_hp.saturating_sub(dmg);
+                lost = old_hp - tile.building_hp;
+                result.buildings_damaged += lost as i32;
+                result.grid_damage += lost as i32;
+                if tile.building_hp == 0 {
+                    tile.terrain = Terrain::Rubble;
+                    result.buildings_lost += 1;
+                    destroyed = true;
+                }
             }
         }
     }
@@ -842,6 +853,9 @@ pub fn simulate_enemy_attacks(
                 if let Some((bx, by, _)) = best {
                     let idx = xy_to_idx(bx, by);
                     let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+                    if thaw_frozen_building(board, bx, by, &mut result) {
+                        continue;
+                    }
                     let (lost, destroyed) = {
                         let tile = board.tile_mut(bx, by);
                         let old_hp = tile.building_hp;

@@ -99,6 +99,8 @@ class EvalWeights:
     # Mission_Terraform "Terraform the grassland back to desert" objective.
     # Negative penalty per custom grassland tile still present after the plan.
     mission_terraform_grass_remaining: float = -2500
+    # Mission_FreezeBldg "Break 5 buildings out of the ice" objective.
+    mission_freeze_building_bonus: float = 120000
 
     # Building protection
     mech_self_frozen: float = -12000
@@ -438,6 +440,21 @@ def evaluate(
             if getattr(board.tile(x, y), 'grass', False)
         )
         score += grass_remaining * w.mission_terraform_grass_remaining
+
+    # --- MISSION_FREEZEBLDG: thaw frozen objective buildings ---
+    if getattr(board, 'mission_id', '') == 'Mission_FreezeBldg':
+        ft = getattr(board, 'freeze_building_target', 0)
+        if ft > 0:
+            thawed = 0
+            for x, y in getattr(board, 'freeze_building_tiles', set()):
+                tile = board.tile(x, y)
+                if tile.terrain == 'building' and tile.building_hp > 0 and not tile.frozen:
+                    thawed += 1
+            progress = max(min(thawed, ft), 0)
+            if progress > 0:
+                score += w.mission_freeze_building_bonus * 0.50 * (progress / ft)
+            if progress >= ft:
+                score += w.mission_freeze_building_bonus
 
     # --- ENVIRONMENT DANGER: SCALED ---
     # Lethal env (kill_int=1: Air Strike, Lightning, Cataclysm→chasm, Seismic,
@@ -793,6 +810,24 @@ def evaluate_breakdown(
         )
         terraform_grass_score = grass_remaining * w.mission_terraform_grass_remaining
 
+    freeze_building_target = getattr(board, 'freeze_building_target', 0)
+    freeze_buildings_thawed = 0
+    freeze_building_score = 0.0
+    if getattr(board, 'mission_id', '') == 'Mission_FreezeBldg' and freeze_building_target > 0:
+        for x, y in getattr(board, 'freeze_building_tiles', set()):
+            tile = board.tile(x, y)
+            if tile.terrain == 'building' and tile.building_hp > 0 and not tile.frozen:
+                freeze_buildings_thawed += 1
+        progress = max(min(freeze_buildings_thawed, freeze_building_target), 0)
+        if progress > 0:
+            freeze_building_score += (
+                w.mission_freeze_building_bonus
+                * 0.50
+                * (progress / freeze_building_target)
+            )
+        if progress >= freeze_building_target:
+            freeze_building_score += w.mission_freeze_building_bonus
+
     total = (buildings_score + building_hp_score
              + objective_rep_score + objective_grid_score
              + grid_power_score
@@ -800,7 +835,7 @@ def evaluate_breakdown(
              + danger_score
              + mech_score + spawns_score + remaining_spawn_score
              + pods_score + kill_n_score + repair_platform_score
-             + terraform_grass_score)
+             + terraform_grass_score + freeze_building_score)
 
     # Note: sanity check removed — evaluate() now requires turn params.
     # Use evaluate_breakdown only for debugging, not during search.
@@ -845,6 +880,11 @@ def evaluate_breakdown(
         "mission_terraform_grass": {
             "remaining": grass_remaining,
             "score": terraform_grass_score,
+        },
+        "mission_freeze_buildings": {
+            "target": freeze_building_target,
+            "thawed": freeze_buildings_thawed,
+            "score": freeze_building_score,
         },
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
         "mission_unit_objectives": {

@@ -333,6 +333,7 @@ fn capture_snapshot(
             "fire":         t.on_fire(),
             "acid":         t.acid(),
             "smoke":        t.smoke(),
+            "frozen":       t.frozen(),
             "has_pod":      t.has_pod(),
             "repair_platform": t.repair_platform(),
         }));

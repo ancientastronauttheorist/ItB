@@ -858,7 +858,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # flying_immune=1 env_danger_v2 payloads so bombs/lightning kill flying mechs;
 # terrain-conversion missions keep flyer immunity. Pre-v145 corpus archived as
 # failure_db_snapshot_sim_v144.jsonl.
-SIMULATOR_VERSION = 145
+# v146: frozen buildings thaw on damage instead of taking building/grid damage,
+# and Mission_FreezeBldg objective tiles are scored from live thaw state.
+# Pre-v146 corpus archived as failure_db_snapshot_sim_v145.jsonl.
+SIMULATOR_VERSION = 146
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

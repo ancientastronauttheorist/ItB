@@ -187,6 +187,10 @@ pub struct EvalWeights {
     // Negative penalty per custom grassland tile still present after the plan.
     // Grassland is a save/custom-sprite marker, not a distinct terrain id.
     pub mission_terraform_grass_remaining: f64,
+    // Mission_FreezeBldg "Break 5 buildings out of the ice" objective.
+    // Progress is read from objective building tiles that are alive and no
+    // longer frozen after the plan.
+    pub mission_freeze_building_bonus: f64,
 
     // Context-aware building multiplier knobs
     pub bld_grid_floor: f64,
@@ -315,6 +319,7 @@ impl Default for EvalWeights {
             mission_kill_bonus: 15000.0,
             mission_repair_bonus: 15000.0,
             mission_terraform_grass_remaining: -2500.0,
+            mission_freeze_building_bonus: 120000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
             bld_phase_floor: 1.0,
@@ -752,6 +757,37 @@ pub fn evaluate(
         let grass_remaining = board.tiles.iter().filter(|t| t.grass()).count();
         if grass_remaining > 0 {
             score += grass_remaining as f64 * weights.mission_terraform_grass_remaining;
+        }
+    }
+
+    // ── Mission bonus: Break frozen buildings out of the ice ───────────
+    // Mission_FreezeBldg stores the objective building list separately from
+    // ordinary building metadata. A building counts once it is still alive and
+    // its frozen flag has been removed. Existing progress contributes a
+    // constant across candidates; newly-thawed buildings improve the post-state
+    // score immediately, so search spends actions on them before the mission
+    // runs out of turns.
+    if board.mission_id == "Mission_FreezeBldg" && board.freeze_building_target > 0 {
+        let target = board.freeze_building_target as i32;
+        let mut thawed = 0i32;
+        let mut bits = board.freeze_building_tiles;
+        while bits != 0 {
+            let bit_idx = bits.trailing_zeros() as usize;
+            bits &= bits - 1;
+            let (x, y) = idx_to_xy(bit_idx);
+            let tile = board.tile(x, y);
+            if tile.terrain == Terrain::Building && tile.building_hp > 0 && !tile.frozen() {
+                thawed += 1;
+            }
+        }
+        let progress = thawed.clamp(0, target);
+        if progress > 0 {
+            score += weights.mission_freeze_building_bonus
+                * 0.50
+                * (progress as f64 / target as f64);
+        }
+        if progress >= target {
+            score += weights.mission_freeze_building_bonus;
         }
     }
 
@@ -1475,5 +1511,37 @@ mod tests {
         let s_cleared = evaluate(&cleared, &[], &w, 0, 0, &p, 0);
 
         assert!((s_cleared - s_with_grass - 5000.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_freeze_building_scores_thawed_objective_buildings() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut frozen = Board::default();
+        frozen.mission_id = "Mission_FreezeBldg".to_string();
+        frozen.freeze_building_target = 5;
+        for x in 0u8..5 {
+            let idx = xy_to_idx(x, 0);
+            frozen.freeze_building_tiles |= 1u64 << idx;
+            frozen.tile_mut(x, 0).terrain = Terrain::Building;
+            frozen.tile_mut(x, 0).building_hp = 1;
+            frozen.tile_mut(x, 0).set_frozen(true);
+        }
+
+        let mut one_thawed = frozen.clone();
+        one_thawed.tile_mut(0, 0).set_frozen(false);
+
+        let mut all_thawed = frozen.clone();
+        for x in 0u8..5 {
+            all_thawed.tile_mut(x, 0).set_frozen(false);
+        }
+
+        let s_frozen = evaluate(&frozen, &[], &w, 0, 0, &p, 0);
+        let s_one = evaluate(&one_thawed, &[], &w, 0, 0, &p, 0);
+        let s_all = evaluate(&all_thawed, &[], &w, 0, 0, &p, 0);
+
+        assert!((s_one - s_frozen - 12000.0).abs() < 1.0);
+        assert!((s_all - s_frozen - 180000.0).abs() < 1.0);
     }
 }
