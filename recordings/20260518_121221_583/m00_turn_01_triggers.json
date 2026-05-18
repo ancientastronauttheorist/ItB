@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-05-18T12:20:29.610142",
+  "run_id": "20260518_121221_583",
+  "mission_index": 0,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_on_danger",
+        "tier": 4,
+        "severity": "critical",
+        "details": "TeleMech moved to danger tile (5,3)"
+      },
+      {
+        "trigger": "mech_on_danger",
+        "tier": 4,
+        "severity": "critical",
+        "details": "FlameMech moved to danger tile (6,2)"
+      }
+    ],
+    "trigger_count": 2,
+    "severity_counts": {
+      "critical": 2,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

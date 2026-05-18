@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-05-18T12:59:45.399115",
+  "run_id": "20260518_121221_583",
+  "mission_index": 5,
+  "turn": 1,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 2,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          4,
+          5
+        ],
+        "target_visual": "C4",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 5568,
+          "type": "Spiderling1",
+          "pos": [
+            5,
+            5
+          ],
+          "visual": "C3",
+          "hp": 1,
+          "max_hp": 1,
+          "weapon_id": "SpiderlingAtk1",
+          "target": [
+            4,
+            5
+          ],
+          "target_visual": "C4",
+          "queued_target": [
+            4,
+            5
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      },
+      {
+        "threat_kind": "hatch_projected_building",
+        "target": [
+          4,
+          3
+        ],
+        "target_visual": "E4",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 5571,
+          "type": "SpiderlingEgg1",
+          "pos": [
+            3,
+            3
+          ],
+          "visual": "E5",
+          "hp": 1,
+          "max_hp": 1,
+          "weapon_id": "SpiderlingHatch1",
+          "target": [
+            -1,
+            -1
+          ],
+          "target_visual": null,
+          "queued_target": [
+            -1,
+            -1
+          ],
+          "has_queued_attack": false
+        },
+        "coverage": {
+          "reason": "attacker_will_die_to_fire",
+          "detail": "attacker will burn before attacking"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}
