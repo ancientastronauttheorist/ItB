@@ -1,5 +1,7 @@
 """Game window detection and screenshot capture for Into the Breach on macOS."""
 
+from __future__ import annotations
+
 import subprocess
 import json
 import time
@@ -38,7 +40,7 @@ def get_window_bounds() -> dict | None:
         tell process "Into the Breach"
             set winPos to position of window 1
             set winSize to size of window 1
-            return (item 1 of winPos) & "," & (item 2 of winPos) & "," & (item 1 of winSize) & "," & (item 2 of winSize)
+            return (item 1 of winPos as text) & "," & (item 2 of winPos as text) & "," & (item 1 of winSize as text) & "," & (item 2 of winSize as text)
         end tell
     end tell
     '''
@@ -48,7 +50,7 @@ def get_window_bounds() -> dict | None:
             capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0:
-            parts = result.stdout.strip().split(", ")
+            parts = [p.strip() for p in result.stdout.strip().split(",")]
             if len(parts) == 4:
                 x, y, w, h = [int(p) for p in parts]
                 return {"x": x, "y": y, "width": w, "height": h}
@@ -69,33 +71,19 @@ def take_screenshot(output_path: str | Path) -> Path:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Use screencapture with window selection by title
-    # -l flag captures a specific window by ID
-    # First, get window ID
-    script = '''
-    tell application "System Events"
-        tell process "Into the Breach"
-            return id of window 1
-        end tell
-    end tell
-    '''
-    result = subprocess.run(
-        ["osascript", "-e", script],
-        capture_output=True, text=True, timeout=5
-    )
-
-    if result.returncode == 0:
-        window_id = result.stdout.strip()
+    bounds = get_window_bounds()
+    if bounds:
+        region = (
+            f"{bounds['x']},{bounds['y']},"
+            f"{bounds['width']},{bounds['height']}"
+        )
         subprocess.run(
-            ["screencapture", "-l", window_id, "-x", str(output_path)],
-            timeout=10
+            ["screencapture", "-x", "-R", region, str(output_path)],
+            timeout=10,
         )
     else:
-        # Fallback: capture entire screen
-        subprocess.run(
-            ["screencapture", "-x", str(output_path)],
-            timeout=10
-        )
+        # Fallback: capture entire screen if accessibility window bounds fail.
+        subprocess.run(["screencapture", "-x", str(output_path)], timeout=10)
 
     return output_path
 

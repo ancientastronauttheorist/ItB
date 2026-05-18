@@ -68,6 +68,7 @@ from src.strategy.achievement_sync import (
     sync_achievement_details,
 )
 from src.strategy.run_planner import recommend_squad_for_run
+from src.strategy.setup_verifier import capture_and_check_setup
 
 BONUS_MECH_DAMAGE_ID = 4
 MECH_DAMAGE_OBJECTIVE_LIMIT = 4
@@ -5522,6 +5523,45 @@ def cmd_recommend_squad(
     for warning in rec.warnings:
         print(f"  warning: {warning}")
 
+    _print_result(result)
+    return result
+
+
+def cmd_verify_setup_screen(
+    *,
+    expected_difficulty: int = 0,
+    require_all_advanced: bool = True,
+) -> dict:
+    """Verify the visible new-run difficulty setup before pressing Start."""
+    check = capture_and_check_setup(
+        expected_difficulty=expected_difficulty,
+        require_all_advanced=require_all_advanced,
+    )
+    result = check.to_dict()
+
+    print("\n=== VERIFY_SETUP_SCREEN ===")
+    actual = result.get("actual_difficulty")
+    actual_label = _DIFFICULTY_LABELS.get(actual, "unknown")
+    expected_label = _DIFFICULTY_LABELS.get(
+        expected_difficulty, str(expected_difficulty)
+    )
+    print(f"  status: {check.status}")
+    print(f"  difficulty: {actual_label} (expected {expected_label})")
+    print("  advanced content:")
+    for row in check.advanced:
+        state = "ON" if row["enabled"] else "OFF"
+        print(
+            f"    - {row['label']}: {state} "
+            f"(colorfulness={row['colorfulness']:.3f})"
+        )
+    if check.click_plan:
+        print("  suggested clicks:")
+        for i, click in enumerate(check.click_plan, start=1):
+            print(
+                f"    {i}. ({click['x']}, {click['y']}) "
+                f"{click['description']}"
+            )
+    print(f"  screenshot: {check.screenshot_path}")
     _print_result(result)
     return result
 

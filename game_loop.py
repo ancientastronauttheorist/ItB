@@ -51,6 +51,7 @@ from src.loop.commands import (
     cmd_deploy_recommended,
     cmd_recommend_squad,
     cmd_recommend_mission,
+    cmd_verify_setup_screen,
     cmd_research_attach_community,
     cmd_research_next,
     cmd_research_probe_mech,
@@ -429,6 +430,18 @@ def main():
              "isn't on the corp map screen, use this to score offline.",
     )
 
+    # verify_setup
+    p_verify_setup = sub.add_parser(
+        "verify_setup",
+        help="Verify new-run difficulty and Advanced Content toggles on screen",
+    )
+    p_verify_setup.add_argument("--difficulty", type=int, default=0)
+    p_verify_setup.add_argument(
+        "--allow-partial-advanced",
+        action="store_true",
+        help="Do not fail when some Advanced Content rows appear disabled",
+    )
+
     # end_turn
     sub.add_parser("end_turn", help="Plan clicks for End Turn")
 
@@ -633,6 +646,11 @@ def main():
         cmd_recommend_mission(
             profile=args.profile,
             island_map_json=args.island_map_json,
+        )
+    elif args.command == "verify_setup":
+        cmd_verify_setup_screen(
+            expected_difficulty=args.difficulty,
+            require_all_advanced=not args.allow_partial_advanced,
         )
     elif args.command == "research_next":
         cmd_research_next(profile=args.profile)
