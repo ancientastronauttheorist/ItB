@@ -1478,6 +1478,16 @@ def _environment_danger_info(board: Board,
         mission_id = str(bridge_data.get("mission_id") or "")
     mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
     final_cave_env = mission_id == "Mission_Final_Cave"
+    deadly_threat_env = mission_id in {
+        "Mission_Airstrike",
+        "Mission_Lightning",
+        "Mission_LightningStorm",
+    }
+    terrain_conversion_env = mission_id in {
+        "Mission_Tides",
+        "Mission_Cataclysm",
+        "Mission_Crack",
+    }
     if isinstance(bridge_data, dict):
         for dt in bridge_data.get("environment_danger_v2", []) or []:
             if not isinstance(dt, (list, tuple)) or len(dt) < 4:
@@ -1485,8 +1495,11 @@ def _environment_danger_info(board: Board,
             try:
                 pos = (int(dt[0]), int(dt[1]))
                 flying_immune = bool(int(dt[4])) if len(dt) >= 5 else False
-                if final_cave_env and bool(int(dt[3])):
-                    flying_immune = False
+                if bool(int(dt[3])):
+                    if final_cave_env or deadly_threat_env:
+                        flying_immune = False
+                    elif terrain_conversion_env:
+                        flying_immune = True
                 danger[pos] = {
                     "damage": int(dt[2]),
                     "lethal": bool(int(dt[3])),

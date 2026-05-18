@@ -279,7 +279,7 @@ pub struct JsonUnit {
     pub base_move: Option<u8>,
     pub weapons: Option<Vec<String>>,
     pub queued_target: Option<Vec<i8>>,
-    pub weapon_damage: Option<u8>,
+    pub weapon_damage: Option<u16>,
     pub weapon_target_behind: Option<bool>,
     pub weapon_push: Option<u8>,
     pub ranged: Option<u8>,
@@ -449,18 +449,29 @@ pub fn board_from_json(json_str: &str)
     // Final Cave's marked tiles are Env_Final falling-rock/tentacle death
     // effects, not ordinary chasm conversion. Treat stale bridge payloads that
     // say flying_immune=1 as lethal to flyers anyway.
-    let final_cave_env = input.mission_id.as_deref() == Some("Mission_Final_Cave");
+    let mission_id = input.mission_id.as_deref();
+    let final_cave_env = mission_id == Some("Mission_Final_Cave");
+    let deadly_threat_env = matches!(mission_id,
+        Some("Mission_Airstrike")
+        | Some("Mission_Lightning")
+        | Some("Mission_LightningStorm")
+    );
+    let terrain_conversion_env = matches!(mission_id,
+        Some("Mission_Tides")
+        | Some("Mission_Cataclysm")
+        | Some("Mission_Crack")
+    );
     // Back-compat fallback: when the 5th element is missing, look at the
     // top-level env_type to decide whether the lethal hazard is terrain-
     // conversion (flying_immune=true) or Deadly Threat (false).
     let env_type_flying_immune: Option<bool> = input.env_type.as_deref().map(|t| {
-        !final_cave_env && matches!(t,
+        !final_cave_env && !deadly_threat_env && (terrain_conversion_env || matches!(t,
             "tidal_or_cataclysm"
             | "cataclysm_or_seismic"
             | "tidal"
             | "cataclysm"
             | "seismic"
-        )
+        ))
     });
     if let Some(v2) = &input.environment_danger_v2 {
         for entry in v2 {
@@ -469,8 +480,10 @@ pub fn board_from_json(json_str: &str)
                 env_danger |= bit;  // v2 entry is also a v1 danger tile
                 if entry[3] != 0 {
                     env_danger_kill |= bit;
-                    let flying_immune = if final_cave_env {
+                    let flying_immune = if final_cave_env || deadly_threat_env {
                         false
+                    } else if terrain_conversion_env {
+                        true
                     } else if entry.len() >= 5 {
                         entry[4] != 0
                     } else {
@@ -626,7 +639,7 @@ pub fn board_from_json(json_str: &str)
                 weapon2,
                 queued_target_x: qtx,
                 queued_target_y: qty,
-                weapon_damage: ju.weapon_damage.unwrap_or(0),
+                weapon_damage: ju.weapon_damage.unwrap_or(0).min(u8::MAX as u16) as u8,
                 weapon_push: ju.weapon_push.unwrap_or(0),
                 weapon_target_behind: ju.weapon_target_behind.unwrap_or(false),
                 web_source_uid: ju.web_source_uid.unwrap_or(0),

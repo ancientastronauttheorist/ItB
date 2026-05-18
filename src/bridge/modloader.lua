@@ -907,6 +907,30 @@ local function dump_state()
             mt = getmetatable(cls_table)
         end
 
+        -- Mission IDs are authoritative when class/field signatures collide.
+        -- Archive Airstrike exposes StartEffect like Seismic/Cataclysm on some
+        -- bridge builds, but bombs still kill flying units. Terrain-conversion
+        -- missions are the ones where flyers hover over the new water/chasm.
+        if mission_id == "Mission_Airstrike"
+                or mission_id == "Mission_Lightning"
+                or mission_id == "Mission_LightningStorm" then
+            env_type = "lightning_or_airstrike"
+            env_kill_default = true
+            env_flying_immune_default = false
+            return
+        elseif mission_id == "Mission_Tides" then
+            env_type = "tidal"
+            env_kill_default = true
+            env_flying_immune_default = true
+            return
+        elseif mission_id == "Mission_Cataclysm"
+                or mission_id == "Mission_Crack" then
+            env_type = "cataclysm_or_seismic"
+            env_kill_default = true
+            env_flying_immune_default = true
+            return
+        end
+
         -- Field-signature fallback for envs without an explicit class match
         -- (mods, edge-case classes). Order tightened: WindDir/Row/Index/StartEffect
         -- are unique enough; Locations is checked LAST since SnowStorm shares it.

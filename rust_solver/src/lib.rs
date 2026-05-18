@@ -1285,7 +1285,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   matching Perfect Strategy run 20260517_175633_388 Mission_Teleporter turn 4.
 //   Cluster Artillery outer corpse absorption remains unchanged. Pre-v144 corpus
 //   archived as `failure_db_snapshot_sim_v143.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 144;
+// v145 - Mission_Airstrike / Mission_Lightning override stale
+//   flying_immune=1 env_danger_v2 payloads so bombs/lightning kill flying mechs;
+//   terrain-conversion missions keep flyer immunity. Pre-v145 corpus archived
+//   as `failure_db_snapshot_sim_v144.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 145;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

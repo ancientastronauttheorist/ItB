@@ -8658,6 +8658,43 @@ mod tests {
     }
 
     #[test]
+    fn test_airstrike_env_ignores_stale_flying_immune_field() {
+        // Archive Airstrike can expose StartEffect like terrain-conversion
+        // envs. Mission ID wins: bombs kill flyers even if the bridge's 5th
+        // env_danger_v2 field is stale flying_immune=1.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+        let json = r#"{
+          "mission_id": "Mission_Airstrike",
+          "tiles": [],
+          "units": [
+            {"uid":2,"type":"TeleMech","x":4,"y":3,
+             "hp":2,"max_hp":2,"team":1,"mech":true,
+             "active":true,"massive":true,"flying":true,
+             "weapons":["Science_Swap"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[4, 3, 1, 1, 1]],
+          "env_type": "cataclysm_or_seismic",
+          "remaining_spawns": 0,
+          "turn": 4,
+          "total_turns": 4
+        }"#;
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        assert!(board.is_env_danger_kill(4, 3));
+        assert!(!board.is_env_danger_flying_immune(4, 3),
+            "Mission_Airstrike danger must not inherit flying immunity");
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        assert_eq!(board.units[0].hp, 0,
+            "Airstrike danger kills flying mechs");
+    }
+
+    #[test]
     fn test_env_danger_v2_legacy_4field_falls_back_to_env_type() {
         // Older recordings emit only 4 fields. Fallback path: when 5th is
         // missing, derive flying_immune from `env_type`.

@@ -854,7 +854,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # matching Perfect Strategy run 20260517_175633_388 Mission_Teleporter turn 4.
 # Cluster Artillery outer corpse absorption remains unchanged. Pre-v144 corpus
 # archived as failure_db_snapshot_sim_v143.jsonl.
-SIMULATOR_VERSION = 144
+# v145 - Mission_Airstrike / Mission_Lightning override stale
+# flying_immune=1 env_danger_v2 payloads so bombs/lightning kill flying mechs;
+# terrain-conversion missions keep flyer immunity. Pre-v145 corpus archived as
+# failure_db_snapshot_sim_v144.jsonl.
+SIMULATOR_VERSION = 145
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
