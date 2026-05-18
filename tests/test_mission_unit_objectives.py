@@ -41,6 +41,18 @@ def test_mission_terraform_protects_terraformer():
     assert resolved["protect"] == ["Terraformer"]
 
 
+def test_mission_civilians_protects_vip_trucks():
+    resolved = resolve_unit_objectives("Mission_Civilians")
+    assert resolved["destroy"] == []
+    assert resolved["protect"] == ["VIP_Truck"]
+
+
+def test_mission_power_tracks_bonus_debris_when_present():
+    resolved = resolve_unit_objectives("Mission_Power")
+    assert resolved["destroy"] == ["BonusDebris"]
+    assert resolved["protect"] == []
+
+
 def test_mission_volatile_protects_volatile_vek():
     resolved = resolve_unit_objectives("Mission_Volatile")
     assert resolved["destroy"] == []

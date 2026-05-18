@@ -34,6 +34,14 @@
     "destroy": [],
     "protect": ["Disposal_Unit"]
   },
+  "Mission_Civilians": {
+    "destroy": [],
+    "protect": ["VIP_Truck"]
+  },
+  "Mission_Power": {
+    "destroy": ["BonusDebris"],
+    "protect": []
+  },
   "Mission_Volatile": {
     "destroy": [],
     "protect": ["GlowingScorpion", "Volatile_Vek"]
