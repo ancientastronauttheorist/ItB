@@ -9,9 +9,11 @@ from __future__ import annotations
 
 from src.strategy.mission_picker import (
     BONUS_ASSET,
+    BONUS_BLOCK,
     BONUS_GRID,
     BONUS_KILL_FIVE,
     BONUS_MECHS,
+    BONUS_PACIFIST,
     derive_squad_tags,
     score_island_map,
     score_mission,
@@ -90,6 +92,26 @@ def _tidal_mission() -> dict:
         "mission_id": "Mission_Battle",
         "bonus_objective_ids": [BONUS_GRID],
         "environment": "Env_TidalWaves",
+    }
+
+
+def _spawn_block_mission() -> dict:
+    """Mission with the block-emergence bonus."""
+    return {
+        "region_id": 5,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [BONUS_BLOCK],
+        "environment": "Env_Null",
+    }
+
+
+def _kill_limit_mission() -> dict:
+    """Mission with the kill-limit / pacifist-style bonus."""
+    return {
+        "region_id": 6,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [BONUS_PACIFIST],
+        "environment": "Env_Null",
     }
 
 
@@ -225,6 +247,35 @@ def test_tidal_no_flying_penalty_only_when_no_flying():
     for line in with_fly["rationale_lines"]:
         assert "no flying" not in line
     assert with_fly["score"] > no_fly["score"]
+
+
+def test_spawn_block_bonus_avoided_for_perfect_island_farming():
+    """Spawn-block objectives are risky unless the turn solver hard-gates them."""
+    ranked = score_island_map(
+        [_spawn_block_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    block = next(e for e in ranked if BONUS_BLOCK in e["bonus_objective_ids"])
+    assert block["score"] < 0
+    assert any("block-spawn" in line for line in block["rationale_lines"])
+
+
+def test_kill_limit_bonus_avoided_for_perfect_island_farming():
+    """Kill-limit objectives are risky unless lethal planning is hard-gated."""
+    ranked = score_island_map(
+        [_kill_limit_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    kill_limit = next(e for e in ranked if BONUS_PACIFIST in e["bonus_objective_ids"])
+    assert kill_limit["score"] < 0
+    rationale = " ".join(kill_limit["rationale_lines"])
+    assert "kill-limit" in rationale
 
 
 # ---------------------------------------------------------------------------

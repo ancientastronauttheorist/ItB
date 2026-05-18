@@ -52,7 +52,7 @@ BONUS_BLOCK = 5        # Block emergence
 BONUS_KILL_FIVE = 6    # Kill at least 7 enemies (Hard difficulty)
 BONUS_DEBRIS = 7       # Destroy mountains/buildings to clear debris
 BONUS_SELFDAMAGE = 8   # Take no self-damage
-BONUS_PACIFIST = 9     # Don't kill any Vek (let buildings/terrain do it)
+BONUS_PACIFIST = 9     # Kill <=N enemies / pacifist-style objective
 
 # Bonus → display symbol used in CLI rationale lines.
 BONUS_SYMBOL = {
@@ -426,7 +426,7 @@ def _bonus_value(bonus_id: int, grid_power: int) -> tuple[int, str]:
     if bonus_id == BONUS_SELFDAMAGE:
         return 2, f"{sym} no self-damage"
     if bonus_id == BONUS_PACIFIST:
-        return 2, f"{sym} pacifist"
+        return 2, f"{sym} kill-limit / pacifist"
     if bonus_id == BONUS_BLOCK:
         return 2, f"{sym} block emergence"
     if bonus_id == BONUS_ASSET:
@@ -468,6 +468,16 @@ def score_mission(
     if len(bonus_ids) >= 2:
         score += 2
         rationale.append("+2  ★★ double-bonus mission")
+    # Perfect Island farming needs every bonus objective, not just grid
+    # safety. These counters require special turn-by-turn planning that the
+    # tactical solver does not hard-gate yet, so strongly prefer other slate
+    # options whenever they exist.
+    if BONUS_BLOCK in bonus_ids:
+        score -= 12
+        rationale.append("-12 block-spawn objective risky for Perfect Island farming")
+    if BONUS_PACIFIST in bonus_ids:
+        score -= 12
+        rationale.append("-12 kill-limit objective risky for Perfect Island farming")
 
     # Penalties: squad/mission mismatch.
     if "train" in mission_tags and "train_defender" not in squad_tags:
