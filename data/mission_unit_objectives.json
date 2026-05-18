@@ -34,6 +34,10 @@
     "destroy": [],
     "protect": ["Disposal_Unit"]
   },
+  "Mission_Volatile": {
+    "destroy": [],
+    "protect": ["GlowingScorpion", "Volatile_Vek"]
+  },
   "Mission_BeetleBoss": {
     "destroy": ["BeetleBoss"],
     "protect": []

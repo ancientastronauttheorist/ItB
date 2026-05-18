@@ -1512,31 +1512,35 @@ def _type_matches_any(name: str, patterns: list[str]) -> bool:
 
 def _protected_objective_patterns(board: Board,
                                   bridge_data: dict | None) -> list[str]:
-    patterns = [
-        s for s in getattr(board, "protect_objective_unit_types", []) or []
-        if isinstance(s, str) and s
-    ]
-    if patterns:
-        return patterns
+    patterns: list[str] = []
+
+    def add_many(values) -> None:
+        for s in values or []:
+            if isinstance(s, str) and s and s not in patterns:
+                patterns.append(s)
+
+    add_many(getattr(board, "protect_objective_unit_types", []) or [])
 
     if isinstance(bridge_data, dict):
-        patterns = [
-            s for s in bridge_data.get("protect_objective_unit_types", []) or []
-            if isinstance(s, str) and s
-        ]
-        if patterns:
-            return patterns
+        add_many(bridge_data.get("protect_objective_unit_types", []) or [])
+        add_many(bridge_data.get("bonus_objective_unit_types", []) or [])
         mission_id = bridge_data.get("mission_id") or getattr(board, "mission_id", "")
     else:
         mission_id = getattr(board, "mission_id", "")
 
     if not mission_id:
-        return []
+        return patterns
     try:
         from src.solver.mission_unit_objectives import resolve_unit_objectives
-        return resolve_unit_objectives(mission_id).get("protect", [])
+        add_many(resolve_unit_objectives(mission_id).get("protect", []))
     except Exception:
-        return []
+        pass
+    try:
+        from src.solver.mission_bonus_objectives import resolve_bonus_types
+        add_many(resolve_bonus_types(mission_id))
+    except Exception:
+        pass
+    return patterns
 
 
 def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dict:

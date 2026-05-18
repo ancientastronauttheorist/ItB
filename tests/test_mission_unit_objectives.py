@@ -41,6 +41,13 @@ def test_mission_terraform_protects_terraformer():
     assert resolved["protect"] == ["Terraformer"]
 
 
+def test_mission_volatile_protects_volatile_vek():
+    resolved = resolve_unit_objectives("Mission_Volatile")
+    assert resolved["destroy"] == []
+    assert "GlowingScorpion" in resolved["protect"]
+    assert "Volatile_Vek" in resolved["protect"]
+
+
 def test_boss_missions_destroy_the_leader_units():
     cases = {
         "Mission_BeetleBoss": "BeetleBoss",
