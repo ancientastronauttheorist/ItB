@@ -9,6 +9,7 @@ import json
 import os
 import re
 
+from src.capture.save_parser import SAVE_DIR, parse_save_file
 from src.model.board import Board
 from src.bridge.protocol import read_state
 
@@ -92,6 +93,62 @@ def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
     except OSError:
         return {}
     return _parse_conveyor_belts_from_save_text(content)
+
+
+def _read_active_bonus_objective_ids_from_save() -> list[int]:
+    """Return active mission BonusObjs from saveData.lua.
+
+    The Lua bridge emits the full island map only between missions. During
+    combat, the active mission's chosen BonusObjs still live in saveData under
+    GAME.Missions[<region mission slot>], while RegionData tells us which slot
+    is currently being fought.
+    """
+    save_path = SAVE_DIR / "profile_Alpha" / "saveData.lua"
+    if not save_path.exists():
+        return []
+    try:
+        data = parse_save_file(save_path)
+    except Exception:
+        return []
+
+    region_data = data.get("RegionData", {})
+    if not isinstance(region_data, dict):
+        return []
+    battle_region = region_data.get("iBattleRegion", -1)
+    if not isinstance(battle_region, int) or battle_region < 0:
+        return []
+    region = region_data.get(f"region{battle_region}", {})
+    if not isinstance(region, dict):
+        return []
+    mission_slot = region.get("mission", "")
+    if not isinstance(mission_slot, str):
+        return []
+    match = re.fullmatch(r"Mission(\d+)", mission_slot)
+    if not match:
+        return []
+
+    missions = data.get("GAME", {}).get("Missions", {})
+    if not isinstance(missions, dict):
+        return []
+    mission = missions.get(int(match.group(1)), {})
+    if not isinstance(mission, dict):
+        return []
+    bonus_objs = mission.get("BonusObjs", {})
+    out: list[int] = []
+    if isinstance(bonus_objs, dict):
+        items = sorted(
+            (int(k), v) for k, v in bonus_objs.items()
+            if isinstance(k, int) or (isinstance(k, str) and k.isdigit())
+        )
+        values = [v for _k, v in items]
+    elif isinstance(bonus_objs, list):
+        values = bonus_objs
+    else:
+        values = []
+    for value in values:
+        if isinstance(value, int):
+            out.append(value)
+    return out
 
 
 def _read_freeze_mines_from_save() -> set[tuple[int, int]]:
@@ -660,6 +717,11 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     data = read_state()
     if data is None:
         return None, None
+
+    if "bonus_objective_ids" not in data:
+        bonus_ids = _read_active_bonus_objective_ids_from_save()
+        if bonus_ids:
+            data["bonus_objective_ids"] = bonus_ids
 
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a

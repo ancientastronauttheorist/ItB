@@ -30,6 +30,7 @@ BLOCKING_KINDS = {
     "bigbomb_lost",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
+    "mech_damage_objective_failed",
 }
 
 NON_OVERRIDABLE_KINDS = {
@@ -41,6 +42,7 @@ NON_OVERRIDABLE_KINDS = {
     "objective_building_hp_loss",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
+    "mech_damage_objective_failed",
 }
 
 FINAL_CAVE_EMERGENCY_PYLON_KINDS = {
@@ -85,6 +87,7 @@ LOSS_KINDS = {
     "protected_objective_unit_lost": "protected_objective_units_alive",
     "protected_objective_unit_unfrozen": "protected_objective_units_frozen",
     "mech_hp_loss": "mech_hp_total",
+    "mech_damage_objective_failed": "mech_damage_taken_total",
 }
 
 
@@ -274,6 +277,31 @@ def audit_plan_safety(current: dict[str, Any],
                 blocking=block_mech_hp_loss,
             ))
 
+    cur_mech_damage = _int_or_none(current.get("mech_damage_taken_total"))
+    pred_mech_damage = _int_or_none(predicted.get("mech_damage_taken_total"))
+    cur_mech_damage_limit = _int_or_none(
+        current.get("mech_damage_objective_limit")
+    )
+    pred_mech_damage_limit = _int_or_none(
+        predicted.get("mech_damage_objective_limit")
+    )
+    mech_damage_limit = cur_mech_damage_limit or pred_mech_damage_limit
+    if (
+        mech_damage_limit is not None
+        and cur_mech_damage is not None
+        and pred_mech_damage is not None
+    ):
+        compared.append("mech_damage_taken_total")
+        compared.append("mech_damage_objective_limit")
+        if pred_mech_damage >= mech_damage_limit:
+            violations.append(_violation(
+                "mech_damage_objective_failed",
+                cur_mech_damage,
+                pred_mech_damage,
+                "Predicted mech damage reaches the mission objective limit.",
+                {"limit": mech_damage_limit},
+            ))
+
     if "mechs_acid" in current or "mechs_acid" in predicted:
         compared.append("mechs_acid")
         current_acid_uids = {
@@ -450,6 +478,8 @@ def audit_plan_safety(current: dict[str, Any],
             "pods_present": cur_pods,
             "mechs_alive": cur_mechs,
             "mech_hp_total": cur_mech_hp,
+            "mech_damage_taken_total": cur_mech_damage,
+            "mech_damage_objective_limit": cur_mech_damage_limit,
             "mechs_acid": _list_or_empty(current.get("mechs_acid")),
             "mechs_fire": _list_or_empty(current.get("mechs_fire")),
             "mechs_webbed": _list_or_empty(current.get("mechs_webbed")),
@@ -473,6 +503,8 @@ def audit_plan_safety(current: dict[str, Any],
             "pods_present": pred_pods,
             "mechs_alive": pred_mechs,
             "mech_hp_total": pred_mech_hp,
+            "mech_damage_taken_total": pred_mech_damage,
+            "mech_damage_objective_limit": pred_mech_damage_limit,
             "mechs_acid": _list_or_empty(predicted.get("mechs_acid")),
             "mechs_fire": _list_or_empty(predicted.get("mechs_fire")),
             "mechs_webbed": _list_or_empty(predicted.get("mechs_webbed")),

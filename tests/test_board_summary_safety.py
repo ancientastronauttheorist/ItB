@@ -92,6 +92,41 @@ def test_summary_excludes_friendly_objective_units_from_mech_loss():
     ]
 
 
+def test_summary_tracks_mech_damage_objective_from_bonus_ids():
+    data = _bridge_with_mech()
+    data["bonus_objective_ids"] = [4, 1]
+    data["units"].append({
+        "uid": 12,
+        "type": "IgniteMech",
+        "x": 3,
+        "y": 5,
+        "hp": 3,
+        "max_hp": 3,
+        "team": 1,
+        "mech": True,
+        "move": 4,
+        "weapons": ["Ranged_Ignite"],
+        "active": True,
+        "can_move": True,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mech_damage_taken_total"] == 1
+    assert summary["mech_damage_objective_limit"] == 4
+
+
+def test_summary_omits_mech_damage_objective_without_bonus_id():
+    data = _bridge_with_mech()
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mech_damage_taken_total"] == 1
+    assert summary["mech_damage_objective_limit"] is None
+
+
 def test_summary_tracks_protected_objective_units_from_mission_metadata():
     data = _bridge_with_mech()
     data["mission_id"] = "Mission_FreezeBots"

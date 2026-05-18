@@ -448,6 +448,50 @@ def test_mech_hp_loss_blocks_for_perfect_battle_mode():
     assert safety_loss_profile(audit)["label"] == "mech_hp_loss"
 
 
+def test_mech_damage_objective_limit_blocks_and_is_not_dirty_consentable():
+    audit = audit_plan_safety(
+        _summary(
+            mech_hp_total=7,
+            mech_damage_taken_total=3,
+            mech_damage_objective_limit=4,
+        ),
+        _summary(
+            mech_hp_total=6,
+            mech_damage_taken_total=4,
+            mech_damage_objective_limit=4,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["blocking"] is True
+    assert plan_requires_safety_block(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert [v["kind"] for v in audit["violations"]] == [
+        "mech_hp_loss",
+        "mech_damage_objective_failed",
+    ]
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_mech_damage_objective_allows_staying_below_limit():
+    audit = audit_plan_safety(
+        _summary(
+            mech_hp_total=8,
+            mech_damage_taken_total=2,
+            mech_damage_objective_limit=4,
+        ),
+        _summary(
+            mech_hp_total=7,
+            mech_damage_taken_total=3,
+            mech_damage_objective_limit=4,
+        ),
+    )
+
+    assert audit["status"] == "WARN"
+    assert audit["blocking"] is False
+    assert [v["kind"] for v in audit["violations"]] == ["mech_hp_loss"]
+
+
 def test_uncollected_pod_loss_blocks_plan():
     audit = audit_plan_safety(
         _summary(pods_present=1),

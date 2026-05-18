@@ -69,6 +69,9 @@ from src.strategy.achievement_sync import (
 )
 from src.strategy.run_planner import recommend_squad_for_run
 
+BONUS_MECH_DAMAGE_ID = 4
+MECH_DAMAGE_OBJECTIVE_LIMIT = 4
+
 SNAPSHOT_DIR = Path(__file__).parent.parent.parent / "snapshots"
 SAVE_DIR = Path.home() / "Library" / "Application Support" / "IntoTheBreach"
 
@@ -1614,6 +1617,21 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         if m.is_player and m.is_mech and not getattr(m, "is_extra_tile", False)
     ]
     live_player_mechs = [m for m in player_mechs if m.hp > 0]
+    mech_damage_taken_total = sum(
+        max(0, int(getattr(m, "max_hp", 0)) - max(0, int(getattr(m, "hp", 0))))
+        for m in player_mechs
+    )
+    bonus_objective_ids = []
+    if isinstance(bridge_data, dict):
+        bonus_objective_ids = [
+            b for b in (bridge_data.get("bonus_objective_ids") or [])
+            if isinstance(b, int)
+        ]
+    mech_damage_objective_limit = (
+        MECH_DAMAGE_OBJECTIVE_LIMIT
+        if BONUS_MECH_DAMAGE_ID in bonus_objective_ids
+        else None
+    )
     for m in live_player_mechs:
         pos = (m.x, m.y)
         danger_info = danger.get(pos)
@@ -1672,6 +1690,8 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "enemy_hp_total": sum(e.hp for e in board.enemies()),
         "mechs_alive": len(live_player_mechs),
         "mech_hp_total": sum(max(0, m.hp) for m in player_mechs),
+        "mech_damage_taken_total": mech_damage_taken_total,
+        "mech_damage_objective_limit": mech_damage_objective_limit,
         "bigbomb_alive": bool(getattr(board, "bigbomb_alive", False)),
         "mech_hp": [
             {
