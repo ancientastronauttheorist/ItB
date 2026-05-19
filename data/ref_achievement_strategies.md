@@ -21,6 +21,7 @@ evaluation weights when targeting that achievement.
 - [x] Immovable Objects (41.7%) -- Block 100 Vek across all games (cumulative)
 - [x] Sustainable Energy (39.1%) -- Finish 3 Corporate Islands without dropping below 4 Grid Power
 - [x] Humanity's Savior (27.8%) -- Rescue 100,000 civilians across all games
+- [x] Perfect Strategy (23.3%) -- Collect 10 Perfect Island rewards across all games
 - [x] Mass Displacement (23.0%) -- Push 3 enemies with single attack (Steel Judoka)
 - [x] Scorched Earth (20.5%) -- End battle with 12 tiles on Fire (Flame Behemoths)
 - [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
@@ -155,6 +156,7 @@ evaluation weights when targeting that achievement.
 
 ### Perfect Strategy (23.3%)
 - **Requirement:** Collect 10 Perfect Island rewards across all games (cumulative).
+- **Status:** Completed on 2026-05-19 after Rusting Hulks secured an Archive Inc. Perfect Island in run `20260518_215903_654`.
 - **Squad:** Any
 - **Strategy:** A Perfect Island reward is given when no objectives are failed on an entire island. Play clean islands across runs.
 - **Bot approach:** Weight bonus objectives highly. The bot's standard play should aim for perfect islands.

@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-18T01:01:21.334571",
+    "last_steam_sync": "2026-05-19T10:50:27.831381",
     "last_steam_total": 70,
-    "last_steam_unlocked": 33
+    "last_steam_unlocked": 34
   },
   "achievements": {
     "rift_walkers": [
@@ -589,7 +589,7 @@
         "description": "Collect 10 Perfect Island rewards across all games",
         "type": "cumulative",
         "global_unlock_pct": 23.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Complete islands without failing any objectives (including time pods). 1-objective missions are easier for perfect completion. 10 perfect islands total across all games.",
         "setup": "Easy difficulty. 1-objective missions. Protect all time pods.",
         "pitfalls": "Failed bonus objectives break the perfect island. Time pods must be protected too."

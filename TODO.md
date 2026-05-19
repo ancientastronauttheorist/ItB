@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-33 of 70 completed (latest Steam sync on 2026-05-17; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 37 remaining, sorted by global unlock % (easiest first).
+34 of 70 completed (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 36 remaining, sorted by global unlock % (easiest first).
 
-Current Blitzkrieg note: Chain Attack is complete in run `20260517_105759_344`, confirmed by the 2026-05-17 Steam sync after a full Blitzkrieg victory with Building Chain powered. The same sync also promoted Ramming Speed and Squads Victory. Previous Hard Victory hardening remains in `docs/final_cave_hard_rusting_hulks_retrospective.md`.
+Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks collected the final Archive Inc. Perfect Island reward in run `20260518_215903_654`. The key live-loop note is in `docs/perfect_strategy_rusting_hulks_retrospective.md`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -24,7 +24,7 @@ Current Blitzkrieg note: Chain Attack is complete in run `20260517_105759_344`, 
 - [x] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
 - [x] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg] — completed in run `20260517_105759_344`
-- [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
+- [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative] — completed with Rusting Hulks after Archive Inc. Perfect Island in run `20260518_215903_654`
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
@@ -79,7 +79,7 @@ Current Blitzkrieg note: Chain Attack is complete in run `20260517_105759_344`, 
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (30, from Steam sync + live confirmations)
+### Already Completed (34, from Steam sync + live confirmations)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -97,7 +97,10 @@ Current Blitzkrieg note: Chain Attack is complete in run `20260517_105759_344`, 
 - [x] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle  [Rusting Hulks]
 - [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself  [Zenith Guard]
 - [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle  [Zenith Guard]
+- [x] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch  [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
+- [x] Chain Attack (24.8%) — Chain Whip through 10 tiles  [Blitzkrieg]
+- [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire  [Flame Behemoths]
@@ -110,6 +113,7 @@ Current Blitzkrieg note: Chain Attack is complete in run `20260517_105759_344`, 
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
+- [x] Squads Victory — Beat game with 4 different Squads
 
 
 ## Development Phases

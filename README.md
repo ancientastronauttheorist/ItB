@@ -2,11 +2,11 @@
 
 An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **33 / 70 achievements earned** (latest Steam sync on 2026-05-18; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
+Status: **34 / 70 achievements earned** (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
 
-Recent unlocks: **Ramming Speed**, **Chain Attack**, and **Squads Victory** were confirmed by the 2026-05-18 sync after the 2026-05-17 Blitzkrieg victory push; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
+Recent unlocks: **Perfect Strategy** was confirmed by the 2026-05-19 sync after a Rusting Hulks Easy Archive Perfect Island reward; **Ramming Speed**, **Chain Attack**, and **Squads Victory** were confirmed by the 2026-05-18 sync after the 2026-05-17 Blitzkrieg victory push; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
 
-Current live-run milestone: **Chain Attack completed** with Blitzkrieg in run `20260517_105759_344`; Steam confirmed the squad's Chain Whip finally threaded a 10-tile chain. The same victory also advanced the cumulative **Squads Victory** achievement. Previous milestone: **Hard Victory completed** with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`.
+Current live-run milestone: **Perfect Strategy completed** with Rusting Hulks in run `20260518_215903_654`; Steam confirmed the cumulative 10th Perfect Island reward after the Archive Inc. island clear. Previous milestone: **Chain Attack completed** with Blitzkrieg in run `20260517_105759_344`, which also advanced **Squads Victory**.
 
 ---
 
