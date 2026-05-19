@@ -4,7 +4,7 @@
 
 34 of 70 completed (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 36 remaining, sorted by global unlock % (easiest first).
 
-Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks collected the final Archive Inc. Perfect Island reward in run `20260518_215903_654`. The key live-loop note is in `docs/perfect_strategy_rusting_hulks_retrospective.md`.
+Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks collected the final Pinnacle Robotics Perfect Island reward in run `20260519_133059_179`. Archive Inc. run `20260518_215903_654` set up 9/10; the Pinnacle reward made it 10/10. The key live-loop note is in `docs/perfect_strategy_rusting_hulks_retrospective.md`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -24,7 +24,7 @@ Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Ste
 - [x] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
 - [x] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg] — completed in run `20260517_105759_344`
-- [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative] — completed with Rusting Hulks after Archive Inc. Perfect Island in run `20260518_215903_654`
+- [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative] — completed with Rusting Hulks after Pinnacle Robotics Perfect Island in run `20260519_133059_179`
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
