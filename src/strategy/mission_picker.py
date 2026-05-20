@@ -191,6 +191,15 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
     # Survive / battle
     "Mission_Survive":        ["protect_buildings"],
     "Mission_Battle":         ["high_threat"],
+    "Mission_Tanks":          ["fragile_ally_objective"],
+    "Mission_Terraform":      ["terraform_grass_counter"],
+    "Mission_Holes":          ["mite_counter"],
+    "Mission_Dam":            ["mite_counter"],
+    "Mission_Teleporter":     ["mite_counter"],
+    # Custom Archive objective: "End with 8 spaces on fire". The tactical
+    # solver does not hard-gate this counter yet, so it is unsafe for
+    # Perfect Island farming even for Flame Behemoths.
+    "Mission_ForestFire":     ["fire_tile_counter"],
     # Final / boss
     "Mission_Final":          ["high_threat", "boss"],
     # Critical buildings (Solar / Wind / Power) — protect 2 specific buildings
@@ -478,6 +487,24 @@ def score_mission(
     if BONUS_PACIFIST in bonus_ids:
         score -= 12
         rationale.append("-12 kill-limit objective risky for Perfect Island farming")
+    if "fire_tile_counter" in mission_tags:
+        score -= 50
+        rationale.append(
+            "-50 fire-tile counter objective not solver-gated — hard veto"
+        )
+    if "fragile_ally_objective" in mission_tags:
+        score -= 20
+        rationale.append("-20 fragile ally objective risky for Perfect Island farming")
+    if "terraform_grass_counter" in mission_tags:
+        score -= 50
+        rationale.append(
+            "-50 terraform-grass counter objective not fully solver-gated — hard veto"
+        )
+    if "mite_counter" in mission_tags:
+        score -= 50
+        rationale.append(
+            "-50 mite counter objective not fully solver-gated — hard veto"
+        )
 
     # Penalties: squad/mission mismatch.
     if "train" in mission_tags and "train_defender" not in squad_tags:

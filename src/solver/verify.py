@@ -861,7 +861,30 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v146: frozen buildings thaw on damage instead of taking building/grid damage,
 # and Mission_FreezeBldg objective tiles are scored from live thaw state.
 # Pre-v146 corpus archived as failure_db_snapshot_sim_v145.jsonl.
-SIMULATOR_VERSION = 146
+# v147: Flame Shielding protects player mechs only, not controllable mission
+# allies such as Archive_Tank. Mission_Tanks Archive Tanks are also surfaced as
+# protected objective units. Pre-v147 corpus archived as
+# failure_db_snapshot_sim_v146.jsonl.
+# v148: Mission_Wind exports live WindDir and simulates wind row pushes before
+# Vek attacks, including bump/grid damage. Pre-v148 corpus archived as
+# failure_db_snapshot_sim_v147.jsonl.
+# v149: Attack-phase landing effects collect/destroy Time Pods, so Aerial Bombs
+# landing on a pod records collection instead of leaving the pod in predicted
+# state. Pre-v149 corpus archived as failure_db_snapshot_sim_v148.jsonl.
+# v150: Aerial Bombs transit over Mission_FreezeBldg frozen objective buildings
+# thaws and damages the building, with grid loss deferred to enemy-turn settle.
+# Pre-v150 corpus archived as failure_db_snapshot_sim_v149.jsonl.
+# v151: Minor Vek such as Totems still count as enemies_killed for scoring, but
+# no longer advance mission.KilledVek objectives like "Kill at least 5 Enemies".
+# Pre-v151 corpus archived as failure_db_snapshot_sim_v150.jsonl.
+# v152: Stale non-egg `web_source_uid` from bridge input is replaced when an
+# alive queued web attack currently targets the webbed unit's tile. Fixes false
+# web-clears after moving the wrong stale source. Pre-v152 corpus archived as
+# failure_db_snapshot_sim_v151.jsonl.
+# v153: Firefly Leader (`FireflyAtkB` / Burning Thorax) fires paired
+# projectiles in both the queued direction and the opposite direction.
+# Pre-v153 corpus archived as failure_db_snapshot_sim_v152.jsonl.
+SIMULATOR_VERSION = 154
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

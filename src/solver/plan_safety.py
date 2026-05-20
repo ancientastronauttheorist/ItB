@@ -21,6 +21,7 @@ BLOCKING_KINDS = {
     "objective_building_destroyed",
     "objective_building_hp_loss",
     "pod_lost",
+    "pod_unrecovered_final",
     "mech_lost",
     "mech_acid",
     "mech_fire",
@@ -30,8 +31,14 @@ BLOCKING_KINDS = {
     "bigbomb_lost",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
+    "destroy_objective_unit_alive_final",
     "mech_damage_objective_failed",
     "freeze_building_objective_failed",
+    "terraform_grass_objective_failed",
+    "mountain_objective_failed",
+    "mite_objective_failed",
+    "kill_objective_failed",
+    "kill_limit_objective_failed",
 }
 
 NON_OVERRIDABLE_KINDS = {
@@ -41,10 +48,17 @@ NON_OVERRIDABLE_KINDS = {
     "bigbomb_lost",
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "pod_unrecovered_final",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
+    "destroy_objective_unit_alive_final",
     "mech_damage_objective_failed",
     "freeze_building_objective_failed",
+    "terraform_grass_objective_failed",
+    "mountain_objective_failed",
+    "mite_objective_failed",
+    "kill_objective_failed",
+    "kill_limit_objective_failed",
 }
 
 FINAL_CAVE_EMERGENCY_PYLON_KINDS = {
@@ -69,6 +83,14 @@ FINAL_CAVE_RESIST_GAMBLE_ALLOWED_KINDS = {
     "pylon_hp_loss",
 }
 
+FINAL_BOMB_DIRTY_ALLOWED_KINDS = {
+    "grid_damage",
+    "building_destroyed",
+    "building_hp_loss",
+    "objective_building_destroyed",
+    "objective_building_hp_loss",
+}
+
 
 LOSS_KINDS = {
     "grid_damage": "grid_power",
@@ -79,6 +101,7 @@ LOSS_KINDS = {
     "objective_building_destroyed": "objective_buildings_alive",
     "objective_building_hp_loss": "objective_building_hp_total",
     "pod_lost": "pods_present",
+    "pod_unrecovered_final": "pods_present",
     "mech_lost": "mechs_alive",
     "mech_acid": "mechs_acid",
     "mech_fire": "mechs_fire",
@@ -88,9 +111,15 @@ LOSS_KINDS = {
     "bigbomb_lost": "bigbomb_alive",
     "protected_objective_unit_lost": "protected_objective_units_alive",
     "protected_objective_unit_unfrozen": "protected_objective_units_frozen",
+    "destroy_objective_unit_alive_final": "destroy_objective_units_alive",
     "mech_hp_loss": "mech_hp_total",
     "mech_damage_objective_failed": "mech_damage_taken_total",
     "freeze_building_objective_failed": "freeze_buildings_thawed",
+    "terraform_grass_objective_failed": "terraform_grass_remaining",
+    "mountain_objective_failed": "mission_mountains_destroyed",
+    "mite_objective_failed": "mites_remaining",
+    "kill_objective_failed": "mission_kills_done",
+    "kill_limit_objective_failed": "mission_kills_done",
 }
 
 
@@ -234,12 +263,27 @@ def audit_plan_safety(current: dict[str, Any],
                 "Predicted outcome loses objective-building HP.",
             ))
 
+    mission_id = current.get("mission_id") or predicted.get("mission_id")
+    cur_turn = _int_or_none(current.get("turn"))
+    pred_turn = _int_or_none(predicted.get("turn"))
+    cur_total_turns = _int_or_none(current.get("total_turns"))
+    pred_total_turns = _int_or_none(predicted.get("total_turns"))
+    final_turn = (
+        cur_turn is not None
+        and cur_total_turns is not None
+        and cur_turn >= cur_total_turns
+    ) or (
+        pred_turn is not None
+        and pred_total_turns is not None
+        and pred_turn >= pred_total_turns
+    )
+
     cur_pods = _int_or_none(current.get("pods_present"))
     pred_pods = _int_or_none(predicted.get("pods_present"))
     if cur_pods is not None and pred_pods is not None:
         compared.append("pods_present")
+        pods_collected = _int_or_none(predicted.get("pods_collected")) or 0
         if pred_pods < cur_pods:
-            pods_collected = _int_or_none(predicted.get("pods_collected")) or 0
             unaccounted = cur_pods - pred_pods - max(0, pods_collected)
             if unaccounted > 0:
                 violations.append(_violation(
@@ -249,6 +293,136 @@ def audit_plan_safety(current: dict[str, Any],
                     "Predicted outcome loses a pod without recording collection.",
                     {"pods_collected": pods_collected},
                 ))
+        if final_turn and pred_pods > 0:
+            violations.append(_violation(
+                "pod_unrecovered_final",
+                cur_pods,
+                pred_pods,
+                "Predicted final-turn outcome leaves a Time Pod unrecovered.",
+                {"pods_collected": pods_collected},
+            ))
+
+    cur_grass = _int_or_none(current.get("terraform_grass_remaining"))
+    pred_grass = _int_or_none(predicted.get("terraform_grass_remaining"))
+    if mission_id == "Mission_Terraform" and cur_grass is not None and pred_grass is not None:
+        compared.append("terraform_grass_remaining")
+        if final_turn and pred_grass > 0:
+            violations.append(_violation(
+                "terraform_grass_objective_failed",
+                cur_grass,
+                pred_grass,
+                "Predicted final-turn outcome leaves Terraform grassland uncleared.",
+                {
+                    "current_tiles": _list_or_empty(current.get("terraform_grass_tiles")),
+                    "predicted_tiles": _list_or_empty(predicted.get("terraform_grass_tiles")),
+                },
+            ))
+
+    cur_mountain_target = _int_or_none(current.get("mission_mountain_target"))
+    pred_mountain_target = _int_or_none(predicted.get("mission_mountain_target"))
+    mountain_target = cur_mountain_target or pred_mountain_target
+    cur_mountains = _int_or_none(current.get("mission_mountains_destroyed"))
+    pred_mountains = _int_or_none(predicted.get("mission_mountains_destroyed"))
+    if mountain_target and cur_mountains is not None and pred_mountains is not None:
+        compared.append("mission_mountains_destroyed")
+        if final_turn and pred_mountains < mountain_target:
+            violations.append(_violation(
+                "mountain_objective_failed",
+                cur_mountains,
+                pred_mountains,
+                "Predicted final-turn outcome leaves the mountain objective short.",
+                {
+                    "target": mountain_target,
+                    "planned_mountains": _int_or_none(
+                        predicted.get("mission_mountains_planned")
+                    ) or 0,
+                    "current_tiles": _list_or_empty(
+                        current.get("mission_mountain_tiles")
+                    ),
+                    "predicted_tiles": _list_or_empty(
+                        predicted.get("mission_mountain_tiles")
+                    ),
+                },
+            ))
+
+    cur_mites = _int_or_none(current.get("mites_remaining"))
+    pred_mites = _int_or_none(predicted.get("mites_remaining"))
+    cur_mites_tracked = (
+        current.get("mites_status_tracked") is True
+        or isinstance(current.get("mechs_infected"), list)
+    )
+    pred_mites_tracked = (
+        predicted.get("mites_status_tracked") is True
+        or isinstance(predicted.get("mechs_infected"), list)
+    )
+    if (
+        cur_mites is not None
+        and pred_mites is not None
+        and (cur_mites_tracked or pred_mites_tracked or cur_mites > 0 or pred_mites > 0)
+    ):
+        compared.append("mites_remaining")
+        audited_pred_mites = pred_mites
+        if cur_mites_tracked and not pred_mites_tracked and cur_mites > pred_mites:
+            audited_pred_mites = cur_mites
+        if final_turn and audited_pred_mites > 0:
+            violations.append(_violation(
+                "mite_objective_failed",
+                cur_mites,
+                audited_pred_mites,
+                "Predicted final-turn outcome leaves Vek Mites attached.",
+                {
+                    "current_mechs": _list_or_empty(current.get("mechs_infected")),
+                    "predicted_mechs": _list_or_empty(predicted.get("mechs_infected")),
+                    "predicted_status_tracked": pred_mites_tracked,
+                },
+            ))
+
+    cur_kill_target = _int_or_none(current.get("mission_kill_target"))
+    pred_kill_target = _int_or_none(predicted.get("mission_kill_target"))
+    kill_target = cur_kill_target or pred_kill_target
+    cur_kill_limit = _int_or_none(current.get("mission_kill_limit"))
+    pred_kill_limit = _int_or_none(predicted.get("mission_kill_limit"))
+    kill_limit = cur_kill_limit or pred_kill_limit
+    cur_kills_done = _int_or_none(current.get("mission_kills_done"))
+    pred_kills_done = _int_or_none(predicted.get("mission_kills_done"))
+    if (
+        kill_target is not None
+        and kill_target > 0
+        and cur_kills_done is not None
+        and pred_kills_done is not None
+    ):
+        compared.append("mission_kill_target")
+        compared.append("mission_kills_done")
+        if final_turn and pred_kills_done < kill_target:
+            violations.append(_violation(
+                "kill_objective_failed",
+                cur_kills_done,
+                pred_kills_done,
+                "Predicted final-turn outcome does not complete the kill objective.",
+                {
+                    "target": kill_target,
+                    "planned_kills": _int_or_none(predicted.get("mission_kills_planned")),
+                },
+            ))
+    if (
+        kill_limit is not None
+        and kill_limit > 0
+        and cur_kills_done is not None
+        and pred_kills_done is not None
+    ):
+        compared.append("mission_kill_limit")
+        compared.append("mission_kills_done")
+        if pred_kills_done > kill_limit:
+            violations.append(_violation(
+                "kill_limit_objective_failed",
+                cur_kills_done,
+                pred_kills_done,
+                "Predicted outcome exceeds the kill-limit objective.",
+                {
+                    "limit": kill_limit,
+                    "planned_kills": _int_or_none(predicted.get("mission_kills_planned")),
+                },
+            ))
 
     cur_mechs = _int_or_none(current.get("mechs_alive"))
     pred_mechs = _int_or_none(predicted.get("mechs_alive"))
@@ -427,13 +601,24 @@ def audit_plan_safety(current: dict[str, Any],
                 },
             ))
 
+    cur_destroy = _int_or_none(current.get("destroy_objective_units_alive"))
+    pred_destroy = _int_or_none(predicted.get("destroy_objective_units_alive"))
+    if cur_destroy is not None and pred_destroy is not None:
+        compared.append("destroy_objective_units_alive")
+        if final_turn and pred_destroy > 0:
+            violations.append(_violation(
+                "destroy_objective_unit_alive_final",
+                cur_destroy,
+                pred_destroy,
+                "Predicted final-turn outcome leaves one or more destroy-objective units alive.",
+                {
+                    "current_units": _list_or_empty(current.get("destroy_objective_units")),
+                    "predicted_units": _list_or_empty(predicted.get("destroy_objective_units")),
+                },
+            ))
+
     cur_frozen = _int_or_none(current.get("protected_objective_units_frozen"))
     pred_frozen = _int_or_none(predicted.get("protected_objective_units_frozen"))
-    mission_id = current.get("mission_id") or predicted.get("mission_id")
-    cur_turn = _int_or_none(current.get("turn"))
-    pred_turn = _int_or_none(predicted.get("turn"))
-    cur_total_turns = _int_or_none(current.get("total_turns"))
-    pred_total_turns = _int_or_none(predicted.get("total_turns"))
     if (
         mission_id == "Mission_FreezeBots"
         and cur_frozen is not None
@@ -468,15 +653,6 @@ def audit_plan_safety(current: dict[str, Any],
         compared.append("freeze_buildings_thawed")
         if pred_freeze_alive is not None:
             compared.append("freeze_buildings_alive")
-        final_turn = (
-            cur_turn is not None
-            and cur_total_turns is not None
-            and cur_turn >= cur_total_turns
-        ) or (
-            pred_turn is not None
-            and pred_total_turns is not None
-            and pred_turn >= pred_total_turns
-        )
         impossible = pred_freeze_alive is not None and pred_freeze_alive < freeze_target
         if impossible or (final_turn and pred_freeze_thawed < freeze_target):
             violations.append(_violation(
@@ -530,11 +706,21 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_on_danger": _list_or_empty(current.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(current.get("mechs_disabled")),
             "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
+            "destroy_objective_units_alive": cur_destroy,
             "protected_objective_units_alive": cur_protected,
             "protected_objective_units_frozen": cur_frozen,
             "freeze_building_target": cur_freeze_target,
             "freeze_buildings_alive": cur_freeze_alive,
             "freeze_buildings_thawed": cur_freeze_thawed,
+            "terraform_grass_remaining": cur_grass,
+            "mission_mountain_target": cur_mountain_target,
+            "mission_mountains_destroyed": cur_mountains,
+            "mites_remaining": cur_mites,
+            "mites_status_tracked": cur_mites_tracked,
+            "mechs_infected": _list_or_empty(current.get("mechs_infected")),
+            "mission_kill_target": cur_kill_target,
+            "mission_kill_limit": cur_kill_limit,
+            "mission_kills_done": cur_kills_done,
         },
         "predicted": {
             "mission_id": mission_id,
@@ -558,11 +744,22 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_on_danger": _list_or_empty(predicted.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(predicted.get("mechs_disabled")),
             "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
+            "destroy_objective_units_alive": pred_destroy,
             "protected_objective_units_alive": pred_protected,
             "protected_objective_units_frozen": pred_frozen,
             "freeze_building_target": pred_freeze_target,
             "freeze_buildings_alive": pred_freeze_alive,
             "freeze_buildings_thawed": pred_freeze_thawed,
+            "terraform_grass_remaining": pred_grass,
+            "mission_mountain_target": pred_mountain_target,
+            "mission_mountains_destroyed": pred_mountains,
+            "mites_remaining": pred_mites,
+            "mites_status_tracked": pred_mites_tracked,
+            "mechs_infected": _list_or_empty(predicted.get("mechs_infected")),
+            "mission_kill_target": pred_kill_target,
+            "mission_kill_limit": pred_kill_limit,
+            "mission_kills_done": pred_kills_done,
+            "mission_kills_planned": _int_or_none(predicted.get("mission_kills_planned")),
         },
     }
 
@@ -583,6 +780,7 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
         )
         allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(audit)
         allow_final_cave_resist = final_cave_resist_gamble_allowed(audit)
+        allow_final_bomb_dirty = final_bomb_dirty_consent_allowed(audit)
         return any(
             isinstance(v, dict)
             and v.get("blocking")
@@ -599,9 +797,81 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                 allow_final_cave_resist
                 and v.get("kind") in FINAL_CAVE_RESIST_GAMBLE_ALLOWED_KINDS
             )
+            and not (
+                allow_final_bomb_dirty
+                and v.get("kind") in FINAL_BOMB_DIRTY_ALLOWED_KINDS
+            )
             for v in audit.get("violations", []) or []
         )
     return bool(audit.get("blocking"))
+
+
+def final_bomb_dirty_consent_allowed(
+    audit: dict[str, Any] | None,
+) -> bool:
+    """Return whether exact dirty consent may finish the last Renfield turn.
+
+    The live loop can accept ordinary city/lab damage on the final
+    ``Mission_Bomb`` turn only after review. The Renfield bombs must survive,
+    grid must stay above zero, and the dirty kinds must be limited to building
+    losses; protected-unit/objective losses remain non-consentable.
+    """
+    if not isinstance(audit, dict) or audit.get("status") != "DIRTY":
+        return False
+    current = audit.get("current") if isinstance(audit.get("current"), dict) else {}
+    predicted = (
+        audit.get("predicted") if isinstance(audit.get("predicted"), dict) else {}
+    )
+    mission_id = current.get("mission_id") or predicted.get("mission_id")
+    if mission_id != "Mission_Bomb":
+        return False
+
+    turn = _int_or_none(current.get("turn")) or _int_or_none(predicted.get("turn"))
+    total_turns = (
+        _int_or_none(current.get("total_turns"))
+        or _int_or_none(predicted.get("total_turns"))
+    )
+    if turn is None or total_turns is None or turn < total_turns:
+        return False
+
+    kinds = {
+        v.get("kind")
+        for v in audit.get("violations", []) or []
+        if isinstance(v, dict) and v.get("blocking")
+    }
+    if not kinds:
+        return False
+    if not kinds <= FINAL_BOMB_DIRTY_ALLOWED_KINDS:
+        return False
+
+    pred_grid = _int_or_none(predicted.get("grid_power"))
+    if pred_grid is None or pred_grid <= 0:
+        return False
+
+    cur_protected = _int_or_none(current.get("protected_objective_units_alive"))
+    pred_protected = _int_or_none(predicted.get("protected_objective_units_alive"))
+    if (
+        cur_protected is None
+        or pred_protected is None
+        or pred_protected < cur_protected
+    ):
+        return False
+
+    cur_mechs = _int_or_none(current.get("mechs_alive"))
+    pred_mechs = _int_or_none(predicted.get("mechs_alive"))
+    if cur_mechs is None or pred_mechs is None or pred_mechs < cur_mechs:
+        return False
+
+    for key in (
+        "mechs_acid",
+        "mechs_fire",
+        "mechs_webbed",
+        "mechs_on_danger",
+        "mechs_disabled",
+    ):
+        if _list_or_empty(predicted.get(key)):
+            return False
+    return True
 
 
 def final_cave_emergency_pylon_loss_allowed(

@@ -100,6 +100,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .count() as i32;
 
         let mut kills = 0i32;
+        let mut mission_kills = 0i32;
         let mut bumps = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
@@ -127,6 +128,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 illegal_events.push(event.clone());
             }
             kills += result.enemies_killed as i32;
+            mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
         }
 
@@ -134,8 +136,10 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
             .count() as i32;
 
-        let _ = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
-        apply_spawn_blocking(&mut board, &spawn_points);
+        let enemy_phase_result = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+        let spawn_block_result = apply_spawn_blocking(&mut board, &spawn_points);
+        kills += enemy_phase_result.enemies_killed + spawn_block_result.enemies_killed;
+        mission_kills += enemy_phase_result.mission_kills + spawn_block_result.mission_kills;
 
         let buildings_after = board.tiles.iter()
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
@@ -164,7 +168,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 building_threats |= 1u64 << xy_to_idx(tx, ty);
             }
         }
-        let score = evaluate(&board, &spawn_points, &weights, kills, bumps, &psion_before, building_threats);
+        let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats);
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -185,6 +189,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "mechs_alive": mechs_alive,
             "judo_hp": judo_hp,
             "kills": kills,
+            "mission_kills": mission_kills,
             "bldgs_alive": bldgs_alive,
             "bldg_hp_total": bldg_hp_total,
             "dead_mechs": dead_mechs,
@@ -271,6 +276,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             "spawn_points": spawn_json,
             "action_result": {
                 "enemies_killed": result.enemies_killed,
+                "mission_kills": result.mission_kills,
                 "mechs_killed": result.mechs_killed,
                 "buildings_lost": result.buildings_lost,
                 "buildings_damaged": result.buildings_damaged,
@@ -358,6 +364,7 @@ fn project_plan_scenarios(
                 "spawn_points": spawn_json,
                 "action_result": {
                     "enemies_killed": s.action_result.enemies_killed,
+                    "mission_kills": s.action_result.mission_kills,
                     "mechs_killed": s.action_result.mechs_killed,
                     "buildings_lost": s.action_result.buildings_lost,
                     "buildings_damaged": s.action_result.buildings_damaged,
@@ -1289,10 +1296,36 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   flying_immune=1 env_danger_v2 payloads so bombs/lightning kill flying mechs;
 //   terrain-conversion missions keep flyer immunity. Pre-v145 corpus archived
 //   as `failure_db_snapshot_sim_v144.jsonl`.
-// - v146: frozen buildings thaw on damage instead of taking building/grid
+// v146 - Frozen buildings thaw on damage instead of taking building/grid
 //   damage, and Mission_FreezeBldg objective tiles are scored from live thaw
 //   state. Pre-v146 corpus archived as `failure_db_snapshot_sim_v145.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 146;
+// v147 - Flame Shielding protects player mechs only, not controllable mission
+//   allies such as Archive_Tank. Mission_Tanks Archive Tanks are also surfaced
+//   as protected objective units. Pre-v147 corpus archived as
+//   `failure_db_snapshot_sim_v146.jsonl`.
+// v148 - Mission_Wind exports live WindDir and simulates wind row pushes before
+//   Vek attacks, including bump/grid damage. Pre-v148 corpus archived as
+//   `failure_db_snapshot_sim_v147.jsonl`.
+// v149 - Attack-phase landing effects collect/destroy Time Pods, so Aerial
+//   Bombs landing on a pod records collection instead of leaving the pod in
+//   predicted state. Pre-v149 corpus archived as
+//   `failure_db_snapshot_sim_v148.jsonl`.
+// v150 - Aerial Bombs transit over Mission_FreezeBldg frozen objective
+//   buildings thaws and damages the building, with grid loss deferred to
+//   enemy-turn settle. Pre-v150 corpus archived as
+//   `failure_db_snapshot_sim_v149.jsonl`.
+// v151 - Minor Vek such as Totems still count as enemies_killed for scoring,
+//   but no longer advance mission.KilledVek objectives like "Kill at least
+//   5 Enemies". Pre-v151 corpus archived as
+//   `failure_db_snapshot_sim_v150.jsonl`.
+// v152 - Stale non-egg `web_source_uid` from bridge input is replaced when an
+//   alive queued web attack currently targets the webbed unit's tile. Fixes
+//   false web-clears after moving the wrong stale source. Pre-v152 corpus
+//   archived as `failure_db_snapshot_sim_v151.jsonl`.
+// v153 - Firefly Leader (`FireflyAtkB` / Burning Thorax) fires paired
+//   projectiles in both the queued direction and the opposite direction.
+//   Pre-v153 corpus archived as `failure_db_snapshot_sim_v152.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 154;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

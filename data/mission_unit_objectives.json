@@ -10,6 +10,10 @@
     "destroy": ["Hacked_Building"],
     "protect": ["Snowtank1", "Snowtank1_Player"]
   },
+  "Mission_Dam": {
+    "destroy": ["Dam_Pawn"],
+    "protect": []
+  },
   "Mission_FreezeBots": {
     "destroy": [],
     "protect": ["Snowtank", "Snowlaser"]
@@ -38,8 +42,16 @@
     "destroy": [],
     "protect": ["VIP_Truck"]
   },
+  "Mission_Tanks": {
+    "destroy": [],
+    "protect": ["Archive_Tank"]
+  },
   "Mission_Power": {
     "destroy": ["BonusDebris"],
+    "protect": []
+  },
+  "Mission_AcidStorm": {
+    "destroy": ["Storm_Generator"],
     "protect": []
   },
   "Mission_Volatile": {
@@ -68,6 +80,10 @@
   },
   "Mission_JellyBoss": {
     "destroy": ["Jelly_Boss"],
+    "protect": []
+  },
+  "Mission_CentipedeBoss": {
+    "destroy": ["CentipedeBoss"],
     "protect": []
   },
   "Mission_ScorpionBoss": {

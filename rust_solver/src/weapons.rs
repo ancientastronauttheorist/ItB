@@ -521,9 +521,18 @@ pub enum WId {
     ScienceMassShiftA = 169,
     ScienceMassShiftB = 170,
     ScienceMassShiftAB = 171,
+    /// Centipede Leader's Caustic Vomit: 3 damage acid projectile, T splash,
+    /// plus zero-damage A.C.I.D. on every tile in the projectile path.
+    CentipedeAtkB = 172,
+    /// Teleporter with +1 Range powered.
+    ScienceSwapA = 173,
+    /// Teleporter with +2 Range powered.
+    ScienceSwapB = 174,
+    /// Teleporter with +1 Range and +2 Range powered.
+    ScienceSwapAB = 175,
 }
 
-pub const WEAPON_COUNT: usize = 172;
+pub const WEAPON_COUNT: usize = 176;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -755,6 +764,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 43: Science_Swap — Teleporter
     w[43] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 1, flags: C, ..DEF };
+    // 173-175: Science_Swap upgrades — Teleporter range.
+    w[173] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 2, flags: C, ..DEF };
+    w[174] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 3, flags: C, ..DEF };
+    w[175] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 4, flags: C, ..DEF };
     // 44: Science_AcidShot — Acid Projector
     w[44] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Forward, range_max: 0,
         flags: f(WeaponFlags::ACID.bits()), ..DEF };
@@ -852,6 +865,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 78: CentipedeAtk2 — alpha centipede, 2 dmg, acid + aoe_perp
     w[78] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, range_max: 0,
         flags: f(WeaponFlags::ACID.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
+    // 172: CentipedeAtkB — Centipede Leader, 3 dmg acid projectile with
+    // perpendicular splash. The projectile path A.C.I.D. trail is modeled as
+    // a WId-specific enemy-phase side effect because all u32 flag bits are used.
+    w[172] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::ACID.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 79: DiggerAtk2 — alpha digger, 2 dmg, self_aoe
     w[79] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 2, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 80: BlobberAtk2 — alpha blobber, spawns alpha blob
@@ -882,7 +900,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[90] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
     // 91: PlasmodiaAtk2 — alpha, spawns alpha spore
     w[91] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
-    // 92: FireflyAtkB — Firefly Boss, projectile, 4 dmg
+    // 92: FireflyAtkB — Firefly Boss, two opposing projectiles, 4 dmg each
     w[92] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, range_max: 0, flags: C, ..DEF };
     // 157: MosquitoAtkB — Mosquito Leader's Cloudburst Tentacles.
     // Special instant-kill semantics live in enemy.rs so the attack bypasses
@@ -1400,6 +1418,9 @@ pub fn wid_from_str(s: &str) -> WId {
         // shield remains conservative until building shields are modeled.
         "Science_Repulse_AB" => WId::ScienceRepulseA,
         "Science_Swap" => WId::ScienceSwap,
+        "Science_Swap_A" => WId::ScienceSwapA,
+        "Science_Swap_B" => WId::ScienceSwapB,
+        "Science_Swap_AB" => WId::ScienceSwapAB,
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
         "Science_Confuse" => WId::ScienceConfuse,
@@ -1424,6 +1445,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "ScarabAtk1" => WId::ScarabAtk1,
         "ScarabAtk2" => WId::ScarabAtk2,
         "ScarabAtkB" => WId::ScarabAtkB,
+        "CentipedeAtkB" => WId::CentipedeAtkB,
         "CrabAtk1" => WId::CrabAtk1,
         "CrabAtk2" => WId::CrabAtk2,
         "CrabAtkB" => WId::CrabAtkB,
@@ -1583,6 +1605,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceRepulse => "Science_Repulse",
         WId::ScienceRepulseA => "Science_Repulse_A",
         WId::ScienceSwap => "Science_Swap",
+        WId::ScienceSwapA => "Science_Swap_A",
+        WId::ScienceSwapB => "Science_Swap_B",
+        WId::ScienceSwapAB => "Science_Swap_AB",
         WId::ScienceAcidShot => "Science_AcidShot",
         WId::ScienceShield => "Science_Shield",
         WId::ScienceConfuse => "Science_Confuse",
@@ -1604,6 +1629,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScarabAtk1 => "ScarabAtk1",
         WId::ScarabAtk2 => "ScarabAtk2",
         WId::ScarabAtkB => "ScarabAtkB",
+        WId::CentipedeAtkB => "CentipedeAtkB",
         WId::CrabAtk1 => "CrabAtk1",
         WId::CrabAtk2 => "CrabAtk2",
         WId::CrabAtkB => "CrabAtkB",
@@ -1687,6 +1713,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Firefly2" => WId::FireflyAtk2,
         "Centipede1" => WId::CentipedeAtk1,
         "Centipede2" => WId::CentipedeAtk2,
+        "CentipedeBoss" => WId::CentipedeAtkB,
         "Scarab1" => WId::ScarabAtk1,
         "Scarab2" => WId::ScarabAtk2,
         "ScarabBoss" => WId::ScarabAtkB,
@@ -1842,7 +1869,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScienceGravwell => "Grav Well",
         WId::ScienceRepulse => "Repulse",
         WId::ScienceRepulseA => "Repulse",
-        WId::ScienceSwap => "Teleporter",
+        WId::ScienceSwap | WId::ScienceSwapA
+            | WId::ScienceSwapB | WId::ScienceSwapAB => "Teleporter",
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
@@ -1862,6 +1890,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::FireflyAtk2 => "Alpha Firefly Shot",
         WId::CentipedeAtk1 => "Centipede Spit",
         WId::CentipedeAtk2 => "Alpha Centipede Spit",
+        WId::CentipedeAtkB => "Caustic Vomit",
         WId::ScarabAtk1 => "Scarab Shot",
         WId::ScarabAtk2 => "Alpha Scarab Shot",
         WId::ScarabAtkB => "Expectorating Glands",
@@ -1982,6 +2011,17 @@ mod tests {
         assert_eq!(wid_from_str("Science_MassShift_AB"), WId::ScienceMassShiftAB);
         assert_eq!(wid_to_str(WId::RangedArachnoidAB), "Ranged_Arachnoid_AB");
         assert_eq!(weapon_name(WId::ScienceMassShift), "Area Shift");
+    }
+
+    #[test]
+    fn test_teleporter_upgrade_ranges() {
+        assert_eq!(weapon_def(WId::ScienceSwap).range_max, 1);
+        assert_eq!(weapon_def(WId::ScienceSwapA).range_max, 2);
+        assert_eq!(weapon_def(WId::ScienceSwapB).range_max, 3);
+        assert_eq!(weapon_def(WId::ScienceSwapAB).range_max, 4);
+        assert_eq!(wid_from_str("Science_Swap_AB"), WId::ScienceSwapAB);
+        assert_eq!(wid_to_str(WId::ScienceSwapAB), "Science_Swap_AB");
+        assert_eq!(weapon_name(WId::ScienceSwapAB), "Teleporter");
     }
 
     #[test]
@@ -2170,6 +2210,19 @@ mod tests {
     }
 
     #[test]
+    fn test_centipede_boss_caustic_vomit_def() {
+        let w = weapon_def(WId::CentipedeAtkB);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 3);
+        assert!(w.acid());
+        assert!(w.aoe_perpendicular());
+        assert_eq!(wid_from_str("CentipedeAtkB"), WId::CentipedeAtkB);
+        assert_eq!(wid_to_str(WId::CentipedeAtkB), "CentipedeAtkB");
+        assert_eq!(enemy_weapon_for_type("CentipedeBoss"), WId::CentipedeAtkB);
+        assert_eq!(weapon_name(WId::CentipedeAtkB), "Caustic Vomit");
+    }
+
+    #[test]
     fn test_terraformer_attack_def_and_footprint() {
         let w = weapon_def(WId::TerraformerAttack);
         assert_eq!(w.weapon_type, WeaponType::Terraformer);
@@ -2309,6 +2362,9 @@ mod tests {
             ("Terraformer_Attack", WId::TerraformerAttack),
             ("Disposal_Attack", WId::DisposalAttack),
             ("Science_Pullmech", WId::SciencePullmech),
+            ("Science_Swap_A", WId::ScienceSwapA),
+            ("Science_Swap_B", WId::ScienceSwapB),
+            ("Science_Swap_AB", WId::ScienceSwapAB),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),
         ];

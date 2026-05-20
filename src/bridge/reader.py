@@ -157,6 +157,49 @@ def _read_active_bonus_objective_ids_from_save() -> list[int]:
     return out
 
 
+def _read_mission_force_progress_from_save() -> dict:
+    """Return Mission_Force mountain-objective progress from saveData.
+
+    Mission_Force stores its visible "Destroy 2 mountains" counter as
+    ``mission.Mountains`` and the target as ``mission.MountainsGoal``.
+    The bridge may not expose these fields until the game is restarted with a
+    newer modloader, so the reader supplements them from saveData at player
+    turn boundaries. The live bridge tiles remain authoritative for current
+    mountain HP and for same-turn projections.
+    """
+    mission = _read_active_save_mission()
+    if not isinstance(mission, dict):
+        return {}
+    mission_id = mission.get("ID") or mission.get("Class")
+    if mission_id != "Mission_Force":
+        return {}
+    out: dict = {}
+    target = mission.get("MountainsGoal")
+    if isinstance(target, int) and target > 0:
+        out["mission_mountain_target"] = target
+    destroyed = mission.get("Mountains")
+    if isinstance(destroyed, int) and destroyed >= 0:
+        out["mission_mountains_destroyed"] = destroyed
+    return out
+
+
+def _read_mission_wind_dir_from_save() -> int | None:
+    """Return Mission_Wind's live WindDir from saveData, if available."""
+    mission = _read_active_save_mission()
+    if not isinstance(mission, dict):
+        return None
+    mission_id = mission.get("ID") or mission.get("Class")
+    if mission_id != "Mission_Wind":
+        return None
+    live_env = mission.get("LiveEnvironment")
+    if not isinstance(live_env, dict):
+        return None
+    wind_dir = live_env.get("WindDir")
+    if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
+        return wind_dir
+    return None
+
+
 def _read_freeze_building_objective_tiles_from_save() -> set[tuple[int, int]]:
     """Read Mission_FreezeBldg's static frozen-building objective tiles.
 
@@ -299,6 +342,10 @@ def _parse_mech_stat_overlays_from_save_text(content: str) -> dict[int, dict]:
         if max_hp_m:
             rec["max_hp"] = int(max_hp_m.group(1))
 
+        infected_m = re.search(r'\["bInfected"\]\s*=\s*(true|false)', body)
+        if infected_m:
+            rec["infected"] = infected_m.group(1) == "true"
+
         health_power_m = re.search(r'\["healthPower"\]\s*=\s*\{\s*(-?\d+)', body)
         if health_power_m:
             rec["health_power"] = int(health_power_m.group(1))
@@ -386,6 +433,8 @@ def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
         for key in ("pilot_id", "pilot_name", "pilot_name_id", "pilot_level"):
             if rec.get(key) not in (None, ""):
                 unit.setdefault(key, rec[key])
+        if "infected" in rec:
+            unit["infected"] = rec["infected"]
 
         raw_skills = list(unit.get("pilot_skills", []) or [])
         for save_key, label in (
@@ -728,10 +777,11 @@ def _recover_grapple_probe_webs(bridge_units: list) -> None:
         if not _is_grapple_probe_active(unit):
             continue
         unit["web"] = True
-        if unit.get("web_source_uid"):
-            continue
         candidates = web_sources_by_target.get((unit.get("x"), unit.get("y")), [])
         if candidates:
+            current_uid = unit.get("web_source_uid")
+            if current_uid and any(c.get("uid") == current_uid for c in candidates):
+                continue
             unit["web_source_uid"] = candidates[0].get("uid", 0)
 
 
@@ -801,6 +851,37 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
             data["freeze_building_tiles"] = [
                 [x, y] for x, y in sorted(freeze_building_tiles)
             ]
+
+    if data.get("mission_id") == "Mission_Force":
+        progress = _read_mission_force_progress_from_save()
+        if progress:
+            data.setdefault(
+                "mission_mountain_target",
+                progress.get("mission_mountain_target", 2),
+            )
+            data.setdefault(
+                "mission_mountains_destroyed",
+                progress.get("mission_mountains_destroyed", 0),
+            )
+        else:
+            data.setdefault("mission_mountain_target", 2)
+        mountain_tiles = []
+        for td in data.get("tiles", []) or []:
+            if not isinstance(td, dict):
+                continue
+            if td.get("terrain") != "mountain" and td.get("terrain_id") != 4:
+                continue
+            x, y = td.get("x"), td.get("y")
+            if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+                mountain_tiles.append([x, y])
+        data["mission_mountain_tiles"] = mountain_tiles
+
+    if data.get("mission_id") == "Mission_Wind":
+        wind_dir = data.get("environment_wind_dir")
+        if not isinstance(wind_dir, int) or not (0 <= wind_dir <= 3):
+            wind_dir = _read_mission_wind_dir_from_save()
+        if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
+            data["environment_wind_dir"] = wind_dir
 
     # SaveData carries effective mech max_health after pilot perks and powered
     # +Health upgrades. Overlay before Board construction so live reads,

@@ -145,10 +145,13 @@ fn apply_plan_and_enemy_phase(
         );
         aggregate.merge(&result);
     }
-    let _ = simulate_enemy_attacks(&mut b, &original_positions, weapons);
+    let enemy_phase_result = simulate_enemy_attacks(&mut b, &original_positions, weapons);
+    aggregate.merge(&enemy_phase_result);
     if !spawn_points.is_empty() {
-        apply_spawn_blocking(&mut b, spawn_points);
+        let spawn_result = apply_spawn_blocking(&mut b, spawn_points);
+        aggregate.merge(&spawn_result);
     }
+    b.add_mission_kills(aggregate.mission_kills);
     // Clear fired queued attacks — subsequent scenario re-queues populate new ones.
     for i in 0..b.unit_count as usize {
         let u = &mut b.units[i];
@@ -421,6 +424,7 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if u.acid()                       { unit_val["acid"]                 = json!(true); }
         if u.frozen()                     { unit_val["frozen"]               = json!(true); }
         if u.fire()                       { unit_val["fire"]                 = json!(true); }
+        if u.infected()                   { unit_val["infected"]             = json!(true); }
         if u.web()                        { unit_val["web"]                  = json!(true); }
         if u.boosted()                    { unit_val["boosted"]              = json!(true); }
         if u.ranged()                     { unit_val["ranged"]               = json!(1u8); }
@@ -441,6 +445,14 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         freeze_bits &= freeze_bits - 1;
         let (x, y) = idx_to_xy(bit_idx);
         freeze_building_tiles.push(vec![x, y]);
+    }
+    let mut mission_mountain_tiles: Vec<Vec<u8>> = Vec::new();
+    let mut mountain_bits = board.mission_mountain_tiles;
+    while mountain_bits != 0 {
+        let bit_idx = mountain_bits.trailing_zeros() as usize;
+        mountain_bits &= mountain_bits - 1;
+        let (x, y) = idx_to_xy(bit_idx);
+        mission_mountain_tiles.push(vec![x, y]);
     }
     let mut env_danger_v2: Vec<Vec<u8>> = Vec::new();
     for idx in 0..64usize {
@@ -473,7 +485,11 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "environment_danger_v2": env_danger_v2,
         "mission_id":            board.mission_id,
         "mission_kill_target":   board.mission_kill_target,
+        "mission_kill_limit":    board.mission_kill_limit,
         "mission_kills_done":    board.mission_kills_done,
+        "mission_mountain_target": board.mission_mountain_target,
+        "mission_mountains_destroyed": board.projected_mountains_destroyed(),
+        "mission_mountain_tiles": mission_mountain_tiles,
         "repair_platform_target": board.repair_platform_target,
         "repair_platforms_used":  board.repair_platforms_used,
         "freeze_building_target": board.freeze_building_target,

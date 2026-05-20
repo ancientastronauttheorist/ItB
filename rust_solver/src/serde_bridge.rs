@@ -45,15 +45,26 @@ pub struct JsonInput {
     /// SIMULATOR_VERSION 19 only have 4 fields. Never authoritative when the
     /// per-tile field is present.
     pub env_type: Option<String>,
+    /// Mission_Wind live push direction. Engine DIR_* values match Rust DIRS:
+    /// 0=(0,+1), 1=(+1,0), 2=(0,-1), 3=(-1,0).
+    pub environment_wind_dir: Option<i8>,
     pub eval_weights: Option<EvalWeights>,
     pub mission_id: Option<String>,
-    /// "Kill N enemies" bonus target (mission:GetKillBonus(), difficulty-scaled).
+    /// "Kill at least N enemies" bonus target (mission:GetKillBonus(), difficulty-scaled).
     /// Missing / 0 → no bonus on this mission; evaluator's step-function
     /// scoring is a no-op in that case.
     pub mission_kill_target: Option<u8>,
+    /// "Kill N or fewer enemies" bonus cap (mission:GetPacifistCount(),
+    /// difficulty-scaled). Missing / 0 → no cap on this mission.
+    pub mission_kill_limit: Option<u8>,
     /// Cumulative this-mission kills (mission.KilledVek). Combined with the
-    /// simulated turn's kills to decide whether a plan crosses the target.
+    /// simulated turn's kills to decide whether a plan crosses or exceeds a
+    /// kill-count objective.
     pub mission_kills_done: Option<u8>,
+    /// Mission_Force "Destroy 2 mountains" objective progress.
+    pub mission_mountain_target: Option<u8>,
+    pub mission_mountains_destroyed: Option<u8>,
+    pub mission_mountain_tiles: Option<Vec<Vec<u8>>>,
     /// Mission_Repair objective target/progress. Repair platforms are
     /// generic Item_Repair_Mine tiles; the game counts EVENT_REPAIR_PICKUP
     /// from any unit toward this progress.
@@ -277,6 +288,7 @@ pub struct JsonUnit {
     pub acid: Option<bool>,
     pub frozen: Option<bool>,
     pub fire: Option<bool>,
+    pub infected: Option<bool>,
     pub web: Option<bool>,
     pub web_probes: Option<JsonWebProbes>,
     pub boosted: Option<bool>,
@@ -525,6 +537,13 @@ pub fn board_from_json(json_str: &str)
     board.env_danger_kill = env_danger_kill;
     board.env_danger_flying_immune = env_danger_flying_immune;
     board.env_wind = env_wind;
+    board.env_wind_dir = if env_wind != 0 {
+        input.environment_wind_dir
+            .filter(|dir| (0..=3).contains(dir))
+            .unwrap_or(-1)
+    } else {
+        -1
+    };
 
     // Ice Storm freeze tiles. Separate channel from env_danger — these tiles
     // apply Frozen=true to units at start of enemy turn, no HP damage.
@@ -606,6 +625,7 @@ pub fn board_from_json(json_str: &str)
             if ju.acid.unwrap_or(false) { flags |= UnitFlags::ACID; }
             if ju.frozen.unwrap_or(false) { flags |= UnitFlags::FROZEN; }
             if ju.fire.unwrap_or(false) { flags |= UnitFlags::FIRE; }
+            if ju.infected.unwrap_or(false) { flags |= UnitFlags::INFECTED; }
             let probe_web = ju.web_probes
                 .as_ref()
                 .and_then(|p| p.is_grappled)
@@ -674,14 +694,17 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Fill missing web ownership from alive queued web attacks. Older bridge
-    // fallback code cleared Mosquito Leader grapples because `MosquitoAtkB` was
-    // absent from its source table, but the raw IsGrappled probe is still true.
+    // Fill missing/stale web ownership from alive queued web attacks. Older
+    // bridge fallback code cleared Mosquito Leader grapples because
+    // `MosquitoAtkB` was absent from its source table, and GetGrappledSource()
+    // can also preserve a stale source after enemies retarget. Prefer the
+    // queued web attack that currently targets the webbed unit's tile.
     for idx in 0..board.unit_count as usize {
-        if !board.units[idx].web() || board.units[idx].web_source_uid != 0 {
+        if !board.units[idx].web() {
             continue;
         }
         let (ux, uy) = (board.units[idx].x, board.units[idx].y);
+        let current_uid = board.units[idx].web_source_uid;
         let mut source_uid = 0;
         for src_idx in 0..board.unit_count as usize {
             let src = board.units[src_idx];
@@ -692,11 +715,17 @@ pub fn board_from_json(json_str: &str)
                 continue;
             }
             if WEAPONS[src.weapon.0 as usize].web() {
+                if src.uid == current_uid {
+                    source_uid = current_uid;
+                    break;
+                }
+                if source_uid != 0 {
+                    continue;
+                }
                 source_uid = src.uid;
-                break;
             }
         }
-        if source_uid != 0 {
+        if source_uid != 0 && source_uid != current_uid {
             board.units[idx].web_source_uid = source_uid;
         }
     }
@@ -727,7 +756,17 @@ pub fn board_from_json(json_str: &str)
     board.infinite_spawn = input.is_infinite_spawn.unwrap_or(false);
     board.mission_id = input.mission_id.clone().unwrap_or_default();
     board.mission_kill_target = input.mission_kill_target.unwrap_or(0);
+    board.mission_kill_limit = input.mission_kill_limit.unwrap_or(0);
     board.mission_kills_done = input.mission_kills_done.unwrap_or(0);
+    board.mission_mountain_target = input.mission_mountain_target.unwrap_or(0);
+    board.mission_mountains_destroyed = input.mission_mountains_destroyed.unwrap_or(0);
+    if let Some(tiles) = &input.mission_mountain_tiles {
+        for entry in tiles {
+            if entry.len() >= 2 && entry[0] < 8 && entry[1] < 8 {
+                board.mission_mountain_tiles |= 1u64 << xy_to_idx(entry[0], entry[1]);
+            }
+        }
+    }
     board.repair_platform_target = input.repair_platform_target.unwrap_or(0);
     board.repair_platforms_used = input.repair_platforms_used.unwrap_or(0);
 
@@ -1224,6 +1263,63 @@ mod tests {
         assert_eq!(
             board.units[0].web_source_uid, 626,
             "active Scorpion grapple targeting the mech should keep ownership"
+        );
+    }
+
+    #[test]
+    fn test_bridge_load_replaces_stale_non_egg_web_source() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 2,
+                    "type": "PulseMech",
+                    "x": 5,
+                    "y": 5,
+                    "hp": 4,
+                    "max_hp": 5,
+                    "team": 1,
+                    "mech": true,
+                    "web": true,
+                    "web_source_uid": 776,
+                    "weapons": ["Science_Repulse_A"]
+                },
+                {
+                    "uid": 776,
+                    "type": "Scorpion1",
+                    "x": 5,
+                    "y": 6,
+                    "hp": 2,
+                    "max_hp": 3,
+                    "team": 6,
+                    "weapons": ["ScorpionAtk1"],
+                    "has_queued_attack": true,
+                    "queued_target": [4, 6]
+                },
+                {
+                    "uid": 799,
+                    "type": "Scorpion1",
+                    "x": 5,
+                    "y": 4,
+                    "hp": 3,
+                    "max_hp": 3,
+                    "team": 6,
+                    "weapons": ["ScorpionAtk1"],
+                    "has_queued_attack": true,
+                    "queued_target": [5, 5]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(board.units[0].web());
+        assert_eq!(
+            board.units[0].web_source_uid, 799,
+            "alive queued web source targeting the mech should replace stale bridge ownership"
         );
     }
 

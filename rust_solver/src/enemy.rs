@@ -87,12 +87,13 @@ fn apply_mosquito_boss_attack(board: &mut Board, x: u8, y: u8, result: &mut Acti
         let old_hp = board.units[idx].hp.max(0) as i32;
         let was_enemy = board.units[idx].is_enemy();
         let was_player = board.units[idx].is_player();
+        let mission_counted = was_enemy && !board.units[idx].minor();
         board.units[idx].set_shield(false);
         board.units[idx].set_frozen(false);
         board.units[idx].hp = 0;
         if was_enemy {
             result.enemy_damage_dealt += old_hp;
-            result.enemies_killed += 1;
+            result.record_enemy_kill(mission_counted);
             on_enemy_death(board, idx, result);
         } else if was_player {
             result.mech_damage_taken += old_hp;
@@ -237,7 +238,7 @@ fn apply_env_danger(
                     result.mechs_killed += 1;
                     result.mech_damage_taken += prev_hp as i32;
                 } else if unit.is_enemy() {
-                    result.enemies_killed += 1;
+                    result.record_enemy_kill(!unit.minor());
                     result.enemy_damage_dealt += prev_hp as i32;
                     enemy_died_idx = Some(uidx);
                 }
@@ -258,7 +259,7 @@ fn apply_env_danger(
                     } else if unit.is_enemy() {
                         result.enemy_damage_dealt += 1;
                         if unit.hp <= 0 {
-                            result.enemies_killed += 1;
+                            result.record_enemy_kill(!unit.minor());
                             enemy_died_idx = Some(uidx);
                         }
                     }
@@ -325,7 +326,8 @@ fn apply_env_danger(
 pub fn apply_spawn_blocking(
     board: &mut Board,
     spawn_points: &[(u8, u8)],
-) {
+) -> ActionResult {
+    let mut result = ActionResult::default();
     for &(sx, sy) in spawn_points {
         if let Some(idx) = board.unit_at(sx, sy) {
             let unit = &mut board.units[idx];
@@ -342,8 +344,10 @@ pub fn apply_spawn_blocking(
             // so multi-tile HP mirroring + future dam-flood trigger run.
             let mut tmp_result = ActionResult::default();
             apply_damage(board, sx, sy, 1, &mut tmp_result, DamageSource::Bump);
+            result.merge(&tmp_result);
         }
     }
+    result
 }
 
 /// Mission_Reactivation thaw: at the start of each enemy turn, the Lua
@@ -428,6 +432,74 @@ fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
     }
 }
 
+/// Mission_Wind pushes units standing on marked rows before Vek attacks.
+///
+/// The bridge stores affected tiles in `env_wind` and the live Lua `WindDir`
+/// in `env_wind_dir`. Precompute initially occupied wind tiles so a unit
+/// pushed into another marked tile is not hit twice during one gust.
+fn simulate_mission_wind(board: &mut Board, result: &mut ActionResult) {
+    if board.env_wind == 0 || !(0..=3).contains(&board.env_wind_dir) {
+        return;
+    }
+    let dir = board.env_wind_dir as usize;
+    let mut targets: Vec<(u8, u8)> = Vec::new();
+    match dir {
+        3 => {
+            for y in 0..8u8 {
+                for x in 0..8u8 {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        1 => {
+            for y in 0..8u8 {
+                for x in (0..8u8).rev() {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        2 => {
+            for x in 0..8u8 {
+                for y in 0..8u8 {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        0 => {
+            for x in 0..8u8 {
+                for y in (0..8u8).rev() {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        _ => return,
+    }
+
+    for (x, y) in targets {
+        if let Some(idx) = board.unit_at(x, y) {
+            if board.units[idx].hp > 0 {
+                apply_push(board, x, y, dir, result);
+            }
+        }
+    }
+}
+
 fn hatch_spawn_destination(board: &Board, x: u8, y: u8) -> Option<(u8, u8)> {
     // Live HQ capture: a WebbEgg at E6 hatched onto adjacent F6, destroying a
     // 2-HP building. The Lua skill queues `sPawn` at the occupied egg tile, and
@@ -456,14 +528,15 @@ fn hatch_spawn_destination(board: &Board, x: u8, y: u8) -> Option<(u8, u8)> {
 }
 
 /// Simulate all enemy attacks on the post-mech-action board.
-/// Processes in UID order. Returns buildings destroyed count.
+/// Processes in UID order and returns the accumulated outcome from fire,
+/// environment, enemy attacks, and other enemy-phase effects.
 ///
 /// `original_positions`: maps unit index -> (orig_x, orig_y) for direction/range checks.
 pub fn simulate_enemy_attacks(
     board: &mut Board,
     original_positions: &[(u8, u8); 16],
     weapons: &WeaponTable,
-) -> i32 {
+) -> ActionResult {
     // Mission_Reactivation: thaw 2 frozen Vek at start of enemy phase.
     // Must run BEFORE the frozen-skip in the attack loop so newly-thawed
     // pawns are reflected in post-enemy state (they don't attack this
@@ -482,7 +555,7 @@ pub fn simulate_enemy_attacks(
     // guard) or if pilot_flags were injected mid-mission.
     for i in 0..board.unit_count as usize {
         if board.units[i].fire() && board.units[i].hp > 0 {
-            if board.flame_shielding && board.units[i].is_player() {
+            if board.flame_shielding && board.units[i].is_player() && board.units[i].is_mech() {
                 continue; // mechs immune to fire with Flame Shielding
             }
             if board.units[i].pilot_rock() {
@@ -683,6 +756,11 @@ pub fn simulate_enemy_attacks(
     // moved Vek re-aim from their conveyor-shifted tile using the original
     // queued direction below.
     simulate_conveyor_belts(board, &mut result);
+
+    // Mission_Wind rows are push lanes, not damage tiles. The gust resolves
+    // before attacks; Vek then fire from their pushed tile while preserving
+    // the original queued direction.
+    simulate_mission_wind(board, &mut result);
 
     // Egg hatch step: transform any surviving spider/spiderling egg into
     // its hatched live unit (sim v22/v115). Runs AFTER fire tick + env_danger
@@ -1009,6 +1087,23 @@ pub fn simulate_enemy_attacks(
 
         match wdef.weapon_type {
             WeaponType::Projectile => {
+                if enemy_wid == WId::FireflyAtkB {
+                    if let Some((dx, dy)) = projectile_delta_from_queued(orig.0, orig.1, qtx, qty) {
+                        for (shot_dx, shot_dy) in [(dx, dy), (-dx, -dy)] {
+                            if let Some((tx, ty)) = find_projectile_target_in_direction(
+                                board, ex, ey, shot_dx, shot_dy,
+                            ) {
+                                let occupied_at_impact = board.unit_at(tx, ty).is_some();
+                                let d = enemy_hit_damage(board, tx, ty, damage, vh);
+                                apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                                apply_weapon_status_with_impact_occupancy(
+                                    board, tx, ty, wdef, occupied_at_impact,
+                                );
+                            }
+                        }
+                    }
+                    continue;
+                }
                 if let Some((tx, ty)) = find_projectile_target(board, ex, ey, orig.0, orig.1, qtx, qty) {
                     let hit_was_object = {
                         let tile = board.tile(tx, ty);
@@ -1030,7 +1125,7 @@ pub fn simulate_enemy_attacks(
                             // walking exception. Fire Psion grants Vek
                             // immunity to fire-status application.
                             if !u.frozen() && u.can_catch_fire()
-                                && !(board.flame_shielding && u.is_player())
+                                && !(board.flame_shielding && u.is_player() && u.is_mech())
                                 && !target_is_immune_vek
                             {
                                 u.set_fire(true);
@@ -1054,6 +1149,30 @@ pub fn simulate_enemy_attacks(
                     if wdef.projectile_grapple() {
                         if let Some(dir) = projectile_dir_from_queued(orig.0, orig.1, qtx, qty) {
                             apply_projectile_grapple(board, ei, tx, ty, dir, hit_was_object, &mut result);
+                        }
+                    }
+
+                    // Centipede Leader's Caustic Vomit queues zero-damage ACID
+                    // on every tile strictly between the attacker and impact.
+                    // The normal Centipede/Alpha Centipede weapons do not.
+                    if enemy_wid == WId::CentipedeAtkB {
+                        let pdx = (tx as i8 - ex as i8).signum();
+                        let pdy = (ty as i8 - ey as i8).signum();
+                        if (pdx != 0) != (pdy != 0) {
+                            let mut px = ex as i8 + pdx;
+                            let mut py = ey as i8 + pdy;
+                            while in_bounds(px, py) && (px as u8, py as u8) != (tx, ty) {
+                                let occupied_at_impact = board.unit_at(px as u8, py as u8).is_some();
+                                apply_weapon_status_with_impact_occupancy(
+                                    board,
+                                    px as u8,
+                                    py as u8,
+                                    wdef,
+                                    occupied_at_impact,
+                                );
+                                px += pdx;
+                                py += pdy;
+                            }
                         }
                     }
 
@@ -1320,7 +1439,7 @@ pub fn simulate_enemy_attacks(
                                         && board.units[idx].type_name_str() != "Jelly_Fire1";
                                     let u = &mut board.units[idx];
                                     if !u.frozen() && u.can_catch_fire()
-                                        && !(board.flame_shielding && u.is_player())
+                                        && !(board.flame_shielding && u.is_player() && u.is_mech())
                                         && !target_is_immune_vek
                                     {
                                         u.set_fire(true);
@@ -1633,7 +1752,7 @@ pub fn simulate_enemy_attacks(
     // won't get displaced.
     crate::simulate::drain_pending_spider_eggs(board);
 
-    buildings_destroyed
+    result
 }
 
 /// Advance the Supply Train 2 tiles forward. Called at end of enemy phase.
@@ -1722,7 +1841,7 @@ fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
             if board.units[idx].hp > 0 {
                 board.units[idx].hp = 0;
                 if board.units[idx].is_enemy() {
-                    result.enemies_killed += 1;
+                    result.record_enemy_kill(!board.units[idx].minor());
                     on_enemy_death(board, idx, &mut result);
                 }
             }
@@ -1761,6 +1880,11 @@ fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
 /// Trace projectile from enemy position in queued direction.
 /// Returns (hit_x, hit_y) or None.
 fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
+    let (dx, dy) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty)?;
+    find_projectile_target_in_direction(board, ex, ey, dx, dy)
+}
+
+fn projectile_delta_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
     if qtx < 0 { return None; }
 
     // Compute direction from ORIGINAL position to queued target.
@@ -1774,6 +1898,10 @@ fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8,
     // Must be a valid cardinal direction (exactly one axis non-zero)
     if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) { return None; }
 
+    Some((dx, dy))
+}
+
+fn find_projectile_target_in_direction(board: &Board, ex: u8, ey: u8, dx: i8, dy: i8) -> Option<(u8, u8)> {
     // Trace from CURRENT position in the original direction.
     // If the projectile walks off the board without hitting anything,
     // fall back to the last valid (on-board) tile — matches the game's
@@ -2733,6 +2861,26 @@ mod tests {
     }
 
     #[test]
+    fn test_centipede_leader_acidifies_projectile_path() {
+        // Centipede Leader at (0,3) firing east into a mech at (4,3).
+        // Caustic Vomit damages/acidifies the impact T shape like Alpha
+        // Centipede, and additionally applies zero-damage A.C.I.D. to
+        // every tile in the flight path before impact.
+        let mut board = Board::default();
+        let target_idx = add_mech_unit(&mut board, 10, 4, 3, 6);
+        add_enemy_with_type(&mut board, 1, 0, 3, 7, "CentipedeBoss", 4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[target_idx].hp, 3, "Primary target should take 3 damage");
+        assert!(board.units[target_idx].acid(), "Primary target should be ACID'd");
+        for x in 1..4 {
+            assert!(board.tile(x, 3).acid(), "path tile ({},3) should become A.C.I.D.", x);
+        }
+    }
+
+    #[test]
     fn test_centipede_attack_lands_on_board_edge() {
         // Reproduces live scenario: Alpha Centipede at (0, 3) = E8 with
         // queued_target (0, 4) = D8 (first tile in +y attack direction).
@@ -2764,6 +2912,31 @@ mod tests {
         // A7 (perpendicular splash) should also be an acid tile
         assert!(board.tile(1, 7).acid(),
             "A7 (perpendicular splash) should convert to A.C.I.D. Tile");
+    }
+
+    #[test]
+    fn test_firefly_boss_fires_forward_and_backward_projectiles() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        {
+            let tile = board.tile_mut(2, 6);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        add_enemy_with_type(&mut board, 803, 5, 6, 6, "FireflyBoss", 6, 6);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.tile(2, 6).terrain,
+            Terrain::Rubble,
+            "backward Burning Thorax projectile should destroy the first building behind the leader"
+        );
+        assert_eq!(board.grid_power, 5);
+        assert_eq!(result.grid_damage, 2);
     }
 
     #[test]
@@ -2822,7 +2995,7 @@ mod tests {
         let egg_idx = add_enemy_with_type(&mut board, 1, 2, 3, 1, "WebbEgg1", 2, 3);
 
         let orig = default_orig_pos(&board);
-        let grid_damage = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+        let grid_damage = simulate_enemy_attacks(&mut board, &orig, &WEAPONS).grid_damage;
 
         let u = &board.units[egg_idx];
         assert_eq!(u.type_name_str(), "Spiderling1");
@@ -3052,6 +3225,30 @@ mod tests {
             "Default-pilot mech takes 1 fire-tick damage");
         assert!(board.units[idx].fire(),
             "Fire flag persists for a non-Rockman mech");
+    }
+
+    #[test]
+    fn test_flame_shielding_does_not_skip_ally_fire_tick() {
+        // Regression: Archive_Tank is team Player but not a mech. Flame
+        // Shielding must not prevent its fire tick.
+        use crate::board::UnitFlags;
+        let mut board = Board::default();
+        board.flame_shielding = true;
+        let mut unit = Unit {
+            uid: 5326, x: 5, y: 1, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::FIRE,
+            weapon: crate::board::WeaponId(WId::DeployTankShot as u16),
+            move_speed: 0,
+            ..Default::default()
+        };
+        unit.set_type_name("Archive_Tank");
+        let idx = board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0);
     }
 
     #[test]

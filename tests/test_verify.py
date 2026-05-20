@@ -276,6 +276,27 @@ states = predicted_states_from_solve_record(v2_forward_record)
 check("future v2 record: chosen-plan predicted_states still readable",
       len(states) == 1)
 
+# Test 20: RockThrown engine UIDs are unstable; match identity by type+tile.
+predicted_rock = {
+    "units": [{
+        "uid": 2333,
+        "type": "RockThrown",
+        "pos": [3, 2],
+        "hp": 1,
+        "alive": True,
+        "status": {},
+    }],
+    "tiles_changed": [],
+    "grid_power": 7,
+}
+actual_rock_board = make_board(units=[
+    mk_unit(2338, "RockThrown", 3, 2, hp=1, max_hp=1, team=2, is_mech=False,
+            active=False),
+])
+diff = diff_states(predicted_rock, actual_rock_board)
+check("RockThrown UID drift matched by type+tile", diff.is_empty(),
+      diff.unit_diffs)
+
 print(f"\n{passed}/{passed+failed} tests passed")
 if failed:
     raise SystemExit(1)

@@ -1,5 +1,6 @@
 from src.solver.plan_safety import (
     audit_plan_safety,
+    final_bomb_dirty_consent_allowed,
     final_cave_emergency_pylon_loss_allowed,
     final_cave_resist_gamble_allowed,
     plan_requires_safety_block,
@@ -131,6 +132,77 @@ def test_final_cave_resist_gamble_can_be_dirty_consented_on_last_turn():
 
     assert final_cave_resist_gamble_allowed(audit) is True
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
+
+
+def test_final_bomb_turn_can_dirty_consent_bonus_building_loss():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Bomb",
+            turn=4,
+            total_turns=4,
+            grid=7,
+            buildings=7,
+            hp=9,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            protected_objective_units_alive=2,
+            mechs_alive=3,
+            mech_hp_total=7,
+        ),
+        _summary(
+            mission_id="Mission_Bomb",
+            turn=4,
+            total_turns=4,
+            grid=6,
+            buildings=6,
+            hp=8,
+            objective_buildings_alive=0,
+            objective_building_hp_total=0,
+            protected_objective_units_alive=2,
+            mechs_alive=3,
+            mech_hp_total=7,
+            mechs_acid=[],
+            mechs_fire=[],
+            mechs_webbed=[],
+            mechs_on_danger=[],
+            mechs_disabled=[],
+        ),
+    )
+
+    assert final_bomb_dirty_consent_allowed(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is False
+
+
+def test_final_bomb_turn_rejects_bomb_loss():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Bomb",
+            turn=4,
+            total_turns=4,
+            grid=7,
+            buildings=7,
+            hp=9,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            protected_objective_units_alive=2,
+            mechs_alive=3,
+        ),
+        _summary(
+            mission_id="Mission_Bomb",
+            turn=4,
+            total_turns=4,
+            grid=6,
+            buildings=6,
+            hp=8,
+            objective_buildings_alive=0,
+            objective_building_hp_total=0,
+            protected_objective_units_alive=1,
+            mechs_alive=3,
+        ),
+    )
+
+    assert final_bomb_dirty_consent_allowed(audit) is False
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
 
 
 def test_final_cave_resist_gamble_rejects_before_last_turn():
@@ -294,6 +366,29 @@ def test_allow_dirty_plan_does_not_override_protected_objective_loss():
     assert audit["status"] == "DIRTY"
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
     assert audit["violations"][0]["kind"] == "protected_objective_unit_lost"
+
+
+def test_final_turn_destroy_objective_unit_alive_blocks():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_AcidStorm",
+            turn=4,
+            total_turns=4,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "Storm_Generator", "alive": True}],
+        ),
+        _summary(
+            mission_id="Mission_AcidStorm",
+            turn=4,
+            total_turns=4,
+            destroy_objective_units_alive=1,
+            destroy_objective_units=[{"type": "Storm_Generator", "alive": True}],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "destroy_objective_unit_alive_final"
 
 
 def test_freezebots_protected_unit_unfreeze_blocks_plan():
@@ -567,6 +662,293 @@ def test_freeze_building_objective_allows_incomplete_nonfinal_progress():
     assert plan_requires_safety_block(audit) is False
 
 
+def test_terraform_grass_objective_blocks_final_under_target():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Terraform",
+            turn=4,
+            total_turns=4,
+            terraform_grass_remaining=2,
+            terraform_grass_tiles=[[3, 3], [4, 3]],
+        ),
+        _summary(
+            mission_id="Mission_Terraform",
+            turn=4,
+            total_turns=4,
+            terraform_grass_remaining=1,
+            terraform_grass_tiles=[[4, 3]],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "terraform_grass_objective_failed"
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_terraform_grass_objective_allows_incomplete_nonfinal_progress():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Terraform",
+            turn=3,
+            total_turns=4,
+            terraform_grass_remaining=2,
+        ),
+        _summary(
+            mission_id="Mission_Terraform",
+            turn=3,
+            total_turns=4,
+            terraform_grass_remaining=1,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_mountain_objective_blocks_final_under_target():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Force",
+            turn=4,
+            total_turns=4,
+            mission_mountain_target=2,
+            mission_mountains_destroyed=0,
+            mission_mountain_tiles=[
+                {"pos": [2, 2], "hp": 1},
+                {"pos": [4, 4], "hp": 2},
+            ],
+        ),
+        _summary(
+            mission_id="Mission_Force",
+            turn=4,
+            total_turns=4,
+            mission_mountain_target=2,
+            mission_mountains_destroyed=1,
+            mission_mountains_planned=1,
+            mission_mountain_tiles=[
+                {"pos": [4, 4], "hp": 2},
+            ],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "mountain_objective_failed"
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_mountain_objective_allows_final_target_met():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Force",
+            turn=4,
+            total_turns=4,
+            mission_mountain_target=2,
+            mission_mountains_destroyed=1,
+        ),
+        _summary(
+            mission_id="Mission_Force",
+            turn=4,
+            total_turns=4,
+            mission_mountain_target=2,
+            mission_mountains_destroyed=2,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_mite_objective_blocks_final_infected_mech():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Holes",
+            turn=4,
+            total_turns=4,
+            mites_remaining=1,
+            mites_status_tracked=True,
+            mechs_infected=[
+                {"uid": 2, "type": "IgniteMech", "pos": [1, 4]},
+            ],
+        ),
+        _summary(
+            mission_id="Mission_Holes",
+            turn=4,
+            total_turns=4,
+            mites_remaining=1,
+            mites_status_tracked=True,
+            mechs_infected=[
+                {"uid": 2, "type": "IgniteMech", "pos": [1, 4]},
+            ],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "mite_objective_failed"
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_mite_objective_conservatively_blocks_when_projection_loses_status():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Holes",
+            turn=4,
+            total_turns=4,
+            mites_remaining=1,
+            mites_status_tracked=True,
+            mechs_infected=[
+                {"uid": 2, "type": "IgniteMech", "pos": [1, 4]},
+            ],
+        ),
+        _summary(
+            mission_id="Mission_Holes",
+            turn=4,
+            total_turns=4,
+            mites_remaining=0,
+            mites_status_tracked=False,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert audit["violations"][0]["predicted"] == 1
+    assert audit["violations"][0]["details"]["predicted_status_tracked"] is False
+
+
+def test_mite_objective_allows_final_clear():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Holes",
+            turn=4,
+            total_turns=4,
+            mites_remaining=1,
+            mites_status_tracked=True,
+        ),
+        _summary(
+            mission_id="Mission_Holes",
+            turn=4,
+            total_turns=4,
+            mites_remaining=0,
+            mites_status_tracked=True,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_mite_objective_allows_final_clear_with_empty_projected_list():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Belt",
+            turn=4,
+            total_turns=4,
+            mites_remaining=1,
+            mites_status_tracked=True,
+            mechs_infected=[
+                {"uid": 2, "type": "PulseMech", "pos": [3, 1]},
+            ],
+        ),
+        _summary(
+            mission_id="Mission_Belt",
+            turn=4,
+            total_turns=4,
+            mites_remaining=0,
+            mites_status_tracked=False,
+            mechs_infected=[],
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_final_turn_kill_objective_blocks_when_short():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_SnowStorm",
+            turn=4,
+            total_turns=4,
+            mission_kill_target=5,
+            mission_kills_done=4,
+        ),
+        _summary(
+            mission_id="Mission_SnowStorm",
+            turn=4,
+            total_turns=4,
+            mission_kill_target=5,
+            mission_kills_done=4,
+            mission_kills_planned=0,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "kill_objective_failed"
+    assert audit["violations"][0]["details"] == {
+        "target": 5,
+        "planned_kills": 0,
+    }
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_final_turn_kill_objective_allows_threshold():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_SnowStorm",
+            turn=4,
+            total_turns=4,
+            mission_kill_target=5,
+            mission_kills_done=4,
+        ),
+        _summary(
+            mission_id="Mission_SnowStorm",
+            turn=4,
+            total_turns=4,
+            mission_kill_target=5,
+            mission_kills_done=5,
+            mission_kills_planned=1,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_kill_limit_objective_blocks_over_cap_immediately():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Acid",
+            turn=3,
+            total_turns=4,
+            mission_kill_limit=4,
+            mission_kills_done=3,
+        ),
+        _summary(
+            mission_id="Mission_Acid",
+            turn=3,
+            total_turns=4,
+            mission_kill_limit=4,
+            mission_kills_done=5,
+            mission_kills_planned=2,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+    assert audit["violations"][0]["kind"] == "kill_limit_objective_failed"
+    assert audit["violations"][0]["details"] == {
+        "limit": 4,
+        "planned_kills": 2,
+    }
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
 def test_uncollected_pod_loss_blocks_plan():
     audit = audit_plan_safety(
         _summary(pods_present=1),
@@ -582,6 +964,39 @@ def test_collected_pod_drop_is_clean():
     audit = audit_plan_safety(
         _summary(pods_present=1),
         _summary(pods_present=0, pods_collected=1),
+    )
+
+    assert audit["status"] == "CLEAN"
+    assert plan_requires_safety_block(audit) is False
+
+
+def test_final_turn_live_pod_blocks_until_recovered():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Satellite",
+            turn=4,
+            total_turns=4,
+            pods_present=1,
+        ),
+        _summary(
+            mission_id="Mission_Satellite",
+            turn=4,
+            total_turns=4,
+            pods_present=1,
+            pods_collected=0,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert plan_requires_safety_block(audit) is True
+    assert audit["violations"][0]["kind"] == "pod_unrecovered_final"
+    assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_nonfinal_live_pod_can_remain_on_board():
+    audit = audit_plan_safety(
+        _summary(turn=2, total_turns=4, pods_present=1),
+        _summary(turn=2, total_turns=4, pods_present=1, pods_collected=0),
     )
 
     assert audit["status"] == "CLEAN"

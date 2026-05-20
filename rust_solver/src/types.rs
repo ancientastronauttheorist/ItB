@@ -209,6 +209,7 @@ pub enum DamageSource {
     SelfDamage = 3,
     WeaponUnitOnly = 4,
     ChainWhip = 5,
+    WeaponDeferredGrid = 6,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────

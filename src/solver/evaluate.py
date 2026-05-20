@@ -241,6 +241,7 @@ def evaluate(
     spawn_points: list[tuple[int, int]] = None,
     weights: EvalWeights = None,
     kills: int = 0,
+    mission_kills: int | None = None,
     blast_psion_was_active: bool = False,
     soldier_psion_was_active: bool = False,
     dam_was_alive: bool = False,
@@ -407,13 +408,13 @@ def evaluate(
     if bigbomb_was_alive and not getattr(board, 'bigbomb_alive', False):
         score += w.bigbomb_killed
 
-    # --- "KILL N ENEMIES" BONUS: progress + threshold cross ---
+    # --- "KILL AT LEAST N ENEMIES" BONUS: progress + threshold cross ---
     # Partial progress matters early; the full step reward still fires once
     # on the plan whose simulated kills push cumulative count to the target.
     kt = getattr(board, 'mission_kill_target', 0)
     if kt > 0:
         kd = getattr(board, 'mission_kills_done', 0)
-        new_kills = max(kills, 0)
+        new_kills = max(kills if mission_kills is None else mission_kills, 0)
         if kd < kt and new_kills > 0:
             progress_kills = max(min(kd + new_kills, kt) - kd, 0)
             if progress_kills > 0:
@@ -421,6 +422,14 @@ def evaluate(
                 score += _scaled(w.mission_kill_bonus, ff, 0.10, 0.40) * progress_ratio
         if kd < kt and kd + new_kills >= kt:
             score += _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+
+    # --- "KILL N OR FEWER ENEMIES" BONUS: immediate over-cap failure ---
+    kl = getattr(board, 'mission_kill_limit', 0)
+    if kl > 0:
+        kd = getattr(board, 'mission_kills_done', 0)
+        new_kills = max(kills if mission_kills is None else mission_kills, 0)
+        if kd + new_kills > kl:
+            score -= w.mission_kill_bonus * 20.0
 
     # --- "USE 3 REPAIR PLATFORMS" BONUS: cumulative progress + completion ---
     rt = getattr(board, 'repair_platform_target', 0)
@@ -579,6 +588,7 @@ def evaluate_breakdown(
     spawn_points: list[tuple[int, int]] = None,
     weights: EvalWeights = None,
     kills: int = 0,
+    mission_kills: int | None = None,
     current_turn: int = 0,
     total_turns: int = 5,
     remaining_spawns: int = 2**31 - 1,
@@ -767,12 +777,14 @@ def evaluate_breakdown(
                         pods_proximity += 1
                         pods_score += w.pod_proximity
 
-    # Kill-N bonus: progress shaping plus cumulative-kill cross. See evaluate().
+    # Kill-count bonuses: progress shaping, target cross, and limit cap.
     kill_n_progress_score = 0.0
     kill_n_threshold_score = 0.0
+    kill_limit_penalty = 0.0
     kt = getattr(board, 'mission_kill_target', 0)
+    kl = getattr(board, 'mission_kill_limit', 0)
     kd = getattr(board, 'mission_kills_done', 0)
-    new_kills = max(kills, 0)
+    new_kills = max(kills if mission_kills is None else mission_kills, 0)
     if kt > 0 and kd < kt and new_kills > 0:
         progress_kills = max(min(kd + new_kills, kt) - kd, 0)
         if progress_kills > 0:
@@ -782,7 +794,9 @@ def evaluate_breakdown(
             )
     if kt > 0 and kd < kt and kd + new_kills >= kt:
         kill_n_threshold_score = _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
-    kill_n_score = kill_n_progress_score + kill_n_threshold_score
+    if kl > 0 and kd + new_kills > kl:
+        kill_limit_penalty = -(w.mission_kill_bonus * 20.0)
+    kill_n_score = kill_n_progress_score + kill_n_threshold_score + kill_limit_penalty
 
     repair_platform_progress_score = 0.0
     repair_platform_threshold_score = 0.0
@@ -864,10 +878,12 @@ def evaluate_breakdown(
         "enemies_killed": {"count": kills, "score": enemies_killed_score},
         "mission_kill_bonus": {
             "target": kt,
+            "limit": kl,
             "done_pre_turn": kd,
             "kills_this_turn": kills,
             "progress_score": kill_n_progress_score,
             "threshold_score": kill_n_threshold_score,
+            "limit_penalty": kill_limit_penalty,
             "score": kill_n_score,
         },
         "mission_repair_bonus": {

@@ -14,6 +14,8 @@ import pytest
 from src.loop import commands as cmd_mod
 from src.loop.commands import _unit_roster_fingerprint
 from src.loop.session import ActiveSolution, RunSession, SolverAction
+from src.model.board import Board
+from src.solver.verify import DiffResult
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +69,44 @@ def test_fingerprint_empty_for_missing_data():
     assert _unit_roster_fingerprint(None) == ""
     assert _unit_roster_fingerprint({}) == ""
     assert _unit_roster_fingerprint({"units": []}) == ""
+
+
+def test_pod_state_diff_queues_investigation(tmp_path, monkeypatch):
+    monkeypatch.setattr(cmd_mod, "SNAPSHOT_DIR", tmp_path)
+    diff = DiffResult(tile_diffs=[{
+        "x": 5,
+        "y": 4,
+        "field": "has_pod",
+        "predicted": True,
+        "actual": False,
+    }])
+    investigations = []
+
+    cmd_mod._maybe_flag_pod_state_diff(
+        investigations,
+        diff,
+        {"categories": ["pod"], "top_category": "pod"},
+        {"tiles": []},
+        Board(),
+        {
+            "sub_action": "attack",
+            "action_index": 2,
+            "mech_uid": 7,
+            "weapon": "Science_Swap",
+            "target": [5, 3],
+        },
+        run_id="run",
+        turn=2,
+        failure_db_id="failure",
+    )
+
+    assert len(investigations) == 1
+    inv = investigations[0]
+    assert inv["kind"] == "pod_state_diff"
+    assert inv["pod_diffs"][0]["field"] == "has_pod"
+    context = json.loads((Path(inv["snapshot_path"]) / "context.json").read_text())
+    assert context["kind"] == "pod_state_diff"
+    assert context["weapon"] == "Science_Swap"
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +290,74 @@ def test_dirty_consent_accepts_final_cave_emergency_pylon_loss():
         plan_safety=safety,
         actions=actions,
         candidate_rank=0,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_final_bomb_bonus_building_loss():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement_hunt"])
+    s.mission_index = 5
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "grid_damage",
+                "current": 7,
+                "predicted": 6,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "objective_building_destroyed",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "objective_building_hp_loss",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+        ],
+        "current": {
+            "mission_id": "Mission_Bomb",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 7,
+            "protected_objective_units_alive": 2,
+            "mechs_alive": 3,
+        },
+        "predicted": {
+            "mission_id": "Mission_Bomb",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 6,
+            "protected_objective_units_alive": 2,
+            "mechs_alive": 3,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=36)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=36,
         provided_id=token,
     )
 

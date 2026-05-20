@@ -85,6 +85,8 @@ VEK_STATS = {
     "CrabBoss":      PawnStats(move_speed=3, ranged=1, massive=True),
     "Centipede1":    PawnStats(move_speed=2, ranged=1),
     "Centipede2":    PawnStats(move_speed=2, ranged=1),
+    "CentipedeBoss": PawnStats(move_speed=3, ranged=1, massive=True,
+                               default_weapon="CentipedeAtkB"),
     "Digger1":       PawnStats(move_speed=3, ranged=0),
     "Digger2":       PawnStats(move_speed=3, ranged=0),
     "Burrower1":     PawnStats(move_speed=4, ranged=0, pushable=False),

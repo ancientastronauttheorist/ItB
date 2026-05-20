@@ -20,6 +20,12 @@ fn refresh_all_arrogant_boosts(board: &mut Board) {
     }
 }
 
+fn clear_mites(unit: &mut Unit) {
+    if unit.is_player() && unit.is_mech() {
+        unit.set_infected(false);
+    }
+}
+
 // ── Blast Psion death explosion ──────────────────────────────────────────────
 
 /// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
@@ -88,7 +94,7 @@ fn apply_explosive_decay_tile_effects(board: &mut Board, x: u8, y: u8, status_bl
         if !status_blocked
             && board.units[idx].hp > 0
             && board.units[idx].can_catch_fire()
-            && !(board.flame_shielding && board.units[idx].is_player())
+            && !(board.flame_shielding && board.units[idx].is_player() && board.units[idx].is_mech())
             && !target_is_immune_vek
         {
             board.units[idx].set_fire(true);
@@ -304,7 +310,7 @@ fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
     if board.units[unit_idx].hp > 0
         && !board.units[unit_idx].shield()
         && board.units[unit_idx].can_catch_fire()
-        && !(board.flame_shielding && board.units[unit_idx].is_player())
+        && !(board.flame_shielding && board.units[unit_idx].is_player() && board.units[unit_idx].is_mech())
         && !target_is_immune_vek
     {
         board.units[unit_idx].set_fire(true);
@@ -327,15 +333,19 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         break_web_from(board, webber_uid);
     }
 
-    // 2. Smoke tile: carried unit fire is extinguished on landing.
+    // 2. Time Pod contact: attack-phase movement (Aerial Bombs, pushes, swaps)
+    // collects/destroys pods just like ordinary movement.
+    apply_pod_on_land(board, unit_idx, result);
+
+    // 3. Smoke tile: carried unit fire is extinguished on landing.
     apply_smoke_tile_extinguish(board, unit_idx, nx, ny);
 
-    // 3. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
+    // 4. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
     //    to burning Ground when a unit lands on it.
     apply_fire_tile_pickup(board, unit_idx, nx, ny);
 
-    // 4. ACID pool: unit gains ACID, pool consumed
+    // 5. ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
         if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
             board.units[unit_idx].set_acid(true);
@@ -343,7 +353,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // 5. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
+    // 6. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
     // units fall through to the deadly-terrain check below — frozen cancels
     // flight so they drown / fall normally.
     let dest_terrain = board.tile(nx, ny).terrain;
@@ -354,8 +364,8 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         return;
     }
 
-    // 6. Water / Lava / Chasm death.
-    // 7. Lava + flying → fire status (combined branch).
+    // 7. Water / Lava / Chasm death.
+    // 8. Lava + flying → fire status (combined branch).
     if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
         let massive = board.units[unit_idx].massive();
         match dest_terrain {
@@ -376,14 +386,14 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
             && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
         if !board.units[unit_idx].shield()
             && board.units[unit_idx].can_catch_fire()
-            && !(board.flame_shielding && board.units[unit_idx].is_player())
+            && !(board.flame_shielding && board.units[unit_idx].is_player() && board.units[unit_idx].is_mech())
             && !target_is_immune_vek
         {
             board.units[unit_idx].set_fire(true);
         }
     }
 
-    // 8-9. Mines.
+    // 9-10. Mines.
     if board.units[unit_idx].hp > 0 {
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
@@ -399,14 +409,14 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     }
 
-    // 10. Repair platform item: fires after terrain/mine resolution, before
+    // 11. Repair platform item: fires after terrain/mine resolution, before
     // teleporter relocation consumes the unit's landing tile.
     apply_repair_platform(board, unit_idx, result);
 
-    // 11. Teleporter pad: fires LAST, after terrain/mine/item resolution.
+    // 12. Teleporter pad: fires LAST, after terrain/mine/item resolution.
     apply_teleport_on_land(board, unit_idx);
 
-    // 12. Spider/Web Egg adjacency webs are tile-based and can apply after a
+    // 13. Spider/Web Egg adjacency webs are tile-based and can apply after a
     // unit lands beside an existing egg or after a teleporter swap.
     board.refresh_webb_egg_grapples();
 }
@@ -568,7 +578,7 @@ pub(crate) fn on_enemy_death(
                     board.units[j].max_hp -= 1;
                     board.units[j].hp -= 1;
                     if board.units[j].hp <= 0 {
-                        result.enemies_killed += 1;
+                        result.record_enemy_kill(!board.units[j].minor());
                     }
                 }
             }
@@ -590,7 +600,7 @@ pub(crate) fn on_enemy_death(
                     board.units[j].max_hp -= 1;
                     board.units[j].hp -= 1;
                     if board.units[j].hp <= 0 {
-                        result.enemies_killed += 1;
+                        result.record_enemy_kill(!board.units[j].minor());
                     }
                 }
             }
@@ -918,6 +928,7 @@ fn finish_instant_unit_death(
 
     let is_enemy = board.units[unit_idx].is_enemy();
     let is_player = board.units[unit_idx].is_player();
+    let mission_counted = is_enemy && !board.units[unit_idx].minor();
     let has_acid = board.units[unit_idx].acid();
     let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
     let dying_tname = board.units[unit_idx].type_name_str().to_string();
@@ -931,7 +942,7 @@ fn finish_instant_unit_death(
     board.units[unit_idx].hp = 0;
 
     if is_enemy {
-        result.enemies_killed += 1;
+        result.record_enemy_kill(mission_counted);
         on_enemy_death(board, unit_idx, result);
         if is_volatile {
             apply_volatile_decay(board, death_x, death_y, result, 0);
@@ -1029,7 +1040,10 @@ pub(crate) fn settle_building_grid_loss(
         return 0;
     }
 
-    if source == DamageSource::Bump && !is_unique && !destroyed {
+    if matches!(source, DamageSource::Bump | DamageSource::WeaponDeferredGrid)
+        && !is_unique
+        && !destroyed
+    {
         board.deferred_bump_grid_debt[idx] =
             board.deferred_bump_grid_debt[idx].saturating_add(hp_lost);
         return 0;
@@ -1097,6 +1111,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         } else if unit.frozen() {
             // Frozen = invincible, damage unfreezes (0 actual damage)
             unit.set_frozen(false);
+            clear_mites(unit);
         } else {
             let actual = match source {
                 DamageSource::Bump => {
@@ -1125,11 +1140,14 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             };
 
             unit.hp -= actual;
+            if actual > 0 {
+                clear_mites(unit);
+            }
 
             if unit.is_enemy() {
                 result.enemy_damage_dealt += actual as i32;
                 if unit.hp <= 0 {
-                    result.enemies_killed += 1;
+                    result.record_enemy_kill(!unit.minor());
                     on_enemy_death(board, idx, result);
                 }
             } else if unit.is_player() {
@@ -1236,7 +1254,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                     if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
                         unit.hp = 0;
                         if unit.is_enemy() {
-                            result.enemies_killed += 1;
+                            result.record_enemy_kill(!unit.minor());
                         }
                     }
                 }
@@ -1255,13 +1273,13 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             tile.set_cracked(false);
             if let Some(idx) = board.unit_at(x, y) {
                 let unit = &mut board.units[idx];
-                if unit.hp > 0 && !unit.effectively_flying() {
-                    unit.hp = 0;
-                    if unit.is_enemy() {
-                        result.enemies_killed += 1;
+                    if unit.hp > 0 && !unit.effectively_flying() {
+                        unit.hp = 0;
+                        if unit.is_enemy() {
+                            result.record_enemy_kill(!unit.minor());
+                        }
                     }
                 }
-            }
         }
 
         // Forest: weapon damage ignites (NOT bump/push damage)
@@ -2094,19 +2112,21 @@ pub fn apply_weapon_status_with_impact_occupancy(
                 u.set_frozen(false); // fire on frozen: unfreeze AND catch fire
             }
             // Pilot_Rock (Ariadne) is fire-immune. Flame Shielding (squad-wide)
-            // also blocks fire-apply on player units; Fire Psion grants the
+            // also blocks fire-apply on player mechs; Fire Psion grants the
             // same immunity to other Vek. Freeze-on-fire still unfreezes
             // above because that mechanic is independent of fire application.
             if u.can_catch_fire()
-                && !(board.flame_shielding && u.is_player())
+                && !(board.flame_shielding && u.is_player() && u.is_mech())
                 && !target_is_immune_vek
             {
                 u.set_fire(true);
+                clear_mites(u);
             }
         }
         if wdef.acid() {
             if !board.units[idx].frozen() {
                 board.units[idx].set_acid(true);
+                clear_mites(&mut board.units[idx]);
             }
         }
         if wdef.freeze() {
@@ -2115,6 +2135,7 @@ pub fn apply_weapon_status_with_impact_occupancy(
                 u.set_fire(false); // freeze on fire: extinguish
             }
             u.set_frozen(true);
+            clear_mites(u);
         }
         if wdef.web() {
             // Pilot_Soldier (Camila Vera) is web-immune. The web_source_uid
@@ -3106,6 +3127,7 @@ fn apply_trapped_death_damage(
                 && unit.receives_psion_aura()
                 && tname != "Jelly_Explode1"
                 && tname != "Jelly_Boss";
+            let mission_counted = is_enemy && !unit.minor();
             killed_enemy_uid = unit.uid;
 
             unit.hp = 0;
@@ -3113,7 +3135,7 @@ fn apply_trapped_death_damage(
             unit.set_frozen(false);
 
             if is_enemy {
-                result.enemies_killed += 1;
+                result.record_enemy_kill(mission_counted);
                 result.enemy_damage_dealt += prev_hp as i32;
                 killed_enemy_idx = Some(uidx);
             } else if is_player_mech {
@@ -3619,7 +3641,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                     tile.terrain = Terrain::Ground;
                     tile.set_on_fire(false);
                 }
-                let source = if wdef.smoke() && board.unit_at(nx as u8, ny as u8).is_some() {
+                let mut source = if wdef.smoke() && board.unit_at(nx as u8, ny as u8).is_some() {
                     // The bridge's adaptive Aerial Bombs workaround observes
                     // engine unit damage on occupied transit tiles and then
                     // applies only smoke, so terrain such as Sand is preserved.
@@ -3627,6 +3649,26 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                 } else {
                     DamageSource::Weapon
                 };
+                if wdef.smoke() && source == DamageSource::Weapon {
+                    let ux = nx as u8;
+                    let uy = ny as u8;
+                    let idx = xy_to_idx(ux, uy);
+                    let is_freeze_objective_tile =
+                        board.mission_id == "Mission_FreezeBldg"
+                        && (board.freeze_building_tiles & (1u64 << idx)) != 0;
+                    {
+                        let tile = board.tile_mut(ux, uy);
+                        if is_freeze_objective_tile
+                            && tile.terrain == Terrain::Building
+                            && tile.building_hp > 0
+                            && tile.frozen()
+                        {
+                            tile.set_frozen(false);
+                            result.events.push(format!("building_thawed:{}:{}", ux, uy));
+                            source = DamageSource::WeaponDeferredGrid;
+                        }
+                    }
+                }
                 apply_damage(board, nx as u8, ny as u8, wdef.damage, result, source);
             }
         }
@@ -3985,6 +4027,7 @@ pub fn simulate_attack(
             unit.set_fire(false);
             unit.set_acid(false);
             unit.set_frozen(false);
+            clear_mites(unit);
             if storm_active {
                 unit.set_acid(true);
             }
@@ -4455,6 +4498,34 @@ mod tests {
         assert!(board.tile(3, 4).on_fire(), "Ordinary tile fire remains on the tile");
     }
 
+    #[test]
+    fn test_flame_shielding_does_not_protect_archive_tank_from_fire_tile() {
+        // Regression: Flame Behemoths Perfect Strategy run 20260518_105028_125,
+        // Mission_Tanks final turn. The live Archive Tank caught fire after
+        // moving onto a burning tile; the sim had incorrectly treated every
+        // player-team unit as Flame-Shielding immune.
+        let mut board = make_test_board();
+        board.flame_shielding = true;
+        board.tile_mut(5, 1).set_on_fire(true);
+        let tank = add_mission_ally(
+            &mut board,
+            5326,
+            4,
+            2,
+            1,
+            WId::DeployTankShot,
+            "Archive_Tank",
+        );
+
+        let _ = simulate_move(&mut board, tank, (5, 1));
+
+        assert_eq!((board.units[tank].x, board.units[tank].y), (5, 1));
+        assert!(
+            board.units[tank].fire(),
+            "Flame Shielding applies to mechs, not allied mission tanks"
+        );
+    }
+
     fn add_decoy_building(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
         let idx = board.add_unit(Unit {
             uid, x, y, hp: 2, max_hp: 2,
@@ -4902,6 +4973,19 @@ mod tests {
         assert_eq!(result.enemies_killed, 1);
         // Dead unit pushed forward (simultaneous)
         assert_eq!(board.units[enemy_idx].y, 5); // moved from 4 to 5
+    }
+
+    #[test]
+    fn test_minor_totem_kill_does_not_advance_mission_kill_counter() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimePunchmech);
+        let totem_idx = add_enemy_type(&mut board, 91, 3, 4, 1, "Totem1");
+        board.units[totem_idx].flags.insert(UnitFlags::MINOR);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mission_kills, 0);
     }
 
     // ── Prime_Spear path_size=2 stab (Lua weapons_prime.lua:792-846) ──────────
@@ -6216,6 +6300,20 @@ mod tests {
     }
 
     #[test]
+    fn test_aerial_bombs_landing_on_time_pod_collects() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        board.tile_mut(3, 5).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 3, 5);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (3, 5));
+        assert!(!board.tile(3, 5).has_pod());
+        assert_eq!(result.pods_collected, 1);
+        assert!(result.events.iter().any(|e| e == "pod_collected:3:5"));
+    }
+
+    #[test]
     fn test_jetmech_smokes_transit_range_upgraded() {
         // Range-upgraded Aerial Bombs (e.g. +1 range power): S=(3,3) → T1=(3,4)
         // → T2=(3,5) → L=(3,6). Smoke on BOTH transit tiles, not on L or S.
@@ -6428,6 +6526,49 @@ mod tests {
         assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Aerial Bombs consumes transit Forest");
         assert!(board.tile(3, 4).smoke(), "Aerial Bombs still leaves smoke on the transit tile");
         assert!(!board.tile(3, 4).on_fire(), "Aerial Bombs smoke prevents transit Forest ignition");
+    }
+
+    #[test]
+    fn test_aerial_bombs_frozen_objective_building_damage_defers_grid() {
+        // Rusting Hulks There Is No Try run 20260519_133059_179,
+        // Mission_FreezeBldg turn 1: Aerial Bombs flew over a frozen objective
+        // building. Live immediately thawed and damaged the building, but the
+        // grid meter charged the HP loss only when the enemy turn began.
+        let mut board = make_test_board();
+        board.mission_id = "Mission_FreezeBldg".to_string();
+        board.grid_power = 6;
+        board.freeze_building_target = 5;
+        let bidx = xy_to_idx(3, 4);
+        board.freeze_building_tiles |= 1u64 << bidx;
+        {
+            let tile = board.tile_mut(3, 4);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+            tile.set_frozen(true);
+        }
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        let result = simulate_action(
+            &mut board,
+            mech_idx,
+            (3, 3),
+            WId::BruteJetmech,
+            (3, 5),
+            &WEAPONS,
+        );
+
+        assert!(!board.tile(3, 4).frozen(), "transit objective building should thaw");
+        assert!(board.tile(3, 4).smoke(), "Aerial Bombs should smoke the transit building");
+        assert_eq!(board.tile(3, 4).building_hp, 1, "transit objective building should lose HP");
+        assert_eq!(board.grid_power, 6, "grid loss is deferred until enemy-turn settle");
+        assert_eq!(result.grid_damage, 0, "per-action grid damage should not fire immediately");
+        assert_eq!(result.buildings_damaged, 1);
+        assert_eq!(board.deferred_bump_grid_debt[bidx], 1);
+
+        let mut settle = ActionResult::default();
+        flush_deferred_bump_grid_debt(&mut board, &mut settle);
+        assert_eq!(board.grid_power, 5);
+        assert_eq!(settle.grid_damage, 1);
     }
 
     #[test]
@@ -8671,6 +8812,32 @@ mod tests {
         let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
         assert_eq!(board.grid_power, 7);
         assert_eq!(board.tile(1, 2).building_hp, 1);
+    }
+
+    #[test]
+    fn test_mission_wind_dir_push_bumps_mech_into_building() {
+        // Perfect Strategy run 20260518_184029_155, Mission_Wind turn 2:
+        // RocketMech stood on C3 with the Old Earth Bar at B3. WindDir=0
+        // pushed it into the bar, damaging both and costing the objective.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let rocket = add_mech(&mut board, 1, 5, 5, 3, WId::RangedRocket);
+        board.tile_mut(5, 6).terrain = Terrain::Building;
+        board.tile_mut(5, 6).building_hp = 1;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 6);
+        board.env_wind = 1u64 << xy_to_idx(5, 5);
+        board.env_wind_dir = 0;
+        let grid_before = board.grid_power;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!((board.units[rocket].x, board.units[rocket].y), (5, 5));
+        assert_eq!(board.units[rocket].hp, 2, "blocked wind push bumps mech");
+        assert_eq!(board.tile(5, 6).building_hp, 0, "wind bump destroys building");
+        assert_eq!(board.grid_power, grid_before - 1);
+        assert_eq!(result.grid_damage, 1);
     }
 
     #[test]

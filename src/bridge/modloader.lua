@@ -105,8 +105,11 @@ local function _read_save_data()
         conveyor_belts = {},
         pilots = {},  -- [pawn_id] = {id=..., level=..., skill1=..., skill2=...}
         pawn_max_health = {},  -- [pawn_id] = max_health
+        infected = {},  -- [pawn_id] = bInfected (Vek Mites objective state)
         master_seed = nil,    -- GameData.seed — run-lifetime master RNG seed
         mission_seeds = {},   -- [region_key] = aiSeed — per-mission per-turn PRNG snapshot
+        current_weapons = {}, -- GameData.current.weapons, 1-indexed loadout slots
+        pawn_offsets = {},    -- [pawn_id] = 1-indexed loadout offset in current_weapons
     }
     local base = os.getenv("HOME") ..
         "/Library/Application Support/IntoTheBreach/profile_Alpha/"
@@ -139,6 +142,12 @@ local function _read_save_data()
     -- fish which telegraphed attacks the game has pre-rolled as resists.
     local ms = content:match('%["seed"%]%s*=%s*(%-?%d+)')
     if ms then result.master_seed = tonumber(ms) end
+    local weapons_blob = content:match('%["weapons"%]%s*=%s*{(.-)}')
+    if weapons_blob then
+        for w in weapons_blob:gmatch('"([^"]*)"') do
+            result.current_weapons[#result.current_weapons + 1] = w
+        end
+    end
     for region_key, region_block in content:gmatch('%["(region%d+)"%]%s*=%s*(%b{})') do
         local ais = region_block:match('%["aiSeed"%]%s*=%s*(%-?%d+)')
         if ais then
@@ -162,6 +171,10 @@ local function _read_save_data()
         local pid = block:match('%["id"%]%s*=%s*(%d+)')
         if pid then
             local pid_n = tonumber(pid)
+            local off = block:match('%["offset"%]%s*=%s*(%d+)')
+            if off then
+                result.pawn_offsets[pid_n] = tonumber(off)
+            end
             -- Queued shot (projectile/laser/artillery end-tile)
             local qs = block:match('%["piQueuedShot"%]%s*=%s*Point%s*%(([^%)]+)%)')
             if qs then
@@ -199,6 +212,10 @@ local function _read_save_data()
             local mh = block:match('%["max_health"%]%s*=%s*(%d+)')
             if mh then
                 result.pawn_max_health[pid_n] = tonumber(mh)
+            end
+            local infected = block:match('%["bInfected"%]%s*=%s*(true|false)')
+            if infected then
+                result.infected[pid_n] = infected == "true"
             end
             -- Pilot: nested table inside the pawn block
             local pilot_block = block:match('%["pilot"%]%s*=%s*(%b{})')
@@ -575,6 +592,18 @@ local function dump_state()
                 if ok_fi then unit.fire = fi end
                 local ok_fr, fr = pcall(function() return p:IsFrozen() end)
                 if ok_fr then unit.frozen = fr end
+                local infected = nil
+                for _, mname in ipairs({"IsInfected", "IsInfested", "IsMiteInfected"}) do
+                    local ok_m, v = pcall(function() return p[mname](p) end)
+                    if ok_m and type(v) == "boolean" then
+                        infected = v
+                        break
+                    end
+                end
+                if infected == nil and save_data.infected[pid] ~= nil then
+                    infected = save_data.infected[pid]
+                end
+                if infected ~= nil then unit.infected = infected end
                 local ok_bo, boosted = pcall(function() return p:IsBoosted() end)
                 if ok_bo and boosted then unit.boosted = true end
                 -- Web/grapple detection: try multiple API method names.
@@ -964,6 +993,15 @@ local function dump_state()
         end
     end)
     state.env_type = env_type
+    if env_type == "wind" then
+        pcall(function()
+            local mission = _ITB_CURRENT_MISSION
+            if mission and mission.LiveEnvironment
+                    and mission.LiveEnvironment.WindDir ~= nil then
+                state.environment_wind_dir = mission.LiveEnvironment.WindDir
+            end
+        end)
+    end
 
     -- Helper: add a danger tile to both v1 and v2 fields. The optional
     -- `flying_immune_override` controls the 5th field (Satellite Rocket
@@ -1065,26 +1103,36 @@ local function dump_state()
         end
     end
 
-    -- Bonus-objective progress for "Kill N enemies" (BONUS_KILL_FIVE = 6).
-    -- Emitted so the Python evaluator can reward plans that reach the
-    -- cumulative kill target. Absent / 0 → no kill-N bonus on this mission;
-    -- the evaluator's step-function check neutralizes safely. Per
+    -- Bonus-objective progress for enemy kill-count objectives.
+    -- BONUS_KILL_FIVE is "kill at least N"; BONUS_PACIFIST is
+    -- "kill N or fewer". Emit separate fields because the former rewards
+    -- extra kills while the latter fails immediately when exceeded. Per
     -- scripts/missions/missions.lua:
     --   BONUS_KILL_FIVE = 6 in the enum
+    --   BONUS_PACIFIST = 9 in the enum
     --   mission.BonusObjs is the chosen bonus list (random from BonusPool)
     --   mission.KilledVek is cumulative this-mission kills
     --   mission:GetKillBonus() is difficulty-scaled (5 easy / 7 normal/hard)
+    --   mission:GetPacifistCount() is difficulty-scaled (4 easy / 5 normal/hard / 6 unfair)
     pcall(function()
         local mission = _ITB_CURRENT_MISSION
         if mission and mission.BonusObjs then
             local has_kill_five = false
+            local has_pacifist = false
             for _, obj in ipairs(mission.BonusObjs) do
-                if obj == 6 then has_kill_five = true; break end
+                if obj == 6 then has_kill_five = true end
+                if obj == 9 then has_pacifist = true end
             end
             if has_kill_five and mission.GetKillBonus then
                 local ok, target = pcall(function() return mission:GetKillBonus() end)
                 if ok and type(target) == "number" then
                     state.mission_kill_target = target
+                end
+            end
+            if has_pacifist and mission.GetPacifistCount then
+                local ok, limit = pcall(function() return mission:GetPacifistCount() end)
+                if ok and type(limit) == "number" then
+                    state.mission_kill_limit = limit
                 end
             end
             if mission.KilledVek ~= nil then
@@ -1103,6 +1151,23 @@ local function dump_state()
             state.repair_platform_target = 3
             if mission.RepairPickups ~= nil then
                 state.repair_platforms_used = mission.RepairPickups
+            end
+        end
+    end)
+
+    -- Mission_Force objective progress ("Destroy 2 mountains"). The game
+    -- increments mission.Mountains from EVENT_MOUNTAIN_DESTROYED and gates
+    -- mission end on mission.MountainsGoal.
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if mission and mission.ID == "Mission_Force" then
+            if mission.MountainsGoal ~= nil then
+                state.mission_mountain_target = mission.MountainsGoal
+            else
+                state.mission_mountain_target = 2
+            end
+            if mission.Mountains ~= nil then
+                state.mission_mountains_destroyed = mission.Mountains
             end
         end
     end)
@@ -1321,6 +1386,34 @@ local function find_weapon_slot(pawn, weapon_id)
     return nil
 end
 
+local function effective_weapon_from_save(save_data, uid, weapon_slot, fallback)
+    if not save_data then return fallback, "static" end
+    local weapons = save_data.current_weapons or {}
+    local idx = nil
+    if save_data.pawn_offsets then
+        local off = save_data.pawn_offsets[uid]
+        if type(off) == "number" then
+            idx = off + weapon_slot
+        end
+    end
+    -- Fallback for old saves / unexpected missing offsets: player mech ids are
+    -- normally 0,1,2 and GameData.current.weapons stores two slots per mech.
+    if not idx and type(uid) == "number" and uid >= 0 then
+        idx = uid * 2 + weapon_slot + 1
+    end
+    local wname = idx and weapons[idx] or nil
+    if type(wname) == "string" and wname ~= "" then
+        if _G[wname] ~= nil then
+            return wname, "save"
+        end
+        log_bridge("WARN: save weapon " .. wname ..
+                   " for uid=" .. tostring(uid) ..
+                   " slot=" .. tostring(weapon_slot) ..
+                   " has no Lua skill; falling back to " .. tostring(fallback))
+    end
+    return fallback, "static"
+end
+
 local function tile_damage_snapshot(pt)
     local snap = {}
     local ok_t, terrain_id = pcall(function() return Board:GetTerrain(pt) end)
@@ -1430,7 +1523,21 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                " out of range (pawn " .. ptype ..
                " has " .. skill_count .. " skills)"
     end
-    local wname = pawn_def.SkillList[slot]
+    local uid = nil
+    local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
+    if ok_uid then uid = uid_val end
+    local base_wname = pawn_def.SkillList[slot]
+    local save_data = _read_save_data()
+    local wname, wsource =
+        effective_weapon_from_save(save_data, uid, weapon_slot, base_wname)
+    local restore_wname = nil
+    if wname ~= base_wname then
+        restore_wname = base_wname
+        pawn_def.SkillList[slot] = wname
+        log_bridge("EFFECTIVE_WEAPON: uid=" .. tostring(uid) ..
+                   " slot=" .. slot .. " " .. tostring(base_wname) ..
+                   " -> " .. tostring(wname) .. " source=" .. tostring(wsource))
+    end
     local source = pawn:GetSpace()
     local is_transit_leap =
         string.find(wname, "^Brute_Jetmech") ~= nil or
@@ -1454,6 +1561,9 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     local ok, err = pcall(function()
         pawn:FireWeapon(Point(tx, ty), slot)
     end)
+    if restore_wname ~= nil then
+        pawn_def.SkillList[slot] = restore_wname
+    end
     if not ok then
         log_bridge("WARN: FireWeapon failed for slot " .. slot ..
                    " (" .. wname .. "): " .. tostring(err))
@@ -1526,8 +1636,15 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                     local ok_d = false
                     local err_d = nil
                     if dmg_val == 0 and has_live and smoke_val > 0 and acid_val == 0 then
+                        -- Use a real SpaceDamage payload even for occupied
+                        -- transit tiles. Direct Board:SetSmoke paints the
+                        -- tile but can leave already-queued Vek attacks live;
+                        -- DamageSpace(iSmoke) follows the weapon/status path
+                        -- that attack cancellation code observes.
+                        local sd = SpaceDamage(tp, 0)
+                        sd.iSmoke = smoke_val
                         ok_d, err_d = pcall(function()
-                            Board:SetSmoke(tp, true, true)
+                            Board:DamageSpace(sd)
                         end)
                         used_direct_status = ok_d
                     end
@@ -1729,6 +1846,12 @@ local function execute_command(cmd_str)
             sd.iFrozen = effect_remove
             sd.iInjure = effect_remove
             Board:DamageSpace(sd)
+            pcall(function()
+                local fn = pawn.SetInfected
+                if type(fn) == "function" then
+                    fn(pawn, false)
+                end
+            end)
 
             -- Direct SpaceDamage is not a normal ability use, so consume Boost
             -- manually. Kai's Arrogant Boost is state-based and returns if the

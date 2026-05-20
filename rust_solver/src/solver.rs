@@ -347,7 +347,17 @@ pub(crate) fn get_weapon_targets(
                     if dist < min_r { continue; }
                     if !omnidirectional && x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
-                    if tile.terrain == Terrain::Building && tile.building_hp > 0 && !wdef.shield() { continue; }
+                    let zero_damage_building_center_ok = matches!(
+                        weapon_id,
+                        WId::RangedIgnite | WId::RangedIgniteA
+                    );
+                    if tile.terrain == Terrain::Building
+                        && tile.building_hp > 0
+                        && !wdef.shield()
+                        && !zero_damage_building_center_ok
+                    {
+                        continue;
+                    }
                     targets.push((x, y));
                 }
             }
@@ -734,8 +744,13 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
                 }
             }
 
-            // Repair (if damaged/on_fire/acid/frozen)
-            if action_unit.hp < action_unit.max_hp || action_unit.fire() || action_unit.acid() || action_unit.frozen() {
+            // Repair (if damaged/on_fire/acid/frozen/infected)
+            if action_unit.hp < action_unit.max_hp
+                || action_unit.fire()
+                || action_unit.acid()
+                || action_unit.frozen()
+                || action_unit.infected()
+            {
                 actions.push((pos, WId::Repair, attack_pos));
             }
         }
@@ -1088,6 +1103,7 @@ fn search_recursive(
     depth: usize,
     actions_so_far: &mut Vec<MechAction>,
     kills_so_far: i32,
+    mission_kills_so_far: i32,
     bumps_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
@@ -1115,9 +1131,19 @@ fn search_recursive(
         // All mechs acted — snapshot buildings before enemy phase
         let mut b_eval = board.clone();
         let buildings_before_enemy = count_buildings(&b_eval);
-        simulate_enemy_attacks(&mut b_eval, original_positions, weapons);
-        apply_spawn_blocking(&mut b_eval, spawn_points);
-        let raw = evaluate(&b_eval, spawn_points, weights, kills_so_far, bumps_so_far, psion_before, building_threats);
+        let enemy_phase_result = simulate_enemy_attacks(&mut b_eval, original_positions, weapons);
+        let spawn_block_result = apply_spawn_blocking(&mut b_eval, spawn_points);
+        let projected_kills = kills_so_far
+            + enemy_phase_result.enemies_killed
+            + spawn_block_result.enemies_killed;
+        let projected_mission_kills = mission_kills_so_far
+            + enemy_phase_result.mission_kills
+            + spawn_block_result.mission_kills;
+        let raw = evaluate(
+            &b_eval, spawn_points, weights,
+            projected_kills, projected_mission_kills,
+            bumps_so_far, psion_before, building_threats,
+        );
         // Tier 2 soft-disable bias: penalize any candidate plan that
         // relies on a weapon in the session's disabled_actions list.
         // Subtracted at terminal evaluation so the search retains its
@@ -1169,7 +1195,7 @@ fn search_recursive(
         // Still recurse to the next depth so the remaining mechs can act
         search_recursive(
             board, mech_order, depth + 1,
-            actions_so_far, kills_so_far, bumps_so_far, soft_disable_penalty_so_far,
+            actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
@@ -1241,6 +1267,7 @@ fn search_recursive(
             &b_next, mech_order, depth + 1,
             actions_so_far,
             kills_so_far + result.enemies_killed,
+            mission_kills_so_far + result.mission_kills,
             bumps_so_far + result.buildings_bump_damaged,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
@@ -1413,7 +1440,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -1611,7 +1638,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -1704,6 +1731,29 @@ mod top_k_tests {
 
         let actions = enumerate_actions(&board, idx, &WEAPONS);
         assert!(actions.iter().any(|a| a.1 == WId::TrappedExplode));
+    }
+
+    #[test]
+    fn infected_full_hp_mech_can_repair() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 11,
+            x: 3,
+            y: 1,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::INFECTED,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("PulseMech");
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+        assert!(
+            actions.iter().any(|a| a.1 == WId::Repair),
+            "Vek Mites must make Repair a legal action even at full HP"
+        );
     }
 
     #[test]
@@ -1875,6 +1925,50 @@ mod top_k_tests {
         assert!(
             targets.contains(&(2, 2)),
             "Artemis should still target cardinal F6 from D6"
+        );
+    }
+
+    #[test]
+    fn vulcan_artillery_can_target_building_center_for_adjacent_push() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 5,
+            y: 1,
+            hp: 2,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedIgnite as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        {
+            let tile = board.tile_mut(4, 3);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+        board.add_unit(Unit {
+            uid: 231,
+            x: 4,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (5, 1) && a.1 == WId::RangedIgnite && a.2 == (4, 3)
+            }),
+            "Vulcan Artillery should be able to target a live building when the zero-damage center shot pushes adjacent attackers"
         );
     }
 

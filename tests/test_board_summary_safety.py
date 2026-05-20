@@ -117,6 +117,21 @@ def test_summary_tracks_mech_damage_objective_from_bonus_ids():
     assert summary["mech_damage_objective_limit"] == 4
 
 
+def test_summary_tracks_mission_kill_objective_progress():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_SnowStorm"
+    data["mission_kill_target"] = 5
+    data["mission_kill_limit"] = 4
+    data["mission_kills_done"] = 4
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mission_kill_target"] == 5
+    assert summary["mission_kill_limit"] == 4
+    assert summary["mission_kills_done"] == 4
+
+
 def test_summary_omits_mech_damage_objective_without_bonus_id():
     data = _bridge_with_mech()
     board = Board.from_bridge_data(data)
@@ -250,6 +265,195 @@ def test_summary_tracks_proto_bombs_from_mission_metadata():
         "ProtoBomb",
         "ProtoBomb",
     ]
+
+
+def test_summary_tracks_archive_tanks_from_mission_metadata():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Tanks"
+    data["units"].extend([
+        {
+            "uid": 501,
+            "type": "Archive_Tank",
+            "x": 3,
+            "y": 4,
+            "hp": 1,
+            "max_hp": 1,
+            "team": 1,
+            "mech": False,
+            "move": 3,
+            "weapons": ["Deploy_TankShot"],
+        },
+        {
+            "uid": 502,
+            "type": "Archive_Tank",
+            "x": 4,
+            "y": 4,
+            "hp": 0,
+            "max_hp": 1,
+            "team": 1,
+            "mech": False,
+            "move": 3,
+            "weapons": ["Deploy_TankShot"],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["protected_objective_units_alive"] == 1
+    assert [u["type"] for u in summary["protected_objective_units"]] == [
+        "Archive_Tank",
+        "Archive_Tank",
+    ]
+
+
+def test_summary_tracks_destroy_objective_units_from_mission_metadata():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_AcidStorm"
+    data["units"].extend([
+        {
+            "uid": 601,
+            "type": "Storm_Generator",
+            "x": 2,
+            "y": 2,
+            "hp": 3,
+            "max_hp": 3,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+        {
+            "uid": 602,
+            "type": "Storm_Generator",
+            "x": 4,
+            "y": 2,
+            "hp": 0,
+            "max_hp": 3,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["destroy_objective_units_alive"] == 1
+    assert [u["type"] for u in summary["destroy_objective_units"]] == [
+        "Storm_Generator",
+        "Storm_Generator",
+    ]
+
+
+def test_summary_tracks_dam_pawn_destroy_objective_from_metadata():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Dam"
+    data["units"].extend([
+        {
+            "uid": 603,
+            "type": "Dam_Pawn",
+            "x": 0,
+            "y": 0,
+            "hp": 2,
+            "max_hp": 2,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+        {
+            "uid": 604,
+            "type": "Dam_Pawn",
+            "x": 1,
+            "y": 0,
+            "hp": 0,
+            "max_hp": 2,
+            "team": 6,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+        },
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["destroy_objective_units_alive"] == 1
+    assert [u["type"] for u in summary["destroy_objective_units"]] == [
+        "Dam_Pawn",
+        "Dam_Pawn",
+    ]
+
+
+def test_summary_tracks_terraform_grass_counter_tiles():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Terraform"
+    data["tiles"].extend([
+        {"x": 3, "y": 2, "terrain": "ground", "grass": True},
+        {"x": 4, "y": 3, "terrain": "ground", "custom": "ground_grass.png"},
+        {"x": 6, "y": 6, "terrain": "ground"},
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["terraform_grass_remaining"] == 2
+    assert summary["terraform_grass_tiles"] == [[3, 2], [4, 3]]
+
+
+def test_summary_tracks_mission_force_mountain_counter():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Force"
+    data["mission_mountain_target"] = 2
+    data["mission_mountains_destroyed"] = 1
+    data["mission_mountain_tiles"] = [[2, 2], [4, 4]]
+    data["tiles"].extend([
+        {"x": 2, "y": 2, "terrain": "mountain", "building_hp": 1},
+        {"x": 4, "y": 4, "terrain": "mountain", "building_hp": 2},
+        {"x": 5, "y": 5, "terrain": "rubble", "building_hp": 0},
+    ])
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mission_mountain_target"] == 2
+    assert summary["mission_mountains_destroyed"] == 1
+    assert summary["mission_mountain_tiles"] == [
+        {"pos": [2, 2], "hp": 1},
+        {"pos": [4, 4], "hp": 2},
+    ]
+
+
+def test_summary_tracks_infected_mechs_for_mite_counter():
+    data = _bridge_with_mech()
+    data["mission_id"] = "Mission_Holes"
+    data["units"][0]["infected"] = True
+    data["units"].append({
+        "uid": 12,
+        "type": "IgniteMech",
+        "x": 4,
+        "y": 5,
+        "hp": 3,
+        "max_hp": 3,
+        "team": 1,
+        "mech": True,
+        "move": 4,
+        "weapons": ["Ranged_Ignite"],
+        "infected": False,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["mites_status_tracked"] is True
+    assert summary["mites_remaining"] == 1
+    assert summary["mechs_infected"] == [{
+        "uid": 11,
+        "type": "TeleMech",
+        "pos": [2, 5],
+    }]
 
 
 def test_summary_keeps_dead_player_mechs_for_post_enemy_diff():

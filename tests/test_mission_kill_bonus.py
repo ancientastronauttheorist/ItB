@@ -1,4 +1,4 @@
-"""Progress + threshold scoring for the "Kill N enemies" bonus objective.
+"""Progress + threshold/cap scoring for kill-count bonus objectives.
 
 BONUS_KILL_FIVE (mission.BonusObjs id=6) grants +1 rep star when the team
 kills at least N Vek in the mission (N = 5 Easy / 7 Normal/Hard). The
@@ -6,6 +6,10 @@ evaluator rewards partial progress toward the target, then fires the full
 bonus exactly once — on the plan whose simulated kills cross the cumulative
 target (pre-turn kills_done < target AND post-turn kills_done +
 this_plan_kills ≥ target).
+
+BONUS_PACIFIST (mission.BonusObjs id=9) grants +1 rep star only if the team
+kills N or fewer Vek (N = 4 Easy / 5 Normal/Hard / 6 Unfair). Exceeding that
+cap fails immediately and must dominate ordinary kill value.
 
 This matters because without cumulative tracking the solver sees only
 per-turn kills scaled by enemy_killed (500 × future_factor) and has no
@@ -18,11 +22,16 @@ from src.model.board import Board
 from src.solver.evaluate import evaluate, evaluate_breakdown, EvalWeights
 
 
-def _empty_board(kill_target: int = 0, kills_done: int = 0) -> Board:
+def _empty_board(
+    kill_target: int = 0,
+    kills_done: int = 0,
+    kill_limit: int = 0,
+) -> Board:
     b = Board()
     b.grid_power = 5
     b.grid_power_max = 7
     b.mission_kill_target = kill_target
+    b.mission_kill_limit = kill_limit
     b.mission_kills_done = kills_done
     return b
 
@@ -47,6 +56,20 @@ def test_bonus_fires_when_plan_crosses_target():
         f"Crossing the kill target should fire the bonus. "
         f"with={with_bonus}, without={without_bonus}, diff={diff}"
     )
+
+
+def test_minor_kills_score_normally_without_crossing_mission_target():
+    b = _empty_board(kill_target=5, kills_done=4)
+    counted = evaluate(
+        b, spawn_points=[], weights=EvalWeights(),
+        current_turn=4, total_turns=4, kills=1, mission_kills=1,
+    )
+    minor_only = evaluate(
+        b, spawn_points=[], weights=EvalWeights(),
+        current_turn=4, total_turns=4, kills=1, mission_kills=0,
+    )
+
+    assert counted - minor_only > 3_000
 
 
 def test_bonus_does_not_fire_if_target_already_hit():
@@ -90,10 +113,19 @@ def test_target_zero_neutralizes_scoring():
 
 def test_board_copy_preserves_kill_fields():
     """Board.copy() must preserve mission_kill_target/done for search branches."""
-    b = _empty_board(kill_target=7, kills_done=3)
+    b = _empty_board(kill_target=7, kills_done=3, kill_limit=4)
     c = b.copy()
     assert c.mission_kill_target == 7
+    assert c.mission_kill_limit == 4
     assert c.mission_kills_done == 3
+
+
+def test_kill_limit_penalizes_over_cap():
+    """BONUS_PACIFIST: kills_done=3, limit=4, killing 2 fails objective."""
+    b = _empty_board(kills_done=3, kill_limit=4)
+    safe = _score(b, kills=1)
+    failed = _score(b, kills=2)
+    assert safe - failed > 250_000
 
 
 def test_breakdown_reports_kill_bonus():
@@ -102,11 +134,22 @@ def test_breakdown_reports_kill_bonus():
                             current_turn=2, total_turns=5, kills=3)
     info = bd["mission_kill_bonus"]
     assert info["target"] == 7
+    assert info["limit"] == 0
     assert info["done_pre_turn"] == 5
     assert info["kills_this_turn"] == 3
     assert info["progress_score"] > 0
     assert info["threshold_score"] > 0
+    assert info["limit_penalty"] == 0.0
     assert info["score"] > 0
+
+    b_limit = _empty_board(kills_done=3, kill_limit=4)
+    bd_limit = evaluate_breakdown(b_limit, spawn_points=[], weights=EvalWeights(),
+                                  current_turn=2, total_turns=5, kills=2)
+    limit_info = bd_limit["mission_kill_bonus"]
+    assert limit_info["target"] == 0
+    assert limit_info["limit"] == 4
+    assert limit_info["limit_penalty"] < -250_000
+    assert limit_info["score"] == limit_info["limit_penalty"]
 
     b_below = _empty_board(kill_target=7, kills_done=2)
     bd_below = evaluate_breakdown(b_below, spawn_points=[], weights=EvalWeights(),
@@ -128,4 +171,5 @@ def test_bridge_data_missing_fields_defaults_to_zero():
     }
     b = Board.from_bridge_data(data)
     assert b.mission_kill_target == 0
+    assert b.mission_kill_limit == 0
     assert b.mission_kills_done == 0

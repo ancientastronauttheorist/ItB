@@ -134,6 +134,7 @@ class Unit:
     frozen: bool = False
     fire: bool = False
     web: bool = False
+    infected: bool = False  # Vek Mites attached; objective counter state
     boosted: bool = False
     # UID of the enemy currently webbing this unit. -1 = no web / unknown.
     # When that enemy is pushed or killed, web breaks and move_speed restores.
@@ -230,6 +231,7 @@ class Board:
         # so the evaluator can score "lose a turn" instead of "die".
         self.environment_freeze: set[tuple[int, int]] = set()
         self.env_type: str = "unknown"
+        self.environment_wind_dir: int | None = None
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
         self.soldier_psion_active: bool = False
@@ -253,15 +255,24 @@ class Board:
         self.medical_supplies: bool = False
         # Mission metadata (from bridge mission.ID, e.g. "Mission_Dam").
         self.mission_id: str = ""
-        # "Kill N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
+        # "Kill at least N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
         # mission doesn't have this bonus. Target is difficulty-scaled by
         # the game (5 on Easy, 7 on Normal/Hard). Used by the evaluator to
         # fire a step-function bonus when cumulative kills cross the target.
         self.mission_kill_target: int = 0
+        # "Kill N or fewer enemies" bonus objective (BONUS_PACIFIST). 0 when
+        # absent. Exceeding this cap fails the bonus immediately.
+        self.mission_kill_limit: int = 0
         # Cumulative enemy kills this mission (mission.KilledVek from Lua).
         # Combined with the simulated turn's kills to decide whether a plan
-        # crosses the kill target threshold.
+        # crosses the kill target threshold or exceeds the kill limit.
         self.mission_kills_done: int = 0
+        # Mission_Force objective: destroy 2 mountains. `mission_mountain_tiles`
+        # is the set of current mountain positions at solve input; projection
+        # counts how many of those become rubble during the planned turn.
+        self.mission_mountain_target: int = 0
+        self.mission_mountains_destroyed: int = 0
+        self.mission_mountain_tiles: set[tuple[int, int]] = set()
         # Mission_Repair objective: use 3 repair platforms. Progress counts
         # EVENT_REPAIR_PICKUP in Lua; the Rust simulator increments this when
         # any live unit lands on an Item_Repair_Mine tile.
@@ -314,6 +325,7 @@ class Board:
         b.environment_danger_v2 = dict(self.environment_danger_v2)
         b.environment_freeze = set(self.environment_freeze)
         b.env_type = self.env_type
+        b.environment_wind_dir = self.environment_wind_dir
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
@@ -325,7 +337,11 @@ class Board:
         b.medical_supplies = self.medical_supplies
         b.mission_id = self.mission_id
         b.mission_kill_target = self.mission_kill_target
+        b.mission_kill_limit = self.mission_kill_limit
         b.mission_kills_done = self.mission_kills_done
+        b.mission_mountain_target = self.mission_mountain_target
+        b.mission_mountains_destroyed = self.mission_mountains_destroyed
+        b.mission_mountain_tiles = set(self.mission_mountain_tiles)
         b.repair_platform_target = self.repair_platform_target
         b.repair_platforms_used = self.repair_platforms_used
         b.freeze_building_target = self.freeze_building_target
@@ -529,6 +545,9 @@ class Board:
 
         # Environment danger: v2 format has per-tile lethality [x, y, damage, kill_int]
         board.env_type = data.get("env_type", "unknown")
+        wind_dir = data.get("environment_wind_dir")
+        if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
+            board.environment_wind_dir = wind_dir
         for dt in data.get("environment_danger_v2", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 4:
                 board.environment_danger.add((dt[0], dt[1]))
@@ -589,6 +608,7 @@ class Board:
                 frozen=ud.get("frozen", False),
                 fire=ud.get("fire", False),
                 web=ud.get("web", False),
+                infected=ud.get("infected", False),
                 boosted=ud.get("boosted", False),
                 web_source_uid=ud.get("web_source_uid", -1),
                 target_x=qt_x,
@@ -611,19 +631,37 @@ class Board:
 
         # Mission metadata — may be empty string if bridge couldn't resolve.
         board.mission_id = data.get("mission_id", "") or ""
-        # Kill-N bonus objective fields. Both default 0, which makes the
-        # evaluator's step-function check a no-op for missions without the
-        # kill-N bonus. Emitted by the Lua bridge from mission.BonusObjs +
-        # mission.KilledVek + mission:GetKillBonus(). Safe when the Lua side
-        # hasn't been updated — int() wraps whatever the bridge sent.
+        # Kill-count bonus objective fields. All default 0, which makes the
+        # evaluator/safety checks no-op for missions without those bonuses.
+        # Emitted by the Lua bridge from mission.BonusObjs + mission.KilledVek
+        # + mission:GetKillBonus()/GetPacifistCount().
         try:
             board.mission_kill_target = int(data.get("mission_kill_target", 0) or 0)
         except (TypeError, ValueError):
             board.mission_kill_target = 0
         try:
+            board.mission_kill_limit = int(data.get("mission_kill_limit", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_kill_limit = 0
+        try:
             board.mission_kills_done = int(data.get("mission_kills_done", 0) or 0)
         except (TypeError, ValueError):
             board.mission_kills_done = 0
+        try:
+            board.mission_mountain_target = int(data.get("mission_mountain_target", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_mountain_target = 0
+        try:
+            board.mission_mountains_destroyed = int(data.get("mission_mountains_destroyed", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_mountains_destroyed = 0
+        board.mission_mountain_tiles = set()
+        for entry in data.get("mission_mountain_tiles", []) or []:
+            if not isinstance(entry, (list, tuple)) or len(entry) < 2:
+                continue
+            x, y = entry[0], entry[1]
+            if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+                board.mission_mountain_tiles.add((x, y))
         try:
             board.repair_platform_target = int(data.get("repair_platform_target", 0) or 0)
         except (TypeError, ValueError):

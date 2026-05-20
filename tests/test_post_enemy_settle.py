@@ -181,6 +181,48 @@ def test_post_enemy_settle_waits_past_stale_favorable_grid(monkeypatch):
     assert info["samples"] == 4
 
 
+def test_post_enemy_settle_aborts_when_turn_window_changes(monkeypatch):
+    start = _board(5)
+    late = _board(3)
+    reads = iter([
+        (late, _bridge(turn=4)),
+    ])
+    clock = {"t": 0.0}
+
+    monkeypatch.setattr(
+        commands,
+        "_load_solve_prediction_for_turn",
+        lambda session, turn: {
+            "grid_power": 5,
+            "buildings_alive": 6,
+            "building_hp_total": 7,
+        },
+    )
+
+    def sleep(dt):
+        clock["t"] += dt
+
+    settled, data, info = commands._settle_post_enemy_board(
+        RunSession(run_id="test"),
+        start,
+        _bridge(turn=3),
+        solved_turn=2,
+        max_wait=2.0,
+        interval=0.25,
+        read_fn=lambda: next(reads),
+        refresh_fn=lambda: None,
+        sleep_fn=sleep,
+        now_fn=lambda: clock["t"],
+    )
+
+    assert settled.grid_power == 3
+    assert data["turn"] == 4
+    assert info["aborted"] is True
+    assert info["reason"] == "turn_window_changed"
+    assert info["expected_turn"] == 3
+    assert info["actual_turn"] == 4
+
+
 def test_post_enemy_settle_keeps_polling_favorable_resist_to_cap(monkeypatch):
     stale = _board(5)
     reads = iter([
@@ -252,6 +294,43 @@ def test_record_post_enemy_returns_investigation_gate(tmp_path, monkeypatch):
     assert session.post_enemy_block["turn"] == 1
     assert session.post_enemy_block["deltas"]["grid_power_diff"] == -2
     assert (run_dir / "m11_turn_01_post_enemy.json").exists()
+
+
+def test_record_post_enemy_blocks_late_turn_window_without_comparing(tmp_path, monkeypatch):
+    monkeypatch.setattr(commands, "RECORDING_DIR", tmp_path)
+    session = RunSession(run_id="run")
+    session.mission_index = 11
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    solve_file = run_dir / "m11_turn_01_solve.json"
+    solve_file.write_text(json.dumps({
+        "data": {
+            "predicted_board_summary": {
+                "buildings_alive": 6,
+                "building_hp_total": 7,
+                "grid_power": 6,
+                "enemies_alive": 0,
+                "mech_hp": [],
+            },
+            "search_stats": {},
+        }
+    }))
+
+    result = commands._record_post_enemy(
+        session,
+        _board(4),
+        1,
+        bridge_data={"phase": "combat_player", "turn": 3},
+    )
+
+    assert result["status"] == "POST_ENEMY_AUDIT_MISSED_WINDOW"
+    assert result["blocking"] is True
+    assert result["expected_actual_turn"] == 2
+    assert result["actual_turn"] == 3
+    assert result["reason"] == "actual_turn_past_expected_post_enemy_window"
+    assert result["post_enemy_block"]["source"] == "post_enemy_turn_window_guard"
+    assert session.post_enemy_block is not None
+    assert not (run_dir / "m11_turn_01_post_enemy.json").exists()
 
 
 def test_post_enemy_block_round_trips_and_blocks_commands(tmp_path, monkeypatch):

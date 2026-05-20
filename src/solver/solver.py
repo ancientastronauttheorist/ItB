@@ -239,8 +239,15 @@ def replay_solution(
             sum(int(t.building_hp) for t in pylon_tiles),
         )
     total_kills = sum(int(r.get("enemies_killed", 0)) for r in data.get("action_results", []))
+    total_mission_kills = int(
+        predicted_outcome.get("mission_kills_total_projected") or sum(
+            int(r.get("mission_kills", r.get("enemies_killed", 0)) or 0)
+            for r in data.get("action_results", [])
+        )
+    )
     score_breakdown = evaluate_breakdown(
         final_board, spawn_pts, kills=total_kills,
+        mission_kills=total_mission_kills,
         current_turn=current_turn,
         total_turns=total_turns,
         remaining_spawns=remaining_spawns,

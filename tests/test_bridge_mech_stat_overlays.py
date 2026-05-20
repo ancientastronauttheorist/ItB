@@ -12,7 +12,7 @@ SAVE_SNIPPET = """
 ["pawn2"] = {["type"] = "PulseMech", ["id"] = 2, ["mech"] = true,
 ["healthPower"] = {1, },
 ["pilot"] = {["id"] = "Pilot_Pinnacle", ["name"] = "Cinnabar", ["name_id"] = "", ["skill1"] = 10, ["skill2"] = 1, ["level"] = 2, },
-["health"] = 4, ["max_health"] = 5, }
+["bInfected"] = true, ["health"] = 4, ["max_health"] = 5, }
 
 
 ["pawn3"] = {["type"] = "Scorpion2", ["id"] = 700, ["mech"] = false,
@@ -33,6 +33,7 @@ def test_parse_mech_stat_overlays_reads_effective_max_hp_and_pilot_fields():
     assert records[2]["type"] == "PulseMech"
     assert records[2]["max_hp"] == 5
     assert records[2]["health_power"] == 1
+    assert records[2]["infected"] is True
 
 
 def test_apply_save_mech_stat_overlays_patches_max_hp_without_touching_live_hp(
@@ -89,6 +90,7 @@ def test_apply_save_mech_stat_overlays_patches_max_hp_without_touching_live_hp(
     assert jet["pilot_skills"] == ["skill2=2"]
     assert pulse["hp"] == 4
     assert pulse["max_hp"] == 5
+    assert pulse["infected"] is True
     assert pulse["pilot_skills"] == ["skill1=10", "skill2=1"]
     assert bridge_data["mech_stat_overlays"][0]["pos"] == "C5"
     assert bridge_data["pilot_calibration_requests"][0]["capture_hint"]
@@ -99,6 +101,7 @@ def test_apply_save_mech_stat_overlays_patches_max_hp_without_touching_live_hp(
     assert units[0].max_hp == 4
     assert units[2].hp == 4
     assert units[2].max_hp == 5
+    assert units[2].infected is True
 
 
 def test_apply_save_mech_stat_overlays_ignores_uid_type_mismatch(monkeypatch):

@@ -152,6 +152,9 @@ bitflags! {
         /// Boosted status: the unit's next ability gets +1 weapon damage, and
         /// Repair heals +1 extra HP. Consumed on attack or repair.
         const BOOSTED = 0b0001_0000_0000_0000_0000;
+        /// Vek Mites attached to a mech. Mission objective state from
+        /// `bInfected`; cleared by repair/status/damage effects.
+        const INFECTED = 0b0010_0000_0000_0000_0000;
     }
 }
 
@@ -234,6 +237,7 @@ impl Unit {
     pub fn has_queued_attack(&self) -> bool { self.flags.contains(UnitFlags::HAS_QUEUED_ATTACK) }
     pub fn minor(&self) -> bool { self.flags.contains(UnitFlags::MINOR) }
     pub fn boosted(&self) -> bool { self.flags.contains(UnitFlags::BOOSTED) }
+    pub fn infected(&self) -> bool { self.flags.contains(UnitFlags::INFECTED) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -242,6 +246,7 @@ impl Unit {
     pub fn set_acid(&mut self, v: bool) { self.flags.set(UnitFlags::ACID, v); }
     pub fn set_web(&mut self, v: bool) { self.flags.set(UnitFlags::WEB, v); }
     pub fn set_boosted(&mut self, v: bool) { self.flags.set(UnitFlags::BOOSTED, v); }
+    pub fn set_infected(&mut self, v: bool) { self.flags.set(UnitFlags::INFECTED, v); }
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
@@ -257,12 +262,9 @@ impl Unit {
     pub fn pilot_chemical(&self) -> bool { self.pilot_flags.contains(PilotFlags::CHEMICAL) }
     pub fn pilot_arrogant(&self) -> bool { self.pilot_flags.contains(PilotFlags::ARROGANT) }
 
-    /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and for
-    /// any player unit when the squad has Flame Shielding (checked at the
-    /// call site by passing `board.flame_shielding`). Keeping this on
-    /// `Unit` alone avoids threading `board` through every fire-apply
-    /// callsite — squad-wide Flame Shielding is handled separately at
-    /// each hook (`!(board.flame_shielding && u.is_player())`).
+    /// Can this unit catch fire? False for Ariadne (Pilot_Rock). Squad-wide
+    /// Flame Shielding is handled at call sites because it needs board state,
+    /// and it applies only to player mechs, not controllable mission allies.
     pub fn can_catch_fire(&self) -> bool { !self.pilot_rock() }
 
     /// Get pawn type name as string (from stored bytes).
@@ -351,10 +353,11 @@ pub struct Board {
     /// flying offers no protection.
     pub env_danger_flying_immune: u64,
     /// Bitset: bit i = tile i is affected by Mission_Wind. Wind is a push
-    /// effect, not direct 1 HP environment damage; until the bridge exports the
-    /// live WindDir, the simulator treats these as non-damaging markers instead
-    /// of falsely draining grid from buildings on wind rows.
+    /// effect, not direct 1 HP environment damage.
     pub env_wind: u64,
+    /// Mission_Wind push direction, matching engine DIR_* constants and Rust
+    /// DIRS. -1 means older bridge/recording without WindDir export.
+    pub env_wind_dir: i8,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
     /// Frozen=true to any alive unit standing on these tiles. Buildings
@@ -375,9 +378,10 @@ pub struct Board {
     pub freeze_building_tiles: u64, // bitset: Mission_FreezeBldg buildings that start frozen and count toward "Break 5 buildings out of the ice"
     pub freeze_building_target: u8, // Mission_FreezeBldg thaw target (normally 5); 0 when inactive.
     /// Per-tile grid debt from non-unique multi-HP buildings damaged by
-    /// bump/push collision. Live grid can remain unchanged at the first bump,
-    /// then charge the earlier HP loss if the same building is later
-    /// destroyed.
+    /// bump/push collision or Aerial Bombs thaw damage on Mission_FreezeBldg
+    /// objective buildings. Live grid can remain unchanged at first HP loss,
+    /// then charge the earlier damage at enemy-turn settle or if the same
+    /// building is later destroyed.
     pub deferred_bump_grid_debt: [u8; 64],
     pub blast_psion: bool,   // Blast Psion (Jelly_Explode1): all Vek explode on death
     pub armor_psion: bool,   // Shell Psion (Jelly_Armor1): all Vek gain Armor
@@ -414,12 +418,18 @@ pub struct Board {
                                 // 2026-04-28.
     pub mission_id: String,     // Mission class name from bridge (e.g. "Mission_Dam").
                                 // Empty when the bridge couldn't resolve it.
-    pub mission_kill_target: u8,   // "Kill N enemies" bonus target from mission:GetKillBonus()
+    pub mission_kill_target: u8,   // "Kill at least N enemies" bonus target from mission:GetKillBonus()
                                 // (7 on Normal/Hard, 5 on Easy). 0 when the mission
                                 // doesn't have BONUS_KILL_FIVE in its BonusObjs.
+    pub mission_kill_limit: u8,    // "Kill N or fewer enemies" bonus cap from
+                                // mission:GetPacifistCount(). 0 when the mission
+                                // doesn't have BONUS_PACIFIST in its BonusObjs.
     pub mission_kills_done: u8,    // Cumulative this-mission kills (mission.KilledVek).
                                 // Combined with the simulated turn's kills to decide
-                                // whether a plan crosses the kill target threshold.
+                                // whether a plan crosses a target or exceeds a cap.
+    pub mission_mountain_target: u8, // Mission_Force "Destroy 2 mountains" target.
+    pub mission_mountains_destroyed: u8, // Cumulative EVENT_MOUNTAIN_DESTROYED count.
+    pub mission_mountain_tiles: u64, // bitset: current mountain tiles at solve input.
     pub repair_platform_target: u8, // Mission_Repair objective target (normally 3).
     pub repair_platforms_used: u8,  // Cumulative EVENT_REPAIR_PICKUP count.
     pub dam_alive: bool,        // True while at least one Dam_Pawn has hp > 0. Flips
@@ -484,6 +494,7 @@ impl Default for Board {
             env_danger_kill: 0,
             env_danger_flying_immune: 0,
             env_wind: 0,
+            env_wind_dir: -1,
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
@@ -511,7 +522,11 @@ impl Default for Board {
             infinite_spawn: false,
             mission_id: String::new(),
             mission_kill_target: 0,
+            mission_kill_limit: 0,
             mission_kills_done: 0,
+            mission_mountain_target: 0,
+            mission_mountains_destroyed: 0,
+            mission_mountain_tiles: 0,
             repair_platform_target: 0,
             repair_platforms_used: 0,
             dam_alive: false,
@@ -734,6 +749,32 @@ impl Board {
         self.unit_count += 1;
         idx
     }
+
+    pub fn add_mission_kills(&mut self, kills: i32) {
+        if kills <= 0 {
+            return;
+        }
+        self.mission_kills_done = self
+            .mission_kills_done
+            .saturating_add(kills.min(u8::MAX as i32) as u8);
+    }
+
+    pub fn projected_mountains_destroyed(&self) -> u8 {
+        if self.mission_mountain_target == 0 {
+            return self.mission_mountains_destroyed;
+        }
+        let mut destroyed = self.mission_mountains_destroyed;
+        let mut bits = self.mission_mountain_tiles;
+        while bits != 0 {
+            let idx = bits.trailing_zeros() as usize;
+            bits &= bits - 1;
+            let tile = &self.tiles[idx];
+            if tile.terrain != Terrain::Mountain || tile.building_hp == 0 {
+                destroyed = destroyed.saturating_add(1);
+            }
+        }
+        destroyed
+    }
 }
 
 // ── Action Result ────────────────────────────────────────────────────────────
@@ -746,6 +787,7 @@ pub struct ActionResult {
     pub buildings_bump_damaged: i32,
     pub grid_damage: i32,
     pub enemies_killed: i32,
+    pub mission_kills: i32,
     pub enemy_damage_dealt: i32,
     pub mech_damage_taken: i32,
     pub mechs_killed: i32,
@@ -756,12 +798,20 @@ pub struct ActionResult {
 }
 
 impl ActionResult {
+    pub fn record_enemy_kill(&mut self, mission_counted: bool) {
+        self.enemies_killed += 1;
+        if mission_counted {
+            self.mission_kills += 1;
+        }
+    }
+
     pub fn merge(&mut self, other: &ActionResult) {
         self.buildings_lost += other.buildings_lost;
         self.buildings_damaged += other.buildings_damaged;
         self.buildings_bump_damaged += other.buildings_bump_damaged;
         self.grid_damage += other.grid_damage;
         self.enemies_killed += other.enemies_killed;
+        self.mission_kills += other.mission_kills;
         self.enemy_damage_dealt += other.enemy_damage_dealt;
         self.mech_damage_taken += other.mech_damage_taken;
         self.mechs_killed += other.mechs_killed;

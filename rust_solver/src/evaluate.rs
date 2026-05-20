@@ -173,7 +173,7 @@ pub struct EvalWeights {
     pub mission_protect_unit_alive_bonus: f64,
     pub mission_protect_unit_dead_penalty: f64,
 
-    // "Kill N enemies" bonus (BONUS_KILL_FIVE). Step function that fires
+    // "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Step function that fires
     // exactly once per mission — on the plan whose cumulative kills cross
     // board.mission_kill_target. See the scoring block below for the
     // pre-turn-below / post-turn-at-or-above check.
@@ -416,6 +416,7 @@ pub fn evaluate(
     spawn_points: &[(u8, u8)],
     weights: &EvalWeights,
     kills: i32,
+    mission_kills: i32,
     building_bumps: i32,
     psion_before: &PsionState,
     initial_building_threats: u64,
@@ -714,14 +715,14 @@ pub fn evaluate(
         score += weights.bigbomb_killed;
     }
 
-    // ── Mission bonus: "Kill N enemies" progress + threshold cross ───────
+    // ── Mission bonus: "Kill at least N enemies" progress + threshold cross ───────
     // Reward partial progress toward the cumulative target so early turns
     // don't ignore the bonus until the exact threshold-cross turn. The full
     // step reward still fires exactly once on the plan that reaches N kills.
     let kt = board.mission_kill_target as i32;
     if kt > 0 {
         let kd = board.mission_kills_done as i32;
-        let new_kills = kills.max(0);
+        let new_kills = mission_kills.max(0);
         if kd < kt && new_kills > 0 {
             let progress_kills = ((kd + new_kills).min(kt) - kd).max(0);
             if progress_kills > 0 {
@@ -732,6 +733,19 @@ pub fn evaluate(
         }
         if kd < kt && kd + new_kills >= kt {
             score += scaled(weights.mission_kill_bonus, ff, 0.25, 0.75);
+        }
+    }
+
+    // ── Mission bonus: "Kill N or fewer enemies" cap ─────────────────────
+    // BONUS_PACIFIST fails immediately when cumulative kills exceed the cap.
+    // Use a large unscaled penalty so the solver treats over-cap kills like
+    // other irreversible objective failures, even early in the mission.
+    let kl = board.mission_kill_limit as i32;
+    if kl > 0 {
+        let kd = board.mission_kills_done as i32;
+        let new_kills = mission_kills.max(0);
+        if kd + new_kills > kl {
+            score -= weights.mission_kill_bonus * 20.0;
         }
     }
 
@@ -748,6 +762,17 @@ pub fn evaluate(
         }
     }
 
+    // ── Mission bonus: Knock Vek Mites off mechs ─────────────────────
+    // Mite objectives serialize as `bInfected` on player mechs. Remaining
+    // infections are a reputation risk; reward clearing them immediately so
+    // the solver spends repair/damage/status actions before the final turn.
+    let infected_mechs = board.units.iter()
+        .filter(|u| u.is_player() && u.is_mech() && u.hp > 0 && u.infected())
+        .count() as f64;
+    if infected_mechs > 0.0 {
+        score -= scaled(weights.mission_repair_bonus, ff, 0.25, 0.75) * infected_mechs;
+    }
+
     // ── Mission bonus: Terraform remaining grassland ─────────────────
     // Mission_Terraform grassland is serialized as custom `ground_grass.png`
     // on otherwise ordinary terrain. Penalize every remaining grass marker so
@@ -757,6 +782,23 @@ pub fn evaluate(
         let grass_remaining = board.tiles.iter().filter(|t| t.grass()).count();
         if grass_remaining > 0 {
             score += grass_remaining as f64 * weights.mission_terraform_grass_remaining;
+        }
+    }
+
+    // ── Mission bonus: Destroy 2 mountains ───────────────────────────
+    // Mission_Force tracks the visible counter as EVENT_MOUNTAIN_DESTROYED.
+    // Python/bridge pass the current solve-input mountain bitset; simulated
+    // boards count any of those tiles that became rubble as this-plan progress.
+    if board.mission_mountain_target > 0 {
+        let target = board.mission_mountain_target as i32;
+        let done = (board.projected_mountains_destroyed() as i32).min(target);
+        let remaining = (target - done).max(0) as f64;
+        if done > 0 {
+            score += scaled(weights.mission_kill_bonus, ff, 0.10, 0.50)
+                * (done as f64 / target as f64);
+        }
+        if remaining > 0.0 {
+            score -= scaled(weights.mission_kill_bonus, ff, 0.10, 0.50) * remaining;
         }
     }
 
@@ -1161,7 +1203,7 @@ mod tests {
     fn test_empty_board_score() {
         let board = Board::default();
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((score - 35000.0).abs() < 0.01);
     }
 
@@ -1171,7 +1213,7 @@ mod tests {
         board.tile_mut(3, 3).terrain = Terrain::Building;
         board.tile_mut(3, 3).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         // 35000 grid + 10000 building + 2000 hp - 500 uncovered_building = 46500
         assert!((score - 46500.0).abs() < 0.01);
     }
@@ -1183,15 +1225,15 @@ mod tests {
         let mut b1 = Board::default();
         b1.current_turn = 1;
         b1.total_turns = 5;
-        let s0 = evaluate(&b1, &[], &w, 0, 0, &p, 0);
-        let s1 = evaluate(&b1, &[], &w, 2, 0, &p, 0);
+        let s0 = evaluate(&b1, &[], &w, 0, 0, 0, &p, 0);
+        let s1 = evaluate(&b1, &[], &w, 2, 2, 0, &p, 0);
         assert!((s1 - s0 - 1800.0).abs() < 1.0);
 
         let mut b5 = Board::default();
         b5.current_turn = 5;
         b5.total_turns = 5;
-        let s0 = evaluate(&b5, &[], &w, 0, 0, &p, 0);
-        let s1 = evaluate(&b5, &[], &w, 2, 0, &p, 0);
+        let s0 = evaluate(&b5, &[], &w, 0, 0, 0, &p, 0);
+        let s1 = evaluate(&b5, &[], &w, 2, 2, 0, &p, 0);
         assert!((s1 - s0 - 200.0).abs() < 1.0);
     }
 
@@ -1205,8 +1247,8 @@ mod tests {
         b.mission_kill_target = 5;
         b.mission_kills_done = 0;
 
-        let no_kills = evaluate(&b, &[], &w, 0, 0, &p, 0);
-        let two_kills = evaluate(&b, &[], &w, 2, 0, &p, 0);
+        let no_kills = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
+        let two_kills = evaluate(&b, &[], &w, 2, 2, 0, &p, 0);
 
         // 2 base kills on turn 1 = 1800. Progress shaping adds
         // 15000 * 0.50 * (2/5) = 3000 before the full threshold bonus.
@@ -1223,16 +1265,35 @@ mod tests {
         b.mission_kill_target = 5;
         b.mission_kills_done = 4;
 
-        let no_kills = evaluate(&b, &[], &w, 0, 0, &p, 0);
-        let one_kill = evaluate(&b, &[], &w, 1, 0, &p, 0);
+        let no_kills = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
+        let one_kill = evaluate(&b, &[], &w, 1, 1, 0, &p, 0);
 
         // 1 base kill = 900, progress shaping = 1500, threshold bonus = 15000.
         assert!((one_kill - no_kills - 17400.0).abs() < 1.0);
 
         b.mission_kills_done = 5;
-        let achieved_no_kills = evaluate(&b, &[], &w, 0, 0, &p, 0);
-        let achieved_one_kill = evaluate(&b, &[], &w, 1, 0, &p, 0);
+        let achieved_no_kills = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
+        let achieved_one_kill = evaluate(&b, &[], &w, 1, 1, 0, &p, 0);
         assert!((achieved_one_kill - achieved_no_kills - 900.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_kill_limit_penalizes_over_cap() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 3;
+        b.total_turns = 5;
+        b.mission_kill_limit = 4;
+        b.mission_kills_done = 3;
+
+        let one_kill = evaluate(&b, &[], &w, 1, 1, 0, &p, 0);
+        let two_kills = evaluate(&b, &[], &w, 2, 2, 0, &p, 0);
+
+        assert!(
+            one_kill - two_kills > 250_000.0,
+            "exceeding a kill-limit objective must dominate normal kill value"
+        );
     }
 
     #[test]
@@ -1242,7 +1303,7 @@ mod tests {
         board.tile_mut(0, 0).terrain = Terrain::Building;
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000*bld_mult) + 1 HP(2000*bld_mult) - 2500 uncovered(500*5.0)
         // bld_mult = 0.6 + 0.4*(1/7) = 0.6571... → building: 6571 + 1314 = 7886, total: 25000 + 7886 - 2500 = 30386
         assert!((score - 30386.0).abs() < 1.0);
@@ -1260,8 +1321,8 @@ mod tests {
             flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
             ..Unit::default()
         });
-        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, 0, &no_psion(), 0);
-        let without_spawn = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, 0, 0, &no_psion(), 0);
+        let without_spawn = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((with_spawn - without_spawn).abs() < 1.0);
     }
 
@@ -1295,8 +1356,8 @@ mod tests {
         board.total_turns = 5;
         // Blast Psion was active before, now dead
         let p_blast = PsionState { blast: true, ..Default::default() };
-        let with_bonus = evaluate(&board, &[], &w, 0, 0, &p_blast, 0);
-        let without_bonus = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let with_bonus = evaluate(&board, &[], &w, 0, 0, 0, &p_blast, 0);
+        let without_bonus = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
     }
 
@@ -1311,9 +1372,9 @@ mod tests {
         b.current_turn = 1;
         b.total_turns = 5;
         b.remaining_spawns = 0;
-        let s0 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s0 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         b.remaining_spawns = 2;
-        let s2 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s2 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         let expected = 2.0 * w.remaining_spawn_penalty;
         assert!((s0 - s2 - expected).abs() < 1.0,
             "expected s0-s2 ~= {}, got {} (s0={}, s2={})",
@@ -1329,9 +1390,9 @@ mod tests {
         b.current_turn = 5;
         b.total_turns = 5;
         b.remaining_spawns = 0;
-        let s0 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s0 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         b.remaining_spawns = 3;
-        let s3 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s3 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         assert!((s0 - s3).abs() < 1.0,
             "final turn should zero the penalty, got delta={}", s0 - s3);
     }
@@ -1345,9 +1406,9 @@ mod tests {
         b.current_turn = 1;
         b.total_turns = 5;
         b.remaining_spawns = u32::MAX;
-        let s_sent = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s_sent = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         b.remaining_spawns = 0;
-        let s_zero = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s_zero = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         assert!((s_sent - s_zero).abs() < 1.0,
             "sentinel should match zero-spawn score, got delta={}", s_sent - s_zero);
     }
@@ -1359,8 +1420,8 @@ mod tests {
         board.current_turn = 1;
         board.total_turns = 5;
         let p_tyrant = PsionState { tyrant: true, ..Default::default() };
-        let with = evaluate(&board, &[], &w, 0, 0, &p_tyrant, 0);
-        let without = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let with = evaluate(&board, &[], &w, 0, 0, 0, &p_tyrant, 0);
+        let without = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((with - without - 2500.0).abs() < 1.0);
     }
 
@@ -1391,12 +1452,12 @@ mod tests {
         base.add_unit(volatile);
 
         // Branch A: no protected types this mission — penalty no-ops.
-        let s_no_bonus = evaluate(&base, &[], &w, 0, 0, &p, 0);
+        let s_no_bonus = evaluate(&base, &[], &w, 0, 0, 0, &p, 0);
 
         // Branch B: this mission DOES protect Volatiles — penalty fires.
         let mut with_bonus = base.clone();
         with_bonus.bonus_dont_kill_types.push("GlowingScorpion".to_string());
-        let s_with_bonus = evaluate(&with_bonus, &[], &w, 0, 0, &p, 0);
+        let s_with_bonus = evaluate(&with_bonus, &[], &w, 0, 0, 0, &p, 0);
 
         let delta = s_no_bonus - s_with_bonus;
         // Penalty default = -10000.0. The bonus-active branch must be
@@ -1418,11 +1479,11 @@ mod tests {
         u.set_type_name("Volatile_Vek");
         volatile_canonical.add_unit(u);
         volatile_canonical.bonus_dont_kill_types.push("Volatile_Vek".to_string());
-        let s_canonical = evaluate(&volatile_canonical, &[], &w, 0, 0, &p, 0);
+        let s_canonical = evaluate(&volatile_canonical, &[], &w, 0, 0, 0, &p, 0);
         let s_canonical_no_bonus = {
             let mut b = volatile_canonical.clone();
             b.bonus_dont_kill_types.clear();
-            evaluate(&b, &[], &w, 0, 0, &p, 0)
+            evaluate(&b, &[], &w, 0, 0, 0, &p, 0)
         };
         assert!((s_canonical_no_bonus - s_canonical - 10000.0).abs() < 1.0,
             "canonical Volatile_Vek should also fire when listed");
@@ -1441,10 +1502,10 @@ mod tests {
         u2.set_type_name("Scarab1");
         other.add_unit(u2);
         other.bonus_dont_kill_types.push("GlowingScorpion".to_string());
-        let s_unrelated = evaluate(&other, &[], &w, 0, 0, &p, 0);
+        let s_unrelated = evaluate(&other, &[], &w, 0, 0, 0, &p, 0);
         let mut other_clean = other.clone();
         other_clean.bonus_dont_kill_types.clear();
-        let s_unrelated_clean = evaluate(&other_clean, &[], &w, 0, 0, &p, 0);
+        let s_unrelated_clean = evaluate(&other_clean, &[], &w, 0, 0, 0, &p, 0);
         assert!((s_unrelated - s_unrelated_clean).abs() < 1.0,
             "non-matching enemy must not trigger penalty regardless of bonus list");
     }
@@ -1475,21 +1536,21 @@ mod tests {
         bot.set_type_name("Snowtank1");
         base.add_unit(bot);
 
-        let shielded_alive = evaluate(&base, &[], &w, 0, 0, &p, 0);
+        let shielded_alive = evaluate(&base, &[], &w, 0, 0, 0, &p, 0);
 
         let mut unshielded = base.clone();
         unshielded.units[0].set_shield(false);
-        let unshielded_alive = evaluate(&unshielded, &[], &w, 0, 0, &p, 0);
+        let unshielded_alive = evaluate(&unshielded, &[], &w, 0, 0, 0, &p, 0);
         assert!((unshielded_alive - shielded_alive - 3000.0).abs() < 1.0);
 
         let mut destroyed = unshielded.clone();
         destroyed.units[0].hp = 0;
-        let destroyed_score = evaluate(&destroyed, &[], &w, 0, 0, &p, 0);
+        let destroyed_score = evaluate(&destroyed, &[], &w, 0, 0, 0, &p, 0);
         assert!((destroyed_score - unshielded_alive - 21100.0).abs() < 1.0);
 
         let mut bot_dead = destroyed.clone();
         bot_dead.units[1].hp = 0;
-        let bot_dead_score = evaluate(&bot_dead, &[], &w, 0, 0, &p, 0);
+        let bot_dead_score = evaluate(&bot_dead, &[], &w, 0, 0, 0, &p, 0);
         assert!((destroyed_score - bot_dead_score - 22900.0).abs() < 1.0);
     }
 
@@ -1507,8 +1568,8 @@ mod tests {
         cleared.tile_mut(3, 3).set_grass(false);
         cleared.tile_mut(4, 4).set_grass(false);
 
-        let s_with_grass = evaluate(&with_grass, &[], &w, 0, 0, &p, 0);
-        let s_cleared = evaluate(&cleared, &[], &w, 0, 0, &p, 0);
+        let s_with_grass = evaluate(&with_grass, &[], &w, 0, 0, 0, &p, 0);
+        let s_cleared = evaluate(&cleared, &[], &w, 0, 0, 0, &p, 0);
 
         assert!((s_cleared - s_with_grass - 5000.0).abs() < 1.0);
     }
@@ -1537,9 +1598,9 @@ mod tests {
             all_thawed.tile_mut(x, 0).set_frozen(false);
         }
 
-        let s_frozen = evaluate(&frozen, &[], &w, 0, 0, &p, 0);
-        let s_one = evaluate(&one_thawed, &[], &w, 0, 0, &p, 0);
-        let s_all = evaluate(&all_thawed, &[], &w, 0, 0, &p, 0);
+        let s_frozen = evaluate(&frozen, &[], &w, 0, 0, 0, &p, 0);
+        let s_one = evaluate(&one_thawed, &[], &w, 0, 0, 0, &p, 0);
+        let s_all = evaluate(&all_thawed, &[], &w, 0, 0, 0, &p, 0);
 
         assert!((s_one - s_frozen - 12000.0).abs() < 1.0);
         assert!((s_all - s_frozen - 180000.0).abs() < 1.0);

@@ -36,6 +36,7 @@ from src.solver.plan_safety import (
     FINAL_CAVE_EMERGENCY_PYLON_KINDS,
     NON_OVERRIDABLE_KINDS,
     audit_plan_safety,
+    final_bomb_dirty_consent_allowed,
     final_cave_emergency_pylon_loss_allowed,
     final_cave_resist_gamble_allowed,
     plan_requires_safety_block,
@@ -95,6 +96,7 @@ _HARD_STOP_STATUSES = {
     "INVESTIGATE",
     "INVESTIGATE_POST_ENEMY",
     "POST_ENEMY_AUDIT_MISSING",
+    "POST_ENEMY_AUDIT_MISSED_WINDOW",
     "SAFETY_BLOCKED",
     "SAFETY_BLOCKED_RE_SOLVE",
     "THREAT_AUDIT_BLOCKED",
@@ -200,7 +202,7 @@ def _install_post_enemy_block(
         "triggers": result.get("triggers", []),
         "actual_outcome": result.get("actual_outcome"),
         "predicted_outcome": result.get("predicted_outcome"),
-        "next_step": (
+        "next_step": result.get("next_step") or (
             "Investigate this enemy-phase prediction miss before solving, "
             "executing, or emitting another End Turn plan. Clear only after "
             "the simulator/process cause is understood."
@@ -329,6 +331,7 @@ def _dirty_consent_gate(
     debug_collapse = os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
     allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(plan_safety)
     allow_final_cave_resist = final_cave_resist_gamble_allowed(plan_safety)
+    allow_final_bomb_dirty = final_bomb_dirty_consent_allowed(plan_safety)
     non_overridable = sorted(
         k for k in kinds
         if k in NON_OVERRIDABLE_KINDS
@@ -341,6 +344,13 @@ def _dirty_consent_gate(
         and not (
             allow_final_cave_resist
             and k in FINAL_CAVE_EMERGENCY_PYLON_KINDS
+        )
+        and not (
+            allow_final_bomb_dirty
+            and k in {
+                "objective_building_destroyed",
+                "objective_building_hp_loss",
+            }
         )
     )
     if non_overridable:
@@ -1560,6 +1570,33 @@ def _protected_objective_patterns(board: Board,
     return patterns
 
 
+def _destroy_objective_patterns(board: Board,
+                                bridge_data: dict | None) -> list[str]:
+    patterns: list[str] = []
+
+    def add_many(values) -> None:
+        for s in values or []:
+            if isinstance(s, str) and s and s not in patterns:
+                patterns.append(s)
+
+    add_many(getattr(board, "destroy_objective_unit_types", []) or [])
+
+    if isinstance(bridge_data, dict):
+        add_many(bridge_data.get("destroy_objective_unit_types", []) or [])
+        mission_id = bridge_data.get("mission_id") or getattr(board, "mission_id", "")
+    else:
+        mission_id = getattr(board, "mission_id", "")
+
+    if not mission_id:
+        return patterns
+    try:
+        from src.solver.mission_unit_objectives import resolve_unit_objectives
+        add_many(resolve_unit_objectives(mission_id).get("destroy", []))
+    except Exception:
+        pass
+    return patterns
+
+
 def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dict:
     """Extract a summary of the current board state for comparison."""
     mission_id = (
@@ -1591,6 +1628,20 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     freeze_buildings_frozen = 0
     freeze_buildings_thawed = 0
     freeze_buildings = []
+    terraform_grass_tiles = []
+    mission_mountain_tiles = []
+    try:
+        mission_mountain_target = int(
+            getattr(board, "mission_mountain_target", 0) or 0
+        )
+    except (TypeError, ValueError):
+        mission_mountain_target = 0
+    try:
+        mission_mountains_destroyed = int(
+            getattr(board, "mission_mountains_destroyed", 0) or 0
+        )
+    except (TypeError, ValueError):
+        mission_mountains_destroyed = 0
     try:
         freeze_building_target = int(
             getattr(board, "freeze_building_target", 0) or 0
@@ -1627,9 +1678,33 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                     "frozen": frozen,
                     "hp": max(0, int(getattr(t, "building_hp", 0) or 0)),
                 })
+            if mission_id == "Mission_Terraform" and getattr(t, "grass", False):
+                terraform_grass_tiles.append([x, y])
+            if mission_id == "Mission_Force" and t.terrain == "mountain":
+                mission_mountain_tiles.append({
+                    "pos": [x, y],
+                    "hp": max(0, int(getattr(t, "building_hp", 0) or 0)),
+                })
 
     raw_units = _bridge_units_by_uid(bridge_data)
     danger = _environment_danger_info(board, bridge_data)
+    destroy_patterns = _destroy_objective_patterns(board, bridge_data)
+    destroy_objective_units = []
+    if destroy_patterns:
+        for u in board.units:
+            if getattr(u, "is_extra_tile", False):
+                continue
+            if not _type_matches_any(u.type, destroy_patterns):
+                continue
+            destroy_objective_units.append({
+                "uid": u.uid,
+                "type": u.type,
+                "pos": [u.x, u.y],
+                "hp": max(0, u.hp),
+                "max_hp": u.max_hp,
+                "alive": u.hp > 0,
+                "team": u.team,
+            })
     protect_patterns = _protected_objective_patterns(board, bridge_data)
     protected_objective_units = []
     if protect_patterns:
@@ -1651,8 +1726,13 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     mechs_on_danger = []
     mechs_disabled = []
     mechs_webbed = []
+    mechs_infected = []
     mechs_acid = []
     mechs_fire = []
+    mite_status_tracked = any(
+        isinstance(raw, dict) and "infected" in raw
+        for raw in raw_units.values()
+    )
     player_mechs = [
         m for m in board.units
         if m.is_player and m.is_mech and not getattr(m, "is_extra_tile", False)
@@ -1701,6 +1781,13 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
             })
         if getattr(m, "web", False):
             mechs_webbed.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
+        if getattr(m, "infected", False):
+            mite_status_tracked = True
+            mechs_infected.append({
                 "uid": m.uid,
                 "type": m.type,
                 "pos": [m.x, m.y],
@@ -1759,6 +1846,16 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mech_damage_taken_total": mech_damage_taken_total,
         "mech_damage_objective_limit": mech_damage_objective_limit,
         "bigbomb_alive": bool(getattr(board, "bigbomb_alive", False)),
+        "terraform_grass_remaining": (
+            len(terraform_grass_tiles)
+            if mission_id == "Mission_Terraform"
+            else None
+        ),
+        "terraform_grass_tiles": (
+            terraform_grass_tiles
+            if mission_id == "Mission_Terraform"
+            else []
+        ),
         "mech_hp": [
             {
                 "uid": m.uid,
@@ -1773,9 +1870,34 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mechs_on_danger": mechs_on_danger,
         "mechs_disabled": mechs_disabled,
         "mechs_webbed": mechs_webbed,
+        "mechs_infected": mechs_infected,
+        "mites_remaining": len(mechs_infected),
+        "mites_status_tracked": mite_status_tracked,
         "mission_id": mission_id,
+        "mission_kill_target": getattr(board, "mission_kill_target", 0),
+        "mission_kill_limit": getattr(board, "mission_kill_limit", 0),
+        "mission_kills_done": getattr(board, "mission_kills_done", 0),
+        "mission_mountain_target": (
+            mission_mountain_target
+            if mission_id == "Mission_Force" and mission_mountain_target > 0
+            else 0
+        ),
+        "mission_mountains_destroyed": (
+            mission_mountains_destroyed
+            if mission_id == "Mission_Force"
+            else 0
+        ),
+        "mission_mountain_tiles": (
+            mission_mountain_tiles
+            if mission_id == "Mission_Force"
+            else []
+        ),
         "turn": turn if isinstance(turn, int) else None,
         "total_turns": total_turns if isinstance(total_turns, int) else None,
+        "destroy_objective_units": destroy_objective_units,
+        "destroy_objective_units_alive": sum(
+            1 for u in destroy_objective_units if u["alive"]
+        ),
         "protected_objective_units": protected_objective_units,
         "protected_objective_units_alive": sum(
             1 for u in protected_objective_units if u["alive"]
@@ -2068,6 +2190,64 @@ def _evaluate_solution_safety(board: Board,
         for r in enriched.get("action_results", [])
         if isinstance(r, dict)
     )
+    planned_kills = sum(
+        int(r.get("mission_kills", r.get("enemies_killed", 0)) or 0)
+        for r in enriched.get("action_results", [])
+        if isinstance(r, dict)
+    )
+    projected_mission_kills = predicted_outcome.get("mission_kills_total_projected")
+    if isinstance(projected_mission_kills, int):
+        planned_kills = projected_mission_kills
+    current_kill_target = current_outcome.get("mission_kill_target")
+    current_kill_limit = current_outcome.get("mission_kill_limit")
+    current_kills_done = current_outcome.get("mission_kills_done")
+    if isinstance(current_kill_target, int) and current_kill_target > 0:
+        predicted_board_summary["mission_kill_target"] = current_kill_target
+        projected_kills_done = predicted_outcome.get("mission_kills_done_projected")
+        if isinstance(projected_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = projected_kills_done
+        elif isinstance(current_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = (
+                current_kills_done + planned_kills
+            )
+        predicted_board_summary["mission_kills_planned"] = planned_kills
+    if isinstance(current_kill_limit, int) and current_kill_limit > 0:
+        predicted_board_summary["mission_kill_limit"] = current_kill_limit
+        projected_kills_done = predicted_outcome.get("mission_kills_done_projected")
+        if isinstance(projected_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = projected_kills_done
+        elif isinstance(current_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = (
+                current_kills_done + planned_kills
+            )
+        predicted_board_summary["mission_kills_planned"] = planned_kills
+    current_mountain_target = current_outcome.get("mission_mountain_target")
+    current_mountains_done = current_outcome.get("mission_mountains_destroyed")
+    if isinstance(current_mountain_target, int) and current_mountain_target > 0:
+        current_mountain_tiles = {
+            tuple(item.get("pos"))
+            for item in current_outcome.get("mission_mountain_tiles", [])
+            if isinstance(item, dict)
+            and isinstance(item.get("pos"), list)
+            and len(item.get("pos")) >= 2
+        }
+        predicted_mountain_tiles = {
+            tuple(item.get("pos")): int(item.get("hp", 0) or 0)
+            for item in predicted_board_summary.get("mission_mountain_tiles", [])
+            if isinstance(item, dict)
+            and isinstance(item.get("pos"), list)
+            and len(item.get("pos")) >= 2
+        }
+        newly_destroyed = sum(
+            1 for pos in current_mountain_tiles
+            if predicted_mountain_tiles.get(pos, 0) <= 0
+        )
+        predicted_board_summary["mission_mountain_target"] = current_mountain_target
+        if isinstance(current_mountains_done, int):
+            predicted_board_summary["mission_mountains_destroyed"] = (
+                current_mountains_done + newly_destroyed
+            )
+        predicted_board_summary["mission_mountains_planned"] = newly_destroyed
     pending_debt = 0
     if isinstance(bridge_data, dict):
         try:
@@ -2643,6 +2823,7 @@ def _repair_would_be_noop(board: Board | None, mech_uid: int) -> bool:
         and not getattr(mech, "fire", False)
         and not getattr(mech, "acid", False)
         and not getattr(mech, "frozen", False)
+        and not getattr(mech, "infected", False)
     )
 
 
@@ -2745,6 +2926,49 @@ def _post_enemy_record_path(session: RunSession, solved_turn: int) -> Path:
     )
 
 
+def _bridge_turn_value(bridge_data: dict | None) -> int | None:
+    if not isinstance(bridge_data, dict):
+        return None
+    try:
+        turn = int(bridge_data.get("turn", 0) or 0)
+    except (TypeError, ValueError):
+        return None
+    return turn if turn > 0 else None
+
+
+def _post_enemy_expected_actual_turn(solved_turn: int) -> int:
+    return int(solved_turn) + 1
+
+
+def _post_enemy_missed_window_result(
+    session: RunSession,
+    solved_turn: int,
+    actual_turn: int,
+) -> dict:
+    expected_turn = _post_enemy_expected_actual_turn(solved_turn)
+    result = {
+        "status": "POST_ENEMY_AUDIT_MISSED_WINDOW",
+        "mission_index": session.mission_index,
+        "turn": solved_turn,
+        "blocking": True,
+        "source": "post_enemy_turn_window_guard",
+        "reason": "actual_turn_past_expected_post_enemy_window",
+        "expected_actual_turn": expected_turn,
+        "actual_turn": actual_turn,
+        "message": (
+            "Refusing to compare a stale solve prediction against a later "
+            "combat turn. The post-enemy audit window was missed."
+        ),
+        "next_step": (
+            "Snapshot and investigate why the exact post-enemy window was "
+            "missed. Do not use this late board as simulator evidence; clear "
+            "the block only after the process cause is understood."
+        ),
+    }
+    result["post_enemy_block"] = _install_post_enemy_block(session, result)
+    return result
+
+
 def _post_enemy_needs_investigation(deltas: dict) -> bool:
     """True when actual enemy-phase damage is worse than the prediction."""
     return any(
@@ -2792,6 +3016,11 @@ def _record_post_enemy(session: RunSession, board: Board,
             "turn": solved_turn,
             "blocking": False,
         }
+
+    actual_turn = _bridge_turn_value(bridge_data)
+    expected_turn = _post_enemy_expected_actual_turn(solved_turn)
+    if actual_turn is not None and actual_turn > expected_turn:
+        return _post_enemy_missed_window_result(session, solved_turn, actual_turn)
 
     # Load the solve recording from the solved turn (try new naming, fallback to old)
     solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
@@ -3108,11 +3337,14 @@ def _settle_post_enemy_board(
     reads by a few seconds.
     """
     predicted = _load_solve_prediction_for_turn(session, solved_turn)
+    expected_turn = _post_enemy_expected_actual_turn(solved_turn)
     start = now_fn()
     latest_board = board
     latest_data = bridge_data
     latest_fp = _post_enemy_settle_fingerprint(board, bridge_data)
     samples = 1
+    aborted_reason: str | None = None
+    aborted_turn: int | None = None
 
     while now_fn() - start < max_wait:
         sleep_fn(interval)
@@ -3122,6 +3354,13 @@ def _settle_post_enemy_board(
         except Exception:
             break
         if reread_board is None or not isinstance(reread_data, dict):
+            break
+        reread_turn = _bridge_turn_value(reread_data)
+        if reread_turn is not None and reread_turn != expected_turn:
+            latest_board, latest_data = reread_board, reread_data
+            samples += 1
+            aborted_reason = "turn_window_changed"
+            aborted_turn = reread_turn
             break
 
         # A phase/mission transition beats settlement; return the freshest
@@ -3157,6 +3396,13 @@ def _settle_post_enemy_board(
             "elapsed_seconds": round(elapsed, 3),
             "grid_power": latest_board.grid_power,
         }
+        if aborted_reason:
+            info.update({
+                "aborted": True,
+                "reason": aborted_reason,
+                "expected_turn": expected_turn,
+                "actual_turn": aborted_turn,
+            })
     return latest_board, latest_data, info
 
 
@@ -3226,7 +3472,9 @@ def cmd_read(profile: str = "Alpha") -> dict:
 
             post_enemy_settle = None
             if (session.active_solution is not None
-                    and bridge_data.get("turn", 0) > session.active_solution.turn
+                    and bridge_data.get("turn", 0) == _post_enemy_expected_actual_turn(
+                        session.active_solution.turn
+                    )
                     and _post_enemy_ready_for_audit(board, bridge_data)):
                 board, bridge_data, post_enemy_settle = _settle_post_enemy_board(
                     session, board, bridge_data, session.active_solution.turn
@@ -3781,10 +4029,11 @@ def _infer_grapple_probe_webs(units: list) -> None:
         if not (isinstance(probes, dict) and probes.get("IsGrappled") is True):
             continue
         unit["web"] = True
-        if unit.get("web_source_uid"):
-            continue
         candidates = web_sources_by_target.get((unit.get("x"), unit.get("y")), [])
         if candidates:
+            current_uid = unit.get("web_source_uid")
+            if current_uid and any(c.get("uid") == current_uid for c in candidates):
+                continue
             unit["web_source_uid"] = candidates[0].get("uid", 0)
 
 
@@ -7810,6 +8059,106 @@ def _maybe_flag_grid_drop(
     print(f"  [grid-drop] flagged for investigation → {snap_label}")
 
 
+def _maybe_flag_pod_state_diff(
+    investigations: list,
+    diff,
+    classification: dict,
+    predicted: dict,
+    actual_board,
+    context: dict,
+    run_id: str,
+    turn: int,
+    failure_db_id: str,
+) -> None:
+    """Snapshot + queue an investigation when a predicted pod disappears.
+
+    A missing pod can mean "recovered" or "destroyed" depending on mission
+    state, but for Perfect Island farming either is too important to let a
+    later threat-audit result hide it.
+    """
+    if "pod" not in classification.get("categories", ()):
+        return
+
+    pod_diffs = [
+        td for td in getattr(diff, "tile_diffs", []) or []
+        if (
+            td.get("field") == "has_pod"
+            and bool(td.get("predicted")) is True
+            and bool(td.get("actual")) is False
+        )
+    ]
+    if not pod_diffs:
+        return
+
+    snap_label = f"pod_state_{run_id}_t{turn:02d}_a{context.get('action_index', '?')}"
+    snap_dir = SNAPSHOT_DIR / snap_label
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with (snap_dir / "predicted.json").open("w") as f:
+            json.dump(predicted, f, indent=2, default=str)
+        with (snap_dir / "actual_board.json").open("w") as f:
+            json.dump(
+                {
+                    "grid_power": actual_board.grid_power,
+                    "grid_power_max": actual_board.grid_power_max,
+                    "units": [
+                        {
+                            "uid": u.uid, "type": u.type,
+                            "x": u.x, "y": u.y,
+                            "hp": u.hp, "max_hp": u.max_hp,
+                            "team": u.team, "is_mech": u.is_mech,
+                        }
+                        for u in actual_board.units
+                    ],
+                    "tiles": [
+                        [
+                            {
+                                "terrain": t.terrain,
+                                "building_hp": getattr(t, "building_hp", 0),
+                                "has_pod": getattr(t, "has_pod", False),
+                            }
+                            for t in row
+                        ]
+                        for row in actual_board.tiles
+                    ],
+                },
+                f, indent=2, default=str,
+            )
+        with (snap_dir / "context.json").open("w") as f:
+            json.dump({
+                "kind": "pod_state_diff",
+                "run_id": run_id,
+                "turn": turn,
+                "sub_action": context.get("sub_action"),
+                "action_index": context.get("action_index"),
+                "mech_uid": context.get("mech_uid"),
+                "weapon": context.get("weapon"),
+                "target": context.get("target"),
+                "pod_diffs": pod_diffs,
+                "failure_db_id": failure_db_id,
+                "classification": classification,
+            }, f, indent=2, default=str)
+    except OSError as e:
+        print(f"  [pod-state] snapshot write failed: {e}")
+
+    tile_labels = [
+        f"({td.get('x')},{td.get('y')})"
+        for td in pod_diffs
+    ]
+    investigations.append({
+        "kind": "pod_state_diff",
+        "reason": f"predicted pod missing after action at {', '.join(tile_labels)}",
+        "snapshot_path": str(snap_dir),
+        "failure_db_id": failure_db_id,
+        "turn": turn,
+        "action_index": context.get("action_index"),
+        "weapon": context.get("weapon"),
+        "mech_uid": context.get("mech_uid"),
+        "pod_diffs": pod_diffs,
+    })
+    print(f"  [pod-state] flagged for investigation → {snap_label}")
+
+
 def _log_sub_action_desync(
     session: RunSession,
     phase: str,
@@ -8484,6 +8833,23 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 f"per_sub_action_desync_move_a{actions_completed}"
                             ),
                         )
+                        _maybe_flag_pod_state_diff(
+                            grid_drop_investigations, diff, classification,
+                            pred_post_move, actual_board,
+                            context={
+                                "mech_uid": mech_uid, "sub_action": "move",
+                                "action_index": actions_completed,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            run_id=session.run_id or "default",
+                            turn=turn,
+                            failure_db_id=(
+                                f"{session.run_id or 'default'}_"
+                                f"m{session.mission_index:02d}_t{turn:02d}_"
+                                f"per_sub_action_desync_move_a{actions_completed}"
+                            ),
+                        )
                         re_solve_count += 1
                         # Re-solve: this mech has moved but not attacked
                         if actual_data:
@@ -8640,6 +9006,23 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         fuzzy_signal=fuzzy_signal,
                     )
                     _maybe_flag_grid_drop(
+                        grid_drop_investigations, diff, classification,
+                        pred_post_attack, actual_board,
+                        context={
+                            "mech_uid": mech_uid, "sub_action": final_phase,
+                            "action_index": actions_completed,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
+                        },
+                        run_id=session.run_id or "default",
+                        turn=turn,
+                        failure_db_id=(
+                            f"{session.run_id or 'default'}_"
+                            f"m{session.mission_index:02d}_t{turn:02d}_"
+                            f"per_sub_action_desync_{final_phase}_a{actions_completed}"
+                        ),
+                    )
+                    _maybe_flag_pod_state_diff(
                         grid_drop_investigations, diff, classification,
                         pred_post_attack, actual_board,
                         context={

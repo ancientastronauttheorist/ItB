@@ -713,6 +713,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Centipede Spit", weapon_type="projectile",
         damage=2, acid=True, aoe_perpendicular=True, range_max=0,
     ),
+    "CentipedeAtkB": WeaponDef(
+        name="Caustic Vomit", weapon_type="projectile",
+        damage=3, acid=True, aoe_perpendicular=True, range_max=0,
+    ),
 
     # ── Base Game Artillery ──────────────────────────────────────────
     "ScarabAtk1": WeaponDef(
@@ -899,6 +903,8 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
 
     # ── Bosses ───────────────────────────────────────────────────────
     "FireflyAtkB": WeaponDef(
+        # Burning Thorax queues this projectile both toward the target and in
+        # the opposite direction; Rust enemy simulation handles the paired shot.
         name="Firefly Boss Shot", weapon_type="projectile",
         damage=4, range_max=0,
     ),

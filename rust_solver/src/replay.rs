@@ -58,6 +58,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
 
     let mut action_results: Vec<Value> = Vec::with_capacity(plan.len());
     let mut predicted_states: Vec<Value> = Vec::with_capacity(plan.len());
+    let mut player_phase_result = ActionResult::default();
 
     for (i, act) in plan.iter().enumerate() {
         let mech_uid = act.mech_uid;
@@ -79,6 +80,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                 });
                 action_results.push(json!({
                     "enemies_killed": 0,
+                    "mission_kills": 0,
                     "enemy_damage_dealt": 0,
                     "buildings_lost": 0,
                     "buildings_damaged": 0,
@@ -130,16 +132,19 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         let post_attack_snap = capture_snapshot(
             &board, i, mech_uid, &all_events, "after_mech_action",
         );
+        player_phase_result.merge(&move_result);
+        player_phase_result.merge(&attack_result);
 
         action_results.push(json!({
             "enemies_killed":     attack_result.enemies_killed,
+            "mission_kills":      attack_result.mission_kills,
             "enemy_damage_dealt": attack_result.enemy_damage_dealt,
             "buildings_lost":     attack_result.buildings_lost,
             "buildings_damaged":  attack_result.buildings_damaged,
             "grid_damage":        attack_result.grid_damage,
             "mech_damage_taken":  attack_result.mech_damage_taken,
             "mechs_killed":       attack_result.mechs_killed,
-            "pods_collected":     move_result.pods_collected,
+            "pods_collected":     move_result.pods_collected + attack_result.pods_collected,
             "repair_platforms_used": move_result.repair_platforms_used + attack_result.repair_platforms_used,
             "spawns_blocked":     attack_result.spawns_blocked,
             "events":             all_events,
@@ -173,8 +178,15 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     // Env effects + Vek attacks. simulate_enemy_attacks handles env_danger
     // BEFORE Vek attacks (enemy.rs:287-297) — same ordering as Python's
     // _simulate_env_effects then _simulate_enemy_attacks.
-    let _ = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
-    apply_spawn_blocking(&mut board, &spawn_points);
+    let enemy_phase_result = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+    let spawn_block_result = apply_spawn_blocking(&mut board, &spawn_points);
+    let total_projected_kills = player_phase_result.enemies_killed
+        + enemy_phase_result.enemies_killed
+        + spawn_block_result.enemies_killed;
+    let total_projected_mission_kills = player_phase_result.mission_kills
+        + enemy_phase_result.mission_kills
+        + spawn_block_result.mission_kills;
+    board.add_mission_kills(total_projected_mission_kills);
 
     // Build predicted_outcome (mirrors solver.py:744-756).
     let mut buildings_alive = 0i32;
@@ -226,6 +238,16 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         "mechs_alive":                   mechs_alive,
         "mech_hp":                       mech_hp_list,
         "buildings_destroyed_by_enemies": buildings_destroyed_by_enemies,
+        "enemies_killed_by_player":       player_phase_result.enemies_killed,
+        "enemies_killed_by_enemy_phase":  enemy_phase_result.enemies_killed,
+        "enemies_killed_by_spawn_block":  spawn_block_result.enemies_killed,
+        "enemies_killed_total_projected": total_projected_kills,
+        "mission_kills_by_player":        player_phase_result.mission_kills,
+        "mission_kills_by_enemy_phase":   enemy_phase_result.mission_kills,
+        "mission_kills_by_spawn_block":   spawn_block_result.mission_kills,
+        "mission_kills_total_projected":  total_projected_mission_kills,
+        "mission_kills_done_projected":   board.mission_kills_done,
+        "mission_mountains_destroyed_projected": board.projected_mountains_destroyed(),
     });
 
     // Serialize the final post-enemy board so Python's evaluate_breakdown
@@ -318,6 +340,7 @@ fn capture_snapshot(
                 "shield": u.shield(),
                 "web":    u.web(),
                 "boosted": u.boosted(),
+                "infected": u.infected(),
             },
         }));
     }
@@ -505,6 +528,50 @@ mod tests {
         let jet = post_attack_units.iter().find(|u| u["uid"] == 0).unwrap();
         assert_eq!(jet["status"]["boosted"], true,
             "Replay snapshots must preserve Boosted so verify does not create false status diffs");
+    }
+
+    #[test]
+    fn replay_solution_counts_aerial_bombs_pod_collection() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 3, "y": 5, "terrain": "ground", "has_pod": true}
+          ],
+          "units": [
+            {"uid": 0, "type": "JetMech", "x": 3, "y": 3,
+             "hp": 2, "max_hp": 2, "team": 1, "mech": true,
+             "flying": true, "move": 5, "active": true,
+             "weapons": ["Brute_Jetmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 3],
+          "weapon_id": "Brute_Jetmech",
+          "target": [3, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(v["action_results"][0]["pods_collected"], 1);
+
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let jet = post_attack["units"].as_array().unwrap()
+            .iter()
+            .find(|u| u["uid"] == 0)
+            .unwrap();
+        assert_eq!(jet["pos"], json!([3, 5]));
+        let pod_tile = post_attack["tiles_changed"].as_array().unwrap()
+            .iter()
+            .find(|t| t["x"] == 3 && t["y"] == 5)
+            .unwrap();
+        assert_eq!(pod_tile["has_pod"], false);
     }
 
     #[test]

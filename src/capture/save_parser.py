@@ -54,6 +54,9 @@ _MODELED_UPGRADED_WEAPONS = {
     "Ranged_Rocket_AB",
     "Science_Repulse_A",
     "Science_Repulse_AB",
+    "Science_Swap_A",
+    "Science_Swap_B",
+    "Science_Swap_AB",
 }
 
 
