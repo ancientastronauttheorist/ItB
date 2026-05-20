@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-35 of 70 completed (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 35 remaining, sorted by global unlock % (easiest first).
+36 of 70 completed (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 34 remaining, sorted by global unlock % (easiest first).
 
-Current milestone: There is No Try is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks finished Detritus, Archive, and R.S.T. without failed objectives in run `20260519_154655_297`. The in-game toast appeared after leaving island 3, then Steam/cache reflected 35/70 after save-quit-reopen. The key live-loop note is in `docs/there_is_no_try_rusting_hulks_retrospective.md`.
+Current milestone: Adaptable Victory is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks won a 2-island game in run `20260519_200933_351`. The profile already had 3- and 4-island victories credited, so the final missing length was Detritus + Archive -> Volcanic Hive. The in-game toast appeared during the victory sequence and Steam/cache reflected 36/70. The key live-loop note is in `docs/adaptable_victory_rusting_hulks_retrospective.md`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -33,7 +33,7 @@ Current milestone: There is No Try is complete, confirmed by the 2026-05-19 Stea
 
 ### Tier 3: Orange Zone (10-20% — deliberate setup needed)
 - [x] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative] — completed with the Blitzkrieg victory in run `20260517_105759_344`
-- [ ] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative]
+- [x] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative] — completed with a 2-island Rusting Hulks victory in run `20260519_200933_351`
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
 - [ ] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
@@ -79,7 +79,7 @@ Current milestone: There is No Try is complete, confirmed by the 2026-05-19 Stea
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (35, from Steam sync + live confirmations)
+### Already Completed (36, from Steam sync + live confirmations)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -102,6 +102,7 @@ Current milestone: There is No Try is complete, confirmed by the 2026-05-19 Stea
 - [x] Chain Attack (24.8%) — Chain Whip through 10 tiles  [Blitzkrieg]
 - [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards
 - [x] There is No Try (20.2%) — Finish 3 islands without failing an objective
+- [x] Adaptable Victory (18.8%) — Beat game at 2-, 3-, and 4-island lengths
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire  [Flame Behemoths]

@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-19T19:52:47.286642",
+    "last_steam_sync": "2026-05-19T22:03:17.440444",
     "last_steam_total": 70,
-    "last_steam_unlocked": 35
+    "last_steam_unlocked": 36
   },
   "achievements": {
     "rift_walkers": [
@@ -517,7 +517,7 @@
         "description": "Beat the game at least once per length (2, 3, & 4 Islands secured)",
         "type": "cumulative",
         "global_unlock_pct": 18.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Three separate runs at different island counts. 2-island is easiest. 4-island is longest and hardest.",
         "setup": "Three separate games: 2, 3, and 4 islands.",
         "pitfalls": "4-island run is very long and difficult. Save best squad/pilot for it."

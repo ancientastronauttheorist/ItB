@@ -23,6 +23,7 @@ evaluation weights when targeting that achievement.
 - [x] Humanity's Savior (27.8%) -- Rescue 100,000 civilians across all games
 - [x] Perfect Strategy (23.3%) -- Collect 10 Perfect Island rewards across all games
 - [x] There is No Try (20.2%) -- Finish 3 Corporate Islands without failing an objective
+- [x] Adaptable Victory (18.8%) -- Beat the game at each island length: 2, 3, and 4 Corporate Islands secured
 - [x] Mass Displacement (23.0%) -- Push 3 enemies with single attack (Steel Judoka)
 - [x] Scorched Earth (20.5%) -- End battle with 12 tiles on Fire (Flame Behemoths)
 - [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
@@ -221,9 +222,10 @@ evaluation weights when targeting that achievement.
 
 ### Adaptable Victory (18.8%)
 - **Requirement:** Beat the game at least once at each length: 2, 3, and 4 islands secured (cumulative).
+- **Status:** Completed on 2026-05-19 with Rusting Hulks on Easy in run `20260519_200933_351`; Steam sync confirmed 36/70. Prior logs/profile state already covered 3- and 4-island victories, so the missing length was a 2-island win.
 - **Squad:** Any
 - **Strategy:** Complete one run at each length. 2-island is the shortest/easiest. 4-island is the longest but gives more upgrades.
-- **Bot approach:** Run-level planner tracks which lengths have been completed. Select the next unfinished length.
+- **Bot approach:** Run-level planner tracks which lengths have been completed. Select the next unfinished length; when chasing the 2-island leg, secure exactly 2 Corporate Islands, skip any third Corporate Island, and go directly to Volcanic Hive.
 - **Ideal setup:** Normal difficulty. Do 2-island first (easiest), then 3, then 4.
 - **Estimated difficulty for bot:** Medium (requires 3 victories)
 
