@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-34 of 70 completed (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 36 remaining, sorted by global unlock % (easiest first).
+35 of 70 completed (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 35 remaining, sorted by global unlock % (easiest first).
 
-Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks collected the final Pinnacle Robotics Perfect Island reward in run `20260519_133059_179`. Archive Inc. run `20260518_215903_654` set up 9/10; the Pinnacle reward made it 10/10. The key live-loop note is in `docs/perfect_strategy_rusting_hulks_retrospective.md`.
+Current milestone: There is No Try is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks finished Detritus, Archive, and R.S.T. without failed objectives in run `20260519_154655_297`. The in-game toast appeared after leaving island 3, then Steam/cache reflected 35/70 after save-quit-reopen. The key live-loop note is in `docs/there_is_no_try_rusting_hulks_retrospective.md`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -29,7 +29,7 @@ Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Ste
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
 - [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times [cumulative]
-- [ ] There is No Try (20.2%) — Finish 3 islands without failing an objective
+- [x] There is No Try (20.2%) — Finish 3 islands without failing an objective — completed with Rusting Hulks in run `20260519_154655_297`
 
 ### Tier 3: Orange Zone (10-20% — deliberate setup needed)
 - [x] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative] — completed with the Blitzkrieg victory in run `20260517_105759_344`
@@ -79,7 +79,7 @@ Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Ste
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (34, from Steam sync + live confirmations)
+### Already Completed (35, from Steam sync + live confirmations)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -101,6 +101,7 @@ Current milestone: Perfect Strategy is complete, confirmed by the 2026-05-19 Ste
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
 - [x] Chain Attack (24.8%) — Chain Whip through 10 tiles  [Blitzkrieg]
 - [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards
+- [x] There is No Try (20.2%) — Finish 3 islands without failing an objective
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
 - [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire  [Flame Behemoths]

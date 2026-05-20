@@ -54,4 +54,4 @@ This run also reinforced that no-failed-objective achievements need explicit cou
 
 - Add a regression board for the Research Center final-turn clean line so the Rust solver can find it instead of safety-blocking.
 - Promote the Shielded Vaults v150 capture into replay/corpus coverage, not only the focused Rust unit test.
-- Continue the active Pinnacle clear as the first island toward **There is No Try**, unless the next achievement target changes.
+- The follow-on **There is No Try** push succeeded in run `20260519_154655_297`; see `docs/there_is_no_try_rusting_hulks_retrospective.md`.

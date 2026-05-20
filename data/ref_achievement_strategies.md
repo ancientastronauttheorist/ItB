@@ -22,6 +22,7 @@ evaluation weights when targeting that achievement.
 - [x] Sustainable Energy (39.1%) -- Finish 3 Corporate Islands without dropping below 4 Grid Power
 - [x] Humanity's Savior (27.8%) -- Rescue 100,000 civilians across all games
 - [x] Perfect Strategy (23.3%) -- Collect 10 Perfect Island rewards across all games
+- [x] There is No Try (20.2%) -- Finish 3 Corporate Islands without failing an objective
 - [x] Mass Displacement (23.0%) -- Push 3 enemies with single attack (Steel Judoka)
 - [x] Scorched Earth (20.5%) -- End battle with 12 tiles on Fire (Flame Behemoths)
 - [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
@@ -199,6 +200,7 @@ evaluation weights when targeting that achievement.
 
 ### There is No Try (20.2%)
 - **Requirement:** Finish 3 Corporate Islands without failing an objective.
+- **Status:** Completed on 2026-05-19 with Rusting Hulks on Easy in run `20260519_154655_297`; Steam sync confirmed 35/70 after save-quit-reopen.
 - **Squad:** Any
 - **Strategy:** Complete 3 islands in a single run without failing any bonus or main objective. This is like getting 3 Perfect Islands in one run. Requires consistently clean play.
 - **Bot approach:** Weight bonus objectives very highly -- treat them almost like building protection. The solver must never sacrifice an objective.

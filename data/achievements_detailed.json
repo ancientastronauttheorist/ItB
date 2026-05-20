@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-19T14:25:40.195986",
+    "last_steam_sync": "2026-05-19T19:52:47.286642",
     "last_steam_total": 70,
-    "last_steam_unlocked": 34
+    "last_steam_unlocked": 35
   },
   "achievements": {
     "rift_walkers": [
@@ -735,7 +735,7 @@
         "description": "Finish 3 Corporate Islands without failing an objective",
         "type": "single_run",
         "global_unlock_pct": 20.2,
-        "completed": false,
+        "completed": true,
         "strategy": "No failed objectives across 3 islands. Choose 1-objective missions when possible. Prioritize damage and efficiency. Isaac Jones pilot gives error margin (extra reset).",
         "setup": "3-island run. Easy difficulty. 1-objective missions. Isaac Jones pilot.",
         "pitfalls": "ANY failed objective on any mission fails the achievement. Very demanding."
