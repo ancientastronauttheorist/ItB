@@ -954,7 +954,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Matches Cataclysm Unfair stress run 20260521_120049_468 Mission_Lightning
 # turn 2, where B4 BombRock damaged B3->B2 Dung2 but not C4 Scorpion2.
 # Pre-v174 corpus archived as failure_db_snapshot_sim_v173.jsonl.
-SIMULATOR_VERSION = 174
+# v175: Save-file upgraded weapon overlays now recognize Cataclysm powered
+# IDs (Prime_TC_Punt_*, Ranged_Crack_*, Science_KO_Crack_*), matching live
+# bridge execution after shop/reactor upgrades. Pre-v175 corpus archived as
+# failure_db_snapshot_sim_v174.jsonl.
+SIMULATOR_VERSION = 175
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

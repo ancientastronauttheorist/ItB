@@ -47,6 +47,9 @@ _MODELED_UPGRADED_WEAPONS = {
     "Prime_Flamethrower_A",
     "Prime_Flamethrower_B",
     "Prime_Flamethrower_AB",
+    "Prime_TC_Punt_A",
+    "Prime_TC_Punt_B",
+    "Prime_TC_Punt_AB",
     "Brute_Jetmech_A",
     "Brute_Jetmech_B",
     "Brute_Jetmech_AB",
@@ -55,11 +58,17 @@ _MODELED_UPGRADED_WEAPONS = {
     "Ranged_Rocket_A",
     "Ranged_Rocket_B",
     "Ranged_Rocket_AB",
+    "Ranged_Crack_A",
+    "Ranged_Crack_B",
+    "Ranged_Crack_AB",
     "Science_Repulse_A",
     "Science_Repulse_AB",
     "Science_Swap_A",
     "Science_Swap_B",
     "Science_Swap_AB",
+    "Science_KO_Crack_A",
+    "Science_KO_Crack_B",
+    "Science_KO_Crack_AB",
 }
 
 

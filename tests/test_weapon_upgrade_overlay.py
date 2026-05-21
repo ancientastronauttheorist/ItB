@@ -268,6 +268,72 @@ def test_rocket_artillery_damage_upgrades_overlay_from_save(monkeypatch):
         ]
 
 
+def test_cataclysm_upgraded_weapons_overlay_from_save(monkeypatch):
+    bridge_data = {
+        "units": [
+            {
+                "uid": 0,
+                "type": "BottlecapMech",
+                "mech": True,
+                "weapons": ["Prime_TC_Punt"],
+            },
+            {
+                "uid": 1,
+                "type": "TrimissileMech",
+                "mech": True,
+                "weapons": ["Ranged_Crack"],
+            },
+            {
+                "uid": 2,
+                "type": "HydrantMech",
+                "mech": True,
+                "weapons": ["Science_KO_Crack"],
+            },
+        ]
+    }
+
+    class FakeState:
+        weapons = [
+            "Prime_TC_Punt_B",
+            "",
+            "Ranged_Crack_B",
+            "",
+            "Science_KO_Crack_A",
+            "",
+        ]
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    updates = _enrich_bridge_mech_weapons_from_save(bridge_data)
+
+    assert updates == [
+        {
+            "uid": 0,
+            "slot": 0,
+            "base": "Prime_TC_Punt",
+            "upgraded": "Prime_TC_Punt_B",
+        },
+        {
+            "uid": 1,
+            "slot": 0,
+            "base": "Ranged_Crack",
+            "upgraded": "Ranged_Crack_B",
+        },
+        {
+            "uid": 2,
+            "slot": 0,
+            "base": "Science_KO_Crack",
+            "upgraded": "Science_KO_Crack_A",
+        },
+    ]
+    assert bridge_data["units"][0]["weapons"] == ["Prime_TC_Punt_B"]
+    assert bridge_data["units"][1]["weapons"] == ["Ranged_Crack_B"]
+    assert bridge_data["units"][2]["weapons"] == ["Science_KO_Crack_A"]
+
+
 def test_powered_pawn_mods_overlay_when_current_weapons_stay_base(monkeypatch):
     bridge_data = {
         "units": [

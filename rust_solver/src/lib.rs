@@ -1396,7 +1396,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Matches Cataclysm Unfair stress run 20260521_120049_468 Mission_Lightning
 //   turn 2, where B4 BombRock damaged B3->B2 Dung2 but not C4 Scorpion2.
 //   Pre-v174 corpus archived as `failure_db_snapshot_sim_v173.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 174;
+// v175 - Save-file upgraded weapon overlays now recognize Cataclysm powered
+//   IDs (`Prime_TC_Punt_*`, `Ranged_Crack_*`, `Science_KO_Crack_*`), matching
+//   live bridge execution after shop/reactor upgrades. Pre-v175 corpus
+//   archived as `failure_db_snapshot_sim_v174.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 175;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
