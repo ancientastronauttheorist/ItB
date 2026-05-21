@@ -201,6 +201,19 @@ pub(crate) fn get_weapon_targets(
     let wdef = &weapons[weapon_id as usize];
     let mut targets = Vec::new();
 
+    if weapon_id == WId::VipTruckMove {
+        let Some(unit_idx) = board.unit_at(mx, my) else {
+            return targets;
+        };
+        let range = wdef.range_max.max(3);
+        for pos in reachable_tiles_with_speed(board, unit_idx, range) {
+            if pos != (mx, my) {
+                targets.push(pos);
+            }
+        }
+        return targets;
+    }
+
     match wdef.weapon_type {
         WeaponType::Melee => {
             // For path_size>1 melee (Prime_Spear: Range=2, PathSize=2 in
@@ -551,6 +564,10 @@ fn weapon_action_has_effect(
     }
     let wdef = &weapons[weapon_id as usize];
     let (mx, my) = move_to;
+
+    if weapon_id == WId::VipTruckMove {
+        return target != (mx, my);
+    }
 
     let unit_at = |x: u8, y: u8| board.unit_at(x, y).is_some();
     let adj_has_unit = |x: u8, y: u8| {
@@ -1367,6 +1384,10 @@ fn make_action(unit: &Unit, move_to: (u8, u8), weapon_id: WId, target: (u8, u8))
     }
     if weapon_id == WId::Repair {
         desc += ", repair";
+    } else if weapon_id == WId::VipTruckMove {
+        desc += &format!(", drive {}→{}",
+            bridge_to_visual(unit.x, unit.y),
+            bridge_to_visual(target.0, target.1));
     } else if weapon_id != WId::None {
         desc += &format!(", fire {} at {}",
             weapon_name(weapon_id),
@@ -1457,8 +1478,7 @@ pub fn solve_turn(
     let active: Vec<usize> = (0..board.unit_count as usize)
         .filter(|&i| {
             let u = &board.units[i];
-            u.is_player() && u.alive() && u.active()
-                && (u.is_mech() || u.weapon.0 > 0)
+            u.is_player_action_unit()
         })
         .collect();
 
@@ -1657,8 +1677,7 @@ pub fn solve_turn_top_k(
     let active: Vec<usize> = (0..board.unit_count as usize)
         .filter(|&i| {
             let u = &board.units[i];
-            u.is_player() && u.alive() && u.active()
-                && (u.is_mech() || u.weapon.0 > 0)
+            u.is_player_action_unit()
         })
         .collect();
 
@@ -1824,6 +1843,68 @@ mod top_k_tests {
         assert!(
             actions.iter().any(|a| a.1 == WId::Repair),
             "Vek Mites must make Repair a legal action even at full HP"
+        );
+    }
+
+    #[test]
+    fn vip_truck_with_move_helper_is_active_solver_unit() {
+        let mut board = Board::default();
+        board.current_turn = 2;
+        board.total_turns = 4;
+        board.protect_objective_unit_types.push("VIP_Truck".to_string());
+
+        let truck_idx = board.add_unit(Unit {
+            uid: 1197,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            base_move: 0,
+            weapon: WeaponId(WId::VipTruckMove as u16),
+            ..Default::default()
+        });
+        board.units[truck_idx].set_type_name("VIP_Truck");
+
+        let enemy_idx = board.add_unit(Unit {
+            uid: 200,
+            x: 3,
+            y: 0,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            queued_target_x: 3,
+            queued_target_y: 3,
+            weapon_damage: 1,
+            ..Default::default()
+        });
+        board.units[enemy_idx].set_type_name("Firefly1");
+
+        assert_eq!(board.active_mechs(), vec![truck_idx]);
+
+        let solution = solve_turn(
+            &board,
+            &[],
+            1.0,
+            25,
+            &EvalWeights::default(),
+            [0; 2],
+            &WEAPONS,
+        );
+
+        assert!(
+            solution.actions.iter().any(|a| {
+                a.mech_uid == 1197
+                    && a.weapon == WId::VipTruckMove
+                    && a.move_to == (3, 3)
+                    && a.target != (3, 3)
+            }),
+            "solver should use VIP_Truck_Move on the threatened truck; got {:?}",
+            solution.actions
         );
     }
 

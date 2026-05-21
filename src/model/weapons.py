@@ -893,6 +893,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Armored Charge", weapon_type="passive",
         damage=255,
     ),
+    "VIP_Truck_Move": WeaponDef(
+        name="Floor It!", weapon_type="passive",
+        range_max=3, limited=2,
+    ),
     "StarfishAtk1": WeaponDef(
         name="Starfish Slash", weapon_type="melee",
         damage=1,

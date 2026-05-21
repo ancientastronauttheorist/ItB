@@ -562,9 +562,12 @@ pub enum WId {
     ScienceKoCrackB = 189,
     /// Seismic Capacitor with both +1 Damage upgrades powered.
     ScienceKoCrackAB = 190,
+    /// Mission_Civilians VIP Truck movement skill. The pawn has MoveSpeed=0;
+    /// this weapon grants a two-use range-3 path move via AddMove.
+    VipTruckMove = 191,
 }
 
-pub const WEAPON_COUNT: usize = 191;
+pub const WEAPON_COUNT: usize = 192;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -848,6 +851,9 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[188] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
     w[189] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
     w[190] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Flip, flags: C, ..DEF };
+    // 191: VIP_Truck_Move — "Floor It!" movement skill. Target enumeration and
+    // simulation are bespoke because the pawn's normal MoveSpeed is 0.
+    w[191] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, range_max: 3, limited: 2, flags: C, ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1620,6 +1626,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "ScorpionAtkB" => WId::ScorpionAtkB,
         "BouncerAtkB" => WId::BouncerAtkB,
         "Armored_Train_Move" => WId::ArmoredTrainMove,
+        "VIP_Truck_Move" => WId::VipTruckMove,
         "Acid_Tank_Attack" => WId::AcidTankAtk,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
@@ -1829,6 +1836,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BurnbugAtkB => "BurnbugAtkB",
         WId::BouncerAtkB => "BouncerAtkB",
         WId::ArmoredTrainMove => "Armored_Train_Move",
+        WId::VipTruckMove => "VIP_Truck_Move",
         WId::SupportWind => "Support_Wind",
         WId::MissilesShield => "Missiles_Shield",
         WId::MissilesOneDmg => "Missiles_OneDmg",
@@ -2086,6 +2094,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScorpionAtkB => "Massive Spinneret",
         WId::BouncerAtkB => "Sweeping Horns",
         WId::ArmoredTrainMove => "Armored Charge",
+        WId::VipTruckMove => "Floor It!",
         WId::BeetleAtkB => "Flaming Abdomen",
         WId::SupportRepair => "Repair Drop",
         WId::AcidTankAtk => "A.C.I.D. Cannon",
@@ -2565,6 +2574,7 @@ mod tests {
             ("Missiles_OneDmg", WId::MissilesOneDmg),
             ("BouncerAtkB", WId::BouncerAtkB),
             ("Armored_Train_Move", WId::ArmoredTrainMove),
+            ("VIP_Truck_Move", WId::VipTruckMove),
             ("ScarabAtkB", WId::ScarabAtkB),
             ("Terraformer_Attack", WId::TerraformerAttack),
             ("Disposal_Attack", WId::DisposalAttack),

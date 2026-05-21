@@ -938,7 +938,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v170: Tri-Rocket targets killed by terrain after landing do not leave a
 # vacated corpse-bump tile. Pre-v170 corpus archived as
 # failure_db_snapshot_sim_v169.jsonl.
-SIMULATOR_VERSION = 170
+# v171: VIP_Truck_Move is a range-3 path movement skill even though the VIP
+# Truck pawn has MoveSpeed=0. Solver/replay now enumerate and simulate the
+# skill as an attack-phase AddMove. Pre-v171 corpus archived as
+# failure_db_snapshot_sim_v170.jsonl.
+SIMULATOR_VERSION = 171
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

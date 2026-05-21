@@ -262,6 +262,8 @@ NEUTRAL_STATS = {
     "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False),
     "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
     "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
+    "VIP_Truck":         PawnStats(move_speed=0, ranged=1,
+                                   default_weapon="VIP_Truck_Move"),
     # Detritus Contraption (Mission_Missiles): immobile corporate mission
     # ally with two global-use weapons, not pushable, smoke-immune.
     "Missile_Unit":      PawnStats(move_speed=0, ranged=1, pushable=False,

@@ -2269,6 +2269,12 @@ pub fn simulate_weapon_with(
         }
     }
 
+    if weapon_id == WId::VipTruckMove {
+        let move_result = simulate_move(board, attacker_idx, (target_x, target_y));
+        result.merge(&move_result);
+        return result;
+    }
+
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),

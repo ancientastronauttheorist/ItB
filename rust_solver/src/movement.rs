@@ -10,6 +10,15 @@ use crate::board::*;
 /// Dead wrecks hard-block (can't pass at all).
 pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     let unit = &board.units[unit_idx];
+    reachable_tiles_with_speed(board, unit_idx, unit.move_speed)
+}
+
+/// Get all tiles a unit can reach with an explicit movement budget.
+///
+/// Used by mission movement skills such as `VIP_Truck_Move`, whose pawn has
+/// MoveSpeed=0 but whose weapon grants a temporary range-3 path move.
+pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> Vec<(u8, u8)> {
+    let unit = &board.units[unit_idx];
     let ux = unit.x;
     let uy = unit.y;
 
@@ -19,7 +28,6 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     }
 
     let uid = unit.uid;
-    let speed = unit.move_speed;
     let flying = unit.flying();
 
     let mut result = Vec::with_capacity(20);

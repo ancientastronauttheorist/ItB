@@ -1379,7 +1379,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v170 - Tri-Rocket targets killed by terrain after landing do not leave a
 //   vacated corpse-bump tile. Pre-v170 corpus archived as
 //   `failure_db_snapshot_sim_v169.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 170;
+// v171 - VIP_Truck_Move is a range-3 path movement skill even though the VIP
+//   Truck pawn has MoveSpeed=0. Solver/replay now enumerate and simulate the
+//   skill as an attack-phase AddMove. Pre-v171 corpus archived as
+//   `failure_db_snapshot_sim_v170.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 171;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
