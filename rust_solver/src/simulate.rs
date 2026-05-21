@@ -240,13 +240,13 @@ fn apply_pod_on_land(board: &mut Board, unit_idx: usize, result: &mut ActionResu
 
 // ── apply_landing_effects ────────────────────────────────────────────────────
 
-/// Resolve the post-move landing pipeline at a unit's current tile: web-break
-/// (if the moved unit is an enemy webber), smoke extinguish, Fire pickup, ACID
-/// pickup, frozen-grounded-on-water → Ice, water/lava/chasm death (with Flying
-/// / Massive exemptions), Lava-ignites-flying, Old Earth Mine, Freeze Mine,
-/// repair platform, and finally teleporter-pad swap. Caller must have already
-/// updated the unit's `x`/`y` to the destination tile; this function reads
-/// `board.units[idx].(x,y)` and resolves effects there.
+/// Resolve the post-move landing pipeline at a unit's current tile: own
+/// web-break, web-break if the moved unit is an enemy webber, smoke extinguish,
+/// Fire pickup, ACID pickup, frozen-grounded-on-water → Ice, water/lava/chasm
+/// death (with Flying / Massive exemptions), Lava-ignites-flying, Old Earth
+/// Mine, Freeze Mine, repair platform, and finally teleporter-pad swap. Caller
+/// must have already updated the unit's `x`/`y` to the destination tile; this
+/// function reads `board.units[idx].(x,y)` and resolves effects there.
 ///
 /// Shared between `apply_throw` (Vice Fist relocation) and `sim_pull_or_swap`
 /// (Science_Swap Teleporter). Before this helper existed, swap silently
@@ -260,18 +260,19 @@ fn apply_pod_on_land(board: &mut Board, unit_idx: usize, result: &mut ActionResu
 /// Order matches `apply_throw`'s historical inline ordering exactly so that
 /// extracting the helper is a behaviour-preserving refactor on the throw
 /// path:
-///   1. break webs sourced FROM this unit (if enemy webber moved)
-///   2. Smoke on tile → clear unit fire
-///   3. Fire on tile → set unit fire (Flame Shielding exempts player mechs)
-///   4. ACID pool on tile → set unit acid, consume pool
-///   5. frozen non-flying + Water → tile becomes Ice, return early
-///   6. Water/Lava drown non-flying-non-Massive; Chasm kills any non-flying
-///   7. Lava + flying → ignite (Flame Shielding exempts player mechs)
-///   8. Old Earth Mine → instant kill, mine consumed
-///   9. Freeze Mine → freeze (or pop shield), mine consumed
-///  10. Repair platform → heal by Item_Repair_Mine's -10 damage, consume
-///  11. Teleporter pad → swap to partner if paired
-///  12. WebbEgg1 adjacency refresh → newly adjacent units become webbed
+///   1. break the moved unit's own web
+///   2. break webs sourced FROM this unit (if enemy webber moved)
+///   3. Smoke on tile → clear unit fire
+///   4. Fire on tile → set unit fire (Flame Shielding exempts player mechs)
+///   5. ACID pool on tile → set unit acid, consume pool
+///   6. frozen non-flying + Water → tile becomes Ice, return early
+///   7. Water/Lava drown non-flying-non-Massive; Chasm kills any non-flying
+///   8. Lava + flying → ignite (Flame Shielding exempts player mechs)
+///   9. Old Earth Mine → instant kill, mine consumed
+///  10. Freeze Mine → freeze (or pop shield), mine consumed
+///  11. Repair platform → heal by Item_Repair_Mine's -10 damage, consume
+///  12. Teleporter pad → swap to partner if paired
+///  13. WebbEgg1 adjacency refresh → newly adjacent units become webbed
 fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     if board.units[unit_idx].hp <= 0 { return; }
     let x = board.units[unit_idx].x;
@@ -358,25 +359,29 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
     let nx = board.units[unit_idx].x;
     let ny = board.units[unit_idx].y;
 
-    // 1. Web break: enemy webber moved → unweb any mechs they were holding
+    // 1. Any actual tile change breaks the moved unit's own web. Blocked
+    // pushes do not call this helper, so their grapple remains attached.
+    clear_unit_web(board, unit_idx);
+
+    // 2. Web break: enemy webber moved → unweb any mechs they were holding.
     if board.units[unit_idx].is_enemy() {
         let webber_uid = board.units[unit_idx].uid;
         break_web_from(board, webber_uid);
     }
 
-    // 2. Time Pod contact: attack-phase movement (Aerial Bombs, pushes, swaps)
+    // 3. Time Pod contact: attack-phase movement (Aerial Bombs, pushes, swaps)
     // collects/destroys pods just like ordinary movement.
     apply_pod_on_land(board, unit_idx, result);
 
-    // 3. Smoke tile: carried unit fire is extinguished on landing.
+    // 4. Smoke tile: carried unit fire is extinguished on landing.
     apply_smoke_tile_extinguish(board, unit_idx, nx, ny);
 
-    // 4. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
+    // 5. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
     //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
     //    to burning Ground when a unit lands on it.
     apply_fire_tile_pickup(board, unit_idx, nx, ny);
 
-    // 5. ACID pool: unit gains ACID, pool consumed
+    // 6. ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
         if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
             board.units[unit_idx].set_acid(true);
@@ -384,7 +389,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // 6. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
+    // 7. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
     // units fall through to the deadly-terrain check below — frozen cancels
     // flight so they drown / fall normally.
     let dest_terrain = board.tile(nx, ny).terrain;
@@ -395,8 +400,8 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         return;
     }
 
-    // 7. Water / Lava / Chasm death.
-    // 8. Lava + flying → fire status (combined branch).
+    // 8. Water / Lava / Chasm death.
+    // 9. Lava + flying → fire status (combined branch).
     if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
         let massive = board.units[unit_idx].massive();
         match dest_terrain {
@@ -424,7 +429,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     }
 
-    // 9-10. Mines.
+    // 10-11. Mines.
     if board.units[unit_idx].hp > 0 {
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
@@ -440,14 +445,14 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     }
 
-    // 11. Repair platform item: fires after terrain/mine resolution, before
+    // 12. Repair platform item: fires after terrain/mine resolution, before
     // teleporter relocation consumes the unit's landing tile.
     apply_repair_platform(board, unit_idx, result);
 
-    // 12. Teleporter pad: fires LAST, after terrain/mine/item resolution.
+    // 13. Teleporter pad: fires LAST, after terrain/mine/item resolution.
     apply_teleport_on_land(board, unit_idx);
 
-    // 13. Spider/Web Egg adjacency webs are tile-based and can apply after a
+    // 14. Spider/Web Egg adjacency webs are tile-based and can apply after a
     // unit lands beside an existing egg or after a teleporter swap.
     board.refresh_webb_egg_grapples();
 }
@@ -7243,6 +7248,23 @@ mod tests {
 
         assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (1, 0));
         assert_eq!((board.units[enemy].x, board.units[enemy].y), (1, 4));
+    }
+
+    #[test]
+    fn test_science_swap_breaks_web_on_swapped_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 5, 2, WId::ScienceSwapA);
+        let enemy = add_enemy_type(&mut board, 731, 5, 3, 5, "Moth2");
+        let egg = add_enemy_type(&mut board, 787, 4, 3, 1, "WebbEgg1");
+        board.units[enemy].set_web(true);
+        board.units[enemy].web_source_uid = board.units[egg].uid;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceSwapA, 5, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 5));
+        assert!(!board.units[enemy].web(), "Science Swap target changed tiles and should break web");
+        assert_eq!(board.units[enemy].web_source_uid, 0);
     }
 
     #[test]

@@ -918,7 +918,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v164: FIRE weapon tile status can sit on intact Mountain tiles. Backburn
 # (Ranged_Ignite_A) lights the mountain directly behind the shooter without
 # damaging it. Pre-v164 corpus archived as failure_db_snapshot_sim_v163.jsonl.
-SIMULATOR_VERSION = 164
+# v165: Science_Swap target relocation breaks the moved target's own web,
+# matching the engine rule that actual tile changes break grapples. Pre-v165
+# corpus archived as failure_db_snapshot_sim_v164.jsonl.
+SIMULATOR_VERSION = 165
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
