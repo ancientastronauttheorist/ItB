@@ -884,7 +884,38 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v153: Firefly Leader (`FireflyAtkB` / Burning Thorax) fires paired
 # projectiles in both the queued direction and the opposite direction.
 # Pre-v153 corpus archived as failure_db_snapshot_sim_v152.jsonl.
-SIMULATOR_VERSION = 154
+# v155: Science_Swap / Teleporter target validation is cardinal-line only,
+# matching Lua GetTargetArea. Diagonal or out-of-range swap targets now no-op in
+# replay/scoring instead of projecting a fake teleport. Pre-v155 corpus archived
+# as failure_db_snapshot_sim_v154.jsonl.
+# v156: FIRE weapon status on Sand/Forest consumes the terrain to burning Ground
+# immediately, matching live Flamethrower/Ranged_Ignite verification. Pre-v156
+# corpus archived as failure_db_snapshot_sim_v155.jsonl.
+# v157: Pinnacle FACTION_BOTS (`Snowtank*`, `Snowart*`, `Snowlaser*`,
+# `Snowmine*`, `BotBoss*`) are not Vek and do not receive Psion auras.
+# Pre-v157 corpus archived as failure_db_snapshot_sim_v156.jsonl.
+# v158: Prime_Flamethrower lights the struck tile before pushing, but a target
+# pushed off that tile does not carry Fire status. Pre-v158 corpus archived as
+# failure_db_snapshot_sim_v157.jsonl.
+# v159: Prime_Flamethrower's newly lit target tile ignites grounded occupants
+# even if pushed away, but flying occupants only catch it if they remain on or
+# land on a burning tile. Pre-v159 corpus archived as
+# failure_db_snapshot_sim_v158.jsonl.
+# v160: Fire weapons no longer mark non-fire-hosting terrain (for example
+# Water) as a burning tile; Prime_Flamethrower still applies direct Fire to a
+# flying target if its push is blocked and the target remains on the struck
+# tile. Pre-v160 corpus archived as failure_db_snapshot_sim_v159.jsonl.
+# v161: Boosted Prime_Flamethrower adds Boost's +1 weapon damage to its
+# conditional FireDamage branch only when the target was already burning, and
+# powered Flame Thrower range IDs (_A / _B / _AB) are modeled. Pre-v161 corpus
+# archived as failure_db_snapshot_sim_v160.jsonl.
+# v162: Fire weapon tile status can live on Grid Buildings without damaging
+# them; upgraded Flame Thrower line paths ignite intermediate building tiles.
+# Pre-v162 corpus archived as failure_db_snapshot_sim_v161.jsonl.
+# v163: Breaking a web on one board entry clears every duplicate segment with
+# the same logical uid, matching multi-tile mission units such as trains.
+# Pre-v163 corpus archived as failure_db_snapshot_sim_v162.jsonl.
+SIMULATOR_VERSION = 163
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

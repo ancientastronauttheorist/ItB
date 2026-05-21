@@ -133,6 +133,7 @@ pub struct WeaponDef {
     pub range_max: u8,   // 0 = unlimited
     pub limited: u8,     // 0 = unlimited uses
     pub path_size: u8,   // tiles hit in line (1 = default, 2 = Crab dual artillery)
+    pub boost_bonus: u8, // transient +damage from Boost for conditional damage branches
     pub flags: WeaponFlags,
 }
 
@@ -178,6 +179,7 @@ const DEF: WeaponDef = WeaponDef {
     range_min: 1, range_max: 1,
     limited: 0,
     path_size: 1,
+    boost_bonus: 0,
     flags: WeaponFlags::AOE_CENTER, // aoe_center defaults true
 };
 
@@ -530,9 +532,15 @@ pub enum WId {
     ScienceSwapB = 174,
     /// Teleporter with +1 Range and +2 Range powered.
     ScienceSwapAB = 175,
+    /// Flame Thrower with first +1 Range powered.
+    PrimeFlamethrowerA = 176,
+    /// Flame Thrower with second +1 Range powered.
+    PrimeFlamethrowerB = 177,
+    /// Flame Thrower with both +1 Range upgrades powered.
+    PrimeFlamethrowerAB = 178,
 }
 
-pub const WEAPON_COUNT: usize = 176;
+pub const WEAPON_COUNT: usize = 179;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -586,6 +594,16 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // BURNS_FIRE_TARGETS). In-game tooltip: "Push target tile and light
     // tiles on Fire. Damage units already on Fire."
     w[6] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    // 176-178: Prime_Flamethrower upgrades — +1/+1 Range (PathSize 2/2/3).
+    w[176] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        range_max: 2, path_size: 2,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    w[177] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        range_max: 2, path_size: 2,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    w[178] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        range_max: 3, path_size: 3,
         flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
     // 7: Prime_Areablast — Area Blast
     w[7] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
@@ -994,6 +1012,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         range_min: 0, range_max: 0,
         limited: 1,
         path_size: 1,
+        boost_bonus: 0,
         flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
     };
 
@@ -1086,6 +1105,7 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         range_min: 0, range_max: 0,
         limited: 1,
         path_size: 1,
+        boost_bonus: 0,
         flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
     };
 
@@ -1346,6 +1366,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_ShieldBash" => WId::PrimeShieldBash,
         "Prime_Shift" => WId::PrimeShift,
         "Prime_Flamethrower" => WId::PrimeFlamethrower,
+        "Prime_Flamethrower_A" => WId::PrimeFlamethrowerA,
+        "Prime_Flamethrower_B" => WId::PrimeFlamethrowerB,
+        "Prime_Flamethrower_AB" => WId::PrimeFlamethrowerAB,
         "Prime_Areablast" => WId::PrimeAreablast,
         "Prime_Leap" => WId::PrimeLeap,
         "Prime_Spear" => WId::PrimeSpear,
@@ -1544,6 +1567,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeShieldBash => "Prime_ShieldBash",
         WId::PrimeShift => "Prime_Shift",
         WId::PrimeFlamethrower => "Prime_Flamethrower",
+        WId::PrimeFlamethrowerA => "Prime_Flamethrower_A",
+        WId::PrimeFlamethrowerB => "Prime_Flamethrower_B",
+        WId::PrimeFlamethrowerAB => "Prime_Flamethrower_AB",
         WId::PrimeAreablast => "Prime_Areablast",
         WId::PrimeLeap => "Prime_Leap",
         WId::PrimeSpear => "Prime_Spear",
@@ -1819,7 +1845,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeLasermech | WId::PrimeLasermechA | WId::PrimeLasermechB | WId::PrimeLasermechAB => "Burst Beam",
         WId::PrimeShieldBash => "Shield Bash",
         WId::PrimeShift => "Vice Fist",
-        WId::PrimeFlamethrower => "Flamethrower",
+        WId::PrimeFlamethrower | WId::PrimeFlamethrowerA
+            | WId::PrimeFlamethrowerB | WId::PrimeFlamethrowerAB => "Flamethrower",
         WId::PrimeAreablast => "Area Blast",
         WId::PrimeLeap => "Hydraulic Legs",
         WId::PrimeSpear => "Spear",
@@ -2022,6 +2049,21 @@ mod tests {
         assert_eq!(wid_from_str("Science_Swap_AB"), WId::ScienceSwapAB);
         assert_eq!(wid_to_str(WId::ScienceSwapAB), "Science_Swap_AB");
         assert_eq!(weapon_name(WId::ScienceSwapAB), "Teleporter");
+    }
+
+    #[test]
+    fn test_flamethrower_upgrade_ranges() {
+        assert_eq!(weapon_def(WId::PrimeFlamethrower).range_max, 1);
+        assert_eq!(weapon_def(WId::PrimeFlamethrower).path_size, 1);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerA).range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerA).path_size, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerB).range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerB).path_size, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerAB).range_max, 3);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerAB).path_size, 3);
+        assert_eq!(wid_from_str("Prime_Flamethrower_AB"), WId::PrimeFlamethrowerAB);
+        assert_eq!(wid_to_str(WId::PrimeFlamethrowerAB), "Prime_Flamethrower_AB");
+        assert_eq!(weapon_name(WId::PrimeFlamethrowerAB), "Flamethrower");
     }
 
     #[test]

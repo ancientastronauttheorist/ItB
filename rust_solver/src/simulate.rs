@@ -317,6 +317,37 @@ fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
     }
 }
 
+fn tile_can_host_fire(board: &Board, x: u8, y: u8) -> bool {
+    matches!(
+        board.tile(x, y).terrain,
+        Terrain::Ground | Terrain::Sand | Terrain::Forest | Terrain::Rubble | Terrain::Building
+            | Terrain::Ice | Terrain::Fire
+    )
+}
+
+fn apply_fire_weapon_unit_status(board: &mut Board, unit_idx: usize) {
+    if board.units[unit_idx].shield() {
+        return;
+    }
+
+    let fire_psion = board.fire_psion;
+    let target_is_immune_vek = fire_psion
+        && board.units[unit_idx].receives_psion_aura()
+        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
+
+    let u = &mut board.units[unit_idx];
+    if u.frozen() {
+        u.set_frozen(false);
+    }
+    if u.can_catch_fire()
+        && !(board.flame_shielding && u.is_player() && u.is_mech())
+        && !target_is_immune_vek
+    {
+        u.set_fire(true);
+        clear_mites(u);
+    }
+}
+
 fn apply_smoke_tile_extinguish(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
     if board.tile(x, y).smoke() && board.units[unit_idx].fire() {
         board.units[unit_idx].set_fire(false);
@@ -440,10 +471,16 @@ fn break_web_from(board: &mut Board, src_uid: u16) {
 /// `break_web_from`.
 fn clear_unit_web(board: &mut Board, unit_idx: usize) {
     if !board.units[unit_idx].web() { return; }
-    board.units[unit_idx].set_web(false);
-    board.units[unit_idx].web_source_uid = 0;
-    if board.units[unit_idx].move_speed == 0 {
-        board.units[unit_idx].move_speed = board.units[unit_idx].base_move;
+    let logical_uid = board.units[unit_idx].uid;
+    for i in 0..board.unit_count as usize {
+        if board.units[i].uid != logical_uid || !board.units[i].web() {
+            continue;
+        }
+        board.units[i].set_web(false);
+        board.units[i].web_source_uid = 0;
+        if board.units[i].move_speed == 0 {
+            board.units[i].move_speed = board.units[i].base_move;
+        }
     }
 }
 
@@ -2030,6 +2067,18 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
     apply_weapon_status_with_impact_occupancy(board, x, y, wdef, occupied_at_impact);
 }
 
+fn apply_fire_weapon_tile_status(board: &mut Board, x: u8, y: u8) {
+    if !tile_can_host_fire(board, x, y) {
+        return;
+    }
+    let tile = board.tile_mut(x, y);
+    if matches!(tile.terrain, Terrain::Sand | Terrain::Forest) {
+        tile.terrain = Terrain::Ground;
+    }
+    tile.set_smoke(false);
+    tile.set_on_fire(true);
+}
+
 /// Apply status with explicit pre-damage occupancy for ACID fall-to-feet logic.
 /// Damage can kill the occupant before status is applied; that should not turn a
 /// live-target ACID hit into an empty-tile pool.
@@ -2042,9 +2091,7 @@ pub fn apply_weapon_status_with_impact_occupancy(
 ) {
     // ── Tile effects ──
     if wdef.fire() {
-        let tile = board.tile_mut(x, y);
-        tile.set_smoke(false); // fire replaces smoke
-        tile.set_on_fire(true);
+        apply_fire_weapon_tile_status(board, x, y);
     }
     if wdef.smoke() {
         place_smoke(board, x, y);
@@ -2102,26 +2149,11 @@ pub fn apply_weapon_status_with_impact_occupancy(
         }
 
         if wdef.fire() {
-            // Compute Fire Psion immunity gating before grabbing the mut ref.
-            let fire_psion = board.fire_psion;
-            let target_is_immune_vek = fire_psion
-                && board.units[idx].receives_psion_aura()
-                && board.units[idx].type_name_str() != "Jelly_Fire1";
-            let u = &mut board.units[idx];
-            if u.frozen() {
-                u.set_frozen(false); // fire on frozen: unfreeze AND catch fire
-            }
-            // Pilot_Rock (Ariadne) is fire-immune. Flame Shielding (squad-wide)
-            // also blocks fire-apply on player mechs; Fire Psion grants the
-            // same immunity to other Vek. Freeze-on-fire still unfreezes
-            // above because that mechanic is independent of fire application.
-            if u.can_catch_fire()
-                && !(board.flame_shielding && u.is_player() && u.is_mech())
-                && !target_is_immune_vek
-            {
-                u.set_fire(true);
-                clear_mites(u);
-            }
+            // Pilot_Rock (Ariadne) is fire-immune. Flame Shielding blocks
+            // player mechs; Fire Psion grants the same immunity to Vek.
+            // Freeze-on-fire still unfreezes because that mechanic is
+            // independent of fire application.
+            apply_fire_weapon_unit_status(board, idx);
         }
         if wdef.acid() {
             if !board.units[idx].frozen() {
@@ -2188,6 +2220,9 @@ pub fn simulate_weapon_with(
         }
         if boosted_wdef.self_damage > 0 {
             boosted_wdef.self_damage = boosted_wdef.self_damage.saturating_add(1);
+        }
+        if boosted_wdef.burns_fire_targets() {
+            boosted_wdef.boost_bonus = 1;
         }
         &boosted_wdef
     } else {
@@ -2462,7 +2497,28 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
                 let px = ax as i8 + dxs * i;
                 let py = ay as i8 + dys * i;
                 if !in_bounds(px, py) { break; }
-                apply_damage(board, px as u8, py as u8, wdef.damage, result, DamageSource::Weapon);
+                let pxu = px as u8;
+                let pyu = py as u8;
+                if wdef.burns_fire_targets() && wdef.fire() {
+                    let mut path_dmg = wdef.damage;
+                    if let Some(uid) = board.unit_at(pxu, pyu) {
+                        if board.units[uid].fire() {
+                            path_dmg = path_dmg.saturating_add(2);
+                            path_dmg = path_dmg.saturating_add(wdef.boost_bonus);
+                        }
+                    }
+                    let occupied_at_impact = board.unit_at(pxu, pyu).is_some();
+                    apply_damage(board, pxu, pyu, path_dmg, result, DamageSource::Weapon);
+                    apply_weapon_status_with_impact_occupancy(
+                        board,
+                        pxu,
+                        pyu,
+                        wdef,
+                        occupied_at_impact,
+                    );
+                } else {
+                    apply_damage(board, pxu, pyu, wdef.damage, result, DamageSource::Weapon);
+                }
             }
         }
     }
@@ -2477,6 +2533,7 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
         if let Some(uid) = board.unit_at(tx, ty) {
             if board.units[uid].fire() {
                 target_dmg = target_dmg.saturating_add(2);
+                target_dmg = target_dmg.saturating_add(wdef.boost_bonus);
             }
         }
     }
@@ -2537,10 +2594,35 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
     }
 
     if let Some(dir) = attack_dir {
-        // Apply weapon status BEFORE push (unit still at target tile)
-        apply_weapon_status_with_impact_occupancy(
-            board, tx, ty, wdef, target_occupied_at_impact,
-        );
+        let flamethrower_push =
+            wdef.burns_fire_targets() && wdef.fire() && matches!(wdef.push, PushDir::Forward);
+        let flamethrower_target_at_impact = if flamethrower_push {
+            board.unit_at(tx, ty)
+        } else {
+            None
+        };
+        let flamethrower_target_effectively_flying = flamethrower_target_at_impact
+            .map(|idx| board.units[idx].effectively_flying())
+            .unwrap_or(false);
+
+        if flamethrower_push {
+            // Live Prime_Flamethrower lights the struck tile, then pushes the
+            // target. Grounded occupants catch the flame even if the push
+            // moves them away; flying occupants only catch it if the push is
+            // blocked and they remain on the struck tile, or if they land on
+            // ordinary burning terrain.
+            apply_fire_weapon_tile_status(board, tx, ty);
+            if let Some(idx) = flamethrower_target_at_impact {
+                if !flamethrower_target_effectively_flying {
+                    apply_fire_weapon_unit_status(board, idx);
+                }
+            }
+        } else {
+            // Apply weapon status BEFORE push (unit still at target tile)
+            apply_weapon_status_with_impact_occupancy(
+                board, tx, ty, wdef, target_occupied_at_impact,
+            );
+        }
 
         match wdef.push {
             PushDir::Forward => {
@@ -2558,6 +2640,17 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
             }
             PushDir::Throw => apply_throw(board, ax, ay, tx, ty, dir, result),
             _ => {}
+        }
+
+        if flamethrower_push {
+            if let Some(idx) = board.unit_at(tx, ty) {
+                if flamethrower_target_at_impact == Some(idx)
+                    && flamethrower_target_effectively_flying
+                {
+                    apply_fire_weapon_unit_status(board, idx);
+                }
+                apply_fire_tile_pickup(board, idx, tx, ty);
+            }
         }
 
         if let Some(idx) = deferred_death_explosion {
@@ -3245,6 +3338,20 @@ fn sim_trapped_explode(board: &mut Board, attacker_idx: usize, result: &mut Acti
 
 fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     if wdef.weapon_type == WeaponType::Swap {
+        if tx >= 8 || ty >= 8 {
+            return;
+        }
+        let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+        let dist = (tx as i8 - ax as i8).unsigned_abs()
+            + (ty as i8 - ay as i8).unsigned_abs();
+        let min_r = wdef.range_min.max(1);
+        let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
+        if dist < min_r
+            || dist > max_r
+            || cardinal_direction(ax, ay, tx, ty).is_none()
+        {
+            return;
+        }
         if let Some(target_idx) = board.unit_at(tx, ty) {
             // Stable/Massive neutrals (e.g. Dam_Pawn) are immune to swap.
             // Mechs are always swap-eligible regardless of pushable flag.
@@ -3252,7 +3359,6 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
                 return;
             }
             // Swap positions
-            let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
             board.units[target_idx].x = ax;
             board.units[target_idx].y = ay;
             board.units[attacker_idx].x = tx;
@@ -5705,6 +5811,42 @@ mod tests {
     }
 
     #[test]
+    fn test_web_break_clears_duplicate_train_segments() {
+        let mut board = make_test_board();
+        let webber_uid = 900;
+        let main = board.add_unit(Unit {
+            uid: 508,
+            x: 4,
+            y: 2,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            ..Default::default()
+        });
+        let extra = board.add_unit(Unit {
+            uid: 508,
+            x: 4,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            ..Default::default()
+        });
+        board.units[main].set_type_name("Train_Pawn");
+        board.units[extra].set_type_name("Train_Pawn");
+        board.units[main].set_web(true);
+        board.units[main].web_source_uid = webber_uid;
+        board.units[extra].set_web(true);
+
+        break_web_from(&mut board, webber_uid);
+
+        assert!(!board.units[main].web());
+        assert!(!board.units[extra].web());
+        assert_eq!(board.units[main].web_source_uid, 0);
+        assert_eq!(board.units[extra].web_source_uid, 0);
+    }
+
+    #[test]
     fn test_move_next_to_webb_egg_becomes_webbed() {
         // Live Rusting Hulks regression: JetMech moved next to a WebbEgg1 and
         // the engine immediately marked it webbed. The sim must refresh egg
@@ -6915,6 +7057,132 @@ mod tests {
     }
 
     #[test]
+    fn test_fire_weapon_on_sand_consumes_sand_to_burning_ground() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+        let mech_idx = add_mech(&mut board, 0, 2, 4, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 3, 4);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+        assert!(board.tile(3, 4).on_fire());
+        assert_eq!(board.units[enemy].hp, 2, "base Flamethrower still deals no direct damage");
+    }
+
+    #[test]
+    fn test_flamethrower_pushed_ground_target_catches_new_tile_fire() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 1));
+        assert!(board.tile(5, 2).on_fire(), "Flamethrower should ignite the struck tile");
+        assert!(board.units[enemy].fire(), "Ground target should catch newly lit tile fire");
+    }
+
+    #[test]
+    fn test_boosted_flamethrower_kills_three_hp_burning_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        board.units[mech_idx].set_boosted(true);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 3);
+        board.units[enemy].set_fire(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert!(
+            board.units[enemy].hp <= 0,
+            "Boosted Flamethrower should deal FireDamage 2 + Boost 1 to burning targets"
+        );
+    }
+
+    #[test]
+    fn test_boosted_flamethrower_does_not_damage_non_burning_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        board.units[mech_idx].set_boosted(true);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert_eq!(
+            board.units[enemy].hp, 3,
+            "Boost should not turn zero-damage Flamethrower into damage unless FireDamage triggers"
+        );
+        assert!(board.units[enemy].fire());
+    }
+
+    #[test]
+    fn test_upgraded_flamethrower_damages_burning_units_in_path() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrowerA);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 2);
+        board.units[enemy].set_fire(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrowerA, 5, 1);
+
+        assert!(
+            board.units[enemy].hp <= 0,
+            "range-upgraded Flamethrower should apply FireDamage to burning units before the clicked tile"
+        );
+        assert!(board.tile(5, 2).on_fire());
+        assert!(board.tile(5, 1).on_fire());
+    }
+
+    #[test]
+    fn test_upgraded_flamethrower_ignites_building_path_without_damage() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrowerA);
+        {
+            let tile = board.tile_mut(5, 2);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrowerA, 5, 1);
+
+        assert!(board.tile(5, 2).on_fire());
+        assert_eq!(board.tile(5, 2).building_hp, 2);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_flamethrower_pushed_flying_target_does_not_carry_new_tile_fire() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 2);
+        board.units[enemy].flags.insert(UnitFlags::FLYING);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 1));
+        assert!(board.tile(5, 2).on_fire(), "Flamethrower should ignite the struck tile");
+        assert!(!board.units[enemy].fire(), "Flying target should not carry newly lit tile fire");
+    }
+
+    #[test]
+    fn test_flamethrower_blocked_flying_target_on_water_catches_fire_but_water_does_not() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 6, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 4, 6, 2);
+        board.units[enemy].flags.insert(UnitFlags::FLYING);
+        board.tile_mut(4, 6).terrain = Terrain::Water;
+        board.tile_mut(3, 6).terrain = Terrain::Mountain;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 4, 6);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 6));
+        assert!(board.units[enemy].fire(), "Blocked flying target should catch direct flame");
+        assert!(
+            !board.tile(4, 6).on_fire(),
+            "Water under the target should not become a burning tile"
+        );
+    }
+
+    #[test]
     fn test_science_swap_water_kill_triggers_blast_psion_explosion() {
         let mut board = make_test_board();
         board.blast_psion = true;
@@ -6934,6 +7202,33 @@ mod tests {
         assert_eq!(board.tile(1, 1).building_hp, 0, "Blast Psion explosion damages adjacent building");
         assert_eq!(result.enemies_killed, 1);
         assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_science_swap_diagonal_target_is_noop() {
+        // Science_Swap.GetTargetArea only emits tiles in the four cardinal
+        // lines. A diagonal bridge FireWeapon ACK should not be modeled as a
+        // real swap/teleport.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 4, 2, WId::ScienceSwapAB);
+        let enemy = add_enemy(&mut board, 1, 2, 5, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceSwapAB, 2, 5);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (1, 4));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (2, 5));
+    }
+
+    #[test]
+    fn test_science_swap_range_upgrade_still_allows_cardinal_range_four() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 4, 2, WId::ScienceSwapAB);
+        let enemy = add_enemy(&mut board, 1, 1, 0, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceSwapAB, 1, 0);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (1, 0));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (1, 4));
     }
 
     #[test]
@@ -7935,6 +8230,7 @@ mod tests {
             self_damage: 0,
             range_min: 1, range_max: 1,
             limited: 0, path_size: 1,
+            boost_bonus: 0,
             flags: WeaponFlags::FIRE,
         }
     }
@@ -7948,6 +8244,7 @@ mod tests {
             self_damage: 0,
             range_min: 1, range_max: 4,
             limited: 0, path_size: 1,
+            boost_bonus: 0,
             flags: WeaponFlags::WEB,
         }
     }

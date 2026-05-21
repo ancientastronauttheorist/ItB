@@ -181,6 +181,22 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 range (2 tiles)",
         upgrade_b="+1 range (2 tiles)",
     ),
+    "Prime_Flamethrower_A": WeaponDef(
+        name="Flamethrower", weapon_type="melee",
+        damage=0, push="forward", fire=True, path_size=2,
+        range_max=2, upgrade_a="+1 range (2 tiles)",
+    ),
+    "Prime_Flamethrower_B": WeaponDef(
+        name="Flamethrower", weapon_type="melee",
+        damage=0, push="forward", fire=True, path_size=2,
+        range_max=2, upgrade_b="+1 range (2 tiles)",
+    ),
+    "Prime_Flamethrower_AB": WeaponDef(
+        name="Flamethrower", weapon_type="melee",
+        damage=0, push="forward", fire=True, path_size=3,
+        range_max=3, upgrade_a="+1 range (2 tiles)",
+        upgrade_b="+1 range (3 tiles)",
+    ),
     "Prime_Areablast": WeaponDef(
         name="Area Blast", weapon_type="self_aoe",
         damage=1, push="outward", aoe_adjacent=True, aoe_center=False,
