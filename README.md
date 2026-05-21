@@ -2,11 +2,11 @@
 
 An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS, aiming to earn all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
 
-Status: **36 / 70 achievements earned** (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
+Status: **37 / 70 achievements earned** (latest Steam sync on 2026-05-20; refresh with `python3 game_loop.py achievements --sync` when `.env` has `STEAM_API_KEY` and `STEAM_ID`).
 
-Recent unlocks: **Adaptable Victory** was confirmed by the 2026-05-19 sync after the Rusting Hulks Easy 2-island victory run `20260519_200933_351`; **There is No Try** was confirmed earlier on 2026-05-19 after the Rusting Hulks Easy no-failed-objectives run `20260519_154655_297`; **Perfect Strategy** was confirmed earlier on 2026-05-19 after a Rusting Hulks Easy Pinnacle Perfect Island reward in run `20260519_133059_179`; **Ramming Speed**, **Chain Attack**, and **Squads Victory** were confirmed by the 2026-05-18 sync after the 2026-05-17 Blitzkrieg victory push; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
+Recent unlocks: **Quantum Entanglement** was confirmed by the 2026-05-20 sync after a four-tile `Science_Swap_AB` Teleporter line in Flame Behemoths run `20260520_134643_900`; **Adaptable Victory** was confirmed by the 2026-05-19 sync after the Rusting Hulks Easy 2-island victory run `20260519_200933_351`; **There is No Try** was confirmed earlier on 2026-05-19 after the Rusting Hulks Easy no-failed-objectives run `20260519_154655_297`; **Perfect Strategy** was confirmed earlier on 2026-05-19 after a Rusting Hulks Easy Pinnacle Perfect Island reward in run `20260519_133059_179`; **Ramming Speed**, **Chain Attack**, and **Squads Victory** were confirmed by the 2026-05-18 sync after the 2026-05-17 Blitzkrieg victory push; **Stormy Weather** and **Hard Victory** on 2026-05-16; **Get Over Here**, **Shield Mastery**, and **Glittering C-Beam** on 2026-05-10; **Trusted Equipment** on 2026-05-09; **Perfect Battle** on 2026-05-08; **Backup Batteries**, **Overpowered**, **Best of the Best**, and **I'm getting too old for this...** on 2026-05-07. See `TODO.md` for the checklist.
 
-Current milestone: **Adaptable Victory completed** with Rusting Hulks on Easy. Logs and Steam state showed the 3- and 4-island victory lengths were already credited, so run `20260519_200933_351` secured Detritus Disposal and Archive Inc., skipped a third Corporate Island, then won the Volcanic Hive. The in-game toast appeared during the victory sequence, and Steam confirmed the unlock at 36/70. Previous milestone: **There is No Try completed** with Rusting Hulks after run `20260519_154655_297` finished three Corporate Islands without failed objectives.
+Current milestone: **Quantum Entanglement completed** with Flame Behemoths on Easy. The unlock depended on the full Teleporter range path being modeled end-to-end: save-backed effective weapon overlays, Rust IDs for `Science_Swap_A/B/AB`, cardinal-line-only target enumeration, and bridge execution using the upgraded weapon ID. The decisive solve in run `20260520_134643_900` was mission 14 turn 4: `TeleMech, move B3->B5, fire Teleporter at F5`, a four-tile cardinal swap from B5 to F5. Next Flame Behemoths target: **This is Fine**.
 
 ---
 
@@ -32,6 +32,7 @@ Solver 2.0 is built around a stricter goal than "highest score this turn": avoid
 - **Candidate search is wider.** The loop asks Rust for top-K one-turn candidates and depth-2 beam chains (`solve_top_k`, `solve_beam`, `project_plan`) instead of trusting only the top raw-score plan.
 - **Plan safety gates bad wins.** Every candidate is replayed and checked for irreversible losses: grid power, building HP, objective buildings, pods, mech deaths, and unsafe self-damage. The first clean candidate wins, even if it scored slightly lower.
 - **Execution is closed-loop.** `auto_turn` executes move -> verify -> attack/repair -> verify through the bridge, re-solves after desyncs, and withholds End Turn on unexplained predicted-vs-actual grid drops.
+- **Upgrades are first-class.** Achievement-critical variants such as `Science_Swap_AB` are represented in the save overlay, Rust weapon IDs, target enumeration, and bridge firing path, so the solver can see and execute upgraded weapon behavior rather than silently falling back to base loadouts.
 - **Unknowns stop the bot.** The research gate blocks solving past uncatalogued pawns, terrain, weapons, and screens. Recent live-loop catalog work includes Digger, Wall, Centipede, Wind Torrent, and AE psion/boss behavior.
 - **Failures feed the next version.** `recordings/failure_db.jsonl`, the fuzzy detector, the diagnosis queue, weapon override staging, regression boards, and `EvalWeights` tuning turn live mistakes into repeatable fixes.
 
@@ -48,7 +49,7 @@ See `docs/self_healing_loop_design.md` for the four-phase design (Instrumentatio
 
 ### Failure database and auto-tuning
 
-Every desync between predicted and actual board writes a record to `recordings/failure_db.jsonl`. Three commands consume it:
+Every desync between predicted and actual board writes a record to `recordings/failure_db.jsonl`. Four commands consume it:
 
 - `analyze` — pattern breakdowns by trigger, tier, severity, squad, island.
 - `tune` — random search + coordinate refinement on `EvalWeights`; objective is `mean_fixed_score − 100 × failure_count`.
@@ -199,7 +200,7 @@ sessions/      active_session.json (current run state)
 snapshots/     Labeled regression fixtures
 tests/         pytest suite (64 files); use `-m regression` for the slow corpus
 scripts/       install_modloader.sh, install-hooks.sh, regression.sh, migrate_failure_db.py, regenerate_known_types.py, replay_fuzzy_detector.py, probe_deploy_zone.py
-docs/          self_healing_loop_design.md, reference.md, lua_bridge_architecture.md, env_hazards_by_island.md, self_improvement_plan.md
+docs/          retrospectives, self_healing_loop_design.md, reference.md, lua_bridge_architecture.md, env_hazards_by_island.md, self_improvement_plan.md
 assets/        Game UI screenshots used for calibration
 prompts/       Vision prompt templates for the research loop
 ```

@@ -26,8 +26,8 @@ itb-bot/
 │   │   └── save_parser.py # Lua save file fallback when bridge unavailable
 │   ├── vision/            # Sprite matching for shop/reward screens
 │   ├── model/             # Board, Unit, WeaponDef dataclasses
-│   ├── solver/            # Threat analysis, search, evaluation (thin wrapper
-│   │                      # over Rust; simulate.py is a parallel Python impl)
+│   ├── solver/            # Thin Python wrapper, audit scoring, verification,
+│   │                      # tuning, and research feedback over Rust
 │   ├── control/
 │   │   └── executor.py    # grid_to_mcp + click planning (calibrated <2px)
 │   ├── strategy/          # Achievement planner, run-level decisions
@@ -50,6 +50,7 @@ itb-bot/
 │   ├── install_modloader.sh  # Deploy bridge Lua into Steam app bundle
 │   ├── regression.sh         # Full regression suite (used by pre-commit hook)
 │   └── hooks/pre-commit      # Runs regression when solver code changes
+├── docs/                  # Design notes, investigations, achievement retros
 └── data/
     ├── achievements_detailed.json
     ├── board_state_test.json

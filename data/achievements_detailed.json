@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-19T22:03:17.440444",
+    "last_steam_sync": "2026-05-20T21:17:06.474056",
     "last_steam_total": 70,
-    "last_steam_unlocked": 36
+    "last_steam_unlocked": 37
   },
   "achievements": {
     "rift_walkers": [
@@ -177,10 +177,10 @@
         "description": "Teleport a unit 4 tiles away with the Flame Behemoths squad",
         "type": "single_battle",
         "global_unlock_pct": 16.6,
-        "completed": false,
-        "strategy": "Fully upgrade Swap Mech's Teleporter range (+1 range twice = base + 2). Need 3+ cores invested. Teleport a unit exactly 4+ tiles. Hunt time pods for reactor cores.",
-        "setup": "Fully upgraded Teleporter. +1 reactor pilot helps. Prioritize cores.",
-        "pitfalls": "Base range may not reach 4 tiles without upgrades. Need reactor cores."
+        "completed": true,
+        "strategy": "Fully upgrade Swap Mech's Teleporter to Science_Swap_AB (+1 Range, then +2 Range). Teleport a unit exactly 4 tiles along a cardinal line. Completed live on 2026-05-20 in run 20260520_134643_900 with TeleMech B5 -> F5.",
+        "setup": "Fully upgraded Teleporter. +1 reactor pilot helps. Prioritize cores and core-reward missions.",
+        "pitfalls": "Base range cannot reach 4 tiles. Upgraded Teleporter is cardinal-line only; diagonal or Manhattan-distance targets can ACK while doing nothing if the solver or bridge falls back to invalid/base behavior."
       },
       {
         "name": "Scorched Earth",

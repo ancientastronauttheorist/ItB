@@ -240,10 +240,11 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### Quantum Entanglement (16.6%)
+- **Status:** Completed on 2026-05-20 with Flame Behemoths on Easy in run `20260520_134643_900`; Steam sync confirmed 37/70. Decisive line: mission 14 turn 4, `TeleMech, move B3->B5, fire Teleporter at F5`, using `Science_Swap_AB` for an exact four-tile cardinal swap from B5 to F5.
 - **Requirement:** Teleport a unit 4 tiles away with the Flame Behemoths squad.
 - **Squad:** Flame Behemoths (required)
-- **Strategy:** The Swap Mech's Teleporter swaps its position with a target. Base range is adjacent only. Upgrade I adds +1 range (2 tiles), Upgrade II adds +2 more (4 tiles total). With both upgrades, swap with a unit 4 tiles away.
-- **Bot approach:** Requires both Teleporter range upgrades (3 reactor cores for science weapon). Once upgraded, find any unit 4 tiles away and swap. The solver should heavily reward using Teleporter at max range.
+- **Strategy:** The Swap Mech's Teleporter swaps its position with a target. Base range is adjacent only. Upgrade I adds +1 range (2 tiles), Upgrade II adds +2 more (4 tiles total). With both upgrades, swap with a unit exactly 4 tiles away along a cardinal line.
+- **Bot approach:** Requires both Teleporter range upgrades (3 reactor cores for science weapon). The save overlay must expose `Science_Swap_AB`, Rust must enumerate only cardinal-line targets, and bridge execution must fire the upgraded effective weapon ID. Once upgraded, reward four-tile cardinal swaps heavily but keep normal safety gates for timeline, pods, objective units, and non-overridable losses.
 - **Key weapons:** Teleporter with both range upgrades (+1 Range, +2 Range)
 - **Ideal setup:** Normal difficulty, second island (need time to get 3 reactor cores for upgrades). Any mission once fully upgraded.
 - **Estimated difficulty for bot:** Medium
@@ -619,7 +620,7 @@ Some achievements can be combined in a single run:
 - **Get Over Here** + **Shield Mastery** + **Glittering C-Beam** (all Zenith Guard, same run)
 - **Chain Attack** + **Hold the Line** + **Lightning War** (all Blitzkrieg, same run -- though Lightning War's time pressure conflicts with setup)
 - **Unbreakable** + **Unwitting Allies** + **Mass Displacement** (all Steel Judoka, same run)
-- **Quantum Entanglement** + **Scorched Earth** + **This is Fine** (all Flame Behemoths, same run)
+- **Quantum Entanglement** + **Scorched Earth** + **This is Fine** (all Flame Behemoths; Quantum and Scorched Earth are complete, This is Fine remains the active Flame Behemoths target)
 - **Cryo Expert** + **Pacifist** + **Trick Shot** (all Frozen Titans, same run -- Pacifist conflicts somewhat with Trick Shot)
 - **Healing** + **Immortal** + **Overkill** (all Hazardous Mechs, same run -- Immortal conflicts with aggressive Healing/Overkill play)
 

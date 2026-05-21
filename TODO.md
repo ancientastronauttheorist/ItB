@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-36 of 70 completed (latest Steam sync on 2026-05-19; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 34 remaining, sorted by global unlock % (easiest first).
+37 of 70 completed (latest Steam sync on 2026-05-20; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 33 remaining, sorted by global unlock % (easiest first).
 
-Current milestone: Adaptable Victory is complete, confirmed by the 2026-05-19 Steam sync after Rusting Hulks won a 2-island game in run `20260519_200933_351`. The profile already had 3- and 4-island victories credited, so the final missing length was Detritus + Archive -> Volcanic Hive. The in-game toast appeared during the victory sequence and Steam/cache reflected 36/70. The key live-loop note is in `docs/adaptable_victory_rusting_hulks_retrospective.md`.
+Current milestone: Quantum Entanglement is complete, confirmed by the 2026-05-20 Steam sync after Flame Behemoths Easy run `20260520_134643_900`. The decisive action was `TeleMech, move B3->B5, fire Teleporter at F5` on mission 14 turn 4, using `Science_Swap_AB` for an exact four-tile cardinal swap from B5 to F5. The key live-loop note is in `docs/quantum_entanglement_flame_behemoths_retrospective.md`. Next Flame Behemoths target: This is Fine.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -35,7 +35,7 @@ Current milestone: Adaptable Victory is complete, confirmed by the 2026-05-19 St
 - [x] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative] — completed with the Blitzkrieg victory in run `20260517_105759_344`
 - [x] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative] — completed with a 2-island Rusting Hulks victory in run `20260519_200933_351`
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
-- [ ] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths]
+- [x] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths] — completed in run `20260520_134643_900` with `Science_Swap_AB`
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
 - [ ] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths]
 - [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
@@ -79,7 +79,7 @@ Current milestone: Adaptable Victory is complete, confirmed by the 2026-05-19 St
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (36, from Steam sync + live confirmations)
+### Already Completed (37, from Steam sync + live confirmations)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -108,6 +108,7 @@ Current milestone: Adaptable Victory is complete, confirmed by the 2026-05-19 St
 - [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire  [Flame Behemoths]
 - [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle  [Frozen Titans]
+- [x] Quantum Entanglement (16.6%) — Teleport a unit 4 tiles away  [Flame Behemoths]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
 - [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle  [Rusting Hulks]
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser  [Zenith Guard]
