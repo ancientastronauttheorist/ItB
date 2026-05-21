@@ -945,7 +945,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v172: Tri-Rocket center targets inherit LineArtillery's range-2 minimum;
 # targeting an adjacent center tile spends the bridge action without an engine
 # effect. Pre-v172 corpus archived as failure_db_snapshot_sim_v171.jsonl.
-SIMULATOR_VERSION = 172
+# v173: Enemy-phase non-unique multi-HP bump grid debt now flushes before
+# returning to the next player turn, matching Tumblebug BombRock explosions
+# that damage 2-HP buildings. Pre-v173 corpus archived as
+# failure_db_snapshot_sim_v172.jsonl.
+SIMULATOR_VERSION = 173
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

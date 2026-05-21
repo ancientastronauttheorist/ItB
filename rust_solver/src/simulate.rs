@@ -1099,11 +1099,12 @@ pub(crate) fn settle_building_grid_loss(
     grid_loss
 }
 
-/// Charge all pending non-unique multi-HP bump debt at enemy-turn start.
+/// Charge all pending non-unique multi-HP bump debt at enemy-turn boundaries.
 ///
 /// Live captures show the building HP loss appears immediately, while the grid
-/// meter can lag until the turn rolls. This keeps per-action verification
-/// tolerant without letting post-enemy projection miss the grid loss.
+/// meter can lag until the turn rolls. Player-phase bump debt flushes at
+/// enemy-turn start; enemy-phase bump debt flushes again before the next player
+/// turn so post-enemy projection includes the settled grid loss.
 pub(crate) fn flush_deferred_bump_grid_debt(
     board: &mut Board,
     result: &mut ActionResult,

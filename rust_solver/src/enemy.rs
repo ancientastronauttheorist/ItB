@@ -1733,6 +1733,13 @@ pub fn simulate_enemy_attacks(
     // enemy attacks above.
     simulate_train_advance(board);
 
+    // Player-phase bump debt is flushed at enemy-turn start above. Enemy-phase
+    // bumps can create the same deferred debt (for example Tumblebug BombRock
+    // explosions into 2-HP regular buildings), and the live grid meter is
+    // settled before the next player turn. Flush again before returning the
+    // post-enemy prediction.
+    flush_deferred_bump_grid_debt(board, &mut result);
+
     // Count buildings destroyed from result
     buildings_destroyed += result.grid_damage;
 
@@ -2088,6 +2095,39 @@ mod tests {
 
         assert_eq!(board.tile(2, 1).building_hp, 1, "old G6 target should survive");
         assert_eq!(board.tile(3, 1).building_hp, 0, "shifted G5 target should be hit");
+    }
+
+    #[test]
+    fn test_enemy_phase_bump_debt_flushes_before_player_turn() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 5).terrain = Terrain::Building;
+        board.tile_mut(3, 5).building_hp = 2;
+
+        let rock_idx = board.add_unit(Unit {
+            uid: 80,
+            x: 4,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Neutral,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[rock_idx].set_type_name("BombRock");
+
+        let dung_idx = add_enemy_with_type(&mut board, 81, 5, 5, 5, "Dung2", 4, 5);
+        board.units[dung_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[rock_idx].hp <= 0, "Tumblebug should kill the queued BombRock");
+        assert_eq!(board.tile(3, 5).building_hp, 1, "BombRock explosion should damage C5");
+        assert_eq!(board.grid_power, 6, "enemy-phase bump debt must settle before player turn");
+        assert_eq!(board.deferred_bump_grid_debt[xy_to_idx(3, 5)], 0);
+        assert_eq!(result.grid_damage, 1);
     }
 
     #[test]

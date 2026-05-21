@@ -1387,7 +1387,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   targeting an adjacent center tile spends the bridge action without an
 //   engine effect. Pre-v172 corpus archived as
 //   `failure_db_snapshot_sim_v171.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 172;
+// v173 - Enemy-phase non-unique multi-HP bump grid debt now flushes before
+//   returning to the next player turn, matching Tumblebug BombRock explosions
+//   that damage 2-HP buildings. Pre-v173 corpus archived as
+//   `failure_db_snapshot_sim_v172.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 173;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
