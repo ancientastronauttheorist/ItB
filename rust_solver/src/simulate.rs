@@ -1787,6 +1787,12 @@ const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
 };
 
+const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+};
+
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
@@ -2589,7 +2595,7 @@ fn sim_tri_rocket(
                 DamageSource::Weapon,
             )
         };
-        apply_push(board, x, y, dir, result);
+        apply_push_with_policy(board, x, y, dir, result, TRI_ROCKET_PUSH_POLICY);
         if let Some((idx, pre_hp, was_acid, tile_had_acid, ox, oy)) = pre_hit_unit {
             let fx = board.units[idx].x;
             let fy = board.units[idx].y;
@@ -4498,6 +4504,27 @@ mod tests {
         assert!(!board.tile(3, 3).acid(), "vacated pre-push tile should not retain a new acid pool");
         assert_eq!((board.units[back].x, board.units[back].y, board.units[back].hp), (3, 3, 2));
         assert!(!board.units[back].acid(), "following unit should not pick up acid from the vacated tile");
+    }
+
+    #[test]
+    fn test_tri_rocket_killed_adjacent_corpse_bumps_center_blocker() {
+        let mut board = make_test_board();
+        let shooter = add_mech(&mut board, 1, 0, 1, 2, WId::RangedCrack);
+        let near = add_enemy(&mut board, 90, 2, 1, 1);
+        let center = add_mech(&mut board, 0, 3, 1, 4, WId::PrimeTcPunt);
+        let far = add_enemy(&mut board, 91, 4, 1, 3);
+        let far_blocker = add_enemy(&mut board, 92, 5, 1, 3);
+
+        simulate_weapon(&mut board, shooter, WId::RangedCrack, 3, 1);
+
+        assert_eq!(board.units[near].hp, 0, "near missile target should die");
+        assert_eq!(board.units[far].hp, 0, "far target should die after center bump");
+        assert_eq!(board.units[far_blocker].hp, 2, "far blocker takes one bump");
+        assert_eq!(
+            (board.units[center].x, board.units[center].y, board.units[center].hp),
+            (3, 1, 1),
+            "center blocker takes direct, live-bump, and killed-corpse bump damage",
+        );
     }
 
     #[test]

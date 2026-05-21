@@ -1373,7 +1373,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v168 - Seismic Capacitor on-kill crack effect damages adjacent Mountains
 //   by 1 HP instead of ignoring them. Pre-v168 corpus archived as
 //   `failure_db_snapshot_sim_v167.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 168;
+// v169 - Tri-Rocket killed adjacent missile targets corpse-bump live center
+//   blockers when pushed into them. Pre-v169 corpus archived as
+//   `failure_db_snapshot_sim_v168.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 169;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

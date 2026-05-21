@@ -932,7 +932,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v168: Seismic Capacitor on-kill crack effect damages adjacent Mountains
 # by 1 HP instead of ignoring them. Pre-v168 corpus archived as
 # failure_db_snapshot_sim_v167.jsonl.
-SIMULATOR_VERSION = 168
+# v169: Tri-Rocket killed adjacent missile targets corpse-bump live center
+# blockers when pushed into them. Pre-v169 corpus archived as
+# failure_db_snapshot_sim_v168.jsonl.
+SIMULATOR_VERSION = 169
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
