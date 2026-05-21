@@ -524,6 +524,9 @@ def main():
                                   "after explicit dirty-line consent")
     p_auto_turn.add_argument("--dirty-consent-id", default=None,
                              help="Exact one-use token emitted by a safety block")
+    p_auto_turn.add_argument("--allow-protected-objective-loss", action="store_true",
+                             help="Stress-test escape hatch: with exact dirty consent, "
+                                  "allow protected objective unit loss")
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",
@@ -712,7 +715,8 @@ def main():
                       wait_for_turn=not args.no_wait, max_wait=args.max_wait,
                       allow_dirty_plan=args.allow_dirty_plan,
                       candidate_rank=args.candidate_rank,
-                      dirty_consent_id=args.dirty_consent_id)
+                      dirty_consent_id=args.dirty_consent_id,
+                      allow_protected_objective_loss=args.allow_protected_objective_loss)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)

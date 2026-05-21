@@ -368,6 +368,19 @@ def test_allow_dirty_plan_does_not_override_protected_objective_loss():
     assert audit["violations"][0]["kind"] == "protected_objective_unit_lost"
 
 
+def test_explicit_stress_flag_overrides_protected_objective_loss():
+    audit = audit_plan_safety(
+        _summary(protected_objective_units_alive=2),
+        _summary(protected_objective_units_alive=1),
+    )
+
+    assert plan_requires_safety_block(
+        audit,
+        allow_dirty_plan=True,
+        allow_protected_objective_loss_dirty=True,
+    ) is False
+
+
 def test_final_turn_destroy_objective_unit_alive_blocks():
     audit = audit_plan_safety(
         _summary(
