@@ -250,6 +250,14 @@ impl Unit {
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
+    pub fn is_player_action_unit(&self) -> bool {
+        self.is_player() && self.alive() && self.active() && !self.is_extra_tile()
+            && (
+                self.is_mech()
+                || !self.weapon.is_none()
+                || (self.move_speed > 0 && self.type_name_str() == "VIP_Truck")
+            )
+    }
     pub fn is_pinnacle_bot(&self) -> bool {
         let name = self.type_name_str();
         name.starts_with("Snowtank")
@@ -731,9 +739,7 @@ impl Board {
         let mut result = Vec::new();
         for i in 0..self.unit_count as usize {
             let u = &self.units[i];
-            if u.is_player() && u.alive() && u.active()
-                && (u.is_mech() || !u.weapon.is_none())
-            {
+            if u.is_player_action_unit() {
                 result.push(i);
             }
         }
