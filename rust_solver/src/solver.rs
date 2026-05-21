@@ -350,6 +350,7 @@ pub(crate) fn get_weapon_targets(
                     let zero_damage_building_center_ok = matches!(
                         weapon_id,
                         WId::RangedIgnite | WId::RangedIgniteA
+                            | WId::RangedCrackB | WId::RangedCrackAB
                     );
                     if tile.terrain == Terrain::Building
                         && tile.building_hp > 0
@@ -359,6 +360,30 @@ pub(crate) fn get_weapon_targets(
                         continue;
                     }
                     targets.push((x, y));
+                }
+            }
+        }
+        WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
+            let throw_range = wdef.range_max.max(1);
+            for &(dx, dy) in &DIRS {
+                let grab_x = mx as i8 + dx;
+                let grab_y = my as i8 + dy;
+                if !in_bounds(grab_x, grab_y) { continue; }
+                let gx = grab_x as u8;
+                let gy = grab_y as u8;
+                let Some(unit_idx) = board.unit_at(gx, gy) else { continue; };
+                let target = &board.units[unit_idx];
+                if !target.pushable() && !target.is_mech() { continue; }
+
+                for i in 1..=(throw_range as i8) {
+                    let land_x = grab_x + dx * i;
+                    let land_y = grab_y + dy * i;
+                    if !in_bounds(land_x, land_y) { break; }
+                    let lx = land_x as u8;
+                    let ly = land_y as u8;
+                    if !board.is_blocked(lx, ly, true) {
+                        targets.push((lx, ly));
+                    }
                 }
             }
         }
@@ -413,12 +438,13 @@ pub(crate) fn get_weapon_targets(
         }
         WeaponType::Swap => {
             let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
-            for x in 0..8u8 {
-                for y in 0..8u8 {
-                    let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
-                    if dist >= 1 && dist <= max_r {
-                        targets.push((x, y));
-                    }
+            let min_r = wdef.range_min.max(1);
+            for &(dx, dy) in &DIRS {
+                for i in (min_r as i8)..=(max_r as i8) {
+                    let nx = mx as i8 + dx * i;
+                    let ny = my as i8 + dy * i;
+                    if !in_bounds(nx, ny) { break; }
+                    targets.push((nx as u8, ny as u8));
                 }
             }
         }
@@ -586,6 +612,30 @@ fn weapon_action_has_effect(
             false
         }
         WeaponType::Artillery => {
+            if is_tri_rocket(weapon_id) {
+                let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+                    return false;
+                };
+                let (dx, dy) = DIRS[dir];
+                for offset in [1i8, 0, -1] {
+                    let px = target.0 as i8 + dx * offset;
+                    let py = target.1 as i8 + dy * offset;
+                    if !in_bounds(px, py) { continue; }
+                    let ux = px as u8;
+                    let uy = py as u8;
+                    if unit_at(ux, uy) {
+                        return true;
+                    }
+                    let tile = board.tile(ux, uy);
+                    if tile.terrain == Terrain::Mountain
+                        || tile.terrain == Terrain::Ice
+                        || (tile.terrain == Terrain::Ground && tile.cracked())
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
             if wdef.shield() {
                 if shieldable_at(target.0, target.1) {
                     return true;
@@ -612,6 +662,27 @@ fn weapon_action_has_effect(
             }
             unit_at(target.0, target.1) || adj_has_unit(target.0, target.1)
         },
+        WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
+            let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else {
+                return false;
+            };
+            let dist = (target.0 as i8 - mx as i8).unsigned_abs()
+                + (target.1 as i8 - my as i8).unsigned_abs();
+            if dist < 2 {
+                return false;
+            }
+            let (dx, dy) = DIRS[dir];
+            let grab_x = mx as i8 + dx;
+            let grab_y = my as i8 + dy;
+            if !in_bounds(grab_x, grab_y) || board.is_blocked(target.0, target.1, true) {
+                return false;
+            }
+            let Some(unit_idx) = board.unit_at(grab_x as u8, grab_y as u8) else {
+                return false;
+            };
+            let target_unit = &board.units[unit_idx];
+            target_unit.pushable() || target_unit.is_mech()
+        }
         WeaponType::SelfAoe => unit_at(mx, my) || adj_has_unit(mx, my),
         WeaponType::Charge => {
             // Charges forward until it hits something
@@ -1929,6 +2000,73 @@ mod top_k_tests {
     }
 
     #[test]
+    fn hydraulic_lifter_enumerates_second_click_landings() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::PrimeTcPunt as u16),
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 90,
+            x: 3,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::PrimeTcPunt,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(targets.contains(&(3, 1)));
+        assert!(targets.contains(&(3, 0)));
+        assert!(!targets.contains(&(3, 2)), "first click tile is not the solver target");
+    }
+
+    #[test]
+    fn tri_rocket_can_aim_adjacent_cardinal_tile() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::RangedCrack as u16),
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::RangedCrack,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(targets.contains(&(3, 2)));
+        assert!(!targets.contains(&(2, 2)), "Tri-Rocket target area is still cardinal-only");
+    }
+
+    #[test]
     fn vulcan_artillery_can_target_building_center_for_adjacent_push() {
         let mut board = Board::default();
         let idx = board.add_unit(Unit {
@@ -2010,6 +2148,48 @@ mod top_k_tests {
         assert!(
             targets.contains(&(2, 3)),
             "Rock Accelerator should still target cardinal E6 from C6"
+        );
+    }
+
+    #[test]
+    fn science_swap_ab_rejects_diagonal_targets() {
+        // Live Flame Behemoths run 20260519_224158_398, Mission_Holes turn 2:
+        // TeleMech at D7 fired upgraded Teleporter at C6. The bridge fired
+        // Science_Swap_AB, but the engine target area is cardinal-only, so the
+        // diagonal click spent an effectless action.
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 2,
+            x: 1,
+            y: 4,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            weapon: WeaponId(WId::ScienceSwapAB as u16),
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+
+        let targets = get_weapon_targets(
+            &board,
+            board.units[idx].x,
+            board.units[idx].y,
+            WId::ScienceSwapAB,
+            (board.units[idx].x, board.units[idx].y),
+            &WEAPONS,
+        );
+
+        assert!(
+            !targets.contains(&(2, 5)),
+            "Teleporter D7->C6 is diagonal and must not be enumerated"
+        );
+        assert!(
+            targets.contains(&(1, 0)),
+            "Upgraded Teleporter should still reach straight-line H7 at range 4"
         );
     }
 

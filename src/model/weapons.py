@@ -197,6 +197,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         range_max=3, upgrade_a="+1 range (2 tiles)",
         upgrade_b="+1 range (3 tiles)",
     ),
+    "Prime_TC_Punt": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=1, range_max=2, targets_allies=True,
+        upgrade_a="+2 range (4-tile throw)",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Prime_TC_Punt_A": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=1, range_max=4, targets_allies=True,
+    ),
+    "Prime_TC_Punt_B": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=3, range_max=2, targets_allies=True,
+    ),
+    "Prime_TC_Punt_AB": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=3, range_max=4, targets_allies=True,
+    ),
     "Prime_Areablast": WeaponDef(
         name="Area Blast", weapon_type="self_aoe",
         damage=1, push="outward", aoe_adjacent=True, aoe_center=False,
@@ -463,6 +481,26 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage (total 3)",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Ranged_Crack": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=1, push="forward", range_min=1, path_size=3,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="no building damage",
+    ),
+    "Ranged_Crack_A": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=2, push="forward", range_min=1, path_size=3,
+    ),
+    "Ranged_Crack_B": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=1, push="forward", range_min=1, path_size=3,
+        building_damage=False,
+    ),
+    "Ranged_Crack_AB": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=2, push="forward", range_min=1, path_size=3,
+        building_damage=False,
+    ),
     "Ranged_Ignite": WeaponDef(
         name="Ignite", weapon_type="artillery",
         damage=0, push="outward", fire=True, range_min=2,
@@ -573,6 +611,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Science_Confuse": WeaponDef(
         name="Confusion Ray", weapon_type="projectile",
         damage=0, push="flip", range_max=0,
+    ),
+    "Science_KO_Crack": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=1, push="flip",
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Science_KO_Crack_A": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=2, push="flip",
+    ),
+    "Science_KO_Crack_B": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=2, push="flip",
+    ),
+    "Science_KO_Crack_AB": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=3, push="flip",
     ),
     "Science_MassShift": WeaponDef(
         name="Area Shift", weapon_type="self_aoe",

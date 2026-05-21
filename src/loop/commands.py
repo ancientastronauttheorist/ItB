@@ -89,6 +89,43 @@ def _get_logger(session: RunSession) -> DecisionLog:
     return DecisionLog(run_id)
 
 
+def _achievement_weight_overlay(
+    session: RunSession | None,
+    base_weights: dict | None,
+) -> tuple[dict | None, list[str]]:
+    """Apply narrow live-run scoring nudges for active achievement targets."""
+    targets = {
+        str(t).strip().lower()
+        for t in (getattr(session, "achievement_targets", None) or [])
+        if str(t).strip()
+    }
+    if not targets:
+        return base_weights, []
+
+    weights = dict(base_weights or {})
+    applied: list[str] = []
+
+    if "this is fine" in targets:
+        # The run goal is five enemies burning at once, not fast cleanup.
+        # Keep ordinary safety weights intact, but reward burning Vek enough
+        # that safe fire-spreading lines beat unnecessary kills.
+        weights["enemy_on_fire_bonus"] = max(
+            float(weights.get("enemy_on_fire_bonus", 0) or 0),
+            3500.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 0) or 0),
+            -500.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("this_is_fine")
+
+    return weights, applied
+
+
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
 _SAFETY_WIDENING_TOP_K = 1000
@@ -308,6 +345,43 @@ def _dirty_consent_id(
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
+_NO_FAILED_OBJECTIVE_LABEL_MARKERS = {
+    "there is no try",
+    "perfect strategy",
+    "perfect island",
+    "perfect battle",
+    "no failed objective",
+    "no failed objectives",
+    "objective perfect",
+}
+
+
+def _normalize_run_label(value: object) -> str:
+    return str(value).strip().lower().replace("_", " ").replace("-", " ")
+
+
+def _allow_kill_limit_objective_dirty_consent(session: RunSession) -> bool:
+    """Allow kill-cap bonus failure only for explicitly non-perfect targets."""
+    targets = [
+        _normalize_run_label(t)
+        for t in (session.achievement_targets or [])
+        if str(t).strip()
+    ]
+    if not targets:
+        return False
+    labels = targets + [
+        _normalize_run_label(t)
+        for t in (session.tags or [])
+        if str(t).strip()
+    ]
+    for label in labels:
+        if "perfect" in label or "objective" in label:
+            return False
+        if any(marker in label for marker in _NO_FAILED_OBJECTIVE_LABEL_MARKERS):
+            return False
+    return True
+
+
 def _dirty_consent_gate(
     session: RunSession,
     *,
@@ -316,6 +390,7 @@ def _dirty_consent_gate(
     actions: list[SolverAction],
     candidate_rank: int | None,
     provided_id: str | None,
+    consume: bool = True,
 ) -> dict | None:
     if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
         return None
@@ -332,6 +407,7 @@ def _dirty_consent_gate(
     allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(plan_safety)
     allow_final_cave_resist = final_cave_resist_gamble_allowed(plan_safety)
     allow_final_bomb_dirty = final_bomb_dirty_consent_allowed(plan_safety)
+    allow_kill_limit_dirty = _allow_kill_limit_objective_dirty_consent(session)
     non_overridable = sorted(
         k for k in kinds
         if k in NON_OVERRIDABLE_KINDS
@@ -351,6 +427,10 @@ def _dirty_consent_gate(
                 "objective_building_destroyed",
                 "objective_building_hp_loss",
             }
+        )
+        and not (
+            allow_kill_limit_dirty
+            and k == "kill_limit_objective_failed"
         )
     )
     if non_overridable:
@@ -406,7 +486,8 @@ def _dirty_consent_gate(
             loss_profile=profile,
             reason="dirty consent token was already consumed",
         )
-    session.dirty_consent_used.append(expected)
+    if consume:
+        session.dirty_consent_used.append(expected)
     return None
 
 
@@ -4231,6 +4312,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             weight_version = weight_data.get("version", "unknown")
         except (json.JSONDecodeError, IOError):
             pass
+    eval_weights_dict, achievement_weight_overlays = _achievement_weight_overlay(
+        session, eval_weights_dict
+    )
+    if achievement_weight_overlays:
+        weight_version = f"{weight_version}+{'+'.join(achievement_weight_overlays)}"
+        print(f"  Achievement weight overlay: {', '.join(achievement_weight_overlays)}")
     breakdown_weights = None
     if eval_weights_dict:
         from src.solver.evaluate import EvalWeights as _EW
@@ -8653,6 +8740,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     # Build action list from session solution
     actions = session.active_solution.actions if session.active_solution else []
 
+    allow_kill_limit_dirty = (
+        allow_dirty_plan
+        and _allow_kill_limit_objective_dirty_consent(session)
+    )
+    dirty_consent_validated = False
     if allow_dirty_plan and isinstance(plan_safety, dict) and plan_safety.get("blocking"):
         consent_error = _dirty_consent_gate(
             session,
@@ -8661,14 +8753,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             actions=actions,
             candidate_rank=selected_candidate_rank,
             provided_id=dirty_consent_id,
+            consume=False,
         )
         if consent_error is not None:
             _print_result(consent_error)
             return consent_error
-        session.save()
+        dirty_consent_validated = True
 
     if plan_requires_safety_block(plan_safety,
-                                  allow_dirty_plan=allow_dirty_plan):
+                                  allow_dirty_plan=allow_dirty_plan,
+                                  allow_kill_limit_objective_dirty=allow_kill_limit_dirty):
         consent_id = _dirty_consent_id(
             session,
             turn,
@@ -8722,6 +8816,18 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 print(f"!   {v.get('kind')}: {v.get('current')} -> {v.get('predicted')}")
         _print_result(result)
         return result
+
+    if dirty_consent_validated:
+        expected = _dirty_consent_id(
+            session,
+            turn,
+            plan_safety,
+            actions,
+            candidate_rank=selected_candidate_rank,
+        )
+        if expected not in session.dirty_consent_used:
+            session.dirty_consent_used.append(expected)
+        session.save()
 
     done_uids: set[int] = set()
     re_solve_count = 0

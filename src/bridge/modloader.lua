@@ -109,7 +109,7 @@ local function _read_save_data()
         master_seed = nil,    -- GameData.seed — run-lifetime master RNG seed
         mission_seeds = {},   -- [region_key] = aiSeed — per-mission per-turn PRNG snapshot
         current_weapons = {}, -- GameData.current.weapons, 1-indexed loadout slots
-        pawn_offsets = {},    -- [pawn_id] = 1-indexed loadout offset in current_weapons
+        pawn_offsets = {},    -- [pawn_id] = raw save offset (diagnostic only)
     }
     local base = os.getenv("HOME") ..
         "/Library/Application Support/IntoTheBreach/profile_Alpha/"
@@ -1390,15 +1390,11 @@ local function effective_weapon_from_save(save_data, uid, weapon_slot, fallback)
     if not save_data then return fallback, "static" end
     local weapons = save_data.current_weapons or {}
     local idx = nil
-    if save_data.pawn_offsets then
-        local off = save_data.pawn_offsets[uid]
-        if type(off) == "number" then
-            idx = off + weapon_slot
-        end
-    end
-    -- Fallback for old saves / unexpected missing offsets: player mech ids are
-    -- normally 0,1,2 and GameData.current.weapons stores two slots per mech.
-    if not idx and type(uid) == "number" and uid >= 0 then
+    -- GameData.current.weapons stores two loadout slots per player mech, keyed
+    -- by the stable player mech ids 0,1,2. Do not use pawn["offset"] here:
+    -- live combat saves can stamp every squad mech with the same value (for
+    -- example 5), which is a board/undo offset rather than a loadout offset.
+    if type(uid) == "number" and uid >= 0 and uid <= 2 then
         idx = uid * 2 + weapon_slot + 1
     end
     local wname = idx and weapons[idx] or nil
@@ -1504,6 +1500,59 @@ local function install_safe_jet_target_area()
                installed)
 end
 
+local function execute_prime_tc_punt(pawn, wname, tx, ty)
+    local skill = _G[wname]
+    if not skill then
+        return false, "Prime_TC_Punt skill missing: " .. tostring(wname)
+    end
+
+    local source = pawn:GetSpace()
+    local dx = tx - source.x
+    local dy = ty - source.y
+    local dist = math.abs(dx) + math.abs(dy)
+    if dist < 2 or (dx ~= 0 and dy ~= 0) then
+        return false, "invalid Prime_TC_Punt landing " .. tx .. "," .. ty ..
+               " from " .. source.x .. "," .. source.y
+    end
+
+    local sx = dx == 0 and 0 or (dx / math.abs(dx))
+    local sy = dy == 0 and 0 or (dy / math.abs(dy))
+    local first = Point(source.x + sx, source.y + sy)
+    local landing = Point(tx, ty)
+
+    if not Board:IsValid(landing) then
+        return false, "Prime_TC_Punt landing off-board " .. tx .. "," .. ty
+    end
+    if Board:IsBlocked(landing, PATH_FLYER) then
+        return false, "Prime_TC_Punt landing blocked " .. tx .. "," .. ty
+    end
+
+    local target = Board:GetPawn(first)
+    if not target then
+        return false, "Prime_TC_Punt first click has no pawn at " ..
+               first.x .. "," .. first.y
+    end
+    local guarding = false
+    local ok_guard, guard_val = pcall(function() return target:IsGuarding() end)
+    if ok_guard and guard_val then guarding = true end
+    if guarding then
+        return false, "Prime_TC_Punt target is guarding at " ..
+               first.x .. "," .. first.y
+    end
+
+    local ok, err = pcall(function()
+        Board:AddEffect(skill:GetFinalEffect(source, first, landing))
+    end)
+    if not ok then
+        return false, "Prime_TC_Punt GetFinalEffect failed: " .. tostring(err)
+    end
+    log_bridge("FIRE: " .. wname .. " two_click " ..
+               source.x .. "," .. source.y .. " -> " ..
+               first.x .. "," .. first.y .. " -> " .. tx .. "," .. ty)
+    return true, "GetFinalEffect(" .. wname .. ") first=" ..
+           first.x .. "," .. first.y .. " landing=" .. tx .. "," .. ty
+end
+
 -- execute_weapon_by_slot: fire weapon using a 0-based slot index from
 -- the Python side (maps to 1-indexed Lua SkillList).
 -- This avoids name-matching issues where the solver's weapon ID doesn't
@@ -1539,6 +1588,19 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                    " -> " .. tostring(wname) .. " source=" .. tostring(wsource))
     end
     local source = pawn:GetSpace()
+    if string.find(wname, "^Prime_TC_Punt") ~= nil then
+        local ok_punt, method = execute_prime_tc_punt(pawn, wname, tx, ty)
+        if restore_wname ~= nil then
+            pawn_def.SkillList[slot] = restore_wname
+        end
+        if not ok_punt then
+            log_bridge("WARN: Prime_TC_Punt failed for slot " .. slot ..
+                       " (" .. tostring(wname) .. "): " .. tostring(method))
+            return false, method
+        end
+        return true, method
+    end
+
     local is_transit_leap =
         string.find(wname, "^Brute_Jetmech") ~= nil or
         string.find(wname, "^Brute_Bombrun") ~= nil

@@ -81,6 +81,16 @@ def _mech_base_hp(mech_type: str) -> int:
     }.get(mech_type, 0)
 
 
+def _is_pinnacle_bot(unit_type: str) -> bool:
+    return (
+        unit_type.startswith("Snowtank")
+        or unit_type.startswith("Snowart")
+        or unit_type.startswith("Snowlaser")
+        or unit_type.startswith("Snowmine")
+        or unit_type in {"BotBoss", "BotBoss2"}
+    )
+
+
 def _compute_pilot_value(pilot_id: str, pilot_skills, current_max_hp: int,
                          mech_type: str, pilot_level: int = 0) -> float:
     """Return a multiplier on the mech_killed penalty for this unit.
@@ -172,6 +182,10 @@ class Unit:
     def is_enemy(self) -> bool:
         return self.team == 6
 
+    @property
+    def receives_psion_aura(self) -> bool:
+        return self.is_enemy and not self.minor and not _is_pinnacle_bot(self.type)
+
 
 @dataclass
 class BoardTile:
@@ -206,6 +220,7 @@ class Board:
             [BoardTile() for _ in range(8)] for _ in range(8)
         ]
         self.units: list[Unit] = []
+        self.attack_order: list[int] = []
         self.grid_power: int = 0
         self.grid_power_max: int = 7
         # Grid Defense: % chance a building resists damage. Not exposed by
@@ -316,6 +331,7 @@ class Board:
         b = Board()
         b.tiles = [[deepcopy(self.tiles[x][y]) for y in range(8)] for x in range(8)]
         b.units = [deepcopy(u) for u in self.units]
+        b.attack_order = list(self.attack_order)
         b.grid_power = self.grid_power
         b.grid_power_max = self.grid_power_max
         b.grid_defense_pct = self.grid_defense_pct
@@ -491,6 +507,11 @@ class Board:
         board = Board()
         board.grid_power = data.get("grid_power", 0)
         board.grid_power_max = data.get("grid_power_max", 7)
+        board.attack_order = [
+            int(uid)
+            for uid in (data.get("attack_order", []) or [])
+            if isinstance(uid, int)
+        ]
 
         # Tiles
         for td in data.get("tiles", []):
@@ -753,7 +774,7 @@ class Board:
             # Hardened Carapace excludes the Psion itself — "all OTHER Vek
             # have incoming weapon damage reduced by 1."
             for u in board.units:
-                if u.is_enemy and not u.minor and u.type != "Jelly_Armor1":
+                if u.receives_psion_aura and u.type != "Jelly_Armor1":
                     u.armor = True
 
         # Detect Old Earth Dam — record the primary tile (non-extra) for the
@@ -789,7 +810,7 @@ class Board:
             # Bridge sends hp already buffed but max_hp as base — adjust max_hp.
             # Exclude both psion sources from the buff (their HP is intrinsic).
             for u in board.units:
-                if u.is_enemy and not u.minor and u.type not in ("Jelly_Health1", "Jelly_Boss"):
+                if u.receives_psion_aura and u.type not in ("Jelly_Health1", "Jelly_Boss"):
                     u.max_hp += 1
 
         # Detect AE Psions (sim v37). Flags tracked for parity / breakdown;

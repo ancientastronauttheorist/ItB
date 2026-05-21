@@ -767,7 +767,8 @@ def audit_plan_safety(current: dict[str, Any],
 def plan_requires_safety_block(audit: dict[str, Any] | None,
                                *,
                                allow_dirty_plan: bool = False,
-                               allow_timeline_collapse_debug: bool = False) -> bool:
+                               allow_timeline_collapse_debug: bool = False,
+                               allow_kill_limit_objective_dirty: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
     if not isinstance(audit, dict):
         return True
@@ -800,6 +801,10 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             and not (
                 allow_final_bomb_dirty
                 and v.get("kind") in FINAL_BOMB_DIRTY_ALLOWED_KINDS
+            )
+            and not (
+                allow_kill_limit_objective_dirty
+                and v.get("kind") == "kill_limit_objective_failed"
             )
             for v in audit.get("violations", []) or []
         )

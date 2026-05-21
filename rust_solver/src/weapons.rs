@@ -538,9 +538,33 @@ pub enum WId {
     PrimeFlamethrowerB = 177,
     /// Flame Thrower with both +1 Range upgrades powered.
     PrimeFlamethrowerAB = 178,
+    /// Cataclysm — Pitcher Mech's Hydraulic Lifter.
+    PrimeTcPunt = 179,
+    /// Hydraulic Lifter with +2 Range powered.
+    PrimeTcPuntA = 180,
+    /// Hydraulic Lifter with +2 Damage powered.
+    PrimeTcPuntB = 181,
+    /// Hydraulic Lifter with +2 Range and +2 Damage powered.
+    PrimeTcPuntAB = 182,
+    /// Cataclysm — Triptych Mech's Tri-Rocket.
+    RangedCrack = 183,
+    /// Tri-Rocket with +1 Damage powered.
+    RangedCrackA = 184,
+    /// Tri-Rocket with Building Immune powered.
+    RangedCrackB = 185,
+    /// Tri-Rocket with +1 Damage and Building Immune powered.
+    RangedCrackAB = 186,
+    /// Cataclysm — Drill Mech's Seismic Capacitor.
+    ScienceKoCrack = 187,
+    /// Seismic Capacitor with first +1 Damage powered.
+    ScienceKoCrackA = 188,
+    /// Seismic Capacitor with second +1 Damage powered.
+    ScienceKoCrackB = 189,
+    /// Seismic Capacitor with both +1 Damage upgrades powered.
+    ScienceKoCrackAB = 190,
 }
 
-pub const WEAPON_COUNT: usize = 179;
+pub const WEAPON_COUNT: usize = 191;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -605,6 +629,19 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[178] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
         range_max: 3, path_size: 3,
         flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    // 179-182: Prime_TC_Punt — Hydraulic Lifter.
+    // Lua stores the throw distance in `Range` (2 base, 4 with upgrade). The
+    // solver encodes the final landing tile as the action target; target
+    // enumeration uses source+dir as the grabbed adjacent pawn and
+    // source+(2..=Range+1)*dir as legal landings.
+    w[179] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, range_max: 2,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[180] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, range_max: 4,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[181] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 3, range_max: 2,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[182] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 3, range_max: 4,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 7: Prime_Areablast — Area Blast
     w[7] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 8: Prime_Leap — Hydraulic Legs
@@ -738,6 +775,16 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
     w[138] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, push: PushDir::Forward, range_min: 2,
         flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    // 183-186: Ranged_Crack — Tri-Rocket. Damage/pushes three sequential
+    // cardinal tiles: target+dir, target, target-dir. It can aim the adjacent
+    // tile, so range_min is 1. Building Immune upgrades suppress direct weapon
+    // damage to Grid Buildings only; collision damage still applies.
+    w[183] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 1, flags: C, ..DEF };
+    w[184] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 1, flags: C, ..DEF };
+    w[185] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 1,
+        flags: f(WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
+    w[186] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 1,
+        flags: f(WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
         flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
@@ -794,6 +841,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::SHIELD.bits() | WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 46: Science_Confuse — Confusion Ray
     w[46] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Flip, range_max: 0, flags: C, ..DEF };
+    // 187-190: Science_KO_Crack — Seismic Capacitor. The base melee hit deals
+    // damage and flips the target; a lethal hit creates cracked ground on the
+    // four adjacent tiles in simulate.rs.
+    w[187] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Flip, flags: C, ..DEF };
+    w[188] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
+    w[189] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
+    w[190] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Flip, flags: C, ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1255,6 +1309,31 @@ pub fn is_rocket_artillery(id: WId) -> bool {
 }
 
 #[inline]
+pub fn is_hydraulic_lifter(id: WId) -> bool {
+    matches!(
+        id,
+        WId::PrimeTcPunt | WId::PrimeTcPuntA | WId::PrimeTcPuntB | WId::PrimeTcPuntAB
+    )
+}
+
+#[inline]
+pub fn is_tri_rocket(id: WId) -> bool {
+    matches!(
+        id,
+        WId::RangedCrack | WId::RangedCrackA | WId::RangedCrackB | WId::RangedCrackAB
+    )
+}
+
+#[inline]
+pub fn is_seismic_capacitor(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceKoCrack | WId::ScienceKoCrackA
+            | WId::ScienceKoCrackB | WId::ScienceKoCrackAB
+    )
+}
+
+#[inline]
 pub fn is_arachnoid_injector(id: WId) -> bool {
     matches!(
         id,
@@ -1369,6 +1448,14 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Flamethrower_A" => WId::PrimeFlamethrowerA,
         "Prime_Flamethrower_B" => WId::PrimeFlamethrowerB,
         "Prime_Flamethrower_AB" => WId::PrimeFlamethrowerAB,
+        "Prime_TC_Punt" => WId::PrimeTcPunt,
+        "PrimeTcPunt" => WId::PrimeTcPunt,
+        "Prime_TC_Punt_A" => WId::PrimeTcPuntA,
+        "PrimeTcPuntA" => WId::PrimeTcPuntA,
+        "Prime_TC_Punt_B" => WId::PrimeTcPuntB,
+        "PrimeTcPuntB" => WId::PrimeTcPuntB,
+        "Prime_TC_Punt_AB" => WId::PrimeTcPuntAB,
+        "PrimeTcPuntAB" => WId::PrimeTcPuntAB,
         "Prime_Areablast" => WId::PrimeAreablast,
         "Prime_Leap" => WId::PrimeLeap,
         "Prime_Spear" => WId::PrimeSpear,
@@ -1420,6 +1507,14 @@ pub fn wid_from_str(s: &str) -> WId {
         "RangedRocketB" => WId::RangedRocketB,
         "Ranged_Rocket_AB" => WId::RangedRocketAB,
         "RangedRocketAB" => WId::RangedRocketAB,
+        "Ranged_Crack" => WId::RangedCrack,
+        "RangedCrack" => WId::RangedCrack,
+        "Ranged_Crack_A" => WId::RangedCrackA,
+        "RangedCrackA" => WId::RangedCrackA,
+        "Ranged_Crack_B" => WId::RangedCrackB,
+        "RangedCrackB" => WId::RangedCrackB,
+        "Ranged_Crack_AB" => WId::RangedCrackAB,
+        "RangedCrackAB" => WId::RangedCrackAB,
         "Ranged_Ignite" => WId::RangedIgnite,
         "Ranged_Ignite_A" => WId::RangedIgniteA,
         "RangedIgniteA" => WId::RangedIgniteA,
@@ -1447,6 +1542,14 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
         "Science_Confuse" => WId::ScienceConfuse,
+        "Science_KO_Crack" => WId::ScienceKoCrack,
+        "ScienceKoCrack" => WId::ScienceKoCrack,
+        "Science_KO_Crack_A" => WId::ScienceKoCrackA,
+        "ScienceKoCrackA" => WId::ScienceKoCrackA,
+        "Science_KO_Crack_B" => WId::ScienceKoCrackB,
+        "ScienceKoCrackB" => WId::ScienceKoCrackB,
+        "Science_KO_Crack_AB" => WId::ScienceKoCrackAB,
+        "ScienceKoCrackAB" => WId::ScienceKoCrackAB,
         "Science_MassShift" => WId::ScienceMassShift,
         "Science_MassShift_A" => WId::ScienceMassShiftA,
         "Science_MassShift_B" => WId::ScienceMassShiftB,
@@ -1570,6 +1673,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeFlamethrowerA => "Prime_Flamethrower_A",
         WId::PrimeFlamethrowerB => "Prime_Flamethrower_B",
         WId::PrimeFlamethrowerAB => "Prime_Flamethrower_AB",
+        WId::PrimeTcPunt => "Prime_TC_Punt",
+        WId::PrimeTcPuntA => "Prime_TC_Punt_A",
+        WId::PrimeTcPuntB => "Prime_TC_Punt_B",
+        WId::PrimeTcPuntAB => "Prime_TC_Punt_AB",
         WId::PrimeAreablast => "Prime_Areablast",
         WId::PrimeLeap => "Prime_Leap",
         WId::PrimeSpear => "Prime_Spear",
@@ -1614,6 +1721,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::RangedRocketA => "Ranged_Rocket_A",
         WId::RangedRocketB => "Ranged_Rocket_B",
         WId::RangedRocketAB => "Ranged_Rocket_AB",
+        WId::RangedCrack => "Ranged_Crack",
+        WId::RangedCrackA => "Ranged_Crack_A",
+        WId::RangedCrackB => "Ranged_Crack_B",
+        WId::RangedCrackAB => "Ranged_Crack_AB",
         WId::RangedIgnite => "Ranged_Ignite",
         WId::RangedIgniteA => "Ranged_Ignite_A",
         WId::RangedIce => "Ranged_Ice",
@@ -1637,6 +1748,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceAcidShot => "Science_AcidShot",
         WId::ScienceShield => "Science_Shield",
         WId::ScienceConfuse => "Science_Confuse",
+        WId::ScienceKoCrack => "Science_KO_Crack",
+        WId::ScienceKoCrackA => "Science_KO_Crack_A",
+        WId::ScienceKoCrackB => "Science_KO_Crack_B",
+        WId::ScienceKoCrackAB => "Science_KO_Crack_AB",
         WId::ScienceMassShift => "Science_MassShift",
         WId::ScienceMassShiftA => "Science_MassShift_A",
         WId::ScienceMassShiftB => "Science_MassShift_B",
@@ -1847,6 +1962,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeShift => "Vice Fist",
         WId::PrimeFlamethrower | WId::PrimeFlamethrowerA
             | WId::PrimeFlamethrowerB | WId::PrimeFlamethrowerAB => "Flamethrower",
+        WId::PrimeTcPunt | WId::PrimeTcPuntA
+            | WId::PrimeTcPuntB | WId::PrimeTcPuntAB => "Hydraulic Lifter",
         WId::PrimeAreablast => "Area Blast",
         WId::PrimeLeap => "Hydraulic Legs",
         WId::PrimeSpear => "Spear",
@@ -1883,6 +2000,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::RangedRocketA => "Rocket Artillery",
         WId::RangedRocketB => "Rocket Artillery",
         WId::RangedRocketAB => "Rocket Artillery",
+        WId::RangedCrack | WId::RangedCrackA
+            | WId::RangedCrackB | WId::RangedCrackAB => "Tri-Rocket",
         WId::RangedIgnite => "Ignite",
         WId::RangedIgniteA => "Ignite",
         WId::RangedIce => "Cryo-Launcher",
@@ -1901,6 +2020,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
+        WId::ScienceKoCrack | WId::ScienceKoCrackA
+            | WId::ScienceKoCrackB | WId::ScienceKoCrackAB => "Seismic Capacitor",
         WId::ScienceMassShift | WId::ScienceMassShiftA
             | WId::ScienceMassShiftB | WId::ScienceMassShiftAB => "Area Shift",
         WId::Repair => "Repair",
@@ -2064,6 +2185,38 @@ mod tests {
         assert_eq!(wid_from_str("Prime_Flamethrower_AB"), WId::PrimeFlamethrowerAB);
         assert_eq!(wid_to_str(WId::PrimeFlamethrowerAB), "Prime_Flamethrower_AB");
         assert_eq!(weapon_name(WId::PrimeFlamethrowerAB), "Flamethrower");
+    }
+
+    #[test]
+    fn test_cataclysm_weapon_defs_and_mappings() {
+        let lifter = weapon_def(WId::PrimeTcPunt);
+        assert_eq!(lifter.weapon_type, WeaponType::TwoClick);
+        assert_eq!(lifter.damage, 1);
+        assert_eq!(lifter.range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeTcPuntA).range_max, 4);
+        assert_eq!(weapon_def(WId::PrimeTcPuntB).damage, 3);
+        assert!(is_hydraulic_lifter(WId::PrimeTcPuntAB));
+        assert_eq!(wid_from_str("Prime_TC_Punt"), WId::PrimeTcPunt);
+        assert_eq!(wid_to_str(WId::PrimeTcPuntAB), "Prime_TC_Punt_AB");
+        assert_eq!(weapon_name(WId::PrimeTcPunt), "Hydraulic Lifter");
+
+        let tri = weapon_def(WId::RangedCrack);
+        assert_eq!(tri.weapon_type, WeaponType::Artillery);
+        assert_eq!(tri.range_min, 1);
+        assert_eq!(tri.push, PushDir::Forward);
+        assert!(is_tri_rocket(WId::RangedCrackAB));
+        assert!(weapon_def(WId::RangedCrackB).building_immune());
+        assert_eq!(wid_from_str("Ranged_Crack_AB"), WId::RangedCrackAB);
+        assert_eq!(weapon_name(WId::RangedCrackA), "Tri-Rocket");
+
+        let seismic = weapon_def(WId::ScienceKoCrackAB);
+        assert_eq!(seismic.weapon_type, WeaponType::Melee);
+        assert_eq!(seismic.damage, 3);
+        assert_eq!(seismic.push, PushDir::Flip);
+        assert!(is_seismic_capacitor(WId::ScienceKoCrackB));
+        assert_eq!(wid_from_str("Science_KO_Crack"), WId::ScienceKoCrack);
+        assert_eq!(wid_to_str(WId::ScienceKoCrackB), "Science_KO_Crack_B");
+        assert_eq!(weapon_name(WId::ScienceKoCrack), "Seismic Capacitor");
     }
 
     #[test]
@@ -2394,6 +2547,18 @@ mod tests {
             ("Ranged_Rocket_A", WId::RangedRocketA),
             ("Ranged_Rocket_B", WId::RangedRocketB),
             ("Ranged_Rocket_AB", WId::RangedRocketAB),
+            ("Prime_TC_Punt", WId::PrimeTcPunt),
+            ("Prime_TC_Punt_A", WId::PrimeTcPuntA),
+            ("Prime_TC_Punt_B", WId::PrimeTcPuntB),
+            ("Prime_TC_Punt_AB", WId::PrimeTcPuntAB),
+            ("Ranged_Crack", WId::RangedCrack),
+            ("Ranged_Crack_A", WId::RangedCrackA),
+            ("Ranged_Crack_B", WId::RangedCrackB),
+            ("Ranged_Crack_AB", WId::RangedCrackAB),
+            ("Science_KO_Crack", WId::ScienceKoCrack),
+            ("Science_KO_Crack_A", WId::ScienceKoCrackA),
+            ("Science_KO_Crack_B", WId::ScienceKoCrackB),
+            ("Science_KO_Crack_AB", WId::ScienceKoCrackAB),
             ("Deploy_TankShot", WId::DeployTankShot),
             ("Trapped_Explode", WId::TrappedExplode),
             ("Missiles_Shield", WId::MissilesShield),

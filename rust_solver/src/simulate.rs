@@ -2240,6 +2240,11 @@ pub fn simulate_weapon_with(
     // charge/pull pick up the correct attack axis even when target isn't adjacent.
     // Melee targets ARE adjacent, so both helpers agree there.
     let attack_dir = cardinal_direction(ax, ay, target_x, target_y);
+    let seismic_target_idx = if is_seismic_capacitor(weapon_id) {
+        board.unit_at(target_x, target_y)
+    } else {
+        None
+    };
 
     if weapon_id == WId::TrappedExplode {
         sim_trapped_explode(board, attacker_idx, &mut result);
@@ -2274,6 +2279,9 @@ pub fn simulate_weapon_with(
                 &mut result,
             )
         }
+        WeaponType::Artillery if is_tri_rocket(weapon_id) => {
+            sim_tri_rocket(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result)
+        }
         WeaponType::Artillery => sim_artillery(board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::SelfAoe => {
             if is_mass_shift(weapon_id) {
@@ -2307,9 +2315,18 @@ pub fn simulate_weapon_with(
         WeaponType::GlobalUnitEffect => sim_global_unit_effect(
             board, wdef, (ax, ay), (target_x, target_y), &mut result,
         ),
+        WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
+            sim_hydraulic_lifter(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result)
+        }
         WeaponType::Terraformer => sim_terraformer(board, ax, ay, target_x, target_y, &mut result),
         WeaponType::Disposal => sim_disposal(board, target_x, target_y, &mut result),
         _ => {} // Passive, Deploy, TwoClick — no simulation
+    }
+
+    if let Some(idx) = seismic_target_idx {
+        if board.units[idx].hp <= 0 {
+            create_adjacent_cracks(board, target_x, target_y, &mut result);
+        }
     }
 
     if is_arachnoid_attack(weapon_id) {
@@ -2481,6 +2498,160 @@ fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResul
 fn sim_disposal(board: &mut Board, tx: u8, ty: u8, result: &mut ActionResult) {
     for (x, y) in disposal_cross_tiles(tx, ty) {
         apply_disposal_tile(board, x, y, result);
+    }
+}
+
+// ── Cataclysm squad weapons ─────────────────────────────────────────────────
+
+fn sim_hydraulic_lifter(
+    board: &mut Board,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let Some(dir) = attack_dir else {
+        result.events.push(format!("invalid_hydraulic_lifter_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    };
+    let dist = (tx as i8 - ax as i8).unsigned_abs() + (ty as i8 - ay as i8).unsigned_abs();
+    if dist < 2 {
+        result.events.push(format!("invalid_hydraulic_lifter_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    }
+
+    let (dx, dy) = DIRS[dir];
+    let grab_x = ax as i8 + dx;
+    let grab_y = ay as i8 + dy;
+    if !in_bounds(grab_x, grab_y) || board.is_blocked(tx, ty, true) {
+        return;
+    }
+    let gx = grab_x as u8;
+    let gy = grab_y as u8;
+    let Some(unit_idx) = board.unit_at(gx, gy) else { return; };
+    if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
+        return;
+    }
+
+    board.units[unit_idx].x = tx;
+    board.units[unit_idx].y = ty;
+    apply_landing_effects(board, unit_idx, result);
+    apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+}
+
+fn sim_tri_rocket(
+    board: &mut Board,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let Some(dir) = attack_dir else {
+        result.events.push(format!("invalid_tri_rocket_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    };
+    let (dx, dy) = DIRS[dir];
+    let mut vacated_kill_tiles: Vec<(u8, u8)> = Vec::new();
+    for offset in [1i8, 0, -1] {
+        let px = tx as i8 + dx * offset;
+        let py = ty as i8 + dy * offset;
+        if !in_bounds(px, py) { continue; }
+        let x = px as u8;
+        let y = py as u8;
+        let pre_hit_unit = board.unit_at(x, y).map(|idx| {
+            (
+                idx,
+                board.units[idx].hp,
+                board.units[idx].acid(),
+                board.tile(x, y).acid(),
+                board.units[idx].x,
+                board.units[idx].y,
+            )
+        });
+        let deferred_death_explosion = if wdef.building_immune()
+            && board.tile(x, y).terrain == Terrain::Building
+            && board.tile(x, y).building_hp > 0
+        {
+            None
+        } else {
+            apply_damage_defer_death_explosion(
+                board,
+                x,
+                y,
+                wdef.damage,
+                result,
+                DamageSource::Weapon,
+            )
+        };
+        apply_push(board, x, y, dir, result);
+        if let Some((idx, pre_hp, was_acid, tile_had_acid, ox, oy)) = pre_hit_unit {
+            let fx = board.units[idx].x;
+            let fy = board.units[idx].y;
+            let moved = (fx, fy) != (ox, oy);
+            let died = board.units[idx].hp <= 0;
+            if died && moved {
+                // Tri-Rocket queues three individual SpaceDamage hits. Live
+                // captures show a killed ACID unit leaves its pool at the
+                // pushed corpse destination, not at the pre-push damage tile.
+                vacated_kill_tiles.push((ox, oy));
+                if was_acid {
+                    if !tile_had_acid {
+                        board.tile_mut(ox, oy).flags.remove(TileFlags::ACID);
+                    }
+                    let final_terrain = board.tile(fx, fy).terrain;
+                    if !final_terrain.is_deadly_ground() || final_terrain == Terrain::Water {
+                        board.tile_mut(fx, fy).flags |= TileFlags::ACID;
+                    }
+                }
+            } else if pre_hp > 0 && board.units[idx].hp > 0 && moved
+                && vacated_kill_tiles.contains(&(fx, fy))
+            {
+                // The following rocket can shove a live unit into a tile that
+                // an earlier killed target just vacated. The engine applies a
+                // corpse-bump damage to the entering unit, but still lets it
+                // occupy the tile after the corpse has been pushed onward.
+                apply_damage(board, fx, fy, 1, result, DamageSource::Bump);
+            }
+        }
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
+        }
+    }
+}
+
+fn create_crack(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    let tile = board.tile_mut(x, y);
+    match tile.terrain {
+        Terrain::Ground | Terrain::Ice if !tile.cracked() => {
+            tile.set_cracked(true);
+            result.events.push(format!("crack_created:{}:{}", x, y));
+        }
+        Terrain::Mountain if tile.building_hp > 0 => {
+            tile.building_hp -= 1;
+            result.events.push(format!("mountain_cracked:{}:{}", x, y));
+            if tile.building_hp == 0 {
+                tile.terrain = Terrain::Rubble;
+            }
+        }
+        _ => {}
+    }
+}
+
+fn create_adjacent_cracks(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    for &(dx, dy) in &DIRS {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if in_bounds(nx, ny) {
+            create_crack(board, nx as u8, ny as u8, result);
+        }
     }
 }
 
@@ -4281,6 +4452,81 @@ mod tests {
         });
         board.units[idx].set_type_name("BombRock");
         idx
+    }
+
+    #[test]
+    fn test_hydraulic_lifter_throws_adjacent_unit_to_landing() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::PrimeTcPunt);
+        let enemy = add_enemy(&mut board, 90, 3, 2, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeTcPunt, 3, 0);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 0));
+        assert_eq!(board.units[enemy].hp, 2);
+        assert!(board.unit_at(3, 2).is_none());
+        assert_eq!(result.enemy_damage_dealt, 1);
+    }
+
+    #[test]
+    fn test_tri_rocket_hits_three_tiles_in_order() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 6, 3, WId::RangedCrack);
+        let front = add_enemy(&mut board, 90, 3, 2, 2);
+        let center = add_enemy(&mut board, 91, 3, 3, 2);
+        let back = add_enemy(&mut board, 92, 3, 4, 2);
+
+        simulate_weapon(&mut board, mech, WId::RangedCrack, 3, 3);
+
+        assert_eq!((board.units[front].x, board.units[front].y, board.units[front].hp), (3, 1, 1));
+        assert_eq!((board.units[center].x, board.units[center].y, board.units[center].hp), (3, 2, 1));
+        assert_eq!((board.units[back].x, board.units[back].y, board.units[back].hp), (3, 3, 1));
+    }
+
+    #[test]
+    fn test_tri_rocket_moves_acid_corpse_pool_and_bumps_following_unit() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 6, 3, WId::RangedCrack);
+        let center = add_enemy(&mut board, 91, 3, 3, 2);
+        let back = add_enemy(&mut board, 92, 3, 4, 4);
+        board.units[center].set_acid(true);
+
+        simulate_weapon(&mut board, mech, WId::RangedCrack, 3, 3);
+
+        assert_eq!((board.units[center].x, board.units[center].y, board.units[center].hp), (3, 2, 0));
+        assert!(board.tile(3, 2).acid(), "acid corpse pool should follow the pushed corpse");
+        assert!(!board.tile(3, 3).acid(), "vacated pre-push tile should not retain a new acid pool");
+        assert_eq!((board.units[back].x, board.units[back].y, board.units[back].hp), (3, 3, 2));
+        assert!(!board.units[back].acid(), "following unit should not pick up acid from the vacated tile");
+    }
+
+    #[test]
+    fn test_seismic_capacitor_cracks_adjacent_tiles_on_kill() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::ScienceKoCrack);
+        let enemy = add_enemy(&mut board, 90, 3, 2, 1);
+
+        simulate_weapon(&mut board, mech, WId::ScienceKoCrack, 3, 2);
+
+        assert!(board.units[enemy].hp <= 0);
+        for (x, y) in [(3, 1), (4, 2), (3, 3), (2, 2)] {
+            assert!(board.tile(x, y).cracked(), "expected crack at {},{}", x, y);
+        }
+        assert!(!board.tile(3, 2).cracked(), "center crack is not emitted by the live tooltip path");
+    }
+
+    #[test]
+    fn test_seismic_capacitor_crack_damages_adjacent_mountain() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 5, 1, 3, WId::ScienceKoCrack);
+        add_enemy(&mut board, 90, 6, 1, 1);
+        board.tile_mut(6, 2).terrain = Terrain::Mountain;
+        board.tile_mut(6, 2).building_hp = 2;
+
+        simulate_weapon(&mut board, mech, WId::ScienceKoCrack, 6, 1);
+
+        assert_eq!(board.tile(6, 2).terrain, Terrain::Mountain);
+        assert_eq!(board.tile(6, 2).building_hp, 1);
     }
 
     #[test]

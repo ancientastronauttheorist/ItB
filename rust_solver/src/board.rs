@@ -250,7 +250,18 @@ impl Unit {
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
-    pub fn receives_psion_aura(&self) -> bool { self.is_enemy() && !self.minor() }
+    pub fn is_pinnacle_bot(&self) -> bool {
+        let name = self.type_name_str();
+        name.starts_with("Snowtank")
+            || name.starts_with("Snowart")
+            || name.starts_with("Snowlaser")
+            || name.starts_with("Snowmine")
+            || name == "BotBoss"
+            || name == "BotBoss2"
+    }
+    pub fn receives_psion_aura(&self) -> bool {
+        self.is_enemy() && !self.minor() && !self.is_pinnacle_bot()
+    }
     pub fn alive(&self) -> bool { self.hp > 0 }
 
     // Pilot-passive accessors. Enemies and neutrals never have these bits,
@@ -880,6 +891,30 @@ mod tests {
 
         assert!(board.unit_at(3, 4).is_some());
         assert!(board.unit_at(0, 0).is_none());
+    }
+
+    #[test]
+    fn test_pinnacle_bots_do_not_receive_psion_auras() {
+        let mut bot = Unit {
+            uid: 1,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            ..Default::default()
+        };
+        bot.set_type_name("Snowtank1");
+
+        let mut vek = Unit {
+            uid: 2,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            ..Default::default()
+        };
+        vek.set_type_name("Leaper1");
+
+        assert!(!bot.receives_psion_aura());
+        assert!(vek.receives_psion_aura());
     }
 
     #[test]

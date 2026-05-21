@@ -921,7 +921,18 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v165: Science_Swap target relocation breaks the moved target's own web,
 # matching the engine rule that actual tile changes break grapples. Pre-v165
 # corpus archived as failure_db_snapshot_sim_v164.jsonl.
-SIMULATOR_VERSION = 165
+# v166: Cataclysm squad weapons modeled: Hydraulic Lifter two-click throws,
+# Tri-Rocket's three sequential line hits, and Seismic Capacitor's on-kill
+# adjacent crack creation. Pre-v166 corpus archived as
+# failure_db_snapshot_sim_v165.jsonl.
+# v167: Tri-Rocket simultaneous damage+push cleanup: killed ACID units move
+# their corpse acid pool to the pushed destination, and later rockets bump
+# units entering a just-vacated killed-corpse tile. Pre-v167 corpus archived
+# as failure_db_snapshot_sim_v166.jsonl.
+# v168: Seismic Capacitor on-kill crack effect damages adjacent Mountains
+# by 1 HP instead of ignoring them. Pre-v168 corpus archived as
+# failure_db_snapshot_sim_v167.jsonl.
+SIMULATOR_VERSION = 168
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

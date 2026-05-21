@@ -377,15 +377,19 @@ def _parse_mech_stat_overlays_from_save_text(content: str) -> dict[int, dict]:
 
 
 def _read_mech_stat_overlays_from_save() -> dict[int, dict]:
-    save_path = os.path.expanduser(
-        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    profile_dir = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
     )
-    try:
-        with open(save_path) as f:
-            content = f.read()
-    except OSError:
-        return {}
-    return _parse_mech_stat_overlays_from_save_text(content)
+    for filename in ("saveData.lua", "undoSave.lua"):
+        try:
+            with open(os.path.join(profile_dir, filename)) as f:
+                content = f.read()
+        except OSError:
+            continue
+        records = _parse_mech_stat_overlays_from_save_text(content)
+        if records:
+            return records
+    return {}
 
 
 def _visual_coord(x: int, y: int) -> str:

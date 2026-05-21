@@ -187,6 +187,13 @@ def test_dirty_consent_token_is_exact_and_single_use():
     )
     assert accepted is None
     assert token in s.dirty_consent_used
+    assert not cmd_mod.plan_requires_safety_block(
+        safety,
+        allow_dirty_plan=True,
+        allow_kill_limit_objective_dirty=(
+            cmd_mod._allow_kill_limit_objective_dirty_consent(s)
+        ),
+    )
 
     reused = cmd_mod._dirty_consent_gate(
         s,
@@ -228,6 +235,121 @@ def test_dirty_consent_rejects_non_overridable_without_consuming_token():
 
     assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
     assert "pylon_hp_loss" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_validation_can_delay_token_consumption():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.mission_index = 4
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "grid_damage",
+            "current": 5,
+            "predicted": 4,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=3)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+        consume=False,
+    )
+
+    assert accepted is None
+    assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_kill_limit_failure_for_non_perfect_targets():
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=["achievement"],
+        achievement_targets=["Quantum Entanglement", "This is Fine"],
+    )
+    s.mission_index = 7
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_limit_objective_failed",
+            "current": 4,
+            "predicted": 6,
+            "blocking": True,
+            "delta": 2,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=23)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=23,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+@pytest.mark.parametrize(
+    ("targets", "tags"),
+    [
+        (["There is No Try"], ["achievement"]),
+        (["Perfect Strategy"], ["achievement"]),
+        (["Quantum Entanglement"], ["perfect_strategy"]),
+    ],
+)
+def test_dirty_consent_rejects_kill_limit_failure_for_perfect_targets(
+    targets, tags
+):
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=tags,
+        achievement_targets=targets,
+    )
+    s.mission_index = 7
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_limit_objective_failed",
+            "current": 4,
+            "predicted": 6,
+            "blocking": True,
+            "delta": 2,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=23)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=23,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "kill_limit_objective_failed" in rejected["reason"]
     assert token not in s.dirty_consent_used
 
 

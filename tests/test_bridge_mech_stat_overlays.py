@@ -36,6 +36,26 @@ def test_parse_mech_stat_overlays_reads_effective_max_hp_and_pilot_fields():
     assert records[2]["infected"] is True
 
 
+def test_read_mech_stat_overlays_falls_back_to_undo_save(
+    monkeypatch, tmp_path
+):
+    profile_dir = tmp_path / "profile_Alpha"
+    profile_dir.mkdir()
+    (profile_dir / "undoSave.lua").write_text(SAVE_SNIPPET)
+    monkeypatch.setattr(
+        reader.os.path,
+        "expanduser",
+        lambda path: str(profile_dir)
+        if path.endswith("profile_Alpha")
+        else path,
+    )
+
+    records = reader._read_mech_stat_overlays_from_save()
+
+    assert records[0]["type"] == "JetMech"
+    assert records[0]["max_hp"] == 4
+
+
 def test_apply_save_mech_stat_overlays_patches_max_hp_without_touching_live_hp(
     monkeypatch,
 ):
