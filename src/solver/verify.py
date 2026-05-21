@@ -915,7 +915,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v163: Breaking a web on one board entry clears every duplicate segment with
 # the same logical uid, matching multi-tile mission units such as trains.
 # Pre-v163 corpus archived as failure_db_snapshot_sim_v162.jsonl.
-SIMULATOR_VERSION = 163
+# v164: FIRE weapon tile status can sit on intact Mountain tiles. Backburn
+# (Ranged_Ignite_A) lights the mountain directly behind the shooter without
+# damaging it. Pre-v164 corpus archived as failure_db_snapshot_sim_v163.jsonl.
+SIMULATOR_VERSION = 164
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1356,7 +1356,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v163 - Breaking a web on one board entry clears every duplicate segment with
 //   the same logical uid, matching multi-tile mission units such as trains.
 //   Pre-v163 corpus archived as `failure_db_snapshot_sim_v162.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 163;
+// v164 - FIRE weapon tile status can sit on intact Mountain tiles. Backburn
+//   (`Ranged_Ignite_A`) lights the mountain directly behind the shooter without
+//   damaging it. Pre-v164 corpus archived as `failure_db_snapshot_sim_v163.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 164;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

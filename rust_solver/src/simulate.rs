@@ -321,7 +321,7 @@ fn tile_can_host_fire(board: &Board, x: u8, y: u8) -> bool {
     matches!(
         board.tile(x, y).terrain,
         Terrain::Ground | Terrain::Sand | Terrain::Forest | Terrain::Rubble | Terrain::Building
-            | Terrain::Ice | Terrain::Fire
+            | Terrain::Ice | Terrain::Fire | Terrain::Mountain
     )
 }
 
@@ -7054,6 +7054,20 @@ mod tests {
             (5, 5),
             "adjacent unit still gets pushed outward"
         );
+    }
+
+    #[test]
+    fn test_ranged_ignite_backburn_lights_mountain_behind_shooter() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 2).terrain = Terrain::Mountain;
+        board.tile_mut(3, 2).building_hp = 2;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedIgniteA);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgniteA, 3, 5);
+
+        assert_eq!(board.tile(3, 2).terrain, Terrain::Mountain);
+        assert_eq!(board.tile(3, 2).building_hp, 2);
+        assert!(board.tile(3, 2).on_fire(), "Backburn lights intact mountains");
     }
 
     #[test]

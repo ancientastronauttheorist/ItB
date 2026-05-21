@@ -2,15 +2,9 @@
   "community_notes": [
     {
       "source": "reddit",
-      "url": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Starfish&restrict_sr=1",
-      "excerpt": "Reddit search surfaces related Starfish discussion entries including Starfish and Starfish Leaders, consistent with the displayed Alpha Starfish family name.",
-      "confidence": 0.5
-    },
-    {
-      "source": "steam_forum",
-      "url": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Starfish",
-      "excerpt": "Steam discussion search did not surface a specific Alpha Starfish mechanics thread; only general Into the Breach discussions appeared.",
-      "confidence": 0.5
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/1bguw0b/into_the_breach_daily_discussion_starfish_248292/",
+      "excerpt": "Daily Discussion lists Alpha Starfish as HP 4, Move 3, Lacerated Appendages, Damage 2, effect: damage four oblique tiles.",
+      "confidence": 0.8
     }
   ]
 }
