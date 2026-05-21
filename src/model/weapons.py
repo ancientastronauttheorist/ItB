@@ -483,22 +483,22 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     ),
     "Ranged_Crack": WeaponDef(
         name="Tri-Rocket", weapon_type="artillery",
-        damage=1, push="forward", range_min=1, path_size=3,
+        damage=1, push="forward", range_min=2, path_size=3,
         upgrade_a="+1 damage (total 2)",
         upgrade_b="no building damage",
     ),
     "Ranged_Crack_A": WeaponDef(
         name="Tri-Rocket", weapon_type="artillery",
-        damage=2, push="forward", range_min=1, path_size=3,
+        damage=2, push="forward", range_min=2, path_size=3,
     ),
     "Ranged_Crack_B": WeaponDef(
         name="Tri-Rocket", weapon_type="artillery",
-        damage=1, push="forward", range_min=1, path_size=3,
+        damage=1, push="forward", range_min=2, path_size=3,
         building_damage=False,
     ),
     "Ranged_Crack_AB": WeaponDef(
         name="Tri-Rocket", weapon_type="artillery",
-        damage=2, push="forward", range_min=1, path_size=3,
+        damage=2, push="forward", range_min=2, path_size=3,
         building_damage=False,
     ),
     "Ranged_Ignite": WeaponDef(

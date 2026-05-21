@@ -2120,7 +2120,7 @@ mod top_k_tests {
     }
 
     #[test]
-    fn tri_rocket_can_aim_adjacent_cardinal_tile() {
+    fn tri_rocket_excludes_adjacent_center_target() {
         let mut board = Board::default();
         let idx = board.add_unit(Unit {
             uid: 2,
@@ -2143,7 +2143,8 @@ mod top_k_tests {
             &WEAPONS,
         );
 
-        assert!(targets.contains(&(3, 2)));
+        assert!(!targets.contains(&(3, 2)));
+        assert!(targets.contains(&(3, 1)));
         assert!(!targets.contains(&(2, 2)), "Tri-Rocket target area is still cardinal-only");
     }
 

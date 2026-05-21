@@ -942,7 +942,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Truck pawn has MoveSpeed=0. Solver/replay now enumerate and simulate the
 # skill as an attack-phase AddMove. Pre-v171 corpus archived as
 # failure_db_snapshot_sim_v170.jsonl.
-SIMULATOR_VERSION = 171
+# v172: Tri-Rocket center targets inherit LineArtillery's range-2 minimum;
+# targeting an adjacent center tile spends the bridge action without an engine
+# effect. Pre-v172 corpus archived as failure_db_snapshot_sim_v171.jsonl.
+SIMULATOR_VERSION = 172
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

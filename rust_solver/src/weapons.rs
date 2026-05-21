@@ -779,14 +779,16 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[138] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, push: PushDir::Forward, range_min: 2,
         flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
     // 183-186: Ranged_Crack — Tri-Rocket. Damage/pushes three sequential
-    // cardinal tiles: target+dir, target, target-dir. It can aim the adjacent
-    // tile, so range_min is 1. Building Immune upgrades suppress direct weapon
-    // damage to Grid Buildings only; collision damage still applies.
-    w[183] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 1, flags: C, ..DEF };
-    w[184] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 1, flags: C, ..DEF };
-    w[185] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 1,
+    // cardinal tiles: target+dir, target, target-dir. The engine inherits
+    // LineArtillery's target area, so the selectable center tile starts at
+    // range 2; adjacent enemies are hit by targeting the tile behind them.
+    // Building Immune upgrades suppress direct weapon damage to Grid Buildings
+    // only; collision damage still applies.
+    w[183] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 2, flags: C, ..DEF };
+    w[184] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2, flags: C, ..DEF };
+    w[185] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 2,
         flags: f(WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
-    w[186] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 1,
+    w[186] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2,
         flags: f(WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,

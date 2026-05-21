@@ -1383,7 +1383,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Truck pawn has MoveSpeed=0. Solver/replay now enumerate and simulate the
 //   skill as an attack-phase AddMove. Pre-v171 corpus archived as
 //   `failure_db_snapshot_sim_v170.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 171;
+// v172 - Tri-Rocket center targets inherit LineArtillery's range-2 minimum;
+//   targeting an adjacent center tile spends the bridge action without an
+//   engine effect. Pre-v172 corpus archived as
+//   `failure_db_snapshot_sim_v171.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 172;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
