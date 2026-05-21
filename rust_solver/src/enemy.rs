@@ -2331,6 +2331,33 @@ mod tests {
     }
 
     #[test]
+    fn test_alpha_burnbug_projectile_hits_mech_behind_empty_target_tile() {
+        let mut board = Board::default();
+        let mech_idx = board.add_unit(Unit {
+            uid: 1,
+            x: 4,
+            y: 2,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ARMOR,
+            ..Default::default()
+        });
+        add_enemy_with_type(&mut board, 1535, 6, 2, 4, "Burnbug2", 5, 2);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[mech_idx].hp, 0,
+            "Alpha Burnbug projectile should travel past empty F3 and kill armored Trimissile at F4");
+        assert_eq!(result.mechs_killed, 1);
+        assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
     fn test_gastropod_projectile_pulls_hit_unit_toward_attacker() {
         let mut board = Board::default();
         let target_idx = board.add_unit(Unit {

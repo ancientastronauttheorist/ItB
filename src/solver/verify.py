@@ -961,7 +961,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v176: Python bridge reader reconciles save-stale per-unit DIR_FLIP targets
 # with live Board:IsTargeted markers before constructing solver input.
 # Pre-v176 corpus archived as failure_db_snapshot_sim_v175.jsonl.
-SIMULATOR_VERSION = 176
+# v177: Mission_Wind raw engine WindDir is converted to the solver's
+# bridge-coordinate direction order before wind pushes. Pre-v177 corpus
+# archived as failure_db_snapshot_sim_v176.jsonl.
+SIMULATOR_VERSION = 177
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -9501,9 +9501,7 @@ mod tests {
 
     #[test]
     fn test_mission_wind_dir_push_bumps_mech_into_building() {
-        // Perfect Strategy run 20260518_184029_155, Mission_Wind turn 2:
-        // RocketMech stood on C3 with the Old Earth Bar at B3. WindDir=0
-        // pushed it into the bar, damaging both and costing the objective.
+        // Internal solver direction 0 pushes toward increasing bridge y.
         use crate::enemy::simulate_enemy_attacks;
         use crate::types::xy_to_idx;
         let mut board = make_test_board();
@@ -9523,6 +9521,74 @@ mod tests {
         assert_eq!(board.tile(5, 6).building_hp, 0, "wind bump destroys building");
         assert_eq!(board.grid_power, grid_before - 1);
         assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_mission_wind_raw_dir_two_pushes_egg_sack_out_of_burnbug_lane() {
+        // Cataclysm Unfair live run 20260521_120049_468, Mission_Wind t1:
+        // raw WindDir=2 pushed the marked E3 Vek egg sack into the D3 chasm,
+        // clearing the F2 Alpha Burnbug projectile lane to kill Trimissile.
+        // Pre-v177 treated raw dir 2 as solver dir 2, moved the egg to F3,
+        // and incorrectly let the egg block the shot.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+
+        let json = r#"{
+          "mission_id": "Mission_Wind",
+          "tiles": [
+            {"x": 5, "y": 4, "terrain": "chasm", "terrain_id": 9}
+          ],
+          "units": [
+            {"uid": 1, "type": "TrimissileMech", "x": 4, "y": 2,
+             "hp": 2, "max_hp": 2, "team": 1, "mech": true,
+             "massive": true, "pushable": true, "weapons": ["Ranged_Crack_B"]},
+            {"uid": 2, "type": "HydrantMech", "x": 4, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "massive": true, "pushable": true, "weapons": ["Science_KO_Crack_A"]},
+            {"uid": 1530, "type": "BonusDebris", "x": 5, "y": 3,
+             "hp": 1, "max_hp": 1, "team": 6, "minor": true,
+             "pushable": true, "weapons": []},
+            {"uid": 1535, "type": "Burnbug2", "x": 6, "y": 2,
+             "hp": 4, "max_hp": 4, "team": 6, "pushable": true,
+             "ranged": 1, "weapons": ["BurnbugAtk2"],
+             "has_queued_attack": true, "queued_target": [5, 2],
+             "weapon_damage": 3}
+          ],
+          "grid_power": 6,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[5, 3, 1, 0, 0]],
+          "environment_wind_dir": 2,
+          "env_type": "wind",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        let trimissile = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 1)
+            .unwrap();
+        let hydrant = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 2)
+            .unwrap();
+        let egg = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 1530)
+            .unwrap();
+
+        assert!(board.units[egg].hp <= 0, "wind should push the egg sack into the chasm");
+        assert!(board.units[trimissile].hp <= 0,
+            "Alpha Burnbug should hit Trimissile after the egg leaves the lane");
+        assert_eq!(board.units[hydrant].hp, 3,
+            "raw WindDir=2 must not bump the adjacent Hydrant");
+        assert_eq!(result.mechs_killed, 1);
     }
 
     #[test]

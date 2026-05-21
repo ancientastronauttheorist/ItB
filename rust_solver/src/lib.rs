@@ -1403,7 +1403,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v176 - Python bridge reader reconciles save-stale per-unit DIR_FLIP targets
 //   with live Board:IsTargeted markers before constructing solver input.
 //   Pre-v176 corpus archived as `failure_db_snapshot_sim_v175.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 176;
+// v177 - Mission_Wind raw engine WindDir is converted to the solver's
+//   bridge-coordinate direction order before wind pushes. Pre-v177 corpus
+//   archived as `failure_db_snapshot_sim_v176.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 177;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -45,8 +45,9 @@ pub struct JsonInput {
     /// SIMULATOR_VERSION 19 only have 4 fields. Never authoritative when the
     /// per-tile field is present.
     pub env_type: Option<String>,
-    /// Mission_Wind live push direction. Engine DIR_* values match Rust DIRS:
-    /// 0=(0,+1), 1=(+1,0), 2=(0,-1), 3=(-1,0).
+    /// Mission_Wind live push direction as exported from the engine's DIR_*
+    /// constants. Convert with `engine_dir_to_solver_dir` before storing on
+    /// `Board`; the solver's internal DIRS use bridge-coordinate deltas.
     pub environment_wind_dir: Option<i8>,
     pub eval_weights: Option<EvalWeights>,
     pub mission_id: Option<String>,
@@ -350,6 +351,20 @@ fn known_minor_type(type_name: &str) -> bool {
     )
 }
 
+fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
+    match dir {
+        // Engine DIR_UP / DIR_DOWN are vertically opposite the solver's
+        // bridge-coordinate direction order. Mission_Wind live capture
+        // 20260521_120049_468 m08 t01: raw WindDir=2 pushed the E3 Vek egg
+        // sack toward D3 (solver dir 0), not toward F3.
+        0 => Some(2),
+        1 => Some(1),
+        2 => Some(0),
+        3 => Some(3),
+        _ => None,
+    }
+}
+
 // ── Deserialize Board from JSON ──────────────────────────────────────────────
 
 pub fn board_from_json(json_str: &str)
@@ -539,7 +554,7 @@ pub fn board_from_json(json_str: &str)
     board.env_wind = env_wind;
     board.env_wind_dir = if env_wind != 0 {
         input.environment_wind_dir
-            .filter(|dir| (0..=3).contains(dir))
+            .and_then(engine_dir_to_solver_dir)
             .unwrap_or(-1)
     } else {
         -1
