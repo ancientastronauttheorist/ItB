@@ -680,6 +680,32 @@ local function dump_state()
                         if did_normalize then
                             unit.queued_target_normalized = true
                         end
+                        -- Save-file piQueuedShot can remain stale after live
+                        -- attack retarget effects such as DIR_FLIP. Prefer
+                        -- the C++ pawn's current queued shot when it returns a
+                        -- valid board tile; it already reflects the current
+                        -- position/target and must not be normalized again by
+                        -- the Python reader.
+                        if unit.has_queued_attack then
+                            local ok_gqs, gqs = pcall(function() return p:GetQueuedShot() end)
+                            if ok_gqs and gqs and (type(gqs) == "userdata" or type(gqs) == "table") then
+                                local gx, gy = gqs.x, gqs.y
+                                if type(gx) == "number" and type(gy) == "number"
+                                        and gx >= 0 and gy >= 0
+                                        and gx <= 7 and gy <= 7
+                                        and (not unit.queued_target
+                                             or unit.queued_target[1] ~= gx
+                                             or unit.queued_target[2] ~= gy) then
+                                    log_bridge(string.format(
+                                        "queued_target live override for %s/%d: save=(%d,%d) normalized=%s GetQueuedShot=(%d,%d)",
+                                        ptype or "?", pid, qs.x, qs.y,
+                                        unit.queued_target and string.format("(%d,%d)", unit.queued_target[1], unit.queued_target[2]) or "nil",
+                                        gx, gy))
+                                    unit.queued_target = {gx, gy}
+                                    unit.queued_target_normalized = true
+                                end
+                            end
+                        end
                     elseif unit.has_queued_attack then
                         local resolved_via = nil
                         -- (1) Save-file piTarget (works for Leapers, Scorpions,
