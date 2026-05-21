@@ -26,6 +26,7 @@ evaluation weights when targeting that achievement.
 - [x] Adaptable Victory (18.8%) -- Beat the game at each island length: 2, 3, and 4 Corporate Islands secured
 - [x] Mass Displacement (23.0%) -- Push 3 enemies with single attack (Steel Judoka)
 - [x] Scorched Earth (20.5%) -- End battle with 12 tiles on Fire (Flame Behemoths)
+- [x] This is Fine (15.7%) -- Have 5 enemies on Fire simultaneously (Flame Behemoths)
 - [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
 - [x] Pacifist (16.6%) -- Kill less than 3 enemies in a battle (Frozen Titans)
 - [x] Stormy Weather (15.4%) -- 12 Electric Smoke damage in one battle (Rusting Hulks)
@@ -259,6 +260,7 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### This is Fine (15.7%)
+- **Status:** Completed on 2026-05-21 with Flame Behemoths on Easy in run `20260520_174936_811`; live achievement toast observed during the R.S.T. Black Rock / `Mission_Crack` fire-spread push. Next Steam sync should reconcile the checklist to 38/70.
 - **Requirement:** Have 5 enemies on Fire simultaneously with the Flame Behemoths squad.
 - **Squad:** Flame Behemoths (required)
 - **Strategy:** Set enemies on fire using Flame Thrower and Vulcan Artillery. Need 5+ enemies alive and on fire at the same time. Do not kill burning enemies. Later missions with more enemies (4-5 at once) plus emerging Vek make this possible. Ignite tiles where Vek are emerging so they spawn on fire.
@@ -620,7 +622,7 @@ Some achievements can be combined in a single run:
 - **Get Over Here** + **Shield Mastery** + **Glittering C-Beam** (all Zenith Guard, same run)
 - **Chain Attack** + **Hold the Line** + **Lightning War** (all Blitzkrieg, same run -- though Lightning War's time pressure conflicts with setup)
 - **Unbreakable** + **Unwitting Allies** + **Mass Displacement** (all Steel Judoka, same run)
-- **Quantum Entanglement** + **Scorched Earth** + **This is Fine** (all Flame Behemoths; Quantum and Scorched Earth are complete, This is Fine remains the active Flame Behemoths target)
+- **Quantum Entanglement** + **Scorched Earth** + **This is Fine** (all Flame Behemoths; all three are complete as of 2026-05-21)
 - **Cryo Expert** + **Pacifist** + **Trick Shot** (all Frozen Titans, same run -- Pacifist conflicts somewhat with Trick Shot)
 - **Healing** + **Immortal** + **Overkill** (all Hazardous Mechs, same run -- Immortal conflicts with aggressive Healing/Overkill play)
 

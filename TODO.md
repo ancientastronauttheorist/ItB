@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-37 of 70 completed (latest Steam sync on 2026-05-20; refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 33 remaining, sorted by global unlock % (easiest first).
+38 of 70 live-confirmed (**This is Fine** toast observed on 2026-05-21; latest repo Steam sync still reported 37/70 on 2026-05-21, so refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts -- it missed Watery Grave / Perfect Island / Sustainable Energy). 32 remaining, sorted by global unlock % (easiest first).
 
-Current milestone: Quantum Entanglement is complete, confirmed by the 2026-05-20 Steam sync after Flame Behemoths Easy run `20260520_134643_900`. The decisive action was `TeleMech, move B3->B5, fire Teleporter at F5` on mission 14 turn 4, using `Science_Swap_AB` for an exact four-tile cardinal swap from B5 to F5. The key live-loop note is in `docs/quantum_entanglement_flame_behemoths_retrospective.md`. Next Flame Behemoths target: This is Fine.
+Current milestone: This is Fine is complete, live-confirmed by the 2026-05-21 achievement toast during Flame Behemoths Easy run `20260520_174936_811`. The successful route used R.S.T. fire-friendly boards, Ignite/Backburn tile fire, spawn-lane ignition, and high-HP Vek that stayed burning long enough to count five simultaneous Fire statuses. The key live-loop note is in `docs/this_is_fine_flame_behemoths_retrospective.md`. Flame Behemoths squad achievements are now closed; sync Steam and pick the next unfinished squad target.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -37,7 +37,7 @@ Current milestone: Quantum Entanglement is complete, confirmed by the 2026-05-20
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
 - [x] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths] — completed in run `20260520_134643_900` with `Science_Swap_AB`
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
-- [ ] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths]
+- [x] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths] — live toast observed on 2026-05-21 in run `20260520_174936_811`
 - [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
 - [ ] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs]
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
@@ -109,6 +109,7 @@ Current milestone: Quantum Entanglement is complete, confirmed by the 2026-05-20
 - [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times
 - [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle  [Frozen Titans]
 - [x] Quantum Entanglement (16.6%) — Teleport a unit 4 tiles away  [Flame Behemoths]
+- [x] This is Fine (15.7%) — 5 enemies on Fire simultaneously  [Flame Behemoths]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
 - [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle  [Rusting Hulks]
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser  [Zenith Guard]

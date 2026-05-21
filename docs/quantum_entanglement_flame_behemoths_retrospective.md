@@ -25,6 +25,6 @@ From B5 to F5 is exactly four tiles along a cardinal row, satisfying the achieve
 - Reactor-core routing mattered more than perfect objectives. Mission choices prioritized core rewards and high enemy density over perfect-island cleanliness.
 - Earlier Flame Behemoths attempts exposed the two important blockers: diagonal Teleporter enumeration and save/loadout offset confusion. Fixing those made the final four-tile swap boring in the best possible way.
 
-## Next Target
+## Follow-up
 
-Keep Flame Behemoths pointed at **This is Fine**. Quantum no longer needs special weighting except as a regression guard for `Science_Swap_AB`; future Flame Behemoths scoring should favor simultaneous burning enemies, high-spawn missions, and lines that keep burning Vek alive long enough to count.
+**This is Fine** popped on 2026-05-21 in Flame Behemoths run `20260520_174936_811`, closing the remaining Flame Behemoths squad-achievement target. Quantum no longer needs special weighting except as a regression guard for `Science_Swap_AB`; future Flame Behemoths work is simulator/regression coverage rather than achievement targeting.
