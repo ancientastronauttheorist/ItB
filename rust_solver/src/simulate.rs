@@ -2571,7 +2571,31 @@ fn sim_tri_rocket(
     };
     let (dx, dy) = DIRS[dir];
     let mut vacated_kill_tiles: Vec<(u8, u8)> = Vec::new();
+    let center_bombrock = board.unit_at(tx, ty).is_some_and(|idx| {
+        board.units[idx].hp > 0 && board.units[idx].type_name_str() == "BombRock"
+    });
+    if center_bombrock {
+        let center_idx = board.unit_at(tx, ty);
+        apply_damage_core(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+        if let Some(idx) = center_idx {
+            if board.units[idx].hp <= 0 {
+                // Ranged_Crack queues artillery impacts on three separate
+                // tiles. Live Cataclysm captures show a BombRock destroyed by
+                // the center rocket does not emit its normal four-way blast;
+                // instead the killed boulder collides forward along the rocket
+                // line before the front rocket's own hit resolves.
+                let fx = tx as i8 + dx;
+                let fy = ty as i8 + dy;
+                if in_bounds(fx, fy) {
+                    apply_damage(board, fx as u8, fy as u8, 1, result, DamageSource::Bump);
+                }
+            }
+        }
+    }
     for offset in [1i8, 0, -1] {
+        if center_bombrock && offset == 0 {
+            continue;
+        }
         let px = tx as i8 + dx * offset;
         let py = ty as i8 + dy * offset;
         if !in_bounds(px, py) { continue; }
@@ -4558,6 +4582,28 @@ mod tests {
             (5, 6, 1),
             "following target moves into the vacated tile without a corpse-bump from terrain death",
         );
+    }
+
+    #[test]
+    fn test_tri_rocket_center_bombrock_bumps_front_without_side_explosion() {
+        let mut board = make_test_board();
+        let shooter = add_mech(&mut board, 1, 1, 6, 2, WId::RangedCrackB);
+        let front = add_enemy_type(&mut board, 90, 5, 6, 4, "Dung2");
+        let side = add_enemy_type(&mut board, 91, 4, 5, 4, "Scorpion2");
+        let rock = add_bombrock(&mut board, 92, 4, 6);
+
+        simulate_weapon(&mut board, shooter, WId::RangedCrackB, 4, 6);
+
+        assert_eq!(
+            (board.units[front].x, board.units[front].y, board.units[front].hp),
+            (6, 6, 2),
+            "front target takes the center BombRock corpse-bump, then the front rocket hit",
+        );
+        assert_eq!(
+            board.units[side].hp, 4,
+            "Tri-Rocket center BombRock collision should not emit a side blast",
+        );
+        assert!(board.units[rock].hp <= 0, "center BombRock is destroyed");
     }
 
     #[test]

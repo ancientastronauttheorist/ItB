@@ -1391,7 +1391,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   returning to the next player turn, matching Tumblebug BombRock explosions
 //   that damage 2-HP buildings. Pre-v173 corpus archived as
 //   `failure_db_snapshot_sim_v172.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 173;
+// v174 - Tri-Rocket center-hit BombRocks resolve as a forward killed-boulder
+//   collision inside the rocket line, without emitting the normal side blast.
+//   Matches Cataclysm Unfair stress run 20260521_120049_468 Mission_Lightning
+//   turn 2, where B4 BombRock damaged B3->B2 Dung2 but not C4 Scorpion2.
+//   Pre-v174 corpus archived as `failure_db_snapshot_sim_v173.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 174;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -949,7 +949,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # returning to the next player turn, matching Tumblebug BombRock explosions
 # that damage 2-HP buildings. Pre-v173 corpus archived as
 # failure_db_snapshot_sim_v172.jsonl.
-SIMULATOR_VERSION = 173
+# v174: Tri-Rocket center-hit BombRocks resolve as a forward killed-boulder
+# collision inside the rocket line, without emitting the normal side blast.
+# Matches Cataclysm Unfair stress run 20260521_120049_468 Mission_Lightning
+# turn 2, where B4 BombRock damaged B3->B2 Dung2 but not C4 Scorpion2.
+# Pre-v174 corpus archived as failure_db_snapshot_sim_v173.jsonl.
+SIMULATOR_VERSION = 174
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
