@@ -1566,11 +1566,63 @@ local function execute_prime_tc_punt(pawn, wname, tx, ty)
                first.x .. "," .. first.y
     end
 
+    local uid = nil
+    local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
+    if ok_uid then uid = uid_val end
+    local save_data = _read_save_data()
+    local save_pilot = uid and save_data.pilots[uid] or nil
+    local boosted = false
+    local ok_bo, bo = pcall(function() return pawn:IsBoosted() end)
+    if ok_bo and bo then boosted = true end
+    local target_was_enemy = false
+    local ok_team, target_team = pcall(function() return target:GetTeam() end)
+    if ok_team and target_team == (_G.TEAM_ENEMY or 6) then
+        target_was_enemy = true
+    end
+
+    -- Board:AddEffect(GetFinalEffect(...)) bypasses the engine ability-use
+    -- wrapper that normally applies and consumes Boost. Mirror that wrapper
+    -- here so the bridge execution matches the solver's weapon semantics.
+    local old_damage = nil
+    if boosted and type(skill.Damage) == "number" and skill.Damage > 0 then
+        old_damage = skill.Damage
+        skill.Damage = old_damage + 1
+    end
     local ok, err = pcall(function()
         Board:AddEffect(skill:GetFinalEffect(source, first, landing))
     end)
+    if old_damage ~= nil then
+        pcall(function() skill.Damage = old_damage end)
+    end
     if not ok then
         return false, "Prime_TC_Punt GetFinalEffect failed: " .. tostring(err)
+    end
+
+    local desired_boosted = false
+    if save_pilot and save_pilot.id == "Pilot_Arrogant" then
+        local hp = pawn:GetHealth()
+        local max_hp = get_pawn_max_health(pawn, uid, save_data)
+        desired_boosted = hp >= max_hp
+    elseif save_pilot and save_pilot.id == "Pilot_Chemical" and target_was_enemy then
+        local dead = false
+        local ok_dead, is_dead = pcall(function() return target:IsDead() end)
+        if ok_dead and is_dead then dead = true end
+        local ok_hp, hp = pcall(function() return target:GetHealth() end)
+        if ok_hp and hp <= 0 then dead = true end
+        desired_boosted = dead
+    end
+    if boosted or desired_boosted then
+        for _, mname in ipairs({"SetBoosted", "SetBoost"}) do
+            local ok_set, did_set = pcall(function()
+                local fn = pawn[mname]
+                if type(fn) == "function" then
+                    fn(pawn, desired_boosted)
+                    return true
+                end
+                return false
+            end)
+            if ok_set and did_set then break end
+        end
     end
     log_bridge("FIRE: " .. wname .. " two_click " ..
                source.x .. "," .. source.y .. " -> " ..
