@@ -739,6 +739,44 @@ def _normalize_queued_targets(bridge_units: list) -> None:
             u["queued_target"] = None
 
 
+def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
+    """Trust live attack markers when save-backed queued targets are stale.
+
+    After effects such as Seismic Capacitor's ``DIR_FLIP``, saveData can keep
+    the old per-pawn ``piQueuedShot`` even though the visible attack marker has
+    already flipped. The bridge also reports Board:IsTargeted() tiles, which are
+    live marker data. If a unit's old target is gone from those markers and the
+    exact 180-degree mirror is present, rewrite the unit target to that mirror.
+    """
+    targeted = {
+        (int(t[0]), int(t[1]))
+        for t in data.get("targeted_tiles", []) or []
+        if isinstance(t, (list, tuple)) and len(t) >= 2
+    }
+    if not targeted:
+        return
+
+    for u in data.get("units", []) or []:
+        if u.get("team") != 6 or int(u.get("hp") or 0) <= 0:
+            continue
+        if not u.get("has_queued_attack"):
+            continue
+        qt = u.get("queued_target")
+        if not isinstance(qt, list) or len(qt) < 2:
+            continue
+        qx, qy = int(qt[0]), int(qt[1])
+        if (qx, qy) in targeted:
+            continue
+        cx, cy = int(u.get("x", -1)), int(u.get("y", -1))
+        if not (0 <= cx < 8 and 0 <= cy < 8):
+            continue
+        fx, fy = 2 * cx - qx, 2 * cy - qy
+        if 0 <= fx < 8 and 0 <= fy < 8 and (fx, fy) in targeted:
+            u["queued_target_stale_save"] = [qx, qy]
+            u["queued_target"] = [fx, fy]
+            u["queued_target_reconciled_via_targeted_tiles"] = True
+
+
 WEB_SOURCE_WEAPONS = {
     "ScorpionAtk1",
     "ScorpionAtk2",
@@ -822,6 +860,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     # constructing the Board so downstream solvers see the right direction.
     if "units" in data:
         _normalize_queued_targets(data["units"])
+        _reconcile_flipped_queued_targets_with_targeted_tiles(data)
         _recover_grapple_probe_webs(data["units"])
 
     # Mission_Repair progress (Use 3 Repair Platforms). Old live modloader

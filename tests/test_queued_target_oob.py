@@ -161,6 +161,61 @@ def test_normalize_queued_targets_skips_bridge_normalized_payload():
         reader_mod._read_queued_origins_from_save = orig
 
 
+def test_reconcile_flipped_queued_target_uses_live_target_marker():
+    """Live Board:IsTargeted markers can reveal save-stale DIR_FLIP targets."""
+    from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles
+
+    data = {
+        "targeted_tiles": [[5, 4]],
+        "units": [
+            {
+                "uid": 1250,
+                "type": "Scorpion2",
+                "team": 6,
+                "hp": 2,
+                "x": 4,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [3, 4],
+                "queued_target_normalized": True,
+            },
+        ],
+    }
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    unit = data["units"][0]
+    assert unit["queued_target"] == [5, 4], unit
+    assert unit["queued_target_stale_save"] == [3, 4], unit
+    assert unit["queued_target_reconciled_via_targeted_tiles"] is True, unit
+
+
+def test_reconcile_flipped_queued_target_keeps_live_original_marker():
+    """Do not flip targets when the original queued tile is still targeted."""
+    from src.bridge.reader import _reconcile_flipped_queued_targets_with_targeted_tiles
+
+    data = {
+        "targeted_tiles": [[3, 4], [5, 4]],
+        "units": [
+            {
+                "uid": 1250,
+                "type": "Scorpion2",
+                "team": 6,
+                "hp": 2,
+                "x": 4,
+                "y": 4,
+                "has_queued_attack": True,
+                "queued_target": [3, 4],
+            },
+        ],
+    }
+
+    _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+
+    assert data["units"][0]["queued_target"] == [3, 4], data["units"][0]
+    assert "queued_target_stale_save" not in data["units"][0]
+
+
 if __name__ == "__main__":
     test_rust_solve_does_not_panic_on_oob_queued_target()
     print("PASS: rust solve no panic on OOB queued_target")
@@ -172,3 +227,7 @@ if __name__ == "__main__":
     print("PASS: _normalize_queued_targets preserves full same-axis offset")
     test_normalize_queued_targets_skips_bridge_normalized_payload()
     print("PASS: _normalize_queued_targets skips bridge-normalized payload")
+    test_reconcile_flipped_queued_target_uses_live_target_marker()
+    print("PASS: flipped queued target reconciles with live markers")
+    test_reconcile_flipped_queued_target_keeps_live_original_marker()
+    print("PASS: live original marker preserves queued target")

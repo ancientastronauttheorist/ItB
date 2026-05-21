@@ -1400,7 +1400,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   IDs (`Prime_TC_Punt_*`, `Ranged_Crack_*`, `Science_KO_Crack_*`), matching
 //   live bridge execution after shop/reactor upgrades. Pre-v175 corpus
 //   archived as `failure_db_snapshot_sim_v174.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 175;
+// v176 - Python bridge reader reconciles save-stale per-unit DIR_FLIP targets
+//   with live Board:IsTargeted markers before constructing solver input.
+//   Pre-v176 corpus archived as `failure_db_snapshot_sim_v175.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 176;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

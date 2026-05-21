@@ -958,7 +958,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # IDs (Prime_TC_Punt_*, Ranged_Crack_*, Science_KO_Crack_*), matching live
 # bridge execution after shop/reactor upgrades. Pre-v175 corpus archived as
 # failure_db_snapshot_sim_v174.jsonl.
-SIMULATOR_VERSION = 175
+# v176: Python bridge reader reconciles save-stale per-unit DIR_FLIP targets
+# with live Board:IsTargeted markers before constructing solver input.
+# Pre-v176 corpus archived as failure_db_snapshot_sim_v175.jsonl.
+SIMULATOR_VERSION = 176
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
