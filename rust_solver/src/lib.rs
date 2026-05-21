@@ -1376,7 +1376,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v169 - Tri-Rocket killed adjacent missile targets corpse-bump live center
 //   blockers when pushed into them. Pre-v169 corpus archived as
 //   `failure_db_snapshot_sim_v168.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 169;
+// v170 - Tri-Rocket targets killed by terrain after landing do not leave a
+//   vacated corpse-bump tile. Pre-v170 corpus archived as
+//   `failure_db_snapshot_sim_v169.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 170;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

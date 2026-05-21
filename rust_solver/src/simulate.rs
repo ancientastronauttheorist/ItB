@@ -2595,13 +2595,16 @@ fn sim_tri_rocket(
                 DamageSource::Weapon,
             )
         };
+        let killed_by_hit = pre_hit_unit
+            .map(|(idx, _, _, _, _, _)| board.units[idx].hp <= 0)
+            .unwrap_or(false);
         apply_push_with_policy(board, x, y, dir, result, TRI_ROCKET_PUSH_POLICY);
         if let Some((idx, pre_hp, was_acid, tile_had_acid, ox, oy)) = pre_hit_unit {
             let fx = board.units[idx].x;
             let fy = board.units[idx].y;
             let moved = (fx, fy) != (ox, oy);
             let died = board.units[idx].hp <= 0;
-            if died && moved {
+            if died && moved && killed_by_hit {
                 // Tri-Rocket queues three individual SpaceDamage hits. Live
                 // captures show a killed ACID unit leaves its pool at the
                 // pushed corpse destination, not at the pre-push damage tile.
@@ -4524,6 +4527,29 @@ mod tests {
             (board.units[center].x, board.units[center].y, board.units[center].hp),
             (3, 1, 1),
             "center blocker takes direct, live-bump, and killed-corpse bump damage",
+        );
+    }
+
+    #[test]
+    fn test_tri_rocket_terrain_kill_vacated_tile_does_not_corpse_bump() {
+        let mut board = make_test_board();
+        let shooter = add_mech(&mut board, 1, 1, 6, 2, WId::RangedCrack);
+        let center = add_enemy(&mut board, 90, 5, 6, 5);
+        let back = add_enemy(&mut board, 91, 4, 6, 2);
+        board.tile_mut(6, 6).set_cracked(true);
+
+        simulate_weapon(&mut board, shooter, WId::RangedCrack, 5, 6);
+
+        assert_eq!(board.tile(6, 6).terrain, Terrain::Chasm);
+        assert_eq!(
+            (board.units[center].x, board.units[center].y, board.units[center].hp),
+            (6, 6, 0),
+            "center target is killed after being pushed into the newly opened chasm",
+        );
+        assert_eq!(
+            (board.units[back].x, board.units[back].y, board.units[back].hp),
+            (5, 6, 1),
+            "following target moves into the vacated tile without a corpse-bump from terrain death",
         );
     }
 

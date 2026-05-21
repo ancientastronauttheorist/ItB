@@ -935,7 +935,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v169: Tri-Rocket killed adjacent missile targets corpse-bump live center
 # blockers when pushed into them. Pre-v169 corpus archived as
 # failure_db_snapshot_sim_v168.jsonl.
-SIMULATOR_VERSION = 169
+# v170: Tri-Rocket targets killed by terrain after landing do not leave a
+# vacated corpse-bump tile. Pre-v170 corpus archived as
+# failure_db_snapshot_sim_v169.jsonl.
+SIMULATOR_VERSION = 170
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
