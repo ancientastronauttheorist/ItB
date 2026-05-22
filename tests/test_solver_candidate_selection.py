@@ -134,6 +134,34 @@ def test_perfect_battle_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch
     assert _blocks_mech_hp_loss_for_perfect_battle(session) is True
 
 
+def test_untouchable_target_enables_mech_hp_safety_mode(tmp_path, monkeypatch):
+    achievements_path = tmp_path / "achievements_detailed.json"
+    achievements_path.write_text(
+        '{"achievements": {"global": [{"name": "Untouchable", "completed": false}]}}'
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.ACHIEVEMENTS_PATH",
+        achievements_path,
+    )
+    session = RunSession(achievement_targets=["Untouchable"])
+
+    assert _blocks_mech_hp_loss_for_perfect_battle(session) is True
+
+
+def test_completed_untouchable_target_keeps_default_mech_hp_safety_mode(tmp_path, monkeypatch):
+    achievements_path = tmp_path / "achievements_detailed.json"
+    achievements_path.write_text(
+        '{"achievements": {"global": [{"name": "Untouchable", "completed": true}]}}'
+    )
+    monkeypatch.setattr(
+        "src.loop.commands.ACHIEVEMENTS_PATH",
+        achievements_path,
+    )
+    session = RunSession(achievement_targets=["Untouchable"])
+
+    assert _blocks_mech_hp_loss_for_perfect_battle(session) is False
+
+
 def test_non_perfect_battle_target_keeps_default_mech_hp_safety_mode():
     session = RunSession(achievement_targets=["Stormy Weather"])
 

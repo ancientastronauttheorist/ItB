@@ -2202,17 +2202,24 @@ def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
     ]
 
 
+_ZERO_MECH_DAMAGE_ACHIEVEMENTS = {"perfect battle", "untouchable"}
+
+
 def _blocks_mech_hp_loss_for_perfect_battle(session: RunSession | None) -> bool:
     """Return True when the active run treats any mech damage as a loss.
 
-    Normal ITB play can accept repairable mech damage, but Perfect Battle is
-    invalidated by any mech or building damage in the battle. Building damage is
-    already a global safety block; this flag promotes mech HP loss to the same
-    level only for runs that explicitly target Perfect Battle.
+    Normal ITB play can accept repairable mech damage, but Perfect Battle and
+    Untouchable are invalidated by any mech HP loss. Building damage is already
+    a global safety block; this flag promotes mech HP loss to the same level
+    only for runs that explicitly target a still-locked zero-mech-damage
+    achievement.
     """
-    targets = getattr(session, "achievement_targets", None) or []
-    if not any(str(target).strip().lower() == "perfect battle"
-               for target in targets):
+    targets = {
+        str(target).strip().lower()
+        for target in (getattr(session, "achievement_targets", None) or [])
+    }
+    active_zero_damage_targets = targets & _ZERO_MECH_DAMAGE_ACHIEVEMENTS
+    if not active_zero_damage_targets:
         return False
 
     try:
@@ -2224,15 +2231,21 @@ def _blocks_mech_hp_loss_for_perfect_battle(session: RunSession | None) -> bool:
     if not isinstance(groups, dict):
         return True
 
+    completed_by_name: dict[str, bool] = {}
     for achievements in groups.values():
         if not isinstance(achievements, list):
             continue
         for achievement in achievements:
             if not isinstance(achievement, dict):
                 continue
-            if str(achievement.get("name", "")).strip().lower() == "perfect battle":
-                return not bool(achievement.get("completed"))
-    return True
+            name = str(achievement.get("name", "")).strip().lower()
+            if name in active_zero_damage_targets:
+                completed_by_name[name] = bool(achievement.get("completed"))
+
+    for target in active_zero_damage_targets:
+        if target not in completed_by_name or not completed_by_name[target]:
+            return True
+    return False
 
 
 def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
