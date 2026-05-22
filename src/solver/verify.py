@@ -977,7 +977,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # into live blockers. Fixes Frozen Titans Untouchable Mission_Airstrike turn 1,
 # where Brute_Mirrorshot killed BonusDebris on F6 and live bumped IceMech on E6
 # for 1 HP. Pre-v180 corpus archived as failure_db_snapshot_sim_v179.jsonl.
-SIMULATOR_VERSION = 180
+# v181: Conveyor sprite directions from the engine are normalized to solver
+# DIRS before simulation. Fixes Rusting Hulks Untouchable Mission_BeltRandom
+# turn 1, where raw conveyor2 on C5 bumped PulseMech into B5 and cost 1 HP
+# plus 1 grid. Pre-v181 corpus archived as failure_db_snapshot_sim_v180.jsonl.
+SIMULATOR_VERSION = 181
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

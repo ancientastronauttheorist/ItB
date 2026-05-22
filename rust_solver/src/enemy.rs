@@ -2194,6 +2194,30 @@ mod tests {
     }
 
     #[test]
+    fn test_conveyor_dir_two_capture_bumps_mech_into_building() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_BeltRandom".to_string();
+        board.grid_power = 5;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 5).conveyor_dir = 0; // raw engine dir 2 after serde normalization
+        board.tile_mut(3, 6).terrain = Terrain::Building;
+        board.tile_mut(3, 6).building_hp = 2;
+        add_mech_unit(&mut board, 2, 3, 5, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            (board.units[0].x, board.units[0].y),
+            (3, 5),
+            "blocked conveyor push should leave the mech on the belt tile"
+        );
+        assert_eq!(board.units[0].hp, 2);
+        assert_eq!(board.tile(3, 6).building_hp, 1);
+        assert_eq!(board.grid_power, 4);
+    }
+
+    #[test]
     fn test_mission_missiles_decorative_conveyor_does_not_move_enemy_attack() {
         let mut board = Board::default();
         board.mission_id = "Mission_Missiles".to_string();

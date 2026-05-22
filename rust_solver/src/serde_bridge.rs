@@ -355,8 +355,9 @@ fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
     match dir {
         // Engine DIR_UP / DIR_DOWN are vertically opposite the solver's
         // bridge-coordinate direction order. Mission_Wind live capture
-        // 20260521_120049_468 m08 t01: raw WindDir=2 pushed the E3 Vek egg
-        // sack toward D3 (solver dir 0), not toward F3.
+        // 20260521_120049_468 m08 t01 and Mission_BeltRandom live capture
+        // 20260521_232056_112 m00 t01 both show raw dir=2 pushes through
+        // solver dir 0.
         0 => Some(2),
         1 => Some(1),
         2 => Some(0),
@@ -422,7 +423,10 @@ pub fn board_from_json(json_str: &str)
                 flags |= TileFlags::GRASS;
             }
             tile.flags = flags;
-            tile.conveyor_dir = jt.conveyor.unwrap_or(-1);
+            tile.conveyor_dir = jt
+                .conveyor
+                .and_then(engine_dir_to_solver_dir)
+                .unwrap_or(-1);
 
             // Objective buildings (Coal Plant, Power Generator, Batteries,
             // Clinic, Nimbus, Tower, Solar Farms). `unique_buildings` is the
@@ -1080,6 +1084,30 @@ mod tests {
 
         assert!(board.tile(3, 3).grass());
         assert!(board.tile(4, 4).grass());
+    }
+
+    #[test]
+    fn test_conveyor_engine_dirs_normalized_to_solver_dirs() {
+        let input = r#"{
+            "mission_id": "Mission_BeltRandom",
+            "tiles": [
+                {"x": 1, "y": 1, "terrain": "ground", "conveyor": 0},
+                {"x": 2, "y": 2, "terrain": "ground", "conveyor": 1},
+                {"x": 3, "y": 3, "terrain": "ground", "conveyor": 2},
+                {"x": 4, "y": 4, "terrain": "ground", "conveyor": 3}
+            ],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.tile(1, 1).conveyor_dir, 2);
+        assert_eq!(board.tile(2, 2).conveyor_dir, 1);
+        assert_eq!(board.tile(3, 3).conveyor_dir, 0);
+        assert_eq!(board.tile(4, 4).conveyor_dir, 3);
     }
 
     #[test]

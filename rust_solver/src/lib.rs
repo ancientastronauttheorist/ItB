@@ -1422,7 +1422,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260521_223240_242 Mission_Airstrike turn 1, where Brute_Mirrorshot killed
 //   BonusDebris on F6 and live bumped IceMech on E6 for 1 HP. Pre-v180 corpus
 //   archived as `failure_db_snapshot_sim_v179.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 180;
+// v181 - Conveyor sprite directions from the engine are normalized to solver
+//   DIRS before simulation. Fixes Rusting Hulks Untouchable run
+//   20260521_232056_112 Mission_BeltRandom turn 1, where raw conveyor2 on C5
+//   bumped PulseMech into B5 and cost 1 HP + 1 grid. Pre-v181 corpus archived
+//   as `failure_db_snapshot_sim_v180.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 181;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
