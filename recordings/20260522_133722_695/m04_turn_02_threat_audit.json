@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-05-22T14:44:57.136828",
+  "run_id": "20260522_133722_695",
+  "mission_index": 4,
+  "turn": 2,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 1,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          0,
+          2
+        ],
+        "target_visual": "F8",
+        "target_hp": 1,
+        "attacker": {
+          "uid": 140,
+          "type": "Scarab1",
+          "pos": [
+            2,
+            2
+          ],
+          "visual": "F6",
+          "hp": 2,
+          "max_hp": 2,
+          "weapon_id": "ScarabAtk1",
+          "target": [
+            0,
+            2
+          ],
+          "target_visual": "F8",
+          "queued_target": [
+            0,
+            2
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}

@@ -1,0 +1,517 @@
+{
+  "run_id": "20260522_133722_695",
+  "squad": "Frozen Titans",
+  "achievement_targets": [
+    "Untouchable"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "Mission_Dam",
+  "islands_completed": [],
+  "mission_index": 1,
+  "last_mission_turn": 4,
+  "current_turn": 4,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "GuardMech",
+        "move_to": [
+          5,
+          3
+        ],
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          5,
+          2
+        ],
+        "description": "GuardMech, fire Shield Bash at F3"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "MirrorMech",
+        "move_to": [
+          2,
+          4
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "MirrorMech, move D5->D6"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "IceMech",
+        "move_to": [
+          1,
+          3
+        ],
+        "weapon": "Ranged_Ice",
+        "target": [
+          6,
+          3
+        ],
+        "description": "IceMech, move G8->E7, fire Cryo-Launcher at E2"
+      }
+    ],
+    "score": 32812.00015200887,
+    "turn": 4,
+    "input_fingerprint": "0:5,3:3|107:3,0:0|107:4,0:0|110:5,4:2|111:5,5:3|112:6,3:3|113:6,5:3|114:5,2:3|1:3,4:3|2:0,1:2"
+  },
+  "actions_executed": 2,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-22T13:44:33.141815",
+      "turn": 1,
+      "label": "solve",
+      "score": 120742.85714285713,
+      "actions": [
+        "GuardMech, move F6\u2192G4, fire Shield Bash at G3",
+        "MirrorMech, move G5\u2192F6",
+        "IceMech, move D5\u2192G5, fire Cryo-Launcher at G2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:46:21.771721",
+      "turn": 2,
+      "label": "solve",
+      "score": 127162.85714285713,
+      "actions": [
+        "MirrorMech, fire Mirror Shot at F5",
+        "GuardMech, move G4\u2192E3, fire Shield Bash at E2",
+        "IceMech, move G5\u2192E6, fire Cryo-Launcher at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:47:06.787105",
+      "turn": 3,
+      "label": "solve",
+      "score": 131437.85714285713,
+      "actions": [
+        "GuardMech, move E3\u2192C4, fire Shield Bash at D4",
+        "MirrorMech, move F6\u2192D7",
+        "IceMech, move E6\u2192F8, fire Cryo-Launcher at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:50:50.644054",
+      "turn": 1,
+      "label": "solve",
+      "score": 151457.14285714284,
+      "actions": [
+        "MirrorMech, move D6\u2192D5, fire Mirror Shot at D4",
+        "GuardMech, move F5\u2192G5, fire Shield Bash at H5",
+        "IceMech, move G6\u2192D6, fire Cryo-Launcher at D1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:51:45.011434",
+      "turn": 2,
+      "label": "solve",
+      "score": 155202.95240046878,
+      "actions": [
+        "GuardMech, fire Shield Bash at G4",
+        "IceMech, move D6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, fire Mirror Shot at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:52:26.898037",
+      "turn": 2,
+      "label": "solve",
+      "score": 155202.95240046878,
+      "actions": [
+        "GuardMech, fire Shield Bash at G4",
+        "IceMech, move D6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, fire Mirror Shot at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:54:24.947957",
+      "turn": 3,
+      "label": "solve",
+      "score": 156237.14285714287,
+      "actions": [
+        "MirrorMech",
+        "IceMech, move E7\u2192G8, fire Cryo-Launcher at G4",
+        "GuardMech, move G5\u2192E3, fire Shield Bash at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:55:28.179308",
+      "turn": 4,
+      "label": "solve",
+      "score": 86482.00009376662,
+      "actions": [
+        "GuardMech, fire Shield Bash at D3",
+        "MirrorMech, move D5\u2192D6",
+        "IceMech, move G8\u2192E7, fire Cryo-Launcher at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:57:31.836488",
+      "turn": 4,
+      "label": "solve",
+      "score": 86482.00009376662,
+      "actions": [
+        "GuardMech, fire Shield Bash at D3",
+        "MirrorMech, move D5\u2192D6",
+        "IceMech, move G8\u2192E7, fire Cryo-Launcher at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T14:00:51.511798",
+      "turn": 4,
+      "label": "note",
+      "message": "Untouchable manual override on Mission_Dam turn 4: solver frontier only had mech_hp_loss, so using offline-projected no-HP line Guard bash F3, Mirror D5->D6 skip, Ice G8->E7 freeze E2; accepts ordinary B3/grid loss 4->3."
+    },
+    {
+      "timestamp": "2026-05-22T14:03:42.260248",
+      "turn": 4,
+      "label": "manual_override",
+      "achievement": "Untouchable",
+      "mission_id": "Mission_Dam",
+      "reason": "solver frontier included mech_hp_loss; offline manual line preserves mech HP and accepts ordinary grid/building loss",
+      "actions": [
+        "GuardMech, fire Shield Bash at F3",
+        "MirrorMech, move D5->D6",
+        "IceMech, move G8->E7, fire Cryo-Launcher at E2"
+      ],
+      "score_plan": {
+        "alive_mech_hp": 8,
+        "bldg_hp_total": 8,
+        "bldgs_alive": 6,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 6,
+        "buildings_after_player": 7,
+        "buildings_before": 7,
+        "buildings_destroyed_by_enemies": 1,
+        "current_turn": 4,
+        "dead_mechs": 0,
+        "enemy_grid_save_expected": 0.15000000596046448,
+        "grid_power": 3,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "mechs_alive": 3,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 1,
+        "score": 32812.00015200887,
+        "total_turns": 4
+      },
+      "plan_safety": {
+        "status": "DIRTY",
+        "blocking": true,
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "current": 4,
+            "predicted": 3,
+            "blocking": true,
+            "message": "Predicted grid power drops before the next player turn.",
+            "delta": -1
+          },
+          {
+            "kind": "building_destroyed",
+            "current": 7,
+            "predicted": 6,
+            "blocking": true,
+            "message": "Predicted outcome destroys one or more buildings.",
+            "delta": -1
+          },
+          {
+            "kind": "building_hp_loss",
+            "current": 9,
+            "predicted": 8,
+            "blocking": true,
+            "message": "Predicted outcome loses building HP even if grid power stays visible.",
+            "delta": -1
+          }
+        ],
+        "compared": [
+          "grid_power",
+          "buildings_alive",
+          "building_hp_total",
+          "objective_buildings_alive",
+          "objective_building_hp_total",
+          "pods_present",
+          "mites_remaining",
+          "mission_kill_limit",
+          "mission_kills_done",
+          "mechs_alive",
+          "mech_hp_total",
+          "mechs_acid",
+          "mechs_fire",
+          "mechs_webbed",
+          "mechs_on_danger",
+          "mechs_disabled",
+          "bigbomb_alive",
+          "protected_objective_units_alive",
+          "destroy_objective_units_alive"
+        ],
+        "current": {
+          "mission_id": "Mission_Dam",
+          "turn": 4,
+          "total_turns": 4,
+          "grid_power": 4,
+          "buildings_alive": 7,
+          "building_hp_total": 9,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "mechs_alive": 3,
+          "mech_hp_total": 8,
+          "mech_damage_taken_total": 0,
+          "mech_damage_objective_limit": null,
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_webbed": [
+            {
+              "uid": 0,
+              "type": "GuardMech",
+              "pos": [
+                5,
+                3
+              ]
+            }
+          ],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "bigbomb_alive": false,
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_thawed": null,
+          "terraform_grass_remaining": null,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mechs_infected": [],
+          "mission_kill_target": 0,
+          "mission_kill_limit": 4,
+          "mission_kills_done": 2
+        },
+        "predicted": {
+          "mission_id": "Mission_Dam",
+          "turn": 4,
+          "total_turns": 4,
+          "grid_power": 3,
+          "buildings_alive": 6,
+          "building_hp_total": 8,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "mechs_alive": 3,
+          "mech_hp_total": 8,
+          "mech_damage_taken_total": 0,
+          "mech_damage_objective_limit": null,
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_webbed": [
+            {
+              "uid": 0,
+              "type": "GuardMech",
+              "pos": [
+                5,
+                3
+              ]
+            }
+          ],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "bigbomb_alive": false,
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_thawed": null,
+          "terraform_grass_remaining": null,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mechs_infected": [],
+          "mission_kill_target": 0,
+          "mission_kill_limit": 4,
+          "mission_kills_done": 2,
+          "mission_kills_planned": 0
+        }
+      }
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      1,
+      3
+    ]
+  ],
+  "post_enemy_block": null,
+  "dirty_consent_used": [
+    "bd1f69d33c9b6899"
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Mirrorshot|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          4,
+          4
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [
+    {
+      "weapon_id": "Brute_Mirrorshot",
+      "cause_pattern": "death|Brute_Mirrorshot|attack",
+      "expires_turn": 5,
+      "strategic_override": false
+    }
+  ],
+  "research_queue": [
+    {
+      "type": "GuardMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Armored_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Frozen Titans friendly mech weapon is already modeled and known; stale queue item during Untouchable run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "MirrorMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Armored_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Frozen Titans friendly mech weapon is already modeled and known; stale queue item during Untouchable run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "IceMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Armored_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Frozen Titans friendly mech weapon is already modeled and known; stale queue item during Untouchable run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "Scarab1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Dam",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Scarab1 in data/known_types; queue item came from a Brute_Mirrorshot death desync already soft-disabled for live solving, not missing visual research.",
+        "kind": "behavior_novelty",
+        "attempts": 0,
+        "diff_field": "alive",
+        "diff_predicted": false,
+        "diff_actual": true
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high"
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "d579a3508f0e693f",
+    "classes": "ggbbgbgggggggggwmfbbggbwwwwwwwwwwiwwwwwwmgggggbwgfgfggwwggggggfw",
+    "mission_index": 1,
+    "turn": 4
+  },
+  "terrain_stage_change_pending": false
+}

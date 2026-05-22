@@ -1,0 +1,20 @@
+{
+  "run_id": "20260522_124544_344",
+  "squad": "Frozen Titans",
+  "difficulty": 0,
+  "achievement_targets": [
+    "Untouchable"
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "solver_version": "rust-0.1.0-c9f3f87",
+  "weight_version": "v011",
+  "updated": "2026-05-22T13:30:48.254481",
+  "created": "2026-05-22T12:45:44.369167",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 4,
+  "outcome_recorded_at": "2026-05-22T13:30:48.234739",
+  "outcome_notes": "Untouchable Detritus Corporate HQ secured with no mech HP loss, grid 5/7. Accepted exact objective-loss dirty line 027308428fea0618 to leave Spider Leader alive while preserving mech HP and Corporate Tower."
+}

@@ -1,0 +1,194 @@
+{
+  "timestamp": "2026-05-22T14:34:10.237998",
+  "run_id": "20260522_133722_695",
+  "mission_index": 3,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 12,
+      "pylons_alive": null,
+      "pylon_hp_total": null,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 0,
+      "freeze_building_target": null,
+      "freeze_buildings_alive": null,
+      "freeze_buildings_frozen": null,
+      "freeze_buildings_thawed": null,
+      "freeze_buildings": [],
+      "grid_power": 5,
+      "enemies_alive": 3,
+      "enemy_hp_total": 7,
+      "mechs_alive": 3,
+      "mech_hp_total": 8,
+      "mech_damage_taken_total": 0,
+      "mech_damage_objective_limit": null,
+      "bigbomb_alive": false,
+      "terraform_grass_remaining": null,
+      "terraform_grass_tiles": [],
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "MirrorMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "IceMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "mechs_acid": [],
+      "mechs_fire": [],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "pos": [
+            3,
+            2
+          ]
+        }
+      ],
+      "mechs_infected": [],
+      "mites_remaining": 0,
+      "mites_status_tracked": true,
+      "mission_id": "Mission_Survive",
+      "mission_kill_target": 0,
+      "mission_kill_limit": 0,
+      "mission_kills_done": 0,
+      "mission_mountain_target": 0,
+      "mission_mountains_destroyed": 0,
+      "mission_mountain_tiles": [],
+      "turn": 2,
+      "total_turns": 4,
+      "destroy_objective_units": [],
+      "destroy_objective_units_alive": 0,
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0
+    },
+    "predicted_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 12,
+      "pylons_alive": null,
+      "pylon_hp_total": null,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 0,
+      "freeze_building_target": null,
+      "freeze_buildings_alive": null,
+      "freeze_buildings_frozen": null,
+      "freeze_buildings_thawed": null,
+      "freeze_buildings": [],
+      "grid_power": 5,
+      "enemies_alive": 1,
+      "enemy_hp_total": 1,
+      "mechs_alive": 3,
+      "mech_hp_total": 8,
+      "mech_damage_taken_total": 0,
+      "mech_damage_objective_limit": null,
+      "bigbomb_alive": false,
+      "terraform_grass_remaining": null,
+      "terraform_grass_tiles": [],
+      "mech_hp": [
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "GuardMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "MirrorMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "IceMech",
+          "uid": 2
+        }
+      ],
+      "mechs_acid": [],
+      "mechs_fire": [],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mechs_infected": [],
+      "mites_remaining": 0,
+      "mites_status_tracked": false,
+      "mission_id": "Mission_Survive",
+      "mission_kill_target": 0,
+      "mission_kill_limit": 0,
+      "mission_kills_done": 1,
+      "mission_mountain_target": 0,
+      "mission_mountains_destroyed": 0,
+      "mission_mountain_tiles": [],
+      "turn": 1,
+      "total_turns": 4,
+      "destroy_objective_units": [],
+      "destroy_objective_units_alive": 0,
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_killed_by_enemy_phase": 0,
+      "enemies_killed_by_player": 1,
+      "enemies_killed_by_spawn_block": 0,
+      "enemies_killed_total_projected": 1,
+      "mission_kills_by_enemy_phase": 0,
+      "mission_kills_by_player": 1,
+      "mission_kills_by_spawn_block": 0,
+      "mission_kills_done_projected": 1,
+      "mission_kills_total_projected": 1,
+      "mission_mountains_destroyed_projected": 0,
+      "pods_collected": 0
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 2,
+      "protected_objective_units_alive_diff": 0,
+      "protected_objective_units_frozen_diff": 0,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "GuardMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "MirrorMech",
+          "predicted_hp": 3,
+          "actual_hp": 3,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "IceMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

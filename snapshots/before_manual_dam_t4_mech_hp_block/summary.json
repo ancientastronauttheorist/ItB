@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-22T13:58:03.370110",
+  "label": "before_manual_dam_t4_mech_hp_block",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "GuardMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "MirrorMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IceMech",
+      "pos": [
+        0,
+        1
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    }
+  ]
+}

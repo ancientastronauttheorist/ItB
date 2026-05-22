@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-05-22T13:32:48.300428",
+  "label": "untouchable_failed_non_hp_damage_events",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "GuardMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "MirrorMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IceMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "SpiderBoss",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 7
+    },
+    {
+      "type": "SpiderlingEgg1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Health1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "SpiderlingEgg1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "SpiderlingEgg1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 1
+    }
+  ]
+}

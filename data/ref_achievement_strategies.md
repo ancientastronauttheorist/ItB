@@ -300,12 +300,13 @@ evaluation weights when targeting that achievement.
 
 ### Untouchable (14.5%)
 - **Requirement:** Finish a Corporate Island without taking Mech Damage. Repaired damage still counts.
-- **Squad:** Any (Rusting Hulks recommended -- smoke prevents attacks)
-- **Strategy:** No mech can take any damage across an entire island (3-4 missions). Use smoke, shields, and pushing to prevent all damage to mechs. Avoid using self-damage weapons.
-- **Bot approach:** Set mech_damage weight to maximum. The solver should never allow mech damage, treating it as almost as bad as building damage. Prefer smoke/shield/push over direct combat.
-- **Key weapons:** Smoke weapons (Rusting Hulks), Shield Projector (Zenith Guard)
-- **Key pilots:** Mafan (Zoltan Shield absorbs 1 hit per turn)
-- **Ideal setup:** Normal difficulty, first island (fewer enemies). Rusting Hulks with smoke on every enemy every turn.
+- **Squad:** Frozen Titans succeeded on Easy in run `20260522_133722_695`; Rusting Hulks remain a strong alternative because smoke cancels attacks.
+- **Strategy:** No mech HP may go down across the island. Building, grid, failed bonus objective, and pod losses can be acceptable if they preserve mech HP and leave enough grid to finish. Use shields, freeze/smoke, pushes, and target denial before direct damage. Avoid self-damaging weapons and avoid mission slates with forced mech pressure.
+- **Bot approach:** Treat `mech_hp_loss` as a hard block. For this achievement only, manual lower-scoring lines are allowed after fresh-board review when they project zero mech HP loss, zero mech death, no dangerous status debt, and grid remains 2+. Dirty consent may accept reviewed grid/building/objective loss, but never mech HP loss. Run `auto_turn --time-limit 10` first and override only on safety blocks or missing solver lines.
+- **Key weapons:** Frozen Titans' Spartan Shield, Mirror Shot, and Cryo-Launcher; Rusting Hulks smoke weapons; Shield Projector if available. Shielded hits are fine when HP does not move.
+- **Key pilots:** Mafan/Bethany-style shields are ideal. Abe's armor helps against weapon damage but does not protect from bump, fire, acid-amplified, blocking, or environmental damage.
+- **Mission selection:** Prefer Easy Island 1 survive/defense maps. Avoid Mite / Old Earth mine missions, Bad Repairs, volatile Vek, trains, tidal waves, earthquake/chasm chaos, webber-heavy islands, frozen-building traps, and maps with non-controllable allies that can force awkward body-blocking.
+- **Successful run notes:** Frozen Titans on Easy cleared Archive in run `20260522_133722_695`; the game awarded **Untouchable** after Corporate HQ with grid `6/7`, proving grid/building damage is acceptable when mech HP stays full. The Steam client cache still reported 39/70 immediately afterward, so visible in-game achievement popups may lead local sync.
 - **Estimated difficulty for bot:** Medium-Hard
 
 ### Unwitting Allies (14.2%)

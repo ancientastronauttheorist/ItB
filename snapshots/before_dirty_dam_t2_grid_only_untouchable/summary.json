@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-22T13:52:14.100633",
+  "label": "before_dirty_dam_t2_grid_only_untouchable",
+  "turn": 2,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "GuardMech",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "MirrorMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IceMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        7,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    }
+  ]
+}
