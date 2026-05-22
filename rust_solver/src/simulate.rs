@@ -2565,10 +2565,14 @@ fn sim_hydraulic_lifter(
         return;
     }
 
+    let landing_was_forest = board.tile(tx, ty).terrain == Terrain::Forest;
     board.units[unit_idx].x = tx;
     board.units[unit_idx].y = ty;
     apply_landing_effects(board, unit_idx, result);
     apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+    if landing_was_forest {
+        apply_fire_tile_pickup(board, unit_idx, tx, ty);
+    }
 }
 
 fn sim_tri_rocket(
@@ -4522,6 +4526,22 @@ mod tests {
         assert_eq!(board.units[enemy].hp, 2);
         assert!(board.unit_at(3, 2).is_none());
         assert_eq!(result.enemy_damage_dealt, 1);
+    }
+
+    #[test]
+    fn test_hydraulic_lifter_landing_damage_ignites_forest_target() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 5, 0, 4, WId::PrimeTcPuntAB);
+        let enemy = add_enemy_type(&mut board, 1881, 5, 1, 5, "Firefly2");
+        board.tile_mut(5, 3).terrain = Terrain::Forest;
+
+        simulate_weapon(&mut board, mech, WId::PrimeTcPuntAB, 5, 3);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 3));
+        assert!(board.units[enemy].hp > 0, "target should survive to carry fire status");
+        assert!(board.units[enemy].fire(), "thrown forest-landing target should catch fire");
+        assert_eq!(board.tile(5, 3).terrain, Terrain::Ground);
+        assert!(board.tile(5, 3).on_fire(), "landing Forest should become burning Ground");
     }
 
     #[test]

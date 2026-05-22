@@ -1412,7 +1412,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Leader charge in Cataclysm Unfair stress run 20260521_120049_468
 //   Mission_BeetleBoss turn 2. Pre-v178 corpus archived as
 //   `failure_db_snapshot_sim_v177.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 178;
+// v179 - Hydraulic Lifter landing damage that ignites a Forest now immediately
+//   sets fire on the thrown surviving unit. Fixes Cataclysm Unfair stress run
+//   20260521_120049_468 Mission_Volatile turn 1, where Prime_TC_Punt_AB threw
+//   Firefly2 onto E3 Forest and live set status.fire. Pre-v179 corpus archived
+//   as `failure_db_snapshot_sim_v178.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 179;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

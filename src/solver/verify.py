@@ -969,7 +969,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # charger along the charge path. Fixes the Cataclysm Unfair Mission_BeetleBoss
 # turn 2 displaced Seismic-flipped Beetle Leader charge. Pre-v178 corpus
 # archived as failure_db_snapshot_sim_v177.jsonl.
-SIMULATOR_VERSION = 178
+# v179: Hydraulic Lifter landing damage that ignites a Forest now immediately
+# sets fire on the thrown surviving unit. Fixes Cataclysm Unfair Mission_Volatile
+# turn 1, where Prime_TC_Punt_AB threw Firefly2 onto E3 Forest and live set
+# status.fire. Pre-v179 corpus archived as failure_db_snapshot_sim_v178.jsonl.
+SIMULATOR_VERSION = 179
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
