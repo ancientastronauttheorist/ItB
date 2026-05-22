@@ -3530,6 +3530,27 @@ def _settle_post_enemy_board(
 # --- State Reading Commands ---
 
 
+def _unit_status_summary(unit) -> tuple[str, list[str]]:
+    """Human-readable action state plus live status flags for read output."""
+    if unit.hp <= 0:
+        base = "DEAD"
+    else:
+        base = "READY" if unit.active else "DONE"
+
+    flags: list[str] = []
+    if getattr(unit, "web", False):
+        flags.append("WEBBED")
+    if getattr(unit, "frozen", False):
+        flags.append("FROZEN")
+    if getattr(unit, "fire", False):
+        flags.append("FIRE")
+    if getattr(unit, "acid", False):
+        flags.append("ACID")
+    if getattr(unit, "shield", False):
+        flags.append("SHIELD")
+    return (f"{base} {'/'.join(flags)}" if flags else base, flags)
+
+
 def cmd_read(profile: str = "Alpha") -> dict:
     """Parse save file, detect game phase, dump board state.
 
@@ -3650,13 +3671,16 @@ def cmd_read(profile: str = "Alpha") -> dict:
             if phase in ("combat_player", "combat_enemy"):
                 mechs = board.mechs()
                 active_mechs = [m for m in mechs if m.active and m.hp > 0]
-                result["mechs"] = [
-                    {"type": m.type, "pos": _bv(m.x, m.y),
-                     "hp": f"{m.hp}/{m.max_hp}",
-                     "weapon": get_weapon_name(m.weapon),
-                     "status": "READY" if m.active else "DONE"}
-                    for m in mechs
-                ]
+                result["mechs"] = []
+                for m in mechs:
+                    status, conditions = _unit_status_summary(m)
+                    entry = {"type": m.type, "pos": _bv(m.x, m.y),
+                             "hp": f"{m.hp}/{m.max_hp}",
+                             "weapon": get_weapon_name(m.weapon),
+                             "status": status}
+                    if conditions:
+                        entry["conditions"] = conditions
+                    result["mechs"].append(entry)
                 result["active_mechs"] = len(active_mechs)
 
                 enemies = board.enemies()
@@ -3983,17 +4007,18 @@ def cmd_read(profile: str = "Alpha") -> dict:
         active_mechs = [mech for mech in mechs if mech.active and mech.hp > 0]
         result["mechs"] = []
         for mech in mechs:
-            status = "READY" if mech.active else "DONE"
-            if mech.hp <= 0:
-                status = "DEAD"
+            status, conditions = _unit_status_summary(mech)
             weapon_name = get_weapon_name(mech.weapon)
-            result["mechs"].append({
+            entry = {
                 "type": mech.type,
                 "pos": _bv(mech.x, mech.y),
                 "hp": f"{mech.hp}/{mech.max_hp}",
                 "weapon": weapon_name,
                 "status": status,
-            })
+            }
+            if conditions:
+                entry["conditions"] = conditions
+            result["mechs"].append(entry)
         result["active_mechs"] = len(active_mechs)
 
         # Enemies
