@@ -8272,6 +8272,27 @@ mod tests {
     // ── PushDir::Flip semantics (Spartan Shield / Confusion Ray) ──────────────
 
     #[test]
+    fn test_spartan_shield_deals_damage_and_flips_attack() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::PrimeShieldBash);
+        let enemy = add_enemy(&mut board, 2, 3, 2, 3);
+        board.units[enemy].queued_target_x = 3;
+        board.units[enemy].queued_target_y = 1;
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeShieldBash, 3, 2);
+
+        assert_eq!(board.units[enemy].hp, 1, "Spartan Shield deals base 2 damage");
+        assert_eq!(
+            (board.units[enemy].queued_target_x, board.units[enemy].queued_target_y),
+            (3, 3),
+            "Spartan Shield flips the queued attack around the target"
+        );
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 2),
+            "Flip does not push the target");
+        assert_eq!(result.enemy_damage_dealt, 2);
+    }
+
+    #[test]
     fn test_flip_queued_attack_flips_180_around_unit_position() {
         // Enemy at (3,3) aimed NORTH at (3,0). Flip → aimed SOUTH at (3,6).
         let mut board = make_test_board();

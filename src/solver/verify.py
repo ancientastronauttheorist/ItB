@@ -981,7 +981,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # DIRS before simulation. Fixes Rusting Hulks Untouchable Mission_BeltRandom
 # turn 1, where raw conveyor2 on C5 bumped PulseMech into B5 and cost 1 HP
 # plus 1 grid. Pre-v181 corpus archived as failure_db_snapshot_sim_v180.jsonl.
-SIMULATOR_VERSION = 181
+SIMULATOR_VERSION = 183
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

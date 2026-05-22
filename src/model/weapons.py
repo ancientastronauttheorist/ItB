@@ -165,9 +165,9 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     ),
     "Prime_ShieldBash": WeaponDef(
         name="Spartan Shield", weapon_type="melee",
-        damage=0, push="none",
-        upgrade_a="shield self before attack",
-        upgrade_b="+1 damage (total 1)",
+        damage=2, push="flip",
+        upgrade_a="gain shield when bashing",
+        upgrade_b="+1 damage (total 3)",
     ),
     "Prime_Shift": WeaponDef(
         name="Vice Fist", weapon_type="melee",

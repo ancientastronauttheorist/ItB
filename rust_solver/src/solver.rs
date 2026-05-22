@@ -775,9 +775,11 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         return actions;
     }
 
+    // Webbed mechs can attack or repair, but their normal move phase is
+    // locked until the web source moves/dies or the mech is pushed.
     // MID_ACTION mechs (can_move=false): already moved, only generate
     // attack/repair options from current position.
-    let positions = if unit.can_move() {
+    let positions = if unit.can_move() && !unit.web() {
         reachable_tiles(board, mech_idx)
     } else {
         vec![(unit.x, unit.y)]
@@ -1843,6 +1845,46 @@ mod top_k_tests {
         assert!(
             actions.iter().any(|a| a.1 == WId::Repair),
             "Vek Mites must make Repair a legal action even at full HP"
+        );
+    }
+
+    #[test]
+    fn webbed_mech_cannot_use_normal_move_phase() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 4,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE | UnitFlags::WEB,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::PrimeShieldBash as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("GuardMech");
+        let enemy_idx = board.add_unit(Unit {
+            uid: 212,
+            x: 4,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.units[enemy_idx].set_type_name("Leaper1");
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(!actions.is_empty(), "webbed mechs should still have attack/skip options");
+        assert!(
+            actions.iter().all(|a| a.0 == (4, 4)),
+            "webbed normal movement must stay on the current tile; got {:?}",
+            actions
         );
     }
 
