@@ -33,6 +33,7 @@ evaluation weights when targeting that achievement.
 - [x] Unwitting Allies (14.2%) -- 4 enemies die from enemy fire (Steel Judoka)
 - [x] Unbreakable (10.2%) -- Mech Armor absorbs 5 damage in one battle (Steel Judoka)
 - [x] Hard Victory (9.0%) -- Beat the game on Hard
+- [x] Unstable Ground (7.9%) -- Crack 10 tiles in one mission (Cataclysm)
 
 ---
 
@@ -260,7 +261,7 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### This is Fine (15.7%)
-- **Status:** Completed on 2026-05-21 with Flame Behemoths on Easy in run `20260520_174936_811`; live achievement toast observed during the R.S.T. Black Rock / `Mission_Crack` fire-spread push. Next Steam sync should reconcile the checklist to 38/70.
+- **Status:** Completed on 2026-05-21 with Flame Behemoths on Easy in run `20260520_174936_811`; live achievement toast observed during the R.S.T. Black Rock / `Mission_Crack` fire-spread push. The 2026-05-21 Steam/client sync reconciled the checklist to 39/70.
 - **Requirement:** Have 5 enemies on Fire simultaneously with the Flame Behemoths squad.
 - **Squad:** Flame Behemoths (required)
 - **Strategy:** Set enemies on fire using Flame Thrower and Vulcan Artillery. Need 5+ enemies alive and on fire at the same time. Do not kill burning enemies. Later missions with more enemies (4-5 at once) plus emerging Vek make this possible. Ignite tiles where Vek are emerging so they spawn on fire.
@@ -460,11 +461,12 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### Unstable Ground (7.9%)
+- **Status:** Completed on 2026-05-21 during Cataclysm run `20260521_120049_468`; Steam/client sync confirmed `Ach_Squad_Cataclysm_1` and brought the local checklist to 39/70.
 - **Requirement:** Crack 10 tiles in one mission with the Cataclysm squad.
 - **Squad:** Cataclysm (required)
-- **Strategy:** The Cataclysm squad specializes in cracking ground tiles. The Tectonic Mech's Seismic Slam cracks tiles, the Shrapnel Mech's Cluster Bombs crack tiles, and the Prospector Mech helps with positioning. Cracking 10 tiles in one 5-turn mission requires aggressive ground-cracking every turn.
-- **Bot approach:** The solver should maximize tiles cracked per turn. Weight cracked tiles heavily. Use all weapon actions to crack tiles even when not directly needed for Vek defense. [needs-verification: exact weapon mechanics for Cataclysm squad]
-- **Key weapons:** Seismic Slam (Tectonic Mech), Cluster Bombs (Shrapnel Mech), Prospector tools
+- **Strategy:** The Cataclysm squad specializes in cracking ground tiles. Seismic Capacitor cracks adjacent tiles when its target dies, Tri-Rocket cracks target lanes while pushing, and Hydraulic Lifter creates throw lines that let cracked terrain become kills or control.
+- **Bot approach:** The solver should still maximize useful cracked tiles early, especially when threat safety is already solved. Avoid wasting cracks on water/chasm-heavy maps, objective tiles, Time Pods, trains, or lines that make future pathing unsafe.
+- **Key weapons:** Seismic Capacitor (Drill Mech), Tri-Rocket (Triptych Mech), Hydraulic Lifter (Pitcher Mech)
 - **Ideal setup:** Normal difficulty, pick missions with lots of normal ground tiles (avoid water/chasm heavy maps).
 - **Estimated difficulty for bot:** Medium-Hard
 

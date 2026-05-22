@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-20T21:17:06.474056",
+    "last_steam_sync": "2026-05-21T20:45:29.707858",
     "last_steam_total": 70,
-    "last_steam_unlocked": 37
+    "last_steam_unlocked": 39
   },
   "achievements": {
     "rift_walkers": [
@@ -197,7 +197,7 @@
         "description": "Have 5 enemies on Fire simultaneously with the Flame Behemoths squad",
         "type": "single_battle",
         "global_unlock_pct": 15.7,
-        "completed": false,
+        "completed": true,
         "strategy": "Blood Psion mission ideal \u2014 enemies regenerate, keeping them alive while burning. Upgrade Flamethrower range. Set all enemies on fire but don't kill them. Need 5 burning Vek at same time.",
         "setup": "Blood Psion mission. Upgraded Flamethrower. Late turn with many enemies.",
         "pitfalls": "Burning enemies take 1 damage/turn and may die. Blood Psion regeneration counteracts this."
@@ -465,7 +465,7 @@
         "description": "Crack 10 tiles in one mission with the Cataclysm squad",
         "type": "single_battle",
         "global_unlock_pct": 7.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Drill Mech kills crack adjacent tiles. Triptych Mech creates pits. Upgrade Drill Mech damage (1 core) for more kills. Focus on 2-HP enemy kills. 10 cracked tiles total.",
         "setup": "Upgraded Drill Mech. Many enemies to kill. Late turns with spawns.",
         "pitfalls": "Cracks only happen on kills (Drill) or Triptych strikes. Need enough enemies."

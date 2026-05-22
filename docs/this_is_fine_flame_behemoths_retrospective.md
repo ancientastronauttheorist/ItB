@@ -6,7 +6,7 @@ Squad: Flame Behemoths
 Difficulty: Easy
 Target: Have 5 enemies on Fire simultaneously
 
-Outcome: **This is Fine unlocked**. The achievement toast was observed live during the Flame Behemoths Easy push, after the R.S.T. Black Rock / `Mission_Crack` fire-spread sequence. This brings the live-confirmed achievement count to 38/70; the next Steam sync should reconcile the stored checklist.
+Outcome: **This is Fine unlocked**. The achievement toast was observed live during the Flame Behemoths Easy push, after the R.S.T. Black Rock / `Mission_Crack` fire-spread sequence. The 2026-05-21 Steam/client sync reconciled this achievement, plus **Unstable Ground**, bringing the stored checklist to 39/70.
 
 ## What Worked
 
@@ -24,4 +24,4 @@ Outcome: **This is Fine unlocked**. The achievement toast was observed live duri
 
 ## Next Target
 
-Flame Behemoths squad achievements are now closed: **Scorched Earth**, **Quantum Entanglement**, and **This is Fine** are complete. Before starting the next hunt, run `python3 game_loop.py achievements --sync` to reconcile Steam state, then use `python3 game_loop.py recommend_squad --tags achievement` to choose the next unfinished squad target.
+Flame Behemoths squad achievements are now closed: **Scorched Earth**, **Quantum Entanglement**, and **This is Fine** are complete. Cataclysm has since picked up **Unstable Ground**; the remaining Cataclysm squad targets are **Core of the Earth** and **Miner Inconvenience**.

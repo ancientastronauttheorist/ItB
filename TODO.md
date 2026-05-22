@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-38 of 70 live-confirmed (**This is Fine** toast observed on 2026-05-21; latest repo Steam sync still reported 37/70 on 2026-05-21, so refresh with `python3 game_loop.py achievements --sync` when `.env` has Steam credentials. profile.lua drifts -- it missed Watery Grave / Perfect Island / Sustainable Energy). 32 remaining, sorted by global unlock % (easiest first).
+39 of 70 Steam-confirmed (`python3 game_loop.py achievements --sync` on 2026-05-21 reconciled Steam/client cache and local metadata at 39/70. profile.lua drifts -- it missed Watery Grave / Perfect Island / Sustainable Energy). 31 remaining, sorted by global unlock % (easiest first).
 
-Current milestone: This is Fine is complete, live-confirmed by the 2026-05-21 achievement toast during Flame Behemoths Easy run `20260520_174936_811`. The successful route used R.S.T. fire-friendly boards, Ignite/Backburn tile fire, spawn-lane ignition, and high-HP Vek that stayed burning long enough to count five simultaneous Fire statuses. The key live-loop note is in `docs/this_is_fine_flame_behemoths_retrospective.md`. Flame Behemoths squad achievements are now closed; sync Steam and pick the next unfinished squad target.
+Current milestone: Unstable Ground is complete, Steam-confirmed by the 2026-05-21 sync during Cataclysm run `20260521_120049_468`. The Cataclysm push can keep pursuing Core of the Earth and Miner Inconvenience if the run stays viable. The prior Flame Behemoths milestone is also fully reconciled: This is Fine, Quantum Entanglement, and Scorched Earth are all complete.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -61,7 +61,7 @@ Current milestone: This is Fine is complete, live-confirmed by the 2026-05-21 ac
 - [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
 - [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
-- [ ] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm]
+- [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
 - [ ] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom
 - [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
 - [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
@@ -79,7 +79,7 @@ Current milestone: This is Fine is complete, live-confirmed by the 2026-05-21 ac
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (37, from Steam sync + live confirmations)
+### Already Completed (39, from Steam sync + live confirmations)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -117,6 +117,7 @@ Current milestone: This is Fine is complete, live-confirmed by the 2026-05-21 ac
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
+- [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
 - [x] Squads Victory — Beat game with 4 different Squads
 
 
