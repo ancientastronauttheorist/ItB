@@ -61,6 +61,21 @@ NON_OVERRIDABLE_KINDS = {
     "kill_limit_objective_failed",
 }
 
+OBJECTIVE_LOSS_DIRTY_KINDS = {
+    "objective_building_destroyed",
+    "objective_building_hp_loss",
+    "protected_objective_unit_lost",
+    "protected_objective_unit_unfrozen",
+    "destroy_objective_unit_alive_final",
+    "mech_damage_objective_failed",
+    "freeze_building_objective_failed",
+    "terraform_grass_objective_failed",
+    "mountain_objective_failed",
+    "mite_objective_failed",
+    "kill_objective_failed",
+    "kill_limit_objective_failed",
+}
+
 FINAL_CAVE_EMERGENCY_PYLON_KINDS = {
     "pylon_destroyed",
     "pylon_hp_loss",
@@ -769,7 +784,8 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
                                allow_dirty_plan: bool = False,
                                allow_timeline_collapse_debug: bool = False,
                                allow_kill_limit_objective_dirty: bool = False,
-                               allow_protected_objective_loss_dirty: bool = False) -> bool:
+                               allow_protected_objective_loss_dirty: bool = False,
+                               allow_objective_loss_dirty: bool = False) -> bool:
     """Return True when auto_turn should stop before executing actions."""
     if not isinstance(audit, dict):
         return True
@@ -810,6 +826,10 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             and not (
                 allow_protected_objective_loss_dirty
                 and v.get("kind") == "protected_objective_unit_lost"
+            )
+            and not (
+                allow_objective_loss_dirty
+                and v.get("kind") in OBJECTIVE_LOSS_DIRTY_KINDS
             )
             for v in audit.get("violations", []) or []
         )

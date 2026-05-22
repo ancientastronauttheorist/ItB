@@ -35,6 +35,7 @@ from src.solver.evaluate import evaluate_threats
 from src.solver.plan_safety import (
     FINAL_CAVE_EMERGENCY_PYLON_KINDS,
     NON_OVERRIDABLE_KINDS,
+    OBJECTIVE_LOSS_DIRTY_KINDS,
     audit_plan_safety,
     final_bomb_dirty_consent_allowed,
     final_cave_emergency_pylon_loss_allowed,
@@ -392,6 +393,7 @@ def _dirty_consent_gate(
     provided_id: str | None,
     consume: bool = True,
     allow_protected_objective_loss: bool = False,
+    allow_objective_loss: bool = False,
 ) -> dict | None:
     if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
         return None
@@ -436,6 +438,10 @@ def _dirty_consent_gate(
         and not (
             allow_protected_objective_loss
             and k == "protected_objective_unit_lost"
+        )
+        and not (
+            allow_objective_loss
+            and k in OBJECTIVE_LOSS_DIRTY_KINDS
         )
     )
     if non_overridable:
@@ -8403,7 +8409,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   allow_dirty_plan: bool = False,
                   candidate_rank: int | None = None,
                   dirty_consent_id: str | None = None,
-                  allow_protected_objective_loss: bool = False) -> dict:
+                  allow_protected_objective_loss: bool = False,
+                  allow_objective_loss: bool = False) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -8761,6 +8768,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             provided_id=dirty_consent_id,
             consume=False,
             allow_protected_objective_loss=allow_protected_objective_loss,
+            allow_objective_loss=allow_objective_loss,
         )
         if consent_error is not None:
             _print_result(consent_error)
@@ -8770,7 +8778,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     if plan_requires_safety_block(plan_safety,
                                   allow_dirty_plan=allow_dirty_plan,
                                   allow_kill_limit_objective_dirty=allow_kill_limit_dirty,
-                                  allow_protected_objective_loss_dirty=allow_protected_objective_loss):
+                                  allow_protected_objective_loss_dirty=allow_protected_objective_loss,
+                                  allow_objective_loss_dirty=allow_objective_loss):
         consent_id = _dirty_consent_id(
             session,
             turn,

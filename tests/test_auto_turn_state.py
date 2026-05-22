@@ -279,6 +279,64 @@ def test_dirty_consent_accepts_protected_objective_loss_with_stress_flag():
     assert token in s.dirty_consent_used
 
 
+def test_dirty_consent_accepts_objective_loss_with_stress_flag():
+    s = RunSession(run_id="r", difficulty=3, tags=["solver_eval"])
+    s.mission_index = 3
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "objective_building_destroyed",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "objective_building_hp_loss",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "protected_objective_unit_lost",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+        ],
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=0)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+    )
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+        allow_objective_loss=True,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "objective_building_destroyed" in rejected["reason"]
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
 def test_dirty_consent_validation_can_delay_token_consumption():
     s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
     s.mission_index = 4
