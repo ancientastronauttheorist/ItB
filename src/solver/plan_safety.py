@@ -64,6 +64,7 @@ NON_OVERRIDABLE_KINDS = {
 OBJECTIVE_LOSS_DIRTY_KINDS = {
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "pod_unrecovered_final",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
     "destroy_objective_unit_alive_final",
