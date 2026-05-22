@@ -2294,7 +2294,9 @@ pub fn simulate_weapon_with(
 
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
-        WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
+        WeaponType::Projectile => {
+            sim_projectile(board, ax, ay, weapon_id, wdef, attack_dir, &mut result)
+        },
         WeaponType::Artillery if is_arachnoid_injector(weapon_id) => {
             sim_arachnoid_injector(
                 board,
@@ -2939,7 +2941,15 @@ fn projectile_damage(wdef: &WeaponDef, ax: u8, ay: u8, hx: u8, hy: u8) -> u8 {
     scaled.min(wdef.damage)
 }
 
-fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_projectile(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
     let dir = match attack_dir {
         Some(d) => d,
         None => return,
@@ -3000,6 +3010,8 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         ); // status BEFORE push (unit still here)
         let policy = if wdef.no_edge_bump_direct_push() {
             NO_EDGE_BUMP_PUSH_POLICY
+        } else if weapon_id == WId::BruteMirrorshot {
+            TRI_ROCKET_PUSH_POLICY
         } else {
             DEFAULT_PUSH_POLICY
         };
@@ -10059,6 +10071,28 @@ mod tests {
             board.tile(0, 6).terrain, Terrain::Rubble,
             "Mountain at hp=1 hit by Mirror Shot backward arm should become Rubble"
         );
+    }
+
+    #[test]
+    fn test_mirrorshot_killed_forward_target_bumps_live_mech_blocker() {
+        // Live regression: Frozen Titans Untouchable run
+        // 20260521_223240_242, Mission_Airstrike turn 1. Mirror Mech at G6
+        // fired Janus Cannon at the 1-HP egg/debris on F6 while Ice Mech
+        // stood directly behind it on E6. The killed target still resolved
+        // the forward push/bump into Ice Mech, invalidating Untouchable.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 2, 1, 3, WId::BruteMirrorshot);
+        let debris = add_enemy_type(&mut board, 2272, 2, 2, 1, "BonusDebris");
+        let ice = add_mech(&mut board, 2, 2, 3, 2, WId::RangedIce);
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshot, 2, 2);
+
+        assert_eq!(board.units[debris].hp, 0);
+        assert_eq!(
+            board.units[ice].hp, 1,
+            "Mirror Shot killed-target forward push should corpse-bump the live mech blocker"
+        );
+        assert_eq!(result.mech_damage_taken, 1);
     }
 
     // ── Teleporter pad swap (Mission_Teleporter) ──────────────────────────

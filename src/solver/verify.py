@@ -973,7 +973,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # sets fire on the thrown surviving unit. Fixes Cataclysm Unfair Mission_Volatile
 # turn 1, where Prime_TC_Punt_AB threw Firefly2 onto E3 Forest and live set
 # status.fire. Pre-v179 corpus archived as failure_db_snapshot_sim_v178.jsonl.
-SIMULATOR_VERSION = 179
+# v180: Mirror Shot killed forward targets still resolve the forward corpse bump
+# into live blockers. Fixes Frozen Titans Untouchable Mission_Airstrike turn 1,
+# where Brute_Mirrorshot killed BonusDebris on F6 and live bumped IceMech on E6
+# for 1 HP. Pre-v180 corpus archived as failure_db_snapshot_sim_v179.jsonl.
+SIMULATOR_VERSION = 180
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

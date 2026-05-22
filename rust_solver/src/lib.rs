@@ -1417,7 +1417,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260521_120049_468 Mission_Volatile turn 1, where Prime_TC_Punt_AB threw
 //   Firefly2 onto E3 Forest and live set status.fire. Pre-v179 corpus archived
 //   as `failure_db_snapshot_sim_v178.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 179;
+// v180 - Mirror Shot killed forward targets still resolve the forward corpse
+//   bump into live blockers. Fixes Frozen Titans Untouchable run
+//   20260521_223240_242 Mission_Airstrike turn 1, where Brute_Mirrorshot killed
+//   BonusDebris on F6 and live bumped IceMech on E6 for 1 HP. Pre-v180 corpus
+//   archived as `failure_db_snapshot_sim_v179.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 180;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
