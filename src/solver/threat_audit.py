@@ -167,6 +167,11 @@ def _will_die_to_lethal_environment_before_attack(board: Board, attacker: Unit) 
     v2 = getattr(board, "environment_danger_v2", {}) or {}
     if pos in v2:
         _damage, lethal = v2[pos]
+        flying_immune = pos in (
+            getattr(board, "environment_danger_flying_immune", set()) or set()
+        )
+        if lethal and flying_immune and getattr(attacker, "flying", False):
+            return False
         return bool(lethal)
     return pos in (getattr(board, "environment_danger", set()) or set())
 

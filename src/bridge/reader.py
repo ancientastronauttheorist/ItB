@@ -63,6 +63,77 @@ def _is_infinite_spawn_mission(mission_id: str) -> bool:
     return False
 
 
+def _satellite_launch_danger_tiles(data: dict) -> set[tuple[int, int]]:
+    """Return Mission_Satellite launch blast tiles.
+
+    Launch blasts resolve before Vek attacks, but they spare flying pawns.
+    Older/current Lua bridge builds expose their adjacent death tiles with
+    ``flying_immune=0``. Normalize that bit before solver/audit use.
+    """
+    if data.get("mission_id") != "Mission_Satellite":
+        return set()
+
+    tiles: set[tuple[int, int]] = set()
+    for unit in data.get("units", []) or []:
+        if not isinstance(unit, dict):
+            continue
+        if "Satellite" not in str(unit.get("type", "")):
+            continue
+        if unit.get("hp", 0) <= 0 or not unit.get("queued_launch"):
+            continue
+        x, y = unit.get("x"), unit.get("y")
+        if not isinstance(x, int) or not isinstance(y, int):
+            continue
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if 0 <= nx < 8 and 0 <= ny < 8:
+                tiles.add((nx, ny))
+    return tiles
+
+
+def _mark_satellite_launch_danger_flying_immune(data: dict) -> None:
+    """Mark satellite launch danger as lethal terrain that spares flyers."""
+    launch_tiles = _satellite_launch_danger_tiles(data)
+    if not launch_tiles:
+        return
+
+    danger = [
+        list(entry) if isinstance(entry, tuple) else entry
+        for entry in (data.get("environment_danger", []) or [])
+    ]
+    danger_v2 = [
+        list(entry) if isinstance(entry, tuple) else entry
+        for entry in (data.get("environment_danger_v2", []) or [])
+    ]
+    seen_v1 = {
+        (entry[0], entry[1])
+        for entry in danger
+        if isinstance(entry, list) and len(entry) >= 2
+    }
+    seen_v2: set[tuple[int, int]] = set()
+
+    for entry in danger_v2:
+        if not isinstance(entry, list) or len(entry) < 2:
+            continue
+        pos = (entry[0], entry[1])
+        seen_v2.add(pos)
+        if pos not in launch_tiles:
+            continue
+        while len(entry) < 5:
+            entry.append(0)
+        entry[2] = entry[2] if entry[2] else 1
+        entry[3] = 1
+        entry[4] = 1
+
+    for x, y in sorted(launch_tiles):
+        if (x, y) not in seen_v1:
+            danger.append([x, y])
+        if (x, y) not in seen_v2:
+            danger_v2.append([x, y, 1, 1, 1])
+
+    data["environment_danger"] = danger
+    data["environment_danger_v2"] = danger_v2
+
+
 def _parse_conveyor_belts_from_save_text(content: str) -> dict[tuple[int, int], int]:
     """Parse conveyor sprites without crossing serialized tile entries."""
     belts = {}
@@ -862,6 +933,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         _normalize_queued_targets(data["units"])
         _reconcile_flipped_queued_targets_with_targeted_tiles(data)
         _recover_grapple_probe_webs(data["units"])
+        _mark_satellite_launch_danger_flying_immune(data)
 
     # Mission_Repair progress (Use 3 Repair Platforms). Old live modloader
     # builds already emit tile.item="Item_Repair_Mine" but not the progress

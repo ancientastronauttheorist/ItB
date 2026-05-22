@@ -56,6 +56,32 @@ def test_summary_honors_flying_immunity_for_environment_danger():
     assert summary["mechs_on_danger"] == []
 
 
+def test_summary_honors_board_flying_immunity_when_bridge_payload_is_stale():
+    data = _bridge_with_mech(flying=True, danger=[[2, 5, 1, 1, 0]])
+    data["mission_id"] = "Mission_Satellite"
+    data["targeted_tiles"] = [[2, 5]]
+    data["units"].append({
+        "uid": 98,
+        "type": "SatelliteRocket",
+        "x": 2,
+        "y": 4,
+        "hp": 2,
+        "max_hp": 2,
+        "team": 1,
+        "mech": False,
+        "move": 0,
+        "weapons": ["Rocket_Launch"],
+        "active": False,
+        "queued_launch": True,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert (2, 5) in board.environment_danger_flying_immune
+    assert summary["mechs_on_danger"] == []
+
+
 def test_summary_does_not_treat_spent_action_as_disabled():
     data = _bridge_with_mech()
     data["units"][0]["active"] = False

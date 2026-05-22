@@ -237,6 +237,21 @@ def test_threat_audit_attacker_will_die_to_lethal_environment():
     )
 
 
+def test_threat_audit_flying_attacker_survives_flying_immune_environment():
+    board = _board()
+    board.units[0].flying = True
+    board.environment_danger.add((4, 4))
+    board.environment_danger_v2[(4, 4)] = (1, True)
+    board.environment_danger_flying_immune.add((4, 4))
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "WARN"
+    assert audit["still_threatened_count"] == 1
+    assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
+
+
 def test_threat_audit_shield_blocks_environment_freeze_credit():
     board = _board()
     board.environment_freeze.add((4, 4))

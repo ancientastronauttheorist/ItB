@@ -871,9 +871,10 @@ local function dump_state()
     --   flying_immune=1 → terrain-conversion lethal (Tidal Wave, Cataclysm,
     --                     Seismic). Effectively-flying units survive
     --                     because water/chasm rules let them hover.
-    --                     Air Strike / Lightning / Satellite / Final Cave
-    --                     falling rocks emit flying_immune=0 — those hit
-    --                     flyers too.
+    --                     Air Strike / Lightning / Final Cave falling rocks
+    --                     emit flying_immune=0 — those hit flyers too.
+    --                     Satellite launch exhaust emits flying_immune=1:
+    --                     ground units die, flyers survive.
     -- The 5th field landed at SIMULATOR_VERSION 19 (2026-04-25) closing the
     -- "Hornet on Tidal tile" silent kill desync. Older bridges emit only 4
     -- fields; the Rust deserializer falls back to env_type when the 5th is
@@ -1030,8 +1031,7 @@ local function dump_state()
     end
 
     -- Helper: add a danger tile to both v1 and v2 fields. The optional
-    -- `flying_immune_override` controls the 5th field (Satellite Rocket
-    -- forces it false — bombs hit flyers).
+    -- `flying_immune_override` controls the 5th field.
     local function add_danger(x, y, kill_override, flying_immune_override)
         state.environment_danger[#state.environment_danger + 1] = {x, y}
         local k = env_kill_default
@@ -1065,10 +1065,12 @@ local function dump_state()
         end
     end
 
-    -- Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch
-    -- Board:IsEnvironmentDanger() does NOT detect these, so we add them manually.
+    -- Satellite rocket deadly threat: 4 adjacent tiles kill grounded units on
+    -- launch. Board:IsEnvironmentDanger() does NOT detect these, so we add
+    -- them manually.
     -- Only flag tiles on the turn the rocket is queued to fire (GetSelectedWeapon > 0).
-    -- Satellite rockets are always Deadly Threat regardless of mission environment.
+    -- Satellite rockets are always lethal regardless of mission environment,
+    -- but live launch exhaust spares flying pawns.
     for _, u in ipairs(state.units) do
         if u.type and string.find(u.type, "Satellite") then
             local ok, p = pcall(function() return Board:GetPawn(u.uid) end)
@@ -1081,9 +1083,7 @@ local function dump_state()
                     for _, d in ipairs(dirs) do
                         local nx, ny = u.x + d[1], u.y + d[2]
                         if nx >= 0 and nx <= 7 and ny >= 0 and ny <= 7 then
-                            -- Always lethal, never flying-immune (rockets
-                            -- detonate above ground level — flyers caught).
-                            add_danger(nx, ny, true, false)
+                            add_danger(nx, ny, true, true)
                         end
                     end
                 end

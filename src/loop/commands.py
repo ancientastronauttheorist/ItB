@@ -1610,17 +1610,33 @@ def _environment_danger_info(board: Board,
             except (TypeError, ValueError):
                 continue
 
+    board_flying_immune = (
+        getattr(board, "environment_danger_flying_immune", set()) or set()
+    )
     for pos, (damage, lethal) in board.environment_danger_v2.items():
-        danger.setdefault(pos, {
+        board_info = {
             "damage": int(damage),
             "lethal": bool(lethal),
-            "flying_immune": False,
-        })
+            "flying_immune": bool(
+                bool(lethal)
+                and pos in board_flying_immune
+                and not final_cave_env
+                and not deadly_threat_env
+            ),
+        }
+        if pos in danger:
+            danger[pos].update(board_info)
+        else:
+            danger[pos] = board_info
     for pos in board.environment_danger:
         danger.setdefault(pos, {
             "damage": 1,
             "lethal": True,
-            "flying_immune": False,
+            "flying_immune": bool(
+                pos in board_flying_immune
+                and not final_cave_env
+                and not deadly_threat_env
+            ),
         })
     return danger
 
@@ -7348,6 +7364,8 @@ def _load_board_from_recording(board_file: Path) -> tuple:
     bridge_data = board_record.get("data", {}).get("bridge_state")
     if bridge_data is None:
         raise ValueError("Recording has no bridge_state")
+    from src.bridge.reader import _mark_satellite_launch_danger_flying_immune
+    _mark_satellite_launch_danger_flying_immune(bridge_data)
 
     board = Board.from_bridge_data(bridge_data)
     spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]

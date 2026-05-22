@@ -240,6 +240,7 @@ class Board:
         self.environment_danger: set[tuple[int, int]] = set()
         self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
         # Maps (x,y) -> (damage, is_lethal)
+        self.environment_danger_flying_immune: set[tuple[int, int]] = set()
         # Ice Storm freeze tiles (Env_SnowStorm Acid=false). At start of enemy
         # turn, units on these tiles get Frozen=true. Buildings/mountains are
         # unaffected — frozen is a unit status. Separate from environment_danger
@@ -339,6 +340,7 @@ class Board:
         b.player_grid_save_expected = self.player_grid_save_expected
         b.environment_danger = set(self.environment_danger)
         b.environment_danger_v2 = dict(self.environment_danger_v2)
+        b.environment_danger_flying_immune = set(self.environment_danger_flying_immune)
         b.environment_freeze = set(self.environment_freeze)
         b.env_type = self.env_type
         b.environment_wind_dir = self.environment_wind_dir
@@ -571,8 +573,11 @@ class Board:
             board.environment_wind_dir = wind_dir
         for dt in data.get("environment_danger_v2", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 4:
-                board.environment_danger.add((dt[0], dt[1]))
-                board.environment_danger_v2[(dt[0], dt[1])] = (dt[2], dt[3] != 0)
+                pos = (dt[0], dt[1])
+                board.environment_danger.add(pos)
+                board.environment_danger_v2[pos] = (dt[2], dt[3] != 0)
+                if len(dt) >= 5 and dt[4] != 0:
+                    board.environment_danger_flying_immune.add(pos)
         # Backwards compat: v1 entries not in v2 default to lethal
         for dt in data.get("environment_danger", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 2:
@@ -825,9 +830,9 @@ class Board:
             u.type == "Jelly_Spider1" and u.hp > 0 for u in board.units
         )
 
-        # Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch.
-        # Detect by checking if adjacent tiles appear in targeted_tiles (= rocket is
-        # queued to fire this turn). Board:IsEnvironmentDanger() misses these.
+        # Satellite rocket deadly threat: 4 adjacent tiles kill grounded units
+        # on launch, but live launch exhaust spares flying pawns. Detect by
+        # targeted adjacent tiles when old payloads lack environment_danger_v2.
         targeted = set()
         for tt in data.get("targeted_tiles", []):
             if isinstance(tt, (list, tuple)) and len(tt) >= 2:
@@ -839,6 +844,9 @@ class Board:
                 if any(t in targeted for t in adj_on_board):
                     for t in adj_on_board:
                         board.environment_danger.add(t)
+                        if data.get("mission_id") == "Mission_Satellite":
+                            board.environment_danger_v2.setdefault(t, (1, True))
+                            board.environment_danger_flying_immune.add(t)
 
         return board
 
