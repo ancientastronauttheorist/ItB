@@ -151,6 +151,17 @@ fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: 
     base_damage
 }
 
+fn queued_origin_for_attack(enemy: &Unit, fallback: (u8, u8)) -> (u8, u8) {
+    if enemy.flags.contains(UnitFlags::QUEUED_ORIGIN_SET)
+        && enemy.queued_origin_x >= 0
+        && enemy.queued_origin_y >= 0
+    {
+        (enemy.queued_origin_x as u8, enemy.queued_origin_y as u8)
+    } else {
+        fallback
+    }
+}
+
 /// Starfish attacks are self-targeted queued appendage strikes:
 /// - normal/alpha Starfish damage the four diagonal tiles around themselves;
 /// - Starfish Leader additionally pushes the four cardinal adjacent tiles
@@ -979,6 +990,7 @@ pub fn simulate_enemy_attacks(
         let qty = enemy.queued_target_y;
         let enemy_uid = enemy.uid;
         let orig = original_positions[ei];
+        let queued_origin = queued_origin_for_attack(enemy, orig);
 
         // Look up actual weapon type from enemy pawn type
         let mut enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
@@ -1088,7 +1100,12 @@ pub fn simulate_enemy_attacks(
         match wdef.weapon_type {
             WeaponType::Projectile => {
                 if enemy_wid == WId::FireflyAtkB {
-                    if let Some((dx, dy)) = projectile_delta_from_queued(orig.0, orig.1, qtx, qty) {
+                    if let Some((dx, dy)) = projectile_delta_from_queued(
+                        queued_origin.0,
+                        queued_origin.1,
+                        qtx,
+                        qty,
+                    ) {
                         for (shot_dx, shot_dy) in [(dx, dy), (-dx, -dy)] {
                             if let Some((tx, ty)) = find_projectile_target_in_direction(
                                 board, ex, ey, shot_dx, shot_dy,
@@ -1104,7 +1121,15 @@ pub fn simulate_enemy_attacks(
                     }
                     continue;
                 }
-                if let Some((tx, ty)) = find_projectile_target(board, ex, ey, orig.0, orig.1, qtx, qty) {
+                if let Some((tx, ty)) = find_projectile_target(
+                    board,
+                    ex,
+                    ey,
+                    queued_origin.0,
+                    queued_origin.1,
+                    qtx,
+                    qty,
+                ) {
                     let hit_was_object = {
                         let tile = board.tile(tx, ty);
                         tile.terrain == Terrain::Mountain
@@ -1147,7 +1172,12 @@ pub fn simulate_enemy_attacks(
                         }
                     }
                     if wdef.projectile_grapple() {
-                        if let Some(dir) = projectile_dir_from_queued(orig.0, orig.1, qtx, qty) {
+                        if let Some(dir) = projectile_dir_from_queued(
+                            queued_origin.0,
+                            queued_origin.1,
+                            qtx,
+                            qty,
+                        ) {
                             apply_projectile_grapple(board, ei, tx, ty, dir, hit_was_object, &mut result);
                         }
                     }
@@ -1217,8 +1247,8 @@ pub fn simulate_enemy_attacks(
                 // Piercing beam: fires in cardinal direction from enemy position,
                 // damage starts at wdef.damage and decreases by 1 per tile (floor 1).
                 // Stops at mountains and buildings (after damaging them).
-                let dx = (qtx - orig.0 as i8).signum();
-                let dy = (qty - orig.1 as i8).signum();
+                let dx = (qtx - queued_origin.0 as i8).signum();
+                let dy = (qty - queued_origin.1 as i8).signum();
                 if (dx != 0) != (dy != 0) {
                     let mut dmg = wdef.damage;
                     for i in 1..8i8 {
@@ -1253,8 +1283,8 @@ pub fn simulate_enemy_attacks(
                 //
                 // range_min guard: if the PUSHED distance is below the weapon's
                 // minimum range, attack cancels (e.g. pushed adjacent to target).
-                let offset_x = qtx - orig.0 as i8;
-                let offset_y = qty - orig.1 as i8;
+                let offset_x = qtx - queued_origin.0 as i8;
+                let offset_y = qty - queued_origin.1 as i8;
                 let new_tx = ex as i8 + offset_x;
                 let new_ty = ey as i8 + offset_y;
                 if !in_bounds(new_tx, new_ty) { continue; }
@@ -1391,13 +1421,15 @@ pub fn simulate_enemy_attacks(
 
             WeaponType::Charge => {
                 // Charge from CURRENT position in original queued direction
-                let dx = (qtx - orig.0 as i8).signum();
-                let dy = (qty - orig.1 as i8).signum();
+                let dx = (qtx - queued_origin.0 as i8).signum();
+                let dy = (qty - queued_origin.1 as i8).signum();
 
                 // Must be valid cardinal direction
                 if (dx != 0) != (dy != 0) {
                     let mut hit: Option<(u8, u8)> = None;
-                    let mut hit_i: i8 = 0;
+                    let mut last_free = (ex, ey);
+                    let mut path: Vec<(u8, u8)> = Vec::new();
+                    let flying_charge = enemy_wid == WId::BeetleAtkB;
                     for i in 1..8i8 {
                         let nx = ex as i8 + dx * i;
                         let ny = ey as i8 + dy * i;
@@ -1408,30 +1440,32 @@ pub fn simulate_enemy_attacks(
                         let tile = board.tile(nxu, nyu);
                         if tile.terrain == Terrain::Mountain {
                             hit = Some((nxu, nyu));
-                            hit_i = i;
                             break;
                         }
-                        if tile.terrain.is_deadly_ground() { break; }
+                        if tile.terrain.is_deadly_ground() && !flying_charge { break; }
                         if tile.is_building() {
                             hit = Some((nxu, nyu));
-                            hit_i = i;
                             break;
                         }
                         if board.unit_at(nxu, nyu).is_some() {
                             hit = Some((nxu, nyu));
-                            hit_i = i;
                             break;
                         }
+                        path.push((nxu, nyu));
+                        last_free = (nxu, nyu);
                     }
+
+                    board.units[ei].x = last_free.0;
+                    board.units[ei].y = last_free.1;
+                    apply_teleport_on_land(board, ei);
 
                     if let Some((hx, hy)) = hit {
                         // Flaming Abdomen: fire on every PASSED tile (i=1..hit_i-1)
                         // EXCLUDING the final resting tile (i=hit_i-1). So fire
                         // on tiles i=1..=(hit_i-2).
                         if wdef.fire() {
-                            for i in 1..=(hit_i - 2) {
-                                let fx = (ex as i8 + dx * i) as u8;
-                                let fy = (ey as i8 + dy * i) as u8;
+                            let fire_count = path.len().saturating_sub(1);
+                            for &(fx, fy) in path.iter().take(fire_count) {
                                 board.tile_mut(fx, fy).set_on_fire(true);
                                 if let Some(idx) = board.unit_at(fx, fy) {
                                     let target_is_immune_vek = board.fire_psion
@@ -1511,8 +1545,8 @@ pub fn simulate_enemy_attacks(
                     // Line attack (e.g., Launching Stinger): 2-tile line in the original
                     // cardinal direction. When pushed, retrace direction from the ORIGINAL
                     // position so the attack fires correctly from the new position.
-                    let dx = (qtx - orig.0 as i8).signum();
-                    let dy = (qty - orig.1 as i8).signum();
+                    let dx = (qtx - queued_origin.0 as i8).signum();
+                    let dy = (qty - queued_origin.1 as i8).signum();
                     // Must be a valid cardinal direction (exactly one axis non-zero)
                     if (dx != 0) == (dy != 0) { continue; }
 
@@ -1548,7 +1582,12 @@ pub fn simulate_enemy_attacks(
                     }
                 } else {
                     if enemy_wid == WId::BouncerAtkB {
-                        let Some(dir) = projectile_dir_from_queued(orig.0, orig.1, qtx, qty) else {
+                        let Some(dir) = projectile_dir_from_queued(
+                            queued_origin.0,
+                            queued_origin.1,
+                            qtx,
+                            qty,
+                        ) else {
                             continue;
                         };
                         let (dx, dy) = DIRS[dir];
@@ -1581,8 +1620,8 @@ pub fn simulate_enemy_attacks(
                         // but live captures show p2 is still interpreted as the
                         // original attacker-relative offset. A pushed Goo keeps
                         // firing; the target tile shifts by the same displacement.
-                        let offset_x = qtx - orig.0 as i8;
-                        let offset_y = qty - orig.1 as i8;
+                        let offset_x = qtx - queued_origin.0 as i8;
+                        let offset_y = qty - queued_origin.1 as i8;
                         let new_tx = ex as i8 + offset_x;
                         let new_ty = ey as i8 + offset_y;
                         if !in_bounds(new_tx, new_ty) { continue; }
@@ -1591,8 +1630,8 @@ pub fn simulate_enemy_attacks(
                         // Standard single-tile melee preserves the original
                         // queued direction, then re-aims from the attacker's
                         // current tile after pushes, swaps, and teleports.
-                        let dx = (qtx - orig.0 as i8).signum();
-                        let dy = (qty - orig.1 as i8).signum();
+                        let dx = (qtx - queued_origin.0 as i8).signum();
+                        let dy = (qty - queued_origin.1 as i8).signum();
                         if (dx != 0) == (dy != 0) { continue; }
                         let tx = ex as i8 + dx;
                         let ty = ey as i8 + dy;
@@ -2470,6 +2509,37 @@ mod tests {
             "Bouncer should push the killed Rocket onward to C4");
         assert_eq!(board.units[bouncer_idx].hp, 1,
             "Bouncer edge recoil should not self-bump to death");
+    }
+
+    #[test]
+    fn test_flipped_displaced_beetle_leader_charges_new_direction() {
+        let mut board = Board::default();
+        board.grid_power = 5;
+        board.tile_mut(2, 3).terrain = Terrain::Building;
+        board.tile_mut(2, 3).building_hp = 1;
+        board.tile_mut(2, 6).terrain = Terrain::Building;
+        board.tile_mut(2, 6).building_hp = 2;
+
+        // Cataclysm HQ regression: the Beetle Leader started at D7 aimed E7,
+        // got pushed to D6, then Seismic Capacitor flipped the preserved
+        // direction. The post-flip queued target is C6 with origin D6, so the
+        // flying charge should continue through C6 and hit B6, not the old E6.
+        let boss_idx = add_enemy_with_type(&mut board, 1793, 2, 4, 3, "BeetleBoss", 2, 5);
+        board.units[boss_idx].weapon_damage = 3;
+        board.units[boss_idx].queued_origin_x = 2;
+        board.units[boss_idx].queued_origin_y = 4;
+        board.units[boss_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::QUEUED_ORIGIN_SET,
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(2, 3).building_hp, 1, "old E6 building should survive");
+        assert_eq!(board.tile(2, 6).building_hp, 0, "flipped charge should destroy B6");
+        assert_eq!(board.grid_power, 3, "2-HP B6 building drains two grid");
+        assert_eq!((board.units[boss_idx].x, board.units[boss_idx].y), (2, 5),
+            "charge should move the boss to the last free tile before impact");
     }
 
     #[test]

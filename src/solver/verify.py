@@ -964,7 +964,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v177: Mission_Wind raw engine WindDir is converted to the solver's
 # bridge-coordinate direction order before wind pushes. Pre-v177 corpus
 # archived as failure_db_snapshot_sim_v176.jsonl.
-SIMULATOR_VERSION = 177
+# v178: Enemy queued-target origins are preserved through player-phase
+# displacement and DIR_FLIP retargets, and enemy Charge attacks now move the
+# charger along the charge path. Fixes the Cataclysm Unfair Mission_BeetleBoss
+# turn 2 displaced Seismic-flipped Beetle Leader charge. Pre-v178 corpus
+# archived as failure_db_snapshot_sim_v177.jsonl.
+SIMULATOR_VERSION = 178
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

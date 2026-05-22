@@ -155,6 +155,10 @@ bitflags! {
         /// Vek Mites attached to a mech. Mission objective state from
         /// `bInfected`; cleared by repair/status/damage effects.
         const INFECTED = 0b0010_0000_0000_0000_0000;
+        /// Enemy queued-target origin is explicitly recorded. This lets
+        /// player-phase retarget effects preserve the original attack vector
+        /// after the attacker has been pushed.
+        const QUEUED_ORIGIN_SET = 0b0100_0000_0000_0000_0000;
     }
 }
 
@@ -201,6 +205,8 @@ pub struct Unit {
     // Enemy intent
     pub queued_target_x: i8, // -1 = no target
     pub queued_target_y: i8,
+    pub queued_origin_x: i8,
+    pub queued_origin_y: i8,
     pub weapon_damage: u8,
     pub weapon_push: u8,
     pub weapon_target_behind: bool,

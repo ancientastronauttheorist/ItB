@@ -1739,19 +1739,35 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
     let qty = unit.queued_target_y as i32;
     let ux = unit.x as i32;
     let uy = unit.y as i32;
-    if qtx == ux && qty == uy {
+    let (origin_x, origin_y) = if unit.flags.contains(UnitFlags::QUEUED_ORIGIN_SET)
+        && unit.queued_origin_x >= 0
+        && unit.queued_origin_y >= 0
+    {
+        (unit.queued_origin_x as i32, unit.queued_origin_y as i32)
+    } else {
+        (ux, uy)
+    };
+    let offset_x = qtx - origin_x;
+    let offset_y = qty - origin_y;
+    if offset_x == 0 && offset_y == 0 {
         // Self-targeted (suicide bomber / egg spawner) — no vector to flip.
         return;
     }
-    let flipped_x = 2 * ux - qtx;
-    let flipped_y = 2 * uy - qty;
+    let flipped_x = ux - offset_x;
+    let flipped_y = uy - offset_y;
     if !(0..8).contains(&flipped_x) || !(0..8).contains(&flipped_y) {
         // Flipped target is off-board: cancel the attack entirely.
         unit.queued_target_x = -1;
         unit.queued_target_y = -1;
+        unit.queued_origin_x = -1;
+        unit.queued_origin_y = -1;
+        unit.flags.remove(UnitFlags::QUEUED_ORIGIN_SET);
     } else {
         unit.queued_target_x = flipped_x as i8;
         unit.queued_target_y = flipped_y as i8;
+        unit.queued_origin_x = unit.x as i8;
+        unit.queued_origin_y = unit.y as i8;
+        unit.flags.insert(UnitFlags::QUEUED_ORIGIN_SET);
     }
 }
 
@@ -8239,6 +8255,28 @@ mod tests {
         assert_eq!(board.units[idx].x, 3,
             "Unit position unchanged — Flip does NOT push the unit");
         assert_eq!(board.units[idx].y, 3);
+    }
+
+    #[test]
+    fn test_flip_queued_attack_uses_recorded_origin_after_displacement() {
+        // The enemy started at (1,4) aimed at (1,3), then was pushed to
+        // (2,4) before Seismic Capacitor flipped its queued attack. The flip
+        // must reverse the original attack vector around the current tile,
+        // producing (2,5), not a diagonal stale-save mirror at (3,5).
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 2, 4, 3);
+        board.units[idx].queued_target_x = 1;
+        board.units[idx].queued_target_y = 3;
+        board.units[idx].queued_origin_x = 1;
+        board.units[idx].queued_origin_y = 4;
+        board.units[idx].flags.insert(UnitFlags::QUEUED_ORIGIN_SET);
+
+        flip_queued_attack(&mut board, 2, 4);
+
+        assert_eq!(board.units[idx].queued_target_x, 2);
+        assert_eq!(board.units[idx].queued_target_y, 5);
+        assert_eq!(board.units[idx].queued_origin_x, 2);
+        assert_eq!(board.units[idx].queued_origin_y, 4);
     }
 
     #[test]

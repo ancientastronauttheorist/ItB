@@ -1406,7 +1406,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v177 - Mission_Wind raw engine WindDir is converted to the solver's
 //   bridge-coordinate direction order before wind pushes. Pre-v177 corpus
 //   archived as `failure_db_snapshot_sim_v176.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 177;
+// v178 - Enemy queued-target origins are preserved through player-phase
+//   displacement and DIR_FLIP retargets, and enemy Charge attacks now move the
+//   charger along the charge path. Fixes a displaced Seismic-flipped Beetle
+//   Leader charge in Cataclysm Unfair stress run 20260521_120049_468
+//   Mission_BeetleBoss turn 2. Pre-v178 corpus archived as
+//   `failure_db_snapshot_sim_v177.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 178;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

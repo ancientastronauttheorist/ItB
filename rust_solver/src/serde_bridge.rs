@@ -674,6 +674,9 @@ pub fn board_from_json(json_str: &str)
             } else {
                 (-1, -1)
             };
+            if qtx >= 0 && qty >= 0 {
+                flags |= UnitFlags::QUEUED_ORIGIN_SET;
+            }
 
             let move_speed = ju.move_speed.or(ju.base_move).unwrap_or(3);
             let mut unit = Unit {
@@ -692,6 +695,8 @@ pub fn board_from_json(json_str: &str)
                 weapon2,
                 queued_target_x: qtx,
                 queued_target_y: qty,
+                queued_origin_x: if qtx >= 0 && qty >= 0 { ju.x as i8 } else { -1 },
+                queued_origin_y: if qtx >= 0 && qty >= 0 { ju.y as i8 } else { -1 },
                 weapon_damage: ju.weapon_damage.unwrap_or(0).min(u8::MAX as u16) as u8,
                 weapon_push: ju.weapon_push.unwrap_or(0),
                 weapon_target_behind: ju.weapon_target_behind.unwrap_or(false),
