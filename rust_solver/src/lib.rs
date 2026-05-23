@@ -1505,7 +1505,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v201 - The occupied-crack exception is weapon-damage-only; self-damage such
 //   as Hydraulic Legs recoil still collapses cracked Ground under the mech.
 //   Pre-v201 corpus archived as `failure_db_snapshot_sim_v200.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 201;
+// v202 - Brute_Unstable recoil still bumps a live rear blocker even when
+//   Hazardous self-damage has dropped the attacker to 0 before Viscera
+//   Nanobots revives it. Pre-v202 corpus archived as
+//   `failure_db_snapshot_sim_v201.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 202;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

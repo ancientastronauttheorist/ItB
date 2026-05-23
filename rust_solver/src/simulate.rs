@@ -1867,6 +1867,12 @@ const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: true,
 };
 
+const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+};
+
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
@@ -2455,7 +2461,12 @@ pub fn simulate_weapon_with(
             let ax = board.units[attacker_idx].x;
             let ay = board.units[attacker_idx].y;
             let kills_before = result.enemies_killed;
-            apply_push(board, ax, ay, opposite_dir(dir), &mut result);
+            let recoil_policy = if weapon_id == WId::BruteUnstable {
+                BRUTE_UNSTABLE_RECOIL_PUSH_POLICY
+            } else {
+                DEFAULT_PUSH_POLICY
+            };
+            apply_push_with_policy(board, ax, ay, opposite_dir(dir), &mut result, recoil_policy);
             let pushback_kills = result.enemies_killed - kills_before;
             if pushback_kills > 0 {
                 result.leech_credit_kills += pushback_kills;
@@ -4723,6 +4734,37 @@ mod tests {
         assert!(
             result.events.iter().any(|e| e == "viscera_nanobots_heal:1:2:2"),
             "pushback bump kill should add a second Nanobots heal credit"
+        );
+    }
+
+    #[test]
+    fn test_unstable_dead_recoil_bumps_live_mech_before_nanobot_heal() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let blocker = add_mech(&mut board, 0, 6, 4, 1, WId::PrimeLeap);
+        let mech = add_mech(&mut board, 1, 6, 5, 1, WId::BruteUnstable);
+        board.units[mech].max_hp = 3;
+        let enemy = add_enemy(&mut board, 90, 6, 6, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 6, 6);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(
+            board.units[blocker].hp, 0,
+            "Unstable recoil still bumps the live rear blocker after self-damage drops the attacker to 0"
+        );
+        assert_eq!(
+            board.units[mech].hp, 2,
+            "Viscera Nanobots should revive/heal the attacker after the kill"
+        );
+        assert_eq!(
+            result.mechs_killed, 1,
+            "only the rear blocker remains disabled after the attacker is revived"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"),
+            "the direct Unstable Cannon kill should produce one boosted Nanobots heal"
         );
     }
 

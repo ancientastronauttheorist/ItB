@@ -1035,7 +1035,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v201: The occupied-crack exception is weapon-damage-only; self-damage such as
 # Hydraulic Legs recoil still collapses cracked Ground under the mech.
 # Pre-v201 corpus archived as failure_db_snapshot_sim_v200.jsonl.
-SIMULATOR_VERSION = 201
+# v202: Brute_Unstable recoil still bumps a live rear blocker even if Hazardous
+# self-damage temporarily disables the attacker before Viscera Nanobots heals.
+# Pre-v202 corpus archived as failure_db_snapshot_sim_v201.jsonl.
+SIMULATOR_VERSION = 202
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
