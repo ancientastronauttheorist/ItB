@@ -420,6 +420,9 @@ pub struct Board {
     pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
+    /// Passive_Leech / Viscera Nanobots heal amount for player mechs that
+    /// deal killing blows. 0 means the passive is not currently available.
+    pub viscera_nanobots_heal: u8,
     pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
     pub force_amp: bool,        // Passive_ForceAmp: Vek take +1 from bump/spawn-block
                                 // damage. Excludes sentient enemies (Bot Leader).
@@ -538,6 +541,7 @@ impl Default for Board {
             boss_alive: false,
             storm_generator: false,
             flame_shielding: false,
+            viscera_nanobots_heal: 0,
             vek_hormones: false,
             force_amp: false,
             medical_supplies: false,

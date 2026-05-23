@@ -69,6 +69,7 @@ _MODELED_UPGRADED_WEAPONS = {
     "Science_KO_Crack_A",
     "Science_KO_Crack_B",
     "Science_KO_Crack_AB",
+    "Passive_Leech_A",
 }
 
 

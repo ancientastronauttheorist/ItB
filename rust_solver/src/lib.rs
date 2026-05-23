@@ -1427,7 +1427,52 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260521_232056_112 Mission_BeltRandom turn 1, where raw conveyor2 on C5
 //   bumped PulseMech into B5 and cost 1 HP + 1 grid. Pre-v181 corpus archived
 //   as `failure_db_snapshot_sim_v180.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 183;
+// v184 - Webbed `Prime_Leap` / Hydraulic Legs no-ops like live instead of
+//   jumping, self-damaging, and killing landing-adjacent units. Fixes Hazardous
+//   Mechs Healing run 20260522_154935_555 Mission_Barrels turn 2, where a
+//   webbed Leap Mech was asked to leap from C4 to B3 and live left the Leaper
+//   alive. Pre-v184 corpus archived as `failure_db_snapshot_sim_v183.jsonl`.
+// v185 - `Prime_Leap` / Hydraulic Legs target area is cardinal-line only,
+//   matching Leap_Attack:GetTargetArea's DIR_VECTORS[i] * k enumeration.
+//   Fixes the same Healing run Mission_Barrels turn 3, where E3->G4 ACKed
+//   but live no-oped. Pre-v185 corpus archived as
+//   `failure_db_snapshot_sim_v184.jsonl`.
+// v186 - Passive_Leech / Viscera Nanobots heals player mechs after attack
+//   kills, including Hazardous self-damage recoil that drops the attacker to
+//   0 before the kill-heal revives it. Fixes Healing run
+//   20260522_154935_555 Mission_Civilians turn 2, where Brute_Unstable killed
+//   a Vek and live healed UnstableTank from recoil back to full. Pre-v186
+//   corpus archived as `failure_db_snapshot_sim_v185.jsonl`.
+// v187 - Science_AcidShot / Acid Projector direct off-board pushes do not
+//   edge-bump, and the zero-damage ACID status is suppressed in that blocked
+//   edge case. Fixes Healing run 20260522_154935_555 Mission_Civilians turn 4,
+//   where Nano B2->A2 left a 1-HP Scarab alive and un-acidified. Pre-v187
+//   corpus archived as `failure_db_snapshot_sim_v186.jsonl`.
+// v188 - Science_AcidShot applies ACID but does not push hit units at all;
+//   when the projectile endpoint is the map-edge tile in its fire direction,
+//   the zero-damage ACID payload is still suppressed. Fixes the same Healing
+//   run Mission_Belt turn 2, where Nano D4->E4 acidified the G4 Scarab but
+//   live left it on G4 instead of pushing it to H4. Pre-v188 corpus archived
+//   as `failure_db_snapshot_sim_v187.jsonl`.
+// v189 - Science_AcidShot does push clean targets when ACID is newly applied,
+//   but already-acid targets keep their tile and edge endpoints still no-op.
+//   Fixes Healing run 20260522_154935_555 Corporate HQ turn 2, where Nano
+//   G7->F7 pushed the Beetle Leader from E7 to D7. Pre-v189 corpus archived
+//   as `failure_db_snapshot_sim_v188.jsonl`.
+// v190 - Prime_Leap / Hydraulic Legs killed landing-adjacent targets still
+//   resolve their outward corpse push into live blockers. Fixes Healing run
+//   20260522_154935_555 Corporate HQ turn 3, where a killed Leaper on D4
+//   corpse-bumped UnstableTank on D5. Pre-v190 corpus archived as
+//   `failure_db_snapshot_sim_v189.jsonl`.
+// v191 - Passive_Leech / Viscera Nanobots remains active even after the Nano
+//   Mech is disabled. Fixes the same Healing run Corporate HQ turn 4, where
+//   dead Nano's passive healed UnstableTank's recoil after killing Leaper1.
+//   Pre-v191 corpus archived as `failure_db_snapshot_sim_v190.jsonl`.
+// v192 - Wrecks block pushed units. Fixes the same Healing run Corporate HQ
+//   turn 4, where Prime_Leap pushed an acid Beetle Leader into disabled Nano's
+//   wreck on C7; live applied a bump and left the boss on C6. Pre-v192 corpus
+//   archived as `failure_db_snapshot_sim_v191.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 192;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -981,7 +981,29 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # DIRS before simulation. Fixes Rusting Hulks Untouchable Mission_BeltRandom
 # turn 1, where raw conveyor2 on C5 bumped PulseMech into B5 and cost 1 HP
 # plus 1 grid. Pre-v181 corpus archived as failure_db_snapshot_sim_v180.jsonl.
-SIMULATOR_VERSION = 183
+# v184: Webbed `Prime_Leap` / Hydraulic Legs no-ops like live instead of
+# jumping, self-damaging, and killing landing-adjacent units. Fixes Hazardous
+# Mechs Healing Mission_Barrels turn 2, where a webbed Leap Mech was asked to
+# leap from C4 to B3 and live left the Leaper alive. Pre-v184 corpus archived
+# as failure_db_snapshot_sim_v183.jsonl.
+# v185: `Prime_Leap` / Hydraulic Legs target area is cardinal-line only,
+# matching Leap_Attack:GetTargetArea's DIR_VECTORS[i] * k enumeration. Fixes
+# the same Healing run Mission_Barrels turn 3, where E3->G4 ACKed but live
+# no-oped. Pre-v185 corpus archived as failure_db_snapshot_sim_v184.jsonl.
+# v186: Passive_Leech / Viscera Nanobots heals player mechs after attack kills,
+# including Hazardous self-damage recoil that drops the attacker to 0 before the
+# kill-heal revives it. Fixes Healing run 20260522_154935_555 Mission_Civilians
+# turn 2, where Brute_Unstable killed a Vek and live healed UnstableTank from
+# recoil back to full. Pre-v186 corpus archived as failure_db_snapshot_sim_v185.jsonl.
+# v191: Passive_Leech / Viscera Nanobots remains active even after the Nano Mech
+# is disabled. Fixes Healing run 20260522_154935_555 Corporate HQ turn 4, where
+# dead Nano's passive healed UnstableTank's recoil after killing Leaper1.
+# Pre-v191 corpus archived as failure_db_snapshot_sim_v190.jsonl.
+# v192: Wrecks block pushed units. Fixes the same Healing run Corporate HQ turn
+# 4, where Prime_Leap pushed an acid Beetle Leader into disabled Nano's wreck on
+# C7; live applied a bump and left the boss on C6.
+# Pre-v192 corpus archived as failure_db_snapshot_sim_v191.jsonl.
+SIMULATOR_VERSION = 192
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

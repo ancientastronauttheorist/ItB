@@ -941,6 +941,12 @@ pub fn board_from_json(json_str: &str)
                         match wname.as_str() {
                             "Passive_Electric" => board.storm_generator = true,
                             "Passive_FlameImmune" => board.flame_shielding = true,
+                            "Passive_Leech" => {
+                                board.viscera_nanobots_heal = board.viscera_nanobots_heal.max(1);
+                            }
+                            "Passive_Leech_A" => {
+                                board.viscera_nanobots_heal = board.viscera_nanobots_heal.max(2);
+                            }
                             "Passive_FriendlyFire" => board.vek_hormones = true,
                             "Passive_ForceAmp" => board.force_amp = true,
                             "Passive_Medical" => board.medical_supplies = true,
@@ -1084,6 +1090,34 @@ mod tests {
 
         assert!(board.tile(3, 3).grass());
         assert!(board.tile(4, 4).grass());
+    }
+
+    #[test]
+    fn test_disabled_nano_mech_still_enables_viscera_nanobots() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {
+                    "uid": 2,
+                    "type": "NanoMech",
+                    "x": 1,
+                    "y": 5,
+                    "hp": 0,
+                    "max_hp": 2,
+                    "team": 1,
+                    "mech": true,
+                    "active": false,
+                    "weapons": ["Science_AcidShot", "Passive_Leech_A"]
+                }
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.viscera_nanobots_heal, 2);
     }
 
     #[test]

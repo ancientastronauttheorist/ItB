@@ -1502,6 +1502,43 @@ pub fn apply_damage_with_bombrock_exclusion(
     apply_damage_inner(board, x, y, damage, result, source, exclude, 0);
 }
 
+fn apply_viscera_nanobots_heal(
+    board: &mut Board,
+    attacker_idx: usize,
+    kills: i32,
+    result: &mut ActionResult,
+) {
+    if board.viscera_nanobots_heal == 0 || kills <= 0 {
+        return;
+    }
+    let attacker = &board.units[attacker_idx];
+    if !attacker.is_player() || !attacker.is_mech() {
+        return;
+    }
+
+    let heal = (board.viscera_nanobots_heal as i32 * kills).min(i8::MAX as i32) as i8;
+    if heal <= 0 {
+        return;
+    }
+    let was_disabled = board.units[attacker_idx].hp <= 0;
+    let old_hp = board.units[attacker_idx].hp;
+    let max_hp = board.units[attacker_idx].max_hp;
+    let new_hp = (old_hp + heal).min(max_hp);
+    let actual_heal = new_hp - old_hp;
+    if actual_heal <= 0 {
+        return;
+    }
+
+    board.units[attacker_idx].hp = new_hp;
+    if was_disabled && new_hp > 0 && result.mechs_killed > 0 {
+        result.mechs_killed -= 1;
+    }
+    result.events.push(format!(
+        "viscera_nanobots_heal:{}:{}:{}",
+        board.units[attacker_idx].uid, kills, actual_heal
+    ));
+}
+
 fn apply_damage_inner(
     board: &mut Board,
     x: u8,
@@ -1959,6 +1996,12 @@ fn apply_push_with_policy(
         return;
     }
 
+    // Blocked by a wreck — pushed unit bumps, wreck stays inert.
+    if board.wreck_at(nx, ny) {
+        apply_damage(board, x, y, 1, result, DamageSource::Bump);
+        return;
+    }
+
     // Blocked by another alive unit — BOTH take 1 bump.
     //
     // Exception: if the pushed unit is already dead (HP<=0), its corpse
@@ -2292,6 +2335,8 @@ pub fn simulate_weapon_with(
         return result;
     }
 
+    let leech_kills_before = result.enemies_killed;
+
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => {
@@ -2372,6 +2417,9 @@ pub fn simulate_weapon_with(
         let ay = board.units[attacker_idx].y;
         apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
     }
+
+    let leech_kills = result.enemies_killed - leech_kills_before;
+    apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
 
     // Self-freeze (Cryo-Launcher freezes attacker)
     if wdef.freeze() && weapon_id == WId::RangedIce {
@@ -2941,6 +2989,20 @@ fn projectile_damage(wdef: &WeaponDef, ax: u8, ay: u8, hx: u8, hy: u8) -> u8 {
     scaled.min(wdef.damage)
 }
 
+fn acid_projector_edge_block_suppresses_status(
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    hx: u8,
+    hy: u8,
+    dir: usize,
+) -> bool {
+    if weapon_id != WId::ScienceAcidShot || wdef.damage != 0 {
+        return false;
+    }
+    let (dx, dy) = DIRS[dir];
+    !in_bounds(hx as i8 + dx, hy as i8 + dy)
+}
+
 fn sim_projectile(
     board: &mut Board,
     ax: u8,
@@ -3005,9 +3067,20 @@ fn sim_projectile(
             apply_damage(board, hx, hy, dmg, result, DamageSource::Weapon);
             None
         };
-        apply_weapon_status_with_impact_occupancy(
-            board, hx, hy, wdef, occupied_at_impact,
-        ); // status BEFORE push (unit still here)
+        let acid_projector_edge_suppressed =
+            acid_projector_edge_block_suppresses_status(weapon_id, wdef, hx, hy, dir);
+        let acid_projector_already_acid = weapon_id == WId::ScienceAcidShot
+            && wdef.damage == 0
+            && board.unit_at(hx, hy)
+                .map(|idx| board.units[idx].acid())
+                .unwrap_or(false);
+        if !acid_projector_edge_suppressed {
+            apply_weapon_status_with_impact_occupancy(
+                board, hx, hy, wdef, occupied_at_impact,
+            ); // status BEFORE push (unit still here)
+        }
+        let suppress_direct_push =
+            acid_projector_edge_suppressed || acid_projector_already_acid;
         let policy = if wdef.no_edge_bump_direct_push() {
             NO_EDGE_BUMP_PUSH_POLICY
         } else if weapon_id == WId::BruteMirrorshot {
@@ -3016,8 +3089,8 @@ fn sim_projectile(
             DEFAULT_PUSH_POLICY
         };
         match wdef.push {
-            PushDir::Forward => apply_push_with_policy(board, hx, hy, dir, result, policy),
-            PushDir::Backward => apply_push_with_policy(board, hx, hy, opposite_dir(dir), result, policy),
+            PushDir::Forward if !suppress_direct_push => apply_push_with_policy(board, hx, hy, dir, result, policy),
+            PushDir::Backward if !suppress_direct_push => apply_push_with_policy(board, hx, hy, opposite_dir(dir), result, policy),
             _ => {}
         }
         if let Some(idx) = deferred_death_explosion {
@@ -3886,6 +3959,14 @@ fn leap_landing_illegal_reason(
     if tx >= 8 || ty >= 8 {
         return Some("out_of_bounds");
     }
+    if weapon_id == WId::PrimeLeap && board.units[attacker_idx].web() {
+        return Some("webbed");
+    }
+    let old_x = board.units[attacker_idx].x;
+    let old_y = board.units[attacker_idx].y;
+    if tx != old_x && ty != old_y {
+        return Some("off_axis");
+    }
 
     let landing = board.tile(tx, ty);
     if landing.terrain == Terrain::Chasm {
@@ -4029,6 +4110,11 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
     } else {
         // Damage adjacent tiles (skip source direction)
         let from_dir = direction_between(tx, ty, old_x, old_y);
+        let push_policy = if weapon_id == WId::PrimeLeap {
+            TRI_ROCKET_PUSH_POLICY
+        } else {
+            DEFAULT_PUSH_POLICY
+        };
         for (i, &(dx, dy)) in DIRS.iter().enumerate() {
             if Some(i) == from_dir { continue; }
             let nx = tx as i8 + dx;
@@ -4036,7 +4122,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
             if !in_bounds(nx, ny) { continue; }
             apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
             if wdef.push == PushDir::Outward {
-                apply_push(board, nx as u8, ny as u8, i, result);
+                apply_push_with_policy(board, nx as u8, ny as u8, i, result, push_policy);
             }
         }
     }
@@ -4524,6 +4610,48 @@ mod tests {
         });
         board.units[idx].set_type_name("BombRock");
         idx
+    }
+
+    #[test]
+    fn test_viscera_nanobots_heals_unstable_self_damage_on_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 4, 4, 3, WId::BruteUnstable);
+        let enemy = add_enemy(&mut board, 90, 4, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(board.units[mech].hp, 3);
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:1"));
+    }
+
+    #[test]
+    fn test_viscera_nanobots_revives_self_damaged_attacker_on_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 4, 4, 1, WId::BruteUnstable);
+        board.units[mech].max_hp = 3;
+        add_enemy(&mut board, 90, 4, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mechs_killed, 0);
+        assert_eq!(board.units[mech].hp, 1);
+    }
+
+    #[test]
+    fn test_viscera_nanobots_no_passive_keeps_unstable_recoil_damage() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 4, 4, 3, WId::BruteUnstable);
+        add_enemy(&mut board, 90, 4, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[mech].hp, 2);
     }
 
     #[test]
@@ -5946,10 +6074,53 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 4);
         // Acid Projector should apply ACID status to target
         assert!(board.units[enemy_idx].acid(), "Enemy should have ACID after Acid Projector");
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (3, 5));
         assert!(
             !board.tile(3, 4).acid(),
             "Occupied ACID hits should not create an immediate ground pool"
         );
+    }
+
+    #[test]
+    fn test_acid_projector_edge_block_noops_zero_damage_status() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 6, 2, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 7, 1);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 7);
+
+        assert_eq!(board.units[enemy_idx].hp, 1);
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (3, 7));
+        assert!(!board.units[enemy_idx].acid());
+        assert!(!board.tile(3, 7).acid());
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_acid_projector_pushes_line_target_beyond_clicked_tile() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 1, 2, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 1, 3, 6);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 1, 2);
+
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (1, 4));
+        assert_eq!(board.units[enemy_idx].hp, 6);
+        assert!(board.units[enemy_idx].acid());
+    }
+
+    #[test]
+    fn test_acid_projector_does_not_push_already_acid_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 4, 2, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 4, 1, 2);
+        board.units[enemy_idx].set_acid(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 4, 3);
+
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (4, 1));
+        assert_eq!(board.units[enemy_idx].hp, 2);
+        assert!(board.units[enemy_idx].acid());
     }
 
     #[test]
@@ -6986,6 +7157,80 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_killed_target_corpse_bumps_live_blocker() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeLeap);
+        let blocker_idx = add_mech(&mut board, 1, 3, 4, 3, WId::BruteUnstable);
+        let leaper_idx = add_enemy_type(&mut board, 140, 4, 4, 1, "Leaper1");
+
+        let wdef = WEAPONS[WId::PrimeLeap as usize];
+        let mut result = ActionResult::default();
+        sim_leap(&mut board, mech_idx, WId::PrimeLeap, &wdef, 5, 4, &mut result);
+
+        assert_eq!(board.units[leaper_idx].hp, 0, "landing damage kills the Leaper");
+        assert_eq!(board.units[blocker_idx].hp, 2, "killed Leaper corpse bumps the live blocker");
+        assert_eq!((board.units[leaper_idx].x, board.units[leaper_idx].y), (4, 4));
+    }
+
+    #[test]
+    fn test_prime_leap_push_into_disabled_mech_wreck_bumps_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 5, 3, WId::PrimeLeap);
+        let boss_idx = add_enemy_type(&mut board, 137, 2, 5, 6, "BeetleBoss");
+        board.units[boss_idx].set_acid(true);
+        let wreck_idx = add_mech(&mut board, 2, 1, 5, 0, WId::ScienceAcidShot);
+        board.units[wreck_idx].set_active(false);
+        board.units[wreck_idx].set_type_name("NanoMech");
+        board.units[wreck_idx].max_hp = 2;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 3, 5);
+
+        assert_eq!(board.units[boss_idx].hp, 3);
+        assert_eq!((board.units[boss_idx].x, board.units[boss_idx].y), (2, 5));
+        assert_eq!(board.units[wreck_idx].hp, 0);
+        assert_eq!(result.enemy_damage_dealt, 3);
+    }
+
+    #[test]
+    fn test_webbed_prime_leap_noops() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimeLeap);
+        board.units[mech_idx].set_web(true);
+        board.units[mech_idx].web_source_uid = 99;
+        let adj_n = add_enemy(&mut board, 30, 2, 4, 3);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 3, 4);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (3, 3));
+        assert_eq!(board.units[mech_idx].hp, 3, "no-op Hydraulic Legs should not self-damage");
+        assert!(board.units[mech_idx].web(), "no-op Hydraulic Legs should leave web intact");
+        assert_eq!(board.units[adj_n].hp, 3, "no-op Hydraulic Legs should not damage landing-adjacent units");
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:3:4:webbed"),
+            "expected webbed illegal-leap event, got {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_off_axis_prime_leap_noops() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeLeap);
+        let adj_n = add_enemy(&mut board, 30, 3, 1, 3);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 4, 1);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(board.units[mech_idx].hp, 3, "off-axis Hydraulic Legs should not self-damage");
+        assert_eq!(board.units[adj_n].hp, 3, "off-axis Hydraulic Legs should not damage landing-adjacent units");
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:4:1:off_axis"),
+            "expected off-axis illegal-leap event, got {:?}",
+            result.events
+        );
     }
 
     #[test]
