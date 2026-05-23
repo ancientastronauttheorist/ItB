@@ -1513,7 +1513,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   landing-adjacent tiles, and Viscera Nanobots cannot revive a mech killed by
 //   chasm/water/lava terrain under its own tile. Pre-v203 corpus archived as
 //   `failure_db_snapshot_sim_v202.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 203;
+// v204 - Bump/collision damage to a pawn standing on cracked Ground is
+//   absorbed by the pawn and does not open a chasm under the occupied tile.
+//   Pre-v204 corpus archived as `failure_db_snapshot_sim_v203.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 204;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

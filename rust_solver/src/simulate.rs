@@ -1336,9 +1336,12 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         // damages the mech's tile, so Hydraulic Legs can open a chasm under
         // its landing mech.
         let tile = board.tile_mut(x, y);
-        let occupied_weapon_hit =
-            occupied_by_alive_unit_at_start && source == DamageSource::Weapon;
-        if tile.terrain == Terrain::Ground && tile.cracked() && !occupied_weapon_hit {
+        let occupied_tile_absorbs_crack_hit =
+            occupied_by_alive_unit_at_start
+            && matches!(source, DamageSource::Weapon | DamageSource::Bump);
+        if tile.terrain == Terrain::Ground
+            && tile.cracked()
+            && !occupied_tile_absorbs_crack_hit {
             tile.terrain = Terrain::Chasm;
             tile.set_cracked(false);
             if let Some(idx) = board.unit_at(x, y) {
@@ -6334,6 +6337,28 @@ mod tests {
         assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (4, 0));
         assert_eq!(board.units[enemy_idx].hp, 2);
         assert!(board.units[enemy_idx].acid());
+    }
+
+    #[test]
+    fn test_acid_projector_bump_on_occupied_cracked_ground_does_not_open_chasm() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 5, 4, 2, WId::ScienceAcidShot);
+        let shaman_idx = add_enemy_type(&mut board, 422, 5, 5, 3, "Shaman1");
+        let bouncer_idx = add_enemy_type(&mut board, 448, 5, 6, 3, "Bouncer1");
+        board.tile_mut(5, 6).set_cracked(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 5, 5);
+
+        assert_eq!(board.units[shaman_idx].hp, 2);
+        assert!(board.units[shaman_idx].acid(), "Acid Projector should acid the hit target before push");
+        assert_eq!(board.units[bouncer_idx].hp, 2, "blocked push bumps the cracked-tile blocker for 1");
+        assert_eq!(
+            board.tile(5, 6).terrain,
+            Terrain::Ground,
+            "occupied cracked Ground should absorb bump damage without opening a chasm"
+        );
+        assert!(board.tile(5, 6).cracked());
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]

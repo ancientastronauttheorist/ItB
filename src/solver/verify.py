@@ -1042,7 +1042,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # landing-adjacent tiles, and Viscera Nanobots cannot revive a mech killed by
 # chasm/water/lava terrain under its own tile.
 # Pre-v203 corpus archived as failure_db_snapshot_sim_v202.jsonl.
-SIMULATOR_VERSION = 203
+# v204: Bump/collision damage to a pawn standing on cracked Ground is absorbed
+# by the pawn and does not open a chasm under the occupied tile.
+# Pre-v204 corpus archived as failure_db_snapshot_sim_v203.jsonl.
+SIMULATOR_VERSION = 204
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
