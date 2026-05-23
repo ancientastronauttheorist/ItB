@@ -1,6 +1,9 @@
 #!/bin/bash
-# Run the full regression suite: Rust corpus + Python failure_db replay.
+# Run the full regression suite: tracked Rust corpus + Python failure_db replay.
 # Sets DYLD_FRAMEWORK_PATH so pyo3 tests can find libpython at runtime.
+#
+# Set ITB_REGRESSION_INCLUDE_UNTRACKED=1 to include local live-run recordings in
+# the Rust corpus while investigating an uncurated board.
 
 set -e
 

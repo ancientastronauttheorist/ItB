@@ -6,6 +6,15 @@ dist/
 build/
 .env
 venv/
-.env
 rust_solver/target/
 tmp/
+
+# Live-run artifacts are intentionally local by default. Historical fixtures
+# already tracked in Git remain tracked; force-add a specific new artifact when
+# it should become part of the regression corpus.
+.local_runs/
+recordings/[0-9]*/
+snapshots/*/
+logs/*_log.md
+data/wiki_raw/*
+*.tmp

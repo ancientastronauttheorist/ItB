@@ -1,4 +1,4 @@
-//! Regression test: run the solver against every recorded board and assert
+//! Regression test: run the solver against every tracked recorded board and assert
 //! it doesn't crash, produce empty solutions on active boards, or emit
 //! out-of-bounds actions.
 //!
@@ -6,13 +6,48 @@
 //! change with weight tuning and tie-breaking.
 
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use glob::glob;
 use serde_json::Value;
 
 use itb_solver::serde_bridge::board_from_json;
 use itb_solver::solver::{solve_turn, Solution};
+
+/// Return board recordings for the Rust corpus. By default this uses only
+/// tracked files so local live-run artifacts do not turn regression into an
+/// unbounded crawl. Set ITB_REGRESSION_INCLUDE_UNTRACKED=1 to opt into the old
+/// glob behavior when investigating a local recording before curating it.
+fn recording_board_paths(repo_root: &Path) -> Vec<PathBuf> {
+    if std::env::var("ITB_REGRESSION_INCLUDE_UNTRACKED").as_deref() == Ok("1") {
+        return glob_recording_board_paths(repo_root);
+    }
+
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(repo_root)
+        .arg("ls-files")
+        .arg("recordings/*/m*_turn_*_board.json")
+        .output();
+    match output {
+        Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .filter(|line| !line.trim().is_empty())
+            .map(|line| repo_root.join(line))
+            .collect(),
+        _ => glob_recording_board_paths(repo_root),
+    }
+}
+
+fn glob_recording_board_paths(repo_root: &Path) -> Vec<PathBuf> {
+    let pattern = repo_root.join("recordings/*/m*_turn_*_board.json");
+    let pattern_str = pattern.to_str().expect("path to str");
+    glob(pattern_str)
+        .expect("bad glob")
+        .filter_map(Result::ok)
+        .collect()
+}
 
 /// Load known_issues.json and extract Rust-scoped entries.
 /// Returns set of (run_id, turn, trigger_name) tuples.
@@ -130,8 +165,7 @@ fn regression_all_boards() {
         .parent()
         .unwrap()
         .to_path_buf();
-    let pattern = repo_root.join("recordings/*/m*_turn_*_board.json");
-    let pattern_str = pattern.to_str().expect("path to str");
+    let paths = recording_board_paths(&repo_root);
 
     let known = load_known_issues();
     let mut total = 0usize;
@@ -139,11 +173,7 @@ fn regression_all_boards() {
     let mut expected_failures = 0usize;
     let mut unexpected: Vec<String> = Vec::new();
 
-    for entry in glob(pattern_str).expect("bad glob") {
-        let path = match entry {
-            Ok(p) => p,
-            Err(_) => continue,
-        };
+    for path in paths {
         total += 1;
 
         let raw = match std::fs::read_to_string(&path) {
