@@ -1313,7 +1313,20 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         // Ice: intact → cracked → water
         let tile = board.tile_mut(x, y);
         if tile.terrain == Terrain::Ice {
-            if tile.cracked() || source == DamageSource::Fire {
+            let occupied_pawn_absorbs_ice_hit =
+                occupied_by_alive_unit_at_start
+                && matches!(
+                    source,
+                    DamageSource::Weapon
+                        | DamageSource::Bump
+                        | DamageSource::WeaponCracksOccupied
+                        | DamageSource::WeaponNoAcidPool
+                );
+            if occupied_pawn_absorbs_ice_hit {
+                // Live pawn hits on occupied ice are pawn-only for ordinary
+                // weapon/bump-class damage: the occupant can die or be pushed,
+                // but the underlying ice neither cracks nor melts.
+            } else if tile.cracked() || source == DamageSource::Fire {
                 tile.terrain = Terrain::Water;
                 tile.set_cracked(false);
                 // Non-flying unit drowns. effectively_flying() = flying && !frozen,
@@ -10638,26 +10651,55 @@ mod tests {
     }
 
     #[test]
-    fn test_flying_ice_break_survives() {
-        // apply_damage_core path: weapon damage melts cracked ice to water.
-        // A unit on the tile drowns if not effectively_flying() && not massive.
-        // The frozen case doesn't fire here in practice — any damage that
-        // breaks the ice ALSO unfreezes the unit (frozen-takes-0-damage
-        // unfreeze runs FIRST in apply_damage_core, before the tile effect),
-        // so by the time the ice→water conversion happens the unit is already
-        // un-frozen and re-flying. Test the baseline (damage-through-ice
-        // survives for a flying unit) to lock in the effectively_flying-based
-        // check in apply_damage_core.
+    fn test_empty_cracked_ice_breaks_to_water() {
         let mut board = make_test_board();
         board.tile_mut(3, 3).terrain = Terrain::Ice;
         board.tile_mut(3, 3).set_cracked(true);
-        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
 
         let mut result = ActionResult::default();
         apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
 
-        assert_eq!(board.units[idx].hp, 2,
-            "Flying unit on melting ice must survive (took 1 weapon dmg)");
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Water);
+        assert!(!board.tile(3, 3).cracked());
+    }
+
+    #[test]
+    fn test_occupied_ice_absorbs_weapon_tile_break() {
+        for source in [
+            DamageSource::Weapon,
+            DamageSource::Bump,
+            DamageSource::WeaponCracksOccupied,
+            DamageSource::WeaponNoAcidPool,
+        ] {
+            let mut intact = make_test_board();
+            intact.tile_mut(3, 3).terrain = Terrain::Ice;
+            let intact_enemy = add_enemy(&mut intact, 42, 3, 3, 1);
+            let mut result = ActionResult::default();
+
+            apply_damage_core(&mut intact, 3, 3, 1, &mut result, source);
+
+            assert_eq!(intact.units[intact_enemy].hp, 0, "occupant should take the hit");
+            assert_eq!(intact.tile(3, 3).terrain, Terrain::Ice);
+            assert!(
+                !intact.tile(3, 3).cracked(),
+                "{source:?} should not crack occupied intact ice"
+            );
+
+            let mut cracked = make_test_board();
+            cracked.tile_mut(3, 3).terrain = Terrain::Ice;
+            cracked.tile_mut(3, 3).set_cracked(true);
+            let cracked_enemy = add_enemy(&mut cracked, 43, 3, 3, 1);
+            let mut result = ActionResult::default();
+
+            apply_damage_core(&mut cracked, 3, 3, 1, &mut result, source);
+
+            assert_eq!(cracked.units[cracked_enemy].hp, 0, "occupant should take the hit");
+            assert_eq!(cracked.tile(3, 3).terrain, Terrain::Ice);
+            assert!(
+                cracked.tile(3, 3).cracked(),
+                "{source:?} should not melt occupied cracked ice"
+            );
+        }
     }
 
     #[test]

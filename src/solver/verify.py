@@ -1069,7 +1069,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # push into live blockers. Fixes Healing run 20260522_193613_471
 # Mission_BlobberBoss turn 2, where a killed BlobB corpse bumped NanoMech.
 # Pre-v211 corpus archived as failure_db_snapshot_sim_v210.jsonl.
-SIMULATOR_VERSION = 211
+# v212: Weapon/bump-class damage to a pawn standing on Ice is pawn-only: it can
+# damage/kill/push the pawn, but does not crack or melt the underlying ice tile.
+# Pre-v212 corpus archived as failure_db_snapshot_sim_v211.jsonl.
+SIMULATOR_VERSION = 212
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

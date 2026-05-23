@@ -1545,7 +1545,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   corpse push into live blockers. Fixes Healing run 20260522_193613_471
 //   Mission_BlobberBoss turn 2, where a killed BlobB corpse bumped NanoMech.
 //   Pre-v211 corpus archived as `failure_db_snapshot_sim_v210.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 211;
+// v212 - Weapon/bump-class damage to a pawn standing on Ice is pawn-only: it
+//   can damage/kill/push the pawn, but does not crack or melt the underlying
+//   ice tile. Pre-v212 corpus archived as `failure_db_snapshot_sim_v211.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 212;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
