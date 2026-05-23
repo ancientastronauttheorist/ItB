@@ -1003,7 +1003,39 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 4, where Prime_Leap pushed an acid Beetle Leader into disabled Nano's wreck on
 # C7; live applied a bump and left the boss on C6.
 # Pre-v192 corpus archived as failure_db_snapshot_sim_v191.jsonl.
-SIMULATOR_VERSION = 192
+# v193: Ignore stale teleporter pad pairs unless the active mission is
+# Mission_Teleporter. A stale pair leaked into Mission_AcidTank and made the sim
+# teleport Hazardous mechs after recoil/movement while the engine left them in
+# place. Pre-v193 corpus archived as failure_db_snapshot_sim_v192.jsonl.
+# v194: Passive_Leech / Viscera Nanobots heal credit is limited to direct
+# weapon-damage kills. Hydraulic Legs edge-bump kills still count for score and
+# mission kills, but live did not heal the Leap Mech.
+# Pre-v194 corpus archived as failure_db_snapshot_sim_v193.jsonl.
+# v195: Science_AcidShot / Acid Projector still pushes an already-ACID target
+# when the push destination is legal; only the edge-endpoint zero-damage no-op
+# suppresses the direct push.
+# Pre-v195 corpus archived as failure_db_snapshot_sim_v194.jsonl.
+# v196: Prime_Leap / Hydraulic Legs resolves landing tile effects after Leap
+# self-damage, so Bethany's shield can be stripped before an ACID pool on the
+# landing tile applies.
+# Pre-v196 corpus archived as failure_db_snapshot_sim_v195.jsonl.
+# v197: Prime_Leap / Hydraulic Legs moves a killed ACID target's new pool with
+# the simultaneously-pushed corpse instead of leaving it on the damage tile.
+# Pre-v197 corpus archived as failure_db_snapshot_sim_v196.jsonl.
+# v198: Instant-killing a web source releases its grapple, Terraformer sweeps
+# clear grass on ACID ground without converting that tile to Sand, and replay
+# WId::None plan entries deactivate the skipped unit.
+# Pre-v198 corpus archived as failure_db_snapshot_sim_v197.jsonl.
+# v199: ACID death pools on Sand become Ground, and Brute_Unstable pushback
+# bump kills count as Viscera Nanobots killing blows.
+# Pre-v199 corpus archived as failure_db_snapshot_sim_v198.jsonl.
+# v200: Weapon damage that kills a pawn standing on cracked Ground leaves the
+# tile cracked; only direct damage to the empty tile opens a chasm.
+# Pre-v200 corpus archived as failure_db_snapshot_sim_v199.jsonl.
+# v201: The occupied-crack exception is weapon-damage-only; self-damage such as
+# Hydraulic Legs recoil still collapses cracked Ground under the mech.
+# Pre-v201 corpus archived as failure_db_snapshot_sim_v200.jsonl.
+SIMULATOR_VERSION = 201
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

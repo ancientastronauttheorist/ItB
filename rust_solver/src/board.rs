@@ -815,6 +815,7 @@ pub struct ActionResult {
     pub grid_damage: i32,
     pub enemies_killed: i32,
     pub mission_kills: i32,
+    pub leech_credit_kills: i32,
     pub enemy_damage_dealt: i32,
     pub mech_damage_taken: i32,
     pub mechs_killed: i32,
@@ -826,9 +827,20 @@ pub struct ActionResult {
 
 impl ActionResult {
     pub fn record_enemy_kill(&mut self, mission_counted: bool) {
+        self.record_enemy_kill_with_leech_credit(mission_counted, false);
+    }
+
+    pub fn record_enemy_kill_with_leech_credit(
+        &mut self,
+        mission_counted: bool,
+        leech_credit: bool,
+    ) {
         self.enemies_killed += 1;
         if mission_counted {
             self.mission_kills += 1;
+        }
+        if leech_credit {
+            self.leech_credit_kills += 1;
         }
     }
 
@@ -839,6 +851,7 @@ impl ActionResult {
         self.grid_damage += other.grid_damage;
         self.enemies_killed += other.enemies_killed;
         self.mission_kills += other.mission_kills;
+        self.leech_credit_kills += other.leech_credit_kills;
         self.enemy_damage_dealt += other.enemy_damage_dealt;
         self.mech_damage_taken += other.mech_damage_taken;
         self.mechs_killed += other.mechs_killed;

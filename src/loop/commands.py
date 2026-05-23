@@ -7675,7 +7675,7 @@ def _re_solve_partial(
     time_limit: float,
     session: RunSession,
     allow_dirty_plan: bool = False,
-) -> tuple[list, list, float, dict | None]:
+) -> tuple[list, list, float, dict | None, dict | None]:
     """Re-solve from actual board state with partial mech states.
 
     Args:
@@ -7687,9 +7687,10 @@ def _re_solve_partial(
         session: Session for weight loading.
 
     Returns:
-        (actions, predicted_states, score, plan_safety) from the new solve.
-        actions is a list of MechAction. predicted_states is the dual-snapshot
-        list from replay_solution.
+        (actions, predicted_states, score, plan_safety, solve_data) from the
+        new solve. actions is a list of MechAction. predicted_states is the
+        dual-snapshot list from replay_solution. solve_data mirrors the normal
+        solve recording so post-enemy audit uses the re-solved prediction.
     """
     import json as _json
     import time as _time
@@ -7873,11 +7874,85 @@ def _re_solve_partial(
                             f"  ! {v.get('kind')}: "
                             f"{v.get('current')} -> {v.get('predicted')}"
                         )
-            return actions, enriched.get("predicted_states", []), score, plan_safety
+            from src.model.weapons import get_weapon_name
+            from src.solver.verify import SOLVE_RECORD_SCHEMA_VERSION
+            threats_payload = rust_result.get("threats", [])
+            threat_count = (
+                len(threats_payload)
+                if isinstance(threats_payload, list)
+                else int(threats_payload or 0)
+            )
+            solve_data = {
+                "schema_version": SOLVE_RECORD_SCHEMA_VERSION,
+                "simulator_version": _get_simulator_version(),
+                "score": score,
+                "actions": [{
+                    "mech_uid": a.mech_uid,
+                    "mech_type": a.mech_type,
+                    "move_to": list(a.move_to) if a.move_to else None,
+                    "weapon": (
+                        get_weapon_name(a.weapon)
+                        if a.weapon and a.weapon != "_REPAIR"
+                        else a.weapon
+                    ),
+                    "weapon_id": a.weapon,
+                    "target": list(a.target),
+                    "description": a.description,
+                } for a in actions],
+                "threats": threat_count,
+                "initial_building_threats": rust_result.get(
+                    "initial_building_threats", []
+                ),
+                "active_mechs": len(actions),
+                "spawn_points": spawns,
+                "search_stats": {
+                    "elapsed_seconds": elapsed,
+                    "timed_out": rust_result.get("stats", {}).get(
+                        "timed_out", False
+                    ),
+                    "permutations_tried": rust_result.get("stats", {}).get(
+                        "permutations_tried", 0
+                    ),
+                    "total_permutations": rust_result.get("stats", {}).get(
+                        "total_permutations", 0
+                    ),
+                    "active_mech_count": len(actions),
+                },
+                "weight_version": _get_weight_version(),
+                "beam_mode": False,
+                "beam_chain_score": None,
+                "candidate_count": 1,
+                "selected_candidate_rank": 0,
+                "selected_candidate_source": "partial_re_solve",
+                "candidate_safety": [],
+                "dirty_frontier": [],
+                "lookahead_frontier": [],
+                "robust_frontier": [],
+                "safety_widening": [],
+                "action_results": enriched.get("action_results", []),
+                "predicted_states": enriched.get("predicted_states", []),
+                "replay_annotations": enriched.get("replay_annotations", []),
+                "current_outcome": current_outcome,
+                "predicted_outcome": enriched.get("predicted_outcome", {}),
+                "predicted_board_summary": predicted_board_summary,
+                "plan_safety": plan_safety,
+                "score_breakdown": enriched.get("score_breakdown", {}),
+                "partial_re_solve": {
+                    "done_uids": sorted(done_uids),
+                    "mid_action_uid": mid_action_uid,
+                },
+            }
+            return (
+                actions,
+                enriched.get("predicted_states", []),
+                score,
+                plan_safety,
+                solve_data,
+            )
     except Exception as e:
         print(f"  Re-solve error: {e}")
 
-    return [], [], float('-inf'), None
+    return [], [], float('-inf'), None, None
 
 
 def _resolve_weapon_slot_from_board(mech_uid: int, weapon_id: str, board: Board) -> int:
@@ -8503,10 +8578,52 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 return False
         return True
 
-    def _settle_transient_status_diff(predicted: dict, actual_board, actual_data, phase: str):
-        """Re-read briefly for bridge status effects that apply after command ACK."""
+    def _is_transient_teleporter_position_diff(diff, actual_data) -> bool:
+        """True for Mission_Teleporter pad swaps that can lag the command ACK."""
+        if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+            return False
+        if not isinstance(actual_data, dict):
+            return False
+        if actual_data.get("mission_id") != "Mission_Teleporter":
+            return False
+        pairs = actual_data.get("teleporter_pairs") or []
+        pad_tiles = {
+            (int(pair[i]), int(pair[i + 1]))
+            for pair in pairs
+            if isinstance(pair, (list, tuple)) and len(pair) >= 4
+            for i in (0, 2)
+        }
+        if not pad_tiles:
+            return False
+        unit_diffs = getattr(diff, "unit_diffs", []) or []
+        if not unit_diffs:
+            return False
+        for ud in unit_diffs:
+            if ud.get("field") != "pos":
+                return False
+            predicted_pos = ud.get("predicted")
+            actual_pos = ud.get("actual")
+            if not (
+                isinstance(predicted_pos, (list, tuple))
+                and isinstance(actual_pos, (list, tuple))
+                and len(predicted_pos) >= 2
+                and len(actual_pos) >= 2
+                and (int(predicted_pos[0]), int(predicted_pos[1])) in pad_tiles
+                and (int(actual_pos[0]), int(actual_pos[1])) in pad_tiles
+            ):
+                return False
+        return True
+
+    def _is_transient_verify_diff(diff, actual_data) -> bool:
+        return (
+            _is_transient_predicted_status_gain(diff)
+            or _is_transient_teleporter_position_diff(diff, actual_data)
+        )
+
+    def _settle_transient_verify_diff(predicted: dict, actual_board, actual_data, phase: str):
+        """Re-read briefly for bridge effects that apply after command ACK."""
         diff = diff_states(predicted, actual_board)
-        if diff.is_empty() or not _is_transient_predicted_status_gain(diff):
+        if diff.is_empty() or not _is_transient_verify_diff(diff, actual_data):
             return actual_board, actual_data, diff
 
         best_board, best_data, best_diff = actual_board, actual_data, diff
@@ -8518,12 +8635,12 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 continue
             reread_diff = diff_states(predicted, reread_board)
             if reread_diff.is_empty():
-                print(f"  {phase.upper()} VERIFIED: PASS (status settled after {attempt + 1} reread)")
+                print(f"  {phase.upper()} VERIFIED: PASS (bridge settled after {attempt + 1} reread)")
                 return reread_board, reread_data, reread_diff
             if reread_diff.total_count() < best_diff.total_count():
                 best_board, best_data, best_diff = reread_board, reread_data, reread_diff
         if best_diff.total_count() < diff.total_count():
-            print(f"  {phase.upper()} verify: status diff partially settled "
+            print(f"  {phase.upper()} verify: transient diff partially settled "
                   f"({diff.total_count()} -> {best_diff.total_count()})")
         return best_board, best_data, best_diff
 
@@ -8959,7 +9076,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             actual_board, actual_data = read_bridge_state()
 
             if actual_board and pred_post_move:
-                actual_board, actual_data, diff = _settle_transient_status_diff(
+                actual_board, actual_data, diff = _settle_transient_verify_diff(
                     pred_post_move, actual_board, actual_data, "move"
                 )
                 if not diff.is_empty():
@@ -9032,7 +9149,13 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                         re_solve_count += 1
                         # Re-solve: this mech has moved but not attacked
                         if actual_data:
-                            new_actions, new_preds, new_score, new_safety = _re_solve_partial(
+                            (
+                                new_actions,
+                                new_preds,
+                                new_score,
+                                new_safety,
+                                new_solve_data,
+                            ) = _re_solve_partial(
                                 actual_board, actual_data, done_uids,
                                 mid_action_uid=mech_uid,
                                 time_limit=time_limit, session=session,
@@ -9074,6 +9197,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 actions = solver_actions
                                 predicted_states = new_preds
                                 score = new_score
+                                if new_solve_data:
+                                    solve_data = new_solve_data
+                                    predicted_outcome = (
+                                        solve_data.get("predicted_outcome") or {}
+                                    )
+                                    plan_safety = solve_data.get("plan_safety")
+                                    _record_turn_state(
+                                        session, "solve", solve_data,
+                                        turn_override=turn,
+                                    )
                                 action_idx = 0
                                 continue  # restart loop with new solution
                 else:
@@ -9142,7 +9275,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         actual_board, actual_data = read_bridge_state()
 
         if actual_board and pred_post_attack:
-            actual_board, actual_data, diff = _settle_transient_status_diff(
+            actual_board, actual_data, diff = _settle_transient_verify_diff(
                 pred_post_attack, actual_board, actual_data, final_phase
             )
             if not diff.is_empty():
@@ -9240,7 +9373,13 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     done_uids.add(mech_uid)
                     remaining = len(actions) - action_idx - 1
                     if remaining > 0 and actual_data:
-                        new_actions, new_preds, new_score, new_safety = _re_solve_partial(
+                        (
+                            new_actions,
+                            new_preds,
+                            new_score,
+                            new_safety,
+                            new_solve_data,
+                        ) = _re_solve_partial(
                             actual_board, actual_data, done_uids,
                             mid_action_uid=None,
                             time_limit=time_limit, session=session,
@@ -9281,6 +9420,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             actions = solver_actions
                             predicted_states = new_preds
                             score = new_score
+                            if new_solve_data:
+                                solve_data = new_solve_data
+                                predicted_outcome = (
+                                    solve_data.get("predicted_outcome") or {}
+                                )
+                                plan_safety = solve_data.get("plan_safety")
+                                _record_turn_state(
+                                    session, "solve", solve_data,
+                                    turn_override=turn,
+                                )
                             action_idx = 0
                             actions_completed += 1
                             continue  # restart loop with new solution

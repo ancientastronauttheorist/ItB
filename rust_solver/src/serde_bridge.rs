@@ -95,8 +95,9 @@ pub struct JsonInput {
     /// Teleporter pad pairs on Mission_Teleporter (Detritus disposal
     /// missions). Each entry = [x1, y1, x2, y2]. Bridge populates via the
     /// Board.AddTeleport hook in modloader.lua. Parsed into
-    /// `Board::teleporter_pairs`. Missing / empty on non-teleporter
-    /// missions.
+    /// `Board::teleporter_pairs` only when `mission_id` is Mission_Teleporter
+    /// (or absent on legacy recordings); stale pairs on other missions are
+    /// ignored.
     pub teleporter_pairs: Option<Vec<Vec<u8>>>,
     /// Per-mission "do not kill X" bonus objective unit-type list. When
     /// non-empty, the evaluator's `volatile_enemy_killed` penalty fires
@@ -588,11 +589,20 @@ pub fn board_from_json(json_str: &str)
         }
     }
 
-    // Teleporter pad pairs (Mission_Teleporter overlay from Board:AddTeleport)
-    if let Some(pairs) = &input.teleporter_pairs {
-        for p in pairs {
-            if p.len() >= 4 && p[0] < 8 && p[1] < 8 && p[2] < 8 && p[3] < 8 {
-                board.teleporter_pairs.push((p[0], p[1], p[2], p[3]));
+    // Teleporter pad pairs (Mission_Teleporter overlay from Board:AddTeleport).
+    // Legacy recordings may lack mission_id, so preserve pairs when the
+    // mission is unknown. Live non-teleporter missions must not inherit stale
+    // pad pairs from a previous Mission_Teleporter capture.
+    let allow_teleporter_pairs = input
+        .mission_id
+        .as_deref()
+        .map_or(true, |id| id == "Mission_Teleporter");
+    if allow_teleporter_pairs {
+        if let Some(pairs) = &input.teleporter_pairs {
+            for p in pairs {
+                if p.len() >= 4 && p[0] < 8 && p[1] < 8 && p[2] < 8 && p[3] < 8 {
+                    board.teleporter_pairs.push((p[0], p[1], p[2], p[3]));
+                }
             }
         }
     }
@@ -1471,5 +1481,42 @@ mod tests {
             0,
             "WId 135 must be represented in the high disabled-mask word"
         );
+    }
+
+    #[test]
+    fn test_non_teleporter_mission_ignores_stale_pad_pairs() {
+        let input = r#"{
+            "mission_id": "Mission_AcidTank",
+            "tiles": [],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": [],
+            "teleporter_pairs": [[2, 3, 2, 5]]
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert!(
+            board.teleporter_pairs.is_empty(),
+            "stale Mission_Teleporter pad pairs must not affect other missions"
+        );
+    }
+
+    #[test]
+    fn test_teleporter_mission_keeps_pad_pairs() {
+        let input = r#"{
+            "mission_id": "Mission_Teleporter",
+            "tiles": [],
+            "units": [],
+            "grid_power": 7,
+            "spawning_tiles": [],
+            "teleporter_pairs": [[2, 3, 2, 5]]
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.teleporter_pairs, vec![(2, 3, 2, 5)]);
     }
 }

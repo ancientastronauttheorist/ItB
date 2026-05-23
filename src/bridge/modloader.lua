@@ -1116,13 +1116,14 @@ local function dump_state()
 
     -- Teleporter pads: populated by the Mission_Teleporter:StartMission
     -- wrap below. Each entry = {x1, y1, x2, y2}. Empty list / absent on
-    -- non-teleporter missions; the Rust/Python simulators ignore an empty
-    -- list (pre-sim-v8 behavior). The earlier Board.AddTeleport global
+    -- non-teleporter missions; stale pairs must not leak into other
+    -- missions. The earlier Board.AddTeleport global
     -- override crashed mac OS at file-load with "no static 'AddTeleport'
     -- in class 'Board'" (commit 456ba49 → rolled back in 63e0e18); the
     -- current scope-rebinds AddTeleport only inside StartMission and pcalls
     -- everything so a future API change can't take down mission load.
-    if _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
+    if state.mission_id == "Mission_Teleporter"
+       and _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
         state.teleporter_pairs = {}
         for _, pair in ipairs(_ITB_TELEPORT_PAIRS) do
             state.teleporter_pairs[#state.teleporter_pairs + 1] = pair
@@ -1497,6 +1498,21 @@ local function bridge_safe_jet_target_area(self, point)
     return ret
 end
 
+local function bridge_safe_leap_target_area(self, point)
+    local ret = PointList()
+    local path_prof = path_profile_for_target_area(point, PATH_FLYER)
+    local range = self.Range or 1
+    for i = DIR_START, DIR_END do
+        for k = 1, range do
+            local curr = DIR_VECTORS[i] * k + point
+            if Board:IsValid(curr) and not Board:IsBlocked(curr, path_prof) then
+                ret:push_back(curr)
+            end
+        end
+    end
+    return ret
+end
+
 local function install_safe_jet_target_area()
     if _ITB_BRIDGE_SAFE_JET_TARGET_AREA then return end
     local names = {
@@ -1523,6 +1539,35 @@ local function install_safe_jet_target_area()
     end
     _ITB_BRIDGE_SAFE_JET_TARGET_AREA = true
     log_bridge("SAFE TARGET AREA: patched Aerial Bombs family entries=" ..
+               installed)
+end
+
+local function install_safe_leap_target_area()
+    if _ITB_BRIDGE_SAFE_LEAP_TARGET_AREA then return end
+    local names = {
+        "Prime_Leap",
+        "Prime_Leap_A",
+        "Prime_Leap_B",
+        "Prime_Leap_AB",
+        "Support_Boosters",
+        "Support_Boosters_A",
+        "Support_Boosters_B",
+        "Support_Boosters_AB",
+        "Prime_SpikeLeap",
+        "Prime_SpikeLeap_A",
+        "Prime_SpikeLeap_B",
+        "Prime_SpikeLeap_AB",
+    }
+    local installed = 0
+    for _, name in ipairs(names) do
+        local skill = _G[name]
+        if skill ~= nil then
+            skill.GetTargetArea = bridge_safe_leap_target_area
+            installed = installed + 1
+        end
+    end
+    _ITB_BRIDGE_SAFE_LEAP_TARGET_AREA = true
+    log_bridge("SAFE TARGET AREA: patched Leap_Attack family entries=" ..
                installed)
 end
 
@@ -2227,6 +2272,15 @@ _ITB_CURRENT_MISSION = _ITB_CURRENT_MISSION or nil
 local _state_dump_interval = 5  -- dump state every 5 seconds
 local _last_state_dump = 0
 
+local function clear_stale_teleporter_pairs_for(mission)
+    if mission and mission.ID and mission.ID ~= "Mission_Teleporter"
+       and _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
+        log_bridge("TELEPORT PAD: clearing stale pairs for "
+            .. tostring(mission.ID))
+        _ITB_TELEPORT_PAIRS = {}
+    end
+end
+
 -- BaseUpdate: resume pending command coroutine, poll for new commands,
 -- and periodically dump state. Coroutine resume happens FIRST so that
 -- wait_for_board_coro yields get unblocked the moment the engine drains
@@ -2236,6 +2290,7 @@ Mission.BaseUpdate = function(self)
     _orig_BaseUpdate(self)
     -- Cache current mission (self is the active mission inside BaseUpdate)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
         local f = io.open("/tmp/itb_bridge_heartbeat", "w")
@@ -2283,6 +2338,7 @@ end
 Mission.NextTurn = function(self)
     _orig_NextTurn(self)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     pcall(function()
         if Game and Game:GetTeamTurn() == TEAM_PLAYER then
             local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
@@ -2300,6 +2356,7 @@ end
 Mission.BaseStart = function(self)
     _orig_BaseStart(self)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     pcall(dump_state)
     log_bridge("MISSION START: " .. tostring(self.ID or self.Name or "unknown"))
 end
@@ -2308,6 +2365,7 @@ end
 Mission.BaseDeployment = function(self)
     _orig_BaseDeployment(self)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     -- Capture zone AFTER original runs (engine creates the zone in BaseDeployment)
     _ITB_DEPLOY_ZONE = capture_deploy_zone()
     if #_ITB_DEPLOY_ZONE > 0 then
@@ -2447,6 +2505,7 @@ pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
 pcall(function() os.remove(ACK_FILE) end)
 install_safe_jet_target_area()
+install_safe_leap_target_area()
 
 local _reload_count = (_ITB_BRIDGE_LOAD_COUNT or 0) + 1
 _ITB_BRIDGE_LOAD_COUNT = _reload_count

@@ -20,7 +20,7 @@ use crate::serde_bridge;
 use crate::simulate::{simulate_attack, simulate_move};
 use crate::turn_projection::board_to_json;
 use crate::types::Terrain;
-use crate::weapons::{self, build_overlay_table, wid_from_str, WeaponTable};
+use crate::weapons::{self, build_overlay_table, wid_from_str, WeaponTable, WId};
 
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
@@ -127,6 +127,11 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                 &mut board, mech_idx, wid, (act.target[0], act.target[1]), weapons_table,
             )
         };
+        if illegal_move.is_none() && wid == WId::None {
+            // A replay plan entry with WId::None represents the bridge's
+            // explicit skip after any move-only action, so the action is spent.
+            board.units[mech_idx].set_active(false);
+        }
         let mut all_events = move_result.events.clone();
         all_events.extend_from_slice(&attack_result.events);
         let post_attack_snap = capture_snapshot(
@@ -526,6 +531,8 @@ mod tests {
         let v: Value = serde_json::from_str(&raw).unwrap();
         let post_attack_units = v["predicted_states"][0]["post_attack"]["units"].as_array().unwrap();
         let jet = post_attack_units.iter().find(|u| u["uid"] == 0).unwrap();
+        assert_eq!(jet["active"], false,
+            "Replay WId::None plan entries represent bridge skips and must deactivate the unit");
         assert_eq!(jet["status"]["boosted"], true,
             "Replay snapshots must preserve Boosted so verify does not create false status diffs");
     }

@@ -489,6 +489,19 @@ fn clear_unit_web(board: &mut Board, unit_idx: usize) {
     }
 }
 
+fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
+    let terrain = board.tile(x, y).terrain;
+    if !terrain.is_deadly_ground() || terrain == Terrain::Water {
+        let tile = board.tile_mut(x, y);
+        tile.flags |= TileFlags::ACID;
+        tile.set_on_fire(false);
+        if matches!(terrain, Terrain::Ground | Terrain::Sand) {
+            tile.terrain = Terrain::Ground;
+            tile.set_grass(false);
+        }
+    }
+}
+
 /// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
 /// the smoke-cancelled queued attack releases that grapple immediately.
 fn place_smoke(board: &mut Board, x: u8, y: u8) {
@@ -972,6 +985,7 @@ fn finish_instant_unit_death(
     let is_player = board.units[unit_idx].is_player();
     let mission_counted = is_enemy && !board.units[unit_idx].minor();
     let has_acid = board.units[unit_idx].acid();
+    let dying_uid = board.units[unit_idx].uid;
     let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
     let dying_tname = board.units[unit_idx].type_name_str().to_string();
     let can_explode = is_enemy
@@ -986,6 +1000,7 @@ fn finish_instant_unit_death(
     if is_enemy {
         result.record_enemy_kill(mission_counted);
         on_enemy_death(board, unit_idx, result);
+        break_web_from(board, dying_uid);
         if is_volatile {
             apply_volatile_decay(board, death_x, death_y, result, 0);
         }
@@ -999,7 +1014,7 @@ fn finish_instant_unit_death(
     // ACID units leave an acid pool/tile on normal ground and water. Lava/chasm
     // consume it, matching the existing apply_damage_core behavior.
     if has_acid && (!death_terrain.is_deadly_ground() || death_terrain == Terrain::Water) {
-        board.tile_mut(death_x, death_y).flags |= TileFlags::ACID;
+        leave_acid_pool_on_death(board, death_x, death_y);
     }
 }
 
@@ -1144,6 +1159,8 @@ pub(crate) fn thaw_frozen_building(
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
 
+    let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
+
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
         let unit = &mut board.units[idx];
@@ -1190,7 +1207,10 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             if unit.is_enemy() {
                 result.enemy_damage_dealt += actual as i32;
                 if unit.hp <= 0 {
-                    result.record_enemy_kill(!unit.minor());
+                    result.record_enemy_kill_with_leech_credit(
+                        !unit.minor(),
+                        matches!(source, DamageSource::Weapon),
+                    );
                     on_enemy_death(board, idx, result);
                 }
             } else if unit.is_player() {
@@ -1208,7 +1228,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         if unit.hp <= 0 && unit.acid() {
             let tile = board.tile(x, y);
             if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
-                board.tile_mut(x, y).flags |= TileFlags::ACID;
+                leave_acid_pool_on_death(board, x, y);
             }
         }
     }
@@ -1306,12 +1326,16 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             }
         }
 
-        // Cracked ground: any damage turns the tile into a Chasm.
-        // The unit standing on it (if any) falls in and dies. Unlike drowning,
-        // Massive does NOT save from Chasm — falling into a pit is a destroy.
-        // Flying units are exempt via effectively_flying().
+        // Cracked ground collapses only when the tile itself is damaged.
+        // Live Mission_Bomb captures show a pawn standing on cracked ground
+        // absorbs ordinary weapon SpaceDamage: the pawn can die while the
+        // tile remains cracked Ground for the next hit. Self-damage still
+        // damages the mech's tile, so Hydraulic Legs can open a chasm under
+        // its landing mech.
         let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Ground && tile.cracked() {
+        let occupied_weapon_hit =
+            occupied_by_alive_unit_at_start && source == DamageSource::Weapon;
+        if tile.terrain == Terrain::Ground && tile.cracked() && !occupied_weapon_hit {
             tile.terrain = Terrain::Chasm;
             tile.set_cracked(false);
             if let Some(idx) = board.unit_at(x, y) {
@@ -1370,11 +1394,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     if let Some(idx) = board.any_unit_at(x, y) {
         let unit = &board.units[idx];
         if unit.hp <= 0 && unit.acid() {
-            let tile = board.tile_mut(x, y);
-            if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
-                tile.flags |= TileFlags::ACID;
-                tile.set_on_fire(false); // acid pool extinguishes fire
-            }
+            leave_acid_pool_on_death(board, x, y);
         }
     }
 
@@ -2335,7 +2355,7 @@ pub fn simulate_weapon_with(
         return result;
     }
 
-    let leech_kills_before = result.enemies_killed;
+    let leech_kills_before = result.leech_credit_kills;
 
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
@@ -2418,14 +2438,14 @@ pub fn simulate_weapon_with(
         apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
     }
 
-    let leech_kills = result.enemies_killed - leech_kills_before;
-    apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
-
-    // Self-freeze (Cryo-Launcher freezes attacker)
-    if wdef.freeze() && weapon_id == WId::RangedIce {
-        let u = &board.units[attacker_idx];
-        if !u.shield() {
-            board.units[attacker_idx].set_frozen(true);
+    // Leap movement is a real tile change, but live resolves its landing
+    // effects after the queued self-damage in Leap_Attack:GetSkillEffect().
+    // This matters when recoil strips a shield before landing on ACID.
+    if wdef.weapon_type == WeaponType::Leap {
+        let lx = board.units[attacker_idx].x;
+        let ly = board.units[attacker_idx].y;
+        if (lx, ly) != (ax, ay) {
+            apply_landing_effects(board, attacker_idx, &mut result);
         }
     }
 
@@ -2434,7 +2454,23 @@ pub fn simulate_weapon_with(
         if let Some(dir) = attack_dir {
             let ax = board.units[attacker_idx].x;
             let ay = board.units[attacker_idx].y;
+            let kills_before = result.enemies_killed;
             apply_push(board, ax, ay, opposite_dir(dir), &mut result);
+            let pushback_kills = result.enemies_killed - kills_before;
+            if pushback_kills > 0 {
+                result.leech_credit_kills += pushback_kills;
+            }
+        }
+    }
+
+    let leech_kills = result.leech_credit_kills - leech_kills_before;
+    apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
+
+    // Self-freeze (Cryo-Launcher freezes attacker)
+    if wdef.freeze() && weapon_id == WId::RangedIce {
+        let u = &board.units[attacker_idx];
+        if !u.shield() {
+            board.units[attacker_idx].set_frozen(true);
         }
     }
 
@@ -2488,13 +2524,16 @@ fn apply_terraformer_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionRe
     }
 
     let terrain = board.tile(x, y).terrain;
+    let preserve_ground_acid = terrain == Terrain::Ground && board.tile(x, y).acid();
     let tile = board.tile_mut(x, y);
     tile.set_smoke(false);
     tile.set_on_fire(false);
     tile.set_cracked(false);
-    if terrain != Terrain::Mountain {
+    if terrain != Terrain::Mountain && !preserve_ground_acid {
         tile.terrain = Terrain::Sand;
         tile.building_hp = 0;
+    }
+    if terrain != Terrain::Mountain {
         tile.set_grass(false);
     }
 
@@ -2714,10 +2753,7 @@ fn sim_tri_rocket(
                     if !tile_had_acid {
                         board.tile_mut(ox, oy).flags.remove(TileFlags::ACID);
                     }
-                    let final_terrain = board.tile(fx, fy).terrain;
-                    if !final_terrain.is_deadly_ground() || final_terrain == Terrain::Water {
-                        board.tile_mut(fx, fy).flags |= TileFlags::ACID;
-                    }
+                    leave_acid_pool_on_death(board, fx, fy);
                 }
             } else if pre_hp > 0 && board.units[idx].hp > 0 && moved
                 && vacated_kill_tiles.contains(&(fx, fy))
@@ -3069,18 +3105,12 @@ fn sim_projectile(
         };
         let acid_projector_edge_suppressed =
             acid_projector_edge_block_suppresses_status(weapon_id, wdef, hx, hy, dir);
-        let acid_projector_already_acid = weapon_id == WId::ScienceAcidShot
-            && wdef.damage == 0
-            && board.unit_at(hx, hy)
-                .map(|idx| board.units[idx].acid())
-                .unwrap_or(false);
         if !acid_projector_edge_suppressed {
             apply_weapon_status_with_impact_occupancy(
                 board, hx, hy, wdef, occupied_at_impact,
             ); // status BEFORE push (unit still here)
         }
-        let suppress_direct_push =
-            acid_projector_edge_suppressed || acid_projector_already_acid;
+        let suppress_direct_push = acid_projector_edge_suppressed;
         let policy = if wdef.no_edge_bump_direct_push() {
             NO_EDGE_BUMP_PUSH_POLICY
         } else if weapon_id == WId::BruteMirrorshot {
@@ -3560,7 +3590,7 @@ fn apply_trapped_death_damage(
             if has_acid {
                 let terrain = board.tile(x, y).terrain;
                 if !terrain.is_deadly_ground() || terrain == Terrain::Water {
-                    board.tile_mut(x, y).flags |= TileFlags::ACID;
+                    leave_acid_pool_on_death(board, x, y);
                 }
             }
         }
@@ -4120,24 +4150,41 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if !in_bounds(nx, ny) { continue; }
-            apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
+            let hx = nx as u8;
+            let hy = ny as u8;
+            let pre_hit_unit = board.unit_at(hx, hy).map(|idx| {
+                (
+                    idx,
+                    board.units[idx].hp,
+                    board.units[idx].acid(),
+                    board.tile(hx, hy).acid(),
+                    board.units[idx].x,
+                    board.units[idx].y,
+                )
+            });
+            apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+            let killed_by_hit = pre_hit_unit
+                .map(|(idx, pre_hp, _, _, _, _)| pre_hp > 0 && board.units[idx].hp <= 0)
+                .unwrap_or(false);
             if wdef.push == PushDir::Outward {
-                apply_push_with_policy(board, nx as u8, ny as u8, i, result, push_policy);
+                apply_push_with_policy(board, hx, hy, i, result, push_policy);
+            }
+            if let Some((idx, _, was_acid, tile_had_acid, ox, oy)) = pre_hit_unit {
+                let fx = board.units[idx].x;
+                let fy = board.units[idx].y;
+                if killed_by_hit && was_acid && (fx, fy) != (ox, oy) {
+                    if !tile_had_acid {
+                        board.tile_mut(ox, oy).flags.remove(TileFlags::ACID);
+                    }
+                    leave_acid_pool_on_death(board, fx, fy);
+                }
             }
         }
     }
 
-    // Landing pipeline: the attack movement still counts as a real tile
-    // change. A webbed mech that relocates via Aerial Bombs breaks free, then
-    // resolves fire/ACID/mines/repair/teleporter on the landing tile. This
-    // fires at the VERY END so weapon status (fire/smoke/ACID) lands on the
-    // leap target tile BEFORE the mech teleports away. Matches in-game
-    // behaviour: you aim Bombing Run at the pad, the bomb drops on the pad,
-    // then the mech swaps to the partner pad.
-    if (tx, ty) != (old_x, old_y) {
-        clear_unit_web(board, attacker_idx);
-        apply_landing_effects(board, attacker_idx, result);
-    }
+    // The wrapper resolves the landing pipeline after any Leap self-damage.
+    // Live Hydraulic Legs strips Bethany's shield with recoil before ACID
+    // pools on the landing tile apply, so landing effects cannot run here.
 }
 
 // ── Laser ────────────────────────────────────────────────────────────────────
@@ -4655,6 +4702,57 @@ mod tests {
     }
 
     #[test]
+    fn test_viscera_nanobots_heals_unstable_pushback_bump_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::BruteUnstable);
+        let front = add_enemy(&mut board, 90, 3, 2, 2);
+        let rear = add_enemy_type(&mut board, 91, 3, 4, 1, "Totem1");
+        board.units[rear].set_acid(true);
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 3, 2);
+
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(result.leech_credit_kills, 2);
+        assert_eq!(board.units[front].hp, 0);
+        assert_eq!(board.units[rear].hp, 0);
+        assert_eq!(board.units[mech].hp, 3);
+        assert!(board.tile(3, 4).acid());
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:1:2:2"),
+            "pushback bump kill should add a second Nanobots heal credit"
+        );
+    }
+
+    #[test]
+    fn test_viscera_nanobots_does_not_heal_hydraulic_legs_edge_bump_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 5, 3, 3, WId::PrimeLeap);
+        board.tile_mut(6, 3).flags |= TileFlags::ACID;
+        let enemy = add_enemy(&mut board, 90, 7, 3, 3);
+        board.units[enemy].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeLeap, 6, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.leech_credit_kills, 0);
+        assert_eq!(
+            board.units[mech].hp, 2,
+            "edge-bump kills do not count as Nanobots killing blows; only Leap recoil applies"
+        );
+        assert!(
+            !result
+                .events
+                .iter()
+                .any(|e| e.starts_with("viscera_nanobots_heal:")),
+            "no heal event should be emitted for bump-only kills"
+        );
+    }
+
+    #[test]
     fn test_hydraulic_lifter_throws_adjacent_unit_to_landing() {
         let mut board = make_test_board();
         let mech = add_mech(&mut board, 1, 3, 3, 3, WId::PrimeTcPunt);
@@ -4906,6 +5004,44 @@ mod tests {
         assert!(!board.tile(7, 2).grass());
         assert_eq!(board.tile(7, 3).terrain, Terrain::Mountain);
         assert!(board.tile(7, 3).grass());
+    }
+
+    #[test]
+    fn test_terraformer_killing_web_source_releases_webbed_ally() {
+        let mut board = make_test_board();
+        let terraformer = add_mission_ally(&mut board, 245, 4, 5, 2, WId::TerraformerAttack, "Terraformer");
+        let scorpion = add_enemy_type(&mut board, 302, 4, 4, 3, "Scorpion1");
+        board.units[terraformer].set_web(true);
+        board.units[terraformer].web_source_uid = board.units[scorpion].uid;
+
+        let result = simulate_weapon(&mut board, terraformer, WId::TerraformerAttack, 4, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[scorpion].hp, 0);
+        assert!(!board.units[terraformer].web());
+        assert_eq!(board.units[terraformer].web_source_uid, 0);
+    }
+
+    #[test]
+    fn test_terraformer_clears_grass_but_preserves_acid_ground_tile() {
+        let mut board = make_test_board();
+        let terraformer = add_mission_ally(&mut board, 245, 4, 5, 2, WId::TerraformerAttack, "Terraformer");
+        let acid_enemy = add_enemy(&mut board, 301, 5, 4, 2);
+        board.units[acid_enemy].set_acid(true);
+        board.tile_mut(5, 4).terrain = Terrain::Ground;
+        board.tile_mut(5, 4).set_grass(true);
+        board.tile_mut(4, 4).terrain = Terrain::Ground;
+        board.tile_mut(4, 4).set_grass(true);
+
+        let result = simulate_weapon(&mut board, terraformer, WId::TerraformerAttack, 4, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[acid_enemy].hp, 0);
+        assert!(board.tile(5, 4).acid());
+        assert_eq!(board.tile(5, 4).terrain, Terrain::Ground);
+        assert!(!board.tile(5, 4).grass());
+        assert_eq!(board.tile(4, 4).terrain, Terrain::Sand);
+        assert!(!board.tile(4, 4).grass());
     }
 
     #[test]
@@ -6110,7 +6246,7 @@ mod tests {
     }
 
     #[test]
-    fn test_acid_projector_does_not_push_already_acid_target() {
+    fn test_acid_projector_pushes_already_acid_target_with_open_space() {
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 4, 4, 2, WId::ScienceAcidShot);
         let enemy_idx = add_enemy(&mut board, 1, 4, 1, 2);
@@ -6118,7 +6254,7 @@ mod tests {
 
         let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 4, 3);
 
-        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (4, 1));
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (4, 0));
         assert_eq!(board.units[enemy_idx].hp, 2);
         assert!(board.units[enemy_idx].acid());
     }
@@ -7157,6 +7293,38 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_self_damage_strips_shield_before_acid_pool_pickup() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeLeap);
+        board.units[mech_idx].set_shield(true);
+        board.tile_mut(5, 3).set_acid(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(board.units[mech_idx].hp, 5, "shield absorbs the Leap recoil");
+        assert!(!board.units[mech_idx].shield(), "Leap recoil should strip shield");
+        assert!(board.units[mech_idx].acid(), "landing ACID should apply after shield is stripped");
+        assert!(!board.tile(5, 3).acid(), "ACID pool should be consumed on landing");
+    }
+
+    #[test]
+    fn test_prime_leap_moves_acid_pool_with_killed_pushed_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 2, 5, WId::PrimeLeap);
+        let mosquito_idx = add_enemy_type(&mut board, 290, 6, 2, 2, "Mosquito1");
+        board.units[mosquito_idx].set_acid(true);
+        board.units[mosquito_idx].flags |= UnitFlags::FLYING;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 7, 2);
+
+        assert_eq!(board.units[mosquito_idx].hp, 0);
+        assert_eq!((board.units[mosquito_idx].x, board.units[mosquito_idx].y), (5, 2));
+        assert!(!board.tile(6, 2).acid(), "vacated kill tile should not keep a new ACID pool");
+        assert!(board.tile(5, 2).acid(), "ACID pool should follow the pushed corpse");
     }
 
     #[test]
@@ -10153,6 +10321,49 @@ mod tests {
 
         assert_eq!(board.units[idx].hp, 2,
             "Flying unit on melting ice must survive (took 1 weapon dmg)");
+    }
+
+    #[test]
+    fn test_weapon_kill_on_occupied_cracked_ground_does_not_open_chasm() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ground;
+        board.tile_mut(3, 3).set_cracked(true);
+        let enemy = add_enemy(&mut board, 42, 3, 3, 1);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[enemy].hp, 0, "occupant should take the hit");
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Ground);
+        assert!(board.tile(3, 3).cracked(), "crack remains for a later tile hit");
+    }
+
+    #[test]
+    fn test_weapon_damage_on_empty_cracked_ground_opens_chasm() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ground;
+        board.tile_mut(3, 3).set_cracked(true);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Chasm);
+        assert!(!board.tile(3, 3).cracked());
+    }
+
+    #[test]
+    fn test_self_damage_on_occupied_cracked_ground_opens_chasm() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ground;
+        board.tile_mut(3, 3).set_cracked(true);
+        let mech = add_mech(&mut board, 7, 3, 3, 5, WId::PrimeLeap);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::SelfDamage);
+
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Chasm);
+        assert!(!board.tile(3, 3).cracked());
+        assert_eq!(board.units[mech].hp, 0, "grounded mech falls into chasm");
     }
 
     // ── building_hp underflow regression tests ───────────────────────────

@@ -558,13 +558,15 @@ class Board:
                     # Mountains have 2 HP (bridge doesn't send mountain HP)
                     bt.building_hp = td.get("building_hp", 2)
 
-        # Teleporter pad pairs (Mission_Teleporter). Bridge emits each
-        # entry as [x1, y1, x2, y2]; normalize to tuples.
-        for pair in data.get("teleporter_pairs", []) or []:
-            if isinstance(pair, (list, tuple)) and len(pair) >= 4:
-                board.teleporter_pairs.append(
-                    (int(pair[0]), int(pair[1]), int(pair[2]), int(pair[3]))
-                )
+        # Teleporter pad pairs are scoped to Mission_Teleporter. Preserve
+        # legacy recordings without mission_id, but ignore stale live bridge
+        # pairs on other missions.
+        if data.get("mission_id") in (None, "Mission_Teleporter"):
+            for pair in data.get("teleporter_pairs", []) or []:
+                if isinstance(pair, (list, tuple)) and len(pair) >= 4:
+                    board.teleporter_pairs.append(
+                        (int(pair[0]), int(pair[1]), int(pair[2]), int(pair[3]))
+                    )
 
         # Environment danger: v2 format has per-tile lethality [x, y, damage, kill_int]
         board.env_type = data.get("env_type", "unknown")
