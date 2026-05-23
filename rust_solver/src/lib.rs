@@ -1560,7 +1560,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Beetle2 on F5 left Water after Leap push, while Unstable's intact E4
 //   firing tile stayed Ice. Pre-v214 corpus archived as
 //   `failure_db_snapshot_sim_v213.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 214;
+// v215 - Hydraulic Legs only breaks occupied Ice after a grounded target is
+//   actually displaced off the original tile. A blocked push/corpse bump leaves
+//   the occupied Ice intact. Fixes Healing run 20260522_193613_471 Pinnacle
+//   Mission_Factory turn 4, where Leaper1 died on C3 but the C2 blocker kept
+//   the corpse on intact Ice. Pre-v215 corpus archived as
+//   `failure_db_snapshot_sim_v214.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 215;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

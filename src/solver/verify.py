@@ -1083,7 +1083,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Healing run 20260522_193613_471 Mission_Survive turn 3, where Beetle2 on F5
 # left Water after Leap push, while Unstable's intact E4 firing tile stayed Ice.
 # Pre-v214 corpus archived as failure_db_snapshot_sim_v213.jsonl.
-SIMULATOR_VERSION = 214
+SIMULATOR_VERSION = 215
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

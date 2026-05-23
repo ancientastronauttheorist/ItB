@@ -4294,7 +4294,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
             if let Some((idx, _, was_acid, was_flying, tile_had_acid, ox, oy)) = pre_hit_unit {
                 let fx = board.units[idx].x;
                 let fy = board.units[idx].y;
-                if !was_flying {
+                if !was_flying && (fx, fy) != (ox, oy) {
                     flood_ice_tile(board, ox, oy, result);
                 }
                 if killed_by_hit && was_acid && (fx, fy) != (ox, oy) {
@@ -10745,6 +10745,30 @@ mod tests {
             board.tile(3, 2).terrain,
             Terrain::Ice,
             "flying targets absorb the occupied-ice hit without breaking the tile"
+        );
+    }
+
+    #[test]
+    fn test_hydraulic_legs_blocked_grounded_target_keeps_occupied_ice() {
+        let mut board = make_test_board();
+        let leap = add_mech(&mut board, 1, 0, 1, 5, WId::PrimeLeap);
+        board.tile_mut(3, 2).terrain = Terrain::Ice;
+        let leaper = add_enemy_type(&mut board, 90, 3, 2, 1, "Leaper1");
+        let blocker = add_mech(&mut board, 2, 3, 3, 5, WId::BruteUnstable);
+
+        simulate_weapon(&mut board, leap, WId::PrimeLeap, 3, 1);
+
+        assert_eq!(
+            (board.units[leaper].x, board.units[leaper].y),
+            (3, 2),
+            "blocked Hydraulic Legs push should leave the corpse on the original ice tile"
+        );
+        assert_eq!(board.units[leaper].hp, 0);
+        assert_eq!(board.units[blocker].hp, 4, "blocked push still bumps the blocker");
+        assert_eq!(
+            board.tile(3, 2).terrain,
+            Terrain::Ice,
+            "grounded targets only break occupied Ice after an actual displacement"
         );
     }
 
