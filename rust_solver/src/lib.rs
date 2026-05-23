@@ -1509,7 +1509,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Hazardous self-damage has dropped the attacker to 0 before Viscera
 //   Nanobots revives it. Pre-v202 corpus archived as
 //   `failure_db_snapshot_sim_v201.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 202;
+// v203 - Prime_Leap / Hydraulic Legs damage collapses occupied cracked
+//   landing-adjacent tiles, and Viscera Nanobots cannot revive a mech killed by
+//   chasm/water/lava terrain under its own tile. Pre-v203 corpus archived as
+//   `failure_db_snapshot_sim_v202.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 203;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

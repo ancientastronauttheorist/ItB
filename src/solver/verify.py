@@ -1038,7 +1038,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v202: Brute_Unstable recoil still bumps a live rear blocker even if Hazardous
 # self-damage temporarily disables the attacker before Viscera Nanobots heals.
 # Pre-v202 corpus archived as failure_db_snapshot_sim_v201.jsonl.
-SIMULATOR_VERSION = 202
+# v203: Prime_Leap / Hydraulic Legs damage collapses occupied cracked
+# landing-adjacent tiles, and Viscera Nanobots cannot revive a mech killed by
+# chasm/water/lava terrain under its own tile.
+# Pre-v203 corpus archived as failure_db_snapshot_sim_v202.jsonl.
+SIMULATOR_VERSION = 203
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

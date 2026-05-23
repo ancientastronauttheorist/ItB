@@ -1209,7 +1209,10 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                 if unit.hp <= 0 {
                     result.record_enemy_kill_with_leech_credit(
                         !unit.minor(),
-                        matches!(source, DamageSource::Weapon),
+                        matches!(
+                            source,
+                            DamageSource::Weapon | DamageSource::WeaponCracksOccupied
+                        ),
                     );
                     on_enemy_death(board, idx, result);
                 }
@@ -1344,6 +1347,8 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                         unit.hp = 0;
                         if unit.is_enemy() {
                             result.record_enemy_kill(!unit.minor());
+                        } else if unit.is_player() {
+                            result.mechs_killed += 1;
                         }
                     }
                 }
@@ -1360,7 +1365,11 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
 
         // Sand: weapon/self damage -> smoke (fire weapon -> fire tile instead)
         let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Sand && matches!(source, DamageSource::Weapon | DamageSource::SelfDamage) {
+        if tile.terrain == Terrain::Sand
+            && matches!(
+                source,
+                DamageSource::Weapon | DamageSource::SelfDamage | DamageSource::WeaponCracksOccupied
+            ) {
             tile.terrain = Terrain::Ground;
             // Note: fire_weapon flag not yet threaded; default to smoke.
             // Correct fire-on-sand requires knowing if weapon has FIRE flag.
@@ -1541,6 +1550,13 @@ fn apply_viscera_nanobots_heal(
         return;
     }
     let was_disabled = board.units[attacker_idx].hp <= 0;
+    if was_disabled && disabled_unit_is_on_deadly_terrain(board, attacker_idx) {
+        result.events.push(format!(
+            "viscera_nanobots_blocked_by_terrain:{}:{}",
+            board.units[attacker_idx].uid, kills
+        ));
+        return;
+    }
     let old_hp = board.units[attacker_idx].hp;
     let max_hp = board.units[attacker_idx].max_hp;
     let new_hp = (old_hp + heal).min(max_hp);
@@ -1557,6 +1573,18 @@ fn apply_viscera_nanobots_heal(
         "viscera_nanobots_heal:{}:{}:{}",
         board.units[attacker_idx].uid, kills, actual_heal
     ));
+}
+
+fn disabled_unit_is_on_deadly_terrain(board: &Board, unit_idx: usize) -> bool {
+    let unit = &board.units[unit_idx];
+    if unit.hp > 0 || unit.effectively_flying() {
+        return false;
+    }
+    match board.tile(unit.x, unit.y).terrain {
+        Terrain::Chasm => true,
+        Terrain::Water | Terrain::Lava => !unit.massive(),
+        _ => false,
+    }
 }
 
 fn apply_damage_inner(
@@ -4173,7 +4201,14 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                     board.units[idx].y,
                 )
             });
-            apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+            let damage_source = if weapon_id == WId::PrimeLeap {
+                // Live Hydraulic Legs emits tile damage on landing-adjacent
+                // cracked ground even when the hit kills the pawn occupying it.
+                DamageSource::WeaponCracksOccupied
+            } else {
+                DamageSource::Weapon
+            };
+            apply_damage(board, hx, hy, wdef.damage, result, damage_source);
             let killed_by_hit = pre_hit_unit
                 .map(|(idx, pre_hp, _, _, _, _)| pre_hp > 0 && board.units[idx].hp <= 0)
                 .unwrap_or(false);
@@ -7351,6 +7386,45 @@ mod tests {
         assert!(!board.units[mech_idx].shield(), "Leap recoil should strip shield");
         assert!(board.units[mech_idx].acid(), "landing ACID should apply after shield is stripped");
         assert!(!board.tile(5, 3).acid(), "ACID pool should be consumed on landing");
+    }
+
+    #[test]
+    fn test_prime_leap_cracked_landing_death_is_not_nanobot_revived() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 0, 2, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 3;
+        board.tile_mut(5, 2).set_cracked(true);
+        board.tile_mut(6, 2).set_cracked(true);
+        let totem_idx = add_enemy_type(&mut board, 489, 6, 2, 1, "Totem1");
+        board.units[totem_idx].flags |= UnitFlags::MINOR;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 2);
+
+        assert_eq!(
+            board.tile(5, 2).terrain,
+            Terrain::Chasm,
+            "self-damage opens the cracked landing tile"
+        );
+        assert_eq!(
+            board.tile(6, 2).terrain,
+            Terrain::Chasm,
+            "Hydraulic Legs also cracks the occupied landing-adjacent target tile"
+        );
+        assert_eq!(board.units[totem_idx].hp, 0, "landing-adjacent Totem is killed");
+        assert_eq!(
+            board.units[mech_idx].hp,
+            0,
+            "Nanobots must not revive a mech that fell into a chasm"
+        );
+        assert_eq!(result.mechs_killed, 1);
+        assert!(
+            result
+                .events
+                .iter()
+                .any(|e| e == "viscera_nanobots_blocked_by_terrain:0:1"),
+            "terrain-blocked Nanobots revive should be explicit in replay events"
+        );
     }
 
     #[test]
