@@ -405,6 +405,42 @@ def test_dirty_consent_accepts_kill_limit_failure_for_non_perfect_targets():
     assert token in s.dirty_consent_used
 
 
+def test_dirty_consent_accepts_kill_count_failure_for_non_perfect_targets():
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=["achievement"],
+        achievement_targets=["Healing"],
+    )
+    s.mission_index = 9
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_objective_failed",
+            "current": 2,
+            "predicted": 3,
+            "blocking": True,
+            "delta": 1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=8)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=8,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
 @pytest.mark.parametrize(
     ("targets", "tags"),
     [
@@ -449,6 +485,43 @@ def test_dirty_consent_rejects_kill_limit_failure_for_perfect_targets(
 
     assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
     assert "kill_limit_objective_failed" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_rejects_kill_count_failure_for_perfect_targets():
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=["achievement"],
+        achievement_targets=["Perfect Strategy"],
+    )
+    s.mission_index = 9
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_objective_failed",
+            "current": 2,
+            "predicted": 3,
+            "blocking": True,
+            "delta": 1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=8)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=8,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "kill_objective_failed" in rejected["reason"]
     assert token not in s.dirty_consent_used
 
 

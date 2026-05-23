@@ -362,7 +362,7 @@ def _normalize_run_label(value: object) -> str:
 
 
 def _allow_kill_limit_objective_dirty_consent(session: RunSession) -> bool:
-    """Allow kill-cap bonus failure only for explicitly non-perfect targets."""
+    """Allow kill-count bonus failure only for explicitly non-perfect targets."""
     targets = [
         _normalize_run_label(t)
         for t in (session.achievement_targets or [])
@@ -433,7 +433,7 @@ def _dirty_consent_gate(
         )
         and not (
             allow_kill_limit_dirty
-            and k == "kill_limit_objective_failed"
+            and k in {"kill_objective_failed", "kill_limit_objective_failed"}
         )
         and not (
             allow_protected_objective_loss

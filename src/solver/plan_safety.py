@@ -822,7 +822,10 @@ def plan_requires_safety_block(audit: dict[str, Any] | None,
             )
             and not (
                 allow_kill_limit_objective_dirty
-                and v.get("kind") == "kill_limit_objective_failed"
+                and v.get("kind") in {
+                    "kill_objective_failed",
+                    "kill_limit_objective_failed",
+                }
             )
             and not (
                 allow_protected_objective_loss_dirty
