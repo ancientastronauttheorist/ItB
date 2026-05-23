@@ -1523,6 +1523,12 @@ pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     }
 }
 
+fn flood_ice_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    if board.tile(x, y).terrain == Terrain::Ice {
+        flood_tile(board, x, y, result);
+    }
+}
+
 /// Trigger the Dam_Pawn death flood. Fires exactly once when the dam
 /// transitions from alive → dead. Flood pattern from mission_dam.lua:
 /// `for y = 1,7 do for x = 0,1 do SpaceDamage(DamPos + Point(x,y)) end end`.
@@ -2513,10 +2519,21 @@ pub fn simulate_weapon_with(
     // Self damage. Skipped for Charge weapons — sim_charge applies it inline
     // only when the charge actually hits a target (empty-tile charges take no
     // recoil in the game, but the solver used to over-predict HP by 1).
+    let defer_unstable_ice_self_damage =
+        weapon_id == WId::BruteUnstable
+        && wdef.self_damage > 0
+        && wdef.weapon_type != WeaponType::Charge
+        && board.tile(ax, ay).terrain == Terrain::Ice;
+
     if wdef.self_damage > 0 && wdef.weapon_type != WeaponType::Charge {
         let ax = board.units[attacker_idx].x;
         let ay = board.units[attacker_idx].y;
-        apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
+        let source = if defer_unstable_ice_self_damage {
+            DamageSource::WeaponUnitOnly
+        } else {
+            DamageSource::SelfDamage
+        };
+        apply_damage(board, ax, ay, wdef.self_damage, &mut result, source);
     }
 
     let mut leech_heal_applied = false;
@@ -2554,6 +2571,10 @@ pub fn simulate_weapon_with(
                 result.leech_credit_kills += pushback_kills;
             }
         }
+    }
+
+    if defer_unstable_ice_self_damage {
+        flood_ice_tile(board, ax, ay, &mut result);
     }
 
     if !leech_heal_applied {
@@ -4831,6 +4852,30 @@ mod tests {
             !board.tile(5, 5).acid(),
             "Unstable Cannon should not leave a corpse ACID pool on the direct-hit tile"
         );
+    }
+
+    #[test]
+    fn test_unstable_cannon_origin_ice_floods_after_recoil() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Ice;
+        let mech = add_mech(&mut board, 1, 3, 4, 5, WId::BruteUnstable);
+        let target = add_enemy(&mut board, 90, 4, 4, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 4);
+
+        assert_eq!(board.units[mech].hp, 4, "self-damage still hits the mech");
+        assert_eq!(
+            (board.units[mech].x, board.units[mech].y),
+            (2, 4),
+            "recoil should move the Unstable Tank off the firing tile"
+        );
+        assert_eq!(
+            board.tile(3, 4).terrain,
+            Terrain::Water,
+            "the vacated firing ice tile should melt to water"
+        );
+        assert_eq!(board.units[target].hp, 1);
+        assert_eq!(result.mechs_killed, 0);
     }
 
     #[test]

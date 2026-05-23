@@ -1072,7 +1072,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v212: Weapon/bump-class damage to a pawn standing on Ice is pawn-only: it can
 # damage/kill/push the pawn, but does not crack or melt the underlying ice tile.
 # Pre-v212 corpus archived as failure_db_snapshot_sim_v211.jsonl.
-SIMULATOR_VERSION = 212
+# v213: Brute_Unstable self-damage on an Ice firing tile applies its HP hit
+# first, then resolves the origin tile as Water after recoil. Fixes Healing run
+# 20260522_193613_471 Mission_Survive turn 2, where D5 flooded after Unstable
+# recoiled to D6.
+# Pre-v213 corpus archived as failure_db_snapshot_sim_v212.jsonl.
+SIMULATOR_VERSION = 213
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
