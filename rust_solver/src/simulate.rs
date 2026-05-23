@@ -2487,10 +2487,17 @@ pub fn simulate_weapon_with(
         apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
     }
 
-    // Leap movement is a real tile change, but live resolves its landing
-    // effects after the queued self-damage in Leap_Attack:GetSkillEffect().
-    // This matters when recoil strips a shield before landing on ACID.
+    let mut leech_heal_applied = false;
+
+    // Leap movement is a real tile change, but live resolves Nanobots from
+    // Leap kills after queued self-damage and before landing tile effects.
+    // This lets a self-disabled Hazardous mech revive, then catch fire/ACID
+    // from its destination. Recoil still strips shields before landing ACID.
     if wdef.weapon_type == WeaponType::Leap {
+        let leech_kills = result.leech_credit_kills - leech_kills_before;
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
+        leech_heal_applied = true;
+
         let lx = board.units[attacker_idx].x;
         let ly = board.units[attacker_idx].y;
         if (lx, ly) != (ax, ay) {
@@ -2517,8 +2524,10 @@ pub fn simulate_weapon_with(
         }
     }
 
-    let leech_kills = result.leech_credit_kills - leech_kills_before;
-    apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
+    if !leech_heal_applied {
+        let leech_kills = result.leech_credit_kills - leech_kills_before;
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
+    }
 
     // Self-freeze (Cryo-Launcher freezes attacker)
     if wdef.freeze() && weapon_id == WId::RangedIce {
@@ -7467,6 +7476,34 @@ mod tests {
         assert!(!board.units[mech_idx].shield(), "Leap recoil should strip shield");
         assert!(board.units[mech_idx].acid(), "landing ACID should apply after shield is stripped");
         assert!(!board.tile(5, 3).acid(), "ACID pool should be consumed on landing");
+    }
+
+    #[test]
+    fn test_prime_leap_nanobots_revive_before_fire_landing_pickup() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 1, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.tile_mut(5, 3).set_on_fire(true);
+        let firefly_idx = add_enemy(&mut board, 562, 5, 2, 1);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[firefly_idx].hp, 0);
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(
+            board.units[mech_idx].hp, 2,
+            "Nanobots should revive Leap after self-damage before landing fire applies"
+        );
+        assert!(
+            board.units[mech_idx].fire(),
+            "revived Hydraulic Legs mech should catch fire from the landing tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:0:1:2"),
+            "the landing-adjacent kill should produce a boosted Nanobots heal"
+        );
     }
 
     #[test]

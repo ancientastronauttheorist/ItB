@@ -1051,7 +1051,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v206: Ground Prime_Leap / Hydraulic Legs cannot land on Water or Lava; live
 # consumes the click as an unfired action.
 # Pre-v206 corpus archived as failure_db_snapshot_sim_v205.jsonl.
-SIMULATOR_VERSION = 206
+# v207: Prime_Leap / Hydraulic Legs applies Viscera Nanobots revive before
+# landing tile fire/ACID pickup, after self-damage.
+# Pre-v207 corpus archived as failure_db_snapshot_sim_v206.jsonl.
+SIMULATOR_VERSION = 207
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

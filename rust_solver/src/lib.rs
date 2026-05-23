@@ -1522,7 +1522,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v206 - Ground Prime_Leap / Hydraulic Legs cannot land on Water or Lava;
 //   live consumes the click as an unfired action. Pre-v206 corpus archived as
 //   `failure_db_snapshot_sim_v205.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 206;
+// v207 - Prime_Leap / Hydraulic Legs applies Viscera Nanobots revive before
+//   landing tile fire/ACID pickup, after self-damage. Pre-v207 corpus archived
+//   as `failure_db_snapshot_sim_v206.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 207;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
