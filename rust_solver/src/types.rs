@@ -211,6 +211,9 @@ pub enum DamageSource {
     ChainWhip = 5,
     WeaponDeferredGrid = 6,
     WeaponCracksOccupied = 7,
+    /// Weapon damage that still uses weapon damage math / kill credit but does
+    /// not synthesize a corpse ACID pool when the killed pawn had ACID.
+    WeaponNoAcidPool = 8,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────

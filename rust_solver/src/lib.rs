@@ -1516,7 +1516,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v204 - Bump/collision damage to a pawn standing on cracked Ground is
 //   absorbed by the pawn and does not open a chasm under the occupied tile.
 //   Pre-v204 corpus archived as `failure_db_snapshot_sim_v203.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 204;
+// v205 - Brute_Unstable direct weapon kills do not synthesize a corpse ACID
+//   pool on the target tile. Pre-v205 corpus archived as
+//   `failure_db_snapshot_sim_v204.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 205;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

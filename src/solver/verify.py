@@ -1045,7 +1045,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v204: Bump/collision damage to a pawn standing on cracked Ground is absorbed
 # by the pawn and does not open a chasm under the occupied tile.
 # Pre-v204 corpus archived as failure_db_snapshot_sim_v203.jsonl.
-SIMULATOR_VERSION = 204
+# v205: Brute_Unstable direct weapon kills do not synthesize a corpse ACID pool
+# on the target tile.
+# Pre-v205 corpus archived as failure_db_snapshot_sim_v204.jsonl.
+SIMULATOR_VERSION = 205
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

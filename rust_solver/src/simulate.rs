@@ -1211,7 +1211,9 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
                         !unit.minor(),
                         matches!(
                             source,
-                            DamageSource::Weapon | DamageSource::WeaponCracksOccupied
+                            DamageSource::Weapon
+                                | DamageSource::WeaponCracksOccupied
+                                | DamageSource::WeaponNoAcidPool
                         ),
                     );
                     on_enemy_death(board, idx, result);
@@ -1226,12 +1228,14 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     // Acid pool creation: unit with acid dies → acid pool on tile
-    if let Some(idx) = board.unit_at(x, y) {
-        let unit = &board.units[idx];
-        if unit.hp <= 0 && unit.acid() {
-            let tile = board.tile(x, y);
-            if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
-                leave_acid_pool_on_death(board, x, y);
+    if source != DamageSource::WeaponNoAcidPool {
+        if let Some(idx) = board.unit_at(x, y) {
+            let unit = &board.units[idx];
+            if unit.hp <= 0 && unit.acid() {
+                let tile = board.tile(x, y);
+                if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
+                    leave_acid_pool_on_death(board, x, y);
+                }
             }
         }
     }
@@ -1338,7 +1342,10 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         let tile = board.tile_mut(x, y);
         let occupied_tile_absorbs_crack_hit =
             occupied_by_alive_unit_at_start
-            && matches!(source, DamageSource::Weapon | DamageSource::Bump);
+            && matches!(
+                source,
+                DamageSource::Weapon | DamageSource::Bump | DamageSource::WeaponNoAcidPool
+            );
         if tile.terrain == Terrain::Ground
             && tile.cracked()
             && !occupied_tile_absorbs_crack_hit {
@@ -1371,7 +1378,10 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         if tile.terrain == Terrain::Sand
             && matches!(
                 source,
-                DamageSource::Weapon | DamageSource::SelfDamage | DamageSource::WeaponCracksOccupied
+                DamageSource::Weapon
+                    | DamageSource::SelfDamage
+                    | DamageSource::WeaponCracksOccupied
+                    | DamageSource::WeaponNoAcidPool
             ) {
             tile.terrain = Terrain::Ground;
             // Note: fire_weapon flag not yet threaded; default to smoke.
@@ -1403,10 +1413,12 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     // ACID pool creation: unit with ACID dies → acid pool on tile
-    if let Some(idx) = board.any_unit_at(x, y) {
-        let unit = &board.units[idx];
-        if unit.hp <= 0 && unit.acid() {
-            leave_acid_pool_on_death(board, x, y);
+    if source != DamageSource::WeaponNoAcidPool {
+        if let Some(idx) = board.any_unit_at(x, y) {
+            let unit = &board.units[idx];
+            if unit.hp <= 0 && unit.acid() {
+                leave_acid_pool_on_death(board, x, y);
+            }
         }
     }
 
@@ -3130,6 +3142,11 @@ fn sim_projectile(
         let hy = hit_y as u8;
         let dmg = projectile_damage(wdef, ax, ay, hx, hy);
         let occupied_at_impact = board.unit_at(hx, hy).is_some();
+        let damage_source = if weapon_id == WId::BruteUnstable {
+            DamageSource::WeaponNoAcidPool
+        } else {
+            DamageSource::Weapon
+        };
         let skip_friendly_damage = wdef.friendly_immune()
             && board.unit_at(hx, hy)
                 .map(|idx| board.units[idx].is_player())
@@ -3139,10 +3156,10 @@ fn sim_projectile(
             None
         } else if defer_death_explosion {
             apply_damage_defer_death_explosion(
-                board, hx, hy, dmg, result, DamageSource::Weapon,
+                board, hx, hy, dmg, result, damage_source,
             )
         } else {
-            apply_damage(board, hx, hy, dmg, result, DamageSource::Weapon);
+            apply_damage(board, hx, hy, dmg, result, damage_source);
             None
         };
         let acid_projector_edge_suppressed =
@@ -4748,6 +4765,23 @@ mod tests {
 
         assert_eq!(result.enemies_killed, 1);
         assert_eq!(board.units[mech].hp, 2);
+    }
+
+    #[test]
+    fn test_unstable_cannon_direct_kill_does_not_create_acid_pool() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 4, 5, 3, WId::BruteUnstable);
+        let shaman = add_enemy_type(&mut board, 422, 5, 5, 2, "Shaman1");
+        board.units[shaman].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 5, 5);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert!(board.units[shaman].hp <= 0);
+        assert!(
+            !board.tile(5, 5).acid(),
+            "Unstable Cannon should not leave a corpse ACID pool on the direct-hit tile"
+        );
     }
 
     #[test]
