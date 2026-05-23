@@ -1077,7 +1077,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260522_193613_471 Mission_Survive turn 2, where D5 flooded after Unstable
 # recoiled to D6.
 # Pre-v213 corpus archived as failure_db_snapshot_sim_v212.jsonl.
-SIMULATOR_VERSION = 213
+# v214: Reverts the v213 overgeneralization for intact Brute_Unstable ice
+# origins, and models Hydraulic Legs breaking occupied Ice only when the hit
+# pawn is grounded. Flying targets still leave occupied Ice intact. Fixes
+# Healing run 20260522_193613_471 Mission_Survive turn 3, where Beetle2 on F5
+# left Water after Leap push, while Unstable's intact E4 firing tile stayed Ice.
+# Pre-v214 corpus archived as failure_db_snapshot_sim_v213.jsonl.
+SIMULATOR_VERSION = 214
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

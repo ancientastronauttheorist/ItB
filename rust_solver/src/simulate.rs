@@ -2519,21 +2519,10 @@ pub fn simulate_weapon_with(
     // Self damage. Skipped for Charge weapons — sim_charge applies it inline
     // only when the charge actually hits a target (empty-tile charges take no
     // recoil in the game, but the solver used to over-predict HP by 1).
-    let defer_unstable_ice_self_damage =
-        weapon_id == WId::BruteUnstable
-        && wdef.self_damage > 0
-        && wdef.weapon_type != WeaponType::Charge
-        && board.tile(ax, ay).terrain == Terrain::Ice;
-
     if wdef.self_damage > 0 && wdef.weapon_type != WeaponType::Charge {
         let ax = board.units[attacker_idx].x;
         let ay = board.units[attacker_idx].y;
-        let source = if defer_unstable_ice_self_damage {
-            DamageSource::WeaponUnitOnly
-        } else {
-            DamageSource::SelfDamage
-        };
-        apply_damage(board, ax, ay, wdef.self_damage, &mut result, source);
+        apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
     }
 
     let mut leech_heal_applied = false;
@@ -2571,10 +2560,6 @@ pub fn simulate_weapon_with(
                 result.leech_credit_kills += pushback_kills;
             }
         }
-    }
-
-    if defer_unstable_ice_self_damage {
-        flood_ice_tile(board, ax, ay, &mut result);
     }
 
     if !leech_heal_applied {
@@ -4286,6 +4271,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                     idx,
                     board.units[idx].hp,
                     board.units[idx].acid(),
+                    board.units[idx].effectively_flying(),
                     board.tile(hx, hy).acid(),
                     board.units[idx].x,
                     board.units[idx].y,
@@ -4300,14 +4286,17 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
             };
             apply_damage(board, hx, hy, wdef.damage, result, damage_source);
             let killed_by_hit = pre_hit_unit
-                .map(|(idx, pre_hp, _, _, _, _)| pre_hp > 0 && board.units[idx].hp <= 0)
+                .map(|(idx, pre_hp, _, _, _, _, _)| pre_hp > 0 && board.units[idx].hp <= 0)
                 .unwrap_or(false);
             if wdef.push == PushDir::Outward {
                 apply_push_with_policy(board, hx, hy, i, result, push_policy);
             }
-            if let Some((idx, _, was_acid, tile_had_acid, ox, oy)) = pre_hit_unit {
+            if let Some((idx, _, was_acid, was_flying, tile_had_acid, ox, oy)) = pre_hit_unit {
                 let fx = board.units[idx].x;
                 let fy = board.units[idx].y;
+                if !was_flying {
+                    flood_ice_tile(board, ox, oy, result);
+                }
                 if killed_by_hit && was_acid && (fx, fy) != (ox, oy) {
                     if !tile_had_acid {
                         board.tile_mut(ox, oy).flags.remove(TileFlags::ACID);
@@ -4852,30 +4841,6 @@ mod tests {
             !board.tile(5, 5).acid(),
             "Unstable Cannon should not leave a corpse ACID pool on the direct-hit tile"
         );
-    }
-
-    #[test]
-    fn test_unstable_cannon_origin_ice_floods_after_recoil() {
-        let mut board = make_test_board();
-        board.tile_mut(3, 4).terrain = Terrain::Ice;
-        let mech = add_mech(&mut board, 1, 3, 4, 5, WId::BruteUnstable);
-        let target = add_enemy(&mut board, 90, 4, 4, 3);
-
-        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 4);
-
-        assert_eq!(board.units[mech].hp, 4, "self-damage still hits the mech");
-        assert_eq!(
-            (board.units[mech].x, board.units[mech].y),
-            (2, 4),
-            "recoil should move the Unstable Tank off the firing tile"
-        );
-        assert_eq!(
-            board.tile(3, 4).terrain,
-            Terrain::Water,
-            "the vacated firing ice tile should melt to water"
-        );
-        assert_eq!(board.units[target].hp, 1);
-        assert_eq!(result.mechs_killed, 0);
     }
 
     #[test]
@@ -10745,6 +10710,42 @@ mod tests {
                 "{source:?} should not melt occupied cracked ice"
             );
         }
+    }
+
+    #[test]
+    fn test_hydraulic_legs_grounded_target_breaks_ice_after_push() {
+        let mut board = make_test_board();
+        let leap = add_mech(&mut board, 1, 0, 1, 5, WId::PrimeLeap);
+        board.tile_mut(3, 2).terrain = Terrain::Ice;
+        let beetle = add_enemy_type(&mut board, 90, 3, 2, 5, "Beetle2");
+
+        let result = simulate_weapon(&mut board, leap, WId::PrimeLeap, 3, 1);
+
+        assert_eq!(
+            (board.units[beetle].x, board.units[beetle].y),
+            (3, 3),
+            "ground target should be pushed off the ice tile"
+        );
+        assert_eq!(board.units[beetle].hp, 4);
+        assert_eq!(board.tile(3, 2).terrain, Terrain::Water);
+        assert_eq!(result.mechs_killed, 0);
+    }
+
+    #[test]
+    fn test_hydraulic_legs_flying_target_does_not_break_ice() {
+        let mut board = make_test_board();
+        let leap = add_mech(&mut board, 1, 0, 1, 5, WId::PrimeLeap);
+        board.tile_mut(3, 2).terrain = Terrain::Ice;
+        let mosquito = add_flying_enemy(&mut board, 90, 3, 2, 4);
+
+        simulate_weapon(&mut board, leap, WId::PrimeLeap, 3, 1);
+
+        assert_eq!(board.units[mosquito].hp, 3);
+        assert_eq!(
+            board.tile(3, 2).terrain,
+            Terrain::Ice,
+            "flying targets absorb the occupied-ice hit without breaking the tile"
+        );
     }
 
     #[test]
