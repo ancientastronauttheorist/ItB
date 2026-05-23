@@ -35,6 +35,13 @@ If `cargo test` hits a rustc incremental-compilation ICE, rerun with
 `CARGO_INCREMENTAL=0` before treating it as a code/test failure. The regression
 script already sets this guard.
 
+If `cargo test` or `maturin build --release` appears idle while Rust is reading
+generated Cargo fingerprint files under `rust_solver/target/{debug,release}/.fingerprint`,
+stop the stuck build, remove only that generated `.fingerprint` directory for the
+affected profile, and rerun the same command. This is build-cache cleanup, not a
+source revert. On macOS pyo3 test binaries may also need:
+`DYLD_FRAMEWORK_PATH="/Applications/Xcode.app/Contents/Developer/Library/Frameworks:/Library/Developer/CommandLineTools/Library/Frameworks"`.
+
 ## Execution Model
 
 **Default combat mode: `auto_turn`.** A single `game_loop.py auto_turn` call reads board, solves, executes every mech action via bridge (move → verify → attack → verify, re-solving on desync), and emits an End Turn click plan. It *polls the bridge internally* for the enemy→player transition (up to 45s by default) at entry, waiting for both `phase == combat_player` **and** `active_mechs > 0` — the animation window after End Turn flips phase early but leaves mechs inactive, so checking phase alone falsely proceeds into "No active mechs" errors.

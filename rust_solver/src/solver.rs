@@ -423,23 +423,28 @@ pub(crate) fn get_weapon_targets(
             }
         }
         WeaponType::Leap => {
+            if prime_leap_blocked_by_web(board, mx, my, weapon_id) {
+                return targets;
+            }
             let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
             let min_r = if wdef.range_min == 0 { 1 } else { wdef.range_min };
             let aerial_bombs = is_aerial_bombs(weapon_id);
-            // Fixed-distance leaps (Aerial Bombs: range_min == range_max) fly
-            // over a straight cardinal line and land on the target, so the
-            // target must share a row or column with the attacker. Upgraded
-            // Aerial Bombs has a 2-3 tile range but is still cardinal-only.
-            // Variable leaps (Hydraulic Legs) can land anywhere within range.
-            let cardinal_only =
-                aerial_bombs || (wdef.range_min > 0 && wdef.range_min == wdef.range_max);
+            let attacker_flying = board.unit_at(mx, my)
+                .map(|idx| board.units[idx].flying())
+                .unwrap_or(false);
+            // Leap_Attack:GetTargetArea enumerates DIR_VECTORS[i] * k for
+            // every range step. That includes variable-range Hydraulic Legs:
+            // it can jump far, but only along a row or column.
             for x in 0..8u8 {
                 for y in 0..8u8 {
-                    if cardinal_only && x != mx && y != my { continue; }
+                    if x != mx && y != my { continue; }
                     let dist = (x as i8 - mx as i8).unsigned_abs() + (y as i8 - my as i8).unsigned_abs();
                     if dist < min_r || dist > max_r { continue; }
                     let landing_terrain = board.tile(x, y).terrain;
                     if landing_terrain == Terrain::Chasm { continue; }
+                    if !attacker_flying && matches!(landing_terrain, Terrain::Water | Terrain::Lava) {
+                        continue;
+                    }
                     if aerial_bombs && matches!(landing_terrain, Terrain::Water | Terrain::Lava) {
                         continue;
                     }
@@ -521,6 +526,16 @@ pub(crate) fn get_weapon_targets(
     }
 
     targets
+}
+
+fn prime_leap_blocked_by_web(board: &Board, mx: u8, my: u8, weapon_id: WId) -> bool {
+    if weapon_id != WId::PrimeLeap {
+        return false;
+    }
+    match board.unit_at(mx, my) {
+        Some(idx) => board.units[idx].web(),
+        None => false,
+    }
 }
 
 // ── Action enumeration ───────────────────────────────────────────────────────
@@ -1885,6 +1900,109 @@ mod top_k_tests {
             actions.iter().all(|a| a.0 == (4, 4)),
             "webbed normal movement must stay on the current tile; got {:?}",
             actions
+        );
+    }
+
+    #[test]
+    fn webbed_leap_mech_cannot_use_hydraulic_legs() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 4,
+            y: 4,
+            hp: 2,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE | UnitFlags::WEB,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::PrimeLeap as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("LeapMech");
+        let enemy_idx = board.add_unit(Unit {
+            uid: 212,
+            x: 5,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            move_speed: 3,
+            ..Default::default()
+        });
+        board.units[enemy_idx].set_type_name("Leaper1");
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| a.1 == WId::Repair),
+            "damaged webbed Leap Mech should still be able to repair"
+        );
+        assert!(
+            !actions.iter().any(|a| a.1 == WId::PrimeLeap),
+            "webbed Leap Mech must not enumerate Hydraulic Legs; got {:?}",
+            actions
+        );
+    }
+
+    #[test]
+    fn prime_leap_targets_are_cardinal_only() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 5,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE,
+            move_speed: 4,
+            base_move: 4,
+            weapon: WeaponId(WId::PrimeLeap as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("LeapMech");
+
+        let targets = get_weapon_targets(&board, 5, 3, WId::PrimeLeap, (5, 3), &WEAPONS);
+
+        assert!(targets.contains(&(5, 1)), "cardinal long landing should be legal");
+        assert!(
+            !targets.contains(&(4, 1)),
+            "Hydraulic Legs should not enumerate non-cardinal landing G4 from E3; got {:?}",
+            targets
+        );
+    }
+
+    #[test]
+    fn prime_leap_ground_mech_cannot_target_deadly_ground_landings() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 12,
+            x: 5,
+            y: 3,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE,
+            move_speed: 5,
+            base_move: 5,
+            weapon: WeaponId(WId::PrimeLeap as u16),
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("LeapMech");
+        board.tile_mut(4, 3).terrain = Terrain::Water;
+        board.tile_mut(3, 3).terrain = Terrain::Lava;
+
+        let targets = get_weapon_targets(&board, 5, 3, WId::PrimeLeap, (5, 3), &WEAPONS);
+
+        assert!(
+            !targets.contains(&(4, 3)),
+            "Hydraulic Legs should not enumerate water landing D4 for a ground mech"
+        );
+        assert!(
+            !targets.contains(&(3, 3)),
+            "Hydraulic Legs should not enumerate lava landing E4 for a ground mech"
         );
     }
 

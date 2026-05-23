@@ -1048,7 +1048,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v205: Brute_Unstable direct weapon kills do not synthesize a corpse ACID pool
 # on the target tile.
 # Pre-v205 corpus archived as failure_db_snapshot_sim_v204.jsonl.
-SIMULATOR_VERSION = 205
+# v206: Ground Prime_Leap / Hydraulic Legs cannot land on Water or Lava; live
+# consumes the click as an unfired action.
+# Pre-v206 corpus archived as failure_db_snapshot_sim_v205.jsonl.
+SIMULATOR_VERSION = 206
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

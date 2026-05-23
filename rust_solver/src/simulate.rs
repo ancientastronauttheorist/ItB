@@ -4061,6 +4061,12 @@ fn leap_landing_illegal_reason(
     if landing.terrain == Terrain::Chasm {
         return Some("chasm");
     }
+    if !board.units[attacker_idx].flying() && landing.terrain == Terrain::Water {
+        return Some("water");
+    }
+    if !board.units[attacker_idx].flying() && landing.terrain == Terrain::Lava {
+        return Some("lava");
+    }
     let aerial_bombs = matches!(
         weapon_id,
         WId::BruteJetmech
@@ -7429,6 +7435,22 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_ground_landing_on_water_is_unfired_action() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 5, WId::PrimeLeap);
+        board.tile_mut(4, 3).terrain = Terrain::Water;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 4, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(board.units[mech_idx].hp, 5);
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:4:3:water"),
+            "invalid water landing should be recorded as an unfired leap"
+        );
     }
 
     #[test]
