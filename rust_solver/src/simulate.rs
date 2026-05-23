@@ -1921,7 +1921,7 @@ const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
 const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
-    edge_bump_damage: true,
+    edge_bump_damage: false,
 };
 
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -4829,6 +4829,28 @@ mod tests {
         assert!(
             result.events.iter().any(|e| e == "viscera_nanobots_heal:1:2:2"),
             "pushback bump kill should add a second Nanobots heal credit"
+        );
+    }
+
+    #[test]
+    fn test_unstable_recoil_into_edge_does_not_bump_self_before_nanobots() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech = add_mech(&mut board, 1, 0, 5, 4, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        let enemy = add_enemy(&mut board, 90, 4, 5, 1);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 1, 5);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert!(board.units[enemy].hp <= 0);
+        assert_eq!(
+            board.units[mech].hp, 5,
+            "edge recoil should not add a second self-damage event before Nanobots heals"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"),
+            "the direct Unstable Cannon kill should produce one boosted Nanobots heal"
         );
     }
 

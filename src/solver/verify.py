@@ -1057,7 +1057,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v208: Viscera Nanobots revive clears negative statuses carried by the
 # temporarily disabled mech before any later landing effects can reapply them.
 # Pre-v208 corpus archived as failure_db_snapshot_sim_v207.jsonl.
-SIMULATOR_VERSION = 208
+# v209: Brute_Unstable recoil still bumps live rear blockers, but recoil into
+# the board edge does not self-bump. Fixes Healing run 20260522_193613_471
+# Mission_Volatile turn 2, where edge recoil was over-predicted by 1 HP.
+# Pre-v209 corpus archived as failure_db_snapshot_sim_v208.jsonl.
+SIMULATOR_VERSION = 209
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
