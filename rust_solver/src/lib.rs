@@ -1532,7 +1532,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   the board edge does not self-bump. Fixes Healing run 20260522_193613_471
 //   Mission_Volatile turn 2, where edge recoil was over-predicted by 1 HP.
 //   Pre-v209 corpus archived as `failure_db_snapshot_sim_v208.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 209;
+// v210 - Mission_Dam flood clears tile fire when it converts a burning Forest
+//   to Water. Fixes Healing run 20260522_193613_471 Mission_Dam turn 2, where
+//   a Leap-ignited flooded tile was predicted as water+fire. Pre-v210 corpus
+//   archived as `failure_db_snapshot_sim_v209.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 210;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

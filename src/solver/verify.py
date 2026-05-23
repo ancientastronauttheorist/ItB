@@ -1061,7 +1061,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # the board edge does not self-bump. Fixes Healing run 20260522_193613_471
 # Mission_Volatile turn 2, where edge recoil was over-predicted by 1 HP.
 # Pre-v209 corpus archived as failure_db_snapshot_sim_v208.jsonl.
-SIMULATOR_VERSION = 209
+# v210: Mission_Dam flood clears tile fire when it converts a burning Forest to
+# Water. Fixes Healing run 20260522_193613_471 Mission_Dam turn 2, where a
+# Leap-ignited flooded tile was predicted as water+fire.
+# Pre-v210 corpus archived as failure_db_snapshot_sim_v209.jsonl.
+SIMULATOR_VERSION = 210
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -1488,11 +1488,16 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
 pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     if x >= 8 || y >= 8 { return; }
     let t = board.tile(x, y);
-    if t.terrain == Terrain::Water { return; }
+    if t.terrain == Terrain::Water {
+        board.tile_mut(x, y).set_on_fire(false);
+        return;
+    }
     if matches!(t.terrain, Terrain::Mountain | Terrain::Building) { return; }
 
-    board.tile_mut(x, y).terrain = Terrain::Water;
-    board.tile_mut(x, y).set_cracked(false);
+    let tile = board.tile_mut(x, y);
+    tile.terrain = Terrain::Water;
+    tile.set_cracked(false);
+    tile.set_on_fire(false);
 
     if let Some(idx) = board.unit_at(x, y) {
         let drowns = {
@@ -8391,6 +8396,24 @@ mod tests {
         assert_eq!(result.enemies_killed, 1);
         assert_eq!(result.grid_damage, 1, "direct blast damage drains grid per building HP");
         assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_dam_flood_extinguishes_forest_ignited_by_same_attack() {
+        let mut board = make_test_board();
+        let mut result = ActionResult::default();
+        board.tile_mut(4, 3).terrain = Terrain::Forest;
+
+        apply_damage(&mut board, 4, 3, 1, &mut result, DamageSource::Weapon);
+        assert!(board.tile(4, 3).on_fire(), "weapon damage should ignite Forest first");
+
+        flood_tile(&mut board, 4, 3, &mut result);
+
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Water);
+        assert!(
+            !board.tile(4, 3).on_fire(),
+            "dam flood converts the tile to Water and extinguishes fire"
+        );
     }
 
     #[test]
