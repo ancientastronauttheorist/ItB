@@ -124,6 +124,16 @@ def _achievement_weight_overlay(
         )
         applied.append("this_is_fine")
 
+    if "healing" in targets:
+        # Hazardous Mechs' Healing achievement counts actual HP restored by
+        # Viscera Nanobots, so prefer safe kill lines that restore missing HP
+        # over equivalent full-health kills.
+        weights["viscera_nanobots_heal_bonus"] = max(
+            float(weights.get("viscera_nanobots_heal_bonus", 0) or 0),
+            9000.0,
+        )
+        applied.append("healing")
+
     return weights, applied
 
 

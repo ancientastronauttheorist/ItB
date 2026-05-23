@@ -53,6 +53,15 @@ fn mission_missiles_action_bonus(board: &Board, actions: &[MechAction]) -> f64 {
     }
 }
 
+pub(crate) fn viscera_nanobots_heal_from_events(events: &[String]) -> i32 {
+    events
+        .iter()
+        .filter_map(|event| event.strip_prefix("viscera_nanobots_heal:"))
+        .filter_map(|payload| payload.rsplit(':').next())
+        .filter_map(|amount| amount.parse::<i32>().ok())
+        .sum()
+}
+
 // ── MechAction ───────────────────────────────────────────────────────────────
 
 #[derive(Clone, Debug)]
@@ -1210,6 +1219,7 @@ fn search_recursive(
     kills_so_far: i32,
     mission_kills_so_far: i32,
     bumps_so_far: i32,
+    nanobots_heal_so_far: i32,
     soft_disable_penalty_so_far: f64,
     threat_tiles: u64,
     building_threats: u64,
@@ -1275,7 +1285,12 @@ fn search_recursive(
             1.0
         };
         let mission_action_bonus = mission_missiles_action_bonus(&b_eval, actions_so_far);
-        let score = raw + mission_action_bonus - soft_disable_penalty_so_far * penalty_scale;
+        let nanobots_heal_bonus =
+            nanobots_heal_so_far as f64 * weights.viscera_nanobots_heal_bonus;
+        let score = raw
+            + mission_action_bonus
+            + nanobots_heal_bonus
+            - soft_disable_penalty_so_far * penalty_scale;
 
 
         if score > *best_score {
@@ -1300,7 +1315,8 @@ fn search_recursive(
         // Still recurse to the next depth so the remaining mechs can act
         search_recursive(
             board, mech_order, depth + 1,
-            actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far, soft_disable_penalty_so_far,
+            actions_so_far, kills_so_far, mission_kills_so_far, bumps_so_far,
+            nanobots_heal_so_far, soft_disable_penalty_so_far,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
             spawn_points, max_actions, weights, deadline,
@@ -1351,6 +1367,7 @@ fn search_recursive(
 
         let mut b_next = board.clone(); // ~800 byte memcpy
         let result = simulate_action(&mut b_next, mech_idx, move_to, weapon_id, target, weapons);
+        let nanobots_heal_add = viscera_nanobots_heal_from_events(&result.events);
 
         // Accrue the soft-disable penalty per disabled-weapon use along the
         // branch. Pass 1 (`allow_disabled_weapons=false`) never reaches
@@ -1374,6 +1391,7 @@ fn search_recursive(
             kills_so_far + result.enemies_killed,
             mission_kills_so_far + result.mission_kills,
             bumps_so_far + result.buildings_bump_damaged,
+            nanobots_heal_so_far + nanobots_heal_add,
             soft_disable_penalty_so_far + penalty_add,
             threat_tiles, building_threats, spawn_bits,
             original_positions,
@@ -1548,7 +1566,7 @@ pub fn solve_turn(
 
             search_recursive(
                 board, mech_order, 0,
-                &mut actions_buf, 0, 0, 0, 0.0,
+                &mut actions_buf, 0, 0, 0, 0, 0.0,
                 threat_tiles, building_threats, spawn_bits,
                 &original_positions,
                 spawn_points, effective_max, weights, deadline,
@@ -1745,7 +1763,7 @@ pub fn solve_turn_top_k(
 
         search_recursive(
             board, mech_order, 0,
-            &mut actions_buf, 0, 0, 0, 0.0,
+            &mut actions_buf, 0, 0, 0, 0, 0.0,
             threat_tiles, building_threats, spawn_bits,
             &original_positions,
             spawn_points, effective_max, weights, deadline,
@@ -1817,6 +1835,17 @@ mod top_k_tests {
     //! 1 already — but catching the regression here gives a sharper failure
     //! message than a byte-diff at the Python layer.
     use super::*;
+
+    #[test]
+    fn nanobots_heal_events_sum_actual_hp_restored() {
+        let events = vec![
+            "viscera_nanobots_heal:1:1:2".to_string(),
+            "other_event".to_string(),
+            "viscera_nanobots_heal:0:2:3".to_string(),
+        ];
+
+        assert_eq!(viscera_nanobots_heal_from_events(&events), 5);
+    }
 
     #[test]
     fn trapped_building_can_attack_from_smoke() {

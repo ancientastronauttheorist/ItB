@@ -1065,7 +1065,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Water. Fixes Healing run 20260522_193613_471 Mission_Dam turn 2, where a
 # Leap-ignited flooded tile was predicted as water+fire.
 # Pre-v210 corpus archived as failure_db_snapshot_sim_v209.jsonl.
-SIMULATOR_VERSION = 210
+# v211: Brute_Unstable killed direct targets still resolve their forward corpse
+# push into live blockers. Fixes Healing run 20260522_193613_471
+# Mission_BlobberBoss turn 2, where a killed BlobB corpse bumped NanoMech.
+# Pre-v211 corpus archived as failure_db_snapshot_sim_v210.jsonl.
+SIMULATOR_VERSION = 211
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

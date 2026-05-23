@@ -1929,6 +1929,12 @@ const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     edge_bump_damage: false,
 };
 
+const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+};
+
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
@@ -3194,6 +3200,8 @@ fn sim_projectile(
         let suppress_direct_push = acid_projector_edge_suppressed;
         let policy = if wdef.no_edge_bump_direct_push() {
             NO_EDGE_BUMP_PUSH_POLICY
+        } else if weapon_id == WId::BruteUnstable {
+            BRUTE_UNSTABLE_TARGET_PUSH_POLICY
         } else if weapon_id == WId::BruteMirrorshot {
             TRI_ROCKET_PUSH_POLICY
         } else {
@@ -4857,6 +4865,24 @@ mod tests {
             result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"),
             "the direct Unstable Cannon kill should produce one boosted Nanobots heal"
         );
+    }
+
+    #[test]
+    fn test_unstable_killed_target_corpse_bumps_live_mech_blocker() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 2, 4, 3, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        let blob = add_enemy_type(&mut board, 890, 4, 4, 2, "BlobB");
+        let nano = add_mech(&mut board, 2, 5, 4, 4, WId::ScienceAcidShot);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 3, 4);
+
+        assert_eq!(board.units[blob].hp, 0);
+        assert_eq!(
+            board.units[nano].hp, 3,
+            "Unstable Cannon killed-target forward push should corpse-bump the live mech blocker"
+        );
+        assert_eq!(result.mech_damage_taken, 2);
     }
 
     #[test]

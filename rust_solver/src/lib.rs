@@ -62,6 +62,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
     use crate::evaluate::{evaluate, PsionState};
     use crate::movement::illegal_move_reason;
     use crate::simulate::simulate_action;
+    use crate::solver::viscera_nanobots_heal_from_events;
     use crate::weapons::wid_from_str;
     use crate::types::{Terrain, xy_to_idx};
 
@@ -102,6 +103,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
         let mut kills = 0i32;
         let mut mission_kills = 0i32;
         let mut bumps = 0i32;
+        let mut nanobots_heal = 0i32;
         let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
@@ -127,6 +129,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             for event in result.events.iter().filter(|e| e.starts_with("illegal_")) {
                 illegal_events.push(event.clone());
             }
+            nanobots_heal += viscera_nanobots_heal_from_events(&result.events);
             kills += result.enemies_killed as i32;
             mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
@@ -168,7 +171,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 building_threats |= 1u64 << xy_to_idx(tx, ty);
             }
         }
-        let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats);
+        let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats)
+            + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus;
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -199,6 +203,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "remaining_spawns": board.remaining_spawns,
             "building_threats_bits": format!("{:b}", building_threats),
             "building_bumps": bumps,
+            "viscera_nanobots_heal": nanobots_heal,
             "illegal_events": illegal_events,
         });
         Ok(out.to_string())
@@ -1536,7 +1541,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   to Water. Fixes Healing run 20260522_193613_471 Mission_Dam turn 2, where
 //   a Leap-ignited flooded tile was predicted as water+fire. Pre-v210 corpus
 //   archived as `failure_db_snapshot_sim_v209.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 210;
+// v211 - Brute_Unstable killed direct targets still resolve their forward
+//   corpse push into live blockers. Fixes Healing run 20260522_193613_471
+//   Mission_BlobberBoss turn 2, where a killed BlobB corpse bumped NanoMech.
+//   Pre-v211 corpus archived as `failure_db_snapshot_sim_v210.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 211;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

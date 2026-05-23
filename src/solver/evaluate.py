@@ -81,6 +81,7 @@ class EvalWeights:
     chain_damage: float = 0
     smoke_placed: float = 0
     tiles_frozen: float = 0
+    viscera_nanobots_heal_bonus: float = 0
 
     # Mission-specific bonus objectives (default 0; set via active.json).
     # Old Earth Dam: +1 Rep + 14-tile flood. Turn-aware scaling in evaluate.
