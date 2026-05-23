@@ -1525,7 +1525,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v207 - Prime_Leap / Hydraulic Legs applies Viscera Nanobots revive before
 //   landing tile fire/ACID pickup, after self-damage. Pre-v207 corpus archived
 //   as `failure_db_snapshot_sim_v206.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 207;
+// v208 - Viscera Nanobots revive clears negative statuses carried by the
+//   temporarily disabled mech before any later landing effects can reapply
+//   them. Pre-v208 corpus archived as `failure_db_snapshot_sim_v207.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 208;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

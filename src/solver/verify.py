@@ -1054,7 +1054,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v207: Prime_Leap / Hydraulic Legs applies Viscera Nanobots revive before
 # landing tile fire/ACID pickup, after self-damage.
 # Pre-v207 corpus archived as failure_db_snapshot_sim_v206.jsonl.
-SIMULATOR_VERSION = 207
+# v208: Viscera Nanobots revive clears negative statuses carried by the
+# temporarily disabled mech before any later landing effects can reapply them.
+# Pre-v208 corpus archived as failure_db_snapshot_sim_v207.jsonl.
+SIMULATOR_VERSION = 208
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

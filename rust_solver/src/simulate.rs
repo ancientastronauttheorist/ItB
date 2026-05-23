@@ -1581,8 +1581,16 @@ fn apply_viscera_nanobots_heal(
     }
 
     board.units[attacker_idx].hp = new_hp;
-    if was_disabled && new_hp > 0 && result.mechs_killed > 0 {
-        result.mechs_killed -= 1;
+    if was_disabled && new_hp > 0 {
+        clear_unit_web(board, attacker_idx);
+        let attacker = &mut board.units[attacker_idx];
+        attacker.set_fire(false);
+        attacker.set_acid(false);
+        attacker.set_frozen(false);
+        clear_mites(attacker);
+        if result.mechs_killed > 0 {
+            result.mechs_killed -= 1;
+        }
     }
     result.events.push(format!(
         "viscera_nanobots_heal:{}:{}:{}",
@@ -7503,6 +7511,30 @@ mod tests {
         assert!(
             result.events.iter().any(|e| e == "viscera_nanobots_heal:0:1:2"),
             "the landing-adjacent kill should produce a boosted Nanobots heal"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_nanobots_revive_clears_existing_fire_before_landing() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 1, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_fire(true);
+        let spider_idx = add_enemy(&mut board, 563, 5, 2, 1);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[spider_idx].hp, 0);
+        assert_eq!(board.units[mech_idx].hp, 2);
+        assert!(
+            !board.units[mech_idx].fire(),
+            "Nanobots revive should clear fire carried by the temporary mech death"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:0:1:2"),
+            "the landing-adjacent kill should still produce a boosted Nanobots heal"
         );
     }
 
