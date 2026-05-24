@@ -816,6 +816,7 @@ pub struct ActionResult {
     pub enemies_killed: i32,
     pub mission_kills: i32,
     pub leech_credit_kills: i32,
+    pub leech_uncapped_kills: i32,
     pub enemy_damage_dealt: i32,
     pub mech_damage_taken: i32,
     pub mechs_killed: i32,
@@ -852,6 +853,7 @@ impl ActionResult {
         self.enemies_killed += other.enemies_killed;
         self.mission_kills += other.mission_kills;
         self.leech_credit_kills += other.leech_credit_kills;
+        self.leech_uncapped_kills += other.leech_uncapped_kills;
         self.enemy_damage_dealt += other.enemy_damage_dealt;
         self.mech_damage_taken += other.mech_damage_taken;
         self.mechs_killed += other.mechs_killed;

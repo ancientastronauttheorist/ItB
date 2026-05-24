@@ -1116,7 +1116,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Healing run 20260522_193613_471 Corporate HQ turn 1, where Blood Psion and
 # Mosquito Leader both survived at 1 HP.
 # Pre-v220 corpus archived as failure_db_snapshot_sim_v219.jsonl.
-SIMULATOR_VERSION = 220
+# v221: Hydraulic Legs push kills into deadly terrain credit Viscera Nanobots
+# healing, and occupied Ice stays intact when the pushed target dies after
+# displacement. Fixes Healing run 20260522_193613_471 Corporate HQ turn 4,
+# where a Beetle pushed from B2 into water died, Leap healed to 5/5, and B2
+# stayed Ice.
+# Pre-v221 corpus archived as failure_db_snapshot_sim_v220.jsonl.
+SIMULATOR_VERSION = 221
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

@@ -2481,6 +2481,7 @@ pub fn simulate_weapon_with(
     }
 
     let leech_kills_before = result.leech_credit_kills;
+    let leech_uncapped_before = result.leech_uncapped_kills;
 
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
@@ -2571,6 +2572,8 @@ pub fn simulate_weapon_with(
     // from its destination. Recoil still strips shields before landing ACID.
     if wdef.weapon_type == WeaponType::Leap {
         let leech_kills = result.leech_credit_kills - leech_kills_before;
+        let leech_uncapped = result.leech_uncapped_kills - leech_uncapped_before;
+        let leech_capped = leech_kills - leech_uncapped;
         let heal_cap_override = if weapon_id == WId::PrimeLeap {
             Some(hydraulic_legs_nanobots_heal_cap(&board.units[attacker_idx]))
         } else {
@@ -2579,10 +2582,11 @@ pub fn simulate_weapon_with(
         apply_viscera_nanobots_heal(
             board,
             attacker_idx,
-            leech_kills,
+            leech_capped,
             heal_cap_override,
             &mut result,
         );
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_uncapped, None, &mut result);
         leech_heal_applied = true;
 
         let lx = board.units[attacker_idx].x;
@@ -4321,6 +4325,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                     board.units[idx].hp,
                     board.units[idx].acid(),
                     board.units[idx].effectively_flying(),
+                    board.units[idx].massive(),
                     board.tile(hx, hy).acid(),
                     board.units[idx].x,
                     board.units[idx].y,
@@ -4347,15 +4352,42 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                 apply_damage(board, hx, hy, wdef.damage, result, damage_source);
             }
             let killed_by_hit = pre_hit_unit
-                .map(|(idx, pre_hp, _, _, _, _, _)| pre_hp > 0 && board.units[idx].hp <= 0)
+                .map(|(idx, pre_hp, _, _, _, _, _, _)| {
+                    pre_hp > 0 && board.units[idx].hp <= 0
+                })
                 .unwrap_or(false);
             if wdef.push == PushDir::Outward {
                 apply_push_with_policy(board, hx, hy, i, result, push_policy);
             }
-            if let Some((idx, _, was_acid, was_flying, tile_had_acid, ox, oy)) = pre_hit_unit {
+            if let Some((
+                idx,
+                pre_hp,
+                was_acid,
+                was_flying,
+                was_massive,
+                tile_had_acid,
+                ox,
+                oy,
+            )) = pre_hit_unit {
                 let fx = board.units[idx].x;
                 let fy = board.units[idx].y;
-                if !was_flying && (fx, fy) != (ox, oy) {
+                let moved = (fx, fy) != (ox, oy);
+                let died_after_push = pre_hp > 0 && board.units[idx].hp <= 0 && !killed_by_hit;
+                let dest_terrain = board.tile(fx, fy).terrain;
+                let deadly_terrain_kill = died_after_push
+                    && moved
+                    && !was_flying
+                    && board.units[idx].is_enemy()
+                    && match dest_terrain {
+                        Terrain::Chasm => true,
+                        Terrain::Water | Terrain::Lava => !was_massive,
+                        _ => false,
+                    };
+                if deadly_terrain_kill {
+                    result.leech_credit_kills += 1;
+                    result.leech_uncapped_kills += 1;
+                }
+                if !was_flying && moved && board.units[idx].hp > 0 {
                     flood_ice_tile(board, ox, oy, result);
                 }
                 if killed_by_hit && was_acid && (fx, fy) != (ox, oy) {
@@ -7701,6 +7733,34 @@ mod tests {
         );
         assert_eq!(board.units[scarab_idx].hp, 2);
         assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_prime_leap_push_into_water_heals_and_keeps_origin_ice() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 4, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        board.tile_mut(6, 6).terrain = Terrain::Ice;
+        board.tile_mut(7, 6).terrain = Terrain::Water;
+        let beetle_idx = add_enemy_type(&mut board, 1149, 6, 6, 4, "Beetle1");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 6);
+
+        assert_eq!(
+            board.tile(6, 6).terrain,
+            Terrain::Ice,
+            "occupied Ice should stay intact when the pushed target dies in water"
+        );
+        assert_eq!((board.units[beetle_idx].x, board.units[beetle_idx].y), (7, 6));
+        assert_eq!(board.units[beetle_idx].hp, 0);
+        assert_eq!(result.leech_credit_kills, 1);
+        assert_eq!(
+            board.units[mech_idx].hp,
+            5,
+            "Hydraulic Legs terrain-push kill should receive boosted Nanobots healing after recoil"
+        );
     }
 
     #[test]
