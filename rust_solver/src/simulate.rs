@@ -1574,6 +1574,7 @@ fn apply_viscera_nanobots_heal(
     board: &mut Board,
     attacker_idx: usize,
     kills: i32,
+    heal_cap_override: Option<i8>,
     result: &mut ActionResult,
 ) {
     if board.viscera_nanobots_heal == 0 || kills <= 0 {
@@ -1597,8 +1598,11 @@ fn apply_viscera_nanobots_heal(
         return;
     }
     let old_hp = board.units[attacker_idx].hp;
-    let max_hp = board.units[attacker_idx].max_hp;
-    let new_hp = (old_hp + heal).min(max_hp);
+    let heal_cap = heal_cap_override.unwrap_or(board.units[attacker_idx].max_hp);
+    if old_hp >= heal_cap {
+        return;
+    }
+    let new_hp = (old_hp + heal).min(heal_cap);
     let actual_heal = new_hp - old_hp;
     if actual_heal <= 0 {
         return;
@@ -1620,6 +1624,14 @@ fn apply_viscera_nanobots_heal(
         "viscera_nanobots_heal:{}:{}:{}",
         board.units[attacker_idx].uid, kills, actual_heal
     ));
+}
+
+fn hydraulic_legs_nanobots_heal_cap(unit: &Unit) -> i8 {
+    match unit.type_name_str() {
+        "LeapMech" | "UnstableTank" => 3,
+        "NanoMech" => 2,
+        _ => unit.max_hp,
+    }
 }
 
 fn disabled_unit_is_on_deadly_terrain(board: &Board, unit_idx: usize) -> bool {
@@ -2559,7 +2571,18 @@ pub fn simulate_weapon_with(
     // from its destination. Recoil still strips shields before landing ACID.
     if wdef.weapon_type == WeaponType::Leap {
         let leech_kills = result.leech_credit_kills - leech_kills_before;
-        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
+        let heal_cap_override = if weapon_id == WId::PrimeLeap {
+            Some(hydraulic_legs_nanobots_heal_cap(&board.units[attacker_idx]))
+        } else {
+            None
+        };
+        apply_viscera_nanobots_heal(
+            board,
+            attacker_idx,
+            leech_kills,
+            heal_cap_override,
+            &mut result,
+        );
         leech_heal_applied = true;
 
         let lx = board.units[attacker_idx].x;
@@ -2590,7 +2613,7 @@ pub fn simulate_weapon_with(
 
     if !leech_heal_applied {
         let leech_kills = result.leech_credit_kills - leech_kills_before;
-        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, &mut result);
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, None, &mut result);
     }
 
     // Self-freeze (Cryo-Launcher freezes attacker)
@@ -4280,6 +4303,26 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
     } else {
         // Damage adjacent tiles (skip source direction)
         let from_dir = direction_between(tx, ty, old_x, old_y);
+        if weapon_id == WId::PrimeLeap {
+            if let Some(dir) = cardinal_direction(old_x, old_y, tx, ty) {
+                let (dx, dy) = DIRS[dir];
+                let dist =
+                    (tx as i8 - old_x as i8).abs() + (ty as i8 - old_y as i8).abs();
+                for step in 1..(dist - 1) {
+                    let nx = old_x as i8 + dx * step;
+                    let ny = old_y as i8 + dy * step;
+                    if !in_bounds(nx, ny) { continue; }
+                    apply_damage(
+                        board,
+                        nx as u8,
+                        ny as u8,
+                        wdef.damage,
+                        result,
+                        DamageSource::Bump,
+                    );
+                }
+            }
+        }
         let push_policy = if weapon_id == WId::PrimeLeap {
             PRIME_LEAP_PUSH_POLICY
         } else {
@@ -4310,7 +4353,19 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
             } else {
                 DamageSource::Weapon
             };
-            apply_damage(board, hx, hy, wdef.damage, result, damage_source);
+            if weapon_id == WId::PrimeLeap {
+                apply_damage_with_bombrock_exclusion(
+                    board,
+                    hx,
+                    hy,
+                    wdef.damage,
+                    result,
+                    damage_source,
+                    Some((tx, ty)),
+                );
+            } else {
+                apply_damage(board, hx, hy, wdef.damage, result, damage_source);
+            }
             let killed_by_hit = pre_hit_unit
                 .map(|(idx, pre_hp, _, _, _, _, _)| pre_hp > 0 && board.units[idx].hp <= 0)
                 .unwrap_or(false);
@@ -4822,6 +4877,28 @@ mod tests {
         assert_eq!(result.enemies_killed, 1);
         assert_eq!(board.units[enemy].hp, 0);
         assert_eq!(board.units[mech].hp, 3);
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:1"));
+    }
+
+    #[test]
+    fn test_viscera_nanobots_heals_unstable_to_save_max_on_direct_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech = add_mech(&mut board, 1, 4, 4, 5, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        board.units[mech].set_type_name("UnstableTank");
+        let enemy = add_enemy_type(&mut board, 90, 4, 2, 4, "Dung2");
+        board.units[enemy].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(
+            board.units[mech].hp,
+            5,
+            "direct Unstable Cannon kills can heal recoil back to save-overlaid max HP"
+        );
         assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:1"));
     }
 
@@ -7554,6 +7631,38 @@ mod tests {
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_long_jump_transit_damage_bombrock_excludes_landing_mech() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 7, 3, 5, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        let dung_idx = add_enemy_type(&mut board, 501, 4, 3, 5, "Dung2");
+        board.units[dung_idx].set_acid(true);
+        let rock_idx = add_bombrock(&mut board, 503, 3, 3);
+        let leaper_idx = add_enemy_type(&mut board, 502, 1, 3, 1, "Leaper1");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 2, 3);
+
+        assert_eq!(
+            board.units[dung_idx].hp,
+            3,
+            "transit pass-over plus BombRock blast should each damage Dung once"
+        );
+        assert_eq!(board.units[rock_idx].hp, 0, "landing-adjacent BombRock should explode");
+        assert_eq!(board.units[leaper_idx].hp, 0, "landing-adjacent Leaper should be killed");
+        assert_eq!(
+            board.units[mech_idx].hp,
+            4,
+            "BombRock blast should exclude the landing Leap and Hydraulic Legs Nanobots should not heal above the engine/base HP cap"
+        );
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("viscera_nanobots_heal:")),
+            "over-base Hydraulic Legs kill should not emit an actual heal event"
+        );
     }
 
     #[test]

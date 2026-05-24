@@ -1571,7 +1571,19 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   20260522_193613_471 Pinnacle Mission_FreezeMines turn 2, where Leaper1 was
 //   already dead on F2 and UnstableTank later moved E2->F2. Pre-v216 corpus
 //   archived as `failure_db_snapshot_sim_v215.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 216;
+// v217 - Long Hydraulic Legs jumps also damage interior transit units with
+//   acid/armor-ignoring pass-over damage. Hydraulic Legs-triggered BombRock
+//   blasts exclude the landing Leap Mech. Fixes Healing run
+//   20260522_193613_471 Pinnacle Mission_SnowStorm turn 2, where Leap E1->E6
+//   damaged acid Dung2 on E4 by 1 HP and detonated E5 BombRock without
+//   blast-damaging Leap. Pre-v217 corpus archived as
+//   `failure_db_snapshot_sim_v216.jsonl`.
+// v218 - Hydraulic Legs Nanobots healing caps at the engine/base mech HP, but
+//   direct Unstable Cannon kills can still heal recoil back to the save-overlaid
+//   max HP. Fixes the same Mission_SnowStorm turn 2, where Leap stayed 4/5
+//   after killing Leaper1 while UnstableTank healed its Dung2 kill back to 5/5.
+//   Pre-v218 corpus archived as `failure_db_snapshot_sim_v217.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 218;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
