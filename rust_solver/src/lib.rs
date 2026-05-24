@@ -1611,7 +1611,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   `Brute_Unstable_AB` at 1 HP, killed Jelly_Lava1, and live ended at 2 HP
 //   still burning. Pre-v223 corpus archived as
 //   `failure_db_snapshot_sim_v222.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 223;
+// v224 - Acid Projector can push a live enemy into an existing dead enemy
+//   wreck without bump damage. Fixes Healing run 20260522_193613_471 Final
+//   Cave turn 3, where NanoMech pushed Hornet1 into dead Scarab1's tile and
+//   live left Hornet1 alive at 1 HP. Pre-v224 corpus archived as
+//   `failure_db_snapshot_sim_v223.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 224;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

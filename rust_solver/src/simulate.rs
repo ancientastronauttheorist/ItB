@@ -1942,6 +1942,7 @@ struct PushPolicy {
     dead_bumps_live_blocker: bool,
     edge_bump_damage: bool,
     friendly_live_pusher_enters_wreck: bool,
+    live_pusher_enters_wreck: bool,
 }
 
 const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1949,6 +1950,7 @@ const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: false,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
 };
 
 const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1956,6 +1958,7 @@ const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
 };
 
 const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1963,6 +1966,7 @@ const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
 };
 
 const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1970,6 +1974,7 @@ const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
 };
 
 const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1977,6 +1982,7 @@ const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
 };
 
 const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1984,6 +1990,7 @@ const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
     friendly_live_pusher_enters_wreck: true,
+    live_pusher_enters_wreck: false,
 };
 
 const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1991,6 +1998,7 @@ const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
 };
 
 const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -1998,6 +2006,15 @@ const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: true,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const ACID_PROJECTOR_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: false,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: true,
 };
 
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
@@ -2005,6 +2022,7 @@ const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_bumps_live_blocker: false,
     edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
 };
 
 /// Push unit at (x, y) in direction. Damage+push are simultaneous; a
@@ -2152,10 +2170,10 @@ fn apply_push_with_policy(
 
     // Blocked by a wreck — pushed unit bumps, wreck stays inert.
     if board.wreck_at(nx, ny) {
-        if policy.friendly_live_pusher_enters_wreck
-            && board.units[unit_idx].hp > 0
-            && board.units[unit_idx].is_player()
-        {
+        let live_pusher_enters_wreck = board.units[unit_idx].hp > 0
+            && (policy.live_pusher_enters_wreck
+                || (policy.friendly_live_pusher_enters_wreck && board.units[unit_idx].is_player()));
+        if live_pusher_enters_wreck {
             clear_unit_web(board, unit_idx);
             board.units[unit_idx].x = nx;
             board.units[unit_idx].y = ny;
@@ -3294,6 +3312,8 @@ fn sim_projectile(
             NO_EDGE_BUMP_PUSH_POLICY
         } else if is_brute_unstable_weapon(weapon_id) {
             BRUTE_UNSTABLE_TARGET_PUSH_POLICY
+        } else if weapon_id == WId::ScienceAcidShot {
+            ACID_PROJECTOR_PUSH_POLICY
         } else if weapon_id == WId::BruteMirrorshot {
             TRI_ROCKET_PUSH_POLICY
         } else {
@@ -6700,6 +6720,25 @@ mod tests {
         );
         assert!(board.tile(5, 6).cracked());
         assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_acid_projector_pushes_live_enemy_into_dead_enemy_wreck_without_bump() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 5, 2, 4, WId::ScienceAcidShot);
+        let hornet_idx = add_enemy_type(&mut board, 1184, 5, 5, 1, "Hornet1");
+        let scarab_idx = add_enemy_type(&mut board, 1183, 5, 6, 1, "Scarab1");
+        board.units[scarab_idx].hp = 0;
+        board.units[scarab_idx].set_active(false);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 5, 3);
+
+        assert_eq!(board.units[hornet_idx].hp, 1);
+        assert!(board.units[hornet_idx].acid());
+        assert_eq!((board.units[hornet_idx].x, board.units[hornet_idx].y), (5, 6));
+        assert_eq!(board.units[scarab_idx].hp, 0);
+        assert_eq!(result.enemies_killed, 0);
+        assert_eq!(result.enemy_damage_dealt, 0);
     }
 
     #[test]

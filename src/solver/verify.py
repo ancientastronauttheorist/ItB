@@ -1133,7 +1133,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Brute_Unstable_AB at 1 HP, killed Jelly_Lava1, and live ended at 2 HP still
 # burning.
 # Pre-v223 corpus archived as failure_db_snapshot_sim_v222.jsonl.
-SIMULATOR_VERSION = 223
+# v224: Acid Projector can push a live enemy into an existing dead enemy wreck
+# without bump damage. Fixes Healing run 20260522_193613_471 Final Cave turn 3,
+# where NanoMech pushed Hornet1 into dead Scarab1's tile and live left Hornet1
+# alive at 1 HP.
+# Pre-v224 corpus archived as failure_db_snapshot_sim_v223.jsonl.
+SIMULATOR_VERSION = 224
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
