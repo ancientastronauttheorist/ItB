@@ -1566,7 +1566,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Mission_Factory turn 4, where Leaper1 died on C3 but the C2 blocker kept
 //   the corpse on intact Ice. Pre-v215 corpus archived as
 //   `failure_db_snapshot_sim_v214.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 215;
+// v216 - Hydraulic Legs friendly landing-adjacent pushes can enter an existing
+//   dead-unit/wreck tile without taking the normal wreck bump. Fixes Healing run
+//   20260522_193613_471 Pinnacle Mission_FreezeMines turn 2, where Leaper1 was
+//   already dead on F2 and UnstableTank later moved E2->F2. Pre-v216 corpus
+//   archived as `failure_db_snapshot_sim_v215.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 216;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

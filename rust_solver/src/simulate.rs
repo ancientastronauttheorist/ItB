@@ -1910,54 +1910,70 @@ struct PushPolicy {
     dead_nonpushable_collides: bool,
     dead_bumps_live_blocker: bool,
     edge_bump_damage: bool,
+    friendly_live_pusher_enters_wreck: bool,
 }
 
 const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
     edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
 };
 
 const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: true,
     dead_bumps_live_blocker: true,
     edge_bump_damage: false,
+    friendly_live_pusher_enters_wreck: false,
 };
 
 const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
 };
 
 const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
 };
 
 const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+};
+
+const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: true,
 };
 
 const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
     edge_bump_damage: false,
+    friendly_live_pusher_enters_wreck: false,
 };
 
 const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
     edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
 };
 
 const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: false,
     edge_bump_damage: false,
+    friendly_live_pusher_enters_wreck: false,
 };
 
 /// Push unit at (x, y) in direction. Damage+push are simultaneous; a
@@ -2105,6 +2121,16 @@ fn apply_push_with_policy(
 
     // Blocked by a wreck — pushed unit bumps, wreck stays inert.
     if board.wreck_at(nx, ny) {
+        if policy.friendly_live_pusher_enters_wreck
+            && board.units[unit_idx].hp > 0
+            && board.units[unit_idx].is_player()
+        {
+            clear_unit_web(board, unit_idx);
+            board.units[unit_idx].x = nx;
+            board.units[unit_idx].y = ny;
+            apply_pod_on_land(board, unit_idx, result);
+            return;
+        }
         apply_damage(board, x, y, 1, result, DamageSource::Bump);
         return;
     }
@@ -4255,7 +4281,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
         // Damage adjacent tiles (skip source direction)
         let from_dir = direction_between(tx, ty, old_x, old_y);
         let push_policy = if weapon_id == WId::PrimeLeap {
-            TRI_ROCKET_PUSH_POLICY
+            PRIME_LEAP_PUSH_POLICY
         } else {
             DEFAULT_PUSH_POLICY
         };
@@ -7683,6 +7709,31 @@ mod tests {
         assert_eq!(board.units[leaper_idx].hp, 0, "landing damage kills the Leaper");
         assert_eq!(board.units[blocker_idx].hp, 2, "killed Leaper corpse bumps the live blocker");
         assert_eq!((board.units[leaper_idx].x, board.units[leaper_idx].y), (4, 4));
+    }
+
+    #[test]
+    fn test_prime_leap_friendly_push_enters_existing_dead_unit_tile_without_bump() {
+        let mut board = make_test_board();
+        let leap_idx = add_mech(&mut board, 0, 5, 4, 5, WId::PrimeLeap);
+        let unstable_idx = add_mech(&mut board, 1, 6, 3, 3, WId::BruteUnstable);
+        let leaper_idx = add_enemy_type(&mut board, 140, 6, 2, 1, "Leaper1");
+        board.units[leaper_idx].hp = 0;
+        board.units[leaper_idx].set_active(false);
+
+        let result = simulate_weapon(&mut board, leap_idx, WId::PrimeLeap, 6, 4);
+
+        assert_eq!(board.units[leaper_idx].hp, 0, "dead Leaper wreck should stay on the destination tile");
+        assert_eq!(
+            (board.units[unstable_idx].x, board.units[unstable_idx].y),
+            (6, 2),
+            "Hydraulic Legs should move the friendly pusher into the existing dead unit tile"
+        );
+        assert_eq!(
+            board.units[unstable_idx].hp,
+            2,
+            "friendly pusher takes landing-adjacent damage but no wreck bump"
+        );
+        assert_eq!(result.mech_damage_taken, 2);
     }
 
     #[test]

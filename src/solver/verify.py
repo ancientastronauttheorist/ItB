@@ -1083,7 +1083,18 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Healing run 20260522_193613_471 Mission_Survive turn 3, where Beetle2 on F5
 # left Water after Leap push, while Unstable's intact E4 firing tile stayed Ice.
 # Pre-v214 corpus archived as failure_db_snapshot_sim_v213.jsonl.
-SIMULATOR_VERSION = 215
+# v215: Hydraulic Legs only breaks occupied Ice after a grounded target is
+# actually displaced off the original tile. A blocked push/corpse bump leaves
+# the occupied Ice intact. Fixes Healing run 20260522_193613_471 Pinnacle
+# Mission_Factory turn 4, where Leaper1 died on C3 but the C2 blocker kept the
+# corpse on intact Ice.
+# Pre-v215 corpus archived as failure_db_snapshot_sim_v214.jsonl.
+# v216: Hydraulic Legs friendly landing-adjacent pushes can enter an existing
+# dead-unit/wreck tile without taking the normal wreck bump. Fixes Healing run
+# 20260522_193613_471 Pinnacle Mission_FreezeMines turn 2, where Leaper1 was
+# already dead on F2 and UnstableTank later moved E2->F2.
+# Pre-v216 corpus archived as failure_db_snapshot_sim_v215.jsonl.
+SIMULATOR_VERSION = 216
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
