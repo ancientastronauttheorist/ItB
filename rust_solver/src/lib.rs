@@ -1583,7 +1583,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   max HP. Fixes the same Mission_SnowStorm turn 2, where Leap stayed 4/5
 //   after killing Leaper1 while UnstableTank healed its Dung2 kill back to 5/5.
 //   Pre-v218 corpus archived as `failure_db_snapshot_sim_v217.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 218;
+// v219 - Long Hydraulic Legs pass-over damage skips the first transit tile next
+//   to the takeoff point as well as the final pre-landing tile. Fixes Healing
+//   run 20260522_193613_471 Pinnacle Mission_SnowStorm turn 4, where Leap
+//   jumped C4->F4 and live left Mosquito1 on D4 at 2/2. Pre-v219 corpus
+//   archived as `failure_db_snapshot_sim_v218.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 219;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

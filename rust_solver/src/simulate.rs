@@ -4308,7 +4308,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                 let (dx, dy) = DIRS[dir];
                 let dist =
                     (tx as i8 - old_x as i8).abs() + (ty as i8 - old_y as i8).abs();
-                for step in 1..(dist - 1) {
+                for step in 2..(dist - 1) {
                     let nx = old_x as i8 + dx * step;
                     let ny = old_y as i8 + dy * step;
                     if !in_bounds(nx, ny) { continue; }
@@ -7663,6 +7663,24 @@ mod tests {
             !result.events.iter().any(|e| e.starts_with("viscera_nanobots_heal:")),
             "over-base Hydraulic Legs kill should not emit an actual heal event"
         );
+    }
+
+    #[test]
+    fn test_prime_leap_long_jump_skips_first_transit_tile() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 5, 5, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        let mosquito_idx = add_enemy_type(&mut board, 504, 4, 4, 2, "Mosquito1");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 4, 2);
+
+        assert_eq!(
+            board.units[mosquito_idx].hp,
+            2,
+            "the first pass-over tile next to the takeoff point should not take Hydraulic Legs transit damage"
+        );
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]
