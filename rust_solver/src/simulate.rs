@@ -1575,6 +1575,7 @@ fn apply_viscera_nanobots_heal(
     attacker_idx: usize,
     kills: i32,
     heal_cap_override: Option<i8>,
+    clear_statuses_on_revive: bool,
     result: &mut ActionResult,
 ) {
     if board.viscera_nanobots_heal == 0 || kills <= 0 {
@@ -1598,24 +1599,28 @@ fn apply_viscera_nanobots_heal(
         return;
     }
     let old_hp = board.units[attacker_idx].hp;
+    // Live Nanobots ignores negative overkill HP and heals from zero.
+    let heal_base = old_hp.max(0);
     let heal_cap = heal_cap_override.unwrap_or(board.units[attacker_idx].max_hp);
-    if old_hp >= heal_cap {
+    if heal_base >= heal_cap {
         return;
     }
-    let new_hp = (old_hp + heal).min(heal_cap);
-    let actual_heal = new_hp - old_hp;
+    let new_hp = (heal_base + heal).min(heal_cap);
+    let actual_heal = new_hp - heal_base;
     if actual_heal <= 0 {
         return;
     }
 
     board.units[attacker_idx].hp = new_hp;
     if was_disabled && new_hp > 0 {
-        clear_unit_web(board, attacker_idx);
-        let attacker = &mut board.units[attacker_idx];
-        attacker.set_fire(false);
-        attacker.set_acid(false);
-        attacker.set_frozen(false);
-        clear_mites(attacker);
+        if clear_statuses_on_revive {
+            clear_unit_web(board, attacker_idx);
+            let attacker = &mut board.units[attacker_idx];
+            attacker.set_fire(false);
+            attacker.set_acid(false);
+            attacker.set_frozen(false);
+            clear_mites(attacker);
+        }
         if result.mechs_killed > 0 {
             result.mechs_killed -= 1;
         }
@@ -2598,9 +2603,10 @@ pub fn simulate_weapon_with(
             attacker_idx,
             leech_capped,
             heal_cap_override,
+            true,
             &mut result,
         );
-        apply_viscera_nanobots_heal(board, attacker_idx, leech_uncapped, None, &mut result);
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_uncapped, None, true, &mut result);
         leech_heal_applied = true;
 
         let lx = board.units[attacker_idx].x;
@@ -2631,7 +2637,7 @@ pub fn simulate_weapon_with(
 
     if !leech_heal_applied {
         let leech_kills = result.leech_credit_kills - leech_kills_before;
-        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, None, &mut result);
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, None, false, &mut result);
     }
 
     // Self-freeze (Cryo-Launcher freezes attacker)
@@ -5076,6 +5082,37 @@ mod tests {
             4,
             "AB self-damage plus recoil bump should leave 4 HP after boosted Nanobots"
         );
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"));
+    }
+
+    #[test]
+    fn test_unstable_ab_nanobots_heals_from_zero_and_preserves_fire() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let unstable = add_mech(&mut board, 1, 3, 5, 1, WId::BruteUnstableAB);
+        board.units[unstable].max_hp = 5;
+        board.units[unstable].set_type_name("UnstableTank");
+        board.units[unstable].set_fire(true);
+        let jelly = add_enemy_type(&mut board, 1174, 3, 4, 2, "Jelly_Lava1");
+
+        let result = simulate_weapon(&mut board, unstable, WId::BruteUnstableAB, 3, 4);
+
+        assert!(board.units[jelly].hp <= 0);
+        assert_eq!(
+            (board.units[unstable].x, board.units[unstable].y),
+            (3, 6),
+            "Unstable Cannon recoil should still move the self-damaged attacker"
+        );
+        assert_eq!(
+            board.units[unstable].hp,
+            2,
+            "Nanobots should heal from HP floor 0 after overkill self-damage"
+        );
+        assert!(
+            board.units[unstable].fire(),
+            "Unstable Cannon Nanobots recovery preserves carried fire status"
+        );
+        assert_eq!(result.mechs_killed, 0);
         assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"));
     }
 

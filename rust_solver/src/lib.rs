@@ -1605,7 +1605,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Volcanic Hive turn 1, where live fired `Brute_Unstable_AB` and its extra
 //   self-damage plus recoil bump left UnstableTank at 4 HP. Pre-v222 corpus
 //   archived as `failure_db_snapshot_sim_v221.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 222;
+// v223 - Viscera Nanobots heals self-damage overkill from HP floor 0, and
+//   Unstable Cannon recovery preserves carried statuses. Fixes Healing run
+//   20260522_193613_471 Volcanic Hive turn 4, where burning UnstableTank fired
+//   `Brute_Unstable_AB` at 1 HP, killed Jelly_Lava1, and live ended at 2 HP
+//   still burning. Pre-v223 corpus archived as
+//   `failure_db_snapshot_sim_v222.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 223;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
