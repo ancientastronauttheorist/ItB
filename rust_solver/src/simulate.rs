@@ -1977,7 +1977,7 @@ const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
 const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
     dead_nonpushable_collides: false,
     dead_bumps_live_blocker: true,
-    edge_bump_damage: true,
+    edge_bump_damage: false,
     friendly_live_pusher_enters_wreck: false,
 };
 
@@ -4303,26 +4303,6 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
     } else {
         // Damage adjacent tiles (skip source direction)
         let from_dir = direction_between(tx, ty, old_x, old_y);
-        if weapon_id == WId::PrimeLeap {
-            if let Some(dir) = cardinal_direction(old_x, old_y, tx, ty) {
-                let (dx, dy) = DIRS[dir];
-                let dist =
-                    (tx as i8 - old_x as i8).abs() + (ty as i8 - old_y as i8).abs();
-                for step in 2..(dist - 1) {
-                    let nx = old_x as i8 + dx * step;
-                    let ny = old_y as i8 + dy * step;
-                    if !in_bounds(nx, ny) { continue; }
-                    apply_damage(
-                        board,
-                        nx as u8,
-                        ny as u8,
-                        wdef.damage,
-                        result,
-                        DamageSource::Bump,
-                    );
-                }
-            }
-        }
         let push_policy = if weapon_id == WId::PrimeLeap {
             PRIME_LEAP_PUSH_POLICY
         } else {
@@ -5009,6 +4989,26 @@ mod tests {
             "Unstable Cannon killed-target forward push should corpse-bump the live mech blocker"
         );
         assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
+    fn test_unstable_direct_edge_push_does_not_bump_target_off_board() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 1, 4, 5, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        let boss = add_enemy_type(&mut board, 1145, 0, 4, 5, "MosquitoBoss");
+        board.units[boss].flags.insert(UnitFlags::FLYING | UnitFlags::MASSIVE);
+        board.units[boss].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 0, 4);
+
+        assert_eq!(
+            board.units[boss].hp,
+            1,
+            "acid-doubled Unstable Cannon damage should not add an off-board edge bump"
+        );
+        assert_eq!((board.units[boss].x, board.units[boss].y), (0, 4));
+        assert_eq!(result.enemies_killed, 0);
     }
 
     #[test]
@@ -7634,7 +7634,7 @@ mod tests {
     }
 
     #[test]
-    fn test_prime_leap_long_jump_transit_damage_bombrock_excludes_landing_mech() {
+    fn test_prime_leap_long_jump_bombrock_excludes_landing_mech_without_transit_damage() {
         let mut board = make_test_board();
         board.viscera_nanobots_heal = 2;
         let mech_idx = add_mech(&mut board, 0, 7, 3, 5, WId::PrimeLeap);
@@ -7649,8 +7649,8 @@ mod tests {
 
         assert_eq!(
             board.units[dung_idx].hp,
-            3,
-            "transit pass-over plus BombRock blast should each damage Dung once"
+            4,
+            "Hydraulic Legs should not add pass-over damage; only the BombRock blast hits Dung"
         );
         assert_eq!(board.units[rock_idx].hp, 0, "landing-adjacent BombRock should explode");
         assert_eq!(board.units[leaper_idx].hp, 0, "landing-adjacent Leaper should be killed");
@@ -7666,7 +7666,7 @@ mod tests {
     }
 
     #[test]
-    fn test_prime_leap_long_jump_skips_first_transit_tile() {
+    fn test_prime_leap_long_jump_does_not_damage_transit_tiles() {
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 4, 5, 5, WId::PrimeLeap);
         board.units[mech_idx].max_hp = 5;
@@ -7678,8 +7678,28 @@ mod tests {
         assert_eq!(
             board.units[mosquito_idx].hp,
             2,
-            "the first pass-over tile next to the takeoff point should not take Hydraulic Legs transit damage"
+            "Hydraulic Legs should not damage pass-over transit tiles"
         );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_prime_leap_no_middle_transit_damage_before_landing_push_collision() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 5, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        let jelly_idx = add_enemy_type(&mut board, 1146, 5, 3, 2, "Jelly_Regen1");
+        let scarab_idx = add_enemy_type(&mut board, 1147, 5, 4, 4, "Scarab2");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 5);
+
+        assert_eq!(
+            board.units[jelly_idx].hp,
+            1,
+            "Blood Psion should take only the Scarab collision bump, not synthetic pass-over damage"
+        );
+        assert_eq!(board.units[scarab_idx].hp, 2);
         assert_eq!(result.enemies_killed, 0);
     }
 

@@ -1110,7 +1110,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # 20260522_193613_471 Pinnacle Mission_SnowStorm turn 4, where Leap jumped
 # C4->F4 and live left Mosquito1 on D4 at 2/2.
 # Pre-v219 corpus archived as failure_db_snapshot_sim_v218.jsonl.
-SIMULATOR_VERSION = 219
+# v220: Removes synthetic Prime_Leap transit damage entirely; vanilla Hydraulic
+# Legs only damages landing-adjacent tiles plus recoil. Also makes
+# Brute_Unstable direct target pushes omit off-board edge-bump damage. Fixes
+# Healing run 20260522_193613_471 Corporate HQ turn 1, where Blood Psion and
+# Mosquito Leader both survived at 1 HP.
+# Pre-v220 corpus archived as failure_db_snapshot_sim_v219.jsonl.
+SIMULATOR_VERSION = 220
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
