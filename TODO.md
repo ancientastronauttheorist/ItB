@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-39 of 70 Steam-cache confirmed, 40 of 70 including live in-game unlocks. `python3 game_loop.py achievements --sync` still reported 39/70 immediately after the 2026-05-22 **Untouchable** popup, so the Steam client cache appears to lag the visible game award. 30 remaining if that popup is treated as authoritative; sorted by global unlock % (easiest first).
+42 of 70 Steam-cache confirmed. **Healing** and **Overkill** reconciled after Steam was brought online and Into the Breach restarted; the offline Steam cache had hidden the unlocks immediately after the Hazardous Mechs victory. 28 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Untouchable popped in-game on 2026-05-22 after Frozen Titans Easy Archive run `20260522_133722_695`. The earlier Unstable Ground milestone remains Steam-confirmed by the 2026-05-21 sync during Cataclysm run `20260521_120049_468`.
+Current milestone: Hazardous Mechs Easy run `20260522_193613_471` closed **Healing** and **Overkill** and reached a 4-island victory. **Untouchable** was also confirmed by the later sync after its Frozen Titans in-game popup in run `20260522_133722_695`.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -39,12 +39,12 @@ Current milestone: Untouchable popped in-game on 2026-05-22 after Frozen Titans 
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
 - [x] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths] — live toast observed on 2026-05-21 in run `20260520_174936_811`
 - [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
-- [ ] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs]
+- [x] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs] — completed in run `20260522_193613_471`; Steam sync reconciled after online restart
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
 - [x] Untouchable (14.5%) — Finish island without Mech Damage — in-game popup observed after Frozen Titans Easy Archive run `20260522_133722_695`; Steam cache sync still lagged at 39/70 immediately afterward
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire [Steel Judoka]
 - [ ] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg]
-- [ ] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs]
+- [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
 - [ ] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod)
 - [ ] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad
 - [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
@@ -79,7 +79,7 @@ Current milestone: Untouchable popped in-game on 2026-05-22 after Frozen Titans 
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (40, from Steam sync + live confirmations)
+### Already Completed (42, from Steam sync)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -112,9 +112,11 @@ Current milestone: Untouchable popped in-game on 2026-05-22 after Frozen Titans 
 - [x] This is Fine (15.7%) — 5 enemies on Fire simultaneously  [Flame Behemoths]
 - [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
 - [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle  [Rusting Hulks]
+- [x] Healing (15.1%) — Heal 10 Mech Health in one battle  [Hazardous Mechs]
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser  [Zenith Guard]
-- [x] Untouchable (14.5%) — Finish island without Mech Damage  [Frozen Titans] — in-game popup observed in run `20260522_133722_695`
+- [x] Untouchable (14.5%) — Finish island without Mech Damage  [Frozen Titans]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
+- [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]

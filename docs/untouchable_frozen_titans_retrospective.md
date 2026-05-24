@@ -7,7 +7,7 @@ Difficulty: Easy, Advanced Edition ON
 Island: Archive
 Target: Finish one Corporate Island without taking mech damage
 
-Outcome: **Untouchable unlocked in-game** after Corporate HQ / `Mission_StarfishBoss`. The reward flow showed **Achievement! Untouchable** on the island map. The immediate `python3 game_loop.py achievements --sync` still reported 39/70 from Steam/client cache, so the tracker may lag the visible game award.
+Outcome: **Untouchable unlocked in-game** after Corporate HQ / `Mission_StarfishBoss`. The reward flow showed **Achievement! Untouchable** on the island map. The immediate `python3 game_loop.py achievements --sync` still reported 39/70 from Steam/client cache while Steam was offline; after Steam was brought online and Into the Breach restarted, a later sync confirmed Untouchable along with Healing and Overkill at 42/70.
 
 ## What Worked
 
@@ -23,8 +23,8 @@ Outcome: **Untouchable unlocked in-game** after Corporate HQ / `Mission_Starfish
 - Building/grid/objective damage is strategically spendable. Keep grid at 2+ when possible so one model miss does not collapse the timeline.
 - Manual low-score lines are legitimate only after a fresh-board audit predicts no mech HP loss and no hidden damage event; otherwise trust the solver or restart.
 - Shields are valuable because they can absorb hits without HP loss, but do not assume every shield interaction cancels Vek intent. Fresh-read queued targets after Spartan Shield lines against projectile-grapple enemies.
-- The game awarding Untouchable is more authoritative than immediate Steam cache sync. Record the visible popup and re-sync later if the cache remains stale.
+- The game awarding Untouchable is more authoritative than an immediate offline Steam cache sync. Record the visible popup and re-sync after Steam is online and the game has restarted if the cache remains stale.
 
 ## Follow-Up
 
-The achievement is complete from the game's perspective. Keep `data/achievements_detailed.json` sync-aware rather than hand-forcing the Steam flag unless repeated cache syncs continue to lag, but avoid targeting Untouchable again unless the visible popup is later contradicted.
+The achievement is complete and Steam-confirmed. Avoid targeting Untouchable again unless a future full achievement sync contradicts the current 42/70 cache state.

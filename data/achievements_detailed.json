@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-22T14:52:37.930191",
+    "last_steam_sync": "2026-05-23T22:30:44.597863",
     "last_steam_total": 70,
-    "last_steam_unlocked": 39
+    "last_steam_unlocked": 42
   },
   "achievements": {
     "rift_walkers": [
@@ -241,7 +241,7 @@
         "description": "Heal 10 Mech Health in a single battle with the Hazardous Mechs squad",
         "type": "single_battle",
         "global_unlock_pct": 15.1,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Nano Mech's Viscera Nanobots (3 cores) for heal-on-kill. Leap Mech and Unstable Mech self-damage, then Nano Mech kills heal them. Technician perk also helps. Need 10 total healing across all mechs.",
         "setup": "Upgraded Viscera Nanobots. Self-damage + heal loop. Many enemies to kill.",
         "pitfalls": "Must actually take damage first to have HP to heal. Balance self-damage carefully."
@@ -261,7 +261,7 @@
         "description": "Deal 8 damage to a unit with a single attack with Hazardous Mechs squad",
         "type": "single_battle",
         "global_unlock_pct": 12.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Fully upgrade Unstable Mech's A.P. Cannon (up to 5 damage, 4 cores). Hit an A.C.I.D.-affected enemy (doubles damage to 10). Detritus island A.C.I.D. pools make this easy.",
         "setup": "Fully upgraded A.P. Cannon (4 cores). Detritus island for A.C.I.D. pools.",
         "pitfalls": "Need A.C.I.D. on target for doubling. Without A.C.I.D., max is 5 damage."
@@ -673,7 +673,7 @@
         "description": "Finish a Corporate Island without taking Mech Damage",
         "type": "single_island",
         "global_unlock_pct": 14.4,
-        "completed": false,
+        "completed": true,
         "strategy": "No mech damage across all missions on one island. Focus mobility upgrades. Shield mechs. Sacrifice grid power if needed to keep mechs safe. Avoid self-damaging weapons.",
         "setup": "Easy difficulty. Non-self-damaging squad. Shields.",
         "pitfalls": "Repaired damage is still damage. Self-damage counts. Environmental damage counts. Very careful play required."

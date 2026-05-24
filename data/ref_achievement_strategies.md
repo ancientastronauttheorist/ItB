@@ -30,7 +30,10 @@ evaluation weights when targeting that achievement.
 - [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
 - [x] Pacifist (16.6%) -- Kill less than 3 enemies in a battle (Frozen Titans)
 - [x] Stormy Weather (15.4%) -- 12 Electric Smoke damage in one battle (Rusting Hulks)
+- [x] Healing (15.1%) -- Heal 10 Mech Health in a single battle (Hazardous Mechs)
+- [x] Untouchable (14.5%) -- Finish a Corporate Island without taking Mech Damage
 - [x] Unwitting Allies (14.2%) -- 4 enemies die from enemy fire (Steel Judoka)
+- [x] Overkill (12.6%) -- Deal 8 damage to a unit with a single attack (Hazardous Mechs)
 - [x] Unbreakable (10.2%) -- Mech Armor absorbs 5 damage in one battle (Steel Judoka)
 - [x] Hard Victory (9.0%) -- Beat the game on Hard
 - [x] Unstable Ground (7.9%) -- Crack 10 tiles in one mission (Cataclysm)
@@ -281,12 +284,14 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### Healing (15.1%)
+- **Status:** Completed in Hazardous Mechs Easy run `20260522_193613_471`; Steam/client sync confirmed on 2026-05-24 after Steam was brought online and Into the Breach restarted.
 - **Requirement:** Heal 10 Mech Health in a single battle with the Hazardous Mechs squad.
 - **Squad:** Hazardous Mechs (required)
 - **Strategy:** Viscera Nanobots heals mechs 1 (or 2 with upgrade) HP per killing blow. The Leap Mech and Unstable Mech both deal self-damage every attack. Intentionally take self-damage, then heal by getting kills. Need 10 total healing in one battle. With +1 Heal upgrade, need 5 kills that heal. Without upgrade, need 10 kill-heals.
-- **Bot approach:** Encourage self-damage attacks and then killing blows. The solver should track total healing in the battle and prioritize getting kills with damaged mechs. Upgrade +1 Heal on Viscera Nanobots first.
+- **Bot approach:** Encourage self-damage attacks and then killing blows. The solver should track total healing in the battle and prioritize getting kills with damaged mechs. Upgrade +1 Heal on Viscera Nanobots first. Expect lower-scoring lines to be correct for this target: clean threat resolution alone may under-farm healing.
 - **Key weapons:** Hydraulic Legs (self-damage + area damage), Unstable Cannon (self-damage + target damage), Viscera Nanobots (passive, upgrade +1 Heal)
 - **Ideal setup:** Normal difficulty, second island with enough enemies. Keep attacking even when taking self-damage to maximize heal cycles.
+- **Successful run notes:** Run `20260522_193613_471` stacked Hazardous HP upgrades, powered `Passive_Leech_A`, and repeated Leap/Unstable kill-heal loops. Several simulator gaps surfaced because the run deliberately leaned into self-damage, ACID, ice, lava, corpse-push, and Nanobots timing; they were patched through simulator v224 before the final victory. The achievement did not reconcile while Steam was offline, then appeared after going online and restarting the game.
 - **Estimated difficulty for bot:** Medium
 
 ### Glittering C-Beam (14.8%)
@@ -328,6 +333,7 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Hard (requires 4 simultaneous spawns, which is situational)
 
 ### Overkill (12.6%)
+- **Status:** Completed in Hazardous Mechs Easy run `20260522_193613_471`; Steam/client sync confirmed on 2026-05-24 after Steam was brought online and Into the Breach restarted. Recorded anchor: Volcanic Hive / `Mission_Final` turn 2, where `Brute_Unstable_AB` dealt 8 damage to an A.C.I.D.-tagged target.
 - **Requirement:** Deal 8 damage to a unit with a single attack with the Hazardous Mechs squad.
 - **Squad:** Hazardous Mechs (required)
 - **Strategy:** The Unstable Cannon deals 2 base + upgrades. With both damage upgrades (+1 each to self and target, +1 to target) it reaches 4 damage. Apply A.C.I.D. (doubles damage) with Nano Mech first, then shoot with Unstable Cannon for 8 damage. Alternatively, the Leap Mech can also reach high damage with A.C.I.D.
