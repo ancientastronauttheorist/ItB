@@ -1122,7 +1122,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # where a Beetle pushed from B2 into water died, Leap healed to 5/5, and B2
 # stayed Ice.
 # Pre-v221 corpus archived as failure_db_snapshot_sim_v220.jsonl.
-SIMULATOR_VERSION = 221
+# v222: Models powered Prime_Leap_A/B/AB and Brute_Unstable_A/B/AB loadout IDs
+# from save overlays. Fixes Healing run 20260522_193613_471 Volcanic Hive turn
+# 1, where live fired Brute_Unstable_AB and its extra self-damage plus recoil
+# bump left UnstableTank at 4 HP.
+# Pre-v222 corpus archived as failure_db_snapshot_sim_v221.jsonl.
+SIMULATOR_VERSION = 222
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

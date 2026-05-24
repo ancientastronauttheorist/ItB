@@ -1634,6 +1634,20 @@ fn hydraulic_legs_nanobots_heal_cap(unit: &Unit) -> i8 {
     }
 }
 
+fn is_prime_leap_weapon(weapon_id: WId) -> bool {
+    matches!(
+        weapon_id,
+        WId::PrimeLeap | WId::PrimeLeapA | WId::PrimeLeapB | WId::PrimeLeapAB
+    )
+}
+
+fn is_brute_unstable_weapon(weapon_id: WId) -> bool {
+    matches!(
+        weapon_id,
+        WId::BruteUnstable | WId::BruteUnstableA | WId::BruteUnstableB | WId::BruteUnstableAB
+    )
+}
+
 fn disabled_unit_is_on_deadly_terrain(board: &Board, unit_idx: usize) -> bool {
     let unit = &board.units[unit_idx];
     if unit.hp > 0 || unit.effectively_flying() {
@@ -2574,7 +2588,7 @@ pub fn simulate_weapon_with(
         let leech_kills = result.leech_credit_kills - leech_kills_before;
         let leech_uncapped = result.leech_uncapped_kills - leech_uncapped_before;
         let leech_capped = leech_kills - leech_uncapped;
-        let heal_cap_override = if weapon_id == WId::PrimeLeap {
+        let heal_cap_override = if is_prime_leap_weapon(weapon_id) {
             Some(hydraulic_legs_nanobots_heal_cap(&board.units[attacker_idx]))
         } else {
             None
@@ -2602,7 +2616,7 @@ pub fn simulate_weapon_with(
             let ax = board.units[attacker_idx].x;
             let ay = board.units[attacker_idx].y;
             let kills_before = result.enemies_killed;
-            let recoil_policy = if weapon_id == WId::BruteUnstable {
+            let recoil_policy = if is_brute_unstable_weapon(weapon_id) {
                 BRUTE_UNSTABLE_RECOIL_PUSH_POLICY
             } else {
                 DEFAULT_PUSH_POLICY
@@ -3242,7 +3256,7 @@ fn sim_projectile(
         let hy = hit_y as u8;
         let dmg = projectile_damage(wdef, ax, ay, hx, hy);
         let occupied_at_impact = board.unit_at(hx, hy).is_some();
-        let damage_source = if weapon_id == WId::BruteUnstable {
+        let damage_source = if is_brute_unstable_weapon(weapon_id) {
             DamageSource::WeaponNoAcidPool
         } else {
             DamageSource::Weapon
@@ -3272,7 +3286,7 @@ fn sim_projectile(
         let suppress_direct_push = acid_projector_edge_suppressed;
         let policy = if wdef.no_edge_bump_direct_push() {
             NO_EDGE_BUMP_PUSH_POLICY
-        } else if weapon_id == WId::BruteUnstable {
+        } else if is_brute_unstable_weapon(weapon_id) {
             BRUTE_UNSTABLE_TARGET_PUSH_POLICY
         } else if weapon_id == WId::BruteMirrorshot {
             TRI_ROCKET_PUSH_POLICY
@@ -4150,7 +4164,7 @@ fn leap_landing_illegal_reason(
     if tx >= 8 || ty >= 8 {
         return Some("out_of_bounds");
     }
-    if weapon_id == WId::PrimeLeap && board.units[attacker_idx].web() {
+    if is_prime_leap_weapon(weapon_id) && board.units[attacker_idx].web() {
         return Some("webbed");
     }
     let old_x = board.units[attacker_idx].x;
@@ -4307,7 +4321,7 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
     } else {
         // Damage adjacent tiles (skip source direction)
         let from_dir = direction_between(tx, ty, old_x, old_y);
-        let push_policy = if weapon_id == WId::PrimeLeap {
+        let push_policy = if is_prime_leap_weapon(weapon_id) {
             PRIME_LEAP_PUSH_POLICY
         } else {
             DEFAULT_PUSH_POLICY
@@ -4331,14 +4345,14 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &Weapo
                     board.units[idx].y,
                 )
             });
-            let damage_source = if weapon_id == WId::PrimeLeap {
+            let damage_source = if is_prime_leap_weapon(weapon_id) {
                 // Live Hydraulic Legs emits tile damage on landing-adjacent
                 // cracked ground even when the hit kills the pawn occupying it.
                 DamageSource::WeaponCracksOccupied
             } else {
                 DamageSource::Weapon
             };
-            if weapon_id == WId::PrimeLeap {
+            if is_prime_leap_weapon(weapon_id) {
                 apply_damage_with_bombrock_exclusion(
                     board,
                     hx,
@@ -5041,6 +5055,28 @@ mod tests {
         );
         assert_eq!((board.units[boss].x, board.units[boss].y), (0, 4));
         assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_unstable_ab_self_damage_and_recoil_bump_before_nanobots() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let leap = add_mech(&mut board, 0, 5, 2, 5, WId::PrimeLeap);
+        let unstable = add_mech(&mut board, 1, 5, 3, 5, WId::BruteUnstableAB);
+        board.units[unstable].max_hp = 5;
+        board.units[unstable].set_type_name("UnstableTank");
+        let scarab = add_enemy_type(&mut board, 1167, 5, 4, 2, "Scarab1");
+
+        let result = simulate_weapon(&mut board, unstable, WId::BruteUnstableAB, 5, 4);
+
+        assert!(board.units[scarab].hp <= 0);
+        assert_eq!(board.units[leap].hp, 4, "recoil bump should damage the rear blocker");
+        assert_eq!(
+            board.units[unstable].hp,
+            4,
+            "AB self-damage plus recoil bump should leave 4 HP after boosted Nanobots"
+        );
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"));
     }
 
     #[test]

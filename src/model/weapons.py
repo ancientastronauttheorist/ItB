@@ -228,6 +228,21 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage, +1 self damage",
         upgrade_b="+1 damage",
     ),
+    "Prime_Leap_A": WeaponDef(
+        name="Hydraulic Legs", weapon_type="leap",
+        damage=2, push="outward", self_damage=2, range_max=7,
+        aoe_adjacent=True, aoe_center=False,
+    ),
+    "Prime_Leap_B": WeaponDef(
+        name="Hydraulic Legs", weapon_type="leap",
+        damage=2, push="outward", self_damage=1, range_max=7,
+        aoe_adjacent=True, aoe_center=False,
+    ),
+    "Prime_Leap_AB": WeaponDef(
+        name="Hydraulic Legs", weapon_type="leap",
+        damage=3, push="outward", self_damage=2, range_max=7,
+        aoe_adjacent=True, aoe_center=False,
+    ),
     "Prime_Spear": WeaponDef(
         name="Spear", weapon_type="melee",
         damage=2, push="forward", path_size=2,
@@ -326,6 +341,18 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=2, push="forward", self_damage=1, push_self=True, range_max=0,
         upgrade_a="+1 damage, +1 self damage",
         upgrade_b="+1 damage (total 3)",
+    ),
+    "Brute_Unstable_A": WeaponDef(
+        name="Unstable Cannon", weapon_type="projectile",
+        damage=3, push="forward", self_damage=2, push_self=True, range_max=0,
+    ),
+    "Brute_Unstable_B": WeaponDef(
+        name="Unstable Cannon", weapon_type="projectile",
+        damage=3, push="forward", self_damage=1, push_self=True, range_max=0,
+    ),
+    "Brute_Unstable_AB": WeaponDef(
+        name="Unstable Cannon", weapon_type="projectile",
+        damage=4, push="forward", self_damage=2, push_self=True, range_max=0,
     ),
     "Brute_PhaseShot": WeaponDef(
         name="Phase Cannon", weapon_type="projectile",

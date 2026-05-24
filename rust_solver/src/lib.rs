@@ -1600,7 +1600,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   turn 4, where a Beetle pushed from B2 into water died, Leap healed to 5/5,
 //   and B2 stayed Ice. Pre-v221 corpus archived as
 //   `failure_db_snapshot_sim_v220.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 221;
+// v222 - Models powered `Prime_Leap_A/B/AB` and `Brute_Unstable_A/B/AB`
+//   loadout IDs from save overlays. Fixes Healing run 20260522_193613_471
+//   Volcanic Hive turn 1, where live fired `Brute_Unstable_AB` and its extra
+//   self-damage plus recoil bump left UnstableTank at 4 HP. Pre-v222 corpus
+//   archived as `failure_db_snapshot_sim_v221.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 222;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

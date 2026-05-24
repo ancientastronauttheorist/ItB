@@ -565,9 +565,21 @@ pub enum WId {
     /// Mission_Civilians VIP Truck movement skill. The pawn has MoveSpeed=0;
     /// this weapon grants a two-use range-3 path move via AddMove.
     VipTruckMove = 191,
+    /// Hydraulic Legs with +1 Damage Each powered.
+    PrimeLeapA = 192,
+    /// Hydraulic Legs with +1 Damage powered.
+    PrimeLeapB = 193,
+    /// Hydraulic Legs with both damage upgrades powered.
+    PrimeLeapAB = 194,
+    /// Unstable Cannon with +1 Damage Each powered.
+    BruteUnstableA = 195,
+    /// Unstable Cannon with +1 Damage powered.
+    BruteUnstableB = 196,
+    /// Unstable Cannon with both damage upgrades powered.
+    BruteUnstableAB = 197,
 }
 
-pub const WEAPON_COUNT: usize = 192;
+pub const WEAPON_COUNT: usize = 198;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -646,6 +658,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[7] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 8: Prime_Leap — Hydraulic Legs
     w[8] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, push: PushDir::Outward, self_damage: 1, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 192-194: Hydraulic Legs upgrades. Lua `Prime_Leap_A/B/AB` changes
+    // landing-adjacent damage and self-damage; targeting footprint is unchanged.
+    w[192] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, push: PushDir::Outward, self_damage: 2, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    w[193] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, push: PushDir::Outward, self_damage: 1, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    w[194] = WeaponDef { weapon_type: WeaponType::Leap, damage: 3, push: PushDir::Outward, self_damage: 2, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 9: Prime_Spear — Spear
     // Lua scripts/weapons_prime.lua:792-846 (Range=2, PathSize=2). The spear
     // stabs EVERY tile from attacker forward to the targeted tile, taking
@@ -699,6 +716,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::FULL_PULL.bits()), ..DEF };
     // 21: Brute_Unstable — Unstable Cannon
     w[21] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, self_damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 195-197: Unstable Cannon upgrades. Lua `Brute_Unstable_A/B/AB`
+    // increases target damage, and only the A/AB branch increases self-damage.
+    w[195] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, self_damage: 2, range_max: 0,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    w[196] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, self_damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    w[197] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, push: PushDir::Forward, self_damage: 2, range_max: 0,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     // 22: Brute_PhaseShot — Phase Cannon
     w[22] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0,
@@ -1463,6 +1488,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "PrimeTcPuntAB" => WId::PrimeTcPuntAB,
         "Prime_Areablast" => WId::PrimeAreablast,
         "Prime_Leap" => WId::PrimeLeap,
+        "Prime_Leap_A" => WId::PrimeLeapA,
+        "Prime_Leap_B" => WId::PrimeLeapB,
+        "Prime_Leap_AB" => WId::PrimeLeapAB,
         "Prime_Spear" => WId::PrimeSpear,
         "Prime_Rockmech" => WId::PrimeRockmech,
         "Prime_RocketPunch" => WId::PrimeRocketPunch,
@@ -1479,6 +1507,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Beetle" => WId::BruteBeetle,
         "Brute_Grapple" => WId::BruteGrapple,
         "Brute_Unstable" => WId::BruteUnstable,
+        "Brute_Unstable_A" => WId::BruteUnstableA,
+        "Brute_Unstable_B" => WId::BruteUnstableB,
+        "Brute_Unstable_AB" => WId::BruteUnstableAB,
         "Brute_PhaseShot" => WId::BrutePhaseShot,
         "Brute_Shrapnel" => WId::BruteShrapnel,
         "Brute_Heavyrocket" => WId::BruteHeavyrocket,
@@ -1685,6 +1716,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeTcPuntAB => "Prime_TC_Punt_AB",
         WId::PrimeAreablast => "Prime_Areablast",
         WId::PrimeLeap => "Prime_Leap",
+        WId::PrimeLeapA => "Prime_Leap_A",
+        WId::PrimeLeapB => "Prime_Leap_B",
+        WId::PrimeLeapAB => "Prime_Leap_AB",
         WId::PrimeSpear => "Prime_Spear",
         WId::PrimeRockmech => "Prime_Rockmech",
         WId::PrimeRocketPunch => "Prime_RocketPunch",
@@ -1701,6 +1735,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteBeetle => "Brute_Beetle",
         WId::BruteGrapple => "Brute_Grapple",
         WId::BruteUnstable => "Brute_Unstable",
+        WId::BruteUnstableA => "Brute_Unstable_A",
+        WId::BruteUnstableB => "Brute_Unstable_B",
+        WId::BruteUnstableAB => "Brute_Unstable_AB",
         WId::BrutePhaseShot => "Brute_PhaseShot",
         WId::BruteShrapnel => "Brute_Shrapnel",
         WId::BruteHeavyrocket => "Brute_Heavyrocket",
@@ -1972,7 +2009,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeTcPunt | WId::PrimeTcPuntA
             | WId::PrimeTcPuntB | WId::PrimeTcPuntAB => "Hydraulic Lifter",
         WId::PrimeAreablast => "Area Blast",
-        WId::PrimeLeap => "Hydraulic Legs",
+        WId::PrimeLeap | WId::PrimeLeapA | WId::PrimeLeapB | WId::PrimeLeapAB => "Hydraulic Legs",
         WId::PrimeSpear => "Spear",
         WId::PrimeRockmech => "Rock Throw",
         WId::PrimeRocketPunch => "Rocket Fist",
@@ -1985,7 +2022,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteMirrorshot => "Mirror Shot",
         WId::BruteBeetle => "Ramming Engines",
         WId::BruteGrapple => "Grappling Hook",
-        WId::BruteUnstable => "Unstable Cannon",
+        WId::BruteUnstable | WId::BruteUnstableA
+            | WId::BruteUnstableB | WId::BruteUnstableAB => "Unstable Cannon",
         WId::BrutePhaseShot => "Phase Cannon",
         WId::BruteShrapnel => "Defensive Shrapnel",
         WId::BruteHeavyrocket => "Heavy Rocket",
