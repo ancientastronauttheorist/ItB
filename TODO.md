@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-42 of 70 Steam-cache confirmed. **Healing** and **Overkill** reconciled after Steam was brought online and Into the Breach restarted; the offline Steam cache had hidden the unlocks immediately after the Hazardous Mechs victory. 28 remaining; sorted by global unlock % (easiest first).
+43 of 70 Steam-cache confirmed. **Hold the Line** unlocked in Blitzkrieg Normal run `20260524_195401_412` after a manual four-block spawn cluster on Detritus Corporate HQ. 27 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Hazardous Mechs Easy run `20260522_193613_471` closed **Healing** and **Overkill** and reached a 4-island victory. **Untouchable** was also confirmed by the later sync after its Frozen Titans in-game popup in run `20260522_133722_695`.
+Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line** by blocking D3, C3, C2, and C1 in one enemy emergence phase. Hazardous Mechs Easy run `20260522_193613_471` previously closed **Healing** and **Overkill** and reached a 4-island victory.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -43,7 +43,7 @@ Current milestone: Hazardous Mechs Easy run `20260522_193613_471` closed **Heali
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
 - [x] Untouchable (14.5%) — Finish island without Mech Damage — in-game popup observed after Frozen Titans Easy Archive run `20260522_133722_695`; Steam cache sync still lagged at 39/70 immediately afterward
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire [Steel Judoka]
-- [ ] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg]
+- [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg] — completed in run `20260524_195401_412` on Detritus Corporate HQ
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
 - [ ] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod)
 - [ ] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad
@@ -79,7 +79,7 @@ Current milestone: Hazardous Mechs Easy run `20260522_193613_471` closed **Heali
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (42, from Steam sync)
+### Already Completed (43, from Steam sync)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -116,6 +116,7 @@ Current milestone: Hazardous Mechs Easy run `20260522_193613_471` closed **Heali
 - [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser  [Zenith Guard]
 - [x] Untouchable (14.5%) — Finish island without Mech Damage  [Frozen Titans]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
+- [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn  [Blitzkrieg]
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons

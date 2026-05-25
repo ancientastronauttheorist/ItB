@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-23T22:30:44.597863",
+    "last_steam_sync": "2026-05-24T21:08:19.254702",
     "last_steam_total": 70,
-    "last_steam_unlocked": 42
+    "last_steam_unlocked": 43
   },
   "achievements": {
     "rift_walkers": [
@@ -133,7 +133,7 @@
         "description": "Block 4 emerging Vek in a single turn with the Blitzkrieg squad",
         "type": "single_turn",
         "global_unlock_pct": 13.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Need 4 spawn points active simultaneously. Position 3 mechs on spawn points. Use Boulder Mech to place a boulder on the 4th. Zoltan/Bethany pilot helps survive. Later turns have more spawns. Neutral units (boulders, bomblings) can block spawns too.",
         "setup": "Late-game turn with 4+ spawns. Boulder Mech, plus positioning.",
         "pitfalls": "Rare to have 4 spawns in one turn. May need to let spawns accumulate."
