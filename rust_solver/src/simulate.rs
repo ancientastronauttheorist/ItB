@@ -8,14 +8,33 @@ use crate::board::*;
 use crate::weapons::*;
 use crate::movement::{direction_between, cardinal_direction};
 
+fn refresh_arrogant_boost(unit: &mut Unit) {
+    if unit.pilot_arrogant() {
+        unit.set_boosted(unit.hp > 0 && unit.hp >= unit.max_hp);
+    }
+}
+
+fn refresh_all_arrogant_boosts(board: &mut Board) {
+    for i in 0..board.unit_count as usize {
+        refresh_arrogant_boost(&mut board.units[i]);
+    }
+}
+
+fn clear_mites(unit: &mut Unit) {
+    if unit.is_player() && unit.is_mech() {
+        unit.set_infected(false);
+    }
+}
+
 // ── Blast Psion death explosion ──────────────────────────────────────────────
 
 /// Apply death explosion: 1 bump damage to all 4 adjacent tiles.
 /// Called when an enemy Vek dies while Blast Psion is alive on the board.
-/// Handles chain reactions (explosion kills another Vek → another explosion).
+/// Eligible non-minor Vek killed by the burst can emit their own Blast Psion
+/// explosion; minor pawns still do not receive the aura.
 /// Volatile Vek's "Explosive Decay": 1 damage to all 4 adjacent tiles
-/// when it dies, for any cause. Bump-class damage (ignores armor, acid,
-/// shield, frozen — same rules the game applies to Volatile Guts).
+/// when it dies, for any cause. Bump-class unit damage ignores armor/acid,
+/// and the explosion ignites damaged forest tiles.
 ///
 /// Per `data/vek.json` #262 the base-game Volatile Vek explodes for 1
 /// damage. Matches the Blast Psion aura in shape but is unit-intrinsic
@@ -34,6 +53,10 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
         let nx = nx as u8;
         let ny = ny as u8;
 
+        let status_blocked = board.unit_at(nx, ny)
+            .map(|idx| board.units[idx].shield() || board.units[idx].frozen())
+            .unwrap_or(false);
+
         // Track adjacent Volatile Vek for the chain check — if this 1
         // damage kills one, it explodes too.
         let chain_idx = board.unit_at(nx, ny).and_then(|idx| {
@@ -44,6 +67,7 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
         });
 
         apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
+        apply_explosive_decay_tile_effects(board, nx, ny, status_blocked);
 
         if let Some(idx) = chain_idx {
             if board.units[idx].hp <= 0 {
@@ -53,15 +77,39 @@ pub fn apply_volatile_decay(board: &mut Board, x: u8, y: u8, result: &mut Action
     }
 }
 
+fn apply_explosive_decay_tile_effects(board: &mut Board, x: u8, y: u8, status_blocked: bool) {
+    if board.tile(x, y).terrain != Terrain::Forest {
+        return;
+    }
+
+    let tile = board.tile_mut(x, y);
+    tile.terrain = Terrain::Ground;
+    tile.set_smoke(false);
+    tile.set_on_fire(true);
+
+    if let Some(idx) = board.unit_at(x, y) {
+        let target_is_immune_vek = board.fire_psion
+            && board.units[idx].receives_psion_aura()
+            && board.units[idx].type_name_str() != "Jelly_Fire1";
+        if !status_blocked
+            && board.units[idx].hp > 0
+            && board.units[idx].can_catch_fire()
+            && !(board.flame_shielding && board.units[idx].is_player() && board.units[idx].is_mech())
+            && !target_is_immune_vek
+        {
+            board.units[idx].set_fire(true);
+        }
+    }
+}
+
 /// Boss/Blast Psion EXPLODE-on-death helper. Public to the crate so
 /// non-weapon kill paths (env_danger lethal kills, etc.) can dispatch the
 /// explosion themselves — `on_enemy_death` does NOT fire this; explosion
-/// dispatch is currently caller-side at apply_damage:788 (weapon kills),
-/// apply_push:1137,1164 (push-into-deadly-terrain, mine), and
-/// apply_env_danger (lethal env kills, since sim v38). See v39 follow-up
-/// to centralize so ice-drown / dam-flood / other latent paths are covered.
+/// dispatch is currently caller-side at apply_damage (weapon kills),
+/// `finish_instant_unit_death` (push/swap/throw terrain + mine kills), and
+/// apply_env_danger (lethal env kills, since sim v38).
 pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mut ActionResult, depth: u8) {
-    if depth > 8 { return; } // safety limit for chain reactions
+    if depth > 8 { return; }
 
     for &(dx, dy) in &DIRS {
         let nx = x as i8 + dx;
@@ -70,42 +118,53 @@ pub(crate) fn apply_death_explosion(board: &mut Board, x: u8, y: u8, result: &mu
         let nx = nx as u8;
         let ny = ny as u8;
 
-        // Pre-check: is there an alive non-Psion enemy that could chain-explode?
-        // Both Blast Psion (Jelly_Explode1) and Psion Abomination (Jelly_Boss)
-        // grant the EXPLODE-on-death aura, so any of them being alive can chain.
-        // Boss is excluded from chaining itself (it doesn't explode on its own
-        // death — it's the source of the aura, not subject to it).
-        let chain_check = if board.blast_psion || board.boss_psion {
-            board.unit_at(nx, ny).and_then(|idx| {
-                let u = &board.units[idx];
-                let tname = u.type_name_str();
-                if u.is_enemy() && u.hp > 0
-                    && tname != "Jelly_Explode1"
-                    && tname != "Jelly_Boss"
-                {
-                    Some(idx)
-                } else { None }
-            })
-        } else { None };
-
+        let chain_idx = blast_explosion_chain_candidate(board, nx, ny);
         // Apply 1 bump damage (ignores armor/acid)
         apply_damage_core(board, nx, ny, 1, result, DamageSource::Bump);
-
-        // Chain reaction: if that enemy just died, it also explodes
-        if let Some(idx) = chain_check {
+        if let Some(idx) = chain_idx {
             if board.units[idx].hp <= 0 {
-                // Check if either explode-source is still alive (killing both
-                // stops future explosions).
-                let psion_alive = (0..board.unit_count as usize).any(|i| {
-                    let t = board.units[i].type_name_str();
-                    (t == "Jelly_Explode1" || t == "Jelly_Boss")
-                        && board.units[i].hp > 0
-                });
-                if psion_alive {
-                    apply_death_explosion(board, nx, ny, result, depth + 1);
-                }
+                apply_death_explosion(board, nx, ny, result, depth + 1);
             }
         }
+    }
+}
+
+fn blast_explosion_chain_candidate(board: &Board, x: u8, y: u8) -> Option<usize> {
+    if !board.blast_psion && !board.boss_psion {
+        return None;
+    }
+    board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        let tname = u.type_name_str();
+        if u.receives_psion_aura()
+            && u.hp > 0
+            && tname != "Jelly_Explode1"
+            && tname != "Jelly_Boss"
+        {
+            Some(idx)
+        } else {
+            None
+        }
+    })
+}
+
+fn apply_bombrock_explosion(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+    exclude: Option<(u8, u8)>,
+    depth: u8,
+) {
+    if depth > 8 { return; }
+
+    for &(dx, dy) in &DIRS {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if nx < 0 || nx >= 8 || ny < 0 || ny >= 8 { continue; }
+        let (nx, ny) = (nx as u8, ny as u8);
+        if exclude == Some((nx, ny)) { continue; }
+        apply_damage_inner(board, nx, ny, 1, result, DamageSource::Bump, None, depth + 1);
     }
 }
 
@@ -161,15 +220,33 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
     }
 }
 
+/// Resolve Time Pod contact when a unit lands on a tile. Player mechs collect
+/// pods; every other live unit destroys the pod without collection credit.
+#[inline]
+fn apply_pod_on_land(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
+    if board.units[unit_idx].hp <= 0 { return; }
+    let x = board.units[unit_idx].x;
+    let y = board.units[unit_idx].y;
+    if !board.tile(x, y).has_pod() { return; }
+
+    board.tile_mut(x, y).set_has_pod(false);
+    if board.units[unit_idx].is_player() && board.units[unit_idx].is_mech() {
+        result.pods_collected += 1;
+        result.events.push(format!("pod_collected:{}:{}", x, y));
+    } else {
+        result.events.push(format!("pod_destroyed_by_landing:{}:{}", x, y));
+    }
+}
+
 // ── apply_landing_effects ────────────────────────────────────────────────────
 
-/// Resolve the post-move landing pipeline at a unit's current tile: web-break
-/// (if the moved unit is an enemy webber), Fire pickup, ACID pickup, frozen-
-/// grounded-on-water → Ice, water/lava/chasm death (with Flying / Massive
-/// exemptions), Lava-ignites-flying, Old Earth Mine, Freeze Mine, and finally
-/// teleporter-pad swap. Caller must have already updated the unit's `x`/`y`
-/// to the destination tile; this function reads `board.units[idx].(x,y)` and
-/// resolves effects there.
+/// Resolve the post-move landing pipeline at a unit's current tile: own
+/// web-break, web-break if the moved unit is an enemy webber, smoke extinguish,
+/// Fire pickup, ACID pickup, frozen-grounded-on-water → Ice, water/lava/chasm
+/// death (with Flying / Massive exemptions), Lava-ignites-flying, Old Earth
+/// Mine, Freeze Mine, repair platform, and finally teleporter-pad swap. Caller
+/// must have already updated the unit's `x`/`y` to the destination tile; this
+/// function reads `board.units[idx].(x,y)` and resolves effects there.
 ///
 /// Shared between `apply_throw` (Vice Fist relocation) and `sim_pull_or_swap`
 /// (Science_Swap Teleporter). Before this helper existed, swap silently
@@ -183,39 +260,128 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
 /// Order matches `apply_throw`'s historical inline ordering exactly so that
 /// extracting the helper is a behaviour-preserving refactor on the throw
 /// path:
-///   1. break webs sourced FROM this unit (if enemy webber moved)
-///   2. Fire on tile → set unit fire (Flame Shielding exempts player mechs)
-///   3. ACID pool on tile → set unit acid, consume pool
-///   4. frozen non-flying + Water → tile becomes Ice, return early
-///   5. Water/Lava drown non-flying-non-Massive; Chasm kills any non-flying
-///   6. Lava + flying → ignite (Flame Shielding exempts player mechs)
-///   7. Old Earth Mine → instant kill, mine consumed
-///   8. Freeze Mine → freeze (or pop shield), mine consumed
-///   9. Teleporter pad → swap to partner if paired
+///   1. break the moved unit's own web
+///   2. break webs sourced FROM this unit (if enemy webber moved)
+///   3. Smoke on tile → clear unit fire
+///   4. Fire on tile → set unit fire (Flame Shielding exempts player mechs)
+///   5. ACID pool on tile → set unit acid, consume pool
+///   6. frozen non-flying + Water → tile becomes Ice, return early
+///   7. Water/Lava drown non-flying-non-Massive; Chasm kills any non-flying
+///   8. Lava + flying → ignite (Flame Shielding exempts player mechs)
+///   9. Old Earth Mine → instant kill, mine consumed
+///  10. Freeze Mine → freeze (or pop shield), mine consumed
+///  11. Repair platform → heal by Item_Repair_Mine's -10 damage, consume
+///  12. Teleporter pad → swap to partner if paired
+///  13. WebbEgg1 adjacency refresh → newly adjacent units become webbed
+fn apply_repair_platform(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
+    if board.units[unit_idx].hp <= 0 { return; }
+    let x = board.units[unit_idx].x;
+    let y = board.units[unit_idx].y;
+    if !board.tile(x, y).repair_platform() { return; }
+
+    board.tile_mut(x, y).set_repair_platform(false);
+    let before = board.units[unit_idx].hp;
+    // Lua defines Item_Repair_Mine as SpaceDamage(-10). Live Mission_Repair
+    // captures show damaged 3-max-HP mechs healing up to 5/3 while a 2-max-HP
+    // Jet stayed at 4/2, matching an overheal cap of max_hp + 2. A full-health
+    // mech still consumes/counts the platform, but does not gain extra HP.
+    if before < board.units[unit_idx].max_hp {
+        let cap = board.units[unit_idx].max_hp.saturating_add(2);
+        board.units[unit_idx].hp = before.saturating_add(10).min(cap);
+    }
+    refresh_arrogant_boost(&mut board.units[unit_idx]);
+    board.repair_platforms_used = board.repair_platforms_used.saturating_add(1);
+    result.repair_platforms_used += 1;
+    result.events.push(format!(
+        "repair_platform:{}:{}:{}->{}",
+        x, y, before, board.units[unit_idx].hp
+    ));
+}
+
+fn apply_fire_tile_pickup(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+    if !board.tile(x, y).on_fire() {
+        return;
+    }
+    if board.tile(x, y).terrain == Terrain::Forest {
+        board.tile_mut(x, y).terrain = Terrain::Ground;
+    }
+    let target_is_immune_vek = board.fire_psion
+        && board.units[unit_idx].receives_psion_aura()
+        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
+    if board.units[unit_idx].hp > 0
+        && !board.units[unit_idx].shield()
+        && board.units[unit_idx].can_catch_fire()
+        && !(board.flame_shielding && board.units[unit_idx].is_player() && board.units[unit_idx].is_mech())
+        && !target_is_immune_vek
+    {
+        board.units[unit_idx].set_fire(true);
+    }
+}
+
+fn tile_can_host_fire(board: &Board, x: u8, y: u8) -> bool {
+    matches!(
+        board.tile(x, y).terrain,
+        Terrain::Ground | Terrain::Sand | Terrain::Forest | Terrain::Rubble | Terrain::Building
+            | Terrain::Ice | Terrain::Fire | Terrain::Mountain
+    )
+}
+
+fn apply_fire_weapon_unit_status(board: &mut Board, unit_idx: usize) {
+    if board.units[unit_idx].shield() {
+        return;
+    }
+
+    let fire_psion = board.fire_psion;
+    let target_is_immune_vek = fire_psion
+        && board.units[unit_idx].receives_psion_aura()
+        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
+
+    let u = &mut board.units[unit_idx];
+    if u.frozen() {
+        u.set_frozen(false);
+    }
+    if u.can_catch_fire()
+        && !(board.flame_shielding && u.is_player() && u.is_mech())
+        && !target_is_immune_vek
+    {
+        u.set_fire(true);
+        clear_mites(u);
+    }
+}
+
+fn apply_smoke_tile_extinguish(board: &mut Board, unit_idx: usize, x: u8, y: u8) {
+    if board.tile(x, y).smoke() && board.units[unit_idx].fire() {
+        board.units[unit_idx].set_fire(false);
+    }
+}
+
 fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut ActionResult) {
     let nx = board.units[unit_idx].x;
     let ny = board.units[unit_idx].y;
 
-    // 1. Web break: enemy webber moved → unweb any mechs they were holding
+    // 1. Any actual tile change breaks the moved unit's own web. Blocked
+    // pushes do not call this helper, so their grapple remains attached.
+    clear_unit_web(board, unit_idx);
+
+    // 2. Web break: enemy webber moved → unweb any mechs they were holding.
     if board.units[unit_idx].is_enemy() {
         let webber_uid = board.units[unit_idx].uid;
         break_web_from(board, webber_uid);
     }
 
-    // 2. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
-    //    Fire Psion grants Vek the same immunity).
-    let target_is_immune_vek = board.fire_psion
-        && board.units[unit_idx].is_enemy()
-        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
-    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
-        && board.units[unit_idx].can_catch_fire()
-        && !(board.flame_shielding && board.units[unit_idx].is_player())
-        && !target_is_immune_vek
-    {
-        board.units[unit_idx].set_fire(true);
-    }
+    // 3. Time Pod contact: attack-phase movement (Aerial Bombs, pushes, swaps)
+    // collects/destroys pods just like ordinary movement.
+    apply_pod_on_land(board, unit_idx, result);
 
-    // 3. ACID pool: unit gains ACID, pool consumed
+    // 4. Smoke tile: carried unit fire is extinguished on landing.
+    apply_smoke_tile_extinguish(board, unit_idx, nx, ny);
+
+    // 5. Fire tile: unit catches fire (Flame Shielding exempts player mechs;
+    //    Fire Psion grants Vek the same immunity). Burning Forest is consumed
+    //    to burning Ground when a unit lands on it.
+    apply_fire_tile_pickup(board, unit_idx, nx, ny);
+
+    // 6. ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
         if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
             board.units[unit_idx].set_acid(true);
@@ -223,7 +389,7 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         board.tile_mut(nx, ny).flags.remove(TileFlags::ACID);
     }
 
-    // 4. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
+    // 7. Frozen GROUNDED unit on Water → Ice tile (no drown). Frozen FLYING
     // units fall through to the deadly-terrain check below — frozen cancels
     // flight so they drown / fall normally.
     let dest_terrain = board.tile(nx, ny).terrain;
@@ -234,43 +400,40 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         return;
     }
 
-    // 5. Water / Lava / Chasm death.
-    // 6. Lava + flying → fire status (combined branch).
+    // 8. Water / Lava / Chasm death.
+    // 9. Lava + flying → fire status (combined branch).
     if board.units[unit_idx].hp > 0 && !board.units[unit_idx].effectively_flying() {
         let massive = board.units[unit_idx].massive();
         match dest_terrain {
             Terrain::Water | Terrain::Lava => {
                 if !massive {
-                    board.units[unit_idx].hp = 0;
+                    finish_instant_unit_death(board, unit_idx, result, nx, ny);
                 }
             }
             Terrain::Chasm => {
-                board.units[unit_idx].hp = 0;
+                finish_instant_unit_death(board, unit_idx, result, nx, ny);
             }
             _ => {}
         }
     } else if board.units[unit_idx].hp > 0 && board.units[unit_idx].effectively_flying()
         && dest_terrain == Terrain::Lava {
         let target_is_immune_vek = board.fire_psion
-            && board.units[unit_idx].is_enemy()
+            && board.units[unit_idx].receives_psion_aura()
             && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
         if !board.units[unit_idx].shield()
             && board.units[unit_idx].can_catch_fire()
-            && !(board.flame_shielding && board.units[unit_idx].is_player())
+            && !(board.flame_shielding && board.units[unit_idx].is_player() && board.units[unit_idx].is_mech())
             && !target_is_immune_vek
         {
             board.units[unit_idx].set_fire(true);
         }
     }
 
-    // 7-8. Mines.
+    // 10-11. Mines.
     if board.units[unit_idx].hp > 0 {
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
-            board.units[unit_idx].hp = 0;
-            if board.units[unit_idx].is_mech() {
-                result.mechs_killed += 1;
-            }
+            finish_instant_unit_death(board, unit_idx, result, nx, ny);
             board.tile_mut(nx, ny).set_old_earth_mine(false);
         } else if tile.freeze_mine() {
             if !board.units[unit_idx].shield() {
@@ -282,8 +445,16 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
         }
     }
 
-    // 9. Teleporter pad: fires LAST, after terrain/mine resolution.
+    // 12. Repair platform item: fires after terrain/mine resolution, before
+    // teleporter relocation consumes the unit's landing tile.
+    apply_repair_platform(board, unit_idx, result);
+
+    // 13. Teleporter pad: fires LAST, after terrain/mine/item resolution.
     apply_teleport_on_land(board, unit_idx);
+
+    // 14. Spider/Web Egg adjacency webs are tile-based and can apply after a
+    // unit lands beside an existing egg or after a teleporter swap.
+    board.refresh_webb_egg_grapples();
 }
 
 // ── Web break ────────────────────────────────────────────────────────────────
@@ -295,10 +466,53 @@ fn break_web_from(board: &mut Board, src_uid: u16) {
     if src_uid == 0 { return; }
     for i in 0..board.unit_count as usize {
         if board.units[i].web() && board.units[i].web_source_uid == src_uid {
-            board.units[i].set_web(false);
-            if board.units[i].move_speed == 0 {
-                board.units[i].move_speed = board.units[i].base_move;
-            }
+            clear_unit_web(board, i);
+        }
+    }
+}
+
+/// Clear a unit's own web status. A pushed webbed pawn breaks free even when
+/// the web source stays put; source movement/death is handled by
+/// `break_web_from`.
+fn clear_unit_web(board: &mut Board, unit_idx: usize) {
+    if !board.units[unit_idx].web() { return; }
+    let logical_uid = board.units[unit_idx].uid;
+    for i in 0..board.unit_count as usize {
+        if board.units[i].uid != logical_uid || !board.units[i].web() {
+            continue;
+        }
+        board.units[i].set_web(false);
+        board.units[i].web_source_uid = 0;
+        if board.units[i].move_speed == 0 {
+            board.units[i].move_speed = board.units[i].base_move;
+        }
+    }
+}
+
+fn leave_acid_pool_on_death(board: &mut Board, x: u8, y: u8) {
+    let terrain = board.tile(x, y).terrain;
+    if !terrain.is_deadly_ground() || terrain == Terrain::Water {
+        let tile = board.tile_mut(x, y);
+        tile.flags |= TileFlags::ACID;
+        tile.set_on_fire(false);
+        if matches!(terrain, Terrain::Ground | Terrain::Sand) {
+            tile.terrain = Terrain::Ground;
+            tile.set_grass(false);
+        }
+    }
+}
+
+/// Place smoke on a tile. If the tile holds an enemy currently webbing a unit,
+/// the smoke-cancelled queued attack releases that grapple immediately.
+fn place_smoke(board: &mut Board, x: u8, y: u8) {
+    let tile = board.tile_mut(x, y);
+    tile.set_on_fire(false); // smoke replaces fire
+    tile.set_smoke(true);
+
+    if let Some(idx) = board.unit_at(x, y) {
+        if board.units[idx].is_enemy() {
+            let uid = board.units[idx].uid;
+            break_web_from(board, uid);
         }
     }
 }
@@ -334,6 +548,13 @@ pub(crate) fn on_enemy_death(
     let dx = board.units[idx].x;
     let dy = board.units[idx].y;
 
+    if let Some((child_type, child_hp, child_weapon)) =
+        blob_boss_death_spawn(&dying_tname_owned)
+    {
+        spawn_blob_boss_children(board, dx, dy, board.units[idx].uid, &dying_tname_owned,
+                                child_type, child_hp, child_weapon, result);
+    }
+
     // ── Fire Psion (AE LEADER_FIRE) on-death fire ─────────────────────────
     // While Fire Psion is alive, every Vek that dies leaves Fire on its tile.
     // Excludes the Psion itself and the Boost/Spider/other AE psions per the
@@ -343,7 +564,7 @@ pub(crate) fn on_enemy_death(
     // Mountains don't host fire either (the destroyed-mountain Rubble case
     // can host fire, but live mountains are skipped to match the Lua rule
     // SetFire only applies to ground-class tiles).
-    if board.fire_psion && dying_tname_owned != "Jelly_Fire1" {
+    if board.fire_psion && board.units[idx].receives_psion_aura() && dying_tname_owned != "Jelly_Fire1" {
         // Tile filter: fire is meaningless on water/chasm/lava and on intact
         // mountain. The set_on_fire flag is harmless on those tiles but we
         // skip for hygiene + parity with apply_weapon_status's behavior.
@@ -360,10 +581,10 @@ pub(crate) fn on_enemy_death(
     }
 
     // ── Spider Psion (AE LEADER_SPIDER) on-death egg ──────────────────────
-    // While Spider Psion is alive, every Vek that dies leaves a SpiderEgg
-    // (WebbEgg1) on its tile. The egg-hatch logic (per `project_egg_spawn_sim`)
-    // turns it into a Spiderling at the NEXT enemy phase. Excludes the
-    // Psion itself.
+    // While Spider Psion is alive, every Vek that dies leaves a Spiderling
+    // Egg (SpiderlingEgg1) on its tile. The egg-hatch logic (per
+    // `project_egg_spawn_sim`) turns it into a Spiderling at the NEXT enemy
+    // phase. Excludes the Psion itself.
     //
     // sim v38: we DEFER the actual `spawn_enemy` call to a board-level
     // queue (`pending_spider_eggs`) drained at the END of
@@ -378,7 +599,7 @@ pub(crate) fn on_enemy_death(
     // as the spawn. Deferring the spawn until after the hatch loop fixes
     // this. (When the trigger is a player-phase weapon kill, hatching is
     // a non-issue — the egg sits there until the next enemy phase.)
-    if board.spider_psion && dying_tname_owned != "Jelly_Spider1" {
+    if board.spider_psion && board.units[idx].receives_psion_aura() && dying_tname_owned != "Jelly_Spider1" {
         board.pending_spider_eggs.push((dx, dy));
     }
 
@@ -405,14 +626,14 @@ pub(crate) fn on_enemy_death(
         if !board.boss_psion {
             for j in 0..board.unit_count as usize {
                 let tname = board.units[j].type_name_str();
-                if board.units[j].is_enemy() && board.units[j].hp > 0
+                if board.units[j].receives_psion_aura() && board.units[j].hp > 0
                     && tname != "Jelly_Health1"
                     && tname != "Jelly_Boss"
                 {
                     board.units[j].max_hp -= 1;
                     board.units[j].hp -= 1;
                     if board.units[j].hp <= 0 {
-                        result.enemies_killed += 1;
+                        result.record_enemy_kill(!board.units[j].minor());
                     }
                 }
             }
@@ -427,14 +648,14 @@ pub(crate) fn on_enemy_death(
         if !board.soldier_psion {
             for j in 0..board.unit_count as usize {
                 let tname = board.units[j].type_name_str();
-                if board.units[j].is_enemy() && board.units[j].hp > 0
+                if board.units[j].receives_psion_aura() && board.units[j].hp > 0
                     && tname != "Jelly_Health1"
                     && tname != "Jelly_Boss"
                 {
                     board.units[j].max_hp -= 1;
                     board.units[j].hp -= 1;
                     if board.units[j].hp <= 0 {
-                        result.enemies_killed += 1;
+                        result.record_enemy_kill(!board.units[j].minor());
                     }
                 }
             }
@@ -451,9 +672,21 @@ pub(crate) fn on_enemy_death(
         board.tyrant_psion = false;
     }
 
-    // Boost Psion (AE) killed: stop +1 weapon damage to Vek attacks
+    // Boost Psion (AE) killed: stop +1 weapon damage to Vek attacks and clear
+    // the visible Boosted status the engine removes from all surviving Vek.
     if board.boost_psion && board.units[idx].type_name_str() == "Jelly_Boost1" {
-        board.boost_psion = false;
+        let other_alive = (0..board.unit_count as usize)
+            .any(|j| j != idx
+                && board.units[j].type_name_str() == "Jelly_Boost1"
+                && board.units[j].hp > 0);
+        if !other_alive {
+            board.boost_psion = false;
+            for j in 0..board.unit_count as usize {
+                if board.units[j].is_enemy() {
+                    board.units[j].set_boosted(false);
+                }
+            }
+        }
     }
 
     // Fire Psion (AE) killed: stop fire-immunity + on-death-fire
@@ -472,9 +705,461 @@ pub(crate) fn on_enemy_death(
     }
 }
 
+fn blob_boss_death_spawn(name: &str) -> Option<(&'static str, i8, WId)> {
+    match name {
+        "BlobBoss" => Some(("BlobBossMed", 2, WId::BlobBossAtkMed)),
+        "BlobBossMed" => Some(("BlobBossSmall", 1, WId::BlobBossAtkSmall)),
+        _ => None,
+    }
+}
+
+fn spawn_blob_boss_children(
+    board: &mut Board,
+    death_x: u8,
+    death_y: u8,
+    parent_uid: u16,
+    parent_type: &str,
+    child_type: &str,
+    child_hp: i8,
+    child_weapon: WId,
+    result: &mut ActionResult,
+) {
+    let mut spawned = 0u8;
+    let mut primary = blob_boss_split_candidates(board, death_x, death_y, 1, 2);
+    let mut backup = blob_boss_split_candidates(board, death_x, death_y, 3, 4);
+
+    while spawned < 2 {
+        let loc = if !primary.is_empty() {
+            Some(primary.remove(0))
+        } else if !backup.is_empty() {
+            Some(backup.remove(0))
+        } else {
+            None
+        };
+        let Some((sx, sy)) = loc else { break; };
+        if !spawn_blob_boss_child(board, sx, sy, child_type, child_hp, child_weapon) {
+            continue;
+        }
+        spawned += 1;
+        result.events.push(format!(
+            "blob_split:{}:{}:{}:{}->{}:{}:{}",
+            parent_uid, parent_type, death_x, death_y, child_type, sx, sy
+        ));
+        // The first child now occupies its tile, so the second child must not
+        // reuse that candidate if it was also present in the backup list.
+        primary.retain(|&p| p != (sx, sy));
+        backup.retain(|&p| p != (sx, sy));
+    }
+}
+
+fn blob_boss_split_candidates(
+    board: &Board,
+    cx: u8,
+    cy: u8,
+    min_dist: u8,
+    max_dist: u8,
+) -> Vec<(u8, u8)> {
+    let mut out = Vec::new();
+    let size = 4i8;
+    let corner_x = cx as i8 - size;
+    let corner_y = cy as i8 - size;
+    // Lua general_DiamondTarget scans the surrounding square row-major from
+    // center - (size,size), then filters to the Manhattan diamond. The real
+    // Goo split uses random_removal from this list; the simulator takes the
+    // first valid deterministic representatives so searches are reproducible.
+    for y in corner_y..=(corner_y + size * 2) {
+        for x in corner_x..=(corner_x + size * 2) {
+            if !in_bounds(x, y) {
+                continue;
+            }
+            let ux = x as u8;
+            let uy = y as u8;
+            if (ux, uy) == (cx, cy) {
+                continue;
+            }
+            let dist = (x - cx as i8).unsigned_abs() + (y - cy as i8).unsigned_abs();
+            if dist < min_dist || dist > max_dist {
+                continue;
+            }
+            if board.is_blocked(ux, uy, false) {
+                continue;
+            }
+            out.push((ux, uy));
+        }
+    }
+    out
+}
+
+fn spawn_blob_boss_child(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    child_type: &str,
+    base_hp: i8,
+    child_weapon: WId,
+) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+    if board.unit_at(x, y).is_some() || board.wreck_at(x, y) {
+        return false;
+    }
+    if board.is_blocked(x, y, false) {
+        return false;
+    }
+
+    let mut hp = base_hp;
+    let mut max_hp = base_hp;
+    if board.soldier_psion || board.boss_psion {
+        hp += 1;
+        max_hp += 1;
+    }
+
+    let mut new_uid: u16 = 1;
+    for i in 0..board.unit_count as usize {
+        new_uid = new_uid.max(board.units[i].uid.saturating_add(1));
+    }
+
+    let mut flags = UnitFlags::PUSHABLE | UnitFlags::MASSIVE;
+    if board.armor_psion {
+        flags.insert(UnitFlags::ARMOR);
+    }
+
+    let mut unit = Unit {
+        uid: new_uid,
+        x,
+        y,
+        hp,
+        max_hp,
+        team: Team::Enemy,
+        move_speed: 3,
+        base_move: 3,
+        flags,
+        weapon: WeaponId(child_weapon as u16),
+        queued_target_x: -1,
+        queued_target_y: -1,
+        ..Unit::default()
+    };
+    unit.set_type_name(child_type);
+    board.add_unit(unit);
+    true
+}
+
+fn next_spawn_uid(board: &Board) -> u16 {
+    let mut new_uid: u16 = 1;
+    for i in 0..board.unit_count as usize {
+        new_uid = new_uid.max(board.units[i].uid.saturating_add(1));
+    }
+    new_uid
+}
+
+fn acid_storm_active(board: &Board) -> bool {
+    board.mission_id == "Mission_AcidStorm"
+        && board.units[..board.unit_count as usize]
+            .iter()
+            .any(|u| u.hp > 0 && u.type_name_str() == "Storm_Generator")
+}
+
+fn spawn_rock_thrown(board: &mut Board, x: u8, y: u8) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+    if board.is_blocked(x, y, false) {
+        return false;
+    }
+
+    let mut unit = Unit {
+        uid: next_spawn_uid(board),
+        x,
+        y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Neutral,
+        move_speed: 0,
+        base_move: 0,
+        flags: UnitFlags::PUSHABLE,
+        queued_target_x: -1,
+        queued_target_y: -1,
+        ..Unit::default()
+    };
+    unit.set_type_name("RockThrown");
+    if acid_storm_active(board) {
+        unit.set_acid(true);
+    }
+    board.add_unit(unit);
+    true
+}
+
+fn spawn_arachnoid(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    acid_attack: bool,
+    result: &mut ActionResult,
+) -> bool {
+    if board.unit_count as usize >= board.units.len() {
+        return false;
+    }
+    if board.unit_at(x, y).is_some() {
+        return false;
+    }
+
+    let terrain = board.tile(x, y).terrain;
+    if matches!(terrain, Terrain::Mountain | Terrain::Building)
+        || terrain.is_deadly_ground()
+    {
+        return false;
+    }
+
+    let weapon = if acid_attack {
+        WId::DeployUnitAracnoidAtkB
+    } else {
+        WId::DeployUnitAracnoidAtk
+    };
+    let mut unit = Unit {
+        uid: next_spawn_uid(board),
+        x,
+        y,
+        hp: 1,
+        max_hp: 1,
+        team: Team::Player,
+        move_speed: 3,
+        base_move: 3,
+        flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+        weapon: WeaponId(weapon as u16),
+        queued_target_x: -1,
+        queued_target_y: -1,
+        ..Unit::default()
+    };
+    unit.set_type_name(if acid_attack {
+        "DeployUnit_AracnoidB"
+    } else {
+        "DeployUnit_Aracnoid"
+    });
+    let idx = board.add_unit(unit);
+    apply_landing_effects(board, idx, result);
+    true
+}
+
+/// Materialize Spider Psion death eggs queued by `on_enemy_death`.
+///
+/// Player-phase kills need the egg on-board immediately for replay snapshots
+/// and partial re-solves. Enemy-phase kills call this only after the hatch
+/// loop, so newly-created eggs still wait until the next enemy phase.
+pub(crate) fn drain_pending_spider_eggs(board: &mut Board) {
+    let pending = std::mem::take(&mut board.pending_spider_eggs);
+    for (x, y) in pending {
+        crate::enemy::spawn_enemy(board, x, y, "SpiderlingEgg1", 1);
+    }
+}
+
+fn retarget_pending_spider_egg(board: &mut Board, from_x: u8, from_y: u8, to_x: u8, to_y: u8) {
+    if (from_x, from_y) == (to_x, to_y) {
+        return;
+    }
+    for egg in board.pending_spider_eggs.iter_mut().rev() {
+        if *egg == (from_x, from_y) {
+            *egg = (to_x, to_y);
+            break;
+        }
+    }
+}
+
+/// Finish a non-damage instant death path after the caller has determined the
+/// unit dies at its current tile: drowning/falling from a push, swap, throw, or
+/// Old Earth Mine. This mirrors apply_damage_core's bookkeeping plus the
+/// caller-side Blast Psion / Volatile Vek explosions that instant-kill paths
+/// must dispatch themselves.
+fn finish_instant_unit_death(
+    board: &mut Board,
+    unit_idx: usize,
+    result: &mut ActionResult,
+    death_x: u8,
+    death_y: u8,
+) {
+    if board.units[unit_idx].hp <= 0 {
+        return;
+    }
+
+    let is_enemy = board.units[unit_idx].is_enemy();
+    let is_player = board.units[unit_idx].is_player();
+    let mission_counted = is_enemy && !board.units[unit_idx].minor();
+    let has_acid = board.units[unit_idx].acid();
+    let dying_uid = board.units[unit_idx].uid;
+    let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
+    let dying_tname = board.units[unit_idx].type_name_str().to_string();
+    let can_explode = is_enemy
+        && (board.blast_psion || board.boss_psion)
+        && board.units[unit_idx].receives_psion_aura()
+        && dying_tname != "Jelly_Explode1"
+        && dying_tname != "Jelly_Boss";
+    let death_terrain = board.tile(death_x, death_y).terrain;
+
+    board.units[unit_idx].hp = 0;
+
+    if is_enemy {
+        result.record_enemy_kill(mission_counted);
+        on_enemy_death(board, unit_idx, result);
+        break_web_from(board, dying_uid);
+        if is_volatile {
+            apply_volatile_decay(board, death_x, death_y, result, 0);
+        }
+        if can_explode {
+            apply_death_explosion(board, death_x, death_y, result, 0);
+        }
+    } else if is_player {
+        result.mechs_killed += 1;
+    }
+
+    // ACID units leave an acid pool/tile on normal ground and water. Lava/chasm
+    // consume it, matching the existing apply_damage_core behavior.
+    if has_acid && (!death_terrain.is_deadly_ground() || death_terrain == Terrain::Water) {
+        leave_acid_pool_on_death(board, death_x, death_y);
+    }
+}
+
+/// Apply normal damage but defer Blast Psion explosion dispatch until the
+/// caller has resolved a simultaneous push. Used for single SpaceDamage-style
+/// damage+push hits where live game death effects occur from the final corpse
+/// tile rather than the pre-push damage tile.
+fn apply_damage_defer_death_explosion(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+) -> Option<usize> {
+    if damage == 0 { return None; }
+
+    let death_check = if board.blast_psion || board.boss_psion {
+        board.unit_at(x, y).and_then(|idx| {
+            let u = &board.units[idx];
+            let tname = u.type_name_str();
+            if u.receives_psion_aura() && u.hp > 0
+                && tname != "Jelly_Explode1"
+                && tname != "Jelly_Boss"
+            {
+                Some(idx)
+            } else { None }
+        })
+    } else { None };
+
+    let volatile_check = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.is_enemy() && u.hp > 0 && u.is_volatile_vek() {
+            Some(idx)
+        } else { None }
+    });
+
+    // BombRock explosions are not a corpse-position death aura: live
+    // Unstable Boulders detonate from the tile that took damage, before
+    // a push weapon can shove the dead boulder onward.
+    let bombrock_check = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.hp > 0 && u.type_name_str() == "BombRock" {
+            Some(idx)
+        } else { None }
+    });
+
+    apply_damage_core(board, x, y, damage, result, source);
+
+    if let Some(idx) = bombrock_check {
+        if board.units[idx].hp <= 0 {
+            apply_bombrock_explosion(board, x, y, result, None, 0);
+        }
+    }
+
+    if let Some(idx) = volatile_check {
+        if board.units[idx].hp <= 0 {
+            apply_volatile_decay(board, x, y, result, 0);
+        }
+    }
+
+    death_check.filter(|idx| board.units[*idx].hp <= 0)
+}
+
+/// Grid-power accounting for building HP changes.
+///
+/// Non-unique multi-HP buildings have a live-engine wrinkle: a bump can reduce
+/// HP without moving the visible grid scalar. Store that latent debt on the
+/// board so immediate action verification can pass; the debt is charged when
+/// the enemy turn starts, or earlier if the same building is destroyed.
+pub(crate) fn settle_building_grid_loss(
+    board: &mut Board,
+    idx: usize,
+    hp_lost: u8,
+    destroyed: bool,
+    is_unique: bool,
+    source: DamageSource,
+) -> u8 {
+    if hp_lost == 0 {
+        return 0;
+    }
+
+    if matches!(source, DamageSource::Bump | DamageSource::WeaponDeferredGrid)
+        && !is_unique
+        && !destroyed
+    {
+        board.deferred_bump_grid_debt[idx] =
+            board.deferred_bump_grid_debt[idx].saturating_add(hp_lost);
+        return 0;
+    }
+
+    let mut grid_loss = hp_lost;
+    if destroyed {
+        grid_loss = grid_loss.saturating_add(board.deferred_bump_grid_debt[idx]);
+        board.deferred_bump_grid_debt[idx] = 0;
+    }
+    grid_loss
+}
+
+/// Charge all pending non-unique multi-HP bump debt at enemy-turn boundaries.
+///
+/// Live captures show the building HP loss appears immediately, while the grid
+/// meter can lag until the turn rolls. Player-phase bump debt flushes at
+/// enemy-turn start; enemy-phase bump debt flushes again before the next player
+/// turn so post-enemy projection includes the settled grid loss.
+pub(crate) fn flush_deferred_bump_grid_debt(
+    board: &mut Board,
+    result: &mut ActionResult,
+) -> u8 {
+    let mut total = 0u8;
+    for debt in board.deferred_bump_grid_debt.iter_mut() {
+        if *debt == 0 {
+            continue;
+        }
+        total = total.saturating_add(*debt);
+        *debt = 0;
+    }
+
+    if total > 0 {
+        result.grid_damage += total as i32;
+        board.grid_power = board.grid_power.saturating_sub(total);
+    }
+    total
+}
+
+pub(crate) fn thaw_frozen_building(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+) -> bool {
+    let tile = board.tile_mut(x, y);
+    if tile.terrain == Terrain::Building && tile.building_hp > 0 && tile.frozen() {
+        tile.set_frozen(false);
+        result.events.push(format!("building_thawed:{}:{}", x, y));
+        return true;
+    }
+    false
+}
+
 
 fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
     if damage == 0 { return; }
+
+    let occupied_by_alive_unit_at_start = board.unit_at(x, y).is_some();
 
     // Damage unit if present
     if let Some(idx) = board.unit_at(x, y) {
@@ -486,6 +1171,7 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
         } else if unit.frozen() {
             // Frozen = invincible, damage unfreezes (0 actual damage)
             unit.set_frozen(false);
+            clear_mites(unit);
         } else {
             let actual = match source {
                 DamageSource::Bump => {
@@ -514,11 +1200,22 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             };
 
             unit.hp -= actual;
+            if actual > 0 {
+                clear_mites(unit);
+            }
 
             if unit.is_enemy() {
                 result.enemy_damage_dealt += actual as i32;
                 if unit.hp <= 0 {
-                    result.enemies_killed += 1;
+                    result.record_enemy_kill_with_leech_credit(
+                        !unit.minor(),
+                        matches!(
+                            source,
+                            DamageSource::Weapon
+                                | DamageSource::WeaponCracksOccupied
+                                | DamageSource::WeaponNoAcidPool
+                        ),
+                    );
                     on_enemy_death(board, idx, result);
                 }
             } else if unit.is_player() {
@@ -531,130 +1228,209 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
     }
 
     // Acid pool creation: unit with acid dies → acid pool on tile
-    if let Some(idx) = board.unit_at(x, y) {
-        let unit = &board.units[idx];
-        if unit.hp <= 0 && unit.acid() {
-            let tile = board.tile(x, y);
-            if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
-                board.tile_mut(x, y).flags |= TileFlags::ACID;
+    if source != DamageSource::WeaponNoAcidPool {
+        if let Some(idx) = board.unit_at(x, y) {
+            let unit = &board.units[idx];
+            if unit.hp <= 0 && unit.acid() {
+                let tile = board.tile(x, y);
+                if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
+                    leave_acid_pool_on_death(board, x, y);
+                }
             }
         }
     }
 
-    // Damage building if present — incremental HP damage. All buildings take
-    // damage per-HP regardless of uniqueness (the push-damage path at
-    // apply_push already does this; weapon damage must match). Previously this
-    // branch treated non-unique buildings as all-or-nothing (any damage
-    // destroys the whole HP pool), which over-predicted damage against 2-HP
-    // non-objective buildings — e.g. Aerial Bombs transit tile hitting a
-    // 2-HP building: predicted 0 HP, actual 1 HP. See
-    // snapshots/grid_drop_20260424_144237_364_t01_a1.
-    //
-    // The is_unique flag still controls terrain transition at hp=0:
-    // objective buildings retain Terrain::Building (so they keep their
-    // objective identity for end-of-mission scoring) while regular buildings
-    // become Rubble.
-    let mut bldg_hp_lost: u8 = 0;
-    {
-        let idx = xy_to_idx(x, y) as u64;
-        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+    if source != DamageSource::WeaponUnitOnly && source != DamageSource::ChainWhip {
+        // Time Pods are fragile map objects: direct tile damage destroys them
+        // unless they were already collected by a player mech landing.
+        if damage > 0 && board.tile(x, y).has_pod() {
+            board.tile_mut(x, y).set_has_pod(false);
+            result.events.push(format!("pod_destroyed_by_damage:{}:{}", x, y));
+        }
+
+        // Damage building if present — incremental HP damage. Direct weapon and
+        // explosion damage drains current grid per building HP lost. Push/bump
+        // collision damage has its own non-unique multi-HP exception below.
+        let mut bldg_hp_lost: u8 = 0;
+        let mut bldg_destroyed = false;
+        let mut bldg_is_unique = false;
+        let mut bldg_idx = 0usize;
+        {
+            let idx = xy_to_idx(x, y);
+            let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+            let tile = board.tile_mut(x, y);
+            if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+                if tile.shield() {
+                    tile.set_shield(false);
+                } else if tile.frozen() {
+                    tile.set_frozen(false);
+                    result.events.push(format!("building_thawed:{}:{}", x, y));
+                } else {
+                    let hp_lost = damage.min(tile.building_hp);
+                    tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
+                    if tile.building_hp == 0 {
+                        tile.set_shield(false);
+                        if !is_unique {
+                            tile.terrain = Terrain::Rubble;
+                        }
+                    }
+                    bldg_hp_lost = hp_lost;
+                    result.buildings_damaged += hp_lost as i32;
+                    result.grid_damage += hp_lost as i32;
+                    if tile.building_hp == 0 {
+                        result.buildings_lost += 1;
+                    }
+                    bldg_idx = idx;
+                    bldg_is_unique = is_unique;
+                    bldg_destroyed = tile.building_hp == 0;
+                }
+            }
+        }
+        if bldg_hp_lost > 0 {
+            let grid_loss = settle_building_grid_loss(
+                board,
+                bldg_idx,
+                bldg_hp_lost,
+                bldg_destroyed,
+                bldg_is_unique,
+                source,
+            );
+            result.grid_damage += (grid_loss as i32) - (bldg_hp_lost as i32);
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
+        }
+
+        // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
+        {
+            let tile = board.tile_mut(x, y);
+            if tile.terrain == Terrain::Mountain && tile.building_hp > 0 {
+                tile.building_hp = tile.building_hp.saturating_sub(1);
+                if tile.building_hp == 0 {
+                    tile.terrain = Terrain::Rubble;
+                }
+            }
+        }
+
+        // Ice: intact → cracked → water
         let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-            let hp_lost = damage.min(tile.building_hp);
-            tile.building_hp = tile.building_hp.saturating_sub(hp_lost);
-            if tile.building_hp == 0 && !is_unique {
-                tile.terrain = Terrain::Rubble;
-            }
-            bldg_hp_lost = hp_lost;
-            result.buildings_damaged += hp_lost as i32;
-            result.grid_damage += hp_lost as i32;
-            if tile.building_hp == 0 {
-                result.buildings_lost += 1;
-            }
-        }
-    }
-    if bldg_hp_lost > 0 {
-        board.grid_power = board.grid_power.saturating_sub(bldg_hp_lost);
-    }
-
-    // Damage mountain — HP 2 → 1 → 0 (Rubble). Does not affect grid_power.
-    {
-        let tile = board.tile_mut(x, y);
-        if tile.terrain == Terrain::Mountain && tile.building_hp > 0 {
-            tile.building_hp = tile.building_hp.saturating_sub(1);
-            if tile.building_hp == 0 {
-                tile.terrain = Terrain::Rubble;
-            }
-        }
-    }
-
-    // Ice: intact → cracked → water
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Ice {
-        if tile.cracked() || source == DamageSource::Fire {
-            tile.terrain = Terrain::Water;
-            tile.set_cracked(false);
-            // Non-flying unit drowns. effectively_flying() = flying && !frozen,
-            // so a frozen flying unit loses its flight and drowns here.
-            // Massive units survive drowning (drown-immunity applies to Water).
-            if let Some(idx) = board.unit_at(x, y) {
-                let unit = &mut board.units[idx];
-                if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
-                    unit.hp = 0;
-                    if unit.is_enemy() {
-                        result.enemies_killed += 1;
+        if tile.terrain == Terrain::Ice {
+            let occupied_pawn_absorbs_ice_hit =
+                occupied_by_alive_unit_at_start
+                && matches!(
+                    source,
+                    DamageSource::Weapon
+                        | DamageSource::Bump
+                        | DamageSource::WeaponCracksOccupied
+                        | DamageSource::WeaponNoAcidPool
+                );
+            if occupied_pawn_absorbs_ice_hit {
+                // Live pawn hits on occupied ice are pawn-only for ordinary
+                // weapon/bump-class damage: the occupant can die or be pushed,
+                // but the underlying ice neither cracks nor melts.
+            } else if tile.cracked() || source == DamageSource::Fire {
+                tile.terrain = Terrain::Water;
+                tile.set_cracked(false);
+                // Non-flying unit drowns. effectively_flying() = flying && !frozen,
+                // so a frozen flying unit loses its flight and drowns here.
+                // Massive units survive drowning (drown-immunity applies to Water).
+                if let Some(idx) = board.unit_at(x, y) {
+                    let unit = &mut board.units[idx];
+                    if unit.hp > 0 && !unit.effectively_flying() && !unit.massive() {
+                        unit.hp = 0;
+                        if unit.is_enemy() {
+                            result.record_enemy_kill(!unit.minor());
+                        }
                     }
                 }
+            } else {
+                tile.set_cracked(true);
             }
-        } else {
-            tile.set_cracked(true);
+        }
+
+        // Cracked ground collapses only when the tile itself is damaged.
+        // Live Mission_Bomb captures show a pawn standing on cracked ground
+        // absorbs ordinary weapon SpaceDamage: the pawn can die while the
+        // tile remains cracked Ground for the next hit. Self-damage still
+        // damages the mech's tile, so Hydraulic Legs can open a chasm under
+        // its landing mech.
+        let tile = board.tile_mut(x, y);
+        let occupied_tile_absorbs_crack_hit =
+            occupied_by_alive_unit_at_start
+            && matches!(
+                source,
+                DamageSource::Weapon | DamageSource::Bump | DamageSource::WeaponNoAcidPool
+            );
+        if tile.terrain == Terrain::Ground
+            && tile.cracked()
+            && !occupied_tile_absorbs_crack_hit {
+            tile.terrain = Terrain::Chasm;
+            tile.set_cracked(false);
+            if let Some(idx) = board.unit_at(x, y) {
+                let unit = &mut board.units[idx];
+                    if unit.hp > 0 && !unit.effectively_flying() {
+                        unit.hp = 0;
+                        if unit.is_enemy() {
+                            result.record_enemy_kill(!unit.minor());
+                        } else if unit.is_player() {
+                            result.mechs_killed += 1;
+                        }
+                    }
+                }
+        }
+
+        // Forest: weapon damage ignites (NOT bump/push damage)
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Forest && source != DamageSource::Bump {
+            tile.terrain = Terrain::Ground;
+            tile.set_on_fire(true);
+            // Live consumes the forest immediately: the tile becomes burning Ground.
+            // Unit does NOT immediately catch fire — happens at end-of-turn.
+        }
+
+        // Sand: weapon/self damage -> smoke (fire weapon -> fire tile instead)
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Sand
+            && matches!(
+                source,
+                DamageSource::Weapon
+                    | DamageSource::SelfDamage
+                    | DamageSource::WeaponCracksOccupied
+                    | DamageSource::WeaponNoAcidPool
+            ) {
+            tile.terrain = Terrain::Ground;
+            // Note: fire_weapon flag not yet threaded; default to smoke.
+            // Correct fire-on-sand requires knowing if weapon has FIRE flag.
+            tile.set_smoke(true);
         }
     }
 
-    // Cracked ground: any damage turns the tile into a Chasm.
-    // The unit standing on it (if any) falls in and dies. Unlike drowning,
-    // Massive does NOT save from Chasm — falling into a pit is a destroy.
-    // Flying units are exempt via effectively_flying().
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Ground && tile.cracked() {
-        tile.terrain = Terrain::Chasm;
-        tile.set_cracked(false);
-        if let Some(idx) = board.unit_at(x, y) {
-            let unit = &mut board.units[idx];
-            if unit.hp > 0 && !unit.effectively_flying() {
-                unit.hp = 0;
-                if unit.is_enemy() {
-                    result.enemies_killed += 1;
+    // Chain Whip is not generic tile damage: it leaves Ice/Sand/Pods/etc.
+    // alone, but live captures show it ignites Forest under a zapped pawn.
+    if source == DamageSource::ChainWhip {
+        let ignited = {
+            let tile = board.tile_mut(x, y);
+            if tile.terrain == Terrain::Forest {
+                tile.terrain = Terrain::Ground;
+                tile.set_on_fire(true);
+                true
+            } else {
+                false
+            }
+        };
+        if ignited {
+            if let Some(idx) = board.unit_at(x, y) {
+                if board.units[idx].hp > 0 {
+                    board.units[idx].set_fire(true);
                 }
             }
         }
-    }
-
-    // Forest: weapon damage ignites (NOT bump/push damage)
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Forest && source != DamageSource::Bump {
-        tile.set_on_fire(true);
-        // Tile stays Terrain::Forest with ON_FIRE flag.
-        // Unit does NOT immediately catch fire — happens at end-of-turn.
-    }
-
-    // Sand: weapon damage → smoke (fire weapon → fire tile instead)
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Sand && source == DamageSource::Weapon {
-        tile.terrain = Terrain::Ground;
-        // Note: fire_weapon flag not yet threaded; default to smoke.
-        // Correct fire-on-sand requires knowing if weapon has FIRE flag.
-        tile.set_smoke(true);
     }
 
     // ACID pool creation: unit with ACID dies → acid pool on tile
-    if let Some(idx) = board.any_unit_at(x, y) {
-        let unit = &board.units[idx];
-        if unit.hp <= 0 && unit.acid() {
-            let tile = board.tile_mut(x, y);
-            if !tile.terrain.is_deadly_ground() || tile.terrain == Terrain::Water {
-                tile.flags |= TileFlags::ACID;
-                tile.set_on_fire(false); // acid pool extinguishes fire
+    if source != DamageSource::WeaponNoAcidPool {
+        if let Some(idx) = board.any_unit_at(x, y) {
+            let unit = &board.units[idx];
+            if unit.hp <= 0 && unit.acid() {
+                leave_acid_pool_on_death(board, x, y);
             }
         }
     }
@@ -715,32 +1491,41 @@ fn apply_damage_core(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut A
             break_web_from(board, dead_uid);
         }
     }
+
+    refresh_all_arrogant_boosts(board);
 }
 
 /// Convert a single tile to Water, drowning any non-flying non-massive unit
 /// standing on it. Idempotent: running on existing Water is a no-op.
 /// Mountains / Buildings are not flooded (game engine refuses to overwrite).
-///
-/// TODO(dam-integration): in-game, drown deaths DO trigger Blast Psion
-/// explosions. This helper uses direct `hp = 0` bypassing the explosion
-/// dispatch. Swap to a `apply_damage(..., source=Water)` routed path once
-/// the user verifies drown-credit semantics.
-pub fn flood_tile(board: &mut Board, x: u8, y: u8, _result: &mut ActionResult) {
+pub fn flood_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     if x >= 8 || y >= 8 { return; }
     let t = board.tile(x, y);
-    if t.terrain == Terrain::Water { return; }
+    if t.terrain == Terrain::Water {
+        board.tile_mut(x, y).set_on_fire(false);
+        return;
+    }
     if matches!(t.terrain, Terrain::Mountain | Terrain::Building) { return; }
 
-    board.tile_mut(x, y).terrain = Terrain::Water;
-    board.tile_mut(x, y).set_cracked(false);
+    let tile = board.tile_mut(x, y);
+    tile.terrain = Terrain::Water;
+    tile.set_cracked(false);
+    tile.set_on_fire(false);
 
     if let Some(idx) = board.unit_at(x, y) {
-        let u = &board.units[idx];
-        if !u.effectively_flying() && !u.massive() {
-            board.units[idx].hp = 0;
-            // No enemies_killed increment — user verifying in-game whether
-            // flood kills credit pilot XP / achievements.
+        let drowns = {
+            let u = &board.units[idx];
+            u.hp > 0 && !u.effectively_flying() && !u.massive()
+        };
+        if drowns {
+            finish_instant_unit_death(board, idx, result, x, y);
         }
+    }
+}
+
+fn flood_ice_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    if board.tile(x, y).terrain == Terrain::Ice {
+        flood_tile(board, x, y, result);
     }
 }
 
@@ -752,8 +1537,8 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
         Some(p) => p,
         None => return,
     };
-    for x_off in 0i8..=1 {
-        for y_off in 1i8..=7 {
+    for y_off in 1i8..=7 {
+        for x_off in 0i8..=1 {
             let tx = px as i8 + x_off;
             let ty = py as i8 + y_off;
             if tx >= 0 && tx < 8 && ty >= 0 && ty < 8 {
@@ -766,7 +1551,130 @@ fn trigger_dam_flood(board: &mut Board, result: &mut ActionResult) {
 /// Apply damage to whatever is at (x, y), including Blast Psion death
 /// explosions and Volatile Vek decay.
 /// Source: Bump/Fire bypass armor and acid. Normal/Self respects them.
+/// WeaponUnitOnly mirrors weapon damage against occupants while leaving
+/// buildings/terrain unchanged. ChainWhip is unit-only except for igniting
+/// Forest under a hit pawn.
 pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut ActionResult, source: DamageSource) {
+    apply_damage_inner(board, x, y, damage, result, source, None, 0);
+}
+
+pub fn apply_damage_with_bombrock_exclusion(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+    exclude: Option<(u8, u8)>,
+) {
+    apply_damage_inner(board, x, y, damage, result, source, exclude, 0);
+}
+
+fn apply_viscera_nanobots_heal(
+    board: &mut Board,
+    attacker_idx: usize,
+    kills: i32,
+    heal_cap_override: Option<i8>,
+    clear_statuses_on_revive: bool,
+    result: &mut ActionResult,
+) {
+    if board.viscera_nanobots_heal == 0 || kills <= 0 {
+        return;
+    }
+    let attacker = &board.units[attacker_idx];
+    if !attacker.is_player() || !attacker.is_mech() {
+        return;
+    }
+
+    let heal = (board.viscera_nanobots_heal as i32 * kills).min(i8::MAX as i32) as i8;
+    if heal <= 0 {
+        return;
+    }
+    let was_disabled = board.units[attacker_idx].hp <= 0;
+    if was_disabled && disabled_unit_is_on_deadly_terrain(board, attacker_idx) {
+        result.events.push(format!(
+            "viscera_nanobots_blocked_by_terrain:{}:{}",
+            board.units[attacker_idx].uid, kills
+        ));
+        return;
+    }
+    let old_hp = board.units[attacker_idx].hp;
+    // Live Nanobots ignores negative overkill HP and heals from zero.
+    let heal_base = old_hp.max(0);
+    let heal_cap = heal_cap_override.unwrap_or(board.units[attacker_idx].max_hp);
+    if heal_base >= heal_cap {
+        return;
+    }
+    let new_hp = (heal_base + heal).min(heal_cap);
+    let actual_heal = new_hp - heal_base;
+    if actual_heal <= 0 {
+        return;
+    }
+
+    board.units[attacker_idx].hp = new_hp;
+    if was_disabled && new_hp > 0 {
+        if clear_statuses_on_revive {
+            clear_unit_web(board, attacker_idx);
+            let attacker = &mut board.units[attacker_idx];
+            attacker.set_fire(false);
+            attacker.set_acid(false);
+            attacker.set_frozen(false);
+            clear_mites(attacker);
+        }
+        if result.mechs_killed > 0 {
+            result.mechs_killed -= 1;
+        }
+    }
+    result.events.push(format!(
+        "viscera_nanobots_heal:{}:{}:{}",
+        board.units[attacker_idx].uid, kills, actual_heal
+    ));
+}
+
+fn hydraulic_legs_nanobots_heal_cap(unit: &Unit) -> i8 {
+    match unit.type_name_str() {
+        "LeapMech" | "UnstableTank" => 3,
+        "NanoMech" => 2,
+        _ => unit.max_hp,
+    }
+}
+
+fn is_prime_leap_weapon(weapon_id: WId) -> bool {
+    matches!(
+        weapon_id,
+        WId::PrimeLeap | WId::PrimeLeapA | WId::PrimeLeapB | WId::PrimeLeapAB
+    )
+}
+
+fn is_brute_unstable_weapon(weapon_id: WId) -> bool {
+    matches!(
+        weapon_id,
+        WId::BruteUnstable | WId::BruteUnstableA | WId::BruteUnstableB | WId::BruteUnstableAB
+    )
+}
+
+fn disabled_unit_is_on_deadly_terrain(board: &Board, unit_idx: usize) -> bool {
+    let unit = &board.units[unit_idx];
+    if unit.hp > 0 || unit.effectively_flying() {
+        return false;
+    }
+    match board.tile(unit.x, unit.y).terrain {
+        Terrain::Chasm => true,
+        Terrain::Water | Terrain::Lava => !unit.massive(),
+        _ => false,
+    }
+}
+
+fn apply_damage_inner(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    damage: u8,
+    result: &mut ActionResult,
+    source: DamageSource,
+    bombrock_exclude: Option<(u8, u8)>,
+    bombrock_depth: u8,
+) {
     if damage == 0 { return; }
 
     // Pre-check: track alive non-Psion enemy for Blast Psion / Psion Abomination
@@ -775,7 +1683,7 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
         board.unit_at(x, y).and_then(|idx| {
             let u = &board.units[idx];
             let tname = u.type_name_str();
-            if u.is_enemy() && u.hp > 0
+            if u.receives_psion_aura() && u.hp > 0
                 && tname != "Jelly_Explode1"
                 && tname != "Jelly_Boss"
             {
@@ -792,8 +1700,32 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
         } else { None }
     });
 
+    // Tumblebug BombRock / Unstable Boulder is a neutral 1 HP pawn with the
+    // engine's Explodes flag: destroying it deals 1 bump-class damage to
+    // cardinal-adjacent tiles. Tumblebugs exclude their own source tile when
+    // detonating the queued boulder.
+    let bombrock_check = board.unit_at(x, y).and_then(|idx| {
+        let u = &board.units[idx];
+        if u.hp > 0 && u.type_name_str() == "BombRock" {
+            Some(idx)
+        } else { None }
+    });
+
     // Apply core damage
     apply_damage_core(board, x, y, damage, result, source);
+
+    if let Some(idx) = bombrock_check {
+        if board.units[idx].hp <= 0 {
+            apply_bombrock_explosion(
+                board,
+                x,
+                y,
+                result,
+                bombrock_exclude,
+                bombrock_depth,
+            );
+        }
+    }
 
     // Volatile Vek decay fires first — it's a tier-0 unit effect. If the
     // ensuing damage kills a Blast Psion–tagged enemy that was adjacent,
@@ -810,6 +1742,16 @@ pub fn apply_damage(board: &mut Board, x: u8, y: u8, damage: u8, result: &mut Ac
             apply_death_explosion(board, x, y, result, 0);
         }
     }
+}
+
+fn apply_direct_weapon_damage(board: &mut Board, x: u8, y: u8, damage: u8, wdef: &WeaponDef, result: &mut ActionResult) {
+    if wdef.building_immune() {
+        let tile = board.tile(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            return;
+        }
+    }
+    apply_damage(board, x, y, damage, result, DamageSource::Weapon);
 }
 
 // ── apply_throw ──────────────────────────────────────────────────────────────
@@ -866,35 +1808,49 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
     // objective building (terrain=Building, hp=0, e.g. Emergency Batteries
     // after destruction) still blocks but takes no further damage.
     //
-    // Grid-power accounting mirrors apply_push: non-unique buildings
-    // contribute ONE grid power regardless of HP, so bump only drops grid on
-    // full destruction. Unique buildings lose grid per HP.
+    // Grid-power accounting mirrors apply_push: non-unique multi-HP buildings
+    // can defer bump grid loss until destruction. Unique/inferred objective
+    // buildings lose grid immediately per HP.
     if board.tile(nx, ny).terrain == Terrain::Building {
-        let dest_idx = xy_to_idx(nx, ny) as u64;
+        let dest_idx = xy_to_idx(nx, ny);
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
+            if thaw_frozen_building(board, nx, ny, result) {
+                return;
+            }
             result.buildings_bump_damaged += 1;
             // Guard: apply_damage above can trigger volatile decay / blast
             // psion chains that damage adjacent tiles, including (nx, ny).
             // That path may have already driven building_hp to 0, so the
             // outer `> 0` guard is stale. Use saturating_sub to avoid u8
             // underflow (debug panic / release wrap-to-255).
-            let bt = board.tile_mut(nx, ny);
-            bt.building_hp = bt.building_hp.saturating_sub(1);
-            if bt.building_hp == 0 {
-                if !is_unique {
+            let (hp_lost, destroyed) = {
+                let bt = board.tile_mut(nx, ny);
+                let old_hp = bt.building_hp;
+                bt.building_hp = bt.building_hp.saturating_sub(1);
+                let hp_lost = old_hp.saturating_sub(bt.building_hp);
+                let destroyed = old_hp > 0 && bt.building_hp == 0;
+                if destroyed && !is_unique {
                     bt.terrain = Terrain::Rubble;
                 }
-                result.grid_damage += 1;
+                (hp_lost, destroyed)
+            };
+            if destroyed {
                 result.buildings_lost += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
-            } else {
-                result.buildings_damaged += 1;
-                if is_unique {
-                    board.grid_power = board.grid_power.saturating_sub(1);
-                }
+            } else if hp_lost > 0 {
+                result.buildings_damaged += hp_lost as i32;
             }
+            let grid_loss = settle_building_grid_loss(
+                board,
+                dest_idx,
+                hp_lost,
+                destroyed,
+                is_unique,
+                DamageSource::Bump,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
         } else {
             // Destroyed objective: bump the thrown unit only.
             apply_damage(board, tx, ty, 1, result, DamageSource::Bump);
@@ -946,38 +1902,183 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
     let qty = unit.queued_target_y as i32;
     let ux = unit.x as i32;
     let uy = unit.y as i32;
-    if qtx == ux && qty == uy {
+    let (origin_x, origin_y) = if unit.flags.contains(UnitFlags::QUEUED_ORIGIN_SET)
+        && unit.queued_origin_x >= 0
+        && unit.queued_origin_y >= 0
+    {
+        (unit.queued_origin_x as i32, unit.queued_origin_y as i32)
+    } else {
+        (ux, uy)
+    };
+    let offset_x = qtx - origin_x;
+    let offset_y = qty - origin_y;
+    if offset_x == 0 && offset_y == 0 {
         // Self-targeted (suicide bomber / egg spawner) — no vector to flip.
         return;
     }
-    let flipped_x = 2 * ux - qtx;
-    let flipped_y = 2 * uy - qty;
+    let flipped_x = ux - offset_x;
+    let flipped_y = uy - offset_y;
     if !(0..8).contains(&flipped_x) || !(0..8).contains(&flipped_y) {
         // Flipped target is off-board: cancel the attack entirely.
         unit.queued_target_x = -1;
         unit.queued_target_y = -1;
+        unit.queued_origin_x = -1;
+        unit.queued_origin_y = -1;
+        unit.flags.remove(UnitFlags::QUEUED_ORIGIN_SET);
     } else {
         unit.queued_target_x = flipped_x as i8;
         unit.queued_target_y = flipped_y as i8;
+        unit.queued_origin_x = unit.x as i8;
+        unit.queued_origin_y = unit.y as i8;
+        unit.flags.insert(UnitFlags::QUEUED_ORIGIN_SET);
     }
 }
 
 // ── apply_push ───────────────────────────────────────────────────────────────
 
+#[derive(Clone, Copy)]
+struct PushPolicy {
+    dead_nonpushable_collides: bool,
+    dead_bumps_live_blocker: bool,
+    edge_bump_damage: bool,
+    friendly_live_pusher_enters_wreck: bool,
+    live_pusher_enters_wreck: bool,
+}
+
+const DEFAULT_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: false,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const ROCKET_CENTER_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: true,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: false,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const DASH_PUNCH_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const FLAMETHROWER_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const TRI_ROCKET_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const PRIME_LEAP_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: true,
+    live_pusher_enters_wreck: false,
+};
+
+const BRUTE_UNSTABLE_RECOIL_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: false,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const BRUTE_UNSTABLE_TARGET_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: true,
+    edge_bump_damage: false,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
+const ACID_PROJECTOR_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: false,
+    edge_bump_damage: true,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: true,
+};
+
+const NO_EDGE_BUMP_PUSH_POLICY: PushPolicy = PushPolicy {
+    dead_nonpushable_collides: false,
+    dead_bumps_live_blocker: false,
+    edge_bump_damage: false,
+    friendly_live_pusher_enters_wreck: false,
+    live_pusher_enters_wreck: false,
+};
+
 /// Push unit at (x, y) in direction. Damage+push are simultaneous; a
 /// corpse still pushes into static obstacles (building/mountain/edge) and
-/// takes/deals bump damage there. Exception: a dead corpse pushed INTO a
-/// live blocker unit is absorbed silently — no bump to either. See the
+/// takes/deals bump damage there. Exception: by default, a dead corpse pushed
+/// INTO a live blocker unit is absorbed silently — no bump to either. See the
 /// in-body comment on the unit-blocker branch for the snapshot citation.
 pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mut ActionResult) {
+    apply_push_with_policy(board, x, y, direction, result, DEFAULT_PUSH_POLICY);
+}
+
+pub(crate) fn apply_push_no_edge_bump(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+) {
+    apply_push_with_policy(board, x, y, direction, result, NO_EDGE_BUMP_PUSH_POLICY);
+}
+
+fn apply_rocket_center_push(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+) {
+    apply_push_with_policy(board, x, y, direction, result, ROCKET_CENTER_PUSH_POLICY);
+}
+
+fn apply_push_with_policy(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+    policy: PushPolicy,
+) {
     // Find ANY unit (including dead) — simultaneous damage+push
     let unit_idx = match board.any_unit_at(x, y) {
         Some(idx) => idx,
         None => return,
     };
 
+    // BombRocks explode as soon as they are destroyed. The dead boulder does
+    // not continue as a pushable corpse for Taurus/Rocket-style damage+push.
+    if board.units[unit_idx].hp <= 0 && board.units[unit_idx].type_name_str() == "BombRock" {
+        return;
+    }
+
     // Non-pushable non-mechs are immune
-    if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
+    if !board.units[unit_idx].pushable()
+        && !board.units[unit_idx].is_mech()
+        && !(policy.dead_nonpushable_collides && board.units[unit_idx].hp <= 0)
+    {
         return;
     }
 
@@ -987,7 +2088,9 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
 
     // Blocked by map edge
     if !in_bounds(nx_i, ny_i) {
-        apply_damage(board, x, y, 1, result, DamageSource::Bump);
+        if policy.edge_bump_damage {
+            apply_damage(board, x, y, 1, result, DamageSource::Bump);
+        }
         return;
     }
 
@@ -1010,11 +2113,9 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     // Blocked by building — live building: BOTH take 1 bump.
     // Destroyed objective (terrain=Building, hp=0): only pushed unit bumps.
     //
-    // Grid-power accounting: non-unique buildings contribute ONE grid power
-    // regardless of their HP (a Residential 2-HP house provides +1 grid, not
-    // +2). Bump damage only reduces grid_power when the building is fully
-    // destroyed (bhp → 0). Unique objective buildings (Coal Plant, Power
-    // Generator, Solar Farm, Batteries) have per-HP grid worth and decrement
+    // Grid-power accounting: non-unique multi-HP buildings can defer bump
+    // grid loss until the building is fully destroyed (bhp -> 0). Unique /
+    // inferred objective buildings have per-HP grid worth and decrement
     // grid_power on every HP lost.
     //
     // Regression: grid_drop_20260421_161809_372_t02_a0 (Taurus Cannon push
@@ -1022,36 +2123,64 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     // m00_turn_03 Ranged_Rocket bump from commit 2a86ca1 (pred grid would be
     // 4 with old code, actual grid stayed 5).
     if board.tile(nx, ny).terrain == Terrain::Building {
-        let dest_idx = xy_to_idx(nx, ny) as u64;
+        let dest_idx = xy_to_idx(nx, ny);
         let is_unique = (board.unique_buildings & (1u64 << dest_idx)) != 0;
         if board.tile(nx, ny).building_hp > 0 {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
+            if thaw_frozen_building(board, nx, ny, result) {
+                return;
+            }
             result.buildings_bump_damaged += 1;
             // Guard: apply_damage above can trigger volatile decay / blast
             // psion chains that damage adjacent tiles, including (nx, ny).
             // That path may have already driven building_hp to 0, so the
             // outer `> 0` guard is stale. Use saturating_sub to avoid u8
             // underflow (debug panic / release wrap-to-255).
-            let bt = board.tile_mut(nx, ny);
-            bt.building_hp = bt.building_hp.saturating_sub(1);
-            if bt.building_hp == 0 {
-                if !is_unique {
+            let (hp_lost, destroyed) = {
+                let bt = board.tile_mut(nx, ny);
+                let old_hp = bt.building_hp;
+                bt.building_hp = bt.building_hp.saturating_sub(1);
+                let hp_lost = old_hp.saturating_sub(bt.building_hp);
+                let destroyed = old_hp > 0 && bt.building_hp == 0;
+                if destroyed && !is_unique {
                     bt.terrain = Terrain::Rubble;
                 }
-                result.grid_damage += 1;
+                (hp_lost, destroyed)
+            };
+            if destroyed {
                 result.buildings_lost += 1;
-                board.grid_power = board.grid_power.saturating_sub(1);
-            } else {
-                result.buildings_damaged += 1;
-                // Non-unique multi-HP building: damaged but not destroyed →
-                // grid_power stays. Unique building: each HP is worth 1 grid.
-                if is_unique {
-                    board.grid_power = board.grid_power.saturating_sub(1);
-                }
+            } else if hp_lost > 0 {
+                result.buildings_damaged += hp_lost as i32;
             }
+            let grid_loss = settle_building_grid_loss(
+                board,
+                dest_idx,
+                hp_lost,
+                destroyed,
+                is_unique,
+                DamageSource::Bump,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
         } else {
             apply_damage(board, x, y, 1, result, DamageSource::Bump);
         }
+        return;
+    }
+
+    // Blocked by a wreck — pushed unit bumps, wreck stays inert.
+    if board.wreck_at(nx, ny) {
+        let live_pusher_enters_wreck = board.units[unit_idx].hp > 0
+            && (policy.live_pusher_enters_wreck
+                || (policy.friendly_live_pusher_enters_wreck && board.units[unit_idx].is_player()));
+        if live_pusher_enters_wreck {
+            clear_unit_web(board, unit_idx);
+            board.units[unit_idx].x = nx;
+            board.units[unit_idx].y = ny;
+            apply_pod_on_land(board, unit_idx, result);
+            return;
+        }
+        apply_damage(board, x, y, 1, result, DamageSource::Bump);
         return;
     }
 
@@ -1069,6 +2198,10 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     if let Some(blocker_idx) = board.unit_at(nx, ny) {
         if blocker_idx != unit_idx {
             if board.units[unit_idx].hp <= 0 {
+                if policy.dead_bumps_live_blocker {
+                    apply_damage(board, nx, ny, 1, result, DamageSource::Bump);
+                    return;
+                }
                 // Dead pusher: corpse absorbed by live blocker, no bump.
                 return;
             }
@@ -1078,9 +2211,24 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         }
     }
 
-    // Destination clear — move the unit
+    if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
+        // Rocket-center corpse semantics can still damage blockers, but a
+        // non-pushable corpse with open space behind does not need a visible
+        // position change.
+        return;
+    }
+
+    let retarget_death_egg = board.units[unit_idx].hp <= 0 && board.units[unit_idx].is_enemy();
+
+    // Destination clear: only an actual tile change breaks the pushed unit's
+    // own web. Blocked pushes bump in place and leave the grapple attached.
+    clear_unit_web(board, unit_idx);
     board.units[unit_idx].x = nx;
     board.units[unit_idx].y = ny;
+    if retarget_death_egg {
+        retarget_pending_spider_egg(board, x, y, nx, ny);
+    }
+    apply_pod_on_land(board, unit_idx, result);
 
     // Web break: enemy webber pushed → unweb any mechs they were holding.
     // Position change alone breaks the grapple (regardless of whether the
@@ -1090,17 +2238,8 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         break_web_from(board, pushed_uid);
     }
 
-    // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity)
-    let push_target_immune_vek = board.fire_psion
-        && board.units[unit_idx].is_enemy()
-        && board.units[unit_idx].type_name_str() != "Jelly_Fire1";
-    if board.tile(nx, ny).on_fire() && board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield()
-        && board.units[unit_idx].can_catch_fire()
-        && !(board.flame_shielding && board.units[unit_idx].is_player())
-        && !push_target_immune_vek
-    {
-        board.units[unit_idx].set_fire(true);
-    }
+    // Fire tile: pushed unit catches fire (Fire Psion grants Vek immunity).
+    apply_fire_tile_pickup(board, unit_idx, nx, ny);
 
     // ACID pool: unit gains ACID, pool consumed
     if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
@@ -1141,53 +2280,12 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     };
 
     if deadly_kill {
-        let is_enemy = board.units[unit_idx].is_enemy();
-        let has_acid = board.units[unit_idx].acid();
-        let dying_tname = board.units[unit_idx].type_name_str();
-        let can_explode = is_enemy && (board.blast_psion || board.boss_psion)
-            && dying_tname != "Jelly_Explode1"
-            && dying_tname != "Jelly_Boss";
-        let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
-        let unit = &mut board.units[unit_idx];
-        unit.hp = 0;
-        if is_enemy {
-            result.enemies_killed += 1;
-            if is_volatile {
-                apply_volatile_decay(board, nx, ny, result, 0);
-            }
-            if can_explode {
-                apply_death_explosion(board, nx, ny, result, 0);
-            }
-        } else if unit.is_player() {
-            result.mechs_killed += 1;
-        }
-
-        // ACID unit drowns in water → water becomes ACID tile
-        if has_acid && dest_terrain == Terrain::Water {
-            board.tile_mut(nx, ny).flags |= TileFlags::ACID;
-        }
+        finish_instant_unit_death(board, unit_idx, result, nx, ny);
     } else {
         // Unit survived the push — check for Old Earth Mine (instant kill, bypasses shield)
         let tile = board.tile(nx, ny);
         if tile.old_earth_mine() {
-            let is_enemy = board.units[unit_idx].is_enemy();
-            let dying_tname = board.units[unit_idx].type_name_str();
-            let can_explode = is_enemy && (board.blast_psion || board.boss_psion)
-                && dying_tname != "Jelly_Explode1"
-                && dying_tname != "Jelly_Boss";
-            let is_volatile = is_enemy && board.units[unit_idx].is_volatile_vek();
-            board.units[unit_idx].hp = 0;
-            if is_enemy {
-                result.enemies_killed += 1;
-                if is_volatile {
-                    apply_volatile_decay(board, nx, ny, result, 0);
-                }
-                if can_explode {
-                    apply_death_explosion(board, nx, ny, result, 0);
-                }
-            } else if board.units[unit_idx].is_player() {
-                result.mechs_killed += 1;
-            }
+            finish_instant_unit_death(board, unit_idx, result, nx, ny);
             board.tile_mut(nx, ny).set_old_earth_mine(false);
         }
         // Freeze mine: pushed unit gets frozen, mine consumed
@@ -1204,8 +2302,12 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
         }
     }
 
-    // Teleporter pad: fires LAST, after terrain-kill / mine / fire / acid
-    // have had a chance to mutate the unit (dead units don't swap).
+    // Repair platform item fires after terrain/mine resolution and before
+    // teleporter relocation consumes the landing tile.
+    apply_repair_platform(board, unit_idx, result);
+
+    // Teleporter pad: fires LAST, after terrain-kill / mine / item / fire /
+    // acid have had a chance to mutate the unit (dead units don't swap).
     apply_teleport_on_land(board, unit_idx);
 }
 
@@ -1214,16 +2316,38 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
 /// Apply a weapon's status effects to a tile and its occupant.
 /// Called AFTER damage and push — if damage broke a shield, status will land.
 pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
+    let occupied_at_impact = board.unit_at(x, y).is_some();
+    apply_weapon_status_with_impact_occupancy(board, x, y, wdef, occupied_at_impact);
+}
+
+fn apply_fire_weapon_tile_status(board: &mut Board, x: u8, y: u8) {
+    if !tile_can_host_fire(board, x, y) {
+        return;
+    }
+    let tile = board.tile_mut(x, y);
+    if matches!(tile.terrain, Terrain::Sand | Terrain::Forest) {
+        tile.terrain = Terrain::Ground;
+    }
+    tile.set_smoke(false);
+    tile.set_on_fire(true);
+}
+
+/// Apply status with explicit pre-damage occupancy for ACID fall-to-feet logic.
+/// Damage can kill the occupant before status is applied; that should not turn a
+/// live-target ACID hit into an empty-tile pool.
+pub fn apply_weapon_status_with_impact_occupancy(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    wdef: &WeaponDef,
+    occupied_at_impact: bool,
+) {
     // ── Tile effects ──
     if wdef.fire() {
-        let tile = board.tile_mut(x, y);
-        tile.set_smoke(false); // fire replaces smoke
-        tile.set_on_fire(true);
+        apply_fire_weapon_tile_status(board, x, y);
     }
     if wdef.smoke() {
-        let tile = board.tile_mut(x, y);
-        tile.set_on_fire(false); // smoke replaces fire
-        tile.set_smoke(true);
+        place_smoke(board, x, y);
     }
     if wdef.freeze() {
         let tile = board.tile_mut(x, y);
@@ -1238,13 +2362,29 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
         }
     }
     if wdef.acid() {
-        // Acid weapon on liquid/ground terrain creates a persistent
-        // A.C.I.D. Tile (water) or A.C.I.D. Pool (ground/rubble).
-        // Observed in game: Alpha Centipede Corrosive Vomit splash on
-        // water converts it to A.C.I.D. Tile.
+        // Acid weapons apply ACID to live units, but do not create a ground
+        // pool underneath them until that ACID unit dies. If the status is
+        // blocked by shield/frozen, it "falls to feet" and acidifies the tile.
+        // Empty liquid/ground hits still create a persistent A.C.I.D. Tile/Pool.
+        let acid_falls_to_tile = match board.unit_at(x, y) {
+            Some(idx) => {
+                let u = &board.units[idx];
+                u.shield() || u.frozen()
+            }
+            None => !occupied_at_impact,
+        };
+        if acid_falls_to_tile {
+            let tile = board.tile_mut(x, y);
+            if matches!(tile.terrain, Terrain::Water | Terrain::Ground | Terrain::Rubble) {
+                tile.set_acid(true);
+            }
+        }
+    }
+
+    if wdef.shield() {
         let tile = board.tile_mut(x, y);
-        if matches!(tile.terrain, Terrain::Water | Terrain::Ground | Terrain::Rubble) {
-            tile.set_acid(true);
+        if tile.is_building() {
+            tile.set_shield(true);
         }
     }
 
@@ -1262,28 +2402,17 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
         }
 
         if wdef.fire() {
-            // Compute Fire Psion immunity gating before grabbing the mut ref.
-            let fire_psion = board.fire_psion;
-            let target_is_immune_vek = fire_psion
-                && board.units[idx].is_enemy()
-                && board.units[idx].type_name_str() != "Jelly_Fire1";
-            let u = &mut board.units[idx];
-            if u.frozen() {
-                u.set_frozen(false); // fire on frozen: unfreeze AND catch fire
-            }
-            // Pilot_Rock (Ariadne) is fire-immune. Flame Shielding (squad-wide)
-            // also blocks fire-apply on player units; Fire Psion grants the
-            // same immunity to other Vek. Freeze-on-fire still unfreezes
-            // above because that mechanic is independent of fire application.
-            if u.can_catch_fire()
-                && !(board.flame_shielding && u.is_player())
-                && !target_is_immune_vek
-            {
-                u.set_fire(true);
-            }
+            // Pilot_Rock (Ariadne) is fire-immune. Flame Shielding blocks
+            // player mechs; Fire Psion grants the same immunity to Vek.
+            // Freeze-on-fire still unfreezes because that mechanic is
+            // independent of fire application.
+            apply_fire_weapon_unit_status(board, idx);
         }
         if wdef.acid() {
-            board.units[idx].set_acid(true);
+            if !board.units[idx].frozen() {
+                board.units[idx].set_acid(true);
+                clear_mites(&mut board.units[idx]);
+            }
         }
         if wdef.freeze() {
             let u = &mut board.units[idx];
@@ -1291,6 +2420,7 @@ pub fn apply_weapon_status(board: &mut Board, x: u8, y: u8, wdef: &WeaponDef) {
                 u.set_fire(false); // freeze on fire: extinguish
             }
             u.set_frozen(true);
+            clear_mites(u);
         }
         if wdef.web() {
             // Pilot_Soldier (Camila Vera) is web-immune. The web_source_uid
@@ -1331,7 +2461,26 @@ pub fn simulate_weapon_with(
     weapons: &WeaponTable,
 ) -> ActionResult {
     let mut result = ActionResult::default();
-    let wdef = &weapons[weapon_id as usize];
+    let base_wdef = &weapons[weapon_id as usize];
+    let mut boosted_wdef;
+    let wdef = if board.units[attacker_idx].boosted() {
+        boosted_wdef = *base_wdef;
+        if boosted_wdef.damage > 0 {
+            boosted_wdef.damage = boosted_wdef.damage.saturating_add(1);
+        }
+        if boosted_wdef.damage_outer > 0 {
+            boosted_wdef.damage_outer = boosted_wdef.damage_outer.saturating_add(1);
+        }
+        if boosted_wdef.self_damage > 0 {
+            boosted_wdef.self_damage = boosted_wdef.self_damage.saturating_add(1);
+        }
+        if boosted_wdef.burns_fire_targets() {
+            boosted_wdef.boost_bonus = 1;
+        }
+        &boosted_wdef
+    } else {
+        base_wdef
+    };
 
     let ax = board.units[attacker_idx].x;
     let ay = board.units[attacker_idx].y;
@@ -1339,18 +2488,108 @@ pub fn simulate_weapon_with(
     // charge/pull pick up the correct attack axis even when target isn't adjacent.
     // Melee targets ARE adjacent, so both helpers agree there.
     let attack_dir = cardinal_direction(ax, ay, target_x, target_y);
+    let seismic_target_idx = if is_seismic_capacitor(weapon_id) {
+        board.unit_at(target_x, target_y)
+    } else {
+        None
+    };
+
+    if weapon_id == WId::TrappedExplode {
+        sim_trapped_explode(board, attacker_idx, &mut result);
+        return result;
+    }
+
+    if wdef.weapon_type == WeaponType::Leap {
+        if let Some(reason) = leap_landing_illegal_reason(
+            board, attacker_idx, weapon_id, target_x, target_y,
+        ) {
+            result.events.push(format!(
+                "illegal_leap_landing:{}:{}:{}",
+                target_x, target_y, reason
+            ));
+            return result;
+        }
+    }
+
+    if weapon_id == WId::VipTruckMove {
+        let move_result = simulate_move(board, attacker_idx, (target_x, target_y));
+        result.merge(&move_result);
+        return result;
+    }
+
+    let leech_kills_before = result.leech_credit_kills;
+    let leech_uncapped_before = result.leech_uncapped_kills;
 
     match wdef.weapon_type {
         WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
-        WeaponType::Projectile => sim_projectile(board, ax, ay, wdef, attack_dir, &mut result),
-        WeaponType::Artillery => sim_artillery(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
-        WeaponType::SelfAoe => sim_self_aoe(board, ax, ay, wdef, &mut result),
+        WeaponType::Projectile => {
+            sim_projectile(board, ax, ay, weapon_id, wdef, attack_dir, &mut result)
+        },
+        WeaponType::Artillery if is_arachnoid_injector(weapon_id) => {
+            sim_arachnoid_injector(
+                board,
+                weapon_id,
+                wdef,
+                ax,
+                ay,
+                target_x,
+                target_y,
+                attack_dir,
+                &mut result,
+            )
+        }
+        WeaponType::Artillery if is_tri_rocket(weapon_id) => {
+            sim_tri_rocket(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result)
+        }
+        WeaponType::Artillery => sim_artillery(board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
+        WeaponType::SelfAoe => {
+            if is_mass_shift(weapon_id) {
+                if let Some(dir) = direction_between(ax, ay, target_x, target_y) {
+                    sim_mass_shift(board, ax, ay, wdef, dir, &mut result);
+                } else {
+                    result.events.push(format!(
+                        "invalid_mass_shift_target:{}:{}:from:{}:{}",
+                        target_x, target_y, ax, ay
+                    ));
+                }
+            } else if self_aoe_target_in_area(ax, ay, target_x, target_y) {
+                sim_self_aoe(board, ax, ay, wdef, &mut result);
+            } else {
+                result.events.push(format!(
+                    "invalid_self_aoe_target:{}:{}:from:{}:{}",
+                    target_x, target_y, ax, ay
+                ));
+            }
+        },
         WeaponType::Pull | WeaponType::Swap => sim_pull_or_swap(board, attacker_idx, wdef, target_x, target_y, attack_dir, &mut result),
-        WeaponType::Charge => sim_charge(board, attacker_idx, wdef, attack_dir, &mut result),
-        WeaponType::Leap => sim_leap(board, attacker_idx, wdef, target_x, target_y, &mut result),
+        WeaponType::Charge => sim_charge(board, attacker_idx, weapon_id, wdef, attack_dir, &mut result),
+        WeaponType::Leap => sim_leap(board, attacker_idx, weapon_id, wdef, target_x, target_y, &mut result),
         WeaponType::Laser => sim_laser(board, ax, ay, wdef, attack_dir, &mut result),
         WeaponType::HealAll => sim_heal_all(board, &mut result),
+        WeaponType::GlobalPush => {
+            if let Some(dir) = support_wind_dir_from_target(target_x, target_y) {
+                sim_global_push(board, dir, &mut result);
+            }
+        }
+        WeaponType::GlobalUnitEffect => sim_global_unit_effect(
+            board, wdef, (ax, ay), (target_x, target_y), &mut result,
+        ),
+        WeaponType::TwoClick if is_hydraulic_lifter(weapon_id) => {
+            sim_hydraulic_lifter(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result)
+        }
+        WeaponType::Terraformer => sim_terraformer(board, ax, ay, target_x, target_y, &mut result),
+        WeaponType::Disposal => sim_disposal(board, target_x, target_y, &mut result),
         _ => {} // Passive, Deploy, TwoClick — no simulation
+    }
+
+    if let Some(idx) = seismic_target_idx {
+        if board.units[idx].hp <= 0 {
+            create_adjacent_cracks(board, target_x, target_y, &mut result);
+        }
+    }
+
+    if is_arachnoid_attack(weapon_id) {
+        board.units[attacker_idx].hp = 0;
     }
 
     // Self damage. Skipped for Charge weapons — sim_charge applies it inline
@@ -1362,11 +2601,36 @@ pub fn simulate_weapon_with(
         apply_damage(board, ax, ay, wdef.self_damage, &mut result, DamageSource::SelfDamage);
     }
 
-    // Self-freeze (Cryo-Launcher freezes attacker)
-    if wdef.freeze() && weapon_id == WId::RangedIce {
-        let u = &board.units[attacker_idx];
-        if !u.shield() {
-            board.units[attacker_idx].set_frozen(true);
+    let mut leech_heal_applied = false;
+
+    // Leap movement is a real tile change, but live resolves Nanobots from
+    // Leap kills after queued self-damage and before landing tile effects.
+    // This lets a self-disabled Hazardous mech revive, then catch fire/ACID
+    // from its destination. Recoil still strips shields before landing ACID.
+    if wdef.weapon_type == WeaponType::Leap {
+        let leech_kills = result.leech_credit_kills - leech_kills_before;
+        let leech_uncapped = result.leech_uncapped_kills - leech_uncapped_before;
+        let leech_capped = leech_kills - leech_uncapped;
+        let heal_cap_override = if is_prime_leap_weapon(weapon_id) {
+            Some(hydraulic_legs_nanobots_heal_cap(&board.units[attacker_idx]))
+        } else {
+            None
+        };
+        apply_viscera_nanobots_heal(
+            board,
+            attacker_idx,
+            leech_capped,
+            heal_cap_override,
+            true,
+            &mut result,
+        );
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_uncapped, None, true, &mut result);
+        leech_heal_applied = true;
+
+        let lx = board.units[attacker_idx].x;
+        let ly = board.units[attacker_idx].y;
+        if (lx, ly) != (ax, ay) {
+            apply_landing_effects(board, attacker_idx, &mut result);
         }
     }
 
@@ -1375,11 +2639,358 @@ pub fn simulate_weapon_with(
         if let Some(dir) = attack_dir {
             let ax = board.units[attacker_idx].x;
             let ay = board.units[attacker_idx].y;
-            apply_push(board, ax, ay, opposite_dir(dir), &mut result);
+            let kills_before = result.enemies_killed;
+            let recoil_policy = if is_brute_unstable_weapon(weapon_id) {
+                BRUTE_UNSTABLE_RECOIL_PUSH_POLICY
+            } else {
+                DEFAULT_PUSH_POLICY
+            };
+            apply_push_with_policy(board, ax, ay, opposite_dir(dir), &mut result, recoil_policy);
+            let pushback_kills = result.enemies_killed - kills_before;
+            if pushback_kills > 0 {
+                result.leech_credit_kills += pushback_kills;
+            }
+        }
+    }
+
+    if !leech_heal_applied {
+        let leech_kills = result.leech_credit_kills - leech_kills_before;
+        apply_viscera_nanobots_heal(board, attacker_idx, leech_kills, None, false, &mut result);
+    }
+
+    // Self-freeze (Cryo-Launcher freezes attacker)
+    if wdef.freeze() && weapon_id == WId::RangedIce {
+        let u = &board.units[attacker_idx];
+        if !u.shield() {
+            board.units[attacker_idx].set_frozen(true);
         }
     }
 
     result
+}
+
+// ── Terraformer ────────────────────────────────────────────────────────────────
+
+fn apply_terraformer_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    if let Some(idx) = board.unit_at(x, y) {
+        let hp_before = board.units[idx].hp.max(0) as i32;
+        let was_enemy = board.units[idx].is_enemy();
+        let was_player = board.units[idx].is_player();
+        finish_instant_unit_death(board, idx, result, x, y);
+        if hp_before > 0 && board.units[idx].hp <= 0 {
+            if was_enemy {
+                result.enemy_damage_dealt += hp_before;
+            } else if was_player {
+                result.mech_damage_taken += hp_before;
+            }
+        }
+    }
+
+    if board.tile(x, y).terrain == Terrain::Building && board.tile(x, y).building_hp > 0 {
+        if thaw_frozen_building(board, x, y, result) {
+            return;
+        }
+        let idx = xy_to_idx(x, y);
+        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+        let hp_lost = {
+            let tile = board.tile_mut(x, y);
+            let lost = tile.building_hp;
+            tile.building_hp = 0;
+            tile.set_shield(false);
+            lost
+        };
+        if hp_lost > 0 {
+            result.buildings_damaged += hp_lost as i32;
+            result.buildings_lost += 1;
+            let grid_loss = settle_building_grid_loss(
+                board,
+                idx,
+                hp_lost,
+                true,
+                is_unique,
+                DamageSource::Weapon,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
+        }
+    }
+
+    let terrain = board.tile(x, y).terrain;
+    let preserve_ground_acid = terrain == Terrain::Ground && board.tile(x, y).acid();
+    let tile = board.tile_mut(x, y);
+    tile.set_smoke(false);
+    tile.set_on_fire(false);
+    tile.set_cracked(false);
+    if terrain != Terrain::Mountain && !preserve_ground_acid {
+        tile.terrain = Terrain::Sand;
+        tile.building_hp = 0;
+    }
+    if terrain != Terrain::Mountain {
+        tile.set_grass(false);
+    }
+
+    if let Some(idx) = board.unit_at(x, y) {
+        board.units[idx].set_fire(false);
+    }
+}
+
+fn sim_terraformer(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, result: &mut ActionResult) {
+    let Some(tiles) = terraformer_sweep_tiles(ax, ay, tx, ty) else {
+        result.events.push(format!("invalid_terraformer_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    };
+
+    for (x, y) in tiles {
+        apply_terraformer_tile(board, x, y, result);
+    }
+}
+
+// ── Disposal A.C.I.D. Launcher ───────────────────────────────────────────────
+
+fn apply_disposal_tile(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    if let Some(idx) = board.unit_at(x, y) {
+        let hp_before = board.units[idx].hp.max(0) as i32;
+        let was_enemy = board.units[idx].is_enemy();
+        let was_player = board.units[idx].is_player();
+        finish_instant_unit_death(board, idx, result, x, y);
+        if hp_before > 0 && board.units[idx].hp <= 0 {
+            if was_enemy {
+                result.enemy_damage_dealt += hp_before;
+            } else if was_player {
+                result.mech_damage_taken += hp_before;
+            }
+        }
+    }
+
+    if board.tile(x, y).terrain == Terrain::Building && board.tile(x, y).building_hp > 0 {
+        if thaw_frozen_building(board, x, y, result) {
+            return;
+        }
+        let idx = xy_to_idx(x, y);
+        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+        let hp_lost = {
+            let tile = board.tile_mut(x, y);
+            let lost = tile.building_hp;
+            tile.building_hp = 0;
+            tile.set_shield(false);
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
+            lost
+        };
+        if hp_lost > 0 {
+            result.buildings_damaged += hp_lost as i32;
+            result.buildings_lost += 1;
+            let grid_loss = settle_building_grid_loss(
+                board,
+                idx,
+                hp_lost,
+                true,
+                is_unique,
+                DamageSource::Weapon,
+            );
+            result.grid_damage += grid_loss as i32;
+            board.grid_power = board.grid_power.saturating_sub(grid_loss);
+        }
+    }
+
+    let tile = board.tile_mut(x, y);
+    tile.set_acid(true);
+    tile.set_cracked(false);
+    tile.set_smoke(false);
+    tile.set_on_fire(false);
+    if tile.terrain == Terrain::Mountain {
+        tile.terrain = Terrain::Ground;
+        tile.building_hp = 0;
+    }
+}
+
+fn sim_disposal(board: &mut Board, tx: u8, ty: u8, result: &mut ActionResult) {
+    for (x, y) in disposal_cross_tiles(tx, ty) {
+        apply_disposal_tile(board, x, y, result);
+    }
+}
+
+// ── Cataclysm squad weapons ─────────────────────────────────────────────────
+
+fn sim_hydraulic_lifter(
+    board: &mut Board,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let Some(dir) = attack_dir else {
+        result.events.push(format!("invalid_hydraulic_lifter_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    };
+    let dist = (tx as i8 - ax as i8).unsigned_abs() + (ty as i8 - ay as i8).unsigned_abs();
+    if dist < 2 {
+        result.events.push(format!("invalid_hydraulic_lifter_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    }
+
+    let (dx, dy) = DIRS[dir];
+    let grab_x = ax as i8 + dx;
+    let grab_y = ay as i8 + dy;
+    if !in_bounds(grab_x, grab_y) || board.is_blocked(tx, ty, true) {
+        return;
+    }
+    let gx = grab_x as u8;
+    let gy = grab_y as u8;
+    let Some(unit_idx) = board.unit_at(gx, gy) else { return; };
+    if !board.units[unit_idx].pushable() && !board.units[unit_idx].is_mech() {
+        return;
+    }
+
+    let landing_was_forest = board.tile(tx, ty).terrain == Terrain::Forest;
+    board.units[unit_idx].x = tx;
+    board.units[unit_idx].y = ty;
+    apply_landing_effects(board, unit_idx, result);
+    apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+    if landing_was_forest {
+        apply_fire_tile_pickup(board, unit_idx, tx, ty);
+    }
+}
+
+fn sim_tri_rocket(
+    board: &mut Board,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let Some(dir) = attack_dir else {
+        result.events.push(format!("invalid_tri_rocket_target:{}:{}:from:{}:{}", tx, ty, ax, ay));
+        return;
+    };
+    let (dx, dy) = DIRS[dir];
+    let mut vacated_kill_tiles: Vec<(u8, u8)> = Vec::new();
+    let center_bombrock = board.unit_at(tx, ty).is_some_and(|idx| {
+        board.units[idx].hp > 0 && board.units[idx].type_name_str() == "BombRock"
+    });
+    if center_bombrock {
+        let center_idx = board.unit_at(tx, ty);
+        apply_damage_core(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+        if let Some(idx) = center_idx {
+            if board.units[idx].hp <= 0 {
+                // Ranged_Crack queues artillery impacts on three separate
+                // tiles. Live Cataclysm captures show a BombRock destroyed by
+                // the center rocket does not emit its normal four-way blast;
+                // instead the killed boulder collides forward along the rocket
+                // line before the front rocket's own hit resolves.
+                let fx = tx as i8 + dx;
+                let fy = ty as i8 + dy;
+                if in_bounds(fx, fy) {
+                    apply_damage(board, fx as u8, fy as u8, 1, result, DamageSource::Bump);
+                }
+            }
+        }
+    }
+    for offset in [1i8, 0, -1] {
+        if center_bombrock && offset == 0 {
+            continue;
+        }
+        let px = tx as i8 + dx * offset;
+        let py = ty as i8 + dy * offset;
+        if !in_bounds(px, py) { continue; }
+        let x = px as u8;
+        let y = py as u8;
+        let pre_hit_unit = board.unit_at(x, y).map(|idx| {
+            (
+                idx,
+                board.units[idx].hp,
+                board.units[idx].acid(),
+                board.tile(x, y).acid(),
+                board.units[idx].x,
+                board.units[idx].y,
+            )
+        });
+        let deferred_death_explosion = if wdef.building_immune()
+            && board.tile(x, y).terrain == Terrain::Building
+            && board.tile(x, y).building_hp > 0
+        {
+            None
+        } else {
+            apply_damage_defer_death_explosion(
+                board,
+                x,
+                y,
+                wdef.damage,
+                result,
+                DamageSource::Weapon,
+            )
+        };
+        let killed_by_hit = pre_hit_unit
+            .map(|(idx, _, _, _, _, _)| board.units[idx].hp <= 0)
+            .unwrap_or(false);
+        apply_push_with_policy(board, x, y, dir, result, TRI_ROCKET_PUSH_POLICY);
+        if let Some((idx, pre_hp, was_acid, tile_had_acid, ox, oy)) = pre_hit_unit {
+            let fx = board.units[idx].x;
+            let fy = board.units[idx].y;
+            let moved = (fx, fy) != (ox, oy);
+            let died = board.units[idx].hp <= 0;
+            if died && moved && killed_by_hit {
+                // Tri-Rocket queues three individual SpaceDamage hits. Live
+                // captures show a killed ACID unit leaves its pool at the
+                // pushed corpse destination, not at the pre-push damage tile.
+                vacated_kill_tiles.push((ox, oy));
+                if was_acid {
+                    if !tile_had_acid {
+                        board.tile_mut(ox, oy).flags.remove(TileFlags::ACID);
+                    }
+                    leave_acid_pool_on_death(board, fx, fy);
+                }
+            } else if pre_hp > 0 && board.units[idx].hp > 0 && moved
+                && vacated_kill_tiles.contains(&(fx, fy))
+            {
+                // The following rocket can shove a live unit into a tile that
+                // an earlier killed target just vacated. The engine applies a
+                // corpse-bump damage to the entering unit, but still lets it
+                // occupy the tile after the corpse has been pushed onward.
+                apply_damage(board, fx, fy, 1, result, DamageSource::Bump);
+            }
+        }
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
+        }
+    }
+}
+
+fn create_crack(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    let tile = board.tile_mut(x, y);
+    match tile.terrain {
+        Terrain::Ground | Terrain::Ice if !tile.cracked() => {
+            tile.set_cracked(true);
+            result.events.push(format!("crack_created:{}:{}", x, y));
+        }
+        Terrain::Mountain if tile.building_hp > 0 => {
+            tile.building_hp -= 1;
+            result.events.push(format!("mountain_cracked:{}:{}", x, y));
+            if tile.building_hp == 0 {
+                tile.terrain = Terrain::Rubble;
+            }
+        }
+        _ => {}
+    }
+}
+
+fn create_adjacent_cracks(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    for &(dx, dy) in &DIRS {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if in_bounds(nx, ny) {
+            create_crack(board, nx as u8, ny as u8, result);
+        }
+    }
 }
 
 // ── Melee ────────────────────────────────────────────────────────────────────
@@ -1400,7 +3011,28 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
                 let px = ax as i8 + dxs * i;
                 let py = ay as i8 + dys * i;
                 if !in_bounds(px, py) { break; }
-                apply_damage(board, px as u8, py as u8, wdef.damage, result, DamageSource::Weapon);
+                let pxu = px as u8;
+                let pyu = py as u8;
+                if wdef.burns_fire_targets() && wdef.fire() {
+                    let mut path_dmg = wdef.damage;
+                    if let Some(uid) = board.unit_at(pxu, pyu) {
+                        if board.units[uid].fire() {
+                            path_dmg = path_dmg.saturating_add(2);
+                            path_dmg = path_dmg.saturating_add(wdef.boost_bonus);
+                        }
+                    }
+                    let occupied_at_impact = board.unit_at(pxu, pyu).is_some();
+                    apply_damage(board, pxu, pyu, path_dmg, result, DamageSource::Weapon);
+                    apply_weapon_status_with_impact_occupancy(
+                        board,
+                        pxu,
+                        pyu,
+                        wdef,
+                        occupied_at_impact,
+                    );
+                } else {
+                    apply_damage(board, pxu, pyu, wdef.damage, result, DamageSource::Weapon);
+                }
             }
         }
     }
@@ -1415,49 +3047,105 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
         if let Some(uid) = board.unit_at(tx, ty) {
             if board.units[uid].fire() {
                 target_dmg = target_dmg.saturating_add(2);
+                target_dmg = target_dmg.saturating_add(wdef.boost_bonus);
             }
         }
     }
-    apply_damage(board, tx, ty, target_dmg, result, DamageSource::Weapon);
+    let target_occupied_at_impact = board.unit_at(tx, ty).is_some();
+    let defer_target_death_explosion = !wdef.chain()
+        && attack_dir.is_some()
+        && target_dmg > 0
+        && !matches!(wdef.push, PushDir::None | PushDir::Flip);
+    let deferred_death_explosion = if defer_target_death_explosion {
+        apply_damage_defer_death_explosion(
+            board, tx, ty, target_dmg, result, DamageSource::Weapon,
+        )
+    } else if !wdef.chain() {
+        apply_damage(board, tx, ty, target_dmg, result, DamageSource::Weapon);
+        None
+    } else {
+        None
+    };
 
-    // Chain weapon (Electric Whip): BFS through adjacent occupied tiles.
-    // The shooter's own tile is excluded from the chain graph — in-game
-    // Electric Whip never damages its own mech even when the chain would
-    // loop back adjacent. Seed `visited` with both target and attacker so
-    // the BFS cannot re-enter the source.
+    // Chain weapon (Electric Whip): BFS through adjacent pawns, and with
+    // Building Chain powered, through live Grid Buildings as zero-damage
+    // nodes. Lua's Prime_Lightning only emits SpaceDamage for pawns/building
+    // chain nodes; it does not damage terrain such as Ice under the pawn.
+    // Live captures show it still ignites Forest under a hit pawn.
+    // The shooter's own tile is excluded from the graph.
     if wdef.chain() {
         let mut visited = 0u64;
-        visited |= 1u64 << xy_to_idx(tx, ty);
         visited |= 1u64 << xy_to_idx(ax, ay);
         let mut queue: Vec<(u8, u8)> = vec![(tx, ty)];
         let mut head = 0;
         while head < queue.len() {
             let (cx, cy) = queue[head];
             head += 1;
+            let bit = 1u64 << xy_to_idx(cx, cy);
+            if visited & bit != 0 { continue; }
+            visited |= bit;
+
+            let has_pawn = board.unit_at(cx, cy).is_some();
+            let chain_building = wdef.building_immune() && board.tile(cx, cy).is_building();
+            if !has_pawn && !chain_building {
+                continue;
+            }
+
+            if has_pawn {
+                apply_damage(board, cx, cy, wdef.damage, result, DamageSource::ChainWhip);
+            }
+
             for &(dx, dy) in &DIRS {
                 let nx = cx as i8 + dx;
                 let ny = cy as i8 + dy;
                 if !in_bounds(nx, ny) { continue; }
-                let (nxu, nyu) = (nx as u8, ny as u8);
-                let bit = 1u64 << xy_to_idx(nxu, nyu);
-                if visited & bit != 0 { continue; }
-                visited |= bit;
-                // Chain doesn't pass through buildings (no Building Chain upgrade yet)
-                if board.tile(nxu, nyu).is_building() { continue; }
-                if board.unit_at(nxu, nyu).is_some() {
-                    apply_damage(board, nxu, nyu, wdef.damage, result, DamageSource::Weapon);
-                    queue.push((nxu, nyu));
+                let next_bit = 1u64 << xy_to_idx(nx as u8, ny as u8);
+                if visited & next_bit == 0 {
+                    queue.push((nx as u8, ny as u8));
                 }
             }
         }
     }
 
     if let Some(dir) = attack_dir {
-        // Apply weapon status BEFORE push (unit still at target tile)
-        apply_weapon_status(board, tx, ty, wdef);
+        let flamethrower_push =
+            wdef.burns_fire_targets() && wdef.fire() && matches!(wdef.push, PushDir::Forward);
+        let flamethrower_target_at_impact = if flamethrower_push {
+            board.unit_at(tx, ty)
+        } else {
+            None
+        };
+        let flamethrower_target_effectively_flying = flamethrower_target_at_impact
+            .map(|idx| board.units[idx].effectively_flying())
+            .unwrap_or(false);
+
+        if flamethrower_push {
+            // Live Prime_Flamethrower lights the struck tile, then pushes the
+            // target. Grounded occupants catch the flame even if the push
+            // moves them away; flying occupants only catch it if the push is
+            // blocked and they remain on the struck tile, or if they land on
+            // ordinary burning terrain.
+            apply_fire_weapon_tile_status(board, tx, ty);
+            if let Some(idx) = flamethrower_target_at_impact {
+                if !flamethrower_target_effectively_flying {
+                    apply_fire_weapon_unit_status(board, idx);
+                }
+            }
+        } else {
+            // Apply weapon status BEFORE push (unit still at target tile)
+            apply_weapon_status_with_impact_occupancy(
+                board, tx, ty, wdef, target_occupied_at_impact,
+            );
+        }
 
         match wdef.push {
-            PushDir::Forward => apply_push(board, tx, ty, dir, result),
+            PushDir::Forward => {
+                if wdef.burns_fire_targets() {
+                    apply_push_with_policy(board, tx, ty, dir, result, FLAMETHROWER_PUSH_POLICY);
+                } else {
+                    apply_push(board, tx, ty, dir, result);
+                }
+            }
             PushDir::Flip => flip_queued_attack(board, tx, ty),
             PushDir::Backward => apply_push(board, tx, ty, opposite_dir(dir), result),
             PushDir::Perpendicular => apply_push(board, tx, ty, (dir + 1) % 4, result),
@@ -1466,6 +3154,23 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
             }
             PushDir::Throw => apply_throw(board, ax, ay, tx, ty, dir, result),
             _ => {}
+        }
+
+        if flamethrower_push {
+            if let Some(idx) = board.unit_at(tx, ty) {
+                if flamethrower_target_at_impact == Some(idx)
+                    && flamethrower_target_effectively_flying
+                {
+                    apply_fire_weapon_unit_status(board, idx);
+                }
+                apply_fire_tile_pickup(board, idx, tx, ty);
+            }
+        }
+
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
         }
 
         // AoE behind: hit tile behind target
@@ -1512,7 +3217,29 @@ fn projectile_damage(wdef: &WeaponDef, ax: u8, ay: u8, hx: u8, hy: u8) -> u8 {
     scaled.min(wdef.damage)
 }
 
-fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn acid_projector_edge_block_suppresses_status(
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    hx: u8,
+    hy: u8,
+    dir: usize,
+) -> bool {
+    if weapon_id != WId::ScienceAcidShot || wdef.damage != 0 {
+        return false;
+    }
+    let (dx, dy) = DIRS[dir];
+    !in_bounds(hx as i8 + dx, hy as i8 + dy)
+}
+
+fn sim_projectile(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
     let dir = match attack_dir {
         Some(d) => d,
         None => return,
@@ -1552,12 +3279,55 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
         let hx = hit_x as u8;
         let hy = hit_y as u8;
         let dmg = projectile_damage(wdef, ax, ay, hx, hy);
-        apply_damage(board, hx, hy, dmg, result, DamageSource::Weapon);
-        apply_weapon_status(board, hx, hy, wdef); // status BEFORE push (unit still here)
+        let occupied_at_impact = board.unit_at(hx, hy).is_some();
+        let damage_source = if is_brute_unstable_weapon(weapon_id) {
+            DamageSource::WeaponNoAcidPool
+        } else {
+            DamageSource::Weapon
+        };
+        let skip_friendly_damage = wdef.friendly_immune()
+            && board.unit_at(hx, hy)
+                .map(|idx| board.units[idx].is_player())
+                .unwrap_or(false);
+        let defer_death_explosion = dmg > 0 && !matches!(wdef.push, PushDir::None | PushDir::Flip);
+        let deferred_death_explosion = if skip_friendly_damage {
+            None
+        } else if defer_death_explosion {
+            apply_damage_defer_death_explosion(
+                board, hx, hy, dmg, result, damage_source,
+            )
+        } else {
+            apply_damage(board, hx, hy, dmg, result, damage_source);
+            None
+        };
+        let acid_projector_edge_suppressed =
+            acid_projector_edge_block_suppresses_status(weapon_id, wdef, hx, hy, dir);
+        if !acid_projector_edge_suppressed {
+            apply_weapon_status_with_impact_occupancy(
+                board, hx, hy, wdef, occupied_at_impact,
+            ); // status BEFORE push (unit still here)
+        }
+        let suppress_direct_push = acid_projector_edge_suppressed;
+        let policy = if wdef.no_edge_bump_direct_push() {
+            NO_EDGE_BUMP_PUSH_POLICY
+        } else if is_brute_unstable_weapon(weapon_id) {
+            BRUTE_UNSTABLE_TARGET_PUSH_POLICY
+        } else if weapon_id == WId::ScienceAcidShot {
+            ACID_PROJECTOR_PUSH_POLICY
+        } else if weapon_id == WId::BruteMirrorshot {
+            TRI_ROCKET_PUSH_POLICY
+        } else {
+            DEFAULT_PUSH_POLICY
+        };
         match wdef.push {
-            PushDir::Forward => apply_push(board, hx, hy, dir, result),
-            PushDir::Backward => apply_push(board, hx, hy, opposite_dir(dir), result),
+            PushDir::Forward if !suppress_direct_push => apply_push_with_policy(board, hx, hy, dir, result, policy),
+            PushDir::Backward if !suppress_direct_push => apply_push_with_policy(board, hx, hy, opposite_dir(dir), result, policy),
             _ => {}
+        }
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
         }
     } else if let Some((mx, my)) = mountain_hit {
         // Projectile struck a mountain with no prior target — damage it.
@@ -1601,14 +3371,63 @@ fn sim_projectile(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_di
 
 // ── Artillery ────────────────────────────────────────────────────────────────
 
-fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_artillery(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+    let center_occupied_at_impact = board.unit_at(tx, ty).is_some();
+    let center_blocked_at_impact = board.is_blocked(tx, ty, false);
+    let rockthrow_defer_center_death_effects = weapon_id == WId::RangedRockthrow
+        && matches!(wdef.push, PushDir::Perpendicular);
+    let center_volatile_idx = if rockthrow_defer_center_death_effects {
+        board.unit_at(tx, ty).and_then(|idx| {
+            let u = &board.units[idx];
+            if u.is_enemy() && u.hp > 0 && u.is_volatile_vek() {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+    } else {
+        None
+    };
+    let center_blast_idx = if rockthrow_defer_center_death_effects
+        && (board.blast_psion || board.boss_psion)
+    {
+        board.unit_at(tx, ty).and_then(|idx| {
+            let u = &board.units[idx];
+            let tname = u.type_name_str();
+            if u.receives_psion_aura() && u.hp > 0
+                && tname != "Jelly_Explode1"
+                && tname != "Jelly_Boss"
+            {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+    } else {
+        None
+    };
+    let mut deferred_center_volatile_decay = false;
+    let mut deferred_center_blast_explosion = false;
+
     // Center damage
     if wdef.aoe_center() {
-        apply_damage(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+        if center_volatile_idx.is_some() || center_blast_idx.is_some() {
+            apply_damage_core(board, tx, ty, wdef.damage, result, DamageSource::Weapon);
+            deferred_center_volatile_decay = center_volatile_idx
+                .map(|idx| board.units[idx].hp <= 0)
+                .unwrap_or(false);
+            deferred_center_blast_explosion = center_blast_idx
+                .map(|idx| board.units[idx].hp <= 0)
+                .unwrap_or(false);
+        } else {
+            apply_direct_weapon_damage(board, tx, ty, wdef.damage, wdef, result);
+        }
     }
 
     // Apply status effects to center tile (fire, freeze, smoke, shield, acid)
-    apply_weapon_status(board, tx, ty, wdef);
+    apply_weapon_status_with_impact_occupancy(
+        board, tx, ty, wdef, center_occupied_at_impact,
+    );
 
     // Smoke-behind-shooter: Rocket Artillery (Ranged_Rocket) places a single
     // smoke tile one step opposite the shot direction from the shooter's
@@ -1621,9 +3440,20 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             let bx = ax as i8 - ddx;
             let by = ay as i8 - ddy;
             if in_bounds(bx, by) {
-                let tile = board.tile_mut(bx as u8, by as u8);
-                tile.set_on_fire(false); // smoke replaces fire
-                tile.set_smoke(true);
+                place_smoke(board, bx as u8, by as u8);
+            }
+        }
+    }
+
+    // Fire-behind-shooter: Vulcan Artillery Backburn upgrade lights the tile
+    // one step opposite the shot direction from the shooter's position.
+    if wdef.fire_behind_shooter() {
+        if let Some(dir) = attack_dir {
+            let (ddx, ddy) = DIRS[dir];
+            let bx = ax as i8 - ddx;
+            let by = ay as i8 - ddy;
+            if in_bounds(bx, by) {
+                apply_weapon_status(board, bx as u8, by as u8, wdef);
             }
         }
     }
@@ -1640,8 +3470,22 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
     // static bystanders that actually got flung one tile.
     if let Some(dir) = attack_dir {
         match wdef.push {
-            PushDir::Forward if wdef.aoe_center()  => apply_push(board, tx, ty, dir, result),
-            PushDir::Backward if wdef.aoe_center() => apply_push(board, tx, ty, opposite_dir(dir), result),
+            PushDir::Forward if wdef.aoe_center()  => {
+                if is_rocket_artillery(weapon_id) {
+                    apply_rocket_center_push(board, tx, ty, dir, result);
+                } else if wdef.no_edge_bump_direct_push() {
+                    apply_push_with_policy(board, tx, ty, dir, result, NO_EDGE_BUMP_PUSH_POLICY);
+                } else {
+                    apply_push(board, tx, ty, dir, result);
+                }
+            }
+            PushDir::Backward if wdef.aoe_center() => {
+                if wdef.no_edge_bump_direct_push() {
+                    apply_push_with_policy(board, tx, ty, opposite_dir(dir), result, NO_EDGE_BUMP_PUSH_POLICY);
+                } else {
+                    apply_push(board, tx, ty, opposite_dir(dir), result);
+                }
+            }
             PushDir::Perpendicular => {
                 // Two side tiles outward. Perpendicular directions are
                 // (dir + 1) % 4 and (dir + 3) % 4; each side pushes outward
@@ -1665,6 +3509,20 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
         }
     }
 
+    if deferred_center_volatile_decay {
+        apply_volatile_decay(board, tx, ty, result, 0);
+    }
+    if deferred_center_blast_explosion {
+        apply_death_explosion(board, tx, ty, result, 0);
+    }
+
+    // Rock Accelerator leaves a neutral boulder on an empty target tile after
+    // impact. The pre-impact blocked check prevents replacing mountains,
+    // buildings, units, wrecks, or deadly terrain cleared by the shot.
+    if weapon_id == WId::RangedRockthrow && !center_blocked_at_impact {
+        spawn_rock_thrown(board, tx, ty);
+    }
+
     // Behind tile damage (Old Earth Artillery)
     if wdef.aoe_behind() {
         if let Some(dir) = attack_dir {
@@ -1672,8 +3530,11 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             let bx = tx as i8 + ddx;
             let by = ty as i8 + ddy;
             if in_bounds(bx, by) {
-                apply_damage(board, bx as u8, by as u8, wdef.damage, result, DamageSource::Weapon);
-                apply_weapon_status(board, bx as u8, by as u8, wdef);
+                let occupied_at_impact = board.unit_at(bx as u8, by as u8).is_some();
+                apply_direct_weapon_damage(board, bx as u8, by as u8, wdef.damage, wdef, result);
+                apply_weapon_status_with_impact_occupancy(
+                    board, bx as u8, by as u8, wdef, occupied_at_impact,
+                );
             }
         }
     }
@@ -1696,8 +3557,13 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if !in_bounds(nx, ny) { continue; }
-            apply_damage(board, nx as u8, ny as u8, wdef.damage_outer, result, DamageSource::Weapon);
+            apply_direct_weapon_damage(board, nx as u8, ny as u8, wdef.damage_outer, wdef, result);
             if wdef.push == PushDir::Outward {
+                if wdef.no_edge_bump_adjacent_push() && wdef.damage_outer == 0 {
+                    let bx = nx + dx;
+                    let by = ny + dy;
+                    if !in_bounds(bx, by) { continue; }
+                }
                 apply_push(board, nx as u8, ny as u8, i, result);
             }
         }
@@ -1717,27 +3583,306 @@ fn sim_artillery(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty
                 let px = tx as i8 + pdx;
                 let py = ty as i8 + pdy;
                 if !in_bounds(px, py) { continue; }
-                apply_damage(board, px as u8, py as u8, wdef.damage, result, DamageSource::Weapon);
-                apply_weapon_status(board, px as u8, py as u8, wdef);
+                let occupied_at_impact = board.unit_at(px as u8, py as u8).is_some();
+                apply_direct_weapon_damage(board, px as u8, py as u8, wdef.damage, wdef, result);
+                apply_weapon_status_with_impact_occupancy(
+                    board, px as u8, py as u8, wdef, occupied_at_impact,
+                );
             }
         }
     }
 }
 
+fn sim_arachnoid_injector(
+    board: &mut Board,
+    weapon_id: WId,
+    wdef: &WeaponDef,
+    ax: u8,
+    ay: u8,
+    tx: u8,
+    ty: u8,
+    attack_dir: Option<usize>,
+    result: &mut ActionResult,
+) {
+    let target_before = board.unit_at(tx, ty);
+    let spawn_allowed = target_before
+        .map(|idx| !board.units[idx].is_mech())
+        .unwrap_or(false);
+
+    sim_artillery(board, weapon_id, wdef, ax, ay, tx, ty, attack_dir, result);
+
+    if !spawn_allowed {
+        return;
+    }
+    let Some(idx) = target_before else {
+        return;
+    };
+    if board.units[idx].hp > 0 {
+        return;
+    }
+
+    // The engine replaces the killed target with the Arachnoid pawn. Dead
+    // units remain in Rust's fixed unit array for collision replay, so move
+    // this corpse off-board before spawning or its wreck would falsely block
+    // the new friendly unit and the vacated tile later in the same turn.
+    board.units[idx].x = 8;
+    board.units[idx].y = 8;
+    let acid_attack = arachnoid_injector_spawns_acid_attack(weapon_id);
+    spawn_arachnoid(board, tx, ty, acid_attack, result);
+}
+
 // ── Self AoE ─────────────────────────────────────────────────────────────────
+
+fn apply_mass_shift_tile(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    dir: usize,
+    is_self: bool,
+    wdef: &WeaponDef,
+    result: &mut ActionResult,
+) {
+    if let Some(idx) = board.unit_at(x, y) {
+        if (is_self && wdef.shield_self())
+            || (!is_self && wdef.shield_allies() && board.units[idx].is_player())
+        {
+            board.units[idx].set_shield(true);
+        }
+    }
+    apply_damage(board, x, y, wdef.damage, result, DamageSource::Weapon);
+    apply_push(board, x, y, dir, result);
+}
+
+fn sim_mass_shift(
+    board: &mut Board,
+    ax: u8,
+    ay: u8,
+    wdef: &WeaponDef,
+    dir: usize,
+    result: &mut ActionResult,
+) {
+    let (fdx, fdy) = DIRS[dir];
+    let side_a = (dir + 1) % 4;
+    let side_b = (dir + 3) % 4;
+    let back = opposite_dir(dir);
+    let (adx, ady) = DIRS[side_a];
+    let (bdx, bdy) = DIRS[side_b];
+    let (rdx, rdy) = DIRS[back];
+
+    let front = (ax as i8 + fdx, ay as i8 + fdy);
+    if in_bounds(front.0, front.1) {
+        apply_mass_shift_tile(board, front.0 as u8, front.1 as u8, dir, false, wdef, result);
+    }
+
+    apply_mass_shift_tile(board, ax, ay, dir, true, wdef, result);
+
+    let side_a_tile = (ax as i8 + adx, ay as i8 + ady);
+    if in_bounds(side_a_tile.0, side_a_tile.1) {
+        apply_mass_shift_tile(
+            board,
+            side_a_tile.0 as u8,
+            side_a_tile.1 as u8,
+            dir,
+            false,
+            wdef,
+            result,
+        );
+    }
+
+    let side_b_tile = (ax as i8 + bdx, ay as i8 + bdy);
+    if in_bounds(side_b_tile.0, side_b_tile.1) {
+        apply_mass_shift_tile(
+            board,
+            side_b_tile.0 as u8,
+            side_b_tile.1 as u8,
+            dir,
+            false,
+            wdef,
+            result,
+        );
+    }
+
+    let rear = (ax as i8 + rdx, ay as i8 + rdy);
+    if in_bounds(rear.0, rear.1) {
+        apply_mass_shift_tile(board, rear.0 as u8, rear.1 as u8, dir, false, wdef, result);
+    }
+}
+
+fn self_aoe_target_in_area(ax: u8, ay: u8, target_x: u8, target_y: u8) -> bool {
+    if target_x >= 8 || target_y >= 8 {
+        return false;
+    }
+    let dx = (target_x as i8 - ax as i8).abs();
+    let dy = (target_y as i8 - ay as i8).abs();
+    dx + dy <= 1
+}
 
 fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mut ActionResult) {
     for (i, &(dx, dy)) in DIRS.iter().enumerate() {
         let nx = ax as i8 + dx;
         let ny = ay as i8 + dy;
         if !in_bounds(nx, ny) { continue; }
+        let occupied_at_impact = board.unit_at(nx as u8, ny as u8).is_some();
         apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
         match wdef.push {
-            PushDir::Outward => apply_push(board, nx as u8, ny as u8, i, result),
+            PushDir::Outward => {
+                let bx = nx + dx;
+                let by = ny + dy;
+                if !(wdef.no_edge_bump_adjacent_push() && wdef.damage == 0 && !in_bounds(bx, by)) {
+                    apply_push(board, nx as u8, ny as u8, i, result);
+                }
+            }
             PushDir::Inward => apply_push(board, nx as u8, ny as u8, opposite_dir(i), result),
             _ => {}
         }
-        apply_weapon_status(board, nx as u8, ny as u8, wdef);
+        apply_weapon_status_with_impact_occupancy(
+            board, nx as u8, ny as u8, wdef, occupied_at_impact,
+        );
+    }
+    if wdef.shield_self() {
+        if let Some(idx) = board.unit_at(ax, ay) {
+            board.units[idx].set_shield(true);
+        }
+    }
+}
+
+fn apply_trapped_death_damage(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+    damage_building: bool,
+) {
+    let mut killed_enemy_idx = None;
+    let mut killed_enemy_uid = 0u16;
+    let mut volatile = false;
+    let mut death_explosion = false;
+
+    if let Some(uidx) = board.unit_at(x, y) {
+        let unit = &mut board.units[uidx];
+        if unit.hp > 0 {
+            let prev_hp = unit.hp;
+            let tname = unit.type_name_str().to_string();
+            let is_enemy = unit.is_enemy();
+            let is_player_mech = unit.is_player() && unit.is_mech();
+            let has_acid = unit.acid();
+            volatile = is_enemy && unit.is_volatile_vek();
+            death_explosion = is_enemy
+                && (board.blast_psion || board.boss_psion)
+                && unit.receives_psion_aura()
+                && tname != "Jelly_Explode1"
+                && tname != "Jelly_Boss";
+            let mission_counted = is_enemy && !unit.minor();
+            killed_enemy_uid = unit.uid;
+
+            unit.hp = 0;
+            unit.set_shield(false);
+            unit.set_frozen(false);
+
+            if is_enemy {
+                result.record_enemy_kill(mission_counted);
+                result.enemy_damage_dealt += prev_hp as i32;
+                killed_enemy_idx = Some(uidx);
+            } else if is_player_mech {
+                result.mechs_killed += 1;
+                result.mech_damage_taken += prev_hp as i32;
+            }
+
+            if has_acid {
+                let terrain = board.tile(x, y).terrain;
+                if !terrain.is_deadly_ground() || terrain == Terrain::Water {
+                    leave_acid_pool_on_death(board, x, y);
+                }
+            }
+        }
+    }
+
+    if let Some(idx) = killed_enemy_idx {
+        on_enemy_death(board, idx, result);
+        break_web_from(board, killed_enemy_uid);
+        if volatile {
+            apply_volatile_decay(board, x, y, result, 0);
+        }
+        if death_explosion {
+            apply_death_explosion(board, x, y, result, 0);
+        }
+    }
+
+    if board.tile(x, y).is_building() {
+        if !damage_building {
+            return;
+        }
+        if thaw_frozen_building(board, x, y, result) {
+            return;
+        }
+        let idx = xy_to_idx(x, y) as u64;
+        let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+        let tile = board.tile_mut(x, y);
+        if tile.building_hp > 0 {
+            let lost = tile.building_hp;
+            tile.building_hp = 0;
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
+            result.buildings_damaged += lost as i32;
+            result.grid_damage += lost as i32;
+            result.buildings_lost += 1;
+            board.grid_power = board.grid_power.saturating_sub(lost);
+        }
+        return;
+    }
+
+    let terrain = board.tile(x, y).terrain;
+    match terrain {
+        Terrain::Mountain => {
+            let tile = board.tile_mut(x, y);
+            if tile.building_hp > 0 {
+                tile.building_hp = tile.building_hp.saturating_sub(1);
+                if tile.building_hp == 0 {
+                    tile.terrain = Terrain::Rubble;
+                }
+            }
+        }
+        Terrain::Ice => {
+            if board.tile(x, y).cracked() {
+                board.tile_mut(x, y).terrain = Terrain::Water;
+                board.tile_mut(x, y).set_cracked(false);
+            } else {
+                board.tile_mut(x, y).set_cracked(true);
+            }
+        }
+        Terrain::Ground => {
+            if board.tile(x, y).cracked() {
+                board.tile_mut(x, y).terrain = Terrain::Chasm;
+                board.tile_mut(x, y).set_cracked(false);
+            }
+        }
+        Terrain::Forest => {
+            board.tile_mut(x, y).set_on_fire(true);
+        }
+        Terrain::Sand => {
+            board.tile_mut(x, y).terrain = Terrain::Ground;
+            board.tile_mut(x, y).set_smoke(true);
+        }
+        _ => {}
+    }
+}
+
+fn sim_trapped_explode(board: &mut Board, attacker_idx: usize, result: &mut ActionResult) {
+    let ax = board.units[attacker_idx].x;
+    let ay = board.units[attacker_idx].y;
+    apply_trapped_death_damage(board, ax, ay, result, true);
+
+    for &(dx, dy) in &DIRS {
+        let nx = ax as i8 + dx;
+        let ny = ay as i8 + dy;
+        if !in_bounds(nx, ny) { continue; }
+        let tx = nx as u8;
+        let ty = ny as u8;
+        if board.tile(tx, ty).is_building() {
+            continue;
+        }
+        apply_trapped_death_damage(board, tx, ty, result, false);
     }
 }
 
@@ -1745,6 +3890,20 @@ fn sim_self_aoe(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, result: &mu
 
 fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     if wdef.weapon_type == WeaponType::Swap {
+        if tx >= 8 || ty >= 8 {
+            return;
+        }
+        let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+        let dist = (tx as i8 - ax as i8).unsigned_abs()
+            + (ty as i8 - ay as i8).unsigned_abs();
+        let min_r = wdef.range_min.max(1);
+        let max_r = if wdef.range_max == 0 { 8 } else { wdef.range_max };
+        if dist < min_r
+            || dist > max_r
+            || cardinal_direction(ax, ay, tx, ty).is_none()
+        {
+            return;
+        }
         if let Some(target_idx) = board.unit_at(tx, ty) {
             // Stable/Massive neutrals (e.g. Dam_Pawn) are immune to swap.
             // Mechs are always swap-eligible regardless of pushable flag.
@@ -1752,7 +3911,6 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
                 return;
             }
             // Swap positions
-            let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
             board.units[target_idx].x = ax;
             board.units[target_idx].y = ay;
             board.units[attacker_idx].x = tx;
@@ -1897,7 +4055,7 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
 
 // ── Charge ───────────────────────────────────────────────────────────────────
 
-fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_charge(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &WeaponDef, attack_dir: Option<usize>, result: &mut ActionResult) {
     let dir = match attack_dir {
         Some(d) => d,
         None => return,
@@ -1926,7 +4084,7 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
         let tile = board.tile(nxu, nyu);
         if tile.terrain == Terrain::Mountain { break; }
         if tile.is_building() { hit = Some((nxu, nyu)); break; }
-        if !wdef.flying_charge() && tile.terrain.is_deadly_ground() { break; }
+        if charge_terrain_blocks(weapon_id, wdef, tile.terrain) { break; }
         if board.unit_at(nxu, nyu).is_some() { hit = Some((nxu, nyu)); break; }
 
         path.push((nxu, nyu));
@@ -1964,46 +4122,140 @@ fn sim_charge(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, attack_d
     // Damage hit target. Self-damage is only taken on impact (empty-tile
     // charges deal no recoil — see outer simulate() for the Charge skip).
     if let Some((hx, hy)) = hit {
-        apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
-        apply_weapon_status(board, hx, hy, wdef); // status BEFORE push
+        let distance = (hx as i8 - ax as i8).unsigned_abs()
+            + (hy as i8 - ay as i8).unsigned_abs();
+        let kills_before = result.enemies_killed;
+        let occupied_at_impact = board.unit_at(hx, hy).is_some();
+        let defer_death_explosion = wdef.damage > 0 && wdef.push == PushDir::Forward;
+        let deferred_death_explosion = if defer_death_explosion {
+            apply_damage_defer_death_explosion(
+                board, hx, hy, wdef.damage, result, DamageSource::Weapon,
+            )
+        } else {
+            apply_damage(board, hx, hy, wdef.damage, result, DamageSource::Weapon);
+            None
+        };
+        apply_weapon_status_with_impact_occupancy(
+            board, hx, hy, wdef, occupied_at_impact,
+        ); // status BEFORE push
         if wdef.push == PushDir::Forward {
-            apply_push(board, hx, hy, dir, result);
+            let policy = if matches!(weapon_id, WId::PrimePunchmechA | WId::PrimePunchmechAB) {
+                DASH_PUNCH_PUSH_POLICY
+            } else {
+                DEFAULT_PUSH_POLICY
+            };
+            apply_push_with_policy(board, hx, hy, dir, result, policy);
+        }
+        if let Some(idx) = deferred_death_explosion {
+            let ex = board.units[idx].x;
+            let ey = board.units[idx].y;
+            apply_death_explosion(board, ex, ey, result, 0);
         }
         if wdef.self_damage > 0 {
             let ax = board.units[attacker_idx].x;
             let ay = board.units[attacker_idx].y;
             apply_damage(board, ax, ay, wdef.self_damage, result, DamageSource::SelfDamage);
         }
+        if matches!(weapon_id, WId::PrimePunchmechA | WId::PrimePunchmechAB)
+            && distance >= 5
+            && result.enemies_killed > kills_before
+        {
+            result.events.push(format!(
+                "achievement_ramming_speed_dash_punch_kill:distance:{}:target:{}:{}",
+                distance, hx, hy
+            ));
+        }
     }
+}
+
+fn charge_terrain_blocks(weapon_id: WId, wdef: &WeaponDef, terrain: Terrain) -> bool {
+    if wdef.flying_charge() {
+        return false;
+    }
+    if matches!(weapon_id, WId::PrimePunchmechA | WId::PrimePunchmechAB) {
+        return terrain == Terrain::Chasm;
+    }
+    terrain.is_deadly_ground()
 }
 
 // ── Leap ─────────────────────────────────────────────────────────────────────
 
-fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty: u8, result: &mut ActionResult) {
+fn leap_landing_illegal_reason(
+    board: &Board,
+    attacker_idx: usize,
+    weapon_id: WId,
+    tx: u8,
+    ty: u8,
+) -> Option<&'static str> {
+    if tx >= 8 || ty >= 8 {
+        return Some("out_of_bounds");
+    }
+    if is_prime_leap_weapon(weapon_id) && board.units[attacker_idx].web() {
+        return Some("webbed");
+    }
+    let old_x = board.units[attacker_idx].x;
+    let old_y = board.units[attacker_idx].y;
+    if tx != old_x && ty != old_y {
+        return Some("off_axis");
+    }
+
+    let landing = board.tile(tx, ty);
+    if landing.terrain == Terrain::Chasm {
+        return Some("chasm");
+    }
+    if !board.units[attacker_idx].flying() && landing.terrain == Terrain::Water {
+        return Some("water");
+    }
+    if !board.units[attacker_idx].flying() && landing.terrain == Terrain::Lava {
+        return Some("lava");
+    }
+    let aerial_bombs = matches!(
+        weapon_id,
+        WId::BruteJetmech
+            | WId::BruteJetmechA
+            | WId::BruteJetmechB
+            | WId::BruteJetmechAB
+    );
+    if aerial_bombs && landing.terrain == Terrain::Water {
+        return Some("water");
+    }
+    if aerial_bombs && landing.terrain == Terrain::Lava {
+        return Some("lava");
+    }
+    if landing.terrain == Terrain::Mountain {
+        return Some("mountain");
+    }
+    if landing.terrain == Terrain::Building {
+        return Some("building");
+    }
+    if board.wreck_at(tx, ty) {
+        return Some("wreck");
+    }
+
+    let same_tile = tx == board.units[attacker_idx].x
+        && ty == board.units[attacker_idx].y;
+    if !same_tile && board.unit_at(tx, ty).is_some() {
+        return Some("unit");
+    }
+
+    None
+}
+
+fn sim_leap(board: &mut Board, attacker_idx: usize, weapon_id: WId, wdef: &WeaponDef, tx: u8, ty: u8, result: &mut ActionResult) {
     let old_x = board.units[attacker_idx].x;
     let old_y = board.units[attacker_idx].y;
 
-    // Defensive landing-legality check. Target enumeration in
-    // solver::get_weapon_targets already filters out mountains, buildings,
-    // wrecks, and occupied tiles via Board::is_blocked(…, flying=true), so a
-    // plan that reaches sim_leap with an illegal landing indicates a bug in
-    // the enumerator or a caller bypassing it. In debug builds we crash
-    // loudly so the upstream bug is obvious; in release we still execute
-    // the (now-silent) leap-through rather than corrupt state further.
-    debug_assert!(
-        {
-            let landing = board.tile(tx, ty);
-            let same_tile = tx == old_x && ty == old_y;
-            let occupied_by_other = board
-                .unit_at(tx, ty)
-                .map_or(false, |u| u != attacker_idx);
-            landing.terrain != Terrain::Mountain
-                && landing.terrain != Terrain::Building
-                && !board.wreck_at(tx, ty)
-                && (!occupied_by_other || same_tile)
-        },
-        "sim_leap: illegal landing tile ({tx}, {ty}) — enumerator should have filtered this"
-    );
+    // Target enumeration filters illegal leap landings during normal search,
+    // but diagnostic callers (`score_plan`, replaying a hand-written plan)
+    // can still pass an impossible landing. Treat it as an unfired action
+    // instead of creating overlapping units in the projected board.
+    if let Some(reason) = leap_landing_illegal_reason(board, attacker_idx, weapon_id, tx, ty) {
+        result.events.push(format!(
+            "illegal_leap_landing:{}:{}:{}",
+            tx, ty, reason
+        ));
+        return;
+    }
 
     board.units[attacker_idx].x = tx;
     board.units[attacker_idx].y = ty;
@@ -2056,29 +4308,141 @@ fn sim_leap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx: u8, ty
                 let nx = old_x as i8 + dx * step;
                 let ny = old_y as i8 + dy * step;
                 if !in_bounds(nx, ny) { continue; }
-                apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
+                if wdef.smoke() && board.tile(nx as u8, ny as u8).terrain == Terrain::Forest {
+                    let tile = board.tile_mut(nx as u8, ny as u8);
+                    tile.terrain = Terrain::Ground;
+                    tile.set_on_fire(false);
+                }
+                let mut source = if wdef.smoke() && board.unit_at(nx as u8, ny as u8).is_some() {
+                    // The bridge's adaptive Aerial Bombs workaround observes
+                    // engine unit damage on occupied transit tiles and then
+                    // applies only smoke, so terrain such as Sand is preserved.
+                    DamageSource::WeaponUnitOnly
+                } else {
+                    DamageSource::Weapon
+                };
+                if wdef.smoke() && source == DamageSource::Weapon {
+                    let ux = nx as u8;
+                    let uy = ny as u8;
+                    let idx = xy_to_idx(ux, uy);
+                    let is_freeze_objective_tile =
+                        board.mission_id == "Mission_FreezeBldg"
+                        && (board.freeze_building_tiles & (1u64 << idx)) != 0;
+                    {
+                        let tile = board.tile_mut(ux, uy);
+                        if is_freeze_objective_tile
+                            && tile.terrain == Terrain::Building
+                            && tile.building_hp > 0
+                            && tile.frozen()
+                        {
+                            tile.set_frozen(false);
+                            result.events.push(format!("building_thawed:{}:{}", ux, uy));
+                            source = DamageSource::WeaponDeferredGrid;
+                        }
+                    }
+                }
+                apply_damage(board, nx as u8, ny as u8, wdef.damage, result, source);
             }
         }
     } else {
         // Damage adjacent tiles (skip source direction)
         let from_dir = direction_between(tx, ty, old_x, old_y);
+        let push_policy = if is_prime_leap_weapon(weapon_id) {
+            PRIME_LEAP_PUSH_POLICY
+        } else {
+            DEFAULT_PUSH_POLICY
+        };
         for (i, &(dx, dy)) in DIRS.iter().enumerate() {
             if Some(i) == from_dir { continue; }
             let nx = tx as i8 + dx;
             let ny = ty as i8 + dy;
             if !in_bounds(nx, ny) { continue; }
-            apply_damage(board, nx as u8, ny as u8, wdef.damage, result, DamageSource::Weapon);
+            let hx = nx as u8;
+            let hy = ny as u8;
+            let pre_hit_unit = board.unit_at(hx, hy).map(|idx| {
+                (
+                    idx,
+                    board.units[idx].hp,
+                    board.units[idx].acid(),
+                    board.units[idx].effectively_flying(),
+                    board.units[idx].massive(),
+                    board.tile(hx, hy).acid(),
+                    board.units[idx].x,
+                    board.units[idx].y,
+                )
+            });
+            let damage_source = if is_prime_leap_weapon(weapon_id) {
+                // Live Hydraulic Legs emits tile damage on landing-adjacent
+                // cracked ground even when the hit kills the pawn occupying it.
+                DamageSource::WeaponCracksOccupied
+            } else {
+                DamageSource::Weapon
+            };
+            if is_prime_leap_weapon(weapon_id) {
+                apply_damage_with_bombrock_exclusion(
+                    board,
+                    hx,
+                    hy,
+                    wdef.damage,
+                    result,
+                    damage_source,
+                    Some((tx, ty)),
+                );
+            } else {
+                apply_damage(board, hx, hy, wdef.damage, result, damage_source);
+            }
+            let killed_by_hit = pre_hit_unit
+                .map(|(idx, pre_hp, _, _, _, _, _, _)| {
+                    pre_hp > 0 && board.units[idx].hp <= 0
+                })
+                .unwrap_or(false);
             if wdef.push == PushDir::Outward {
-                apply_push(board, nx as u8, ny as u8, i, result);
+                apply_push_with_policy(board, hx, hy, i, result, push_policy);
+            }
+            if let Some((
+                idx,
+                pre_hp,
+                was_acid,
+                was_flying,
+                was_massive,
+                tile_had_acid,
+                ox,
+                oy,
+            )) = pre_hit_unit {
+                let fx = board.units[idx].x;
+                let fy = board.units[idx].y;
+                let moved = (fx, fy) != (ox, oy);
+                let died_after_push = pre_hp > 0 && board.units[idx].hp <= 0 && !killed_by_hit;
+                let dest_terrain = board.tile(fx, fy).terrain;
+                let deadly_terrain_kill = died_after_push
+                    && moved
+                    && !was_flying
+                    && board.units[idx].is_enemy()
+                    && match dest_terrain {
+                        Terrain::Chasm => true,
+                        Terrain::Water | Terrain::Lava => !was_massive,
+                        _ => false,
+                    };
+                if deadly_terrain_kill {
+                    result.leech_credit_kills += 1;
+                    result.leech_uncapped_kills += 1;
+                }
+                if !was_flying && moved && board.units[idx].hp > 0 {
+                    flood_ice_tile(board, ox, oy, result);
+                }
+                if killed_by_hit && was_acid && (fx, fy) != (ox, oy) {
+                    if !tile_had_acid {
+                        board.tile_mut(ox, oy).flags.remove(TileFlags::ACID);
+                    }
+                    leave_acid_pool_on_death(board, fx, fy);
+                }
             }
         }
     }
 
-    // Teleporter pad: fires at the VERY END so weapon status (fire/smoke/ACID)
-    // lands on the leap target tile BEFORE the mech teleports away. Matches
-    // in-game behaviour: you aim Bombing Run at the pad, the bomb drops on
-    // the pad, then the mech swaps to the partner pad.
-    apply_teleport_on_land(board, attacker_idx);
+    // The wrapper resolves the landing pipeline after any Leap self-damage.
+    // Live Hydraulic Legs strips Bethany's shield with recoil before ACID
+    // pools on the landing tile apply, so landing effects cannot run here.
 }
 
 // ── Laser ────────────────────────────────────────────────────────────────────
@@ -2111,7 +4475,13 @@ fn sim_laser(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Op
             break;
         }
 
-        apply_damage(board, nxu, nyu, dmg, result, DamageSource::Weapon);
+        let skip_friendly = wdef.friendly_immune()
+            && board.unit_at(nxu, nyu)
+                .map(|idx| board.units[idx].is_player())
+                .unwrap_or(false);
+        if !skip_friendly {
+            apply_damage(board, nxu, nyu, dmg, result, DamageSource::Weapon);
+        }
         dmg = dmg.saturating_sub(1).max(1); // damage floor = 1
     }
 }
@@ -2126,6 +4496,7 @@ fn sim_laser(board: &mut Board, ax: u8, ay: u8, wdef: &WeaponDef, attack_dir: Op
 /// the next turn tick.
 fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
     let mut seen: Vec<u16> = Vec::with_capacity(8);
+    let storm_active = acid_storm_active(board);
     for i in 0..board.units.len() {
         let u = &board.units[i];
         if u.team != Team::Player || seen.contains(&u.uid) {
@@ -2137,6 +4508,122 @@ fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
         u.set_fire(false);
         u.set_acid(false);
         u.set_frozen(false);
+        if storm_active {
+            u.set_acid(true);
+        }
+    }
+}
+
+// ── Global Push (Wind Torrent) ────────────────────────────────────────────────
+
+/// Support_Wind (Wind Torrent): pushes every pawn one tile in the chosen
+/// direction. Lua first records every initial pawn-space in direction-specific
+/// scan order, then applies each `SpaceDamage(point, 0, dir)` sequentially.
+/// Precomputing the target list matches that behavior: a pawn moved onto a
+/// tile that was empty at cast time does not get a second, newly-created hit.
+fn sim_global_push(board: &mut Board, direction: usize, result: &mut ActionResult) {
+    let mut targets: Vec<(u8, u8)> = Vec::with_capacity(board.units.len());
+    match direction {
+        // DIR_LEFT: for i(row/y)=0..7, j(col/x)=0..7 -> Point(j,i)
+        3 => {
+            for y in 0..8u8 {
+                for x in 0..8u8 {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        // DIR_RIGHT: Point(7-j,i)
+        1 => {
+            for y in 0..8u8 {
+                for x in (0..8u8).rev() {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        // DIR_UP: Point(i,j)
+        2 => {
+            for x in 0..8u8 {
+                for y in 0..8u8 {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        // DIR_DOWN: Point(i,7-j)
+        0 => {
+            for x in 0..8u8 {
+                for y in (0..8u8).rev() {
+                    if board.unit_at(x, y).is_some() {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        _ => return,
+    }
+
+    for (x, y) in targets {
+        apply_push(board, x, y, direction, result);
+    }
+}
+
+// ── Global Unit Effect (Detritus Contraption) ───────────────────────────────
+
+/// Missiles_Shield / Missiles_OneDmg: affects every live non-source unit.
+/// Lua's Support_Missiles:GetTargetArea excludes the source tile even when
+/// FriendlyFire is true. FireWeapon also requires the clicked target to be in
+/// that target area; clicking the source consumes the action but emits no
+/// SpaceDamage. Lua builds the target list before applying each SpaceDamage,
+/// so a unit killed by an earlier missile is not reselected and buildings are
+/// untouched.
+fn sim_global_unit_effect(
+    board: &mut Board,
+    wdef: &WeaponDef,
+    source: (u8, u8),
+    target: (u8, u8),
+    result: &mut ActionResult,
+) {
+    let valid_target = board.unit_at(target.0, target.1)
+        .map(|idx| {
+            let unit = &board.units[idx];
+            unit.hp > 0 && if wdef.targets_allies() {
+                target != source
+            } else {
+                unit.is_enemy()
+            }
+        })
+        .unwrap_or(false);
+    if !valid_target {
+        return;
+    }
+
+    let targets: Vec<(u8, u8)> = board.units.iter()
+        .filter(|u| {
+            u.hp > 0 && if wdef.targets_allies() {
+                (u.x, u.y) != source
+            } else {
+                u.is_enemy()
+            }
+        })
+        .map(|u| (u.x, u.y))
+        .collect();
+
+    for (x, y) in targets {
+        if wdef.damage > 0 {
+            apply_damage(board, x, y, wdef.damage, result, DamageSource::Weapon);
+        }
+        if wdef.shield() {
+            if let Some(idx) = board.unit_at(x, y) {
+                if board.units[idx].hp > 0 {
+                    board.units[idx].set_shield(true);
+                }
+            }
+        }
     }
 }
 
@@ -2151,7 +4638,7 @@ fn sim_heal_all(board: &mut Board, _result: &mut ActionResult) {
 // `simulate_action`; this is purely structural.
 
 /// Move phase only: position update, pod pickup, ACID transfer, mines,
-/// fire-tile catch, teleporter pad swap.
+/// fire-tile catch, teleporter pad swap, WebbEgg adjacency refresh.
 pub fn simulate_move(
     board: &mut Board,
     mech_idx: usize,
@@ -2163,14 +4650,7 @@ pub fn simulate_move(
     board.units[mech_idx].x = move_to.0;
     board.units[mech_idx].y = move_to.1;
 
-    // Collect pod
-    {
-        let tile = board.tile_mut(move_to.0, move_to.1);
-        if tile.has_pod() {
-            tile.set_has_pod(false);
-            result.pods_collected += 1;
-        }
-    }
+    apply_pod_on_land(board, mech_idx, &mut result);
 
     // ACID pool pickup: mech gains ACID, pool consumed
     {
@@ -2209,13 +4689,14 @@ pub fn simulate_move(
     // Fire tile: mech catches fire on arrival (if not shielded).
     // Mirrors apply_push's fire-catch logic so move and push paths agree.
     if move_to != old_pos {
-        let tile = board.tile(move_to.0, move_to.1);
-        if tile.on_fire() && board.units[mech_idx].hp > 0 && !board.units[mech_idx].shield()
-            && board.units[mech_idx].can_catch_fire()
-            && !(board.flame_shielding && board.units[mech_idx].is_player())
-        {
-            board.units[mech_idx].set_fire(true);
-        }
+        apply_fire_tile_pickup(board, mech_idx, move_to.0, move_to.1);
+    }
+
+    // Repair platform: generic Item_Repair_Mine tile. It heals by negative
+    // damage and is consumed; unlike the Repair action, Lua does not set
+    // explicit fire/acid/frozen removal flags.
+    if move_to != old_pos {
+        apply_repair_platform(board, mech_idx, &mut result);
     }
 
     // Teleporter pad: if the mech moved AND landed on a pad, swap with
@@ -2227,6 +4708,8 @@ pub fn simulate_move(
     if move_to != old_pos {
         apply_teleport_on_land(board, mech_idx);
     }
+
+    board.refresh_webb_egg_grapples();
 
     result
 }
@@ -2242,17 +4725,63 @@ pub fn simulate_attack(
 ) -> ActionResult {
     let mut result = ActionResult::default();
 
+    // Smoke prevents attacks and repair. Solver enumeration normally filters
+    // these out, but diagnostic score/replay can receive hand-written plans.
+    if weapon_id != WId::None {
+        let (sx, sy, ignores_smoke) = {
+            let unit = &board.units[mech_idx];
+            (unit.x, unit.y, unit.type_name_str() == "Trapped_Building")
+        };
+        if board.tile(sx, sy).smoke() && !ignores_smoke {
+            result.events.push(format!("illegal_attack_smoke:{}:{}", sx, sy));
+            return result;
+        }
+    }
+
+    // Diagnostic callers can hand us targets the UI would not offer. Treat
+    // them as no-ops with an explicit event instead of simulating impossible
+    // effects (for example player artillery off-axis targets).
+    if weapon_id != WId::None && weapon_id != WId::Repair {
+        let (sx, sy) = (board.units[mech_idx].x, board.units[mech_idx].y);
+        let legal_targets = crate::solver::get_weapon_targets(
+            board,
+            sx,
+            sy,
+            weapon_id,
+            (sx, sy),
+            weapons,
+        );
+        if !legal_targets.contains(&target) {
+            result.events.push(format!(
+                "illegal_weapon_target:{}:{}:{}",
+                target.0,
+                target.1,
+                weapon_name(weapon_id),
+            ));
+            return result;
+        }
+    }
+
     // Repair
     if weapon_id == WId::Repair {
+        let storm_active = acid_storm_active(board);
         let (is_repairman, rx, ry) = {
             let unit = &mut board.units[mech_idx];
-            unit.hp = unit.hp.min(unit.max_hp - 1) + 1; // heal 1
+            let heal: i8 = if unit.boosted() { 2 } else { 1 };
+            unit.hp = unit.hp.min(unit.max_hp - heal) + heal;
             unit.set_fire(false);
             unit.set_acid(false);
             unit.set_frozen(false);
+            clear_mites(unit);
+            if storm_active {
+                unit.set_acid(true);
+            }
+            unit.set_boosted(false);
+            refresh_arrogant_boost(unit);
             unit.set_active(false);
             (unit.pilot_repairman(), unit.x, unit.y)
         };
+        board.tile_mut(rx, ry).set_on_fire(false);
         // Harold Schmidt (Pilot_Repairman) — Frenzied Repair: push all four
         // cardinal neighbours outward. Uses `apply_push` so push chains,
         // bump-into-building damage, drown/lava kills, and terrain
@@ -2265,6 +4794,7 @@ pub fn simulate_attack(
                 apply_push(board, nx as u8, ny as u8, i, &mut result);
             }
         }
+        drain_pending_spider_eggs(board);
         return result;
     }
 
@@ -2287,7 +4817,11 @@ pub fn simulate_attack(
     // as a desync on WallMech, pawn movement rounds, etc.
     if weapon_id != WId::None {
         board.units[mech_idx].set_active(false);
+        let finisher_boost = board.units[mech_idx].pilot_chemical() && result.enemies_killed > 0;
+        board.units[mech_idx].set_boosted(finisher_boost);
+        refresh_arrogant_boost(&mut board.units[mech_idx]);
     }
+    drain_pending_spider_eggs(board);
     result
 }
 
@@ -2337,6 +4871,12 @@ mod tests {
         })
     }
 
+    fn add_enemy_type(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, type_name: &str) -> usize {
+        let idx = add_enemy(board, uid, x, y, hp);
+        board.units[idx].set_type_name(type_name);
+        idx
+    }
+
     fn add_mech(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, weapon: WId) -> usize {
         board.add_unit(Unit {
             uid, x, y, hp, max_hp: hp,
@@ -2346,6 +4886,926 @@ mod tests {
             move_speed: 3,
             ..Default::default()
         })
+    }
+
+    fn add_mission_ally(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8, weapon: WId, type_name: &str) -> usize {
+        let idx = board.add_unit(Unit {
+            uid, x, y, hp, max_hp: hp,
+            team: Team::Player,
+            weapon: crate::board::WeaponId(weapon as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            base_move: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name(type_name);
+        idx
+    }
+
+    fn add_bombrock(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
+        let idx = board.add_unit(Unit {
+            uid,
+            x,
+            y,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Neutral,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("BombRock");
+        idx
+    }
+
+    #[test]
+    fn test_viscera_nanobots_heals_unstable_self_damage_on_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 4, 4, 3, WId::BruteUnstable);
+        let enemy = add_enemy(&mut board, 90, 4, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(board.units[mech].hp, 3);
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:1"));
+    }
+
+    #[test]
+    fn test_viscera_nanobots_heals_unstable_to_save_max_on_direct_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech = add_mech(&mut board, 1, 4, 4, 5, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        board.units[mech].set_type_name("UnstableTank");
+        let enemy = add_enemy_type(&mut board, 90, 4, 2, 4, "Dung2");
+        board.units[enemy].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(
+            board.units[mech].hp,
+            5,
+            "direct Unstable Cannon kills can heal recoil back to save-overlaid max HP"
+        );
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:1"));
+    }
+
+    #[test]
+    fn test_viscera_nanobots_revives_self_damaged_attacker_on_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 4, 4, 1, WId::BruteUnstable);
+        board.units[mech].max_hp = 3;
+        add_enemy(&mut board, 90, 4, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mechs_killed, 0);
+        assert_eq!(board.units[mech].hp, 1);
+    }
+
+    #[test]
+    fn test_viscera_nanobots_no_passive_keeps_unstable_recoil_damage() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 4, 4, 3, WId::BruteUnstable);
+        add_enemy(&mut board, 90, 4, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 4, 2);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[mech].hp, 2);
+    }
+
+    #[test]
+    fn test_unstable_cannon_direct_kill_does_not_create_acid_pool() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 4, 5, 3, WId::BruteUnstable);
+        let shaman = add_enemy_type(&mut board, 422, 5, 5, 2, "Shaman1");
+        board.units[shaman].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 5, 5);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert!(board.units[shaman].hp <= 0);
+        assert!(
+            !board.tile(5, 5).acid(),
+            "Unstable Cannon should not leave a corpse ACID pool on the direct-hit tile"
+        );
+    }
+
+    #[test]
+    fn test_viscera_nanobots_heals_unstable_pushback_bump_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::BruteUnstable);
+        let front = add_enemy(&mut board, 90, 3, 2, 2);
+        let rear = add_enemy_type(&mut board, 91, 3, 4, 1, "Totem1");
+        board.units[rear].set_acid(true);
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 3, 2);
+
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(result.leech_credit_kills, 2);
+        assert_eq!(board.units[front].hp, 0);
+        assert_eq!(board.units[rear].hp, 0);
+        assert_eq!(board.units[mech].hp, 3);
+        assert!(board.tile(3, 4).acid());
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:1:2:2"),
+            "pushback bump kill should add a second Nanobots heal credit"
+        );
+    }
+
+    #[test]
+    fn test_unstable_recoil_into_edge_does_not_bump_self_before_nanobots() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech = add_mech(&mut board, 1, 0, 5, 4, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        let enemy = add_enemy(&mut board, 90, 4, 5, 1);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 1, 5);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert!(board.units[enemy].hp <= 0);
+        assert_eq!(
+            board.units[mech].hp, 5,
+            "edge recoil should not add a second self-damage event before Nanobots heals"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"),
+            "the direct Unstable Cannon kill should produce one boosted Nanobots heal"
+        );
+    }
+
+    #[test]
+    fn test_unstable_killed_target_corpse_bumps_live_mech_blocker() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 2, 4, 3, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        let blob = add_enemy_type(&mut board, 890, 4, 4, 2, "BlobB");
+        let nano = add_mech(&mut board, 2, 5, 4, 4, WId::ScienceAcidShot);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 3, 4);
+
+        assert_eq!(board.units[blob].hp, 0);
+        assert_eq!(
+            board.units[nano].hp, 3,
+            "Unstable Cannon killed-target forward push should corpse-bump the live mech blocker"
+        );
+        assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
+    fn test_unstable_direct_edge_push_does_not_bump_target_off_board() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 1, 4, 5, WId::BruteUnstable);
+        board.units[mech].max_hp = 5;
+        let boss = add_enemy_type(&mut board, 1145, 0, 4, 5, "MosquitoBoss");
+        board.units[boss].flags.insert(UnitFlags::FLYING | UnitFlags::MASSIVE);
+        board.units[boss].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 0, 4);
+
+        assert_eq!(
+            board.units[boss].hp,
+            1,
+            "acid-doubled Unstable Cannon damage should not add an off-board edge bump"
+        );
+        assert_eq!((board.units[boss].x, board.units[boss].y), (0, 4));
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_unstable_ab_self_damage_and_recoil_bump_before_nanobots() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let leap = add_mech(&mut board, 0, 5, 2, 5, WId::PrimeLeap);
+        let unstable = add_mech(&mut board, 1, 5, 3, 5, WId::BruteUnstableAB);
+        board.units[unstable].max_hp = 5;
+        board.units[unstable].set_type_name("UnstableTank");
+        let scarab = add_enemy_type(&mut board, 1167, 5, 4, 2, "Scarab1");
+
+        let result = simulate_weapon(&mut board, unstable, WId::BruteUnstableAB, 5, 4);
+
+        assert!(board.units[scarab].hp <= 0);
+        assert_eq!(board.units[leap].hp, 4, "recoil bump should damage the rear blocker");
+        assert_eq!(
+            board.units[unstable].hp,
+            4,
+            "AB self-damage plus recoil bump should leave 4 HP after boosted Nanobots"
+        );
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"));
+    }
+
+    #[test]
+    fn test_unstable_ab_nanobots_heals_from_zero_and_preserves_fire() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let unstable = add_mech(&mut board, 1, 3, 5, 1, WId::BruteUnstableAB);
+        board.units[unstable].max_hp = 5;
+        board.units[unstable].set_type_name("UnstableTank");
+        board.units[unstable].set_fire(true);
+        let jelly = add_enemy_type(&mut board, 1174, 3, 4, 2, "Jelly_Lava1");
+
+        let result = simulate_weapon(&mut board, unstable, WId::BruteUnstableAB, 3, 4);
+
+        assert!(board.units[jelly].hp <= 0);
+        assert_eq!(
+            (board.units[unstable].x, board.units[unstable].y),
+            (3, 6),
+            "Unstable Cannon recoil should still move the self-damaged attacker"
+        );
+        assert_eq!(
+            board.units[unstable].hp,
+            2,
+            "Nanobots should heal from HP floor 0 after overkill self-damage"
+        );
+        assert!(
+            board.units[unstable].fire(),
+            "Unstable Cannon Nanobots recovery preserves carried fire status"
+        );
+        assert_eq!(result.mechs_killed, 0);
+        assert!(result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"));
+    }
+
+    #[test]
+    fn test_unstable_dead_recoil_bumps_live_mech_before_nanobot_heal() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let blocker = add_mech(&mut board, 0, 6, 4, 1, WId::PrimeLeap);
+        let mech = add_mech(&mut board, 1, 6, 5, 1, WId::BruteUnstable);
+        board.units[mech].max_hp = 3;
+        let enemy = add_enemy(&mut board, 90, 6, 6, 2);
+
+        let result = simulate_weapon(&mut board, mech, WId::BruteUnstable, 6, 6);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(
+            board.units[blocker].hp, 0,
+            "Unstable recoil still bumps the live rear blocker after self-damage drops the attacker to 0"
+        );
+        assert_eq!(
+            board.units[mech].hp, 2,
+            "Viscera Nanobots should revive/heal the attacker after the kill"
+        );
+        assert_eq!(
+            result.mechs_killed, 1,
+            "only the rear blocker remains disabled after the attacker is revived"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:1:1:2"),
+            "the direct Unstable Cannon kill should produce one boosted Nanobots heal"
+        );
+    }
+
+    #[test]
+    fn test_viscera_nanobots_does_not_heal_hydraulic_legs_edge_bump_kill() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 1;
+        let mech = add_mech(&mut board, 1, 5, 3, 3, WId::PrimeLeap);
+        board.tile_mut(6, 3).flags |= TileFlags::ACID;
+        let enemy = add_enemy(&mut board, 90, 7, 3, 3);
+        board.units[enemy].set_acid(true);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeLeap, 6, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.leech_credit_kills, 0);
+        assert_eq!(
+            board.units[mech].hp, 2,
+            "edge-bump kills do not count as Nanobots killing blows; only Leap recoil applies"
+        );
+        assert!(
+            !result
+                .events
+                .iter()
+                .any(|e| e.starts_with("viscera_nanobots_heal:")),
+            "no heal event should be emitted for bump-only kills"
+        );
+    }
+
+    #[test]
+    fn test_hydraulic_lifter_throws_adjacent_unit_to_landing() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::PrimeTcPunt);
+        let enemy = add_enemy(&mut board, 90, 3, 2, 3);
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeTcPunt, 3, 0);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 0));
+        assert_eq!(board.units[enemy].hp, 2);
+        assert!(board.unit_at(3, 2).is_none());
+        assert_eq!(result.enemy_damage_dealt, 1);
+    }
+
+    #[test]
+    fn test_hydraulic_lifter_landing_damage_ignites_forest_target() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 5, 0, 4, WId::PrimeTcPuntAB);
+        let enemy = add_enemy_type(&mut board, 1881, 5, 1, 5, "Firefly2");
+        board.tile_mut(5, 3).terrain = Terrain::Forest;
+
+        simulate_weapon(&mut board, mech, WId::PrimeTcPuntAB, 5, 3);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 3));
+        assert!(board.units[enemy].hp > 0, "target should survive to carry fire status");
+        assert!(board.units[enemy].fire(), "thrown forest-landing target should catch fire");
+        assert_eq!(board.tile(5, 3).terrain, Terrain::Ground);
+        assert!(board.tile(5, 3).on_fire(), "landing Forest should become burning Ground");
+    }
+
+    #[test]
+    fn test_tri_rocket_hits_three_tiles_in_order() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 6, 3, WId::RangedCrack);
+        let front = add_enemy(&mut board, 90, 3, 2, 2);
+        let center = add_enemy(&mut board, 91, 3, 3, 2);
+        let back = add_enemy(&mut board, 92, 3, 4, 2);
+
+        simulate_weapon(&mut board, mech, WId::RangedCrack, 3, 3);
+
+        assert_eq!((board.units[front].x, board.units[front].y, board.units[front].hp), (3, 1, 1));
+        assert_eq!((board.units[center].x, board.units[center].y, board.units[center].hp), (3, 2, 1));
+        assert_eq!((board.units[back].x, board.units[back].y, board.units[back].hp), (3, 3, 1));
+    }
+
+    #[test]
+    fn test_tri_rocket_moves_acid_corpse_pool_and_bumps_following_unit() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 6, 3, WId::RangedCrack);
+        let center = add_enemy(&mut board, 91, 3, 3, 2);
+        let back = add_enemy(&mut board, 92, 3, 4, 4);
+        board.units[center].set_acid(true);
+
+        simulate_weapon(&mut board, mech, WId::RangedCrack, 3, 3);
+
+        assert_eq!((board.units[center].x, board.units[center].y, board.units[center].hp), (3, 2, 0));
+        assert!(board.tile(3, 2).acid(), "acid corpse pool should follow the pushed corpse");
+        assert!(!board.tile(3, 3).acid(), "vacated pre-push tile should not retain a new acid pool");
+        assert_eq!((board.units[back].x, board.units[back].y, board.units[back].hp), (3, 3, 2));
+        assert!(!board.units[back].acid(), "following unit should not pick up acid from the vacated tile");
+    }
+
+    #[test]
+    fn test_tri_rocket_killed_adjacent_corpse_bumps_center_blocker() {
+        let mut board = make_test_board();
+        let shooter = add_mech(&mut board, 1, 0, 1, 2, WId::RangedCrack);
+        let near = add_enemy(&mut board, 90, 2, 1, 1);
+        let center = add_mech(&mut board, 0, 3, 1, 4, WId::PrimeTcPunt);
+        let far = add_enemy(&mut board, 91, 4, 1, 3);
+        let far_blocker = add_enemy(&mut board, 92, 5, 1, 3);
+
+        simulate_weapon(&mut board, shooter, WId::RangedCrack, 3, 1);
+
+        assert_eq!(board.units[near].hp, 0, "near missile target should die");
+        assert_eq!(board.units[far].hp, 0, "far target should die after center bump");
+        assert_eq!(board.units[far_blocker].hp, 2, "far blocker takes one bump");
+        assert_eq!(
+            (board.units[center].x, board.units[center].y, board.units[center].hp),
+            (3, 1, 1),
+            "center blocker takes direct, live-bump, and killed-corpse bump damage",
+        );
+    }
+
+    #[test]
+    fn test_tri_rocket_terrain_kill_vacated_tile_does_not_corpse_bump() {
+        let mut board = make_test_board();
+        let shooter = add_mech(&mut board, 1, 1, 6, 2, WId::RangedCrack);
+        let center = add_enemy(&mut board, 90, 5, 6, 5);
+        let back = add_enemy(&mut board, 91, 4, 6, 2);
+        board.tile_mut(6, 6).set_cracked(true);
+
+        simulate_weapon(&mut board, shooter, WId::RangedCrack, 5, 6);
+
+        assert_eq!(board.tile(6, 6).terrain, Terrain::Chasm);
+        assert_eq!(
+            (board.units[center].x, board.units[center].y, board.units[center].hp),
+            (6, 6, 0),
+            "center target is killed after being pushed into the newly opened chasm",
+        );
+        assert_eq!(
+            (board.units[back].x, board.units[back].y, board.units[back].hp),
+            (5, 6, 1),
+            "following target moves into the vacated tile without a corpse-bump from terrain death",
+        );
+    }
+
+    #[test]
+    fn test_tri_rocket_center_bombrock_bumps_front_without_side_explosion() {
+        let mut board = make_test_board();
+        let shooter = add_mech(&mut board, 1, 1, 6, 2, WId::RangedCrackB);
+        let front = add_enemy_type(&mut board, 90, 5, 6, 4, "Dung2");
+        let side = add_enemy_type(&mut board, 91, 4, 5, 4, "Scorpion2");
+        let rock = add_bombrock(&mut board, 92, 4, 6);
+
+        simulate_weapon(&mut board, shooter, WId::RangedCrackB, 4, 6);
+
+        assert_eq!(
+            (board.units[front].x, board.units[front].y, board.units[front].hp),
+            (6, 6, 2),
+            "front target takes the center BombRock corpse-bump, then the front rocket hit",
+        );
+        assert_eq!(
+            board.units[side].hp, 4,
+            "Tri-Rocket center BombRock collision should not emit a side blast",
+        );
+        assert!(board.units[rock].hp <= 0, "center BombRock is destroyed");
+    }
+
+    #[test]
+    fn test_seismic_capacitor_cracks_adjacent_tiles_on_kill() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::ScienceKoCrack);
+        let enemy = add_enemy(&mut board, 90, 3, 2, 1);
+
+        simulate_weapon(&mut board, mech, WId::ScienceKoCrack, 3, 2);
+
+        assert!(board.units[enemy].hp <= 0);
+        for (x, y) in [(3, 1), (4, 2), (3, 3), (2, 2)] {
+            assert!(board.tile(x, y).cracked(), "expected crack at {},{}", x, y);
+        }
+        assert!(!board.tile(3, 2).cracked(), "center crack is not emitted by the live tooltip path");
+    }
+
+    #[test]
+    fn test_seismic_capacitor_crack_damages_adjacent_mountain() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 5, 1, 3, WId::ScienceKoCrack);
+        add_enemy(&mut board, 90, 6, 1, 1);
+        board.tile_mut(6, 2).terrain = Terrain::Mountain;
+        board.tile_mut(6, 2).building_hp = 2;
+
+        simulate_weapon(&mut board, mech, WId::ScienceKoCrack, 6, 1);
+
+        assert_eq!(board.tile(6, 2).terrain, Terrain::Mountain);
+        assert_eq!(board.tile(6, 2).building_hp, 1);
+    }
+
+    #[test]
+    fn test_arachnoid_injector_kill_spawns_active_arachnoid() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 10, 3, 1, 3, WId::RangedArachnoid);
+        let target = add_enemy(&mut board, 11, 3, 3, 1);
+        board.units[target].set_type_name("Leaper1");
+
+        let result = simulate_weapon(&mut board, mech, WId::RangedArachnoid, 3, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[target].hp, 0);
+        assert_eq!((board.units[target].x, board.units[target].y), (8, 8));
+        let spawned = board.unit_at(3, 3).expect("Arachnoid should spawn on kill tile");
+        assert_eq!(board.units[spawned].team, Team::Player);
+        assert_eq!(board.units[spawned].type_name_str(), "DeployUnit_Aracnoid");
+        assert_eq!(board.units[spawned].weapon, WeaponId(WId::DeployUnitAracnoidAtk as u16));
+        assert!(board.units[spawned].active());
+        assert!(!board.wreck_at(3, 3));
+    }
+
+    #[test]
+    fn test_spawned_arachnoid_attack_pushes_and_self_destructs_without_mech_loss() {
+        let mut board = make_test_board();
+        let arachnoid = board.add_unit(Unit {
+            uid: 20,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            move_speed: 3,
+            base_move: 3,
+            flags: UnitFlags::ACTIVE | UnitFlags::PUSHABLE,
+            weapon: WeaponId(WId::DeployUnitAracnoidAtk as u16),
+            ..Default::default()
+        });
+        board.units[arachnoid].set_type_name("DeployUnit_Aracnoid");
+        let target = add_enemy(&mut board, 21, 3, 4, 2);
+
+        let result = simulate_weapon(&mut board, arachnoid, WId::DeployUnitAracnoidAtk, 3, 4);
+
+        assert_eq!(board.units[target].hp, 1);
+        assert_eq!((board.units[target].x, board.units[target].y), (3, 5));
+        assert_eq!(board.units[arachnoid].hp, 0);
+        assert_eq!(result.mechs_killed, 0);
+    }
+
+    #[test]
+    fn test_area_shift_pushes_self_and_adjacent_tiles_in_clicked_direction() {
+        let mut board = make_test_board();
+        let slide = add_mech(&mut board, 30, 3, 3, 2, WId::ScienceMassShift);
+        let front = add_enemy(&mut board, 31, 3, 4, 2);
+        let right = add_enemy(&mut board, 32, 4, 3, 2);
+        let left = add_enemy(&mut board, 33, 2, 3, 2);
+        let rear = add_enemy(&mut board, 34, 3, 2, 2);
+
+        simulate_weapon(&mut board, slide, WId::ScienceMassShift, 3, 4);
+
+        assert_eq!((board.units[front].x, board.units[front].y), (3, 5));
+        assert_eq!((board.units[slide].x, board.units[slide].y), (3, 4));
+        assert_eq!((board.units[right].x, board.units[right].y), (4, 4));
+        assert_eq!((board.units[left].x, board.units[left].y), (2, 4));
+        assert_eq!((board.units[rear].x, board.units[rear].y), (3, 3));
+    }
+
+    #[test]
+    fn test_terraformer_attack_kills_six_tile_sweep_and_sands_ground() {
+        let mut board = make_test_board();
+        let terraformer = add_mission_ally(&mut board, 245, 5, 3, 2, WId::TerraformerAttack, "Terraformer");
+        let moth = add_enemy(&mut board, 246, 6, 3, 3);
+        let blob = add_enemy(&mut board, 247, 7, 2, 1);
+        let safe = add_enemy(&mut board, 248, 5, 5, 1);
+        board.tile_mut(6, 3).set_smoke(true);
+        board.tile_mut(6, 3).set_grass(true);
+        board.tile_mut(7, 2).terrain = Terrain::Forest;
+        board.tile_mut(7, 2).set_on_fire(true);
+        board.tile_mut(7, 2).set_grass(true);
+        board.tile_mut(7, 3).terrain = Terrain::Mountain;
+        board.tile_mut(7, 3).building_hp = 2;
+        board.tile_mut(7, 3).set_grass(true);
+
+        let result = simulate_weapon(&mut board, terraformer, WId::TerraformerAttack, 6, 3);
+
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(board.units[moth].hp, 0);
+        assert_eq!(board.units[blob].hp, 0);
+        assert_eq!(board.units[safe].hp, 1);
+        assert_eq!(board.tile(6, 3).terrain, Terrain::Sand);
+        assert!(!board.tile(6, 3).smoke());
+        assert!(!board.tile(6, 3).grass());
+        assert_eq!(board.tile(7, 2).terrain, Terrain::Sand);
+        assert!(!board.tile(7, 2).on_fire());
+        assert!(!board.tile(7, 2).grass());
+        assert_eq!(board.tile(7, 3).terrain, Terrain::Mountain);
+        assert!(board.tile(7, 3).grass());
+    }
+
+    #[test]
+    fn test_terraformer_killing_web_source_releases_webbed_ally() {
+        let mut board = make_test_board();
+        let terraformer = add_mission_ally(&mut board, 245, 4, 5, 2, WId::TerraformerAttack, "Terraformer");
+        let scorpion = add_enemy_type(&mut board, 302, 4, 4, 3, "Scorpion1");
+        board.units[terraformer].set_web(true);
+        board.units[terraformer].web_source_uid = board.units[scorpion].uid;
+
+        let result = simulate_weapon(&mut board, terraformer, WId::TerraformerAttack, 4, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[scorpion].hp, 0);
+        assert!(!board.units[terraformer].web());
+        assert_eq!(board.units[terraformer].web_source_uid, 0);
+    }
+
+    #[test]
+    fn test_terraformer_clears_grass_but_preserves_acid_ground_tile() {
+        let mut board = make_test_board();
+        let terraformer = add_mission_ally(&mut board, 245, 4, 5, 2, WId::TerraformerAttack, "Terraformer");
+        let acid_enemy = add_enemy(&mut board, 301, 5, 4, 2);
+        board.units[acid_enemy].set_acid(true);
+        board.tile_mut(5, 4).terrain = Terrain::Ground;
+        board.tile_mut(5, 4).set_grass(true);
+        board.tile_mut(4, 4).terrain = Terrain::Ground;
+        board.tile_mut(4, 4).set_grass(true);
+
+        let result = simulate_weapon(&mut board, terraformer, WId::TerraformerAttack, 4, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[acid_enemy].hp, 0);
+        assert!(board.tile(5, 4).acid());
+        assert_eq!(board.tile(5, 4).terrain, Terrain::Ground);
+        assert!(!board.tile(5, 4).grass());
+        assert_eq!(board.tile(4, 4).terrain, Terrain::Sand);
+        assert!(!board.tile(4, 4).grass());
+    }
+
+    #[test]
+    fn test_disposal_attack_kills_acid_cross_and_clears_mountains() {
+        let mut board = make_test_board();
+        let launcher = add_mission_ally(&mut board, 260, 1, 1, 2, WId::DisposalAttack, "Disposal_Unit");
+        let center = add_enemy(&mut board, 261, 4, 4, 2);
+        let adjacent = add_enemy(&mut board, 262, 4, 5, 1);
+        let diagonal_safe = add_enemy(&mut board, 263, 5, 5, 1);
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 2;
+        board.tile_mut(5, 4).terrain = Terrain::Forest;
+        board.tile_mut(5, 4).set_on_fire(true);
+        board.tile_mut(4, 3).set_smoke(true);
+
+        let result = simulate_weapon(&mut board, launcher, WId::DisposalAttack, 4, 4);
+
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(board.units[center].hp, 0);
+        assert_eq!(board.units[adjacent].hp, 0);
+        assert_eq!(board.units[diagonal_safe].hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Rubble);
+        assert_eq!(board.tile(4, 3).building_hp, 0);
+        assert_eq!(result.buildings_lost, 1);
+        assert_eq!(result.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
+        for (x, y) in disposal_cross_tiles(4, 4) {
+            assert!(board.tile(x, y).acid(), "expected acid at ({},{})", x, y);
+        }
+        assert!(!board.tile(5, 4).on_fire());
+        assert!(!board.tile(4, 3).smoke());
+        assert!(!board.tile(5, 5).acid());
+    }
+
+    #[test]
+    fn test_boosted_taurus_kills_pushed_hornet_and_explodes_from_final_tile() {
+        // R.S.T. Corporate HQ, run 20260510_213059_819 m10 turn 4:
+        // Fenrir/Kai's boosted Tank fired Taurus at a 2 HP Hornet. The live
+        // game applied Boost (+1 damage), pushed the corpse, then resolved the
+        // Psion Abomination death explosion from the corpse's final tile.
+        let mut board = make_test_board();
+        board.boss_psion = true;
+        board.tile_mut(3, 2).terrain = Terrain::Building;
+        board.tile_mut(3, 2).building_hp = 2;
+
+        let tank = add_mech(&mut board, 1, 2, 4, 3, WId::BruteTankmech);
+        board.units[tank].set_boosted(true);
+        let hornet = add_enemy_type(&mut board, 710, 2, 3, 2, "Hornet1");
+        let boss = add_enemy_type(&mut board, 706, 1, 2, 4, "Jelly_Boss");
+
+        let _ = simulate_action(
+            &mut board, tank, (2, 4), WId::BruteTankmech, (2, 3), &WEAPONS,
+        );
+
+        assert!(board.units[hornet].hp <= 0, "boosted Taurus kills 2 HP Hornet");
+        assert_eq!((board.units[hornet].x, board.units[hornet].y), (2, 2),
+            "dead pushable target is pushed before death explosion resolves");
+        assert_eq!(board.units[boss].hp, 3, "death explosion hits Jelly_Boss at F7");
+        assert_eq!(board.tile(3, 2).building_hp, 1, "death explosion damages F5 tower");
+        assert!(!board.units[tank].boosted(), "Boost is consumed by the attack");
+    }
+
+    #[test]
+    fn test_boosted_repair_heals_two_and_consumes_boost() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::Repair);
+        board.units[mech].hp = 1;
+        board.units[mech].set_boosted(true);
+
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair, (3, 3), &WEAPONS);
+
+        assert_eq!(board.units[mech].hp, 3, "boosted Repair heals 2 HP");
+        assert!(!board.units[mech].boosted(), "Boost is consumed by Repair");
+    }
+
+    #[test]
+    fn test_repair_keeps_acid_during_active_acid_storm() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_AcidStorm".to_string();
+        add_enemy_type(&mut board, 99, 2, 1, 3, "Storm_Generator");
+        let mech = add_mech(&mut board, 1, 3, 3, 2, WId::Repair);
+        board.units[mech].set_acid(true);
+
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair, (3, 3), &WEAPONS);
+
+        assert_eq!(board.units[mech].hp, 3, "Repair still heals in ACID Storm");
+        assert!(
+            board.units[mech].acid(),
+            "active ACID Storm should immediately keep repaired units ACIDed"
+        );
+    }
+
+    #[test]
+    fn test_repulse_shield_self_upgrade_shields_pulse_after_pushes() {
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 3, 3, 3, WId::ScienceRepulseA);
+        let enemy = add_enemy(&mut board, 10, 2, 3, 1);
+
+        let _ = simulate_weapon(&mut board, pulse, WId::ScienceRepulseA, 3, 3);
+
+        assert!(board.units[pulse].shield(), "Shield Self should shield Pulse");
+        assert_eq!(
+            (board.units[enemy].x, board.units[enemy].y),
+            (1, 3),
+            "Repulse_A should keep base adjacent outward push behavior"
+        );
+        assert!(
+            !board.units[enemy].shield(),
+            "Shield Self should not shield adjacent enemies"
+        );
+    }
+
+    #[test]
+    fn test_repulse_invalid_diagonal_target_noops() {
+        // Mission_Teleporter m23 turn 4: Pulse moved onto a pad at (4,4),
+        // teleported to (5,3), then the stale target (4,4) was diagonal from
+        // the actual source. pawn:FireWeapon accepted the command but produced
+        // no Repulse effect, so the sim must not invent a push or Shield Self.
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 5, 3, 3, WId::ScienceRepulseA);
+        let enemy = add_enemy(&mut board, 10, 5, 2, 3);
+
+        let result = simulate_weapon(&mut board, pulse, WId::ScienceRepulseA, 4, 4);
+
+        assert_eq!(
+            (board.units[enemy].x, board.units[enemy].y, board.units[enemy].hp),
+            (5, 2, 3),
+            "invalid diagonal Repulse target should not push or damage adjacent units"
+        );
+        assert!(
+            !board.units[pulse].shield(),
+            "invalid diagonal Repulse target should not apply Shield Self"
+        );
+        assert!(
+            result.events.iter().any(|e| e.starts_with("invalid_self_aoe_target")),
+            "invalid target should leave a replay/audit breadcrumb"
+        );
+    }
+
+    #[test]
+    fn test_repulse_edge_push_does_not_bump_off_board() {
+        // Live regression: Easy Rusting Hulks run 20260508_134925_472,
+        // Corporate HQ turn 3. PulseMech at D2 Repulsed a 1-HP Blobber at
+        // D1 toward the board edge; the engine pushed nowhere and dealt no
+        // phantom bump damage.
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 6, 4, 3, WId::ScienceRepulse);
+        let blobber = add_enemy_type(&mut board, 541, 7, 4, 1, "Blobber1");
+
+        let result = simulate_weapon(&mut board, pulse, WId::ScienceRepulse, 6, 4);
+
+        assert_eq!(
+            (board.units[blobber].x, board.units[blobber].y, board.units[blobber].hp),
+            (7, 4, 1),
+            "zero-damage Repulse edge push should not add off-board bump damage"
+        );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_repair_platform_overheal_cap_is_max_hp_plus_two() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).set_repair_platform(true);
+        let mech_idx = add_mech(&mut board, 1, 3, 2, 1, WId::PrimePunchmech);
+        board.units[mech_idx].max_hp = 3;
+
+        let result = simulate_move(&mut board, mech_idx, (3, 3));
+
+        assert_eq!(board.units[mech_idx].hp, 5, "1/3 mech overheals to 5/3");
+        assert_eq!(board.repair_platforms_used, 1);
+        assert_eq!(result.repair_platforms_used, 1);
+        assert!(
+            !board.tile(3, 3).repair_platform(),
+            "repair platform consumed on use"
+        );
+    }
+
+    #[test]
+    fn test_repair_platform_does_not_floor_two_hp_mech_to_five() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).set_repair_platform(true);
+        let mech_idx = add_mech(&mut board, 1, 3, 2, 4, WId::BruteJetmech);
+        board.units[mech_idx].max_hp = 2;
+
+        let _ = simulate_move(&mut board, mech_idx, (3, 3));
+
+        assert_eq!(board.units[mech_idx].hp, 4, "4/2 Jet stays capped at 4/2");
+    }
+
+    #[test]
+    fn test_repair_platform_full_health_mech_does_not_overheal() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).set_repair_platform(true);
+        let mech_idx = add_mech(&mut board, 1, 3, 2, 3, WId::ScienceRepulse);
+        board.units[mech_idx].max_hp = 3;
+
+        let result = simulate_move(&mut board, mech_idx, (3, 3));
+
+        assert_eq!(board.units[mech_idx].hp, 3, "3/3 mech consumes platform without overheal");
+        assert_eq!(board.repair_platforms_used, 1);
+        assert_eq!(result.repair_platforms_used, 1);
+        assert!(
+            !board.tile(3, 3).repair_platform(),
+            "repair platform consumed even when full-health mech gets no HP"
+        );
+    }
+
+    #[test]
+    fn test_flying_mech_move_onto_fire_tile_ignites() {
+        // Live regression: Easy Rusting Hulks run 20260508_134925_472,
+        // Mission_Final_Cave turn 4. An immediate verify sampled before the
+        // fire status settled, but a fresh bridge read showed JetMech on fire.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_on_fire(true);
+        let jet = add_mech(&mut board, 1, 3, 3, 2, WId::BruteJetmechB);
+        board.units[jet].flags.insert(UnitFlags::FLYING);
+
+        let _ = simulate_move(&mut board, jet, (3, 4));
+
+        assert_eq!((board.units[jet].x, board.units[jet].y), (3, 4));
+        assert!(
+            board.units[jet].fire(),
+            "Flying mech should catch fire from ordinary burning ground once status settles"
+        );
+        assert!(board.tile(3, 4).on_fire(), "Ordinary tile fire remains on the tile");
+    }
+
+    #[test]
+    fn test_flame_shielding_does_not_protect_archive_tank_from_fire_tile() {
+        // Regression: Flame Behemoths Perfect Strategy run 20260518_105028_125,
+        // Mission_Tanks final turn. The live Archive Tank caught fire after
+        // moving onto a burning tile; the sim had incorrectly treated every
+        // player-team unit as Flame-Shielding immune.
+        let mut board = make_test_board();
+        board.flame_shielding = true;
+        board.tile_mut(5, 1).set_on_fire(true);
+        let tank = add_mission_ally(
+            &mut board,
+            5326,
+            4,
+            2,
+            1,
+            WId::DeployTankShot,
+            "Archive_Tank",
+        );
+
+        let _ = simulate_move(&mut board, tank, (5, 1));
+
+        assert_eq!((board.units[tank].x, board.units[tank].y), (5, 1));
+        assert!(
+            board.units[tank].fire(),
+            "Flame Shielding applies to mechs, not allied mission tanks"
+        );
+    }
+
+    fn add_decoy_building(board: &mut Board, uid: u16, x: u8, y: u8) -> usize {
+        let idx = board.add_unit(Unit {
+            uid, x, y, hp: 2, max_hp: 2,
+            team: Team::Player,
+            weapon: crate::board::WeaponId(WId::TrappedExplode as u16),
+            flags: UnitFlags::ACTIVE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.units[idx].set_type_name("Trapped_Building");
+        idx
+    }
+
+    #[test]
+    fn test_bouncer_boss_sweeping_horns_hits_t_pattern_and_bounces() {
+        let mut board = make_test_board();
+        let boss = add_enemy_type(&mut board, 10, 3, 3, 4, "BouncerBoss");
+        let center = add_mech(&mut board, 20, 3, 4, 4, WId::None);
+        let left = add_mech(&mut board, 21, 2, 4, 4, WId::None);
+        let right = add_mech(&mut board, 22, 4, 4, 4, WId::None);
+
+        let _ = simulate_weapon(&mut board, boss, WId::BouncerAtkB, 3, 4);
+
+        assert_eq!((board.units[boss].x, board.units[boss].y), (3, 2), "boss bounced backward");
+        assert_eq!((board.units[center].x, board.units[center].y), (3, 5));
+        assert_eq!(board.units[center].hp, 2);
+        assert_eq!((board.units[left].x, board.units[left].y), (2, 5));
+        assert_eq!(board.units[left].hp, 2);
+        assert_eq!((board.units[right].x, board.units[right].y), (4, 5));
+        assert_eq!(board.units[right].hp, 2);
+    }
+
+    #[test]
+    fn test_trapped_explode_kills_self_and_adjacent_units() {
+        let mut board = make_test_board();
+        let decoy = add_decoy_building(&mut board, 10, 3, 3);
+        let enemy = add_enemy(&mut board, 20, 3, 4, 5);
+        let mech = add_mech(&mut board, 30, 2, 3, 3, WId::PrimePunchmech);
+
+        let result = simulate_weapon(&mut board, decoy, WId::TrappedExplode, 3, 3);
+
+        assert_eq!(board.units[decoy].hp, 0);
+        assert_eq!(board.units[enemy].hp, 0);
+        assert_eq!(board.units[mech].hp, 0);
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mechs_killed, 1);
+    }
+
+    #[test]
+    fn test_trapped_explode_skips_adjacent_buildings() {
+        let mut board = make_test_board();
+        let decoy = add_decoy_building(&mut board, 10, 3, 3);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        board.tile_mut(4, 3).terrain = Terrain::Mountain;
+        board.tile_mut(4, 3).building_hp = 2;
+
+        let result = simulate_weapon(&mut board, decoy, WId::TrappedExplode, 3, 3);
+
+        assert_eq!(board.tile(3, 4).building_hp, 2);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(board.tile(4, 3).building_hp, 1);
     }
 
     #[test]
@@ -2358,6 +5818,105 @@ mod tests {
         apply_push(&mut board, 3, 3, 0, &mut result); // push N into water
         assert_eq!(board.units[idx].hp, 0);
         assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_push_enemy_onto_time_pod_destroys_without_collecting() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_has_pod(true);
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
+        assert!(!board.tile(3, 4).has_pod());
+        assert_eq!(result.pods_collected, 0);
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_landing:3:4"));
+    }
+
+    #[test]
+    fn test_push_mech_onto_time_pod_collects() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_has_pod(true);
+        let idx = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
+        assert!(!board.tile(3, 4).has_pod());
+        assert_eq!(result.pods_collected, 1);
+    }
+
+    #[test]
+    fn test_direct_damage_to_time_pod_destroys_without_collecting() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_has_pod(true);
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut result, DamageSource::Weapon);
+
+        assert!(!board.tile(3, 4).has_pod());
+        assert_eq!(result.pods_collected, 0);
+        assert!(result.events.iter().any(|e| e == "pod_destroyed_by_damage:3:4"));
+    }
+
+    #[test]
+    fn test_chain_whip_does_not_break_ice_under_target() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 5, 3, 5, WId::PrimeLightning);
+        board.tile_mut(4, 3).terrain = Terrain::Ice;
+        board.tile_mut(4, 3).set_cracked(true);
+        let starfish = add_enemy_type(&mut board, 2588, 4, 3, 4, "Starfish2");
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightning, (4, 3), &WEAPONS);
+
+        assert_eq!(board.units[starfish].hp, 2);
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ice);
+        assert!(board.tile(4, 3).cracked());
+        assert_eq!(result.enemies_killed, 0);
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "adjacent pawn target should be legal"
+        );
+    }
+
+    #[test]
+    fn test_chain_whip_ignites_forest_under_hit_pawn() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 5, 3, 5, WId::PrimeLightning);
+        board.tile_mut(4, 3).terrain = Terrain::Forest;
+        let enemy = add_enemy_type(&mut board, 2588, 4, 3, 4, "Starfish2");
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightning, (4, 3), &WEAPONS);
+
+        assert_eq!(board.units[enemy].hp, 2);
+        assert!(board.units[enemy].fire());
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Ground);
+        assert!(board.tile(4, 3).on_fire());
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_chain_whip_building_chain_uses_zero_damage_building_node() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 4, 4, 5, WId::PrimeLightningA);
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 1;
+        board.grid_power = 4;
+        let chained = add_enemy(&mut board, 2588, 4, 2, 4);
+
+        let result = simulate_attack(&mut board, mech, WId::PrimeLightningA, (4, 3), &WEAPONS);
+
+        assert_eq!(board.units[chained].hp, 2);
+        assert_eq!(board.tile(4, 3).building_hp, 1);
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 0);
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "Building Chain should make adjacent buildings legal targets"
+        );
     }
 
     #[test]
@@ -2379,11 +5938,10 @@ mod tests {
     // Regression: snapshots grid_drop_20260421_161809_372_t02_a0 and t03_a1
     // plus the Ranged_Rocket bump trace from commit 2a86ca1.
     //
-    // Non-unique multi-HP buildings (e.g. 2-HP Residential) contribute a
-    // single grid power regardless of HP. A bump that damages but does NOT
-    // destroy them must leave grid_power alone — only full destruction
-    // (bhp → 0) drops grid. Unique/objective buildings keep per-HP grid
-    // accounting (verified by the following unique-building test).
+    // A bump that damages a non-unique multi-HP building but does NOT destroy
+    // it must leave grid_power alone. If that same building later dies, the
+    // delayed bump HP loss is charged then. Unique/objective buildings keep
+    // immediate per-HP grid accounting.
     #[test]
     fn test_push_into_nonunique_2hp_building_preserves_grid() {
         let mut board = make_test_board();
@@ -2404,11 +5962,98 @@ mod tests {
     }
 
     #[test]
+    fn test_deferred_nonunique_bump_debt_charged_on_later_destroy() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut first);
+        assert_eq!(board.units[idx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(first.grid_damage, 0);
+        assert_eq!(board.grid_power, 7);
+
+        let mut second = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut second, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(second.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_deferred_nonunique_bump_debt_flushes_at_enemy_turn_start() {
+        let mut board = make_test_board();
+        board.grid_power = 4;
+        board.tile_mut(4, 6).terrain = Terrain::Building;
+        board.tile_mut(4, 6).building_hp = 2; // B4 visual
+        let firefly = add_enemy_type(&mut board, 884, 4, 5, 5, "Firefly2");
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 4, 5, 0, &mut first); // push into B4
+        assert_eq!(board.units[firefly].hp, 4);
+        assert_eq!(board.tile(4, 6).building_hp, 1);
+        assert_eq!(first.grid_damage, 0);
+        assert_eq!(board.grid_power, 4);
+
+        let original_positions = [(0u8, 0u8); 16];
+        crate::enemy::simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!(board.tile(4, 6).building_hp, 1, "B4 survives at 1 HP");
+        assert_eq!(board.grid_power, 3, "deferred B4 grid debt is charged at enemy-turn start");
+        assert_eq!(board.deferred_bump_grid_debt[xy_to_idx(4, 6)], 0);
+    }
+
+    #[test]
+    fn test_deferred_nonunique_bump_debt_not_double_charged_after_destroy() {
+        let mut board = make_test_board();
+        board.grid_power = 7;
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut first);
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+
+        let mut second = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut second, DamageSource::Weapon);
+        assert_eq!(second.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
+
+        let original_positions = [(0u8, 0u8); 16];
+        crate::enemy::simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        assert_eq!(board.grid_power, 5, "enemy-turn flush must not charge cleared debt twice");
+    }
+
+    #[test]
+    fn test_second_bump_collects_deferred_nonunique_grid_debt() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut first = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut first);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(first.grid_damage, 0);
+        assert_eq!(board.grid_power, 7);
+
+        let mut second = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut second);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(second.grid_damage, 2);
+        assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
     fn test_push_into_unique_2hp_building_drops_grid_per_hp() {
         let mut board = make_test_board();
         board.tile_mut(3, 4).terrain = Terrain::Building;
         board.tile_mut(3, 4).building_hp = 2;
-        // Mark as unique/objective building.
+        // Mark as a unique/objective-style building.
         let idx = xy_to_idx(3, 4) as u64;
         board.unique_buildings |= 1u64 << idx;
         let eidx = add_enemy(&mut board, 1, 3, 3, 3);
@@ -2418,7 +6063,27 @@ mod tests {
         assert_eq!(board.units[eidx].hp, 2);
         assert_eq!(board.tile(3, 4).building_hp, 1);
         assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
-        // Unique objective building: each HP is worth 1 grid.
+        // Unique/inferred objective building: each HP is worth 1 grid.
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_push_into_grid_reward_2hp_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = xy_to_idx(3, 4) as u64;
+        board.unique_buildings |= 1u64 << idx;
+        board.grid_reward_buildings |= 1u64 << idx;
+        let eidx = add_enemy(&mut board, 1, 3, 3, 3);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!(board.units[eidx].hp, 2);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(result.grid_damage, 1);
         assert_eq!(board.grid_power, 6);
     }
 
@@ -2439,6 +6104,45 @@ mod tests {
         assert_eq!(board.grid_power, 6);
         // Unit still took the bump.
         assert_eq!(board.units[idx].hp, 2);
+    }
+
+    #[test]
+    fn test_weapon_damage_multi_hp_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+
+        let mut first = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut first, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(first.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
+
+        let mut second = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut second, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+        assert_eq!(second.grid_damage, 1);
+        assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_weapon_damage_grid_reward_building_drops_grid_per_hp() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let idx = xy_to_idx(3, 4) as u64;
+        board.unique_buildings |= 1u64 << idx;
+        board.grid_reward_buildings |= 1u64 << idx;
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 4, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
     }
 
     #[test]
@@ -2485,6 +6189,19 @@ mod tests {
         assert_eq!(result.enemies_killed, 1);
         // Dead unit pushed forward (simultaneous)
         assert_eq!(board.units[enemy_idx].y, 5); // moved from 4 to 5
+    }
+
+    #[test]
+    fn test_minor_totem_kill_does_not_advance_mission_kill_counter() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimePunchmech);
+        let totem_idx = add_enemy_type(&mut board, 91, 3, 4, 1, "Totem1");
+        board.units[totem_idx].flags.insert(UnitFlags::MINOR);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.mission_kills, 0);
     }
 
     // ── Prime_Spear path_size=2 stab (Lua weapons_prime.lua:792-846) ──────────
@@ -2673,6 +6390,74 @@ mod tests {
         assert_eq!(board.units[mech_idx].hp, 5);
     }
 
+    #[test]
+    fn test_titan_fist_dash_punch_charges_to_target_and_records_ramming_speed() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 3, 3, WId::PrimePunchmechA);
+        let enemy_idx = add_enemy(&mut board, 1, 6, 3, 2);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 2, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert!(board.units[enemy_idx].hp <= 0, "Dash Punch should kill the 2 HP target");
+        assert_eq!(result.enemies_killed, 1);
+        assert!(
+            result.events.iter().any(|e| {
+                e == "achievement_ramming_speed_dash_punch_kill:distance:5:target:6:3"
+            }),
+            "Expected Ramming Speed event, got {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_titan_fist_ab_dash_punch_uses_damage_upgrade() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 3, 3, WId::PrimePunchmechAB);
+        let enemy_idx = add_enemy(&mut board, 1, 6, 3, 4);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechAB, 2, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert!(board.units[enemy_idx].hp <= 0, "AB Dash Punch should deal 4 damage");
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_titan_fist_dash_crosses_water_before_first_blocker() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 3, 3, WId::PrimePunchmechA);
+        let enemy_idx = add_enemy(&mut board, 1, 6, 3, 2);
+        board.tile_mut(4, 3).terrain = Terrain::Water;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 3, 3);
+
+        assert_eq!(
+            (board.units[mech_idx].x, board.units[mech_idx].y),
+            (5, 3),
+            "Dash Punch should cross water instead of stopping before it"
+        );
+        assert!(board.units[enemy_idx].hp <= 0);
+        assert_eq!(result.enemies_killed, 1);
+    }
+
+    #[test]
+    fn test_titan_fist_dash_dead_target_bumps_live_blocker() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 2, 3, WId::PrimePunchmechA);
+        let blob_idx = add_enemy(&mut board, 1, 1, 1, 1);
+        let arti_idx = add_mech(&mut board, 2, 1, 0, 2, WId::RangedArtillerymech);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 1, 1);
+
+        assert!(board.units[blob_idx].hp <= 0, "Dash target dies from the punch");
+        assert_eq!(
+            board.units[arti_idx].hp, 1,
+            "Dead Dash Punch target should still bump the live blocker behind it"
+        );
+        assert_eq!(result.mech_damage_taken, 1);
+    }
+
     /// Reproduction via the bridge JSON path — the failing run actually
     /// dispatched through `replay_solution`, so verify the JSON pipeline
     /// (board_from_json → simulate_attack → snapshot serializer) reaches
@@ -2776,6 +6561,55 @@ mod tests {
     }
 
     #[test]
+    fn test_shielded_building_absorbs_damage_before_grid_loss() {
+        let mut board = make_test_board();
+        board.grid_power = 4;
+        {
+            let tile = board.tile_mut(3, 3);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+            tile.set_shield(true);
+        }
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 3).building_hp, 1);
+        assert!(!board.tile(3, 3).shield());
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.buildings_damaged, 0);
+
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+        assert_eq!(board.tile(3, 3).building_hp, 0);
+        assert_eq!(board.grid_power, 3);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(result.buildings_damaged, 1);
+    }
+
+    #[test]
+    fn test_shield_projector_shields_building_target_and_line_tile() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 5, 3, 2, WId::ScienceShield);
+        for &(x, y) in &[(3, 3), (2, 3)] {
+            let tile = board.tile_mut(x, y);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 1;
+        }
+
+        let result = simulate_attack(&mut board, mech_idx, WId::ScienceShield, (3, 3), &WEAPONS);
+
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "building target should be legal for Shield Projector"
+        );
+        assert!(board.tile(3, 3).shield(), "target building should gain a shield");
+        assert!(board.tile(2, 3).shield(), "second line tile should gain a shield");
+        assert_eq!(board.tile(3, 3).building_hp, 1);
+        assert_eq!(board.tile(2, 3).building_hp, 1);
+    }
+
+    #[test]
     fn test_laser_damage_decay() {
         let mut board = make_test_board();
         // Place enemies along a line
@@ -2794,6 +6628,21 @@ mod tests {
     }
 
     #[test]
+    fn test_laser_ally_immune_skips_friendly_damage_but_decays() {
+        let mut board = make_test_board();
+        add_enemy(&mut board, 1, 1, 0, 10);
+        let ally = add_mech(&mut board, 2, 2, 0, 3, WId::SciencePullmech);
+        add_enemy(&mut board, 3, 3, 0, 10);
+
+        let laser = add_mech(&mut board, 0, 0, 0, 3, WId::PrimeLasermechA);
+        let _ = simulate_weapon(&mut board, laser, WId::PrimeLasermechA, 1, 0);
+
+        assert_eq!(board.units[0].hp, 7, "first enemy takes 3 damage");
+        assert_eq!(board.units[ally].hp, 3, "ally is not damaged by Ally Immune");
+        assert_eq!(board.units[2].hp, 9, "beam still decays through ally tile");
+    }
+
+    #[test]
     fn test_acid_projector_applies_acid() {
         let mut board = make_test_board();
         let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceAcidShot);
@@ -2802,6 +6651,124 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 4);
         // Acid Projector should apply ACID status to target
         assert!(board.units[enemy_idx].acid(), "Enemy should have ACID after Acid Projector");
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (3, 5));
+        assert!(
+            !board.tile(3, 4).acid(),
+            "Occupied ACID hits should not create an immediate ground pool"
+        );
+    }
+
+    #[test]
+    fn test_acid_projector_edge_block_noops_zero_damage_status() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 6, 2, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 7, 1);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 7);
+
+        assert_eq!(board.units[enemy_idx].hp, 1);
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (3, 7));
+        assert!(!board.units[enemy_idx].acid());
+        assert!(!board.tile(3, 7).acid());
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_acid_projector_pushes_line_target_beyond_clicked_tile() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 1, 2, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 1, 3, 6);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 1, 2);
+
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (1, 4));
+        assert_eq!(board.units[enemy_idx].hp, 6);
+        assert!(board.units[enemy_idx].acid());
+    }
+
+    #[test]
+    fn test_acid_projector_pushes_already_acid_target_with_open_space() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 4, 2, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 4, 1, 2);
+        board.units[enemy_idx].set_acid(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 4, 3);
+
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (4, 0));
+        assert_eq!(board.units[enemy_idx].hp, 2);
+        assert!(board.units[enemy_idx].acid());
+    }
+
+    #[test]
+    fn test_acid_projector_bump_on_occupied_cracked_ground_does_not_open_chasm() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 5, 4, 2, WId::ScienceAcidShot);
+        let shaman_idx = add_enemy_type(&mut board, 422, 5, 5, 3, "Shaman1");
+        let bouncer_idx = add_enemy_type(&mut board, 448, 5, 6, 3, "Bouncer1");
+        board.tile_mut(5, 6).set_cracked(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 5, 5);
+
+        assert_eq!(board.units[shaman_idx].hp, 2);
+        assert!(board.units[shaman_idx].acid(), "Acid Projector should acid the hit target before push");
+        assert_eq!(board.units[bouncer_idx].hp, 2, "blocked push bumps the cracked-tile blocker for 1");
+        assert_eq!(
+            board.tile(5, 6).terrain,
+            Terrain::Ground,
+            "occupied cracked Ground should absorb bump damage without opening a chasm"
+        );
+        assert!(board.tile(5, 6).cracked());
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_acid_projector_pushes_live_enemy_into_dead_enemy_wreck_without_bump() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 5, 2, 4, WId::ScienceAcidShot);
+        let hornet_idx = add_enemy_type(&mut board, 1184, 5, 5, 1, "Hornet1");
+        let scarab_idx = add_enemy_type(&mut board, 1183, 5, 6, 1, "Scarab1");
+        board.units[scarab_idx].hp = 0;
+        board.units[scarab_idx].set_active(false);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 5, 3);
+
+        assert_eq!(board.units[hornet_idx].hp, 1);
+        assert!(board.units[hornet_idx].acid());
+        assert_eq!((board.units[hornet_idx].x, board.units[hornet_idx].y), (5, 6));
+        assert_eq!(board.units[scarab_idx].hp, 0);
+        assert_eq!(result.enemies_killed, 0);
+        assert_eq!(result.enemy_damage_dealt, 0);
+    }
+
+    #[test]
+    fn test_acid_tank_cannon_acids_unit_without_ground_pool() {
+        let mut board = make_test_board();
+        let tank_idx = add_mech(&mut board, 0, 3, 3, 1, WId::AcidTankAtk);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+
+        let _ = simulate_weapon(&mut board, tank_idx, WId::AcidTankAtk, 3, 4);
+
+        assert!(board.units[enemy_idx].acid(), "A.C.I.D. Cannon should acidify the target unit");
+        assert!(
+            !board.tile(3, 4).acid(),
+            "A.C.I.D. Cannon should not create a pool below a live target"
+        );
+    }
+
+    #[test]
+    fn test_lethal_acid_hit_on_non_acid_unit_does_not_create_pool() {
+        let mut board = make_test_board();
+        let centipede_weapon = add_mech(&mut board, 0, 3, 3, 3, WId::CentipedeAtk2);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 1);
+
+        let _ = simulate_weapon(&mut board, centipede_weapon, WId::CentipedeAtk2, 3, 4);
+
+        assert!(board.units[enemy_idx].hp <= 0, "Centipede hit should kill the 1 HP target");
+        assert!(
+            !board.tile(3, 4).acid(),
+            "A lethal ACID hit on a non-ACID live target should not synthesize a pool"
+        );
     }
 
     #[test]
@@ -2827,6 +6794,46 @@ mod tests {
         // Acid Projector does 0 damage, so shield NOT consumed. Status also blocked.
         assert!(!board.units[enemy_idx].acid(), "Shield should block ACID status");
         assert!(board.units[enemy_idx].shield(), "Shield should NOT be consumed by 0 damage");
+        assert!(
+            board.tile(3, 4).acid(),
+            "Blocked ACID should fall to the target's feet"
+        );
+    }
+
+    #[test]
+    fn test_acid_projector_frozen_target_falls_to_feet() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::ScienceAcidShot);
+        let enemy_idx = add_enemy(&mut board, 1, 3, 4, 3);
+        board.units[enemy_idx].set_frozen(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceAcidShot, 3, 4);
+
+        assert!(!board.units[enemy_idx].acid(), "Frozen target should not receive ACID status");
+        assert!(
+            board.tile(3, 4).acid(),
+            "ACID blocked by frozen status should fall to the tile"
+        );
+    }
+
+    #[test]
+    fn test_missile_barrage_excludes_source_and_requires_valid_target() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 0, 3, 3, 2, WId::MissilesOneDmg);
+        let ally = add_mech(&mut board, 1, 4, 3, 3, WId::None);
+        let enemy = add_enemy(&mut board, 2, 5, 3, 3);
+
+        let _ = simulate_weapon(&mut board, caster, WId::MissilesOneDmg, 5, 3);
+        assert_eq!(board.units[caster].hp, 2, "source tile is excluded by Support_Missiles");
+        assert_eq!(board.units[ally].hp, 2, "friendly non-source unit should be hit");
+        assert_eq!(board.units[enemy].hp, 2, "enemy unit should be hit");
+
+        let mut invalid = make_test_board();
+        let invalid_caster = add_mech(&mut invalid, 10, 3, 3, 2, WId::MissilesOneDmg);
+        let invalid_enemy = add_enemy(&mut invalid, 11, 5, 3, 3);
+        let _ = simulate_weapon(&mut invalid, invalid_caster, WId::MissilesOneDmg, 3, 3);
+        assert_eq!(invalid.units[invalid_caster].hp, 2, "source click should no-op");
+        assert_eq!(invalid.units[invalid_enemy].hp, 3, "source click should emit no missiles");
     }
 
     #[test]
@@ -2838,6 +6845,23 @@ mod tests {
         let mut result = ActionResult::default();
         apply_push(&mut board, 3, 3, 0, &mut result);
         assert!(board.units[idx].fire(), "Unit pushed onto fire tile should catch fire");
+    }
+
+    #[test]
+    fn test_push_flying_unit_onto_fire_tile_ignites() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).set_on_fire(true);
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
+        board.units[idx].flags.insert(UnitFlags::FLYING);
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 0, &mut result);
+
+        assert_eq!((board.units[idx].x, board.units[idx].y), (3, 4));
+        assert!(
+            board.units[idx].fire(),
+            "Flying unit should catch fire from ordinary burning ground"
+        );
     }
 
     // ── Ranged_Rocket smoke-behind-shooter ──────────────────────────────────
@@ -2872,6 +6896,214 @@ mod tests {
     }
 
     #[test]
+    fn test_rock_accelerator_spawns_rock_on_empty_target() {
+        // Live Blitzkrieg regression: RockartMech fired Rock Launcher at an
+        // empty D2 and the bridge materialized a neutral RockThrown there.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        let rock = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|u| u.type_name_str() == "RockThrown")
+            .expect("Rock Accelerator should spawn a RockThrown on an empty target");
+        assert_eq!((rock.x, rock.y), (6, 4));
+        assert_eq!(rock.team, Team::Neutral);
+        assert_eq!((rock.hp, rock.max_hp), (1, 1));
+        assert_eq!(rock.move_speed, 0);
+        assert!(rock.pushable());
+    }
+
+    #[test]
+    fn test_rock_accelerator_does_not_spawn_on_preblocked_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+        board.tile_mut(6, 4).terrain = Terrain::Mountain;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        assert!(
+            board.units[..board.unit_count as usize]
+                .iter()
+                .all(|u| u.type_name_str() != "RockThrown"),
+            "Rock Accelerator should not replace a pre-impact blocker"
+        );
+    }
+
+    #[test]
+    fn test_rock_accelerator_defers_boom_bot_decay_until_after_side_pushes() {
+        // Mission_BoomBots capture: Rock Launcher kills a center Boom Bot while
+        // a second Boom Bot is on a perpendicular side tile. The side bot is
+        // pushed out before Explosive Decay resolves, so it survives.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 4, 2, WId::RangedRockthrow);
+        let center = add_enemy_type(&mut board, 1, 4, 4, 1, "Snowlaser1_Boom");
+        let side = add_enemy_type(&mut board, 2, 4, 3, 1, "Snowtank1_Boom");
+        board.tile_mut(4, 5).terrain = Terrain::Building;
+        board.tile_mut(4, 5).building_hp = 2;
+        board.grid_power = 7;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 4, 4);
+
+        assert_eq!(board.units[center].hp, -1, "center Boom Bot dies to Rock Launcher");
+        assert_eq!(
+            (board.units[side].x, board.units[side].y, board.units[side].hp),
+            (4, 2, 1),
+            "perpendicular side Boom Bot is pushed out of decay range before the center explosion"
+        );
+        assert_eq!(
+            board.tile(4, 5).building_hp,
+            1,
+            "center Explosive Decay still damages adjacent buildings after the side push"
+        );
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_rock_accelerator_spawn_inherits_active_acid_storm() {
+        let mut board = make_test_board();
+        board.mission_id = "Mission_AcidStorm".to_string();
+        add_enemy_type(&mut board, 99, 2, 1, 3, "Storm_Generator");
+        let mech_idx = add_mech(&mut board, 0, 6, 7, 2, WId::RangedRockthrow);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRockthrow, 6, 4);
+
+        let rock = board.units[..board.unit_count as usize]
+            .iter()
+            .find(|u| u.type_name_str() == "RockThrown")
+            .expect("Rock Accelerator should spawn a RockThrown on an empty target");
+        assert!(
+            rock.acid(),
+            "ACID Storm should immediately acidify newly spawned RockThrown"
+        );
+    }
+
+    #[test]
+    fn test_smoking_web_source_breaks_current_grapple() {
+        // Corporate HQ regression: Rocket smoke lands behind the shooter on a
+        // Scorpion Leader's tile, cancelling its queued web and freeing Pulse.
+        let mut board = make_test_board();
+        let rocket = add_mech(&mut board, 0, 5, 3, 3, WId::RangedRocket);
+        let pulse = add_mech(&mut board, 2, 4, 2, 3, WId::ScienceRepulse);
+        let boss = add_enemy_type(&mut board, 744, 5, 2, 7, "ScorpionBoss");
+        let target = add_enemy(&mut board, 747, 5, 6, 3);
+
+        board.units[pulse].base_move = 3;
+        board.units[pulse].set_web(true);
+        board.units[pulse].web_source_uid = board.units[boss].uid;
+        board.units[pulse].move_speed = 0;
+        board.units[boss].weapon = crate::board::WeaponId(WId::ScorpionAtkB as u16);
+
+        let _ = simulate_weapon(&mut board, rocket, WId::RangedRocket, 5, 6);
+
+        assert_eq!(board.units[target].hp, 1, "rocket target should still take normal damage");
+        assert!(board.tile(5, 2).smoke(), "Rocket smoke should land on the web source tile");
+        assert!(!board.units[pulse].web(), "smoking the web source should release the grapple");
+        assert_eq!(board.units[pulse].web_source_uid, 0);
+        assert_eq!(board.units[pulse].move_speed, board.units[pulse].base_move);
+    }
+
+    #[test]
+    fn test_web_break_clears_duplicate_train_segments() {
+        let mut board = make_test_board();
+        let webber_uid = 900;
+        let main = board.add_unit(Unit {
+            uid: 508,
+            x: 4,
+            y: 2,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            ..Default::default()
+        });
+        let extra = board.add_unit(Unit {
+            uid: 508,
+            x: 4,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Player,
+            ..Default::default()
+        });
+        board.units[main].set_type_name("Train_Pawn");
+        board.units[extra].set_type_name("Train_Pawn");
+        board.units[main].set_web(true);
+        board.units[main].web_source_uid = webber_uid;
+        board.units[extra].set_web(true);
+
+        break_web_from(&mut board, webber_uid);
+
+        assert!(!board.units[main].web());
+        assert!(!board.units[extra].web());
+        assert_eq!(board.units[main].web_source_uid, 0);
+        assert_eq!(board.units[extra].web_source_uid, 0);
+    }
+
+    #[test]
+    fn test_move_next_to_webb_egg_becomes_webbed() {
+        // Live Rusting Hulks regression: JetMech moved next to a WebbEgg1 and
+        // the engine immediately marked it webbed. The sim must refresh egg
+        // adjacency after movement, not only trust bridge status at turn read.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 6, 0, 2, WId::BruteJetmech);
+        board.units[jet].flags.insert(UnitFlags::CAN_MOVE);
+        let egg = add_enemy_type(&mut board, 674, 5, 2, 1, "WebbEgg1");
+
+        let _ = simulate_move(&mut board, jet, (6, 2));
+
+        assert!(board.units[jet].web(), "landing beside WebbEgg1 should web Jet");
+        assert_eq!(board.units[jet].web_source_uid, board.units[egg].uid);
+    }
+
+    #[test]
+    fn test_killing_webb_egg_releases_adjacency_web() {
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 6, 0, 2, WId::BruteJetmech);
+        let egg = add_enemy_type(&mut board, 674, 5, 2, 1, "WebbEgg1");
+        let _ = simulate_move(&mut board, jet, (6, 2));
+        assert!(board.units[jet].web());
+
+        let mut result = ActionResult::default();
+        let egg_pos = (board.units[egg].x, board.units[egg].y);
+        apply_damage(
+            &mut board, egg_pos.0, egg_pos.1, 1,
+            &mut result, DamageSource::Weapon,
+        );
+
+        assert!(!board.units[jet].web(), "dead egg should release adjacent web");
+        assert_eq!(board.units[jet].web_source_uid, 0);
+    }
+
+    #[test]
+    fn test_webb_egg_does_not_steal_active_scorpion_grapple() {
+        // Live m11t2: Pulse was adjacent to a WebbEgg, but the active grapple
+        // was from a Scorpion targeting Pulse. Killing the egg freed Jet but
+        // did not free Pulse.
+        let mut board = make_test_board();
+        let pulse = add_mech(&mut board, 2, 5, 3, 3, WId::ScienceRepulse);
+        let scorpion = add_enemy_type(&mut board, 626, 6, 3, 3, "Scorpion1");
+        let egg = add_enemy_type(&mut board, 674, 5, 2, 1, "WebbEgg1");
+        board.units[pulse].set_web(true);
+        board.units[pulse].web_source_uid = board.units[scorpion].uid;
+        board.units[scorpion].queued_target_x = board.units[pulse].x as i8;
+        board.units[scorpion].queued_target_y = board.units[pulse].y as i8;
+
+        board.refresh_webb_egg_grapples();
+        assert_eq!(board.units[pulse].web_source_uid, board.units[scorpion].uid);
+
+        let mut result = ActionResult::default();
+        let egg_pos = (board.units[egg].x, board.units[egg].y);
+        apply_damage(
+            &mut board, egg_pos.0, egg_pos.1, 1,
+            &mut result, DamageSource::Weapon,
+        );
+
+        assert!(board.units[pulse].web(), "Scorpion web should survive egg death");
+        assert_eq!(board.units[pulse].web_source_uid, board.units[scorpion].uid);
+    }
+
+    #[test]
     fn test_sim_artillery_rocket_no_smoke_when_shooter_on_edge() {
         // Rocket Mech at (3,0) (west edge, y=0) fires east. Behind-shooter
         // would be (3,-1) which is off-board — smoke must be skipped silently
@@ -2898,6 +7130,199 @@ mod tests {
                 y
             );
         }
+    }
+
+    #[test]
+    fn test_taurus_edge_push_does_not_add_bump_damage() {
+        // Live regression: Easy Rift Walkers run 20260510_213059_819,
+        // R.S.T. Mission_Cataclysm turn 1. Taurus hit a Scorpion already on
+        // the west edge; the engine dealt weapon damage but no off-board bump.
+        let mut board = make_test_board();
+        let tank = add_mech(&mut board, 0, 4, 3, 3, WId::BruteTankmech);
+        let scorpion = add_enemy_type(&mut board, 684, 4, 0, 2, "Scorpion1");
+
+        let result = simulate_weapon(&mut board, tank, WId::BruteTankmech, 4, 0);
+
+        assert_eq!(
+            (board.units[scorpion].x, board.units[scorpion].y, board.units[scorpion].hp),
+            (4, 0, 1),
+            "Taurus edge hit should deal weapon damage only"
+        );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_taurus_killed_bombrock_explodes_before_push_and_chains() {
+        // Corporate HQ / Tumblebug Leader turn 2: Tank at C7 fired Taurus at a
+        // C6 BombRock with another BombRock at C5. Live exploded from C6 before
+        // any corpse push, damaging Tank C7 and D6, then chained through C5 to
+        // damage D5.
+        let mut board = make_test_board();
+        let tank = add_mech(&mut board, 0, 1, 5, 3, WId::BruteTankmech);
+        let rock_c6 = add_bombrock(&mut board, 1745, 2, 5);
+        let rock_c5 = add_bombrock(&mut board, 1744, 3, 5);
+
+        {
+            let d6 = board.tile_mut(2, 4);
+            d6.terrain = Terrain::Building;
+            d6.building_hp = 1;
+        }
+        {
+            let d5 = board.tile_mut(3, 4);
+            d5.terrain = Terrain::Building;
+            d5.building_hp = 2;
+        }
+
+        let _result = simulate_action(
+            &mut board,
+            tank,
+            (1, 5),
+            WId::BruteTankmech,
+            (2, 5),
+            &WEAPONS,
+        );
+
+        assert_eq!(board.units[tank].hp, 2, "C6 BombRock explosion hits Tank at C7");
+        assert!(board.units[rock_c6].hp <= 0, "directly hit C6 BombRock dies");
+        assert!(board.units[rock_c5].hp <= 0, "C5 BombRock dies from chain explosion");
+        assert_eq!(
+            (board.units[rock_c6].x, board.units[rock_c6].y),
+            (2, 5),
+            "dead BombRock should not be pushed as a corpse"
+        );
+        assert_eq!(board.tile(2, 4).building_hp, 0, "C6 explosion destroys D6 building");
+        assert_eq!(board.tile(2, 4).terrain, Terrain::Rubble, "D6 becomes rubble");
+        assert_eq!(board.tile(3, 4).building_hp, 1, "C5 chain explosion damages D5 building");
+    }
+
+    #[test]
+    fn test_taurus_hits_stable_nonpushable_without_moving_target() {
+        // Live regression: Easy Rift Walkers run 20260510_213059_819,
+        // Final Cave turn 2. Taurus hit the B6 FireflyBoss for damage, but the
+        // engine's Stable/guarding state prevented the predicted push to A6.
+        let mut board = make_test_board();
+        let tank = add_mech(&mut board, 0, 2, 4, 3, WId::BruteTankmech);
+        let boss = board.add_unit(Unit {
+            uid: 1143,
+            x: 2,
+            y: 6,
+            hp: 6,
+            max_hp: 6,
+            team: Team::Enemy,
+            flags: UnitFlags::MASSIVE,
+            ..Default::default()
+        });
+        board.units[boss].set_type_name("FireflyBoss");
+
+        let result = simulate_weapon(&mut board, tank, WId::BruteTankmech, 2, 6);
+
+        assert_eq!(
+            (board.units[boss].x, board.units[boss].y, board.units[boss].hp),
+            (2, 6, 5),
+            "Stable/non-pushable FireflyBoss should take Taurus damage without moving"
+        );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_artemis_a_direct_building_damage_is_zero() {
+        let mut board = make_test_board();
+        board.grid_power = 5;
+        board.tile_mut(3, 5).terrain = Terrain::Building;
+        board.tile_mut(3, 5).building_hp = 1;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedArtillerymechA);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedArtillerymechA, 3, 5);
+
+        assert_eq!(board.tile(3, 5).building_hp, 1);
+        assert_eq!(board.tile(3, 5).terrain, Terrain::Building);
+        assert_eq!(board.grid_power, 5);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_weapon_damage_thaws_frozen_building_without_grid_loss() {
+        let mut board = make_test_board();
+        board.grid_power = 6;
+        let mech_idx = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        board.tile_mut(3, 4).set_frozen(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
+
+        assert_eq!(board.tile(3, 4).building_hp, 1);
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Building);
+        assert!(!board.tile(3, 4).frozen());
+        assert_eq!(board.grid_power, 6);
+        assert_eq!(result.grid_damage, 0);
+        assert_eq!(result.buildings_damaged, 0);
+        assert_eq!(result.buildings_lost, 0);
+        assert!(result.events.iter().any(|e| e == "building_thawed:3:4"));
+    }
+
+    #[test]
+    fn test_artemis_a_push_bump_can_still_damage_building() {
+        let mut board = make_test_board();
+        board.grid_power = 5;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedArtillerymechA);
+        add_enemy(&mut board, 1, 3, 6, 2);
+        board.tile_mut(3, 7).terrain = Terrain::Building;
+        board.tile_mut(3, 7).building_hp = 1;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedArtillerymechA, 3, 5);
+
+        assert_eq!(board.tile(3, 7).building_hp, 0);
+        assert_eq!(board.grid_power, 4);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(result.buildings_bump_damaged, 1);
+    }
+
+    #[test]
+    fn test_artemis_adjacent_edge_push_does_not_bump_off_board() {
+        // Live regression: Easy Rift Walkers run 20260510_213059_819,
+        // R.S.T. Mission_Crack turn 3. Artemis targeted B5, pushing a Hornet
+        // on adjacent A5 into the edge; the engine left it alive at 1 HP.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedArtillerymech);
+        let hornet = add_enemy_type(&mut board, 689, 3, 7, 1, "Hornet1");
+        board.units[hornet].flags.insert(UnitFlags::FLYING);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedArtillerymech, 3, 6);
+
+        assert_eq!(
+            (board.units[hornet].x, board.units[hornet].y, board.units[hornet].hp),
+            (3, 7, 1),
+            "Artemis adjacent edge push should not add off-board bump damage"
+        );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_artemis_off_axis_target_is_illegal_noop() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 2, 2, 4, 2, WId::RangedArtillerymech);
+        let firefly = add_enemy_type(&mut board, 2214, 6, 3, 5, "Firefly2");
+        let crab = add_enemy_type(&mut board, 2217, 6, 2, 3, "Crab1");
+
+        let result = simulate_attack(
+            &mut board,
+            mech_idx,
+            WId::RangedArtillerymech,
+            (6, 2),
+            &WEAPONS,
+        );
+
+        assert!(
+            result.events.iter().any(|e| e.starts_with("illegal_weapon_target")),
+            "Artemis D6->F2 should be rejected as off-axis"
+        );
+        assert_eq!(board.units[crab].hp, 3);
+        assert_eq!(
+            (board.units[firefly].x, board.units[firefly].y),
+            (6, 3),
+            "off-axis Artemis no-op should not push the adjacent Firefly"
+        );
     }
 
     // ── Ranged_Rocket: push-bump when target is killed by the rocket ─────────
@@ -2962,6 +7387,232 @@ mod tests {
     }
 
     #[test]
+    fn test_upgraded_rocket_damage_plus_blocked_bump_kills_alpha_scorpion() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 5, 3, WId::RangedRocketA);
+        let scorpion = add_enemy_type(&mut board, 757, 2, 5, 4, "Scorpion2");
+        board.tile_mut(1, 5).terrain = Terrain::Mountain;
+        board.tile_mut(1, 5).building_hp = 2;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedRocketA, 2, 5);
+
+        assert_eq!(board.units[scorpion].hp, 0);
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.tile(1, 5).building_hp, 1);
+        assert!(board.tile(5, 5).smoke(), "upgraded Rocket still smokes behind shooter");
+    }
+
+    #[test]
+    fn test_rocket_live_edge_target_takes_damage_without_edge_bump() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 1, 1, 4, 3, WId::RangedRocket);
+        let moth = add_enemy_type(&mut board, 337, 7, 4, 3, "Moth1");
+        board.units[moth].flags.insert(UnitFlags::FLYING);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 7, 4);
+
+        assert_eq!(board.units[moth].hp, 1);
+        assert_eq!((board.units[moth].x, board.units[moth].y), (7, 4));
+        assert_eq!(result.enemies_killed, 0);
+        assert!(board.tile(0, 4).smoke(), "Rocket still smokes behind the shooter");
+    }
+
+    #[test]
+    fn test_rocket_killed_target_bumps_live_mech_blocker() {
+        let mut board = make_test_board();
+        // Shooter west of target; forward push moves target east into Pulse.
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedRocket);
+        let _target = add_enemy(&mut board, 1, 3, 5, 2);
+        let pulse = add_mech(&mut board, 2, 3, 6, 1, WId::ScienceRepulse);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 3, 5);
+
+        assert_eq!(
+            board.units[pulse].hp, 0,
+            "Rocket center corpse should bump and kill a 1-HP mech blocker"
+        );
+    }
+
+    #[test]
+    fn test_rocket_killed_nonpushable_target_bumps_building() {
+        let mut board = make_test_board();
+        board.grid_power = 7;
+        // Shooter south of target; forward push moves target north into a
+        // two-HP building. Non-pushable live targets are immune, but Rocket's
+        // killed center target still resolves the corpse bump.
+        let mech_idx = add_mech(&mut board, 0, 7, 5, 3, WId::RangedRocket);
+        let target = add_enemy_type(&mut board, 1, 5, 5, 2, "Jelly_Armor1");
+        board.units[target].flags.remove(UnitFlags::PUSHABLE);
+        board.tile_mut(4, 5).terrain = Terrain::Building;
+        board.tile_mut(4, 5).building_hp = 2;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedRocket, 5, 5);
+
+        assert_eq!(
+            board.tile(4, 5).building_hp, 1,
+            "Rocket-killed non-pushable target should bump the building behind it"
+        );
+        assert_eq!(
+            board.grid_power, 7,
+            "damaging a non-unique 2-HP building should not drop grid until destroyed"
+        );
+    }
+
+    #[test]
+    fn test_arachnid_psion_player_kill_spawns_spiderling_egg_immediately() {
+        // Live regression: Hard Rusting Hulks run 20260512_104120_903,
+        // R.S.T. Corporate HQ turn 4. Rocket at D8 fired at Firefly on D4;
+        // the corpse bumped the Arachnid Psion on D3, and the engine spawned
+        // SpiderlingEgg1 uid 84 on D4 before the next mech acted.
+        let mut board = make_test_board();
+        board.spider_psion = true;
+        let rocket = add_mech(&mut board, 1, 0, 4, 3, WId::RangedRocket);
+        let _firefly = add_enemy_type(&mut board, 78, 4, 4, 3, "Firefly1");
+        let psion = add_enemy_type(&mut board, 80, 5, 4, 2, "Jelly_Spider1");
+        board.units[psion].flags.insert(UnitFlags::FLYING);
+        let _hornet_a = add_enemy_type(&mut board, 82, 4, 5, 2, "Hornet1");
+        let _hornet_b = add_enemy_type(&mut board, 83, 4, 2, 2, "Hornet1");
+
+        let result = simulate_attack(&mut board, rocket, WId::RangedRocket, (4, 4), &WEAPONS);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.pending_spider_eggs.len(), 0);
+        let egg = board.unit_at(4, 4).expect("Arachnid Psion egg should spawn on death tile");
+        assert_eq!(board.units[egg].uid, 84);
+        assert_eq!(board.units[egg].type_name_str(), "SpiderlingEgg1");
+        assert_eq!(board.units[egg].hp, 1);
+    }
+
+    #[test]
+    fn test_arachnid_psion_egg_follows_rocket_killed_corpse_push() {
+        // Live regression: Hard Rusting Hulks run 20260513_144310_771,
+        // R.S.T. Mission_Solar turn 3. Rocket at C6 fired at Leaper on C2;
+        // the killed Leaper corpse moved to C1, and the engine spawned the
+        // SpiderlingEgg1 on C1 before the next mech acted.
+        let mut board = make_test_board();
+        board.spider_psion = true;
+        let rocket = add_mech(&mut board, 1, 2, 5, 3, WId::RangedRocket);
+        let target = add_enemy_type(&mut board, 878, 6, 5, 2, "Leaper2");
+        let psion = add_enemy_type(&mut board, 879, 5, 6, 2, "Jelly_Spider1");
+        board.units[psion].flags.insert(UnitFlags::FLYING);
+
+        let result = simulate_attack(&mut board, rocket, WId::RangedRocket, (6, 5), &WEAPONS);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!((board.units[target].x, board.units[target].y), (7, 5));
+        assert_eq!(board.units[target].hp, 0);
+        assert_eq!(board.pending_spider_eggs.len(), 0);
+        assert!(board.unit_at(6, 5).is_none(), "C2 should be empty after the corpse push");
+        let egg = board.unit_at(7, 5).expect("Arachnid Psion egg should follow the corpse to C1");
+        assert_eq!(board.units[egg].uid, 880);
+        assert_eq!(board.units[egg].type_name_str(), "SpiderlingEgg1");
+        assert_eq!(board.units[egg].hp, 1);
+    }
+
+    #[test]
+    fn test_blob_boss_death_spawns_two_medium_goos() {
+        let mut board = make_test_board();
+        let _boss = add_enemy_type(&mut board, 200, 4, 4, 1, "BlobBoss");
+        board.units[0].flags.insert(UnitFlags::MASSIVE);
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(result.enemies_killed, 1);
+        let children: Vec<_> = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossMed")
+            .collect();
+        assert_eq!(children.len(), 2);
+        assert_eq!((children[0].x, children[0].y), (4, 2));
+        assert_eq!((children[1].x, children[1].y), (3, 3));
+        for child in children {
+            assert_eq!(child.hp, 2);
+            assert_eq!(child.max_hp, 2);
+            assert_eq!(child.move_speed, 3);
+            assert_eq!(child.base_move, 3);
+            assert!(child.massive());
+            assert!(child.pushable());
+            assert!(!child.has_queued_attack());
+            assert_eq!(child.queued_target_x, -1);
+            assert_eq!(child.weapon, WeaponId(WId::BlobBossAtkMed as u16));
+        }
+        assert!(result.events.iter().any(|e| e.contains("blob_split:200:BlobBoss")));
+    }
+
+    #[test]
+    fn test_medium_goo_splits_and_small_goo_does_not() {
+        let mut board = make_test_board();
+        let _med = add_enemy_type(&mut board, 201, 4, 4, 1, "BlobBossMed");
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+
+        let smalls = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossSmall")
+            .count();
+        assert_eq!(smalls, 2);
+
+        let mut board = make_test_board();
+        let _small = add_enemy_type(&mut board, 202, 4, 4, 1, "BlobBossSmall");
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+        assert_eq!(board.unit_count, 1, "Small Goo should not split further");
+    }
+
+    #[test]
+    fn test_blob_boss_split_uses_backup_radius_when_primary_blocked() {
+        let mut board = make_test_board();
+        for x in 0u8..8 {
+            for y in 0u8..8 {
+                let dist = (x as i8 - 4).unsigned_abs() + (y as i8 - 4).unsigned_abs();
+                if (1..=2).contains(&dist) {
+                    board.tile_mut(x, y).terrain = Terrain::Water;
+                }
+            }
+        }
+        let _boss = add_enemy_type(&mut board, 203, 4, 4, 1, "BlobBoss");
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 4, 4, 1, &mut result, DamageSource::Weapon);
+
+        let children: Vec<_> = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossMed")
+            .collect();
+        assert_eq!(children.len(), 2);
+        for child in children {
+            let dist = (child.x as i8 - 4).unsigned_abs()
+                + (child.y as i8 - 4).unsigned_abs();
+            assert!(
+                (3..=4).contains(&dist),
+                "child at ({}, {}) should use backup radius",
+                child.x,
+                child.y
+            );
+        }
+    }
+
+    #[test]
+    fn test_blob_boss_instant_death_still_splits() {
+        let mut board = make_test_board();
+        let _boss = add_enemy_type(&mut board, 204, 4, 4, 1, "BlobBoss");
+        board.units[0].flags.insert(UnitFlags::MASSIVE);
+        board.tile_mut(4, 5).terrain = Terrain::Chasm;
+        let mut result = ActionResult::default();
+
+        apply_push(&mut board, 4, 4, 0, &mut result);
+
+        assert_eq!(result.enemies_killed, 1);
+        let children = board.units[..board.unit_count as usize]
+            .iter()
+            .filter(|u| u.hp > 0 && u.type_name_str() == "BlobBossMed")
+            .count();
+        assert_eq!(children, 2);
+    }
+
+    #[test]
     fn test_jetmech_smokes_transit_base_range() {
         // Aerial Bombs tooltip: "Fly over a target, dropping an explosive
         // smoke bomb." Smoke goes on the TRANSIT tile(s), NOT landing or start.
@@ -2985,6 +7636,20 @@ mod tests {
     }
 
     #[test]
+    fn test_aerial_bombs_landing_on_time_pod_collects() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        board.tile_mut(3, 5).set_has_pod(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::BruteJetmech, 3, 5);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (3, 5));
+        assert!(!board.tile(3, 5).has_pod());
+        assert_eq!(result.pods_collected, 1);
+        assert!(result.events.iter().any(|e| e == "pod_collected:3:5"));
+    }
+
+    #[test]
     fn test_jetmech_smokes_transit_range_upgraded() {
         // Range-upgraded Aerial Bombs (e.g. +1 range power): S=(3,3) → T1=(3,4)
         // → T2=(3,5) → L=(3,6). Smoke on BOTH transit tiles, not on L or S.
@@ -2997,7 +7662,7 @@ mod tests {
         // Clone the default def and expand range so the leap covers 3 tiles.
         let upgraded = WEAPONS[WId::BruteJetmech as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &upgraded, 3, 6, &mut result);
+        sim_leap(&mut board, mech_idx, WId::BruteJetmech, &upgraded, 3, 6, &mut result);
 
         assert!(
             board.tile(3, 4).smoke(),
@@ -3071,7 +7736,7 @@ mod tests {
 
         let upgraded = WEAPONS[WId::BruteJetmech as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &upgraded, 3, 6, &mut result);
+        sim_leap(&mut board, mech_idx, WId::BruteJetmech, &upgraded, 3, 6, &mut result);
 
         assert_eq!(
             board.units[t1_enemy].hp, 2,
@@ -3105,11 +7770,347 @@ mod tests {
 
         let upgraded = WEAPONS[WId::PrimeLeap as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &upgraded, 3, 4, &mut result);
+        sim_leap(&mut board, mech_idx, WId::PrimeLeap, &upgraded, 3, 4, &mut result);
 
         assert_eq!(board.units[adj_n].hp, 2, "Prime_Leap: landing-adjacent N must take 1 dmg");
         assert_eq!(board.units[adj_s].hp, 2, "Prime_Leap: landing-adjacent S must take 1 dmg");
         assert_eq!(board.units[adj_e].hp, 2, "Prime_Leap: landing-adjacent E must take 1 dmg");
+    }
+
+    #[test]
+    fn test_prime_leap_long_jump_bombrock_excludes_landing_mech_without_transit_damage() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 7, 3, 5, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        let dung_idx = add_enemy_type(&mut board, 501, 4, 3, 5, "Dung2");
+        board.units[dung_idx].set_acid(true);
+        let rock_idx = add_bombrock(&mut board, 503, 3, 3);
+        let leaper_idx = add_enemy_type(&mut board, 502, 1, 3, 1, "Leaper1");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 2, 3);
+
+        assert_eq!(
+            board.units[dung_idx].hp,
+            4,
+            "Hydraulic Legs should not add pass-over damage; only the BombRock blast hits Dung"
+        );
+        assert_eq!(board.units[rock_idx].hp, 0, "landing-adjacent BombRock should explode");
+        assert_eq!(board.units[leaper_idx].hp, 0, "landing-adjacent Leaper should be killed");
+        assert_eq!(
+            board.units[mech_idx].hp,
+            4,
+            "BombRock blast should exclude the landing Leap and Hydraulic Legs Nanobots should not heal above the engine/base HP cap"
+        );
+        assert!(
+            !result.events.iter().any(|e| e.starts_with("viscera_nanobots_heal:")),
+            "over-base Hydraulic Legs kill should not emit an actual heal event"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_long_jump_does_not_damage_transit_tiles() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 5, 5, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        let mosquito_idx = add_enemy_type(&mut board, 504, 4, 4, 2, "Mosquito1");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 4, 2);
+
+        assert_eq!(
+            board.units[mosquito_idx].hp,
+            2,
+            "Hydraulic Legs should not damage pass-over transit tiles"
+        );
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_prime_leap_no_middle_transit_damage_before_landing_push_collision() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 5, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        let jelly_idx = add_enemy_type(&mut board, 1146, 5, 3, 2, "Jelly_Regen1");
+        let scarab_idx = add_enemy_type(&mut board, 1147, 5, 4, 4, "Scarab2");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 5);
+
+        assert_eq!(
+            board.units[jelly_idx].hp,
+            1,
+            "Blood Psion should take only the Scarab collision bump, not synthetic pass-over damage"
+        );
+        assert_eq!(board.units[scarab_idx].hp, 2);
+        assert_eq!(result.enemies_killed, 0);
+    }
+
+    #[test]
+    fn test_prime_leap_push_into_water_heals_and_keeps_origin_ice() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 4, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_type_name("LeapMech");
+        board.tile_mut(6, 6).terrain = Terrain::Ice;
+        board.tile_mut(7, 6).terrain = Terrain::Water;
+        let beetle_idx = add_enemy_type(&mut board, 1149, 6, 6, 4, "Beetle1");
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 6);
+
+        assert_eq!(
+            board.tile(6, 6).terrain,
+            Terrain::Ice,
+            "occupied Ice should stay intact when the pushed target dies in water"
+        );
+        assert_eq!((board.units[beetle_idx].x, board.units[beetle_idx].y), (7, 6));
+        assert_eq!(board.units[beetle_idx].hp, 0);
+        assert_eq!(result.leech_credit_kills, 1);
+        assert_eq!(
+            board.units[mech_idx].hp,
+            5,
+            "Hydraulic Legs terrain-push kill should receive boosted Nanobots healing after recoil"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_ground_landing_on_water_is_unfired_action() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 5, WId::PrimeLeap);
+        board.tile_mut(4, 3).terrain = Terrain::Water;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 4, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(board.units[mech_idx].hp, 5);
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:4:3:water"),
+            "invalid water landing should be recorded as an unfired leap"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_self_damage_strips_shield_before_acid_pool_pickup() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 5, WId::PrimeLeap);
+        board.units[mech_idx].set_shield(true);
+        board.tile_mut(5, 3).set_acid(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(board.units[mech_idx].hp, 5, "shield absorbs the Leap recoil");
+        assert!(!board.units[mech_idx].shield(), "Leap recoil should strip shield");
+        assert!(board.units[mech_idx].acid(), "landing ACID should apply after shield is stripped");
+        assert!(!board.tile(5, 3).acid(), "ACID pool should be consumed on landing");
+    }
+
+    #[test]
+    fn test_prime_leap_nanobots_revive_before_fire_landing_pickup() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 1, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.tile_mut(5, 3).set_on_fire(true);
+        let firefly_idx = add_enemy(&mut board, 562, 5, 2, 1);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[firefly_idx].hp, 0);
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(
+            board.units[mech_idx].hp, 2,
+            "Nanobots should revive Leap after self-damage before landing fire applies"
+        );
+        assert!(
+            board.units[mech_idx].fire(),
+            "revived Hydraulic Legs mech should catch fire from the landing tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:0:1:2"),
+            "the landing-adjacent kill should produce a boosted Nanobots heal"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_nanobots_revive_clears_existing_fire_before_landing() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 1, 1, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 5;
+        board.units[mech_idx].set_fire(true);
+        let spider_idx = add_enemy(&mut board, 563, 5, 2, 1);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 3);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[spider_idx].hp, 0);
+        assert_eq!(board.units[mech_idx].hp, 2);
+        assert!(
+            !board.units[mech_idx].fire(),
+            "Nanobots revive should clear fire carried by the temporary mech death"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "viscera_nanobots_heal:0:1:2"),
+            "the landing-adjacent kill should still produce a boosted Nanobots heal"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_cracked_landing_death_is_not_nanobot_revived() {
+        let mut board = make_test_board();
+        board.viscera_nanobots_heal = 2;
+        let mech_idx = add_mech(&mut board, 0, 5, 0, 2, WId::PrimeLeap);
+        board.units[mech_idx].max_hp = 3;
+        board.tile_mut(5, 2).set_cracked(true);
+        board.tile_mut(6, 2).set_cracked(true);
+        let totem_idx = add_enemy_type(&mut board, 489, 6, 2, 1, "Totem1");
+        board.units[totem_idx].flags |= UnitFlags::MINOR;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 5, 2);
+
+        assert_eq!(
+            board.tile(5, 2).terrain,
+            Terrain::Chasm,
+            "self-damage opens the cracked landing tile"
+        );
+        assert_eq!(
+            board.tile(6, 2).terrain,
+            Terrain::Chasm,
+            "Hydraulic Legs also cracks the occupied landing-adjacent target tile"
+        );
+        assert_eq!(board.units[totem_idx].hp, 0, "landing-adjacent Totem is killed");
+        assert_eq!(
+            board.units[mech_idx].hp,
+            0,
+            "Nanobots must not revive a mech that fell into a chasm"
+        );
+        assert_eq!(result.mechs_killed, 1);
+        assert!(
+            result
+                .events
+                .iter()
+                .any(|e| e == "viscera_nanobots_blocked_by_terrain:0:1"),
+            "terrain-blocked Nanobots revive should be explicit in replay events"
+        );
+    }
+
+    #[test]
+    fn test_prime_leap_moves_acid_pool_with_killed_pushed_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 2, 5, WId::PrimeLeap);
+        let mosquito_idx = add_enemy_type(&mut board, 290, 6, 2, 2, "Mosquito1");
+        board.units[mosquito_idx].set_acid(true);
+        board.units[mosquito_idx].flags |= UnitFlags::FLYING;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 7, 2);
+
+        assert_eq!(board.units[mosquito_idx].hp, 0);
+        assert_eq!((board.units[mosquito_idx].x, board.units[mosquito_idx].y), (5, 2));
+        assert!(!board.tile(6, 2).acid(), "vacated kill tile should not keep a new ACID pool");
+        assert!(board.tile(5, 2).acid(), "ACID pool should follow the pushed corpse");
+    }
+
+    #[test]
+    fn test_prime_leap_killed_target_corpse_bumps_live_blocker() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeLeap);
+        let blocker_idx = add_mech(&mut board, 1, 3, 4, 3, WId::BruteUnstable);
+        let leaper_idx = add_enemy_type(&mut board, 140, 4, 4, 1, "Leaper1");
+
+        let wdef = WEAPONS[WId::PrimeLeap as usize];
+        let mut result = ActionResult::default();
+        sim_leap(&mut board, mech_idx, WId::PrimeLeap, &wdef, 5, 4, &mut result);
+
+        assert_eq!(board.units[leaper_idx].hp, 0, "landing damage kills the Leaper");
+        assert_eq!(board.units[blocker_idx].hp, 2, "killed Leaper corpse bumps the live blocker");
+        assert_eq!((board.units[leaper_idx].x, board.units[leaper_idx].y), (4, 4));
+    }
+
+    #[test]
+    fn test_prime_leap_friendly_push_enters_existing_dead_unit_tile_without_bump() {
+        let mut board = make_test_board();
+        let leap_idx = add_mech(&mut board, 0, 5, 4, 5, WId::PrimeLeap);
+        let unstable_idx = add_mech(&mut board, 1, 6, 3, 3, WId::BruteUnstable);
+        let leaper_idx = add_enemy_type(&mut board, 140, 6, 2, 1, "Leaper1");
+        board.units[leaper_idx].hp = 0;
+        board.units[leaper_idx].set_active(false);
+
+        let result = simulate_weapon(&mut board, leap_idx, WId::PrimeLeap, 6, 4);
+
+        assert_eq!(board.units[leaper_idx].hp, 0, "dead Leaper wreck should stay on the destination tile");
+        assert_eq!(
+            (board.units[unstable_idx].x, board.units[unstable_idx].y),
+            (6, 2),
+            "Hydraulic Legs should move the friendly pusher into the existing dead unit tile"
+        );
+        assert_eq!(
+            board.units[unstable_idx].hp,
+            2,
+            "friendly pusher takes landing-adjacent damage but no wreck bump"
+        );
+        assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
+    fn test_prime_leap_push_into_disabled_mech_wreck_bumps_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 5, 3, WId::PrimeLeap);
+        let boss_idx = add_enemy_type(&mut board, 137, 2, 5, 6, "BeetleBoss");
+        board.units[boss_idx].set_acid(true);
+        let wreck_idx = add_mech(&mut board, 2, 1, 5, 0, WId::ScienceAcidShot);
+        board.units[wreck_idx].set_active(false);
+        board.units[wreck_idx].set_type_name("NanoMech");
+        board.units[wreck_idx].max_hp = 2;
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 3, 5);
+
+        assert_eq!(board.units[boss_idx].hp, 3);
+        assert_eq!((board.units[boss_idx].x, board.units[boss_idx].y), (2, 5));
+        assert_eq!(board.units[wreck_idx].hp, 0);
+        assert_eq!(result.enemy_damage_dealt, 3);
+    }
+
+    #[test]
+    fn test_webbed_prime_leap_noops() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::PrimeLeap);
+        board.units[mech_idx].set_web(true);
+        board.units[mech_idx].web_source_uid = 99;
+        let adj_n = add_enemy(&mut board, 30, 2, 4, 3);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 3, 4);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (3, 3));
+        assert_eq!(board.units[mech_idx].hp, 3, "no-op Hydraulic Legs should not self-damage");
+        assert!(board.units[mech_idx].web(), "no-op Hydraulic Legs should leave web intact");
+        assert_eq!(board.units[adj_n].hp, 3, "no-op Hydraulic Legs should not damage landing-adjacent units");
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:3:4:webbed"),
+            "expected webbed illegal-leap event, got {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_off_axis_prime_leap_noops() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeLeap);
+        let adj_n = add_enemy(&mut board, 30, 3, 1, 3);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeLeap, 4, 1);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!(board.units[mech_idx].hp, 3, "off-axis Hydraulic Legs should not self-damage");
+        assert_eq!(board.units[adj_n].hp, 3, "off-axis Hydraulic Legs should not damage landing-adjacent units");
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:4:1:off_axis"),
+            "expected off-axis illegal-leap event, got {:?}",
+            result.events
+        );
     }
 
     #[test]
@@ -3134,7 +8135,7 @@ mod tests {
 
         let wdef = WEAPONS[WId::BruteBombrun as usize];
         let mut result = ActionResult::default();
-        sim_leap(&mut board, mech_idx, &wdef, 3, 6, &mut result);
+        sim_leap(&mut board, mech_idx, WId::BruteBombrun, &wdef, 3, 6, &mut result);
 
         assert_eq!(
             board.units[t1_enemy].hp, 2,
@@ -3174,7 +8175,7 @@ mod tests {
     }
 
     #[test]
-    fn test_forest_ignites_on_weapon_damage() {
+    fn test_forest_consumed_on_weapon_damage() {
         let mut board = make_test_board();
         board.tile_mut(3, 4).terrain = Terrain::Forest;
         add_enemy(&mut board, 1, 3, 4, 3);
@@ -3182,7 +8183,108 @@ mod tests {
 
         let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
         assert!(board.tile(3, 4).on_fire(), "Forest should ignite from weapon damage");
-        assert_eq!(board.tile(3, 4).terrain, Terrain::Forest, "Terrain should stay Forest");
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Burning forest should become Ground");
+    }
+
+    #[test]
+    fn test_aerial_bombs_smoke_consumes_transit_forest_without_fire() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Forest;
+        add_enemy(&mut board, 1, 3, 4, 1);
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        let _ = simulate_action(&mut board, mech_idx, (3, 3), WId::BruteJetmech, (3, 5), &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Aerial Bombs consumes transit Forest");
+        assert!(board.tile(3, 4).smoke(), "Aerial Bombs still leaves smoke on the transit tile");
+        assert!(!board.tile(3, 4).on_fire(), "Aerial Bombs smoke prevents transit Forest ignition");
+    }
+
+    #[test]
+    fn test_aerial_bombs_frozen_objective_building_damage_defers_grid() {
+        // Rusting Hulks There Is No Try run 20260519_133059_179,
+        // Mission_FreezeBldg turn 1: Aerial Bombs flew over a frozen objective
+        // building. Live immediately thawed and damaged the building, but the
+        // grid meter charged the HP loss only when the enemy turn began.
+        let mut board = make_test_board();
+        board.mission_id = "Mission_FreezeBldg".to_string();
+        board.grid_power = 6;
+        board.freeze_building_target = 5;
+        let bidx = xy_to_idx(3, 4);
+        board.freeze_building_tiles |= 1u64 << bidx;
+        {
+            let tile = board.tile_mut(3, 4);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+            tile.set_frozen(true);
+        }
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+
+        let result = simulate_action(
+            &mut board,
+            mech_idx,
+            (3, 3),
+            WId::BruteJetmech,
+            (3, 5),
+            &WEAPONS,
+        );
+
+        assert!(!board.tile(3, 4).frozen(), "transit objective building should thaw");
+        assert!(board.tile(3, 4).smoke(), "Aerial Bombs should smoke the transit building");
+        assert_eq!(board.tile(3, 4).building_hp, 1, "transit objective building should lose HP");
+        assert_eq!(board.grid_power, 6, "grid loss is deferred until enemy-turn settle");
+        assert_eq!(result.grid_damage, 0, "per-action grid damage should not fire immediately");
+        assert_eq!(result.buildings_damaged, 1);
+        assert_eq!(board.deferred_bump_grid_debt[bidx], 1);
+
+        let mut settle = ActionResult::default();
+        flush_deferred_bump_grid_debt(&mut board, &mut settle);
+        assert_eq!(board.grid_power, 5);
+        assert_eq!(settle.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_aerial_bombs_landing_on_smoke_extinguishes_carried_fire() {
+        // Hard Rusting Hulks run 20260513_230944_542, Mission_Airstrike turn 2:
+        // Jet was on fire at H3 and Aerial-Bombed to an already-smoked F3.
+        // The bridge reported Jet's fire cleared after landing.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 5, 0, 3, WId::BruteJetmech);
+        board.units[jet].set_fire(true);
+        board.tile_mut(5, 2).set_smoke(true);
+
+        let _ = simulate_action(&mut board, jet, (5, 0), WId::BruteJetmech, (5, 2), &WEAPONS);
+
+        assert_eq!((board.units[jet].x, board.units[jet].y), (5, 2));
+        assert!(!board.units[jet].fire(), "landing on smoke must extinguish carried fire");
+        assert!(board.tile(5, 1).smoke(), "Aerial Bombs still smokes the transit tile");
+        assert!(board.tile(5, 2).smoke(), "pre-existing landing smoke should remain");
+    }
+
+    #[test]
+    fn test_aerial_bombs_landing_resolves_fire_and_breaks_web() {
+        // Hard Rusting Hulks live run 20260512_181719_119, Mission_Survive
+        // turn 3: Rocket ignited a Forest landing tile at F2, then JetMech
+        // used Aerial Bombs while webbed and landed there at 1 HP. The engine
+        // cleared the web and set Jet on fire, so the next fire tick killed it.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 6, 4, 1, WId::BruteJetmech);
+        board.units[jet].set_web(true);
+        board.units[jet].web_source_uid = 99;
+        board.units[jet].move_speed = 0;
+        board.units[jet].base_move = 3;
+        board.tile_mut(6, 2).terrain = Terrain::Forest;
+        board.tile_mut(6, 2).set_on_fire(true);
+
+        let _ = simulate_action(&mut board, jet, (6, 4), WId::BruteJetmech, (6, 2), &WEAPONS);
+
+        assert_eq!((board.units[jet].x, board.units[jet].y), (6, 2));
+        assert!(board.units[jet].fire(), "Aerial Bombs landing on fire must ignite Jet");
+        assert!(!board.units[jet].web(), "Aerial Bombs tile change must break Jet's web");
+        assert_eq!(board.units[jet].web_source_uid, 0);
+        assert_eq!(board.units[jet].move_speed, 3);
+        assert_eq!(board.tile(6, 2).terrain, Terrain::Ground, "burning Forest landing is consumed");
+        assert!(board.tile(6, 2).on_fire(), "consumed landing tile remains on fire");
     }
 
     #[test]
@@ -3195,6 +8297,39 @@ mod tests {
         let _ = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 3, 4);
         assert!(board.tile(3, 4).smoke(), "Sand should become smoke from weapon damage");
         assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Sand should become ground");
+    }
+
+    #[test]
+    fn test_aerial_bombs_occupied_sand_transit_preserves_sand() {
+        // Hard Rusting Hulks live run 20260512_181719_119, Mission_Holes
+        // turn 2: JetMech E3 -> C3 over shielded PulseMech on sandy D3.
+        // Live consumed Pulse's shield and placed smoke, but D3 stayed Sand.
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+        let jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let pulse = add_mech(&mut board, 1, 3, 4, 3, WId::ScienceRepulse);
+        board.units[pulse].set_shield(true);
+
+        let _ = simulate_weapon(&mut board, jet, WId::BruteJetmech, 3, 5);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Sand, "Occupied Aerial Bombs transit sand is preserved");
+        assert!(board.tile(3, 4).smoke(), "Aerial Bombs still smokes occupied sand transit");
+        assert!(!board.units[pulse].shield(), "Aerial Bombs transit damage consumes the shield");
+        assert_eq!(board.units[pulse].hp, 3, "Shielded Pulse should not take HP damage");
+    }
+
+    #[test]
+    fn test_charge_recoil_on_sand_creates_smoke() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::BruteBeetle);
+        add_enemy(&mut board, 1, 3, 5, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::BruteBeetle, 3, 5);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (3, 4));
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground, "Ramming recoil should consume sand");
+        assert!(board.tile(3, 4).smoke(), "Ramming recoil on sand should create smoke");
     }
 
     #[test]
@@ -3405,6 +8540,428 @@ mod tests {
     // SiegeMech weapon: targets a CENTER tile (which is NOT damaged) and hits
     // the 4 cardinal-adjacent tiles with 1 damage + push outward. Used to
     // protect a building/objective by clearing enemies around it.
+
+    #[test]
+    fn test_ranged_ignite_adjacent_edge_push_does_not_bump() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 6, 0, 3, WId::RangedIgnite);
+        let edge_enemy = add_enemy(&mut board, 1, 7, 2, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgnite, 6, 2);
+
+        assert_eq!(board.units[edge_enemy].hp, 3, "zero-damage air push must not edge-bump");
+        assert_eq!((board.units[edge_enemy].x, board.units[edge_enemy].y), (7, 2));
+    }
+
+    #[test]
+    fn test_ranged_ignite_adjacent_non_edge_push_still_moves() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 4, 2, 3, WId::RangedIgnite);
+        let enemy = add_enemy(&mut board, 1, 5, 4, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgnite, 4, 4);
+
+        assert_eq!(board.units[enemy].hp, 3, "zero-damage adjacent push stays non-damaging");
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (6, 4));
+    }
+
+    #[test]
+    fn test_ranged_ignite_backburn_fires_behind_shooter_only() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedIgniteA);
+        let adjacent = add_enemy(&mut board, 1, 4, 5, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgniteA, 3, 5);
+
+        assert!(board.tile(3, 5).on_fire(), "target tile catches fire");
+        assert!(board.tile(3, 2).on_fire(), "Backburn lights tile behind shooter");
+        assert!(
+            !board.tile(4, 5).on_fire(),
+            "adjacent pushed tiles do not inherit Vulcan's fire status"
+        );
+        assert_eq!(
+            (board.units[adjacent].x, board.units[adjacent].y),
+            (5, 5),
+            "adjacent unit still gets pushed outward"
+        );
+    }
+
+    #[test]
+    fn test_ranged_ignite_backburn_lights_mountain_behind_shooter() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 2).terrain = Terrain::Mountain;
+        board.tile_mut(3, 2).building_hp = 2;
+        let mech_idx = add_mech(&mut board, 0, 3, 3, 3, WId::RangedIgniteA);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::RangedIgniteA, 3, 5);
+
+        assert_eq!(board.tile(3, 2).terrain, Terrain::Mountain);
+        assert_eq!(board.tile(3, 2).building_hp, 2);
+        assert!(board.tile(3, 2).on_fire(), "Backburn lights intact mountains");
+    }
+
+    #[test]
+    fn test_fire_weapon_on_sand_consumes_sand_to_burning_ground() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 4).terrain = Terrain::Sand;
+        let mech_idx = add_mech(&mut board, 0, 2, 4, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 3, 4, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 3, 4);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Ground);
+        assert!(board.tile(3, 4).on_fire());
+        assert_eq!(board.units[enemy].hp, 2, "base Flamethrower still deals no direct damage");
+    }
+
+    #[test]
+    fn test_flamethrower_pushed_ground_target_catches_new_tile_fire() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 1));
+        assert!(board.tile(5, 2).on_fire(), "Flamethrower should ignite the struck tile");
+        assert!(board.units[enemy].fire(), "Ground target should catch newly lit tile fire");
+    }
+
+    #[test]
+    fn test_boosted_flamethrower_kills_three_hp_burning_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        board.units[mech_idx].set_boosted(true);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 3);
+        board.units[enemy].set_fire(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert!(
+            board.units[enemy].hp <= 0,
+            "Boosted Flamethrower should deal FireDamage 2 + Boost 1 to burning targets"
+        );
+    }
+
+    #[test]
+    fn test_boosted_flamethrower_does_not_damage_non_burning_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        board.units[mech_idx].set_boosted(true);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 3);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert_eq!(
+            board.units[enemy].hp, 3,
+            "Boost should not turn zero-damage Flamethrower into damage unless FireDamage triggers"
+        );
+        assert!(board.units[enemy].fire());
+    }
+
+    #[test]
+    fn test_upgraded_flamethrower_damages_burning_units_in_path() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrowerA);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 2);
+        board.units[enemy].set_fire(true);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrowerA, 5, 1);
+
+        assert!(
+            board.units[enemy].hp <= 0,
+            "range-upgraded Flamethrower should apply FireDamage to burning units before the clicked tile"
+        );
+        assert!(board.tile(5, 2).on_fire());
+        assert!(board.tile(5, 1).on_fire());
+    }
+
+    #[test]
+    fn test_upgraded_flamethrower_ignites_building_path_without_damage() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrowerA);
+        {
+            let tile = board.tile_mut(5, 2);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrowerA, 5, 1);
+
+        assert!(board.tile(5, 2).on_fire());
+        assert_eq!(board.tile(5, 2).building_hp, 2);
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_flamethrower_pushed_flying_target_does_not_carry_new_tile_fire() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 3, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 5, 2, 2);
+        board.units[enemy].flags.insert(UnitFlags::FLYING);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 5, 2);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 1));
+        assert!(board.tile(5, 2).on_fire(), "Flamethrower should ignite the struck tile");
+        assert!(!board.units[enemy].fire(), "Flying target should not carry newly lit tile fire");
+    }
+
+    #[test]
+    fn test_flamethrower_blocked_flying_target_on_water_catches_fire_but_water_does_not() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 6, 3, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 4, 6, 2);
+        board.units[enemy].flags.insert(UnitFlags::FLYING);
+        board.tile_mut(4, 6).terrain = Terrain::Water;
+        board.tile_mut(3, 6).terrain = Terrain::Mountain;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 4, 6);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 6));
+        assert!(board.units[enemy].fire(), "Blocked flying target should catch direct flame");
+        assert!(
+            !board.tile(4, 6).on_fire(),
+            "Water under the target should not become a burning tile"
+        );
+    }
+
+    #[test]
+    fn test_science_swap_water_kill_triggers_blast_psion_explosion() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        board.tile_mut(2, 1).terrain = Terrain::Water;
+        board.tile_mut(1, 1).terrain = Terrain::Building;
+        board.tile_mut(1, 1).building_hp = 1;
+
+        let mech_idx = add_mech(&mut board, 0, 2, 1, 2, WId::ScienceSwap);
+        let enemy = add_enemy(&mut board, 1, 2, 2, 2);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::ScienceSwap, 2, 2);
+
+        assert_eq!(board.units[enemy].hp, 0, "swapped enemy drowns on the mech's old water tile");
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (2, 1));
+        assert_eq!(board.units[mech_idx].hp, 1, "Blast Psion explosion damages adjacent Swap Mech");
+        assert_eq!(board.tile(1, 1).building_hp, 0, "Blast Psion explosion damages adjacent building");
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_science_swap_diagonal_target_is_noop() {
+        // Science_Swap.GetTargetArea only emits tiles in the four cardinal
+        // lines. A diagonal bridge FireWeapon ACK should not be modeled as a
+        // real swap/teleport.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 4, 2, WId::ScienceSwapAB);
+        let enemy = add_enemy(&mut board, 1, 2, 5, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceSwapAB, 2, 5);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (1, 4));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (2, 5));
+    }
+
+    #[test]
+    fn test_science_swap_range_upgrade_still_allows_cardinal_range_four() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 1, 4, 2, WId::ScienceSwapAB);
+        let enemy = add_enemy(&mut board, 1, 1, 0, 2);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceSwapAB, 1, 0);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (1, 0));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (1, 4));
+    }
+
+    #[test]
+    fn test_science_swap_breaks_web_on_swapped_target() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 5, 5, 2, WId::ScienceSwapA);
+        let enemy = add_enemy_type(&mut board, 731, 5, 3, 5, "Moth2");
+        let egg = add_enemy_type(&mut board, 787, 4, 3, 1, "WebbEgg1");
+        board.units[enemy].set_web(true);
+        board.units[enemy].web_source_uid = board.units[egg].uid;
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::ScienceSwapA, 5, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (5, 3));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (5, 5));
+        assert!(!board.units[enemy].web(), "Science Swap target changed tiles and should break web");
+        assert_eq!(board.units[enemy].web_source_uid, 0);
+    }
+
+    #[test]
+    fn test_dam_flood_drowning_triggers_blast_psion_explosion() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        let drowned = add_enemy_type(&mut board, 91, 4, 4, 5, "Shaman2");
+        board.tile_mut(5, 4).terrain = Terrain::Building;
+        board.tile_mut(5, 4).building_hp = 2;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 4);
+
+        let mut result = ActionResult::default();
+        flood_tile(&mut board, 4, 4, &mut result);
+
+        assert_eq!(board.tile(4, 4).terrain, Terrain::Water);
+        assert_eq!(board.units[drowned].hp, 0, "dam flood drowns grounded Vek");
+        assert_eq!(
+            board.tile(5, 4).building_hp,
+            1,
+            "drowned Vek must emit its Blast Psion aura explosion"
+        );
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(result.grid_damage, 1, "direct blast damage drains grid per building HP");
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_dam_flood_extinguishes_forest_ignited_by_same_attack() {
+        let mut board = make_test_board();
+        let mut result = ActionResult::default();
+        board.tile_mut(4, 3).terrain = Terrain::Forest;
+
+        apply_damage(&mut board, 4, 3, 1, &mut result, DamageSource::Weapon);
+        assert!(board.tile(4, 3).on_fire(), "weapon damage should ignite Forest first");
+
+        flood_tile(&mut board, 4, 3, &mut result);
+
+        assert_eq!(board.tile(4, 3).terrain, Terrain::Water);
+        assert!(
+            !board.tile(4, 3).on_fire(),
+            "dam flood converts the tile to Water and extinguishes fire"
+        );
+    }
+
+    #[test]
+    fn test_dam_flood_minor_totem_does_not_receive_blast_psion_aura() {
+        let mut board = make_test_board();
+        board.grid_power = 7;
+        board.dam_primary = Some((3, 0));
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+
+        let rocket = add_mech(&mut board, 1, 3, 4, 3, WId::None);
+        let pulse = add_mech(&mut board, 2, 4, 2, 3, WId::None);
+        board.units[rocket].flags.insert(UnitFlags::MASSIVE);
+        board.units[pulse].flags.insert(UnitFlags::MASSIVE);
+        board.units[pulse].set_shield(true);
+
+        let totem = add_enemy_type(&mut board, 91, 4, 1, 1, "Totem2");
+        board.units[totem].flags.insert(UnitFlags::MINOR);
+        let burnbug = add_enemy_type(&mut board, 92, 4, 3, 4, "Burnbug2");
+        let shaman = add_enemy_type(&mut board, 93, 4, 4, 5, "Shaman2");
+
+        board.tile_mut(5, 4).terrain = Terrain::Building;
+        board.tile_mut(5, 4).building_hp = 2;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 4);
+
+        let mut result = ActionResult::default();
+        trigger_dam_flood(&mut board, &mut result);
+
+        assert_eq!(board.units[totem].hp, 0);
+        assert_eq!(board.units[burnbug].hp, 0);
+        assert_eq!(board.units[shaman].hp, 0);
+        assert_eq!(board.units[pulse].hp, 3, "only Burnbug's non-minor aura burst should pop Pulse shield");
+        assert!(!board.units[pulse].shield());
+        assert_eq!(board.units[rocket].hp, 2, "Shaman's non-minor aura burst damages Rocket");
+        assert_eq!(board.tile(5, 4).building_hp, 1, "Shaman's burst damages the Robotics Lab-style building");
+        assert_eq!(result.enemies_killed, 3);
+        assert_eq!(result.mech_damage_taken, 1);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.grid_power, 6);
+    }
+
+    #[test]
+    fn test_blast_psion_explosion_chains_through_eligible_aura_deaths() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        let first = add_enemy(&mut board, 1, 3, 3, 1);
+        let adjacent = add_enemy(&mut board, 2, 4, 3, 1);
+        board.tile_mut(5, 3).terrain = Terrain::Building;
+        board.tile_mut(5, 3).building_hp = 1;
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[first].hp, 0, "initial weapon kill dies");
+        assert_eq!(
+            board.units[adjacent].hp, 0,
+            "adjacent enemy dies to the first Blast Psion explosion"
+        );
+        assert_eq!(
+            board.tile(5, 3).building_hp, 0,
+            "enemy killed by Blast Psion explosion emits a second eligible aura explosion"
+        );
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_titan_fist_dash_blast_psion_chain_hits_secondary_building() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 5, 1, 1, "Jelly_Explode1");
+        let mech_idx = add_mech(&mut board, 0, 4, 2, 3, WId::PrimePunchmechA);
+        let burnbug = add_enemy_type(&mut board, 1, 4, 5, 2, "Burnbug1");
+        let moth = add_enemy_type(&mut board, 2, 4, 6, 1, "Moth1");
+        let leaper = add_enemy_type(&mut board, 3, 5, 5, 1, "Leaper1");
+        board.tile_mut(5, 6).terrain = Terrain::Building;
+        board.tile_mut(5, 6).building_hp = 1;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 6);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmechA, 4, 3);
+
+        assert_eq!((board.units[mech_idx].x, board.units[mech_idx].y), (4, 4));
+        assert!(board.units[burnbug].hp <= 0, "Dash Punch kills the first blocker at C4");
+        assert!(board.units[moth].hp <= 0, "Burnbug's burst kills adjacent Moth at B4");
+        assert!(board.units[leaper].hp <= 0, "Burnbug's burst kills adjacent Leaper at C3");
+        assert_eq!(board.tile(5, 6).building_hp, 0, "secondary B4/C3 bursts damage B3");
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_flamethrower_kill_push_defers_blast_psion_explosion_to_final_tile() {
+        let mut board = make_test_board();
+        board.blast_psion = true;
+        add_enemy_type(&mut board, 90, 7, 7, 2, "Jelly_Explode1");
+        board.tile_mut(3, 6).terrain = Terrain::Building;
+        board.tile_mut(3, 6).building_hp = 2;
+
+        let mech_idx = add_mech(&mut board, 0, 2, 5, 5, WId::PrimeFlamethrower);
+        let enemy = add_enemy(&mut board, 1, 2, 6, 1);
+        board.units[enemy].set_fire(true);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 2, 6);
+
+        assert_eq!(board.units[enemy].hp, -1, "burning target dies to Flamethrower bonus damage");
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (2, 7));
+        assert_eq!(board.units[mech_idx].hp, 5, "pre-push adjacent mech should not eat the explosion");
+        assert_eq!(board.tile(3, 6).building_hp, 2, "pre-push adjacent building should not eat the explosion");
+        assert_eq!(result.grid_damage, 0);
+    }
+
+    #[test]
+    fn test_flamethrower_killed_target_bumps_live_mech_blocker() {
+        // Regression: Perfect Strategy run 20260517_175633_388,
+        // Mission_Teleporter turn 4. FlameMech at D5 fires at burning
+        // Scorpion1 on E5; the killed Scorpion corpse is still pushed into
+        // TeleMech on F5, killing the 1-HP mech. This is Flamethrower-specific
+        // and must not change Cluster Artillery's outer corpse absorption.
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 3, 4, 3, WId::PrimeFlamethrower);
+        let scorpion = add_enemy_type(&mut board, 3088, 3, 3, 2, "Scorpion1");
+        board.units[scorpion].set_fire(true);
+        let tele = add_mech(&mut board, 2, 3, 2, 1, WId::ScienceSwap);
+
+        let _ = simulate_weapon(&mut board, mech_idx, WId::PrimeFlamethrower, 3, 3);
+
+        assert_eq!(board.units[scorpion].hp, 0, "burning target dies to Flamethrower bonus damage");
+        assert_eq!(board.units[tele].hp, 0, "killed Flamethrower target should corpse-bump the live mech blocker");
+    }
 
     #[test]
     fn test_cluster_artillery_no_damage_to_center() {
@@ -3858,6 +9415,27 @@ mod tests {
     // ── PushDir::Flip semantics (Spartan Shield / Confusion Ray) ──────────────
 
     #[test]
+    fn test_spartan_shield_deals_damage_and_flips_attack() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::PrimeShieldBash);
+        let enemy = add_enemy(&mut board, 2, 3, 2, 3);
+        board.units[enemy].queued_target_x = 3;
+        board.units[enemy].queued_target_y = 1;
+
+        let result = simulate_weapon(&mut board, mech, WId::PrimeShieldBash, 3, 2);
+
+        assert_eq!(board.units[enemy].hp, 1, "Spartan Shield deals base 2 damage");
+        assert_eq!(
+            (board.units[enemy].queued_target_x, board.units[enemy].queued_target_y),
+            (3, 3),
+            "Spartan Shield flips the queued attack around the target"
+        );
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 2),
+            "Flip does not push the target");
+        assert_eq!(result.enemy_damage_dealt, 2);
+    }
+
+    #[test]
     fn test_flip_queued_attack_flips_180_around_unit_position() {
         // Enemy at (3,3) aimed NORTH at (3,0). Flip → aimed SOUTH at (3,6).
         let mut board = make_test_board();
@@ -3873,6 +9451,28 @@ mod tests {
         assert_eq!(board.units[idx].x, 3,
             "Unit position unchanged — Flip does NOT push the unit");
         assert_eq!(board.units[idx].y, 3);
+    }
+
+    #[test]
+    fn test_flip_queued_attack_uses_recorded_origin_after_displacement() {
+        // The enemy started at (1,4) aimed at (1,3), then was pushed to
+        // (2,4) before Seismic Capacitor flipped its queued attack. The flip
+        // must reverse the original attack vector around the current tile,
+        // producing (2,5), not a diagonal stale-save mirror at (3,5).
+        let mut board = make_test_board();
+        let idx = add_enemy(&mut board, 1, 2, 4, 3);
+        board.units[idx].queued_target_x = 1;
+        board.units[idx].queued_target_y = 3;
+        board.units[idx].queued_origin_x = 1;
+        board.units[idx].queued_origin_y = 4;
+        board.units[idx].flags.insert(UnitFlags::QUEUED_ORIGIN_SET);
+
+        flip_queued_attack(&mut board, 2, 4);
+
+        assert_eq!(board.units[idx].queued_target_x, 2);
+        assert_eq!(board.units[idx].queued_target_y, 5);
+        assert_eq!(board.units[idx].queued_origin_x, 2);
+        assert_eq!(board.units[idx].queued_origin_y, 4);
     }
 
     #[test]
@@ -3952,6 +9552,29 @@ mod tests {
             "Grunt loses +1 aura HP after Psion dies (3 -> 2)");
         assert_eq!(board.units[grunt_idx].max_hp, 2,
             "Grunt max_hp also reduced");
+    }
+
+    #[test]
+    fn test_boost_psion_death_clears_boosted_status_on_surviving_vek() {
+        // Detritus Mission_Disposal turn 1, run 20260516_120646_726:
+        // Taurus killed Jelly_Boost1 at F4. Live immediately removed the
+        // Boosted status from Spider E4 and Leapers F3/D4; pre-fix Rust only
+        // cleared board.boost_psion and verify flagged a status desync.
+        let mut board = make_test_board();
+        board.boost_psion = true;
+        let psion_idx = add_enemy_type(&mut board, 1, 4, 2, 2, "Jelly_Boost1");
+        let spider_idx = add_enemy_type(&mut board, 2, 4, 3, 2, "Spider1");
+        let leaper_idx = add_enemy_type(&mut board, 3, 5, 2, 2, "Leaper2");
+        board.units[spider_idx].set_boosted(true);
+        board.units[leaper_idx].set_boosted(true);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 4, 2, 2, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[psion_idx].hp, 0);
+        assert!(!board.boost_psion);
+        assert!(!board.units[spider_idx].boosted());
+        assert!(!board.units[leaper_idx].boosted());
     }
 
     // ── Storm Generator (Passive_Electric — Rusting Hulks / Detritus) ─────────
@@ -4060,6 +9683,53 @@ mod tests {
         let _ = simulate_weapon(&mut board, caster, WId::SupportRepair, 3, 3);
 
         assert_eq!(board.units[disabled].hp, 3, "Disabled mech revived to full HP");
+    }
+
+    #[test]
+    fn test_support_wind_pushes_every_unit_left() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 3, 3, 3, WId::SupportWind);
+        let enemy = add_enemy(&mut board, 99, 5, 3, 2);
+
+        let _ = simulate_weapon(&mut board, caster, WId::SupportWind, 1, 3);
+
+        assert_eq!((board.units[caster].x, board.units[caster].y), (2, 3));
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (4, 3));
+        assert_eq!(board.units[enemy].hp, 2, "zero-damage push only");
+    }
+
+    #[test]
+    fn test_support_wind_right_scan_order_moves_leading_unit_first() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 0, 0, 3, WId::SupportWind);
+        let trailing = add_enemy(&mut board, 10, 5, 3, 2);
+        let leading = add_enemy(&mut board, 11, 6, 3, 2);
+
+        let _ = simulate_weapon(&mut board, caster, WId::SupportWind, 5, 3);
+
+        assert_eq!((board.units[leading].x, board.units[leading].y), (7, 3));
+        assert_eq!((board.units[trailing].x, board.units[trailing].y), (6, 3));
+        assert_eq!(board.units[leading].hp, 2);
+        assert_eq!(board.units[trailing].hp, 2);
+        assert_eq!((board.units[caster].x, board.units[caster].y), (1, 0));
+    }
+
+    #[test]
+    fn test_support_wind_bump_into_building_costs_grid() {
+        let mut board = make_test_board();
+        let caster = add_mech(&mut board, 1, 6, 6, 3, WId::SupportWind);
+        let enemy = add_enemy(&mut board, 99, 3, 3, 2);
+        board.tile_mut(2, 3).terrain = Terrain::Building;
+        board.tile_mut(2, 3).building_hp = 1;
+        let grid_before = board.grid_power;
+
+        let result = simulate_weapon(&mut board, caster, WId::SupportWind, 1, 3);
+
+        assert_eq!((board.units[enemy].x, board.units[enemy].y), (3, 3));
+        assert_eq!(board.units[enemy].hp, 1);
+        assert_eq!(board.tile(2, 3).building_hp, 0);
+        assert_eq!(board.grid_power, grid_before - 1);
+        assert_eq!(result.grid_damage, 1);
     }
 
     // ── Force Amp (Passive_ForceAmp) ──────────────────────────────────────────
@@ -4182,6 +9852,7 @@ mod tests {
             self_damage: 0,
             range_min: 1, range_max: 1,
             limited: 0, path_size: 1,
+            boost_bonus: 0,
             flags: WeaponFlags::FIRE,
         }
     }
@@ -4195,6 +9866,7 @@ mod tests {
             self_damage: 0,
             range_min: 1, range_max: 4,
             limited: 0, path_size: 1,
+            boost_bonus: 0,
             flags: WeaponFlags::WEB,
         }
     }
@@ -4284,6 +9956,76 @@ mod tests {
         assert_eq!(board.units[harold].hp, 3, "Repair heals 1 HP");
     }
 
+    #[test]
+    fn test_pilot_chemical_gets_boost_after_enemy_kill() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let morgan = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        board.units[morgan].pilot_flags = PilotFlags::CHEMICAL;
+        add_enemy(&mut board, 10, 3, 4, 1);
+
+        let _ = simulate_action(&mut board, morgan, (3, 3), WId::PrimePunchmech, (3, 4), &WEAPONS);
+
+        assert!(board.units[morgan].boosted(), "Morgan should be boosted after killing an enemy");
+    }
+
+    #[test]
+    fn test_pilot_chemical_loses_existing_boost_without_kill() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let morgan = add_mech(&mut board, 1, 3, 3, 3, WId::PrimePunchmech);
+        board.units[morgan].pilot_flags = PilotFlags::CHEMICAL;
+        board.units[morgan].set_boosted(true);
+
+        let _ = simulate_action(&mut board, morgan, (3, 3), WId::PrimePunchmech, (3, 4), &WEAPONS);
+
+        assert!(!board.units[morgan].boosted(), "Morgan's boost should be consumed when no enemy dies");
+    }
+
+    #[test]
+    fn test_pilot_arrogant_regains_boost_after_repair_to_full_hp() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let kai = add_mech(&mut board, 0, 3, 3, 2, WId::BruteJetmech);
+        board.units[kai].pilot_flags = PilotFlags::ARROGANT;
+        board.units[kai].hp = 1;
+        board.units[kai].set_boosted(false);
+
+        let _ = simulate_action(&mut board, kai, (3, 3), WId::Repair, (255, 255), &WEAPONS);
+
+        assert_eq!(board.units[kai].hp, 2);
+        assert!(board.units[kai].boosted(), "Kai should be boosted again once Repair restores full HP");
+    }
+
+    #[test]
+    fn test_pilot_arrogant_stays_boosted_after_full_hp_attack() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let kai = add_mech(&mut board, 0, 3, 3, 2, WId::BruteJetmech);
+        board.units[kai].pilot_flags = PilotFlags::ARROGANT;
+        board.units[kai].set_boosted(true);
+
+        let _ = simulate_action(&mut board, kai, (3, 3), WId::BruteJetmech, (3, 5), &WEAPONS);
+
+        assert_eq!(board.units[kai].hp, 2);
+        assert!(board.units[kai].boosted(), "Kai's Boost is state-based while full HP, not consumed like generic Boost");
+    }
+
+    #[test]
+    fn test_pilot_arrogant_loses_boost_when_damaged() {
+        use crate::board::PilotFlags;
+        let mut board = make_test_board();
+        let kai = add_mech(&mut board, 0, 3, 3, 2, WId::BruteJetmech);
+        board.units[kai].pilot_flags = PilotFlags::ARROGANT;
+        board.units[kai].set_boosted(true);
+        let mut result = ActionResult::default();
+
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[kai].hp, 1);
+        assert!(!board.units[kai].boosted(), "Kai should lose Boost below full HP");
+    }
+
     // sim v32: Grid Defense expected save fires for player-phase building
     // damage too (per text.lua:122 "This building resisted damage!"). The
     // simulator still destroys the building deterministically — what changes
@@ -4354,11 +10096,12 @@ mod tests {
 
     // ── Aerial Bombs (Brute_Jetmech) landing-tile legality gate ───────────────
     // In-game, Aerial Bombs is unfireable at a target whose landing tile is a
-    // mountain (any HP) or occupied by a unit, wreck, or building. Rubble and
-    // water/chasm/lava ARE legal (Jet Mech is Flying+Massive). The filter
-    // lives in solver::get_weapon_targets via Board::is_blocked(flying=true).
-    // Evidence: Steam/gamepressure/GameFAQs weapon references + Board::is_blocked
-    // logic (board.rs ~400). These tests pin the gate so we notice if it regresses.
+    // water, lava, chasm, mountain (any HP), or occupied by a unit, wreck, or
+    // building. Rubble remains legal for Jet Mech. The filter lives in
+    // solver::get_weapon_targets plus sim_leap's diagnostic no-op guard.
+    // Regression anchor: Easy Rusting Hulks run 20260508_134925_472,
+    // Mission_Cataclysm turn 3 JetMech B5 -> B3 click_miss, where B3 was
+    // already Cataclysm chasm terrain.
 
     fn leap_targets(board: &Board, mech_pos: (u8, u8)) -> Vec<(u8, u8)> {
         crate::solver::get_weapon_targets(
@@ -4401,6 +10144,106 @@ mod tests {
     }
 
     #[test]
+    fn test_aerial_bombs_enum_rejects_landing_on_chasm() {
+        // Cataclysm/seismic chasm landing tiles are not selectable for Aerial
+        // Bombs, even though Jet Mech itself is flying.
+        let mut board = make_test_board();
+        board.tile_mut(3, 5).terrain = Terrain::Chasm;
+        let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let targets = leap_targets(&board, (3, 3));
+        assert!(!targets.contains(&(3, 5)),
+            "Chasm landing tile must make target illegal — got {:?}", targets);
+    }
+
+    #[test]
+    fn test_aerial_bombs_sim_noops_illegal_enemy_landing() {
+        // Diagnostic callers can bypass target enumeration with a hand-written
+        // plan. Illegal leap landings must not stack Jet onto a live enemy or
+        // apply transit smoke/damage from a shot that cannot fire in-game.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let transit_enemy = add_enemy(&mut board, 10, 3, 4, 3);
+        let landing_enemy = add_enemy(&mut board, 11, 3, 5, 3);
+
+        let result = simulate_weapon(&mut board, jet, WId::BruteJetmech, 3, 5);
+
+        assert_eq!(
+            (board.units[jet].x, board.units[jet].y),
+            (3, 3),
+            "illegal leap must leave Jet on its original tile"
+        );
+        assert_eq!(
+            (board.units[landing_enemy].x, board.units[landing_enemy].y),
+            (3, 5),
+            "landing enemy must remain alone on the blocked tile"
+        );
+        assert_eq!(
+            board.units[transit_enemy].hp, 3,
+            "unfireable Aerial Bombs must not damage the transit tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:3:5:unit"),
+            "illegal landing should be visible to replay diagnostics: {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_aerial_bombs_sim_noops_chasm_landing() {
+        // Diagnostic callers can bypass target enumeration. A chasm landing
+        // should behave like the live click_miss: no leap, no transit damage,
+        // and an explicit replay event.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
+        let transit_enemy = add_enemy(&mut board, 10, 3, 4, 3);
+        board.tile_mut(3, 5).terrain = Terrain::Chasm;
+
+        let result = simulate_weapon(&mut board, jet, WId::BruteJetmech, 3, 5);
+
+        assert_eq!(
+            (board.units[jet].x, board.units[jet].y),
+            (3, 3),
+            "chasm leap must leave Jet on its original tile"
+        );
+        assert_eq!(
+            board.units[transit_enemy].hp, 3,
+            "unfireable chasm landing must not damage the transit tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:3:5:chasm"),
+            "chasm landing should be visible to replay diagnostics: {:?}",
+            result.events
+        );
+    }
+
+    #[test]
+    fn test_aerial_bombs_sim_noops_water_landing() {
+        // Live regression: JetMech D7 -> B7 over a Blob at C7 click-missed
+        // because B7 was water. The attack must not damage the transit tile.
+        let mut board = make_test_board();
+        let jet = add_mech(&mut board, 0, 1, 4, 3, WId::BruteJetmech);
+        let transit_enemy = add_enemy(&mut board, 10, 1, 5, 1);
+        board.tile_mut(1, 6).terrain = Terrain::Water;
+
+        let result = simulate_weapon(&mut board, jet, WId::BruteJetmech, 1, 6);
+
+        assert_eq!(
+            (board.units[jet].x, board.units[jet].y),
+            (1, 4),
+            "water leap must leave Jet on its original tile"
+        );
+        assert_eq!(
+            board.units[transit_enemy].hp, 1,
+            "unfireable water landing must not damage the transit tile"
+        );
+        assert!(
+            result.events.iter().any(|e| e == "illegal_leap_landing:1:6:water"),
+            "water landing should be visible to replay diagnostics: {:?}",
+            result.events
+        );
+    }
+
+    #[test]
     fn test_aerial_bombs_enum_rejects_landing_on_full_mountain() {
         // Full-HP mountain (terrain=Mountain, hp=2) on the landing tile → illegal.
         let mut board = make_test_board();
@@ -4437,16 +10280,16 @@ mod tests {
     }
 
     #[test]
-    fn test_aerial_bombs_enum_allows_landing_on_water() {
-        // Jet Mech is Flying+Massive → can land on water without drowning.
-        // (sim_leap doesn't apply is_deadly_ground to the attacker; the
-        // enumerator passes flying=true which also skips deadly-terrain gate.)
+    fn test_aerial_bombs_enum_rejects_landing_on_water() {
+        // Jet Mech can normally move over water, but Brute_Jetmech's
+        // GetTargetArea rejects water landing tiles; live FireWeapon spends
+        // the action as a no-op when forced via bridge.
         let mut board = make_test_board();
         board.tile_mut(3, 5).terrain = Terrain::Water;
         let _jet = add_mech(&mut board, 0, 3, 3, 3, WId::BruteJetmech);
         let targets = leap_targets(&board, (3, 3));
-        assert!(targets.contains(&(3, 5)),
-            "Water must be a legal landing for flying Jet Mech — got {:?}", targets);
+        assert!(!targets.contains(&(3, 5)),
+            "Water must make Aerial Bombs landing illegal — got {:?}", targets);
     }
 
     #[test]
@@ -4851,6 +10694,213 @@ mod tests {
     }
 
     #[test]
+    fn test_mission_wind_markers_do_not_damage_buildings() {
+        // Hard Rusting Hulks run 20260512_104120_903, Mission_Wind turn 1:
+        // the bridge marked wind rows as non-lethal environment_danger_v2,
+        // including buildings at F7/C7. Wind pushes; it is not direct 1 HP
+        // building damage. Until WindDir is exported, keep these as
+        // non-damaging markers so clean boards do not safety-block on phantom
+        // grid loss.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+        use crate::types::xy_to_idx;
+
+        let json = r#"{
+          "mission_id": "Mission_Wind",
+          "tiles": [
+            {"x": 1, "y": 2, "terrain": "building", "terrain_id": 1, "building_hp": 1}
+          ],
+          "units": [],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[1, 2, 1, 0, 0]],
+          "env_type": "wind",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 5
+        }"#;
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        let wind_bit = 1u64 << xy_to_idx(1, 2);
+        assert_eq!(board.env_wind & wind_bit, wind_bit);
+        assert!(!board.is_env_danger(1, 2),
+            "Mission_Wind markers must not enter direct env damage");
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        assert_eq!(board.grid_power, 7);
+        assert_eq!(board.tile(1, 2).building_hp, 1);
+    }
+
+    #[test]
+    fn test_mission_wind_dir_push_bumps_mech_into_building() {
+        // Internal solver direction 0 pushes toward increasing bridge y.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::types::xy_to_idx;
+        let mut board = make_test_board();
+        let rocket = add_mech(&mut board, 1, 5, 5, 3, WId::RangedRocket);
+        board.tile_mut(5, 6).terrain = Terrain::Building;
+        board.tile_mut(5, 6).building_hp = 1;
+        board.unique_buildings |= 1u64 << xy_to_idx(5, 6);
+        board.env_wind = 1u64 << xy_to_idx(5, 5);
+        board.env_wind_dir = 0;
+        let grid_before = board.grid_power;
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        assert_eq!((board.units[rocket].x, board.units[rocket].y), (5, 5));
+        assert_eq!(board.units[rocket].hp, 2, "blocked wind push bumps mech");
+        assert_eq!(board.tile(5, 6).building_hp, 0, "wind bump destroys building");
+        assert_eq!(board.grid_power, grid_before - 1);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_mission_wind_raw_dir_two_pushes_egg_sack_out_of_burnbug_lane() {
+        // Cataclysm Unfair live run 20260521_120049_468, Mission_Wind t1:
+        // raw WindDir=2 pushed the marked E3 Vek egg sack into the D3 chasm,
+        // clearing the F2 Alpha Burnbug projectile lane to kill Trimissile.
+        // Pre-v177 treated raw dir 2 as solver dir 2, moved the egg to F3,
+        // and incorrectly let the egg block the shot.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+
+        let json = r#"{
+          "mission_id": "Mission_Wind",
+          "tiles": [
+            {"x": 5, "y": 4, "terrain": "chasm", "terrain_id": 9}
+          ],
+          "units": [
+            {"uid": 1, "type": "TrimissileMech", "x": 4, "y": 2,
+             "hp": 2, "max_hp": 2, "team": 1, "mech": true,
+             "massive": true, "pushable": true, "weapons": ["Ranged_Crack_B"]},
+            {"uid": 2, "type": "HydrantMech", "x": 4, "y": 3,
+             "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+             "massive": true, "pushable": true, "weapons": ["Science_KO_Crack_A"]},
+            {"uid": 1530, "type": "BonusDebris", "x": 5, "y": 3,
+             "hp": 1, "max_hp": 1, "team": 6, "minor": true,
+             "pushable": true, "weapons": []},
+            {"uid": 1535, "type": "Burnbug2", "x": 6, "y": 2,
+             "hp": 4, "max_hp": 4, "team": 6, "pushable": true,
+             "ranged": 1, "weapons": ["BurnbugAtk2"],
+             "has_queued_attack": true, "queued_target": [5, 2],
+             "weapon_damage": 3}
+          ],
+          "grid_power": 6,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[5, 3, 1, 0, 0]],
+          "environment_wind_dir": 2,
+          "env_type": "wind",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        let mut original_positions = [(0u8, 0u8); 16];
+        for i in 0..board.unit_count as usize {
+            original_positions[i] = (board.units[i].x, board.units[i].y);
+        }
+        let result = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+
+        let trimissile = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 1)
+            .unwrap();
+        let hydrant = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 2)
+            .unwrap();
+        let egg = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == 1530)
+            .unwrap();
+
+        assert!(board.units[egg].hp <= 0, "wind should push the egg sack into the chasm");
+        assert!(board.units[trimissile].hp <= 0,
+            "Alpha Burnbug should hit Trimissile after the egg leaves the lane");
+        assert_eq!(board.units[hydrant].hp, 3,
+            "raw WindDir=2 must not bump the adjacent Hydrant");
+        assert_eq!(result.mechs_killed, 1);
+    }
+
+    #[test]
+    fn test_final_cave_env_ignores_stale_flying_immune_field() {
+        // Final Cave Env_Final marked tiles are falling-rock/tentacle death
+        // effects. A stale bridge once misclassified them as
+        // cataclysm_or_seismic with flying_immune=1, letting Prospero's
+        // Combat Mech stand on C6 and die live after a "clean" solve.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+        let json = r#"{
+          "mission_id": "Mission_Final_Cave",
+          "tiles": [],
+          "units": [
+            {"uid":0,"type":"PunchMech","x":2,"y":5,
+             "hp":3,"max_hp":3,"team":1,"mech":true,
+             "active":true,"massive":true,"flying":true,
+             "weapons":["Prime_Punchmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[2, 5, 1, 1, 1]],
+          "env_type": "cataclysm_or_seismic",
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        assert!(board.is_env_danger_kill(2, 5));
+        assert!(!board.is_env_danger_flying_immune(2, 5),
+            "Mission_Final_Cave danger must not inherit flying immunity");
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        assert_eq!(board.units[0].hp, 0,
+            "Final Cave falling-rock danger kills flying mechs");
+    }
+
+    #[test]
+    fn test_airstrike_env_ignores_stale_flying_immune_field() {
+        // Archive Airstrike can expose StartEffect like terrain-conversion
+        // envs. Mission ID wins: bombs kill flyers even if the bridge's 5th
+        // env_danger_v2 field is stale flying_immune=1.
+        use crate::enemy::simulate_enemy_attacks;
+        use crate::serde_bridge::board_from_json;
+        let json = r#"{
+          "mission_id": "Mission_Airstrike",
+          "tiles": [],
+          "units": [
+            {"uid":2,"type":"TeleMech","x":4,"y":3,
+             "hp":2,"max_hp":2,"team":1,"mech":true,
+             "active":true,"massive":true,"flying":true,
+             "weapons":["Science_Swap"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "environment_danger_v2": [[4, 3, 1, 1, 1]],
+          "env_type": "cataclysm_or_seismic",
+          "remaining_spawns": 0,
+          "turn": 4,
+          "total_turns": 4
+        }"#;
+        let (mut board, _, _, _, _, _) = board_from_json(json).expect("parse");
+        assert!(board.is_env_danger_kill(4, 3));
+        assert!(!board.is_env_danger_flying_immune(4, 3),
+            "Mission_Airstrike danger must not inherit flying immunity");
+
+        let original_positions: [(u8, u8); 16] = [(0, 0); 16];
+        let _ = simulate_enemy_attacks(&mut board, &original_positions, &WEAPONS);
+        assert_eq!(board.units[0].hp, 0,
+            "Airstrike danger kills flying mechs");
+    }
+
+    #[test]
     fn test_env_danger_v2_legacy_4field_falls_back_to_env_type() {
         // Older recordings emit only 4 fields. Fallback path: when 5th is
         // missing, derive flying_immune from `env_type`.
@@ -4981,26 +11031,158 @@ mod tests {
     }
 
     #[test]
-    fn test_flying_ice_break_survives() {
-        // apply_damage_core path: weapon damage melts cracked ice to water.
-        // A unit on the tile drowns if not effectively_flying() && not massive.
-        // The frozen case doesn't fire here in practice — any damage that
-        // breaks the ice ALSO unfreezes the unit (frozen-takes-0-damage
-        // unfreeze runs FIRST in apply_damage_core, before the tile effect),
-        // so by the time the ice→water conversion happens the unit is already
-        // un-frozen and re-flying. Test the baseline (damage-through-ice
-        // survives for a flying unit) to lock in the effectively_flying-based
-        // check in apply_damage_core.
+    fn test_empty_cracked_ice_breaks_to_water() {
         let mut board = make_test_board();
         board.tile_mut(3, 3).terrain = Terrain::Ice;
         board.tile_mut(3, 3).set_cracked(true);
-        let idx = add_flying_enemy(&mut board, 1, 3, 3, 3);
 
         let mut result = ActionResult::default();
         apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
 
-        assert_eq!(board.units[idx].hp, 2,
-            "Flying unit on melting ice must survive (took 1 weapon dmg)");
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Water);
+        assert!(!board.tile(3, 3).cracked());
+    }
+
+    #[test]
+    fn test_occupied_ice_absorbs_weapon_tile_break() {
+        for source in [
+            DamageSource::Weapon,
+            DamageSource::Bump,
+            DamageSource::WeaponCracksOccupied,
+            DamageSource::WeaponNoAcidPool,
+        ] {
+            let mut intact = make_test_board();
+            intact.tile_mut(3, 3).terrain = Terrain::Ice;
+            let intact_enemy = add_enemy(&mut intact, 42, 3, 3, 1);
+            let mut result = ActionResult::default();
+
+            apply_damage_core(&mut intact, 3, 3, 1, &mut result, source);
+
+            assert_eq!(intact.units[intact_enemy].hp, 0, "occupant should take the hit");
+            assert_eq!(intact.tile(3, 3).terrain, Terrain::Ice);
+            assert!(
+                !intact.tile(3, 3).cracked(),
+                "{source:?} should not crack occupied intact ice"
+            );
+
+            let mut cracked = make_test_board();
+            cracked.tile_mut(3, 3).terrain = Terrain::Ice;
+            cracked.tile_mut(3, 3).set_cracked(true);
+            let cracked_enemy = add_enemy(&mut cracked, 43, 3, 3, 1);
+            let mut result = ActionResult::default();
+
+            apply_damage_core(&mut cracked, 3, 3, 1, &mut result, source);
+
+            assert_eq!(cracked.units[cracked_enemy].hp, 0, "occupant should take the hit");
+            assert_eq!(cracked.tile(3, 3).terrain, Terrain::Ice);
+            assert!(
+                cracked.tile(3, 3).cracked(),
+                "{source:?} should not melt occupied cracked ice"
+            );
+        }
+    }
+
+    #[test]
+    fn test_hydraulic_legs_grounded_target_breaks_ice_after_push() {
+        let mut board = make_test_board();
+        let leap = add_mech(&mut board, 1, 0, 1, 5, WId::PrimeLeap);
+        board.tile_mut(3, 2).terrain = Terrain::Ice;
+        let beetle = add_enemy_type(&mut board, 90, 3, 2, 5, "Beetle2");
+
+        let result = simulate_weapon(&mut board, leap, WId::PrimeLeap, 3, 1);
+
+        assert_eq!(
+            (board.units[beetle].x, board.units[beetle].y),
+            (3, 3),
+            "ground target should be pushed off the ice tile"
+        );
+        assert_eq!(board.units[beetle].hp, 4);
+        assert_eq!(board.tile(3, 2).terrain, Terrain::Water);
+        assert_eq!(result.mechs_killed, 0);
+    }
+
+    #[test]
+    fn test_hydraulic_legs_flying_target_does_not_break_ice() {
+        let mut board = make_test_board();
+        let leap = add_mech(&mut board, 1, 0, 1, 5, WId::PrimeLeap);
+        board.tile_mut(3, 2).terrain = Terrain::Ice;
+        let mosquito = add_flying_enemy(&mut board, 90, 3, 2, 4);
+
+        simulate_weapon(&mut board, leap, WId::PrimeLeap, 3, 1);
+
+        assert_eq!(board.units[mosquito].hp, 3);
+        assert_eq!(
+            board.tile(3, 2).terrain,
+            Terrain::Ice,
+            "flying targets absorb the occupied-ice hit without breaking the tile"
+        );
+    }
+
+    #[test]
+    fn test_hydraulic_legs_blocked_grounded_target_keeps_occupied_ice() {
+        let mut board = make_test_board();
+        let leap = add_mech(&mut board, 1, 0, 1, 5, WId::PrimeLeap);
+        board.tile_mut(3, 2).terrain = Terrain::Ice;
+        let leaper = add_enemy_type(&mut board, 90, 3, 2, 1, "Leaper1");
+        let blocker = add_mech(&mut board, 2, 3, 3, 5, WId::BruteUnstable);
+
+        simulate_weapon(&mut board, leap, WId::PrimeLeap, 3, 1);
+
+        assert_eq!(
+            (board.units[leaper].x, board.units[leaper].y),
+            (3, 2),
+            "blocked Hydraulic Legs push should leave the corpse on the original ice tile"
+        );
+        assert_eq!(board.units[leaper].hp, 0);
+        assert_eq!(board.units[blocker].hp, 4, "blocked push still bumps the blocker");
+        assert_eq!(
+            board.tile(3, 2).terrain,
+            Terrain::Ice,
+            "grounded targets only break occupied Ice after an actual displacement"
+        );
+    }
+
+    #[test]
+    fn test_weapon_kill_on_occupied_cracked_ground_does_not_open_chasm() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ground;
+        board.tile_mut(3, 3).set_cracked(true);
+        let enemy = add_enemy(&mut board, 42, 3, 3, 1);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.units[enemy].hp, 0, "occupant should take the hit");
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Ground);
+        assert!(board.tile(3, 3).cracked(), "crack remains for a later tile hit");
+    }
+
+    #[test]
+    fn test_weapon_damage_on_empty_cracked_ground_opens_chasm() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ground;
+        board.tile_mut(3, 3).set_cracked(true);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::Weapon);
+
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Chasm);
+        assert!(!board.tile(3, 3).cracked());
+    }
+
+    #[test]
+    fn test_self_damage_on_occupied_cracked_ground_opens_chasm() {
+        let mut board = make_test_board();
+        board.tile_mut(3, 3).terrain = Terrain::Ground;
+        board.tile_mut(3, 3).set_cracked(true);
+        let mech = add_mech(&mut board, 7, 3, 3, 5, WId::PrimeLeap);
+
+        let mut result = ActionResult::default();
+        apply_damage_core(&mut board, 3, 3, 1, &mut result, DamageSource::SelfDamage);
+
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Chasm);
+        assert!(!board.tile(3, 3).cracked());
+        assert_eq!(board.units[mech].hp, 0, "grounded mech falls into chasm");
     }
 
     // ── building_hp underflow regression tests ───────────────────────────
@@ -5187,6 +11369,28 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_mirrorshot_killed_forward_target_bumps_live_mech_blocker() {
+        // Live regression: Frozen Titans Untouchable run
+        // 20260521_223240_242, Mission_Airstrike turn 1. Mirror Mech at G6
+        // fired Janus Cannon at the 1-HP egg/debris on F6 while Ice Mech
+        // stood directly behind it on E6. The killed target still resolved
+        // the forward push/bump into Ice Mech, invalidating Untouchable.
+        let mut board = make_test_board();
+        let mirror = add_mech(&mut board, 1, 2, 1, 3, WId::BruteMirrorshot);
+        let debris = add_enemy_type(&mut board, 2272, 2, 2, 1, "BonusDebris");
+        let ice = add_mech(&mut board, 2, 2, 3, 2, WId::RangedIce);
+
+        let result = simulate_weapon(&mut board, mirror, WId::BruteMirrorshot, 2, 2);
+
+        assert_eq!(board.units[debris].hp, 0);
+        assert_eq!(
+            board.units[ice].hp, 1,
+            "Mirror Shot killed-target forward push should corpse-bump the live mech blocker"
+        );
+        assert_eq!(result.mech_damage_taken, 1);
+    }
+
     // ── Teleporter pad swap (Mission_Teleporter) ──────────────────────────
 
     #[test]
@@ -5299,17 +11503,48 @@ mod tests {
     #[test]
     fn test_web_survives_pad_swap() {
         // Pad swap is NOT a push; webbed units stay webbed after teleporting.
-        // Push-break path sets `.set_web(false)` on the pusher's webbing
-        // target; pad swap must not touch the web flag.
+        // Pad swap itself must not touch the web flag.
         let mut board = make_test_board();
         board.teleporter_pairs.push((3, 3, 6, 6));
-        let idx = add_enemy(&mut board, 1, 2, 3, 3);
+        let idx = add_enemy(&mut board, 1, 3, 3, 3);
         board.units[idx].set_web(true);
 
-        let mut result = ActionResult::default();
-        apply_push(&mut board, 2, 3, 1, &mut result); // push onto pad
+        apply_teleport_on_land(&mut board, idx);
         assert_eq!((board.units[idx].x, board.units[idx].y), (6, 6));
         assert!(board.units[idx].web(), "Pad swap must not break web");
+    }
+
+    #[test]
+    fn test_push_breaks_webbed_unit() {
+        let mut board = make_test_board();
+        let idx = add_mech(&mut board, 1, 3, 3, 3, WId::None);
+        board.units[idx].set_web(true);
+        board.units[idx].web_source_uid = 99;
+        board.units[idx].move_speed = 0;
+        board.units[idx].base_move = 3;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 3, 3, 1, &mut result);
+
+        assert_eq!((board.units[idx].x, board.units[idx].y), (4, 3));
+        assert!(!board.units[idx].web(), "Push must break the pushed unit's web");
+        assert_eq!(board.units[idx].web_source_uid, 0);
+        assert_eq!(board.units[idx].move_speed, board.units[idx].base_move);
+    }
+
+    #[test]
+    fn test_repair_extinguishes_current_tile_fire() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 1, 3, 3, 3, WId::Repair);
+        board.units[mech].hp = 1;
+        board.units[mech].set_fire(true);
+        board.tile_mut(3, 3).set_on_fire(true);
+
+        let _ = simulate_action(&mut board, mech, (3, 3), WId::Repair, (3, 3), &WEAPONS);
+
+        assert_eq!(board.units[mech].hp, 2);
+        assert!(!board.units[mech].fire(), "Repair clears unit fire");
+        assert!(!board.tile(3, 3).on_fire(), "Repair extinguishes the occupied tile");
     }
 
     #[test]
@@ -5343,6 +11578,10 @@ mod tests {
         idx
     }
 
+    fn add_boom_bot(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        add_enemy_type(board, uid, x, y, hp, "Snowart1_Boom")
+    }
+
     fn add_armored_mech(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
         let idx = add_mech(board, uid, x, y, hp, WId::None);
         board.units[idx].flags.insert(UnitFlags::ARMOR);
@@ -5374,6 +11613,51 @@ mod tests {
         assert_eq!(board.units[e].hp, 2);
         assert_eq!(board.units[w].hp, 2);
         assert_eq!(result.mech_damage_taken, 4);
+    }
+
+    #[test]
+    fn test_boom_bot_death_uses_volatile_decay() {
+        // Mission_BoomBots' Snow*1_Boom pawns have Explosive Decay. Killing
+        // one by bump/Attract must splash adjacent buildings and mechs.
+        let mut board = make_test_board();
+        let v = add_boom_bot(&mut board, 1, 3, 3, 1);
+        let mech = add_mech(&mut board, 2, 4, 3, 3, WId::None);
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        board.grid_power = 4;
+
+        let mut result = ActionResult::default();
+        apply_damage(&mut board, 3, 3, 1, &mut result, DamageSource::Bump);
+
+        assert_eq!(board.units[v].hp, 0, "boom bot killed");
+        assert_eq!(board.units[mech].hp, 2, "adjacent mech takes decay splash");
+        assert_eq!(board.tile(3, 4).building_hp, 0, "adjacent building takes decay splash");
+        assert_eq!(board.grid_power, 3, "explosion building damage drains grid");
+    }
+
+    #[test]
+    fn test_boom_bot_attract_death_matches_central_processor_capture() {
+        let mut board = make_test_board();
+        let boom = add_boom_bot(&mut board, 1, 4, 3, 1);
+        let science = add_mech(&mut board, 2, 4, 4, 2, WId::SciencePullmech);
+        let laser = add_mech(&mut board, 3, 5, 3, 3, WId::PrimeLasermech);
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 1;
+        board.tile_mut(5, 3).terrain = Terrain::Forest;
+        board.grid_power = 4;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 4, 3, 0, &mut result);
+
+        assert_eq!(board.units[boom].hp, 0, "blocked pull kills the 1-HP Boom Bot");
+        assert_eq!(board.units[science].hp, 0, "Science takes bump plus decay splash");
+        assert_eq!(board.units[laser].hp, 2, "Laser takes adjacent decay splash");
+        assert!(board.units[laser].fire(), "Laser catches fire from the ignited forest");
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Rubble);
+        assert_eq!(board.tile(3, 3).building_hp, 0);
+        assert_eq!(board.tile(5, 3).terrain, Terrain::Ground);
+        assert!(board.tile(5, 3).on_fire(), "forest becomes a burning ground tile");
+        assert_eq!(board.grid_power, 3);
     }
 
     #[test]

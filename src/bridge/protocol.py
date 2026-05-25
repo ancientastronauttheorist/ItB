@@ -43,9 +43,13 @@ def is_bridge_active() -> bool:
         return False
     if not STATE_FILE.exists():
         return False
-    # State file must not be ancient (game may have closed hours ago)
+    # State file must not be ancient unless the heartbeat proves the Lua
+    # bridge is still ticking. On island-map screens the bridge may not dump
+    # combat JSON until prompted, but a fresh heartbeat means refresh can work.
     age = time.time() - STATE_FILE.stat().st_mtime
-    return age < STALENESS_THRESHOLD
+    if age < STALENESS_THRESHOLD:
+        return True
+    return is_bridge_alive(max_stale_sec=5.0)
 
 
 def is_bridge_alive(max_stale_sec: float = 5.0) -> bool:

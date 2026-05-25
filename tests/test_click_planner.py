@@ -11,6 +11,7 @@ Covers:
 8. plan_single_mech: passive → select only
 9. plan_single_mech: secondary weapon goes to slot 2
 10. plan_end_turn always emits one click at the End Turn position
+11. click plans expose Codex Computer Use window-local coordinates
 """
 
 # Mock window detection BEFORE importing the executor module so the
@@ -23,8 +24,9 @@ class _FakeWindow:
 
 
 import src.control.executor as executor
+from src.capture.detect_grid import grid_from_window
 executor._cached_window = _FakeWindow()
-executor._cached_grid = object()  # any non-None sentinel
+executor._cached_grid = grid_from_window(_FakeWindow())
 
 from src.solver.solver import MechAction
 from src.control.executor import (
@@ -79,6 +81,9 @@ def check(name, cond, *details):
 
 # Test 1: classify_weapon coverage
 check("classify normal", classify_weapon("Prime_Punchmech") == "normal")
+check("classify Titan Fist Dash", classify_weapon("Prime_Punchmech_A") == "dash")
+check("classify Titan Fist damage-only", classify_weapon("Prime_Punchmech_B") == "normal")
+check("classify Titan Fist Dash + damage", classify_weapon("Prime_Punchmech_AB") == "dash")
 check("classify dash (charge)", classify_weapon("Brute_Beetle") == "dash")
 check("classify dash (leap)", classify_weapon("Prime_Leap") == "dash")
 check("classify repair", classify_weapon("_REPAIR") == "repair")
@@ -131,6 +136,15 @@ check("dash: 3 clicks (select+arm+target)", len(clicks_only(plan)) == 3, plan)
 check("dash: no move click",
       not any("Move to" in c.get("description", "") for c in plan), plan)
 
+# Test 5b: upgraded Titan Fist Dash uses the dash click flow.
+mech = mk_unit(0, "PunchMech", 1, 3, weapon="Prime_Punchmech_A")
+b = mk_board([mech])
+a = mk_action(0, "PunchMech", (1, 3), "Prime_Punchmech_A", (2, 3))
+plan = plan_single_mech(a, b)
+check("Titan Fist Dash: 3 clicks (select+arm+target)", len(clicks_only(plan)) == 3, plan)
+check("Titan Fist Dash: no move click",
+      not any("Move to" in c.get("description", "") for c in plan), plan)
+
 # Test 6: repair with move
 mech = mk_unit(0, "PunchMech", 1, 1)
 b = mk_board([mech])
@@ -171,6 +185,30 @@ check("end_turn: 1 click", len(plan) == 1, plan)
 check("end_turn: at end-turn UI position",
       (plan[0]["x"], plan[0]["y"]) == _ui_end_turn())
 check("end_turn: type is left_click", plan[0]["type"] == "left_click")
+check("end_turn: has window-local coordinate metadata",
+      (plan[0]["window_x"], plan[0]["window_y"]) == (plan[0]["x"], plan[0]["y"]))
+check("end_turn: has codex computer use click",
+      plan[0]["codex_computer_use"]["coordinate_space"] == "window")
+
+# Test 11: non-zero window origin keeps legacy x/y global while exposing
+# Codex Computer Use coordinates as window-local.
+class _OffsetWindow:
+    x = 215
+    y = 32
+    width = 1280
+    height = 748
+
+
+executor._cached_window = _OffsetWindow()
+plan = plan_end_turn()
+check("end_turn: legacy global coord includes window origin",
+      (plan[0]["x"], plan[0]["y"]) == (341, 152), plan)
+check("end_turn: window-local coord strips window origin",
+      (plan[0]["window_x"], plan[0]["window_y"]) == (126, 120), plan)
+check("end_turn: codex click uses window-local coord",
+      (plan[0]["codex_computer_use"]["x"],
+       plan[0]["codex_computer_use"]["y"]) == (126, 120), plan)
+executor._cached_window = _FakeWindow()
 
 print(f"\n{passed}/{passed+failed} tests passed")
 if failed:

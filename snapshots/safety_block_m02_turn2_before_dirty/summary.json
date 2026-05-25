@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-04T23:26:45.640775",
+  "label": "safety_block_m02_turn2_before_dirty",
+  "turn": 2,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "WallMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Burnbug1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    }
+  ]
+}

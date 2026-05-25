@@ -3,6 +3,7 @@
   "_format": {
     "<Mission_ID>": ["<protected_pawn_type_substring>", "..."]
   },
-  "_pending_research": "Mission_ID for the R.S.T. 'Volatile Vek / Weather Watch' encounter. The GlowingScorpion class is the live unit. Once the Lua bridge confirms the exact mission.ID at runtime, add an entry like 'Mission_VolatileMine': ['GlowingScorpion'] (current best guess based on weapons_enemy.lua naming). Until then the penalty is correctly disabled on every mission, including ones that previously fired it incorrectly.",
+  "_note": "Mission_Volatile is the live Detritus/Archive 'Do not kill the Volatile Vek' objective. Mission_VolatileMine is retained for older guesses/captures.",
+  "Mission_Volatile": ["GlowingScorpion", "Volatile_Vek"],
   "Mission_VolatileMine": ["GlowingScorpion", "Volatile_Vek"]
 }

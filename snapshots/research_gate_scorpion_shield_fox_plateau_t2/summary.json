@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T12:03:52.965080",
+  "label": "research_gate_scorpion_shield_fox_plateau_t2",
+  "turn": 2,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        7,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        3,
+        7
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    }
+  ]
+}

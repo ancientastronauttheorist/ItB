@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-04-30T13:20:03.437467",
+  "label": "mission_belt_secured_m12",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        6,
+        0
+      ],
+      "hp": 5
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 4
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly2",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 2
+    }
+  ]
+}

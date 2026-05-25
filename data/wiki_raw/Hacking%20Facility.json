@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/18wl107/into_the_breach_daily_discussion_pinnacle/",
+      "excerpt": "Pinnacle Robotics mission list identifies the Advanced objective pair as destroying the Hacking Facility while protecting the Cannon Bot; discussion notes the hacked robot becomes a useful extra unit depending on layout.",
+      "confidence": 0.68
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/0/3461597549837414830/",
+      "excerpt": "Community compendium notes a Pinnacle Hacking Facility edge case: if fire destroys the facility, the Cannon Bot attack is cancelled.",
+      "confidence": 0.72
+    }
+  ]
+}

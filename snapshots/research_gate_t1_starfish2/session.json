@@ -1,0 +1,3107 @@
+{
+  "run_id": "20260508_134925_472",
+  "squad": "Rusting Hulks",
+  "achievement_targets": [
+    "Perfect Battle",
+    "Stormy Weather"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "Mission_Armored_Train",
+  "islands_completed": [],
+  "mission_index": 18,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": null,
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-08T13:54:19.401698",
+      "turn": 1,
+      "label": "solve",
+      "score": 128114.28571428568,
+      "actions": [
+        "RocketMech, move E6\u2192D6, fire Rocket Artillery at D4",
+        "PulseMech, move D5\u2192E5, fire Repulse at E5",
+        "JetMech, move G5\u2192G4, fire Aerial Bombs at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T13:57:52.954286",
+      "turn": 2,
+      "label": "solve",
+      "score": 106451.90476190465,
+      "actions": [
+        "PulseMech, fire Repulse at E5",
+        "RocketMech, move D6\u2192E6, fire Rocket Artillery at E2",
+        "JetMech, move E3\u2192C4, fire Aerial Bombs at C6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:00:03.897496",
+      "turn": 3,
+      "label": "solve",
+      "score": 147014.28571428568,
+      "actions": [
+        "JetMech",
+        "PulseMech, move E5\u2192G5, fire Repulse at G5",
+        "RocketMech, move E6\u2192E8, fire Rocket Artillery at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:00:49.508724",
+      "turn": 4,
+      "label": "solve",
+      "score": 108138.57142857142,
+      "actions": [
+        "JetMech, move C6\u2192D6, fire Aerial Bombs at D4",
+        "RocketMech, move E8\u2192E5, fire Rocket Artillery at E8",
+        "PulseMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:09:35.092645",
+      "turn": 1,
+      "label": "solve",
+      "score": 109500.0,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "RocketMech, fire Rocket Artillery at F3",
+        "JetMech, fire Aerial Bombs at C7",
+        "PulseMech, move D6\u2192C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:10:32.537184",
+      "turn": 2,
+      "label": "solve",
+      "score": 105116.6666666666,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "JetMech",
+        "RocketMech, move F5\u2192D6, fire Rocket Artillery at D3",
+        "PulseMech, move C3\u2192E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:12:25.698272",
+      "turn": 2,
+      "label": "solve",
+      "score": 105116.6666666666,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "JetMech",
+        "RocketMech, move F5\u2192D6, fire Rocket Artillery at D3",
+        "PulseMech, move C3\u2192E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:13:27.431390",
+      "turn": 3,
+      "label": "solve",
+      "score": 111810.0,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "RocketMech, move D6\u2192C8, fire Rocket Artillery at C4",
+        "PulseMech, move E3\u2192F2, fire Repulse at F2",
+        "JetMech, move C7\u2192E5, fire Aerial Bombs at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:30:35.424640",
+      "turn": 3,
+      "label": "note",
+      "message": "Investigation: Scrapyard turn 2 Pulse HP delta traced to AE Moth/Bouncer queued recoil self-push. Fixed Rust enemy attack sim, bumped simulator to v68, installed wheel, and full regression passed before resuming live turn."
+    },
+    {
+      "timestamp": "2026-05-08T14:31:39.026458",
+      "turn": 4,
+      "label": "solve",
+      "score": 105257.71431161676,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "JetMech, fire Aerial Bombs at E1",
+        "PulseMech, move F2\u2192E3, fire Repulse at E3",
+        "RocketMech, move C8\u2192E8, fire Rocket Artillery at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:39:06.795698",
+      "turn": 4,
+      "label": "note",
+      "message": "Investigation: Scrapyard turn 3 grid drop traced to Mission_Trapped 2-HP Coal Plant tile missing unique_building in bridge parse. Inferred objective-style grid accounting, bumped simulator to v69, installed wheel, and full regression passed."
+    },
+    {
+      "timestamp": "2026-05-08T14:39:30.416502",
+      "turn": 4,
+      "label": "solve",
+      "score": 114886.28573678221,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "JetMech, fire Aerial Bombs at E1",
+        "PulseMech, move F2\u2192E3, fire Repulse at E3",
+        "RocketMech, move C8\u2192E8, fire Rocket Artillery at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:43:58.888054",
+      "turn": 4,
+      "label": "solve",
+      "score": 114886.28573678221,
+      "actions": [
+        "Trapped_Building",
+        "Trapped_Building",
+        "JetMech, fire Aerial Bombs at E1",
+        "PulseMech, move F2\u2192E3, fire Repulse at E3",
+        "RocketMech, move C8\u2192E8, fire Rocket Artillery at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:44:50.160506",
+      "turn": 4,
+      "label": "solve",
+      "score": 87850.5715131419,
+      "actions": [
+        "Trapped_Building",
+        "JetMech, fire Aerial Bombs at E1",
+        "RocketMech, move C8\u2192C5, fire Rocket Artillery at E5",
+        "PulseMech, move F2\u2192F4, fire Repulse at F4",
+        "Trapped_Building, fire Area Blast at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T14:45:02.998358",
+      "turn": 4,
+      "label": "note",
+      "message": "Turn 4 safety triage: no clean candidate among widened top 500. Selected same-class dirty plan with no mech HP loss; predicted trade is grid 5->4 and building HP 5->4, mechs stay 7 HP total. Awaiting explicit dirty-plan consent before executing."
+    },
+    {
+      "timestamp": "2026-05-08T14:53:53.332329",
+      "turn": 4,
+      "label": "solve",
+      "score": 87850.5715131419,
+      "actions": [
+        "Trapped_Building",
+        "JetMech, fire Aerial Bombs at E1",
+        "RocketMech, move C8\u2192C5, fire Rocket Artillery at E5",
+        "PulseMech, move F2\u2192F4, fire Repulse at F4",
+        "Trapped_Building, fire Area Blast at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:01:26.565453",
+      "turn": 1,
+      "label": "solve",
+      "score": 156500.0,
+      "actions": [
+        "JetMech, move C6\u2192E3",
+        "RocketMech, move B5\u2192C2, fire Rocket Artillery at F2",
+        "PulseMech, move F6\u2192G3, fire Repulse at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:02:19.786123",
+      "turn": 2,
+      "label": "solve",
+      "score": 147006.66666666674,
+      "actions": [
+        "JetMech, move E3\u2192D1, fire Aerial Bombs at D3",
+        "PulseMech, move G3\u2192E2, fire Repulse at E2",
+        "RocketMech, move C2\u2192E3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:03:21.455982",
+      "turn": 3,
+      "label": "solve",
+      "score": 149960.0,
+      "actions": [
+        "JetMech",
+        "RocketMech, move E3\u2192F3, repair",
+        "PulseMech, move E2\u2192E1, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:04:11.286398",
+      "turn": 4,
+      "label": "solve",
+      "score": 150860.0,
+      "actions": [
+        "JetMech, move D3\u2192E2, fire Aerial Bombs at E4",
+        "PulseMech, move E1\u2192E2, fire Repulse at E2",
+        "RocketMech, move F3\u2192D1, fire Rocket Artillery at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:08:14.888094",
+      "turn": 1,
+      "label": "solve",
+      "score": 157071.42857142858,
+      "actions": [
+        "JetMech, fire Aerial Bombs at B5",
+        "RocketMech, move E6\u2192G4, fire Rocket Artillery at D4",
+        "PulseMech, fire Repulse at C6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:09:22.153338",
+      "turn": 2,
+      "label": "solve",
+      "score": 157871.42857142858,
+      "actions": [
+        "JetMech",
+        "RocketMech, fire Rocket Artillery at E4",
+        "PulseMech, move C6\u2192D6, fire Repulse at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:10:26.417567",
+      "turn": 3,
+      "label": "solve",
+      "score": 155811.42857142858,
+      "actions": [
+        "JetMech, fire Aerial Bombs at B3",
+        "PulseMech, move D6\u2192G6, fire Repulse at G6",
+        "RocketMech, move G4\u2192D5, fire Rocket Artillery at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:36:00.206468",
+      "turn": 1,
+      "label": "solve",
+      "score": 125950.0,
+      "actions": [
+        "PulseMech, move F5\u2192D6, fire Repulse at D6",
+        "JetMech, fire Aerial Bombs at D3",
+        "RocketMech, move B6\u2192D7, fire Rocket Artillery at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:37:59.845370",
+      "turn": 2,
+      "label": "solve",
+      "score": 128686.66666666679,
+      "actions": [
+        "JetMech, fire Aerial Bombs at B3",
+        "PulseMech, move D6\u2192D3, fire Repulse at D3",
+        "RocketMech, fire Rocket Artillery at D1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:53:30.748048",
+      "turn": 3,
+      "label": "solve",
+      "score": 133160.0,
+      "actions": [
+        "JetMech",
+        "RocketMech",
+        "PulseMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T15:54:12.289944",
+      "turn": 4,
+      "label": "solve",
+      "score": 140050.0,
+      "actions": [
+        "JetMech, move B3\u2192F2, fire Aerial Bombs at D2",
+        "RocketMech",
+        "PulseMech, move D3\u2192E5, fire Repulse at E5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:16:27.373585",
+      "turn": 1,
+      "label": "solve",
+      "score": 119750.0,
+      "actions": [
+        "JetMech, fire Aerial Bombs at F3",
+        "RocketMech, move E6\u2192F8, fire Rocket Artillery at F2",
+        "PulseMech, move D5\u2192F5, fire Repulse at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:17:24.670497",
+      "turn": 2,
+      "label": "solve",
+      "score": 120706.6666666666,
+      "actions": [
+        "JetMech, move F3\u2192E5, fire Aerial Bombs at E3",
+        "RocketMech, move F8\u2192C8, fire Rocket Artillery at C5",
+        "PulseMech, move F5\u2192C6, fire Repulse at C6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:18:15.892818",
+      "turn": 3,
+      "label": "solve",
+      "score": 125320.0,
+      "actions": [
+        "JetMech, move E3\u2192B3",
+        "RocketMech, fire Rocket Artillery at C3",
+        "PulseMech, fire Repulse at C6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:19:05.041698",
+      "turn": 4,
+      "label": "solve",
+      "score": 128285.0,
+      "actions": [
+        "JetMech, move B3\u2192F3, fire Aerial Bombs at F1",
+        "RocketMech, move C8\u2192E7, fire Rocket Artillery at E2",
+        "PulseMech, move C6\u2192C5, fire Repulse at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:32:38.559855",
+      "turn": 1,
+      "label": "solve",
+      "score": 149750.0,
+      "actions": [
+        "Acid_Tank, move E6\u2192F3, fire A.C.I.D. Cannon at F2",
+        "JetMech, move C6\u2192C3",
+        "RocketMech, move E5\u2192F6, fire Rocket Artillery at F2",
+        "PulseMech, move G5\u2192E4, fire Repulse at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:34:13.082589",
+      "turn": 2,
+      "label": "solve",
+      "score": 138180.0000000002,
+      "actions": [
+        "Acid_Tank, move F3\u2192E2, fire A.C.I.D. Cannon at F2",
+        "JetMech, move C3\u2192D3",
+        "RocketMech, fire Rocket Artillery at F2",
+        "PulseMech, move E4\u2192C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:35:47.984191",
+      "turn": 3,
+      "label": "solve",
+      "score": 139260.0,
+      "actions": [
+        "Acid_Tank, fire A.C.I.D. Cannon at D2",
+        "JetMech, fire Aerial Bombs at D1",
+        "RocketMech",
+        "PulseMech, move C3\u2192C2, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:37:19.311544",
+      "turn": 4,
+      "label": "solve",
+      "score": 122363.71444586346,
+      "actions": [
+        "Acid_Tank, move E2\u2192E1, fire A.C.I.D. Cannon at E2",
+        "JetMech, move D1\u2192E5, fire Aerial Bombs at E3",
+        "RocketMech, move F6\u2192F4, fire Rocket Artillery at D4",
+        "PulseMech, move C2\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:38:32.403273",
+      "turn": 4,
+      "label": "solve",
+      "score": 122363.71444586346,
+      "actions": [
+        "Acid_Tank, move E2\u2192E1, fire A.C.I.D. Cannon at E2",
+        "JetMech, move D1\u2192E5, fire Aerial Bombs at E3",
+        "RocketMech, move F6\u2192F4, fire Rocket Artillery at D4",
+        "PulseMech, move C2\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:56:55.219664",
+      "turn": 4,
+      "label": "solve",
+      "score": 122363.71444586346,
+      "actions": [
+        "Acid_Tank, move E2\u2192E1, fire A.C.I.D. Cannon at E2",
+        "JetMech, move D1\u2192E5, fire Aerial Bombs at E3",
+        "RocketMech, move F6\u2192F4, fire Rocket Artillery at D4",
+        "PulseMech, move C2\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T16:58:15.829788",
+      "turn": 4,
+      "label": "solve",
+      "score": 122363.71444586346,
+      "actions": [
+        "JetMech, fire Aerial Bombs at E3",
+        "RocketMech, move F6\u2192F4, fire Rocket Artillery at D4",
+        "PulseMech, move C2\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T17:24:20.939241",
+      "turn": 4,
+      "label": "solve",
+      "score": 122363.71444586346,
+      "actions": [
+        "JetMech, fire Aerial Bombs at E3",
+        "RocketMech, move F6\u2192F4, fire Rocket Artillery at D4",
+        "PulseMech, move C2\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T17:33:04.558170",
+      "turn": 4,
+      "label": "solve",
+      "score": 122363.71444586346,
+      "actions": [
+        "JetMech, fire Aerial Bombs at E3",
+        "RocketMech, move F6\u2192F4, fire Rocket Artillery at D4",
+        "PulseMech, move C2\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T17:40:42.826901",
+      "turn": 4,
+      "label": "solve",
+      "score": 122363.71444586346,
+      "actions": [
+        "JetMech, fire Aerial Bombs at E3",
+        "RocketMech, move F6\u2192F4, fire Rocket Artillery at D4",
+        "PulseMech, move C2\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T17:59:09.704842",
+      "turn": 1,
+      "label": "solve",
+      "score": 127907.14285714284,
+      "actions": [
+        "JetMech, fire Aerial Bombs at D7",
+        "PulseMech, move F6\u2192E4, fire Repulse at E4",
+        "RocketMech, move C6\u2192C7, fire Rocket Artillery at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T18:00:13.231242",
+      "turn": 2,
+      "label": "solve",
+      "score": 141750.47619047636,
+      "actions": [
+        "JetMech, move D7\u2192F4, fire Aerial Bombs at F2",
+        "RocketMech, move C7\u2192C5, fire Rocket Artillery at C2",
+        "PulseMech, fire Repulse at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T18:01:08.475997",
+      "turn": 3,
+      "label": "solve",
+      "score": 141047.14285714284,
+      "actions": [
+        "JetMech, fire Aerial Bombs at H2",
+        "RocketMech, move C5\u2192D4, fire Rocket Artillery at F4",
+        "PulseMech, move E4\u2192C3, fire Repulse at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T18:03:20.229880",
+      "turn": 4,
+      "label": "solve",
+      "score": 138807.14285714284,
+      "actions": [
+        "JetMech, move H2\u2192F5, fire Aerial Bombs at D5",
+        "PulseMech, fire Repulse at C3",
+        "RocketMech, move D4\u2192D7, fire Rocket Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T18:22:24.858328",
+      "turn": 1,
+      "label": "solve",
+      "score": 160900.0,
+      "actions": [
+        "JetMech, move E5\u2192E3, fire Aerial Bombs at C3",
+        "PulseMech, move F6\u2192C6, fire Repulse at C6",
+        "RocketMech, move B5\u2192B4, fire Rocket Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T18:24:27.275736",
+      "turn": 2,
+      "label": "solve",
+      "score": 161393.33333333352,
+      "actions": [
+        "JetMech, move F2\u2192E3, fire Aerial Bombs at E1",
+        "RocketMech, move B4\u2192B5, fire Rocket Artillery at E4",
+        "PulseMech, move C6\u2192E4, fire Repulse at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T18:27:04.052023",
+      "turn": 3,
+      "label": "solve",
+      "score": 162380.0,
+      "actions": [
+        "JetMech, move E1\u2192G3, fire Aerial Bombs at E3",
+        "RocketMech, move E5\u2192C6, fire Rocket Artillery at F6",
+        "PulseMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T18:29:23.749232",
+      "turn": 4,
+      "label": "solve",
+      "score": 166350.0,
+      "actions": [
+        "RocketMech, move C6\u2192E6, fire Rocket Artillery at B2",
+        "JetMech, move E3\u2192B4, fire Aerial Bombs at B2",
+        "PulseMech, move D6\u2192B4, fire Repulse at B4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T19:02:01.578789",
+      "turn": 1,
+      "label": "solve",
+      "score": 127500.0,
+      "actions": [
+        "PulseMech, move D5\u2192G3, fire Repulse at G3",
+        "RocketMech, move E6\u2192F7, fire Rocket Artillery at F3",
+        "JetMech, move F5\u2192F3, fire Aerial Bombs at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T19:02:54.477630",
+      "turn": 2,
+      "label": "solve",
+      "score": 148416.6666666669,
+      "actions": [
+        "JetMech, move D3\u2192D7, fire Aerial Bombs at B7",
+        "PulseMech, move G3\u2192F3, fire Repulse at F3",
+        "RocketMech, fire Rocket Artillery at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T19:20:31.486626",
+      "turn": 3,
+      "label": "solve",
+      "score": 147380.0,
+      "actions": [
+        "JetMech, fire Aerial Bombs at D5",
+        "RocketMech, move F7\u2192D7, fire Rocket Artillery at D2",
+        "PulseMech, move F3\u2192D2, fire Repulse at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T19:34:57.846899",
+      "turn": 4,
+      "label": "solve",
+      "score": 155760.0,
+      "actions": [
+        "JetMech, move D5\u2192G5, fire Aerial Bombs at E5",
+        "PulseMech, move D2\u2192C3, fire Repulse at C3",
+        "RocketMech, move D7\u2192E6, fire Rocket Artillery at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T19:37:11.515195",
+      "turn": 4,
+      "label": "note",
+      "message": "m10 turn 4 Rocket damage_amount fuzzy was benign: verify diff only RocketMech hp predicted 3 actual 5 after moving/attacking from E6; Bouncer at F5 remained in smoke, targeted_tiles=0, no current-board research pending."
+    },
+    {
+      "timestamp": "2026-05-08T19:55:56.943342",
+      "turn": 1,
+      "label": "solve",
+      "score": 124709.14292774879,
+      "actions": [
+        "JetMech, move E5\u2192F2, fire Aerial Bombs at H2",
+        "RocketMech, move C5\u2192E5, fire Rocket Artillery at C5",
+        "PulseMech, move D6\u2192E3, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T20:03:10.578000",
+      "turn": 1,
+      "label": "solve",
+      "score": 124709.14292774879,
+      "actions": [
+        "JetMech, move E5\u2192F2, fire Aerial Bombs at H2",
+        "RocketMech, move C5\u2192E5, fire Rocket Artillery at C5",
+        "PulseMech, move D6\u2192E3, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T20:04:34.895770",
+      "turn": 2,
+      "label": "solve",
+      "score": 128425.80959441565,
+      "actions": [
+        "JetMech, move H2\u2192F2, fire Aerial Bombs at F4",
+        "PulseMech, move E3\u2192C2, fire Repulse at C2",
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T20:12:36.758437",
+      "turn": 2,
+      "label": "solve",
+      "score": 128425.80959441565,
+      "actions": [
+        "JetMech, move H2\u2192F2, fire Aerial Bombs at F4",
+        "PulseMech, move E3\u2192C2, fire Repulse at C2",
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T20:18:10.478155",
+      "turn": 2,
+      "label": "solve",
+      "score": 128425.80959441565,
+      "actions": [
+        "JetMech, fire Aerial Bombs at F4",
+        "PulseMech, move E3\u2192C2, fire Repulse at C2",
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:05:36.811863",
+      "turn": 2,
+      "label": "solve",
+      "score": 121582.47626108234,
+      "actions": [
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E2",
+        "PulseMech, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:08:17.379190",
+      "turn": 2,
+      "label": "solve",
+      "score": 121582.47626108234,
+      "actions": [
+        "RocketMech, move E5\u2192E6, fire Rocket Artillery at E2",
+        "PulseMech, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:09:46.609757",
+      "turn": 3,
+      "label": "solve",
+      "score": 137330.0,
+      "actions": [
+        "RocketMech, move E6\u2192F8, fire Rocket Artillery at F4",
+        "JetMech, move F3\u2192F7, fire Aerial Bombs at F5",
+        "PulseMech, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:14:48.884525",
+      "turn": 4,
+      "label": "solve",
+      "score": 101238.42863590377,
+      "actions": [
+        "JetMech",
+        "RocketMech, move F8\u2192C7, fire Rocket Artillery at C5",
+        "PulseMech, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:20:19.693715",
+      "turn": 4,
+      "label": "solve",
+      "score": 101238.42863590377,
+      "actions": [
+        "JetMech",
+        "RocketMech, move F8\u2192C7, fire Rocket Artillery at C5",
+        "PulseMech, fire Repulse at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:21:40.858386",
+      "turn": 4,
+      "label": "note",
+      "message": "Turn 4 dirty rank-0 manual execution: Action 0 JetMech skip produced active-only verify desync (pred active true, actual false). Board state/value unaffected; consciously continuing with reviewed dirty line."
+    },
+    {
+      "timestamp": "2026-05-08T21:30:52.527252",
+      "turn": 1,
+      "label": "solve",
+      "score": 144342.85714285713,
+      "actions": [
+        "RocketMech, move C6\u2192E5, fire Rocket Artillery at E3",
+        "JetMech, move D5\u2192E1, fire Aerial Bombs at E3",
+        "PulseMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:31:55.233522",
+      "turn": 2,
+      "label": "solve",
+      "score": 78396.1904761904,
+      "actions": [
+        "JetMech, move E3\u2192D3, fire Aerial Bombs at D5",
+        "RocketMech, move E5\u2192F6, fire Rocket Artillery at F3",
+        "PulseMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:55:46.378452",
+      "turn": 3,
+      "label": "solve",
+      "score": 86862.85714285714,
+      "actions": [
+        "RocketMech, fire Rocket Artillery at F4",
+        "PulseMech, fire Repulse at B5",
+        "JetMech, move D5\u2192F2, fire Aerial Bombs at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T21:57:18.676548",
+      "turn": 4,
+      "label": "solve",
+      "score": 73707.85714285714,
+      "actions": [
+        "JetMech, move F4\u2192C2, fire Aerial Bombs at A2",
+        "PulseMech, move B5\u2192C7, repair",
+        "RocketMech, move F6\u2192D7, fire Rocket Artillery at B7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T22:35:11.629666",
+      "turn": 1,
+      "label": "solve",
+      "score": 104900.0,
+      "actions": [
+        "JetMech, move D5\u2192A4, fire Aerial Bombs at C4",
+        "RocketMech, move C6\u2192E7, fire Rocket Artillery at E2",
+        "PulseMech, move B5\u2192D4, fire Repulse at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T22:36:01.752169",
+      "turn": 2,
+      "label": "solve",
+      "score": 121170.00000000016,
+      "actions": [
+        "RocketMech, fire Rocket Artillery at E4",
+        "PulseMech, move D4\u2192C2, fire Repulse at C2",
+        "JetMech, move C4\u2192D6, fire Aerial Bombs at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T22:37:00.434778",
+      "turn": 3,
+      "label": "solve",
+      "score": 126595.0,
+      "actions": [
+        "JetMech, fire Aerial Bombs at F4",
+        "PulseMech, fire Repulse at C2",
+        "RocketMech, move E7\u2192C6, fire Rocket Artillery at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T22:38:04.094544",
+      "turn": 4,
+      "label": "solve",
+      "score": 108895.0,
+      "actions": [
+        "RocketMech, move C6\u2192F7, fire Rocket Artillery at F3",
+        "JetMech, move F4\u2192E7",
+        "PulseMech, move C2\u2192C4, fire Repulse at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T22:43:41.476173",
+      "turn": 1,
+      "label": "solve",
+      "score": 154042.85714285716,
+      "actions": [
+        "JetMech, move C5\u2192A6, fire Aerial Bombs at A4",
+        "RocketMech, move B6\u2192C7, fire Rocket Artillery at C3",
+        "PulseMech, move E5\u2192C5, fire Repulse at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T22:45:04.309964",
+      "turn": 2,
+      "label": "solve",
+      "score": 77932.00016937929,
+      "actions": [
+        "RocketMech, fire Rocket Artillery at C4",
+        "PulseMech, move C5\u2192F3, fire Repulse at F3",
+        "JetMech, move A4\u2192C5, fire Aerial Bombs at A5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T23:37:11.633116",
+      "turn": 2,
+      "label": "solve",
+      "score": 77965.33350271262,
+      "actions": [
+        "RocketMech, move C7\u2192E6, fire Rocket Artillery at C4",
+        "PulseMech, move C5\u2192F3, fire Repulse at F3",
+        "JetMech, move A4\u2192C5, fire Aerial Bombs at A5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T23:58:27.804953",
+      "turn": 2,
+      "label": "solve",
+      "score": 34748.95272774914,
+      "actions": [
+        "PulseMech, move C5\u2192F3, fire Repulse at F3",
+        "JetMech, move A4\u2192C5, fire Aerial Bombs at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T00:02:17.642703",
+      "turn": 2,
+      "label": "solve",
+      "score": 34748.95272774914,
+      "actions": [
+        "PulseMech, move C5\u2192F3, fire Repulse at F3",
+        "JetMech, move A4\u2192C5, fire Aerial Bombs at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T00:03:50.701798",
+      "turn": 3,
+      "label": "solve",
+      "score": 60992.857142857145,
+      "actions": [
+        "JetMech, move C3\u2192A2, fire Aerial Bombs at C2",
+        "RocketMech, move E6\u2192G5, fire Rocket Artillery at G3",
+        "PulseMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T00:06:17.360043",
+      "turn": 4,
+      "label": "solve",
+      "score": 108916.42857142858,
+      "actions": [
+        "RocketMech, move G5\u2192G2",
+        "PulseMech, move F3\u2192E2, fire Repulse at E2",
+        "JetMech, move C2\u2192F4, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T00:10:29.906427",
+      "turn": 1,
+      "label": "solve",
+      "score": 103350.00000000003,
+      "actions": [
+        "JetMech, move D6\u2192F3, fire Aerial Bombs at F1",
+        "RocketMech, move C5\u2192C8, fire Rocket Artillery at C3",
+        "PulseMech, move F6\u2192C5, fire Repulse at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T00:11:31.322524",
+      "turn": 2,
+      "label": "solve",
+      "score": 147233.33333333355,
+      "actions": [
+        "RocketMech, fire Rocket Artillery at C2",
+        "PulseMech, fire Repulse at C6",
+        "JetMech, move F1\u2192C3, fire Aerial Bombs at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T00:12:31.780230",
+      "turn": 3,
+      "label": "solve",
+      "score": 143110.00000000003,
+      "actions": [
+        "JetMech, move C5\u2192C7, repair",
+        "RocketMech, move C8\u2192D7, fire Rocket Artillery at F7",
+        "PulseMech, move C6\u2192G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T00:14:07.438699",
+      "turn": 4,
+      "label": "solve",
+      "score": 137570.00000000003,
+      "actions": [
+        "JetMech",
+        "RocketMech, move D7\u2192C6, fire Rocket Artillery at C2",
+        "PulseMech, fire Repulse at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T11:39:22.790240",
+      "turn": 1,
+      "label": "solve",
+      "score": 131778.57142857142,
+      "actions": [
+        "RocketMech, move E6\u2192E5, fire Rocket Artillery at E3",
+        "JetMech, move D5\u2192G3, fire Aerial Bombs at E3",
+        "PulseMech, move G5\u2192E4, fire Repulse at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T11:51:00.912290",
+      "turn": 1,
+      "label": "note",
+      "message": "Investigation gate resolved for Mission_Repair t1: Aerial Bombs bridge workaround double-applied transit terrain damage to C2 mountain only; grid stayed 6/7 and no city/objective building was lost. Patched source/install for next restart and continuing current live turn without restarting."
+    },
+    {
+      "timestamp": "2026-05-09T11:52:00.344224",
+      "turn": 2,
+      "label": "solve",
+      "score": 135188.5714285716,
+      "actions": [
+        "JetMech, move C1\u2192E4, fire Aerial Bombs at E2",
+        "PulseMech, move F2\u2192C4, fire Repulse at C4",
+        "RocketMech, move D5\u2192E6, fire Rocket Artillery at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T11:58:23.720776",
+      "turn": 2,
+      "label": "note",
+      "message": "Investigation gate resolved for Mission_Repair t2: Jelly_Explode1/normal Psions were incorrectly injected as non-pushable. Live Repulse bumped Blast Psion C5 into C6 building (both -1), matching shipped pawns.lua Pushable=true. Fixed pawn_stats, bumped simulator v81, regression passed, research_next auto-resolved Jelly_Explode1; continuing current live turn."
+    },
+    {
+      "timestamp": "2026-05-09T12:04:39.378822",
+      "turn": 3,
+      "label": "solve",
+      "score": 128141.42857142857,
+      "actions": [
+        "JetMech, move E2\u2192E1, fire Aerial Bombs at C1",
+        "PulseMech, fire Repulse at C4",
+        "RocketMech, move E6\u2192D5, fire Rocket Artillery at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T12:17:48.609711",
+      "turn": 3,
+      "label": "note",
+      "message": "Turn 3 Rocket desync resolved: Blast Psion aura explosions do not recursively chain. Simulator v82 replay now matches live (Burnbug+Totem dead; Starfish/Blast Psion survive at 1 HP). Cleared stale Ranged_Rocket_A soft-disable from this fixed false positive before End Turn."
+    },
+    {
+      "timestamp": "2026-05-09T12:18:21.150547",
+      "turn": 4,
+      "label": "solve",
+      "score": 136386.42857142858,
+      "actions": [
+        "JetMech, move C1\u2192D3, fire Aerial Bombs at B3",
+        "RocketMech, move D5\u2192B6, fire Rocket Artillery at F6",
+        "PulseMech, move C4\u2192D3, fire Repulse at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T12:33:31.950031",
+      "turn": 1,
+      "label": "solve",
+      "score": 124300.0,
+      "actions": [
+        "RocketMech, move D5\u2192B6, fire Rocket Artillery at B2",
+        "PulseMech, move B5\u2192F4, fire Repulse at F4",
+        "JetMech, move C6\u2192B5, fire Aerial Bombs at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T12:34:53.569169",
+      "turn": 2,
+      "label": "solve",
+      "score": 142756.66666666683,
+      "actions": [
+        "JetMech, move D5\u2192C1, fire Aerial Bombs at C3",
+        "RocketMech, move B6\u2192D5, fire Rocket Artillery at H5",
+        "PulseMech, move F4\u2192E1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T13:28:49.513673",
+      "turn": 3,
+      "label": "solve",
+      "score": 146651.42857142858,
+      "actions": [
+        "RocketMech, move D6\u2192C6, repair",
+        "JetMech, move C3\u2192D6, fire Aerial Bombs at D8",
+        "PulseMech, move E1\u2192D1, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T13:41:16.964656",
+      "turn": 4,
+      "label": "solve",
+      "score": 143861.42857142858,
+      "actions": [
+        "JetMech",
+        "RocketMech, fire Rocket Artillery at C3",
+        "PulseMech, move D1\u2192E2, fire Repulse at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T13:53:27.740618",
+      "turn": 4,
+      "label": "note",
+      "message": "Island map: spent the one loose reactor core on Rocket Mech +1 Move after confirming Storm Generator +1 damage was already powered; selecting Old Earth Park next for 2 reputation + grid power and better Stormy Weather smoke-density odds."
+    },
+    {
+      "timestamp": "2026-05-09T13:54:14.910005",
+      "turn": 4,
+      "label": "note",
+      "message": "Selected Old Earth Park: High Threat Armored Train + Coal Plant. Risk accepted for Stormy Weather density and grid reward at 4/7."
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      1
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      6,
+      3
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      8,
+      1
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      8,
+      3
+    ],
+    [
+      9,
+      1
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      9,
+      3
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
+      3
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      12,
+      2
+    ],
+    [
+      12,
+      3
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      14,
+      1
+    ],
+    [
+      14,
+      2
+    ],
+    [
+      14,
+      3
+    ],
+    [
+      15,
+      1
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      15,
+      3
+    ],
+    [
+      16,
+      1
+    ],
+    [
+      16,
+      2
+    ],
+    [
+      16,
+      3
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      17,
+      2
+    ],
+    [
+      17,
+      3
+    ]
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          7,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 401,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 401,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Acid_Tank_Attack|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 401,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Acid_Tank_Attack",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "tile_status|Brute_Jetmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          0
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Science_Repulse",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "mech_position_wrong",
+      "categories": [
+        "mech_position_wrong"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "mech_position_wrong|Ranged_Rocket|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          4,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "mech_position_wrong",
+      "categories": [
+        "mech_position_wrong"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "mech_position_wrong|Unknown|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|skip",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "skip",
+        "sub_action": "skip",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Ranged_Rocket|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Science_Repulse",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_Rocket|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 4,
+        "weapon": "Ranged_Rocket",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "push_dir",
+      "categories": [
+        "push_dir"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "push_dir|Science_Repulse|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Science_Repulse",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "spawn",
+      "categories": [
+        "spawn"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "spawn|Brute_Jetmech|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Jetmech|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 2,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Rocket_A|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Ranged_Rocket_A",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status",
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Jetmech|attack",
+      "frequency": 3,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|_REPAIR|repair",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "repair",
+        "sub_action": "repair",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "_REPAIR",
+        "target": [
+          1,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "repair_platform",
+      "categories": [
+        "repair_platform"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "repair_platform|Ranged_Rocket_A|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Rocket_A",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "repair_platform",
+      "categories": [
+        "repair_platform"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "repair_platform|Brute_Jetmech|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          7,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "grid_power",
+      "categories": [
+        "grid_power",
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "grid_power|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          7,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "repair_platform",
+      "categories": [
+        "repair_platform"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "repair_platform|Unknown|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "repair_platform"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_Repulse_A|move",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Science_Repulse_A",
+        "target": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_Rocket_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Ranged_Rocket_A",
+        "target": [
+          6,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "repair_platform",
+      "categories": [
+        "repair_platform"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "repair_platform|Brute_Jetmech|move",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "grid_power"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Science_Repulse_A|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Science_Repulse_A",
+        "target": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Rocket_A|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 3,
+        "weapon": "Ranged_Rocket_A",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "pod",
+      "categories": [
+        "pod"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "pod|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Brute_Jetmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount",
+        "grid_power",
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_Rocket_A|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Ranged_Rocket_A",
+        "target": [
+          3,
+          0
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "JetMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Volatile",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Rusting Hulks mech weapon loadout; stale pending research entry during Perfect Battle run.",
+        "kind": "mech_weapon",
+        "attempts": 1,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      },
+      "research_id": "8f69e4a45559",
+      "last_kind": "mech"
+    },
+    {
+      "type": "RocketMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Volatile",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Rusting Hulks mech weapon loadout; stale pending research entry during Perfect Battle run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "PulseMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Volatile",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Rusting Hulks mech weapon loadout; stale pending research entry during Perfect Battle run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "Leaper1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Cataclysm",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Stale soft research_queue_peek after Turn 3 Jet click_miss; research_next reports NO_WORK on current board and Leaper1 is already catalogued enough to continue.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "alive",
+        "diff_predicted": false,
+        "diff_actual": true
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high"
+    },
+    {
+      "type": "Moth1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_BurnbugBoss",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Moth",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "flying",
+              "fire"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Moth",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Moth",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Moth&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "3a056cdc882f",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "VIP_Truck",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Civilians",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Civilian Truck",
+            "hp": 0,
+            "move": 0,
+            "class_icons": [
+              "mission_ally",
+              "non_combat"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Nora Nguyen",
+            "weapon_slot_count": 1,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Civilian Truck",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Civilian+Truck",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Civilian+Truck&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "bdf16d32aadf",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "VIP_Truck_Move",
+      "terrain_id": null,
+      "kind": "enemy_weapon",
+      "slot": null,
+      "mission_id": "Mission_Civilians",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Civilian Truck selected on Pumping Station: mission ally with one two-use movement command; no attack damage observed or expected.",
+        "kind": "enemy_weapon",
+        "attempts": 1,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "Bouncer1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Civilians",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Bouncer",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Bouncer",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Bouncer",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Bouncer&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium",
+      "research_id": "1254c004bf93",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Blob2",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Power",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Alpha Blob",
+            "hp": 1,
+            "move": 0,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Alpha Blob",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Blob",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Blob&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "ad5c3ccedafa",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Blobber2",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Power",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Alpha Blobber",
+            "hp": 4,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Alpha Blobber",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Blobber",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Blobber&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "ce9c33786713",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Jelly_Fire1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Power",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Smoldering Psion",
+            "hp": 2,
+            "move": 2,
+            "class_icons": [
+              "flying"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Smoldering Psion",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Smoldering+Psion",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Smoldering+Psion&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        4,
+        5
+      ],
+      "diff_actual": [
+        3,
+        5
+      ],
+      "severity": "medium",
+      "research_id": "b8a4a8bee576",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "StarfishBoss",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_StarfishBoss",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Starfish Leader",
+            "hp": 6,
+            "move": 3,
+            "class_icons": [
+              "boss",
+              "massive"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 1,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Starfish Leader",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Starfish+Leader",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Starfish+Leader&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "bd32363e9283",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "StarfishAtkB1",
+      "terrain_id": null,
+      "kind": "enemy_weapon",
+      "slot": null,
+      "mission_id": "Mission_StarfishBoss",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "known_weapon_after_baseline_reload",
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "Blob1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_StarfishBoss",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Blob",
+            "hp": 1,
+            "move": 0,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Blob",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Blob",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Blob&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "aecda9f692b8",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Blobber1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_StarfishBoss",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Blobber",
+            "hp": 3,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Blobber",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Blobber",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Blobber&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "d665b7c3da1f",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Burrower2",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_FreezeBldg",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Alpha Burrower",
+            "hp": 5,
+            "move": 4,
+            "class_icons": [
+              "burrower"
+            ],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Alpha Burrower",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Burrower",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Burrower&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "a180af2f3c51",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Burrower2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_FreezeBldg",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Alpha Burrower already researched earlier in this mission; pending entry came from post-action prediction saying Burrower remained while live bridge read shows it absent after the executed Turn 3 line.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "missing_in_actual",
+        "diff_predicted": "present",
+        "diff_actual": "absent"
+      },
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium"
+    },
+    {
+      "type": "Jelly_Regen1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_FreezeBldg",
+      "first_seen_turn": 3,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Blood/Regeneration Psion type; live bridge read after Turn 3 desync shows no new enemy semantics, only a one-tile position diff from the partially re-solved action sequence.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "pos",
+        "diff_predicted": [
+          5,
+          4
+        ],
+        "diff_actual": [
+          5,
+          5
+        ]
+      },
+      "diff_field": "pos",
+      "diff_predicted": [
+        5,
+        4
+      ],
+      "diff_actual": [
+        5,
+        5
+      ],
+      "severity": "medium",
+      "research_id": "b49ae18d519a",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Burrower1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Stasis",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Burrower type; research_next reports NO_WORK on current board, and pending entry is a behavior-novelty missing_in_actual diff after the Turn 2 re-solved action sequence.",
+        "kind": "behavior_novelty",
+        "attempts": 1,
+        "diff_field": "missing_in_actual",
+        "diff_predicted": "present",
+        "diff_actual": "absent"
+      },
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
+      "severity": "medium"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Reactivation",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Burnbug",
+            "hp": 3,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Burnbug",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Burnbug",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Burnbug&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "f18273f86a1b",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Jelly_Explode1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Repair",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 2,
+        "diff_actual": 1
+      },
+      "diff_field": "hp",
+      "diff_predicted": 2,
+      "diff_actual": 1,
+      "severity": "low"
+    },
+    {
+      "type": "Starfish1",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Repair",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Starfish",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Starfish",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Starfish",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Starfish&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "800ab6e166b2",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Starfish1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Repair",
+      "first_seen_turn": 3,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Starfish1 is now in known_types; high-severity alive diff was caused by Blast Psion recursive explosion simulator bug fixed in v82.",
+        "kind": "behavior_novelty",
+        "attempts": 0,
+        "diff_field": "alive",
+        "diff_predicted": false,
+        "diff_actual": true
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high"
+    },
+    {
+      "type": "Starfish2",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Armored_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "3d1f3e4400dd9694",
+    "classes": "ccmgbbggcmmgbbggmmbggggfmgggbgggggggggggmggggggfbggmggfgmgggggmm",
+    "mission_index": 18,
+    "turn": 1
+  },
+  "terrain_stage_change_pending": false
+}

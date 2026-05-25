@@ -13,13 +13,14 @@
 //! `snapshot_after_move` byte-for-byte: same field names, same types, same
 //! tile-sampling rule (touched tiles + 1-tile buffer).
 
-use crate::board::Board;
+use crate::board::{ActionResult, Board};
 use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
+use crate::movement::illegal_move_reason;
 use crate::serde_bridge;
 use crate::simulate::{simulate_attack, simulate_move};
 use crate::turn_projection::board_to_json;
 use crate::types::Terrain;
-use crate::weapons::{self, build_overlay_table, wid_from_str, WeaponTable};
+use crate::weapons::{self, build_overlay_table, wid_from_str, WeaponTable, WId};
 
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
@@ -57,6 +58,7 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
 
     let mut action_results: Vec<Value> = Vec::with_capacity(plan.len());
     let mut predicted_states: Vec<Value> = Vec::with_capacity(plan.len());
+    let mut player_phase_result = ActionResult::default();
 
     for (i, act) in plan.iter().enumerate() {
         let mech_uid = act.mech_uid;
@@ -74,14 +76,17 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
                     "units": [],
                     "tiles_changed": [],
                     "grid_power": board.grid_power,
+                    "repair_platforms_used": board.repair_platforms_used,
                 });
                 action_results.push(json!({
                     "enemies_killed": 0,
+                    "mission_kills": 0,
                     "enemy_damage_dealt": 0,
                     "buildings_lost": 0,
                     "buildings_damaged": 0,
                     "mech_damage_taken": 0,
                     "pods_collected": 0,
+                    "repair_platforms_used": 0,
                     "spawns_blocked": 0,
                     "events": [format!("Mech UID {} not found", mech_uid)],
                 }));
@@ -93,32 +98,59 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
             }
         };
 
-        // Phase 1: move
-        let move_result = simulate_move(&mut board, mech_idx, (act.move_to[0], act.move_to[1]));
+        // Phase 1: move. Diagnostic replay accepts hand-authored plans, so
+        // validate moves before mutating; otherwise impossible plans can score
+        // as clean by walking through buildings, units, or out-of-range tiles.
+        let move_to = (act.move_to[0], act.move_to[1]);
+        let illegal_move = illegal_move_reason(&board, mech_idx, move_to);
+        let move_result = match illegal_move {
+            Some(reason) => {
+                let mut result = ActionResult::default();
+                result.events.push(format!(
+                    "illegal_move:{}:{}:{}",
+                    move_to.0, move_to.1, reason
+                ));
+                result
+            }
+            None => simulate_move(&mut board, mech_idx, move_to),
+        };
         let post_move_snap = capture_snapshot(
             &board, i, mech_uid, &move_result.events, "after_move",
         );
 
         // Phase 2: attack
         let wid = wid_from_str(&act.weapon_id);
-        let attack_result = simulate_attack(
-            &mut board, mech_idx, wid, (act.target[0], act.target[1]), weapons_table,
-        );
+        let attack_result = if illegal_move.is_some() {
+            ActionResult::default()
+        } else {
+            simulate_attack(
+                &mut board, mech_idx, wid, (act.target[0], act.target[1]), weapons_table,
+            )
+        };
+        if illegal_move.is_none() && wid == WId::None {
+            // A replay plan entry with WId::None represents the bridge's
+            // explicit skip after any move-only action, so the action is spent.
+            board.units[mech_idx].set_active(false);
+        }
         let mut all_events = move_result.events.clone();
         all_events.extend_from_slice(&attack_result.events);
         let post_attack_snap = capture_snapshot(
             &board, i, mech_uid, &all_events, "after_mech_action",
         );
+        player_phase_result.merge(&move_result);
+        player_phase_result.merge(&attack_result);
 
         action_results.push(json!({
             "enemies_killed":     attack_result.enemies_killed,
+            "mission_kills":      attack_result.mission_kills,
             "enemy_damage_dealt": attack_result.enemy_damage_dealt,
             "buildings_lost":     attack_result.buildings_lost,
             "buildings_damaged":  attack_result.buildings_damaged,
             "grid_damage":        attack_result.grid_damage,
             "mech_damage_taken":  attack_result.mech_damage_taken,
             "mechs_killed":       attack_result.mechs_killed,
-            "pods_collected":     move_result.pods_collected,
+            "pods_collected":     move_result.pods_collected + attack_result.pods_collected,
+            "repair_platforms_used": move_result.repair_platforms_used + attack_result.repair_platforms_used,
             "spawns_blocked":     attack_result.spawns_blocked,
             "events":             all_events,
         }));
@@ -151,8 +183,15 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     // Env effects + Vek attacks. simulate_enemy_attacks handles env_danger
     // BEFORE Vek attacks (enemy.rs:287-297) — same ordering as Python's
     // _simulate_env_effects then _simulate_enemy_attacks.
-    let _ = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
-    apply_spawn_blocking(&mut board, &spawn_points);
+    let enemy_phase_result = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+    let spawn_block_result = apply_spawn_blocking(&mut board, &spawn_points);
+    let total_projected_kills = player_phase_result.enemies_killed
+        + enemy_phase_result.enemies_killed
+        + spawn_block_result.enemies_killed;
+    let total_projected_mission_kills = player_phase_result.mission_kills
+        + enemy_phase_result.mission_kills
+        + spawn_block_result.mission_kills;
+    board.add_mission_kills(total_projected_mission_kills);
 
     // Build predicted_outcome (mirrors solver.py:744-756).
     let mut buildings_alive = 0i32;
@@ -170,11 +209,12 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.is_mech() {
+            let hp = u.hp.max(0);
             if u.hp > 0 { mechs_alive += 1; }
             mech_hp_list.push(json!({
                 "uid": u.uid,
                 "type": u.type_name_str(),
-                "hp": u.hp,
+                "hp": hp,
                 "max_hp": u.max_hp,
             }));
         } else if u.is_enemy() && u.hp > 0 {
@@ -203,6 +243,16 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
         "mechs_alive":                   mechs_alive,
         "mech_hp":                       mech_hp_list,
         "buildings_destroyed_by_enemies": buildings_destroyed_by_enemies,
+        "enemies_killed_by_player":       player_phase_result.enemies_killed,
+        "enemies_killed_by_enemy_phase":  enemy_phase_result.enemies_killed,
+        "enemies_killed_by_spawn_block":  spawn_block_result.enemies_killed,
+        "enemies_killed_total_projected": total_projected_kills,
+        "mission_kills_by_player":        player_phase_result.mission_kills,
+        "mission_kills_by_enemy_phase":   enemy_phase_result.mission_kills,
+        "mission_kills_by_spawn_block":   spawn_block_result.mission_kills,
+        "mission_kills_total_projected":  total_projected_mission_kills,
+        "mission_kills_done_projected":   board.mission_kills_done,
+        "mission_mountains_destroyed_projected": board.projected_mountains_destroyed(),
     });
 
     // Serialize the final post-enemy board so Python's evaluate_breakdown
@@ -225,8 +275,10 @@ pub fn replay_solution(bridge_json: &str, plan_json: &str) -> Result<String, Str
 
 /// Mirror `src/solver/verify.py::snapshot_after_action` (and
 /// `snapshot_after_move`). Captures every unit (alive or dead — diff
-/// engine needs death/spawn detection) and only the tiles touched by
-/// `events` + a 1-tile buffer + the mech's current tile.
+/// engine needs death/spawn detection) and the tiles touched by `events` +
+/// a 1-tile buffer + the mech's current tile + every building tile. Buildings
+/// are included globally because Grid Defense / Blast Psion interactions can
+/// damage a building outside the sparse event-derived neighborhood.
 fn capture_snapshot(
     board: &Board,
     action_index: usize,
@@ -259,6 +311,14 @@ fn capture_snapshot(
             }
         }
     }
+    for x in 0..8u8 {
+        for y in 0..8u8 {
+            let t = board.tile(x, y);
+            if t.terrain == Terrain::Building {
+                expanded.insert((x, y));
+            }
+        }
+    }
 
     let mut units: Vec<Value> = Vec::with_capacity(board.unit_count as usize);
     for i in 0..board.unit_count as usize {
@@ -284,6 +344,8 @@ fn capture_snapshot(
                 "frozen": u.frozen(),
                 "shield": u.shield(),
                 "web":    u.web(),
+                "boosted": u.boosted(),
+                "infected": u.infected(),
             },
         }));
     }
@@ -299,7 +361,9 @@ fn capture_snapshot(
             "fire":         t.on_fire(),
             "acid":         t.acid(),
             "smoke":        t.smoke(),
+            "frozen":       t.frozen(),
             "has_pod":      t.has_pod(),
+            "repair_platform": t.repair_platform(),
         }));
     }
 
@@ -310,6 +374,7 @@ fn capture_snapshot(
         "units":          units,
         "tiles_changed":  tiles_changed,
         "grid_power":     board.grid_power,
+        "repair_platforms_used": board.repair_platforms_used,
     })
 }
 
@@ -367,6 +432,7 @@ fn terrain_to_str(t: Terrain) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn parse_coords_extracts_pairs_and_filters_off_board() {
@@ -437,6 +503,85 @@ mod tests {
     }
 
     #[test]
+    fn replay_solution_snapshots_include_boosted_status() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 0, "type": "JetMech", "x": 2, "y": 3,
+             "hp": 2, "max_hp": 2, "team": 1, "mech": true,
+             "flying": true, "move": 5, "active": true, "boosted": true,
+             "weapons": ["Brute_Jetmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 1,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [2, 3],
+          "weapon_id": "None",
+          "target": [255, 255]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let post_attack_units = v["predicted_states"][0]["post_attack"]["units"].as_array().unwrap();
+        let jet = post_attack_units.iter().find(|u| u["uid"] == 0).unwrap();
+        assert_eq!(jet["active"], false,
+            "Replay WId::None plan entries represent bridge skips and must deactivate the unit");
+        assert_eq!(jet["status"]["boosted"], true,
+            "Replay snapshots must preserve Boosted so verify does not create false status diffs");
+    }
+
+    #[test]
+    fn replay_solution_counts_aerial_bombs_pod_collection() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 3, "y": 5, "terrain": "ground", "has_pod": true}
+          ],
+          "units": [
+            {"uid": 0, "type": "JetMech", "x": 3, "y": 3,
+             "hp": 2, "max_hp": 2, "team": 1, "mech": true,
+             "flying": true, "move": 5, "active": true,
+             "weapons": ["Brute_Jetmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 3],
+          "weapon_id": "Brute_Jetmech",
+          "target": [3, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(v["action_results"][0]["pods_collected"], 1);
+
+        let post_attack = &v["predicted_states"][0]["post_attack"];
+        let jet = post_attack["units"].as_array().unwrap()
+            .iter()
+            .find(|u| u["uid"] == 0)
+            .unwrap();
+        assert_eq!(jet["pos"], json!([3, 5]));
+        let pod_tile = post_attack["tiles_changed"].as_array().unwrap()
+            .iter()
+            .find(|t| t["x"] == 3 && t["y"] == 5)
+            .unwrap();
+        assert_eq!(pod_tile["has_pod"], false);
+    }
+
+    #[test]
     fn replay_solution_empty_plan_returns_baseline_outcome() {
         // Minimal bridge JSON: a single mech, no enemies, no buildings.
         let bridge = r#"{
@@ -462,5 +607,86 @@ mod tests {
         assert_eq!(v["predicted_outcome"]["mechs_alive"], 1);
         assert_eq!(v["predicted_outcome"]["enemies_alive"], 0);
         assert!(v["final_board"].is_object());
+    }
+
+    #[test]
+    fn replay_solution_noops_attack_from_smoke() {
+        let bridge = r#"{
+          "tiles": [
+            {"x": 3, "y": 7, "terrain": "ground", "smoke": true}
+          ],
+          "units": [
+            {"uid": 0, "type": "JetMech", "x": 4, "y": 7,
+             "hp": 4, "max_hp": 2, "team": 1, "mech": true,
+             "flying": true, "move": 5, "active": true,
+             "weapons": ["Brute_Jetmech"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 0,
+          "move_to": [3, 7],
+          "weapon_id": "Brute_Jetmech",
+          "target": [3, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let events = v["action_results"][0]["events"].as_array().unwrap();
+        assert!(
+            events.iter().any(|e| e.as_str() == Some("illegal_attack_smoke:3:7")),
+            "smoked attack origin should be reported as an illegal diagnostic action"
+        );
+        let post_attack_units = v["predicted_states"][0]["post_attack"]["units"].as_array().unwrap();
+        let jet = post_attack_units.iter().find(|u| u["uid"] == 0).unwrap();
+        assert_eq!(jet["pos"], json!([3, 7]), "illegal smoke attack must not leap to target");
+    }
+
+    #[test]
+    fn replay_solution_noops_off_axis_rocket_target() {
+        let bridge = r#"{
+          "tiles": [],
+          "units": [
+            {"uid": 1, "type": "RocketMech", "x": 2, "y": 3,
+             "hp": 5, "max_hp": 3, "team": 1, "mech": true,
+             "move": 3, "active": true,
+             "weapons": ["Ranged_Rocket_A"]},
+            {"uid": 899, "type": "Burnbug1", "x": 4, "y": 5,
+             "hp": 3, "max_hp": 3, "team": 6, "weapons": ["BurnbugAtk1"]}
+          ],
+          "grid_power": 7,
+          "grid_power_max": 7,
+          "spawning_tiles": [],
+          "environment_danger": [],
+          "remaining_spawns": 0,
+          "turn": 2,
+          "total_turns": 4
+        }"#;
+        let plan = r#"[{
+          "mech_uid": 1,
+          "move_to": [2, 3],
+          "weapon_id": "Ranged_Rocket_A",
+          "target": [4, 5]
+        }]"#;
+
+        let raw = replay_solution(bridge, plan).expect("replay should succeed");
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        let events = v["action_results"][0]["events"].as_array().unwrap();
+        assert!(
+            events.iter().any(|e| {
+                e.as_str()
+                    .is_some_and(|s| s.starts_with("illegal_weapon_target:4:5:"))
+            }),
+            "off-axis Rocket Artillery target should be reported as illegal"
+        );
+        let post_attack_units = v["predicted_states"][0]["post_attack"]["units"].as_array().unwrap();
+        let burnbug = post_attack_units.iter().find(|u| u["uid"] == 899).unwrap();
+        assert_eq!(burnbug["hp"], 3, "illegal off-axis rocket target must not damage Burnbug1");
     }
 }

@@ -1,0 +1,563 @@
+{
+  "run_id": "20260522_124544_344",
+  "squad": "Frozen Titans",
+  "achievement_targets": [
+    "Untouchable"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "",
+  "islands_completed": [],
+  "mission_index": 5,
+  "last_mission_turn": -1,
+  "current_turn": 4,
+  "phase": "unknown",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 2,
+        "mech_type": "IceMech",
+        "move_to": [
+          2,
+          4
+        ],
+        "weapon": "Ranged_Ice",
+        "target": [
+          2,
+          2
+        ],
+        "description": "IceMech, move C5\u2192D6, fire Cryo-Launcher at F6"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "MirrorMech",
+        "move_to": [
+          3,
+          3
+        ],
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          3,
+          4
+        ],
+        "description": "MirrorMech, move C6\u2192E5, fire Mirror Shot at D5"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "GuardMech",
+        "move_to": [
+          3,
+          4
+        ],
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          2,
+          4
+        ],
+        "description": "GuardMech, move C5\u2192D5, fire Shield Bash at D6"
+      }
+    ],
+    "score": 123550.0,
+    "turn": 4,
+    "input_fingerprint": "0:3,4:3|1:2,5:3|2:3,5:2|356:6,1:7|361:4,5:1|362:6,3:1|368:2,2:4|371:3,1:1|372:6,4:1|373:4,1:1|374:5,1:1"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-22T12:49:43.661910",
+      "turn": 0,
+      "label": "note",
+      "message": "Starting fresh Bethany Frozen Titans Untouchable run on Detritus because the current scanner appears webber-free: Bouncer, Scarab, Hornet, Starfish, Digger, Starfish boss. Avoiding visible Leaper and Scorpion pools."
+    },
+    {
+      "timestamp": "2026-05-22T12:53:01.722065",
+      "turn": 0,
+      "label": "note",
+      "message": "Mission choice for fresh Untouchable Detritus: reject Scrapheap because it has a protected Power Generator and kill-5 pressure; reject Containment Zone J because Detritus Contraption adds unpredictable machinery; choose Venting Center despite Defensive Shields because egg sacks are optional for Untouchable and there is no fragile protected generator."
+    },
+    {
+      "timestamp": "2026-05-22T12:54:32.003702",
+      "turn": 1,
+      "label": "solve",
+      "score": 137507.14285714284,
+      "actions": [
+        "MirrorMech, move F7\u2192H6, fire Mirror Shot at G6",
+        "IceMech, move D5\u2192F4, fire Cryo-Launcher at F2",
+        "GuardMech, move E6\u2192E4, fire Shield Bash at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T12:56:09.416324",
+      "turn": 2,
+      "label": "solve",
+      "score": 132557.14285714296,
+      "actions": [
+        "GuardMech, fire Shield Bash at E3",
+        "MirrorMech, move H6\u2192G7, fire Mirror Shot at C3",
+        "IceMech, fire Cryo-Launcher at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T12:57:38.260864",
+      "turn": 3,
+      "label": "solve",
+      "score": 140987.14285714284,
+      "actions": [
+        "GuardMech, move E4\u2192D5, fire Shield Bash at C5",
+        "IceMech, move F4\u2192D3, fire Cryo-Launcher at D6",
+        "MirrorMech, fire Mirror Shot at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T12:58:47.054968",
+      "turn": 4,
+      "label": "solve",
+      "score": 144267.14285714284,
+      "actions": [
+        "GuardMech, move D5\u2192D6, fire Shield Bash at E6",
+        "IceMech, move D3\u2192E4, fire Cryo-Launcher at E6",
+        "MirrorMech, move B3\u2192E3, fire Mirror Shot at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:05:07.174287",
+      "turn": 0,
+      "label": "note",
+      "message": "Mission 2 pick Disposal Vault on Detritus for Untouchable because it has no train no Coal Plant no Bad Repairs no mites no volatile warning and no webber-heavy scanner risks."
+    },
+    {
+      "timestamp": "2026-05-22T13:05:44.460701",
+      "turn": 1,
+      "label": "solve",
+      "score": 141607.14285714284,
+      "actions": [
+        "IceMech, move C5\u2192D6, fire Cryo-Launcher at D4",
+        "MirrorMech, move E6\u2192C6, fire Mirror Shot at C5",
+        "GuardMech, move F5\u2192E6, fire Shield Bash at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:06:23.458061",
+      "turn": 2,
+      "label": "solve",
+      "score": 143283.80952380967,
+      "actions": [
+        "GuardMech, move E6\u2192F4, fire Shield Bash at F3",
+        "IceMech, move D6\u2192C4, fire Cryo-Launcher at E4",
+        "MirrorMech, fire Mirror Shot at C5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:07:19.561287",
+      "turn": 3,
+      "label": "solve",
+      "score": 148037.14285714284,
+      "actions": [
+        "MirrorMech, move C6\u2192F6, fire Mirror Shot at F5",
+        "GuardMech, fire Shield Bash at E3",
+        "IceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:08:02.396262",
+      "turn": 4,
+      "label": "solve",
+      "score": 132602.14285714284,
+      "actions": [
+        "GuardMech, move F3\u2192D2, fire Shield Bash at D3",
+        "IceMech, move C4\u2192F4, fire Cryo-Launcher at B4",
+        "MirrorMech, fire Mirror Shot at F5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:10:16.666221",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission 3 pick Containment Zone J because alternatives are mites train protected Coal Plant conveyors or protected generator pressure while Containment has only the Detritus Contraption objective."
+    },
+    {
+      "timestamp": "2026-05-22T13:12:23.758713",
+      "turn": 1,
+      "label": "solve",
+      "score": 170207.14285714284,
+      "actions": [
+        "IceMech, move F6\u2192C6, fire Cryo-Launcher at C2",
+        "MirrorMech, fire Mirror Shot at C4",
+        "GuardMech, move E6\u2192C4, fire Shield Bash at C3",
+        "Missile_Unit, fire Shield Barrage at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:13:16.070697",
+      "turn": 2,
+      "label": "solve",
+      "score": 176147.1428571428,
+      "actions": [
+        "GuardMech, move C4\u2192D1",
+        "MirrorMech, move C5\u2192D3, fire Mirror Shot at C3",
+        "IceMech, fire Cryo-Launcher at C3",
+        "Missile_Unit, fire Shield Barrage at C2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:14:09.237300",
+      "turn": 3,
+      "label": "solve",
+      "score": 191627.14285714284,
+      "actions": [
+        "MirrorMech, move D3\u2192F2, fire Mirror Shot at F3",
+        "GuardMech, move D1\u2192F3, fire Shield Bash at F4",
+        "Missile_Unit, fire Shield Barrage at C2",
+        "IceMech, fire Cryo-Launcher at C3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:15:01.218046",
+      "turn": 4,
+      "label": "solve",
+      "score": 181337.14285714284,
+      "actions": [
+        "Missile_Unit, fire Missile Barrage at C2",
+        "GuardMech, move F3\u2192G1, fire Shield Bash at G2",
+        "MirrorMech, move F2\u2192D2, fire Mirror Shot at D3",
+        "IceMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:16:58.041706",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission 4 pick Scrapheap because remaining alternatives are train mites or conveyor Coal Plant maps. Scrapheap has protected generator and kill pressure but no special warning and is the least chaotic Untouchable choice."
+    },
+    {
+      "timestamp": "2026-05-22T13:17:56.642626",
+      "turn": 1,
+      "label": "solve",
+      "score": 133914.2857142857,
+      "actions": [
+        "GuardMech, move F6\u2192F5, fire Shield Bash at F4",
+        "MirrorMech, move C5\u2192B4, fire Mirror Shot at C4",
+        "IceMech, move E5\u2192E2, fire Cryo-Launcher at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:18:41.130491",
+      "turn": 2,
+      "label": "solve",
+      "score": 130967.6190476191,
+      "actions": [
+        "MirrorMech, move B4\u2192C6",
+        "IceMech, move E2\u2192F1, fire Cryo-Launcher at F6",
+        "GuardMech, move F5\u2192E2, fire Shield Bash at F2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:19:19.561078",
+      "turn": 3,
+      "label": "solve",
+      "score": 131674.2857142857,
+      "actions": [
+        "GuardMech, move E2\u2192D2",
+        "MirrorMech",
+        "IceMech, move F1\u2192G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:20:09.173927",
+      "turn": 4,
+      "label": "solve",
+      "score": 142542.71430267606,
+      "actions": [
+        "IceMech, move G3\u2192E2, fire Cryo-Launcher at C2",
+        "MirrorMech, move C6\u2192E6, fire Mirror Shot at E5",
+        "GuardMech, move D2\u2192G3, fire Shield Bash at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:20:26.683034",
+      "turn": 4,
+      "label": "note",
+      "message": "Scrapheap final turn dirty consent reviewed. Accept rank 0 grid loss only line with predicted grid 5 to 4 building HP 9 to 8 mech HP remains 8 of 8 generator alive final turn."
+    },
+    {
+      "timestamp": "2026-05-22T13:20:39.258498",
+      "turn": 4,
+      "label": "solve",
+      "score": 142542.71430267606,
+      "actions": [
+        "IceMech, move G3\u2192E2, fire Cryo-Launcher at C2",
+        "MirrorMech, move C6\u2192E6, fire Mirror Shot at E5",
+        "GuardMech, move D2\u2192G3, fire Shield Bash at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:25:30.908747",
+      "turn": 1,
+      "label": "solve",
+      "score": 119100.0,
+      "actions": [
+        "MirrorMech, move C5\u2192C6, fire Mirror Shot at C5",
+        "IceMech, move D6\u2192E6, fire Cryo-Launcher at E2",
+        "GuardMech, fire Shield Bash at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:26:11.318848",
+      "turn": 2,
+      "label": "solve",
+      "score": 120253.33333333324,
+      "actions": [
+        "MirrorMech, fire Mirror Shot at C5",
+        "IceMech, move E6\u2192D6",
+        "GuardMech, move E5\u2192E6, fire Shield Bash at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:26:50.860548",
+      "turn": 3,
+      "label": "solve",
+      "score": 127950.0,
+      "actions": [
+        "GuardMech, move E6\u2192D5, fire Shield Bash at C5",
+        "MirrorMech, fire Mirror Shot at C5",
+        "IceMech, move D6\u2192C5, fire Cryo-Launcher at C7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:27:52.243416",
+      "turn": 4,
+      "label": "solve",
+      "score": 123550.0,
+      "actions": [
+        "IceMech, move C5\u2192D6, fire Cryo-Launcher at F6",
+        "MirrorMech, move C6\u2192E5, fire Mirror Shot at D5",
+        "GuardMech, move C5\u2192D5, fire Shield Bash at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:29:15.035592",
+      "turn": 4,
+      "label": "solve",
+      "score": 123550.0,
+      "actions": [
+        "IceMech, move C5\u2192D6, fire Cryo-Launcher at F6",
+        "MirrorMech, move C6\u2192E5, fire Mirror Shot at D5",
+        "GuardMech, move C5\u2192D5, fire Shield Bash at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:29:44.070756",
+      "turn": 4,
+      "label": "solve",
+      "score": 123550.0,
+      "actions": [
+        "IceMech, move C5\u2192D6, fire Cryo-Launcher at F6",
+        "MirrorMech, move C6\u2192E5, fire Mirror Shot at D5",
+        "GuardMech, move C5\u2192D5, fire Shield Bash at D6"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      1,
+      3
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      1
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      4,
+      3
+    ]
+  ],
+  "post_enemy_block": null,
+  "dirty_consent_used": [
+    "12c304919163b487",
+    "027308428fea0618"
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "terrain|Prime_ShieldBash|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Mirrorshot|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": "model_gap_known",
+      "model_gap": true,
+      "signature": "terrain|Prime_ShieldBash|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.7,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_ShieldBash",
+        "target": [
+          5,
+          4
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "GuardMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Teleporter",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "MirrorMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Teleporter",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    },
+    {
+      "type": "IceMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Teleporter",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "pending",
+      "result": null
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "999e3f021887cb3c",
+    "classes": "wwwwwwwwwbgbbgbwwbgggggggggggggggggbbggggggmmggmgggggggmggggggmm",
+    "mission_index": 4,
+    "turn": 4
+  },
+  "terrain_stage_change_pending": false
+}

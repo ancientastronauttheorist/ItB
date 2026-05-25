@@ -1,0 +1,22 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/w3h1g2/advanced_edition_new_vek_psions_and_leaders/",
+      "excerpt": "Community summary lists Smoldering Psion as granting all other Vek fire protection and leaving fire on death.",
+      "confidence": 0.5
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/search/?q=Smoldering+Psion",
+      "excerpt": "Steam discussion search URL recorded by research queue; no concise thread needed for basic identity after wiki/local corpus match.",
+      "confidence": 0.5
+    },
+    {
+      "source": "wiki",
+      "url": "https://intothebreach.fandom.com/wiki/Smoldering_Psion",
+      "excerpt": "Wiki identifies Smoldering Psion as an Advanced Edition Psion with fire-immunity support behavior.",
+      "confidence": 0.5
+    }
+  ]
+}

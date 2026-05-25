@@ -29,6 +29,7 @@ class EvalWeights:
     grid_power: float = 5000
     enemy_killed: float = 500
     enemy_hp_remaining: float = -100
+    enemy_threat_remaining: float = -100
     mech_killed: float = -150000
     mech_hp: float = 100
     mech_centrality: float = -5      # penalizes distance from center
@@ -53,6 +54,7 @@ class EvalWeights:
     mech_on_acid: float = -200        # mech on ACID pool (penalty)
     mech_low_hp_risk: float = -2000   # 1HP mech near active enemy (binary)
     friendly_npc_killed: float = -20000  # non-mech player unit killed (penalty)
+    volatile_enemy_killed: float = -10000  # protected Volatile Vek killed
     # Renfield Bomb destruction in Mission_Final_Cave — mission-failure
     # penalty layered on top of friendly_npc_killed. The bomb's detonation
     # is the win condition; losing it ends the run. Mirrors Rust default.
@@ -79,15 +81,27 @@ class EvalWeights:
     chain_damage: float = 0
     smoke_placed: float = 0
     tiles_frozen: float = 0
+    viscera_nanobots_heal_bonus: float = 0
 
     # Mission-specific bonus objectives (default 0; set via active.json).
     # Old Earth Dam: +1 Rep + 14-tile flood. Turn-aware scaling in evaluate.
     dam_destroyed: float = 0
 
-    # "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Fires as a step
-    # function exactly once — on the plan that crosses the cumulative
-    # target. Solver will route kills to whichever turn reaches N fastest.
+    # "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Scores partial
+    # progress toward the target, then fires the full step bonus on the plan
+    # that crosses the cumulative target.
     mission_kill_bonus: float = 15000
+
+    # Mission_Repair "Use 3 repair platforms" bonus. The Rust simulator
+    # increments board.repair_platforms_used when any unit triggers an
+    # Item_Repair_Mine tile.
+    mission_repair_bonus: float = 15000
+
+    # Mission_Terraform "Terraform the grassland back to desert" objective.
+    # Negative penalty per custom grassland tile still present after the plan.
+    mission_terraform_grass_remaining: float = -2500
+    # Mission_FreezeBldg "Break 5 buildings out of the ice" objective.
+    mission_freeze_building_bonus: float = 120000
 
     # Building protection
     mech_self_frozen: float = -12000
@@ -103,6 +117,12 @@ class EvalWeights:
     # allowlist.
     grid_reward_building_bonus: float = 25000
     boss_killed_bonus: float = 8000
+    # Unit objectives such as Mission_Hacking's Hacking Facility/Cannon Bot.
+    mission_destroy_unit_bonus: float = 15000
+    mission_destroy_unit_alive_penalty: float = -6000
+    mission_destroy_unit_shield_penalty: float = -3000
+    mission_protect_unit_alive_bonus: float = 8000
+    mission_protect_unit_dead_penalty: float = -15000
     bld_grid_floor: float = 0.6
     bld_grid_scale: float = 0.4
     bld_phase_floor: float = 1.0
@@ -208,11 +228,21 @@ def _scaled(base: float, ff: float, floor: float, scale: float) -> float:
     return base * (floor + scale * ff)
 
 
+def _type_matches_any(name: str, patterns: list[str]) -> bool:
+    return any(p and p in name for p in patterns)
+
+
+def _is_expendable_friendly_pawn(name: str) -> bool:
+    # Mission_Trapped decoy buildings are intended self-destruct bombs.
+    return name == "Trapped_Building"
+
+
 def evaluate(
     board: Board,
     spawn_points: list[tuple[int, int]] = None,
     weights: EvalWeights = None,
     kills: int = 0,
+    mission_kills: int | None = None,
     blast_psion_was_active: bool = False,
     soldier_psion_was_active: bool = False,
     dam_was_alive: bool = False,
@@ -343,6 +373,23 @@ def evaluate(
         # damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
         score += e.hp * _scaled(w.enemy_hp_remaining, ff, 0.10, 0.90)
 
+    destroy_types = getattr(board, 'destroy_objective_unit_types', []) or []
+    protect_types = getattr(board, 'protect_objective_unit_types', []) or []
+    for u in board.units:
+        if destroy_types and _type_matches_any(u.type, destroy_types):
+            if u.hp > 0:
+                score += w.mission_destroy_unit_alive_penalty
+                if u.shield:
+                    score += w.mission_destroy_unit_shield_penalty
+            else:
+                score += w.mission_destroy_unit_bonus
+        if protect_types and _type_matches_any(u.type, protect_types):
+            score += (
+                w.mission_protect_unit_alive_bonus
+                if u.hp > 0
+                else w.mission_protect_unit_dead_penalty
+            )
+
     # --- BLAST PSION KILL BONUS: SCALED by future_factor ---
     if blast_psion_was_active and not board.blast_psion_active:
         score += 2000.0 * ff
@@ -362,16 +409,62 @@ def evaluate(
     if bigbomb_was_alive and not getattr(board, 'bigbomb_alive', False):
         score += w.bigbomb_killed
 
-    # --- "KILL N ENEMIES" BONUS: step function on threshold cross ---
-    # Fires exactly once per mission, on the plan whose simulated kills push
-    # cumulative count to the target. Pre-turn < target AND post-turn ≥
-    # target is the cross condition. Scaled by future_factor so the bonus
-    # decays toward final turn (matches dam_destroyed pattern).
+    # --- "KILL AT LEAST N ENEMIES" BONUS: progress + threshold cross ---
+    # Partial progress matters early; the full step reward still fires once
+    # on the plan whose simulated kills push cumulative count to the target.
     kt = getattr(board, 'mission_kill_target', 0)
     if kt > 0:
         kd = getattr(board, 'mission_kills_done', 0)
-        if kd < kt and kd + kills >= kt:
+        new_kills = max(kills if mission_kills is None else mission_kills, 0)
+        if kd < kt and new_kills > 0:
+            progress_kills = max(min(kd + new_kills, kt) - kd, 0)
+            if progress_kills > 0:
+                progress_ratio = progress_kills / kt
+                score += _scaled(w.mission_kill_bonus, ff, 0.10, 0.40) * progress_ratio
+        if kd < kt and kd + new_kills >= kt:
             score += _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+
+    # --- "KILL N OR FEWER ENEMIES" BONUS: immediate over-cap failure ---
+    kl = getattr(board, 'mission_kill_limit', 0)
+    if kl > 0:
+        kd = getattr(board, 'mission_kills_done', 0)
+        new_kills = max(kills if mission_kills is None else mission_kills, 0)
+        if kd + new_kills > kl:
+            score -= w.mission_kill_bonus * 20.0
+
+    # --- "USE 3 REPAIR PLATFORMS" BONUS: cumulative progress + completion ---
+    rt = getattr(board, 'repair_platform_target', 0)
+    if rt > 0:
+        used = max(min(getattr(board, 'repair_platforms_used', 0), rt), 0)
+        if used > 0:
+            score += _scaled(w.mission_repair_bonus, ff, 0.10, 0.40) * (used / rt)
+        if used >= rt:
+            score += _scaled(w.mission_repair_bonus, ff, 0.25, 0.75)
+
+    # --- MISSION_TERRAFORM: remaining custom grassland objective debt ---
+    if getattr(board, 'mission_id', '') == 'Mission_Terraform':
+        grass_remaining = sum(
+            1
+            for x in range(8)
+            for y in range(8)
+            if getattr(board.tile(x, y), 'grass', False)
+        )
+        score += grass_remaining * w.mission_terraform_grass_remaining
+
+    # --- MISSION_FREEZEBLDG: thaw frozen objective buildings ---
+    if getattr(board, 'mission_id', '') == 'Mission_FreezeBldg':
+        ft = getattr(board, 'freeze_building_target', 0)
+        if ft > 0:
+            thawed = 0
+            for x, y in getattr(board, 'freeze_building_tiles', set()):
+                tile = board.tile(x, y)
+                if tile.terrain == 'building' and tile.building_hp > 0 and not tile.frozen:
+                    thawed += 1
+            progress = max(min(thawed, ft), 0)
+            if progress > 0:
+                score += w.mission_freeze_building_bonus * 0.50 * (progress / ft)
+            if progress >= ft:
+                score += w.mission_freeze_building_bonus
 
     # --- ENVIRONMENT DANGER: SCALED ---
     # Lethal env (kill_int=1: Air Strike, Lightning, Cataclysm→chasm, Seismic,
@@ -393,6 +486,8 @@ def evaluate(
                 score += _scaled(w.enemy_on_danger, ff, 0.20, 1.60)
         for m in board.mechs():
             if m.hp <= 0:
+                continue
+            if not m.is_mech and _is_expendable_friendly_pawn(m.type):
                 continue
             pos = (m.x, m.y)
             if pos not in board.environment_danger:
@@ -430,7 +525,7 @@ def evaluate(
     for m in board.mechs():
         if not m.is_mech:
             # Non-mech player unit (Filler_Pawn, ArchiveArtillery, etc.)
-            if m.hp <= 0:
+            if m.hp <= 0 and not _is_expendable_friendly_pawn(m.type):
                 score += w.friendly_npc_killed
             continue
         if m.hp <= 0:
@@ -494,6 +589,7 @@ def evaluate_breakdown(
     spawn_points: list[tuple[int, int]] = None,
     weights: EvalWeights = None,
     kills: int = 0,
+    mission_kills: int | None = None,
     current_turn: int = 0,
     total_turns: int = 5,
     remaining_spawns: int = 2**31 - 1,
@@ -576,6 +672,34 @@ def evaluate_breakdown(
         enemy_hp_total += e.hp
     enemy_hp_score = enemy_hp_total * _scaled(w.enemy_hp_remaining, ff, 0.10, 0.90)
 
+    destroy_types = getattr(board, 'destroy_objective_unit_types', []) or []
+    protect_types = getattr(board, 'protect_objective_unit_types', []) or []
+    destroy_dead = 0
+    destroy_alive = 0
+    destroy_shielded = 0
+    protect_alive = 0
+    protect_dead = 0
+    for u in board.units:
+        if destroy_types and _type_matches_any(u.type, destroy_types):
+            if u.hp > 0:
+                destroy_alive += 1
+                if u.shield:
+                    destroy_shielded += 1
+            else:
+                destroy_dead += 1
+        if protect_types and _type_matches_any(u.type, protect_types):
+            if u.hp > 0:
+                protect_alive += 1
+            else:
+                protect_dead += 1
+    mission_unit_score = (
+        destroy_dead * w.mission_destroy_unit_bonus
+        + destroy_alive * w.mission_destroy_unit_alive_penalty
+        + destroy_shielded * w.mission_destroy_unit_shield_penalty
+        + protect_alive * w.mission_protect_unit_alive_bonus
+        + protect_dead * w.mission_protect_unit_dead_penalty
+    )
+
     # --- ENVIRONMENT DANGER ---
     # Lethal env (kill_int=1) bypasses flying — mirrors main evaluate() fix.
     danger_enemies_on = 0
@@ -654,19 +778,79 @@ def evaluate_breakdown(
                         pods_proximity += 1
                         pods_score += w.pod_proximity
 
-    # Kill-N bonus: step function on cumulative-kill cross. See evaluate().
-    kill_n_score = 0.0
+    # Kill-count bonuses: progress shaping, target cross, and limit cap.
+    kill_n_progress_score = 0.0
+    kill_n_threshold_score = 0.0
+    kill_limit_penalty = 0.0
     kt = getattr(board, 'mission_kill_target', 0)
+    kl = getattr(board, 'mission_kill_limit', 0)
     kd = getattr(board, 'mission_kills_done', 0)
-    if kt > 0 and kd < kt and kd + kills >= kt:
-        kill_n_score = _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+    new_kills = max(kills if mission_kills is None else mission_kills, 0)
+    if kt > 0 and kd < kt and new_kills > 0:
+        progress_kills = max(min(kd + new_kills, kt) - kd, 0)
+        if progress_kills > 0:
+            kill_n_progress_score = (
+                _scaled(w.mission_kill_bonus, ff, 0.10, 0.40)
+                * (progress_kills / kt)
+            )
+    if kt > 0 and kd < kt and kd + new_kills >= kt:
+        kill_n_threshold_score = _scaled(w.mission_kill_bonus, ff, 0.25, 0.75)
+    if kl > 0 and kd + new_kills > kl:
+        kill_limit_penalty = -(w.mission_kill_bonus * 20.0)
+    kill_n_score = kill_n_progress_score + kill_n_threshold_score + kill_limit_penalty
+
+    repair_platform_progress_score = 0.0
+    repair_platform_threshold_score = 0.0
+    rt = getattr(board, 'repair_platform_target', 0)
+    rused = 0
+    if rt > 0:
+        rused = max(min(getattr(board, 'repair_platforms_used', 0), rt), 0)
+        if rused > 0:
+            repair_platform_progress_score = (
+                _scaled(w.mission_repair_bonus, ff, 0.10, 0.40)
+                * (rused / rt)
+            )
+        if rused >= rt:
+            repair_platform_threshold_score = _scaled(w.mission_repair_bonus, ff, 0.25, 0.75)
+    repair_platform_score = repair_platform_progress_score + repair_platform_threshold_score
+
+    grass_remaining = 0
+    terraform_grass_score = 0.0
+    if getattr(board, 'mission_id', '') == 'Mission_Terraform':
+        grass_remaining = sum(
+            1
+            for x in range(8)
+            for y in range(8)
+            if getattr(board.tile(x, y), 'grass', False)
+        )
+        terraform_grass_score = grass_remaining * w.mission_terraform_grass_remaining
+
+    freeze_building_target = getattr(board, 'freeze_building_target', 0)
+    freeze_buildings_thawed = 0
+    freeze_building_score = 0.0
+    if getattr(board, 'mission_id', '') == 'Mission_FreezeBldg' and freeze_building_target > 0:
+        for x, y in getattr(board, 'freeze_building_tiles', set()):
+            tile = board.tile(x, y)
+            if tile.terrain == 'building' and tile.building_hp > 0 and not tile.frozen:
+                freeze_buildings_thawed += 1
+        progress = max(min(freeze_buildings_thawed, freeze_building_target), 0)
+        if progress > 0:
+            freeze_building_score += (
+                w.mission_freeze_building_bonus
+                * 0.50
+                * (progress / freeze_building_target)
+            )
+        if progress >= freeze_building_target:
+            freeze_building_score += w.mission_freeze_building_bonus
 
     total = (buildings_score + building_hp_score
              + objective_rep_score + objective_grid_score
              + grid_power_score
-             + enemies_killed_score + enemy_hp_score + danger_score
+             + enemies_killed_score + enemy_hp_score + mission_unit_score
+             + danger_score
              + mech_score + spawns_score + remaining_spawn_score
-             + pods_score + kill_n_score)
+             + pods_score + kill_n_score + repair_platform_score
+             + terraform_grass_score + freeze_building_score)
 
     # Note: sanity check removed — evaluate() now requires turn params.
     # Use evaluate_breakdown only for debugging, not during search.
@@ -695,11 +879,39 @@ def evaluate_breakdown(
         "enemies_killed": {"count": kills, "score": enemies_killed_score},
         "mission_kill_bonus": {
             "target": kt,
+            "limit": kl,
             "done_pre_turn": kd,
             "kills_this_turn": kills,
+            "progress_score": kill_n_progress_score,
+            "threshold_score": kill_n_threshold_score,
+            "limit_penalty": kill_limit_penalty,
             "score": kill_n_score,
         },
+        "mission_repair_bonus": {
+            "target": rt,
+            "used": rused,
+            "progress_score": repair_platform_progress_score,
+            "threshold_score": repair_platform_threshold_score,
+            "score": repair_platform_score,
+        },
+        "mission_terraform_grass": {
+            "remaining": grass_remaining,
+            "score": terraform_grass_score,
+        },
+        "mission_freeze_buildings": {
+            "target": freeze_building_target,
+            "thawed": freeze_buildings_thawed,
+            "score": freeze_building_score,
+        },
         "enemy_hp_remaining": {"total": enemy_hp_total, "score": enemy_hp_score},
+        "mission_unit_objectives": {
+            "destroy_dead": destroy_dead,
+            "destroy_alive": destroy_alive,
+            "destroy_shielded": destroy_shielded,
+            "protect_alive": protect_alive,
+            "protect_dead": protect_dead,
+            "score": mission_unit_score,
+        },
         "environment_danger": {
             "enemies_on": danger_enemies_on,
             "mechs_on": danger_mechs_on,

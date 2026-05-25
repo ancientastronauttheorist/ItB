@@ -40,6 +40,22 @@ impl Terrain {
         }
     }
 
+    pub fn from_bridge_id(id: Option<u8>, fallback_name: Option<&str>) -> Self {
+        match id {
+            Some(0) => Terrain::Ground,
+            Some(1) => Terrain::Building,
+            Some(2) => Terrain::Rubble,
+            Some(3) => Terrain::Water,
+            Some(4) => Terrain::Mountain,
+            Some(5) => Terrain::Ice,
+            Some(6) => Terrain::Forest,
+            Some(7) => Terrain::Sand,
+            Some(9) => Terrain::Chasm,
+            Some(10) => Terrain::Ground,
+            _ => Terrain::from_str(fallback_name.unwrap_or("ground")),
+        }
+    }
+
     /// Is this terrain deadly to non-flying ground units?
     pub fn is_deadly_ground(self) -> bool {
         matches!(self, Terrain::Water | Terrain::Chasm | Terrain::Lava)
@@ -104,6 +120,18 @@ pub enum WeaponType {
     /// TEAM_PLAYER pawn on the board to full HP, clears fire/acid/frozen,
     /// revives disabled mechs.
     HealAll = 12,
+    /// Support_Wind (Wind Torrent): fixed board-edge targeting chooses one
+    /// cardinal direction, then every pawn is pushed one tile in Lua scan order.
+    GlobalPush = 13,
+    /// Detritus Contraption barrages: ZONE_ALL targeting, applies damage or
+    /// shield to every live non-source unit on the board.
+    GlobalUnitEffect = 14,
+    /// Mission_Terraform's Terraformer: adjacent direction selector, then a
+    /// 3x2 lethal terrain-conversion sweep in front of the structure.
+    Terraformer = 15,
+    /// Mission_Disposal's A.C.I.D. Launcher: artillery target with a
+    /// cross-shaped instant-kill acid footprint that clears mountains.
+    Disposal = 16,
 }
 
 impl WeaponType {
@@ -122,10 +150,18 @@ impl WeaponType {
             "passive" => WeaponType::Passive,
             "two_click" => WeaponType::TwoClick,
             "heal_all" => WeaponType::HealAll,
+            "global_push" => WeaponType::GlobalPush,
+            "global_unit_effect" => WeaponType::GlobalUnitEffect,
+            "terraformer" => WeaponType::Terraformer,
+            "disposal" => WeaponType::Disposal,
             _ => WeaponType::Melee,
         }
     }
 }
+
+/// Soft-disabled weapon bitset. Two words cover every current WId variant
+/// without aliasing ids >= 128 back onto lower weapon ids.
+pub type DisabledMask = [u128; 2];
 
 // ── Push Direction ───────────────────────────────────────────────────────────
 
@@ -171,6 +207,13 @@ pub enum DamageSource {
     Bump = 1,
     Fire = 2,
     SelfDamage = 3,
+    WeaponUnitOnly = 4,
+    ChainWhip = 5,
+    WeaponDeferredGrid = 6,
+    WeaponCracksOccupied = 7,
+    /// Weapon damage that still uses weapon damage math / kill credit but does
+    /// not synthesize a corpse ACID pool when the killed pawn had ACID.
+    WeaponNoAcidPool = 8,
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────

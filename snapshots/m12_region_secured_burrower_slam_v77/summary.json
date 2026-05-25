@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-08T21:58:52.177717",
+  "label": "m12_region_secured_burrower_slam_v77",
+  "turn": 4,
+  "grid_power": 3,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowtank2",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burrower1",
+      "pos": [
+        1,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burrower1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 3
+    }
+  ]
+}

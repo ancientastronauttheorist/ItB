@@ -1,0 +1,248 @@
+# Into the Breach Achievement Bot Agent Guide
+
+This is the fast-load guide for autonomous Into the Breach achievement runs.
+The old long-form field manual was split on 2026-05-25 into focused docs under
+`docs/agent/`.
+
+## Read First
+
+- `docs/agent/live-runbook.md` - phase flow, command reference, UI/click rules,
+  session locking, and live shell/search hygiene.
+- `docs/agent/safety-gates.md` - research gates, diagnosis loop,
+  investigations, dirty-plan consent, post-enemy blocks, and threat audits.
+- `docs/agent/solver-reference.md` - architecture, Rust build/test discipline,
+  core mechanics, simulator rules, bridge/parser rules, and weapon case law.
+- `docs/agent/achievement-playbook.md` - run setup, achievement targeting,
+  shop priorities, and named-achievement exceptions.
+- `docs/agent/rule-index.md` - historical numbered rule lookup.
+- `docs/agent/legacy-full-guide.md` - verbatim pre-cleanup `AGENTS.md`.
+
+Existing design docs remain authoritative for their domains:
+`docs/reference.md`, `docs/lua_bridge_architecture.md`,
+`docs/self_healing_loop_design.md`, `docs/diagnosis_loop_design.md`,
+`docs/solver_goal_principles.md`, and `docs/env_hazards_by_island.md`.
+
+## Project Goal
+
+Earn all 70 Into the Breach achievements autonomously on macOS while the user
+watches in real time. Combat state comes from the Lua bridge through `/tmp/`.
+Combat actions go through the bridge; deployment, menus, shop, rewards, and
+island navigation use Codex Computer Use clicks.
+
+Steam App ID: `590380`.
+
+After editing `src/bridge/modloader.lua`, run:
+
+```bash
+bash scripts/install_modloader.sh
+```
+
+Then restart the game.
+
+## Architecture
+
+- Layer 0, game loop: `game_loop.py` plus `src/loop/`.
+- Layer 1, state extraction: `src/bridge/` first, `src/capture/save_parser.py`
+  as fallback.
+- Layer 2, model: `src/model/` is the Python board/unit/weapon source.
+- Layer 3, solver and simulator: `rust_solver/` is the only solver and the
+  only simulator. The PyO3 extension is `itb_solver`.
+- Layer 4, strategy: `src/strategy/` chooses weights, squads, islands, shops,
+  and achievement targets.
+
+`src/solver/simulate.py` is gone. Simulator fixes belong in `rust_solver/src/*.rs`
+unless a bridge/parser/model bug is proven.
+
+## Build And Test
+
+Rebuild after editing any Rust solver file:
+
+```bash
+cd rust_solver && maturin build --release && \
+  pip3 install --user --force-reinstall target/wheels/itb_solver-0.1.0-cp39-cp39-macosx_11_0_arm64.whl
+```
+
+If `maturin` is not on `PATH`, use `python3 -m maturin build --release` from
+`rust_solver/`, then run the same `pip3 install`.
+
+Focused Rust tests in this PyO3 crate need:
+
+```bash
+cargo test --no-default-features
+```
+
+If cargo hits a rustc incremental-compilation ICE, rerun with
+`CARGO_INCREMENTAL=0`. If cargo or maturin stalls while reading generated
+fingerprint files, stop it, remove only the affected generated
+`rust_solver/target/{debug,release}/.fingerprint` directory, and rerun.
+
+Do not run repo-wide `cargo fmt` during tactical fixes. This tree is not
+globally format-clean.
+
+## Default Combat Loop
+
+Default combat command:
+
+```bash
+python3 game_loop.py auto_turn --time-limit 10
+```
+
+`auto_turn` reads the board, solves, executes every mech action through the
+bridge, verifies after each sub-action, re-solves on desync when possible, and
+emits an End Turn click plan. It waits at entry for both
+`phase == combat_player` and `active_mechs > 0`.
+
+Typical turn rhythm:
+
+```text
+auto_turn -> click emitted End Turn batch -> auto_turn -> click emitted End Turn batch
+```
+
+Use `click_action`, `verify_action`, and manual combat tile clicks only when the
+bridge is unavailable or an explicit safety/manual protocol calls for it.
+Never call bridge sub-action commands such as `move_mech`, `attack_mech`,
+`skip_mech`, or `repair_mech` directly during ordinary play.
+
+## Coordinates And UI
+
+- Bridge `(x, y)` to visual tile: `Row = 8 - x`, `Col = chr(72 - y)`.
+  Example: bridge `(3, 5)` is visual `C5`.
+- Use A1-H8 visual notation in communication.
+- Click tile centers, not sprites.
+- No keyboard during combat.
+- End Turn is the only routine combat UI click. Use the emitted
+  `codex_computer_use_batch` or the per-click `window_x` / `window_y`, not
+  legacy global coordinates. The calibrated End Turn offset is `(126, 120)`
+  window-relative.
+- For novel UI, use hover -> screenshot -> click. End Turn and calibrated
+  combat tile clicks are exempt.
+- Prefer `game_loop.py read` over screenshots for combat state. Reserve
+  screenshots for novel UI screens, reward/shop/defeat screens, and unexpected
+  state.
+
+## Hard Invariants
+
+1. Run session-touching `game_loop.py` commands one at a time. Never put them in
+   `multi_tool_use.parallel`, chain them with `&&`, pipe them to filters, or run
+   them beside screenshots/UI inspection.
+2. Always verify after each mech action. `auto_turn` does this automatically.
+3. After a crash, timeout, stale heartbeat, or desync recovery, start from a
+   fresh `read` plus `solve`; never resume an old solution.
+4. Trust the solver by default. Do not override it unless it times out, returns
+   empty, or an explicit dirty/manual protocol authorizes the exact line.
+5. Use all mech actions every turn unless the solver or a safety gate says
+   otherwise.
+6. Never voluntarily move onto ACID.
+7. Buildings and objective survival outrank threats, which outrank kills, which
+   outrank spawn blocking unless a named achievement changes the priority.
+8. Save data is stale mid-turn. Trust the bridge for live combat. On visible
+   reward/KIA/failed-objective screens, trust the screen.
+9. Effective upgraded weapons must come from save overlays and must have Rust
+   `WId` plus `known_types` coverage before solving.
+10. Controllable mission allies with weapons count as player actors even when
+    `mech=false`.
+11. Simulator semantic changes require `SIMULATOR_VERSION` discipline: archive
+    the old failure DB, bump both Rust/Python version pins, rebuild/install,
+    run a focused proof, and run the broader regression harness when timing
+    allows.
+12. Process mistakes should update the narrowest focused doc under `docs/agent/`.
+    Touch this top-level file only for global rules every agent must load.
+
+## Stop Signs
+
+Stop before further combat commands or End Turn clicks when any of these appear:
+
+- `requires_research: true` or `RESEARCH_REQUIRED`.
+- `INVESTIGATE` or `INVESTIGATE_POST_ENEMY`.
+- `THREAT_AUDIT_BLOCKED`.
+- A persistent `post_enemy_block`.
+- `SAFETY_BLOCKED` without reviewed dirty consent.
+- A post-action desync that leaves the board uncertain.
+- Visible reward text showing KIA, failed objective, Region Secured mismatch, or
+  another terminal outcome that contradicts the solver.
+
+Research gate protocol: snapshot, run `research_next`, capture/submit the
+requested evidence, attach community notes if requested, resolve stale known
+types with `research_resolve`, and repeat until no work remains.
+
+Diagnosis protocol: drain between turns, one entry per call unless the user asks
+to clear the queue. Run dry-run before applying an agent proposal. If a concrete
+diagnosis fix applies, verify it, rebuild Rust if needed, run focused proof and
+regression when possible, then commit and push only the relevant files.
+
+Dirty-plan protocol: inspect the dirty frontier first. A plain
+`--allow-dirty-plan` is insufficient; rerun only with the exact single-use
+`--dirty-consent-id` for the reviewed line. Timeline collapse is not
+dirty-consentable except the documented final-cave resist emergency.
+
+## Achievement Setup
+
+For normal achievement hunting, sync and target an unfinished squad:
+
+```bash
+python3 game_loop.py achievements --sync
+python3 game_loop.py recommend_squad --tags achievement
+python3 game_loop.py new_run auto --tags achievement
+```
+
+Defaults:
+
+- Ordinary squad achievements: Easy, `--difficulty 0`, Advanced Edition ON.
+- Hold the Line: Normal, `--difficulty 1`, unless continuing an existing Easy
+  timeline by explicit choice.
+- Hard Victory: Hard, `--difficulty 2`, Advanced Edition ON, chosen target
+  squad. Do not fall back to another difficulty unless the run target changes.
+
+Before pressing Start on a new run, require `verify_setup --difficulty <target>`
+to pass and confirm the screenshot is actually focused on Into the Breach.
+
+Active Hold the Line exception: after deployment or End Turn, poll with
+standalone `read` until `phase == combat_player` and `active_mechs > 0`; if
+`spawn_points >= 2`, inspect spawning tiles and run spawn-banking triage before
+`auto_turn`.
+
+Shop rule: if Grid Power is below max, buy Grid Power until `7/7` before cores,
+weapons, pilots, or leaving the island. Use Undo All if you bought something
+else first.
+
+## Core Mechanics
+
+The solver enforces the full rules in `docs/agent/solver-reference.md` and
+`data/ref_game_mechanics.md`. High-risk reminders:
+
+- Water and chasms kill non-flying ground units. Lava kills ground units and
+  sets flying units on Fire.
+- Push into blockers causes bump damage. Push/bump/fire/blocking damage ignores
+  Armor and ACID.
+- Weapon damage is reduced by Armor and doubled by ACID.
+- Frozen units are invincible and immobilized; any damage unfreezes without
+  applying damage.
+- Smoke prevents attacks and repair.
+- Webbed units cannot move but can still attack. A blocked push does not clear
+  web.
+- Environment danger ticks before Vek attacks. `environment_danger_v2` entries
+  are `[x, y, damage, kill_int]`; `kill_int=1` means lethal.
+
+## Command Cheat Sheet
+
+- `read` - live bridge state first, save fallback.
+- `status` - quick session summary plus persistent blocks.
+- `solve [--candidate-rank N]` - solve and record without executing.
+- `auto_turn [--time-limit N]` - default full combat turn.
+- `click_end_turn` - pure End Turn click planner.
+- `deploy_recommended` - bridge deployment helper; click visible CONFIRM after.
+- `research_peek` - read-only research queue view.
+- `resolve_post_enemy_block --reason "<specific cause/fix>"` - clear a
+  persistent post-enemy block only after understanding it.
+- `snapshot <label>` - save current state for regression.
+- `log '<message>'` - append a decision note. Quote the message as one shell
+  argument, especially if it contains punctuation.
+
+When uncertain about a command shape, inspect parser/help in a standalone
+command first, then call only supported flags.
+
+## Reference Material
+
+Use `docs/agent/rule-index.md` to find historical rule numbers and regression
+anchors. Use `docs/reference.md` for codebase layout, knowledge base tables, and
+data file inventory.

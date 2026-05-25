@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit_blobber_discussion",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/15lf2fg",
+      "excerpt": "The Blobber daily discussion references baiting Blobber attacks and handling the spawned blob, corroborating that Blob is a spawned payload from Blobber behavior.",
+      "confidence": 0.5
+    },
+    {
+      "source": "wiki",
+      "url": "https://intothebreach.fandom.com/wiki/Blob",
+      "excerpt": "Fandom lists Blob as 1 HP, 0 move, spawned by Blobber, and describes Unstable Guts as a self-explosion that damages adjacent tiles for 1 unless killed, smoked, or frozen first.",
+      "confidence": 0.9
+    }
+  ]
+}

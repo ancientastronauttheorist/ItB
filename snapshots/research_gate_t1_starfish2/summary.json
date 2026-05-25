@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-09T13:55:19.903481",
+  "label": "research_gate_t1_starfish2",
+  "turn": 1,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Train_Armored",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab2",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Starfish2",
+      "pos": [
+        7,
+        1
+      ],
+      "hp": 4
+    }
+  ]
+}

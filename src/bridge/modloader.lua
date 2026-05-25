@@ -15,11 +15,25 @@ local ACK_FILE   = "/tmp/itb_ack.txt"
 local ACK_TMP    = "/tmp/itb_ack.tmp"
 local LOG_FILE   = "/tmp/itb_bridge.log"
 
-local TERRAIN_NAMES = {
-    [0] = "ground", [1] = "building", [2] = "rubble", [3] = "water",
-    [4] = "mountain", [5] = "lava", [6] = "forest", [7] = "sand",
-    [8] = "ice", [9] = "chasm",
-}
+local TERRAIN_NAMES = {}
+
+local function add_terrain_name(global_name, fallback_id, name)
+    local id = _G[global_name]
+    if type(id) ~= "number" then id = fallback_id end
+    if type(id) == "number" then TERRAIN_NAMES[id] = name end
+end
+
+add_terrain_name("TERRAIN_ROAD", 0, "ground")
+add_terrain_name("TERRAIN_BUILDING", 1, "building")
+add_terrain_name("TERRAIN_RUBBLE", 2, "rubble")
+add_terrain_name("TERRAIN_WATER", 3, "water")
+add_terrain_name("TERRAIN_MOUNTAIN", 4, "mountain")
+add_terrain_name("TERRAIN_ICE", 5, "ice")
+add_terrain_name("TERRAIN_FOREST", 6, "forest")
+add_terrain_name("TERRAIN_SAND", 7, "sand")
+add_terrain_name("TERRAIN_HOLE", 9, "chasm")
+add_terrain_name("TERRAIN_ACID", 10, "acid")
+add_terrain_name("TERRAIN_LAVA", nil, "lava")
 
 local _poll_interval = 0.2  -- seconds between command polls
 local _last_poll = 0
@@ -85,12 +99,17 @@ local function _read_save_data()
         networkMax = nil,
         difficulty = nil,     -- GameData.difficulty (0=Easy, 1=Normal, 2=Hard, 3=Unfair)
         queued_shots = {},
+        queued_origins = {},  -- [pawn_id] = {x, y} from piOrigin (attack queue source)
         queued_targets = {},  -- [pawn_id] = {x, y} from piTarget (leap/melee landing tile)
         queued_skills = {},   -- [pawn_id] = iQueuedSkill (>=0 when an attack is actually queued)
         conveyor_belts = {},
         pilots = {},  -- [pawn_id] = {id=..., level=..., skill1=..., skill2=...}
+        pawn_max_health = {},  -- [pawn_id] = max_health
+        infected = {},  -- [pawn_id] = bInfected (Vek Mites objective state)
         master_seed = nil,    -- GameData.seed — run-lifetime master RNG seed
         mission_seeds = {},   -- [region_key] = aiSeed — per-mission per-turn PRNG snapshot
+        current_weapons = {}, -- GameData.current.weapons, 1-indexed loadout slots
+        pawn_offsets = {},    -- [pawn_id] = raw save offset (diagnostic only)
     }
     local base = os.getenv("HOME") ..
         "/Library/Application Support/IntoTheBreach/profile_Alpha/"
@@ -123,6 +142,12 @@ local function _read_save_data()
     -- fish which telegraphed attacks the game has pre-rolled as resists.
     local ms = content:match('%["seed"%]%s*=%s*(%-?%d+)')
     if ms then result.master_seed = tonumber(ms) end
+    local weapons_blob = content:match('%["weapons"%]%s*=%s*{(.-)}')
+    if weapons_blob then
+        for w in weapons_blob:gmatch('"([^"]*)"') do
+            result.current_weapons[#result.current_weapons + 1] = w
+        end
+    end
     for region_key, region_block in content:gmatch('%["(region%d+)"%]%s*=%s*(%b{})') do
         local ais = region_block:match('%["aiSeed"%]%s*=%s*(%-?%d+)')
         if ais then
@@ -146,12 +171,26 @@ local function _read_save_data()
         local pid = block:match('%["id"%]%s*=%s*(%d+)')
         if pid then
             local pid_n = tonumber(pid)
+            local off = block:match('%["offset"%]%s*=%s*(%d+)')
+            if off then
+                result.pawn_offsets[pid_n] = tonumber(off)
+            end
             -- Queued shot (projectile/laser/artillery end-tile)
             local qs = block:match('%["piQueuedShot"%]%s*=%s*Point%s*%(([^%)]+)%)')
             if qs then
                 local qsx, qsy = qs:match('(%-?%d+)%s*,%s*(%-?%d+)')
                 if qsx and qsy then
                     result.queued_shots[pid_n] = {x = tonumber(qsx), y = tonumber(qsy)}
+                end
+            end
+            -- Origin of the queued attack. piQueuedShot is stored relative
+            -- to this point; if a Vek is pushed mid-turn, the live target
+            -- shifts by current_position + (piQueuedShot - piOrigin).
+            local qo = block:match('%["piOrigin"%]%s*=%s*Point%s*%(([^%)]+)%)')
+            if qo then
+                local qox, qoy = qo:match('(%-?%d+)%s*,%s*(%-?%d+)')
+                if qox and qoy then
+                    result.queued_origins[pid_n] = {x = tonumber(qox), y = tonumber(qoy)}
                 end
             end
             -- piTarget (leap landing tile, melee target, move-style queued attacks).
@@ -169,6 +208,14 @@ local function _read_save_data()
             local qsk = block:match('%["iQueuedSkill"%]%s*=%s*(%-?%d+)')
             if qsk then
                 result.queued_skills[pid_n] = tonumber(qsk)
+            end
+            local mh = block:match('%["max_health"%]%s*=%s*(%d+)')
+            if mh then
+                result.pawn_max_health[pid_n] = tonumber(mh)
+            end
+            local infected = block:match('%["bInfected"%]%s*=%s*(true|false)')
+            if infected then
+                result.infected[pid_n] = infected == "true"
             end
             -- Pilot: nested table inside the pawn block
             local pilot_block = block:match('%["pilot"%]%s*=%s*(%b{})')
@@ -188,19 +235,48 @@ local function _read_save_data()
         end
     end
 
-    -- Conveyor belts: direction from custom tile sprites
-    for loc_x, loc_y, custom in content:gmatch(
-        '%["loc"%]%s*=%s*Point%(%s*(%d+)%s*,%s*(%d+)%s*%).-'
-        .. '%["custom"%]%s*=%s*"(conveyor%d+%.png)"'
-    ) do
-        local dir = custom:match("conveyor(%d+)")
-        if dir then
+    -- Conveyor belts: direction from custom tile sprites. Keep loc/custom on
+    -- the same serialized tile row; a cross-entry pattern can pair a plain
+    -- building loc with the next conveyor custom and create phantom belts.
+    for line in content:gmatch("[^\r\n]+") do
+        local loc_x, loc_y = line:match('%["loc"%]%s*=%s*Point%(%s*(%d+)%s*,%s*(%d+)%s*%)')
+        local dir = line:match('%["custom"%]%s*=%s*"conveyor(%d+)%.png"')
+        if loc_x and loc_y and dir then
             local key = loc_x .. "," .. loc_y
             result.conveyor_belts[key] = tonumber(dir)
         end
     end
 
     return result
+end
+
+local function get_pawn_max_health(pawn, uid, save_data)
+    local fn = pawn.GetMaxHealth
+    if type(fn) == "function" then
+        local ok, mh = pcall(function() return fn(pawn) end)
+        if ok and type(mh) == "number" and mh > 0 then
+            return mh
+        end
+    end
+
+    local saved = save_data and save_data.pawn_max_health and save_data.pawn_max_health[uid]
+    if type(saved) == "number" and saved > 0 then
+        return saved
+    end
+
+    local pawn_def = _G[pawn:GetType()]
+    return (pawn_def and pawn_def.Health) or pawn:GetHealth()
+end
+
+local function normalize_queued_target(raw, origin, current_x, current_y)
+    if not raw then return nil, false end
+    if not origin then return {raw.x, raw.y}, false end
+    local nx = current_x + (raw.x - origin.x)
+    local ny = current_y + (raw.y - origin.y)
+    if nx < 0 or nx > 7 or ny < 0 or ny > 7 then
+        return nil, true
+    end
+    return {nx, ny}, true
 end
 
 --------------------------------------------------------------------
@@ -244,9 +320,14 @@ local function dump_state()
 
     local state = {}
 
-    -- Phase detection
+    -- Phase detection. Game:GetTeamTurn() can keep returning the last combat
+    -- team after MissionEnd, so require the active-mission cache too.
+    local in_active_mission = (_ITB_CURRENT_MISSION ~= nil)
+    state.in_active_mission = in_active_mission
     local team_turn = Game and Game:GetTeamTurn() or 0
-    if team_turn == 1 then
+    if not in_active_mission then
+        state.phase = "unknown"
+    elseif team_turn == 1 then
         state.phase = "combat_player"
     elseif team_turn == 6 then
         state.phase = "combat_enemy"
@@ -339,6 +420,11 @@ local function dump_state()
             if ok_s and smoke then tile.smoke = true end
             local ok_a, acid = pcall(function() return Board:IsAcid(pt) end)
             if ok_a and acid then tile.acid = true end
+            local ok_sh, shield = pcall(function() return Board:IsShield(pt) end)
+            if not ok_sh then
+                ok_sh, shield = pcall(function() return Board:IsShielded(pt) end)
+            end
+            if ok_sh and shield then tile.shield = true end
             local ok_fr, frozen = pcall(function() return Board:IsFrozen(pt) end)
             if ok_fr and frozen then tile.frozen = true end
             local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)
@@ -349,7 +435,7 @@ local function dump_state()
             if belt_dir then tile.conveyor = belt_dir end
 
             -- Building data
-            if terrain_id == 1 then
+            if terrain_id == (_G.TERRAIN_BUILDING or 1) then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
                 if ok_h then tile.building_hp = hp end
                 -- Objective building (Coal Plant / Power Generator /
@@ -363,7 +449,7 @@ local function dump_state()
                     end
                 end
             -- Mountain data (2 = full, 1 = damaged, 0 = rubble)
-            elseif terrain_id == 4 then
+            elseif terrain_id == (_G.TERRAIN_MOUNTAIN or 4) then
                 local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
                 if ok_h then tile.building_hp = hp else tile.building_hp = 2 end
                 tile.population = 1
@@ -381,6 +467,8 @@ local function dump_state()
                     tile.freeze_mine = true
                 elseif item == "Item_Mine" then
                     tile.old_earth_mine = true
+                elseif item == "Item_Repair_Mine" then
+                    tile.repair_platform = true
                 end
             end
 
@@ -423,6 +511,7 @@ local function dump_state()
                     active = p:IsActive(),
                     move = p:GetMoveSpeed(),
                     base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed(),
+                    minor = pawn_def and pawn_def.Minor or false,
                 }
 
                 -- Pilot info (mechs only). Save-file-derived is the most
@@ -470,6 +559,28 @@ local function dump_state()
                     unit.massive = true
                 end
 
+                -- Stable / guarding units cannot be moved by push/teleport
+                -- effects even when their static pawn type is normally
+                -- pushable. Bridge this as live pushability because bosses and
+                -- mission units can gain the status dynamically.
+                local pushable = nil
+                if pawn_def and pawn_def.Pushable == false then
+                    pushable = false
+                end
+                local ok_g, guarding = pcall(function() return p:IsGuarding() end)
+                if ok_g then
+                    unit.guarding = guarding
+                    unit.stable = guarding
+                    if guarding then
+                        pushable = false
+                    elseif pushable == nil and pawn_def and pawn_def.Pushable ~= nil then
+                        pushable = pawn_def.Pushable ~= false
+                    end
+                end
+                if pushable ~= nil then
+                    unit.pushable = pushable
+                end
+
                 -- Status effects
                 local ok_f, fly = pcall(function() return p:IsFlying() end)
                 if ok_f then unit.flying = fly end
@@ -481,6 +592,20 @@ local function dump_state()
                 if ok_fi then unit.fire = fi end
                 local ok_fr, fr = pcall(function() return p:IsFrozen() end)
                 if ok_fr then unit.frozen = fr end
+                local infected = nil
+                for _, mname in ipairs({"IsInfected", "IsInfested", "IsMiteInfected"}) do
+                    local ok_m, v = pcall(function() return p[mname](p) end)
+                    if ok_m and type(v) == "boolean" then
+                        infected = v
+                        break
+                    end
+                end
+                if infected == nil and save_data.infected[pid] ~= nil then
+                    infected = save_data.infected[pid]
+                end
+                if infected ~= nil then unit.infected = infected end
+                local ok_bo, boosted = pcall(function() return p:IsBoosted() end)
+                if ok_bo and boosted then unit.boosted = true end
                 -- Web/grapple detection: try multiple API method names.
                 -- IsGrappled() alone misses Spider-egg webs on mechs; probe
                 -- alternatives so either the Scorpion-grapple or the Spider-
@@ -522,8 +647,16 @@ local function dump_state()
 
                 -- Enemy attack data
                 if p:GetTeam() == TEAM_ENEMY then
+                    local qskill = save_data.queued_skills[pid]
                     local ok_sw, sw = pcall(function() return p:GetSelectedWeapon() end)
-                    if ok_sw and sw and sw > 0 then
+                    if qskill ~= nil then
+                        unit.has_queued_attack = qskill >= 0
+                        if ok_sw and sw and sw > 0 and not unit.has_queued_attack then
+                            log_bridge(string.format(
+                                "selected_weapon ignored for non-attacking %s/%d: GetSelectedWeapon=%s iQueuedSkill=%s",
+                                ptype or "?", pid, tostring(sw), tostring(qskill)))
+                        end
+                    elseif ok_sw and sw and sw > 0 then
                         unit.has_queued_attack = true
                     end
 
@@ -534,15 +667,50 @@ local function dump_state()
                     -- gate the piTarget read on iQueuedSkill >= 0 because the
                     -- save stores piTarget as a stale last-target even on
                     -- pawns that have no queued skill this turn.
+                    local qorigin = save_data.queued_origins[pid]
+                    if qorigin then
+                        unit.queued_origin = {qorigin.x, qorigin.y}
+                    end
                     local qs = save_data.queued_shots[pid]
                     if qs and qs.x >= 0 and qs.y >= 0 then
-                        unit.queued_target = {qs.x, qs.y}
+                        unit.queued_target_raw = {qs.x, qs.y}
+                        local normalized, did_normalize =
+                            normalize_queued_target(qs, qorigin, unit.x, unit.y)
+                        unit.queued_target = normalized
+                        if did_normalize then
+                            unit.queued_target_normalized = true
+                        end
+                        -- Save-file piQueuedShot can remain stale after live
+                        -- attack retarget effects such as DIR_FLIP. Prefer
+                        -- the C++ pawn's current queued shot when it returns a
+                        -- valid board tile; it already reflects the current
+                        -- position/target and must not be normalized again by
+                        -- the Python reader.
+                        if unit.has_queued_attack then
+                            local ok_gqs, gqs = pcall(function() return p:GetQueuedShot() end)
+                            if ok_gqs and gqs and (type(gqs) == "userdata" or type(gqs) == "table") then
+                                local gx, gy = gqs.x, gqs.y
+                                if type(gx) == "number" and type(gy) == "number"
+                                        and gx >= 0 and gy >= 0
+                                        and gx <= 7 and gy <= 7
+                                        and (not unit.queued_target
+                                             or unit.queued_target[1] ~= gx
+                                             or unit.queued_target[2] ~= gy) then
+                                    log_bridge(string.format(
+                                        "queued_target live override for %s/%d: save=(%d,%d) normalized=%s GetQueuedShot=(%d,%d)",
+                                        ptype or "?", pid, qs.x, qs.y,
+                                        unit.queued_target and string.format("(%d,%d)", unit.queued_target[1], unit.queued_target[2]) or "nil",
+                                        gx, gy))
+                                    unit.queued_target = {gx, gy}
+                                    unit.queued_target_normalized = true
+                                end
+                            end
+                        end
                     elseif unit.has_queued_attack then
                         local resolved_via = nil
                         -- (1) Save-file piTarget (works for Leapers, Scorpions,
                         --     any melee/jumper pawn with AddQueuedMelee).
                         local qt = save_data.queued_targets[pid]
-                        local qskill = save_data.queued_skills[pid]
                         if qt and qskill and qskill >= 0
                                 and qt.x >= 0 and qt.y >= 0
                                 and qt.x <= 7 and qt.y <= 7 then
@@ -655,7 +823,7 @@ local function dump_state()
     -- so the solver needs to know which enemy unwebs the unit. If no webber is
     -- found (all dead), clear the stale web flag entirely.
     local WEB_WEAPONS = {ScorpionAtk1=true, ScorpionAtk2=true, ScorpionAtkB=true,
-                         LeaperAtk1=true, LeaperAtk2=true}
+                         LeaperAtk1=true, LeaperAtk2=true, MosquitoAtkB=true}
     for _, u in ipairs(state.units) do
         if u.web and not u.web_source_uid then
             local best_uid, best_dist = nil, 999
@@ -703,8 +871,10 @@ local function dump_state()
     --   flying_immune=1 → terrain-conversion lethal (Tidal Wave, Cataclysm,
     --                     Seismic). Effectively-flying units survive
     --                     because water/chasm rules let them hover.
-    --                     Air Strike / Lightning / Satellite emit
-    --                     flying_immune=0 — those hit flyers too.
+    --                     Air Strike / Lightning / Final Cave falling rocks
+    --                     emit flying_immune=0 — those hit flyers too.
+    --                     Satellite launch exhaust emits flying_immune=1:
+    --                     ground units die, flyers survive.
     -- The 5th field landed at SIMULATOR_VERSION 19 (2026-04-25) closing the
     -- "Hornet on Tidal tile" silent kill desync. Older bridges emit only 4
     -- fields; the Rust deserializer falls back to env_type when the 5th is
@@ -747,6 +917,17 @@ local function dump_state()
         local mission = _ITB_CURRENT_MISSION
         if not mission or not mission.LiveEnvironment then return end
         local le = mission.LiveEnvironment
+        local mission_id = mission.ID or ""
+
+        -- Mission_Final_Cave uses Env_Final, whose marked tiles are falling
+        -- rock / tentacle death effects (SpaceDamage(..., DAMAGE_DEATH)),
+        -- not ordinary chasm conversion. Prospero/flying mechs die here.
+        if mission_id == "Mission_Final_Cave" then
+            env_type = "final_cave"
+            env_kill_default = true
+            env_flying_immune_default = false
+            return
+        end
 
         -- Walk metatable chain. For each link, check membership in our
         -- known-env table. Stops at first match. `_G` lookup is safe — class
@@ -782,6 +963,30 @@ local function dump_state()
             mt = getmetatable(cls_table)
         end
 
+        -- Mission IDs are authoritative when class/field signatures collide.
+        -- Archive Airstrike exposes StartEffect like Seismic/Cataclysm on some
+        -- bridge builds, but bombs still kill flying units. Terrain-conversion
+        -- missions are the ones where flyers hover over the new water/chasm.
+        if mission_id == "Mission_Airstrike"
+                or mission_id == "Mission_Lightning"
+                or mission_id == "Mission_LightningStorm" then
+            env_type = "lightning_or_airstrike"
+            env_kill_default = true
+            env_flying_immune_default = false
+            return
+        elseif mission_id == "Mission_Tides" then
+            env_type = "tidal"
+            env_kill_default = true
+            env_flying_immune_default = true
+            return
+        elseif mission_id == "Mission_Cataclysm"
+                or mission_id == "Mission_Crack" then
+            env_type = "cataclysm_or_seismic"
+            env_kill_default = true
+            env_flying_immune_default = true
+            return
+        end
+
         -- Field-signature fallback for envs without an explicit class match
         -- (mods, edge-case classes). Order tightened: WindDir/Row/Index/StartEffect
         -- are unique enough; Locations is checked LAST since SnowStorm shares it.
@@ -815,10 +1020,18 @@ local function dump_state()
         end
     end)
     state.env_type = env_type
+    if env_type == "wind" then
+        pcall(function()
+            local mission = _ITB_CURRENT_MISSION
+            if mission and mission.LiveEnvironment
+                    and mission.LiveEnvironment.WindDir ~= nil then
+                state.environment_wind_dir = mission.LiveEnvironment.WindDir
+            end
+        end)
+    end
 
     -- Helper: add a danger tile to both v1 and v2 fields. The optional
-    -- `flying_immune_override` controls the 5th field (Satellite Rocket
-    -- forces it false — bombs hit flyers).
+    -- `flying_immune_override` controls the 5th field.
     local function add_danger(x, y, kill_override, flying_immune_override)
         state.environment_danger[#state.environment_danger + 1] = {x, y}
         local k = env_kill_default
@@ -852,10 +1065,12 @@ local function dump_state()
         end
     end
 
-    -- Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch
-    -- Board:IsEnvironmentDanger() does NOT detect these, so we add them manually.
+    -- Satellite rocket deadly threat: 4 adjacent tiles kill grounded units on
+    -- launch. Board:IsEnvironmentDanger() does NOT detect these, so we add
+    -- them manually.
     -- Only flag tiles on the turn the rocket is queued to fire (GetSelectedWeapon > 0).
-    -- Satellite rockets are always Deadly Threat regardless of mission environment.
+    -- Satellite rockets are always lethal regardless of mission environment,
+    -- but live launch exhaust spares flying pawns.
     for _, u in ipairs(state.units) do
         if u.type and string.find(u.type, "Satellite") then
             local ok, p = pcall(function() return Board:GetPawn(u.uid) end)
@@ -868,9 +1083,7 @@ local function dump_state()
                     for _, d in ipairs(dirs) do
                         local nx, ny = u.x + d[1], u.y + d[2]
                         if nx >= 0 and nx <= 7 and ny >= 0 and ny <= 7 then
-                            -- Always lethal, never flying-immune (rockets
-                            -- detonate above ground level — flyers caught).
-                            add_danger(nx, ny, true, false)
+                            add_danger(nx, ny, true, true)
                         end
                     end
                 end
@@ -903,34 +1116,39 @@ local function dump_state()
 
     -- Teleporter pads: populated by the Mission_Teleporter:StartMission
     -- wrap below. Each entry = {x1, y1, x2, y2}. Empty list / absent on
-    -- non-teleporter missions; the Rust/Python simulators ignore an empty
-    -- list (pre-sim-v8 behavior). The earlier Board.AddTeleport global
+    -- non-teleporter missions; stale pairs must not leak into other
+    -- missions. The earlier Board.AddTeleport global
     -- override crashed mac OS at file-load with "no static 'AddTeleport'
     -- in class 'Board'" (commit 456ba49 → rolled back in 63e0e18); the
     -- current scope-rebinds AddTeleport only inside StartMission and pcalls
     -- everything so a future API change can't take down mission load.
-    if _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
+    if state.mission_id == "Mission_Teleporter"
+       and _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
         state.teleporter_pairs = {}
         for _, pair in ipairs(_ITB_TELEPORT_PAIRS) do
             state.teleporter_pairs[#state.teleporter_pairs + 1] = pair
         end
     end
 
-    -- Bonus-objective progress for "Kill N enemies" (BONUS_KILL_FIVE = 6).
-    -- Emitted so the Python evaluator can reward plans that reach the
-    -- cumulative kill target. Absent / 0 → no kill-N bonus on this mission;
-    -- the evaluator's step-function check neutralizes safely. Per
+    -- Bonus-objective progress for enemy kill-count objectives.
+    -- BONUS_KILL_FIVE is "kill at least N"; BONUS_PACIFIST is
+    -- "kill N or fewer". Emit separate fields because the former rewards
+    -- extra kills while the latter fails immediately when exceeded. Per
     -- scripts/missions/missions.lua:
     --   BONUS_KILL_FIVE = 6 in the enum
+    --   BONUS_PACIFIST = 9 in the enum
     --   mission.BonusObjs is the chosen bonus list (random from BonusPool)
     --   mission.KilledVek is cumulative this-mission kills
     --   mission:GetKillBonus() is difficulty-scaled (5 easy / 7 normal/hard)
+    --   mission:GetPacifistCount() is difficulty-scaled (4 easy / 5 normal/hard / 6 unfair)
     pcall(function()
         local mission = _ITB_CURRENT_MISSION
         if mission and mission.BonusObjs then
             local has_kill_five = false
+            local has_pacifist = false
             for _, obj in ipairs(mission.BonusObjs) do
-                if obj == 6 then has_kill_five = true; break end
+                if obj == 6 then has_kill_five = true end
+                if obj == 9 then has_pacifist = true end
             end
             if has_kill_five and mission.GetKillBonus then
                 local ok, target = pcall(function() return mission:GetKillBonus() end)
@@ -938,8 +1156,45 @@ local function dump_state()
                     state.mission_kill_target = target
                 end
             end
+            if has_pacifist and mission.GetPacifistCount then
+                local ok, limit = pcall(function() return mission:GetPacifistCount() end)
+                if ok and type(limit) == "number" then
+                    state.mission_kill_limit = limit
+                end
+            end
             if mission.KilledVek ~= nil then
                 state.mission_kills_done = mission.KilledVek
+            end
+        end
+    end)
+
+    -- Mission_Repair objective progress ("Use 3 Repair Platforms"). The
+    -- game increments RepairPickups from EVENT_REPAIR_PICKUP; any unit that
+    -- triggers Item_Repair_Mine counts. Expose both target and cumulative
+    -- progress so the solver can value using the remaining platforms.
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if mission and mission.ID == "Mission_Repair" then
+            state.repair_platform_target = 3
+            if mission.RepairPickups ~= nil then
+                state.repair_platforms_used = mission.RepairPickups
+            end
+        end
+    end)
+
+    -- Mission_Force objective progress ("Destroy 2 mountains"). The game
+    -- increments mission.Mountains from EVENT_MOUNTAIN_DESTROYED and gates
+    -- mission end on mission.MountainsGoal.
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if mission and mission.ID == "Mission_Force" then
+            if mission.MountainsGoal ~= nil then
+                state.mission_mountain_target = mission.MountainsGoal
+            else
+                state.mission_mountain_target = 2
+            end
+            if mission.Mountains ~= nil then
+                state.mission_mountains_destroyed = mission.Mountains
             end
         end
     end)
@@ -1158,6 +1413,269 @@ local function find_weapon_slot(pawn, weapon_id)
     return nil
 end
 
+local function effective_weapon_from_save(save_data, uid, weapon_slot, fallback)
+    if not save_data then return fallback, "static" end
+    local weapons = save_data.current_weapons or {}
+    local idx = nil
+    -- GameData.current.weapons stores two loadout slots per player mech, keyed
+    -- by the stable player mech ids 0,1,2. Do not use pawn["offset"] here:
+    -- live combat saves can stamp every squad mech with the same value (for
+    -- example 5), which is a board/undo offset rather than a loadout offset.
+    if type(uid) == "number" and uid >= 0 and uid <= 2 then
+        idx = uid * 2 + weapon_slot + 1
+    end
+    local wname = idx and weapons[idx] or nil
+    if type(wname) == "string" and wname ~= "" then
+        if _G[wname] ~= nil then
+            return wname, "save"
+        end
+        log_bridge("WARN: save weapon " .. wname ..
+                   " for uid=" .. tostring(uid) ..
+                   " slot=" .. tostring(weapon_slot) ..
+                   " has no Lua skill; falling back to " .. tostring(fallback))
+    end
+    return fallback, "static"
+end
+
+local function tile_damage_snapshot(pt)
+    local snap = {}
+    local ok_t, terrain_id = pcall(function() return Board:GetTerrain(pt) end)
+    if ok_t then snap.terrain_id = terrain_id end
+    local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
+    if ok_h then snap.health = hp end
+    local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)
+    if ok_cr then snap.cracked = cracked and true or false end
+    return snap
+end
+
+local function tile_damage_changed(before, pt)
+    if before == nil then return false end
+    local ok_t, terrain_id = pcall(function() return Board:GetTerrain(pt) end)
+    if ok_t and before.terrain_id ~= nil and terrain_id ~= before.terrain_id then
+        return true
+    end
+    local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
+    if ok_h and before.health ~= nil and hp ~= before.health then
+        return true
+    end
+    local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)
+    if ok_cr and before.cracked ~= nil and (cracked and true or false) ~= before.cracked then
+        return true
+    end
+    return false
+end
+
+local function path_profile_for_target_area(point, fallback)
+    if Pawn ~= nil then
+        local ok, prof = pcall(function() return Pawn:GetPathProf() end)
+        if ok and prof ~= nil then return prof end
+    end
+    if Board ~= nil and point ~= nil then
+        local ok_pawn, source_pawn = pcall(function()
+            return Board:GetPawn(point)
+        end)
+        if ok_pawn and source_pawn ~= nil then
+            local ok_prof, prof = pcall(function()
+                return source_pawn:GetPathProf()
+            end)
+            if ok_prof and prof ~= nil then return prof end
+        end
+    end
+    return fallback or PATH_FLYER or PATH_PROJECTILE
+end
+
+local function bridge_safe_jet_target_area(self, point)
+    local ret = PointList()
+    local path_prof = path_profile_for_target_area(point, PATH_FLYER)
+    for i = DIR_START, DIR_END do
+        for k = self.MinMove, self.Range do
+            local curr = DIR_VECTORS[i] * k + point
+            if not Board:IsBlocked(curr, path_prof) then
+                ret:push_back(curr)
+            end
+        end
+    end
+    return ret
+end
+
+local function bridge_safe_leap_target_area(self, point)
+    local ret = PointList()
+    local path_prof = path_profile_for_target_area(point, PATH_FLYER)
+    local range = self.Range or 1
+    for i = DIR_START, DIR_END do
+        for k = 1, range do
+            local curr = DIR_VECTORS[i] * k + point
+            if Board:IsValid(curr) and not Board:IsBlocked(curr, path_prof) then
+                ret:push_back(curr)
+            end
+        end
+    end
+    return ret
+end
+
+local function install_safe_jet_target_area()
+    if _ITB_BRIDGE_SAFE_JET_TARGET_AREA then return end
+    local names = {
+        "Brute_Jetmech",
+        "Brute_Jetmech_A",
+        "Brute_Jetmech_B",
+        "Brute_Jetmech_AB",
+        "Brute_Bombrun",
+        "Brute_Bombrun_A",
+        "Brute_Bombrun_B",
+        "Brute_Bombrun_AB",
+        "Support_Smoke",
+        "Support_Smoke_A",
+        "Support_Smoke_B",
+        "Support_Smoke_AB",
+    }
+    local installed = 0
+    for _, name in ipairs(names) do
+        local skill = _G[name]
+        if skill ~= nil then
+            skill.GetTargetArea = bridge_safe_jet_target_area
+            installed = installed + 1
+        end
+    end
+    _ITB_BRIDGE_SAFE_JET_TARGET_AREA = true
+    log_bridge("SAFE TARGET AREA: patched Aerial Bombs family entries=" ..
+               installed)
+end
+
+local function install_safe_leap_target_area()
+    if _ITB_BRIDGE_SAFE_LEAP_TARGET_AREA then return end
+    local names = {
+        "Prime_Leap",
+        "Prime_Leap_A",
+        "Prime_Leap_B",
+        "Prime_Leap_AB",
+        "Support_Boosters",
+        "Support_Boosters_A",
+        "Support_Boosters_B",
+        "Support_Boosters_AB",
+        "Prime_SpikeLeap",
+        "Prime_SpikeLeap_A",
+        "Prime_SpikeLeap_B",
+        "Prime_SpikeLeap_AB",
+    }
+    local installed = 0
+    for _, name in ipairs(names) do
+        local skill = _G[name]
+        if skill ~= nil then
+            skill.GetTargetArea = bridge_safe_leap_target_area
+            installed = installed + 1
+        end
+    end
+    _ITB_BRIDGE_SAFE_LEAP_TARGET_AREA = true
+    log_bridge("SAFE TARGET AREA: patched Leap_Attack family entries=" ..
+               installed)
+end
+
+local function execute_prime_tc_punt(pawn, wname, tx, ty)
+    local skill = _G[wname]
+    if not skill then
+        return false, "Prime_TC_Punt skill missing: " .. tostring(wname)
+    end
+
+    local source = pawn:GetSpace()
+    local dx = tx - source.x
+    local dy = ty - source.y
+    local dist = math.abs(dx) + math.abs(dy)
+    if dist < 2 or (dx ~= 0 and dy ~= 0) then
+        return false, "invalid Prime_TC_Punt landing " .. tx .. "," .. ty ..
+               " from " .. source.x .. "," .. source.y
+    end
+
+    local sx = dx == 0 and 0 or (dx / math.abs(dx))
+    local sy = dy == 0 and 0 or (dy / math.abs(dy))
+    local first = Point(source.x + sx, source.y + sy)
+    local landing = Point(tx, ty)
+
+    if not Board:IsValid(landing) then
+        return false, "Prime_TC_Punt landing off-board " .. tx .. "," .. ty
+    end
+    if Board:IsBlocked(landing, PATH_FLYER) then
+        return false, "Prime_TC_Punt landing blocked " .. tx .. "," .. ty
+    end
+
+    local target = Board:GetPawn(first)
+    if not target then
+        return false, "Prime_TC_Punt first click has no pawn at " ..
+               first.x .. "," .. first.y
+    end
+    local guarding = false
+    local ok_guard, guard_val = pcall(function() return target:IsGuarding() end)
+    if ok_guard and guard_val then guarding = true end
+    if guarding then
+        return false, "Prime_TC_Punt target is guarding at " ..
+               first.x .. "," .. first.y
+    end
+
+    local uid = nil
+    local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
+    if ok_uid then uid = uid_val end
+    local save_data = _read_save_data()
+    local save_pilot = uid and save_data.pilots[uid] or nil
+    local boosted = false
+    local ok_bo, bo = pcall(function() return pawn:IsBoosted() end)
+    if ok_bo and bo then boosted = true end
+    local target_was_enemy = false
+    local ok_team, target_team = pcall(function() return target:GetTeam() end)
+    if ok_team and target_team == (_G.TEAM_ENEMY or 6) then
+        target_was_enemy = true
+    end
+
+    -- Board:AddEffect(GetFinalEffect(...)) bypasses the engine ability-use
+    -- wrapper that normally applies and consumes Boost. Mirror that wrapper
+    -- here so the bridge execution matches the solver's weapon semantics.
+    local old_damage = nil
+    if boosted and type(skill.Damage) == "number" and skill.Damage > 0 then
+        old_damage = skill.Damage
+        skill.Damage = old_damage + 1
+    end
+    local ok, err = pcall(function()
+        Board:AddEffect(skill:GetFinalEffect(source, first, landing))
+    end)
+    if old_damage ~= nil then
+        pcall(function() skill.Damage = old_damage end)
+    end
+    if not ok then
+        return false, "Prime_TC_Punt GetFinalEffect failed: " .. tostring(err)
+    end
+
+    local desired_boosted = false
+    if save_pilot and save_pilot.id == "Pilot_Arrogant" then
+        local hp = pawn:GetHealth()
+        local max_hp = get_pawn_max_health(pawn, uid, save_data)
+        desired_boosted = hp >= max_hp
+    elseif save_pilot and save_pilot.id == "Pilot_Chemical" and target_was_enemy then
+        local dead = false
+        local ok_dead, is_dead = pcall(function() return target:IsDead() end)
+        if ok_dead and is_dead then dead = true end
+        local ok_hp, hp = pcall(function() return target:GetHealth() end)
+        if ok_hp and hp <= 0 then dead = true end
+        desired_boosted = dead
+    end
+    if boosted or desired_boosted then
+        for _, mname in ipairs({"SetBoosted", "SetBoost"}) do
+            local ok_set, did_set = pcall(function()
+                local fn = pawn[mname]
+                if type(fn) == "function" then
+                    fn(pawn, desired_boosted)
+                    return true
+                end
+                return false
+            end)
+            if ok_set and did_set then break end
+        end
+    end
+    log_bridge("FIRE: " .. wname .. " two_click " ..
+               source.x .. "," .. source.y .. " -> " ..
+               first.x .. "," .. first.y .. " -> " .. tx .. "," .. ty)
+    return true, "GetFinalEffect(" .. wname .. ") first=" ..
+           first.x .. "," .. first.y .. " landing=" .. tx .. "," .. ty
+end
+
 -- execute_weapon_by_slot: fire weapon using a 0-based slot index from
 -- the Python side (maps to 1-indexed Lua SkillList).
 -- This avoids name-matching issues where the solver's weapon ID doesn't
@@ -1177,11 +1695,60 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                " out of range (pawn " .. ptype ..
                " has " .. skill_count .. " skills)"
     end
-    local wname = pawn_def.SkillList[slot]
+    local uid = nil
+    local ok_uid, uid_val = pcall(function() return pawn:GetId() end)
+    if ok_uid then uid = uid_val end
+    local base_wname = pawn_def.SkillList[slot]
+    local save_data = _read_save_data()
+    local wname, wsource =
+        effective_weapon_from_save(save_data, uid, weapon_slot, base_wname)
+    local restore_wname = nil
+    if wname ~= base_wname then
+        restore_wname = base_wname
+        pawn_def.SkillList[slot] = wname
+        log_bridge("EFFECTIVE_WEAPON: uid=" .. tostring(uid) ..
+                   " slot=" .. slot .. " " .. tostring(base_wname) ..
+                   " -> " .. tostring(wname) .. " source=" .. tostring(wsource))
+    end
     local source = pawn:GetSpace()
+    if string.find(wname, "^Prime_TC_Punt") ~= nil then
+        local ok_punt, method = execute_prime_tc_punt(pawn, wname, tx, ty)
+        if restore_wname ~= nil then
+            pawn_def.SkillList[slot] = restore_wname
+        end
+        if not ok_punt then
+            log_bridge("WARN: Prime_TC_Punt failed for slot " .. slot ..
+                       " (" .. tostring(wname) .. "): " .. tostring(method))
+            return false, method
+        end
+        return true, method
+    end
+
+    local is_transit_leap =
+        string.find(wname, "^Brute_Jetmech") ~= nil or
+        string.find(wname, "^Brute_Bombrun") ~= nil
+    local skill = is_transit_leap and _G[wname] or nil
+    local transit_before = nil
+    if skill and skill.Damage and skill.Damage > 0 then
+        local dx = tx - source.x
+        local dy = ty - source.y
+        local dist = math.abs(dx) + math.abs(dy)
+        if dist >= 2 and (dx == 0 or dy == 0) then
+            local sx = dx == 0 and 0 or (dx / math.abs(dx))
+            local sy = dy == 0 and 0 or (dy / math.abs(dy))
+            transit_before = {sx = sx, sy = sy, dist = dist, tiles = {}}
+            for k = 1, dist - 1 do
+                local tp = Point(source.x + sx * k, source.y + sy * k)
+                transit_before.tiles[k] = tile_damage_snapshot(tp)
+            end
+        end
+    end
     local ok, err = pcall(function()
         pawn:FireWeapon(Point(tx, ty), slot)
     end)
+    if restore_wname ~= nil then
+        pawn_def.SkillList[slot] = restore_wname
+    end
     if not ok then
         log_bridge("WARN: FireWeapon failed for slot " .. slot ..
                    " (" .. wname .. "): " .. tostring(err))
@@ -1208,11 +1775,8 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     -- NOT using skill:GetSkillEffect + Board:AddEffect: the comment at
     -- the top of this section records that path leaves Board:IsBusy()
     -- stuck true and broke the engine queue.
-    local is_transit_leap =
-        string.find(wname, "^Brute_Jetmech") ~= nil or
-        string.find(wname, "^Brute_Bombrun") ~= nil
     if is_transit_leap then
-        local skill = _G[wname]
+        skill = skill or _G[wname]
         if skill and skill.Damage and skill.Damage > 0 then
             local dx = tx - source.x
             local dy = ty - source.y
@@ -1224,6 +1788,7 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                 local sy = dy == 0 and 0 or (dy / math.abs(dy))
                 local dmg_applied = 0
                 local smoke_applied = 0
+                local engine_tile_damage_seen = 0
                 for k = 1, dist - 1 do
                     local nx = source.x + sx * k
                     local ny = source.y + sy * k
@@ -1233,28 +1798,56 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                     -- turn 1 and turn 2: acid-statused Firefly1 on
                     -- transit died after 1 of our manual + 1 of the
                     -- engine's damage, instead of surviving at HP=1).
-                    -- FireWeapon does NOT damage terrain (buildings /
-                    -- mountains on transit) and does NOT emit the
-                    -- tile's smoke/acid effect — both are still on us.
-                    -- So: apply damage ONLY to tiles without a live
-                    -- unit (FireWeapon handles those), and always
-                    -- apply smoke/acid flags via a damage=0 SpaceDamage.
+                    -- Some engine paths do apply transit terrain damage
+                    -- during FireWeapon, while older captures showed no
+                    -- terrain damage. Snapshot-before / compare-after keeps
+                    -- the workaround adaptive: apply synthetic damage only
+                    -- when FireWeapon left the tile's terrain state unchanged,
+                    -- and always apply smoke/acid via SpaceDamage.
                     local occupant = Board:GetPawn(tp)
                     local has_live = occupant ~= nil and not occupant:IsDead()
-                    local dmg_val = has_live and 0 or skill.Damage
-                    local sd = SpaceDamage(tp, dmg_val)
-                    if skill.Smoke and skill.Smoke > 0 then
-                        sd.iSmoke = skill.Smoke
+                    local before = nil
+                    if transit_before and transit_before.tiles then
+                        before = transit_before.tiles[k]
                     end
-                    if skill.Acid and skill.Acid > 0 then
-                        sd.iAcid = skill.Acid
+                    local engine_changed_tile = tile_damage_changed(before, tp)
+                    if engine_changed_tile then
+                        engine_tile_damage_seen = engine_tile_damage_seen + 1
                     end
-                    local ok_d, err_d = pcall(function()
-                        Board:DamageSpace(sd)
-                    end)
+                    local dmg_val = (has_live or engine_changed_tile) and 0 or skill.Damage
+                    local smoke_val = skill.Smoke or 0
+                    local acid_val = skill.Acid or 0
+                    local used_direct_status = false
+                    local ok_d = false
+                    local err_d = nil
+                    if dmg_val == 0 and has_live and smoke_val > 0 and acid_val == 0 then
+                        -- Use a real SpaceDamage payload even for occupied
+                        -- transit tiles. Direct Board:SetSmoke paints the
+                        -- tile but can leave already-queued Vek attacks live;
+                        -- DamageSpace(iSmoke) follows the weapon/status path
+                        -- that attack cancellation code observes.
+                        local sd = SpaceDamage(tp, 0)
+                        sd.iSmoke = smoke_val
+                        ok_d, err_d = pcall(function()
+                            Board:DamageSpace(sd)
+                        end)
+                        used_direct_status = ok_d
+                    end
+                    if not used_direct_status then
+                        local sd = SpaceDamage(tp, dmg_val)
+                        if smoke_val > 0 then
+                            sd.iSmoke = smoke_val
+                        end
+                        if acid_val > 0 then
+                            sd.iAcid = acid_val
+                        end
+                        ok_d, err_d = pcall(function()
+                            Board:DamageSpace(sd)
+                        end)
+                    end
                     if ok_d then
                         if dmg_val > 0 then dmg_applied = dmg_applied + 1 end
-                        if skill.Smoke and skill.Smoke > 0 then
+                        if smoke_val > 0 then
                             smoke_applied = smoke_applied + 1
                         end
                     else
@@ -1266,6 +1859,7 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                 log_bridge("TRANSIT: " .. wname ..
                            " dmg_applied=" .. dmg_applied ..
                            " smoke_applied=" .. smoke_applied ..
+                           " engine_tile_damage_seen=" .. engine_tile_damage_seen ..
                            " damage=" .. skill.Damage ..
                            " smoke=" .. tostring(skill.Smoke or 0))
             end
@@ -1407,18 +2001,75 @@ local function execute_command(cmd_str)
         local pos = pawn:GetSpace()
         local method = "unknown"
         local ok, err = pcall(function()
-            local repair_skill = _G["Skill_Repair"]
-            if repair_skill and repair_skill.GetSkillEffect then
-                local effect = repair_skill:GetSkillEffect(pos, pos)
-                Board:AddEffect(effect)
-                method = "skill"
-                return
-            end
-            -- Fallback: SpaceDamage with iRepair
-            local sd = SpaceDamage(pos, 0)
-            sd.iRepair = 1
+            local effect_remove = _G["EFFECT_REMOVE"] or 2
+            local boosted = false
+            local ok_bo, bo = pcall(function() return pawn:IsBoosted() end)
+            if ok_bo and bo then boosted = true end
+            local save_data = _read_save_data()
+            local hp = pawn:GetHealth()
+            local max_hp = get_pawn_max_health(pawn, uid, save_data)
+            local heal = boosted and 2 or 1
+            local new_hp = math.min(hp, max_hp - heal) + heal
+
+            -- Board:AddEffect(Skill_Repair:GetSkillEffect(...)) can ACK while
+            -- doing nothing from the bridge command context. Mutate HP/status
+            -- directly so verify sees the live board update.
+            local hp_set = false
+            local ok_set_health, did_set_health = pcall(function()
+                local fn = pawn.SetHealth
+                if type(fn) == "function" then
+                    fn(pawn, new_hp)
+                    return true
+                end
+                return false
+            end)
+            hp_set = ok_set_health and did_set_health
+
+            local sd = SpaceDamage(pos, hp_set and 0 or -heal)
+            sd.iFire = effect_remove
+            sd.iAcid = effect_remove
+            sd.iFrozen = effect_remove
+            sd.iInjure = effect_remove
             Board:DamageSpace(sd)
-            method = "fallback"
+            pcall(function()
+                local fn = pawn.SetInfected
+                if type(fn) == "function" then
+                    fn(pawn, false)
+                end
+            end)
+
+            -- Direct SpaceDamage is not a normal ability use, so consume Boost
+            -- manually. Kai's Arrogant Boost is state-based and returns if the
+            -- repair leaves the mech at full HP.
+            local save_pilot = save_data.pilots[uid]
+            local is_kai = save_pilot and save_pilot.id == "Pilot_Arrogant"
+            local desired_boosted = is_kai and new_hp >= max_hp
+            if boosted or desired_boosted then
+                for _, mname in ipairs({"SetBoosted", "SetBoost"}) do
+                    local ok_set, did_set = pcall(function()
+                        local fn = pawn[mname]
+                        if type(fn) == "function" then
+                            fn(pawn, desired_boosted)
+                            return true
+                        end
+                        return false
+                    end)
+                    if ok_set and did_set then break end
+                end
+            end
+
+            local is_repairman = save_pilot and save_pilot.id == "Pilot_Repairman"
+            local ok_power, has_power = pcall(function()
+                return pawn:IsAbility("Power_Repair")
+            end)
+            if ok_power and has_power then is_repairman = true end
+            if is_repairman then
+                for i = DIR_START, DIR_END do
+                    local adj = pos + DIR_VECTORS[i]
+                    Board:DamageSpace(SpaceDamage(adj, 0, i))
+                end
+            end
+            method = boosted and "direct_repair_boosted" or "direct_repair"
         end)
         if not ok then
             write_ack("ERROR: Repair failed: " .. tostring(err))
@@ -1621,6 +2272,15 @@ _ITB_CURRENT_MISSION = _ITB_CURRENT_MISSION or nil
 local _state_dump_interval = 5  -- dump state every 5 seconds
 local _last_state_dump = 0
 
+local function clear_stale_teleporter_pairs_for(mission)
+    if mission and mission.ID and mission.ID ~= "Mission_Teleporter"
+       and _ITB_TELEPORT_PAIRS and #_ITB_TELEPORT_PAIRS > 0 then
+        log_bridge("TELEPORT PAD: clearing stale pairs for "
+            .. tostring(mission.ID))
+        _ITB_TELEPORT_PAIRS = {}
+    end
+end
+
 -- BaseUpdate: resume pending command coroutine, poll for new commands,
 -- and periodically dump state. Coroutine resume happens FIRST so that
 -- wait_for_board_coro yields get unblocked the moment the engine drains
@@ -1630,6 +2290,7 @@ Mission.BaseUpdate = function(self)
     _orig_BaseUpdate(self)
     -- Cache current mission (self is the active mission inside BaseUpdate)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
         local f = io.open("/tmp/itb_bridge_heartbeat", "w")
@@ -1677,6 +2338,7 @@ end
 Mission.NextTurn = function(self)
     _orig_NextTurn(self)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     pcall(function()
         if Game and Game:GetTeamTurn() == TEAM_PLAYER then
             local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
@@ -1694,6 +2356,7 @@ end
 Mission.BaseStart = function(self)
     _orig_BaseStart(self)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     pcall(dump_state)
     log_bridge("MISSION START: " .. tostring(self.ID or self.Name or "unknown"))
 end
@@ -1702,6 +2365,7 @@ end
 Mission.BaseDeployment = function(self)
     _orig_BaseDeployment(self)
     _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
     -- Capture zone AFTER original runs (engine creates the zone in BaseDeployment)
     _ITB_DEPLOY_ZONE = capture_deploy_zone()
     if #_ITB_DEPLOY_ZONE > 0 then
@@ -1720,6 +2384,7 @@ Mission.MissionEnd = function(self)
     _ITB_CURRENT_MISSION = nil
     _ITB_TELEPORT_PAIRS = {}
     _orig_MissionEnd(self)
+    pcall(dump_state)
 end
 
 -- Mission_Teleporter:StartMission — capture pad pairs.
@@ -1839,6 +2504,8 @@ end
 pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
 pcall(function() os.remove(ACK_FILE) end)
+install_safe_jet_target_area()
+install_safe_leap_target_area()
 
 local _reload_count = (_ITB_BRIDGE_LOAD_COUNT or 0) + 1
 _ITB_BRIDGE_LOAD_COUNT = _reload_count

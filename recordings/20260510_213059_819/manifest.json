@@ -1,0 +1,20 @@
+{
+  "run_id": "20260510_213059_819",
+  "squad": "Rift Walkers",
+  "difficulty": 0,
+  "achievement_targets": [
+    "Ramming Speed"
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "solver_version": "rust-0.1.0-5a877fd",
+  "weight_version": "v011",
+  "updated": "2026-05-12T00:18:04.820116",
+  "created": "2026-05-10T21:30:59.847563",
+  "missions": [],
+  "outcome": "loss",
+  "outcome_mission": 22,
+  "outcome_recorded_at": "2026-05-12T00:18:04.803329",
+  "outcome_notes": "Timeline lost in Final Cave after v99 logging run. Combat died on stale Final Cave flyer danger at C6 before the fix; continued with user-approved dirty salvage. Tank E6->E7 and Arti G7 line still left grid at zero before turn 4; useful logs for Final Cave danger and Taurus push_dir desync."
+}

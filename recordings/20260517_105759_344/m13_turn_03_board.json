@@ -1,0 +1,958 @@
+{
+  "timestamp": "2026-05-17T13:49:12.412622",
+  "run_id": "20260517_105759_344",
+  "mission_index": 13,
+  "turn": 3,
+  "label": "board",
+  "data": {
+    "bridge_state": {
+      "island_map_game_seen": "table",
+      "spawning_tiles": [],
+      "grid_power_max": 7,
+      "grid_power": 3,
+      "island_map_probe": "scope_alive",
+      "turn": 3,
+      "mission_id": "Mission_Reactivation",
+      "master_seed": 1569640937,
+      "total_turns": 4,
+      "island_map_debug": "skipped: in active mission",
+      "environment_danger": [],
+      "tiles": [
+        {
+          "y": 0,
+          "x": 0,
+          "terrain_id": 5,
+          "terrain": "ice"
+        },
+        {
+          "y": 0,
+          "x": 1,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "terrain_id": 0,
+          "terrain": "ground",
+          "fire": true,
+          "x": 5
+        },
+        {
+          "y": 0,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 3
+        },
+        {
+          "y": 1,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 3
+        },
+        {
+          "y": 2,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 0,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 3,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 1,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 5,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 3
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 5,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 0,
+          "terrain_id": 5,
+          "terrain": "ice"
+        },
+        {
+          "y": 6,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "x": 2,
+          "terrain": "building",
+          "building_hp": 1,
+          "unique_building": true,
+          "objective_name": "Str_Power"
+        },
+        {
+          "y": 6,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 3
+        },
+        {
+          "y": 6,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 4
+        },
+        {
+          "y": 6,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 7,
+          "terrain_id": 5,
+          "terrain": "ice"
+        },
+        {
+          "y": 7,
+          "x": 0,
+          "terrain_id": 5,
+          "terrain": "ice"
+        },
+        {
+          "y": 7,
+          "x": 1,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 2
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 3
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 4
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 5
+        },
+        {
+          "y": 7,
+          "x": 6,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 7,
+          "x": 7,
+          "terrain_id": 5,
+          "terrain": "ice"
+        }
+      ],
+      "targeted_tiles": [
+        [
+          4,
+          1
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "phase": "combat_player",
+      "remaining_spawns": 0,
+      "mission_kills_done": 0,
+      "units": [
+        {
+          "web": false,
+          "active": true,
+          "minor": false,
+          "hp": 5,
+          "flying": false,
+          "weapons": [
+            "Prime_Lightning"
+          ],
+          "pilot_level": 2,
+          "team": 1,
+          "fire": false,
+          "massive": true,
+          "frozen": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "type": "ElectricMech",
+          "move": 4,
+          "acid": false,
+          "shield": false,
+          "guarding": false,
+          "pilot_skills": [
+            "skill2=5"
+          ],
+          "pushable": true,
+          "y": 3,
+          "x": 4,
+          "uid": 0,
+          "max_hp": 5,
+          "base_move": 3,
+          "mech": true,
+          "stable": false,
+          "pilot_id": "Pilot_Original",
+          "pilot_name": "Ralph Karlsson",
+          "pilot_name_id": "Pilot_Original_Name",
+          "bridge_reported_max_hp": 3
+        },
+        {
+          "web": false,
+          "active": true,
+          "minor": false,
+          "hp": 3,
+          "flying": false,
+          "weapons": [
+            "Brute_Grapple"
+          ],
+          "pilot_level": 0,
+          "team": 1,
+          "fire": false,
+          "massive": true,
+          "frozen": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "type": "WallMech",
+          "move": 4,
+          "acid": false,
+          "shield": false,
+          "guarding": false,
+          "pilot_skills": [
+            "skill1=3",
+            "skill2=2"
+          ],
+          "pushable": true,
+          "y": 3,
+          "x": 1,
+          "uid": 1,
+          "max_hp": 3,
+          "base_move": 3,
+          "mech": true,
+          "stable": false,
+          "pilot_id": "Pilot_Rust",
+          "pilot_name": "Myra Sanchez"
+        },
+        {
+          "web": false,
+          "active": true,
+          "minor": false,
+          "hp": 2,
+          "flying": false,
+          "weapons": [
+            "Ranged_Rockthrow"
+          ],
+          "pilot_level": 1,
+          "team": 1,
+          "fire": false,
+          "massive": true,
+          "frozen": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "type": "RockartMech",
+          "move": 4,
+          "acid": false,
+          "shield": false,
+          "guarding": false,
+          "pilot_skills": [
+            "skill1=11",
+            "skill2=5"
+          ],
+          "pushable": true,
+          "y": 4,
+          "x": 1,
+          "uid": 2,
+          "max_hp": 2,
+          "base_move": 3,
+          "mech": true,
+          "stable": false,
+          "pilot_id": "Pilot_Pinnacle",
+          "pilot_name": "Serhina"
+        },
+        {
+          "web": false,
+          "weapon_push": 0,
+          "active": false,
+          "minor": false,
+          "weapon_target_behind": false,
+          "hp": 1,
+          "shield": false,
+          "queued_origin": [
+            4,
+            4
+          ],
+          "flying": false,
+          "queued_target_normalized": true,
+          "fire": false,
+          "team": 6,
+          "queued_target_raw": [
+            4,
+            3
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "SnowtankAtk1"
+          ],
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 1,
+          "move": 3,
+          "uid": 2577,
+          "queued_target": [
+            4,
+            3
+          ],
+          "guarding": false,
+          "acid": false,
+          "weapon_damage": 1,
+          "y": 4,
+          "x": 4,
+          "type": "Snowtank1",
+          "base_move": 3,
+          "pushable": true,
+          "mech": false,
+          "stable": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "weapon_push": 0,
+          "active": false,
+          "minor": false,
+          "weapon_target_behind": false,
+          "hp": 1,
+          "shield": false,
+          "queued_origin": [
+            5,
+            3
+          ],
+          "flying": false,
+          "queued_target_normalized": true,
+          "fire": false,
+          "team": 6,
+          "queued_target_raw": [
+            4,
+            3
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "SnowlaserAtk1"
+          ],
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 1,
+          "move": 3,
+          "uid": 2578,
+          "queued_target": [
+            4,
+            3
+          ],
+          "guarding": false,
+          "acid": false,
+          "weapon_damage": 2,
+          "y": 3,
+          "x": 5,
+          "type": "Snowlaser1",
+          "base_move": 3,
+          "pushable": true,
+          "mech": false,
+          "stable": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "weapon_push": 0,
+          "active": false,
+          "minor": false,
+          "weapon_target_behind": false,
+          "hp": 2,
+          "shield": false,
+          "queued_origin": [
+            3,
+            4
+          ],
+          "flying": false,
+          "queued_target_normalized": true,
+          "fire": false,
+          "team": 6,
+          "queued_target_raw": [
+            3,
+            4
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "StarfishAtk1"
+          ],
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 3,
+          "uid": 2581,
+          "queued_target": [
+            3,
+            4
+          ],
+          "guarding": false,
+          "acid": false,
+          "weapon_damage": 1,
+          "y": 4,
+          "x": 3,
+          "type": "Starfish1",
+          "base_move": 3,
+          "pushable": true,
+          "mech": false,
+          "stable": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "weapon_push": 0,
+          "active": false,
+          "minor": false,
+          "weapon_target_behind": false,
+          "hp": 4,
+          "shield": false,
+          "queued_origin": [
+            5,
+            2
+          ],
+          "flying": false,
+          "queued_target_normalized": true,
+          "fire": false,
+          "team": 6,
+          "queued_target_raw": [
+            5,
+            2
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "StarfishAtk2"
+          ],
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 4,
+          "move": 3,
+          "uid": 2582,
+          "queued_target": [
+            5,
+            2
+          ],
+          "guarding": false,
+          "acid": false,
+          "weapon_damage": 2,
+          "y": 2,
+          "x": 5,
+          "type": "Starfish2",
+          "base_move": 3,
+          "pushable": true,
+          "mech": false,
+          "stable": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "minor": false,
+          "hp": 1,
+          "flying": false,
+          "team": 2,
+          "weapons": [],
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 1,
+          "move": 0,
+          "uid": 2584,
+          "fire": false,
+          "guarding": false,
+          "acid": false,
+          "shield": false,
+          "y": 2,
+          "x": 4,
+          "type": "RockThrown",
+          "base_move": 0,
+          "pushable": true,
+          "mech": false,
+          "stable": false,
+          "frozen": false
+        }
+      ],
+      "difficulty": 0,
+      "env_type": "unknown",
+      "environment_freeze": [],
+      "mission_seeds": {
+        "region3": {
+          "state": 4,
+          "turn": 0,
+          "mission": "Mission2",
+          "ai_seed": 837252635
+        },
+        "region7": {
+          "state": 0,
+          "turn": 3,
+          "mission": "Mission3",
+          "ai_seed": 1892340579
+        },
+        "region5": {
+          "state": 4,
+          "turn": 0,
+          "mission": "Mission1",
+          "ai_seed": 1572877027
+        }
+      },
+      "environment_danger_v2": [],
+      "timestamp": 1779043752,
+      "in_active_mission": true,
+      "attack_order": [
+        2577,
+        2578,
+        2581,
+        2582
+      ],
+      "mech_stat_overlays": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "pos": "E4",
+          "bridge_max_hp": 3,
+          "save_max_hp": 5,
+          "pilot_id": "Pilot_Original",
+          "pilot_name": "Ralph Karlsson",
+          "pilot_skills": [
+            "skill2=5"
+          ],
+          "health_power": 0
+        }
+      ],
+      "pilot_calibration_requests": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "pos": "E4",
+          "bridge_max_hp": 3,
+          "save_max_hp": 5,
+          "pilot_id": "Pilot_Original",
+          "pilot_name": "Ralph Karlsson",
+          "pilot_skills": [
+            "skill2=5"
+          ],
+          "health_power": 0,
+          "reason": "bridge max_hp differed from saveData max_health",
+          "capture_hint": "hover/select the visible pilot panel when tactically safe"
+        }
+      ],
+      "is_infinite_spawn": false
+    },
+    "result_summary": {
+      "phase": "combat_player",
+      "source": "bridge",
+      "turn": 3,
+      "grid_power": "3/7",
+      "mech_stat_overlays": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "pos": "E4",
+          "bridge_max_hp": 3,
+          "save_max_hp": 5,
+          "pilot_id": "Pilot_Original",
+          "pilot_name": "Ralph Karlsson",
+          "pilot_skills": [
+            "skill2=5"
+          ],
+          "health_power": 0
+        }
+      ],
+      "pilot_calibration_requests": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "pos": "E4",
+          "bridge_max_hp": 3,
+          "save_max_hp": 5,
+          "pilot_id": "Pilot_Original",
+          "pilot_name": "Ralph Karlsson",
+          "pilot_skills": [
+            "skill2=5"
+          ],
+          "health_power": 0,
+          "reason": "bridge max_hp differed from saveData max_health",
+          "capture_hint": "hover/select the visible pilot panel when tactically safe"
+        }
+      ],
+      "mechs": [
+        {
+          "type": "ElectricMech",
+          "pos": "E4",
+          "hp": "5/5",
+          "weapon": "Chain Whip",
+          "status": "READY"
+        },
+        {
+          "type": "WallMech",
+          "pos": "E7",
+          "hp": "3/3",
+          "weapon": "Vice Fist",
+          "status": "READY"
+        },
+        {
+          "type": "RockartMech",
+          "pos": "D7",
+          "hp": "2/2",
+          "weapon": "Rock Launcher",
+          "status": "READY"
+        }
+      ],
+      "active_mechs": 3,
+      "enemies": [
+        {
+          "type": "Snowtank1",
+          "pos": "D4",
+          "hp": "1/1",
+          "target": " \u2192 E4"
+        },
+        {
+          "type": "Snowlaser1",
+          "pos": "E3",
+          "hp": "1/1",
+          "target": " \u2192 E4"
+        },
+        {
+          "type": "Starfish1",
+          "pos": "D5",
+          "hp": "2/2",
+          "target": " \u2192 D5"
+        },
+        {
+          "type": "Starfish2",
+          "pos": "F3",
+          "hp": "4/4",
+          "target": " \u2192 F3"
+        }
+      ],
+      "threatened_buildings": 0,
+      "targeted_tiles": 10,
+      "spawn_points": 0
+    }
+  }
+}

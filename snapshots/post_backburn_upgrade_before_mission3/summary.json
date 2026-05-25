@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-05-01T12:32:59.869228",
+  "label": "post_backburn_upgrade_before_mission3",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        1,
+        1
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hornet2",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Spider1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Snowtank2",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Snowart1",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 1
+    }
+  ]
+}

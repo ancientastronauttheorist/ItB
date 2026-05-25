@@ -1,0 +1,2746 @@
+{
+  "timestamp": "2026-05-17T12:25:52.469559",
+  "run_id": "20260517_105759_344",
+  "mission_index": 4,
+  "turn": 2,
+  "label": "solve",
+  "data": {
+    "schema_version": 1,
+    "simulator_version": 137,
+    "score": 99398.1904912789,
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "ElectricMech",
+        "move_to": [
+          3,
+          1
+        ],
+        "weapon": "Chain Whip",
+        "weapon_id": "Prime_Lightning",
+        "target": [
+          2,
+          1
+        ],
+        "description": "ElectricMech, move H3\u2192G5, fire Chain Whip at G6"
+      }
+    ],
+    "threats": 1,
+    "initial_building_threats": [
+      {
+        "target": [
+          5,
+          6
+        ],
+        "target_visual": "B3",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 2347,
+          "type": "Mosquito1",
+          "pos": [
+            5,
+            5
+          ],
+          "visual": "C3",
+          "hp": 2,
+          "max_hp": 2,
+          "weapon_id": "MosquitoAtk1",
+          "target": [
+            5,
+            6
+          ],
+          "target_visual": "B3",
+          "queued_target": [
+            5,
+            6
+          ],
+          "has_queued_attack": true
+        }
+      }
+    ],
+    "active_mechs": 1,
+    "spawn_points": [
+      [
+        6,
+        5
+      ]
+    ],
+    "search_stats": {
+      "elapsed_seconds": 0.002034902572631836,
+      "timed_out": false,
+      "permutations_tried": 1,
+      "total_permutations": 1,
+      "active_mech_count": 1
+    },
+    "weight_version": "v011",
+    "beam_mode": 0,
+    "beam_chain_score": null,
+    "candidate_count": 26,
+    "selected_candidate_rank": 0,
+    "selected_candidate_source": "top_k_safety",
+    "candidate_safety": [
+      {
+        "rank": 0,
+        "source": "top_k_safety",
+        "score": 99398.1904912789,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 1,
+        "source": "top_k_safety",
+        "score": 99398.1904912789,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "source": "top_k_safety",
+        "score": 96888.1904912789,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "source": "top_k_safety",
+        "score": 96888.1904912789,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "source": "top_k_safety",
+        "score": 96888.1904912789,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "source": "top_k_safety",
+        "score": 96888.1904912789,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "source": "top_k_safety",
+        "score": 96854.85715794557,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "source": "top_k_safety",
+        "score": 96854.85715794557,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "source": "top_k_safety",
+        "score": 96821.52382461225,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "source": "top_k_safety",
+        "score": 96821.52382461225,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "source": "top_k_safety",
+        "score": 96821.52382461225,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 11,
+        "source": "top_k_safety",
+        "score": 96821.52382461225,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 12,
+        "source": "top_k_safety",
+        "score": 96821.52382461225,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 13,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 14,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 15,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 16,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 17,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 18,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 19,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 20,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 21,
+        "source": "top_k_safety",
+        "score": 96788.19049127892,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 22,
+        "source": "top_k_safety",
+        "score": 96754.85715794559,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 23,
+        "source": "top_k_safety",
+        "score": 96754.85715794559,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 24,
+        "source": "top_k_safety",
+        "score": -50925.144630193674,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 3,
+            "predicted": 2
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 25,
+        "source": "top_k_safety",
+        "score": -74598.57321671075,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "mech_loss",
+          "blocking": true,
+          "losses": {
+            "mechs_alive": 1,
+            "mech_hp_total": 3
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 3,
+            "predicted": 2
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 7
+          }
+        ]
+      }
+    ],
+    "dirty_frontier": [
+      {
+        "label": "grid_loss",
+        "loss_signature": [
+          "grid_loss",
+          true,
+          false,
+          [
+            [
+              "building_hp_total",
+              1
+            ],
+            [
+              "grid_power",
+              1
+            ]
+          ]
+        ],
+        "count": 24,
+        "best_rank": 0,
+        "best_source": "top_k_safety",
+        "best_score": 99398.1904912789,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "grid_power": 1,
+          "building_hp_total": 1
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "label": "grid_and_mech_loss",
+        "loss_signature": [
+          "grid_and_mech_loss",
+          true,
+          false,
+          [
+            [
+              "building_hp_total",
+              1
+            ],
+            [
+              "grid_power",
+              1
+            ],
+            [
+              "mech_hp_total",
+              2
+            ],
+            [
+              "mechs_alive",
+              1
+            ]
+          ]
+        ],
+        "count": 1,
+        "best_rank": 24,
+        "best_source": "top_k_safety",
+        "best_score": -50925.144630193674,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "grid_power": 1,
+          "building_hp_total": 1,
+          "mechs_alive": 1,
+          "mech_hp_total": 2
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 9,
+            "predicted": 8
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 3,
+            "predicted": 2
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "label": "mech_loss",
+        "loss_signature": [
+          "mech_loss",
+          true,
+          false,
+          [
+            [
+              "mech_hp_total",
+              3
+            ],
+            [
+              "mechs_alive",
+              1
+            ]
+          ]
+        ],
+        "count": 1,
+        "best_rank": 25,
+        "best_source": "top_k_safety",
+        "best_score": -74598.57321671075,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "mechs_alive": 1,
+          "mech_hp_total": 3
+        },
+        "violations": [
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 3,
+            "predicted": 2
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 10,
+            "predicted": 7
+          }
+        ]
+      }
+    ],
+    "lookahead_frontier": [
+      {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": 0,
+        "candidate_source": "top_k_safety",
+        "candidate_score": 99398.1904912789,
+        "candidate_label": "grid_loss",
+        "candidate_losses": {
+          "grid_power": 1,
+          "building_hp_total": 1
+        },
+        "status": "OK",
+        "scenario_count": 3,
+        "scenario_results": [
+          {
+            "scenario": "heuristic_requeue",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 1,
+              "enemy_damage_dealt": 4,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 115130.47619047624,
+            "next_elapsed_seconds": 0.18780994415283203,
+            "next_actions": [
+              "WallMech, move E3\u2192C4, repair",
+              "RockartMech, fire Rock Launcher at C5",
+              "ElectricMech, move G5\u2192D5, fire Chain Whip at C5"
+            ],
+            "next_plan_safety": {
+              "status": "WARN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "warning",
+                "blocking": false,
+                "losses": {
+                  "mech_hp_total": 2
+                },
+                "non_overridable": false
+              },
+              "violations": [
+                {
+                  "kind": "mech_hp_loss",
+                  "current": 10,
+                  "predicted": 8,
+                  "blocking": false
+                }
+              ]
+            }
+          },
+          {
+            "scenario": "retarget_building_uid2346_4_2",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 1,
+              "enemy_damage_dealt": 4,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 117263.80952380957,
+            "next_elapsed_seconds": 0.183974027633667,
+            "next_actions": [
+              "WallMech, move E3\u2192C4, repair",
+              "RockartMech, fire Rock Launcher at C5",
+              "ElectricMech, move G5\u2192D5, fire Chain Whip at C5"
+            ],
+            "next_plan_safety": {
+              "status": "WARN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "warning",
+                "blocking": false,
+                "losses": {
+                  "mech_hp_total": 2
+                },
+                "non_overridable": false
+              },
+              "violations": [
+                {
+                  "kind": "mech_hp_loss",
+                  "current": 10,
+                  "predicted": 8,
+                  "blocking": false
+                }
+              ]
+            }
+          },
+          {
+            "scenario": "retarget_building_uid2327_4_2",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 1,
+              "enemy_damage_dealt": 4,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 117263.80952380957,
+            "next_elapsed_seconds": 0.18534493446350098,
+            "next_actions": [
+              "WallMech, move E3\u2192C4, repair",
+              "RockartMech, fire Rock Launcher at C5",
+              "ElectricMech, move G5\u2192D5, fire Chain Whip at C5"
+            ],
+            "next_plan_safety": {
+              "status": "WARN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "warning",
+                "blocking": false,
+                "losses": {
+                  "mech_hp_total": 2
+                },
+                "non_overridable": false
+              },
+              "violations": [
+                {
+                  "kind": "mech_hp_loss",
+                  "current": 10,
+                  "predicted": 8,
+                  "blocking": false
+                }
+              ]
+            }
+          }
+        ],
+        "worst_scenario": "heuristic_requeue",
+        "projected_turn": 3,
+        "projected_action_result": {
+          "buildings_damaged": 0,
+          "buildings_lost": 0,
+          "enemies_killed": 1,
+          "enemy_damage_dealt": 4,
+          "grid_damage": 0,
+          "mech_damage_taken": 0,
+          "mechs_killed": 0,
+          "pods_collected": 0,
+          "repair_platforms_used": 0,
+          "spawns_blocked": 0
+        },
+        "next_score": 115130.47619047624,
+        "next_actions": [
+          "WallMech, move E3\u2192C4, repair",
+          "RockartMech, fire Rock Launcher at C5",
+          "ElectricMech, move G5\u2192D5, fire Chain Whip at C5"
+        ],
+        "next_plan_safety": {
+          "status": "WARN",
+          "blocking": false,
+          "loss_profile": {
+            "label": "warning",
+            "blocking": false,
+            "losses": {
+              "mech_hp_total": 2
+            },
+            "non_overridable": false
+          },
+          "violations": [
+            {
+              "kind": "mech_hp_loss",
+              "current": 10,
+              "predicted": 8,
+              "blocking": false
+            }
+          ]
+        },
+        "robust_summary": {
+          "candidate_label": "grid_loss",
+          "candidate_rank": 0,
+          "candidate_source": "top_k_safety",
+          "candidate_score": 99398.1904912789,
+          "candidate_losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "scenario_count": 3,
+          "worst_scenario": "heuristic_requeue",
+          "next_score": 115130.47619047624,
+          "next_loss_label": "warning",
+          "robust_status": "clean",
+          "robust_score": 214528.66668175516
+        }
+      },
+      {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": 24,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -50925.144630193674,
+        "candidate_label": "grid_and_mech_loss",
+        "candidate_losses": {
+          "grid_power": 1,
+          "building_hp_total": 1,
+          "mechs_alive": 1,
+          "mech_hp_total": 2
+        },
+        "status": "OK",
+        "scenario_count": 3,
+        "scenario_results": [
+          {
+            "scenario": "heuristic_requeue",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 4,
+              "mechs_killed": 1,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 111413.80952380956,
+            "next_elapsed_seconds": 0.001394033432006836,
+            "next_actions": [
+              "ElectricMech, fire Chain Whip at G6",
+              "WallMech"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid2326_4_1",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 4,
+              "mechs_killed": 1,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 113197.14285714287,
+            "next_elapsed_seconds": 0.0015139579772949219,
+            "next_actions": [
+              "WallMech, move E3\u2192E5, fire Grappling Hook at G5",
+              "ElectricMech, move F5\u2192D4, fire Chain Whip at D3"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid2326_4_2",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 4,
+              "mechs_killed": 1,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 113197.14285714287,
+            "next_elapsed_seconds": 0.0014121532440185547,
+            "next_actions": [
+              "WallMech, move E3\u2192E5, fire Grappling Hook at G5",
+              "ElectricMech, move F5\u2192D4, fire Chain Whip at D3"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          }
+        ],
+        "worst_scenario": "heuristic_requeue",
+        "projected_turn": 3,
+        "projected_action_result": {
+          "buildings_damaged": 0,
+          "buildings_lost": 0,
+          "enemies_killed": 0,
+          "enemy_damage_dealt": 0,
+          "grid_damage": 0,
+          "mech_damage_taken": 4,
+          "mechs_killed": 1,
+          "pods_collected": 0,
+          "repair_platforms_used": 0,
+          "spawns_blocked": 0
+        },
+        "next_score": 111413.80952380956,
+        "next_actions": [
+          "ElectricMech, fire Chain Whip at G6",
+          "WallMech"
+        ],
+        "next_plan_safety": {
+          "status": "CLEAN",
+          "blocking": false,
+          "loss_profile": {
+            "label": "clean",
+            "blocking": false,
+            "losses": {},
+            "non_overridable": false
+          },
+          "violations": []
+        },
+        "robust_summary": {
+          "candidate_label": "grid_and_mech_loss",
+          "candidate_rank": 24,
+          "candidate_source": "top_k_safety",
+          "candidate_score": -50925.144630193674,
+          "candidate_losses": {
+            "grid_power": 1,
+            "building_hp_total": 1,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "scenario_count": 3,
+          "worst_scenario": "heuristic_requeue",
+          "next_score": 111413.80952380956,
+          "next_loss_label": "clean",
+          "robust_status": "clean",
+          "robust_score": 60488.66489361588
+        }
+      },
+      {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": 25,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -74598.57321671075,
+        "candidate_label": "mech_loss",
+        "candidate_losses": {
+          "mechs_alive": 1,
+          "mech_hp_total": 3
+        },
+        "status": "OK",
+        "scenario_count": 3,
+        "scenario_results": [
+          {
+            "scenario": "heuristic_requeue",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 2,
+              "enemy_damage_dealt": 8,
+              "grid_damage": 0,
+              "mech_damage_taken": 4,
+              "mechs_killed": 1,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 117818.09523809525,
+            "next_elapsed_seconds": 0.002310037612915039,
+            "next_actions": [
+              "ElectricMech, move F2\u2192E2",
+              "RockartMech, move F5\u2192D6, fire Rock Launcher at G6"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid2326_4_1",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 2,
+              "enemy_damage_dealt": 8,
+              "grid_damage": 0,
+              "mech_damage_taken": 4,
+              "mechs_killed": 1,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 119228.09523809525,
+            "next_elapsed_seconds": 0.0020341873168945312,
+            "next_actions": [
+              "ElectricMech",
+              "RockartMech, move F5\u2192E4, fire Rock Launcher at B4"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid2326_4_2",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 2,
+              "enemy_damage_dealt": 8,
+              "grid_damage": 0,
+              "mech_damage_taken": 4,
+              "mechs_killed": 1,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 119228.09523809525,
+            "next_elapsed_seconds": 0.0019690990447998047,
+            "next_actions": [
+              "ElectricMech",
+              "RockartMech, move F5\u2192E4, fire Rock Launcher at B4"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          }
+        ],
+        "worst_scenario": "heuristic_requeue",
+        "projected_turn": 3,
+        "projected_action_result": {
+          "buildings_damaged": 0,
+          "buildings_lost": 0,
+          "enemies_killed": 2,
+          "enemy_damage_dealt": 8,
+          "grid_damage": 0,
+          "mech_damage_taken": 4,
+          "mechs_killed": 1,
+          "pods_collected": 0,
+          "repair_platforms_used": 0,
+          "spawns_blocked": 0
+        },
+        "next_score": 117818.09523809525,
+        "next_actions": [
+          "ElectricMech, move F2\u2192E2",
+          "RockartMech, move F5\u2192D6, fire Rock Launcher at G6"
+        ],
+        "next_plan_safety": {
+          "status": "CLEAN",
+          "blocking": false,
+          "loss_profile": {
+            "label": "clean",
+            "blocking": false,
+            "losses": {},
+            "non_overridable": false
+          },
+          "violations": []
+        },
+        "robust_summary": {
+          "candidate_label": "mech_loss",
+          "candidate_rank": 25,
+          "candidate_source": "top_k_safety",
+          "candidate_score": -74598.57321671075,
+          "candidate_losses": {
+            "mechs_alive": 1,
+            "mech_hp_total": 3
+          },
+          "scenario_count": 3,
+          "worst_scenario": "heuristic_requeue",
+          "next_score": 117818.09523809525,
+          "next_loss_label": "clean",
+          "robust_status": "clean",
+          "robust_score": 43219.5220213845
+        }
+      }
+    ],
+    "robust_frontier": [
+      {
+        "candidate_label": "grid_loss",
+        "candidate_rank": 0,
+        "candidate_source": "top_k_safety",
+        "candidate_score": 99398.1904912789,
+        "candidate_losses": {
+          "grid_power": 1,
+          "building_hp_total": 1
+        },
+        "scenario_count": 3,
+        "worst_scenario": "heuristic_requeue",
+        "next_score": 115130.47619047624,
+        "next_loss_label": "warning",
+        "robust_status": "clean",
+        "robust_score": 214528.66668175516
+      },
+      {
+        "candidate_label": "grid_and_mech_loss",
+        "candidate_rank": 24,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -50925.144630193674,
+        "candidate_losses": {
+          "grid_power": 1,
+          "building_hp_total": 1,
+          "mechs_alive": 1,
+          "mech_hp_total": 2
+        },
+        "scenario_count": 3,
+        "worst_scenario": "heuristic_requeue",
+        "next_score": 111413.80952380956,
+        "next_loss_label": "clean",
+        "robust_status": "clean",
+        "robust_score": 60488.66489361588
+      },
+      {
+        "candidate_label": "mech_loss",
+        "candidate_rank": 25,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -74598.57321671075,
+        "candidate_losses": {
+          "mechs_alive": 1,
+          "mech_hp_total": 3
+        },
+        "scenario_count": 3,
+        "worst_scenario": "heuristic_requeue",
+        "next_score": 117818.09523809525,
+        "next_loss_label": "clean",
+        "robust_status": "clean",
+        "robust_score": 43219.5220213845
+      }
+    ],
+    "safety_widening": [
+      {
+        "source": "top_k_safety",
+        "candidate_count": 26,
+        "ignored_soft_disables": false
+      }
+    ],
+    "action_results": [
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 4,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "repair_platforms_used": 0,
+        "spawns_blocked": 0
+      }
+    ],
+    "predicted_states": [
+      {
+        "post_attack": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 0,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": true,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 1
+            },
+            {
+              "acid": true,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 0
+            },
+            {
+              "acid": true,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": true,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 0
+            },
+            {
+              "acid": true,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": true,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            },
+            {
+              "acid": true,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 2
+            },
+            {
+              "acid": true,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": true,
+              "terrain": "building",
+              "x": 5,
+              "y": 6
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                3,
+                1
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                3,
+                2
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": -1,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                2,
+                1
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Storm_Generator",
+              "uid": 2326
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 2327
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 2,
+              "type": "RockThrown",
+              "uid": 2348
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                5,
+                4
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion1",
+              "uid": 2346
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Mosquito1",
+              "uid": 2347
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                5,
+                2
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 2,
+              "type": "RockThrown",
+              "uid": 2350
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 0,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": true,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 1
+            },
+            {
+              "acid": true,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": true,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 3,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 0
+            },
+            {
+              "acid": true,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": true,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            },
+            {
+              "acid": true,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 2
+            },
+            {
+              "acid": true,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": true,
+              "terrain": "building",
+              "x": 5,
+              "y": 6
+            }
+          ],
+          "units": [
+            {
+              "active": true,
+              "alive": true,
+              "hp": 5,
+              "is_mech": true,
+              "max_hp": 5,
+              "pos": [
+                3,
+                1
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ElectricMech",
+              "uid": 0
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "WallMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                3,
+                2
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RockartMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                2,
+                1
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Storm_Generator",
+              "uid": 2326
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 2327
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 2,
+              "type": "RockThrown",
+              "uid": 2348
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                5,
+                4
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion1",
+              "uid": 2346
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                5
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Mosquito1",
+              "uid": 2347
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                5,
+                2
+              ],
+              "status": {
+                "acid": true,
+                "boosted": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 2,
+              "type": "RockThrown",
+              "uid": 2350
+            }
+          ]
+        }
+      }
+    ],
+    "replay_annotations": [],
+    "current_outcome": {
+      "buildings_alive": 6,
+      "building_hp_total": 9,
+      "pylons_alive": null,
+      "pylon_hp_total": null,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 0,
+      "grid_power": 6,
+      "enemies_alive": 4,
+      "enemy_hp_total": 10,
+      "mechs_alive": 3,
+      "mech_hp_total": 10,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "hp": 5,
+          "max_hp": 5
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "mechs_acid": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "pos": [
+            5,
+            0
+          ]
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "pos": [
+            5,
+            3
+          ]
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "pos": [
+            3,
+            2
+          ]
+        }
+      ],
+      "mechs_fire": [],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_AcidStorm",
+      "turn": 2,
+      "total_turns": 4,
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0
+    },
+    "predicted_outcome": {
+      "building_hp_total": 8,
+      "buildings_alive": 6,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 3,
+      "enemy_hp_total": 7,
+      "grid_power": 5,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 5,
+          "type": "ElectricMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "WallMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "RockartMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 3,
+      "bigbomb_alive": false
+    },
+    "predicted_board_summary": {
+      "buildings_alive": 6,
+      "building_hp_total": 8,
+      "pylons_alive": null,
+      "pylon_hp_total": null,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 0,
+      "grid_power": 5,
+      "enemies_alive": 3,
+      "enemy_hp_total": 7,
+      "mechs_alive": 3,
+      "mech_hp_total": 10,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 5,
+          "type": "ElectricMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "WallMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "RockartMech",
+          "uid": 2
+        }
+      ],
+      "mechs_acid": [
+        {
+          "uid": 0,
+          "type": "ElectricMech",
+          "pos": [
+            3,
+            1
+          ]
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "pos": [
+            5,
+            3
+          ]
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "pos": [
+            3,
+            2
+          ]
+        }
+      ],
+      "mechs_fire": [],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_AcidStorm",
+      "turn": 2,
+      "total_turns": 4,
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0,
+      "buildings_destroyed_by_enemies": 0,
+      "pods_collected": 0
+    },
+    "plan_safety": {
+      "status": "DIRTY",
+      "blocking": true,
+      "violations": [
+        {
+          "kind": "grid_damage",
+          "current": 6,
+          "predicted": 5,
+          "blocking": true,
+          "message": "Predicted grid power drops before the next player turn.",
+          "delta": -1
+        },
+        {
+          "kind": "building_hp_loss",
+          "current": 9,
+          "predicted": 8,
+          "blocking": true,
+          "message": "Predicted outcome loses building HP even if grid power stays visible.",
+          "delta": -1
+        }
+      ],
+      "compared": [
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "pods_present",
+        "mechs_alive",
+        "mech_hp_total",
+        "mechs_acid",
+        "mechs_fire",
+        "mechs_webbed",
+        "mechs_on_danger",
+        "mechs_disabled",
+        "bigbomb_alive",
+        "protected_objective_units_alive"
+      ],
+      "current": {
+        "mission_id": "Mission_AcidStorm",
+        "turn": 2,
+        "total_turns": 4,
+        "grid_power": 6,
+        "buildings_alive": 6,
+        "building_hp_total": 9,
+        "pylons_alive": null,
+        "pylon_hp_total": null,
+        "objective_buildings_alive": 0,
+        "objective_building_hp_total": 0,
+        "pods_present": 0,
+        "mechs_alive": 3,
+        "mech_hp_total": 10,
+        "mechs_acid": [
+          {
+            "uid": 0,
+            "type": "ElectricMech",
+            "pos": [
+              5,
+              0
+            ]
+          },
+          {
+            "uid": 1,
+            "type": "WallMech",
+            "pos": [
+              5,
+              3
+            ]
+          },
+          {
+            "uid": 2,
+            "type": "RockartMech",
+            "pos": [
+              3,
+              2
+            ]
+          }
+        ],
+        "mechs_fire": [],
+        "mechs_webbed": [],
+        "mechs_on_danger": [],
+        "mechs_disabled": [],
+        "bigbomb_alive": false,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      },
+      "predicted": {
+        "mission_id": "Mission_AcidStorm",
+        "turn": 2,
+        "total_turns": 4,
+        "grid_power": 5,
+        "buildings_alive": 6,
+        "building_hp_total": 8,
+        "pylons_alive": null,
+        "pylon_hp_total": null,
+        "objective_buildings_alive": 0,
+        "objective_building_hp_total": 0,
+        "pods_present": 0,
+        "mechs_alive": 3,
+        "mech_hp_total": 10,
+        "mechs_acid": [
+          {
+            "uid": 0,
+            "type": "ElectricMech",
+            "pos": [
+              3,
+              1
+            ]
+          },
+          {
+            "uid": 1,
+            "type": "WallMech",
+            "pos": [
+              5,
+              3
+            ]
+          },
+          {
+            "uid": 2,
+            "type": "RockartMech",
+            "pos": [
+              3,
+              2
+            ]
+          }
+        ],
+        "mechs_fire": [],
+        "mechs_webbed": [],
+        "mechs_on_danger": [],
+        "mechs_disabled": [],
+        "bigbomb_alive": false,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      }
+    },
+    "score_breakdown": {
+      "total": 102088.39285714286,
+      "grid_multiplier": 1.0,
+      "bld_mult": 1.1428571428571428,
+      "buildings_alive": {
+        "count": 6,
+        "score": 68571.42857142857
+      },
+      "building_hp": {
+        "total": 8,
+        "score": 18285.714285714286
+      },
+      "objective_rep": {
+        "count": 0,
+        "score": 0.0
+      },
+      "objective_grid": {
+        "count": 0,
+        "score": 0.0
+      },
+      "grid_power": {
+        "value": 5,
+        "effective": 5.0,
+        "expected_save": 0.0,
+        "expected_save_player": 0.0,
+        "score": 21800.0
+      },
+      "enemies_killed": {
+        "count": 1,
+        "score": 700.0000000000001
+      },
+      "mission_kill_bonus": {
+        "target": 0,
+        "done_pre_turn": 0,
+        "kills_this_turn": 1,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "mission_repair_bonus": {
+        "target": 0,
+        "used": 0,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "mission_terraform_grass": {
+        "remaining": 0,
+        "score": 0.0
+      },
+      "enemy_hp_remaining": {
+        "total": 7,
+        "score": -542.5
+      },
+      "mission_unit_objectives": {
+        "destroy_dead": 0,
+        "destroy_alive": 0,
+        "destroy_shielded": 0,
+        "protect_alive": 0,
+        "protect_dead": 0,
+        "score": 0
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 3,
+        "dead": 0,
+        "total_hp": 10,
+        "score": 773.75
+      },
+      "spawns_blocked": {
+        "count": 0,
+        "score": 0.0
+      },
+      "remaining_spawns": {
+        "count": 1,
+        "score": -7500.0
+      },
+      "pods": {
+        "uncollected": 0,
+        "proximity": 0,
+        "score": 0.0
+      }
+    }
+  }
+}

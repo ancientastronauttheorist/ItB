@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-05-04T21:59:41.724109",
+  "run_id": "20260504_210332_088",
+  "mission_index": 1,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "building_lost_unexpected",
+        "tier": 1,
+        "severity": "critical",
+        "details": "Predicted 8 buildings, actual 7 (-1)"
+      },
+      {
+        "trigger": "grid_power_drop_unexpected",
+        "tier": 1,
+        "severity": "high",
+        "details": "Predicted grid 6, actual 5 (-1)"
+      }
+    ],
+    "trigger_count": 2,
+    "severity_counts": {
+      "critical": 1,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}

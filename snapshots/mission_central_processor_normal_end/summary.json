@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-04T21:21:58.361473",
+  "label": "mission_central_processor_normal_end",
+  "turn": 4,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "WallMech",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hacked_Building",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Moth2",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Jelly_Boost1",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

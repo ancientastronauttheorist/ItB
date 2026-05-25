@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-08T19:51:56.020893",
+  "label": "research_gate_m11_turn01_burrower2",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Burrower2",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Mosquito2",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    }
+  ]
+}

@@ -8,14 +8,35 @@ evaluation weights when targeting that achievement.
 
 ## Already Completed
 
+- [x] Island Secure (75.1%) -- Complete the first Corporate Island with the Rift Walkers squad
+- [x] Field Promotion (73.2%) -- Have a Pilot reach maximum level
 - [x] Victory (50.1%) -- Beat the game (any length)
 - [x] Watery Grave (68.1%) -- Drown 3 enemies in water in a single battle (Rift Walkers)
 - [x] Emerging Technologies (63.6%) -- Unlock a new Mech Squad
 - [x] Perfect Island (61.3%) -- Do not fail any objective on a single Corporate Island
 - [x] The Defenders (49.8%) -- Finish a Corporate Island without taking Building Damage
+- [x] Friends in High Places (49.8%) -- Spend 50 Reputation across all games
+- [x] Come Together (44.7%) -- Unlock 6 additional Pilots
+- [x] Good Samaritan (41.7%) -- Earn 9 Reputation from missions on a single Corporate Island
 - [x] Immovable Objects (41.7%) -- Block 100 Vek across all games (cumulative)
 - [x] Sustainable Energy (39.1%) -- Finish 3 Corporate Islands without dropping below 4 Grid Power
-- [x] Plus 2 more (likely Island Secure and Field Promotion -- verify with user)
+- [x] Humanity's Savior (27.8%) -- Rescue 100,000 civilians across all games
+- [x] Perfect Strategy (23.3%) -- Collect 10 Perfect Island rewards across all games
+- [x] There is No Try (20.2%) -- Finish 3 Corporate Islands without failing an objective
+- [x] Adaptable Victory (18.8%) -- Beat the game at each island length: 2, 3, and 4 Corporate Islands secured
+- [x] Mass Displacement (23.0%) -- Push 3 enemies with single attack (Steel Judoka)
+- [x] Scorched Earth (20.5%) -- End battle with 12 tiles on Fire (Flame Behemoths)
+- [x] This is Fine (15.7%) -- Have 5 enemies on Fire simultaneously (Flame Behemoths)
+- [x] Cryo Expert (16.9%) -- Shoot Cryo-Launcher 4 times in one battle (Frozen Titans)
+- [x] Pacifist (16.6%) -- Kill less than 3 enemies in a battle (Frozen Titans)
+- [x] Stormy Weather (15.4%) -- 12 Electric Smoke damage in one battle (Rusting Hulks)
+- [x] Healing (15.1%) -- Heal 10 Mech Health in a single battle (Hazardous Mechs)
+- [x] Untouchable (14.5%) -- Finish a Corporate Island without taking Mech Damage
+- [x] Unwitting Allies (14.2%) -- 4 enemies die from enemy fire (Steel Judoka)
+- [x] Overkill (12.6%) -- Deal 8 damage to a unit with a single attack (Hazardous Mechs)
+- [x] Unbreakable (10.2%) -- Mech Armor absorbs 5 damage in one battle (Steel Judoka)
+- [x] Hard Victory (9.0%) -- Beat the game on Hard
+- [x] Unstable Ground (7.9%) -- Crack 10 tiles in one mission (Cataclysm)
 
 ---
 
@@ -117,7 +138,7 @@ evaluation weights when targeting that achievement.
 - **Requirement:** Kill an enemy 5 or more tiles away with a Dash Punch with the Rift Walkers squad.
 - **Squad:** Rift Walkers (required)
 - **Strategy:** The Combat Mech's Titan Fist has a Dash upgrade that lets it charge any distance before punching. The mech must start 5+ tiles away from the target and dash to kill it. Target must die from the punch (2 base damage).
-- **Bot approach:** Requires Dash upgrade on Titan Fist (1 reactor core). The solver should look for enemies with 2 HP or less that are 5+ tiles in a straight line from the Combat Mech. Heavily reward this scenario.
+- **Bot approach:** Requires Dash upgrade on Titan Fist (2 reactor cores per shipped Lua). The solver should look for enemies with 2 HP or less that are 5+ tiles in a straight line from the Combat Mech. Heavily reward this scenario.
 - **Key weapons:** Titan Fist with Dash upgrade (Upgrade I)
 - **Ideal setup:** Normal difficulty, first island. Get Dash upgrade ASAP. Look for long open rows/columns.
 - **Estimated difficulty for bot:** Medium
@@ -142,6 +163,7 @@ evaluation weights when targeting that achievement.
 
 ### Perfect Strategy (23.3%)
 - **Requirement:** Collect 10 Perfect Island rewards across all games (cumulative).
+- **Status:** Completed on 2026-05-19 after Rusting Hulks secured an Archive Inc. Perfect Island in run `20260518_215903_654`.
 - **Squad:** Any
 - **Strategy:** A Perfect Island reward is given when no objectives are failed on an entire island. Play clean islands across runs.
 - **Bot approach:** Weight bonus objectives highly. The bot's standard play should aim for perfect islands.
@@ -184,6 +206,7 @@ evaluation weights when targeting that achievement.
 
 ### There is No Try (20.2%)
 - **Requirement:** Finish 3 Corporate Islands without failing an objective.
+- **Status:** Completed on 2026-05-19 with Rusting Hulks on Easy in run `20260519_154655_297`; Steam sync confirmed 35/70 after save-quit-reopen.
 - **Squad:** Any
 - **Strategy:** Complete 3 islands in a single run without failing any bonus or main objective. This is like getting 3 Perfect Islands in one run. Requires consistently clean play.
 - **Bot approach:** Weight bonus objectives very highly -- treat them almost like building protection. The solver must never sacrifice an objective.
@@ -204,9 +227,10 @@ evaluation weights when targeting that achievement.
 
 ### Adaptable Victory (18.8%)
 - **Requirement:** Beat the game at least once at each length: 2, 3, and 4 islands secured (cumulative).
+- **Status:** Completed on 2026-05-19 with Rusting Hulks on Easy in run `20260519_200933_351`; Steam sync confirmed 36/70. Prior logs/profile state already covered 3- and 4-island victories, so the missing length was a 2-island win.
 - **Squad:** Any
 - **Strategy:** Complete one run at each length. 2-island is the shortest/easiest. 4-island is the longest but gives more upgrades.
-- **Bot approach:** Run-level planner tracks which lengths have been completed. Select the next unfinished length.
+- **Bot approach:** Run-level planner tracks which lengths have been completed. Select the next unfinished length; when chasing the 2-island leg, secure exactly 2 Corporate Islands, skip any third Corporate Island, and go directly to Volcanic Hive.
 - **Ideal setup:** Normal difficulty. Do 2-island first (easiest), then 3, then 4.
 - **Estimated difficulty for bot:** Medium (requires 3 victories)
 
@@ -221,10 +245,11 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### Quantum Entanglement (16.6%)
+- **Status:** Completed on 2026-05-20 with Flame Behemoths on Easy in run `20260520_134643_900`; Steam sync confirmed 37/70. Decisive line: mission 14 turn 4, `TeleMech, move B3->B5, fire Teleporter at F5`, using `Science_Swap_AB` for an exact four-tile cardinal swap from B5 to F5.
 - **Requirement:** Teleport a unit 4 tiles away with the Flame Behemoths squad.
 - **Squad:** Flame Behemoths (required)
-- **Strategy:** The Swap Mech's Teleporter swaps its position with a target. Base range is adjacent only. Upgrade I adds +1 range (2 tiles), Upgrade II adds +2 more (4 tiles total). With both upgrades, swap with a unit 4 tiles away.
-- **Bot approach:** Requires both Teleporter range upgrades (3 reactor cores for science weapon). Once upgraded, find any unit 4 tiles away and swap. The solver should heavily reward using Teleporter at max range.
+- **Strategy:** The Swap Mech's Teleporter swaps its position with a target. Base range is adjacent only. Upgrade I adds +1 range (2 tiles), Upgrade II adds +2 more (4 tiles total). With both upgrades, swap with a unit exactly 4 tiles away along a cardinal line.
+- **Bot approach:** Requires both Teleporter range upgrades (3 reactor cores for science weapon). The save overlay must expose `Science_Swap_AB`, Rust must enumerate only cardinal-line targets, and bridge execution must fire the upgraded effective weapon ID. Once upgraded, reward four-tile cardinal swaps heavily but keep normal safety gates for timeline, pods, objective units, and non-overridable losses.
 - **Key weapons:** Teleporter with both range upgrades (+1 Range, +2 Range)
 - **Ideal setup:** Normal difficulty, second island (need time to get 3 reactor cores for upgrades). Any mission once fully upgraded.
 - **Estimated difficulty for bot:** Medium
@@ -239,6 +264,7 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### This is Fine (15.7%)
+- **Status:** Completed on 2026-05-21 with Flame Behemoths on Easy in run `20260520_174936_811`; live achievement toast observed during the R.S.T. Black Rock / `Mission_Crack` fire-spread push. The 2026-05-21 Steam/client sync reconciled the checklist to 39/70.
 - **Requirement:** Have 5 enemies on Fire simultaneously with the Flame Behemoths squad.
 - **Squad:** Flame Behemoths (required)
 - **Strategy:** Set enemies on fire using Flame Thrower and Vulcan Artillery. Need 5+ enemies alive and on fire at the same time. Do not kill burning enemies. Later missions with more enemies (4-5 at once) plus emerging Vek make this possible. Ignite tiles where Vek are emerging so they spawn on fire.
@@ -248,21 +274,24 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium-Hard
 
 ### Stormy Weather (15.4%)
+- **Status:** Completed 2026-05-16 during Rusting Hulks run `20260513_230944_542`.
 - **Requirement:** Deal 12 damage with Electric Smoke in a single battle with the Rusting Hulks squad.
 - **Squad:** Rusting Hulks (required)
 - **Strategy:** The Storm Generator passive makes smoke deal 1 damage (2 with upgrade) to enemies each turn. Spread smoke aggressively over multiple turns. Each enemy standing in smoke takes damage at the start of their turn. Need to accumulate 12 total smoke damage in one 5-turn battle.
-- **Bot approach:** Maximize smoke coverage on enemy tiles. The solver should prioritize placing smoke on enemies even over killing them. Track total smoke damage. Upgrade Storm Generator (+1 damage) to need fewer instances.
+- **Bot approach:** Maximize smoke coverage on enemy tiles and let smoke ticks finish low-HP enemies when grid/objectives are safe. Track total smoke damage. Upgrade Storm Generator (+1 damage) to need fewer instances.
 - **Key weapons:** Storm Generator (passive, upgraded to +1 damage), Aerial Bombs (Jet Mech, creates smoke), Rocket Artillery (creates smoke behind shooter)
 - **Ideal setup:** Normal difficulty, second or third island with more enemies. Upgrade Storm Generator first. +1 Range on Jet Mech helps cover more enemies.
 - **Estimated difficulty for bot:** Medium
 
 ### Healing (15.1%)
+- **Status:** Completed in Hazardous Mechs Easy run `20260522_193613_471`; Steam/client sync confirmed on 2026-05-24 after Steam was brought online and Into the Breach restarted.
 - **Requirement:** Heal 10 Mech Health in a single battle with the Hazardous Mechs squad.
 - **Squad:** Hazardous Mechs (required)
 - **Strategy:** Viscera Nanobots heals mechs 1 (or 2 with upgrade) HP per killing blow. The Leap Mech and Unstable Mech both deal self-damage every attack. Intentionally take self-damage, then heal by getting kills. Need 10 total healing in one battle. With +1 Heal upgrade, need 5 kills that heal. Without upgrade, need 10 kill-heals.
-- **Bot approach:** Encourage self-damage attacks and then killing blows. The solver should track total healing in the battle and prioritize getting kills with damaged mechs. Upgrade +1 Heal on Viscera Nanobots first.
+- **Bot approach:** Encourage self-damage attacks and then killing blows. The solver should track total healing in the battle and prioritize getting kills with damaged mechs. Upgrade +1 Heal on Viscera Nanobots first. Expect lower-scoring lines to be correct for this target: clean threat resolution alone may under-farm healing.
 - **Key weapons:** Hydraulic Legs (self-damage + area damage), Unstable Cannon (self-damage + target damage), Viscera Nanobots (passive, upgrade +1 Heal)
 - **Ideal setup:** Normal difficulty, second island with enough enemies. Keep attacking even when taking self-damage to maximize heal cycles.
+- **Successful run notes:** Run `20260522_193613_471` stacked Hazardous HP upgrades, powered `Passive_Leech_A`, and repeated Leap/Unstable kill-heal loops. Several simulator gaps surfaced because the run deliberately leaned into self-damage, ACID, ice, lava, corpse-push, and Nanobots timing; they were patched through simulator v224 before the final victory. The achievement did not reconcile while Steam was offline, then appeared after going online and restarting the game.
 - **Estimated difficulty for bot:** Medium
 
 ### Glittering C-Beam (14.8%)
@@ -276,12 +305,13 @@ evaluation weights when targeting that achievement.
 
 ### Untouchable (14.5%)
 - **Requirement:** Finish a Corporate Island without taking Mech Damage. Repaired damage still counts.
-- **Squad:** Any (Rusting Hulks recommended -- smoke prevents attacks)
-- **Strategy:** No mech can take any damage across an entire island (3-4 missions). Use smoke, shields, and pushing to prevent all damage to mechs. Avoid using self-damage weapons.
-- **Bot approach:** Set mech_damage weight to maximum. The solver should never allow mech damage, treating it as almost as bad as building damage. Prefer smoke/shield/push over direct combat.
-- **Key weapons:** Smoke weapons (Rusting Hulks), Shield Projector (Zenith Guard)
-- **Key pilots:** Mafan (Zoltan Shield absorbs 1 hit per turn)
-- **Ideal setup:** Normal difficulty, first island (fewer enemies). Rusting Hulks with smoke on every enemy every turn.
+- **Squad:** Frozen Titans succeeded on Easy in run `20260522_133722_695`; Rusting Hulks remain a strong alternative because smoke cancels attacks.
+- **Strategy:** No mech HP may go down across the island. Building, grid, failed bonus objective, and pod losses can be acceptable if they preserve mech HP and leave enough grid to finish. Use shields, freeze/smoke, pushes, and target denial before direct damage. Avoid self-damaging weapons and avoid mission slates with forced mech pressure.
+- **Bot approach:** Treat `mech_hp_loss` as a hard block. For this achievement only, manual lower-scoring lines are allowed after fresh-board review when they project zero mech HP loss, zero mech death, no dangerous status debt, and grid remains 2+. Dirty consent may accept reviewed grid/building/objective loss, but never mech HP loss. Run `auto_turn --time-limit 10` first and override only on safety blocks or missing solver lines.
+- **Key weapons:** Frozen Titans' Spartan Shield, Mirror Shot, and Cryo-Launcher; Rusting Hulks smoke weapons; Shield Projector if available. Shielded hits are fine when HP does not move.
+- **Key pilots:** Mafan/Bethany-style shields are ideal. Abe's armor helps against weapon damage but does not protect from bump, fire, acid-amplified, blocking, or environmental damage.
+- **Mission selection:** Prefer Easy Island 1 survive/defense maps. Avoid Mite / Old Earth mine missions, Bad Repairs, volatile Vek, trains, tidal waves, earthquake/chasm chaos, webber-heavy islands, frozen-building traps, and maps with non-controllable allies that can force awkward body-blocking.
+- **Successful run notes:** Frozen Titans on Easy cleared Archive in run `20260522_133722_695`; the game awarded **Untouchable** after Corporate HQ with grid `6/7`, proving grid/building damage is acceptable when mech HP stays full. The Steam client cache still reported 39/70 immediately afterward, so visible in-game achievement popups may lead local sync.
 - **Estimated difficulty for bot:** Medium-Hard
 
 ### Unwitting Allies (14.2%)
@@ -303,6 +333,7 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Hard (requires 4 simultaneous spawns, which is situational)
 
 ### Overkill (12.6%)
+- **Status:** Completed in Hazardous Mechs Easy run `20260522_193613_471`; Steam/client sync confirmed on 2026-05-24 after Steam was brought online and Into the Breach restarted. Recorded anchor: Volcanic Hive / `Mission_Final` turn 2, where `Brute_Unstable_AB` dealt 8 damage to an A.C.I.D.-tagged target.
 - **Requirement:** Deal 8 damage to a unit with a single attack with the Hazardous Mechs squad.
 - **Squad:** Hazardous Mechs (required)
 - **Strategy:** The Unstable Cannon deals 2 base + upgrades. With both damage upgrades (+1 each to self and target, +1 to target) it reaches 4 damage. Apply A.C.I.D. (doubles damage) with Nano Mech first, then shoot with Unstable Cannon for 8 damage. Alternatively, the Leap Mech can also reach high damage with A.C.I.D.
@@ -410,11 +441,12 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Hard
 
 ### Hard Victory (9.0%)
+- **Status:** Completed 2026-05-16 with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`.
 - **Requirement:** Beat the game on Hard difficulty (any length).
 - **Squad:** Any (strong squad recommended)
-- **Strategy:** Hard mode has more enemies, higher HP enemies, and tougher conditions. Play a strong squad (Rusting Hulks or Steel Judoka) and use the bot's optimal play.
-- **Bot approach:** Standard solver play but on Hard. May need stronger evaluation weights and deeper search. The solver should be more conservative with building protection.
-- **Ideal setup:** Hard difficulty, 2-island run for shortest path to victory. Rusting Hulks recommended (smoke negates enemy strength).
+- **Strategy:** Hard mode has more enemies, higher HP enemies, and tougher conditions. Play a strong squad (Rusting Hulks or Steel Judoka), protect grid early, and enter the Hive with enough cores/control to answer four-threat overloads.
+- **Bot approach:** Use the Hard safety stack: deep top-K frontier review on dirty turns, post-enemy audits before advancing, exact dirty-consent tokens, and final-cave resist-gamble handling only on the last bomb turn.
+- **Ideal setup:** Hard difficulty with Rusting Hulks remains strong, but prefer a 3-island run unless the 2-island kit is genuinely Hive-ready. The completed 2-island Rusting Hulks run won, but final cave turn 4 required the rank-493 resist line `Jet A3->A6/A4`, `Rocket F3->F1`, `Pulse E1->D5/D5` after no grid-positive candidate existed.
 - **Estimated difficulty for bot:** Hard
 
 ### Powered Blast (8.8%)
@@ -436,11 +468,12 @@ evaluation weights when targeting that achievement.
 - **Estimated difficulty for bot:** Medium
 
 ### Unstable Ground (7.9%)
+- **Status:** Completed on 2026-05-21 during Cataclysm run `20260521_120049_468`; Steam/client sync confirmed `Ach_Squad_Cataclysm_1` and brought the local checklist to 39/70.
 - **Requirement:** Crack 10 tiles in one mission with the Cataclysm squad.
 - **Squad:** Cataclysm (required)
-- **Strategy:** The Cataclysm squad specializes in cracking ground tiles. The Tectonic Mech's Seismic Slam cracks tiles, the Shrapnel Mech's Cluster Bombs crack tiles, and the Prospector Mech helps with positioning. Cracking 10 tiles in one 5-turn mission requires aggressive ground-cracking every turn.
-- **Bot approach:** The solver should maximize tiles cracked per turn. Weight cracked tiles heavily. Use all weapon actions to crack tiles even when not directly needed for Vek defense. [needs-verification: exact weapon mechanics for Cataclysm squad]
-- **Key weapons:** Seismic Slam (Tectonic Mech), Cluster Bombs (Shrapnel Mech), Prospector tools
+- **Strategy:** The Cataclysm squad specializes in cracking ground tiles. Seismic Capacitor cracks adjacent tiles when its target dies, Tri-Rocket cracks target lanes while pushing, and Hydraulic Lifter creates throw lines that let cracked terrain become kills or control.
+- **Bot approach:** The solver should still maximize useful cracked tiles early, especially when threat safety is already solved. Avoid wasting cracks on water/chasm-heavy maps, objective tiles, Time Pods, trains, or lines that make future pathing unsafe.
+- **Key weapons:** Seismic Capacitor (Drill Mech), Tri-Rocket (Triptych Mech), Hydraulic Lifter (Pitcher Mech)
 - **Ideal setup:** Normal difficulty, pick missions with lots of normal ground tiles (avoid water/chasm heavy maps).
 - **Estimated difficulty for bot:** Medium-Hard
 
@@ -598,7 +631,7 @@ Some achievements can be combined in a single run:
 - **Get Over Here** + **Shield Mastery** + **Glittering C-Beam** (all Zenith Guard, same run)
 - **Chain Attack** + **Hold the Line** + **Lightning War** (all Blitzkrieg, same run -- though Lightning War's time pressure conflicts with setup)
 - **Unbreakable** + **Unwitting Allies** + **Mass Displacement** (all Steel Judoka, same run)
-- **Quantum Entanglement** + **Scorched Earth** + **This is Fine** (all Flame Behemoths, same run)
+- **Quantum Entanglement** + **Scorched Earth** + **This is Fine** (all Flame Behemoths; all three are complete as of 2026-05-21)
 - **Cryo Expert** + **Pacifist** + **Trick Shot** (all Frozen Titans, same run -- Pacifist conflicts somewhat with Trick Shot)
 - **Healing** + **Immortal** + **Overkill** (all Hazardous Mechs, same run -- Immortal conflicts with aggressive Healing/Overkill play)
 

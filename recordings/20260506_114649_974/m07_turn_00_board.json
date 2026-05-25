@@ -1,0 +1,572 @@
+{
+  "timestamp": "2026-05-06T13:30:41.767180",
+  "run_id": "20260506_114649_974",
+  "mission_index": 7,
+  "turn": 0,
+  "label": "board",
+  "data": {
+    "bridge_state": {
+      "island_map_game_seen": "table",
+      "spawning_tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "grid_power_max": 7,
+      "grid_power": 7,
+      "island_map_probe": "scope_alive",
+      "turn": 0,
+      "mission_id": "Mission_BouncerBoss",
+      "master_seed": 763877040,
+      "total_turns": 4,
+      "island_map_debug": "skipped: in active mission",
+      "environment_danger": [],
+      "tiles": [
+        {
+          "y": 0,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 0
+        },
+        {
+          "y": 0,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 1
+        },
+        {
+          "y": 0,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 0,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 3
+        },
+        {
+          "y": 0,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 0,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "x": 6,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 0,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 7
+        },
+        {
+          "y": 1,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 6,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 1,
+          "x": 7,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 2,
+          "x": 0,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 2,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 4,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 2,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 6,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 2,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 1
+        },
+        {
+          "y": 3,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "terrain_id": 1,
+          "x": 3,
+          "terrain": "building",
+          "building_hp": 1,
+          "unique_building": true,
+          "objective_name": "Str_Tower"
+        },
+        {
+          "y": 3,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 1
+        },
+        {
+          "y": 4,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 3
+        },
+        {
+          "y": 4,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 5,
+          "terrain_id": 7,
+          "terrain": "sand"
+        },
+        {
+          "y": 6,
+          "x": 6,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 6,
+          "x": 7,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 0
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 1
+        },
+        {
+          "y": 7,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 3
+        },
+        {
+          "y": 7,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 7,
+          "x": 5,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 7,
+          "x": 6,
+          "terrain_id": 3,
+          "terrain": "water"
+        },
+        {
+          "y": 7,
+          "terrain_id": 4,
+          "terrain": "mountain",
+          "building_hp": 2,
+          "population": 1,
+          "x": 7
+        }
+      ],
+      "targeted_tiles": [],
+      "phase": "unknown",
+      "remaining_spawns": 1,
+      "mission_kills_done": 0,
+      "units": [
+        {
+          "web": false,
+          "active": true,
+          "shield": false,
+          "hp": 4,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 4,
+          "move": 3,
+          "weapon_target_behind": false,
+          "uid": 218,
+          "weapons": [
+            "BouncerAtkB"
+          ],
+          "weapon_damage": 2,
+          "y": 2,
+          "x": 5,
+          "fire": false,
+          "type": "BouncerBoss",
+          "base_move": 3,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        }
+      ],
+      "difficulty": 0,
+      "env_type": "unknown",
+      "environment_freeze": [],
+      "mission_seeds": {
+        "region4": {
+          "state": 0,
+          "turn": 4,
+          "mission": "Mission3",
+          "ai_seed": 1051648435
+        },
+        "region2": {
+          "state": 4,
+          "turn": 0,
+          "mission": "Mission2",
+          "ai_seed": 792957617
+        },
+        "region7": {
+          "state": 4,
+          "turn": 0,
+          "mission": "Mission4",
+          "ai_seed": 1033566220
+        },
+        "region3": {
+          "state": 4,
+          "turn": 0,
+          "mission": "Mission5",
+          "ai_seed": 811032137
+        }
+      },
+      "environment_danger_v2": [],
+      "timestamp": 1778092217,
+      "in_active_mission": true,
+      "attack_order": [],
+      "deployment_zone": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "is_infinite_spawn": false
+    },
+    "result_summary": {
+      "phase": "unknown",
+      "source": "bridge",
+      "turn": 0,
+      "grid_power": "7/7"
+    }
+  }
+}

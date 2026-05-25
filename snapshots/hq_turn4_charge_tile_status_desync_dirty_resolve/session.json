@@ -1,0 +1,717 @@
+{
+  "run_id": "20260510_000847_773",
+  "squad": "Zenith Guard",
+  "achievement_targets": [
+    "Get Over Here"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "Mission_BurnbugBoss",
+  "islands_completed": [],
+  "mission_index": 6,
+  "last_mission_turn": 4,
+  "current_turn": 4,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 1,
+        "mech_type": "ChargeMech",
+        "move_to": [
+          1,
+          2
+        ],
+        "weapon": "Brute_Beetle",
+        "target": [
+          1,
+          3
+        ],
+        "description": "ChargeMech, move E6\u2192F7, fire Ramming Engines at E7"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "ScienceMech",
+        "move_to": [
+          3,
+          1
+        ],
+        "weapon": "Science_Pullmech",
+        "target": [
+          5,
+          1
+        ],
+        "description": "ScienceMech, move E3\u2192G5, fire Attract Shot at G3"
+      },
+      {
+        "mech_uid": 0,
+        "mech_type": "LaserMech",
+        "move_to": [
+          5,
+          3
+        ],
+        "weapon": "Prime_Lasermech",
+        "target": [
+          6,
+          3
+        ],
+        "description": "LaserMech, move F6\u2192E3, fire Burst Beam at E2"
+      }
+    ],
+    "score": 72372.00015882084,
+    "turn": 4,
+    "input_fingerprint": "0:2,2:3|185:1,3:1|186:6,5:2|187:6,3:3|188:5,1:3|189:5,4:2|1:2,3:3|2:5,3:1"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-10T00:15:05.326205",
+      "turn": 1,
+      "label": "solve",
+      "score": 167428.57142857142,
+      "actions": [
+        "LaserMech, move G5\u2192F3, fire Burst Beam at G3",
+        "ScienceMech, move E7\u2192D5, fire Attract Shot at D3",
+        "ChargeMech, move B5\u2192C3, fire Ramming Engines at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:30:56.670771",
+      "turn": 2,
+      "label": "solve",
+      "score": 169518.57142857142,
+      "actions": [
+        "LaserMech, move G3\u2192E2, fire Burst Beam at F2",
+        "ChargeMech, move E3\u2192F4, repair",
+        "ScienceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:32:05.570119",
+      "turn": 3,
+      "label": "solve",
+      "score": 166438.57142857142,
+      "actions": [
+        "LaserMech, move E2\u2192F1, fire Burst Beam at E1",
+        "ChargeMech, fire Ramming Engines at G4",
+        "ScienceMech, move D5\u2192E5, fire Attract Shot at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:41:25.716107",
+      "turn": 1,
+      "label": "solve",
+      "score": 145221.42857142858,
+      "actions": [
+        "ChargeMech, move B5\u2192B2, fire Ramming Engines at C2",
+        "LaserMech, move C6\u2192B5, fire Burst Beam at C5",
+        "ScienceMech, move E5\u2192F2, fire Attract Shot at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:43:07.540377",
+      "turn": 2,
+      "label": "solve",
+      "score": 146651.42857142878,
+      "actions": [
+        "LaserMech, move B5\u2192C6, fire Burst Beam at B6",
+        "ChargeMech, move B2\u2192B5, fire Ramming Engines at C5",
+        "ScienceMech, move F2\u2192D4, fire Attract Shot at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:46:11.246178",
+      "turn": 3,
+      "label": "solve",
+      "score": 150531.42857142858,
+      "actions": [
+        "ChargeMech, move E5\u2192E4, repair",
+        "LaserMech, move C6\u2192C5, fire Burst Beam at D5",
+        "ScienceMech, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:46:53.157439",
+      "turn": 4,
+      "label": "solve",
+      "score": 148641.42857142858,
+      "actions": [
+        "ScienceMech, move D4\u2192F5, fire Attract Shot at F2",
+        "ChargeMech, move E4\u2192G3, fire Ramming Engines at F3",
+        "LaserMech, move C5\u2192D5, fire Burst Beam at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:51:28.815816",
+      "turn": 4,
+      "label": "solve",
+      "score": 130697.85714285716,
+      "actions": [
+        "LaserMech, move C5\u2192D5, fire Burst Beam at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:51:41.586967",
+      "turn": 4,
+      "label": "solve",
+      "score": 130697.85714285716,
+      "actions": [
+        "LaserMech, move C5\u2192D5, fire Burst Beam at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:56:39.348168",
+      "turn": 1,
+      "label": "solve",
+      "score": 169750.0,
+      "actions": [
+        "LaserMech, move F5\u2192F3, fire Burst Beam at F2",
+        "ChargeMech, move E6\u2192F4, fire Ramming Engines at G4",
+        "ScienceMech, move C5\u2192F6, fire Attract Shot at F4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:58:10.765437",
+      "turn": 2,
+      "label": "solve",
+      "score": 185083.3333333334,
+      "actions": [
+        "LaserMech, move F3\u2192E2, fire Burst Beam at D2",
+        "ScienceMech, move F6\u2192D5, fire Shield Projector at F5",
+        "ChargeMech, move F5\u2192G4, fire Ramming Engines at G3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T00:59:31.050078",
+      "turn": 3,
+      "label": "solve",
+      "score": 197800.0,
+      "actions": [
+        "ChargeMech, repair",
+        "ScienceMech, move D5\u2192G4, fire Attract Shot at B4",
+        "LaserMech, move E2\u2192C3, fire Burst Beam at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T01:00:54.129540",
+      "turn": 4,
+      "label": "solve",
+      "score": 194650.0,
+      "actions": [
+        "LaserMech, move C3\u2192F3, fire Burst Beam at F4",
+        "ChargeMech",
+        "ScienceMech, move G4\u2192F6, fire Attract Shot at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T01:06:56.695066",
+      "turn": 1,
+      "label": "solve",
+      "score": 130300.0,
+      "actions": [
+        "LaserMech, move E6\u2192E4, fire Burst Beam at D4",
+        "ScienceMech, move D5\u2192F3, fire Attract Shot at C3",
+        "ChargeMech, move F5\u2192D5, fire Ramming Engines at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T01:08:29.647308",
+      "turn": 2,
+      "label": "solve",
+      "score": -21513.335121472668,
+      "actions": [
+        "LaserMech, move E4\u2192D5",
+        "ChargeMech, move D4\u2192C6, repair",
+        "ScienceMech, fire Attract Shot at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:20:05.767763",
+      "turn": 2,
+      "label": "solve",
+      "score": -21513.335121472668,
+      "actions": [
+        "LaserMech, move E4\u2192D5",
+        "ChargeMech, move D4\u2192C6, repair",
+        "ScienceMech, fire Attract Shot at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:22:56.348386",
+      "turn": 3,
+      "label": "solve",
+      "score": 86039.99821186066,
+      "actions": [
+        "LaserMech, move D5\u2192D3, fire Burst Beam at E3",
+        "ChargeMech, fire Ramming Engines at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:24:56.860975",
+      "turn": 4,
+      "label": "solve",
+      "score": 7479.998211860657,
+      "actions": [
+        "LaserMech, move D3\u2192E5, fire Burst Beam at E4",
+        "ChargeMech, move C6\u2192C3, fire Ramming Engines at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:37:43.524257",
+      "turn": 1,
+      "label": "solve",
+      "score": 119150.0,
+      "actions": [
+        "LaserMech, move E6\u2192F6",
+        "ChargeMech, move F5\u2192E6",
+        "ScienceMech, move C5\u2192D4, fire Attract Shot at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:38:33.993230",
+      "turn": 2,
+      "label": "solve",
+      "score": 120930.09532300622,
+      "actions": [
+        "LaserMech, move F5\u2192F7, repair",
+        "ChargeMech",
+        "ScienceMech, move D4\u2192D6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:39:03.387977",
+      "turn": 2,
+      "label": "solve",
+      "score": 136667.71428632754,
+      "actions": [
+        "LaserMech, move F5\u2192F7, repair",
+        "ChargeMech, move E6\u2192D6",
+        "ScienceMech, move D4\u2192D3, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:43:56.958928",
+      "turn": 2,
+      "label": "solve",
+      "score": 120930.09532300622,
+      "actions": [
+        "LaserMech, move F5\u2192F7, repair",
+        "ChargeMech",
+        "ScienceMech, move D4\u2192D6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:45:13.874908",
+      "turn": 3,
+      "label": "solve",
+      "score": 89476.57175016403,
+      "actions": [
+        "ScienceMech, move D6\u2192E3, fire Shield Projector at E6",
+        "ChargeMech, fire Ramming Engines at F6",
+        "LaserMech, move F7\u2192F6, fire Burst Beam at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:45:40.266411",
+      "turn": 3,
+      "label": "solve",
+      "score": 132912.2858734131,
+      "actions": [
+        "ChargeMech, fire Ramming Engines at F6",
+        "LaserMech, move F7\u2192F6, fire Burst Beam at G6",
+        "ScienceMech, move D6\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:48:59.688588",
+      "turn": 3,
+      "label": "solve",
+      "score": 89476.57175016403,
+      "actions": [
+        "ScienceMech, move D6\u2192E3, fire Shield Projector at E6",
+        "ChargeMech, fire Ramming Engines at F6",
+        "LaserMech, move F7\u2192F6, fire Burst Beam at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:50:15.228786",
+      "turn": 4,
+      "label": "solve",
+      "score": 72372.00015882084,
+      "actions": [
+        "ChargeMech, move E6\u2192F7, fire Ramming Engines at E7",
+        "ScienceMech, move E3\u2192G5, fire Attract Shot at G3",
+        "LaserMech, move F6\u2192E3, fire Burst Beam at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:50:36.268976",
+      "turn": 4,
+      "label": "solve",
+      "score": 117552.00008525167,
+      "actions": [
+        "ChargeMech, move E6\u2192F7, fire Ramming Engines at E7",
+        "ScienceMech, move E3\u2192G5, fire Attract Shot at G3",
+        "LaserMech, move F6\u2192E3, fire Burst Beam at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T10:59:43.012928",
+      "turn": 4,
+      "label": "solve",
+      "score": 72372.00015882084,
+      "actions": [
+        "ChargeMech, move E6\u2192F7, fire Ramming Engines at E7",
+        "ScienceMech, move E3\u2192G5, fire Attract Shot at G3",
+        "LaserMech, move F6\u2192E3, fire Burst Beam at E2"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      1
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      4,
+      3
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      6,
+      3
+    ]
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Brute_Beetle|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Brute_Beetle",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Beetle|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Brute_Beetle",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Prime_Lasermech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Lasermech",
+        "target": [
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain",
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Science_Pullmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Science_Pullmech",
+        "target": [
+          5,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Brute_Beetle|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 4,
+        "weapon": "Brute_Beetle",
+        "target": [
+          5,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "tile_status",
+      "categories": [
+        "tile_status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "tile_status|Brute_Beetle|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Brute_Beetle",
+        "target": [
+          1,
+          3
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "LaserMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Terratide",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Zenith Guard player mech; queued mech portrait/weapon prompt is not a current-board unknown.",
+        "kind": "mech_weapon",
+        "attempts": 1,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      },
+      "research_id": "21bce1677bd5",
+      "last_kind": "mech"
+    },
+    {
+      "type": "ChargeMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Terratide",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Zenith Guard player mech; queued mech portrait/weapon prompt is not a current-board unknown.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "ScienceMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Terratide",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Zenith Guard player mech; queued mech portrait/weapon prompt is not a current-board unknown.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "Firefly1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Survive",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Firefly",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [
+              "projectile_attack",
+              "flying"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Firefly",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Firefly",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Firefly&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "59143ea36c3b",
+      "last_kind": "enemy"
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "612e0a628254f9dd",
+    "classes": "ggbbbbwmmgggggwmmwggsswggwgbbgwmggggggggmgbggbggmgggggggmmggggmm",
+    "mission_index": 6,
+    "turn": 4
+  },
+  "terrain_stage_change_pending": false
+}

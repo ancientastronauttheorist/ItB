@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/search/?q=Rock+Wall&restrict_sr=1",
+      "excerpt": "Subreddit search returns Digger and Rock Accelerator discussions, corroborating that rock wall/boulder objects are standard board blockers, though the search page itself has limited mechanics detail.",
+      "confidence": 0.35
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/search/?q=Rock+Wall",
+      "excerpt": "Steam search finds related rock/boulder discussions: Rock Accelerator rocks can block enemies or spawns, extend lightning chains, and created rocks are treated as persistent board objects with 1 HP in comparable AE enemy discussions.",
+      "confidence": 0.45
+    }
+  ]
+}

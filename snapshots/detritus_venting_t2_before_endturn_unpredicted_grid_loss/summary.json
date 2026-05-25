@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-05-12T15:57:06.132041",
+  "label": "detritus_venting_t2_before_endturn_unpredicted_grid_loss",
+  "turn": 2,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        4,
+        0
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Moth2",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Spider1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer2",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 1
+    }
+  ]
+}

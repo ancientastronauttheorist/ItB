@@ -263,6 +263,26 @@ def test_drain_no_save_when_nothing_resolved(monkeypatch):
     assert save_calls == []
 
 
+def test_manual_resolve_known_high_severity_entry(monkeypatch):
+    monkeypatch.setattr(RunSession, "save", lambda self, *a, **kw: None)
+    s = RunSession()
+    s.enqueue_research(
+        "Snowlaser2", None, 1, kind="behavior_novelty",
+        diff_field="alive", diff_predicted=False, diff_actual=True,
+        severity="high",
+    )
+    s.research_queue[0]["attempts"] = 13
+
+    resolved = orchestrator.resolve_known_research_entries(
+        s, "Snowlaser2", kind="behavior_novelty", reason="stale_known_type",
+    )
+
+    assert len(resolved) == 1
+    assert s.research_queue[0]["status"] == "done"
+    assert s.research_queue[0]["result"]["source"] == "manual_resolved"
+    assert s.research_queue[0]["result"]["reason"] == "stale_known_type"
+
+
 def test_drain_legacy_entries_without_severity_stay_pending(monkeypatch):
     # Old session files may have behavior_novelty entries predating
     # the severity stamp. Those can't be safely auto-resolved — missing

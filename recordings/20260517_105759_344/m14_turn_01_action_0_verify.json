@@ -1,0 +1,431 @@
+{
+  "timestamp": "2026-05-17T13:55:11.825074",
+  "run_id": "20260517_105759_344",
+  "mission_index": 14,
+  "turn": 1,
+  "label": "action_0_verify",
+  "data": {
+    "action_index": 0,
+    "mech_uid": 0,
+    "predicted": {
+      "action_index": 0,
+      "grid_power": 4,
+      "mech_uid": 0,
+      "repair_platforms_used": 0,
+      "snapshot_phase": "after_mech_action",
+      "tiles_changed": [
+        {
+          "acid": false,
+          "building_hp": 1,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "building_hp": 1,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 1,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 1,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 1,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 2,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 1,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 2,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 2,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "building_hp": 2,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 2,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": true,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 6,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 6,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 6,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 7,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 7,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "repair_platform": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 7,
+          "y": 5
+        }
+      ],
+      "units": [
+        {
+          "active": false,
+          "alive": true,
+          "hp": 5,
+          "is_mech": true,
+          "max_hp": 5,
+          "pos": [
+            6,
+            4
+          ],
+          "status": {
+            "acid": false,
+            "boosted": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "ElectricMech",
+          "uid": 0
+        },
+        {
+          "active": true,
+          "alive": true,
+          "hp": 3,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            2,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "boosted": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "WallMech",
+          "uid": 1
+        },
+        {
+          "active": true,
+          "alive": true,
+          "hp": 2,
+          "is_mech": true,
+          "max_hp": 2,
+          "pos": [
+            3,
+            6
+          ],
+          "status": {
+            "acid": false,
+            "boosted": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "RockartMech",
+          "uid": 2
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 3,
+          "is_mech": false,
+          "max_hp": 3,
+          "pos": [
+            4,
+            2
+          ],
+          "status": {
+            "acid": false,
+            "boosted": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Bouncer1",
+          "uid": 2560
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 3,
+          "is_mech": false,
+          "max_hp": 3,
+          "pos": [
+            3,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "boosted": false,
+            "fire": false,
+            "frozen": true,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Moth1",
+          "uid": 2561
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 5,
+          "is_mech": false,
+          "max_hp": 5,
+          "pos": [
+            4,
+            3
+          ],
+          "status": {
+            "acid": false,
+            "boosted": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Moth2",
+          "uid": 2562
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": 0,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            6,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "boosted": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Starfish1",
+          "uid": 2563
+        }
+      ]
+    },
+    "diff": {
+      "unit_diffs": [
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "field": "pos",
+          "predicted": [
+            2,
+            5
+          ],
+          "actual": [
+            2,
+            2
+          ]
+        },
+        {
+          "uid": 1,
+          "type": "WallMech",
+          "field": "active",
+          "predicted": true,
+          "actual": false
+        },
+        {
+          "uid": 2,
+          "type": "RockartMech",
+          "field": "active",
+          "predicted": true,
+          "actual": false
+        },
+        {
+          "uid": 2560,
+          "type": "Bouncer1",
+          "field": "pos",
+          "predicted": [
+            4,
+            2
+          ],
+          "actual": [
+            3,
+            2
+          ]
+        },
+        {
+          "uid": 2560,
+          "type": "Bouncer1",
+          "field": "status.frozen",
+          "predicted": false,
+          "actual": true
+        },
+        {
+          "uid": 2562,
+          "type": "Moth2",
+          "field": "pos",
+          "predicted": [
+            4,
+            3
+          ],
+          "actual": [
+            5,
+            3
+          ]
+        },
+        {
+          "uid": 2589,
+          "type": "RockThrown",
+          "field": "missing_in_predicted",
+          "predicted": "absent",
+          "actual": "present"
+        }
+      ],
+      "tile_diffs": [
+        {
+          "x": 5,
+          "y": 3,
+          "field": "has_pod",
+          "predicted": true,
+          "actual": false
+        }
+      ],
+      "scalar_diffs": [],
+      "total_count": 8
+    },
+    "classification": {
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false
+    }
+  }
+}

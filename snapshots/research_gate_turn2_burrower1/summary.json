@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-08T21:32:28.193508",
+  "label": "research_gate_turn2_burrower1",
+  "turn": 2,
+  "grid_power": 3,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowtank2",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowart2",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burrower1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Mosquito1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    }
+  ]
+}

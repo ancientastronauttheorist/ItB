@@ -1,0 +1,5842 @@
+{
+  "timestamp": "2026-05-12T00:13:55.636397",
+  "run_id": "20260510_213059_819",
+  "mission_index": 22,
+  "turn": 2,
+  "label": "solve",
+  "data": {
+    "schema_version": 1,
+    "simulator_version": 99,
+    "score": -160831.33092435196,
+    "actions": [
+      {
+        "mech_uid": 2,
+        "mech_type": "ArtiMech",
+        "move_to": [
+          1,
+          1
+        ],
+        "weapon": "Artemis Artillery",
+        "weapon_id": "Ranged_Artillerymech_A",
+        "target": [
+          7,
+          1
+        ],
+        "description": "ArtiMech, move G5\u2192G7, fire Artemis Artillery at G1"
+      }
+    ],
+    "threats": 2,
+    "active_mechs": 1,
+    "spawn_points": [
+      [
+        5,
+        1
+      ],
+      [
+        4,
+        7
+      ]
+    ],
+    "search_stats": {
+      "elapsed_seconds": 0.0032923221588134766,
+      "timed_out": false,
+      "permutations_tried": 1,
+      "total_permutations": 1,
+      "active_mech_count": 1
+    },
+    "weight_version": "v011",
+    "beam_mode": 0,
+    "beam_chain_score": null,
+    "candidate_count": 96,
+    "selected_candidate_rank": 0,
+    "selected_candidate_source": "top_k_safety",
+    "candidate_safety": [
+      {
+        "rank": 0,
+        "source": "top_k_safety",
+        "score": -160831.33092435196,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 4,
+            "buildings_alive": 2,
+            "building_hp_total": 4
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 2
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 10
+          }
+        ]
+      },
+      {
+        "rank": 1,
+        "source": "top_k_safety",
+        "score": -161641.33092435193,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 4,
+            "buildings_alive": 2,
+            "building_hp_total": 4
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 2
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 10
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "source": "top_k_safety",
+        "score": -161707.99759101862,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 4,
+            "buildings_alive": 2,
+            "building_hp_total": 4
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 2
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 10
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "source": "top_k_safety",
+        "score": -246204.66352097187,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "source": "top_k_safety",
+        "score": -246237.9968543052,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "source": "top_k_safety",
+        "score": -246304.6635209719,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "source": "top_k_safety",
+        "score": -249371.33018763852,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "source": "top_k_safety",
+        "score": -249404.66352097187,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "source": "top_k_safety",
+        "score": -249471.33018763855,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "source": "top_k_safety",
+        "score": -256754.66352097187,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "source": "top_k_safety",
+        "score": -257494.66352097187,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 11,
+        "source": "top_k_safety",
+        "score": -261518.94972674048,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 9
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 5
+          }
+        ]
+      },
+      {
+        "rank": 12,
+        "source": "top_k_safety",
+        "score": -261552.2830600738,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 9
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 5
+          }
+        ]
+      },
+      {
+        "rank": 13,
+        "source": "top_k_safety",
+        "score": -261868.94972674048,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 9
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 5
+          }
+        ]
+      },
+      {
+        "rank": 14,
+        "source": "top_k_safety",
+        "score": -261902.2830600738,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 9
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 5
+          }
+        ]
+      },
+      {
+        "rank": 15,
+        "source": "top_k_safety",
+        "score": -262798.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 16,
+        "source": "top_k_safety",
+        "score": -262831.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 17,
+        "source": "top_k_safety",
+        "score": -262831.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 18,
+        "source": "top_k_safety",
+        "score": -262831.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 19,
+        "source": "top_k_safety",
+        "score": -262865.3297961553,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 20,
+        "source": "top_k_safety",
+        "score": -262865.3297961553,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 21,
+        "source": "top_k_safety",
+        "score": -262865.3297961553,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 22,
+        "source": "top_k_safety",
+        "score": -263544.6642576853,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 4,
+            "buildings_alive": 2,
+            "building_hp_total": 4,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 2
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 10
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 23,
+        "source": "top_k_safety",
+        "score": -263571.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 24,
+        "source": "top_k_safety",
+        "score": -264205.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 25,
+        "source": "top_k_safety",
+        "score": -264311.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 26,
+        "source": "top_k_safety",
+        "score": -264421.33092435193,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 4,
+            "buildings_alive": 2,
+            "building_hp_total": 4,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 2
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 10
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 27,
+        "source": "top_k_safety",
+        "score": -264565.3297961553,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 28,
+        "source": "top_k_safety",
+        "score": -264821.3301876385,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 29,
+        "source": "top_k_safety",
+        "score": -264887.9968543052,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 30,
+        "source": "top_k_safety",
+        "score": -265615.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 31,
+        "source": "top_k_safety",
+        "score": -265615.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 32,
+        "source": "top_k_safety",
+        "score": -265615.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 33,
+        "source": "top_k_safety",
+        "score": -265648.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 34,
+        "source": "top_k_safety",
+        "score": -265965.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 35,
+        "source": "top_k_safety",
+        "score": -265965.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 36,
+        "source": "top_k_safety",
+        "score": -265965.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 37,
+        "source": "top_k_safety",
+        "score": -265965.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 38,
+        "source": "top_k_safety",
+        "score": -265965.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 39,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 40,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 41,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 42,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 43,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 44,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 45,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 46,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 47,
+        "source": "top_k_safety",
+        "score": -265998.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 48,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 49,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 50,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 51,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 52,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 53,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 54,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 55,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 56,
+        "source": "top_k_safety",
+        "score": -266031.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 57,
+        "source": "top_k_safety",
+        "score": -266071.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 58,
+        "source": "top_k_safety",
+        "score": -266105.3297961553,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 59,
+        "source": "top_k_safety",
+        "score": -266388.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 60,
+        "source": "top_k_safety",
+        "score": -266738.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 61,
+        "source": "top_k_safety",
+        "score": -266738.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 62,
+        "source": "top_k_safety",
+        "score": -267055.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 63,
+        "source": "top_k_safety",
+        "score": -267055.3297961552,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 64,
+        "source": "top_k_safety",
+        "score": -267088.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 65,
+        "source": "top_k_safety",
+        "score": -267478.6631294886,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 66,
+        "source": "top_k_safety",
+        "score": -267731.9964628219,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 67,
+        "source": "top_k_safety",
+        "score": -267854.66352097184,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 68,
+        "source": "top_k_safety",
+        "score": -267887.9968543052,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 69,
+        "source": "top_k_safety",
+        "score": -267887.9968543052,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 70,
+        "source": "top_k_safety",
+        "score": -267921.3301876385,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 71,
+        "source": "top_k_safety",
+        "score": -267921.3301876385,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          }
+        ]
+      },
+      {
+        "rank": 72,
+        "source": "top_k_safety",
+        "score": -269334.66352097184,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 3,
+            "building_hp_total": 6,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 8
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 73,
+        "source": "top_k_safety",
+        "score": -279135.32890446973,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 74,
+        "source": "top_k_safety",
+        "score": -279201.9955711364,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 75,
+        "source": "top_k_safety",
+        "score": -279201.9955711364,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 76,
+        "source": "top_k_safety",
+        "score": -279201.9955711364,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 77,
+        "source": "top_k_safety",
+        "score": -279201.9955711364,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          }
+        ]
+      },
+      {
+        "rank": 78,
+        "source": "top_k_safety",
+        "score": -364232.2830600739,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 9,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 5
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 79,
+        "source": "top_k_safety",
+        "score": -368361.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 80,
+        "source": "top_k_safety",
+        "score": -368361.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 81,
+        "source": "top_k_safety",
+        "score": -368361.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 82,
+        "source": "top_k_safety",
+        "score": -368711.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 83,
+        "source": "top_k_safety",
+        "score": -368711.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 84,
+        "source": "top_k_safety",
+        "score": -368711.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 85,
+        "source": "top_k_safety",
+        "score": -368711.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 86,
+        "source": "top_k_safety",
+        "score": -368785.3297961554,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 3
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 2
+          }
+        ]
+      },
+      {
+        "rank": 87,
+        "source": "top_k_safety",
+        "score": -370411.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "rank": 88,
+        "source": "top_k_safety",
+        "score": -370485.32979615533,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 3
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 2
+          }
+        ]
+      },
+      {
+        "rank": 89,
+        "source": "top_k_safety",
+        "score": -370485.32979615533,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 3
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 2
+          }
+        ]
+      },
+      {
+        "rank": 90,
+        "source": "top_k_safety",
+        "score": -372185.32979615533,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_and_mech_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 3
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 2
+          }
+        ]
+      },
+      {
+        "rank": 91,
+        "source": "top_k_safety",
+        "score": -485998.6631294887,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "objective_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "bigbomb_alive": 1
+          },
+          "non_overridable": true
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "bigbomb_lost",
+            "blocking": true,
+            "current": true,
+            "predicted": false
+          }
+        ]
+      },
+      {
+        "rank": 92,
+        "source": "top_k_safety",
+        "score": -486031.996462822,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "objective_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "bigbomb_alive": 1
+          },
+          "non_overridable": true
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "bigbomb_lost",
+            "blocking": true,
+            "current": true,
+            "predicted": false
+          }
+        ]
+      },
+      {
+        "rank": 93,
+        "source": "top_k_safety",
+        "score": -487405.3297961554,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "objective_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mech_hp_total": 1,
+            "bigbomb_alive": 1
+          },
+          "non_overridable": true
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          },
+          {
+            "kind": "bigbomb_lost",
+            "blocking": true,
+            "current": true,
+            "predicted": false
+          }
+        ]
+      },
+      {
+        "rank": 94,
+        "source": "top_k_safety",
+        "score": -588711.9964628218,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "objective_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2,
+            "bigbomb_alive": 1
+          },
+          "non_overridable": true
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          },
+          {
+            "kind": "bigbomb_lost",
+            "blocking": true,
+            "current": true,
+            "predicted": false
+          }
+        ]
+      },
+      {
+        "rank": 95,
+        "source": "top_k_safety",
+        "score": -588711.9964628218,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "objective_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "mechs_alive": 1,
+            "mech_hp_total": 2,
+            "bigbomb_alive": 1
+          },
+          "non_overridable": true
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          },
+          {
+            "kind": "bigbomb_lost",
+            "blocking": true,
+            "current": true,
+            "predicted": false
+          }
+        ]
+      }
+    ],
+    "dirty_frontier": [
+      {
+        "label": "grid_loss",
+        "count": 76,
+        "best_rank": 0,
+        "best_source": "top_k_safety",
+        "best_score": -160831.33092435196,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "grid_power": 4,
+          "buildings_alive": 2,
+          "building_hp_total": 4
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 2
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 10
+          }
+        ]
+      },
+      {
+        "label": "grid_and_mech_loss",
+        "count": 15,
+        "best_rank": 22,
+        "best_source": "top_k_safety",
+        "best_score": -263544.6642576853,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "grid_power": 4,
+          "buildings_alive": 2,
+          "building_hp_total": 4,
+          "mechs_alive": 1,
+          "mech_hp_total": 2
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 2
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 10
+          },
+          {
+            "kind": "mech_lost",
+            "blocking": true,
+            "current": 2,
+            "predicted": 1
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 3
+          }
+        ]
+      },
+      {
+        "label": "objective_loss",
+        "count": 5,
+        "best_rank": 91,
+        "best_source": "top_k_safety",
+        "best_score": -485998.6631294887,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "grid_power": 6,
+          "buildings_alive": 4,
+          "building_hp_total": 8,
+          "bigbomb_alive": 1
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 0
+          },
+          {
+            "kind": "building_destroyed",
+            "blocking": true,
+            "current": 7,
+            "predicted": 3
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 14,
+            "predicted": 6
+          },
+          {
+            "kind": "bigbomb_lost",
+            "blocking": true,
+            "current": true,
+            "predicted": false
+          }
+        ]
+      }
+    ],
+    "lookahead_frontier": [
+      {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": 0,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -160831.33092435196,
+        "candidate_label": "grid_loss",
+        "candidate_losses": {
+          "grid_power": 4,
+          "buildings_alive": 2,
+          "building_hp_total": 4
+        },
+        "status": "OK",
+        "scenario_count": 3,
+        "scenario_results": [
+          {
+            "scenario": "heuristic_requeue",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 28351.666666666657,
+            "next_elapsed_seconds": 0.007424116134643555,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at F6",
+              "ArtiMech, move G7\u2192F6, fire Artemis Artillery at B6"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid1145_5_5",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 28351.666666666657,
+            "next_elapsed_seconds": 0.006413936614990234,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at F6",
+              "ArtiMech, move G7\u2192F6, fire Artemis Artillery at B6"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid1145_6_2",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 26218.33333333332,
+            "next_elapsed_seconds": 0.006151914596557617,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at F6",
+              "ArtiMech, move G7\u2192F6, fire Artemis Artillery at B6"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          }
+        ],
+        "worst_scenario": "retarget_building_uid1145_6_2",
+        "projected_turn": 3,
+        "projected_action_result": {
+          "buildings_damaged": 0,
+          "buildings_lost": 0,
+          "enemies_killed": 0,
+          "enemy_damage_dealt": 0,
+          "grid_damage": 0,
+          "mech_damage_taken": 0,
+          "mechs_killed": 0,
+          "pods_collected": 0,
+          "repair_platforms_used": 0,
+          "spawns_blocked": 0
+        },
+        "next_score": 26218.33333333332,
+        "next_actions": [
+          "TankMech, fire Taurus Cannon at F6",
+          "ArtiMech, move G7\u2192F6, fire Artemis Artillery at B6"
+        ],
+        "next_plan_safety": {
+          "status": "CLEAN",
+          "blocking": false,
+          "loss_profile": {
+            "label": "clean",
+            "blocking": false,
+            "losses": {},
+            "non_overridable": false
+          },
+          "violations": []
+        },
+        "robust_summary": {
+          "candidate_label": "grid_loss",
+          "candidate_rank": 0,
+          "candidate_source": "top_k_safety",
+          "candidate_score": -160831.33092435196,
+          "candidate_losses": {
+            "grid_power": 4,
+            "buildings_alive": 2,
+            "building_hp_total": 4
+          },
+          "scenario_count": 3,
+          "worst_scenario": "retarget_building_uid1145_6_2",
+          "next_score": 26218.33333333332,
+          "next_loss_label": "clean",
+          "robust_status": "clean",
+          "robust_score": -134612.99759101865
+        }
+      },
+      {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": 22,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -263544.6642576853,
+        "candidate_label": "grid_and_mech_loss",
+        "candidate_losses": {
+          "grid_power": 4,
+          "buildings_alive": 2,
+          "building_hp_total": 4,
+          "mechs_alive": 1,
+          "mech_hp_total": 2
+        },
+        "status": "OK",
+        "scenario_count": 3,
+        "scenario_results": [
+          {
+            "scenario": "heuristic_requeue",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 27998.33333333332,
+            "next_elapsed_seconds": 0.0001709461212158203,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at D6"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid1145_5_5",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 27998.33333333332,
+            "next_elapsed_seconds": 0.00017786026000976562,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at D6"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid1145_6_2",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 25864.999999999985,
+            "next_elapsed_seconds": 0.00024700164794921875,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at D6"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          }
+        ],
+        "worst_scenario": "retarget_building_uid1145_6_2",
+        "projected_turn": 3,
+        "projected_action_result": {
+          "buildings_damaged": 0,
+          "buildings_lost": 0,
+          "enemies_killed": 0,
+          "enemy_damage_dealt": 0,
+          "grid_damage": 0,
+          "mech_damage_taken": 0,
+          "mechs_killed": 0,
+          "pods_collected": 0,
+          "repair_platforms_used": 0,
+          "spawns_blocked": 0
+        },
+        "next_score": 25864.999999999985,
+        "next_actions": [
+          "TankMech, fire Taurus Cannon at D6"
+        ],
+        "next_plan_safety": {
+          "status": "CLEAN",
+          "blocking": false,
+          "loss_profile": {
+            "label": "clean",
+            "blocking": false,
+            "losses": {},
+            "non_overridable": false
+          },
+          "violations": []
+        },
+        "robust_summary": {
+          "candidate_label": "grid_and_mech_loss",
+          "candidate_rank": 22,
+          "candidate_source": "top_k_safety",
+          "candidate_score": -263544.6642576853,
+          "candidate_losses": {
+            "grid_power": 4,
+            "buildings_alive": 2,
+            "building_hp_total": 4,
+            "mechs_alive": 1,
+            "mech_hp_total": 2
+          },
+          "scenario_count": 3,
+          "worst_scenario": "retarget_building_uid1145_6_2",
+          "next_score": 25864.999999999985,
+          "next_loss_label": "clean",
+          "robust_status": "clean",
+          "robust_score": -237679.6642576853
+        }
+      },
+      {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": 91,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -485998.6631294887,
+        "candidate_label": "objective_loss",
+        "candidate_losses": {
+          "grid_power": 6,
+          "buildings_alive": 4,
+          "building_hp_total": 8,
+          "bigbomb_alive": 1
+        },
+        "status": "OK",
+        "scenario_count": 3,
+        "scenario_results": [
+          {
+            "scenario": "heuristic_requeue",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": -642061.6666666666,
+            "next_elapsed_seconds": 0.016805171966552734,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at D6",
+              "ArtiMech, move F5\u2192G3, fire Artemis Artillery at G7"
+            ],
+            "next_plan_safety": {
+              "status": "WARN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "warning",
+                "blocking": false,
+                "losses": {
+                  "mech_hp_total": 1
+                },
+                "non_overridable": false
+              },
+              "violations": [
+                {
+                  "kind": "mech_hp_loss",
+                  "current": 5,
+                  "predicted": 4,
+                  "blocking": false
+                }
+              ]
+            }
+          },
+          {
+            "scenario": "retarget_building_uid1143_5_5",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": -644195.0,
+            "next_elapsed_seconds": 0.016549110412597656,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at D6",
+              "ArtiMech, move F5\u2192G3, fire Artemis Artillery at G7"
+            ],
+            "next_plan_safety": {
+              "status": "WARN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "warning",
+                "blocking": false,
+                "losses": {
+                  "mech_hp_total": 1
+                },
+                "non_overridable": false
+              },
+              "violations": [
+                {
+                  "kind": "mech_hp_loss",
+                  "current": 5,
+                  "predicted": 4,
+                  "blocking": false
+                }
+              ]
+            }
+          },
+          {
+            "scenario": "retarget_building_uid1143_1_2",
+            "projected_turn": 3,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 0,
+              "enemy_damage_dealt": 0,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": -644195.0,
+            "next_elapsed_seconds": 0.016203880310058594,
+            "next_actions": [
+              "TankMech, fire Taurus Cannon at D6",
+              "ArtiMech, move F5\u2192G3, fire Artemis Artillery at G7"
+            ],
+            "next_plan_safety": {
+              "status": "WARN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "warning",
+                "blocking": false,
+                "losses": {
+                  "mech_hp_total": 1
+                },
+                "non_overridable": false
+              },
+              "violations": [
+                {
+                  "kind": "mech_hp_loss",
+                  "current": 5,
+                  "predicted": 4,
+                  "blocking": false
+                }
+              ]
+            }
+          }
+        ],
+        "worst_scenario": "retarget_building_uid1143_5_5",
+        "projected_turn": 3,
+        "projected_action_result": {
+          "buildings_damaged": 0,
+          "buildings_lost": 0,
+          "enemies_killed": 0,
+          "enemy_damage_dealt": 0,
+          "grid_damage": 0,
+          "mech_damage_taken": 0,
+          "mechs_killed": 0,
+          "pods_collected": 0,
+          "repair_platforms_used": 0,
+          "spawns_blocked": 0
+        },
+        "next_score": -644195.0,
+        "next_actions": [
+          "TankMech, fire Taurus Cannon at D6",
+          "ArtiMech, move F5\u2192G3, fire Artemis Artillery at G7"
+        ],
+        "next_plan_safety": {
+          "status": "WARN",
+          "blocking": false,
+          "loss_profile": {
+            "label": "warning",
+            "blocking": false,
+            "losses": {
+              "mech_hp_total": 1
+            },
+            "non_overridable": false
+          },
+          "violations": [
+            {
+              "kind": "mech_hp_loss",
+              "current": 5,
+              "predicted": 4,
+              "blocking": false
+            }
+          ]
+        },
+        "robust_summary": {
+          "candidate_label": "objective_loss",
+          "candidate_rank": 91,
+          "candidate_source": "top_k_safety",
+          "candidate_score": -485998.6631294887,
+          "candidate_losses": {
+            "grid_power": 6,
+            "buildings_alive": 4,
+            "building_hp_total": 8,
+            "bigbomb_alive": 1
+          },
+          "scenario_count": 3,
+          "worst_scenario": "retarget_building_uid1143_5_5",
+          "next_score": -644195.0,
+          "next_loss_label": "warning",
+          "robust_status": "clean",
+          "robust_score": -1130193.6631294887
+        }
+      }
+    ],
+    "robust_frontier": [
+      {
+        "candidate_label": "grid_loss",
+        "candidate_rank": 0,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -160831.33092435196,
+        "candidate_losses": {
+          "grid_power": 4,
+          "buildings_alive": 2,
+          "building_hp_total": 4
+        },
+        "scenario_count": 3,
+        "worst_scenario": "retarget_building_uid1145_6_2",
+        "next_score": 26218.33333333332,
+        "next_loss_label": "clean",
+        "robust_status": "clean",
+        "robust_score": -134612.99759101865
+      },
+      {
+        "candidate_label": "grid_and_mech_loss",
+        "candidate_rank": 22,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -263544.6642576853,
+        "candidate_losses": {
+          "grid_power": 4,
+          "buildings_alive": 2,
+          "building_hp_total": 4,
+          "mechs_alive": 1,
+          "mech_hp_total": 2
+        },
+        "scenario_count": 3,
+        "worst_scenario": "retarget_building_uid1145_6_2",
+        "next_score": 25864.999999999985,
+        "next_loss_label": "clean",
+        "robust_status": "clean",
+        "robust_score": -237679.6642576853
+      },
+      {
+        "candidate_label": "objective_loss",
+        "candidate_rank": 91,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -485998.6631294887,
+        "candidate_losses": {
+          "grid_power": 6,
+          "buildings_alive": 4,
+          "building_hp_total": 8,
+          "bigbomb_alive": 1
+        },
+        "scenario_count": 3,
+        "worst_scenario": "retarget_building_uid1143_5_5",
+        "next_score": -644195.0,
+        "next_loss_label": "warning",
+        "robust_status": "clean",
+        "robust_score": -1130193.6631294887
+      }
+    ],
+    "safety_widening": [
+      {
+        "source": "top_k_safety",
+        "candidate_count": 96,
+        "ignored_soft_disables": false
+      }
+    ],
+    "action_results": [
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 0,
+        "enemy_damage_dealt": 0,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "repair_platforms_used": 0,
+        "spawns_blocked": 0
+      }
+    ],
+    "predicted_states": [
+      {
+        "post_attack": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 2,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 0,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 0,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 6,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 6,
+              "y": 3
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                2,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "TankMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                1,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ArtiMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 6,
+              "pos": [
+                2,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "FireflyBoss",
+              "uid": 1143
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                6,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Blobber1",
+              "uid": 1145
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": false,
+              "max_hp": 5,
+              "pos": [
+                2,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Firefly2",
+              "uid": 1165
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 4,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                5,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Hornet2",
+              "uid": 1166
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Blob1",
+              "uid": 1186
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                3,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "BigBomb",
+              "uid": 1146
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 2,
+          "repair_platforms_used": 0,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 0,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 0,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 0
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 3,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 6,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "repair_platform": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 6,
+              "y": 3
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                2,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                2,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "TankMech",
+              "uid": 1
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                1,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "ArtiMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 6,
+              "pos": [
+                2,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "FireflyBoss",
+              "uid": 1143
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                6,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Blobber1",
+              "uid": 1145
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 5,
+              "is_mech": false,
+              "max_hp": 5,
+              "pos": [
+                2,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Firefly2",
+              "uid": 1165
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 4,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                6,
+                1
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Hornet2",
+              "uid": 1166
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 1,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Blob1",
+              "uid": 1186
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 4,
+              "pos": [
+                3,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "BigBomb",
+              "uid": 1146
+            }
+          ]
+        }
+      }
+    ],
+    "current_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 14,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 0,
+      "grid_power": 6,
+      "enemies_alive": 5,
+      "enemy_hp_total": 14,
+      "mechs_alive": 2,
+      "mech_hp_total": 5,
+      "bigbomb_alive": true,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "PunchMech",
+          "hp": 0,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "TankMech",
+          "hp": 3,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "mechs_on_danger": [
+        {
+          "uid": 2,
+          "type": "ArtiMech",
+          "pos": [
+            3,
+            1
+          ],
+          "damage": 1
+        }
+      ],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_Final_Cave",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0
+    },
+    "predicted_outcome": {
+      "building_hp_total": 10,
+      "buildings_alive": 5,
+      "buildings_destroyed_by_enemies": 2,
+      "enemies_alive": 4,
+      "enemy_hp_total": 12,
+      "grid_power": 2,
+      "mech_hp": [
+        {
+          "hp": 0,
+          "max_hp": 3,
+          "type": "PunchMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "TankMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "ArtiMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 2
+    },
+    "predicted_board_summary": {
+      "buildings_alive": 5,
+      "building_hp_total": 10,
+      "objective_buildings_alive": 0,
+      "objective_building_hp_total": 0,
+      "pods_present": 0,
+      "grid_power": 2,
+      "enemies_alive": 4,
+      "enemy_hp_total": 12,
+      "mechs_alive": 2,
+      "mech_hp_total": 5,
+      "bigbomb_alive": true,
+      "mech_hp": [
+        {
+          "hp": 0,
+          "max_hp": 3,
+          "type": "PunchMech",
+          "uid": 0
+        },
+        {
+          "hp": 3,
+          "max_hp": 3,
+          "type": "TankMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "ArtiMech",
+          "uid": 2
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_Final_Cave",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0,
+      "buildings_destroyed_by_enemies": 2,
+      "pods_collected": 0
+    },
+    "plan_safety": {
+      "status": "DIRTY",
+      "blocking": true,
+      "violations": [
+        {
+          "kind": "grid_damage",
+          "current": 6,
+          "predicted": 2,
+          "blocking": true,
+          "message": "Predicted grid power drops before the next player turn.",
+          "delta": -4
+        },
+        {
+          "kind": "building_destroyed",
+          "current": 7,
+          "predicted": 5,
+          "blocking": true,
+          "message": "Predicted outcome destroys one or more buildings.",
+          "delta": -2
+        },
+        {
+          "kind": "building_hp_loss",
+          "current": 14,
+          "predicted": 10,
+          "blocking": true,
+          "message": "Predicted outcome loses building HP even if grid power stays visible.",
+          "delta": -4
+        }
+      ],
+      "compared": [
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "pods_present",
+        "mechs_alive",
+        "mech_hp_total",
+        "mechs_on_danger",
+        "mechs_disabled",
+        "bigbomb_alive",
+        "protected_objective_units_alive"
+      ],
+      "current": {
+        "grid_power": 6,
+        "buildings_alive": 7,
+        "building_hp_total": 14,
+        "objective_buildings_alive": 0,
+        "objective_building_hp_total": 0,
+        "pods_present": 0,
+        "mechs_alive": 2,
+        "mech_hp_total": 5,
+        "mechs_on_danger": [
+          {
+            "uid": 2,
+            "type": "ArtiMech",
+            "pos": [
+              3,
+              1
+            ],
+            "damage": 1
+          }
+        ],
+        "mechs_disabled": [],
+        "bigbomb_alive": true,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      },
+      "predicted": {
+        "grid_power": 2,
+        "buildings_alive": 5,
+        "building_hp_total": 10,
+        "objective_buildings_alive": 0,
+        "objective_building_hp_total": 0,
+        "pods_present": 0,
+        "mechs_alive": 2,
+        "mech_hp_total": 5,
+        "mechs_on_danger": [],
+        "mechs_disabled": [],
+        "bigbomb_alive": true,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      }
+    },
+    "score_breakdown": {
+      "total": 49270.0,
+      "grid_multiplier": 4.0,
+      "bld_mult": 1.3571428571428572,
+      "buildings_alive": {
+        "count": 5,
+        "score": 67857.14285714286
+      },
+      "building_hp": {
+        "total": 10,
+        "score": 27142.857142857145
+      },
+      "objective_rep": {
+        "count": 0,
+        "score": 0.0
+      },
+      "objective_grid": {
+        "count": 0,
+        "score": 0.0
+      },
+      "grid_power": {
+        "value": 2,
+        "effective": 2.0,
+        "expected_save": 0.0,
+        "expected_save_player": 0.0,
+        "score": -40000.0
+      },
+      "enemies_killed": {
+        "count": 0,
+        "score": 0.0
+      },
+      "mission_kill_bonus": {
+        "target": 0,
+        "done_pre_turn": 0,
+        "kills_this_turn": 0,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "mission_repair_bonus": {
+        "target": 0,
+        "used": 0,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "enemy_hp_remaining": {
+        "total": 12,
+        "score": -930.0
+      },
+      "mission_unit_objectives": {
+        "destroy_dead": 0,
+        "destroy_alive": 0,
+        "destroy_shielded": 0,
+        "protect_alive": 0,
+        "protect_dead": 0,
+        "score": 0
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 3,
+        "dead": 0,
+        "total_hp": 6,
+        "score": 450.0
+      },
+      "spawns_blocked": {
+        "count": 1,
+        "score": 2250.0
+      },
+      "remaining_spawns": {
+        "count": 1,
+        "score": -7500.0
+      },
+      "pods": {
+        "uncollected": 0,
+        "proximity": 0,
+        "score": 0.0
+      }
+    }
+  }
+}

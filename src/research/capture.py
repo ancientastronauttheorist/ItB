@@ -28,6 +28,7 @@ Three capture modes:
 from __future__ import annotations
 
 import json
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -62,8 +63,22 @@ def load_ui_regions(path: Path | None = None) -> dict:
     hand-crafted region dicts without touching the filesystem.
     """
     p = path or UI_REGIONS_PATH
-    with open(p) as f:
-        return json.load(f)
+    try:
+        with open(p) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        if path is not None:
+            raise
+
+    rel = UI_REGIONS_PATH.relative_to(UI_REGIONS_PATH.parent.parent.parent).as_posix()
+    proc = subprocess.run(
+        ["git", "show", f"HEAD:{rel}"],
+        cwd=UI_REGIONS_PATH.parent.parent.parent,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(proc.stdout)
 
 
 def resolve_ui_regions(

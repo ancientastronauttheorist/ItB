@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-05T00:27:20.343974",
+  "run_id": "20260504_210332_088",
+  "mission_index": 4,
+  "turn": 3,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "solver_timeout",
+        "tier": 3,
+        "severity": "medium",
+        "details": "Timed out after 10.0s, tried 24/24 permutations"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1
+    }
+  }
+}

@@ -10,7 +10,7 @@
 | Artillery Mech | Ranged | 2 | 3 | Artemis Artillery | 1 | Artillery strike, damage tile + push adjacent |
 
 **Weapon Upgrades:**
-- Titan Fist: U1: Dash -- charge any distance before punching (1 core) | U2: +2 Damage (1 core)
+- Titan Fist: U1: Dash -- charge any distance before punching (2 cores) | U2: +2 Damage (3 cores)
 - Taurus Cannon: U1: +1 Damage (1 core) | U2: +1 Damage (1 core)
 - Artemis Artillery: U1: Buildings Immune (1 core) | U2: +2 Damage (1 core)
 
@@ -147,11 +147,11 @@
 - Teleporter: U1: +1 Range (1 core) | U2: +2 Range (1 core)
 
 **Squad Achievements:**
-- Quantum Entanglement: Teleport a unit 4 tiles away
+- Quantum Entanglement: Teleport a unit 4 tiles away — completed 2026-05-20 with `Science_Swap_AB`
 - Scorched Earth: End battle with 12 tiles on fire
 - This is Fine: Have 5 enemies on fire simultaneously
 
-**Strategy Notes:** Fire-focused. Burning enemies take 1 damage before acting. Fire does NOT damage buildings. Ignite emerging Vek tiles to burn them on spawn. Prioritize range upgrades for Flame Thrower and Teleporter. Swap Mech drops land enemies into water/lava. Vulcan Artillery can safely hit buildings to push Vek. Smoldering Psion is a hard counter. Key pilots: Kazaaakpleth (gives Swap Mech attack power), Mafan (instant range upgrade).
+**Strategy Notes:** Fire-focused. Burning enemies take 1 damage before acting. Fire does NOT damage buildings. Ignite emerging Vek tiles to burn them on spawn. Prioritize range upgrades for Flame Thrower and Teleporter. The fully upgraded Teleporter is `Science_Swap_AB`; it reaches four tiles only along cardinal lines, not diagonals. Swap Mech drops land enemies into water/lava. Vulcan Artillery can safely hit buildings to push Vek. Smoldering Psion is a hard counter. Key pilots: Kazaaakpleth (gives Swap Mech attack power), Mafan (instant range upgrade).
 
 ---
 

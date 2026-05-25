@@ -10,6 +10,15 @@ use crate::board::*;
 /// Dead wrecks hard-block (can't pass at all).
 pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     let unit = &board.units[unit_idx];
+    reachable_tiles_with_speed(board, unit_idx, unit.move_speed)
+}
+
+/// Get all tiles a unit can reach with an explicit movement budget.
+///
+/// Used by mission movement skills such as `VIP_Truck_Move`, whose pawn has
+/// MoveSpeed=0 but whose weapon grants a temporary range-3 path move.
+pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> Vec<(u8, u8)> {
+    let unit = &board.units[unit_idx];
     let ux = unit.x;
     let uy = unit.y;
 
@@ -19,11 +28,32 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     }
 
     let uid = unit.uid;
-    let speed = unit.move_speed;
     let flying = unit.flying();
 
     let mut result = Vec::with_capacity(20);
     result.push((ux, uy)); // always include current position
+
+    if flying {
+        for x in 0..8u8 {
+            for y in 0..8u8 {
+                if (x, y) == (ux, uy) {
+                    continue;
+                }
+                let dist = (x as i8 - ux as i8).unsigned_abs()
+                    + (y as i8 - uy as i8).unsigned_abs();
+                if dist > speed {
+                    continue;
+                }
+                if !board.is_blocked(x, y, true) {
+                    if unit.is_player() && board.tile(x, y).acid() {
+                        continue;
+                    }
+                    result.push((x, y));
+                }
+            }
+        }
+        return result;
+    }
 
     // BFS: visited[x*8+y] = min cost to reach, 255 = unvisited
     let mut visited = [255u8; 64];
@@ -77,6 +107,13 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
                 continue;
             }
 
+            // Operational rule: never voluntarily path a player unit onto
+            // ACID. The engine/bridge can disagree on whether the unit status
+            // is reflected immediately, so keep ACID stops out of search.
+            if unit.is_player() && tile.acid() {
+                continue;
+            }
+
             // Other alive units: friendly can walk through (not stop), enemies hard-block
             if let Some(blocker_idx) = board.unit_at(nx, ny) {
                 if board.units[blocker_idx].uid != uid {
@@ -106,6 +143,53 @@ pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     }
 
     result
+}
+
+/// Explain why a requested move destination is not valid under the same
+/// movement rules used by action enumeration. Returns None for legal stops.
+pub fn illegal_move_reason(board: &Board, unit_idx: usize, move_to: (u8, u8)) -> Option<&'static str> {
+    if move_to.0 >= 8 || move_to.1 >= 8 {
+        return Some("out_of_bounds");
+    }
+
+    let unit = &board.units[unit_idx];
+    if move_to == (unit.x, unit.y) {
+        return None;
+    }
+    if !unit.can_move() {
+        return Some("unit_cannot_move");
+    }
+    if unit.web() {
+        return Some("webbed");
+    }
+    if unit.frozen() {
+        return Some("frozen");
+    }
+
+    if reachable_tiles(board, unit_idx).contains(&move_to) {
+        return None;
+    }
+
+    let tile = board.tile(move_to.0, move_to.1);
+    if tile.terrain == Terrain::Building {
+        return Some("blocked_building");
+    }
+    if tile.terrain == Terrain::Mountain {
+        return Some("blocked_mountain");
+    }
+    if !unit.flying() && tile.terrain.is_deadly_ground() {
+        return Some("deadly_ground");
+    }
+    if unit.is_player() && tile.acid() {
+        return Some("forbidden_acid");
+    }
+    if board.unit_at(move_to.0, move_to.1).is_some() {
+        return Some("blocked_unit");
+    }
+    if board.wreck_at(move_to.0, move_to.1) {
+        return Some("blocked_wreck");
+    }
+    Some("out_of_range")
 }
 
 /// Get adjacent tiles with direction index.
@@ -200,7 +284,7 @@ mod tests {
         if flying {
             unit.flags |= UnitFlags::FLYING;
         }
-        unit.flags |= UnitFlags::IS_MECH | UnitFlags::ACTIVE;
+        unit.flags |= UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::CAN_MOVE;
         let idx = board.add_unit(unit);
         (board, idx)
     }
@@ -247,6 +331,51 @@ mod tests {
         board.tile_mut(0, 1).terrain = Terrain::Water;
         let tiles = reachable_tiles(&board, idx);
         assert!(tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn test_player_ground_avoids_acid_pool() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, false);
+        board.tile_mut(0, 1).set_acid(true);
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn test_player_flying_avoids_acid_pool() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, true);
+        board.tile_mut(0, 1).set_acid(true);
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn illegal_move_reason_reports_building_destination() {
+        let (mut board, idx) = make_board_with_unit(3, 5, 3, false);
+        board.tile_mut(5, 2).terrain = Terrain::Building;
+        board.tile_mut(5, 2).building_hp = 1;
+
+        assert_eq!(
+            illegal_move_reason(&board, idx, (5, 2)),
+            Some("blocked_building")
+        );
+    }
+
+    #[test]
+    fn test_flying_crosses_enemy_blockers() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, true);
+        let mut blocker = Unit::default();
+        blocker.uid = 2;
+        blocker.x = 1;
+        blocker.y = 0;
+        blocker.hp = 2;
+        blocker.team = Team::Enemy;
+        board.add_unit(blocker);
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(1, 0)));
+        assert!(tiles.contains(&(2, 0)));
+        assert!(tiles.contains(&(3, 0)));
     }
 
     #[test]

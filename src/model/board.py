@@ -13,10 +13,26 @@ from src.model.pawn_stats import get_pawn_stats, get_effective_move_speed
 
 
 # Terrain flags
-TERRAIN_PASSABLE = {"ground", "forest", "sand", "ice", "fire", "rubble"}
+TERRAIN_PASSABLE = {"ground", "forest", "sand", "ice", "fire", "rubble", "acid"}
 TERRAIN_BLOCKS_GROUND = {"water", "chasm", "lava", "mountain"}
 TERRAIN_BLOCKS_ALL = {"mountain"}  # blocks flying too (for projectiles)
 TERRAIN_DEADLY_GROUND = {"water", "chasm", "lava"}
+
+
+BRIDGE_TERRAIN_ID_MAP = {
+    # Engine/map-file terrain constants. The Lua bridge also sends a terrain
+    # string, but older bridge builds mislabeled id 5 as lava; id 5 is ice.
+    0: "ground",
+    1: "building",
+    2: "rubble",
+    3: "water",
+    4: "mountain",
+    5: "ice",
+    6: "forest",
+    7: "sand",
+    9: "chasm",
+    10: "acid",
+}
 
 
 # Pilot value lookup: multiplier on the mech_killed penalty reflecting
@@ -58,11 +74,21 @@ def _mech_base_hp(mech_type: str) -> int:
         "PunchMech": 3, "TankMech": 2, "ArtiMech": 2,
         "ChargeMech": 3, "IceMech": 2, "LeapMech": 2, "PierceMech": 2,
         "BeamMech": 2, "FireMech": 3, "MineMech": 3,
-        "JetMech": 2, "RocketMech": 2, "PulseMech": 2, "GuardMech": 3,
+        "JetMech": 2, "RocketMech": 3, "PulseMech": 3, "GuardMech": 3,
         "LaserMech": 2, "ScienceMech": 2, "CannonMech": 3, "BoulderMech": 3,
         "SwapMech": 2, "WallMech": 2, "DamMech": 3, "ElectricMech": 2,
         "NanoMech": 2,
     }.get(mech_type, 0)
+
+
+def _is_pinnacle_bot(unit_type: str) -> bool:
+    return (
+        unit_type.startswith("Snowtank")
+        or unit_type.startswith("Snowart")
+        or unit_type.startswith("Snowlaser")
+        or unit_type.startswith("Snowmine")
+        or unit_type in {"BotBoss", "BotBoss2"}
+    )
 
 
 def _compute_pilot_value(pilot_id: str, pilot_skills, current_max_hp: int,
@@ -106,6 +132,7 @@ class Unit:
     pushable: bool
     weapon: str
     weapon2: str = ""
+    minor: bool = False
     active: bool = True  # can still act this turn
     # Base movement speed (used to restore move_speed when web breaks).
     # Defaults to move_speed if bridge omits base_move.
@@ -113,9 +140,12 @@ class Unit:
     # Status effects (populated by bridge; inferred by save parser)
     shield: bool = False
     acid: bool = False
+    shield: bool = False
     frozen: bool = False
     fire: bool = False
     web: bool = False
+    infected: bool = False  # Vek Mites attached; objective counter state
+    boosted: bool = False
     # UID of the enemy currently webbing this unit. -1 = no web / unknown.
     # When that enemy is pushed or killed, web breaks and move_speed restores.
     web_source_uid: int = -1
@@ -152,6 +182,10 @@ class Unit:
     def is_enemy(self) -> bool:
         return self.team == 6
 
+    @property
+    def receives_psion_aura(self) -> bool:
+        return self.is_enemy and not self.minor and not _is_pinnacle_bot(self.type)
+
 
 @dataclass
 class BoardTile:
@@ -168,6 +202,8 @@ class BoardTile:
     conveyor: int = -1       # -1 = not conveyor, 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y)
     freeze_mine: bool = False  # freeze mine on this tile (freezes unit that stops here)
     old_earth_mine: bool = False  # old earth mine — kills any unit that stops here (bypasses shield)
+    repair_platform: bool = False  # Mission_Repair platform; full-heals then disappears
+    grass: bool = False  # Mission_Terraform custom grassland objective tile
     unique_building: bool = False  # objective building (Coal Plant / Batteries / Generator)
     # Specific objective tag when unique_building=True (e.g. "Str_Power",
     # "Str_Battery", "Mission_Solar" for ⚡ grid-reward; "Str_Clinic",
@@ -184,6 +220,7 @@ class Board:
             [BoardTile() for _ in range(8)] for _ in range(8)
         ]
         self.units: list[Unit] = []
+        self.attack_order: list[int] = []
         self.grid_power: int = 0
         self.grid_power_max: int = 7
         # Grid Defense: % chance a building resists damage. Not exposed by
@@ -203,12 +240,14 @@ class Board:
         self.environment_danger: set[tuple[int, int]] = set()
         self.environment_danger_v2: dict[tuple[int, int], tuple[int, bool]] = {}
         # Maps (x,y) -> (damage, is_lethal)
+        self.environment_danger_flying_immune: set[tuple[int, int]] = set()
         # Ice Storm freeze tiles (Env_SnowStorm Acid=false). At start of enemy
         # turn, units on these tiles get Frozen=true. Buildings/mountains are
         # unaffected — frozen is a unit status. Separate from environment_danger
         # so the evaluator can score "lose a turn" instead of "die".
         self.environment_freeze: set[tuple[int, int]] = set()
         self.env_type: str = "unknown"
+        self.environment_wind_dir: int | None = None
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
         self.soldier_psion_active: bool = False
@@ -232,15 +271,38 @@ class Board:
         self.medical_supplies: bool = False
         # Mission metadata (from bridge mission.ID, e.g. "Mission_Dam").
         self.mission_id: str = ""
-        # "Kill N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
+        # "Kill at least N enemies" bonus objective (BONUS_KILL_FIVE). 0 when the
         # mission doesn't have this bonus. Target is difficulty-scaled by
         # the game (5 on Easy, 7 on Normal/Hard). Used by the evaluator to
         # fire a step-function bonus when cumulative kills cross the target.
         self.mission_kill_target: int = 0
+        # "Kill N or fewer enemies" bonus objective (BONUS_PACIFIST). 0 when
+        # absent. Exceeding this cap fails the bonus immediately.
+        self.mission_kill_limit: int = 0
         # Cumulative enemy kills this mission (mission.KilledVek from Lua).
         # Combined with the simulated turn's kills to decide whether a plan
-        # crosses the kill target threshold.
+        # crosses the kill target threshold or exceeds the kill limit.
         self.mission_kills_done: int = 0
+        # Mission_Force objective: destroy 2 mountains. `mission_mountain_tiles`
+        # is the set of current mountain positions at solve input; projection
+        # counts how many of those become rubble during the planned turn.
+        self.mission_mountain_target: int = 0
+        self.mission_mountains_destroyed: int = 0
+        self.mission_mountain_tiles: set[tuple[int, int]] = set()
+        # Mission_Repair objective: use 3 repair platforms. Progress counts
+        # EVENT_REPAIR_PICKUP in Lua; the Rust simulator increments this when
+        # any live unit lands on an Item_Repair_Mine tile.
+        self.repair_platform_target: int = 0
+        self.repair_platforms_used: int = 0
+        # Mission_FreezeBldg objective: static building list plus target count.
+        # Live progress is represented by those tiles' frozen flags.
+        self.freeze_building_target: int = 0
+        self.freeze_building_tiles: set[tuple[int, int]] = set()
+        # Unit-based mission objectives. Some bonus objectives are pawns
+        # rather than objective building tiles (Mission_Hacking's Hacking
+        # Facility and Cannon Bot are the live example).
+        self.destroy_objective_unit_types: list[str] = []
+        self.protect_objective_unit_types: list[str] = []
         # Old Earth Dam state — flipped to False exactly once when the last
         # Dam_Pawn tile dies; the transition triggers trigger_dam_flood.
         self.dam_alive: bool = False
@@ -270,6 +332,7 @@ class Board:
         b = Board()
         b.tiles = [[deepcopy(self.tiles[x][y]) for y in range(8)] for x in range(8)]
         b.units = [deepcopy(u) for u in self.units]
+        b.attack_order = list(self.attack_order)
         b.grid_power = self.grid_power
         b.grid_power_max = self.grid_power_max
         b.grid_defense_pct = self.grid_defense_pct
@@ -277,8 +340,10 @@ class Board:
         b.player_grid_save_expected = self.player_grid_save_expected
         b.environment_danger = set(self.environment_danger)
         b.environment_danger_v2 = dict(self.environment_danger_v2)
+        b.environment_danger_flying_immune = set(self.environment_danger_flying_immune)
         b.environment_freeze = set(self.environment_freeze)
         b.env_type = self.env_type
+        b.environment_wind_dir = self.environment_wind_dir
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
@@ -290,7 +355,17 @@ class Board:
         b.medical_supplies = self.medical_supplies
         b.mission_id = self.mission_id
         b.mission_kill_target = self.mission_kill_target
+        b.mission_kill_limit = self.mission_kill_limit
         b.mission_kills_done = self.mission_kills_done
+        b.mission_mountain_target = self.mission_mountain_target
+        b.mission_mountains_destroyed = self.mission_mountains_destroyed
+        b.mission_mountain_tiles = set(self.mission_mountain_tiles)
+        b.repair_platform_target = self.repair_platform_target
+        b.repair_platforms_used = self.repair_platforms_used
+        b.freeze_building_target = self.freeze_building_target
+        b.freeze_building_tiles = set(self.freeze_building_tiles)
+        b.destroy_objective_unit_types = list(self.destroy_objective_unit_types)
+        b.protect_objective_unit_types = list(self.protect_objective_unit_types)
         b.dam_alive = self.dam_alive
         b.dam_primary = self.dam_primary
         b.bigbomb_alive = self.bigbomb_alive
@@ -412,6 +487,7 @@ class Board:
                 massive=stats.massive,
                 armor=stats.armor,
                 pushable=stats.pushable,
+                minor=stats.minor,
                 weapon=pawn.primary_weapon,
                 weapon2=pawn.secondary_weapon,
                 active=pawn.active,
@@ -433,46 +509,77 @@ class Board:
         board = Board()
         board.grid_power = data.get("grid_power", 0)
         board.grid_power_max = data.get("grid_power_max", 7)
+        board.attack_order = [
+            int(uid)
+            for uid in (data.get("attack_order", []) or [])
+            if isinstance(uid, int)
+        ]
 
         # Tiles
         for td in data.get("tiles", []):
             x, y = td["x"], td["y"]
             if 0 <= x < 8 and 0 <= y < 8:
                 bt = board.tile(x, y)
-                bt.terrain = td.get("terrain", "ground")
+                terrain_id = td.get("terrain_id")
+                bt.terrain = BRIDGE_TERRAIN_ID_MAP.get(
+                    terrain_id,
+                    td.get("terrain", "ground"),
+                )
                 bt.on_fire = td.get("fire", False)
                 bt.smoke = td.get("smoke", False)
                 bt.acid = td.get("acid", False)
+                bt.shield = td.get("shield", False)
                 bt.frozen = td.get("frozen", False)
                 bt.cracked = td.get("cracked", False)
-                bt.has_pod = td.get("pod", False)
+                bt.has_pod = td.get("pod", td.get("has_pod", False))
                 bt.freeze_mine = td.get("freeze_mine", False)
                 bt.old_earth_mine = td.get("old_earth_mine", False)
+                bt.repair_platform = bool(
+                    td.get("repair_platform", False)
+                    or td.get("item") == "Item_Repair_Mine"
+                )
+                bt.grass = bool(
+                    td.get("grass", False)
+                    or td.get("custom") == "ground_grass.png"
+                )
                 if "conveyor" in td:
                     bt.conveyor = td["conveyor"]
                 if bt.terrain == "building":
-                    bt.building_hp = td.get("building_hp", 1)
-                    bt.population = td.get("population", 1)
                     bt.unique_building = td.get("unique_building", False)
                     bt.objective_name = td.get("objective_name", "")
+                    if "building_hp" in td:
+                        bt.building_hp = td["building_hp"]
+                    elif bt.unique_building:
+                        bt.building_hp = 0
+                    else:
+                        bt.building_hp = 1
+                    bt.population = td.get("population", 1)
                 elif bt.terrain == "mountain":
                     # Mountains have 2 HP (bridge doesn't send mountain HP)
                     bt.building_hp = td.get("building_hp", 2)
 
-        # Teleporter pad pairs (Mission_Teleporter). Bridge emits each
-        # entry as [x1, y1, x2, y2]; normalize to tuples.
-        for pair in data.get("teleporter_pairs", []) or []:
-            if isinstance(pair, (list, tuple)) and len(pair) >= 4:
-                board.teleporter_pairs.append(
-                    (int(pair[0]), int(pair[1]), int(pair[2]), int(pair[3]))
-                )
+        # Teleporter pad pairs are scoped to Mission_Teleporter. Preserve
+        # legacy recordings without mission_id, but ignore stale live bridge
+        # pairs on other missions.
+        if data.get("mission_id") in (None, "Mission_Teleporter"):
+            for pair in data.get("teleporter_pairs", []) or []:
+                if isinstance(pair, (list, tuple)) and len(pair) >= 4:
+                    board.teleporter_pairs.append(
+                        (int(pair[0]), int(pair[1]), int(pair[2]), int(pair[3]))
+                    )
 
         # Environment danger: v2 format has per-tile lethality [x, y, damage, kill_int]
         board.env_type = data.get("env_type", "unknown")
+        wind_dir = data.get("environment_wind_dir")
+        if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
+            board.environment_wind_dir = wind_dir
         for dt in data.get("environment_danger_v2", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 4:
-                board.environment_danger.add((dt[0], dt[1]))
-                board.environment_danger_v2[(dt[0], dt[1])] = (dt[2], dt[3] != 0)
+                pos = (dt[0], dt[1])
+                board.environment_danger.add(pos)
+                board.environment_danger_v2[pos] = (dt[2], dt[3] != 0)
+                if len(dt) >= 5 and dt[4] != 0:
+                    board.environment_danger_flying_immune.add(pos)
         # Backwards compat: v1 entries not in v2 default to lethal
         for dt in data.get("environment_danger", []):
             if isinstance(dt, (list, tuple)) and len(dt) >= 2:
@@ -518,7 +625,8 @@ class Board:
                 flying=ud.get("flying", stats.flying),
                 massive=stats.massive,
                 armor=ud.get("armor", stats.armor),
-                pushable=stats.pushable,
+                pushable=ud.get("pushable", stats.pushable),
+                minor=bool(ud.get("minor", stats.minor)),
                 weapon=primary,
                 weapon2=secondary,
                 active=ud.get("active", True),
@@ -528,6 +636,8 @@ class Board:
                 frozen=ud.get("frozen", False),
                 fire=ud.get("fire", False),
                 web=ud.get("web", False),
+                infected=ud.get("infected", False),
+                boosted=ud.get("boosted", False),
                 web_source_uid=ud.get("web_source_uid", -1),
                 target_x=qt_x,
                 target_y=qt_y,
@@ -549,19 +659,67 @@ class Board:
 
         # Mission metadata — may be empty string if bridge couldn't resolve.
         board.mission_id = data.get("mission_id", "") or ""
-        # Kill-N bonus objective fields. Both default 0, which makes the
-        # evaluator's step-function check a no-op for missions without the
-        # kill-N bonus. Emitted by the Lua bridge from mission.BonusObjs +
-        # mission.KilledVek + mission:GetKillBonus(). Safe when the Lua side
-        # hasn't been updated — int() wraps whatever the bridge sent.
+        # Kill-count bonus objective fields. All default 0, which makes the
+        # evaluator/safety checks no-op for missions without those bonuses.
+        # Emitted by the Lua bridge from mission.BonusObjs + mission.KilledVek
+        # + mission:GetKillBonus()/GetPacifistCount().
         try:
             board.mission_kill_target = int(data.get("mission_kill_target", 0) or 0)
         except (TypeError, ValueError):
             board.mission_kill_target = 0
         try:
+            board.mission_kill_limit = int(data.get("mission_kill_limit", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_kill_limit = 0
+        try:
             board.mission_kills_done = int(data.get("mission_kills_done", 0) or 0)
         except (TypeError, ValueError):
             board.mission_kills_done = 0
+        try:
+            board.mission_mountain_target = int(data.get("mission_mountain_target", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_mountain_target = 0
+        try:
+            board.mission_mountains_destroyed = int(data.get("mission_mountains_destroyed", 0) or 0)
+        except (TypeError, ValueError):
+            board.mission_mountains_destroyed = 0
+        board.mission_mountain_tiles = set()
+        for entry in data.get("mission_mountain_tiles", []) or []:
+            if not isinstance(entry, (list, tuple)) or len(entry) < 2:
+                continue
+            x, y = entry[0], entry[1]
+            if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+                board.mission_mountain_tiles.add((x, y))
+        try:
+            board.repair_platform_target = int(data.get("repair_platform_target", 0) or 0)
+        except (TypeError, ValueError):
+            board.repair_platform_target = 0
+        try:
+            board.repair_platforms_used = int(data.get("repair_platforms_used", 0) or 0)
+        except (TypeError, ValueError):
+            board.repair_platforms_used = 0
+        try:
+            board.freeze_building_target = int(data.get("freeze_building_target", 0) or 0)
+        except (TypeError, ValueError):
+            board.freeze_building_target = 0
+        board.freeze_building_tiles = set()
+        for p in data.get("freeze_building_tiles", []) or []:
+            if not isinstance(p, (list, tuple)) or len(p) < 2:
+                continue
+            try:
+                x, y = int(p[0]), int(p[1])
+            except (TypeError, ValueError):
+                continue
+            if 0 <= x < 8 and 0 <= y < 8:
+                board.freeze_building_tiles.add((x, y))
+        board.destroy_objective_unit_types = [
+            s for s in data.get("destroy_objective_unit_types", []) or []
+            if isinstance(s, str) and s
+        ]
+        board.protect_objective_unit_types = [
+            s for s in data.get("protect_objective_unit_types", []) or []
+            if isinstance(s, str) and s
+        ]
 
         # Infer WEB status from Spider Egg adjacency.
         # Game rule (weapons_enemy.lua SpiderAtk1:GetSkillEffect):
@@ -582,11 +740,19 @@ class Board:
                 neighbor = board.unit_at(nx, ny)
                 if neighbor is None or neighbor.hp <= 0:
                     continue
-                # Adjacent egg is the AUTHORITATIVE webber — override any
-                # bridge-reported web_source_uid (Lua GetGrappler can return
-                # the wrong enemy when a Scorpion is also nearby, which
-                # lets the solver "break" the web by pushing the wrong
-                # enemy and incorrectly conclude the mech can move).
+                source = next(
+                    (u for u in board.units
+                     if u.uid == neighbor.web_source_uid and u.hp > 0),
+                    None,
+                )
+                if (
+                    neighbor.web
+                    and source is not None
+                    and source.type != "WebbEgg1"
+                    and source.queued_target_x == neighbor.x
+                    and source.queued_target_y == neighbor.y
+                ):
+                    continue
                 neighbor.web = True
                 neighbor.web_source_uid = egg.uid
 
@@ -615,7 +781,7 @@ class Board:
             # Hardened Carapace excludes the Psion itself — "all OTHER Vek
             # have incoming weapon damage reduced by 1."
             for u in board.units:
-                if u.is_enemy and u.type != "Jelly_Armor1":
+                if u.receives_psion_aura and u.type != "Jelly_Armor1":
                     u.armor = True
 
         # Detect Old Earth Dam — record the primary tile (non-extra) for the
@@ -651,7 +817,7 @@ class Board:
             # Bridge sends hp already buffed but max_hp as base — adjust max_hp.
             # Exclude both psion sources from the buff (their HP is intrinsic).
             for u in board.units:
-                if u.is_enemy and u.type not in ("Jelly_Health1", "Jelly_Boss"):
+                if u.receives_psion_aura and u.type not in ("Jelly_Health1", "Jelly_Boss"):
                     u.max_hp += 1
 
         # Detect AE Psions (sim v37). Flags tracked for parity / breakdown;
@@ -666,9 +832,9 @@ class Board:
             u.type == "Jelly_Spider1" and u.hp > 0 for u in board.units
         )
 
-        # Satellite rocket deadly threat: 4 adjacent tiles kill any unit on launch.
-        # Detect by checking if adjacent tiles appear in targeted_tiles (= rocket is
-        # queued to fire this turn). Board:IsEnvironmentDanger() misses these.
+        # Satellite rocket deadly threat: 4 adjacent tiles kill grounded units
+        # on launch, but live launch exhaust spares flying pawns. Detect by
+        # targeted adjacent tiles when old payloads lack environment_danger_v2.
         targeted = set()
         for tt in data.get("targeted_tiles", []):
             if isinstance(tt, (list, tuple)) and len(tt) >= 2:
@@ -680,6 +846,9 @@ class Board:
                 if any(t in targeted for t in adj_on_board):
                     for t in adj_on_board:
                         board.environment_danger.add(t)
+                        if data.get("mission_id") == "Mission_Satellite":
+                            board.environment_danger_v2.setdefault(t, (1, True))
+                            board.environment_danger_flying_immune.add(t)
 
         return board
 
@@ -710,6 +879,8 @@ class Board:
                     c = sym.get(t.terrain, "?")
                     if t.freeze_mine:
                         c = "!"
+                    elif t.repair_platform:
+                        c = "+"
                     elif t.on_fire:
                         c = "*"
                     elif t.conveyor >= 0:

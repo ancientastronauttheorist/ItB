@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-08T19:21:01.495780",
+  "label": "research_queue_m10_turn03_blobber1_after_repulse_desync",
+  "turn": 3,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Blobber1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

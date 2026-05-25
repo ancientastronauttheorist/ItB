@@ -1,0 +1,36 @@
+{
+  "run_id": "20260430_230740_117",
+  "turn": 4,
+  "sub_action": "attack",
+  "action_index": 0,
+  "mech_uid": 0,
+  "weapon": "Prime_Flamethrower",
+  "target": [
+    2,
+    6
+  ],
+  "grid_power_diff": {
+    "field": "grid_power",
+    "predicted": 6,
+    "actual": 7
+  },
+  "building_hp_diffs": [
+    {
+      "x": 3,
+      "y": 6,
+      "field": "building_hp",
+      "predicted": 1,
+      "actual": 2
+    }
+  ],
+  "failure_db_id": "20260430_230740_117_m00_t04_per_sub_action_desync_attack_a0",
+  "classification": {
+    "top_category": "damage_amount",
+    "categories": [
+      "damage_amount",
+      "grid_power"
+    ],
+    "subcategory": null,
+    "model_gap": false
+  }
+}

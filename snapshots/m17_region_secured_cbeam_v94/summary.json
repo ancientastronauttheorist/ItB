@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-05-10T21:07:46.706141",
+  "label": "m17_region_secured_cbeam_v94",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Spider2",
+      "pos": [
+        2,
+        1
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Leaper2",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        2,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        7,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    }
+  ]
+}

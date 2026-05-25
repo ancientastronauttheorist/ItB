@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-30T18:08:53.933779",
+  "label": "research_gate_turn2",
+  "turn": 2,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "Disposal_Unit",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "FlameMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 4
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion2",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Jelly_Health1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    }
+  ]
+}

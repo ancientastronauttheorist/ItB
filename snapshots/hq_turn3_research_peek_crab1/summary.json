@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T16:48:06.283725",
+  "label": "hq_turn3_research_peek_crab1",
+  "turn": 3,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        4,
+        7
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Crab1",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Mosquito1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 2
+    }
+  ]
+}

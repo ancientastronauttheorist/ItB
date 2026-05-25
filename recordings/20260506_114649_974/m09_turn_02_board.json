@@ -1,0 +1,672 @@
+{
+  "timestamp": "2026-05-06T15:00:09.064101",
+  "run_id": "20260506_114649_974",
+  "mission_index": 9,
+  "turn": 2,
+  "label": "board",
+  "data": {
+    "bridge_state": {
+      "island_map_game_seen": "table",
+      "spawning_tiles": [
+        [
+          7,
+          3
+        ]
+      ],
+      "grid_power_max": 7,
+      "grid_power": 7,
+      "island_map_probe": "scope_alive",
+      "turn": 2,
+      "mission_id": "Mission_Repair",
+      "master_seed": 547498648,
+      "total_turns": 4,
+      "island_map_debug": "skipped: in active mission",
+      "environment_danger": [],
+      "tiles": [
+        {
+          "y": 0,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 0,
+          "x": 6,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 0,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 1,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 1,
+          "x": 3,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 1,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 1,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 1,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 2,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 2
+        },
+        {
+          "y": 2,
+          "terrain_id": 0,
+          "terrain": "ground",
+          "smoke": true,
+          "x": 3
+        },
+        {
+          "y": 2,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 2,
+          "terrain_id": 0,
+          "terrain": "ground",
+          "smoke": true,
+          "x": 5
+        },
+        {
+          "y": 2,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 2,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 3,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 0,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "terrain_id": 0,
+          "item": "Item_Repair_Mine",
+          "terrain": "ground",
+          "x": 1
+        },
+        {
+          "y": 4,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 4,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 4,
+          "terrain_id": 0,
+          "item": "Item_Repair_Mine",
+          "terrain": "ground",
+          "x": 6
+        },
+        {
+          "y": 4,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 5,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 2
+        },
+        {
+          "y": 5,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "terrain_id": 1,
+          "terrain": "building",
+          "smoke": true,
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 5,
+          "x": 5,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 5,
+          "terrain_id": 0,
+          "item": "Item_Repair_Mine",
+          "terrain": "ground",
+          "x": 6
+        },
+        {
+          "y": 5,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 1,
+          "x": 0
+        },
+        {
+          "y": 6,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 2
+        },
+        {
+          "y": 6,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "terrain_id": 1,
+          "terrain": "building",
+          "building_hp": 2,
+          "x": 4
+        },
+        {
+          "y": 6,
+          "terrain_id": 0,
+          "item": "Item_Repair_Mine",
+          "terrain": "ground",
+          "x": 5
+        },
+        {
+          "y": 6,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 6,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 0,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 7,
+          "x": 1,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 2,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 3,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 4,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 7,
+          "x": 5,
+          "terrain_id": 6,
+          "terrain": "forest"
+        },
+        {
+          "y": 7,
+          "x": 6,
+          "terrain_id": 0,
+          "terrain": "ground"
+        },
+        {
+          "y": 7,
+          "x": 7,
+          "terrain_id": 0,
+          "terrain": "ground"
+        }
+      ],
+      "targeted_tiles": [
+        [
+          2,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "phase": "combat_player",
+      "remaining_spawns": 1,
+      "mission_kills_done": 0,
+      "units": [
+        {
+          "web": false,
+          "active": true,
+          "base_move": 4,
+          "hp": 4,
+          "flying": true,
+          "pilot_level": 2,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 2,
+          "move": 5,
+          "weapons": [
+            "Brute_Jetmech"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=1"
+          ],
+          "fire": false,
+          "y": 1,
+          "x": 5,
+          "acid": false,
+          "shield": false,
+          "type": "JetMech",
+          "mech": true,
+          "uid": 0,
+          "pilot_id": "Pilot_Original"
+        },
+        {
+          "web": false,
+          "active": true,
+          "base_move": 3,
+          "hp": 1,
+          "flying": false,
+          "pilot_level": 1,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 3,
+          "weapons": [
+            "Ranged_Rocket",
+            "Passive_Electric"
+          ],
+          "frozen": false,
+          "pilot_skills": [
+            "skill1=7",
+            "skill2=8"
+          ],
+          "fire": false,
+          "y": 3,
+          "x": 3,
+          "acid": false,
+          "shield": false,
+          "type": "RocketMech",
+          "mech": true,
+          "uid": 1,
+          "pilot_id": "Pilot_Detritus"
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 0,
+          "flying": false,
+          "team": 1,
+          "massive": true,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 0,
+          "weapons": [
+            "Science_Repulse"
+          ],
+          "uid": 2,
+          "y": 6,
+          "x": 3,
+          "fire": false,
+          "type": "PulseMech",
+          "base_move": 4,
+          "mech": true,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 1,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 1,
+          "move": 4,
+          "x": 2,
+          "queued_target": [
+            2,
+            5
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "LeaperAtk1"
+          ],
+          "weapon_damage": 3,
+          "y": 4,
+          "uid": 239,
+          "type": "Leaper1",
+          "base_move": 4,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        },
+        {
+          "web": false,
+          "active": false,
+          "shield": false,
+          "hp": 3,
+          "weapon_push": 0,
+          "flying": false,
+          "team": 6,
+          "weapon_target_behind": false,
+          "web_probes": {
+            "IsGrappled": false
+          },
+          "max_hp": 3,
+          "move": 3,
+          "x": 4,
+          "queued_target": [
+            4,
+            5
+          ],
+          "has_queued_attack": true,
+          "weapons": [
+            "CrabAtk1"
+          ],
+          "weapon_damage": 1,
+          "y": 3,
+          "uid": 240,
+          "type": "Crab1",
+          "base_move": 3,
+          "fire": false,
+          "mech": false,
+          "acid": false,
+          "frozen": false
+        }
+      ],
+      "difficulty": 0,
+      "env_type": "unknown",
+      "environment_freeze": [],
+      "mission_seeds": {
+        "region4": {
+          "state": 0,
+          "turn": 2,
+          "mission": "Mission6",
+          "ai_seed": 1739064593
+        }
+      },
+      "environment_danger_v2": [],
+      "timestamp": 1778097609,
+      "in_active_mission": true,
+      "attack_order": [
+        239,
+        240
+      ],
+      "repair_platform_target": 3,
+      "repair_platforms_used": 2,
+      "is_infinite_spawn": true
+    },
+    "result_summary": {
+      "phase": "combat_player",
+      "source": "bridge",
+      "turn": 2,
+      "grid_power": "7/7",
+      "mechs": [
+        {
+          "type": "JetMech",
+          "pos": "G3",
+          "hp": "4/2",
+          "weapon": "Aerial Bombs",
+          "status": "READY"
+        },
+        {
+          "type": "RocketMech",
+          "pos": "E5",
+          "hp": "1/3",
+          "weapon": "Rocket Artillery",
+          "status": "READY"
+        }
+      ],
+      "active_mechs": 2,
+      "enemies": [
+        {
+          "type": "Leaper1",
+          "pos": "D6",
+          "hp": "1/1",
+          "target": " \u2192 C6"
+        },
+        {
+          "type": "Crab1",
+          "pos": "E4",
+          "hp": "3/3",
+          "target": " \u2192 C4"
+        }
+      ],
+      "threatened_buildings": 2,
+      "threats": [
+        "Building C6 by Leaper1 at D6",
+        "Building C4 by Crab1 at E4"
+      ],
+      "targeted_tiles": 3,
+      "spawn_points": 1
+    }
+  }
+}

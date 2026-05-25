@@ -1,0 +1,350 @@
+{
+  "timestamp": "2026-04-29T23:32:03.936848",
+  "run_id": "default",
+  "mission_index": 6,
+  "turn": 3,
+  "label": "action_1_attack_verify",
+  "data": {
+    "action_index": 1,
+    "sub_action": "attack",
+    "mech_uid": 0,
+    "predicted": {
+      "action_index": 0,
+      "grid_power": 7,
+      "mech_uid": 0,
+      "snapshot_phase": "after_mech_action",
+      "tiles_changed": [
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 3,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 3,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 2,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 3,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": true,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "forest",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 4,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 4,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "forest",
+          "x": 5,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "forest",
+          "x": 5,
+          "y": 6
+        }
+      ],
+      "units": [
+        {
+          "active": true,
+          "alive": true,
+          "hp": 1,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            5,
+            4
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "Terraformer",
+          "uid": 389
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 4,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            4,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "FlameMech",
+          "uid": 0
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 2,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            3,
+            3
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "IgniteMech",
+          "uid": 1
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": 0,
+          "is_mech": true,
+          "max_hp": 2,
+          "pos": [
+            2,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "TeleMech",
+          "uid": 2
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 4,
+          "is_mech": false,
+          "max_hp": 4,
+          "pos": [
+            4,
+            6
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Beetle1",
+          "uid": 391
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": 0,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            4,
+            3
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Jelly_Regen1",
+          "uid": 396
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 3,
+          "is_mech": false,
+          "max_hp": 3,
+          "pos": [
+            5,
+            1
+          ],
+          "status": {
+            "acid": false,
+            "fire": true,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Firefly1",
+          "uid": 395
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 3,
+          "is_mech": false,
+          "max_hp": 3,
+          "pos": [
+            6,
+            1
+          ],
+          "status": {
+            "acid": false,
+            "fire": true,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Firefly1",
+          "uid": 397
+        },
+        {
+          "active": false,
+          "alive": true,
+          "hp": 1,
+          "is_mech": false,
+          "max_hp": 2,
+          "pos": [
+            4,
+            4
+          ],
+          "status": {
+            "acid": false,
+            "fire": true,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 6,
+          "type": "Hornet1",
+          "uid": 398
+        }
+      ]
+    },
+    "diff": {
+      "unit_diffs": [],
+      "tile_diffs": [
+        {
+          "x": 4,
+          "y": 4,
+          "field": "terrain",
+          "predicted": "forest",
+          "actual": "ground"
+        }
+      ],
+      "scalar_diffs": [],
+      "total_count": 1
+    },
+    "classification": {
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false
+    },
+    "fuzzy_signal": {
+      "version": 1,
+      "top_category": "terrain",
+      "categories": [
+        "terrain"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "terrain|Prime_Flamethrower|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Prime_Flamethrower",
+        "target": [
+          4,
+          4
+        ]
+      }
+    }
+  }
+}

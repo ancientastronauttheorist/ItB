@@ -7,7 +7,19 @@
 use crate::types::*;
 use crate::board::*;
 use crate::weapons::*;
-use crate::simulate::{apply_damage, apply_push, apply_weapon_status};
+use crate::simulate::{
+    apply_damage,
+    apply_damage_with_bombrock_exclusion,
+    apply_push,
+    apply_push_no_edge_bump,
+    apply_teleport_on_land,
+    apply_weapon_status,
+    apply_weapon_status_with_impact_occupancy,
+    flush_deferred_bump_grid_debt,
+    on_enemy_death,
+    settle_building_grid_loss,
+    thaw_frozen_building,
+};
 
 /// Spawn a new enemy unit at (x, y). Used by Spider/Blobber artillery
 /// whose in-game effect is "create an egg / blob" at the telegraphed
@@ -20,8 +32,8 @@ use crate::simulate::{apply_damage, apply_push, apply_weapon_status};
 ///
 /// The spawned unit inherits safe defaults: 1 HP, move 0, queued
 /// target = own tile (so the egg-skip treats it as "hatching, not
-/// attacking"). UID uses the 9000+ range to avoid colliding with
-/// bridge-provided UIDs.
+/// attacking"). UID uses the next board-local pawn id, matching the
+/// engine's live bridge ids closely enough for per-action verification.
 pub(crate) fn spawn_enemy(
     board: &mut Board,
     x: u8, y: u8,
@@ -40,11 +52,12 @@ pub(crate) fn spawn_enemy(
         _ => return false,
     }
 
-    // Pick a fresh UID in the spawned-unit range. Keep counting up
-    // from 9000 to avoid duplicates within a single enemy phase.
-    let mut new_uid: u16 = 9000;
+    // Pick the next live-style pawn id. Earlier simulator versions used a
+    // 9000+ synthetic range, which kept search state collision-free but made
+    // bridge verification report false spawn diffs for player-phase spawns.
+    let mut new_uid: u16 = 1;
     for i in 0..board.unit_count as usize {
-        if board.units[i].uid >= new_uid { new_uid = board.units[i].uid + 1; }
+        new_uid = new_uid.max(board.units[i].uid.saturating_add(1));
     }
 
     let mut u = Unit {
@@ -63,6 +76,69 @@ pub(crate) fn spawn_enemy(
     true
 }
 
+fn apply_mosquito_boss_attack(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
+    {
+        let tile = board.tile_mut(x, y);
+        tile.set_on_fire(false);
+        tile.set_smoke(true);
+    }
+
+    if let Some(idx) = board.unit_at(x, y) {
+        let old_hp = board.units[idx].hp.max(0) as i32;
+        let was_enemy = board.units[idx].is_enemy();
+        let was_player = board.units[idx].is_player();
+        let mission_counted = was_enemy && !board.units[idx].minor();
+        board.units[idx].set_shield(false);
+        board.units[idx].set_frozen(false);
+        board.units[idx].hp = 0;
+        if was_enemy {
+            result.enemy_damage_dealt += old_hp;
+            result.record_enemy_kill(mission_counted);
+            on_enemy_death(board, idx, result);
+        } else if was_player {
+            result.mech_damage_taken += old_hp;
+            result.mechs_killed += 1;
+        }
+    }
+
+    let tile_idx = xy_to_idx(x, y);
+    let is_unique = (board.unique_buildings & (1u64 << tile_idx)) != 0;
+    let mut hp_lost = 0u8;
+    let mut destroyed = false;
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            if tile.frozen() {
+                tile.set_frozen(false);
+                result.events.push(format!("building_thawed:{}:{}", x, y));
+            } else {
+                hp_lost = tile.building_hp;
+                tile.building_hp = 0;
+                tile.set_shield(false);
+                if !is_unique {
+                    tile.terrain = Terrain::Rubble;
+                }
+                destroyed = true;
+            }
+        }
+    }
+    if hp_lost > 0 {
+        result.buildings_damaged += hp_lost as i32;
+        result.buildings_lost += 1;
+        result.grid_damage += hp_lost as i32;
+        let grid_loss = settle_building_grid_loss(
+            board,
+            tile_idx,
+            hp_lost,
+            destroyed,
+            is_unique,
+            DamageSource::Weapon,
+        );
+        result.grid_damage += (grid_loss as i32) - (hp_lost as i32);
+        board.grid_power = board.grid_power.saturating_sub(grid_loss);
+    }
+}
+
 /// Get effective damage for an enemy hit at a tile (Vek Hormones adds +1 vs other enemies).
 fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: bool) -> u8 {
     if vek_hormones {
@@ -73,6 +149,56 @@ fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: 
         }
     }
     base_damage
+}
+
+fn queued_origin_for_attack(enemy: &Unit, fallback: (u8, u8)) -> (u8, u8) {
+    if enemy.flags.contains(UnitFlags::QUEUED_ORIGIN_SET)
+        && enemy.queued_origin_x >= 0
+        && enemy.queued_origin_y >= 0
+    {
+        (enemy.queued_origin_x as u8, enemy.queued_origin_y as u8)
+    } else {
+        fallback
+    }
+}
+
+/// Starfish attacks are self-targeted queued appendage strikes:
+/// - normal/alpha Starfish damage the four diagonal tiles around themselves;
+/// - Starfish Leader additionally pushes the four cardinal adjacent tiles
+///   outward with zero damage.
+///
+/// Lua references:
+/// - scripts/advanced/ae_weapons_enemy.lua::StarfishAtk1
+/// - scripts/advanced/bosses/starfish.lua::StarfishAtkB1
+fn apply_starfish_appendages(
+    board: &mut Board,
+    ex: u8,
+    ey: u8,
+    damage: u8,
+    push_cardinals: bool,
+    vek_hormones: bool,
+    result: &mut ActionResult,
+) {
+    for dir in 0..DIRS.len() {
+        let (dx1, dy1) = DIRS[dir];
+        let (dx2, dy2) = DIRS[(dir + 1) % DIRS.len()];
+        let diag_x = ex as i8 + dx1 + dx2;
+        let diag_y = ey as i8 + dy1 + dy2;
+        if in_bounds(diag_x, diag_y) {
+            let x = diag_x as u8;
+            let y = diag_y as u8;
+            let d = enemy_hit_damage(board, x, y, damage, vek_hormones);
+            apply_damage(board, x, y, d, result, DamageSource::Weapon);
+        }
+
+        if push_cardinals {
+            let card_x = ex as i8 + dx1;
+            let card_y = ey as i8 + dy1;
+            if in_bounds(card_x, card_y) {
+                apply_push(board, card_x as u8, card_y as u8, dir, result);
+            }
+        }
+    }
 }
 
 /// Apply environment_danger damage to a tile.
@@ -86,7 +212,8 @@ fn enemy_hit_damage(board: &Board, x: u8, y: u8, base_damage: u8, vek_hormones: 
 /// (chasm rules + project convention). Buildings on the tile still take
 /// the lethal damage regardless. The bridge populates this per-tile via the
 /// 5th element of `environment_danger_v2` entries; missing → false (treat as
-/// pure Deadly Threat, preserving pre-fix behavior).
+/// pure Deadly Threat, preserving pre-fix behavior). Final Cave falling rocks
+/// are Deadly Threats, not hoverable chasm conversion.
 ///
 /// `lethal=false` (sandstorm, wind storm, snow storm) does 1 damage with
 /// bump-like semantics: ignored by armor/ACID, consumed by shield, skips
@@ -122,7 +249,7 @@ fn apply_env_danger(
                     result.mechs_killed += 1;
                     result.mech_damage_taken += prev_hp as i32;
                 } else if unit.is_enemy() {
-                    result.enemies_killed += 1;
+                    result.record_enemy_kill(!unit.minor());
                     result.enemy_damage_dealt += prev_hp as i32;
                     enemy_died_idx = Some(uidx);
                 }
@@ -143,7 +270,7 @@ fn apply_env_danger(
                     } else if unit.is_enemy() {
                         result.enemy_damage_dealt += 1;
                         if unit.hp <= 0 {
-                            result.enemies_killed += 1;
+                            result.record_enemy_kill(!unit.minor());
                             enemy_died_idx = Some(uidx);
                         }
                     }
@@ -159,25 +286,48 @@ fn apply_env_danger(
         // dispatch the explosion here when an aura source is alive. The
         // dying Vek has hp=0 already; explosion damages 4 adjacent tiles.
         // (sim v38 follow-up to v37 boss aura test failure.)
-        if board.blast_psion || board.boss_psion {
+        if (board.blast_psion || board.boss_psion) && board.units[idx].receives_psion_aura() {
             crate::simulate::apply_death_explosion(board, x, y, result, 0);
         }
     }
 
     // Damage building if present (lethal destroys entirely, non-lethal does 1 HP)
-    let tile = board.tile_mut(x, y);
-    if tile.terrain == Terrain::Building && tile.building_hp > 0 {
-        let dmg = if lethal { tile.building_hp } else { 1 };
-        let old_hp = tile.building_hp;
-        tile.building_hp = tile.building_hp.saturating_sub(dmg);
-        let lost = old_hp - tile.building_hp;
-        result.buildings_damaged += lost as i32;
-        result.grid_damage += lost as i32;
-        if tile.building_hp == 0 {
-            tile.terrain = Terrain::Rubble;
-            result.buildings_lost += 1;
+    let idx = xy_to_idx(x, y);
+    let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+    let mut lost = 0u8;
+    let mut destroyed = false;
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            if tile.frozen() {
+                tile.set_frozen(false);
+                result.events.push(format!("building_thawed:{}:{}", x, y));
+            } else {
+                let dmg = if lethal { tile.building_hp } else { 1 };
+                let old_hp = tile.building_hp;
+                tile.building_hp = tile.building_hp.saturating_sub(dmg);
+                lost = old_hp - tile.building_hp;
+                result.buildings_damaged += lost as i32;
+                result.grid_damage += lost as i32;
+                if tile.building_hp == 0 {
+                    tile.terrain = Terrain::Rubble;
+                    result.buildings_lost += 1;
+                    destroyed = true;
+                }
+            }
         }
-        board.grid_power = board.grid_power.saturating_sub(lost);
+    }
+    if lost > 0 {
+        let grid_loss = settle_building_grid_loss(
+            board,
+            idx,
+            lost,
+            destroyed,
+            is_unique,
+            DamageSource::Weapon,
+        );
+        result.grid_damage += (grid_loss as i32) - (lost as i32);
+        board.grid_power = board.grid_power.saturating_sub(grid_loss);
     }
 }
 
@@ -187,7 +337,8 @@ fn apply_env_danger(
 pub fn apply_spawn_blocking(
     board: &mut Board,
     spawn_points: &[(u8, u8)],
-) {
+) -> ActionResult {
+    let mut result = ActionResult::default();
     for &(sx, sy) in spawn_points {
         if let Some(idx) = board.unit_at(sx, sy) {
             let unit = &mut board.units[idx];
@@ -204,8 +355,10 @@ pub fn apply_spawn_blocking(
             // so multi-tile HP mirroring + future dam-flood trigger run.
             let mut tmp_result = ActionResult::default();
             apply_damage(board, sx, sy, 1, &mut tmp_result, DamageSource::Bump);
+            result.merge(&tmp_result);
         }
     }
+    result
 }
 
 /// Mission_Reactivation thaw: at the start of each enemy turn, the Lua
@@ -247,15 +400,154 @@ fn simulate_reactivation_thaw(board: &mut Board) {
     }
 }
 
+fn active_conveyor_mission(board: &Board) -> bool {
+    matches!(board.mission_id.as_str(), "Mission_Belt" | "Mission_BeltRandom")
+}
+
+/// Conveyor effect: on active conveyor missions, all live units standing on
+/// conveyor tiles are pushed one tile in the belt direction before Vek attacks
+/// resolve. Some Detritus maps store decorative conveyor sprites in save data
+/// without running an enemy-phase belt environment, so gate on mission id.
+fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
+    if !active_conveyor_mission(board) {
+        return;
+    }
+    let mut moves: Vec<(usize, i16, u16, u8, u8)> = Vec::new();
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.hp <= 0 { continue; }
+        let dir = board.tile(u.x, u.y).conveyor_dir;
+        if !(0i8..=3i8).contains(&dir) { continue; }
+        let (dx, dy) = DIRS[dir as usize];
+        let projection = u.x as i16 * dx as i16 + u.y as i16 * dy as i16;
+        moves.push((dir as usize, projection, u.uid, u.x, u.y));
+    }
+
+    // Front-to-back within each direction prevents same-direction belt chains
+    // from bumping into units that should move out of the way this tick.
+    moves.sort_by(|a, b| {
+        a.0.cmp(&b.0)
+            .then_with(|| b.1.cmp(&a.1))
+            .then_with(|| a.2.cmp(&b.2))
+    });
+
+    for (dir, _projection, uid, x, y) in moves {
+        let Some(idx) = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].uid == uid)
+        else {
+            continue;
+        };
+        let u = &board.units[idx];
+        if u.hp <= 0 || u.x != x || u.y != y { continue; }
+        apply_push(board, x, y, dir, result);
+    }
+}
+
+/// Mission_Wind pushes units standing on marked rows before Vek attacks.
+///
+/// The bridge stores affected tiles in `env_wind` and the live Lua `WindDir`
+/// in `env_wind_dir`. Precompute initially occupied wind tiles so a unit
+/// pushed into another marked tile is not hit twice during one gust.
+fn simulate_mission_wind(board: &mut Board, result: &mut ActionResult) {
+    if board.env_wind == 0 || !(0..=3).contains(&board.env_wind_dir) {
+        return;
+    }
+    let dir = board.env_wind_dir as usize;
+    let mut targets: Vec<(u8, u8)> = Vec::new();
+    match dir {
+        3 => {
+            for y in 0..8u8 {
+                for x in 0..8u8 {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        1 => {
+            for y in 0..8u8 {
+                for x in (0..8u8).rev() {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        2 => {
+            for x in 0..8u8 {
+                for y in 0..8u8 {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        0 => {
+            for x in 0..8u8 {
+                for y in (0..8u8).rev() {
+                    if board.env_wind & (1u64 << xy_to_idx(x, y)) != 0
+                        && board.unit_at(x, y).is_some()
+                    {
+                        targets.push((x, y));
+                    }
+                }
+            }
+        }
+        _ => return,
+    }
+
+    for (x, y) in targets {
+        if let Some(idx) = board.unit_at(x, y) {
+            if board.units[idx].hp > 0 {
+                apply_push(board, x, y, dir, result);
+            }
+        }
+    }
+}
+
+fn hatch_spawn_destination(board: &Board, x: u8, y: u8) -> Option<(u8, u8)> {
+    // Live HQ capture: a WebbEgg at E6 hatched onto adjacent F6, destroying a
+    // 2-HP building. The Lua skill queues `sPawn` at the occupied egg tile, and
+    // the engine's hidden fallback picked bridge `(x, y-1)` first.
+    let hatch_dirs: [(i8, i8); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+    for &(dx, dy) in &hatch_dirs {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if !in_bounds(nx, ny) {
+            continue;
+        }
+        let hx = nx as u8;
+        let hy = ny as u8;
+        if board.unit_at(hx, hy).is_some() || board.wreck_at(hx, hy) {
+            continue;
+        }
+        let tile = board.tile(hx, hy);
+        match tile.terrain {
+            Terrain::Building if tile.building_hp > 0 && !tile.shield() => return Some((hx, hy)),
+            Terrain::Ground | Terrain::Sand | Terrain::Forest
+            | Terrain::Rubble | Terrain::Fire | Terrain::Ice => return Some((hx, hy)),
+            _ => {}
+        }
+    }
+    None
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
-/// Processes in UID order. Returns buildings destroyed count.
+/// Processes in UID order and returns the accumulated outcome from fire,
+/// environment, enemy attacks, and other enemy-phase effects.
 ///
 /// `original_positions`: maps unit index -> (orig_x, orig_y) for direction/range checks.
 pub fn simulate_enemy_attacks(
     board: &mut Board,
     original_positions: &[(u8, u8); 16],
     weapons: &WeaponTable,
-) -> i32 {
+) -> ActionResult {
     // Mission_Reactivation: thaw 2 frozen Vek at start of enemy phase.
     // Must run BEFORE the frozen-skip in the attack loop so newly-thawed
     // pawns are reflected in post-enemy state (they don't attack this
@@ -264,6 +556,7 @@ pub fn simulate_enemy_attacks(
 
     let mut buildings_destroyed = 0;
     let mut result = ActionResult::default();
+    flush_deferred_bump_grid_debt(board, &mut result);
 
     // Fire tick: burning units take 1 damage before attacks
     // Flame Shielding: player mechs immune to fire
@@ -273,7 +566,7 @@ pub fn simulate_enemy_attacks(
     // guard) or if pilot_flags were injected mid-mission.
     for i in 0..board.unit_count as usize {
         if board.units[i].fire() && board.units[i].hp > 0 {
-            if board.flame_shielding && board.units[i].is_player() {
+            if board.flame_shielding && board.units[i].is_player() && board.units[i].is_mech() {
                 continue; // mechs immune to fire with Flame Shielding
             }
             if board.units[i].pilot_rock() {
@@ -289,7 +582,7 @@ pub fn simulate_enemy_attacks(
             // its own +1 HP buff. Defensively clear the FIRE flag so a
             // stale status doesn't tick once the Psion dies — the on-death
             // cleanup re-enables fire damage normally.
-            if board.fire_psion && board.units[i].is_enemy()
+            if board.fire_psion && board.units[i].receives_psion_aura()
                 && board.units[i].type_name_str() != "Jelly_Fire1"
             {
                 continue;
@@ -341,7 +634,7 @@ pub fn simulate_enemy_attacks(
             if !board.boss_psion {
                 for i in 0..board.unit_count as usize {
                     let tname = board.units[i].type_name_str();
-                    if board.units[i].is_enemy() && board.units[i].hp > 0
+                    if board.units[i].receives_psion_aura() && board.units[i].hp > 0
                         && tname != "Jelly_Health1"
                         && tname != "Jelly_Boss"
                     {
@@ -374,7 +667,7 @@ pub fn simulate_enemy_attacks(
             if !board.soldier_psion {
                 for i in 0..board.unit_count as usize {
                     let tname = board.units[i].type_name_str();
-                    if board.units[i].is_enemy() && board.units[i].hp > 0
+                    if board.units[i].receives_psion_aura() && board.units[i].hp > 0
                         && tname != "Jelly_Health1"
                         && tname != "Jelly_Boss"
                     {
@@ -409,7 +702,7 @@ pub fn simulate_enemy_attacks(
         for i in 0..board.unit_count as usize {
             let u = &mut board.units[i];
             let tname = u.type_name_str();
-            if u.is_enemy() && u.hp > 0
+            if u.receives_psion_aura() && u.hp > 0
                 && tname != "Jelly_Regen1"
                 && tname != "Jelly_Boss"
             {
@@ -470,8 +763,18 @@ pub fn simulate_enemy_attacks(
         }
     }
 
+    // Conveyor belts resolve before Vek attacks on active belt missions, so
+    // moved Vek re-aim from their conveyor-shifted tile using the original
+    // queued direction below.
+    simulate_conveyor_belts(board, &mut result);
+
+    // Mission_Wind rows are push lanes, not damage tiles. The gust resolves
+    // before attacks; Vek then fire from their pushed tile while preserving
+    // the original queued direction.
+    simulate_mission_wind(board, &mut result);
+
     // Egg hatch step: transform any surviving spider/spiderling egg into
-    // its hatched live unit (sim v22). Runs AFTER fire tick + env_danger
+    // its hatched live unit (sim v22/v115). Runs AFTER fire tick + env_danger
     // so eggs killed by those still die without hatching, but BEFORE the
     // attack loop so the hatched Spiderling participates in the unit
     // census the loop snapshots. The fresh hatchling has no queued
@@ -517,7 +820,10 @@ pub fn simulate_enemy_attacks(
     // Spiderling — every spider-bonus mission produced a desync row in
     // failure_db. Surfaced by the 20260425_185532_218 Archive run, where
     // 2-3 eggs piled up over turns 2-3 and were predicted as eggs but
-    // played as a Spiderling wall on turns 3-4.
+    // played as a Spiderling wall on turns 3-4. A later Hard HQ capture
+    // showed the engine's `sPawn` fallback placing the hatchling adjacent
+    // to the occupied egg tile; if that destination is a live building, it
+    // is destroyed before the Spiderling appears there.
     for i in 0..board.unit_count as usize {
         if board.units[i].hp <= 0 { continue; }
         let new_type: Option<&'static str> = {
@@ -533,6 +839,20 @@ pub fn simulate_enemy_attacks(
             }
         };
         if let Some(target_type) = new_type {
+            let hatch_to = {
+                let u = &board.units[i];
+                hatch_spawn_destination(board, u.x, u.y)
+            };
+            if let Some((hx, hy)) = hatch_to {
+                let hp = board.tile(hx, hy).building_hp;
+                if hp > 0 {
+                    apply_damage(board, hx, hy, hp, &mut result, DamageSource::Weapon);
+                }
+                if board.tile(hx, hy).building_hp == 0 {
+                    board.units[i].x = hx;
+                    board.units[i].y = hy;
+                }
+            }
             let u = &mut board.units[i];
             u.set_type_name(target_type);
             // Spiderling stats (data/ref_vek_bestiary.md, pawn_stats.py).
@@ -620,19 +940,37 @@ pub fn simulate_enemy_attacks(
                         uid, type_str);
                 }
                 if let Some((bx, by, _)) = best {
-                    let tile = board.tile_mut(bx, by);
-                    let old_hp = tile.building_hp;
-                    let applied = (dmg as u8).min(old_hp);
-                    tile.building_hp = old_hp - applied;
-                    let lost = old_hp - tile.building_hp;
-                    result.buildings_damaged += lost as i32;
-                    result.grid_damage += lost as i32;
-                    if tile.building_hp == 0 {
-                        tile.terrain = Terrain::Rubble;
-                        result.buildings_lost += 1;
+                    let idx = xy_to_idx(bx, by);
+                    let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+                    if thaw_frozen_building(board, bx, by, &mut result) {
+                        continue;
                     }
-                    board.grid_power = board.grid_power.saturating_sub(lost);
-                    buildings_destroyed += lost as i32;
+                    let (lost, destroyed) = {
+                        let tile = board.tile_mut(bx, by);
+                        let old_hp = tile.building_hp;
+                        let applied = (dmg as u8).min(old_hp);
+                        tile.building_hp = old_hp - applied;
+                        let lost = old_hp - tile.building_hp;
+                        result.buildings_damaged += lost as i32;
+                        result.grid_damage += lost as i32;
+                        let destroyed = tile.building_hp == 0;
+                        if destroyed {
+                            tile.terrain = Terrain::Rubble;
+                            result.buildings_lost += 1;
+                        }
+                        (lost, destroyed)
+                    };
+                    let grid_loss = settle_building_grid_loss(
+                        board,
+                        idx,
+                        lost,
+                        destroyed,
+                        is_unique,
+                        DamageSource::Weapon,
+                    );
+                    result.grid_damage += (grid_loss as i32) - (lost as i32);
+                    board.grid_power = board.grid_power.saturating_sub(grid_loss);
+                    buildings_destroyed += grid_loss as i32;
                 }
             }
             continue;
@@ -652,6 +990,7 @@ pub fn simulate_enemy_attacks(
         let qty = enemy.queued_target_y;
         let enemy_uid = enemy.uid;
         let orig = original_positions[ei];
+        let queued_origin = queued_origin_for_attack(enemy, orig);
 
         // Look up actual weapon type from enemy pawn type
         let mut enemy_wid = enemy_weapon_for_type(enemy.type_name_str());
@@ -716,10 +1055,10 @@ pub fn simulate_enemy_attacks(
         // self-shield no-op (zero damage) — adding 1 there would bump a 0-dmg
         // shield-apply into a 1-dmg shield-apply, which isn't the intent.
         let attacker_tname = enemy.type_name_str();
-        if board.boost_psion
-            && base_damage > 0
-            && attacker_tname != "Jelly_Boost1"
-        {
+        let boost_applies = board.boost_psion
+            && enemy.receives_psion_aura()
+            && attacker_tname != "Jelly_Boost1";
+        if boost_applies && base_damage > 0 {
             base_damage += 1;
         }
         // Vek Hormones: +1 damage when enemy attacks hit other enemies
@@ -729,6 +1068,19 @@ pub fn simulate_enemy_attacks(
         let weapon_behind = enemy.weapon_target_behind;
 
         let vh = board.vek_hormones;
+
+        if matches!(enemy_wid, WId::StarfishAtk1 | WId::StarfishAtk2 | WId::StarfishAtkB1) {
+            apply_starfish_appendages(
+                board,
+                ex,
+                ey,
+                damage,
+                enemy_wid == WId::StarfishAtkB1,
+                vh,
+                &mut result,
+            );
+            continue;
+        }
 
         // BossHeal special-case: Bot Leader's Self-Repairing skill applies
         // Shield to self this enemy turn and queues a +5 heal for the
@@ -747,13 +1099,49 @@ pub fn simulate_enemy_attacks(
 
         match wdef.weapon_type {
             WeaponType::Projectile => {
-                if let Some((tx, ty)) = find_projectile_target(board, ex, ey, orig.0, orig.1, qtx, qty) {
+                if enemy_wid == WId::FireflyAtkB {
+                    if let Some((dx, dy)) = projectile_delta_from_queued(
+                        queued_origin.0,
+                        queued_origin.1,
+                        qtx,
+                        qty,
+                    ) {
+                        for (shot_dx, shot_dy) in [(dx, dy), (-dx, -dy)] {
+                            if let Some((tx, ty)) = find_projectile_target_in_direction(
+                                board, ex, ey, shot_dx, shot_dy,
+                            ) {
+                                let occupied_at_impact = board.unit_at(tx, ty).is_some();
+                                let d = enemy_hit_damage(board, tx, ty, damage, vh);
+                                apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                                apply_weapon_status_with_impact_occupancy(
+                                    board, tx, ty, wdef, occupied_at_impact,
+                                );
+                            }
+                        }
+                    }
+                    continue;
+                }
+                if let Some((tx, ty)) = find_projectile_target(
+                    board,
+                    ex,
+                    ey,
+                    queued_origin.0,
+                    queued_origin.1,
+                    qtx,
+                    qty,
+                ) {
+                    let hit_was_object = {
+                        let tile = board.tile(tx, ty);
+                        tile.terrain == Terrain::Mountain
+                            || (tile.terrain == Terrain::Building && tile.building_hp > 0)
+                    };
+                    let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
                     apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
                     if wdef.fire() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             let target_is_immune_vek = board.fire_psion
-                                && board.units[idx].is_enemy()
+                                && board.units[idx].receives_psion_aura()
                                 && board.units[idx].type_name_str() != "Jelly_Fire1";
                             let u = &mut board.units[idx];
                             // Pilot_Rock is fire-immune; skip even the
@@ -762,7 +1150,7 @@ pub fn simulate_enemy_attacks(
                             // walking exception. Fire Psion grants Vek
                             // immunity to fire-status application.
                             if !u.frozen() && u.can_catch_fire()
-                                && !(board.flame_shielding && u.is_player())
+                                && !(board.flame_shielding && u.is_player() && u.is_mech())
                                 && !target_is_immune_vek
                             {
                                 u.set_fire(true);
@@ -771,13 +1159,49 @@ pub fn simulate_enemy_attacks(
                         board.tile_mut(tx, ty).set_on_fire(true);
                     }
                     // ACID / WEB / other status effects on the primary target
-                    apply_weapon_status(board, tx, ty, wdef);
+                    apply_weapon_status_with_impact_occupancy(
+                        board, tx, ty, wdef, occupied_at_impact,
+                    );
                     if wdef.web() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             // Skip webber-uid tracking for Pilot_Soldier so
                             // Camila's Unit stays clean (no phantom webber).
                             if !board.units[idx].pilot_soldier() {
                                 board.units[idx].web_source_uid = enemy_uid;
+                            }
+                        }
+                    }
+                    if wdef.projectile_grapple() {
+                        if let Some(dir) = projectile_dir_from_queued(
+                            queued_origin.0,
+                            queued_origin.1,
+                            qtx,
+                            qty,
+                        ) {
+                            apply_projectile_grapple(board, ei, tx, ty, dir, hit_was_object, &mut result);
+                        }
+                    }
+
+                    // Centipede Leader's Caustic Vomit queues zero-damage ACID
+                    // on every tile strictly between the attacker and impact.
+                    // The normal Centipede/Alpha Centipede weapons do not.
+                    if enemy_wid == WId::CentipedeAtkB {
+                        let pdx = (tx as i8 - ex as i8).signum();
+                        let pdy = (ty as i8 - ey as i8).signum();
+                        if (pdx != 0) != (pdy != 0) {
+                            let mut px = ex as i8 + pdx;
+                            let mut py = ey as i8 + pdy;
+                            while in_bounds(px, py) && (px as u8, py as u8) != (tx, ty) {
+                                let occupied_at_impact = board.unit_at(px as u8, py as u8).is_some();
+                                apply_weapon_status_with_impact_occupancy(
+                                    board,
+                                    px as u8,
+                                    py as u8,
+                                    wdef,
+                                    occupied_at_impact,
+                                );
+                                px += pdx;
+                                py += pdy;
                             }
                         }
                     }
@@ -801,9 +1225,12 @@ pub fn simulate_enemy_attacks(
                             if !in_bounds(nx, ny) { continue; }
                             let nxu = nx as u8;
                             let nyu = ny as u8;
+                            let occupied_at_impact = board.unit_at(nxu, nyu).is_some();
                             let d2 = enemy_hit_damage(board, nxu, nyu, damage, vh);
                             apply_damage(board, nxu, nyu, d2, &mut result, DamageSource::Weapon);
-                            apply_weapon_status(board, nxu, nyu, wdef);
+                            apply_weapon_status_with_impact_occupancy(
+                                board, nxu, nyu, wdef, occupied_at_impact,
+                            );
                             if wdef.web() {
                                 if let Some(idx) = board.unit_at(nxu, nyu) {
                                     if !board.units[idx].pilot_soldier() {
@@ -820,8 +1247,8 @@ pub fn simulate_enemy_attacks(
                 // Piercing beam: fires in cardinal direction from enemy position,
                 // damage starts at wdef.damage and decreases by 1 per tile (floor 1).
                 // Stops at mountains and buildings (after damaging them).
-                let dx = (qtx - orig.0 as i8).signum();
-                let dy = (qty - orig.1 as i8).signum();
+                let dx = (qtx - queued_origin.0 as i8).signum();
+                let dy = (qty - queued_origin.1 as i8).signum();
                 if (dx != 0) != (dy != 0) {
                     let mut dmg = wdef.damage;
                     for i in 1..8i8 {
@@ -856,8 +1283,8 @@ pub fn simulate_enemy_attacks(
                 //
                 // range_min guard: if the PUSHED distance is below the weapon's
                 // minimum range, attack cancels (e.g. pushed adjacent to target).
-                let offset_x = qtx - orig.0 as i8;
-                let offset_y = qty - orig.1 as i8;
+                let offset_x = qtx - queued_origin.0 as i8;
+                let offset_y = qty - queued_origin.1 as i8;
                 let new_tx = ex as i8 + offset_x;
                 let new_ty = ey as i8 + offset_y;
                 if !in_bounds(new_tx, new_ty) { continue; }
@@ -874,8 +1301,60 @@ pub fn simulate_enemy_attacks(
 
                 let tx = new_tx as u8;
                 let ty = new_ty as u8;
+                let attack_dir = DIRS.iter()
+                    .position(|&(ddx, ddy)| ddx == dx_sign && ddy == dy_sign);
+
+                if wdef.push_self() {
+                    if let Some(dir) = attack_dir {
+                        apply_push_no_edge_bump(board, ex, ey, opposite_dir(dir), &mut result);
+                    }
+                }
+
+                // Crab Leader's Raining Expulsions damages the artillery target
+                // plus each cardinal tile in the projectile path before p2.
+                if wdef.path_damage() && wdef.damage_outer > 0 {
+                    for step in 1..curr_range {
+                        let px = ex as i8 + dx_sign * step;
+                        let py = ey as i8 + dy_sign * step;
+                        if !in_bounds(px, py) { break; }
+                        let d_p = enemy_hit_damage(board, px as u8, py as u8, wdef.damage_outer, vh);
+                        apply_damage(board, px as u8, py as u8, d_p, &mut result, DamageSource::Weapon);
+                    }
+                }
+
                 let d = enemy_hit_damage(board, tx, ty, damage, vh);
                 apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                if wdef.push == PushDir::Forward {
+                    if let Some(dir) = attack_dir {
+                        apply_push(board, tx, ty, dir, &mut result);
+                    }
+                }
+
+                // Scarab Leader's Expectorating Glands queues zero-damage
+                // outward pushes on the four tiles adjacent to the artillery
+                // target. Keep this generic for any future artillery with
+                // AOE_ADJACENT + PushDir::Outward.
+                if wdef.aoe_adjacent() {
+                    for (i, &(dx, dy)) in DIRS.iter().enumerate() {
+                        let nx = new_tx + dx;
+                        let ny = new_ty + dy;
+                        if !in_bounds(nx, ny) { continue; }
+                        let nxu = nx as u8;
+                        let nyu = ny as u8;
+                        if wdef.damage_outer > 0 {
+                            let d_adj = enemy_hit_damage(board, nxu, nyu, wdef.damage_outer, vh);
+                            apply_damage(board, nxu, nyu, d_adj, &mut result, DamageSource::Weapon);
+                        }
+                        if wdef.push == PushDir::Outward {
+                            if wdef.no_edge_bump_adjacent_push() && wdef.damage_outer == 0 {
+                                let bx = nx + dx;
+                                let by = ny + dy;
+                                if !in_bounds(bx, by) { continue; }
+                            }
+                            apply_push(board, nxu, nyu, i, &mut result);
+                        }
+                    }
+                }
 
                 // path_size > 1: also damage subsequent tiles in attack direction
                 // (e.g. Super Stinger's 3-tile line; Crab Artillery's 2-tile hit)
@@ -907,9 +1386,12 @@ pub fn simulate_enemy_attacks(
                         let px = new_tx + pdx;
                         let py = new_ty + pdy;
                         if !in_bounds(px, py) { continue; }
+                        let occupied_at_impact = board.unit_at(px as u8, py as u8).is_some();
                         let d_p = enemy_hit_damage(board, px as u8, py as u8, damage, vh);
                         apply_damage(board, px as u8, py as u8, d_p, &mut result, DamageSource::Weapon);
-                        apply_weapon_status(board, px as u8, py as u8, wdef);
+                        apply_weapon_status_with_impact_occupancy(
+                            board, px as u8, py as u8, wdef, occupied_at_impact,
+                        );
                     }
                 }
 
@@ -930,19 +1412,24 @@ pub fn simulate_enemy_attacks(
                     WId::BlobberAtk2 => {
                         spawn_enemy(board, tx, ty, "Blob2", 1);
                     }
+                    WId::BlobberAtkB => {
+                        spawn_enemy(board, tx, ty, "BlobB", 2);
+                    }
                     _ => {}
                 }
             }
 
             WeaponType::Charge => {
                 // Charge from CURRENT position in original queued direction
-                let dx = (qtx - orig.0 as i8).signum();
-                let dy = (qty - orig.1 as i8).signum();
+                let dx = (qtx - queued_origin.0 as i8).signum();
+                let dy = (qty - queued_origin.1 as i8).signum();
 
                 // Must be valid cardinal direction
                 if (dx != 0) != (dy != 0) {
                     let mut hit: Option<(u8, u8)> = None;
-                    let mut hit_i: i8 = 0;
+                    let mut last_free = (ex, ey);
+                    let mut path: Vec<(u8, u8)> = Vec::new();
+                    let flying_charge = enemy_wid == WId::BeetleAtkB;
                     for i in 1..8i8 {
                         let nx = ex as i8 + dx * i;
                         let ny = ey as i8 + dy * i;
@@ -953,38 +1440,40 @@ pub fn simulate_enemy_attacks(
                         let tile = board.tile(nxu, nyu);
                         if tile.terrain == Terrain::Mountain {
                             hit = Some((nxu, nyu));
-                            hit_i = i;
                             break;
                         }
-                        if tile.terrain.is_deadly_ground() { break; }
+                        if tile.terrain.is_deadly_ground() && !flying_charge { break; }
                         if tile.is_building() {
                             hit = Some((nxu, nyu));
-                            hit_i = i;
                             break;
                         }
                         if board.unit_at(nxu, nyu).is_some() {
                             hit = Some((nxu, nyu));
-                            hit_i = i;
                             break;
                         }
+                        path.push((nxu, nyu));
+                        last_free = (nxu, nyu);
                     }
+
+                    board.units[ei].x = last_free.0;
+                    board.units[ei].y = last_free.1;
+                    apply_teleport_on_land(board, ei);
 
                     if let Some((hx, hy)) = hit {
                         // Flaming Abdomen: fire on every PASSED tile (i=1..hit_i-1)
                         // EXCLUDING the final resting tile (i=hit_i-1). So fire
                         // on tiles i=1..=(hit_i-2).
                         if wdef.fire() {
-                            for i in 1..=(hit_i - 2) {
-                                let fx = (ex as i8 + dx * i) as u8;
-                                let fy = (ey as i8 + dy * i) as u8;
+                            let fire_count = path.len().saturating_sub(1);
+                            for &(fx, fy) in path.iter().take(fire_count) {
                                 board.tile_mut(fx, fy).set_on_fire(true);
                                 if let Some(idx) = board.unit_at(fx, fy) {
                                     let target_is_immune_vek = board.fire_psion
-                                        && board.units[idx].is_enemy()
+                                        && board.units[idx].receives_psion_aura()
                                         && board.units[idx].type_name_str() != "Jelly_Fire1";
                                     let u = &mut board.units[idx];
                                     if !u.frozen() && u.can_catch_fire()
-                                        && !(board.flame_shielding && u.is_player())
+                                        && !(board.flame_shielding && u.is_player() && u.is_mech())
                                         && !target_is_immune_vek
                                     {
                                         u.set_fire(true);
@@ -1016,11 +1505,19 @@ pub fn simulate_enemy_attacks(
                     apply_damage(board, ex, ey, damage, &mut result, DamageSource::Weapon);
                 }
                 if wdef.aoe_adjacent() {
+                    let mut adjacent_damage = if wdef.damage_outer > 0 {
+                        wdef.damage_outer
+                    } else {
+                        damage
+                    };
+                    if boost_applies && adjacent_damage > 0 {
+                        adjacent_damage += 1;
+                    }
                     for (i, &(dx, dy)) in DIRS.iter().enumerate() {
                         let nx = ex as i8 + dx;
                         let ny = ey as i8 + dy;
                         if in_bounds(nx, ny) {
-                            let d = enemy_hit_damage(board, nx as u8, ny as u8, damage, vh);
+                            let d = enemy_hit_damage(board, nx as u8, ny as u8, adjacent_damage, vh);
                             apply_damage(board, nx as u8, ny as u8, d, &mut result, DamageSource::Weapon);
                             // Push outward / inward per weapon def (Scorpion Leader's
                             // Massive Spinneret pushes every target away from itself).
@@ -1048,17 +1545,20 @@ pub fn simulate_enemy_attacks(
                     // Line attack (e.g., Launching Stinger): 2-tile line in the original
                     // cardinal direction. When pushed, retrace direction from the ORIGINAL
                     // position so the attack fires correctly from the new position.
-                    let dx = (qtx - orig.0 as i8).signum();
-                    let dy = (qty - orig.1 as i8).signum();
+                    let dx = (qtx - queued_origin.0 as i8).signum();
+                    let dy = (qty - queued_origin.1 as i8).signum();
                     // Must be a valid cardinal direction (exactly one axis non-zero)
                     if (dx != 0) == (dy != 0) { continue; }
 
                     let tx1 = ex as i8 + dx;
                     let ty1 = ey as i8 + dy;
                     if in_bounds(tx1, ty1) {
+                        let occupied_at_impact = board.unit_at(tx1 as u8, ty1 as u8).is_some();
                         let d = enemy_hit_damage(board, tx1 as u8, ty1 as u8, damage, vh);
                         apply_damage(board, tx1 as u8, ty1 as u8, d, &mut result, DamageSource::Weapon);
-                        apply_weapon_status(board, tx1 as u8, ty1 as u8, wdef);
+                        apply_weapon_status_with_impact_occupancy(
+                            board, tx1 as u8, ty1 as u8, wdef, occupied_at_impact,
+                        );
                         if wdef.web() {
                             if let Some(idx) = board.unit_at(tx1 as u8, ty1 as u8) {
                                 board.units[idx].web_source_uid = enemy_uid;
@@ -1068,9 +1568,12 @@ pub fn simulate_enemy_attacks(
                     let tx2 = ex as i8 + dx * 2;
                     let ty2 = ey as i8 + dy * 2;
                     if in_bounds(tx2, ty2) {
+                        let occupied_at_impact = board.unit_at(tx2 as u8, ty2 as u8).is_some();
                         let d2 = enemy_hit_damage(board, tx2 as u8, ty2 as u8, damage, vh);
                         apply_damage(board, tx2 as u8, ty2 as u8, d2, &mut result, DamageSource::Weapon);
-                        apply_weapon_status(board, tx2 as u8, ty2 as u8, wdef);
+                        apply_weapon_status_with_impact_occupancy(
+                            board, tx2 as u8, ty2 as u8, wdef, occupied_at_impact,
+                        );
                         if wdef.web() {
                             if let Some(idx) = board.unit_at(tx2 as u8, ty2 as u8) {
                                 board.units[idx].web_source_uid = enemy_uid;
@@ -1078,31 +1581,147 @@ pub fn simulate_enemy_attacks(
                         }
                     }
                 } else {
-                    // Standard single-tile melee: attack fixed queued target.
-                    // OOB guard: bridge can deliver off-board queued_target after
-                    // direction normalization (M04 2026-04-28 — cx=7,ddx=+1 → x=8).
-                    // Without this, apply_damage→tile_mut panics with index 69 OOB.
-                    if qtx < 0 || qty < 0 || qtx >= 8 || qty >= 8 { continue; }
-                    let tx = qtx as u8;
-                    let ty = qty as u8;
-                    let curr_dist = (ex as i32 - tx as i32).abs() + (ey as i32 - ty as i32).abs();
-                    // Adjacency check: most melee weapons require the attacker
-                    // to still be next to the target. BlobBoss family
-                    // (QUEUED_DAMAGE_PERSISTS) is the exception — its Lua skill
-                    // (scripts/missions/bosses/goo.lua:172-187) registers
-                    // AddQueuedDamage(SpaceDamage(p2, 4)) BEFORE the optional
-                    // boss move, so the queued damage fires regardless of the
-                    // attacker's current position (e.g. pulled away by
-                    // Grappling Hook). Bounds check on (tx, ty) above is what
-                    // makes this safe to apply when curr_dist > 1.
-                    if curr_dist > 1 && !wdef.queued_damage_persists() { continue; }
+                    if enemy_wid == WId::BouncerAtkB {
+                        let Some(dir) = projectile_dir_from_queued(
+                            queued_origin.0,
+                            queued_origin.1,
+                            qtx,
+                            qty,
+                        ) else {
+                            continue;
+                        };
+                        let (dx, dy) = DIRS[dir];
+                        let tx = ex as i8 + dx;
+                        let ty = ey as i8 + dy;
+                        if !in_bounds(tx, ty) { continue; }
+                        let (tx, ty) = (tx as u8, ty as u8);
 
+                        let d = enemy_hit_damage(board, tx, ty, damage, vh);
+                        apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                        apply_push(board, tx, ty, dir, &mut result);
+
+                        apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+
+                        for &perp in &[(dir + 1) % 4, (dir + 3) % 4] {
+                            let (pdx, pdy) = DIRS[perp];
+                            let px = tx as i8 + pdx;
+                            let py = ty as i8 + pdy;
+                            if !in_bounds(px, py) { continue; }
+                            let (px, py) = (px as u8, py as u8);
+                            let pd = enemy_hit_damage(board, px, py, damage, vh);
+                            apply_damage(board, px, py, pd, &mut result, DamageSource::Weapon);
+                            apply_push(board, px, py, dir, &mut result);
+                        }
+                        continue;
+                    }
+
+                    let (tx, ty, attack_dir) = if wdef.queued_damage_persists() {
+                        // BlobBoss family registers queued damage before movement,
+                        // but live captures show p2 is still interpreted as the
+                        // original attacker-relative offset. A pushed Goo keeps
+                        // firing; the target tile shifts by the same displacement.
+                        let offset_x = qtx - queued_origin.0 as i8;
+                        let offset_y = qty - queued_origin.1 as i8;
+                        let new_tx = ex as i8 + offset_x;
+                        let new_ty = ey as i8 + offset_y;
+                        if !in_bounds(new_tx, new_ty) { continue; }
+                        (new_tx as u8, new_ty as u8, None)
+                    } else {
+                        // Standard single-tile melee preserves the original
+                        // queued direction, then re-aims from the attacker's
+                        // current tile after pushes, swaps, and teleports.
+                        let dx = (qtx - queued_origin.0 as i8).signum();
+                        let dy = (qty - queued_origin.1 as i8).signum();
+                        if (dx != 0) == (dy != 0) { continue; }
+                        let tx = ex as i8 + dx;
+                        let ty = ey as i8 + dy;
+                        if !in_bounds(tx, ty) { continue; }
+                        let dir = DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy);
+                        (tx as u8, ty as u8, dir)
+                    };
+
+                    if wdef.push_self() {
+                        if let Some(dir) = attack_dir {
+                            if matches!(enemy_wid, WId::BouncerAtk1 | WId::BouncerAtk2) {
+                                apply_push_no_edge_bump(board, ex, ey, opposite_dir(dir), &mut result);
+                            } else {
+                                apply_push(board, ex, ey, opposite_dir(dir), &mut result);
+                            }
+                        }
+                    }
+                    if matches!(enemy_wid, WId::BurrowerAtk1 | WId::BurrowerAtk2) {
+                        if let Some(dir) = attack_dir {
+                            for &hit_dir in &[None, Some((dir + 1) % 4), Some((dir + 3) % 4)] {
+                                let (hx, hy) = if let Some(perp) = hit_dir {
+                                    let (pdx, pdy) = DIRS[perp];
+                                    let hx = tx as i8 + pdx;
+                                    let hy = ty as i8 + pdy;
+                                    if !in_bounds(hx, hy) { continue; }
+                                    (hx as u8, hy as u8)
+                                } else {
+                                    (tx, ty)
+                                };
+                                let occupied_at_impact = board.unit_at(hx, hy).is_some();
+                                let d = enemy_hit_damage(board, hx, hy, damage, vh);
+                                apply_damage(board, hx, hy, d, &mut result, DamageSource::Weapon);
+                                apply_weapon_status_with_impact_occupancy(
+                                    board, hx, hy, wdef, occupied_at_impact,
+                                );
+                            }
+                            continue;
+                        }
+                    }
+                    if enemy_wid == WId::MosquitoAtkB {
+                        apply_mosquito_boss_attack(board, tx, ty, &mut result);
+                        continue;
+                    }
+                    let target_had_mech = board.unit_at(tx, ty)
+                        .is_some_and(|idx| board.units[idx].is_mech());
+                    let target_was_mountain = board.tile(tx, ty).terrain == Terrain::Mountain;
+                    let occupied_at_impact = board.unit_at(tx, ty).is_some();
                     let d = enemy_hit_damage(board, tx, ty, damage, vh);
-                    apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
-                    apply_weapon_status(board, tx, ty, wdef);
+                    if matches!(enemy_wid, WId::TumblebugAtk1 | WId::TumblebugAtk2) {
+                        apply_damage_with_bombrock_exclusion(
+                            board,
+                            tx,
+                            ty,
+                            d,
+                            &mut result,
+                            DamageSource::Weapon,
+                            Some((ex, ey)),
+                        );
+                    } else {
+                        apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    }
+                    if wdef.queued_damage_persists() && target_was_mountain {
+                        // BlobBossAtk queues a second identical hit against
+                        // mountains, destroying a full mountain in one squish.
+                        apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                    }
+                    if wdef.push == PushDir::Forward {
+                        if let Some(dir) = attack_dir {
+                            apply_push(board, tx, ty, dir, &mut result);
+                        }
+                    }
+                    apply_weapon_status_with_impact_occupancy(
+                        board, tx, ty, wdef, occupied_at_impact,
+                    );
                     if wdef.web() {
                         if let Some(idx) = board.unit_at(tx, ty) {
                             board.units[idx].web_source_uid = enemy_uid;
+                        }
+                    }
+                    if wdef.queued_damage_persists()
+                        && !target_had_mech
+                        && board.units[ei].hp > 0
+                        && board.unit_at(tx, ty).is_none()
+                    {
+                        let tile = board.tile(tx, ty);
+                        if !matches!(tile.terrain, Terrain::Building | Terrain::Mountain)
+                            && !tile.terrain.is_deadly_ground()
+                        {
+                            board.units[ei].x = tx;
+                            board.units[ei].y = ty;
                         }
                     }
                 }
@@ -1153,6 +1772,13 @@ pub fn simulate_enemy_attacks(
     // enemy attacks above.
     simulate_train_advance(board);
 
+    // Player-phase bump debt is flushed at enemy-turn start above. Enemy-phase
+    // bumps can create the same deferred debt (for example Tumblebug BombRock
+    // explosions into 2-HP regular buildings), and the live grid meter is
+    // settled before the next player turn. Flush again before returning the
+    // post-enemy prediction.
+    flush_deferred_bump_grid_debt(board, &mut result);
+
     // Count buildings destroyed from result
     buildings_destroyed += result.grid_damage;
 
@@ -1163,35 +1789,38 @@ pub fn simulate_enemy_attacks(
     let gd = board.grid_defense_pct as f32;
     board.enemy_grid_save_expected = (buildings_destroyed as f32) * (gd / 100.0);
 
-    // Drain the Spider Psion pending-egg queue (sim v38). Eggs spawned by
+    // Drain the Spider Psion pending-egg queue (sim v38/v105). Eggs spawned by
     // on_enemy_death during this enemy phase land here AFTER the hatch
     // loop has run, so they sit dormant until the NEXT enemy phase
     // (matching the game's AddQueuedDamage hatch behavior — see
     // weapons_enemy.lua:857). spawn_enemy skips occupied tiles internally,
     // so a Vek that moved onto the corpse's tile during the attack loop
     // won't get displaced.
-    let pending = std::mem::take(&mut board.pending_spider_eggs);
-    for (x, y) in pending {
-        spawn_enemy(board, x, y, "WebbEgg1", 1);
-    }
+    crate::simulate::drain_pending_spider_eggs(board);
 
-    buildings_destroyed
+    result
 }
 
 /// Advance the Supply Train 2 tiles forward. Called at end of enemy phase.
 ///
 /// Direction is inferred from the two tile entries sharing uid: forward =
 /// primary - extra (extra_tile is the caboose, primary is the locomotive).
-/// Train is destroyed if either entered tile is blocked by a mountain,
-/// building, or a non-train unit (including mechs and wrecks). Off-board
-/// destinations count as reaching the exit — train stays alive at its
-/// current position (not advanced off the board). Called once per turn.
+/// Normal Train_Pawn is destroyed if either entered tile is blocked by a
+/// mountain, building, or a non-train unit. Armored Train instead destroys
+/// everything in its two entered tiles and keeps moving (Lua
+/// Armored_Train_Move queues DAMAGE_DEATH on both tiles before charge).
+/// Off-board destinations count as reaching the exit — train stays alive at
+/// its current position (not advanced off the board). Called once per turn.
 pub fn simulate_train_advance(board: &mut Board) {
     let mut primary: Option<usize> = None;
     let mut extra: Option<usize> = None;
+    let mut armored_train = false;
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
-        if u.type_name_str() != "Train_Pawn" || u.hp <= 0 { continue; }
+        let tname = u.type_name_str();
+        if tname != "Train_Pawn" && tname != "Train_Armored" { continue; }
+        if u.hp <= 0 { continue; }
+        armored_train = tname == "Train_Armored";
         if u.is_extra_tile() { extra = Some(i); } else { primary = Some(i); }
     }
     let (p, e) = match (primary, extra) {
@@ -1221,6 +1850,10 @@ pub fn simulate_train_advance(board: &mut Board) {
             return;
         }
         let (nxu, nyu) = (*nx as u8, *ny as u8);
+        if armored_train {
+            destroy_armored_train_path_tile(board, nxu, nyu);
+            continue;
+        }
         let t = board.tile(nxu, nyu);
         if t.terrain == Terrain::Mountain || t.terrain == Terrain::Building {
             board.units[p].hp = 0;
@@ -1245,22 +1878,76 @@ pub fn simulate_train_advance(board: &mut Board) {
     board.units[e].y = (ey + 2 * dy) as u8;
 }
 
+fn destroy_armored_train_path_tile(board: &mut Board, x: u8, y: u8) {
+    let mut result = ActionResult::default();
+
+    if let Some(idx) = board.any_unit_at(x, y) {
+        let tname = board.units[idx].type_name_str();
+        if tname != "Train_Pawn" && tname != "Train_Armored" && tname != "Train_Armored_Damaged" {
+            if board.units[idx].hp > 0 {
+                board.units[idx].hp = 0;
+                if board.units[idx].is_enemy() {
+                    result.record_enemy_kill(!board.units[idx].minor());
+                    on_enemy_death(board, idx, &mut result);
+                }
+            }
+        }
+    }
+
+    let idx = xy_to_idx(x, y);
+    let is_unique = (board.unique_buildings & (1u64 << idx)) != 0;
+    let mut lost = 0u8;
+    {
+        let tile = board.tile_mut(x, y);
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            lost = tile.building_hp;
+            tile.building_hp = 0;
+            if !is_unique {
+                tile.terrain = Terrain::Rubble;
+            }
+        } else if tile.terrain == Terrain::Mountain {
+            tile.building_hp = 0;
+            tile.terrain = Terrain::Rubble;
+        }
+    }
+    if lost > 0 {
+        let grid_loss = settle_building_grid_loss(
+            board,
+            idx,
+            lost,
+            true,
+            is_unique,
+            DamageSource::Weapon,
+        );
+        board.grid_power = board.grid_power.saturating_sub(grid_loss);
+    }
+}
+
 /// Trace projectile from enemy position in queued direction.
 /// Returns (hit_x, hit_y) or None.
 fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
+    let (dx, dy) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty)?;
+    find_projectile_target_in_direction(board, ex, ey, dx, dy)
+}
+
+fn projectile_delta_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
     if qtx < 0 { return None; }
 
     // Compute direction from ORIGINAL position to queued target.
     // Preserves cardinal attack direction after mech pushes.
-    // INVARIANT: queued_target is the first tile in the attack direction
-    // from the original position (bridge normalizes piQueuedShot against
-    // piOrigin), so the delta is always a unit cardinal vector.
+    // INVARIANT: queued_target is relative to the original position (bridge
+    // normalizes piQueuedShot against piOrigin when reading a mid-turn board).
+    // The delta may be a full same-row/column offset; signum recovers direction.
     let dx = (qtx - orig_x as i8).signum();
     let dy = (qty - orig_y as i8).signum();
 
     // Must be a valid cardinal direction (exactly one axis non-zero)
     if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) { return None; }
 
+    Some((dx, dy))
+}
+
+fn find_projectile_target_in_direction(board: &Board, ex: u8, ey: u8, dx: i8, dy: i8) -> Option<(u8, u8)> {
     // Trace from CURRENT position in the original direction.
     // If the projectile walks off the board without hitting anything,
     // fall back to the last valid (on-board) tile — matches the game's
@@ -1281,6 +1968,70 @@ fn find_projectile_target(board: &Board, ex: u8, ey: u8, orig_x: u8, orig_y: u8,
         last_valid = Some((nxu, nyu));
     }
     last_valid
+}
+
+fn projectile_dir_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<usize> {
+    let dx = (qtx - orig_x as i8).signum();
+    let dy = (qty - orig_y as i8).signum();
+    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) {
+        return None;
+    }
+    DIRS.iter().position(|&(ddx, ddy)| ddx == dx && ddy == dy)
+}
+
+fn apply_projectile_grapple(
+    board: &mut Board,
+    attacker_idx: usize,
+    hit_x: u8,
+    hit_y: u8,
+    dir: usize,
+    hit_was_object: bool,
+    result: &mut ActionResult,
+) {
+    if let Some(target_idx) = board.unit_at(hit_x, hit_y) {
+        if target_idx == attacker_idx
+            || board.units[target_idx].hp <= 0
+            || !board.units[target_idx].pushable()
+        {
+            return;
+        }
+
+        let pull_dir = opposite_dir(dir);
+        let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+        for _ in 0..8 {
+            let (cx, cy) = (board.units[target_idx].x, board.units[target_idx].y);
+            if (cx as i16 - ax as i16).abs() + (cy as i16 - ay as i16).abs() <= 1 {
+                break;
+            }
+            apply_push(board, cx, cy, pull_dir, result);
+            if board.units[target_idx].hp <= 0 {
+                break;
+            }
+            let (nx, ny) = (board.units[target_idx].x, board.units[target_idx].y);
+            if nx == cx && ny == cy {
+                break;
+            }
+        }
+        return;
+    }
+
+    if !hit_was_object {
+        return;
+    }
+
+    let (dx, dy) = DIRS[dir];
+    let stop_x = hit_x as i8 - dx;
+    let stop_y = hit_y as i8 - dy;
+    if !in_bounds(stop_x, stop_y) {
+        return;
+    }
+    let (ax, ay) = (board.units[attacker_idx].x, board.units[attacker_idx].y);
+    if stop_x as u8 == ax && stop_y as u8 == ay {
+        return;
+    }
+    board.units[attacker_idx].x = stop_x as u8;
+    board.units[attacker_idx].y = stop_y as u8;
+    apply_teleport_on_land(board, attacker_idx);
 }
 
 #[cfg(test)]
@@ -1310,6 +2061,223 @@ mod tests {
     }
 
     #[test]
+    fn test_displaced_standard_melee_reaims_from_current_position() {
+        let mut board = Board::default();
+        let tele_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 4,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let scorpion_idx = add_enemy_with_type(&mut board, 493, 4, 4, 6, "Scorpion2", 4, 2);
+        board.units[scorpion_idx].weapon_damage = 3;
+        board.units[scorpion_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let mut orig = default_orig_pos(&board);
+        orig[tele_idx] = (3, 5);
+        orig[scorpion_idx] = (4, 3);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(
+            board.units[tele_idx].hp <= 0,
+            "Scorpion2 should preserve original melee direction and hit E4"
+        );
+    }
+
+    #[test]
+    fn test_displaced_blob_boss_retargets_queued_damage_by_offset() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(5, 7).terrain = Terrain::Building;
+        board.tile_mut(5, 7).building_hp = 2;
+        board.tile_mut(6, 7).terrain = Terrain::Building;
+        board.tile_mut(6, 7).building_hp = 2;
+
+        // Live Ramming Speed regression: Large Goo was queued B3 -> A3, then
+        // got pushed to B2 and attacked A2.
+        let goo_idx = add_enemy_with_type(&mut board, 1029, 6, 6, 3, "BlobBoss", 5, 7);
+        board.units[goo_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let mut orig = default_orig_pos(&board);
+        orig[goo_idx] = (5, 6);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(5, 7).building_hp, 2, "old A3 target should survive");
+        assert_eq!(board.tile(6, 7).building_hp, 0, "shifted A2 target should be hit");
+    }
+
+    #[test]
+    fn test_displaced_scarab_artillery_retargets_by_full_offset() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(2, 1).terrain = Terrain::Building;
+        board.tile_mut(2, 1).building_hp = 1;
+        board.tile_mut(3, 1).terrain = Terrain::Building;
+        board.tile_mut(3, 1).building_hp = 1;
+
+        // Same live board: Scarab shifted G3 -> G2, so G6 shifted to G5.
+        let scarab_idx = add_enemy_with_type(&mut board, 1030, 6, 1, 2, "Scarab1", 2, 1);
+        board.units[scarab_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let mut orig = default_orig_pos(&board);
+        orig[scarab_idx] = (5, 1);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(2, 1).building_hp, 1, "old G6 target should survive");
+        assert_eq!(board.tile(3, 1).building_hp, 0, "shifted G5 target should be hit");
+    }
+
+    #[test]
+    fn test_enemy_phase_bump_debt_flushes_before_player_turn() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 5).terrain = Terrain::Building;
+        board.tile_mut(3, 5).building_hp = 2;
+
+        let rock_idx = board.add_unit(Unit {
+            uid: 80,
+            x: 4,
+            y: 5,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Neutral,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.units[rock_idx].set_type_name("BombRock");
+
+        let dung_idx = add_enemy_with_type(&mut board, 81, 5, 5, 5, "Dung2", 4, 5);
+        board.units[dung_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[rock_idx].hp <= 0, "Tumblebug should kill the queued BombRock");
+        assert_eq!(board.tile(3, 5).building_hp, 1, "BombRock explosion should damage C5");
+        assert_eq!(board.grid_power, 6, "enemy-phase bump debt must settle before player turn");
+        assert_eq!(board.deferred_bump_grid_debt[xy_to_idx(3, 5)], 0);
+        assert_eq!(result.grid_damage, 1);
+    }
+
+    #[test]
+    fn test_conveyor_moves_enemy_before_projectile_attack() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Belt".to_string();
+        board.grid_power = 6;
+        board.grid_power_max = 7;
+        board.tile_mut(1, 5).terrain = Terrain::Building;
+        board.tile_mut(1, 5).building_hp = 1;
+        board.tile_mut(5, 5).conveyor_dir = 3; // bridge conveyor3: x - 1
+
+        let moth_idx = add_enemy_with_type(&mut board, 91, 5, 5, 3, "Moth1", 1, 5);
+        board.units[moth_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let mut orig = default_orig_pos(&board);
+        orig[moth_idx] = (4, 5);
+
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[moth_idx].x, board.units[moth_idx].y), (5, 5),
+            "Moth should ride the belt, fire, then push itself back");
+        assert_eq!(board.tile(1, 5).building_hp, 0,
+            "conveyor-shifted Moth should re-line the C7 building shot");
+        assert_eq!(board.grid_power, 5);
+    }
+
+    #[test]
+    fn test_conveyor_dir_two_capture_bumps_mech_into_building() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_BeltRandom".to_string();
+        board.grid_power = 5;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 5).conveyor_dir = 0; // raw engine dir 2 after serde normalization
+        board.tile_mut(3, 6).terrain = Terrain::Building;
+        board.tile_mut(3, 6).building_hp = 2;
+        add_mech_unit(&mut board, 2, 3, 5, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            (board.units[0].x, board.units[0].y),
+            (3, 5),
+            "blocked conveyor push should leave the mech on the belt tile"
+        );
+        assert_eq!(board.units[0].hp, 2);
+        assert_eq!(board.tile(3, 6).building_hp, 1);
+        assert_eq!(board.grid_power, 4);
+    }
+
+    #[test]
+    fn test_mission_missiles_decorative_conveyor_does_not_move_enemy_attack() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Missiles".to_string();
+        board.grid_power = 3;
+        board.grid_power_max = 7;
+        board.tile_mut(4, 6).terrain = Terrain::Building;
+        board.tile_mut(4, 6).building_hp = 2;
+        board.tile_mut(3, 6).conveyor_dir = 0;
+
+        let mosquito_idx = add_enemy_with_type(&mut board, 1426, 3, 6, 4, "Mosquito2", 4, 6);
+        board.units[mosquito_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            (board.units[mosquito_idx].x, board.units[mosquito_idx].y),
+            (3, 6),
+            "decorative Landfill conveyor sprite at B5 should not move Mosquito2"
+        );
+        assert_eq!(
+            board.tile(4, 6).building_hp,
+            0,
+            "B4 building should be hit when Mission_Missiles has Env_Null"
+        );
+        assert_eq!(board.grid_power, 1);
+    }
+
+    #[test]
+    fn test_burrower_slam_hits_perpendicular_three_tile_row() {
+        for (type_name, center_hp, flank_hp, expected_center, expected_flank) in [
+            ("Burrower1", 2, 1, 1, 0),
+            ("Burrower2", 2, 2, 0, 0),
+        ] {
+            let mut board = Board::default();
+            // Live regression shape: Burrower at (5,4) attacks west toward
+            // center (4,4). The engine hits (4,4) plus flanks (4,3)/(4,5).
+            for (bx, by, hp) in [
+                (4, 4, center_hp),
+                (4, 3, flank_hp),
+                (4, 5, flank_hp),
+                (3, 4, 1),
+            ] {
+                board.tile_mut(bx, by).terrain = Terrain::Building;
+                board.tile_mut(bx, by).building_hp = hp;
+            }
+            let idx = add_enemy_with_type(&mut board, 24, 5, 4, 3, type_name, 4, 4);
+            board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+            let orig = default_orig_pos(&board);
+            simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+            assert_eq!(board.tile(4, 4).building_hp, expected_center, "{type_name} should damage the center tile");
+            assert_eq!(board.tile(4, 3).building_hp, expected_flank, "{type_name} should damage one perpendicular flank");
+            assert_eq!(board.tile(4, 5).building_hp, expected_flank, "{type_name} should damage the other perpendicular flank");
+            assert_eq!(board.tile(3, 4).building_hp, 1, "{type_name} should not hit a forward line tile");
+        }
+    }
+
+    #[test]
     fn test_scarab_artillery_hits_target_directly() {
         let mut board = Board::default();
         // Scarab at (0,0) targeting building at (4,0) — artillery arcs over obstacles
@@ -1323,6 +2291,279 @@ mod tests {
 
         // Artillery should hit building at (4,0) directly, ignoring mountain
         assert_eq!(board.tile(4, 0).building_hp, 0, "Scarab artillery should hit building through mountain");
+    }
+
+    #[test]
+    fn test_scarab_boss_artillery_pushes_adjacent_tiles() {
+        let mut board = Board::default();
+        board.tile_mut(4, 0).terrain = Terrain::Building;
+        board.tile_mut(4, 0).building_hp = 2;
+
+        let boss = add_enemy_with_type(&mut board, 1, 0, 0, 6, "ScarabBoss", 4, 0);
+        board.units[boss].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let pushed = add_mech_unit(&mut board, 2, 5, 0, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(4, 0).building_hp, 0, "Scarab Leader artillery should deal 4 center damage");
+        assert_eq!((board.units[pushed].x, board.units[pushed].y), (6, 0),
+            "adjacent unit should be pushed outward from the artillery target");
+        assert_eq!(board.units[pushed].hp, 3, "adjacent push is zero-damage");
+    }
+
+    #[test]
+    fn test_starfish_hits_diagonal_tiles_only() {
+        let mut board = Board::default();
+        let idx = add_enemy_with_type(&mut board, 10, 3, 3, 2, "Starfish1", 3, 3);
+        board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        for &(x, y) in &[(4, 4), (4, 2), (2, 2), (2, 4)] {
+            board.tile_mut(x, y).terrain = Terrain::Building;
+            board.tile_mut(x, y).building_hp = 1;
+        }
+        for &(x, y) in &[(3, 4), (4, 3), (3, 2), (2, 3)] {
+            board.tile_mut(x, y).terrain = Terrain::Building;
+            board.tile_mut(x, y).building_hp = 1;
+        }
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        for &(x, y) in &[(4, 4), (4, 2), (2, 2), (2, 4)] {
+            assert_eq!(board.tile(x, y).building_hp, 0, "diagonal tile should be damaged");
+        }
+        for &(x, y) in &[(3, 4), (4, 3), (3, 2), (2, 3)] {
+            assert_eq!(board.tile(x, y).building_hp, 1, "cardinal tile should not be damaged");
+        }
+    }
+
+    #[test]
+    fn test_starfish_leader_diagonal_damage_and_cardinal_push() {
+        let mut board = Board::default();
+        let idx = add_enemy_with_type(&mut board, 20, 3, 3, 6, "StarfishBoss", 3, 3);
+        board.units[idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let pushed_idx = board.add_unit(Unit {
+            uid: 21,
+            x: 3,
+            y: 4,
+            hp: 4,
+            max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let diagonal_idx = board.add_unit(Unit {
+            uid: 22,
+            x: 4,
+            y: 4,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[pushed_idx].x, board.units[pushed_idx].y), (3, 5),
+            "cardinal adjacent unit should be pushed outward");
+        assert_eq!(board.units[pushed_idx].hp, 4,
+            "cardinal push is zero-damage unless it bumps");
+        assert_eq!(board.units[diagonal_idx].hp, 2,
+            "diagonal unit should take the leader's 3 damage");
+    }
+
+    #[test]
+    fn test_gastropod_projectile_keeps_traveling_after_target_moves() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        board.tile_mut(1, 2).terrain = Terrain::Building;
+        board.tile_mut(1, 2).building_hp = 1;
+        add_enemy_with_type(&mut board, 99, 4, 2, 3, "Burnbug1", 3, 2);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(1, 2).building_hp, 0,
+            "Burnbug/Gastropod hook should travel past the vacated first tile");
+        assert_eq!(board.grid_power, 5,
+            "The F7 building loss from run 20260504_210332_088 m01 t01 must be predicted");
+    }
+
+    #[test]
+    fn test_alpha_burnbug_projectile_hits_mech_behind_empty_target_tile() {
+        let mut board = Board::default();
+        let mech_idx = board.add_unit(Unit {
+            uid: 1,
+            x: 4,
+            y: 2,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE
+                | UnitFlags::ARMOR,
+            ..Default::default()
+        });
+        add_enemy_with_type(&mut board, 1535, 6, 2, 4, "Burnbug2", 5, 2);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[mech_idx].hp, 0,
+            "Alpha Burnbug projectile should travel past empty F3 and kill armored Trimissile at F4");
+        assert_eq!(result.mechs_killed, 1);
+        assert_eq!(result.mech_damage_taken, 2);
+    }
+
+    #[test]
+    fn test_gastropod_projectile_pulls_hit_unit_toward_attacker() {
+        let mut board = Board::default();
+        let target_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 1,
+            y: 2,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        add_enemy_with_type(&mut board, 99, 4, 2, 3, "Burnbug1", 3, 2);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[target_idx].hp, 2, "Hook deals 1 damage");
+        assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (3, 2),
+            "Hook pulls the hit pawn until adjacent to the Gastropod");
+    }
+
+    #[test]
+    fn test_snowtank_mark_i_projectile_hits_line_target_and_sets_fire() {
+        let mut board = Board::default();
+        let pulse_idx = add_mech_unit(&mut board, 2, 2, 1, 3);
+        add_enemy_with_type(&mut board, 97, 5, 1, 1, "Snowtank1", 4, 1);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[pulse_idx].hp, 2,
+            "Cannon-Bot projectile should travel past the empty queued tile and hit PulseMech");
+        assert!(board.units[pulse_idx].fire(),
+            "Cannon 8R Mark I should set the hit unit on fire");
+    }
+
+    #[test]
+    fn test_moth_artillery_self_bounce_bumps_blocking_mech() {
+        let mut board = Board::default();
+        board.grid_power = 6;
+        let pulse_idx = add_mech_unit(&mut board, 2, 5, 3, 3);
+        let moth_idx = add_enemy_with_type(&mut board, 314, 4, 3, 3, "Moth1", 1, 3);
+        board.units[moth_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.tile_mut(1, 3).terrain = Terrain::Building;
+        board.tile_mut(1, 3).building_hp = 2;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[pulse_idx].hp, 2,
+            "Moth recoil should bump the mech behind it before artillery lands");
+        assert_eq!(board.units[moth_idx].hp, 2,
+            "Blocked self-bounce should also bump the Moth");
+        assert_eq!((board.units[moth_idx].x, board.units[moth_idx].y), (4, 3),
+            "Blocked recoil leaves the Moth in place");
+        assert_eq!(board.tile(1, 3).building_hp, 1,
+            "Moth artillery still damages its queued target after recoil");
+    }
+
+    #[test]
+    fn test_bouncer_melee_self_bounce_and_target_push() {
+        let mut board = Board::default();
+        let target_idx = add_mech_unit(&mut board, 2, 4, 4, 3);
+        let bouncer_idx = add_enemy_with_type(&mut board, 315, 4, 3, 3, "Bouncer1", 4, 4);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[bouncer_idx].x, board.units[bouncer_idx].y), (4, 2),
+            "Bouncer should recoil before the horn hit resolves");
+        assert_eq!(board.units[target_idx].hp, 2, "Bouncer horn deals 1 damage");
+        assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (4, 5),
+            "Bouncer horn pushes the target forward");
+    }
+
+    #[test]
+    fn test_beetle_charge_pushes_target_forward() {
+        let mut board = Board::default();
+        let target_idx = add_mech_unit(&mut board, 2, 5, 6, 2);
+        let beetle_idx = add_enemy_with_type(&mut board, 46, 6, 6, 4, "Beetle1", 5, 6);
+        board.units[beetle_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[target_idx].hp, 1, "Beetle should deal 1 charge damage");
+        assert_eq!((board.units[target_idx].x, board.units[target_idx].y), (4, 6),
+            "Beetle charge should push the hit target forward");
+    }
+
+    #[test]
+    fn test_beetle_push_into_bouncer_chain_kills_rocket() {
+        let mut board = Board::default();
+        let rocket_idx = add_mech_unit(&mut board, 1, 5, 6, 2);
+        let beetle_idx = add_enemy_with_type(&mut board, 46, 6, 6, 4, "Beetle1", 5, 6);
+        let bouncer_idx = add_enemy_with_type(&mut board, 47, 4, 7, 1, "Bouncer2", 3, 6);
+        board.units[beetle_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[bouncer_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[bouncer_idx].weapon_damage = 3;
+
+        let mut orig = default_orig_pos(&board);
+        orig[bouncer_idx] = (3, 7);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert!(board.units[rocket_idx].hp <= 0,
+            "Beetle B3->B4 displacement should let the alpha Bouncer kill Rocket");
+        assert_eq!((board.units[rocket_idx].x, board.units[rocket_idx].y), (4, 5),
+            "Bouncer should push the killed Rocket onward to C4");
+        assert_eq!(board.units[bouncer_idx].hp, 1,
+            "Bouncer edge recoil should not self-bump to death");
+    }
+
+    #[test]
+    fn test_flipped_displaced_beetle_leader_charges_new_direction() {
+        let mut board = Board::default();
+        board.grid_power = 5;
+        board.tile_mut(2, 3).terrain = Terrain::Building;
+        board.tile_mut(2, 3).building_hp = 1;
+        board.tile_mut(2, 6).terrain = Terrain::Building;
+        board.tile_mut(2, 6).building_hp = 2;
+
+        // Cataclysm HQ regression: the Beetle Leader started at D7 aimed E7,
+        // got pushed to D6, then Seismic Capacitor flipped the preserved
+        // direction. The post-flip queued target is C6 with origin D6, so the
+        // flying charge should continue through C6 and hit B6, not the old E6.
+        let boss_idx = add_enemy_with_type(&mut board, 1793, 2, 4, 3, "BeetleBoss", 2, 5);
+        board.units[boss_idx].weapon_damage = 3;
+        board.units[boss_idx].queued_origin_x = 2;
+        board.units[boss_idx].queued_origin_y = 4;
+        board.units[boss_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::QUEUED_ORIGIN_SET,
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(2, 3).building_hp, 1, "old E6 building should survive");
+        assert_eq!(board.tile(2, 6).building_hp, 0, "flipped charge should destroy B6");
+        assert_eq!(board.grid_power, 3, "2-HP B6 building drains two grid");
+        assert_eq!((board.units[boss_idx].x, board.units[boss_idx].y), (2, 5),
+            "charge should move the boss to the last free tile before impact");
     }
 
     #[test]
@@ -1343,6 +2584,27 @@ mod tests {
     }
 
     #[test]
+    fn test_crab_leader_damages_target_and_projectile_path() {
+        let mut board = Board::default();
+        // Crab Leader at (4,2) targeting (4,6): path tiles are (4,3..5),
+        // target gets 2 damage, path gets 1 damage, tile past target is safe.
+        board.tile_mut(4, 4).terrain = Terrain::Building;
+        board.tile_mut(4, 4).building_hp = 1;
+        board.tile_mut(4, 6).terrain = Terrain::Building;
+        board.tile_mut(4, 6).building_hp = 2;
+        board.tile_mut(4, 7).terrain = Terrain::Building;
+        board.tile_mut(4, 7).building_hp = 1;
+        add_enemy_with_type(&mut board, 1, 4, 2, 6, "CrabBoss", 4, 6);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(4, 4).building_hp, 0, "Crab Leader should hit path tile");
+        assert_eq!(board.tile(4, 6).building_hp, 0, "Crab Leader should hit target for 2 damage");
+        assert_eq!(board.tile(4, 7).building_hp, 1, "Crab Leader should not hit beyond target");
+    }
+
+    #[test]
     fn test_blob_self_destructs_all_adjacent() {
         let mut board = Board::default();
         // Blob at (3,3) — self-AoE should hit self + 4 adjacent
@@ -1360,6 +2622,76 @@ mod tests {
         // Adjacent buildings should take damage
         assert_eq!(board.tile(3, 4).building_hp, 0, "Adjacent building should be hit");
         assert_eq!(board.tile(4, 3).building_hp, 0, "Adjacent building should be hit");
+    }
+
+    #[test]
+    fn test_blobber_leader_spawns_blob_leader() {
+        let mut board = Board::default();
+        add_enemy_with_type(&mut board, 10, 3, 3, 5, "BlobberBoss", 3, 5);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        let spawned = (0..board.unit_count as usize)
+            .find(|&i| board.units[i].type_name_str() == "BlobB")
+            .expect("Blobber Leader should spawn BlobB");
+        assert_eq!((board.units[spawned].x, board.units[spawned].y), (3, 5));
+        assert_eq!(board.units[spawned].hp, 2);
+        assert_eq!(board.units[spawned].max_hp, 2);
+    }
+
+    #[test]
+    fn test_blob_leader_split_self_aoe_damage() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 2;
+        let mech_idx = board.add_unit(Unit {
+            uid: 2,
+            x: 4,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        add_enemy_with_type(&mut board, 1, 3, 3, 2, "BlobB", 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[1].hp, 1, "Blob Leader should survive its 1 self damage");
+        assert_eq!(board.tile(3, 4).building_hp, 0, "adjacent building should take 2 damage");
+        assert_eq!(board.units[mech_idx].hp, 1, "adjacent mech should take 2 damage");
+    }
+
+    #[test]
+    fn test_blob_boss_squish_moves_into_destroyed_building() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+        add_enemy_with_type(&mut board, 20, 3, 3, 3, "BlobBoss", 3, 4);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!((board.units[0].x, board.units[0].y), (3, 4));
+    }
+
+    #[test]
+    fn test_blob_boss_squish_destroys_full_mountain() {
+        let mut board = Board::default();
+        board.tile_mut(3, 4).terrain = Terrain::Mountain;
+        board.tile_mut(3, 4).building_hp = 2;
+        add_enemy_with_type(&mut board, 21, 3, 3, 3, "BlobBoss", 3, 4);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).terrain, Terrain::Rubble);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!((board.units[0].x, board.units[0].y), (3, 4));
     }
 
     #[test]
@@ -1402,7 +2734,10 @@ mod tests {
         assert_eq!(enemy_weapon_for_type("Beetle1"), WId::BeetleAtk1);
         assert_eq!(enemy_weapon_for_type("Digger1"), WId::DiggerAtk1);
         assert_eq!(enemy_weapon_for_type("BlobMini"), WId::BlobAtk1);
+        assert_eq!(enemy_weapon_for_type("BlobB"), WId::BlobAtkB);
+        assert_eq!(enemy_weapon_for_type("BlobberBoss"), WId::BlobberAtkB);
         assert_eq!(enemy_weapon_for_type("Crab1"), WId::CrabAtk1);
+        assert_eq!(enemy_weapon_for_type("CrabBoss"), WId::CrabAtkB);
         assert_eq!(enemy_weapon_for_type("Unknown"), WId::None);
     }
 
@@ -1435,6 +2770,27 @@ mod tests {
             ..Default::default()
         };
         extra.set_type_name("Train_Pawn");
+        let e = board.add_unit(extra);
+        (p, e)
+    }
+
+    fn add_armored_train(board: &mut Board, px: u8, py: u8, ex: u8, ey: u8) -> (usize, usize) {
+        let mut primary = Unit {
+            uid: 2525, x: px, y: py, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::ARMOR,
+            ..Default::default()
+        };
+        primary.set_type_name("Train_Armored");
+        let p = board.add_unit(primary);
+
+        let mut extra = Unit {
+            uid: 2525, x: ex, y: ey, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::ARMOR | UnitFlags::EXTRA_TILE,
+            ..Default::default()
+        };
+        extra.set_type_name("Train_Armored");
         let e = board.add_unit(extra);
         (p, e)
     }
@@ -1472,6 +2828,24 @@ mod tests {
         simulate_train_advance(&mut board);
         assert_eq!(board.units[p].hp, 0);
         assert_eq!(board.units[e].hp, 0);
+    }
+
+    #[test]
+    fn test_armored_train_kills_blocker_and_advances() {
+        let mut board = Board::default();
+        let (p, e) = add_armored_train(&mut board, 4, 6, 4, 7);
+        let vek = add_enemy_with_type(&mut board, 100, 4, 4, 3, "Scarab1", -1, -1);
+        board.tile_mut(4, 5).terrain = Terrain::Mountain;
+        board.tile_mut(4, 5).building_hp = 2;
+
+        simulate_train_advance(&mut board);
+
+        assert_eq!(board.units[p].hp, 1, "armored train primary survives");
+        assert_eq!(board.units[e].hp, 1, "armored train extra survives");
+        assert_eq!(board.units[vek].hp, 0, "blocker is destroyed");
+        assert_eq!(board.tile(4, 5).terrain, Terrain::Rubble, "mountain path tile is crushed");
+        assert_eq!((board.units[p].x, board.units[p].y), (4, 4));
+        assert_eq!((board.units[e].x, board.units[e].y), (4, 5));
     }
 
     #[test]
@@ -1648,6 +3022,26 @@ mod tests {
     }
 
     #[test]
+    fn test_centipede_leader_acidifies_projectile_path() {
+        // Centipede Leader at (0,3) firing east into a mech at (4,3).
+        // Caustic Vomit damages/acidifies the impact T shape like Alpha
+        // Centipede, and additionally applies zero-damage A.C.I.D. to
+        // every tile in the flight path before impact.
+        let mut board = Board::default();
+        let target_idx = add_mech_unit(&mut board, 10, 4, 3, 6);
+        add_enemy_with_type(&mut board, 1, 0, 3, 7, "CentipedeBoss", 4, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[target_idx].hp, 3, "Primary target should take 3 damage");
+        assert!(board.units[target_idx].acid(), "Primary target should be ACID'd");
+        for x in 1..4 {
+            assert!(board.tile(x, 3).acid(), "path tile ({},3) should become A.C.I.D.", x);
+        }
+    }
+
+    #[test]
     fn test_centipede_attack_lands_on_board_edge() {
         // Reproduces live scenario: Alpha Centipede at (0, 3) = E8 with
         // queued_target (0, 4) = D8 (first tile in +y attack direction).
@@ -1682,6 +3076,31 @@ mod tests {
     }
 
     #[test]
+    fn test_firefly_boss_fires_forward_and_backward_projectiles() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        {
+            let tile = board.tile_mut(2, 6);
+            tile.terrain = Terrain::Building;
+            tile.building_hp = 2;
+        }
+
+        add_enemy_with_type(&mut board, 803, 5, 6, 6, "FireflyBoss", 6, 6);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.tile(2, 6).terrain,
+            Terrain::Rubble,
+            "backward Burning Thorax projectile should destroy the first building behind the leader"
+        );
+        assert_eq!(board.grid_power, 5);
+        assert_eq!(result.grid_damage, 2);
+    }
+
+    #[test]
     fn test_webb_egg_does_not_attack() {
         // WebbEgg1 at (3,3) with queued_target = own tile (3,3). The egg's
         // "action" is to hatch into a Spiderling — not an attack. Without
@@ -1699,11 +3118,12 @@ mod tests {
             "Egg should not self-damage on its turn (hatching, not attacking)");
     }
 
-    /// Sim v22 hatch step: a WebbEgg present at the start of the enemy
-    /// phase transforms into a Spiderling in-place. The hatchling has
-    /// no queued attack on its hatch turn (real-game: bite happens turn
-    /// after hatch), so its own tile is not damaged. The unit's
-    /// type_name flips, move_speed/weapon are bound to Spiderling stats.
+    /// Sim v22/v115 hatch step: a WebbEgg present at the start of the enemy
+    /// phase transforms into a Spiderling. The hatchling has no queued attack
+    /// on its hatch turn (real-game: bite happens turn after hatch), so its
+    /// own tile is not damaged. The unit's type_name flips, move_speed/weapon
+    /// are bound to Spiderling stats, and live-style `sPawn` fallback can place
+    /// it adjacent to the occupied egg tile.
     #[test]
     fn test_webb_egg_hatches_into_spiderling() {
         let mut board = Board::default();
@@ -1716,10 +3136,99 @@ mod tests {
             "WebbEgg1 should hatch into Spiderling1");
         assert_eq!(u.hp, 1, "hatched Spiderling inherits 1 HP");
         assert_eq!(u.move_speed, 3, "Spiderling has move_speed=3 per pawn_stats");
+        assert_eq!((u.x, u.y), (3, 2),
+            "sPawn fallback should prefer bridge y-1 from the occupied egg tile");
         assert!(!u.has_queued_attack(),
             "fresh hatchling has no queued attack on its hatch turn");
         assert_eq!(u.queued_target_x, -1,
             "queued_target cleared so phantom-attack guard `continue`s");
+    }
+
+    #[test]
+    fn test_webb_egg_hatches_onto_adjacent_building() {
+        // Hard Rusting Hulks HQ regression: WebbEgg1 at visual E6 (bridge 2,3)
+        // hatched onto adjacent F6 (bridge 2,2), destroying a 2-HP building and
+        // draining exactly 2 grid before the next player turn.
+        let mut board = Board::default();
+        board.grid_power = 4;
+        board.tile_mut(2, 2).terrain = Terrain::Building;
+        board.tile_mut(2, 2).building_hp = 2;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 2, 3, 1, "WebbEgg1", 2, 3);
+
+        let orig = default_orig_pos(&board);
+        let grid_damage = simulate_enemy_attacks(&mut board, &orig, &WEAPONS).grid_damage;
+
+        let u = &board.units[egg_idx];
+        assert_eq!(u.type_name_str(), "Spiderling1");
+        assert_eq!((u.x, u.y), (2, 2),
+            "hatchling should occupy the adjacent building tile the live game selected");
+        assert_eq!(board.tile(2, 2).building_hp, 0);
+        assert_eq!(board.tile(2, 2).terrain, Terrain::Rubble);
+        assert_eq!(board.grid_power, 2);
+        assert_eq!(grid_damage, 2);
+        assert!(!u.has_queued_attack(),
+            "fresh hatchling still does not bite on the hatch turn");
+    }
+
+    #[test]
+    fn test_webb_egg_hatch_fallback_skips_occupied_first_tile() {
+        let mut board = Board::default();
+        let mut blocker = Unit {
+            uid: 2, x: 3, y: 2, hp: 3, max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        };
+        blocker.set_type_name("JetMech");
+        board.add_unit(blocker);
+        board.grid_power = 5;
+        board.tile_mut(4, 3).terrain = Terrain::Building;
+        board.tile_mut(4, 3).building_hp = 1;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 3, 3, 1, "WebbEgg1", 3, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[egg_idx].x, board.units[egg_idx].y), (4, 3),
+            "occupied y-1 tile should be skipped in favor of x+1 fallback");
+        assert_eq!(board.grid_power, 4);
+    }
+
+    #[test]
+    fn test_webb_egg_hatch_skips_shielded_building() {
+        let mut board = Board::default();
+        board.grid_power = 5;
+        board.tile_mut(2, 2).terrain = Terrain::Building;
+        board.tile_mut(2, 2).building_hp = 2;
+        board.tile_mut(2, 2).set_shield(true);
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 1;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 2, 3, 1, "WebbEgg1", 2, 3);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[egg_idx].x, board.units[egg_idx].y), (3, 3),
+            "shielded first building should not be selected as sPawn fallback");
+        assert_eq!(board.tile(2, 2).building_hp, 2,
+            "shielded skipped building should be preserved");
+        assert_eq!(board.tile(3, 3).building_hp, 0);
+        assert_eq!(board.grid_power, 4);
+    }
+
+    #[test]
+    fn test_webb_egg_hatch_all_adjacent_invalid_stays_on_egg_tile() {
+        let mut board = Board::default();
+        board.tile_mut(0, 1).terrain = Terrain::Water;
+        board.tile_mut(1, 0).terrain = Terrain::Chasm;
+        let egg_idx = add_enemy_with_type(&mut board, 1, 0, 0, 1, "WebbEgg1", 0, 0);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[egg_idx].type_name_str(), "Spiderling1");
+        assert_eq!((board.units[egg_idx].x, board.units[egg_idx].y), (0, 0),
+            "if every adjacent fallback tile is invalid, only the type flips");
     }
 
     #[test]
@@ -1877,6 +3386,30 @@ mod tests {
             "Default-pilot mech takes 1 fire-tick damage");
         assert!(board.units[idx].fire(),
             "Fire flag persists for a non-Rockman mech");
+    }
+
+    #[test]
+    fn test_flame_shielding_does_not_skip_ally_fire_tick() {
+        // Regression: Archive_Tank is team Player but not a mech. Flame
+        // Shielding must not prevent its fire tick.
+        use crate::board::UnitFlags;
+        let mut board = Board::default();
+        board.flame_shielding = true;
+        let mut unit = Unit {
+            uid: 5326, x: 5, y: 1, hp: 1, max_hp: 1,
+            team: Team::Player,
+            flags: UnitFlags::ACTIVE | UnitFlags::FIRE,
+            weapon: crate::board::WeaponId(WId::DeployTankShot as u16),
+            move_speed: 0,
+            ..Default::default()
+        };
+        unit.set_type_name("Archive_Tank");
+        let idx = board.add_unit(unit);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[idx].hp, 0);
     }
 
     #[test]
@@ -2040,6 +3573,44 @@ mod tests {
         assert_eq!(board.tile(3, 4).building_hp, 1, "perp (3,4): 5-4=1");
     }
 
+    #[test]
+    fn test_bouncer_boss_enemy_attack_hits_t_pattern_and_bounces() {
+        let mut board = Board::default();
+        let center = board.add_unit(Unit {
+            uid: 20, x: 3, y: 4, hp: 4, max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let left = board.add_unit(Unit {
+            uid: 21, x: 2, y: 4, hp: 4, max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        let right = board.add_unit(Unit {
+            uid: 22, x: 4, y: 4, hp: 4, max_hp: 4,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let boss = add_enemy_with_type(&mut board, 10, 3, 3, 4, "BouncerBoss", 3, 4);
+        board.units[boss].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[boss].x, board.units[boss].y), (3, 2),
+            "Bouncer Leader should bounce backward after attacking");
+        assert_eq!((board.units[center].x, board.units[center].y), (3, 5));
+        assert_eq!(board.units[center].hp, 2);
+        assert_eq!((board.units[left].x, board.units[left].y), (2, 5));
+        assert_eq!(board.units[left].hp, 2);
+        assert_eq!((board.units[right].x, board.units[right].y), (4, 5));
+        assert_eq!(board.units[right].hp, 2);
+    }
+
     /// BossHeal applies Shield to self when boss is damaged. Per
     /// `bot.lua:32-41`, `BossHeal:GetSkillEffect` calls `AddDamage(SpaceDamage(p1))`
     /// with `iShield = 1` immediately. The detection in enemy.rs requires
@@ -2103,10 +3674,38 @@ mod tests {
             "Building should take 2 dmg from SnowBossAtk center tile");
     }
 
+    #[test]
+    fn test_mosquito_leader_kills_through_shield_and_smokes_target() {
+        let mut board = Board::default();
+        let mut target = Unit {
+            uid: 2,
+            x: 4,
+            y: 5,
+            hp: 5,
+            max_hp: 5,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        };
+        target.set_shield(true);
+        let tidx = board.add_unit(target);
+
+        let boss = add_enemy_with_type(&mut board, 1, 4, 4, 5, "MosquitoBoss", 4, 5);
+        board.units[boss].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.units[tidx].hp, 0, "Mosquito Leader kill bypasses shield");
+        assert!(!board.units[tidx].shield(), "bypassed shield is removed with the dead unit");
+        assert!(board.tile(4, 5).smoke(), "Cloudburst Tentacles smokes the target tile");
+    }
+
     /// `enemy_weapon_for_type` mappings for the Bot Leader pawns.
     #[test]
     fn test_bot_leader_weapon_mapping() {
         assert_eq!(enemy_weapon_for_type("BotBoss"), WId::SnowBossAtk);
         assert_eq!(enemy_weapon_for_type("BotBoss2"), WId::SnowBossAtk2);
+        assert_eq!(enemy_weapon_for_type("MosquitoBoss"), WId::MosquitoAtkB);
     }
 }

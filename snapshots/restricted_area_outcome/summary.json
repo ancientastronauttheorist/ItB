@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-11T00:17:26.775596",
+  "label": "restricted_area_outcome",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "PunchMech",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "TankMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hornet1",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    }
+  ]
+}

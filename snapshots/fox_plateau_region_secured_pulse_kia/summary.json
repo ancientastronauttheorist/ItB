@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T12:42:30.467113",
+  "label": "fox_plateau_region_secured_pulse_kia",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion1",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 2
+    }
+  ]
+}

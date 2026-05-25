@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-05T18:24:33.075532",
+  "label": "colonial_park_secured",
+  "turn": 4,
+  "grid_power": 3,
+  "mechs": [
+    {
+      "type": "WallMech",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion2",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    }
+  ]
+}

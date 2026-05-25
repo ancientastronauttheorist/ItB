@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-10T19:31:05.544519",
+  "label": "research_queue_peek_hq_t2_crab1",
+  "turn": 2,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "ScienceMech",
+      "pos": [
+        0,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hornet1",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Crab1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

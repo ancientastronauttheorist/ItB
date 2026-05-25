@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-05-17T15:15:41.600284",
+  "run_id": "20260517_105759_344",
+  "mission_index": 17,
+  "turn": 3,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 1,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          2,
+          3
+        ],
+        "target_visual": "E6",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 2646,
+          "type": "Burrower1",
+          "pos": [
+            3,
+            3
+          ],
+          "visual": "E5",
+          "hp": 3,
+          "max_hp": 3,
+          "weapon_id": "Burrower_Atk",
+          "target": [
+            2,
+            3
+          ],
+          "target_visual": "E6",
+          "queued_target": [
+            2,
+            3
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}

@@ -43,7 +43,6 @@ _WEAPON_DRIFT_CATEGORIES = frozenset({
     "damage_amount",
     "grid_power",
     "death",
-    "status",
 })
 
 # Frequency at which a weapon-drift category escalates from narrate
@@ -141,6 +140,19 @@ def _propose_response(
     # Execution bugs — re-solve path already handles them. No extra response.
     if top in ("click_miss", "mech_position_wrong"):
         return 1, 0.8
+
+    # A lethal overprediction is more dangerous than a generic drift: the
+    # solver may keep trusting a disabled/webbing attacker is gone, then feed
+    # the same mech to it again next turn. Soft-disable immediately.
+    if top == "death" and "enemy_survived_unexpectedly" in asymmetry:
+        return 2, 0.8
+
+    # Status diffs are too broad for automatic weapon cages: active/boosted/
+    # transient UI state can differ after bridge moves/skips, while genuine
+    # weapon semantic bugs usually also produce damage/death/grid/position
+    # evidence. Narrate and re-solve, but keep the squad's tools available.
+    if top == "status":
+        return 4, 0.4
 
     # Weapon-drift pattern with enough evidence to soft-disable.
     if top in _WEAPON_DRIFT_CATEGORIES and frequency + 1 >= _SOFT_DISABLE_THRESHOLD:

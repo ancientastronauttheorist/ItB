@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-04-30T13:46:36.669153",
+  "label": "research_gate_centipede1_m14_t3",
+  "turn": 3,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 4
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Centipede1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 3
+    }
+  ]
+}

@@ -2,7 +2,9 @@
 
 ## Achievement Checklist
 
-15 of 70 completed (authoritative source: `python3 game_loop.py achievements` → Steam Web API. profile.lua drifts — it missed Watery Grave / Perfect Island / Sustainable Energy). 55 remaining, sorted by global unlock % (easiest first).
+43 of 70 Steam-cache confirmed. **Hold the Line** unlocked in Blitzkrieg Normal run `20260524_195401_412` after a manual four-block spawn cluster on Detritus Corporate HQ. 27 remaining; sorted by global unlock % (easiest first).
+
+Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line** by blocking D3, C3, C2, and C1 in one enemy emergence phase. Hazardous Mechs Easy run `20260522_193613_471` previously closed **Healing** and **Overkill** and reached a 4-island victory.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -11,38 +13,38 @@
 - [x] Friends in High Places (49.8%) — Spend 50 Reputation across all games [cumulative]
 - [x] Come Together (44.7%) — Unlock 6 additional Pilots [cumulative]
 - [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
-- [ ] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
-- [ ] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
+- [x] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
+- [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
 
 ### Tier 2: Yellow Zone (20-40% — requires specific squad play or setup)
-- [ ] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
-- [ ] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
-- [ ] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
-- [ ] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
-- [ ] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
+- [x] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle [Rusting Hulks]
+- [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself [Zenith Guard]
+- [x] Overpowered (30.7%) — Overpower Grid twice when full [Rusting Hulks]
+- [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle [Zenith Guard]
+- [x] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians across all games [cumulative]
-- [ ] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg]
-- [ ] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative]
+- [x] Chain Attack (24.8%) — Chain Whip through 10 tiles [Blitzkrieg] — completed in run `20260517_105759_344`
+- [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards [cumulative] — completed with Rusting Hulks after Pinnacle Robotics Perfect Island in run `20260519_133059_179`
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack [Steel Judoka]
-- [ ] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
-- [ ] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
-- [ ] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times [cumulative]
-- [ ] There is No Try (20.2%) — Finish 3 islands without failing an objective
+- [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
+- [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire [Flame Behemoths]
+- [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times [cumulative]
+- [x] There is No Try (20.2%) — Finish 3 islands without failing an objective — completed with Rusting Hulks in run `20260519_154655_297`
 
 ### Tier 3: Orange Zone (10-20% — deliberate setup needed)
-- [ ] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative]
-- [ ] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative]
-- [ ] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
-- [ ] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths]
-- [ ] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
-- [ ] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths]
-- [ ] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
-- [ ] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs]
-- [ ] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
-- [ ] Untouchable (14.5%) — Finish island without Mech Damage
+- [x] Squads Victory (19.0%) — Beat game with 4 different Squads [cumulative] — completed with the Blitzkrieg victory in run `20260517_105759_344`
+- [x] Adaptable Victory (18.8%) — Beat game at each length (2, 3, 4 islands) [cumulative] — completed with a 2-island Rusting Hulks victory in run `20260519_200933_351`
+- [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle [Frozen Titans]
+- [x] Quantum Entanglement (16.6%) — Teleport unit 4 tiles away [Flame Behemoths] — completed in run `20260520_134643_900` with `Science_Swap_AB`
+- [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle [Frozen Titans]
+- [x] This is Fine (15.7%) — 5 enemies on Fire simultaneously [Flame Behemoths] — live toast observed on 2026-05-21 in run `20260520_174936_811`
+- [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle [Rusting Hulks]
+- [x] Healing (15.1%) — Heal 10 Mech Health in one battle [Hazardous Mechs] — completed in run `20260522_193613_471`; Steam sync reconciled after online restart
+- [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser [Zenith Guard]
+- [x] Untouchable (14.5%) — Finish island without Mech Damage — in-game popup observed after Frozen Titans Easy Archive run `20260522_133722_695`; Steam cache sync still lagged at 39/70 immediately afterward
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire [Steel Judoka]
-- [ ] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg]
-- [ ] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs]
+- [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg] — completed in run `20260524_195401_412` on Detritus Corporate HQ
+- [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
 - [ ] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod)
 - [ ] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad
 - [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
@@ -51,15 +53,15 @@
 
 ### Tier 4: Red Zone (<10% — hardest achievements, endgame goals)
 - [ ] Class Specialist (9.8%) — Beat game with 3 Mechs from same class in Custom
-- [ ] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
+- [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 - [ ] Immortal (9.6%) — 4 islands without Mech destroyed [Hazardous Mechs]
 - [ ] Loot Boxes! (9.4%) — Open 5 Time Pods in single game [Random]
 - [ ] Engineering Dropout (9.3%) — 3 islands without powering Weapon Modification
 - [ ] Trick Shot (9.2%) — Kill 3 enemies with single Janus Cannon [Frozen Titans]
-- [ ] Hard Victory (9.0%) — Beat game on Hard
+- [x] Hard Victory (9.0%) — Beat game on Hard — completed with Rusting Hulks on Hard + Advanced Edition in run `20260513_230944_542`
 - [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
-- [ ] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm]
+- [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
 - [ ] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom
 - [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
 - [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
@@ -77,7 +79,7 @@
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (15, from Steam Web API)
+### Already Completed (43, from Steam sync)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -87,12 +89,40 @@
 - [x] The Defenders — Finish a Corporate Island without Building Damage
 - [x] Friends in High Places (49.8%) — Spend 50 Reputation across games
 - [x] Come Together (44.7%) — Unlock 6 additional Pilots
+- [x] Best of the Best (43.9%) — Have 3 Pilots at maximum level simultaneously
 - [x] Immovable Objects — Block 100 Vek across all games
 - [x] Sustainable Energy (39.1%) — Sustain maximum Grid Power for a full mission
+- [x] Good Samaritan (41.7%) — Earn 9 Reputation from missions on a single Corporate Island
+- [x] Overpowered (30.7%) — Overpower Grid twice when full
+- [x] Perfect Battle (36.4%) — Take no Mech or Building Damage in a single battle  [Rusting Hulks]
+- [x] Get Over Here (33.9%) — Kill an enemy by pulling it into yourself  [Zenith Guard]
+- [x] Shield Mastery (28.5%) — Block damage with Shield 4 times in a battle  [Zenith Guard]
+- [x] Ramming Speed (28.4%) — Kill enemy 5+ tiles away with Dash Punch  [Rift Walkers]
 - [x] Humanity's Savior (27.8%) — Rescue 100,000 civilians
+- [x] Chain Attack (24.8%) — Chain Whip through 10 tiles  [Blitzkrieg]
+- [x] Perfect Strategy (23.3%) — Collect 10 Perfect Island rewards
+- [x] There is No Try (20.2%) — Finish 3 islands without failing an objective
+- [x] Adaptable Victory (18.8%) — Beat game at 2-, 3-, and 4-island lengths
 - [x] Mass Displacement (23.0%) — Push 3 enemies with single attack  [Steel Judoka]
+- [x] Backup Batteries (20.7%) — Earn/buy 10 Grid Power on single island
+- [x] Scorched Earth (20.5%) — End battle with 12 tiles on Fire  [Flame Behemoths]
+- [x] I'm getting too old for this... (20.3%) — Same Pilot fights final battle 3 times
+- [x] Cryo Expert (16.9%) — Shoot Cryo-Launcher 4 times in one battle  [Frozen Titans]
+- [x] Quantum Entanglement (16.6%) — Teleport a unit 4 tiles away  [Flame Behemoths]
+- [x] This is Fine (15.7%) — 5 enemies on Fire simultaneously  [Flame Behemoths]
+- [x] Pacifist (16.6%) — Kill less than 3 enemies in a battle  [Frozen Titans]
+- [x] Stormy Weather (15.4%) — 12 Electric Smoke damage in one battle  [Rusting Hulks]
+- [x] Healing (15.1%) — Heal 10 Mech Health in one battle  [Hazardous Mechs]
+- [x] Glittering C-Beam (14.8%) — Hit 4 enemies with single laser  [Zenith Guard]
+- [x] Untouchable (14.5%) — Finish island without Mech Damage  [Frozen Titans]
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
+- [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn  [Blitzkrieg]
+- [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
+- [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
+- [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
+- [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
+- [x] Squads Victory — Beat game with 4 different Squads
 
 
 ## Development Phases
@@ -151,7 +181,10 @@
 
 ### Environment Awareness
 - [x] **Tidal waves / air strikes / lightning**: Bridge provides `environment_danger` tiles via `Board:IsEnvironmentDanger()`. Solver avoids placing mechs on them, rewards pushing enemies onto them.
-- [x] **Conveyor belt direction**: Bridge regex extracts `conveyorN.png` direction (0-3); Rust `Board.conveyor_dir` per tile; deploy filter excludes conveyor tiles. Commit 1c6b38b (2026-04-24).
+- [x] **Conveyor belt direction**: Bridge regex extracts `conveyorN.png` direction (0-3); Rust `Board.conveyor_dir` per tile; deploy filter excludes conveyor tiles; enemy-phase belts apply on any live conveyor map, not only `Mission_Belt` (sim v107).
+- [x] **Mission_Repair full-health platforms**: `Item_Repair_Mine` consumes and counts when a full-health mech lands on it, but HP does not overcap unless the unit was below max HP at trigger time (sim v108).
+- [x] **Delayed grid scalar debt**: Live-loop safety subtracts pending grid debt when building HP has dropped but `grid_power` has not caught up, and post-enemy reads poll briefly when a favorable grid/building sample exceeds the saved prediction. This prevents dirty plans from understating Hard grid loss.
+- [x] **Final-island / Hard safety gates**: Predicted `grid_power <= 0` is `grid_timeline_collapse` and cannot be overridden by ordinary dirty consent; pylon loss is non-overridable; missing or worse post-enemy audits persist as a hard `post_enemy_block`; dirty consent is exact-token and one-use; `auto_turn` records a pre-End-Turn threat audit that includes projected WebbEgg hatch threats and can hold End Turn on critical states; `research_peek` exposes the queue without relying on a nonexistent `research_queue_peek` command; and the v115 WebbEgg run has artifact-parity coverage.
 - [x] **Teleporter pad pairing**: Lua hooks `Board.AddTeleport` to capture pairs; Rust `Board.teleporter_pairs` + `apply_teleport_on_land()` fires on move-end / push / throw. Sim v8, commit 456ba49 (2026-04-23).
 - [ ] **Windstorm direction**: No directional data in bridge. Need Lua extraction for R.S.T. island.
 - [ ] **Volcanic Hive patterns**: Lava flow / falling rocks / tentacles follow cycles (Random → Aimed → Area). Pattern prediction needed for final mission.

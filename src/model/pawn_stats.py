@@ -57,6 +57,9 @@ MECH_STATS = {
     "NanoMech":      PawnStats(move_speed=4, massive=True, flying=True, class_type="Science", default_weapon="Science_AcidShot"),
     # Advanced Edition mechs
     "BeetleMech":    PawnStats(move_speed=3, massive=True, class_type="Prime", default_weapon="Prime_Beetle"),
+    "BulkMech":      PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_TC_Ricochet"),
+    "ScorpioMech":   PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_Arachnoid"),
+    "FourwayMech":   PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_MassShift"),
     "HydroMech":     PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_Hydro"),
     "BottleMech":    PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_RocketShower"),
 }
@@ -70,37 +73,52 @@ VEK_STATS = {
     "Firefly2":      PawnStats(move_speed=2, ranged=1),
     "Hornet1":       PawnStats(move_speed=5, flying=True, ranged=0),
     "Hornet2":       PawnStats(move_speed=5, flying=True, ranged=0),
-    "Leaper1":       PawnStats(move_speed=4, jumper=True, minor=True, ranged=0),
+    "Leaper1":       PawnStats(move_speed=4, jumper=True, ranged=0),
     "Leaper2":       PawnStats(move_speed=4, jumper=True, ranged=0),
     "Beetle1":       PawnStats(move_speed=2, ranged=0, massive=True),
     "Beetle2":       PawnStats(move_speed=2, ranged=0, massive=True),
     "Scarab1":       PawnStats(move_speed=3, ranged=1),
     "Scarab2":       PawnStats(move_speed=3, ranged=1),
+    "ScarabBoss":    PawnStats(move_speed=3, ranged=1, massive=True, default_weapon="ScarabAtkB"),
     "Crab1":         PawnStats(move_speed=3, ranged=1),
     "Crab2":         PawnStats(move_speed=3, ranged=1),
+    "CrabBoss":      PawnStats(move_speed=3, ranged=1, massive=True),
     "Centipede1":    PawnStats(move_speed=2, ranged=1),
     "Centipede2":    PawnStats(move_speed=2, ranged=1),
+    "CentipedeBoss": PawnStats(move_speed=3, ranged=1, massive=True,
+                               default_weapon="CentipedeAtkB"),
     "Digger1":       PawnStats(move_speed=3, ranged=0),
     "Digger2":       PawnStats(move_speed=3, ranged=0),
     "Burrower1":     PawnStats(move_speed=4, ranged=0, pushable=False),
     "Burrower2":     PawnStats(move_speed=4, ranged=0, pushable=False),
-    "Spider1":       PawnStats(move_speed=2, ranged=0, pushable=False),
-    "Spider2":       PawnStats(move_speed=2, ranged=0, pushable=False),
+    # Normal/Alpha Spiders are pushable. A live Detritus capture
+    # (20260506_114649_974 m22 t04) had Repulse push Spider1 from E5 to E6;
+    # marking them non-pushable made Rust suppress that move and safety-block
+    # the partial re-solve.
+    "Spider1":       PawnStats(move_speed=2, ranged=0),
+    "Spider2":       PawnStats(move_speed=2, ranged=0),
     "Blobber1":      PawnStats(move_speed=2, ranged=1),
     "Blobber2":      PawnStats(move_speed=2, ranged=1),
     # Advanced Edition Vek
     "Bouncer1":      PawnStats(move_speed=3, ranged=0),
     "Bouncer2":      PawnStats(move_speed=3, ranged=0),
+    "BouncerBoss":   PawnStats(move_speed=3, ranged=0, armor=True, massive=True, default_weapon="BouncerAtkB"),
     "Moth1":         PawnStats(move_speed=3, flying=True, ranged=1),
     "Moth2":         PawnStats(move_speed=3, flying=True, ranged=1),
     "Mosquito1":     PawnStats(move_speed=4, flying=True, ranged=0),
     "Mosquito2":     PawnStats(move_speed=4, flying=True, ranged=0),
+    "MosquitoBoss":  PawnStats(move_speed=4, flying=True, ranged=0, massive=True, default_weapon="MosquitoAtkB"),
     "Gastropod1":    PawnStats(move_speed=2, ranged=1),
     "Gastropod2":    PawnStats(move_speed=3, ranged=1),
     "Starfish1":     PawnStats(move_speed=3, ranged=0),
     "Starfish2":     PawnStats(move_speed=3, ranged=0),
+    "StarfishBoss":  PawnStats(move_speed=3, massive=True, ranged=0, default_weapon="StarfishAtkB1"),
+    "Dung1":         PawnStats(move_speed=3, ranged=0),
+    "Dung2":         PawnStats(move_speed=3, ranged=0),
+    "DungBoss":      PawnStats(move_speed=3, ranged=0, massive=True, default_weapon="DungAtkB"),
     "Tumblebug1":    PawnStats(move_speed=3, ranged=0),
     "Tumblebug2":    PawnStats(move_speed=3, ranged=0),
+    "TumblebugBoss": PawnStats(move_speed=3, ranged=0, massive=True, default_weapon="DungAtkB"),
     "Plasmodia1":    PawnStats(move_speed=2, ranged=1),
     "Plasmodia2":    PawnStats(move_speed=2, ranged=1),
     # Objective / special Vek
@@ -112,8 +130,8 @@ VEK_STATS = {
     "Snowtank2":     PawnStats(move_speed=3, ranged=0),
     "Snowart1":      PawnStats(move_speed=3, ranged=1),
     "Snowart2":      PawnStats(move_speed=3, ranged=1),
-    "Burnbug1":      PawnStats(move_speed=2, ranged=0),
-    "Burnbug2":      PawnStats(move_speed=2, ranged=0),
+    "Burnbug1":      PawnStats(move_speed=2, ranged=1),
+    "Burnbug2":      PawnStats(move_speed=2, ranged=1),
     # Burnbug Leader (a.k.a. Gastropod Leader) — Archive Inc Corp HQ finale boss.
     # Per `scripts/advanced/bosses/burnbug.lua`: Health=6, MoveSpeed=3, Ranged=1,
     # Massive=true, Tier=BOSS, SkillList={"BurnbugAtkB"}.
@@ -133,15 +151,15 @@ VEK_STATS = {
     "BotBoss2":      PawnStats(move_speed=3, massive=True,
                                default_weapon="SnowBossAtk2"),
     # Psions
-    "Jelly_Health1": PawnStats(move_speed=2, flying=True, leader="LEADER_HEALTH", pushable=False),
-    "Jelly_Armor1":  PawnStats(move_speed=2, flying=True, leader="LEADER_ARMOR", pushable=False),
-    "Jelly_Regen1":  PawnStats(move_speed=2, flying=True, leader="LEADER_REGEN", pushable=False),
-    "Jelly_Explode1":PawnStats(move_speed=2, flying=True, leader="LEADER_EXPLODE", pushable=False),
-    "Jelly_Lava1":   PawnStats(move_speed=2, flying=True, leader="LEADER_TENTACLE", pushable=False),
+    "Jelly_Health1": PawnStats(move_speed=2, flying=True, leader="LEADER_HEALTH"),
+    "Jelly_Armor1":  PawnStats(move_speed=2, flying=True, leader="LEADER_ARMOR"),
+    "Jelly_Regen1":  PawnStats(move_speed=2, flying=True, leader="LEADER_REGEN"),
+    "Jelly_Explode1":PawnStats(move_speed=2, flying=True, leader="LEADER_EXPLODE"),
+    "Jelly_Lava1":   PawnStats(move_speed=2, flying=True, leader="LEADER_TENTACLE"),
     # Advanced Edition Psions
-    "Jelly_Boost1":  PawnStats(move_speed=2, flying=True, leader="LEADER_BOOST", pushable=False),
-    "Jelly_Fire1":   PawnStats(move_speed=2, flying=True, leader="LEADER_FIRE", pushable=False),
-    "Jelly_Spider1": PawnStats(move_speed=2, flying=True, leader="LEADER_SPIDER", pushable=False),
+    "Jelly_Boost1":  PawnStats(move_speed=2, flying=True, leader="LEADER_BOOST"),
+    "Jelly_Fire1":   PawnStats(move_speed=2, flying=True, leader="LEADER_FIRE"),
+    "Jelly_Spider1": PawnStats(move_speed=2, flying=True, leader="LEADER_SPIDER"),
     # Bosses
     "FireflyBoss":   PawnStats(move_speed=3, ranged=1, massive=True),
     "BeetleBoss":    PawnStats(move_speed=3, ranged=0, massive=True),
@@ -181,6 +199,11 @@ VEK_STATS = {
     # the closest 4-dmg melee approximation.
     "ShamanBoss":    PawnStats(move_speed=2, ranged=1, massive=True,
                                default_weapon="ShamanAtkB"),
+    # Blobber Leader - Mission_BlobberBoss. Per
+    # `scripts/advanced/bosses/blobber.lua:17-31`: Health=5, MoveSpeed=2,
+    # Massive, Ranged=1, SkillList={"BlobberAtkB"} (throws BlobB).
+    "BlobberBoss":   PawnStats(move_speed=2, ranged=1, massive=True,
+                               default_weapon="BlobberAtkB"),
     # Psion Abomination — Mission_JellyBoss (R.S.T. Corporate HQ finale).
     # Per `scripts/missions/bosses/psion.lua:14-27`: Health=5, MoveSpeed=3,
     # Flying, Leader=LEADER_BOSS, no offensive SkillList (Tooltip "Overpowered"
@@ -197,7 +220,15 @@ VEK_STATS = {
     "Spiderling2":   PawnStats(move_speed=3, minor=True, ranged=0),
     "Blob1":         PawnStats(move_speed=0, minor=True, ranged=0),
     "Blob2":         PawnStats(move_speed=0, minor=True, ranged=0),
+    "BlobB":         PawnStats(move_speed=0, minor=True, ranged=0,
+                               default_weapon="BlobAtkB"),
     "BlobMini":      PawnStats(move_speed=0, minor=True, ranged=0),  # legacy alias
+    "MantisEgg":     PawnStats(move_speed=0, minor=True, ranged=0),
+    "WebbEgg1":      PawnStats(move_speed=0, minor=True, ranged=0, ignore_smoke=True),
+    "Totem1":        PawnStats(move_speed=0, minor=True, ranged=1),
+    "Totem2":        PawnStats(move_speed=0, minor=True, ranged=1),
+    "TotemB":        PawnStats(move_speed=0, minor=True, ranged=1),
+    "SlugEgg1":      PawnStats(move_speed=0, minor=True, ranged=0),
     "ShellPsion1":   PawnStats(move_speed=2, flying=True, minor=True, leader="LEADER_TENTACLE"),
 }
 
@@ -205,7 +236,19 @@ VEK_STATS = {
 NEUTRAL_STATS = {
     "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False),
     "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False),
+    "Train_Armored":     PawnStats(move_speed=0, massive=True, armor=True,
+                                   pushable=False, ignore_fire=True,
+                                   ignore_smoke=True,
+                                   default_weapon="Armored_Train_Move"),
+    "Train_Armored_Damaged": PawnStats(move_speed=0, massive=True, armor=True,
+                                       pushable=False, ignore_fire=True),
     "Filler_Pawn":       PawnStats(move_speed=0, pushable=False),
+    # Tumblebug explosive boulder. The live bridge exposes this as a neutral
+    # pawn (1 HP, Move 0) with the engine's Explodes flag.
+    "BombRock":          PawnStats(move_speed=0),
+    # Digger rock wall: bridge exposes the spawned rock as a neutral "Wall"
+    # pawn (1 HP, Move 0, no weapon) rather than terrain.
+    "Wall":              PawnStats(move_speed=0),
     # Freeze Tank (Pinnacle Robotics) — friendly NPC on Mission_FreezeBots
     # ("Pinnacle Garden"). Per scripts/missions/snow/snow_helper.lua:
     #   Health=1, MoveSpeed=4, SkillList={"Pinnacle_FreezeTank"},
@@ -219,6 +262,30 @@ NEUTRAL_STATS = {
     "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False),
     "ArchiveArtillery":  PawnStats(move_speed=0, ranged=1),
     "Archive_Tank":      PawnStats(move_speed=0, ranged=1),
+    "VIP_Truck":         PawnStats(move_speed=0, ranged=1,
+                                   default_weapon="VIP_Truck_Move"),
+    # Detritus Contraption (Mission_Missiles): immobile corporate mission
+    # ally with two global-use weapons, not pushable, smoke-immune.
+    "Missile_Unit":      PawnStats(move_speed=0, ranged=1, pushable=False,
+                                   ignore_smoke=True,
+                                   default_weapon="Missiles_Shield"),
+    # A.C.I.D. Launcher (Mission_Disposal): immobile corporate mission ally.
+    # It fires an ignore-smoke artillery cross that instant-kills/acidifies
+    # the target area and clears mountains.
+    "Disposal_Unit":     PawnStats(move_speed=0, ranged=1, pushable=False,
+                                   ignore_smoke=True,
+                                   default_weapon="Disposal_Attack"),
+    # Mission_Trapped Decoy Building: player-team, 2 HP, immobile,
+    # non-grid, non-pushable, self-destruct weapon.
+    "Trapped_Building":  PawnStats(move_speed=0, ranged=1, pushable=False,
+                                   ignore_smoke=True,
+                                   default_weapon="Trapped_Explode"),
+    # Arachnoid Injector spawn: player-controlled 1 HP, Move 3 unit with a
+    # self-destructing melee push. The B variant has the acidic attack upgrade.
+    "DeployUnit_Aracnoid":  PawnStats(move_speed=3, ranged=0, pushable=True,
+                                      default_weapon="DeployUnit_AracnoidAtk"),
+    "DeployUnit_AracnoidB": PawnStats(move_speed=3, ranged=0, pushable=True,
+                                      default_weapon="DeployUnit_AracnoidAtkB"),
     # A.C.I.D. Tank: single-use deployable NPC (time-pod / shop reward).
     # 1 HP base (3 with +2 HP upgrade), Move 3, Normal mass, pushable.
     # Player-controlled same as a mech.
@@ -234,8 +301,9 @@ NEUTRAL_STATS = {
     # Mirrors the Filler_Pawn pattern (player-team NPC, not is_mech) so the
     # evaluator's `friendly_npc_killed` (-20000) penalty fires on death.
     # `bigbomb_alive` (Rust Board) layers a much larger survival bonus on top
-    # since losing the bomb fails the mission.
-    "BigBomb":           PawnStats(move_speed=0, pushable=False, ignore_fire=True),
+    # since losing the bomb fails the mission. Despite being immobile, live
+    # final-cave evidence showed it can be pushed/bumped by Vulcan Artillery.
+    "BigBomb":           PawnStats(move_speed=0, pushable=True, ignore_fire=True),
 }
 
 # Combined lookup

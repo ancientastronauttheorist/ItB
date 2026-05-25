@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T16:30:57.315187",
+  "label": "exhibits_archive_region_secured",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "SatelliteRocket",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Mosquito1",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Armor1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 2
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-05-18T12:44:49.969662",
+  "run_id": "20260518_121221_583",
+  "mission_index": 3,
+  "turn": 4,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 0,
+    "still_threatened_count": 0,
+    "entries": [],
+    "phase": "combat_player"
+  }
+}

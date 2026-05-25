@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-06T15:03:50.022078",
+  "run_id": "20260506_114649_974",
+  "mission_index": 9,
+  "turn": 3,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_destroyed",
+        "tier": 6,
+        "severity": "critical",
+        "details": "PulseMech destroyed (HP=0)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

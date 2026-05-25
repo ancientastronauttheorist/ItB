@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-05T13:10:56.060749",
+  "label": "safety_block_archive_artillery_t1",
+  "turn": 1,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "ArchiveArtillery",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 2
+    },
+    {
+      "type": "WallMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly2",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Shaman1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Totem1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 1
+    }
+  ]
+}

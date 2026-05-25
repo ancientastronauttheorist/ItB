@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-05-10T10:31:58.267169",
+  "label": "m05_region_secured_erosion_flats_bad_charge_click_miss",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "LaserMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ChargeMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 3
+    }
+  ]
+}

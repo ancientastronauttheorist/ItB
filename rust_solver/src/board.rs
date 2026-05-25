@@ -10,27 +10,42 @@ use crate::types::*;
 
 bitflags! {
     #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-    pub struct TileFlags: u8 {
-        const ON_FIRE     = 0b0000_0001;
-        const SMOKE       = 0b0000_0010;
-        const ACID        = 0b0000_0100;
-        const FROZEN      = 0b0000_1000;
-        const CRACKED     = 0b0001_0000;
-        const HAS_POD     = 0b0010_0000;
-        const FREEZE_MINE = 0b0100_0000;
-        const OLD_EARTH_MINE = 0b1000_0000;
+    pub struct TileFlags: u16 {
+        const ON_FIRE         = 0b0000_0000_0001;
+        const SMOKE           = 0b0000_0000_0010;
+        const ACID            = 0b0000_0000_0100;
+        const FROZEN          = 0b0000_0000_1000;
+        const CRACKED         = 0b0000_0001_0000;
+        const HAS_POD         = 0b0000_0010_0000;
+        const FREEZE_MINE     = 0b0000_0100_0000;
+        const OLD_EARTH_MINE  = 0b0000_1000_0000;
+        const REPAIR_PLATFORM = 0b0001_0000_0000;
+        const SHIELD          = 0b0010_0000_0000;
+        const GRASS           = 0b0100_0000_0000;
     }
 }
 
 // ── Tile ─────────────────────────────────────────────────────────────────────
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 pub struct Tile {
     pub terrain: Terrain,
     pub building_hp: u8,
     pub population: u8,
     pub flags: TileFlags,
     pub conveyor_dir: i8, // -1 = none, 0-3 = direction (matches DIRS)
+}
+
+impl Default for Tile {
+    fn default() -> Self {
+        Tile {
+            terrain: Terrain::Ground,
+            building_hp: 0,
+            population: 0,
+            flags: TileFlags::empty(),
+            conveyor_dir: -1,
+        }
+    }
 }
 
 impl Tile {
@@ -42,14 +57,21 @@ impl Tile {
     pub fn has_pod(&self) -> bool { self.flags.contains(TileFlags::HAS_POD) }
     pub fn freeze_mine(&self) -> bool { self.flags.contains(TileFlags::FREEZE_MINE) }
     pub fn old_earth_mine(&self) -> bool { self.flags.contains(TileFlags::OLD_EARTH_MINE) }
+    pub fn repair_platform(&self) -> bool { self.flags.contains(TileFlags::REPAIR_PLATFORM) }
+    pub fn shield(&self) -> bool { self.flags.contains(TileFlags::SHIELD) }
+    pub fn grass(&self) -> bool { self.flags.contains(TileFlags::GRASS) }
 
     pub fn set_on_fire(&mut self, v: bool) { self.flags.set(TileFlags::ON_FIRE, v); }
     pub fn set_smoke(&mut self, v: bool) { self.flags.set(TileFlags::SMOKE, v); }
     pub fn set_acid(&mut self, v: bool) { self.flags.set(TileFlags::ACID, v); }
+    pub fn set_frozen(&mut self, v: bool) { self.flags.set(TileFlags::FROZEN, v); }
     pub fn set_cracked(&mut self, v: bool) { self.flags.set(TileFlags::CRACKED, v); }
     pub fn set_has_pod(&mut self, v: bool) { self.flags.set(TileFlags::HAS_POD, v); }
     pub fn set_freeze_mine(&mut self, v: bool) { self.flags.set(TileFlags::FREEZE_MINE, v); }
     pub fn set_old_earth_mine(&mut self, v: bool) { self.flags.set(TileFlags::OLD_EARTH_MINE, v); }
+    pub fn set_repair_platform(&mut self, v: bool) { self.flags.set(TileFlags::REPAIR_PLATFORM, v); }
+    pub fn set_shield(&mut self, v: bool) { self.flags.set(TileFlags::SHIELD, v); }
+    pub fn set_grass(&mut self, v: bool) { self.flags.set(TileFlags::GRASS, v); }
 
     pub fn is_building(&self) -> bool {
         self.terrain == Terrain::Building && self.building_hp > 0
@@ -87,12 +109,18 @@ bitflags! {
         /// Harold Schmidt (Pilot_Repairman) — Frenzied Repair: the mech's
         /// Repair action also pushes all four adjacent tiles outward.
         const REPAIRMAN = 0b0000_0100;
+        /// Morgan Lejeune (Pilot_Chemical) — Finisher: killing an enemy boosts
+        /// this mech for its next action.
+        const CHEMICAL  = 0b0000_1000;
+        /// Kai Miller (Pilot_Arrogant) — Opener: this mech is Boosted while
+        /// at full HP, and loses 1 Move while damaged.
+        const ARROGANT  = 0b0001_0000;
     }
 }
 
 bitflags! {
     #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-    pub struct UnitFlags: u16 {
+    pub struct UnitFlags: u32 {
         const IS_MECH  = 0b0000_0000_0001;
         const FLYING   = 0b0000_0000_0010;
         const MASSIVE  = 0b0000_0000_0100;
@@ -117,6 +145,20 @@ bitflags! {
         /// is -1, the simulator applies conservative phantom damage
         /// instead of silently skipping the attack.
         const HAS_QUEUED_ATTACK = 0b0100_0000_0000_0000;
+        /// Minor Vek spawned by other Vek. Minor units are enemies for threat
+        /// and collision purposes, but the engine does not apply Psion aura
+        /// bonuses to them.
+        const MINOR = 0b1000_0000_0000_0000;
+        /// Boosted status: the unit's next ability gets +1 weapon damage, and
+        /// Repair heals +1 extra HP. Consumed on attack or repair.
+        const BOOSTED = 0b0001_0000_0000_0000_0000;
+        /// Vek Mites attached to a mech. Mission objective state from
+        /// `bInfected`; cleared by repair/status/damage effects.
+        const INFECTED = 0b0010_0000_0000_0000_0000;
+        /// Enemy queued-target origin is explicitly recorded. This lets
+        /// player-phase retarget effects preserve the original attack vector
+        /// after the attacker has been pushed.
+        const QUEUED_ORIGIN_SET = 0b0100_0000_0000_0000_0000;
     }
 }
 
@@ -163,6 +205,8 @@ pub struct Unit {
     // Enemy intent
     pub queued_target_x: i8, // -1 = no target
     pub queued_target_y: i8,
+    pub queued_origin_x: i8,
+    pub queued_origin_y: i8,
     pub weapon_damage: u8,
     pub weapon_push: u8,
     pub weapon_target_behind: bool,
@@ -197,6 +241,9 @@ impl Unit {
     pub fn can_move(&self) -> bool { self.flags.contains(UnitFlags::CAN_MOVE) }
     pub fn is_extra_tile(&self) -> bool { self.flags.contains(UnitFlags::EXTRA_TILE) }
     pub fn has_queued_attack(&self) -> bool { self.flags.contains(UnitFlags::HAS_QUEUED_ATTACK) }
+    pub fn minor(&self) -> bool { self.flags.contains(UnitFlags::MINOR) }
+    pub fn boosted(&self) -> bool { self.flags.contains(UnitFlags::BOOSTED) }
+    pub fn infected(&self) -> bool { self.flags.contains(UnitFlags::INFECTED) }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -204,9 +251,31 @@ impl Unit {
     pub fn set_fire(&mut self, v: bool) { self.flags.set(UnitFlags::FIRE, v); }
     pub fn set_acid(&mut self, v: bool) { self.flags.set(UnitFlags::ACID, v); }
     pub fn set_web(&mut self, v: bool) { self.flags.set(UnitFlags::WEB, v); }
+    pub fn set_boosted(&mut self, v: bool) { self.flags.set(UnitFlags::BOOSTED, v); }
+    pub fn set_infected(&mut self, v: bool) { self.flags.set(UnitFlags::INFECTED, v); }
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
+    pub fn is_player_action_unit(&self) -> bool {
+        self.is_player() && self.alive() && self.active() && !self.is_extra_tile()
+            && (
+                self.is_mech()
+                || !self.weapon.is_none()
+                || (self.move_speed > 0 && self.type_name_str() == "VIP_Truck")
+            )
+    }
+    pub fn is_pinnacle_bot(&self) -> bool {
+        let name = self.type_name_str();
+        name.starts_with("Snowtank")
+            || name.starts_with("Snowart")
+            || name.starts_with("Snowlaser")
+            || name.starts_with("Snowmine")
+            || name == "BotBoss"
+            || name == "BotBoss2"
+    }
+    pub fn receives_psion_aura(&self) -> bool {
+        self.is_enemy() && !self.minor() && !self.is_pinnacle_bot()
+    }
     pub fn alive(&self) -> bool { self.hp > 0 }
 
     // Pilot-passive accessors. Enemies and neutrals never have these bits,
@@ -215,13 +284,12 @@ impl Unit {
     pub fn pilot_soldier(&self) -> bool { self.pilot_flags.contains(PilotFlags::SOLDIER) }
     pub fn pilot_rock(&self) -> bool { self.pilot_flags.contains(PilotFlags::ROCK) }
     pub fn pilot_repairman(&self) -> bool { self.pilot_flags.contains(PilotFlags::REPAIRMAN) }
+    pub fn pilot_chemical(&self) -> bool { self.pilot_flags.contains(PilotFlags::CHEMICAL) }
+    pub fn pilot_arrogant(&self) -> bool { self.pilot_flags.contains(PilotFlags::ARROGANT) }
 
-    /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and for
-    /// any player unit when the squad has Flame Shielding (checked at the
-    /// call site by passing `board.flame_shielding`). Keeping this on
-    /// `Unit` alone avoids threading `board` through every fire-apply
-    /// callsite — squad-wide Flame Shielding is handled separately at
-    /// each hook (`!(board.flame_shielding && u.is_player())`).
+    /// Can this unit catch fire? False for Ariadne (Pilot_Rock). Squad-wide
+    /// Flame Shielding is handled at call sites because it needs board state,
+    /// and it applies only to player mechs, not controllable mission allies.
     pub fn can_catch_fire(&self) -> bool { !self.pilot_rock() }
 
     /// Get pawn type name as string (from stored bytes).
@@ -230,15 +298,16 @@ impl Unit {
         std::str::from_utf8(&self.type_name[..len]).unwrap_or("Unknown")
     }
 
-    /// Is this unit a Volatile Vek? Matches both the canonical
-    /// `Volatile_Vek` marker (test fixtures, data/vek.json #262) and the
-    /// live-game `GlowingScorpion` class name used in Weather Watch. Both
-    /// trigger the same Explosive Decay mechanic (1 damage to 4 adjacent
-    /// tiles on death). Keeping this as one helper guarantees every
-    /// decay-firing callsite uses the same set of type names.
+    /// Is this unit an intrinsic Explosive Decay unit? Matches the canonical
+    /// `Volatile_Vek` marker (test fixtures, data/vek.json #262), the
+    /// live-game `GlowingScorpion` class name used in Weather Watch, and
+    /// Pinnacle `*_Boom` bots from Mission_BoomBots. These all trigger the
+    /// same 1-damage four-adjacent-tile death splash. Keeping this as one
+    /// helper guarantees every decay-firing callsite uses the same set of
+    /// type names.
     pub fn is_volatile_vek(&self) -> bool {
         let name = self.type_name_str();
-        name.contains("Volatile_Vek") || name.contains("GlowingScorpion")
+        name.contains("Volatile_Vek") || name.contains("GlowingScorpion") || name.ends_with("_Boom")
     }
 
     /// Set type name from string.
@@ -302,11 +371,18 @@ pub struct Board {
     /// (water-conversion is treated as a destroy, not a drown, and chasm
     /// always kills non-flying including Massive).
     ///
-    /// Air Strike / Lightning / Satellite Rocket are NOT in this set —
-    /// those bypass flight (bombs / lightning hit anything in the air).
+    /// Air Strike / Lightning / Satellite Rocket / Final Cave falling rocks
+    /// are NOT in this set — those bypass flight (bombs / lightning / rocks
+    /// hit anything in the air).
     /// Subset of `env_danger_kill`. When a kill tile is NOT in this set,
     /// flying offers no protection.
     pub env_danger_flying_immune: u64,
+    /// Bitset: bit i = tile i is affected by Mission_Wind. Wind is a push
+    /// effect, not direct 1 HP environment damage.
+    pub env_wind: u64,
+    /// Mission_Wind push direction, matching engine DIR_* constants and Rust
+    /// DIRS. -1 means older bridge/recording without WindDir export.
+    pub env_wind_dir: i8,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
     /// Frozen=true to any alive unit standing on these tiles. Buildings
@@ -324,6 +400,14 @@ pub struct Board {
     pub env_freeze: u64,
     pub unique_buildings: u64,  // bitset: bit i = tile i is a mission objective building (Coal Plant, Power Generator, Emergency Batteries)
     pub grid_reward_buildings: u64, // bitset: subset of unique_buildings whose survival restores +1 Grid Power at mission end (Str_Power / Str_Battery / Mission_Solar). See evaluate.rs.
+    pub freeze_building_tiles: u64, // bitset: Mission_FreezeBldg buildings that start frozen and count toward "Break 5 buildings out of the ice"
+    pub freeze_building_target: u8, // Mission_FreezeBldg thaw target (normally 5); 0 when inactive.
+    /// Per-tile grid debt from non-unique multi-HP buildings damaged by
+    /// bump/push collision or Aerial Bombs thaw damage on Mission_FreezeBldg
+    /// objective buildings. Live grid can remain unchanged at first HP loss,
+    /// then charge the earlier damage at enemy-turn settle or if the same
+    /// building is later destroyed.
+    pub deferred_bump_grid_debt: [u8; 64],
     pub blast_psion: bool,   // Blast Psion (Jelly_Explode1): all Vek explode on death
     pub armor_psion: bool,   // Shell Psion (Jelly_Armor1): all Vek gain Armor
     pub soldier_psion: bool, // Soldier Psion (Jelly_Health1): all Vek +1 HP
@@ -332,10 +416,13 @@ pub struct Board {
     pub boss_psion: bool,    // Psion Abomination (Jelly_Boss): combined HEALTH + REGEN + EXPLODE aura
     pub boost_psion: bool,   // Boost Psion (Jelly_Boost1, AE): +1 dmg to all Vek weapon attacks
     pub fire_psion: bool,    // Fire Psion (Jelly_Fire1, AE): Vek immune to fire + Vek leave fire on tile when killed
-    pub spider_psion: bool,  // Spider Psion (Jelly_Spider1, AE): Vek leave a SpiderEgg (WebbEgg1) on tile when killed
+    pub spider_psion: bool,  // Spider Psion (Jelly_Spider1, AE): Vek leave a SpiderlingEgg1 on tile when killed
     pub boss_alive: bool,    // True when a Boss-type enemy is alive (mission objective)
     pub storm_generator: bool,  // Passive_Electric: enemies in smoke take 1 dmg
     pub flame_shielding: bool,  // Passive_FlameImmune: mechs immune to fire
+    /// Passive_Leech / Viscera Nanobots heal amount for player mechs that
+    /// deal killing blows. 0 means the passive is not currently available.
+    pub viscera_nanobots_heal: u8,
     pub vek_hormones: bool,     // Passive_FriendlyFire: enemy attacks +1 to other enemies
     pub force_amp: bool,        // Passive_ForceAmp: Vek take +1 from bump/spawn-block
                                 // damage. Excludes sentient enemies (Bot Leader).
@@ -359,12 +446,20 @@ pub struct Board {
                                 // 2026-04-28.
     pub mission_id: String,     // Mission class name from bridge (e.g. "Mission_Dam").
                                 // Empty when the bridge couldn't resolve it.
-    pub mission_kill_target: u8,   // "Kill N enemies" bonus target from mission:GetKillBonus()
+    pub mission_kill_target: u8,   // "Kill at least N enemies" bonus target from mission:GetKillBonus()
                                 // (7 on Normal/Hard, 5 on Easy). 0 when the mission
                                 // doesn't have BONUS_KILL_FIVE in its BonusObjs.
+    pub mission_kill_limit: u8,    // "Kill N or fewer enemies" bonus cap from
+                                // mission:GetPacifistCount(). 0 when the mission
+                                // doesn't have BONUS_PACIFIST in its BonusObjs.
     pub mission_kills_done: u8,    // Cumulative this-mission kills (mission.KilledVek).
                                 // Combined with the simulated turn's kills to decide
-                                // whether a plan crosses the kill target threshold.
+                                // whether a plan crosses a target or exceeds a cap.
+    pub mission_mountain_target: u8, // Mission_Force "Destroy 2 mountains" target.
+    pub mission_mountains_destroyed: u8, // Cumulative EVENT_MOUNTAIN_DESTROYED count.
+    pub mission_mountain_tiles: u64, // bitset: current mountain tiles at solve input.
+    pub repair_platform_target: u8, // Mission_Repair objective target (normally 3).
+    pub repair_platforms_used: u8,  // Cumulative EVENT_REPAIR_PICKUP count.
     pub dam_alive: bool,        // True while at least one Dam_Pawn has hp > 0. Flips
                                 // false exactly once when the last tile is destroyed —
                                 // the transition triggers trigger_dam_flood().
@@ -394,11 +489,18 @@ pub struct Board {
     /// which fired on every Weather Watch kill regardless of whether the
     /// current mission's BonusObjs actually included BONUS_PROTECT_X.
     pub bonus_dont_kill_types: Vec<String>,
+    /// Unit-based mission objectives to destroy (e.g. Mission_Hacking's
+    /// Hacked_Building). Matched by type-name substring.
+    pub destroy_objective_unit_types: Vec<String>,
+    /// Unit-based mission objectives to protect even when they start on
+    /// enemy team before conversion (e.g. Mission_Hacking's Cannon Bot).
+    pub protect_objective_unit_types: Vec<String>,
     /// Queued Spider Psion egg spawns produced by `on_enemy_death` during
-    /// the current phase. Drained at the END of `simulate_enemy_attacks`
-    /// so eggs spawned mid-enemy-phase do NOT hatch in the same phase
-    /// (matches the game's `AddQueuedDamage`-driven hatch in
-    /// weapons_enemy.lua:857 — eggs hatch in the NEXT enemy phase).
+    /// the current phase. Player-phase kills drain immediately after the
+    /// action so replay snapshots and partial re-solves see the egg. Enemy-
+    /// phase kills drain at the END of `simulate_enemy_attacks` so eggs
+    /// spawned mid-enemy-phase do NOT hatch in the same phase (matching the
+    /// game's `AddQueuedDamage`-driven hatch in weapons_enemy.lua:857).
     /// Each entry = (x, y) of the Vek that just died. Cleared on Board
     /// construction; the queue is short-lived (always drained before the
     /// turn returns).
@@ -419,9 +521,14 @@ impl Default for Board {
             env_danger: 0,
             env_danger_kill: 0,
             env_danger_flying_immune: 0,
+            env_wind: 0,
+            env_wind_dir: -1,
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
+            freeze_building_tiles: 0,
+            freeze_building_target: 0,
+            deferred_bump_grid_debt: [0; 64],
             blast_psion: false,
             armor_psion: false,
             soldier_psion: false,
@@ -434,6 +541,7 @@ impl Default for Board {
             boss_alive: false,
             storm_generator: false,
             flame_shielding: false,
+            viscera_nanobots_heal: 0,
             vek_hormones: false,
             force_amp: false,
             medical_supplies: false,
@@ -443,12 +551,20 @@ impl Default for Board {
             infinite_spawn: false,
             mission_id: String::new(),
             mission_kill_target: 0,
+            mission_kill_limit: 0,
             mission_kills_done: 0,
+            mission_mountain_target: 0,
+            mission_mountains_destroyed: 0,
+            mission_mountain_tiles: 0,
+            repair_platform_target: 0,
+            repair_platforms_used: 0,
             dam_alive: false,
             dam_primary: None,
             bigbomb_alive: false,
             teleporter_pairs: Vec::new(),
             bonus_dont_kill_types: Vec::new(),
+            destroy_objective_unit_types: Vec::new(),
+            protect_objective_unit_types: Vec::new(),
             pending_spider_eggs: Vec::new(),
         }
     }
@@ -497,6 +613,61 @@ impl Board {
             }
         }
         None
+    }
+
+    /// Infer Spider/Web Egg grapples from adjacency.
+    ///
+    /// The live bridge can miss or misattribute `IsGrappled()` for WebbEgg1
+    /// holds. The engine rule is tile-based: a living WebbEgg1 webs every
+    /// living unit in the four cardinal adjacent tiles. Keep this helper
+    /// authoritative so bridge loading and simulated landings agree.
+    pub fn refresh_webb_egg_grapples(&mut self) {
+        let mut eggs: [(u8, u8, u16); 16] = [(0, 0, 0); 16];
+        let mut egg_count = 0usize;
+        for i in 0..self.unit_count as usize {
+            let u = &self.units[i];
+            if u.hp > 0 && u.type_name_str() == "WebbEgg1" && egg_count < eggs.len() {
+                eggs[egg_count] = (u.x, u.y, u.uid);
+                egg_count += 1;
+            }
+        }
+
+        for &(ex, ey, egg_uid) in eggs[..egg_count].iter() {
+            for &(dx, dy) in &DIRS {
+                let nx = ex as i8 + dx;
+                let ny = ey as i8 + dy;
+                if !in_bounds(nx, ny) { continue; }
+                if let Some(idx) = self.unit_at(nx as u8, ny as u8) {
+                    if self.existing_web_source_still_holds(idx) {
+                        continue;
+                    }
+                    self.units[idx].set_web(true);
+                    self.units[idx].web_source_uid = egg_uid;
+                }
+            }
+        }
+    }
+
+    fn existing_web_source_still_holds(&self, unit_idx: usize) -> bool {
+        let unit = &self.units[unit_idx];
+        if !unit.web() || unit.web_source_uid == 0 {
+            return false;
+        }
+
+        let source_idx = (0..self.unit_count as usize).find(|&i| {
+            let src = &self.units[i];
+            src.uid == unit.web_source_uid && src.hp > 0
+        });
+        let Some(source_idx) = source_idx else {
+            return false;
+        };
+        let source = &self.units[source_idx];
+        if source.type_name_str() == "WebbEgg1" {
+            return false;
+        }
+
+        source.queued_target_x == unit.x as i8
+            && source.queued_target_y == unit.y as i8
     }
 
     /// Teleporter partner: if (x, y) is a pad, return the coords of its
@@ -578,9 +749,7 @@ impl Board {
         let mut result = Vec::new();
         for i in 0..self.unit_count as usize {
             let u = &self.units[i];
-            if u.is_player() && u.alive() && u.active()
-                && (u.is_mech() || !u.weapon.is_none())
-            {
+            if u.is_player_action_unit() {
                 result.push(i);
             }
         }
@@ -607,6 +776,32 @@ impl Board {
         self.unit_count += 1;
         idx
     }
+
+    pub fn add_mission_kills(&mut self, kills: i32) {
+        if kills <= 0 {
+            return;
+        }
+        self.mission_kills_done = self
+            .mission_kills_done
+            .saturating_add(kills.min(u8::MAX as i32) as u8);
+    }
+
+    pub fn projected_mountains_destroyed(&self) -> u8 {
+        if self.mission_mountain_target == 0 {
+            return self.mission_mountains_destroyed;
+        }
+        let mut destroyed = self.mission_mountains_destroyed;
+        let mut bits = self.mission_mountain_tiles;
+        while bits != 0 {
+            let idx = bits.trailing_zeros() as usize;
+            bits &= bits - 1;
+            let tile = &self.tiles[idx];
+            if tile.terrain != Terrain::Mountain || tile.building_hp == 0 {
+                destroyed = destroyed.saturating_add(1);
+            }
+        }
+        destroyed
+    }
 }
 
 // ── Action Result ────────────────────────────────────────────────────────────
@@ -619,25 +814,51 @@ pub struct ActionResult {
     pub buildings_bump_damaged: i32,
     pub grid_damage: i32,
     pub enemies_killed: i32,
+    pub mission_kills: i32,
+    pub leech_credit_kills: i32,
+    pub leech_uncapped_kills: i32,
     pub enemy_damage_dealt: i32,
     pub mech_damage_taken: i32,
     pub mechs_killed: i32,
     pub pods_collected: i32,
+    pub repair_platforms_used: i32,
     pub spawns_blocked: i32,
     pub events: Vec<String>,
 }
 
 impl ActionResult {
+    pub fn record_enemy_kill(&mut self, mission_counted: bool) {
+        self.record_enemy_kill_with_leech_credit(mission_counted, false);
+    }
+
+    pub fn record_enemy_kill_with_leech_credit(
+        &mut self,
+        mission_counted: bool,
+        leech_credit: bool,
+    ) {
+        self.enemies_killed += 1;
+        if mission_counted {
+            self.mission_kills += 1;
+        }
+        if leech_credit {
+            self.leech_credit_kills += 1;
+        }
+    }
+
     pub fn merge(&mut self, other: &ActionResult) {
         self.buildings_lost += other.buildings_lost;
         self.buildings_damaged += other.buildings_damaged;
         self.buildings_bump_damaged += other.buildings_bump_damaged;
         self.grid_damage += other.grid_damage;
         self.enemies_killed += other.enemies_killed;
+        self.mission_kills += other.mission_kills;
+        self.leech_credit_kills += other.leech_credit_kills;
+        self.leech_uncapped_kills += other.leech_uncapped_kills;
         self.enemy_damage_dealt += other.enemy_damage_dealt;
         self.mech_damage_taken += other.mech_damage_taken;
         self.mechs_killed += other.mechs_killed;
         self.pods_collected += other.pods_collected;
+        self.repair_platforms_used += other.repair_platforms_used;
         self.spawns_blocked += other.spawns_blocked;
         self.events.extend_from_slice(&other.events);
     }
@@ -652,6 +873,12 @@ mod tests {
     #[test]
     fn test_tile_size() {
         assert!(std::mem::size_of::<Tile>() <= 6, "Tile too large: {} bytes", std::mem::size_of::<Tile>());
+    }
+
+    #[test]
+    fn test_tile_default_has_no_conveyor() {
+        assert_eq!(Tile::default().conveyor_dir, -1);
+        assert_eq!(Board::default().tile(0, 0).conveyor_dir, -1);
     }
 
     #[test]
@@ -695,6 +922,30 @@ mod tests {
 
         assert!(board.unit_at(3, 4).is_some());
         assert!(board.unit_at(0, 0).is_none());
+    }
+
+    #[test]
+    fn test_pinnacle_bots_do_not_receive_psion_auras() {
+        let mut bot = Unit {
+            uid: 1,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            ..Default::default()
+        };
+        bot.set_type_name("Snowtank1");
+
+        let mut vek = Unit {
+            uid: 2,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Enemy,
+            ..Default::default()
+        };
+        vek.set_type_name("Leaper1");
+
+        assert!(!bot.receives_psion_aura());
+        assert!(vek.receives_psion_aura());
     }
 
     #[test]

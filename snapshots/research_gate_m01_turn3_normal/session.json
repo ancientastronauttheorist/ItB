@@ -1,0 +1,553 @@
+{
+  "run_id": "20260504_210332_088",
+  "squad": "BalancedRoll",
+  "achievement_targets": [],
+  "difficulty": 1,
+  "current_island": "",
+  "current_mission": "Mission_Survive",
+  "islands_completed": [],
+  "mission_index": 1,
+  "last_mission_turn": 3,
+  "current_turn": 3,
+  "phase": "combat_player",
+  "active_solution": null,
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-04T21:13:06.693443",
+      "turn": 1,
+      "label": "solve",
+      "score": 102414.28571428571,
+      "actions": [
+        "WallMech, move D6\u2192E6, fire Grappling Hook at E2",
+        "ArtiMech, fire Artemis Artillery at C3",
+        "PulseMech, move C5\u2192D5, fire Repulse at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-04T21:18:27.973471",
+      "turn": 2,
+      "label": "solve",
+      "score": 92954.28571428564,
+      "actions": [
+        "WallMech, move E6\u2192F6, fire Grappling Hook at F3",
+        "ArtiMech, move C7\u2192C6, fire Artemis Artillery at C3",
+        "PulseMech, fire Repulse at D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-04T21:19:30.840013",
+      "turn": 3,
+      "label": "solve",
+      "score": 122484.28571428571,
+      "actions": [
+        "WallMech, move G7\u2192F6, fire Grappling Hook at F4",
+        "PulseMech, move E6\u2192B5, fire Repulse at B5",
+        "ArtiMech, move D5\u2192C6, fire Artemis Artillery at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-04T21:20:30.577485",
+      "turn": 4,
+      "label": "solve",
+      "score": 99689.28571428571,
+      "actions": [
+        "WallMech",
+        "ArtiMech, move C6\u2192A6, fire Artemis Artillery at A3",
+        "PulseMech, move B5\u2192E6, fire Repulse at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-04T21:58:29.547499",
+      "turn": 1,
+      "label": "solve",
+      "score": 157221.42857142858,
+      "actions": [
+        "ArtiMech, fire Artemis Artillery at F5",
+        "WallMech, move F5\u2192E3, fire Grappling Hook at C3",
+        "PulseMech, move E6\u2192D4, fire Repulse at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-04T21:59:44.371602",
+      "turn": 2,
+      "label": "solve",
+      "score": 154845.23809523828,
+      "actions": [
+        "ArtiMech, fire Artemis Artillery at D3",
+        "WallMech, move F3\u2192E2, fire Grappling Hook at E6",
+        "PulseMech, move D5\u2192F3, fire Repulse at F3"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      2
+    ]
+  ],
+  "tags": [
+    "normal_eval",
+    "solver_v2"
+  ],
+  "failure_events_this_run": [
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Grapple|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Brute_Grapple",
+        "target": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Science_Repulse|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Science_Repulse",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Brute_Grapple|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Brute_Grapple",
+        "target": [
+          5,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Ranged_Artillerymech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "death",
+      "categories": [
+        "death"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "death|Ranged_Artillerymech|attack",
+      "frequency": 1,
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Ranged_Artillerymech",
+        "target": [
+          5,
+          4
+        ]
+      }
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "Hacked_Building",
+      "terrain_id": null,
+      "kind": null,
+      "slot": null,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Hacking Facility",
+            "hp": 0,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.7
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Hacking Facility",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hacking+Facility",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hacking+Facility&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "f3df4d6e8665",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "WallMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Hook Mech",
+            "hp": 0,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.7
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": "Ralph Karlsson",
+            "weapon_slot_count": 1,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Hook Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hook+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hook+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "065dc171e853",
+      "last_kind": "mech"
+    },
+    {
+      "type": "ArtiMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Artillery Mech",
+            "hp": 0,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.7
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": null,
+            "weapon_slot_count": 1,
+            "confidence": 0.8
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Artillery Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Artillery+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Artillery+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "e34296da6281",
+      "last_kind": "mech"
+    },
+    {
+      "type": "PulseMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 0,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Pulse Mech",
+            "hp": 0,
+            "move": null,
+            "class_icons": [],
+            "confidence": 0.7
+          },
+          "unit_status": {
+            "kind": "mech",
+            "pilot_name": null,
+            "weapon_slot_count": 1,
+            "confidence": 0.8
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Pulse Mech",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Pulse+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Pulse+Mech&restrict_sr=1"
+          }
+        }
+      },
+      "research_id": "7f54ec781fb0",
+      "last_kind": "mech"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Gastropod",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [
+              "grappling_hook"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Gastropod",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Gastropod",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Gastropod&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "57dee72c2cde",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Snowtank1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Hacking",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Gastropod",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [
+              "grappling_hook"
+            ],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Gastropod",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Gastropod",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Gastropod&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high",
+      "research_id": "a88970dd4800",
+      "last_kind": "enemy"
+    },
+    {
+      "type": "Leaper1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Survive",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "pending",
+      "result": null,
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high"
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "87c3da3a06a1d6f8",
+    "classes": "lllllbbgllrbggfgllgggggglbggggfglbfggbblwgggglllfgggllllgggglwww",
+    "mission_index": 1,
+    "turn": 3
+  },
+  "terrain_stage_change_pending": false
+}

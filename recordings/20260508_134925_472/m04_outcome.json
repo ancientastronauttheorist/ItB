@@ -1,0 +1,7 @@
+{
+  "mission_index": 4,
+  "mission_name": "Mission_Cataclysm",
+  "result": "win",
+  "notes": "m04 R.S.T. Training / Mission_Cataclysm: secured with both objectives (less than 4 Mech Damage, Emergency Batteries protected), visible grid appears full at reward screen, civilians 500. Mid-mission Turn 3 Aerial Bombs click_miss exposed illegal chasm leap landing; fixed in simulator v70, rebuilt wheel, regression passed, then resumed and won.",
+  "recorded_at": "2026-05-08T15:30:44.433218"
+}

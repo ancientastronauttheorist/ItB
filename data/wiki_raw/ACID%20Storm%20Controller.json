@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "fandom",
+      "url": "https://intothebreach.fandom.com/wiki/Abilities_and_status_effects",
+      "excerpt": "The wiki notes ACID Storm Controller as an enemy unit with Smoke Immunity, including that it can still be damaged by electric smoke.",
+      "confidence": 0.75
+    },
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/vj1q8a",
+      "excerpt": "Community discussion of Advanced Edition mentions an acid storm controller building/objective from the trailer, corroborating this Detritus mission object naming.",
+      "confidence": 0.45
+    }
+  ]
+}

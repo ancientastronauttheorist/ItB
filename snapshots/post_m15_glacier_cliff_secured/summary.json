@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-06T18:32:28.620368",
+  "label": "post_m15_glacier_cliff_secured",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Blobber1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 1
+    }
+  ]
+}

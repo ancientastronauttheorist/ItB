@@ -5,7 +5,10 @@
     "advanced_edition": 15,
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
-    "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty."
+    "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
+    "last_steam_sync": "2026-05-24T21:08:19.254702",
+    "last_steam_total": 70,
+    "last_steam_unlocked": 43
   },
   "achievements": {
     "rift_walkers": [
@@ -24,7 +27,7 @@
         "description": "Kill an enemy 5+ tiles away with a Dash Punch with Rift Walkers squad",
         "type": "single_battle",
         "global_unlock_pct": 28.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Combat Mech's Titan Fist to Dash Punch (2 reactor cores). Position 5+ tiles from a low-HP enemy (Hornets at 2 HP ideal). Dash through open tiles to punch the target. Mountains/walls deal collision damage for the kill.",
         "setup": "Need Dash upgrade (2 cores). Target Hornets or damaged enemies.",
         "pitfalls": "Must be exactly 5+ tiles away. Obstacles in path block the dash."
@@ -46,7 +49,7 @@
         "description": "Overpower your Power Grid twice by earning or buying Power when full",
         "type": "single_run",
         "global_unlock_pct": 30.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Get Grid Power to max (7), then earn/buy 2 more power while already full. Prioritize grid power mission rewards and reputation purchases. Each overpower when full counts.",
         "setup": "Rusting Hulks, focus on building protection to keep grid full",
         "pitfalls": "Must earn power while ALREADY at max. Don't let buildings get damaged."
@@ -56,7 +59,7 @@
         "description": "Deal 12 damage with Electric Smoke in a single battle with Rusting Hulks",
         "type": "single_battle",
         "global_unlock_pct": 15.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Storm Generator deals 1 damage to each enemy in smoke at end of enemy turn. Need 12 total smoke-damage instances. Use Jet Mech and Rocket Mech to create lots of smoke. Keep enemies alive in smoke. Upgrade Storm Generator (3 cores). Later turns with more enemies are better.",
         "setup": "Upgrade Storm Generator. Missions with many enemies. Don't kill Vek \u2014 keep them in smoke.",
         "pitfalls": "Killing Vek removes them from smoke. Need to balance damage vs keeping enemies alive."
@@ -66,7 +69,7 @@
         "description": "Take no Mech or Building Damage in a single battle with the Rusting Hulks squad",
         "type": "single_battle",
         "global_unlock_pct": 36.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Play defensively. Use smoke to cancel attacks. Position mechs where they won't be hit. Shield mechs when possible. Web prevention essential \u2014 Camila Vera helps. Choose 1-objective missions (shields on buildings).",
         "setup": "Rusting Hulks, easy difficulty, 1-objective mission with shielded buildings",
         "pitfalls": "ANY mech or building damage fails it. Repaired damage is still damage. Self-damage counts. Watch for splash damage."
@@ -78,7 +81,7 @@
         "description": "Kill an enemy by pulling it into yourself with the Zenith Guard squad",
         "type": "single_battle",
         "global_unlock_pct": 33.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Defense Mech's Attraction Pulse to pull a 1-HP enemy into the mech. Collision kills the enemy. Leapers (1 HP) are ideal targets. Damaged Hornets also work.",
         "setup": "Find a Leaper or 1-HP enemy. Position Defense Mech in line.",
         "pitfalls": "Enemy must die from the collision. Pull damage alone might not be enough if enemy has more HP."
@@ -88,7 +91,7 @@
         "description": "Hit 4 enemies with a single laser with the Zenith Guard squad",
         "type": "single_battle",
         "global_unlock_pct": 14.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Get 4 enemies in a straight line and hit them all with Burst Beam. Use other mechs to push/pull enemies into alignment. Spider Leader missions are good \u2014 spiderlings provide extra targets. Late-game turns with many enemies work best.",
         "setup": "Need many enemies aligned. Use Charge Mech and Defense Mech to reposition Vek.",
         "pitfalls": "Burst Beam damage decreases with range (3-2-1-0). Further targets may take 0 damage but still 'hit'."
@@ -98,7 +101,7 @@
         "description": "Block damage with a Shield 4 times in a single battle with Zenith Guard",
         "type": "single_battle",
         "global_unlock_pct": 28.4,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Defense Mech's shield upgrade to repeatedly shield buildings/mechs that are about to be hit. Bethany Jones or Mafan (Zoltan) provides free shields each turn. 4 shield blocks in one battle.",
         "setup": "Shield upgrade on Defense Mech. Bethany pilot. Let enemies target shielded units.",
         "pitfalls": "Each shield blocks only once \u2014 need to re-apply. Need 4 separate instances."
@@ -110,7 +113,7 @@
         "description": "Have the Chain Whip attack chain through 10 tiles with Blitzkrieg squad",
         "type": "single_battle",
         "global_unlock_pct": 24.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Electric Whip chains through ALL connected adjacent units/objects. Spider eggs, boulders, your own mechs, AND Vek all count as chain links. Spider Leader mission ideal \u2014 spiderlings everywhere. Upgrade whip for range. Position your mechs in the chain.",
         "setup": "Upgrade Electric Whip. Spider Leader mission for many small targets. Position all units adjacently.",
         "pitfalls": "Chain damages everything including allies. Plan for friendly fire damage."
@@ -130,7 +133,7 @@
         "description": "Block 4 emerging Vek in a single turn with the Blitzkrieg squad",
         "type": "single_turn",
         "global_unlock_pct": 13.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Need 4 spawn points active simultaneously. Position 3 mechs on spawn points. Use Boulder Mech to place a boulder on the 4th. Zoltan/Bethany pilot helps survive. Later turns have more spawns. Neutral units (boulders, bomblings) can block spawns too.",
         "setup": "Late-game turn with 4+ spawns. Boulder Mech, plus positioning.",
         "pitfalls": "Rare to have 4 spawns in one turn. May need to let spawns accumulate."
@@ -174,17 +177,17 @@
         "description": "Teleport a unit 4 tiles away with the Flame Behemoths squad",
         "type": "single_battle",
         "global_unlock_pct": 16.6,
-        "completed": false,
-        "strategy": "Fully upgrade Swap Mech's Teleporter range (+1 range twice = base + 2). Need 3+ cores invested. Teleport a unit exactly 4+ tiles. Hunt time pods for reactor cores.",
-        "setup": "Fully upgraded Teleporter. +1 reactor pilot helps. Prioritize cores.",
-        "pitfalls": "Base range may not reach 4 tiles without upgrades. Need reactor cores."
+        "completed": true,
+        "strategy": "Fully upgrade Swap Mech's Teleporter to Science_Swap_AB (+1 Range, then +2 Range). Teleport a unit exactly 4 tiles along a cardinal line. Completed live on 2026-05-20 in run 20260520_134643_900 with TeleMech B5 -> F5.",
+        "setup": "Fully upgraded Teleporter. +1 reactor pilot helps. Prioritize cores and core-reward missions.",
+        "pitfalls": "Base range cannot reach 4 tiles. Upgraded Teleporter is cardinal-line only; diagonal or Manhattan-distance targets can ACK while doing nothing if the solver or bridge falls back to invalid/base behavior."
       },
       {
         "name": "Scorched Earth",
         "description": "End a battle with 12 tiles on Fire with the Flame Behemoths squad",
         "type": "single_battle",
         "global_unlock_pct": 20.4,
-        "completed": false,
+        "completed": true,
         "strategy": "Use Flamethrower (upgrade range) and Meteor Mech to set everything on fire. Bait enemy attacks on forests to create more fire. Upgrade Meteor Mech backburn. Focus on spreading fire, especially on last turn.",
         "setup": "Upgrade Flamethrower range. Forest-heavy maps. Archive island has forests.",
         "pitfalls": "Fire can be extinguished by smoke, water, ice. Maintain fire tiles until battle end."
@@ -194,7 +197,7 @@
         "description": "Have 5 enemies on Fire simultaneously with the Flame Behemoths squad",
         "type": "single_battle",
         "global_unlock_pct": 15.7,
-        "completed": false,
+        "completed": true,
         "strategy": "Blood Psion mission ideal \u2014 enemies regenerate, keeping them alive while burning. Upgrade Flamethrower range. Set all enemies on fire but don't kill them. Need 5 burning Vek at same time.",
         "setup": "Blood Psion mission. Upgraded Flamethrower. Late turn with many enemies.",
         "pitfalls": "Burning enemies take 1 damage/turn and may die. Blood Psion regeneration counteracts this."
@@ -206,7 +209,7 @@
         "description": "Shoot the Cryo-Launcher 4 times in a single battle with Frozen Titans",
         "type": "single_battle",
         "global_unlock_pct": 16.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Bethany Jones or Mafan (Zoltan) on Ice Mech prevents self-freeze, allowing repeated Cryo-Launcher use. Without them, must break free each turn (repair or get hit). 4 shots in one battle.",
         "setup": "Bethany Jones or Mafan pilot on Ice Mech. Shield prevents self-freeze.",
         "pitfalls": "Without shield pilot, self-freeze prevents consecutive shots. Must break free each turn."
@@ -226,7 +229,7 @@
         "description": "Kill less than 3 enemies in a single battle with Frozen Titans squad",
         "type": "single_battle",
         "global_unlock_pct": 16.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Focus on freezing, pushing, and blocking instead of killing. Use Cryo-Launcher to freeze threats. Push Vek away from buildings. Only kill when absolutely necessary. 0-2 kills allowed.",
         "setup": "Bethany/Mafan on Ice Mech. Easy difficulty. Defensive play.",
         "pitfalls": "Environmental kills count. Push kills (water/chasm) count. Be very careful."
@@ -238,7 +241,7 @@
         "description": "Heal 10 Mech Health in a single battle with the Hazardous Mechs squad",
         "type": "single_battle",
         "global_unlock_pct": 15.1,
-        "completed": false,
+        "completed": true,
         "strategy": "Upgrade Nano Mech's Viscera Nanobots (3 cores) for heal-on-kill. Leap Mech and Unstable Mech self-damage, then Nano Mech kills heal them. Technician perk also helps. Need 10 total healing across all mechs.",
         "setup": "Upgraded Viscera Nanobots. Self-damage + heal loop. Many enemies to kill.",
         "pitfalls": "Must actually take damage first to have HP to heal. Balance self-damage carefully."
@@ -258,7 +261,7 @@
         "description": "Deal 8 damage to a unit with a single attack with Hazardous Mechs squad",
         "type": "single_battle",
         "global_unlock_pct": 12.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Fully upgrade Unstable Mech's A.P. Cannon (up to 5 damage, 4 cores). Hit an A.C.I.D.-affected enemy (doubles damage to 10). Detritus island A.C.I.D. pools make this easy.",
         "setup": "Fully upgraded A.P. Cannon (4 cores). Detritus island for A.C.I.D. pools.",
         "pitfalls": "Need A.C.I.D. on target for doubling. Without A.C.I.D., max is 5 damage."
@@ -462,7 +465,7 @@
         "description": "Crack 10 tiles in one mission with the Cataclysm squad",
         "type": "single_battle",
         "global_unlock_pct": 7.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Drill Mech kills crack adjacent tiles. Triptych Mech creates pits. Upgrade Drill Mech damage (1 core) for more kills. Focus on 2-HP enemy kills. 10 cracked tiles total.",
         "setup": "Upgraded Drill Mech. Many enemies to kill. Late turns with spawns.",
         "pitfalls": "Cracks only happen on kills (Drill) or Triptych strikes. Need enough enemies."
@@ -504,7 +507,7 @@
         "description": "Beat the game on Hard (any length)",
         "type": "single_run",
         "global_unlock_pct": 9.0,
-        "completed": false,
+        "completed": true,
         "strategy": "Strong squad required. Ice Mech custom squad strategy is effective. 2-island run to minimize risk. Experienced time-travel pilot.",
         "setup": "Hard difficulty. Strong squad. 2-island run.",
         "pitfalls": "More Alphas, more enemies, less grid power. Significantly harder than Normal."
@@ -514,7 +517,7 @@
         "description": "Beat the game at least once per length (2, 3, & 4 Islands secured)",
         "type": "cumulative",
         "global_unlock_pct": 18.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Three separate runs at different island counts. 2-island is easiest. 4-island is longest and hardest.",
         "setup": "Three separate games: 2, 3, and 4 islands.",
         "pitfalls": "4-island run is very long and difficult. Save best squad/pilot for it."
@@ -524,7 +527,7 @@
         "description": "Beat the game with 4 different Squads (any length)",
         "type": "cumulative",
         "global_unlock_pct": 18.9,
-        "completed": false,
+        "completed": true,
         "strategy": "Win with 4 different squads across multiple runs. Start with easier squads. Cumulative \u2014 doesn't need to be same run.",
         "setup": "Multiple runs with different squads. Easy difficulty fine.",
         "pitfalls": "None \u2014 straightforward cumulative."
@@ -586,7 +589,7 @@
         "description": "Collect 10 Perfect Island rewards across all games",
         "type": "cumulative",
         "global_unlock_pct": 23.2,
-        "completed": false,
+        "completed": true,
         "strategy": "Complete islands without failing any objectives (including time pods). 1-objective missions are easier for perfect completion. 10 perfect islands total across all games.",
         "setup": "Easy difficulty. 1-objective missions. Protect all time pods.",
         "pitfalls": "Failed bonus objectives break the perfect island. Time pods must be protected too."
@@ -608,7 +611,7 @@
         "description": "Have 3 Pilots at maximum level simultaneously",
         "type": "single_run",
         "global_unlock_pct": 43.8,
-        "completed": false,
+        "completed": true,
         "strategy": "Start with a max-level time traveler. Put low-level pilots on strong mechs for kills. 4-island run gives most XP. Damage-focused squad.",
         "setup": "4-island run. Damage-focused squad. Time-travel pilot with XP.",
         "pitfalls": "Hard to level all 3 in one run. May need multiple time-travel iterations."
@@ -628,7 +631,7 @@
         "description": "Have an individual Pilot fight the final battle 3 times across games",
         "type": "cumulative",
         "global_unlock_pct": 20.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Same pilot must reach the final Volcanic Hive battle 3 times across different runs. Time travel the same pilot repeatedly. 2-island runs are fastest.",
         "setup": "Time travel same pilot between runs. 2-island runs. Must reach final battle each time.",
         "pitfalls": "Pilot must survive to the final battle each run. Don't lose them."
@@ -670,7 +673,7 @@
         "description": "Finish a Corporate Island without taking Mech Damage",
         "type": "single_island",
         "global_unlock_pct": 14.4,
-        "completed": false,
+        "completed": true,
         "strategy": "No mech damage across all missions on one island. Focus mobility upgrades. Shield mechs. Sacrifice grid power if needed to keep mechs safe. Avoid self-damaging weapons.",
         "setup": "Easy difficulty. Non-self-damaging squad. Shields.",
         "pitfalls": "Repaired damage is still damage. Self-damage counts. Environmental damage counts. Very careful play required."
@@ -680,7 +683,7 @@
         "description": "Earn or buy 10 Grid Power on a single Corporate Island",
         "type": "single_island",
         "global_unlock_pct": 20.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Prioritize grid power mission rewards. Use reputation to buy grid power. 10 power on one island (earned + bought combined).",
         "setup": "Island with grid power objectives. Spend reputation on power.",
         "pitfalls": "10 is a lot for one island. May not have enough opportunities."
@@ -690,7 +693,7 @@
         "description": "Earn 9 Reputation from missions on a single Corporate Island",
         "type": "single_island",
         "global_unlock_pct": 41.6,
-        "completed": false,
+        "completed": true,
         "strategy": "Select 2-star missions exclusively (more reputation per mission). Complete all bonus objectives. 9 total reputation from one island.",
         "setup": "2-star missions on one island. Complete all objectives.",
         "pitfalls": "2-star missions are harder. Must complete all objectives."
@@ -732,7 +735,7 @@
         "description": "Finish 3 Corporate Islands without failing an objective",
         "type": "single_run",
         "global_unlock_pct": 20.2,
-        "completed": false,
+        "completed": true,
         "strategy": "No failed objectives across 3 islands. Choose 1-objective missions when possible. Prioritize damage and efficiency. Isaac Jones pilot gives error margin (extra reset).",
         "setup": "3-island run. Easy difficulty. 1-objective missions. Isaac Jones pilot.",
         "pitfalls": "ANY failed objective on any mission fails the achievement. Very demanding."
@@ -742,7 +745,7 @@
         "description": "Finish 3 Corporate Islands without equipping any new Pilots or weapons",
         "type": "single_run",
         "global_unlock_pct": 9.7,
-        "completed": false,
+        "completed": true,
         "strategy": "Don't equip any new weapons or pilots found during the run. Donate all finds. Spend reputation only on reactor cores and grid power.",
         "setup": "3-island run. Strong starting squad. Easy difficulty.",
         "pitfalls": "Cannot use any found equipment. Must rely entirely on starting loadout."

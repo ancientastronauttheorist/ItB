@@ -20,9 +20,13 @@ Canonical stats sourced from the game's lua scripts under
   - `missions/bosses/spider.lua` (SpiderBoss)
   - `missions/bosses/goo.lua` (BlobBoss / BlobBossMed / BlobBossSmall)
   - `missions/bosses/psion.lua` (Jelly_Boss)
+  - `advanced/bosses/scarab.lua` (ScarabBoss)
   - `advanced/bosses/shaman.lua` (ShamanBoss)
 """
 from __future__ import annotations
+
+import json
+from pathlib import Path
 
 from src.model.pawn_stats import (
     ALL_PAWN_STATS,
@@ -110,6 +114,27 @@ def test_jelly_boss_has_canonical_stats() -> None:
     assert s.default_weapon == ""
 
 
+def test_scarab_boss_has_canonical_stats() -> None:
+    """ScarabBoss per `advanced/bosses/scarab.lua:11-24`:
+    Health=6, MoveSpeed=3, Massive, Ranged=1, SkillList={"ScarabAtkB"}.
+    """
+    s = get_pawn_stats("ScarabBoss")
+    assert s.move_speed == 3
+    assert s.massive is True
+    assert s.ranged == 1
+    assert s.default_weapon == "ScarabAtkB"
+
+
+def test_bigbomb_is_immobile_but_pushable() -> None:
+    """Renfield Bomb cannot move on its own, but live final-cave evidence
+    showed it can be pushed/bumped by player weapons such as Vulcan Artillery.
+    """
+    s = get_pawn_stats("BigBomb")
+    assert s.move_speed == 0
+    assert s.pushable is True
+    assert s.ignore_fire is True
+
+
 # ── Already-registered Mission_Final_Cave enemies (regression guards) ────
 
 
@@ -134,6 +159,14 @@ def test_crab1_crab2_already_registered() -> None:
     for c in (c1, c2):
         assert c.move_speed == 3
         assert c.ranged == 1
+
+
+def test_crab_boss_registered() -> None:
+    """CrabBoss / Crab Leader is massive, move 3, and uses ranged artillery."""
+    c = get_pawn_stats("CrabBoss")
+    assert c.move_speed == 3
+    assert c.ranged == 1
+    assert c.massive is True
 
 
 def test_blob1_blob2_already_registered() -> None:
@@ -164,13 +197,14 @@ def test_jelly_lava1_already_registered() -> None:
     MoveSpeed=2, Flying, Leader=LEADER_TENTACLE (passive: 1 dmg/turn
     to ALL player units — terrain-piercing, ignores smoke). The
     `tyrant_psion` Board flag is set by `serde_bridge.rs:634-640` and
-    the aura damage is applied by `enemy.rs:1031-1052`.
+    the aura damage is applied by `enemy.rs:1031-1052`. It inherits
+    default Pushable=true from `pawns.lua` / `global.lua`.
     """
     s = get_pawn_stats("Jelly_Lava1")
     assert s.move_speed == 2
     assert s.flying is True
     assert s.leader == "LEADER_TENTACLE"
-    assert s.pushable is False
+    assert s.pushable is True
 
 
 # ── Combined-table integrity guard ───────────────────────────────────────
@@ -189,7 +223,7 @@ def test_no_boss_falls_through_to_default_pawnstats() -> None:
     # reverse drift.
     rust_mapped_bosses = [
         "ScorpionBoss", "FireflyBoss", "BeetleBoss", "HornetBoss",
-        "SpiderBoss", "ShamanBoss",
+        "SpiderBoss", "ShamanBoss", "ScarabBoss",
         "BlobBoss", "BlobBossMed", "BlobBossSmall",
         "BurnbugBoss",
         "BotBoss", "BotBoss2",  # Pinnacle Bot Leader phase 1 / 2
@@ -201,6 +235,14 @@ def test_no_boss_falls_through_to_default_pawnstats() -> None:
         "(move_speed=3, ranged=0, not massive/flying), corrupting reach "
         "predictions and grid-defense heuristics."
     )
+
+
+def test_known_types_catalogs_blob_boss_split_family() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    with open(repo_root / "data" / "known_types.json") as f:
+        known = json.load(f)
+    observed = set(known.get("observed_pawn_types", []))
+    assert {"BlobBoss", "BlobBossMed", "BlobBossSmall"} <= observed
 
 
 def test_jelly_psion_family_complete() -> None:
@@ -220,5 +262,21 @@ def test_jelly_psion_family_complete() -> None:
     ]
     for j in expected:
         assert j in VEK_STATS, f"Missing {j} from VEK_STATS"
+
+
+def test_jelly_psion_family_pushable() -> None:
+    """Normal Psions inherit default Pushable=true in the shipped Lua.
+
+    Boss Psion is also pushable. Marking the small Psions non-pushable makes
+    Repulse/Rocket bump chains miss real building damage.
+    """
+    expected = [
+        "Jelly_Health1", "Jelly_Armor1", "Jelly_Regen1",
+        "Jelly_Explode1", "Jelly_Lava1",
+        "Jelly_Boost1", "Jelly_Fire1", "Jelly_Spider1",
+        "Jelly_Boss",
+    ]
+    for j in expected:
+        assert get_pawn_stats(j).pushable is True
         s = VEK_STATS[j]
         assert s.flying is True, f"{j} should be Flying per game lua"

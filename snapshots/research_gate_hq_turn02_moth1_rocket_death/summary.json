@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-08T15:38:58.127452",
+  "label": "research_gate_hq_turn02_moth1_rocket_death",
+  "turn": 2,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Moth1",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 1
+    }
+  ]
+}

@@ -13,7 +13,7 @@ Usage:
   python game_loop.py end_turn          # Plan clicks for End Turn button
   python game_loop.py status            # Quick state summary
 
-  python game_loop.py new_run <squad> [--achieve X Y]  # Start new run
+  python game_loop.py new_run [squad] [--achieve X Y]  # Start new run
   python game_loop.py snapshot <label>  # Save state for regression
   python game_loop.py log <message>     # Append to decision log
 
@@ -48,11 +48,17 @@ from src.loop.commands import (
     cmd_click_action,
     cmd_click_end_turn,
     cmd_click_balanced_roll,
+    cmd_deploy_recommended,
+    cmd_recommend_squad,
     cmd_recommend_mission,
+    cmd_verify_setup_screen,
     cmd_research_attach_community,
     cmd_research_next,
     cmd_research_probe_mech,
+    cmd_research_peek,
+    cmd_research_resolve,
     cmd_research_submit,
+    cmd_resolve_post_enemy_block,
     cmd_review_overrides,
     cmd_mine_overrides,
     cmd_end_turn,
@@ -95,6 +101,9 @@ def main():
                               "plan whose chain_score (turn-1 + best turn-2) "
                               "is highest. 1 = depth-1 beam (skip the "
                               "clean-plan filter). Does not affect auto_turn.")
+    p_solve.add_argument("--candidate-rank", type=int, default=None,
+                         help="Select an exact solve_top_k candidate rank "
+                              "after reviewing dirty frontier tradeoffs.")
 
     # execute
     p_exec = sub.add_parser("execute", help="Plan clicks for one mech action")
@@ -205,6 +214,29 @@ def main():
     )
     p_research_next.add_argument("--profile", default="Alpha")
 
+    # research_peek
+    p_research_peek = sub.add_parser(
+        "research_peek",
+        help="Read-only view of the current research queue head",
+    )
+    p_research_peek.add_argument("--limit", type=int, default=5)
+
+    # research_resolve
+    p_research_resolve = sub.add_parser(
+        "research_resolve",
+        help="Mark stale research queue entries for a known target as done",
+    )
+    p_research_resolve.add_argument("target",
+                                    help="Known type/terrain/weapon to resolve")
+    p_research_resolve.add_argument("--profile", default="Alpha")
+    p_research_resolve.add_argument("--kind", default=None,
+                                    help="Optional queue kind filter")
+    p_research_resolve.add_argument(
+        "--reason",
+        default="manual_resolved_known_type",
+        help="Reason stored on the queue entry result",
+    )
+
     # research_submit
     p_research_submit = sub.add_parser(
         "research_submit",
@@ -238,6 +270,17 @@ def main():
              "{url, excerpt, confidence} values. See community_fetch.normalize_notes.",
     )
     p_research_attach.add_argument("--profile", default="Alpha")
+
+    # resolve_post_enemy_block
+    p_resolve_post = sub.add_parser(
+        "resolve_post_enemy_block",
+        help="Clear an unresolved post-enemy investigation after review",
+    )
+    p_resolve_post.add_argument(
+        "--reason",
+        required=True,
+        help="What was investigated/fixed; stored in the decision log",
+    )
 
     # research_probe_mech
     p_research_probe_mech = sub.add_parser(
@@ -342,8 +385,36 @@ def main():
     # click_balanced_roll
     sub.add_parser(
         "click_balanced_roll",
-        help="Plan a click for the Balanced Roll button on squad-select",
+        help="Plan a click for Balanced Roll on squad-select",
     )
+
+    # recommend_squad
+    p_rec_squad = sub.add_parser(
+        "recommend_squad",
+        help="Recommend a squad/setup for achievement hunt vs solver eval",
+    )
+    p_rec_squad.add_argument(
+        "squad",
+        nargs="?",
+        default=None,
+        help="Optional explicit squad name, or 'auto' for strategy selection",
+    )
+    p_rec_squad.add_argument("--achieve", nargs="*", default=[],
+                             help="Achievement targets")
+    p_rec_squad.add_argument(
+        "--mode",
+        choices=["achievement_hunt", "solver_eval", "random_squad", "custom"],
+        default=None,
+        help="Run setup mode. Defaults from tags/targets.",
+    )
+    p_rec_squad.add_argument("--tags", nargs="*", default=[],
+                             help="Run classification tags")
+
+    p_deploy_recommended = sub.add_parser(
+        "deploy_recommended",
+        help="Deploy mechs to ranked deployment tiles via bridge",
+    )
+    p_deploy_recommended.add_argument("--profile", default="Alpha")
 
     # recommend_mission
     p_rec_mission = sub.add_parser(
@@ -359,6 +430,18 @@ def main():
              "isn't on the corp map screen, use this to score offline.",
     )
 
+    # verify_setup
+    p_verify_setup = sub.add_parser(
+        "verify_setup",
+        help="Verify new-run difficulty and Advanced Content toggles on screen",
+    )
+    p_verify_setup.add_argument("--difficulty", type=int, default=0)
+    p_verify_setup.add_argument(
+        "--allow-partial-advanced",
+        action="store_true",
+        help="Do not fail when some Advanced Content rows appear disabled",
+    )
+
     # end_turn
     sub.add_parser("end_turn", help="Plan clicks for End Turn")
 
@@ -368,10 +451,21 @@ def main():
 
     # new_run
     p_new = sub.add_parser("new_run", help="Initialize a new run session")
-    p_new.add_argument("squad", help="Squad name")
+    p_new.add_argument(
+        "squad",
+        nargs="?",
+        default=None,
+        help="Squad name, or omit/use 'auto' to pick for achievement hunting",
+    )
     p_new.add_argument("--achieve", nargs="*", default=[],
                        help="Achievement targets")
     p_new.add_argument("--difficulty", type=int, default=0)
+    p_new.add_argument(
+        "--mode",
+        choices=["achievement_hunt", "solver_eval", "random_squad", "custom"],
+        default=None,
+        help="Run setup mode. Use solver_eval to keep Balanced Roll.",
+    )
     p_new.add_argument("--tags", nargs="*", default=[],
                        help="Run classification tags (e.g. 'audit' to exclude "
                             "from tuner training corpus)")
@@ -389,7 +483,15 @@ def main():
     sub.add_parser("calibrate", help="Show detected window position and grid coordinates")
 
     # achievements
-    sub.add_parser("achievements", help="Query Steam for achievement progress")
+    p_achievements = sub.add_parser(
+        "achievements",
+        help="Query Steam for achievement progress",
+    )
+    p_achievements.add_argument(
+        "--sync",
+        action="store_true",
+        help="Update data/achievements_detailed.json from Steam results",
+    )
 
     # replay
     p_replay = sub.add_parser("replay",
@@ -414,6 +516,20 @@ def main():
     p_auto_turn.add_argument("--max-wait", type=float, default=45.0,
                              help="Seconds to poll enemy→player transition "
                                   "(default: 45 — covers Hard-difficulty enemy animations)")
+    p_auto_turn.add_argument("--allow-dirty-plan", action="store_true",
+                             help="Override Solver 2.0 safety block and execute "
+                                  "a plan that predicts grid/building loss")
+    p_auto_turn.add_argument("--candidate-rank", type=int, default=None,
+                             help="Execute an exact solve_top_k candidate rank "
+                                  "after explicit dirty-line consent")
+    p_auto_turn.add_argument("--dirty-consent-id", default=None,
+                             help="Exact one-use token emitted by a safety block")
+    p_auto_turn.add_argument("--allow-protected-objective-loss", action="store_true",
+                             help="Stress-test escape hatch: with exact dirty consent, "
+                                  "allow protected objective unit loss")
+    p_auto_turn.add_argument("--allow-objective-loss", action="store_true",
+                             help="Stress-test escape hatch: with exact dirty consent, "
+                                  "allow objective loss/failure kinds")
 
     # auto_mission
     p_auto_mission = sub.add_parser("auto_mission",
@@ -495,7 +611,7 @@ def main():
         cmd_read(profile=args.profile)
     elif args.command == "solve":
         cmd_solve(profile=args.profile, time_limit=args.time_limit,
-                  beam=args.beam)
+                  beam=args.beam, candidate_rank=args.candidate_rank)
     elif args.command == "execute":
         cmd_execute(args.index, profile=args.profile)
     elif args.command == "verify":
@@ -523,13 +639,34 @@ def main():
         cmd_click_end_turn()
     elif args.command == "click_balanced_roll":
         cmd_click_balanced_roll()
+    elif args.command == "deploy_recommended":
+        cmd_deploy_recommended(profile=args.profile)
+    elif args.command == "recommend_squad":
+        cmd_recommend_squad(
+            args.squad,
+            args.achieve,
+            tags=args.tags,
+            mode=args.mode,
+        )
     elif args.command == "recommend_mission":
         cmd_recommend_mission(
             profile=args.profile,
             island_map_json=args.island_map_json,
         )
+    elif args.command == "verify_setup":
+        cmd_verify_setup_screen(
+            expected_difficulty=args.difficulty,
+            require_all_advanced=not args.allow_partial_advanced,
+        )
     elif args.command == "research_next":
         cmd_research_next(profile=args.profile)
+    elif args.command == "research_peek":
+        cmd_research_peek(limit=args.limit)
+    elif args.command == "research_resolve":
+        cmd_research_resolve(
+            args.target, kind=args.kind, reason=args.reason,
+            profile=args.profile,
+        )
     elif args.command == "research_submit":
         cmd_research_submit(args.research_id, args.vision_json,
                             profile=args.profile,
@@ -540,6 +677,8 @@ def main():
         cmd_research_attach_community(
             args.research_id, args.notes_json, profile=args.profile,
         )
+    elif args.command == "resolve_post_enemy_block":
+        cmd_resolve_post_enemy_block(args.reason)
     elif args.command == "review_overrides":
         cmd_review_overrides(args.sub_action, args.index, force=args.force)
     elif args.command == "mine_overrides":
@@ -556,7 +695,13 @@ def main():
     elif args.command == "status":
         cmd_status(profile=args.profile)
     elif args.command == "new_run":
-        cmd_new_run(args.squad, args.achieve, args.difficulty, tags=args.tags)
+        cmd_new_run(
+            args.squad,
+            args.achieve,
+            args.difficulty,
+            tags=args.tags,
+            mode=args.mode,
+        )
     elif args.command == "snapshot":
         cmd_snapshot(args.label, profile=args.profile)
     elif args.command == "log":
@@ -564,13 +709,18 @@ def main():
     elif args.command == "calibrate":
         cmd_calibrate()
     elif args.command == "achievements":
-        cmd_achievements()
+        cmd_achievements(sync_local=args.sync)
     elif args.command == "replay":
         cmd_replay(args.run_id, args.turn, args.time_limit, mission=args.mission,
                    use_rust=not args.no_rust)
     elif args.command == "auto_turn":
         cmd_auto_turn(profile=args.profile, time_limit=args.time_limit,
-                      wait_for_turn=not args.no_wait, max_wait=args.max_wait)
+                      wait_for_turn=not args.no_wait, max_wait=args.max_wait,
+                      allow_dirty_plan=args.allow_dirty_plan,
+                      candidate_rank=args.candidate_rank,
+                      dirty_consent_id=args.dirty_consent_id,
+                      allow_protected_objective_loss=args.allow_protected_objective_loss,
+                      allow_objective_loss=args.allow_objective_loss)
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)

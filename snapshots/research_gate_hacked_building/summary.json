@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-04T21:09:21.105999",
+  "label": "research_gate_hacked_building",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "WallMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hacked_Building",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowtank1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Moth2",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    }
+  ]
+}

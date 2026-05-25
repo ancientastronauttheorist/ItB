@@ -9,6 +9,7 @@ import json
 import os
 import re
 
+from src.capture.save_parser import SAVE_DIR, Point, parse_save_file
 from src.model.board import Board
 from src.bridge.protocol import read_state
 
@@ -62,13 +63,98 @@ def _is_infinite_spawn_mission(mission_id: str) -> bool:
     return False
 
 
+def _satellite_launch_danger_tiles(data: dict) -> set[tuple[int, int]]:
+    """Return Mission_Satellite launch blast tiles.
+
+    Launch blasts resolve before Vek attacks, but they spare flying pawns.
+    Older/current Lua bridge builds expose their adjacent death tiles with
+    ``flying_immune=0``. Normalize that bit before solver/audit use.
+    """
+    if data.get("mission_id") != "Mission_Satellite":
+        return set()
+
+    tiles: set[tuple[int, int]] = set()
+    for unit in data.get("units", []) or []:
+        if not isinstance(unit, dict):
+            continue
+        if "Satellite" not in str(unit.get("type", "")):
+            continue
+        if unit.get("hp", 0) <= 0 or not unit.get("queued_launch"):
+            continue
+        x, y = unit.get("x"), unit.get("y")
+        if not isinstance(x, int) or not isinstance(y, int):
+            continue
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if 0 <= nx < 8 and 0 <= ny < 8:
+                tiles.add((nx, ny))
+    return tiles
+
+
+def _mark_satellite_launch_danger_flying_immune(data: dict) -> None:
+    """Mark satellite launch danger as lethal terrain that spares flyers."""
+    launch_tiles = _satellite_launch_danger_tiles(data)
+    if not launch_tiles:
+        return
+
+    danger = [
+        list(entry) if isinstance(entry, tuple) else entry
+        for entry in (data.get("environment_danger", []) or [])
+    ]
+    danger_v2 = [
+        list(entry) if isinstance(entry, tuple) else entry
+        for entry in (data.get("environment_danger_v2", []) or [])
+    ]
+    seen_v1 = {
+        (entry[0], entry[1])
+        for entry in danger
+        if isinstance(entry, list) and len(entry) >= 2
+    }
+    seen_v2: set[tuple[int, int]] = set()
+
+    for entry in danger_v2:
+        if not isinstance(entry, list) or len(entry) < 2:
+            continue
+        pos = (entry[0], entry[1])
+        seen_v2.add(pos)
+        if pos not in launch_tiles:
+            continue
+        while len(entry) < 5:
+            entry.append(0)
+        entry[2] = entry[2] if entry[2] else 1
+        entry[3] = 1
+        entry[4] = 1
+
+    for x, y in sorted(launch_tiles):
+        if (x, y) not in seen_v1:
+            danger.append([x, y])
+        if (x, y) not in seen_v2:
+            danger_v2.append([x, y, 1, 1, 1])
+
+    data["environment_danger"] = danger
+    data["environment_danger_v2"] = danger_v2
+
+
+def _parse_conveyor_belts_from_save_text(content: str) -> dict[tuple[int, int], int]:
+    """Parse conveyor sprites without crossing serialized tile entries."""
+    belts = {}
+    loc_re = re.compile(r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)')
+    custom_re = re.compile(r'\["custom"\]\s*=\s*"conveyor(\d+)\.png"')
+    for line in content.splitlines():
+        loc = loc_re.search(line)
+        custom = custom_re.search(line)
+        if not loc or not custom:
+            continue
+        x, y, d = int(loc.group(1)), int(loc.group(2)), int(custom.group(1))
+        belts[(x, y)] = d
+    return belts
+
+
 def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
     """Read conveyor belt data directly from the save file.
 
     Returns {(x, y): direction} where direction is 0-3.
     Direction: 0=right(+x), 1=down(+y), 2=left(-x), 3=up(-y).
     """
-    belts = {}
     save_path = os.path.expanduser(
         "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
     )
@@ -76,17 +162,146 @@ def _read_conveyor_belts_from_save() -> dict[tuple[int, int], int]:
         with open(save_path) as f:
             content = f.read()
     except OSError:
-        return belts
+        return {}
+    return _parse_conveyor_belts_from_save_text(content)
 
-    # Match: ["loc"] = Point( x, y ), ... ["custom"] = "conveyorN.png"
-    pattern = re.compile(
-        r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)'
-        r'.*?\["custom"\]\s*=\s*"conveyor(\d+)\.png"'
-    )
-    for m in pattern.finditer(content):
-        x, y, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
-        belts[(x, y)] = d
-    return belts
+
+def _read_active_save_mission() -> dict | None:
+    """Return the active mission record from saveData.lua, if resolvable.
+
+    The Lua bridge emits the full island map only between missions. During
+    combat, RegionData tells us which GAME.Missions slot is currently being
+    fought. SaveData does not update every sub-action, so callers should only
+    use static mission metadata or fields where save staleness is acceptable.
+    """
+    save_path = SAVE_DIR / "profile_Alpha" / "saveData.lua"
+    if not save_path.exists():
+        return None
+    try:
+        data = parse_save_file(save_path)
+    except Exception:
+        return None
+
+    region_data = data.get("RegionData", {})
+    if not isinstance(region_data, dict):
+        return None
+    battle_region = region_data.get("iBattleRegion", -1)
+    if not isinstance(battle_region, int) or battle_region < 0:
+        return None
+    region = region_data.get(f"region{battle_region}", {})
+    if not isinstance(region, dict):
+        return None
+    mission_slot = region.get("mission", "")
+    if not isinstance(mission_slot, str):
+        return None
+    match = re.fullmatch(r"Mission(\d+)", mission_slot)
+    if not match:
+        return None
+
+    missions = data.get("GAME", {}).get("Missions", {})
+    if not isinstance(missions, dict):
+        return None
+    mission = missions.get(int(match.group(1)), {})
+    return mission if isinstance(mission, dict) else None
+
+
+def _read_active_bonus_objective_ids_from_save() -> list[int]:
+    """Return active mission BonusObjs from saveData.lua."""
+    mission = _read_active_save_mission()
+    if not isinstance(mission, dict):
+        return []
+    bonus_objs = mission.get("BonusObjs", {})
+    out: list[int] = []
+    if isinstance(bonus_objs, dict):
+        items = sorted(
+            (int(k), v) for k, v in bonus_objs.items()
+            if isinstance(k, int) or (isinstance(k, str) and k.isdigit())
+        )
+        values = [v for _k, v in items]
+    elif isinstance(bonus_objs, list):
+        values = bonus_objs
+    else:
+        values = []
+    for value in values:
+        if isinstance(value, int):
+            out.append(value)
+    return out
+
+
+def _read_mission_force_progress_from_save() -> dict:
+    """Return Mission_Force mountain-objective progress from saveData.
+
+    Mission_Force stores its visible "Destroy 2 mountains" counter as
+    ``mission.Mountains`` and the target as ``mission.MountainsGoal``.
+    The bridge may not expose these fields until the game is restarted with a
+    newer modloader, so the reader supplements them from saveData at player
+    turn boundaries. The live bridge tiles remain authoritative for current
+    mountain HP and for same-turn projections.
+    """
+    mission = _read_active_save_mission()
+    if not isinstance(mission, dict):
+        return {}
+    mission_id = mission.get("ID") or mission.get("Class")
+    if mission_id != "Mission_Force":
+        return {}
+    out: dict = {}
+    target = mission.get("MountainsGoal")
+    if isinstance(target, int) and target > 0:
+        out["mission_mountain_target"] = target
+    destroyed = mission.get("Mountains")
+    if isinstance(destroyed, int) and destroyed >= 0:
+        out["mission_mountains_destroyed"] = destroyed
+    return out
+
+
+def _read_mission_wind_dir_from_save() -> int | None:
+    """Return Mission_Wind's live WindDir from saveData, if available."""
+    mission = _read_active_save_mission()
+    if not isinstance(mission, dict):
+        return None
+    mission_id = mission.get("ID") or mission.get("Class")
+    if mission_id != "Mission_Wind":
+        return None
+    live_env = mission.get("LiveEnvironment")
+    if not isinstance(live_env, dict):
+        return None
+    wind_dir = live_env.get("WindDir")
+    if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
+        return wind_dir
+    return None
+
+
+def _read_freeze_building_objective_tiles_from_save() -> set[tuple[int, int]]:
+    """Read Mission_FreezeBldg's static frozen-building objective tiles.
+
+    Live bridge tile.frozen flags tell us which buildings remain frozen after
+    each action. SaveData supplies the mission's original Buildings list, which
+    is stable enough to use mid-turn and avoids requiring a modloader restart.
+    """
+    mission = _read_active_save_mission()
+    if not isinstance(mission, dict):
+        return set()
+    mission_id = mission.get("ID") or mission.get("Class")
+    if mission_id != "Mission_FreezeBldg":
+        return set()
+    buildings = mission.get("Buildings", {})
+    out: set[tuple[int, int]] = set()
+    if isinstance(buildings, dict):
+        values = buildings.values()
+    elif isinstance(buildings, (list, tuple)):
+        values = buildings
+    else:
+        return out
+    for point in values:
+        if isinstance(point, Point):
+            x, y = point.x, point.y
+        elif isinstance(point, (list, tuple)) and len(point) >= 2:
+            x, y = point[0], point[1]
+        else:
+            continue
+        if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+            out.add((x, y))
+    return out
 
 
 def _read_freeze_mines_from_save() -> set[tuple[int, int]]:
@@ -143,6 +358,311 @@ def _read_old_earth_mines_from_save() -> set[tuple[int, int]]:
     return mines
 
 
+def _read_repair_pickups_from_save() -> int | None:
+    """Read Mission_Repair progress when the running modloader is older.
+
+    Lua bridge v48 emits this directly from mission.RepairPickups. This
+    fallback is intentionally conservative: if multiple completed missions
+    in the save contain RepairPickups, return None instead of guessing which
+    one is live.
+    """
+    save_path = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha/saveData.lua"
+    )
+    try:
+        with open(save_path) as f:
+            content = f.read()
+    except OSError:
+        return None
+
+    matches = re.findall(r'\["RepairPickups"\]\s*=\s*(\d+)', content)
+    if len(matches) != 1:
+        return None
+    return int(matches[0])
+
+
+def _parse_mech_stat_overlays_from_save_text(content: str) -> dict[int, dict]:
+    """Return save-backed mech stat records keyed by pawn uid.
+
+    The live Lua bridge can report a pawn definition's base max HP while the
+    save file already has the effective in-mission max_health from pilot perks
+    and powered +Health upgrades. Parse only narrow scalar fields here; never
+    use save health for live HP because it can lag after bridge actions.
+    """
+    records: dict[int, dict] = {}
+    pawn_re = re.compile(
+        r'\["pawn\d+"\]\s*=\s*\{(?P<body>.*?)(?=\n\n\["pawn\d+"\]|\n\n\["blocked"|\n\n\["spawn|\n\n\["zones"|\n\n\["tags"|$)',
+        re.S,
+    )
+    for match in pawn_re.finditer(content):
+        body = match.group("body")
+        if '["mech"] = true' not in body:
+            continue
+
+        uid_m = re.search(r'\["id"\]\s*=\s*(-?\d+)', body)
+        if not uid_m:
+            continue
+        uid = int(uid_m.group(1))
+        rec: dict = {}
+
+        type_m = re.search(r'\["type"\]\s*=\s*"([^"]*)"', body)
+        if type_m:
+            rec["type"] = type_m.group(1)
+
+        max_hp_m = re.search(r'\["max_health"\]\s*=\s*(-?\d+)', body)
+        if max_hp_m:
+            rec["max_hp"] = int(max_hp_m.group(1))
+
+        infected_m = re.search(r'\["bInfected"\]\s*=\s*(true|false)', body)
+        if infected_m:
+            rec["infected"] = infected_m.group(1) == "true"
+
+        health_power_m = re.search(r'\["healthPower"\]\s*=\s*\{\s*(-?\d+)', body)
+        if health_power_m:
+            rec["health_power"] = int(health_power_m.group(1))
+
+        pilot_m = re.search(r'\["pilot"\]\s*=\s*\{(?P<pilot>.*?)\},', body, re.S)
+        if pilot_m:
+            pilot = pilot_m.group("pilot")
+            for save_key, out_key in (
+                ("id", "pilot_id"),
+                ("name", "pilot_name"),
+                ("name_id", "pilot_name_id"),
+            ):
+                val_m = re.search(
+                    rf'\["{save_key}"\]\s*=\s*"([^"]*)"', pilot,
+                )
+                if val_m:
+                    rec[out_key] = val_m.group(1)
+            for save_key, out_key in (
+                ("skill1", "pilot_skill1"),
+                ("skill2", "pilot_skill2"),
+                ("level", "pilot_level"),
+            ):
+                val_m = re.search(rf'\["{save_key}"\]\s*=\s*(-?\d+)', pilot)
+                if val_m:
+                    rec[out_key] = int(val_m.group(1))
+
+        records[uid] = rec
+    return records
+
+
+def _read_mech_stat_overlays_from_save() -> dict[int, dict]:
+    profile_dir = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
+    )
+    for filename in ("saveData.lua", "undoSave.lua"):
+        try:
+            with open(os.path.join(profile_dir, filename)) as f:
+                content = f.read()
+        except OSError:
+            continue
+        records = _parse_mech_stat_overlays_from_save_text(content)
+        if records:
+            return records
+    return {}
+
+
+def _visual_coord(x: int, y: int) -> str:
+    if 0 <= x < 8 and 0 <= y < 8:
+        return f"{chr(ord('H') - y)}{8 - x}"
+    return "??"
+
+
+def _unit_visual_coord(unit: dict) -> str:
+    try:
+        return _visual_coord(int(unit.get("x", -1)), int(unit.get("y", -1)))
+    except (TypeError, ValueError):
+        return "??"
+
+
+def _apply_save_mech_stat_overlays(data: dict) -> list[dict]:
+    """Patch bridge mech max_hp with saveData effective max_health.
+
+    This is intentionally Python-side so it helps immediately without a game
+    restart. It also records calibration requests for pilot screenshots when a
+    bridge/base stat disagrees with save-backed effective stats.
+    """
+    if not isinstance(data, dict):
+        return []
+    overlays = _read_mech_stat_overlays_from_save()
+    if not overlays:
+        return []
+
+    updates: list[dict] = []
+    calibration: list[dict] = []
+    for unit in data.get("units", []) or []:
+        if not isinstance(unit, dict) or not unit.get("mech"):
+            continue
+        try:
+            uid = int(unit.get("uid", -1))
+        except (TypeError, ValueError):
+            continue
+        rec = overlays.get(uid)
+        if not rec:
+            continue
+        rec_type = rec.get("type")
+        if rec_type and unit.get("type") and rec_type != unit.get("type"):
+            continue
+
+        for key in ("pilot_id", "pilot_name", "pilot_name_id", "pilot_level"):
+            if rec.get(key) not in (None, ""):
+                unit.setdefault(key, rec[key])
+        if "infected" in rec:
+            unit["infected"] = rec["infected"]
+
+        raw_skills = list(unit.get("pilot_skills", []) or [])
+        for save_key, label in (
+            ("pilot_skill1", "skill1"),
+            ("pilot_skill2", "skill2"),
+        ):
+            val = rec.get(save_key)
+            if isinstance(val, int) and val != 0:
+                token = f"{label}={val}"
+                if token not in raw_skills:
+                    raw_skills.append(token)
+        if raw_skills:
+            unit["pilot_skills"] = raw_skills
+
+        save_max = rec.get("max_hp")
+        if not isinstance(save_max, int) or save_max <= 0:
+            continue
+        old_max = unit.get("max_hp")
+        if old_max == save_max:
+            continue
+        unit["bridge_reported_max_hp"] = old_max
+        unit["max_hp"] = save_max
+        update = {
+            "uid": uid,
+            "type": unit.get("type", ""),
+            "pos": _unit_visual_coord(unit),
+            "bridge_max_hp": old_max,
+            "save_max_hp": save_max,
+            "pilot_id": unit.get("pilot_id", ""),
+            "pilot_name": unit.get("pilot_name", ""),
+            "pilot_skills": list(unit.get("pilot_skills", []) or []),
+            "health_power": rec.get("health_power"),
+        }
+        updates.append(update)
+        calibration.append({
+            **update,
+            "reason": "bridge max_hp differed from saveData max_health",
+            "capture_hint": "hover/select the visible pilot panel when tactically safe",
+        })
+
+    if updates:
+        data["mech_stat_overlays"] = updates
+    if calibration:
+        data["pilot_calibration_requests"] = calibration
+    return updates
+
+
+def _active_region_keys(data: dict) -> list[str]:
+    """Return save-region keys that look like the currently live mission."""
+    seeds = data.get("mission_seeds") or {}
+    if not isinstance(seeds, dict):
+        return []
+    current_turn = data.get("turn")
+    exact: list[str] = []
+    active: list[str] = []
+    for key, info in seeds.items():
+        if not isinstance(info, dict):
+            continue
+        if info.get("state") != 0:
+            continue
+        active.append(key)
+        if current_turn is None or info.get("turn") == current_turn:
+            exact.append(key)
+    return exact or active
+
+
+def _region_blocks(content: str) -> dict[str, str]:
+    """Slice saveData.lua into RegionData.regionN blocks."""
+    matches = list(re.finditer(r'\["(region\d+)"\]\s*=\s*\{', content))
+    blocks: dict[str, str] = {}
+    for i, match in enumerate(matches):
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(content)
+        blocks[match.group(1)] = content[match.start():end]
+    return blocks
+
+
+def _grass_tiles_from_region_blocks(
+    blocks: dict[str, str],
+    region_keys: set[str],
+) -> set[tuple[int, int]]:
+    tiles: set[tuple[int, int]] = set()
+    for key in region_keys:
+        block = blocks.get(key, "")
+        for line in block.splitlines():
+            loc = re.search(
+                r'\["loc"\]\s*=\s*Point\(\s*(\d+)\s*,\s*(\d+)\s*\)',
+                line,
+            )
+            custom = re.search(r'\["custom"\]\s*=\s*"([^"]+)"', line)
+            if not loc or not custom:
+                continue
+            if custom.group(1) == "ground_grass.png":
+                tiles.add((int(loc.group(1)), int(loc.group(2))))
+    return tiles
+
+
+def _read_terraform_grass_tiles_from_save(data: dict) -> set[tuple[int, int]]:
+    """Read active Mission_Terraform custom grassland tiles from saveData.lua.
+
+    The engine stores grassland as ordinary terrain plus the custom sprite
+    ``ground_grass.png``. The bridge terrain id alone reports this as generic
+    ground/water/sand, so we supplement the live payload from the active save
+    region only.
+    """
+    if data.get("mission_id") != "Mission_Terraform":
+        return set()
+    region_keys = set(_active_region_keys(data))
+    if not region_keys:
+        return set()
+
+    base = os.path.expanduser(
+        "~/Library/Application Support/IntoTheBreach/profile_Alpha"
+    )
+    for filename in ("saveData.lua", "undoSave.lua"):
+        try:
+            with open(os.path.join(base, filename)) as f:
+                content = f.read()
+        except OSError:
+            continue
+        blocks = _region_blocks(content)
+        tiles = _grass_tiles_from_region_blocks(blocks, region_keys)
+        if tiles:
+            return tiles
+    return set()
+
+
+def _safe_to_overlay_save_grass(data: dict) -> bool:
+    """Only use save grass at a fresh player-turn boundary.
+
+    saveData.lua does not update after every bridge action. If we overlaid
+    save-derived grass mid-turn, a partial re-solve after the Terraformer fired
+    could see already-cleared grass as still present.
+    """
+    if data.get("phase") != "combat_player":
+        return False
+    actors = [
+        u for u in data.get("units", []) or []
+        if u.get("team") == 1
+        and int(u.get("hp", 0) or 0) > 0
+        and u.get("weapons")
+    ]
+    if not actors:
+        return False
+    active_count = data.get("active_mechs")
+    if active_count is not None:
+        try:
+            if int(active_count) != len(actors):
+                return False
+        except (TypeError, ValueError):
+            return False
+    return all(bool(u.get("active", False)) for u in actors)
+
+
 def _read_teleporter_pads_from_save() -> list[tuple[int, int, int, int]]:
     """Recover Mission_Teleporter pad pairs from the save file.
 
@@ -196,9 +716,9 @@ def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
     piQueuedShot is stored relative to piOrigin (the attacker's position
     when the attack was queued), not the attacker's current position. If
     the attacker moved between queueing and firing, the bridge's raw
-    queued_target (= piQueuedShot) gives a bogus non-cardinal vector from
-    the current position. Pair it with piOrigin to recover the true
-    cardinal direction: direction = piQueuedShot - piOrigin.
+    queued_target (= piQueuedShot) gives a stale absolute tile. Pair it
+    with piOrigin to recover the attack offset: offset = piQueuedShot -
+    piOrigin.
 
     Returns {uid: (piOrigin_x, piOrigin_y)}.
     """
@@ -235,46 +755,51 @@ def _read_queued_origins_from_save() -> dict[int, tuple[int, int]]:
 def _normalize_queued_targets(bridge_units: list) -> None:
     """Rewrite ``queued_target`` on each unit so the solver invariant holds.
 
-    Invariant: ``queued_target - current_position`` yields a unit cardinal
-    vector. The raw bridge value is piQueuedShot, which is relative to
-    piOrigin (attacker's position when queued), not current position. If
-    the attacker moved between queueing and firing, the delta becomes
-    non-cardinal (e.g. Centipede at E8 with piQueuedShot C7 after moving
-    from D7: raw delta (+1, +2)).
+    Invariant: ``queued_target`` is the tile the attack will hit from the
+    unit's current position. The raw bridge value can be piQueuedShot,
+    which is relative to piOrigin (attacker's position when queued), not
+    current position. If the attacker moved between queueing and firing,
+    the target shifts by the same displacement.
 
     For each unit with a queued_target: look up piOrigin from the save
-    file, compute direction = piQueuedShot - piOrigin, then rewrite
-    queued_target = current_position + direction. Mutates bridge_units
+    file, compute offset = piQueuedShot - piOrigin, then rewrite
+    queued_target = current_position + offset. Mutates bridge_units
     in place.
     """
-    origins = _read_queued_origins_from_save()
-    if not origins:
-        return
+    origins: dict[int, tuple[int, int]] | None = None
     for u in bridge_units:
+        if u.get("queued_target_normalized"):
+            continue
         qt = u.get("queued_target")
         if not qt or len(qt) != 2:
             continue
         qx, qy = qt[0], qt[1]
         if qx < 0 or qy < 0:
             continue
-        uid = u.get("uid")
-        origin = origins.get(uid)
+        origin_payload = u.get("queued_origin")
+        origin = None
+        if origin_payload and len(origin_payload) == 2:
+            origin = (origin_payload[0], origin_payload[1])
+        else:
+            if origins is None:
+                origins = _read_queued_origins_from_save()
+            uid = u.get("uid")
+            origin = origins.get(uid)
         if origin is None:
             continue
         ox, oy = origin
-        # Direction from piOrigin to piQueuedShot. Expected to be a unit
-        # cardinal vector; if not, leave alone (modloader bug to fix).
+        # Offset from piOrigin to piQueuedShot. It may be a full same-axis
+        # distance for artillery/projectiles; only diagonal offsets are not
+        # valid queued line attacks here.
         ddx = qx - ox
         ddy = qy - oy
         if ddx != 0 and ddy != 0:
             continue  # shouldn't happen per game rules
-        if ddx == 0 and ddy == 0:
-            continue  # self-target (e.g. WebbEgg hatch); leave as is
         cx, cy = u.get("x", -1), u.get("y", -1)
         if cx < 0 or cy < 0:
             continue
-        # Normalize to one-step-in-direction so the solver's standard
-        # direction computation (queued_target - current_pos) works.
+        # Normalize to the current target tile so solver/replay offset
+        # computations match the live board.
         nx, ny = cx + ddx, cy + ddy
         # Guard against off-board normalized targets (M04 OOB bug 2026-04-28:
         # Vek at cx=7,ddx=+1 produced queued_target.x=8 → Rust tile_mut OOB
@@ -283,6 +808,94 @@ def _normalize_queued_targets(bridge_units: list) -> None:
             u["queued_target"] = [nx, ny]
         else:
             u["queued_target"] = None
+
+
+def _reconcile_flipped_queued_targets_with_targeted_tiles(data: dict) -> None:
+    """Trust live attack markers when save-backed queued targets are stale.
+
+    After effects such as Seismic Capacitor's ``DIR_FLIP``, saveData can keep
+    the old per-pawn ``piQueuedShot`` even though the visible attack marker has
+    already flipped. The bridge also reports Board:IsTargeted() tiles, which are
+    live marker data. If a unit's old target is gone from those markers and the
+    exact 180-degree mirror is present, rewrite the unit target to that mirror.
+    """
+    targeted = {
+        (int(t[0]), int(t[1]))
+        for t in data.get("targeted_tiles", []) or []
+        if isinstance(t, (list, tuple)) and len(t) >= 2
+    }
+    if not targeted:
+        return
+
+    for u in data.get("units", []) or []:
+        if u.get("team") != 6 or int(u.get("hp") or 0) <= 0:
+            continue
+        if not u.get("has_queued_attack"):
+            continue
+        qt = u.get("queued_target")
+        if not isinstance(qt, list) or len(qt) < 2:
+            continue
+        qx, qy = int(qt[0]), int(qt[1])
+        if (qx, qy) in targeted:
+            continue
+        cx, cy = int(u.get("x", -1)), int(u.get("y", -1))
+        if not (0 <= cx < 8 and 0 <= cy < 8):
+            continue
+        fx, fy = 2 * cx - qx, 2 * cy - qy
+        if 0 <= fx < 8 and 0 <= fy < 8 and (fx, fy) in targeted:
+            u["queued_target_stale_save"] = [qx, qy]
+            u["queued_target"] = [fx, fy]
+            u["queued_target_reconciled_via_targeted_tiles"] = True
+
+
+WEB_SOURCE_WEAPONS = {
+    "ScorpionAtk1",
+    "ScorpionAtk2",
+    "ScorpionAtkB",
+    "LeaperAtk1",
+    "LeaperAtk2",
+    "MosquitoAtkB",
+}
+
+
+def _is_grapple_probe_active(unit: dict) -> bool:
+    probes = unit.get("web_probes")
+    return isinstance(probes, dict) and probes.get("IsGrappled") is True
+
+
+def _recover_grapple_probe_webs(bridge_units: list) -> None:
+    """Recover current-turn grapples that old bridge fallback code cleared.
+
+    The live Lua bridge probes `IsGrappled()` correctly, but older fallback
+    source detection cleared `unit.web` when it did not know a web weapon, which
+    missed Mosquito Leader's `MosquitoAtkB`. Preserve the engine probe and infer
+    ownership from an alive queued web attack targeting the unit's tile.
+    """
+    if not bridge_units:
+        return
+
+    web_sources_by_target: dict[tuple[int, int], list[dict]] = {}
+    for unit in bridge_units:
+        if unit.get("team") != 6 or unit.get("hp", 0) <= 0:
+            continue
+        weapons = unit.get("weapons") or []
+        if not weapons or weapons[0] not in WEB_SOURCE_WEAPONS:
+            continue
+        target = unit.get("queued_target")
+        if not isinstance(target, list) or len(target) < 2:
+            continue
+        web_sources_by_target.setdefault((target[0], target[1]), []).append(unit)
+
+    for unit in bridge_units:
+        if not _is_grapple_probe_active(unit):
+            continue
+        unit["web"] = True
+        candidates = web_sources_by_target.get((unit.get("x"), unit.get("y")), [])
+        if candidates:
+            current_uid = unit.get("web_source_uid")
+            if current_uid and any(c.get("uid") == current_uid for c in candidates):
+                continue
+            unit["web_source_uid"] = candidates[0].get("uid", 0)
 
 
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
@@ -307,12 +920,88 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     if data is None:
         return None, None
 
+    if "bonus_objective_ids" not in data:
+        bonus_ids = _read_active_bonus_objective_ids_from_save()
+        if bonus_ids:
+            data["bonus_objective_ids"] = bonus_ids
+
     # Rewrite queued_target on each unit using piOrigin from the save file.
     # Bridge modloader currently emits piQueuedShot raw, which gives a
     # non-cardinal delta if the attacker moved after queueing. Fix before
     # constructing the Board so downstream solvers see the right direction.
     if "units" in data:
         _normalize_queued_targets(data["units"])
+        _reconcile_flipped_queued_targets_with_targeted_tiles(data)
+        _recover_grapple_probe_webs(data["units"])
+        _mark_satellite_launch_danger_flying_immune(data)
+
+    # Mission_Repair progress (Use 3 Repair Platforms). Old live modloader
+    # builds already emit tile.item="Item_Repair_Mine" but not the progress
+    # scalar; supplement it from saveData.lua until the game is restarted with
+    # the updated bridge.
+    if data.get("mission_id") == "Mission_Repair":
+        data.setdefault("repair_platform_target", 3)
+        if "repair_platforms_used" not in data:
+            pickups = _read_repair_pickups_from_save()
+            if pickups is not None:
+                data["repair_platforms_used"] = pickups
+
+    if (data.get("mission_id") == "Mission_Terraform"
+            and _safe_to_overlay_save_grass(data)):
+        grass_tiles = _read_terraform_grass_tiles_from_save(data)
+        if grass_tiles:
+            data["terraform_grass_tiles"] = [
+                [x, y] for x, y in sorted(grass_tiles)
+            ]
+            for td in data.get("tiles", []):
+                pos = (td.get("x"), td.get("y"))
+                if pos in grass_tiles:
+                    td["grass"] = True
+                    td.setdefault("custom", "ground_grass.png")
+
+    if data.get("mission_id") == "Mission_FreezeBldg":
+        freeze_building_tiles = _read_freeze_building_objective_tiles_from_save()
+        if freeze_building_tiles:
+            data.setdefault("freeze_building_target", 5)
+            data["freeze_building_tiles"] = [
+                [x, y] for x, y in sorted(freeze_building_tiles)
+            ]
+
+    if data.get("mission_id") == "Mission_Force":
+        progress = _read_mission_force_progress_from_save()
+        if progress:
+            data.setdefault(
+                "mission_mountain_target",
+                progress.get("mission_mountain_target", 2),
+            )
+            data.setdefault(
+                "mission_mountains_destroyed",
+                progress.get("mission_mountains_destroyed", 0),
+            )
+        else:
+            data.setdefault("mission_mountain_target", 2)
+        mountain_tiles = []
+        for td in data.get("tiles", []) or []:
+            if not isinstance(td, dict):
+                continue
+            if td.get("terrain") != "mountain" and td.get("terrain_id") != 4:
+                continue
+            x, y = td.get("x"), td.get("y")
+            if isinstance(x, int) and isinstance(y, int) and 0 <= x < 8 and 0 <= y < 8:
+                mountain_tiles.append([x, y])
+        data["mission_mountain_tiles"] = mountain_tiles
+
+    if data.get("mission_id") == "Mission_Wind":
+        wind_dir = data.get("environment_wind_dir")
+        if not isinstance(wind_dir, int) or not (0 <= wind_dir <= 3):
+            wind_dir = _read_mission_wind_dir_from_save()
+        if isinstance(wind_dir, int) and 0 <= wind_dir <= 3:
+            data["environment_wind_dir"] = wind_dir
+
+    # SaveData carries effective mech max_health after pilot perks and powered
+    # +Health upgrades. Overlay before Board construction so live reads,
+    # verification, and Rust solver payloads agree on true max HP.
+    _apply_save_mech_stat_overlays(data)
 
     try:
         board = Board.from_bridge_data(data)
@@ -321,6 +1010,9 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
         # (Python-side fallback until Lua modloader restart picks up native support)
         conveyor_belts = _read_conveyor_belts_from_save()
         if conveyor_belts:
+            for x in range(8):
+                for y in range(8):
+                    board.tile(x, y).conveyor = -1
             for (x, y), direction in conveyor_belts.items():
                 if 0 <= x < 8 and 0 <= y < 8:
                     board.tile(x, y).conveyor = direction

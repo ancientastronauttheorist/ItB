@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-05-06T20:04:10.262112",
+  "label": "research_queue_peek_m19_t3_storm_generator",
+  "turn": 3,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Storm_Generator",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly2",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Spider1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Firefly2",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Spiderling1",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    }
+  ]
+}

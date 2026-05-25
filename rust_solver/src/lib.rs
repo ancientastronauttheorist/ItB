@@ -58,9 +58,11 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
 /// Diagnostic only — not used in the normal solve path.
 #[pyfunction]
 fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
-    use crate::enemy::simulate_enemy_attacks;
+    use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
     use crate::evaluate::{evaluate, PsionState};
+    use crate::movement::illegal_move_reason;
     use crate::simulate::simulate_action;
+    use crate::solver::viscera_nanobots_heal_from_events;
     use crate::weapons::wid_from_str;
     use crate::types::{Terrain, xy_to_idx};
 
@@ -99,7 +101,10 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .count() as i32;
 
         let mut kills = 0i32;
+        let mut mission_kills = 0i32;
         let mut bumps = 0i32;
+        let mut nanobots_heal = 0i32;
+        let mut illegal_events: Vec<String> = Vec::new();
         for act in &plan {
             let mech_idx = board.units.iter().position(|u| u.uid == act.mech_uid && u.alive());
             let mech_idx = match mech_idx {
@@ -107,6 +112,13 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 None => continue,
             };
             let wid = wid_from_str(&act.weapon_id);
+            if let Some(reason) = illegal_move_reason(&board, mech_idx, (act.move_to[0], act.move_to[1])) {
+                illegal_events.push(format!(
+                    "illegal_move:{}:{}:{}",
+                    act.move_to[0], act.move_to[1], reason
+                ));
+                continue;
+            }
             let result = simulate_action(
                 &mut board, mech_idx,
                 (act.move_to[0], act.move_to[1]),
@@ -114,7 +126,12 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 (act.target[0], act.target[1]),
                 weapons_table,
             );
+            for event in result.events.iter().filter(|e| e.starts_with("illegal_")) {
+                illegal_events.push(event.clone());
+            }
+            nanobots_heal += viscera_nanobots_heal_from_events(&result.events);
             kills += result.enemies_killed as i32;
+            mission_kills += result.mission_kills as i32;
             bumps += result.buildings_bump_damaged as i32;
         }
 
@@ -122,7 +139,10 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
             .count() as i32;
 
-        let _ = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+        let enemy_phase_result = simulate_enemy_attacks(&mut board, &original_positions, weapons_table);
+        let spawn_block_result = apply_spawn_blocking(&mut board, &spawn_points);
+        kills += enemy_phase_result.enemies_killed + spawn_block_result.enemies_killed;
+        mission_kills += enemy_phase_result.mission_kills + spawn_block_result.mission_kills;
 
         let buildings_after = board.tiles.iter()
             .filter(|t| t.terrain == crate::types::Terrain::Building && t.building_hp > 0)
@@ -151,7 +171,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
                 building_threats |= 1u64 << xy_to_idx(tx, ty);
             }
         }
-        let score = evaluate(&board, &spawn_points, &weights, kills, bumps, &psion_before, building_threats);
+        let score = evaluate(&board, &spawn_points, &weights, kills, mission_kills, bumps, &psion_before, building_threats)
+            + nanobots_heal as f64 * weights.viscera_nanobots_heal_bonus;
 
         // Count components for debugging
         let bldgs_alive = board.tiles.iter().filter(|t| t.terrain == Terrain::Building && t.building_hp > 0).count() as i32;
@@ -172,6 +193,7 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "mechs_alive": mechs_alive,
             "judo_hp": judo_hp,
             "kills": kills,
+            "mission_kills": mission_kills,
             "bldgs_alive": bldgs_alive,
             "bldg_hp_total": bldg_hp_total,
             "dead_mechs": dead_mechs,
@@ -181,6 +203,8 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
             "remaining_spawns": board.remaining_spawns,
             "building_threats_bits": format!("{:b}", building_threats),
             "building_bumps": bumps,
+            "viscera_nanobots_heal": nanobots_heal,
+            "illegal_events": illegal_events,
         });
         Ok(out.to_string())
     })
@@ -198,12 +222,10 @@ fn score_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<St
 ///     (enemies_killed, mechs_killed, buildings_lost, grid_damage, ...).
 ///   - `spawn_points`: spawn tile list forwarded from the input board.
 ///
-/// Option C behaviour: enemies on the projected board have NO queued targets
-/// (`queued_target_x = -1`). The returned `board_json` injects
-/// `eval_weights.pseudo_threat_eval = true` so that `evaluate()` runs the
-/// queueless-threat augmentation (1.5× next_turn_threat_penalty per alive
-/// enemy that can reach a building) when the projected board is re-evaluated
-/// by a downstream solve call.
+/// Projection re-queues surviving enemies with the deterministic heuristic in
+/// `turn_projection.rs`. The returned `board_json` still injects
+/// `eval_weights.pseudo_threat_eval = true` so enemies without heuristic
+/// targets remain conservatively penalized by downstream solve calls.
 #[pyfunction]
 fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<String> {
     use crate::turn_projection::{project_plan as tp_project_plan, board_to_json};
@@ -259,6 +281,7 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
             "spawn_points": spawn_json,
             "action_result": {
                 "enemies_killed": result.enemies_killed,
+                "mission_kills": result.mission_kills,
                 "mechs_killed": result.mechs_killed,
                 "buildings_lost": result.buildings_lost,
                 "buildings_damaged": result.buildings_damaged,
@@ -267,10 +290,101 @@ fn project_plan(py: Python<'_>, bridge_json: &str, plan_json: &str) -> PyResult<
                 "mech_damage_taken": result.mech_damage_taken,
                 "spawns_blocked": result.spawns_blocked,
                 "pods_collected": result.pods_collected,
+                "repair_platforms_used": result.repair_platforms_used,
             },
             "projected_turn": projected.current_turn,
         });
         Ok(out.to_string())
+    })
+}
+
+/// Project a plan into a bounded set of plausible next-turn enemy-intent
+/// scenarios. Scenario 0 is the same heuristic requeue used by `project_plan`.
+/// Additional scenarios retarget one eligible enemy at a high-value reachable
+/// building, capped by `max_scenarios`.
+#[pyfunction]
+fn project_plan_scenarios(
+    py: Python<'_>,
+    bridge_json: &str,
+    plan_json: &str,
+    max_scenarios: usize,
+) -> PyResult<String> {
+    use crate::turn_projection::{
+        board_to_json,
+        project_plan_scenarios as tp_project_plan_scenarios,
+    };
+    use crate::solver::MechAction;
+    use crate::weapons::wid_from_str;
+
+    py.allow_threads(|| {
+        let (board, spawn_points, _danger, _weights, _disabled_mask, _overlay_entries) =
+            serde_bridge::board_from_json(bridge_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+
+        let overlay_pairs: Vec<(weapons::WId, weapons::PartialWeaponDef)> =
+            _overlay_entries.iter().map(|e| (e.wid, e.patch.clone())).collect();
+        let overlay_table = weapons::build_overlay_table(&overlay_pairs);
+        let weapons_table: &weapons::WeaponTable = match &overlay_table {
+            Some(t) => &**t,
+            None => &weapons::WEAPONS,
+        };
+
+        #[derive(serde::Deserialize)]
+        struct PlanAction {
+            mech_uid: u16,
+            #[serde(default)]
+            mech_type: String,
+            move_to: [u8; 2],
+            weapon_id: String,
+            target: [u8; 2],
+        }
+        let raw_plan: Vec<PlanAction> = serde_json::from_str(plan_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(
+                format!("plan parse: {}", e)))?;
+
+        let actions: Vec<MechAction> = raw_plan.iter().map(|a| MechAction {
+            mech_uid: a.mech_uid,
+            mech_type: a.mech_type.clone(),
+            move_to: (a.move_to[0], a.move_to[1]),
+            weapon: wid_from_str(&a.weapon_id),
+            target: (a.target[0], a.target[1]),
+            description: String::new(),
+        }).collect();
+
+        let spawn_json: Vec<serde_json::Value> = spawn_points.iter()
+            .map(|&(x, y)| serde_json::json!([x, y]))
+            .collect();
+
+        let scenarios = tp_project_plan_scenarios(
+            &board,
+            &actions,
+            &spawn_points,
+            weapons_table,
+            max_scenarios,
+        );
+        let scenario_json: Vec<serde_json::Value> = scenarios.iter().map(|s| {
+            serde_json::json!({
+                "label": s.label,
+                "board_json": board_to_json(&s.board, &spawn_points),
+                "spawn_points": spawn_json,
+                "action_result": {
+                    "enemies_killed": s.action_result.enemies_killed,
+                    "mission_kills": s.action_result.mission_kills,
+                    "mechs_killed": s.action_result.mechs_killed,
+                    "buildings_lost": s.action_result.buildings_lost,
+                    "buildings_damaged": s.action_result.buildings_damaged,
+                    "grid_damage": s.action_result.grid_damage,
+                    "enemy_damage_dealt": s.action_result.enemy_damage_dealt,
+                    "mech_damage_taken": s.action_result.mech_damage_taken,
+                    "spawns_blocked": s.action_result.spawns_blocked,
+                    "pods_collected": s.action_result.pods_collected,
+                    "repair_platforms_used": s.action_result.repair_platforms_used,
+                },
+                "projected_turn": s.board.current_turn,
+            })
+        }).collect();
+
+        Ok(serde_json::json!({ "scenarios": scenario_json }).to_string())
     })
 }
 
@@ -576,7 +690,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   M13 turn 4 (Mission_BlobBoss finale) lost the run when WallMech's
 //   Grappling Hook pulled BlobBoss D6→E6 and the simulator predicted no
 //   D5 hit, while the real game still applied BlobBossAtk's queued 4
-//   damage at D5 — the 2-HP Corp Tower fell, grid 2→0, defeat. Per
+//   damage — the 2-HP Corp Tower fell, grid 2→0, defeat. Per
 //   `scripts/missions/bosses/goo.lua:172-187`, BlobBossAtk:GetSkillEffect
 //   calls AddQueuedDamage(SpaceDamage(p2, 4)) BEFORE adding the optional
 //   move; the queued damage is registered against the target tile and
@@ -775,8 +889,734 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //      train advance). Eggs now sit dormant until the next enemy
 //      phase, matching the game's AddQueuedDamage semantics from
 //      weapons_enemy.lua:857.
-// Pre-v38 corpus archived as `failure_db_snapshot_sim_v37.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 38;
+// v39 — Added Support_Wind / Wind Torrent modeling. The solver now recognizes
+//   `Support_Wind` as an AE any-class global-push support weapon, enumerates
+//   one representative target per fixed custom edge zone, and simulates the
+//   Lua scan-order push of every pawn in the selected direction. Pre-v39 corpus
+//   archived as `failure_db_snapshot_sim_v38.jsonl`.
+// v40 — Standard single-tile enemy melee re-aims from the attacker's current
+//   position using the original queued direction after displacement. BlobBoss
+//   still uses its v29 queued-damage path. Fixes Venting Center T1
+//   Scorpion2 swap killing TeleMech at E4. Pre-v40 corpus archived as
+//   `failure_db_snapshot_sim_v39.jsonl`.
+// v41 — Vulcan Artillery (Ranged_Ignite) zero-damage adjacent pushes no
+//   longer apply off-board edge-bump damage. Pre-v41 corpus archived as
+//   `failure_db_snapshot_sim_v40.jsonl`.
+// v42 — Instant terrain/mine deaths from push/swap/throw landing effects now
+//   run enemy-death side effects, including Blast/Boss Psion death explosions,
+//   Volatile decay, and psion aura teardown. Prime Flamethrower damage+push
+//   kills defer Blast/Boss Psion explosion to the post-push corpse tile.
+//   Replay snapshots also include all building tiles so Grid Defense and Blast
+//   Psion building diffs are visible even when event telemetry is sparse.
+//   Pre-v42 corpus archived as `failure_db_snapshot_sim_v41.jsonl`.
+// v43 — Final-cave Renfield Bomb is pushable/bumpable, and Vulcan Artillery
+//   Backburn (`Ranged_Ignite_A`) lights the tile behind the shooter on fire.
+//   Pre-v43 corpus archived as `failure_db_snapshot_sim_v42.jsonl`.
+// v44 — Burnbug/Gastropod proboscis attacks are projectile grapples rather
+//   than one-tile melee. Vacated first target tiles no longer nullify the
+//   shot; the hook travels to the first blocker, damages it, and pulls a hit
+//   pawn toward the attacker or the attacker toward an object. Fixes Normal
+//   run 20260504_210332_088 m01 t01 F7 grid loss. Pre-v44 corpus archived as
+//   `failure_db_snapshot_sim_v43.jsonl`.
+// v45 — Projected final-board JSON now preserves `building_hp: 0` on
+//   destroyed unique objective buildings. Bridge terrain parsing also trusts
+//   engine terrain ids over stale strings, fixing id 5 = Ice being mislabeled
+//   as Lava in older bridge recordings. This prevents candidate audits from
+//   resurrecting failed Coal Plant / Power objectives and stops false lava
+//   deaths on Pinnacle ice. Pre-v45 corpus archived as
+//   `failure_db_snapshot_sim_v44.jsonl`.
+// v46 — Crab Leader (`CrabBoss` / `CrabAtkB`) now maps to Raining Expulsions:
+//   2-damage artillery target plus 1 damage to every tile in the projectile
+//   path. Fixes Normal run 20260504_210332_088 m05 t01/t02 grid-loss
+//   underprediction. Pre-v46 corpus archived as
+//   `failure_db_snapshot_sim_v45.jsonl`.
+// v47 — Web/repair cleanup from Artifact Vaults: pushing a webbed pawn clears
+//   that pawn's own web_source_uid + WEB flag, and Repair extinguishes the
+//   occupied tile's fire as well as the unit fire status. Bridge attack-intent
+//   extraction also now trusts save iQueuedSkill over stale GetSelectedWeapon
+//   to avoid false phantom attacks. Pre-v47 corpus archived as
+//   `failure_db_snapshot_sim_v46.jsonl`.
+// v48 — Mission_Repair platforms (`Item_Repair_Mine`) now round-trip through
+//   bridge/Python/Rust tile state, heal via the engine's -10 item damage with
+//   a live-observed cap of at least 5 HP, consume on landing/push/swap/throw,
+//   and increment repair-platform objective progress. Pre-v48 corpus archived
+//   as `failure_db_snapshot_sim_v47.jsonl`.
+// v49 - Blocked pushes no longer clear a pawn's own web. The game only breaks
+//   web when the pawn actually changes tiles; bumping into an obstacle leaves
+//   it webbed. Also models `Ranged_Artillerymech_A` direct building immunity.
+//   Pre-v49 corpus archived as `failure_db_snapshot_sim_v48.jsonl`.
+// v50 - Archive / Deploy Tank `Deploy_TankShot` is modeled as a controllable
+//   friendly projectile push weapon (0 damage, forward push), so Stock Cannon
+//   tanks participate in the solver search. Pre-v50 corpus archived as
+//   `failure_db_snapshot_sim_v49.jsonl`.
+// v51 - Mission_Trapped Decoy Building `Trapped_Explode` is modeled as an
+//   expendable player-team self-destruct: kills itself and adjacent
+//   non-building tiles while preserving neighboring buildings. Pre-v51 corpus
+//   archived as `failure_db_snapshot_sim_v50.jsonl`.
+// v52 - Corporate HQ Bouncer Leader (`BouncerBoss` / `BouncerAtkB`) now maps
+//   to Sweeping Horns: 2-damage forward-push T-pattern plus boss bounce-back.
+//   Pre-v52 corpus archived as `failure_db_snapshot_sim_v51.jsonl`.
+// v53 - Python solve payloads copy static pawn Armor into Rust JSON when the
+//   Lua bridge omits it; this fixes Bouncer Leader damage predictions. Pre-v53
+//   corpus archived as `failure_db_snapshot_sim_v52.jsonl`.
+// v54 - Archive Armored Train (`Train_Armored`) advances like the normal train
+//   but destroys blockers in the two entered tiles instead of dying. Pre-v54
+//   corpus archived as `failure_db_snapshot_sim_v53.jsonl`.
+// v55 - Live Storage Vaults fixes: Rocket Artillery center-kill pushes now
+//   let dead targets bump live blockers and killed non-pushable targets bump
+//   static blockers; repair platforms cap overheal at max_hp+2. Pre-v55
+//   corpus archived as `failure_db_snapshot_sim_v54.jsonl`.
+// v56 - Science_Repulse_A (Shield Self) applies Shield to the firing Pulse
+//   Mech after Repulse resolves; loadout overlay now recognizes
+//   Science_Repulse_A/AB. Pre-v56 corpus archived as
+//   `failure_db_snapshot_sim_v55.jsonl`.
+// v57 - Illegal Leap weapon landings no-op with an
+//   `illegal_leap_landing:x:y:reason` replay event instead of letting
+//   diagnostic score_plan/replay inputs stack units on blocked tiles.
+//   Pre-v57 corpus archived as `failure_db_snapshot_sim_v56.jsonl`.
+// v58 - Detritus Contraption weapons are modeled as global non-source unit
+//   effects. Pre-v58 corpus archived as `failure_db_snapshot_sim_v57.jsonl`.
+// v59 - Detritus barrage targeting excludes the source tile and soft-disable
+//   masks cover WId >= 128. Pre-v59 corpus archived as
+//   `failure_db_snapshot_sim_v58.jsonl`.
+// v60 - Static Spider1/Spider2 pawn stats are pushable; solve payloads no
+//   longer inject false `pushable=false` for normal/alpha Spiders. Pre-v60
+//   corpus archived as `failure_db_snapshot_sim_v59.jsonl`.
+// v61 - Mission_Teleporter action enumeration now targets attacks from the
+//   post-pad-swap position, while invalid diagonal SelfAoe clicks no-op in
+//   replay/sim. Pre-v61 corpus archived as
+//   `failure_db_snapshot_sim_v60.jsonl`.
+// v62 - Move-then-attack enumeration again targets from the post-move tile for
+//   ordinary movement; v61 accidentally used the pre-move tile except on
+//   teleporter pads. Pre-v62 corpus archived as
+//   `failure_db_snapshot_sim_v61.jsonl`.
+// v63 - Partial re-solves now re-apply save-file upgraded weapon overlays so
+//   upgraded semantics such as Science_Repulse_A Shield Self remain predicted
+//   after an earlier turn desync. Pre-v63 corpus archived as
+//   `failure_db_snapshot_sim_v62.jsonl`.
+// v64 - Player movement enumeration treats ACID pools as non-stoppable tiles,
+//   hardening the "never move onto ACID voluntarily" operational rule and
+//   avoiding bridge/status ambiguity after ACID-pool moves. Pre-v64 corpus
+//   archived as `failure_db_snapshot_sim_v63.jsonl`.
+// v65 - Smoke placed onto a queued web source immediately releases units webbed
+//   by that source, matching Scorpion Leader web cancellation when Rocket
+//   smoke lands behind the shooter. Pre-v65 corpus archived as
+//   `failure_db_snapshot_sim_v64.jsonl`.
+// v66 - Save-file overlays now recognize Rocket Artillery damage upgrades
+//   (`Ranged_Rocket_A/B/AB`), and Rust models their increased damage while
+//   preserving Rocket-specific smoke and corpse-push behavior. Pre-v66 corpus
+//   archived as `failure_db_snapshot_sim_v65.jsonl`.
+// v67 - Cannon-Bot (`SnowtankAtk1` / Cannon 8R Mark I) is a Firefly-style
+//   projectile that sets the hit target on fire, not a melee attack. This
+//   predicts Mission_FreezeBots line hits such as run 20260508_122657_124
+//   m01 t01 PulseMech fire damage. Pre-v67 corpus archived as
+//   `failure_db_snapshot_sim_v66.jsonl`.
+// v68 - AE Moths and Bouncers resolve queued recoil self-push plus forward
+//   target push in their normal enemy attack paths. This predicts Moth recoil
+//   bumping a blocking mech before artillery, as seen in run
+//   20260508_134925_472 m02 t02. Pre-v68 corpus archived as
+//   `failure_db_snapshot_sim_v67.jsonl`.
+// v69 - Mission_Trapped 2-HP Coal Plant building tiles are inferred as
+//   objective-style buildings when the bridge omits `unique_building`, so
+//   push-bump HP damage decrements grid power. Pre-v69 corpus archived as
+//   `failure_db_snapshot_sim_v68.jsonl`.
+// v70 - Leap weapon target enumeration / replay no-op reject chasm landing
+//   tiles. Live Aerial Bombs on a Cataclysm chasm tile click-missed instead of
+//   moving JetMech or damaging the transit tile. Pre-v70 corpus archived as
+//   `failure_db_snapshot_sim_v69.jsonl`.
+// v71 - Rocket Artillery center push does not add phantom map-edge bump
+//   damage when the target has no tile to move into. Pre-v71 corpus archived as
+//   `failure_db_snapshot_sim_v70.jsonl`.
+// v72 - ACID weapons acidify live occupied targets without creating an
+//   immediate ground pool beneath them. Pre-v72 corpus archived as
+//   `failure_db_snapshot_sim_v71.jsonl`.
+// v73 - Starfish / Starfish Leader appendage attacks are self-targeted
+//   diagonal damage patterns, with StarfishAtkB1 additionally pushing the
+//   four cardinal adjacent tiles. Pre-v73 corpus archived as
+//   `failure_db_snapshot_sim_v72.jsonl`.
+// v74 - Aerial Bombs rejects water/lava landing tiles. Live JetMech water
+//   landings spend the attack as a no-op without damaging transit tiles.
+//   Pre-v74 corpus archived as `failure_db_snapshot_sim_v73.jsonl`.
+// v75 - Repulse zero-damage adjacent pushes do not add phantom map-edge bump
+//   damage when the outward destination is off-board. Pre-v75 corpus archived
+//   as `failure_db_snapshot_sim_v74.jsonl`.
+// v76 - WebbEgg1 adjacency webs are inferred in Rust bridge loading and after
+//   simulated movement/landing while preserving active non-egg grapples.
+//   Pre-v76 corpus archived as
+//   `failure_db_snapshot_sim_v75.jsonl`.
+// v77 - BurrowerAtk1/BurrowerAtk2 melee slams damage the center target tile
+//   plus the two perpendicular flank tiles. Pre-v77 corpus archived as
+//   `failure_db_snapshot_sim_v76.jsonl`.
+// v78 - Save-file upgraded weapon overlays derive modeled upgraded IDs from
+//   pawn primary_mod*/secondary_mod* power pips when GameData.current.weapons
+//   stays on base weapon IDs. Pre-v78 corpus archived as
+//   `failure_db_snapshot_sim_v77.jsonl`.
+// v79 - Player artillery target enumeration briefly allowed off-axis targets;
+//   reverted in v80 after live Rocket Artillery proved those bridge-accepted
+//   targets no-op in-engine. Pre-v79 corpus archived as
+//   `failure_db_snapshot_sim_v78.jsonl`.
+// v80 - Player artillery targeting is cardinal-only again, and diagnostic
+//   score/replay reject illegal moves, smoke-blocked attacks, and invalid
+//   weapon target areas instead of validating impossible hand-written plans.
+//   Pre-v80 corpus archived as `failure_db_snapshot_sim_v79.jsonl`.
+// v81 - Normal Psions (`Jelly_Health1` family, including Blast Psion) are
+//   pushable. Solve payload enrichment no longer injects `pushable=false`,
+//   allowing Repulse/Rocket bump damage into blockers. Pre-v81 corpus archived
+//   as `failure_db_snapshot_sim_v80.jsonl`.
+// v82 - Blast Psion aura explosions do not recursively trigger additional
+//   Blast Psion aura explosions from enemies killed by the first burst.
+//   Pre-v82 corpus archived as `failure_db_snapshot_sim_v81.jsonl`.
+// v83 - Dam flood drowning uses the instant-death path, so drowned Vek emit
+//   Blast Psion / Volatile side effects instead of raw `hp = 0`.
+//   Pre-v83 corpus archived as `failure_db_snapshot_sim_v82.jsonl`.
+// v84 - Minor Vek carry a UnitFlags::MINOR marker and are excluded from Psion
+//   aura bonuses (Blast/Boss death explosions, HP/armor/regen/fire/boost/spider
+//   effects). Dam flood iteration now matches mission_dam.lua's y-major loop.
+//   Pre-v84 corpus archived as `failure_db_snapshot_sim_v83.jsonl`.
+// v85 - Direct weapon/explosion damage to buildings drains current Grid Power
+//   per building HP lost again; non-unique multi-HP bump/push collision damage
+//   still drains only on destruction. Pre-v85 corpus archived as
+//   `failure_db_snapshot_sim_v84.jsonl`.
+// v86 - Aerial Bombs upgraded weapon IDs (`Brute_Jetmech_A/B/AB`) are modeled
+//   from save overlays. The +1 Range branch expands Jet Mech target search to
+//   2-3 cardinal tiles while preserving water/lava landing illegality.
+//   Pre-v86 corpus archived as `failure_db_snapshot_sim_v85.jsonl`.
+// v87 - Blobber Leader package (`BlobberBoss`, `BlobberAtkB`, `BlobB`,
+//   `BlobAtkB`) is modeled directly: boss artillery spawns 2-HP Blob Leaders,
+//   and enemy SelfAoe can use split inner/outer damage for BlobB's 1 self
+//   damage plus 2 adjacent damage. Pre-v87 corpus archived as
+//   `failure_db_snapshot_sim_v86.jsonl`.
+// v88 - Briefly treated ordinary burning ground as not igniting flying units;
+//   superseded by v89 after a settled bridge read proved the live desync was a
+//   verification timing issue. Pre-v88 corpus archived as
+//   `failure_db_snapshot_sim_v87.jsonl`.
+// v89 - Restores ordinary tile-fire ignition for flying units and pairs it
+//   with a Python auto_turn settle retry for transient predicted-true status
+//   diffs immediately after bridge sub-actions. Pre-v89 corpus archived as
+//   `failure_db_snapshot_sim_v88.jsonl`.
+// v90 - Ramming Engines recoil/self-damage on sand now consumes the sand and
+//   creates smoke, matching live Mission_Terratide turn 1 ChargeMech behavior.
+//   Pre-v90 corpus archived as `failure_db_snapshot_sim_v89.jsonl`.
+// v91 - Diagnostic score_plan now applies spawn blocking after enemy attacks,
+//   matching replay/project_plan and avoiding false-clean manual plan audits.
+//   Pre-v91 corpus archived as `failure_db_snapshot_sim_v90.jsonl`.
+// v92 - Shield Projector can target and protect buildings, including its
+//   second line tile; building shields are consumed before HP/grid damage.
+//   Pre-v92 corpus archived as `failure_db_snapshot_sim_v91.jsonl`.
+// v93 - Mission_BoomBots `*_Boom` Pinnacle bots now use intrinsic Explosive
+//   Decay on death, splashing adjacent buildings/mechs like Volatile Vek.
+//   Pre-v93 corpus archived as `failure_db_snapshot_sim_v92.jsonl`.
+// v94 - Burst Beam powered Ally Immune loadouts (`Prime_Lasermech_A` / `_AB`)
+//   now overlay from save data and skip friendly unit damage while preserving
+//   beam decay through the friendly tile.
+//   Pre-v94 corpus archived as `failure_db_snapshot_sim_v93.jsonl`.
+// v95 - Titan Fist powered loadouts (`Prime_Punchmech_A` / `_B` / `_AB`)
+//   now overlay from save data; Dash / Dash+Damage use Charge semantics and
+//   record Ramming Speed candidate kills at distance >=5.
+//   Pre-v95 corpus archived as `failure_db_snapshot_sim_v94.jsonl`.
+// v96 - Taurus Cannon direct edge pushes and Artemis adjacent edge pushes no
+//   longer add off-board bump damage; on-board blocker bumps remain intact.
+//   Pre-v96 corpus archived as `failure_db_snapshot_sim_v95.jsonl`.
+// v97 - Boosted unit status now enters solver payloads, adds +1 weapon damage
+//   / repair healing, and is consumed on attack or repair.
+//   Pre-v97 corpus archived as `failure_db_snapshot_sim_v96.jsonl`.
+// v98 - Titan Fist Dash follows Lua AddCharge/Projectile pathing through
+//   water/lava instead of stopping at water, and dead Dash Punch targets can
+//   still bump a live blocker behind them. Pre-v98 corpus archived as
+//   `failure_db_snapshot_sim_v97.jsonl`.
+// v99 - Final Cave Env_Final danger is falling-rock/tentacle death, not
+//   hoverable cataclysm chasm conversion; ignore stale flying_immune=1
+//   payloads on Mission_Final_Cave so flying mechs cannot stand on marked
+//   cave-collapse tiles. Pre-v99 corpus archived as
+//   `failure_db_snapshot_sim_v98.jsonl`.
+// v100 - Lua bridge exports live Stable/IsGuarding state as `pushable=false`,
+//   and Python board parsing preserves live pushability overrides so Final Cave
+//   leaders are not predicted to move when Taurus/Artemis push them.
+//   Pre-v100 corpus archived as `failure_db_snapshot_sim_v99.jsonl`.
+// v101 - Aerial Bombs smoke consumes transit Forest tiles before damage, and
+//   Morgan Lejeune (Pilot_Chemical) gains Boost after enemy kills instead of
+//   always clearing Boost at action end. Pre-v101 corpus archived as
+//   `failure_db_snapshot_sim_v100.jsonl`.
+// v102 - Mission_Wind rows are no longer modeled as direct environment damage;
+//   the bridge marks them separately until it can export live WindDir for full
+//   push simulation. Pre-v102 corpus archived as
+//   `failure_db_snapshot_sim_v101.jsonl`.
+// v103 - Rust replay verification snapshots now include `status.boosted`, matching
+//   Python snapshots and preventing Kai/Morgan Boost from surfacing as false
+//   status/click_miss desyncs. Pre-v103 corpus archived as
+//   `failure_db_snapshot_sim_v102.jsonl`.
+// v104 - Kai Miller (Pilot_Arrogant) Boost is state-based: full-HP Kai remains
+//   Boosted after attacks and regains Boost after Repair/repair platforms,
+//   while damage below full HP clears Boost. Pre-v104 corpus archived as
+//   `failure_db_snapshot_sim_v103.jsonl`.
+// v105 - Arachnid Psion death eggs materialize immediately after player-phase
+//   kills as SpiderlingEgg1 using live-style next pawn ids; enemy-phase eggs
+//   still drain after the hatch loop so they do not hatch in the same phase.
+//   Pre-v105 corpus archived as `failure_db_snapshot_sim_v104.jsonl`.
+// v106 - Mission_Belt conveyors move live units before Vek attacks, and
+//   save/bridge conveyor parsing no longer cross-pairs a tile loc with a
+//   later tile's custom sprite. Pre-v106 corpus archived as
+//   `failure_db_snapshot_sim_v105.jsonl`.
+// v107 - Conveyor belts move live units before Vek attacks on any map with
+//   live conveyor tiles, not just Mission_Belt. Pre-v107 corpus archived as
+//   `failure_db_snapshot_sim_v106.jsonl`.
+// v108 - Mission_Repair platforms consume/count for full-health units without
+//   overhealing them; damaged units still use the max_hp+2 overheal cap. Also
+//   corrects dirty fallback solve reporting. Pre-v108 corpus archived as
+//   `failure_db_snapshot_sim_v107.jsonl`.
+// v109 - Leap attacks that relocate the firing unit now break that unit's own
+//   web and resolve landing effects, so Aerial Bombs catches fire when landing
+//   on an already-burning Forest tile and consumes it to burning Ground.
+//   Pre-v109 corpus archived as
+//   `failure_db_snapshot_sim_v108.jsonl`.
+// v110 - Aerial Bombs over an occupied transit tile applies occupant damage
+//   and smoke without generic terrain damage, preserving sand under Pulse on
+//   D3 in Hard Rusting Hulks run 20260512_181719_119 Mission_Holes turn 2.
+//   Pre-v110 corpus archived as
+//   `failure_db_snapshot_sim_v109.jsonl`.
+// v111 - Non-unique multi-HP building bump damage can defer grid loss until
+//   that same building is later destroyed, matching C4 in Hard Rusting Hulks
+//   run 20260512_181719_119 Mission_Holes turn 2. Pre-v111 corpus archived as
+//   `failure_db_snapshot_sim_v110.jsonl`.
+// v112 - Scarab Leader's Expectorating Glands is modeled as 4-damage artillery
+//   with zero-damage outward adjacent pushes, and synthetic default tiles now
+//   use conveyor_dir=-1 so no-belt tests do not pre-shift enemy attacks. Pre-v112
+//   corpus archived as `failure_db_snapshot_sim_v111.jsonl`.
+// v113 - Spider Psion death eggs follow a Rocket-killed corpse that is pushed
+//   into a clear tile, matching Hard Rusting Hulks run 20260513_144310_771
+//   Mission_Solar turn 3 where C2 -> C1 produced the live egg at C1. Pre-v113
+//   corpus archived as `failure_db_snapshot_sim_v112.jsonl`.
+// v114 - Deferred non-unique multi-HP bump grid debt flushes at enemy-turn
+//   start, matching Hard Rusting Hulks run 20260513_144310_771 Mission_Holes
+//   turn 2 where Rocket bumped B4 2->1, grid stayed 4 during player phase,
+//   then dropped to 3 by next player turn. Pre-v114 corpus archived as
+//   `failure_db_snapshot_sim_v113.jsonl`.
+// v115 - WebbEgg / SpiderlingEgg hatch uses live-style `sPawn` adjacent fallback
+//   instead of in-place mutation; if the destination is a live building, the
+//   building is destroyed and full HP drains grid. Matches Hard Rusting Hulks
+//   run 20260513_144310_771 Mission_FireflyBoss turn 2, where E6 hatched onto
+//   F6 and destroyed a 2-HP building. Pre-v115 corpus archived as
+//   `failure_db_snapshot_sim_v114.jsonl`.
+// v116 - Landing on smoke extinguishes carried unit fire. Matches Hard Rusting
+//   Hulks run 20260513_230944_542 Mission_Airstrike turn 2, where Jet used
+//   Aerial Bombs from H3 to already-smoked F3 and live cleared fire while the
+//   simulator kept it. Pre-v116 corpus archived as
+//   `failure_db_snapshot_sim_v115.jsonl`.
+// v117 - Beetle charge attacks push their hit target forward, and Bouncer
+//   self-recoil into the board edge does not deal self-bump damage. Matches
+//   Hard Rusting Hulks run 20260513_230944_542 Mission_Airstrike turn 4:
+//   Beetle shoved Rocket B3->B4, then Bouncer hit B4 and pushed the KIA
+//   Rocket to C4. Pre-v117 corpus archived as
+//   `failure_db_snapshot_sim_v116.jsonl`.
+// v118 - Mission_Terraform's controllable Terraformer_Attack is modeled as a
+//   3x2 instant-kill terrain-conversion sweep, so active Terraformer units are
+//   included in solver actor permutations. Pre-v118 corpus archived as
+//   `failure_db_snapshot_sim_v117.jsonl`.
+// v119 - Mission_Terraform custom grassland is tracked as a tile flag and
+//   scored as remaining objective debt; Terraformer sweeps clear the flag.
+//   Pre-v119 corpus archived as `failure_db_snapshot_sim_v118.jsonl`.
+// v120 - Live AE Lua ids `Dung1` / `Dung2` and `DungAtk1` / `DungAtk2`
+//   map onto the existing Tumblebug weapon model. Pre-v120 corpus archived
+//   as `failure_db_snapshot_sim_v119.jsonl`.
+// v121 - BombRock / Unstable Boulder is catalogued as a neutral explosive
+//   Tumblebug boulder; destroying it deals 1 adjacent bump-class damage, while
+//   Tumblebug self-detonation excludes the source tile. Pre-v121 corpus
+//   archived as `failure_db_snapshot_sim_v120.jsonl`.
+// v122 - Time Pods are fragile map objects: player mech landing collects,
+//   while enemy/non-mech landing or direct tile damage destroys without
+//   collection credit. Pre-v122 corpus archived as
+//   `failure_db_snapshot_sim_v121.jsonl`.
+// v123 - BlobBoss death split materializes Large Goo -> 2 Medium Goo and
+//   Medium Goo -> 2 Small Goo using deterministic Lua-diamond candidate
+//   selection; Goo queued attacks also destroy full mountains and move into
+//   non-mech targets when the squish clears the tile. Pre-v123 corpus
+//   archived as `failure_db_snapshot_sim_v122.jsonl`.
+// v124 - Moved queued attackers preserve the original attacker-relative target
+//   offset. BlobBoss queued-damage persistence now shifts with the Goo after
+//   pushes/pulls/swaps instead of treating piQueuedShot as an absolute tile;
+//   bridge payloads also expose piOrigin and normalize piQueuedShot when the
+//   Vek has already moved. Regression anchor: Ramming Speed run
+//   20260516_120646_726, HQ turn 1, BlobBoss B3->B2 retargeted A3->A2 and
+//   Scarab G3->G2 retargeted G6->G5. Pre-v124 corpus archived as
+//   `failure_db_snapshot_sim_v123.jsonl`.
+// v125 - Blast Psion explosions chain through eligible non-minor Vek.
+// v126 - Mission_Disposal A.C.I.D. Launcher (`Disposal_Attack`) is modeled as
+//   a controllable player-side mission ally weapon: artillery target, lethal
+//   acid cross, and mountain-clear terrain conversion. Pre-v126 corpus
+//   archived as `failure_db_snapshot_sim_v125.jsonl`.
+// v127 - Killing the last Boost Psion clears the visible Boosted status from
+//   all surviving Vek immediately. Pre-v127 corpus archived as
+//   `failure_db_snapshot_sim_v126.jsonl`.
+// v128 - Disposal_Attack dissolves building tiles inside its acid cross, not
+//   only units/mountains/status. Pre-v128 corpus archived as
+//   `failure_db_snapshot_sim_v127.jsonl`.
+// v129 - Decorative conveyor sprites on Env_Null missions do not run an
+//   enemy-phase belt tick. Conveyor movement is gated to Mission_Belt and
+//   Mission_BeltRandom. Pre-v129 corpus archived as
+//   `failure_db_snapshot_sim_v128.jsonl`.
+// v130 - Live AE Tumblebug Leader ids `DungBoss` / `DungAtkB` map onto the
+//   existing Alpha Tumblebug boulder attack model (3-damage queued
+//   boulder/tile hit; boulders are already exposed by the bridge). Pre-v130
+//   corpus archived as `failure_db_snapshot_sim_v129.jsonl`.
+// v131 - BombRock death explosions fire immediately on damage+push weapons
+//   instead of being swallowed by the deferred corpse-push path; dead
+//   BombRocks do not push onward as corpses. Pre-v131 corpus archived as
+//   `failure_db_snapshot_sim_v130.jsonl`.
+// v132 - Weapon damage that ignites Forest consumes it to burning Ground
+//   immediately, matching live Prime Punch hits on forest-occupied enemies.
+//   Pre-v132 corpus archived as `failure_db_snapshot_sim_v131.jsonl`.
+// v133 - Directionless Artemis-style artillery was temporarily broadened to
+//   board-wide targeting; live D6->F2 proved that off-axis FireWeapon no-ops.
+//   Pre-v133 corpus archived as `failure_db_snapshot_sim_v132.jsonl`.
+// v134 - Restore player artillery target areas to cardinal-only, including
+//   Artemis. Diagnostic replay now rejects off-axis Artemis shots as illegal
+//   no-ops. Pre-v134 corpus archived as `failure_db_snapshot_sim_v133.jsonl`.
+// v135 - Rock Accelerator materializes a neutral 1 HP RockThrown on empty
+//   target tiles, matching Blitzkrieg run 20260517_105759_344 Mission_Train
+//   turn 3. Pre-v135 corpus archived as `failure_db_snapshot_sim_v134.jsonl`.
+// v136 - RockThrown spawned during active Mission_AcidStorm inherits ACID
+//   immediately, matching Blitzkrieg run 20260517_105759_344 The Wasteland
+//   turn 1. Pre-v136 corpus archived as `failure_db_snapshot_sim_v135.jsonl`.
+// v137 - Repair/Repair Drop during active Mission_AcidStorm leaves player
+//   units ACIDed after healing, matching The Wasteland turn 2. Pre-v137
+//   corpus archived as `failure_db_snapshot_sim_v136.jsonl`.
+// v138 - Rock Launcher defers Boom Bot / Volatile center death decay until
+//   after its perpendicular side pushes, matching Mission_BoomBots where the
+//   side Boom Tank is shoved out before the killed center bot explodes.
+//   Pre-v138 corpus archived as `failure_db_snapshot_sim_v137.jsonl`.
+// v141 - Mosquito Leader `MosquitoBoss` / `MosquitoAtkB` modeled as
+//   shield-piercing smoke+web instant kill. Pre-v141 corpus archived as
+//   `failure_db_snapshot_sim_v140.jsonl`.
+// v142 - Raw `web_probes.IsGrappled=true` is authoritative even when older
+//   bridge fallback cleared `web=false`; infer queued web source ownership.
+//   Pre-v142 corpus archived as `failure_db_snapshot_sim_v141.jsonl`.
+// v143 - Arachnophiles base kit modeled: bridge-executable Ricochet Rocket,
+//   Arachnoid Injector spawn-on-kill, spawned Arachnoid bite, and Area Shift.
+//   Pre-v143 corpus archived as `failure_db_snapshot_sim_v142.jsonl`.
+// v144 - Prime Flamethrower killed-target pushes can corpse-bump live blockers,
+//   matching Perfect Strategy run 20260517_175633_388 Mission_Teleporter turn 4.
+//   Cluster Artillery outer corpse absorption remains unchanged. Pre-v144 corpus
+//   archived as `failure_db_snapshot_sim_v143.jsonl`.
+// v145 - Mission_Airstrike / Mission_Lightning override stale
+//   flying_immune=1 env_danger_v2 payloads so bombs/lightning kill flying mechs;
+//   terrain-conversion missions keep flyer immunity. Pre-v145 corpus archived
+//   as `failure_db_snapshot_sim_v144.jsonl`.
+// v146 - Frozen buildings thaw on damage instead of taking building/grid
+//   damage, and Mission_FreezeBldg objective tiles are scored from live thaw
+//   state. Pre-v146 corpus archived as `failure_db_snapshot_sim_v145.jsonl`.
+// v147 - Flame Shielding protects player mechs only, not controllable mission
+//   allies such as Archive_Tank. Mission_Tanks Archive Tanks are also surfaced
+//   as protected objective units. Pre-v147 corpus archived as
+//   `failure_db_snapshot_sim_v146.jsonl`.
+// v148 - Mission_Wind exports live WindDir and simulates wind row pushes before
+//   Vek attacks, including bump/grid damage. Pre-v148 corpus archived as
+//   `failure_db_snapshot_sim_v147.jsonl`.
+// v149 - Attack-phase landing effects collect/destroy Time Pods, so Aerial
+//   Bombs landing on a pod records collection instead of leaving the pod in
+//   predicted state. Pre-v149 corpus archived as
+//   `failure_db_snapshot_sim_v148.jsonl`.
+// v150 - Aerial Bombs transit over Mission_FreezeBldg frozen objective
+//   buildings thaws and damages the building, with grid loss deferred to
+//   enemy-turn settle. Pre-v150 corpus archived as
+//   `failure_db_snapshot_sim_v149.jsonl`.
+// v151 - Minor Vek such as Totems still count as enemies_killed for scoring,
+//   but no longer advance mission.KilledVek objectives like "Kill at least
+//   5 Enemies". Pre-v151 corpus archived as
+//   `failure_db_snapshot_sim_v150.jsonl`.
+// v152 - Stale non-egg `web_source_uid` from bridge input is replaced when an
+//   alive queued web attack currently targets the webbed unit's tile. Fixes
+//   false web-clears after moving the wrong stale source. Pre-v152 corpus
+//   archived as `failure_db_snapshot_sim_v151.jsonl`.
+// v153 - Firefly Leader (`FireflyAtkB` / Burning Thorax) fires paired
+//   projectiles in both the queued direction and the opposite direction.
+//   Pre-v153 corpus archived as `failure_db_snapshot_sim_v152.jsonl`.
+// v155 - Science_Swap / Teleporter target validation is cardinal-line only,
+//   matching Lua GetTargetArea. Diagonal or out-of-range swap targets now no-op
+//   in replay/scoring instead of projecting a fake teleport. Pre-v155 corpus
+//   archived as `failure_db_snapshot_sim_v154.jsonl`.
+// v156 - FIRE weapon status on Sand/Forest consumes the terrain to burning
+//   Ground immediately, matching live Flamethrower/Ranged_Ignite verification.
+//   Pre-v156 corpus archived as `failure_db_snapshot_sim_v155.jsonl`.
+// v157 - Pinnacle FACTION_BOTS (`Snowtank*`, `Snowart*`, `Snowlaser*`,
+//   `Snowmine*`, `BotBoss*`) are not Vek and do not receive Psion auras.
+//   Pre-v157 corpus archived as `failure_db_snapshot_sim_v156.jsonl`.
+// v158 - Prime_Flamethrower lights the struck tile before pushing, but a
+//   target pushed off that tile does not carry Fire status. Pre-v158 corpus
+//   archived as `failure_db_snapshot_sim_v157.jsonl`.
+// v159 - Prime_Flamethrower's newly lit target tile ignites grounded occupants
+//   even if pushed away, but flying occupants only catch it if they remain on
+//   or land on a burning tile. Pre-v159 corpus archived as
+//   `failure_db_snapshot_sim_v158.jsonl`.
+// v160 - Fire weapons no longer mark non-fire-hosting terrain (for example
+//   Water) as a burning tile; Prime_Flamethrower still applies direct Fire to
+//   a flying target if its push is blocked and the target remains on the struck
+//   tile. Pre-v160 corpus archived as `failure_db_snapshot_sim_v159.jsonl`.
+// v161 - Boosted Prime_Flamethrower adds Boost's +1 weapon damage to its
+//   conditional FireDamage branch only when the target was already burning,
+//   and powered Flame Thrower range IDs (`_A` / `_B` / `_AB`) are modeled.
+//   Pre-v161 corpus archived as `failure_db_snapshot_sim_v160.jsonl`.
+// v162 - Fire weapon tile status can live on Grid Buildings without damaging
+//   them; upgraded Flame Thrower line paths ignite intermediate building tiles.
+//   Pre-v162 corpus archived as `failure_db_snapshot_sim_v161.jsonl`.
+// v163 - Breaking a web on one board entry clears every duplicate segment with
+//   the same logical uid, matching multi-tile mission units such as trains.
+//   Pre-v163 corpus archived as `failure_db_snapshot_sim_v162.jsonl`.
+// v164 - FIRE weapon tile status can sit on intact Mountain tiles. Backburn
+//   (`Ranged_Ignite_A`) lights the mountain directly behind the shooter without
+//   damaging it. Pre-v164 corpus archived as `failure_db_snapshot_sim_v163.jsonl`.
+// v165 - Science_Swap target relocation breaks the moved target's own web,
+//   matching the engine rule that actual tile changes break grapples. Pre-v165
+//   corpus archived as `failure_db_snapshot_sim_v164.jsonl`.
+// v166 - Cataclysm squad weapons modeled: Hydraulic Lifter two-click throws,
+//   Tri-Rocket's three sequential line hits, and Seismic Capacitor's on-kill
+//   adjacent crack creation. Pre-v166 corpus archived as
+//   `failure_db_snapshot_sim_v165.jsonl`.
+// v167 - Tri-Rocket simultaneous damage+push cleanup: killed ACID units move
+//   their corpse acid pool to the pushed destination, and later rockets bump
+//   units entering a just-vacated killed-corpse tile. Pre-v167 corpus archived
+//   as `failure_db_snapshot_sim_v166.jsonl`.
+// v168 - Seismic Capacitor on-kill crack effect damages adjacent Mountains
+//   by 1 HP instead of ignoring them. Pre-v168 corpus archived as
+//   `failure_db_snapshot_sim_v167.jsonl`.
+// v169 - Tri-Rocket killed adjacent missile targets corpse-bump live center
+//   blockers when pushed into them. Pre-v169 corpus archived as
+//   `failure_db_snapshot_sim_v168.jsonl`.
+// v170 - Tri-Rocket targets killed by terrain after landing do not leave a
+//   vacated corpse-bump tile. Pre-v170 corpus archived as
+//   `failure_db_snapshot_sim_v169.jsonl`.
+// v171 - VIP_Truck_Move is a range-3 path movement skill even though the VIP
+//   Truck pawn has MoveSpeed=0. Solver/replay now enumerate and simulate the
+//   skill as an attack-phase AddMove. Pre-v171 corpus archived as
+//   `failure_db_snapshot_sim_v170.jsonl`.
+// v172 - Tri-Rocket center targets inherit LineArtillery's range-2 minimum;
+//   targeting an adjacent center tile spends the bridge action without an
+//   engine effect. Pre-v172 corpus archived as
+//   `failure_db_snapshot_sim_v171.jsonl`.
+// v173 - Enemy-phase non-unique multi-HP bump grid debt now flushes before
+//   returning to the next player turn, matching Tumblebug BombRock explosions
+//   that damage 2-HP buildings. Pre-v173 corpus archived as
+//   `failure_db_snapshot_sim_v172.jsonl`.
+// v174 - Tri-Rocket center-hit BombRocks resolve as a forward killed-boulder
+//   collision inside the rocket line, without emitting the normal side blast.
+//   Matches Cataclysm Unfair stress run 20260521_120049_468 Mission_Lightning
+//   turn 2, where B4 BombRock damaged B3->B2 Dung2 but not C4 Scorpion2.
+//   Pre-v174 corpus archived as `failure_db_snapshot_sim_v173.jsonl`.
+// v175 - Save-file upgraded weapon overlays now recognize Cataclysm powered
+//   IDs (`Prime_TC_Punt_*`, `Ranged_Crack_*`, `Science_KO_Crack_*`), matching
+//   live bridge execution after shop/reactor upgrades. Pre-v175 corpus
+//   archived as `failure_db_snapshot_sim_v174.jsonl`.
+// v176 - Python bridge reader reconciles save-stale per-unit DIR_FLIP targets
+//   with live Board:IsTargeted markers before constructing solver input.
+//   Pre-v176 corpus archived as `failure_db_snapshot_sim_v175.jsonl`.
+// v177 - Mission_Wind raw engine WindDir is converted to the solver's
+//   bridge-coordinate direction order before wind pushes. Pre-v177 corpus
+//   archived as `failure_db_snapshot_sim_v176.jsonl`.
+// v178 - Enemy queued-target origins are preserved through player-phase
+//   displacement and DIR_FLIP retargets, and enemy Charge attacks now move the
+//   charger along the charge path. Fixes a displaced Seismic-flipped Beetle
+//   Leader charge in Cataclysm Unfair stress run 20260521_120049_468
+//   Mission_BeetleBoss turn 2. Pre-v178 corpus archived as
+//   `failure_db_snapshot_sim_v177.jsonl`.
+// v179 - Hydraulic Lifter landing damage that ignites a Forest now immediately
+//   sets fire on the thrown surviving unit. Fixes Cataclysm Unfair stress run
+//   20260521_120049_468 Mission_Volatile turn 1, where Prime_TC_Punt_AB threw
+//   Firefly2 onto E3 Forest and live set status.fire. Pre-v179 corpus archived
+//   as `failure_db_snapshot_sim_v178.jsonl`.
+// v180 - Mirror Shot killed forward targets still resolve the forward corpse
+//   bump into live blockers. Fixes Frozen Titans Untouchable run
+//   20260521_223240_242 Mission_Airstrike turn 1, where Brute_Mirrorshot killed
+//   BonusDebris on F6 and live bumped IceMech on E6 for 1 HP. Pre-v180 corpus
+//   archived as `failure_db_snapshot_sim_v179.jsonl`.
+// v181 - Conveyor sprite directions from the engine are normalized to solver
+//   DIRS before simulation. Fixes Rusting Hulks Untouchable run
+//   20260521_232056_112 Mission_BeltRandom turn 1, where raw conveyor2 on C5
+//   bumped PulseMech into B5 and cost 1 HP + 1 grid. Pre-v181 corpus archived
+//   as `failure_db_snapshot_sim_v180.jsonl`.
+// v184 - Webbed `Prime_Leap` / Hydraulic Legs no-ops like live instead of
+//   jumping, self-damaging, and killing landing-adjacent units. Fixes Hazardous
+//   Mechs Healing run 20260522_154935_555 Mission_Barrels turn 2, where a
+//   webbed Leap Mech was asked to leap from C4 to B3 and live left the Leaper
+//   alive. Pre-v184 corpus archived as `failure_db_snapshot_sim_v183.jsonl`.
+// v185 - `Prime_Leap` / Hydraulic Legs target area is cardinal-line only,
+//   matching Leap_Attack:GetTargetArea's DIR_VECTORS[i] * k enumeration.
+//   Fixes the same Healing run Mission_Barrels turn 3, where E3->G4 ACKed
+//   but live no-oped. Pre-v185 corpus archived as
+//   `failure_db_snapshot_sim_v184.jsonl`.
+// v186 - Passive_Leech / Viscera Nanobots heals player mechs after attack
+//   kills, including Hazardous self-damage recoil that drops the attacker to
+//   0 before the kill-heal revives it. Fixes Healing run
+//   20260522_154935_555 Mission_Civilians turn 2, where Brute_Unstable killed
+//   a Vek and live healed UnstableTank from recoil back to full. Pre-v186
+//   corpus archived as `failure_db_snapshot_sim_v185.jsonl`.
+// v187 - Science_AcidShot / Acid Projector direct off-board pushes do not
+//   edge-bump, and the zero-damage ACID status is suppressed in that blocked
+//   edge case. Fixes Healing run 20260522_154935_555 Mission_Civilians turn 4,
+//   where Nano B2->A2 left a 1-HP Scarab alive and un-acidified. Pre-v187
+//   corpus archived as `failure_db_snapshot_sim_v186.jsonl`.
+// v188 - Science_AcidShot applies ACID but does not push hit units at all;
+//   when the projectile endpoint is the map-edge tile in its fire direction,
+//   the zero-damage ACID payload is still suppressed. Fixes the same Healing
+//   run Mission_Belt turn 2, where Nano D4->E4 acidified the G4 Scarab but
+//   live left it on G4 instead of pushing it to H4. Pre-v188 corpus archived
+//   as `failure_db_snapshot_sim_v187.jsonl`.
+// v189 - Science_AcidShot does push clean targets when ACID is newly applied,
+//   but already-acid targets keep their tile and edge endpoints still no-op.
+//   Fixes Healing run 20260522_154935_555 Corporate HQ turn 2, where Nano
+//   G7->F7 pushed the Beetle Leader from E7 to D7. Pre-v189 corpus archived
+//   as `failure_db_snapshot_sim_v188.jsonl`.
+// v190 - Prime_Leap / Hydraulic Legs killed landing-adjacent targets still
+//   resolve their outward corpse push into live blockers. Fixes Healing run
+//   20260522_154935_555 Corporate HQ turn 3, where a killed Leaper on D4
+//   corpse-bumped UnstableTank on D5. Pre-v190 corpus archived as
+//   `failure_db_snapshot_sim_v189.jsonl`.
+// v191 - Passive_Leech / Viscera Nanobots remains active even after the Nano
+//   Mech is disabled. Fixes the same Healing run Corporate HQ turn 4, where
+//   dead Nano's passive healed UnstableTank's recoil after killing Leaper1.
+//   Pre-v191 corpus archived as `failure_db_snapshot_sim_v190.jsonl`.
+// v192 - Wrecks block pushed units. Fixes the same Healing run Corporate HQ
+//   turn 4, where Prime_Leap pushed an acid Beetle Leader into disabled Nano's
+//   wreck on C7; live applied a bump and left the boss on C6. Pre-v192 corpus
+//   archived as `failure_db_snapshot_sim_v191.jsonl`.
+// v193 - Ignore stale teleporter pad pairs unless the active mission is
+//   Mission_Teleporter. A stale pair leaked into Mission_AcidTank and made the
+//   sim teleport Hazardous mechs after recoil/movement while the engine left
+//   them in place. Pre-v193 corpus archived as
+//   `failure_db_snapshot_sim_v192.jsonl`.
+// v194 - Passive_Leech / Viscera Nanobots heal credit is limited to direct
+//   weapon-damage kills. Hydraulic Legs edge-bump kills still count for score
+//   and mission kills, but live did not heal the Leap Mech. Pre-v194 corpus
+//   archived as `failure_db_snapshot_sim_v193.jsonl`.
+// v195 - Science_AcidShot / Acid Projector still pushes an already-ACID target
+//   when the push destination is legal; only the edge-endpoint zero-damage no-op
+//   suppresses the direct push. Pre-v195 corpus archived as
+//   `failure_db_snapshot_sim_v194.jsonl`.
+// v196 - Prime_Leap / Hydraulic Legs resolves landing tile effects after Leap
+//   self-damage, so Bethany's shield can be stripped before an ACID pool on the
+//   landing tile applies. Pre-v196 corpus archived as
+//   `failure_db_snapshot_sim_v195.jsonl`.
+// v197 - Prime_Leap / Hydraulic Legs moves a killed ACID target's new pool with
+//   the simultaneously-pushed corpse instead of leaving it on the damage tile.
+//   Pre-v197 corpus archived as `failure_db_snapshot_sim_v196.jsonl`.
+// v198 - Instant-killing a web source releases its grapple, Terraformer sweeps
+//   clear grass on ACID ground without converting that tile to Sand, and replay
+//   WId::None plan entries deactivate the skipped unit. Pre-v198 corpus
+//   archived as `failure_db_snapshot_sim_v197.jsonl`.
+// v199 - ACID death pools on Sand become Ground, and Brute_Unstable pushback
+//   bump kills count as Viscera Nanobots killing blows. Pre-v199 corpus
+//   archived as `failure_db_snapshot_sim_v198.jsonl`.
+// v200 - Weapon damage that kills a pawn standing on cracked Ground leaves the
+//   tile cracked; only direct damage to the empty tile opens a chasm. Pre-v200
+//   corpus archived as `failure_db_snapshot_sim_v199.jsonl`.
+// v201 - The occupied-crack exception is weapon-damage-only; self-damage such
+//   as Hydraulic Legs recoil still collapses cracked Ground under the mech.
+//   Pre-v201 corpus archived as `failure_db_snapshot_sim_v200.jsonl`.
+// v202 - Brute_Unstable recoil still bumps a live rear blocker even when
+//   Hazardous self-damage has dropped the attacker to 0 before Viscera
+//   Nanobots revives it. Pre-v202 corpus archived as
+//   `failure_db_snapshot_sim_v201.jsonl`.
+// v203 - Prime_Leap / Hydraulic Legs damage collapses occupied cracked
+//   landing-adjacent tiles, and Viscera Nanobots cannot revive a mech killed by
+//   chasm/water/lava terrain under its own tile. Pre-v203 corpus archived as
+//   `failure_db_snapshot_sim_v202.jsonl`.
+// v204 - Bump/collision damage to a pawn standing on cracked Ground is
+//   absorbed by the pawn and does not open a chasm under the occupied tile.
+//   Pre-v204 corpus archived as `failure_db_snapshot_sim_v203.jsonl`.
+// v205 - Brute_Unstable direct weapon kills do not synthesize a corpse ACID
+//   pool on the target tile. Pre-v205 corpus archived as
+//   `failure_db_snapshot_sim_v204.jsonl`.
+// v206 - Ground Prime_Leap / Hydraulic Legs cannot land on Water or Lava;
+//   live consumes the click as an unfired action. Pre-v206 corpus archived as
+//   `failure_db_snapshot_sim_v205.jsonl`.
+// v207 - Prime_Leap / Hydraulic Legs applies Viscera Nanobots revive before
+//   landing tile fire/ACID pickup, after self-damage. Pre-v207 corpus archived
+//   as `failure_db_snapshot_sim_v206.jsonl`.
+// v208 - Viscera Nanobots revive clears negative statuses carried by the
+//   temporarily disabled mech before any later landing effects can reapply
+//   them. Pre-v208 corpus archived as `failure_db_snapshot_sim_v207.jsonl`.
+// v209 - Brute_Unstable recoil still bumps live rear blockers, but recoil into
+//   the board edge does not self-bump. Fixes Healing run 20260522_193613_471
+//   Mission_Volatile turn 2, where edge recoil was over-predicted by 1 HP.
+//   Pre-v209 corpus archived as `failure_db_snapshot_sim_v208.jsonl`.
+// v210 - Mission_Dam flood clears tile fire when it converts a burning Forest
+//   to Water. Fixes Healing run 20260522_193613_471 Mission_Dam turn 2, where
+//   a Leap-ignited flooded tile was predicted as water+fire. Pre-v210 corpus
+//   archived as `failure_db_snapshot_sim_v209.jsonl`.
+// v211 - Brute_Unstable killed direct targets still resolve their forward
+//   corpse push into live blockers. Fixes Healing run 20260522_193613_471
+//   Mission_BlobberBoss turn 2, where a killed BlobB corpse bumped NanoMech.
+//   Pre-v211 corpus archived as `failure_db_snapshot_sim_v210.jsonl`.
+// v212 - Weapon/bump-class damage to a pawn standing on Ice is pawn-only: it
+//   can damage/kill/push the pawn, but does not crack or melt the underlying
+//   ice tile. Pre-v212 corpus archived as `failure_db_snapshot_sim_v211.jsonl`.
+// v213 - Brute_Unstable self-damage on an Ice firing tile applies its HP hit
+//   first, then resolves the origin tile as Water after recoil. Fixes Healing
+//   run 20260522_193613_471 Mission_Survive turn 2, where D5 flooded after
+//   Unstable recoiled to D6. Pre-v213 corpus archived as
+//   `failure_db_snapshot_sim_v212.jsonl`.
+// v214 - Reverts the v213 overgeneralization for intact Brute_Unstable ice
+//   origins, and models Hydraulic Legs breaking occupied Ice only when the
+//   hit pawn is grounded. Flying targets still leave occupied Ice intact.
+//   Fixes Healing run 20260522_193613_471 Mission_Survive turn 3, where
+//   Beetle2 on F5 left Water after Leap push, while Unstable's intact E4
+//   firing tile stayed Ice. Pre-v214 corpus archived as
+//   `failure_db_snapshot_sim_v213.jsonl`.
+// v215 - Hydraulic Legs only breaks occupied Ice after a grounded target is
+//   actually displaced off the original tile. A blocked push/corpse bump leaves
+//   the occupied Ice intact. Fixes Healing run 20260522_193613_471 Pinnacle
+//   Mission_Factory turn 4, where Leaper1 died on C3 but the C2 blocker kept
+//   the corpse on intact Ice. Pre-v215 corpus archived as
+//   `failure_db_snapshot_sim_v214.jsonl`.
+// v216 - Hydraulic Legs friendly landing-adjacent pushes can enter an existing
+//   dead-unit/wreck tile without taking the normal wreck bump. Fixes Healing run
+//   20260522_193613_471 Pinnacle Mission_FreezeMines turn 2, where Leaper1 was
+//   already dead on F2 and UnstableTank later moved E2->F2. Pre-v216 corpus
+//   archived as `failure_db_snapshot_sim_v215.jsonl`.
+// v217 - Long Hydraulic Legs jumps also damage interior transit units with
+//   acid/armor-ignoring pass-over damage. Hydraulic Legs-triggered BombRock
+//   blasts exclude the landing Leap Mech. Fixes Healing run
+//   20260522_193613_471 Pinnacle Mission_SnowStorm turn 2, where Leap E1->E6
+//   damaged acid Dung2 on E4 by 1 HP and detonated E5 BombRock without
+//   blast-damaging Leap. Pre-v217 corpus archived as
+//   `failure_db_snapshot_sim_v216.jsonl`.
+// v218 - Hydraulic Legs Nanobots healing caps at the engine/base mech HP, but
+//   direct Unstable Cannon kills can still heal recoil back to the save-overlaid
+//   max HP. Fixes the same Mission_SnowStorm turn 2, where Leap stayed 4/5
+//   after killing Leaper1 while UnstableTank healed its Dung2 kill back to 5/5.
+//   Pre-v218 corpus archived as `failure_db_snapshot_sim_v217.jsonl`.
+// v219 - Long Hydraulic Legs pass-over damage skips the first transit tile next
+//   to the takeoff point as well as the final pre-landing tile. Fixes Healing
+//   run 20260522_193613_471 Pinnacle Mission_SnowStorm turn 4, where Leap
+//   jumped C4->F4 and live left Mosquito1 on D4 at 2/2. Pre-v219 corpus
+//   archived as `failure_db_snapshot_sim_v218.jsonl`.
+// v220 - Removes synthetic Prime_Leap transit damage entirely; vanilla
+//   Hydraulic Legs only damages landing-adjacent tiles plus recoil. Also makes
+//   Brute_Unstable direct target pushes omit off-board edge-bump damage. Fixes
+//   Healing run 20260522_193613_471 Corporate HQ turn 1, where Blood Psion and
+//   Mosquito Leader both survived at 1 HP. Pre-v220 corpus archived as
+//   `failure_db_snapshot_sim_v219.jsonl`.
+// v221 - Hydraulic Legs push kills into deadly terrain credit Viscera
+//   Nanobots healing, and occupied Ice stays intact when the pushed target dies
+//   after displacement. Fixes Healing run 20260522_193613_471 Corporate HQ
+//   turn 4, where a Beetle pushed from B2 into water died, Leap healed to 5/5,
+//   and B2 stayed Ice. Pre-v221 corpus archived as
+//   `failure_db_snapshot_sim_v220.jsonl`.
+// v222 - Models powered `Prime_Leap_A/B/AB` and `Brute_Unstable_A/B/AB`
+//   loadout IDs from save overlays. Fixes Healing run 20260522_193613_471
+//   Volcanic Hive turn 1, where live fired `Brute_Unstable_AB` and its extra
+//   self-damage plus recoil bump left UnstableTank at 4 HP. Pre-v222 corpus
+//   archived as `failure_db_snapshot_sim_v221.jsonl`.
+// v223 - Viscera Nanobots heals self-damage overkill from HP floor 0, and
+//   Unstable Cannon recovery preserves carried statuses. Fixes Healing run
+//   20260522_193613_471 Volcanic Hive turn 4, where burning UnstableTank fired
+//   `Brute_Unstable_AB` at 1 HP, killed Jelly_Lava1, and live ended at 2 HP
+//   still burning. Pre-v223 corpus archived as
+//   `failure_db_snapshot_sim_v222.jsonl`.
+// v224 - Acid Projector can push a live enemy into an existing dead enemy
+//   wreck without bump damage. Fixes Healing run 20260522_193613_471 Final
+//   Cave turn 3, where NanoMech pushed Hornet1 into dead Scarab1's tile and
+//   live left Hornet1 alive at 1 HP. Pre-v224 corpus archived as
+//   `failure_db_snapshot_sim_v223.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 224;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
@@ -873,8 +1713,60 @@ fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(solve_top_k, m)?)?;
     m.add_function(wrap_pyfunction!(score_plan, m)?)?;
     m.add_function(wrap_pyfunction!(project_plan, m)?)?;
+    m.add_function(wrap_pyfunction!(project_plan_scenarios, m)?)?;
     m.add_function(wrap_pyfunction!(solve_beam, m)?)?;
     m.add_function(wrap_pyfunction!(simulator_version, m)?)?;
     m.add_function(wrap_pyfunction!(replay_solution, m)?)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::score_plan;
+    use pyo3::Python;
+
+    #[test]
+    fn score_plan_applies_spawn_blocking_after_repair() {
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            let bridge_json = r#"{
+                "mission_id": "Mission_Volatile",
+                "tiles": [],
+                "units": [
+                    {
+                        "uid": 2,
+                        "type": "ScienceMech",
+                        "x": 5,
+                        "y": 2,
+                        "hp": 1,
+                        "max_hp": 2,
+                        "team": 1,
+                        "mech": true,
+                        "active": true,
+                        "weapons": ["Science_Pullmech", "Science_Shield"]
+                    }
+                ],
+                "grid_power": 7,
+                "spawning_tiles": [[5, 2]]
+            }"#;
+            let plan_json = r#"[
+                {
+                    "mech_uid": 2,
+                    "move_to": [5, 2],
+                    "weapon_id": "_REPAIR",
+                    "target": [5, 2]
+                }
+            ]"#;
+
+            let raw = score_plan(py, bridge_json, plan_json).expect("score_plan succeeds");
+            let scored: serde_json::Value = serde_json::from_str(&raw).expect("valid score JSON");
+
+            assert_eq!(
+                scored["alive_mech_hp"].as_i64(),
+                Some(1),
+                "repair should heal to 2, then spawn blocking should deal 1 damage"
+            );
+            assert_eq!(scored["dead_mechs"].as_i64(), Some(0));
+        });
+    }
 }

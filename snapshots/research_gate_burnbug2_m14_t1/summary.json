@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-05-06T17:59:20.564153",
+  "label": "research_gate_burnbug2_m14_t1",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowart1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowtank2",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowtank1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug2",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "BonusDebris",
+      "pos": [
+        2,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "BonusDebris",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 1
+    }
+  ]
+}

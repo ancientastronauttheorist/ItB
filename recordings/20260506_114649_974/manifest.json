@@ -1,0 +1,18 @@
+{
+  "run_id": "20260506_114649_974",
+  "squad": "Rusting Hulks",
+  "difficulty": 0,
+  "achievement_targets": [],
+  "tags": [
+    "achievement"
+  ],
+  "solver_version": "rust-0.1.0-38bde2a",
+  "weight_version": "v011",
+  "updated": "2026-05-06T20:13:24.198474",
+  "created": "2026-05-06T11:46:50.000085",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 19,
+  "outcome_recorded_at": "2026-05-06T20:13:24.168842",
+  "outcome_notes": "Mission 19 The Landfill secured on Detritus with 0 grid damage; failed optional objective Destroy the ACID Storm Controller. Captured Storm_Generator/WebbEgg1/Firefly2 research and end snapshot for solver objective-priority analysis."
+}

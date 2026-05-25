@@ -12,14 +12,17 @@ Repair uses its own button, passives are no-ops.
 
 Coordinate systems:
   - Bridge coordinates: (0-7, 0-7) from the Lua bridge.
-  - MCP coordinates: Quartz logical screen pixels.
-  - ``grid_to_mcp`` auto-detects the game window and produces MCP coords
-    for any tile center, calibrated <2px against all 4 corners.
+  - Legacy MCP coordinates: global screen pixels used by the older batch
+    dispatcher.
+  - Codex Computer Use coordinates: window-local pixels from get_app_state().
+  - ``grid_to_mcp`` delegates to the shared GridConfig calibration used by
+    ``cmd_calibrate`` so deployment, tile_hover, and click planning agree.
 """
 
 from __future__ import annotations
 
 from src.solver.solver import MechAction, Solution
+from src.solver.action_classification import action_has_attack, is_board_target
 from src.model.board import Board
 from src.capture.detect_grid import detect_grid, find_game_window, grid_from_window
 
@@ -56,58 +59,13 @@ def _get_window():
 
 
 def grid_to_mcp(save_x: int, save_y: int) -> tuple[int, int]:
-    """Convert save file coordinates to MCP screenshot coordinates.
+    """Convert bridge/save coordinates to a calibrated tile-center position.
 
-    Uses the game's isometric projection formula:
-      mcp_x = OX + STEP_X * (save_x - save_y)
-      mcp_y = OY + STEP_Y * (save_x + save_y)
-
-    Calibrated 2026-04-23 from live hover-measurements of all 4 board-diamond
-    corners at window (215, 32). See docs/investigation_grid_calibration_residual.md.
-
-    Measured image-pixel tile centers (user-hovered, cursor_position grabbed):
-      H8 save(0,0)  (707, 122)    top vertex
-      A8 save(0,7)  (384, 359)    left vertex
-      H1 save(7,0)  (1033, 364)   right vertex
-      A1 save(7,7)  (705, 603)    bottom vertex
-
-    Least-squares isometric fit:
-      origin_win_rel = (492.25, 89.50)
-      step_x = 46.357   step_y = 34.357
-      max residual = 3.3 px (within human-hover precision)
-
-    All three mechs on the live Silicate Plains board (PunchMech B6, JetMech C5,
-    RocketMech E5) were successfully hover-identified with this formula — the
-    game's info panel appeared for each, confirming the formula lands on the
-    correct mech-bearing tile.
-
-    Historical notes:
-    - 2026-04-07 constants (494, 56, 46.21, 34.57) were close but used a y-origin
-      measured at a different window-Y (the grid_reference.json corners were
-      captured when the game window was at a different position).
-    - 2026-04-23 PR #7 changed the constants to (475, 243, 50, 27.5) — ALL FOUR
-      WRONG. The "hover verification" for PR #7 (F5 = water tile) happened to
-      land on *some* water tile (not F5), producing a false-positive confirmation.
-      Deploy clicks drifted 1-2 tiles consistently; mech-select clicks missed the
-      board entirely.
-    - This fix re-derives the constants from empirical measurements instead of
-      relying on grid_reference.json (which was measured at a different window
-      position and never cross-validated against live hover identity).
+    Bridge/save coords are zero-indexed. ``GridConfig.tile_to_pixel`` is
+    one-indexed, matching the calibration output from ``detect_grid``.
     """
-    win = _get_window()
-
-    sx = win.width / 1280.0
-    sy = win.height / 748.0
-
-    ox = win.x + 492.25 * sx
-    oy = win.y + 89.50 * sy
-
-    step_x = 46.357 * sx
-    step_y = 34.357 * sy
-
-    px = ox + step_x * (save_x - save_y)
-    py = oy + step_y * (save_x + save_y)
-
+    grid = _get_grid()
+    px, py = grid.tile_to_pixel(save_x + 1, save_y + 1)
     return (int(round(px)), int(round(py)))
 
 
@@ -131,7 +89,9 @@ def recalibrate():
 # Live-calibrated 2026-04-11 against Rift Walkers combat mech panel.
 # Slot 2 mirrors slot 1 horizontally inside the same weapon box; it
 # activates only when a mech has a second weapon (time pod upgrade).
-_UI_END_TURN = (95, 78)
+# Recalibrated 2026-04-30 from Corporate HQ: the Codex Computer Use
+# window-local center of the visible End Turn button was (126, 120).
+_UI_END_TURN = (126, 120)
 # Weapon/repair slot offsets re-calibrated 2026-04-23. Old values (191/255/111, 528)
 # missed the icons by ~25 px in Y and ~10 px in X. Empirical hover-verify
 # on Pinnacle Frozen Plains placed the Aerial Bombs icon center at image
@@ -155,6 +115,36 @@ def _ui_pos(offset: tuple[int, int]) -> tuple[int, int]:
         int(round(win.x + offset[0] * sx)),
         int(round(win.y + offset[1] * sy)),
     )
+
+
+def to_window_local(x: int, y: int) -> tuple[int, int]:
+    """Convert legacy global screen coordinates to Codex window-local coords."""
+    win = _get_window()
+    return (int(round(x - win.x)), int(round(y - win.y)))
+
+
+def _annotate_click_op(op: dict) -> dict:
+    """Attach explicit coordinate-space metadata to legacy click ops."""
+    if op.get("type") != "left_click" or "x" not in op or "y" not in op:
+        return op
+    annotated = dict(op)
+    wx, wy = to_window_local(int(annotated["x"]), int(annotated["y"]))
+    annotated.setdefault("coordinate_space", "screen")
+    annotated["window_x"] = wx
+    annotated["window_y"] = wy
+    annotated["codex_computer_use"] = {
+        "type": annotated["type"],
+        "x": wx,
+        "y": wy,
+        "coordinate_space": "window",
+        "description": annotated.get("description", ""),
+    }
+    return annotated
+
+
+def annotate_click_plan(plan: list[dict]) -> list[dict]:
+    """Return a plan with both legacy screen and Codex window-local coords."""
+    return [_annotate_click_op(op) for op in plan]
 
 
 def _ui_weapon_slot_1() -> tuple[int, int]:
@@ -210,6 +200,8 @@ def classify_weapon(weapon_id: str) -> str:
         # picks the firing mech's own tile as the target (see Rust
         # get_weapon_targets WeaponType::HealAll), which is always clickable.
         return "normal"
+    if wdef.weapon_type in ("global_unit_effect", "disposal"):
+        return "normal"
     return "normal"
 
 
@@ -256,16 +248,9 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     if mech is None:
         return []
 
-    # Step 1: select the mech by clicking its tile center. With the corrected
-    # grid_to_mcp formula (2026-04-23 hover-measured calibration), the tile
-    # center pixel falls within the mech sprite's hit-box — empirically
-    # confirmed for all three Rift Walkers mechs on Silicate Plains: hovering
-    # grid_to_mcp(mech.x, mech.y) triggered the game's mech info panel.
-    #
-    # Historical: a -150 Y sprite offset was added in PR #7 to compensate for
-    # a broken grid_to_mcp that placed tiles ~100 px south of reality. With
-    # the corrected formula the offset overshoots into empty space above the
-    # mech and is no longer needed.
+    # Step 1: select the mech by clicking its tile center. grid_to_mcp follows
+    # the shared GridConfig calibration used by cmd_calibrate; the tile center
+    # is reliable even though mech sprites render above it.
     tx, ty = grid_to_mcp(mech.x, mech.y)
     plan: list[dict] = [{
         "type": "left_click",
@@ -278,7 +263,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
     # Passive weapons have no clickable target — just selecting the mech
     # is enough to "consume" the action from the Claude perspective.
     if weapon_type == "passive":
-        return plan
+        return annotate_click_plan(plan)
 
     # Repair: optional move, then click the Repair button.
     if weapon_type == "repair":
@@ -297,7 +282,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "x": rx, "y": ry,
             "description": "Click Repair button",
         })
-        return plan
+        return annotate_click_plan(plan)
 
     # Dash/leap weapons: arm the weapon, then click the destination.
     # The dash IS the move — there's no separate move click.
@@ -309,7 +294,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "x": wx, "y": wy,
             "description": f"Arm {action.weapon}",
         })
-        if action.target and action.target[0] >= 0:
+        if is_board_target(action.target):
             plan.append(_wait_op(_WAIT_AFTER_ARM, "wait for weapon arm"))
             tx, ty = grid_to_mcp(action.target[0], action.target[1])
             plan.append({
@@ -317,7 +302,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
                 "x": tx, "y": ty,
                 "description": f"Dash to ({action.target[0]},{action.target[1]})",
             })
-        return plan
+        return annotate_click_plan(plan)
 
     # Normal: optional move first, then arm weapon, then click target.
     plan.append(_wait_op(_WAIT_AFTER_SELECT, "wait for selection highlight"))
@@ -330,7 +315,7 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
         })
         plan.append(_wait_op(_WAIT_AFTER_MOVE, "wait for move animation"))
 
-    if action.weapon and action.target and action.target[0] >= 0:
+    if action_has_attack(action):
         wx, wy = _weapon_icon_pos(action.weapon, mech)
         plan.append({
             "type": "left_click",
@@ -345,27 +330,27 @@ def plan_single_mech(action: MechAction, board: Board = None) -> list[dict]:
             "description": f"Fire at ({action.target[0]},{action.target[1]})",
         })
 
-    return plan
+    return annotate_click_plan(plan)
 
 
 def plan_end_turn() -> list[dict]:
     """Plan a click for the End Turn button."""
     ex, ey = _ui_end_turn()
-    return [{
+    return annotate_click_plan([{
         "type": "left_click",
         "x": ex, "y": ey,
         "description": "Click End Turn",
-    }]
+    }])
 
 
 def plan_balanced_roll() -> list[dict]:
     """Plan a click for the Balanced Roll button on the squad-select screen."""
     bx, by = _ui_balanced_roll()
-    return [{
+    return annotate_click_plan([{
         "type": "left_click",
         "x": bx, "y": by,
         "description": "Click Balanced Roll",
-    }]
+    }])
 
 
 # --- Backward-Compatible Full-Solution Planning ---

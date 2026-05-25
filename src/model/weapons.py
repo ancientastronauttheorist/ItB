@@ -23,6 +23,9 @@ class WeaponType(str, Enum):
     PULL = "pull"             # Pull target toward self
     TWO_CLICK = "two_click"   # Two-step targeting
     HEAL_ALL = "heal_all"     # Heals every player-team unit on the board
+    GLOBAL_PUSH = "global_push"  # Pushes every unit in one chosen direction
+    GLOBAL_UNIT_EFFECT = "global_unit_effect"  # Affects every live non-source unit on board
+    DISPOSAL = "disposal"       # Mission_Disposal lethal A.C.I.D. Launcher cross
     PASSIVE = "passive"       # Always-on effect
 
 
@@ -50,6 +53,7 @@ class WeaponDef:
     range_min: int = 1                 # Minimum range (artillery start)
     range_max: int = 1                 # Maximum range (0 = unlimited)
     path_size: int = 1                 # Tiles affected in line
+    path_damage: bool = False          # Damage each tile before artillery target
     # Status effects
     fire: bool = False
     acid: bool = False
@@ -93,9 +97,45 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+dash (charge before punch)",
         upgrade_b="+2 damage (total 4)",
     ),
+    "Prime_Punchmech_A": WeaponDef(
+        name="Titan Fist", weapon_type="charge",
+        damage=2, push="forward", charge=True, range_max=0,
+        upgrade_a="+dash (charge before punch)",
+        upgrade_b="+2 damage (total 4)",
+    ),
+    "Prime_Punchmech_B": WeaponDef(
+        name="Titan Fist", weapon_type="melee",
+        damage=4, push="forward",
+        upgrade_a="+dash (charge before punch)",
+        upgrade_b="+2 damage (total 4)",
+    ),
+    "Prime_Punchmech_AB": WeaponDef(
+        name="Titan Fist", weapon_type="charge",
+        damage=4, push="forward", charge=True, range_max=0,
+        upgrade_a="+dash (charge before punch)",
+        upgrade_b="+2 damage (total 4)",
+    ),
     "Prime_Lightning": WeaponDef(
         name="Chain Whip", weapon_type="melee",
         damage=2, chain=True, targets_allies=True,
+        upgrade_a="chains through buildings safely",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_Lightning_A": WeaponDef(
+        name="Chain Whip", weapon_type="melee",
+        damage=2, chain=True, targets_allies=True, building_damage=False,
+        upgrade_a="chains through buildings safely",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_Lightning_B": WeaponDef(
+        name="Chain Whip", weapon_type="melee",
+        damage=3, chain=True, targets_allies=True,
+        upgrade_a="chains through buildings safely",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_Lightning_AB": WeaponDef(
+        name="Chain Whip", weapon_type="melee",
+        damage=3, chain=True, targets_allies=True, building_damage=False,
         upgrade_a="chains through buildings safely",
         upgrade_b="+1 damage (total 3)",
     ),
@@ -105,11 +145,29 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="no friendly damage",
         upgrade_b="+1 starting damage (total 4)",
     ),
+    "Prime_Lasermech_A": WeaponDef(
+        name="Burst Beam", weapon_type="laser",
+        damage=3, range_max=0, targets_allies=True,
+        upgrade_a="no friendly damage",
+        upgrade_b="+1 starting damage (total 4)",
+    ),
+    "Prime_Lasermech_B": WeaponDef(
+        name="Burst Beam", weapon_type="laser",
+        damage=4, range_max=0, targets_allies=True,
+        upgrade_a="no friendly damage",
+        upgrade_b="+1 starting damage (total 4)",
+    ),
+    "Prime_Lasermech_AB": WeaponDef(
+        name="Burst Beam", weapon_type="laser",
+        damage=4, range_max=0, targets_allies=True,
+        upgrade_a="no friendly damage",
+        upgrade_b="+1 starting damage (total 4)",
+    ),
     "Prime_ShieldBash": WeaponDef(
         name="Spartan Shield", weapon_type="melee",
-        damage=0, push="none",
-        upgrade_a="shield self before attack",
-        upgrade_b="+1 damage (total 1)",
+        damage=2, push="flip",
+        upgrade_a="gain shield when bashing",
+        upgrade_b="+1 damage (total 3)",
     ),
     "Prime_Shift": WeaponDef(
         name="Vice Fist", weapon_type="melee",
@@ -123,6 +181,40 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 range (2 tiles)",
         upgrade_b="+1 range (2 tiles)",
     ),
+    "Prime_Flamethrower_A": WeaponDef(
+        name="Flamethrower", weapon_type="melee",
+        damage=0, push="forward", fire=True, path_size=2,
+        range_max=2, upgrade_a="+1 range (2 tiles)",
+    ),
+    "Prime_Flamethrower_B": WeaponDef(
+        name="Flamethrower", weapon_type="melee",
+        damage=0, push="forward", fire=True, path_size=2,
+        range_max=2, upgrade_b="+1 range (2 tiles)",
+    ),
+    "Prime_Flamethrower_AB": WeaponDef(
+        name="Flamethrower", weapon_type="melee",
+        damage=0, push="forward", fire=True, path_size=3,
+        range_max=3, upgrade_a="+1 range (2 tiles)",
+        upgrade_b="+1 range (3 tiles)",
+    ),
+    "Prime_TC_Punt": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=1, range_max=2, targets_allies=True,
+        upgrade_a="+2 range (4-tile throw)",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Prime_TC_Punt_A": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=1, range_max=4, targets_allies=True,
+    ),
+    "Prime_TC_Punt_B": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=3, range_max=2, targets_allies=True,
+    ),
+    "Prime_TC_Punt_AB": WeaponDef(
+        name="Hydraulic Lifter", weapon_type="two_click",
+        damage=3, range_max=4, targets_allies=True,
+    ),
     "Prime_Areablast": WeaponDef(
         name="Area Blast", weapon_type="self_aoe",
         damage=1, push="outward", aoe_adjacent=True, aoe_center=False,
@@ -135,6 +227,21 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         aoe_adjacent=True, aoe_center=False,
         upgrade_a="+1 damage, +1 self damage",
         upgrade_b="+1 damage",
+    ),
+    "Prime_Leap_A": WeaponDef(
+        name="Hydraulic Legs", weapon_type="leap",
+        damage=2, push="outward", self_damage=2, range_max=7,
+        aoe_adjacent=True, aoe_center=False,
+    ),
+    "Prime_Leap_B": WeaponDef(
+        name="Hydraulic Legs", weapon_type="leap",
+        damage=2, push="outward", self_damage=1, range_max=7,
+        aoe_adjacent=True, aoe_center=False,
+    ),
+    "Prime_Leap_AB": WeaponDef(
+        name="Hydraulic Legs", weapon_type="leap",
+        damage=3, push="outward", self_damage=2, range_max=7,
+        aoe_adjacent=True, aoe_center=False,
     ),
     "Prime_Spear": WeaponDef(
         name="Spear", weapon_type="melee",
@@ -195,6 +302,21 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage (total 2)",
         upgrade_b="+1 range (total 3)",
     ),
+    "Brute_Jetmech_A": WeaponDef(
+        name="Aerial Bombs", weapon_type="leap",
+        damage=2, smoke=True, range_min=2, range_max=2,
+        aoe_center=False,
+    ),
+    "Brute_Jetmech_B": WeaponDef(
+        name="Aerial Bombs", weapon_type="leap",
+        damage=1, smoke=True, range_min=2, range_max=3,
+        aoe_center=False,
+    ),
+    "Brute_Jetmech_AB": WeaponDef(
+        name="Aerial Bombs", weapon_type="leap",
+        damage=2, smoke=True, range_min=2, range_max=3,
+        aoe_center=False,
+    ),
     "Brute_Mirrorshot": WeaponDef(
         name="Mirror Shot", weapon_type="projectile",
         damage=1, push="forward", range_max=0, aoe_behind=True,
@@ -219,6 +341,18 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=2, push="forward", self_damage=1, push_self=True, range_max=0,
         upgrade_a="+1 damage, +1 self damage",
         upgrade_b="+1 damage (total 3)",
+    ),
+    "Brute_Unstable_A": WeaponDef(
+        name="Unstable Cannon", weapon_type="projectile",
+        damage=3, push="forward", self_damage=2, push_self=True, range_max=0,
+    ),
+    "Brute_Unstable_B": WeaponDef(
+        name="Unstable Cannon", weapon_type="projectile",
+        damage=3, push="forward", self_damage=1, push_self=True, range_max=0,
+    ),
+    "Brute_Unstable_AB": WeaponDef(
+        name="Unstable Cannon", weapon_type="projectile",
+        damage=4, push="forward", self_damage=2, push_self=True, range_max=0,
     ),
     "Brute_PhaseShot": WeaponDef(
         name="Phase Cannon", weapon_type="projectile",
@@ -268,6 +402,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 use (total 2)",
         upgrade_b="+2 damage (total 3)",
     ),
+    "Brute_TC_Ricochet": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=1, push="forward", range_max=0, targets_allies=True,
+        upgrade_a="+1 damage to both targets (total 2)",
+        upgrade_b="no friendly damage",
+    ),
+    "Brute_TC_Ricochet_A": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=2, push="forward", range_max=0, targets_allies=True,
+    ),
+    "Brute_TC_Ricochet_B": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=1, push="forward", range_max=0, targets_allies=True,
+    ),
+    "Brute_TC_Ricochet_AB": WeaponDef(
+        name="Ricochet Rocket", weapon_type="two_click",
+        damage=2, push="forward", range_max=0, targets_allies=True,
+    ),
 
     # --- MISSION-SPECIFIC ---
 
@@ -276,10 +428,43 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=2, push="none", range_min=2,
         aoe_behind=True,  # hits target + tile behind in firing direction
     ),
+    "Deploy_TankShot": WeaponDef(
+        name="Stock Cannon", weapon_type="projectile",
+        damage=0, push="forward", range_max=0,
+    ),
+    "Deploy_TankShot2": WeaponDef(
+        name="Stock Cannon", weapon_type="projectile",
+        damage=2, push="forward", range_max=0,
+    ),
+    "Trapped_Explode": WeaponDef(
+        name="Area Blast", weapon_type="self_aoe",
+        damage=1, aoe_adjacent=True, aoe_center=True,
+    ),
+    "Missiles_Shield": WeaponDef(
+        name="Shield Barrage", weapon_type="global_unit_effect",
+        damage=0, shield=True, range_max=0, limited=2,
+        targets_allies=True, building_damage=False,
+    ),
+    "Missiles_OneDmg": WeaponDef(
+        name="Missile Barrage", weapon_type="global_unit_effect",
+        damage=1, range_max=0, limited=2,
+        targets_allies=True, building_damage=False,
+    ),
+    "Disposal_Attack": WeaponDef(
+        name="Disintegrator", weapon_type="disposal",
+        damage=0, acid=True, range_max=0, aoe_adjacent=True,
+    ),
 
     # --- RANGED CLASS ---
 
     "Ranged_Artillerymech": WeaponDef(
+        name="Artemis Artillery", weapon_type="artillery",
+        damage=1, damage_outer=0, push="outward", range_min=2,
+        aoe_adjacent=True,
+        upgrade_a="no building damage",
+        upgrade_b="+2 damage (total 3)",
+    ),
+    "Ranged_Artillerymech_A": WeaponDef(
         name="Artemis Artillery", weapon_type="artillery",
         damage=1, damage_outer=0, push="outward", range_min=2,
         aoe_adjacent=True,
@@ -305,7 +490,52 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 damage (total 3)",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Ranged_Rocket_A": WeaponDef(
+        name="Rocket Artillery", weapon_type="artillery",
+        damage=3, push="forward", smoke_behind_shooter=True, range_min=2,
+        upgrade_a="+1 damage (total 3)",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Ranged_Rocket_B": WeaponDef(
+        name="Rocket Artillery", weapon_type="artillery",
+        damage=3, push="forward", smoke_behind_shooter=True, range_min=2,
+        upgrade_a="+1 damage (total 3)",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Ranged_Rocket_AB": WeaponDef(
+        name="Rocket Artillery", weapon_type="artillery",
+        damage=4, push="forward", smoke_behind_shooter=True, range_min=2,
+        upgrade_a="+1 damage (total 3)",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Ranged_Crack": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=1, push="forward", range_min=2, path_size=3,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="no building damage",
+    ),
+    "Ranged_Crack_A": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=2, push="forward", range_min=2, path_size=3,
+    ),
+    "Ranged_Crack_B": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=1, push="forward", range_min=2, path_size=3,
+        building_damage=False,
+    ),
+    "Ranged_Crack_AB": WeaponDef(
+        name="Tri-Rocket", weapon_type="artillery",
+        damage=2, push="forward", range_min=2, path_size=3,
+        building_damage=False,
+    ),
     "Ranged_Ignite": WeaponDef(
+        name="Ignite", weapon_type="artillery",
+        damage=0, push="outward", fire=True, range_min=2,
+        aoe_adjacent=True,
+        upgrade_a="fire behind mech too",
+        upgrade_b="+2 damage to center",
+    ),
+    "Ranged_Ignite_A": WeaponDef(
         name="Ignite", weapon_type="artillery",
         damage=0, push="outward", fire=True, range_min=2,
         aoe_adjacent=True,
@@ -336,6 +566,32 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         aoe_adjacent=True, aoe_center=True,
         upgrade_a="+1 use (total 2)",
         upgrade_b="+1 damage (total 3)",
+    ),
+    "DeployUnit_AracnoidAtk": WeaponDef(
+        name="Arachnoid Bite", weapon_type="melee",
+        damage=1, push="forward", self_damage=99,
+    ),
+    "DeployUnit_AracnoidAtkB": WeaponDef(
+        name="Arachnoid Bite", weapon_type="melee",
+        damage=1, push="forward", acid=True, self_damage=99,
+    ),
+    "Ranged_Arachnoid": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=1, range_min=2, spawns="DeployUnit_Aracnoid",
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="spawned Arachnoid attacks apply ACID",
+    ),
+    "Ranged_Arachnoid_A": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=2, range_min=2, spawns="DeployUnit_Aracnoid",
+    ),
+    "Ranged_Arachnoid_B": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=1, range_min=2, spawns="DeployUnit_AracnoidB",
+    ),
+    "Ranged_Arachnoid_AB": WeaponDef(
+        name="Arachnoid Injector", weapon_type="artillery",
+        damage=2, range_min=2, spawns="DeployUnit_AracnoidB",
     ),
 
     # --- SCIENCE CLASS ---
@@ -383,6 +639,46 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Confusion Ray", weapon_type="projectile",
         damage=0, push="flip", range_max=0,
     ),
+    "Science_KO_Crack": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=1, push="flip",
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Science_KO_Crack_A": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=2, push="flip",
+    ),
+    "Science_KO_Crack_B": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=2, push="flip",
+    ),
+    "Science_KO_Crack_AB": WeaponDef(
+        name="Seismic Capacitor", weapon_type="melee",
+        damage=3, push="flip",
+    ),
+    "Science_MassShift": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False,
+        upgrade_a="shield self",
+        upgrade_b="shield affected allies",
+    ),
+    "Science_MassShift_A": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False, shield=True,
+    ),
+    "Science_MassShift_B": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False, shield=True,
+    ),
+    "Science_MassShift_AB": WeaponDef(
+        name="Area Shift", weapon_type="self_aoe",
+        damage=0, push="forward", aoe_adjacent=True, aoe_center=True,
+        targets_allies=True, building_damage=False, shield=True,
+    ),
 
     # --- ANY CLASS / SUPPORT ---
 
@@ -396,6 +692,15 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Repair Drop", weapon_type="heal_all",
         damage=0, range_max=0, limited=1,
         targets_allies=True, building_damage=False,
+    ),
+    # Wind Torrent: AE any-class support weapon. Lua `Support_Wind` uses four
+    # fixed board-edge target zones; the clicked zone chooses a global direction
+    # and applies 0-damage push to every pawn in Lua scan order.
+    "Support_Wind": WeaponDef(
+        name="Wind Torrent", weapon_type="global_push",
+        damage=0, push="forward", range_max=0, limited=1,
+        targets_allies=True, building_damage=False,
+        upgrade_a="unlimited uses",
     ),
 
     # --- PASSIVE ABILITIES ---
@@ -507,6 +812,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Centipede Spit", weapon_type="projectile",
         damage=2, acid=True, aoe_perpendicular=True, range_max=0,
     ),
+    "CentipedeAtkB": WeaponDef(
+        name="Caustic Vomit", weapon_type="projectile",
+        damage=3, acid=True, aoe_perpendicular=True, range_max=0,
+    ),
 
     # ── Base Game Artillery ──────────────────────────────────────────
     "ScarabAtk1": WeaponDef(
@@ -517,6 +826,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Scarab Shot", weapon_type="artillery",
         damage=3, range_min=2,
     ),
+    "ScarabAtkB": WeaponDef(
+        name="Expectorating Glands", weapon_type="artillery",
+        damage=4, push="outward", range_min=2,
+        aoe_adjacent=True,
+    ),
     "CrabAtk1": WeaponDef(
         name="Crab Artillery", weapon_type="artillery",
         damage=1, range_min=2, path_size=2,
@@ -524,6 +838,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     "CrabAtk2": WeaponDef(
         name="Alpha Crab Artillery", weapon_type="artillery",
         damage=3, range_min=2, path_size=2,
+    ),
+    "CrabAtkB": WeaponDef(
+        name="Raining Expulsions", weapon_type="artillery",
+        damage=2, damage_outer=1, range_min=2, path_damage=True,
     ),
 
     # ── Base Game Special ────────────────────────────────────────────
@@ -542,6 +860,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     "BlobberAtk2": WeaponDef(
         name="Alpha Blobber Launch", weapon_type="artillery",
         damage=0, spawns="Blob2",
+    ),
+    "BlobberAtkB": WeaponDef(
+        name="Eruptive Growth", weapon_type="artillery",
+        damage=0, spawns="BlobB",
     ),
     "SpiderAtk1": WeaponDef(
         name="Spider Egg", weapon_type="artillery",
@@ -563,6 +885,10 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Blob Explode", weapon_type="self_aoe",
         damage=2, aoe_adjacent=True, aoe_center=True,
     ),
+    "BlobAtkB": WeaponDef(
+        name="Eruptive Guts", weapon_type="self_aoe",
+        damage=1, damage_outer=2, aoe_adjacent=True, aoe_center=True,
+    ),
 
     # ── Advanced Edition Melee ───────────────────────────────────────
     "BouncerAtk1": WeaponDef(
@@ -573,6 +899,11 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Energized Horns", weapon_type="melee",
         damage=3, push="forward", push_self=True,
     ),
+    "BouncerAtkB": WeaponDef(
+        name="Sweeping Horns", weapon_type="melee",
+        damage=2, push="forward", push_self=True,
+        aoe_perpendicular=True,
+    ),
     "MosquitoAtk1": WeaponDef(
         name="Smokescreen Whip", weapon_type="melee",
         damage=1, smoke=True,
@@ -580,6 +911,18 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
     "MosquitoAtk2": WeaponDef(
         name="Alpha Smokescreen Whip", weapon_type="melee",
         damage=3, smoke=True,
+    ),
+    "MosquitoAtkB": WeaponDef(
+        name="Cloudburst Tentacles", weapon_type="melee",
+        damage=255, smoke=True, web=True,
+    ),
+    "Armored_Train_Move": WeaponDef(
+        name="Armored Charge", weapon_type="passive",
+        damage=255,
+    ),
+    "VIP_Truck_Move": WeaponDef(
+        name="Floor It!", weapon_type="passive",
+        range_max=3, limited=2,
     ),
     "StarfishAtk1": WeaponDef(
         name="Starfish Slash", weapon_type="melee",
@@ -589,11 +932,24 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         name="Alpha Starfish Slash", weapon_type="melee",
         damage=2,
     ),
+    "StarfishAtkB1": WeaponDef(
+        name="Scored Appendages", weapon_type="self_aoe",
+        damage=3, push="outward",
+        aoe_center=False, aoe_adjacent=True,
+    ),
     "TumblebugAtk1": WeaponDef(
         name="Tumblebug Boulder", weapon_type="melee",
         damage=1,
     ),
     "TumblebugAtk2": WeaponDef(
+        name="Alpha Tumblebug Boulder", weapon_type="melee",
+        damage=3,
+    ),
+    "DungAtk1": WeaponDef(
+        name="Tumblebug Boulder", weapon_type="melee",
+        damage=1,
+    ),
+    "DungAtk2": WeaponDef(
         name="Alpha Tumblebug Boulder", weapon_type="melee",
         damage=3,
     ),
@@ -628,8 +984,8 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
 
     # ── Pinnacle Bots ────────────────────────────────────────────────
     "SnowtankAtk1": WeaponDef(
-        name="Snowtank Attack", weapon_type="melee",
-        damage=1,
+        name="Cannon 8R Mark I", weapon_type="projectile",
+        damage=1, range_max=0, fire=True,
     ),
     "SnowartAtk1": WeaponDef(
         name="Snowart Shot", weapon_type="artillery",
@@ -640,16 +996,18 @@ ENEMY_WEAPON_DEFS: dict[str, WeaponDef] = {
         damage=3, range_min=2,
     ),
     "BurnbugAtk1": WeaponDef(
-        name="Burnbug Strike", weapon_type="melee",
-        damage=1, fire=True,
+        name="Hooked Proboscis", weapon_type="projectile",
+        damage=1, range_max=0,
     ),
     "BurnbugAtk2": WeaponDef(
-        name="Alpha Burnbug Strike", weapon_type="melee",
-        damage=3, fire=True,
+        name="Barbed Proboscis", weapon_type="projectile",
+        damage=3, range_max=0,
     ),
 
     # ── Bosses ───────────────────────────────────────────────────────
     "FireflyAtkB": WeaponDef(
+        # Burning Thorax queues this projectile both toward the target and in
+        # the opposite direction; Rust enemy simulation handles the paired shot.
         name="Firefly Boss Shot", weapon_type="projectile",
         damage=4, range_max=0,
     ),

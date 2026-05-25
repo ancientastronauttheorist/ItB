@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/17g27zh",
+      "excerpt": "Daily Discussion: Gastropod lists Gastropod Leader as enemy, HP 6, Move 3, Massive, Flaming Proboscis with 3 damage that pulls like other Gastropods and sets nearby tiles on fire.",
+      "confidence": 0.9
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2849327763",
+      "excerpt": "Steam Vek Bestiary guide includes Gastropod/Gastropod Leader among Advanced Edition Vek leaders, corroborating the community naming and leader classification.",
+      "confidence": 0.55
+    }
+  ]
+}

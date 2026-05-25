@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-06T12:54:35.692915",
+  "label": "research_gate_trapped_building_t1",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "Trapped_Building",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Trapped_Building",
+      "pos": [
+        2,
+        7
+      ],
+      "hp": 2
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Hornet1",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 3
+    }
+  ]
+}

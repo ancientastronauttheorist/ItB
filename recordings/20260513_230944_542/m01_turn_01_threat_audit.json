@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-05-13T23:24:27.749722",
+  "run_id": "20260513_230944_542",
+  "mission_index": 1,
+  "turn": 1,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 2,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          4,
+          6
+        ],
+        "target_visual": "B4",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 1886,
+          "type": "Bouncer1",
+          "pos": [
+            5,
+            6
+          ],
+          "visual": "B3",
+          "hp": 3,
+          "max_hp": 3,
+          "weapon_id": "BouncerAtk1",
+          "target": [
+            4,
+            6
+          ],
+          "target_visual": "B4",
+          "queued_target": [
+            4,
+            6
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_smoked",
+          "detail": "attacker is standing in smoke"
+        }
+      },
+      {
+        "target": [
+          4,
+          1
+        ],
+        "target_visual": "G4",
+        "target_hp": 1,
+        "attacker": {
+          "uid": 1888,
+          "type": "Bouncer1",
+          "pos": [
+            4,
+            2
+          ],
+          "visual": "F4",
+          "hp": 3,
+          "max_hp": 3,
+          "weapon_id": "BouncerAtk1",
+          "target": [
+            4,
+            1
+          ],
+          "target_visual": "G4",
+          "queued_target": [
+            4,
+            1
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_smoked",
+          "detail": "attacker is standing in smoke"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}

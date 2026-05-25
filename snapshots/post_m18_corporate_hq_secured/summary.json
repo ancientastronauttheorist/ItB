@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T19:25:01.751865",
+  "label": "post_m18_corporate_hq_secured",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "BurnbugBoss",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Moth2",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 3
+    }
+  ]
+}

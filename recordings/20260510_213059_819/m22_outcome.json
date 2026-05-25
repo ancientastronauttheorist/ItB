@@ -1,0 +1,7 @@
+{
+  "mission_index": 22,
+  "mission_name": "Mission_Final_Cave",
+  "result": "loss",
+  "notes": "Timeline lost in Final Cave after v99 logging run. Combat died on stale Final Cave flyer danger at C6 before the fix; continued with user-approved dirty salvage. Tank E6->E7 and Arti G7 line still left grid at zero before turn 4; useful logs for Final Cave danger and Taurus push_dir desync.",
+  "recorded_at": "2026-05-12T00:18:04.802713"
+}

@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-04-30T19:36:51.343175",
+  "label": "heap_turn2_grid_drop",
+  "turn": 2,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "Acid_Tank",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 1
+    },
+    {
+      "type": "FlameMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        0,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Firefly2",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Centipede1",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        7,
+        5
+      ],
+      "hp": 2
+    }
+  ]
+}

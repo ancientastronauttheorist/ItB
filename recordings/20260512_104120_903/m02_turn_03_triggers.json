@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-12T13:23:32.120783",
+  "run_id": "20260512_104120_903",
+  "mission_index": 2,
+  "turn": 3,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_on_danger",
+        "tier": 4,
+        "severity": "critical",
+        "details": "JetMech moved to danger tile (5,3)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

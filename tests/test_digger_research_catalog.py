@@ -1,0 +1,110 @@
+"""Regression tests for live-mission research gates."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from types import SimpleNamespace
+
+from src.model.pawn_stats import get_pawn_stats
+from src.solver import unknown_detector
+
+
+def _fake_board(unit_types):
+    units = [
+        SimpleNamespace(type=t, weapon="", weapon2="", is_mech=False)
+        for t in unit_types
+    ]
+    tiles = [[SimpleNamespace(terrain="ground") for _ in range(8)] for _ in range(8)]
+    return SimpleNamespace(units=units, tiles=tiles)
+
+
+def test_known_types_catalogs_digger_and_rock_wall():
+    repo_root = Path(__file__).parent.parent
+    with open(repo_root / "data" / "known_types.json") as f:
+        known = json.load(f)
+    observed = set(known["observed_pawn_types"])
+    for pawn_type in ("Digger1", "Digger2", "Wall"):
+        assert pawn_type in observed
+
+
+def test_known_types_catalogs_centipede_bridge_tiers():
+    repo_root = Path(__file__).parent.parent
+    with open(repo_root / "data" / "known_types.json") as f:
+        known = json.load(f)
+    observed = set(known["observed_pawn_types"])
+    for pawn_type in ("Centipede1", "Centipede2"):
+        assert pawn_type in observed
+
+
+def test_known_types_catalogs_tumblebug_live_lua_aliases():
+    repo_root = Path(__file__).parent.parent
+    with open(repo_root / "data" / "known_types.json") as f:
+        known = json.load(f)
+    observed = set(known["observed_pawn_types"])
+    for pawn_type in ("Dung1", "Dung2", "DungBoss", "BombRock"):
+        assert pawn_type in observed
+    weapons = set(known["observed_weapons"])
+    for weapon_id in ("DungAtk1", "DungAtk2", "DungAtkB"):
+        assert weapon_id in weapons
+
+
+def test_digger_and_wall_do_not_trigger_research_gate():
+    unknown_detector.reset_cache()
+    board = _fake_board(["Digger1", "Digger2", "Wall"])
+    unknowns = unknown_detector.detect_unknowns(board)
+    assert unknowns["types"] == []
+
+
+def test_centipedes_do_not_trigger_research_gate():
+    unknown_detector.reset_cache()
+    board = _fake_board(["Centipede1", "Centipede2"])
+    unknowns = unknown_detector.detect_unknowns(board)
+    assert unknowns["types"] == []
+
+
+def test_tumblebug_live_lua_aliases_do_not_trigger_research_gate():
+    unknown_detector.reset_cache()
+    board = _fake_board(["Dung1", "Dung2", "DungBoss", "BombRock"])
+    board.units[0].weapon = "DungAtk1"
+    board.units[1].weapon = "DungAtk2"
+    board.units[2].weapon = "DungAtkB"
+    unknowns = unknown_detector.detect_unknowns(board)
+    assert unknowns["types"] == []
+    assert unknowns["weapons"] == []
+
+
+def test_digger_and_wall_have_static_stats():
+    d1 = get_pawn_stats("Digger1")
+    d2 = get_pawn_stats("Digger2")
+    wall = get_pawn_stats("Wall")
+    assert d1.move_speed == 3
+    assert d2.move_speed == 3
+    assert wall.move_speed == 0
+    assert wall.pushable is True
+
+
+def test_centipedes_have_static_stats():
+    c1 = get_pawn_stats("Centipede1")
+    c2 = get_pawn_stats("Centipede2")
+    assert c1.move_speed == 2
+    assert c2.move_speed == 2
+    assert c1.ranged == 1
+    assert c2.ranged == 1
+
+
+def test_tumblebug_live_lua_aliases_have_static_stats():
+    d1 = get_pawn_stats("Dung1")
+    d2 = get_pawn_stats("Dung2")
+    boss = get_pawn_stats("DungBoss")
+    bombrock = get_pawn_stats("BombRock")
+    assert d1.move_speed == 3
+    assert d2.move_speed == 3
+    assert boss.move_speed == 3
+    assert d1.ranged == 0
+    assert d2.ranged == 0
+    assert boss.ranged == 0
+    assert boss.massive is True
+    assert boss.default_weapon == "DungAtkB"
+    assert bombrock.move_speed == 0
+    assert bombrock.pushable is True

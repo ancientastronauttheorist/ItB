@@ -1,0 +1,101 @@
+{
+  "_comment": "Per-mission unit objectives keyed by Lua mission.ID. `destroy` units should be killed for bonus objectives; `protect` units should survive even if the bridge reports them as enemy-team before conversion.",
+  "_format": {
+    "<Mission_ID>": {
+      "destroy": ["<pawn_type_substring>", "..."],
+      "protect": ["<pawn_type_substring>", "..."]
+    }
+  },
+  "Mission_Hacking": {
+    "destroy": ["Hacked_Building"],
+    "protect": ["Snowtank1", "Snowtank1_Player"]
+  },
+  "Mission_Dam": {
+    "destroy": ["Dam_Pawn"],
+    "protect": []
+  },
+  "Mission_FreezeBots": {
+    "destroy": [],
+    "protect": ["Snowtank", "Snowlaser"]
+  },
+  "Mission_Bomb": {
+    "destroy": [],
+    "protect": ["ProtoBomb"]
+  },
+  "Mission_Train": {
+    "destroy": [],
+    "protect": ["Train"]
+  },
+  "Mission_Armored_Train": {
+    "destroy": [],
+    "protect": ["Train"]
+  },
+  "Mission_Terraform": {
+    "destroy": [],
+    "protect": ["Terraformer"]
+  },
+  "Mission_Disposal": {
+    "destroy": [],
+    "protect": ["Disposal_Unit"]
+  },
+  "Mission_Civilians": {
+    "destroy": [],
+    "protect": ["VIP_Truck"]
+  },
+  "Mission_Tanks": {
+    "destroy": [],
+    "protect": ["Archive_Tank"]
+  },
+  "Mission_Power": {
+    "destroy": ["BonusDebris"],
+    "protect": []
+  },
+  "Mission_AcidStorm": {
+    "destroy": ["Storm_Generator"],
+    "protect": []
+  },
+  "Mission_Volatile": {
+    "destroy": [],
+    "protect": ["GlowingScorpion", "Volatile_Vek"]
+  },
+  "Mission_BeetleBoss": {
+    "destroy": ["BeetleBoss"],
+    "protect": []
+  },
+  "Mission_BlobBoss": {
+    "destroy": ["BlobBoss"],
+    "protect": []
+  },
+  "Mission_BotBoss": {
+    "destroy": ["BotBoss"],
+    "protect": []
+  },
+  "Mission_FireflyBoss": {
+    "destroy": ["FireflyBoss"],
+    "protect": []
+  },
+  "Mission_HornetBoss": {
+    "destroy": ["HornetBoss"],
+    "protect": []
+  },
+  "Mission_JellyBoss": {
+    "destroy": ["Jelly_Boss"],
+    "protect": []
+  },
+  "Mission_CentipedeBoss": {
+    "destroy": ["CentipedeBoss"],
+    "protect": []
+  },
+  "Mission_ScorpionBoss": {
+    "destroy": ["ScorpionBoss"],
+    "protect": []
+  },
+  "Mission_SlugBoss": {
+    "destroy": ["SlugBoss"],
+    "protect": []
+  },
+  "Mission_SpiderBoss": {
+    "destroy": ["SpiderBoss"],
+    "protect": []
+  }
+}

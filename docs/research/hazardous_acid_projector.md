@@ -30,7 +30,7 @@ Internal names: `ScienceMech` / `Nano_Mech` chassis, `Science_AcidShot` weapon. 
 | Damage | **0** (wiki "Damage: ''" field; dev clarified "zero-damage attacks like the Nano Mech's attack") |
 | Weapon type | Projectile (straight line in one of 4 cardinal directions) |
 | Range | **Unlimited** — first obstacle / unit / board-edge stops it |
-| Push | **1 tile Forward** (away from Nano Mech, in fire direction) |
+| Push | **Forward, status-gated in live bridge captures.** Clean hit units receive ACID and are pushed 1 tile forward. Already-acid hit units have stayed in place in live captures. |
 | Status applied | **A.C.I.D.** on hit target |
 | Upgrades | **None.** No Upgrade 1 or 2 — one of the few upgrade-less weapons. |
 | Self-damage | None |
@@ -40,8 +40,9 @@ Internal names: `ScienceMech` / `Nano_Mech` chassis, `Science_AcidShot` weapon. 
 
 Firing pattern on target tile T (first occupied/blocking tile in projectile line):
 1. **Resolve projectile line.** First unit, mountain, or board edge on the line is the target tile T. Ice tiles don't block; units/mountains/buildings/edge do.
-2. **If T has a unit:** apply A.C.I.D. to that unit, then push 1 tile Forward. Damage = 0, so armor/ACID damage math is moot.
-3. **If push resolves into a blocker:** pushed unit takes 1 bump damage (standard push rules — ignores armor/ACID).
+2. **If T has a clean unit and is not the final map-edge tile in the fire direction:** apply A.C.I.D. to that unit, then push it 1 tile forward.
+3. **If T has an already-acid unit:** live bridge captures leave it in place; do not predict displacement or bump damage from this repeat ACID hit.
+4. **If T has a unit on the map edge in the fire direction:** the zero-damage ACID payload can be suppressed entirely; the unit stays in place without ACID.
 4. **If T has no unit (mountain/building at first obstacle):** mountain takes 0 weapon damage (no effect). A.C.I.D. is **deposited on the ground tile** immediately in front of the mountain (per dev clarification: "A.C.I.D. falls to their feet" when target can't receive it). **Verify in-game.**
 
 ## 4. Upgrades
@@ -52,7 +53,7 @@ Firing pattern on target tile T (first occupied/blocking tile in projectile line
 
 - **Shield:** 0 damage, so shield is NEVER consumed by this weapon. Shields block new negative status effects → unit does NOT get A.C.I.D. Instead, per dev clarification, A.C.I.D. "falls to their feet" — **tile under the shielded unit becomes an A.C.I.D. Tile**. When shield is later broken, unit picks up ACID from standing on the tile (if still there).
 - **Frozen:** Same fall-to-feet mechanic. 0 damage does not unfreeze. ACID falls to tile under frozen unit → becomes A.C.I.D. Tile (or **Frozen A.C.I.D. Tile** if tile is also ice).
-- **Push still applies to shielded/frozen targets** — shield doesn't block push; frozen does. For frozen, push is nullified; only ACID-to-tile effect remains. **Verify.**
+- **Push:** predict a 1-tile forward push only when the hit unit is clean and receives new ACID. Already-acid repeat hits and the observed edge endpoint case do not push.
 - **Armor:** Irrelevant — 0 damage means armor's −1 never triggers. ACID applied as-is.
 - **ACID (already on target):** No-op stacking — ACID is boolean.
 - **Water tile target:** Projectile hits first blocker along the line; water doesn't block projectiles. If pushed unit ends up pushed INTO water → drowns (non-flying) + water tile becomes **A.C.I.D. Water Tile**. Flying units pushed into water: entering water removes ACID from unit, so flying Vek pushed into water by this weapon loses ACID immediately.
@@ -60,6 +61,9 @@ Firing pattern on target tile T (first occupied/blocking tile in projectile line
 - **Emerging Vek tile:** Firing at a spawn tile in enemy's emergence phase → ACID deposited on tile → Vek that emerges next turn walks onto ACID and becomes ACID-ed.
 - **Smoke tile:** Firing FROM smoke is blocked. Firing INTO smoke is allowed — projectile passes through; ACID applies normally.
 - **Building target:** 0 damage → building unharmed. ACID deposited on building's tile (same fall-to-feet logic). If unit later steps on that tile after building destruction → picks up ACID.
+- **Off-board edge endpoint:** A target standing on the map edge in the fire direction is left in place, takes no bump damage, and does not receive ACID from this zero-damage hit. Observed in Hazardous Mechs Healing run `20260522_154935_555`, `Mission_Civilians` turn 4: Nano at B2 fired at Scarab1 on A2; live left Scarab at 1 HP with `acid=false`.
+- **Already-acid unit endpoint:** Live leaves the target in place. Observed in the same run, `Mission_Belt` turn 2: Nano at D4 fired toward E4; the already-acid Scarab1 on G4 stayed on G4 instead of pushing to H4.
+- **Clean non-edge unit endpoint:** Live applies ACID and pushes. Observed in the same run, Corporate HQ turn 2: Nano at G7 fired toward F7; the clean Beetle Leader on E7 received ACID and moved to D7.
 - **Psion interaction:** "Acid-based attacks nullify armor buffs from Psion Vek" (Gameranx) — ACID on Shield-Psion-buffed unit removes the armor buff.
 - **Friendly-fire ACID:** CAN target a friendly mech (e.g., to double a scripted hit that will kill both). Rarely useful; expose as legal action in solver, low priority.
 

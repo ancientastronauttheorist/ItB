@@ -1,0 +1,21 @@
+{
+  "run_id": "20260513_230944_542",
+  "squad": "Rusting Hulks",
+  "difficulty": 2,
+  "achievement_targets": [
+    "Hard Victory"
+  ],
+  "tags": [
+    "achievement",
+    "hard_victory"
+  ],
+  "solver_version": "rust-0.1.0-bc828e5",
+  "weight_version": "v011",
+  "updated": "2026-05-14T00:24:09.110173",
+  "created": "2026-05-13T23:09:44.559533",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 5,
+  "outcome_recorded_at": "2026-05-14T00:24:09.095905",
+  "outcome_notes": "Detritus Corporate HQ cleared on Hard Rusting Hulks at 2/7 grid; Corporate Tower protected; Scarab Leader objective failed/survived."
+}

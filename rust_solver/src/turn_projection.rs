@@ -28,6 +28,13 @@ use crate::solver::MechAction;
 use crate::types::{Terrain, idx_to_xy};
 use crate::weapons::WeaponTable;
 
+#[derive(Clone, Debug)]
+pub struct ProjectedScenario {
+    pub label: String,
+    pub board: Board,
+    pub action_result: ActionResult,
+}
+
 /// Assign a new queued target to each alive enemy based on closest reachable
 /// threat. Pure function over the board; does not consume any simulation
 /// state. Caller is responsible for clearing stale `queued_target_x/_y`
@@ -108,7 +115,7 @@ pub fn requeue_enemies_heuristic(board: &mut Board) {
     }
 }
 
-pub fn project_plan(
+fn apply_plan_and_enemy_phase(
     board: &Board,
     actions: &[MechAction],
     spawn_points: &[(u8, u8)],
@@ -128,14 +135,24 @@ pub fn project_plan(
             Some(i) => i,
             None => continue,
         };
-        let result = simulate_action(&mut b, mech_idx, action.move_to, action.weapon, action.target, weapons);
+        let result = simulate_action(
+            &mut b,
+            mech_idx,
+            action.move_to,
+            action.weapon,
+            action.target,
+            weapons,
+        );
         aggregate.merge(&result);
     }
-    let _ = simulate_enemy_attacks(&mut b, &original_positions, weapons);
+    let enemy_phase_result = simulate_enemy_attacks(&mut b, &original_positions, weapons);
+    aggregate.merge(&enemy_phase_result);
     if !spawn_points.is_empty() {
-        apply_spawn_blocking(&mut b, spawn_points);
+        let spawn_result = apply_spawn_blocking(&mut b, spawn_points);
+        aggregate.merge(&spawn_result);
     }
-    // Clear fired queued attacks — subsequent re-queue populates new ones.
+    b.add_mission_kills(aggregate.mission_kills);
+    // Clear fired queued attacks — subsequent scenario re-queues populate new ones.
     for i in 0..b.unit_count as usize {
         let u = &mut b.units[i];
         if u.is_enemy() && u.hp > 0 {
@@ -144,8 +161,6 @@ pub fn project_plan(
             u.flags.set(UnitFlags::HAS_QUEUED_ATTACK, false);
         }
     }
-    // Option B: heuristic re-queue for surviving enemies.
-    requeue_enemies_heuristic(&mut b);
     // Reset player mechs for the next turn.
     for i in 0..b.unit_count as usize {
         let u = &mut b.units[i];
@@ -156,6 +171,154 @@ pub fn project_plan(
     }
     b.current_turn = b.current_turn.saturating_add(1);
     (b, aggregate)
+}
+
+pub fn project_plan(
+    board: &Board,
+    actions: &[MechAction],
+    spawn_points: &[(u8, u8)],
+    weapons: &WeaponTable,
+) -> (Board, ActionResult) {
+    let (mut b, aggregate) = apply_plan_and_enemy_phase(
+        board, actions, spawn_points, weapons,
+    );
+    // Option B: heuristic re-queue for surviving enemies.
+    requeue_enemies_heuristic(&mut b);
+    (b, aggregate)
+}
+
+pub fn project_plan_scenarios(
+    board: &Board,
+    actions: &[MechAction],
+    spawn_points: &[(u8, u8)],
+    weapons: &WeaponTable,
+    max_scenarios: usize,
+) -> Vec<ProjectedScenario> {
+    let max_scenarios = max_scenarios.max(1);
+    let (base, aggregate) = apply_plan_and_enemy_phase(
+        board, actions, spawn_points, weapons,
+    );
+    let mut scenarios = Vec::with_capacity(max_scenarios);
+
+    let mut heuristic = base.clone();
+    requeue_enemies_heuristic(&mut heuristic);
+    let mut signatures = vec![target_signature(&heuristic)];
+    scenarios.push(ProjectedScenario {
+        label: "heuristic_requeue".to_string(),
+        board: heuristic.clone(),
+        action_result: aggregate.clone(),
+    });
+
+    let mut retargets = building_retarget_candidates(&base);
+    retargets.sort_by(|a, b| {
+        // Higher building HP first, then closer targets, then stable uid/tile.
+        b.building_hp.cmp(&a.building_hp)
+            .then(a.distance.cmp(&b.distance))
+            .then(a.enemy_uid.cmp(&b.enemy_uid))
+            .then(a.tile_idx.cmp(&b.tile_idx))
+    });
+
+    for retarget in retargets {
+        if scenarios.len() >= max_scenarios {
+            break;
+        }
+        let mut variant = heuristic.clone();
+        let enemy_idx = match variant.units[..variant.unit_count as usize]
+            .iter()
+            .position(|u| u.uid == retarget.enemy_uid && u.alive())
+        {
+            Some(i) => i,
+            None => continue,
+        };
+        let enemy = &mut variant.units[enemy_idx];
+        if enemy.queued_target_x == retarget.x as i8
+            && enemy.queued_target_y == retarget.y as i8
+        {
+            continue;
+        }
+        enemy.queued_target_x = retarget.x as i8;
+        enemy.queued_target_y = retarget.y as i8;
+        enemy.flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        let signature = target_signature(&variant);
+        if signatures.iter().any(|s| *s == signature) {
+            continue;
+        }
+        signatures.push(signature);
+        scenarios.push(ProjectedScenario {
+            label: format!(
+                "retarget_building_uid{}_{}_{}",
+                retarget.enemy_uid, retarget.x, retarget.y,
+            ),
+            board: variant,
+            action_result: aggregate.clone(),
+        });
+    }
+
+    scenarios
+}
+
+#[derive(Clone, Copy, Debug)]
+struct RetargetCandidate {
+    enemy_uid: u16,
+    x: u8,
+    y: u8,
+    tile_idx: usize,
+    distance: i32,
+    building_hp: u8,
+}
+
+fn building_retarget_candidates(board: &Board) -> Vec<RetargetCandidate> {
+    let n = board.unit_count as usize;
+    let mut out = Vec::new();
+    for ei in 0..n {
+        let e = &board.units[ei];
+        if !eligible_for_requeue(board, ei) {
+            continue;
+        }
+        let reach = e.move_speed as i32 + 4;
+        for idx in 0..64usize {
+            let tile = &board.tiles[idx];
+            if tile.terrain != Terrain::Building || tile.building_hp == 0 {
+                continue;
+            }
+            let (bx, by) = idx_to_xy(idx);
+            let dist = (e.x as i32 - bx as i32).abs()
+                + (e.y as i32 - by as i32).abs();
+            if dist == 0 || dist > reach {
+                continue;
+            }
+            out.push(RetargetCandidate {
+                enemy_uid: e.uid,
+                x: bx,
+                y: by,
+                tile_idx: idx,
+                distance: dist,
+                building_hp: tile.building_hp,
+            });
+        }
+    }
+    out
+}
+
+fn eligible_for_requeue(board: &Board, unit_idx: usize) -> bool {
+    let e = &board.units[unit_idx];
+    e.alive()
+        && e.is_enemy()
+        && !e.frozen()
+        && !e.web()
+        && !board.tile(e.x, e.y).smoke()
+}
+
+fn target_signature(board: &Board) -> Vec<(u16, i8, i8)> {
+    let mut sig = Vec::new();
+    for i in 0..board.unit_count as usize {
+        let u = &board.units[i];
+        if u.alive() && u.is_enemy() {
+            sig.push((u.uid, u.queued_target_x, u.queued_target_y));
+        }
+    }
+    sig.sort_unstable();
+    sig
 }
 
 pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
@@ -183,7 +346,11 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             Terrain::Fire     => "fire",
         };
         let mut t = json!({ "x": x, "y": y, "terrain": terrain_str });
-        if tile.building_hp > 0   { t["building_hp"]      = json!(tile.building_hp); }
+        if tile.terrain == Terrain::Building {
+            t["building_hp"] = json!(tile.building_hp);
+        } else if tile.building_hp > 0 {
+            t["building_hp"] = json!(tile.building_hp);
+        }
         if tile.population > 0    { t["population"]        = json!(tile.population); }
         if tile.on_fire()         { t["fire"]              = json!(true); }
         if tile.smoke()           { t["smoke"]             = json!(true); }
@@ -193,6 +360,14 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if tile.has_pod()         { t["has_pod"]           = json!(true); }
         if tile.freeze_mine()     { t["freeze_mine"]       = json!(true); }
         if tile.old_earth_mine()  { t["old_earth_mine"]    = json!(true); }
+        if tile.grass() {
+            t["grass"] = json!(true);
+            t["custom"] = json!("ground_grass.png");
+        }
+        if tile.repair_platform() {
+            t["repair_platform"] = json!(true);
+            t["item"] = json!("Item_Repair_Mine");
+        }
         if tile.conveyor_dir >= 0 { t["conveyor"]          = json!(tile.conveyor_dir); }
         if (board.unique_buildings >> idx) & 1 != 0 {
             t["unique_building"] = json!(true);
@@ -249,7 +424,9 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if u.acid()                       { unit_val["acid"]                 = json!(true); }
         if u.frozen()                     { unit_val["frozen"]               = json!(true); }
         if u.fire()                       { unit_val["fire"]                 = json!(true); }
+        if u.infected()                   { unit_val["infected"]             = json!(true); }
         if u.web()                        { unit_val["web"]                  = json!(true); }
+        if u.boosted()                    { unit_val["boosted"]              = json!(true); }
         if u.ranged()                     { unit_val["ranged"]               = json!(1u8); }
         if u.has_queued_attack()          { unit_val["has_queued_attack"]    = json!(true); }
         if u.is_extra_tile()              { unit_val["is_extra_tile"]        = json!(true); }
@@ -261,6 +438,22 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         units.push(unit_val);
     }
     let spawning_tiles: Vec<Vec<u8>> = spawn_points.iter().map(|&(x, y)| vec![x, y]).collect();
+    let mut freeze_building_tiles: Vec<Vec<u8>> = Vec::new();
+    let mut freeze_bits = board.freeze_building_tiles;
+    while freeze_bits != 0 {
+        let bit_idx = freeze_bits.trailing_zeros() as usize;
+        freeze_bits &= freeze_bits - 1;
+        let (x, y) = idx_to_xy(bit_idx);
+        freeze_building_tiles.push(vec![x, y]);
+    }
+    let mut mission_mountain_tiles: Vec<Vec<u8>> = Vec::new();
+    let mut mountain_bits = board.mission_mountain_tiles;
+    while mountain_bits != 0 {
+        let bit_idx = mountain_bits.trailing_zeros() as usize;
+        mountain_bits &= mountain_bits - 1;
+        let (x, y) = idx_to_xy(bit_idx);
+        mission_mountain_tiles.push(vec![x, y]);
+    }
     let mut env_danger_v2: Vec<Vec<u8>> = Vec::new();
     for idx in 0..64usize {
         let bit = 1u64 << idx;
@@ -292,7 +485,18 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "environment_danger_v2": env_danger_v2,
         "mission_id":            board.mission_id,
         "mission_kill_target":   board.mission_kill_target,
+        "mission_kill_limit":    board.mission_kill_limit,
         "mission_kills_done":    board.mission_kills_done,
+        "mission_mountain_target": board.mission_mountain_target,
+        "mission_mountains_destroyed": board.projected_mountains_destroyed(),
+        "mission_mountain_tiles": mission_mountain_tiles,
+        "repair_platform_target": board.repair_platform_target,
+        "repair_platforms_used":  board.repair_platforms_used,
+        "freeze_building_target": board.freeze_building_target,
+        "freeze_building_tiles":  freeze_building_tiles,
+        "bonus_objective_unit_types":   board.bonus_dont_kill_types,
+        "destroy_objective_unit_types": board.destroy_objective_unit_types,
+        "protect_objective_unit_types": board.protect_objective_unit_types,
         "eval_weights":          json!({ "pseudo_threat_eval": true }),
     });
     serde_json::to_string(&out).unwrap_or_else(|_| "{}".to_string())
@@ -454,7 +658,7 @@ mod tests {
         b.add_unit(mk_enemy(10, 4, 3, UnitFlags::FROZEN));
         b.add_unit(mk_enemy(11, 3, 4, UnitFlags::WEB));
         // Third enemy on a smoke tile.
-        let mut smoked = mk_enemy(12, 2, 3, UnitFlags::empty());
+        let smoked = mk_enemy(12, 2, 3, UnitFlags::empty());
         b.add_unit(smoked);
         b.tiles[xy_to_idx(2, 3)].set_smoke(true);
         // Re-apply frozen flag via set_frozen so filter sees it.
@@ -481,8 +685,65 @@ mod tests {
     }
 
     #[test]
-    fn test_board_to_json_roundtrip() {
+    fn test_project_plan_scenarios_includes_base_and_retarget() {
+        let mut b = Board::default();
+        b.total_turns = 5; b.current_turn = 1; b.remaining_spawns = 2;
+
+        let mut mech = Unit::default();
+        mech.uid = 0; mech.set_type_name("PunchMech");
+        mech.x = 1; mech.y = 1; mech.hp = 3; mech.max_hp = 3;
+        mech.team = Team::Player;
+        mech.flags = UnitFlags::IS_MECH | UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        mech.move_speed = 3; mech.base_move = 3;
+        b.add_unit(mech);
+
+        let mut enemy = Unit::default();
+        enemy.uid = 10; enemy.set_type_name("Hornet");
+        enemy.x = 4; enemy.y = 4; enemy.hp = 1; enemy.max_hp = 1;
+        enemy.team = Team::Enemy;
+        enemy.flags = UnitFlags::ACTIVE | UnitFlags::CAN_MOVE | UnitFlags::PUSHABLE;
+        enemy.move_speed = 2; enemy.base_move = 2;
+        enemy.queued_target_x = -1; enemy.queued_target_y = -1;
+        b.add_unit(enemy);
+
+        b.tiles[xy_to_idx(4, 3)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(4, 3)].building_hp = 1;
+        b.tiles[xy_to_idx(5, 4)].terrain = Terrain::Building;
+        b.tiles[xy_to_idx(5, 4)].building_hp = 2;
+
+        let scenarios = project_plan_scenarios(&b, &[], &[], &WEAPONS, 4);
+
+        assert!(scenarios.len() >= 2, "expected base + retarget scenarios");
+        assert_eq!(scenarios[0].label, "heuristic_requeue");
+        assert_eq!(scenarios[0].board.units[1].queued_target_x, 4);
+        assert_eq!(scenarios[0].board.units[1].queued_target_y, 3);
+        assert!(scenarios.iter().any(|s| {
+            s.label.starts_with("retarget_building_uid10_5_4")
+                && s.board.units[1].queued_target_x == 5
+                && s.board.units[1].queued_target_y == 4
+        }));
+    }
+
+    #[test]
+    fn test_project_plan_scenarios_is_bounded_and_deterministic() {
         let (board, spawn_points) = simple_board();
+
+        let a = project_plan_scenarios(&board, &[], &spawn_points, &WEAPONS, 1);
+        let b = project_plan_scenarios(&board, &[], &spawn_points, &WEAPONS, 1);
+
+        assert_eq!(a.len(), 1);
+        assert_eq!(b.len(), 1);
+        assert_eq!(a[0].label, "heuristic_requeue");
+        assert_eq!(a[0].board.current_turn, b[0].board.current_turn);
+        assert_eq!(a[0].board.grid_power, b[0].board.grid_power);
+    }
+
+    #[test]
+    fn test_board_to_json_roundtrip() {
+        let (mut board, spawn_points) = simple_board();
+        board.bonus_dont_kill_types.push("Volatile_Vek".to_string());
+        board.destroy_objective_unit_types.push("Hacked_Building".to_string());
+        board.protect_objective_unit_types.push("Snowtank".to_string());
         let alive_before: usize = (0..board.unit_count as usize)
             .filter(|&i| board.units[i].alive()).count();
         let json_str = board_to_json(&board, &spawn_points);
@@ -493,9 +754,38 @@ mod tests {
         assert_eq!(alive_before, alive_after, "unit count must survive round-trip");
         assert_eq!(board.grid_power, b2.grid_power);
         assert_eq!(board.current_turn, b2.current_turn);
+        assert_eq!(b2.bonus_dont_kill_types, vec!["Volatile_Vek".to_string()]);
+        assert_eq!(b2.destroy_objective_unit_types, vec!["Hacked_Building".to_string()]);
+        assert_eq!(b2.protect_objective_unit_types, vec!["Snowtank".to_string()]);
         // Option C: round-trip must preserve the pseudo_threat_eval flag
         // that board_to_json injects.
         assert!(weights.pseudo_threat_eval,
             "projected board_to_json must set eval_weights.pseudo_threat_eval=true");
+    }
+
+    #[test]
+    fn test_board_to_json_preserves_destroyed_unique_building_hp_zero() {
+        let (mut board, spawn_points) = simple_board();
+        let idx = xy_to_idx(4, 6);
+        board.tiles[idx].terrain = Terrain::Building;
+        board.tiles[idx].building_hp = 0;
+        board.unique_buildings |= 1u64 << idx;
+        board.grid_reward_buildings |= 1u64 << idx;
+
+        let json_str = board_to_json(&board, &spawn_points);
+        let value: serde_json::Value = serde_json::from_str(&json_str)
+            .expect("board_to_json emits valid json");
+        let tile = value["tiles"].as_array().unwrap().iter()
+            .find(|t| t["x"] == 4 && t["y"] == 6)
+            .expect("destroyed unique building tile is serialized");
+        assert_eq!(tile["terrain"], "building");
+        assert_eq!(tile["building_hp"], 0);
+        assert_eq!(tile["unique_building"], true);
+
+        let (roundtrip, _sp, _, _weights, _, _) = board_from_json(&json_str)
+            .expect("projected final board must round-trip");
+        assert_eq!(roundtrip.tiles[idx].terrain, Terrain::Building);
+        assert_eq!(roundtrip.tiles[idx].building_hp, 0);
+        assert_ne!(roundtrip.unique_buildings & (1u64 << idx), 0);
     }
 }

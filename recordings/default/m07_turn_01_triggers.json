@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-30T00:16:16.200042",
+  "run_id": "default",
+  "mission_index": 7,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_on_danger",
+        "tier": 4,
+        "severity": "critical",
+        "details": "IgniteMech moved to danger tile (2,5)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

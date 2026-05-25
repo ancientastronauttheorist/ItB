@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-05T00:07:52.055466",
+  "label": "before_loadgame_freezebots_objective_recovery",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "Freeze_Tank",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "WallMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowtank1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

@@ -1,0 +1,4874 @@
+{
+  "timestamp": "2026-05-06T12:41:32.537716",
+  "run_id": "20260506_114649_974",
+  "mission_index": 2,
+  "turn": 4,
+  "label": "solve",
+  "data": {
+    "schema_version": 1,
+    "simulator_version": 50,
+    "score": -27917.287495851517,
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "JetMech",
+        "move_to": [
+          1,
+          5
+        ],
+        "weapon": "Aerial Bombs",
+        "weapon_id": "Brute_Jetmech",
+        "target": [
+          1,
+          7
+        ],
+        "description": "JetMech, move D3\u2192C7, fire Aerial Bombs at A7"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "RocketMech",
+        "move_to": [
+          5,
+          4
+        ],
+        "weapon": "Rocket Artillery",
+        "weapon_id": "Ranged_Rocket",
+        "target": [
+          5,
+          6
+        ],
+        "description": "RocketMech, move D4\u2192D3, fire Rocket Artillery at B3"
+      }
+    ],
+    "threats": 3,
+    "active_mechs": 2,
+    "spawn_points": [],
+    "search_stats": {
+      "elapsed_seconds": 0.012681245803833008,
+      "timed_out": false,
+      "permutations_tried": 2,
+      "total_permutations": 2,
+      "active_mech_count": 2
+    },
+    "weight_version": "v011",
+    "beam_mode": 0,
+    "beam_chain_score": null,
+    "candidate_count": 100,
+    "selected_candidate_rank": 0,
+    "selected_candidate_source": "top1",
+    "candidate_safety": [
+      {
+        "rank": 0,
+        "source": "top_k_safety",
+        "score": -46461.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 1,
+        "source": "top_k_safety",
+        "score": -47861.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "source": "top_k_safety",
+        "score": -47861.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "source": "top_k_safety",
+        "score": -47886.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "source": "top_k_safety",
+        "score": -47886.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "source": "top_k_safety",
+        "score": -47886.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "source": "top_k_safety",
+        "score": -47886.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "source": "top_k_safety",
+        "score": -47886.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "source": "top_k_safety",
+        "score": -47911.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 11,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 12,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 13,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 14,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 15,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 16,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 17,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 18,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 19,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 20,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 21,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 22,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 23,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 24,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 25,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 26,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 27,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 28,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 29,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 30,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 31,
+        "source": "top_k_safety",
+        "score": -48021.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 32,
+        "source": "top_k_safety",
+        "score": -48046.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 33,
+        "source": "top_k_safety",
+        "score": -48046.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 34,
+        "source": "top_k_safety",
+        "score": -48046.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 35,
+        "source": "top_k_safety",
+        "score": -48046.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 36,
+        "source": "top_k_safety",
+        "score": -48046.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 37,
+        "source": "top_k_safety",
+        "score": -48111.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 38,
+        "source": "top_k_safety",
+        "score": -48111.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 39,
+        "source": "top_k_safety",
+        "score": -48111.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 40,
+        "source": "top_k_safety",
+        "score": -48186.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 41,
+        "source": "top_k_safety",
+        "score": -48186.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 42,
+        "source": "top_k_safety",
+        "score": -48296.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 43,
+        "source": "top_k_safety",
+        "score": -48296.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 44,
+        "source": "top_k_safety",
+        "score": -48296.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 45,
+        "source": "top_k_safety",
+        "score": -48296.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 46,
+        "source": "top_k_safety",
+        "score": -48296.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 47,
+        "source": "top_k_safety",
+        "score": -48296.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 48,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 49,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 50,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 51,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 52,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 53,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 54,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 55,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 56,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 57,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 58,
+        "source": "top_k_safety",
+        "score": -48321.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 59,
+        "source": "top_k_safety",
+        "score": -48411.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 60,
+        "source": "top_k_safety",
+        "score": -48411.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 61,
+        "source": "top_k_safety",
+        "score": -48571.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 62,
+        "source": "top_k_safety",
+        "score": -48571.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 63,
+        "source": "top_k_safety",
+        "score": -48571.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 64,
+        "source": "top_k_safety",
+        "score": -48571.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 65,
+        "source": "top_k_safety",
+        "score": -48571.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 66,
+        "source": "top_k_safety",
+        "score": -48571.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 67,
+        "source": "top_k_safety",
+        "score": -48596.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 68,
+        "source": "top_k_safety",
+        "score": -48596.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 69,
+        "source": "top_k_safety",
+        "score": -48621.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 70,
+        "source": "top_k_safety",
+        "score": -48621.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 71,
+        "source": "top_k_safety",
+        "score": -48621.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 72,
+        "source": "top_k_safety",
+        "score": -48621.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 73,
+        "source": "top_k_safety",
+        "score": -48621.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 74,
+        "source": "top_k_safety",
+        "score": -48871.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 75,
+        "source": "top_k_safety",
+        "score": -48871.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 76,
+        "source": "top_k_safety",
+        "score": -48871.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 77,
+        "source": "top_k_safety",
+        "score": -49071.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 78,
+        "source": "top_k_safety",
+        "score": -49081.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1,
+            "mech_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          },
+          {
+            "kind": "mech_hp_loss",
+            "blocking": false,
+            "current": 5,
+            "predicted": 4
+          }
+        ]
+      },
+      {
+        "rank": 79,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 80,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 81,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 82,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 83,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 84,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 85,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 86,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 87,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 88,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 89,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 90,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 91,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 92,
+        "source": "top_k_safety",
+        "score": -49121.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 93,
+        "source": "top_k_safety",
+        "score": -49146.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 94,
+        "source": "top_k_safety",
+        "score": -49146.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 95,
+        "source": "top_k_safety",
+        "score": -49146.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 96,
+        "source": "top_k_safety",
+        "score": -49171.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 97,
+        "source": "top_k_safety",
+        "score": -49171.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 98,
+        "source": "top_k_safety",
+        "score": -49171.57313656807,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      },
+      {
+        "rank": 99,
+        "source": "top_k_safety",
+        "score": -61589.858755861016,
+        "chain_score": null,
+        "status": "DIRTY",
+        "blocking": true,
+        "loss_profile": {
+          "label": "grid_loss",
+          "blocking": true,
+          "losses": {
+            "grid_power": 2,
+            "building_hp_total": 2
+          },
+          "non_overridable": false
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 4
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 8
+          }
+        ]
+      }
+    ],
+    "dirty_frontier": [
+      {
+        "label": "grid_loss",
+        "count": 100,
+        "best_rank": 0,
+        "best_source": "top_k_safety",
+        "best_score": -46461.57313656807,
+        "chain_score": null,
+        "blocking": true,
+        "losses": {
+          "grid_power": 1,
+          "building_hp_total": 1
+        },
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "blocking": true,
+            "current": 6,
+            "predicted": 5
+          },
+          {
+            "kind": "building_hp_loss",
+            "blocking": true,
+            "current": 10,
+            "predicted": 9
+          }
+        ]
+      }
+    ],
+    "lookahead_frontier": [
+      {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": 0,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -46461.57313656807,
+        "candidate_label": "grid_loss",
+        "candidate_losses": {
+          "grid_power": 1,
+          "building_hp_total": 1
+        },
+        "status": "OK",
+        "scenario_count": 3,
+        "scenario_results": [
+          {
+            "scenario": "heuristic_requeue",
+            "projected_turn": 5,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 2,
+              "enemy_damage_dealt": 3,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 138504.2857142857,
+            "next_elapsed_seconds": 0.0036821365356445312,
+            "next_actions": [
+              "JetMech",
+              "RocketMech, move D3\u2192D4, fire Rocket Artillery at B4"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid198_2_5",
+            "projected_turn": 5,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 2,
+              "enemy_damage_dealt": 3,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 138504.2857142857,
+            "next_elapsed_seconds": 0.003694772720336914,
+            "next_actions": [
+              "JetMech",
+              "RocketMech, move D3\u2192D4, fire Rocket Artillery at B4"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          },
+          {
+            "scenario": "retarget_building_uid198_5_1",
+            "projected_turn": 5,
+            "projected_action_result": {
+              "buildings_damaged": 0,
+              "buildings_lost": 0,
+              "enemies_killed": 2,
+              "enemy_damage_dealt": 3,
+              "grid_damage": 0,
+              "mech_damage_taken": 0,
+              "mechs_killed": 0,
+              "pods_collected": 0,
+              "repair_platforms_used": 0,
+              "spawns_blocked": 0
+            },
+            "status": "OK",
+            "next_score": 138504.2857142857,
+            "next_elapsed_seconds": 0.0037238597869873047,
+            "next_actions": [
+              "JetMech",
+              "RocketMech, move D3\u2192D4, fire Rocket Artillery at B4"
+            ],
+            "next_plan_safety": {
+              "status": "CLEAN",
+              "blocking": false,
+              "loss_profile": {
+                "label": "clean",
+                "blocking": false,
+                "losses": {},
+                "non_overridable": false
+              },
+              "violations": []
+            }
+          }
+        ],
+        "worst_scenario": "heuristic_requeue",
+        "projected_turn": 5,
+        "projected_action_result": {
+          "buildings_damaged": 0,
+          "buildings_lost": 0,
+          "enemies_killed": 2,
+          "enemy_damage_dealt": 3,
+          "grid_damage": 0,
+          "mech_damage_taken": 0,
+          "mechs_killed": 0,
+          "pods_collected": 0,
+          "repair_platforms_used": 0,
+          "spawns_blocked": 0
+        },
+        "next_score": 138504.2857142857,
+        "next_actions": [
+          "JetMech",
+          "RocketMech, move D3\u2192D4, fire Rocket Artillery at B4"
+        ],
+        "next_plan_safety": {
+          "status": "CLEAN",
+          "blocking": false,
+          "loss_profile": {
+            "label": "clean",
+            "blocking": false,
+            "losses": {},
+            "non_overridable": false
+          },
+          "violations": []
+        },
+        "robust_summary": {
+          "candidate_label": "grid_loss",
+          "candidate_rank": 0,
+          "candidate_source": "top_k_safety",
+          "candidate_score": -46461.57313656807,
+          "candidate_losses": {
+            "grid_power": 1,
+            "building_hp_total": 1
+          },
+          "scenario_count": 3,
+          "worst_scenario": "heuristic_requeue",
+          "next_score": 138504.2857142857,
+          "next_loss_label": "clean",
+          "robust_status": "clean",
+          "robust_score": 92042.71257771764
+        }
+      }
+    ],
+    "robust_frontier": [
+      {
+        "candidate_label": "grid_loss",
+        "candidate_rank": 0,
+        "candidate_source": "top_k_safety",
+        "candidate_score": -46461.57313656807,
+        "candidate_losses": {
+          "grid_power": 1,
+          "building_hp_total": 1
+        },
+        "scenario_count": 3,
+        "worst_scenario": "heuristic_requeue",
+        "next_score": 138504.2857142857,
+        "next_loss_label": "clean",
+        "robust_status": "clean",
+        "robust_score": 92042.71257771764
+      }
+    ],
+    "safety_widening": [],
+    "action_results": [
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 1,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "repair_platforms_used": 0,
+        "spawns_blocked": 0
+      },
+      {
+        "buildings_damaged": 0,
+        "buildings_lost": 0,
+        "enemies_killed": 1,
+        "enemy_damage_dealt": 2,
+        "events": [],
+        "grid_damage": 0,
+        "mech_damage_taken": 0,
+        "mechs_killed": 0,
+        "pods_collected": 0,
+        "repair_platforms_used": 0,
+        "spawns_blocked": 0
+      }
+    ],
+    "predicted_states": [
+      {
+        "post_attack": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 0,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 0,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 0,
+              "y": 7
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": true,
+              "terrain": "ground",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 7
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "water",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 7
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 1
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                1,
+                7
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "JetMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RocketMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "PulseMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                1,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion1",
+              "uid": 182
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 196
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 197
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Hornet1",
+              "uid": 198
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 0,
+          "grid_power": 6,
+          "mech_uid": 0,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "water",
+              "x": 0,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "mountain",
+              "x": 0,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "water",
+              "x": 1,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 1,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 2,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "water",
+              "x": 2,
+              "y": 6
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 1
+            }
+          ],
+          "units": [
+            {
+              "active": true,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                1,
+                5
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "JetMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                4,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RocketMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "PulseMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 1,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                1,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion1",
+              "uid": 182
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 196
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 197
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Hornet1",
+              "uid": 198
+            }
+          ]
+        }
+      },
+      {
+        "post_attack": {
+          "action_index": 1,
+          "grid_power": 6,
+          "mech_uid": 1,
+          "snapshot_phase": "after_mech_action",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "sand",
+              "x": 4,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": true,
+              "terrain": "ground",
+              "x": 5,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "sand",
+              "x": 5,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": true,
+              "terrain": "ground",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "chasm",
+              "x": 6,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": true,
+              "terrain": "ground",
+              "x": 6,
+              "y": 5
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                1,
+                7
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "JetMech",
+              "uid": 0
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RocketMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "PulseMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                1,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion1",
+              "uid": 182
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 196
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                7
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 197
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Hornet1",
+              "uid": 198
+            }
+          ]
+        },
+        "post_move": {
+          "action_index": 1,
+          "grid_power": 6,
+          "mech_uid": 1,
+          "snapshot_phase": "after_move",
+          "tiles_changed": [
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 0,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 1,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 1,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 2
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 2,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "sand",
+              "x": 4,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 4,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 4,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 2,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "building",
+              "x": 5,
+              "y": 1
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 5,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "sand",
+              "x": 5,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": true,
+              "terrain": "ground",
+              "x": 5,
+              "y": 5
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "chasm",
+              "x": 6,
+              "y": 3
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": false,
+              "terrain": "ground",
+              "x": 6,
+              "y": 4
+            },
+            {
+              "acid": false,
+              "building_hp": 0,
+              "fire": false,
+              "has_pod": false,
+              "smoke": true,
+              "terrain": "ground",
+              "x": 6,
+              "y": 5
+            }
+          ],
+          "units": [
+            {
+              "active": false,
+              "alive": true,
+              "hp": 3,
+              "is_mech": true,
+              "max_hp": 2,
+              "pos": [
+                1,
+                7
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "JetMech",
+              "uid": 0
+            },
+            {
+              "active": true,
+              "alive": true,
+              "hp": 2,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                5,
+                4
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "RocketMech",
+              "uid": 1
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": true,
+              "max_hp": 3,
+              "pos": [
+                3,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 1,
+              "type": "PulseMech",
+              "uid": 2
+            },
+            {
+              "active": false,
+              "alive": false,
+              "hp": 0,
+              "is_mech": false,
+              "max_hp": 3,
+              "pos": [
+                1,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scorpion1",
+              "uid": 182
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                3
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 196
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                5,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Scarab1",
+              "uid": 197
+            },
+            {
+              "active": false,
+              "alive": true,
+              "hp": 2,
+              "is_mech": false,
+              "max_hp": 2,
+              "pos": [
+                4,
+                6
+              ],
+              "status": {
+                "acid": false,
+                "fire": false,
+                "frozen": false,
+                "shield": false,
+                "web": false
+              },
+              "team": 6,
+              "type": "Hornet1",
+              "uid": 198
+            }
+          ]
+        }
+      }
+    ],
+    "current_outcome": {
+      "buildings_alive": 7,
+      "building_hp_total": 10,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 0,
+      "grid_power": 6,
+      "enemies_alive": 4,
+      "enemy_hp_total": 7,
+      "mechs_alive": 2,
+      "mech_hp_total": 5,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "JetMech",
+          "hp": 3,
+          "max_hp": 2
+        },
+        {
+          "uid": 1,
+          "type": "RocketMech",
+          "hp": 2,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "PulseMech",
+          "hp": 0,
+          "max_hp": 3
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_Crack",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0
+    },
+    "predicted_outcome": {
+      "building_hp_total": 9,
+      "buildings_alive": 7,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 2,
+      "enemy_hp_total": 3,
+      "grid_power": 5,
+      "mech_hp": [
+        {
+          "hp": 3,
+          "max_hp": 2,
+          "type": "JetMech",
+          "uid": 0
+        },
+        {
+          "hp": 2,
+          "max_hp": 3,
+          "type": "RocketMech",
+          "uid": 1
+        },
+        {
+          "hp": 0,
+          "max_hp": 3,
+          "type": "PulseMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 2
+    },
+    "predicted_board_summary": {
+      "buildings_alive": 7,
+      "building_hp_total": 9,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 0,
+      "grid_power": 5,
+      "enemies_alive": 2,
+      "enemy_hp_total": 3,
+      "mechs_alive": 2,
+      "mech_hp_total": 5,
+      "bigbomb_alive": false,
+      "mech_hp": [
+        {
+          "hp": 3,
+          "max_hp": 2,
+          "type": "JetMech",
+          "uid": 0
+        },
+        {
+          "hp": 2,
+          "max_hp": 3,
+          "type": "RocketMech",
+          "uid": 1
+        },
+        {
+          "hp": 0,
+          "max_hp": 3,
+          "type": "PulseMech",
+          "uid": 2
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": [],
+      "mission_id": "Mission_Crack",
+      "protected_objective_units": [],
+      "protected_objective_units_alive": 0,
+      "protected_objective_units_frozen": 0,
+      "buildings_destroyed_by_enemies": 0,
+      "pods_collected": 0
+    },
+    "plan_safety": {
+      "status": "DIRTY",
+      "blocking": true,
+      "violations": [
+        {
+          "kind": "grid_damage",
+          "current": 6,
+          "predicted": 5,
+          "blocking": true,
+          "message": "Predicted grid power drops before the next player turn.",
+          "delta": -1
+        },
+        {
+          "kind": "building_hp_loss",
+          "current": 10,
+          "predicted": 9,
+          "blocking": true,
+          "message": "Predicted outcome loses building HP even if grid power stays visible.",
+          "delta": -1
+        }
+      ],
+      "compared": [
+        "grid_power",
+        "buildings_alive",
+        "building_hp_total",
+        "objective_buildings_alive",
+        "objective_building_hp_total",
+        "pods_present",
+        "mechs_alive",
+        "mech_hp_total",
+        "mechs_on_danger",
+        "mechs_disabled",
+        "bigbomb_alive",
+        "protected_objective_units_alive"
+      ],
+      "current": {
+        "grid_power": 6,
+        "buildings_alive": 7,
+        "building_hp_total": 10,
+        "objective_buildings_alive": 1,
+        "objective_building_hp_total": 1,
+        "pods_present": 0,
+        "mechs_alive": 2,
+        "mech_hp_total": 5,
+        "mechs_on_danger": [],
+        "mechs_disabled": [],
+        "bigbomb_alive": false,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      },
+      "predicted": {
+        "grid_power": 5,
+        "buildings_alive": 7,
+        "building_hp_total": 9,
+        "objective_buildings_alive": 1,
+        "objective_building_hp_total": 1,
+        "pods_present": 0,
+        "mechs_alive": 2,
+        "mech_hp_total": 5,
+        "mechs_on_danger": [],
+        "mechs_disabled": [],
+        "bigbomb_alive": false,
+        "protected_objective_units_alive": 0,
+        "protected_objective_units_frozen": 0
+      }
+    },
+    "score_breakdown": {
+      "total": 129706.78571428571,
+      "grid_multiplier": 1.0,
+      "bld_mult": 1.1428571428571428,
+      "buildings_alive": {
+        "count": 7,
+        "score": 80000.0
+      },
+      "building_hp": {
+        "total": 9,
+        "score": 20571.42857142857
+      },
+      "objective_rep": {
+        "count": 1,
+        "score": 9142.857142857143
+      },
+      "objective_grid": {
+        "count": 0,
+        "score": 0.0
+      },
+      "grid_power": {
+        "value": 5,
+        "effective": 5.0,
+        "expected_save": 0.0,
+        "expected_save_player": 0.0,
+        "score": 21800.0
+      },
+      "enemies_killed": {
+        "count": 2,
+        "score": 600.0000000000001
+      },
+      "mission_kill_bonus": {
+        "target": 0,
+        "done_pre_turn": 0,
+        "kills_this_turn": 2,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "mission_repair_bonus": {
+        "target": 0,
+        "used": 0,
+        "progress_score": 0.0,
+        "threshold_score": 0.0,
+        "score": 0.0
+      },
+      "enemy_hp_remaining": {
+        "total": 3,
+        "score": -97.5
+      },
+      "mission_unit_objectives": {
+        "destroy_dead": 0,
+        "destroy_alive": 0,
+        "destroy_shielded": 0,
+        "protect_alive": 0,
+        "protect_dead": 0,
+        "score": 0
+      },
+      "environment_danger": {
+        "enemies_on": 0,
+        "mechs_on": 0,
+        "score": 0.0
+      },
+      "mechs": {
+        "alive": 2,
+        "dead": 0,
+        "total_hp": 5,
+        "score": 190.0
+      },
+      "spawns_blocked": {
+        "count": 0,
+        "score": 0.0
+      },
+      "remaining_spawns": {
+        "count": 1,
+        "score": -2500.0
+      },
+      "pods": {
+        "uncollected": 0,
+        "proximity": 0,
+        "score": 0.0
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-05T00:49:35.877453",
+  "label": "research_gate_crabboss_m05_turn1",
+  "turn": 1,
+  "grid_power": 3,
+  "mechs": [
+    {
+      "type": "WallMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "CrabBoss",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 6
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

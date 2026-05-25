@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-08T17:00:09.637784",
+  "label": "investigate_m07_turn04_jet_move_tile_status",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "Acid_Tank",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        7,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        6,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    }
+  ]
+}

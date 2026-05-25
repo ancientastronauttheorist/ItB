@@ -65,8 +65,10 @@ bitflags! {
         /// `BlobBossAtk:GetSkillEffect` (scripts/missions/bosses/goo.lua:172-187)
         /// where `AddQueuedDamage(SpaceDamage(p2, 4))` is appended to the
         /// SkillEffect *before* the optional move; the engine evaluates the
-        /// queued damage on the next enemy turn at p2 even if the boss has
-        /// since been pushed/pulled out of adjacency. Used for goo bosses
+        /// queued damage on the next enemy turn even if the boss has since
+        /// been pushed/pulled out of adjacency. The p2 target is translated
+        /// by the original attacker-relative offset when the boss moves. Used
+        /// for goo bosses
         /// (BlobBoss / BlobBossMed / BlobBossSmall) — without this, pulling
         /// the boss with Grappling Hook silently nullifies a 4-damage
         /// building hit and the solver mispredicts grid_power loss.
@@ -81,6 +83,40 @@ bitflags! {
         /// Currently only Prime_Flamethrower; upgraded multi-tile mode
         /// (PathSize=2/3) is not modelled — base equip uses PathSize=1.
         const BURNS_FIRE_TARGETS = 1 << 22;
+        /// Zero-damage adjacent pushes do not deal edge-bump damage when the
+        /// destination is off-board. Confirmed for Vulcan Artillery and
+        /// Repulse; on-board pushes still move/bump normally.
+        const NO_EDGE_BUMP_ADJACENT_PUSH = 1 << 23;
+        /// Weapon lights the tile directly behind the shooter on fire.
+        /// Ranged_Ignite_A (Vulcan Artillery Backburn upgrade) uses this;
+        /// independent from FIRE, which still applies to the target tile.
+        const FIRE_BEHIND_SHOOTER = 1 << 24;
+        /// Gastropod/Burnbug hook projectile. The shot travels like a normal
+        /// projectile to the first blocker, then either pulls a hit pawn toward
+        /// the attacker or pulls the attacker toward an object.
+        const PROJECTILE_GRAPPLE = 1 << 25;
+        /// Artillery also damages every cardinal tile strictly between the
+        /// shooter and target. Crab Leader's "Raining Expulsions" deals 2 to
+        /// the target and 1 to the projectile path; normal Crab Artillery's
+        /// extra tile is behind the target and remains `path_size`.
+        const PATH_DAMAGE = 1 << 26;
+        /// Direct weapon damage from this weapon does not reduce Grid Building
+        /// HP. Used by Artemis Artillery's Buildings Immune upgrade; push/bump
+        /// damage remains physical collision damage and is handled separately.
+        const BUILDING_IMMUNE = 1 << 27;
+        /// Weapon applies Shield to the firing unit as part of its effect.
+        /// Used by Repulse's Shield Self upgrade.
+        const SHIELD_SELF = 1 << 28;
+        /// Direct weapon damage skips player-side units. Used by Burst Beam's
+        /// Ally Immune upgrade; terrain/building damage and damage decay still
+        /// occur normally.
+        const FRIENDLY_IMMUNE = 1 << 29;
+        /// Direct projectile/center-hit pushes from this weapon do not deal
+        /// off-board edge bump damage. On-board blockers still bump normally.
+        const NO_EDGE_BUMP_DIRECT_PUSH = 1 << 30;
+        /// Weapon applies Shield to player-team units it affects, but not to
+        /// enemies. Used by Area Shift's Shield Ally upgrade.
+        const SHIELD_ALLIES = 1u32 << 31;
     }
 }
 
@@ -97,6 +133,7 @@ pub struct WeaponDef {
     pub range_max: u8,   // 0 = unlimited
     pub limited: u8,     // 0 = unlimited uses
     pub path_size: u8,   // tiles hit in line (1 = default, 2 = Crab dual artillery)
+    pub boost_bonus: u8, // transient +damage from Boost for conditional damage branches
     pub flags: WeaponFlags,
 }
 
@@ -122,6 +159,15 @@ impl WeaponDef {
     pub fn damage_scales_with_dist(&self) -> bool { self.flags.contains(WeaponFlags::DAMAGE_SCALES_WITH_DIST) }
     pub fn queued_damage_persists(&self) -> bool { self.flags.contains(WeaponFlags::QUEUED_DAMAGE_PERSISTS) }
     pub fn burns_fire_targets(&self) -> bool { self.flags.contains(WeaponFlags::BURNS_FIRE_TARGETS) }
+    pub fn no_edge_bump_adjacent_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH) }
+    pub fn fire_behind_shooter(&self) -> bool { self.flags.contains(WeaponFlags::FIRE_BEHIND_SHOOTER) }
+    pub fn projectile_grapple(&self) -> bool { self.flags.contains(WeaponFlags::PROJECTILE_GRAPPLE) }
+    pub fn path_damage(&self) -> bool { self.flags.contains(WeaponFlags::PATH_DAMAGE) }
+    pub fn building_immune(&self) -> bool { self.flags.contains(WeaponFlags::BUILDING_IMMUNE) }
+    pub fn shield_self(&self) -> bool { self.flags.contains(WeaponFlags::SHIELD_SELF) }
+    pub fn friendly_immune(&self) -> bool { self.flags.contains(WeaponFlags::FRIENDLY_IMMUNE) }
+    pub fn no_edge_bump_direct_push(&self) -> bool { self.flags.contains(WeaponFlags::NO_EDGE_BUMP_DIRECT_PUSH) }
+    pub fn shield_allies(&self) -> bool { self.flags.contains(WeaponFlags::SHIELD_ALLIES) }
 }
 
 /// Default weapon def (no-op).
@@ -133,6 +179,7 @@ const DEF: WeaponDef = WeaponDef {
     range_min: 1, range_max: 1,
     limited: 0,
     path_size: 1,
+    boost_bonus: 0,
     flags: WeaponFlags::AOE_CENTER, // aoe_center defaults true
 };
 
@@ -370,9 +417,169 @@ pub enum WId {
     /// trail is at most 1/turn while the mech is on a trail tile and is
     /// dwarfed by the boss's 3-dmg primary attack).
     BurnbugAtkB = 123,
+    /// Wind Torrent (`Support_Wind`): AE any-class support weapon. Targeting
+    /// uses four fixed 2x2 zones near the board edges; the clicked zone chooses
+    /// one global push direction and applies `SpaceDamage(point, 0, dir)` to
+    /// every pawn in scan order. Base weapon is single-use.
+    SupportWind = 124,
+    /// Vulcan Artillery with Backburn upgrade: base center fire + adjacent
+    /// outward pushes, plus fire on the tile directly behind the shooter.
+    RangedIgniteA = 125,
+    /// Crab Leader's "Raining Expulsions": 2 damage artillery target plus 1
+    /// damage to each tile in the projectile path before the target.
+    CrabAtkB = 126,
+    /// Artemis Artillery with Buildings Immune: same center damage and
+    /// adjacent outward pushes, but direct damage to Grid Buildings is zero.
+    RangedArtillerymechA = 127,
+    /// Archive / deployable tank Stock Cannon: projectile, 0 damage, pushes
+    /// the first blocker forward. Controllable friendly non-mech units use it.
+    DeployTankShot = 128,
+    /// Upgraded deployable tank Stock Cannon: same push, 2 direct damage.
+    DeployTankShot2 = 129,
+    /// Decoy Building Area Blast (Mission_Trapped): self-destructs, killing
+    /// itself and every adjacent non-building tile.
+    TrappedExplode = 130,
+    /// Bouncer Leader's "Sweeping Horns": adjacent melee T-pattern, 2 damage
+    /// and forward push on target plus the two perpendicular tiles, then the
+    /// boss bounces backward.
+    BouncerAtkB = 131,
+    /// Archive Armored Train objective: moves forward two tiles and destroys
+    /// blockers in the entered path. Simulated by enemy train-advance logic.
+    ArmoredTrainMove = 132,
+    /// Repulse with Shield Self upgrade: pushes adjacent tiles like base
+    /// Repulse, then applies Shield to the Pulse Mech's own tile.
+    ScienceRepulseA = 133,
+    /// Detritus Contraption Shield Barrage: applies Shield to every live unit.
+    MissilesShield = 134,
+    /// Detritus Contraption Missile Barrage: deals 1 weapon damage to every
+    /// live unit. Friendly fire is intentional and objective-relevant.
+    MissilesOneDmg = 135,
+    /// Rocket Artillery with one +1 Damage upgrade powered.
+    RangedRocketA = 136,
+    /// Rocket Artillery with the alternate +1 Damage upgrade powered.
+    RangedRocketB = 137,
+    /// Rocket Artillery with both +1 Damage upgrades powered.
+    RangedRocketAB = 138,
+    /// Starfish Leader's Scored Appendages: 3 damage on four diagonal
+    /// tiles plus zero-damage outward pushes on the four cardinal tiles.
+    StarfishAtkB1 = 139,
+    /// Aerial Bombs with +1 Damage powered.
+    BruteJetmechA = 140,
+    /// Aerial Bombs with +1 Range powered.
+    BruteJetmechB = 141,
+    /// Aerial Bombs with both +1 Damage and +1 Range powered.
+    BruteJetmechAB = 142,
+    /// Blobber Leader's Eruptive Growth: 0-damage artillery that spawns BlobB.
+    BlobberAtkB = 143,
+    /// Blob Leader's Eruptive Guts: 1 self damage, 2 damage to cardinal adjacent tiles.
+    BlobAtkB = 144,
+    /// Burst Beam with Ally Immune powered.
+    PrimeLasermechA = 145,
+    /// Burst Beam with +1 Damage powered.
+    PrimeLasermechB = 146,
+    /// Burst Beam with Ally Immune and +1 Damage powered.
+    PrimeLasermechAB = 147,
+    /// Titan Fist with Dash powered.
+    PrimePunchmechA = 148,
+    /// Titan Fist with +2 Damage powered.
+    PrimePunchmechB = 149,
+    /// Titan Fist with Dash and +2 Damage powered.
+    PrimePunchmechAB = 150,
+    /// Scarab Leader's "Expectorating Glands": 4-damage artillery on the
+    /// target plus zero-damage outward pushes on the four cardinal adjacent
+    /// tiles.
+    ScarabAtkB = 151,
+    /// Mission_Terraform structure weapon: click one adjacent direction tile,
+    /// then eradicate a 3x2 rectangle immediately in front of the Terraformer.
+    TerraformerAttack = 152,
+    /// Mission_Disposal A.C.I.D. Launcher: artillery target, instant-kill
+    /// acid cross, clears mountains to road.
+    DisposalAttack = 153,
+    /// Chain Whip with Building Chain powered.
+    PrimeLightningA = 154,
+    /// Chain Whip with +1 Damage powered.
+    PrimeLightningB = 155,
+    /// Chain Whip with Building Chain and +1 Damage powered.
+    PrimeLightningAB = 156,
+    /// Mosquito Leader's Cloudburst Tentacles: smoke/web target, then instant-kill.
+    MosquitoAtkB = 157,
+    /// Arachnophiles — Bulk Mech's Ricochet Rocket. The live bridge currently
+    /// fires two-click weapons through Pawn:FireWeapon(target, slot), which
+    /// executes the first-click projectile effect only. Model that executable
+    /// subset until the bridge grows a second-click protocol.
+    BruteTcRicochet = 158,
+    BruteTcRicochetA = 159,
+    BruteTcRicochetB = 160,
+    BruteTcRicochetAB = 161,
+    /// Arachnophiles — Arachnoid Injector and spawned Arachnoid attacks.
+    RangedArachnoid = 162,
+    RangedArachnoidA = 163,
+    RangedArachnoidB = 164,
+    RangedArachnoidAB = 165,
+    DeployUnitAracnoidAtk = 166,
+    DeployUnitAracnoidAtkB = 167,
+    /// Arachnophiles — Slide Mech's Area Shift.
+    ScienceMassShift = 168,
+    ScienceMassShiftA = 169,
+    ScienceMassShiftB = 170,
+    ScienceMassShiftAB = 171,
+    /// Centipede Leader's Caustic Vomit: 3 damage acid projectile, T splash,
+    /// plus zero-damage A.C.I.D. on every tile in the projectile path.
+    CentipedeAtkB = 172,
+    /// Teleporter with +1 Range powered.
+    ScienceSwapA = 173,
+    /// Teleporter with +2 Range powered.
+    ScienceSwapB = 174,
+    /// Teleporter with +1 Range and +2 Range powered.
+    ScienceSwapAB = 175,
+    /// Flame Thrower with first +1 Range powered.
+    PrimeFlamethrowerA = 176,
+    /// Flame Thrower with second +1 Range powered.
+    PrimeFlamethrowerB = 177,
+    /// Flame Thrower with both +1 Range upgrades powered.
+    PrimeFlamethrowerAB = 178,
+    /// Cataclysm — Pitcher Mech's Hydraulic Lifter.
+    PrimeTcPunt = 179,
+    /// Hydraulic Lifter with +2 Range powered.
+    PrimeTcPuntA = 180,
+    /// Hydraulic Lifter with +2 Damage powered.
+    PrimeTcPuntB = 181,
+    /// Hydraulic Lifter with +2 Range and +2 Damage powered.
+    PrimeTcPuntAB = 182,
+    /// Cataclysm — Triptych Mech's Tri-Rocket.
+    RangedCrack = 183,
+    /// Tri-Rocket with +1 Damage powered.
+    RangedCrackA = 184,
+    /// Tri-Rocket with Building Immune powered.
+    RangedCrackB = 185,
+    /// Tri-Rocket with +1 Damage and Building Immune powered.
+    RangedCrackAB = 186,
+    /// Cataclysm — Drill Mech's Seismic Capacitor.
+    ScienceKoCrack = 187,
+    /// Seismic Capacitor with first +1 Damage powered.
+    ScienceKoCrackA = 188,
+    /// Seismic Capacitor with second +1 Damage powered.
+    ScienceKoCrackB = 189,
+    /// Seismic Capacitor with both +1 Damage upgrades powered.
+    ScienceKoCrackAB = 190,
+    /// Mission_Civilians VIP Truck movement skill. The pawn has MoveSpeed=0;
+    /// this weapon grants a two-use range-3 path move via AddMove.
+    VipTruckMove = 191,
+    /// Hydraulic Legs with +1 Damage Each powered.
+    PrimeLeapA = 192,
+    /// Hydraulic Legs with +1 Damage powered.
+    PrimeLeapB = 193,
+    /// Hydraulic Legs with both damage upgrades powered.
+    PrimeLeapAB = 194,
+    /// Unstable Cannon with +1 Damage Each powered.
+    BruteUnstableA = 195,
+    /// Unstable Cannon with +1 Damage powered.
+    BruteUnstableB = 196,
+    /// Unstable Cannon with both damage upgrades powered.
+    BruteUnstableAB = 197,
 }
 
-pub const WEAPON_COUNT: usize = 124;
+pub const WEAPON_COUNT: usize = 198;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -385,16 +592,34 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 1: Prime_Punchmech — Titan Fist
     w[1] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward, flags: C, ..DEF };
+    // 148-150: Prime_Punchmech upgrades — Dash turns Titan Fist into a charge
+    // direction selector, +2 Damage keeps the plain melee footprint.
+    w[148] = WeaponDef { weapon_type: WeaponType::Charge, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[149] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::Forward, flags: C, ..DEF };
+    w[150] = WeaponDef { weapon_type: WeaponType::Charge, damage: 4, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     // 2: Prime_Lightning — Chain Whip
     w[2] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    // 154-156: Chain Whip upgrades.
+    // Building Chain uses buildings as zero-damage chain nodes; the simulator
+    // keys that behavior off BUILDING_IMMUNE in the CHAIN branch.
+    w[154] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2,
+        flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
+    w[155] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
+        flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[156] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
+        flags: f(WeaponFlags::CHAIN.bits() | WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
     // 3: Prime_Lasermech — Burst Beam
     w[3] = WeaponDef { weapon_type: WeaponType::Laser, damage: 3, range_max: 0, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
-    // 4: Prime_ShieldBash — Spartan Shield (passive self-effect).
-    // Empirically does 0 damage and no push: bridge dispatches it with target
-    // (255,255) = no-target sentinel, and every desync shows target alive +
-    // attacker HP unchanged (see recordings/failure_db.jsonl). Kept as Melee so
-    // adjacency constraints still hold, but effectively a no-op for enemies.
-    w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::None, flags: C, ..DEF };
+    // 145-147: Prime_Lasermech upgrades — Burst Beam.
+    w[145] = WeaponDef { weapon_type: WeaponType::Laser, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
+    w[146] = WeaponDef { weapon_type: WeaponType::Laser, damage: 4, range_max: 0,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[147] = WeaponDef { weapon_type: WeaponType::Laser, damage: 4, range_max: 0,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
+    // 4: Prime_ShieldBash — Spartan Shield.
+    // Bashes the adjacent target for 2 damage and flips its queued attack.
+    w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
     // 5: Prime_Shift — Vice Fist (grab and toss target to tile behind attacker)
     w[5] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Throw, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 6: Prime_Flamethrower — Flamethrower.
@@ -406,10 +631,38 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // tiles on Fire. Damage units already on Fire."
     w[6] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
         flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    // 176-178: Prime_Flamethrower upgrades — +1/+1 Range (PathSize 2/2/3).
+    w[176] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        range_max: 2, path_size: 2,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    w[177] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        range_max: 2, path_size: 2,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    w[178] = WeaponDef { weapon_type: WeaponType::Melee, damage: 0, push: PushDir::Forward,
+        range_max: 3, path_size: 3,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::BURNS_FIRE_TARGETS.bits()), ..DEF };
+    // 179-182: Prime_TC_Punt — Hydraulic Lifter.
+    // Lua stores the throw distance in `Range` (2 base, 4 with upgrade). The
+    // solver encodes the final landing tile as the action target; target
+    // enumeration uses source+dir as the grabbed adjacent pawn and
+    // source+(2..=Range+1)*dir as legal landings.
+    w[179] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, range_max: 2,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[180] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 1, range_max: 4,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[181] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 3, range_max: 2,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[182] = WeaponDef { weapon_type: WeaponType::TwoClick, damage: 3, range_max: 4,
+        flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 7: Prime_Areablast — Area Blast
     w[7] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 8: Prime_Leap — Hydraulic Legs
     w[8] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, push: PushDir::Outward, self_damage: 1, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 192-194: Hydraulic Legs upgrades. Lua `Prime_Leap_A/B/AB` changes
+    // landing-adjacent damage and self-damage; targeting footprint is unchanged.
+    w[192] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, push: PushDir::Outward, self_damage: 2, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    w[193] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, push: PushDir::Outward, self_damage: 1, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    w[194] = WeaponDef { weapon_type: WeaponType::Leap, damage: 3, push: PushDir::Outward, self_damage: 2, range_max: 7, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 9: Prime_Spear — Spear
     // Lua scripts/weapons_prime.lua:792-846 (Range=2, PathSize=2). The spear
     // stabs EVERY tile from attacker forward to the targeted tile, taking
@@ -433,9 +686,16 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[15] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::Outward, limited: 1, flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
 
     // 16: Brute_Tankmech — Taurus Cannon
-    w[16] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[16] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0,
+        flags: f(WeaponFlags::NO_EDGE_BUMP_DIRECT_PUSH.bits()), ..DEF };
     // 17: Brute_Jetmech — Aerial Bombs
     w[17] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, range_min: 2, range_max: 2, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 140: Brute_Jetmech_A — Aerial Bombs with +1 Damage
+    w[140] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, range_min: 2, range_max: 2, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 141: Brute_Jetmech_B — Aerial Bombs with +1 Range
+    w[141] = WeaponDef { weapon_type: WeaponType::Leap, damage: 1, range_min: 2, range_max: 3, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
+    // 142: Brute_Jetmech_AB — Aerial Bombs with both upgrades
+    w[142] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, range_min: 2, range_max: 3, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
     // 18: Brute_Mirrorshot — Mirror Shot
     w[18] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 19: Brute_Beetle — Ramming Engines
@@ -456,6 +716,14 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::FULL_PULL.bits()), ..DEF };
     // 21: Brute_Unstable — Unstable Cannon
     w[21] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, self_damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 195-197: Unstable Cannon upgrades. Lua `Brute_Unstable_A/B/AB`
+    // increases target damage, and only the A/AB branch increases self-damage.
+    w[195] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, self_damage: 2, range_max: 0,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    w[196] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, self_damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    w[197] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, push: PushDir::Forward, self_damage: 2, range_max: 0,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     // 22: Brute_PhaseShot — Phase Cannon
     w[22] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0,
@@ -497,6 +765,20 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
 
     // 31: Ranged_Artillerymech — Artemis Artillery
     w[31] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Outward, range_min: 2,
+        flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+    // 127: Ranged_Artillerymech_A — Artemis Artillery with Buildings Immune
+    w[127] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Outward, range_min: 2,
+        flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::BUILDING_IMMUNE.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+    // 128: Deploy_TankShot — Stock Cannon
+    w[128] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Forward, range_max: 0,
+        flags: C, ..DEF };
+    // 129: Deploy_TankShot2 — upgraded Stock Cannon
+    w[129] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0,
+        flags: C, ..DEF };
+    // 130: Trapped_Explode — Decoy Building Area Blast.
+    // Bespoke DAMAGE_DEATH semantics live in simulate.rs; this SelfAoe def gives
+    // targeting/enumeration a single "click self" target.
+    w[130] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1,
         flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
     // 32: Ranged_Rockthrow — Rock Launcher
     w[32] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Perpendicular, range_min: 2, flags: C, ..DEF };
@@ -510,9 +792,32 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // not SMOKE (which would smoke the target tile).
     w[34] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2,
         flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    // 136-138: Rocket Artillery +1 Damage upgrades. Both preserve Rocket's
+    // smoke-behind-shooter and center corpse-push semantics.
+    w[136] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    w[137] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    w[138] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::SMOKE_BEHIND_SHOOTER.bits()), ..DEF };
+    // 183-186: Ranged_Crack — Tri-Rocket. Damage/pushes three sequential
+    // cardinal tiles: target+dir, target, target-dir. The engine inherits
+    // LineArtillery's target area, so the selectable center tile starts at
+    // range 2; adjacent enemies are hit by targeting the tile behind them.
+    // Building Immune upgrades suppress direct weapon damage to Grid Buildings
+    // only; collision damage still applies.
+    w[183] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 2, flags: C, ..DEF };
+    w[184] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2, flags: C, ..DEF };
+    w[185] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
+    w[186] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, push: PushDir::Forward, range_min: 2,
+        flags: f(WeaponFlags::BUILDING_IMMUNE.bits()), ..DEF };
     // 35: Ranged_Ignite — Ignite
     w[35] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
-        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+    // 125: Ranged_Ignite_A — Ignite with Backburn
+    w[125] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, push: PushDir::Outward, range_min: 2,
+        flags: f(WeaponFlags::FIRE.bits() | WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits() | WeaponFlags::FIRE_BEHIND_SHOOTER.bits()), ..DEF };
     // 36: Ranged_Ice — Cryo-Launcher
     w[36] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, range_min: 2,
         flags: f(WeaponFlags::FREEZE.bits()), ..DEF };
@@ -547,17 +852,32 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[41] = WeaponDef { weapon_type: WeaponType::Pull, damage: 0, push: PushDir::Inward, range_min: 2, range_max: 0,
         flags: C, ..DEF };
     // 42: Science_Repulse — Repulse
-    w[42] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    w[42] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 43: Science_Swap — Teleporter
     w[43] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 1, flags: C, ..DEF };
+    // 173-175: Science_Swap upgrades — Teleporter range.
+    w[173] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 2, flags: C, ..DEF };
+    w[174] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 3, flags: C, ..DEF };
+    w[175] = WeaponDef { weapon_type: WeaponType::Swap, damage: 0, range_max: 4, flags: C, ..DEF };
     // 44: Science_AcidShot — Acid Projector
     w[44] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Forward, range_max: 0,
         flags: f(WeaponFlags::ACID.bits()), ..DEF };
     // 45: Science_Shield — Shield Projector
     w[45] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, range_min: 2, limited: 2,
-        flags: f(WeaponFlags::SHIELD.bits()), ..DEF };
+        flags: f(WeaponFlags::SHIELD.bits() | WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 46: Science_Confuse — Confusion Ray
     w[46] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 0, push: PushDir::Flip, range_max: 0, flags: C, ..DEF };
+    // 187-190: Science_KO_Crack — Seismic Capacitor. The base melee hit deals
+    // damage and flips the target; a lethal hit creates cracked ground on the
+    // four adjacent tiles in simulate.rs.
+    w[187] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Flip, flags: C, ..DEF };
+    w[188] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
+    w[189] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
+    w[190] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Flip, flags: C, ..DEF };
+    // 191: VIP_Truck_Move — "Floor It!" movement skill. Target enumeration and
+    // simulation are bespoke because the pawn's normal MoveSpeed is 0.
+    w[191] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, range_max: 3, limited: 2, flags: C, ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -571,9 +891,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 51: LeaperAtk1
     w[51] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, flags: f(WeaponFlags::WEB.bits()), ..DEF };
     // 52: BeetleAtk1
-    w[52] = WeaponDef { weapon_type: WeaponType::Charge, damage: 1, flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
+    w[52] = WeaponDef { weapon_type: WeaponType::Charge, damage: 1, push: PushDir::Forward,
+        flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
     // 53: BeetleAtk2
-    w[53] = WeaponDef { weapon_type: WeaponType::Charge, damage: 3, flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
+    w[53] = WeaponDef { weapon_type: WeaponType::Charge, damage: 3, push: PushDir::Forward,
+        flags: f(WeaponFlags::CHARGE.bits()), ..DEF };
     // 54: FireflyAtk1
     w[54] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0, flags: C, ..DEF };
     // 55: FireflyAtk2
@@ -585,6 +907,12 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[57] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
     // 58: ScarabAtk2
     w[58] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 3, range_min: 2, flags: C, ..DEF };
+    // 151: ScarabAtkB — Scarab Leader's Expectorating Glands. Per
+    // `scripts/advanced/bosses/scarab.lua`, LineArtillery deals 4 to the
+    // target tile, then queues zero-damage outward pushes on all four cardinal
+    // adjacent tiles.
+    w[151] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 4, push: PushDir::Outward,
+        range_min: 2, flags: f(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
     // 59: CrabAtk1 — hits 2 tiles in line
     w[59] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, path_size: 2, flags: C, ..DEF };
     // 60: CrabAtk2 — hits 2 tiles in line
@@ -619,14 +947,17 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 71: MosquitoAtk2 — alpha melee, 3 dmg, applies smoke
     w[71] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
         flags: f(WeaponFlags::SMOKE.bits()), ..DEF };
-    // 72: BurnbugAtk1 — melee, 1 dmg, sets fire
-    w[72] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1,
+    // 72: BurnbugAtk1 — Gastropod Hooked Proboscis: projectile grapple, 1 dmg.
+    w[72] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
+    // 73: BurnbugAtk2 — Alpha Gastropod Barbed Proboscis: projectile grapple, 3 dmg.
+    w[73] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
+    // 74: SnowtankAtk1 — Cannon-Bot's Cannon 8R Mark I. Per
+    // scripts/weapons_snow.lua, this inherits FireflyAtk1's projectile
+    // SkillEffect and sets Fire=1.
+    w[74] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
         flags: f(WeaponFlags::FIRE.bits()), ..DEF };
-    // 73: BurnbugAtk2 — alpha melee, 3 dmg, sets fire
-    w[73] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
-        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
-    // 74: SnowtankAtk1 — Pinnacle bot, melee, 1 dmg
-    w[74] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
     // 75: SnowartAtk1 — Pinnacle bot, artillery, 1 dmg
     w[75] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
     // 76: SnowartAtk2 — Pinnacle bot, alpha artillery, 3 dmg
@@ -635,6 +966,11 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[77] = WeaponDef { weapon_type: WeaponType::Melee, damage: 5, flags: f(WeaponFlags::WEB.bits()), ..DEF };
     // 78: CentipedeAtk2 — alpha centipede, 2 dmg, acid + aoe_perp
     w[78] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, range_max: 0,
+        flags: f(WeaponFlags::ACID.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
+    // 172: CentipedeAtkB — Centipede Leader, 3 dmg acid projectile with
+    // perpendicular splash. The projectile path A.C.I.D. trail is modeled as
+    // a WId-specific enemy-phase side effect because all u32 flag bits are used.
+    w[172] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
         flags: f(WeaponFlags::ACID.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
     // 79: DiggerAtk2 — alpha digger, 2 dmg, self_aoe
     w[79] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 2, flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
@@ -646,13 +982,17 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[82] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, path_size: 3, flags: C, ..DEF };
     // 83: BurrowerAtk2 — alpha burrower, 2 dmg
     w[83] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, path_size: 3, flags: C, ..DEF };
-    // 84: GastropodAtk1 — ranged pull, 1 dmg, pulls self toward target
-    w[84] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0, flags: C, ..DEF };
-    // 85: GastropodAtk2 — alpha, 3 dmg
-    w[85] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0, flags: C, ..DEF };
-    // 86: StarfishAtk1 — melee, 1 dmg (diagonal attack in-game, solver treats as melee)
+    // 84: GastropodAtk1 — ranged grapple, 1 dmg
+    w[84] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
+    // 85: GastropodAtk2 — alpha ranged grapple, 3 dmg
+    w[85] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
+    // 86: StarfishAtk1 — Brittle Appendages. The Starfish self-target
+    // diagonal damage pattern is special-cased in enemy.rs.
     w[86] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
-    // 87: StarfishAtk2 — alpha, 2 dmg
+    // 87: StarfishAtk2 — Alpha Starfish diagonal pattern, special-cased
+    // in enemy.rs.
     w[87] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, flags: C, ..DEF };
     // 88: TumblebugAtk1 — melee, 1 dmg (creates boulder + attacks it)
     w[88] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, flags: C, ..DEF };
@@ -662,8 +1002,53 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[90] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
     // 91: PlasmodiaAtk2 — alpha, spawns alpha spore
     w[91] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
-    // 92: FireflyAtkB — Firefly Boss, projectile, 4 dmg
+    // 92: FireflyAtkB — Firefly Boss, two opposing projectiles, 4 dmg each
     w[92] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, range_max: 0, flags: C, ..DEF };
+    // 157: MosquitoAtkB — Mosquito Leader's Cloudburst Tentacles.
+    // Special instant-kill semantics live in enemy.rs so the attack bypasses
+    // Shield/Frozen like the engine's DAMAGE_DEATH-style leader strike while
+    // still leaving smoke/web metadata visible to targeting/status helpers.
+    w[157] = WeaponDef { weapon_type: WeaponType::Melee, damage: 255,
+        flags: f(WeaponFlags::SMOKE.bits() | WeaponFlags::WEB.bits()), ..DEF };
+
+    // 158-161: Brute_TC_Ricochet — Ricochet Rocket. This is a two-click Lua
+    // weapon, but the bridge's Pawn:FireWeapon(target, slot) route can only
+    // execute the first-click projectile. Keep the simulator aligned with the
+    // executable bridge effect: one projectile, first blocker takes damage and
+    // forward push. Upgrade B zeros friendly damage but still pushes allies.
+    w[158] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+        range_max: 0, flags: C, ..DEF };
+    w[159] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+        range_max: 0, flags: C, ..DEF };
+    w[160] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward,
+        range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
+    w[161] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward,
+        range_max: 0, flags: f(WeaponFlags::FRIENDLY_IMMUNE.bits()), ..DEF };
+
+    // 162-165: Ranged_Arachnoid — Arachnoid Injector. Bespoke spawn-on-kill
+    // semantics live in simulate.rs; the definition supplies artillery damage
+    // and range. B/AB spawn Arachnoids whose self-destruct melee applies ACID.
+    w[162] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
+    w[163] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
+    w[164] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 1, range_min: 2, flags: C, ..DEF };
+    w[165] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, range_min: 2, flags: C, ..DEF };
+    // 166-167: DeployUnit_AracnoidAtk — spawned Arachnoid melee. Self-kill is
+    // special-cased so sacrificing an Arachnoid is not scored as a mech death.
+    w[166] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
+        flags: C, ..DEF };
+    w[167] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Forward,
+        flags: f(WeaponFlags::ACID.bits()), ..DEF };
+
+    // 168-171: Science_MassShift — Area Shift. Directional five-tile push
+    // (front, self, both sides, back) is bespoke in simulate.rs.
+    w[168] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    w[169] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::SHIELD_SELF.bits()), ..DEF };
+    w[170] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::SHIELD_ALLIES.bits()), ..DEF };
+    w[171] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Forward,
+        range_min: 1, range_max: 1, flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits() | WeaponFlags::SHIELD_SELF.bits() | WeaponFlags::SHIELD_ALLIES.bits()), ..DEF };
 
     // 107: ScorpionAtkB — Scorpion Leader's Massive Spinneret.
     // Self-AOE: 2 damage to all 4 cardinal adjacent tiles, pushes outward,
@@ -711,11 +1096,17 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         range_min: 0, range_max: 0,
         limited: 1,
         path_size: 1,
+        boost_bonus: 0,
         flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
     };
 
     // 114: BlobAtk2 — alpha blob explode, 2 dmg center + 4 cardinal adjacent
     w[114] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 2, flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+    // 143: BlobberAtkB — Blobber Leader artillery, spawns a Blob Leader.
+    w[143] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 0, flags: C, ..DEF };
+    // 144: BlobAtkB — Blob Leader explosion, 1 self damage + 2 adjacent.
+    w[144] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 1, damage_outer: 2,
+        flags: f(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
     // 115: Acid_Tank_Attack — A.C.I.D. Cannon (NPC tank deployable).
     // 0-damage cardinal projectile, infinite range (range_max=0), applies
@@ -728,7 +1119,8 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // queued target with 4 damage. The Lua skill registers the queued
     // damage on p2 BEFORE any optional move (goo.lua:172-187), so the
     // damage fires regardless of whether the boss is adjacent at the time
-    // of attack — modelled via the QUEUED_DAMAGE_PERSISTS flag.
+    // of attack. p2 still shifts by the original attacker-relative offset
+    // when the boss is moved — modelled via the QUEUED_DAMAGE_PERSISTS flag.
     // Empirically all three sizes deal 4 damage (BlobBossAtk:GetSkillEffect
     // is shared by Med/Small via Skill:new{} inheritance).
     w[116] = WeaponDef { weapon_type: WeaponType::Melee, damage: 4, push: PushDir::None,
@@ -778,14 +1170,70 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 123: BurnbugAtkB — Burnbug Leader's Flaming Proboscis. Per
     // `scripts/advanced/bosses/burnbug.lua:28-38`,
     // `BurnbugAtkB = BurnbugAtk1:new{ Damage = 3, BossFire = true, ... }`.
-    // Modeled identically to BurnbugAtk2 (Melee, 3 dmg, FIRE) since Atk2 is
-    // also a `BurnbugAtk1:new{Damage=3}` derivative — the cardinal-line
-    // grapple is approximated as a 1-tile melee with FIRE applied to the
-    // target. The `BossFire` around-self fire trail (4 cardinal tiles
-    // ignited around the boss when it fires) is intentionally not modeled
-    // here; see WId::BurnbugAtkB doc comment for rationale.
-    w[123] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3,
-        flags: f(WeaponFlags::FIRE.bits()), ..DEF };
+    // The cardinal-line grapple is modeled via PROJECTILE_GRAPPLE. The
+    // `BossFire` around-self fire trail (4 cardinal tiles ignited around
+    // the boss when it fires) is still intentionally not modeled here; see
+    // WId::BurnbugAtkB doc comment for rationale.
+    w[123] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, range_max: 0,
+        flags: f(WeaponFlags::PROJECTILE_GRAPPLE.bits()), ..DEF };
+
+    // 124: Support_Wind — Wind Torrent. Per scripts/weapons_support.lua:434-537:
+    // ZoneTargeting=ZONE_CUSTOM with fixed edge-zone targets; clicked zone sets
+    // DIR_LEFT/RIGHT/UP/DOWN, then every current pawn receives zero damage plus
+    // a directional push in Lua scan order. No building damage except via bump.
+    w[124] = WeaponDef {
+        weapon_type: WeaponType::GlobalPush,
+        damage: 0, damage_outer: 0,
+        push: PushDir::Forward,
+        self_damage: 0,
+        range_min: 0, range_max: 0,
+        limited: 1,
+        path_size: 1,
+        boost_bonus: 0,
+        flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()),
+    };
+
+    // 126: CrabAtkB — Crab Leader's Raining Expulsions. Per AE boss tooltip:
+    // 2 damage to the artillery target and 1 damage to every tile in the
+    // projectile path before that target.
+    w[126] = WeaponDef { weapon_type: WeaponType::Artillery, damage: 2, damage_outer: 1,
+        range_min: 2, flags: f(WeaponFlags::PATH_DAMAGE.bits()), ..DEF };
+
+    // 131: BouncerAtkB — Bouncer Leader's Sweeping Horns. Per
+    // scripts/advanced/bosses/bouncer.lua:46-58: target tile + two
+    // perpendicular side tiles take 2 damage and PushDir::Forward, while the
+    // boss receives a zero-damage push backward.
+    w[131] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Forward,
+        flags: f(WeaponFlags::PUSH_SELF.bits() | WeaponFlags::AOE_PERP.bits()), ..DEF };
+
+    // 133: Science_Repulse_A — Repulse with Shield Self
+    w[133] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 0, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits() | WeaponFlags::SHIELD_SELF.bits() | WeaponFlags::NO_EDGE_BUMP_ADJACENT_PUSH.bits()), ..DEF };
+
+    // 134: Missiles_Shield — Detritus Contraption Shield Barrage.
+    w[134] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 0, limited: 2,
+        flags: f_nc(WeaponFlags::SHIELD.bits() | WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+    // 135: Missiles_OneDmg — Detritus Contraption Missile Barrage.
+    w[135] = WeaponDef { weapon_type: WeaponType::GlobalUnitEffect, damage: 1, limited: 2,
+        flags: f_nc(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
+
+    // 139: StarfishAtkB1 — Starfish Leader's Scored Appendages.
+    // Lua `advanced/bosses/starfish.lua` self-targets the boss tile, then for
+    // each cardinal dir queues 3 damage on the corner tile
+    // `p1 + DIR[dir] + DIR[(dir+1)%4]` and a zero-damage push on
+    // `p1 + DIR[dir]`. The exact shape is implemented in enemy.rs.
+    w[139] = WeaponDef { weapon_type: WeaponType::SelfAoe, damage: 3, push: PushDir::Outward,
+        flags: f_nc(WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
+
+    // 152: Terraformer_Attack — Mission_Terraform structure weapon. The clicked
+    // adjacent tile chooses direction; bespoke 3x2 lethal/sand sweep in simulate.rs.
+    w[152] = WeaponDef { weapon_type: WeaponType::Terraformer, damage: 0, range_min: 1, range_max: 1,
+        flags: C, ..DEF };
+    // 153: Disposal_Attack — Mission_Disposal A.C.I.D. Launcher. Bespoke
+    // artillery cross in simulate.rs: instant-kill units, acidify affected
+    // non-mountain tiles, and clear mountains to road/ground.
+    w[153] = WeaponDef { weapon_type: WeaponType::Disposal, damage: 0, range_min: 1, range_max: 0,
+        flags: f_nc(WeaponFlags::ACID.bits() | WeaponFlags::AOE_CENTER.bits() | WeaponFlags::AOE_ADJACENT.bits()), ..DEF };
 
     // 93-105: Passive weapons — no simulation needed, all DEF
     // Already initialized as DEF
@@ -811,6 +1259,137 @@ pub fn weapon_def(id: WId) -> &'static WeaponDef {
 // — when no overrides are active they receive `&WEAPONS` directly (no alloc).
 
 pub type WeaponTable = [WeaponDef; WEAPON_COUNT];
+
+/// Representative target tiles for Support_Wind's four custom target zones.
+/// Lua accepts any tile in each 2x2 zone; one per direction keeps search small.
+pub const SUPPORT_WIND_TARGETS: [(u8, u8); 4] = [
+    (1, 3), // left zone  -> DIR_LEFT
+    (5, 3), // right zone -> DIR_RIGHT
+    (3, 1), // upper zone -> DIR_UP
+    (3, 5), // lower zone -> DIR_DOWN
+];
+
+/// Convert a Support_Wind target-zone tile into the Rust direction index.
+///
+/// Game Lua:
+///   x in {1,2} => DIR_LEFT,  x in {5,6} => DIR_RIGHT,
+///   y in {1,2} => DIR_UP,    y in {5,6} => DIR_DOWN.
+/// Rust DIRS are [(0,1), (1,0), (0,-1), (-1,0)], so right/left are 1/3
+/// and down/up are 0/2.
+pub fn support_wind_dir_from_target(x: u8, y: u8) -> Option<usize> {
+    if x == 1 || x == 2 {
+        Some(3)
+    } else if x == 5 || x == 6 {
+        Some(1)
+    } else if y == 1 || y == 2 {
+        Some(2)
+    } else if y == 5 || y == 6 {
+        Some(0)
+    } else {
+        None
+    }
+}
+
+/// Mission_Terraform Terraformer_Attack footprint. Lua starts one perpendicular
+/// tile to the right of the clicked adjacent target, sweeps three tiles across,
+/// then repeats one tile deeper in the clicked direction.
+pub fn terraformer_sweep_tiles(ax: u8, ay: u8, target_x: u8, target_y: u8) -> Option<Vec<(u8, u8)>> {
+    let dir = crate::movement::direction_between(ax, ay, target_x, target_y)?;
+    let (fdx, fdy) = DIRS[dir];
+    let (rdx, rdy) = DIRS[(dir + 1) % 4];
+    let (ldx, ldy) = DIRS[(dir + 3) % 4];
+    let mut tiles = Vec::with_capacity(6);
+
+    for i in 0..=1i8 {
+        let mut x = target_x as i8 + fdx * i + rdx;
+        let mut y = target_y as i8 + fdy * i + rdy;
+        for _ in 0..=2 {
+            if in_bounds(x, y) {
+                tiles.push((x as u8, y as u8));
+            }
+            x += ldx;
+            y += ldy;
+        }
+    }
+
+    Some(tiles)
+}
+
+/// Mission_Disposal A.C.I.D. Launcher footprint: target tile plus the four
+/// cardinal adjacent tiles, clipped to the board.
+pub fn disposal_cross_tiles(target_x: u8, target_y: u8) -> Vec<(u8, u8)> {
+    let mut tiles = Vec::with_capacity(5);
+    tiles.push((target_x, target_y));
+    for &(dx, dy) in &DIRS {
+        let x = target_x as i8 + dx;
+        let y = target_y as i8 + dy;
+        if in_bounds(x, y) {
+            tiles.push((x as u8, y as u8));
+        }
+    }
+    tiles
+}
+
+#[inline]
+pub fn is_rocket_artillery(id: WId) -> bool {
+    matches!(
+        id,
+        WId::RangedRocket | WId::RangedRocketA | WId::RangedRocketB | WId::RangedRocketAB
+    )
+}
+
+#[inline]
+pub fn is_hydraulic_lifter(id: WId) -> bool {
+    matches!(
+        id,
+        WId::PrimeTcPunt | WId::PrimeTcPuntA | WId::PrimeTcPuntB | WId::PrimeTcPuntAB
+    )
+}
+
+#[inline]
+pub fn is_tri_rocket(id: WId) -> bool {
+    matches!(
+        id,
+        WId::RangedCrack | WId::RangedCrackA | WId::RangedCrackB | WId::RangedCrackAB
+    )
+}
+
+#[inline]
+pub fn is_seismic_capacitor(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceKoCrack | WId::ScienceKoCrackA
+            | WId::ScienceKoCrackB | WId::ScienceKoCrackAB
+    )
+}
+
+#[inline]
+pub fn is_arachnoid_injector(id: WId) -> bool {
+    matches!(
+        id,
+        WId::RangedArachnoid | WId::RangedArachnoidA
+            | WId::RangedArachnoidB | WId::RangedArachnoidAB
+    )
+}
+
+#[inline]
+pub fn arachnoid_injector_spawns_acid_attack(id: WId) -> bool {
+    matches!(id, WId::RangedArachnoidB | WId::RangedArachnoidAB)
+}
+
+#[inline]
+pub fn is_arachnoid_attack(id: WId) -> bool {
+    matches!(id, WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB)
+}
+
+#[inline]
+pub fn is_mass_shift(id: WId) -> bool {
+    matches!(
+        id,
+        WId::ScienceMassShift | WId::ScienceMassShiftA
+            | WId::ScienceMassShiftB | WId::ScienceMassShiftAB
+    )
+}
 
 /// Per-field patch applied on top of a base `WeaponDef`. Any `None` field is
 /// left untouched; flag bits set in `flags_set` are OR'd in and bits set in
@@ -882,13 +1461,36 @@ pub fn build_overlay_table(overrides: &[(WId, PartialWeaponDef)]) -> Option<Box<
 pub fn wid_from_str(s: &str) -> WId {
     match s {
         "Prime_Punchmech" => WId::PrimePunchmech,
+        "Prime_Punchmech_A" => WId::PrimePunchmechA,
+        "Prime_Punchmech_B" => WId::PrimePunchmechB,
+        "Prime_Punchmech_AB" => WId::PrimePunchmechAB,
         "Prime_Lightning" => WId::PrimeLightning,
+        "Prime_Lightning_A" => WId::PrimeLightningA,
+        "Prime_Lightning_B" => WId::PrimeLightningB,
+        "Prime_Lightning_AB" => WId::PrimeLightningAB,
         "Prime_Lasermech" => WId::PrimeLasermech,
+        "Prime_Lasermech_A" => WId::PrimeLasermechA,
+        "Prime_Lasermech_B" => WId::PrimeLasermechB,
+        "Prime_Lasermech_AB" => WId::PrimeLasermechAB,
         "Prime_ShieldBash" => WId::PrimeShieldBash,
         "Prime_Shift" => WId::PrimeShift,
         "Prime_Flamethrower" => WId::PrimeFlamethrower,
+        "Prime_Flamethrower_A" => WId::PrimeFlamethrowerA,
+        "Prime_Flamethrower_B" => WId::PrimeFlamethrowerB,
+        "Prime_Flamethrower_AB" => WId::PrimeFlamethrowerAB,
+        "Prime_TC_Punt" => WId::PrimeTcPunt,
+        "PrimeTcPunt" => WId::PrimeTcPunt,
+        "Prime_TC_Punt_A" => WId::PrimeTcPuntA,
+        "PrimeTcPuntA" => WId::PrimeTcPuntA,
+        "Prime_TC_Punt_B" => WId::PrimeTcPuntB,
+        "PrimeTcPuntB" => WId::PrimeTcPuntB,
+        "Prime_TC_Punt_AB" => WId::PrimeTcPuntAB,
+        "PrimeTcPuntAB" => WId::PrimeTcPuntAB,
         "Prime_Areablast" => WId::PrimeAreablast,
         "Prime_Leap" => WId::PrimeLeap,
+        "Prime_Leap_A" => WId::PrimeLeapA,
+        "Prime_Leap_B" => WId::PrimeLeapB,
+        "Prime_Leap_AB" => WId::PrimeLeapAB,
         "Prime_Spear" => WId::PrimeSpear,
         "Prime_Rockmech" => WId::PrimeRockmech,
         "Prime_RocketPunch" => WId::PrimeRocketPunch,
@@ -898,10 +1500,16 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Smash" => WId::PrimeSmash,
         "Brute_Tankmech" => WId::BruteTankmech,
         "Brute_Jetmech" => WId::BruteJetmech,
+        "Brute_Jetmech_A" => WId::BruteJetmechA,
+        "Brute_Jetmech_B" => WId::BruteJetmechB,
+        "Brute_Jetmech_AB" => WId::BruteJetmechAB,
         "Brute_Mirrorshot" => WId::BruteMirrorshot,
         "Brute_Beetle" => WId::BruteBeetle,
         "Brute_Grapple" => WId::BruteGrapple,
         "Brute_Unstable" => WId::BruteUnstable,
+        "Brute_Unstable_A" => WId::BruteUnstableA,
+        "Brute_Unstable_B" => WId::BruteUnstableB,
+        "Brute_Unstable_AB" => WId::BruteUnstableAB,
         "Brute_PhaseShot" => WId::BrutePhaseShot,
         "Brute_Shrapnel" => WId::BruteShrapnel,
         "Brute_Heavyrocket" => WId::BruteHeavyrocket,
@@ -910,23 +1518,80 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Sniper" => WId::BruteSniper,
         "Brute_Splitshot" => WId::BruteSplitshot,
         "Brute_Bombrun" => WId::BruteBombrun,
+        "Brute_TC_Ricochet" => WId::BruteTcRicochet,
+        "Brute_TC_Ricochet_A" => WId::BruteTcRicochetA,
+        "Brute_TC_Ricochet_B" => WId::BruteTcRicochetB,
+        "Brute_TC_Ricochet_AB" => WId::BruteTcRicochetAB,
         "Archive_ArtShot" => WId::ArchiveArtShot,
         "Ranged_Artillerymech" => WId::RangedArtillerymech,
+        "Ranged_Artillerymech_A" => WId::RangedArtillerymechA,
+        "RangedArtillerymechA" => WId::RangedArtillerymechA,
+        "Deploy_TankShot" => WId::DeployTankShot,
+        "DeployTankShot" => WId::DeployTankShot,
+        "Deploy_TankShot2" => WId::DeployTankShot2,
+        "DeployTankShot2" => WId::DeployTankShot2,
+        "Trapped_Explode" => WId::TrappedExplode,
+        "TrappedExplode" => WId::TrappedExplode,
+        "Terraformer_Attack" => WId::TerraformerAttack,
+        "Disposal_Attack" => WId::DisposalAttack,
         "Ranged_Rockthrow" => WId::RangedRockthrow,
         "Ranged_Defensestrike" => WId::RangedDefensestrike,
         "Ranged_Rocket" => WId::RangedRocket,
+        "Ranged_Rocket_A" => WId::RangedRocketA,
+        "RangedRocketA" => WId::RangedRocketA,
+        "Ranged_Rocket_B" => WId::RangedRocketB,
+        "RangedRocketB" => WId::RangedRocketB,
+        "Ranged_Rocket_AB" => WId::RangedRocketAB,
+        "RangedRocketAB" => WId::RangedRocketAB,
+        "Ranged_Crack" => WId::RangedCrack,
+        "RangedCrack" => WId::RangedCrack,
+        "Ranged_Crack_A" => WId::RangedCrackA,
+        "RangedCrackA" => WId::RangedCrackA,
+        "Ranged_Crack_B" => WId::RangedCrackB,
+        "RangedCrackB" => WId::RangedCrackB,
+        "Ranged_Crack_AB" => WId::RangedCrackAB,
+        "RangedCrackAB" => WId::RangedCrackAB,
         "Ranged_Ignite" => WId::RangedIgnite,
+        "Ranged_Ignite_A" => WId::RangedIgniteA,
+        "RangedIgniteA" => WId::RangedIgniteA,
         "Ranged_Ice" => WId::RangedIce,
         "Ranged_ScatterShot" => WId::RangedScatterShot,
         "Ranged_BackShot" => WId::RangedBackShot,
         "Ranged_Wide" => WId::RangedWide,
+        "Ranged_Arachnoid" => WId::RangedArachnoid,
+        "Ranged_Arachnoid_A" => WId::RangedArachnoidA,
+        "Ranged_Arachnoid_B" => WId::RangedArachnoidB,
+        "Ranged_Arachnoid_AB" => WId::RangedArachnoidAB,
+        "DeployUnit_AracnoidAtk" => WId::DeployUnitAracnoidAtk,
+        "DeployUnit_AracnoidAtkB" => WId::DeployUnitAracnoidAtkB,
         "Science_Pullmech" => WId::SciencePullmech,
         "Science_Gravwell" => WId::ScienceGravwell,
         "Science_Repulse" => WId::ScienceRepulse,
+        "Science_Repulse_A" => WId::ScienceRepulseA,
+        // Model the self-shield portion of the AB upgrade. Friendly/building
+        // shield remains conservative until building shields are modeled.
+        "Science_Repulse_AB" => WId::ScienceRepulseA,
         "Science_Swap" => WId::ScienceSwap,
+        "Science_Swap_A" => WId::ScienceSwapA,
+        "Science_Swap_B" => WId::ScienceSwapB,
+        "Science_Swap_AB" => WId::ScienceSwapAB,
         "Science_AcidShot" => WId::ScienceAcidShot,
         "Science_Shield" => WId::ScienceShield,
         "Science_Confuse" => WId::ScienceConfuse,
+        "Science_KO_Crack" => WId::ScienceKoCrack,
+        "ScienceKoCrack" => WId::ScienceKoCrack,
+        "Science_KO_Crack_A" => WId::ScienceKoCrackA,
+        "ScienceKoCrackA" => WId::ScienceKoCrackA,
+        "Science_KO_Crack_B" => WId::ScienceKoCrackB,
+        "ScienceKoCrackB" => WId::ScienceKoCrackB,
+        "Science_KO_Crack_AB" => WId::ScienceKoCrackAB,
+        "ScienceKoCrackAB" => WId::ScienceKoCrackAB,
+        "Science_MassShift" => WId::ScienceMassShift,
+        "Science_MassShift_A" => WId::ScienceMassShiftA,
+        "Science_MassShift_B" => WId::ScienceMassShiftB,
+        "Science_MassShift_AB" => WId::ScienceMassShiftAB,
+        "Missiles_Shield" => WId::MissilesShield,
+        "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
         "ScorpionAtk2" => WId::ScorpionAtk2,
         "HornetAtk1" => WId::HornetAtk1,
@@ -941,8 +1606,11 @@ pub fn wid_from_str(s: &str) -> WId {
         "CentipedeAtk1" => WId::CentipedeAtk1,
         "ScarabAtk1" => WId::ScarabAtk1,
         "ScarabAtk2" => WId::ScarabAtk2,
+        "ScarabAtkB" => WId::ScarabAtkB,
+        "CentipedeAtkB" => WId::CentipedeAtkB,
         "CrabAtk1" => WId::CrabAtk1,
         "CrabAtk2" => WId::CrabAtk2,
+        "CrabAtkB" => WId::CrabAtkB,
         "DiggerAtk1" => WId::DiggerAtk1,
         "BlobberAtk1" => WId::BlobberAtk1,
         "SpiderAtk1" => WId::SpiderAtk1,
@@ -954,6 +1622,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "MothAtk2" => WId::MothAtk2,
         "MosquitoAtk1" => WId::MosquitoAtk1,
         "MosquitoAtk2" => WId::MosquitoAtk2,
+        "MosquitoAtkB" => WId::MosquitoAtkB,
         "BurnbugAtk1" => WId::BurnbugAtk1,
         "BurnbugAtk2" => WId::BurnbugAtk2,
         "SnowtankAtk1" => WId::SnowtankAtk1,
@@ -966,6 +1635,7 @@ pub fn wid_from_str(s: &str) -> WId {
         "CentipedeAtk2" => WId::CentipedeAtk2,
         "DiggerAtk2" => WId::DiggerAtk2,
         "BlobberAtk2" => WId::BlobberAtk2,
+        "BlobberAtkB" => WId::BlobberAtkB,
         "SpiderAtk2" => WId::SpiderAtk2,
         "BurrowerAtk1" => WId::BurrowerAtk1,
         "BurrowerAtk2" => WId::BurrowerAtk2,
@@ -973,15 +1643,24 @@ pub fn wid_from_str(s: &str) -> WId {
         "GastropodAtk2" => WId::GastropodAtk2,
         "StarfishAtk1" => WId::StarfishAtk1,
         "StarfishAtk2" => WId::StarfishAtk2,
+        "StarfishAtkB1" => WId::StarfishAtkB1,
+        "DungAtk1" => WId::TumblebugAtk1,
+        "DungAtk2" => WId::TumblebugAtk2,
+        "DungAtkB" => WId::TumblebugAtk2,
         "TumblebugAtk1" => WId::TumblebugAtk1,
         "TumblebugAtk2" => WId::TumblebugAtk2,
+        "TumblebugAtkB" => WId::TumblebugAtk2,
         "PlasmodiaAtk1" => WId::PlasmodiaAtk1,
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
         "ScorpionAtkB" => WId::ScorpionAtkB,
+        "BouncerAtkB" => WId::BouncerAtkB,
+        "Armored_Train_Move" => WId::ArmoredTrainMove,
+        "VIP_Truck_Move" => WId::VipTruckMove,
         "Acid_Tank_Attack" => WId::AcidTankAtk,
         "Support_Repair" => WId::SupportRepair,
         "BlobAtk2" => WId::BlobAtk2,
+        "BlobAtkB" => WId::BlobAtkB,
         "BlobBossAtk" => WId::BlobBossAtk,
         "BlobBossAtkMed" => WId::BlobBossAtkMed,
         "BlobBossAtkSmall" => WId::BlobBossAtkSmall,
@@ -990,6 +1669,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "BossHeal" => WId::BossHeal,
         "Pinnacle_FreezeTank" => WId::PinnacleFreezeTank,
         "BurnbugAtkB" => WId::BurnbugAtkB,
+        "Support_Wind" => WId::SupportWind,
+        // Upgraded Wind Torrent removes the use limit but keeps identical
+        // board effects. Treat it as the same simulator primitive.
+        "Support_Wind_A" => WId::SupportWind,
         // Repair sentinel — Python emits "_REPAIR" (matches wid_to_str inverse).
         // Without this case, replay_solution / score_plan / project_plan all
         // saw weapon_id="_REPAIR" plans as WId::None, skipping simulate_attack's
@@ -1010,13 +1693,32 @@ pub fn wid_to_str(id: WId) -> &'static str {
     match id {
         WId::None => "",
         WId::PrimePunchmech => "Prime_Punchmech",
+        WId::PrimePunchmechA => "Prime_Punchmech_A",
+        WId::PrimePunchmechB => "Prime_Punchmech_B",
+        WId::PrimePunchmechAB => "Prime_Punchmech_AB",
         WId::PrimeLightning => "Prime_Lightning",
+        WId::PrimeLightningA => "Prime_Lightning_A",
+        WId::PrimeLightningB => "Prime_Lightning_B",
+        WId::PrimeLightningAB => "Prime_Lightning_AB",
         WId::PrimeLasermech => "Prime_Lasermech",
+        WId::PrimeLasermechA => "Prime_Lasermech_A",
+        WId::PrimeLasermechB => "Prime_Lasermech_B",
+        WId::PrimeLasermechAB => "Prime_Lasermech_AB",
         WId::PrimeShieldBash => "Prime_ShieldBash",
         WId::PrimeShift => "Prime_Shift",
         WId::PrimeFlamethrower => "Prime_Flamethrower",
+        WId::PrimeFlamethrowerA => "Prime_Flamethrower_A",
+        WId::PrimeFlamethrowerB => "Prime_Flamethrower_B",
+        WId::PrimeFlamethrowerAB => "Prime_Flamethrower_AB",
+        WId::PrimeTcPunt => "Prime_TC_Punt",
+        WId::PrimeTcPuntA => "Prime_TC_Punt_A",
+        WId::PrimeTcPuntB => "Prime_TC_Punt_B",
+        WId::PrimeTcPuntAB => "Prime_TC_Punt_AB",
         WId::PrimeAreablast => "Prime_Areablast",
         WId::PrimeLeap => "Prime_Leap",
+        WId::PrimeLeapA => "Prime_Leap_A",
+        WId::PrimeLeapB => "Prime_Leap_B",
+        WId::PrimeLeapAB => "Prime_Leap_AB",
         WId::PrimeSpear => "Prime_Spear",
         WId::PrimeRockmech => "Prime_Rockmech",
         WId::PrimeRocketPunch => "Prime_RocketPunch",
@@ -1026,10 +1728,16 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeSmash => "Prime_Smash",
         WId::BruteTankmech => "Brute_Tankmech",
         WId::BruteJetmech => "Brute_Jetmech",
+        WId::BruteJetmechA => "Brute_Jetmech_A",
+        WId::BruteJetmechB => "Brute_Jetmech_B",
+        WId::BruteJetmechAB => "Brute_Jetmech_AB",
         WId::BruteMirrorshot => "Brute_Mirrorshot",
         WId::BruteBeetle => "Brute_Beetle",
         WId::BruteGrapple => "Brute_Grapple",
         WId::BruteUnstable => "Brute_Unstable",
+        WId::BruteUnstableA => "Brute_Unstable_A",
+        WId::BruteUnstableB => "Brute_Unstable_B",
+        WId::BruteUnstableAB => "Brute_Unstable_AB",
         WId::BrutePhaseShot => "Brute_PhaseShot",
         WId::BruteShrapnel => "Brute_Shrapnel",
         WId::BruteHeavyrocket => "Brute_Heavyrocket",
@@ -1038,23 +1746,59 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteSniper => "Brute_Sniper",
         WId::BruteSplitshot => "Brute_Splitshot",
         WId::BruteBombrun => "Brute_Bombrun",
+        WId::BruteTcRicochet => "Brute_TC_Ricochet",
+        WId::BruteTcRicochetA => "Brute_TC_Ricochet_A",
+        WId::BruteTcRicochetB => "Brute_TC_Ricochet_B",
+        WId::BruteTcRicochetAB => "Brute_TC_Ricochet_AB",
         WId::ArchiveArtShot => "Archive_ArtShot",
         WId::RangedArtillerymech => "Ranged_Artillerymech",
+        WId::RangedArtillerymechA => "Ranged_Artillerymech_A",
+        WId::DeployTankShot => "Deploy_TankShot",
+        WId::DeployTankShot2 => "Deploy_TankShot2",
+        WId::TrappedExplode => "Trapped_Explode",
+        WId::TerraformerAttack => "Terraformer_Attack",
+        WId::DisposalAttack => "Disposal_Attack",
         WId::RangedRockthrow => "Ranged_Rockthrow",
         WId::RangedDefensestrike => "Ranged_Defensestrike",
         WId::RangedRocket => "Ranged_Rocket",
+        WId::RangedRocketA => "Ranged_Rocket_A",
+        WId::RangedRocketB => "Ranged_Rocket_B",
+        WId::RangedRocketAB => "Ranged_Rocket_AB",
+        WId::RangedCrack => "Ranged_Crack",
+        WId::RangedCrackA => "Ranged_Crack_A",
+        WId::RangedCrackB => "Ranged_Crack_B",
+        WId::RangedCrackAB => "Ranged_Crack_AB",
         WId::RangedIgnite => "Ranged_Ignite",
+        WId::RangedIgniteA => "Ranged_Ignite_A",
         WId::RangedIce => "Ranged_Ice",
         WId::RangedScatterShot => "Ranged_ScatterShot",
         WId::RangedBackShot => "Ranged_BackShot",
         WId::RangedWide => "Ranged_Wide",
+        WId::RangedArachnoid => "Ranged_Arachnoid",
+        WId::RangedArachnoidA => "Ranged_Arachnoid_A",
+        WId::RangedArachnoidB => "Ranged_Arachnoid_B",
+        WId::RangedArachnoidAB => "Ranged_Arachnoid_AB",
+        WId::DeployUnitAracnoidAtk => "DeployUnit_AracnoidAtk",
+        WId::DeployUnitAracnoidAtkB => "DeployUnit_AracnoidAtkB",
         WId::SciencePullmech => "Science_Pullmech",
         WId::ScienceGravwell => "Science_Gravwell",
         WId::ScienceRepulse => "Science_Repulse",
+        WId::ScienceRepulseA => "Science_Repulse_A",
         WId::ScienceSwap => "Science_Swap",
+        WId::ScienceSwapA => "Science_Swap_A",
+        WId::ScienceSwapB => "Science_Swap_B",
+        WId::ScienceSwapAB => "Science_Swap_AB",
         WId::ScienceAcidShot => "Science_AcidShot",
         WId::ScienceShield => "Science_Shield",
         WId::ScienceConfuse => "Science_Confuse",
+        WId::ScienceKoCrack => "Science_KO_Crack",
+        WId::ScienceKoCrackA => "Science_KO_Crack_A",
+        WId::ScienceKoCrackB => "Science_KO_Crack_B",
+        WId::ScienceKoCrackAB => "Science_KO_Crack_AB",
+        WId::ScienceMassShift => "Science_MassShift",
+        WId::ScienceMassShiftA => "Science_MassShift_A",
+        WId::ScienceMassShiftB => "Science_MassShift_B",
+        WId::ScienceMassShiftAB => "Science_MassShift_AB",
         WId::ScorpionAtk1 => "ScorpionAtk1",
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
@@ -1068,8 +1812,11 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::CentipedeAtk1 => "CentipedeAtk1",
         WId::ScarabAtk1 => "ScarabAtk1",
         WId::ScarabAtk2 => "ScarabAtk2",
+        WId::ScarabAtkB => "ScarabAtkB",
+        WId::CentipedeAtkB => "CentipedeAtkB",
         WId::CrabAtk1 => "CrabAtk1",
         WId::CrabAtk2 => "CrabAtk2",
+        WId::CrabAtkB => "CrabAtkB",
         WId::DiggerAtk1 => "DiggerAtk1",
         WId::BlobberAtk1 => "BlobberAtk1",
         WId::SpiderAtk1 => "SpiderAtk1",
@@ -1081,6 +1828,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::MothAtk2 => "MothAtk2",
         WId::MosquitoAtk1 => "MosquitoAtk1",
         WId::MosquitoAtk2 => "MosquitoAtk2",
+        WId::MosquitoAtkB => "MosquitoAtkB",
         WId::BurnbugAtk1 => "BurnbugAtk1",
         WId::BurnbugAtk2 => "BurnbugAtk2",
         WId::SnowtankAtk1 => "SnowtankAtk1",
@@ -1093,6 +1841,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::CentipedeAtk2 => "CentipedeAtk2",
         WId::DiggerAtk2 => "DiggerAtk2",
         WId::BlobberAtk2 => "BlobberAtk2",
+        WId::BlobberAtkB => "BlobberAtkB",
         WId::SpiderAtk2 => "SpiderAtk2",
         WId::BurrowerAtk1 => "BurrowerAtk1",
         WId::BurrowerAtk2 => "BurrowerAtk2",
@@ -1100,6 +1849,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::GastropodAtk2 => "GastropodAtk2",
         WId::StarfishAtk1 => "StarfishAtk1",
         WId::StarfishAtk2 => "StarfishAtk2",
+        WId::StarfishAtkB1 => "StarfishAtkB1",
         WId::TumblebugAtk1 => "TumblebugAtk1",
         WId::TumblebugAtk2 => "TumblebugAtk2",
         WId::PlasmodiaAtk1 => "PlasmodiaAtk1",
@@ -1110,6 +1860,7 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::Repair => "_REPAIR",
         WId::SupportRepair => "Support_Repair",
         WId::BlobAtk2 => "BlobAtk2",
+        WId::BlobAtkB => "BlobAtkB",
         WId::AcidTankAtk => "Acid_Tank_Attack",
         WId::BlobBossAtk => "BlobBossAtk",
         WId::BlobBossAtkMed => "BlobBossAtkMed",
@@ -1119,6 +1870,12 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BossHeal => "BossHeal",
         WId::PinnacleFreezeTank => "Pinnacle_FreezeTank",
         WId::BurnbugAtkB => "BurnbugAtkB",
+        WId::BouncerAtkB => "BouncerAtkB",
+        WId::ArmoredTrainMove => "Armored_Train_Move",
+        WId::VipTruckMove => "VIP_Truck_Move",
+        WId::SupportWind => "Support_Wind",
+        WId::MissilesShield => "Missiles_Shield",
+        WId::MissilesOneDmg => "Missiles_OneDmg",
         _ => "",
     }
 }
@@ -1141,14 +1898,18 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "Firefly2" => WId::FireflyAtk2,
         "Centipede1" => WId::CentipedeAtk1,
         "Centipede2" => WId::CentipedeAtk2,
+        "CentipedeBoss" => WId::CentipedeAtkB,
         "Scarab1" => WId::ScarabAtk1,
         "Scarab2" => WId::ScarabAtk2,
+        "ScarabBoss" => WId::ScarabAtkB,
         "Crab1" => WId::CrabAtk1,
         "Crab2" => WId::CrabAtk2,
+        "CrabBoss" => WId::CrabAtkB,
         "Digger1" => WId::DiggerAtk1,
         "Digger2" => WId::DiggerAtk2,
         "Blobber1" => WId::BlobberAtk1,
         "Blobber2" => WId::BlobberAtk2,
+        "BlobberBoss" => WId::BlobberAtkB,
         "Spider1" => WId::SpiderAtk1,
         "Spider2" => WId::SpiderAtk2,
         "Burrower1" => WId::BurrowerAtk1,
@@ -1156,16 +1917,23 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         // Advanced Edition Vek
         "Bouncer1" => WId::BouncerAtk1,
         "Bouncer2" => WId::BouncerAtk2,
+        "BouncerBoss" => WId::BouncerAtkB,
         "Moth1" => WId::MothAtk1,
         "Moth2" => WId::MothAtk2,
         "Mosquito1" => WId::MosquitoAtk1,
         "Mosquito2" => WId::MosquitoAtk2,
+        "MosquitoBoss" => WId::MosquitoAtkB,
         "Gastropod1" => WId::GastropodAtk1,
         "Gastropod2" => WId::GastropodAtk2,
         "Starfish1" => WId::StarfishAtk1,
         "Starfish2" => WId::StarfishAtk2,
+        "StarfishBoss" => WId::StarfishAtkB1,
+        "Dung1" => WId::TumblebugAtk1,
+        "Dung2" => WId::TumblebugAtk2,
+        "DungBoss" => WId::TumblebugAtk2,
         "Tumblebug1" => WId::TumblebugAtk1,
         "Tumblebug2" => WId::TumblebugAtk2,
+        "TumblebugBoss" => WId::TumblebugAtk2,
         "Plasmodia1" => WId::PlasmodiaAtk1,
         "Plasmodia2" => WId::PlasmodiaAtk2,
         // Pinnacle bots
@@ -1194,6 +1962,7 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         s if s.starts_with("BlobMini") => WId::BlobAtk1,
         s if s.starts_with("Blob1") => WId::BlobAtk1,
         s if s.starts_with("Blob2") => WId::BlobAtk2,
+        "BlobB" => WId::BlobAtkB,
         // Objective / special Vek
         "GlowingScorpion" => WId::ScorpionAtk1,
         // Bosses
@@ -1230,14 +1999,17 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
 /// Get the display name for a weapon (for solution descriptions).
 pub fn weapon_name(id: WId) -> &'static str {
     match id {
-        WId::PrimePunchmech => "Titan Fist",
-        WId::PrimeLightning => "Chain Whip",
-        WId::PrimeLasermech => "Burst Beam",
+        WId::PrimePunchmech | WId::PrimePunchmechA | WId::PrimePunchmechB | WId::PrimePunchmechAB => "Titan Fist",
+        WId::PrimeLightning | WId::PrimeLightningA | WId::PrimeLightningB | WId::PrimeLightningAB => "Chain Whip",
+        WId::PrimeLasermech | WId::PrimeLasermechA | WId::PrimeLasermechB | WId::PrimeLasermechAB => "Burst Beam",
         WId::PrimeShieldBash => "Shield Bash",
         WId::PrimeShift => "Vice Fist",
-        WId::PrimeFlamethrower => "Flamethrower",
+        WId::PrimeFlamethrower | WId::PrimeFlamethrowerA
+            | WId::PrimeFlamethrowerB | WId::PrimeFlamethrowerAB => "Flamethrower",
+        WId::PrimeTcPunt | WId::PrimeTcPuntA
+            | WId::PrimeTcPuntB | WId::PrimeTcPuntAB => "Hydraulic Lifter",
         WId::PrimeAreablast => "Area Blast",
-        WId::PrimeLeap => "Hydraulic Legs",
+        WId::PrimeLeap | WId::PrimeLeapA | WId::PrimeLeapB | WId::PrimeLeapAB => "Hydraulic Legs",
         WId::PrimeSpear => "Spear",
         WId::PrimeRockmech => "Rock Throw",
         WId::PrimeRocketPunch => "Rocket Fist",
@@ -1246,11 +2018,12 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeSword => "Sword",
         WId::PrimeSmash => "Ground Smash",
         WId::BruteTankmech => "Taurus Cannon",
-        WId::BruteJetmech => "Aerial Bombs",
+        WId::BruteJetmech | WId::BruteJetmechA | WId::BruteJetmechB | WId::BruteJetmechAB => "Aerial Bombs",
         WId::BruteMirrorshot => "Mirror Shot",
         WId::BruteBeetle => "Ramming Engines",
         WId::BruteGrapple => "Grappling Hook",
-        WId::BruteUnstable => "Unstable Cannon",
+        WId::BruteUnstable | WId::BruteUnstableA
+            | WId::BruteUnstableB | WId::BruteUnstableAB => "Unstable Cannon",
         WId::BrutePhaseShot => "Phase Cannon",
         WId::BruteShrapnel => "Defensive Shrapnel",
         WId::BruteHeavyrocket => "Heavy Rocket",
@@ -1259,23 +2032,43 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteSniper => "Sniper Rifle",
         WId::BruteSplitshot => "Split Shot",
         WId::BruteBombrun => "Bombing Run",
+        WId::BruteTcRicochet | WId::BruteTcRicochetA
+            | WId::BruteTcRicochetB | WId::BruteTcRicochetAB => "Ricochet Rocket",
         WId::ArchiveArtShot => "Old Earth Artillery",
         WId::RangedArtillerymech => "Artemis Artillery",
+        WId::RangedArtillerymechA => "Artemis Artillery",
+        WId::DeployTankShot => "Stock Cannon",
+        WId::DeployTankShot2 => "Stock Cannon",
         WId::RangedRockthrow => "Rock Launcher",
         WId::RangedDefensestrike => "Cluster Artillery",
         WId::RangedRocket => "Rocket Artillery",
+        WId::RangedRocketA => "Rocket Artillery",
+        WId::RangedRocketB => "Rocket Artillery",
+        WId::RangedRocketAB => "Rocket Artillery",
+        WId::RangedCrack | WId::RangedCrackA
+            | WId::RangedCrackB | WId::RangedCrackAB => "Tri-Rocket",
         WId::RangedIgnite => "Ignite",
+        WId::RangedIgniteA => "Ignite",
         WId::RangedIce => "Cryo-Launcher",
         WId::RangedScatterShot => "Scatter Shot",
         WId::RangedBackShot => "Back Shot",
         WId::RangedWide => "Overpower",
+        WId::RangedArachnoid | WId::RangedArachnoidA
+            | WId::RangedArachnoidB | WId::RangedArachnoidAB => "Arachnoid Injector",
+        WId::DeployUnitAracnoidAtk | WId::DeployUnitAracnoidAtkB => "Arachnoid Bite",
         WId::SciencePullmech => "Attract Shot",
         WId::ScienceGravwell => "Grav Well",
         WId::ScienceRepulse => "Repulse",
-        WId::ScienceSwap => "Teleporter",
+        WId::ScienceRepulseA => "Repulse",
+        WId::ScienceSwap | WId::ScienceSwapA
+            | WId::ScienceSwapB | WId::ScienceSwapAB => "Teleporter",
         WId::ScienceAcidShot => "Acid Projector",
         WId::ScienceShield => "Shield Projector",
         WId::ScienceConfuse => "Confusion Ray",
+        WId::ScienceKoCrack | WId::ScienceKoCrackA
+            | WId::ScienceKoCrackB | WId::ScienceKoCrackAB => "Seismic Capacitor",
+        WId::ScienceMassShift | WId::ScienceMassShiftA
+            | WId::ScienceMassShiftB | WId::ScienceMassShiftAB => "Area Shift",
         WId::Repair => "Repair",
         WId::ScorpionAtk1 => "Scorpion Strike",
         WId::ScorpionAtk2 => "Alpha Scorpion Strike",
@@ -1290,28 +2083,34 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::FireflyAtk2 => "Alpha Firefly Shot",
         WId::CentipedeAtk1 => "Centipede Spit",
         WId::CentipedeAtk2 => "Alpha Centipede Spit",
+        WId::CentipedeAtkB => "Caustic Vomit",
         WId::ScarabAtk1 => "Scarab Shot",
         WId::ScarabAtk2 => "Alpha Scarab Shot",
+        WId::ScarabAtkB => "Expectorating Glands",
         WId::CrabAtk1 => "Crab Artillery",
         WId::CrabAtk2 => "Alpha Crab Artillery",
+        WId::CrabAtkB => "Raining Expulsions",
         WId::DiggerAtk1 => "Digger Smash",
         WId::DiggerAtk2 => "Alpha Digger Smash",
         WId::BlobberAtk1 => "Blobber Launch",
         WId::BlobberAtk2 => "Alpha Blobber Launch",
+        WId::BlobberAtkB => "Eruptive Growth",
         WId::SpiderAtk1 => "Spider Egg",
         WId::SpiderAtk2 => "Alpha Spider Egg",
         WId::SpiderlingAtk1 => "Spiderling Bite",
         WId::BlobAtk1 => "Blob Explode",
         WId::BlobAtk2 => "Alpha Blob Explode",
+        WId::BlobAtkB => "Eruptive Guts",
         WId::BouncerAtk1 => "Energized Horns",
         WId::BouncerAtk2 => "Alpha Energized Horns",
         WId::MothAtk1 => "Repulsive Pellets",
         WId::MothAtk2 => "Alpha Repulsive Pellets",
         WId::MosquitoAtk1 => "Smokescreen Whip",
         WId::MosquitoAtk2 => "Alpha Smokescreen Whip",
+        WId::MosquitoAtkB => "Cloudburst Tentacles",
         WId::BurnbugAtk1 => "Burnbug Strike",
         WId::BurnbugAtk2 => "Alpha Burnbug Strike",
-        WId::SnowtankAtk1 => "Snowtank Attack",
+        WId::SnowtankAtk1 => "Cannon 8R Mark I",
         WId::SnowtankAtk2 => "Cannon 8R Mark II",
         WId::SnowlaserAtk1 => "BKR Beam Mark I",
         WId::SnowlaserAtk2 => "BKR Beam Mark II",
@@ -1323,12 +2122,16 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::GastropodAtk2 => "Alpha Gastropod Grapple",
         WId::StarfishAtk1 => "Starfish Slash",
         WId::StarfishAtk2 => "Alpha Starfish Slash",
+        WId::StarfishAtkB1 => "Scored Appendages",
         WId::TumblebugAtk1 => "Tumblebug Boulder",
         WId::TumblebugAtk2 => "Alpha Tumblebug Boulder",
         WId::PlasmodiaAtk1 => "Plasmodia Spore",
         WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
         WId::FireflyAtkB => "Firefly Boss Shot",
         WId::ScorpionAtkB => "Massive Spinneret",
+        WId::BouncerAtkB => "Sweeping Horns",
+        WId::ArmoredTrainMove => "Armored Charge",
+        WId::VipTruckMove => "Floor It!",
         WId::BeetleAtkB => "Flaming Abdomen",
         WId::SupportRepair => "Repair Drop",
         WId::AcidTankAtk => "A.C.I.D. Cannon",
@@ -1339,6 +2142,12 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::SnowBossAtk2 => "Vk8 Rockets Mark IV",
         WId::BossHeal => "Self-Repairing",
         WId::BurnbugAtkB => "Flaming Proboscis",
+        WId::SupportWind => "Wind Torrent",
+        WId::MissilesShield => "Shield Barrage",
+        WId::MissilesOneDmg => "Missile Barrage",
+        WId::TrappedExplode => "Area Blast",
+        WId::TerraformerAttack => "Terraformer",
+        WId::DisposalAttack => "Disintegrator",
         _ => "Unknown",
     }
 }
@@ -1365,6 +2174,98 @@ mod tests {
     }
 
     #[test]
+    fn test_arachnophiles_weapon_defs_and_mappings() {
+        let ricochet = weapon_def(WId::BruteTcRicochet);
+        assert_eq!(ricochet.weapon_type, WeaponType::Projectile);
+        assert_eq!(ricochet.damage, 1);
+        assert_eq!(ricochet.push, PushDir::Forward);
+        assert_eq!(weapon_def(WId::BruteTcRicochetA).damage, 2);
+        assert!(weapon_def(WId::BruteTcRicochetB).friendly_immune());
+
+        let injector = weapon_def(WId::RangedArachnoid);
+        assert_eq!(injector.weapon_type, WeaponType::Artillery);
+        assert_eq!(injector.damage, 1);
+        assert!(is_arachnoid_injector(WId::RangedArachnoidAB));
+        assert!(arachnoid_injector_spawns_acid_attack(WId::RangedArachnoidB));
+
+        let bite = weapon_def(WId::DeployUnitAracnoidAtkB);
+        assert_eq!(bite.weapon_type, WeaponType::Melee);
+        assert!(bite.acid());
+        assert!(is_arachnoid_attack(WId::DeployUnitAracnoidAtk));
+
+        let shift = weapon_def(WId::ScienceMassShiftAB);
+        assert_eq!(shift.weapon_type, WeaponType::SelfAoe);
+        assert!(shift.shield_self());
+        assert!(shift.shield_allies());
+        assert!(is_mass_shift(WId::ScienceMassShift));
+
+        assert_eq!(wid_from_str("Brute_TC_Ricochet"), WId::BruteTcRicochet);
+        assert_eq!(wid_from_str("Ranged_Arachnoid_B"), WId::RangedArachnoidB);
+        assert_eq!(wid_from_str("DeployUnit_AracnoidAtk"), WId::DeployUnitAracnoidAtk);
+        assert_eq!(wid_from_str("Science_MassShift_AB"), WId::ScienceMassShiftAB);
+        assert_eq!(wid_to_str(WId::RangedArachnoidAB), "Ranged_Arachnoid_AB");
+        assert_eq!(weapon_name(WId::ScienceMassShift), "Area Shift");
+    }
+
+    #[test]
+    fn test_teleporter_upgrade_ranges() {
+        assert_eq!(weapon_def(WId::ScienceSwap).range_max, 1);
+        assert_eq!(weapon_def(WId::ScienceSwapA).range_max, 2);
+        assert_eq!(weapon_def(WId::ScienceSwapB).range_max, 3);
+        assert_eq!(weapon_def(WId::ScienceSwapAB).range_max, 4);
+        assert_eq!(wid_from_str("Science_Swap_AB"), WId::ScienceSwapAB);
+        assert_eq!(wid_to_str(WId::ScienceSwapAB), "Science_Swap_AB");
+        assert_eq!(weapon_name(WId::ScienceSwapAB), "Teleporter");
+    }
+
+    #[test]
+    fn test_flamethrower_upgrade_ranges() {
+        assert_eq!(weapon_def(WId::PrimeFlamethrower).range_max, 1);
+        assert_eq!(weapon_def(WId::PrimeFlamethrower).path_size, 1);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerA).range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerA).path_size, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerB).range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerB).path_size, 2);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerAB).range_max, 3);
+        assert_eq!(weapon_def(WId::PrimeFlamethrowerAB).path_size, 3);
+        assert_eq!(wid_from_str("Prime_Flamethrower_AB"), WId::PrimeFlamethrowerAB);
+        assert_eq!(wid_to_str(WId::PrimeFlamethrowerAB), "Prime_Flamethrower_AB");
+        assert_eq!(weapon_name(WId::PrimeFlamethrowerAB), "Flamethrower");
+    }
+
+    #[test]
+    fn test_cataclysm_weapon_defs_and_mappings() {
+        let lifter = weapon_def(WId::PrimeTcPunt);
+        assert_eq!(lifter.weapon_type, WeaponType::TwoClick);
+        assert_eq!(lifter.damage, 1);
+        assert_eq!(lifter.range_max, 2);
+        assert_eq!(weapon_def(WId::PrimeTcPuntA).range_max, 4);
+        assert_eq!(weapon_def(WId::PrimeTcPuntB).damage, 3);
+        assert!(is_hydraulic_lifter(WId::PrimeTcPuntAB));
+        assert_eq!(wid_from_str("Prime_TC_Punt"), WId::PrimeTcPunt);
+        assert_eq!(wid_to_str(WId::PrimeTcPuntAB), "Prime_TC_Punt_AB");
+        assert_eq!(weapon_name(WId::PrimeTcPunt), "Hydraulic Lifter");
+
+        let tri = weapon_def(WId::RangedCrack);
+        assert_eq!(tri.weapon_type, WeaponType::Artillery);
+        assert_eq!(tri.range_min, 1);
+        assert_eq!(tri.push, PushDir::Forward);
+        assert!(is_tri_rocket(WId::RangedCrackAB));
+        assert!(weapon_def(WId::RangedCrackB).building_immune());
+        assert_eq!(wid_from_str("Ranged_Crack_AB"), WId::RangedCrackAB);
+        assert_eq!(weapon_name(WId::RangedCrackA), "Tri-Rocket");
+
+        let seismic = weapon_def(WId::ScienceKoCrackAB);
+        assert_eq!(seismic.weapon_type, WeaponType::Melee);
+        assert_eq!(seismic.damage, 3);
+        assert_eq!(seismic.push, PushDir::Flip);
+        assert!(is_seismic_capacitor(WId::ScienceKoCrackB));
+        assert_eq!(wid_from_str("Science_KO_Crack"), WId::ScienceKoCrack);
+        assert_eq!(wid_to_str(WId::ScienceKoCrackB), "Science_KO_Crack_B");
+        assert_eq!(weapon_name(WId::ScienceKoCrack), "Seismic Capacitor");
+    }
+
+    #[test]
     fn test_artemis_artillery() {
         let w = weapon_def(WId::RangedArtillerymech);
         assert_eq!(w.weapon_type, WeaponType::Artillery);
@@ -1372,6 +2273,226 @@ mod tests {
         assert_eq!(w.push, PushDir::Outward);
         assert!(w.aoe_adjacent());
         assert_eq!(w.range_min, 2);
+    }
+
+    #[test]
+    fn test_artemis_artillery_buildings_immune_upgrade() {
+        let w = weapon_def(WId::RangedArtillerymechA);
+        assert_eq!(w.weapon_type, WeaponType::Artillery);
+        assert_eq!(w.damage, 1);
+        assert_eq!(w.push, PushDir::Outward);
+        assert!(w.aoe_center());
+        assert!(w.aoe_adjacent());
+        assert!(w.building_immune());
+        assert_eq!(w.range_min, 2);
+    }
+
+    #[test]
+    fn test_deploy_tank_stock_cannon() {
+        let w = weapon_def(WId::DeployTankShot);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 0);
+        assert_eq!(w.push, PushDir::Forward);
+        assert_eq!(w.range_max, 0);
+
+        let upgraded = weapon_def(WId::DeployTankShot2);
+        assert_eq!(upgraded.damage, 2);
+        assert_eq!(upgraded.push, PushDir::Forward);
+    }
+
+    #[test]
+    fn test_snowtank_mark_i_is_projectile_fire() {
+        let w = weapon_def(WId::SnowtankAtk1);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 1);
+        assert_eq!(w.range_max, 0);
+        assert!(w.fire());
+        assert_eq!(weapon_name(WId::SnowtankAtk1), "Cannon 8R Mark I");
+    }
+
+    #[test]
+    fn test_rocket_artillery_damage_upgrades() {
+        let base = weapon_def(WId::RangedRocket);
+        assert_eq!(base.damage, 2);
+        assert_eq!(base.push, PushDir::Forward);
+        assert!(base.smoke_behind_shooter());
+
+        for upgraded in [WId::RangedRocketA, WId::RangedRocketB] {
+            let w = weapon_def(upgraded);
+            assert_eq!(w.weapon_type, WeaponType::Artillery);
+            assert_eq!(w.damage, 3);
+            assert_eq!(w.push, PushDir::Forward);
+            assert!(w.smoke_behind_shooter());
+            assert!(is_rocket_artillery(upgraded));
+        }
+
+        let both = weapon_def(WId::RangedRocketAB);
+        assert_eq!(both.damage, 4);
+        assert!(both.smoke_behind_shooter());
+
+        assert_eq!(wid_from_str("Ranged_Rocket_A"), WId::RangedRocketA);
+        assert_eq!(wid_from_str("Ranged_Rocket_B"), WId::RangedRocketB);
+        assert_eq!(wid_from_str("Ranged_Rocket_AB"), WId::RangedRocketAB);
+        assert_eq!(wid_to_str(WId::RangedRocketA), "Ranged_Rocket_A");
+        assert_eq!(wid_to_str(WId::RangedRocketB), "Ranged_Rocket_B");
+        assert_eq!(wid_to_str(WId::RangedRocketAB), "Ranged_Rocket_AB");
+        assert_eq!(weapon_name(WId::RangedRocketAB), "Rocket Artillery");
+    }
+
+    #[test]
+    fn test_aerial_bombs_upgrades() {
+        let damage = weapon_def(WId::BruteJetmechA);
+        assert_eq!(damage.weapon_type, WeaponType::Leap);
+        assert_eq!(damage.damage, 2);
+        assert_eq!(damage.range_min, 2);
+        assert_eq!(damage.range_max, 2);
+        assert!(damage.smoke());
+
+        let range = weapon_def(WId::BruteJetmechB);
+        assert_eq!(range.damage, 1);
+        assert_eq!(range.range_min, 2);
+        assert_eq!(range.range_max, 3);
+        assert!(range.smoke());
+
+        let both = weapon_def(WId::BruteJetmechAB);
+        assert_eq!(both.damage, 2);
+        assert_eq!(both.range_min, 2);
+        assert_eq!(both.range_max, 3);
+        assert!(both.smoke());
+
+        assert_eq!(wid_from_str("Brute_Jetmech_A"), WId::BruteJetmechA);
+        assert_eq!(wid_from_str("Brute_Jetmech_B"), WId::BruteJetmechB);
+        assert_eq!(wid_from_str("Brute_Jetmech_AB"), WId::BruteJetmechAB);
+        assert_eq!(wid_to_str(WId::BruteJetmechB), "Brute_Jetmech_B");
+        assert_eq!(weapon_name(WId::BruteJetmechAB), "Aerial Bombs");
+    }
+
+    #[test]
+    fn test_blobber_leader_package_defs() {
+        let launch = weapon_def(WId::BlobberAtkB);
+        assert_eq!(launch.weapon_type, WeaponType::Artillery);
+        assert_eq!(launch.damage, 0);
+        assert_eq!(launch.range_min, 1);
+
+        let blob = weapon_def(WId::BlobAtkB);
+        assert_eq!(blob.weapon_type, WeaponType::SelfAoe);
+        assert_eq!(blob.damage, 1);
+        assert_eq!(blob.damage_outer, 2);
+        assert!(blob.aoe_center());
+        assert!(blob.aoe_adjacent());
+
+        assert_eq!(wid_from_str("BlobberAtkB"), WId::BlobberAtkB);
+        assert_eq!(wid_from_str("BlobAtkB"), WId::BlobAtkB);
+        assert_eq!(wid_to_str(WId::BlobberAtkB), "BlobberAtkB");
+        assert_eq!(wid_to_str(WId::BlobAtkB), "BlobAtkB");
+        assert_eq!(enemy_weapon_for_type("BlobberBoss"), WId::BlobberAtkB);
+        assert_eq!(enemy_weapon_for_type("BlobB"), WId::BlobAtkB);
+        assert_eq!(weapon_name(WId::BlobberAtkB), "Eruptive Growth");
+        assert_eq!(weapon_name(WId::BlobAtkB), "Eruptive Guts");
+    }
+
+    #[test]
+    fn test_detritus_contraption_barrages() {
+        let shield = weapon_def(WId::MissilesShield);
+        assert_eq!(shield.weapon_type, WeaponType::GlobalUnitEffect);
+        assert_eq!(shield.damage, 0);
+        assert!(shield.shield());
+        assert!(shield.targets_allies());
+        assert_eq!(shield.limited, 2);
+
+        let missile = weapon_def(WId::MissilesOneDmg);
+        assert_eq!(missile.weapon_type, WeaponType::GlobalUnitEffect);
+        assert_eq!(missile.damage, 1);
+        assert!(missile.targets_allies());
+        assert_eq!(missile.limited, 2);
+
+        assert_eq!(wid_from_str("Missiles_Shield"), WId::MissilesShield);
+        assert_eq!(wid_from_str("Missiles_OneDmg"), WId::MissilesOneDmg);
+        assert_eq!(wid_to_str(WId::MissilesShield), "Missiles_Shield");
+        assert_eq!(wid_to_str(WId::MissilesOneDmg), "Missiles_OneDmg");
+        assert_eq!(weapon_name(WId::MissilesShield), "Shield Barrage");
+        assert_eq!(weapon_name(WId::MissilesOneDmg), "Missile Barrage");
+    }
+
+    #[test]
+    fn test_tumblebug_live_lua_dung_aliases() {
+        assert_eq!(wid_from_str("DungAtk1"), WId::TumblebugAtk1);
+        assert_eq!(wid_from_str("DungAtk2"), WId::TumblebugAtk2);
+        assert_eq!(wid_from_str("DungAtkB"), WId::TumblebugAtk2);
+        assert_eq!(enemy_weapon_for_type("Dung1"), WId::TumblebugAtk1);
+        assert_eq!(enemy_weapon_for_type("Dung2"), WId::TumblebugAtk2);
+        assert_eq!(enemy_weapon_for_type("DungBoss"), WId::TumblebugAtk2);
+    }
+
+    #[test]
+    fn test_bouncer_boss_sweeping_horns_def() {
+        let w = weapon_def(WId::BouncerAtkB);
+        assert_eq!(w.weapon_type, WeaponType::Melee);
+        assert_eq!(w.damage, 2);
+        assert_eq!(w.push, PushDir::Forward);
+        assert!(w.push_self());
+        assert!(w.aoe_perpendicular());
+        assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
+        assert_eq!(enemy_weapon_for_type("BouncerBoss"), WId::BouncerAtkB);
+        assert_eq!(weapon_name(WId::BouncerAtkB), "Sweeping Horns");
+    }
+
+    #[test]
+    fn test_scarab_boss_expectorating_glands_def() {
+        let w = weapon_def(WId::ScarabAtkB);
+        assert_eq!(w.weapon_type, WeaponType::Artillery);
+        assert_eq!(w.damage, 4);
+        assert_eq!(w.push, PushDir::Outward);
+        assert!(w.aoe_adjacent());
+        assert!(w.no_edge_bump_adjacent_push());
+        assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
+        assert_eq!(enemy_weapon_for_type("ScarabBoss"), WId::ScarabAtkB);
+        assert_eq!(weapon_name(WId::ScarabAtkB), "Expectorating Glands");
+    }
+
+    #[test]
+    fn test_centipede_boss_caustic_vomit_def() {
+        let w = weapon_def(WId::CentipedeAtkB);
+        assert_eq!(w.weapon_type, WeaponType::Projectile);
+        assert_eq!(w.damage, 3);
+        assert!(w.acid());
+        assert!(w.aoe_perpendicular());
+        assert_eq!(wid_from_str("CentipedeAtkB"), WId::CentipedeAtkB);
+        assert_eq!(wid_to_str(WId::CentipedeAtkB), "CentipedeAtkB");
+        assert_eq!(enemy_weapon_for_type("CentipedeBoss"), WId::CentipedeAtkB);
+        assert_eq!(weapon_name(WId::CentipedeAtkB), "Caustic Vomit");
+    }
+
+    #[test]
+    fn test_terraformer_attack_def_and_footprint() {
+        let w = weapon_def(WId::TerraformerAttack);
+        assert_eq!(w.weapon_type, WeaponType::Terraformer);
+        assert_eq!(w.range_min, 1);
+        assert_eq!(w.range_max, 1);
+        assert_eq!(wid_from_str("Terraformer_Attack"), WId::TerraformerAttack);
+        assert_eq!(wid_to_str(WId::TerraformerAttack), "Terraformer_Attack");
+        assert_eq!(weapon_name(WId::TerraformerAttack), "Terraformer");
+
+        let tiles = terraformer_sweep_tiles(5, 3, 6, 3).expect("adjacent target");
+        assert_eq!(
+            tiles,
+            vec![(6, 2), (6, 3), (6, 4), (7, 2), (7, 3), (7, 4)]
+        );
+        assert!(terraformer_sweep_tiles(5, 3, 5, 5).is_none());
+    }
+
+    #[test]
+    fn test_disposal_attack_def() {
+        let w = weapon_def(WId::DisposalAttack);
+        assert_eq!(w.weapon_type, WeaponType::Disposal);
+        assert_eq!(w.range_min, 1);
+        assert_eq!(w.range_max, 0);
+        assert!(w.acid());
+        assert!(w.aoe_center());
+        assert!(w.aoe_adjacent());
+        assert_eq!(wid_from_str("Disposal_Attack"), WId::DisposalAttack);
+        assert_eq!(wid_to_str(WId::DisposalAttack), "Disposal_Attack");
+        assert_eq!(weapon_name(WId::DisposalAttack), "Disintegrator");
     }
 
     #[test]
@@ -1389,15 +2510,68 @@ mod tests {
     }
 
     #[test]
+    fn test_titan_fist_upgraded_defs() {
+        let dash = weapon_def(WId::PrimePunchmechA);
+        assert_eq!(dash.weapon_type, WeaponType::Charge);
+        assert_eq!(dash.damage, 2);
+        assert_eq!(dash.push, PushDir::Forward);
+        assert_eq!(dash.self_damage, 0);
+
+        let damage = weapon_def(WId::PrimePunchmechB);
+        assert_eq!(damage.weapon_type, WeaponType::Melee);
+        assert_eq!(damage.damage, 4);
+        assert_eq!(damage.push, PushDir::Forward);
+
+        let both = weapon_def(WId::PrimePunchmechAB);
+        assert_eq!(both.weapon_type, WeaponType::Charge);
+        assert_eq!(both.damage, 4);
+        assert_eq!(both.push, PushDir::Forward);
+        assert_eq!(weapon_name(WId::PrimePunchmechAB), "Titan Fist");
+    }
+
+    #[test]
     fn test_phase_cannon() {
         let w = weapon_def(WId::BrutePhaseShot);
         assert!(w.phase());
     }
 
     #[test]
+    fn test_chain_whip_upgrades() {
+        let base = weapon_def(WId::PrimeLightning);
+        assert_eq!(base.damage, 2);
+        assert!(base.chain());
+        assert!(!base.building_immune());
+
+        let building_chain = weapon_def(WId::PrimeLightningA);
+        assert_eq!(building_chain.damage, 2);
+        assert!(building_chain.chain());
+        assert!(building_chain.building_immune());
+
+        let damage = weapon_def(WId::PrimeLightningB);
+        assert_eq!(damage.damage, 3);
+        assert!(damage.chain());
+        assert!(!damage.building_immune());
+
+        let both = weapon_def(WId::PrimeLightningAB);
+        assert_eq!(both.damage, 3);
+        assert!(both.chain());
+        assert!(both.building_immune());
+    }
+
+    #[test]
     fn test_string_to_wid_roundtrip() {
         assert_eq!(wid_from_str("Prime_Punchmech"), WId::PrimePunchmech);
+        assert_eq!(wid_from_str("Prime_Lightning_A"), WId::PrimeLightningA);
+        assert_eq!(wid_from_str("Prime_Lightning_B"), WId::PrimeLightningB);
+        assert_eq!(wid_from_str("Prime_Lightning_AB"), WId::PrimeLightningAB);
         assert_eq!(wid_from_str("Ranged_Artillerymech"), WId::RangedArtillerymech);
+        assert_eq!(wid_from_str("Ranged_Artillerymech_A"), WId::RangedArtillerymechA);
+        assert_eq!(wid_from_str("Deploy_TankShot"), WId::DeployTankShot);
+        assert_eq!(wid_from_str("Deploy_TankShot2"), WId::DeployTankShot2);
+        assert_eq!(wid_from_str("Trapped_Explode"), WId::TrappedExplode);
+        assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
+        assert_eq!(wid_from_str("Armored_Train_Move"), WId::ArmoredTrainMove);
+        assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
     }
 
@@ -1406,9 +2580,45 @@ mod tests {
         // Every wid_from_str input should roundtrip through wid_to_str
         let pairs = [
             ("Prime_Punchmech", WId::PrimePunchmech),
+            ("Prime_Punchmech_A", WId::PrimePunchmechA),
+            ("Prime_Punchmech_B", WId::PrimePunchmechB),
+            ("Prime_Punchmech_AB", WId::PrimePunchmechAB),
+            ("Prime_Lightning", WId::PrimeLightning),
+            ("Prime_Lightning_A", WId::PrimeLightningA),
+            ("Prime_Lightning_B", WId::PrimeLightningB),
+            ("Prime_Lightning_AB", WId::PrimeLightningAB),
             ("Brute_Tankmech", WId::BruteTankmech),
             ("Ranged_Artillerymech", WId::RangedArtillerymech),
+            ("Ranged_Artillerymech_A", WId::RangedArtillerymechA),
+            ("Ranged_Rocket_A", WId::RangedRocketA),
+            ("Ranged_Rocket_B", WId::RangedRocketB),
+            ("Ranged_Rocket_AB", WId::RangedRocketAB),
+            ("Prime_TC_Punt", WId::PrimeTcPunt),
+            ("Prime_TC_Punt_A", WId::PrimeTcPuntA),
+            ("Prime_TC_Punt_B", WId::PrimeTcPuntB),
+            ("Prime_TC_Punt_AB", WId::PrimeTcPuntAB),
+            ("Ranged_Crack", WId::RangedCrack),
+            ("Ranged_Crack_A", WId::RangedCrackA),
+            ("Ranged_Crack_B", WId::RangedCrackB),
+            ("Ranged_Crack_AB", WId::RangedCrackAB),
+            ("Science_KO_Crack", WId::ScienceKoCrack),
+            ("Science_KO_Crack_A", WId::ScienceKoCrackA),
+            ("Science_KO_Crack_B", WId::ScienceKoCrackB),
+            ("Science_KO_Crack_AB", WId::ScienceKoCrackAB),
+            ("Deploy_TankShot", WId::DeployTankShot),
+            ("Trapped_Explode", WId::TrappedExplode),
+            ("Missiles_Shield", WId::MissilesShield),
+            ("Missiles_OneDmg", WId::MissilesOneDmg),
+            ("BouncerAtkB", WId::BouncerAtkB),
+            ("Armored_Train_Move", WId::ArmoredTrainMove),
+            ("VIP_Truck_Move", WId::VipTruckMove),
+            ("ScarabAtkB", WId::ScarabAtkB),
+            ("Terraformer_Attack", WId::TerraformerAttack),
+            ("Disposal_Attack", WId::DisposalAttack),
             ("Science_Pullmech", WId::SciencePullmech),
+            ("Science_Swap_A", WId::ScienceSwapA),
+            ("Science_Swap_B", WId::ScienceSwapB),
+            ("Science_Swap_AB", WId::ScienceSwapAB),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),
         ];
@@ -1448,6 +2658,25 @@ mod tests {
         assert_eq!(wid_from_str("Support_Repair"), WId::SupportRepair);
         assert_eq!(wid_to_str(WId::SupportRepair), "Support_Repair");
         assert_eq!(weapon_name(WId::SupportRepair), "Repair Drop");
+    }
+
+    #[test]
+    fn test_support_wind_def_and_target_zones() {
+        let w = weapon_def(WId::SupportWind);
+        assert_eq!(w.weapon_type, WeaponType::GlobalPush);
+        assert_eq!(w.damage, 0);
+        assert_eq!(w.push, PushDir::Forward);
+        assert_eq!(w.limited, 1);
+        assert!(w.targets_allies());
+        assert_eq!(wid_from_str("Support_Wind"), WId::SupportWind);
+        assert_eq!(wid_from_str("Support_Wind_A"), WId::SupportWind);
+        assert_eq!(wid_to_str(WId::SupportWind), "Support_Wind");
+        assert_eq!(weapon_name(WId::SupportWind), "Wind Torrent");
+        assert_eq!(support_wind_dir_from_target(1, 3), Some(3));
+        assert_eq!(support_wind_dir_from_target(5, 3), Some(1));
+        assert_eq!(support_wind_dir_from_target(3, 1), Some(2));
+        assert_eq!(support_wind_dir_from_target(3, 5), Some(0));
+        assert_eq!(support_wind_dir_from_target(3, 3), None);
     }
 
     #[test]

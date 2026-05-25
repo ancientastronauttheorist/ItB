@@ -1,48 +1,65 @@
 {
-  "run_id": "",
-  "squad": "",
-  "achievement_targets": [],
+  "run_id": "20260522_133722_695",
+  "squad": "Frozen Titans",
+  "achievement_targets": [
+    "Untouchable"
+  ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Final_Cave",
+  "current_mission": "",
   "islands_completed": [],
   "mission_index": 5,
-  "current_turn": 5,
-  "phase": "combat_player",
+  "last_mission_turn": -1,
+  "current_turn": 4,
+  "phase": "unknown",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "IgniteMech",
-        "move_to": [
-          3,
-          5
-        ],
-        "weapon": "Ranged_Ignite",
-        "target": [
-          5,
-          5
-        ],
-        "description": "IgniteMech, move E5\u2192C5, fire Ignite at C3"
-      },
-      {
         "mech_uid": 0,
-        "mech_type": "FlameMech",
+        "mech_type": "GuardMech",
         "move_to": [
           5,
           4
         ],
-        "weapon": "Prime_Flamethrower",
+        "weapon": "Prime_ShieldBash",
         "target": [
           5,
-          5
+          3
         ],
-        "description": "FlameMech, move F3\u2192D3, fire Flamethrower at C3"
+        "description": "GuardMech, fire Shield Bash at E3"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "IceMech",
+        "move_to": [
+          2,
+          2
+        ],
+        "weapon": "Ranged_Ice",
+        "target": [
+          4,
+          2
+        ],
+        "description": "IceMech, move E8\u2192F6, fire Cryo-Launcher at F4"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "MirrorMech",
+        "move_to": [
+          4,
+          2
+        ],
+        "weapon": "Brute_Mirrorshot",
+        "target": [
+          3,
+          2
+        ],
+        "description": "MirrorMech, move E6\u2192F4, fire Mirror Shot at F5"
       }
     ],
-    "score": -304002.9983634949,
-    "turn": 5,
-    "input_fingerprint": "0:5,2:1|1:3,3:1|221:6,1:3|227:5,5:2|229:4,2:2|230:3,4:3|231:6,4:5|233:2,4:4|2:2,3:0"
+    "score": 119539.99999999999,
+    "turn": 4,
+    "input_fingerprint": "0:5,4:3|138:3,2:2|141:5,3:2|142:4,4:2|1:2,3:3|2:0,3:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -51,234 +68,476 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-04-29T18:56:24.356127",
+      "timestamp": "2026-05-22T13:44:33.141815",
       "turn": 1,
       "label": "solve",
-      "score": 122300.0,
+      "score": 120742.85714285713,
       "actions": [
-        "TeleMech, move E6\u2192E4, fire Teleporter at E3",
-        "FlameMech, move D5\u2192G4, fire Flamethrower at F4",
-        "IgniteMech, move B5\u2192A4, fire Ignite at D4"
+        "GuardMech, move F6\u2192G4, fire Shield Bash at G3",
+        "MirrorMech, move G5\u2192F6",
+        "IceMech, move D5\u2192G5, fire Cryo-Launcher at G2"
       ]
     },
     {
-      "timestamp": "2026-04-29T18:57:09.022554",
+      "timestamp": "2026-05-22T13:46:21.771721",
       "turn": 2,
       "label": "solve",
-      "score": 120719.99999999991,
+      "score": 127162.85714285713,
       "actions": [
-        "FlameMech, move G4\u2192F6, fire Flamethrower at F5",
-        "IgniteMech, move B8\u2192D7, fire Ignite at D5",
-        "TeleMech, fire Teleporter at F3"
+        "MirrorMech, fire Mirror Shot at F5",
+        "GuardMech, move G4\u2192E3, fire Shield Bash at E2",
+        "IceMech, move G5\u2192E6, fire Cryo-Launcher at E2"
       ]
     },
     {
-      "timestamp": "2026-04-29T18:58:39.148050",
+      "timestamp": "2026-05-22T13:47:06.787105",
       "turn": 3,
       "label": "solve",
-      "score": 137100.0,
+      "score": 131437.85714285713,
       "actions": [
-        "FlameMech, move G6\u2192E6, fire Flamethrower at F6",
-        "IgniteMech, move B6\u2192C7, fire Ignite at C2",
-        "TeleMech, fire Teleporter at E3"
+        "GuardMech, move E3\u2192C4, fire Shield Bash at D4",
+        "MirrorMech, move F6\u2192D7",
+        "IceMech, move E6\u2192F8, fire Cryo-Launcher at F2"
       ]
     },
     {
-      "timestamp": "2026-04-29T18:59:37.413143",
-      "turn": 4,
-      "label": "solve",
-      "score": 113714.14285503115,
-      "actions": [
-        "FlameMech, move E6\u2192D6, fire Flamethrower at D5",
-        "TeleMech, move E3\u2192D4, fire Teleporter at C4",
-        "IgniteMech, move C7\u2192C8, fire Ignite at C4"
-      ]
-    },
-    {
-      "timestamp": "2026-04-29T19:03:25.917368",
+      "timestamp": "2026-05-22T13:50:50.644054",
       "turn": 1,
       "label": "solve",
-      "score": 135971.42857142858,
+      "score": 151457.14285714284,
       "actions": [
-        "IgniteMech, move F6\u2192E6, fire Ignite at E3",
-        "FlameMech, move E5\u2192F3, fire Flamethrower at E3",
-        "TeleMech, move D6\u2192C6, fire Teleporter at B6"
+        "MirrorMech, move D6\u2192D5, fire Mirror Shot at D4",
+        "GuardMech, move F5\u2192G5, fire Shield Bash at H5",
+        "IceMech, move G6\u2192D6, fire Cryo-Launcher at D1"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:04:14.210541",
+      "timestamp": "2026-05-22T13:51:45.011434",
       "turn": 2,
       "label": "solve",
-      "score": 97023.238122554,
+      "score": 155202.95240046878,
       "actions": [
-        "FlameMech, move F3\u2192F2",
-        "TeleMech, move B6\u2192C6, repair",
-        "IgniteMech, move E6\u2192B6, fire Ignite at B2"
+        "GuardMech, fire Shield Bash at G4",
+        "IceMech, move D6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, fire Mirror Shot at D4"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:04:59.023439",
+      "timestamp": "2026-05-22T13:52:26.898037",
+      "turn": 2,
+      "label": "solve",
+      "score": 155202.95240046878,
+      "actions": [
+        "GuardMech, fire Shield Bash at G4",
+        "IceMech, move D6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, fire Mirror Shot at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T13:54:24.947957",
       "turn": 3,
       "label": "solve",
-      "score": 150011.42857142858,
+      "score": 156237.14285714287,
       "actions": [
-        "FlameMech, move F2\u2192F1, repair",
-        "IgniteMech, move B6\u2192D5, fire Ignite at B5",
-        "TeleMech, move C6\u2192B5, fire Teleporter at C5"
+        "MirrorMech",
+        "IceMech, move E7\u2192G8, fire Cryo-Launcher at G4",
+        "GuardMech, move G5\u2192E3, fire Shield Bash at D3"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:06:10.660519",
+      "timestamp": "2026-05-22T13:55:28.179308",
       "turn": 4,
       "label": "solve",
-      "score": 83060.57145830564,
+      "score": 86482.00009376662,
       "actions": [
-        "FlameMech, move F1\u2192E2, fire Flamethrower at F2",
-        "IgniteMech, move D5\u2192D8, fire Ignite at D2",
-        "TeleMech, fire Teleporter at C6"
+        "GuardMech, fire Shield Bash at D3",
+        "MirrorMech, move D5\u2192D6",
+        "IceMech, move G8\u2192E7, fire Cryo-Launcher at E2"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:12:02.606245",
+      "timestamp": "2026-05-22T13:57:31.836488",
+      "turn": 4,
+      "label": "solve",
+      "score": 86482.00009376662,
+      "actions": [
+        "GuardMech, fire Shield Bash at D3",
+        "MirrorMech, move D5\u2192D6",
+        "IceMech, move G8\u2192E7, fire Cryo-Launcher at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T14:15:37.068977",
+      "turn": 4,
+      "label": "manual_override",
+      "achievement": "Untouchable",
+      "mission_id": "Mission_Dam",
+      "reason": "solver frontier included mech_hp_loss; manual plan flips E2, freezes Burnbug F3, and moves Mirror off D5",
+      "actions": [
+        "GuardMech, fire Shield Bash at E2",
+        "IceMech, move G8->F7, fire Cryo-Launcher at F3",
+        "MirrorMech, move D5->D6"
+      ],
+      "score_plan": {
+        "alive_mech_hp": 8,
+        "bldg_hp_total": 8,
+        "bldgs_alive": 6,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 6,
+        "buildings_after_player": 7,
+        "buildings_before": 7,
+        "buildings_destroyed_by_enemies": 1,
+        "current_turn": 4,
+        "dead_mechs": 0,
+        "enemy_grid_save_expected": 0.15000000596046448,
+        "grid_power": 3,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "mechs_alive": 3,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 1,
+        "score": 32787.00015200887,
+        "total_turns": 4
+      },
+      "plan_safety": {
+        "status": "DIRTY",
+        "blocking": true,
+        "violations": [
+          {
+            "kind": "grid_damage",
+            "current": 4,
+            "predicted": 3,
+            "blocking": true,
+            "message": "Predicted grid power drops before the next player turn.",
+            "delta": -1
+          },
+          {
+            "kind": "building_destroyed",
+            "current": 7,
+            "predicted": 6,
+            "blocking": true,
+            "message": "Predicted outcome destroys one or more buildings.",
+            "delta": -1
+          },
+          {
+            "kind": "building_hp_loss",
+            "current": 9,
+            "predicted": 8,
+            "blocking": true,
+            "message": "Predicted outcome loses building HP even if grid power stays visible.",
+            "delta": -1
+          }
+        ],
+        "compared": [
+          "grid_power",
+          "buildings_alive",
+          "building_hp_total",
+          "objective_buildings_alive",
+          "objective_building_hp_total",
+          "pods_present",
+          "mites_remaining",
+          "mission_kill_limit",
+          "mission_kills_done",
+          "mechs_alive",
+          "mech_hp_total",
+          "mechs_acid",
+          "mechs_fire",
+          "mechs_webbed",
+          "mechs_on_danger",
+          "mechs_disabled",
+          "bigbomb_alive",
+          "protected_objective_units_alive",
+          "destroy_objective_units_alive"
+        ],
+        "current": {
+          "mission_id": "Mission_Dam",
+          "turn": 4,
+          "total_turns": 4,
+          "grid_power": 4,
+          "buildings_alive": 7,
+          "building_hp_total": 9,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "mechs_alive": 3,
+          "mech_hp_total": 8,
+          "mech_damage_taken_total": 0,
+          "mech_damage_objective_limit": null,
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_webbed": [
+            {
+              "uid": 0,
+              "type": "GuardMech",
+              "pos": [
+                5,
+                3
+              ]
+            }
+          ],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "bigbomb_alive": false,
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_thawed": null,
+          "terraform_grass_remaining": null,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mechs_infected": [],
+          "mission_kill_target": 0,
+          "mission_kill_limit": 4,
+          "mission_kills_done": 2
+        },
+        "predicted": {
+          "mission_id": "Mission_Dam",
+          "turn": 4,
+          "total_turns": 4,
+          "grid_power": 3,
+          "buildings_alive": 6,
+          "building_hp_total": 8,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "mechs_alive": 3,
+          "mech_hp_total": 8,
+          "mech_damage_taken_total": 0,
+          "mech_damage_objective_limit": null,
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_webbed": [
+            {
+              "uid": 0,
+              "type": "GuardMech",
+              "pos": [
+                5,
+                3
+              ]
+            }
+          ],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "bigbomb_alive": false,
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_thawed": null,
+          "terraform_grass_remaining": null,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mechs_infected": [],
+          "mission_kill_target": 0,
+          "mission_kill_limit": 4,
+          "mission_kills_done": 2,
+          "mission_kills_planned": 0
+        }
+      }
+    },
+    {
+      "timestamp": "2026-05-22T14:16:07.567540",
+      "turn": 4,
+      "label": "solve",
+      "score": 86922.00009376662,
+      "actions": [
+        "MirrorMech, move D5\u2192D6, fire Mirror Shot at D5",
+        "IceMech, move G8\u2192F7, fire Cryo-Launcher at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T14:16:29.889363",
+      "turn": 4,
+      "label": "solve",
+      "score": 86922.00009376662,
+      "actions": [
+        "MirrorMech, move D5\u2192D6, fire Mirror Shot at D5",
+        "IceMech, move G8\u2192F7, fire Cryo-Launcher at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T14:23:11.344705",
       "turn": 1,
       "label": "solve",
-      "score": 124121.42857142858,
+      "score": 170514.28571428574,
       "actions": [
-        "IgniteMech, fire Ignite at G3",
-        "TeleMech, move E6\u2192F3, fire Teleporter at G3",
-        "FlameMech, move F5\u2192E3, fire Flamethrower at F3"
+        "MirrorMech, move D6\u2192D7, fire Mirror Shot at D6",
+        "GuardMech, move C5\u2192E4, fire Shield Bash at E3",
+        "IceMech, move B6\u2192C5, fire Cryo-Launcher at C3"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:12:38.881010",
+      "timestamp": "2026-05-22T14:24:05.402252",
       "turn": 2,
       "label": "solve",
-      "score": -25765.239883377446,
+      "score": 170780.95238095254,
       "actions": [
-        "FlameMech, move E3\u2192C3, fire Flamethrower at B3",
-        "IgniteMech, move G6\u2192H4, fire Ignite at A4"
+        "GuardMech, move E4\u2192D2, fire Shield Bash at C2",
+        "MirrorMech, move D7\u2192F6, fire Mirror Shot at F5",
+        "IceMech"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:13:24.870409",
+      "timestamp": "2026-05-22T14:24:43.396319",
       "turn": 3,
       "label": "solve",
-      "score": 76641.42678328924,
+      "score": 167224.28571428574,
       "actions": [
-        "FlameMech, fire Flamethrower at C2",
-        "IgniteMech, fire Ignite at C4"
+        "GuardMech, fire Shield Bash at E2",
+        "MirrorMech, move F6\u2192F5",
+        "IceMech, move C5\u2192G5"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:14:03.753374",
+      "timestamp": "2026-05-22T14:25:48.502518",
       "turn": 4,
       "label": "solve",
-      "score": -58883.001694372724,
+      "score": 167924.28571428574,
       "actions": [
-        "FlameMech, move C2\u2192C4, fire Flamethrower at C3",
-        "IgniteMech, move H4\u2192H6, fire Ignite at E6"
+        "GuardMech, fire Shield Bash at D3",
+        "MirrorMech, move F5\u2192G4, fire Mirror Shot at F4",
+        "IceMech, move G5\u2192C5, fire Cryo-Launcher at C2"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:22:18.082521",
+      "timestamp": "2026-05-22T14:33:29.950512",
       "turn": 1,
       "label": "solve",
-      "score": 123350.0,
+      "score": 142200.0,
       "actions": [
-        "TeleMech, move F5\u2192F3, fire Teleporter at E3",
-        "IgniteMech, move E6\u2192C5, fire Ignite at F5",
-        "FlameMech, move D5\u2192F2, fire Flamethrower at F3"
+        "GuardMech, fire Shield Bash at F4",
+        "MirrorMech, move C5\u2192B3, fire Mirror Shot at C3",
+        "IceMech, move G6\u2192F6, fire Cryo-Launcher at F4"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:25:55.500320",
+      "timestamp": "2026-05-22T14:34:12.729698",
       "turn": 2,
       "label": "solve",
-      "score": 138320.00000000017,
+      "score": 139370.00000000015,
       "actions": [
-        "FlameMech, move F4\u2192E5, fire Flamethrower at F5",
-        "IgniteMech, move C5\u2192D2",
-        "TeleMech, move E3\u2192E2, fire Teleporter at F2"
+        "GuardMech, fire Shield Bash at G5",
+        "MirrorMech, move B3\u2192D4",
+        "IceMech, move F6\u2192C5, fire Cryo-Launcher at G5"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:26:45.736755",
+      "timestamp": "2026-05-22T14:36:19.642929",
+      "turn": 2,
+      "label": "solve",
+      "score": 148643.3333333335,
+      "actions": [
+        "MirrorMech, move B3\u2192C2, fire Mirror Shot at B2",
+        "IceMech, move F6\u2192C5, fire Cryo-Launcher at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T14:36:48.995997",
+      "turn": 2,
+      "label": "solve",
+      "score": 148643.3333333335,
+      "actions": [
+        "MirrorMech, move B3\u2192C2, fire Mirror Shot at B2",
+        "IceMech, move F6\u2192C5, fire Cryo-Launcher at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-22T14:37:53.186369",
       "turn": 3,
       "label": "solve",
-      "score": 136885.0,
+      "score": 150010.0,
       "actions": [
-        "IgniteMech, move D2\u2192D4, fire Ignite at D1",
-        "FlameMech, move E5\u2192D2, fire Flamethrower at D1",
-        "TeleMech, move F2\u2192E4, repair"
+        "GuardMech",
+        "MirrorMech, fire Mirror Shot at C3",
+        "IceMech, move C5\u2192B8, fire Cryo-Launcher at B2"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:29:27.452945",
+      "timestamp": "2026-05-22T14:39:08.926780",
       "turn": 4,
       "label": "solve",
-      "score": 112680.14309324537,
+      "score": 146865.0,
       "actions": [
-        "IgniteMech, move D4\u2192B5, fire Ignite at F5",
-        "FlameMech, move D3\u2192D4, fire Flamethrower at D5",
-        "TeleMech, move E4\u2192G4, fire Teleporter at G3"
+        "GuardMech",
+        "MirrorMech, fire Mirror Shot at B2",
+        "IceMech, move B8\u2192E8, fire Cryo-Launcher at E3"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:32:06.900317",
+      "timestamp": "2026-05-22T14:43:30.354672",
       "turn": 1,
       "label": "solve",
-      "score": 51900.0,
+      "score": 111249.99999999999,
       "actions": [
-        "TeleMech, move E6\u2192C4, fire Teleporter at C3",
-        "IgniteMech, move E5\u2192F5, fire Ignite at C5",
-        "FlameMech, move E5\u2192C6, fire Flamethrower at C5"
+        "GuardMech",
+        "MirrorMech, fire Mirror Shot at E5",
+        "IceMech, move C6\u2192E7, fire Cryo-Launcher at E3"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:33:33.472655",
+      "timestamp": "2026-05-22T14:44:47.465338",
       "turn": 2,
       "label": "solve",
-      "score": 68199.99999999991,
+      "score": 123036.66666666657,
       "actions": [
-        "FlameMech, move B4\u2192E6, fire Flamethrower at E5",
-        "IgniteMech, move F5\u2192F4, fire Ignite at D4",
-        "TeleMech, move C3\u2192B5, fire Teleporter at B6"
+        "MirrorMech, move E6\u2192E8",
+        "GuardMech, move D5\u2192E6, fire Shield Bash at F6",
+        "IceMech"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:35:08.770533",
+      "timestamp": "2026-05-22T14:47:24.542044",
       "turn": 3,
       "label": "solve",
-      "score": 60730.0,
+      "score": 119309.99999999999,
       "actions": [
-        "FlameMech, move E6\u2192D3, fire Flamethrower at E3",
-        "IgniteMech, move F4\u2192D2, fire Ignite at F2",
-        "TeleMech, move B6\u2192E6, repair"
+        "GuardMech, move E6\u2192D3, fire Shield Bash at E3",
+        "MirrorMech, move E8\u2192E6, fire Mirror Shot at E5",
+        "IceMech, move E8\u2192E7, fire Cryo-Launcher at E2"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:36:02.475150",
+      "timestamp": "2026-05-22T14:49:26.963222",
       "turn": 4,
       "label": "solve",
-      "score": -44315.0,
+      "score": 119539.99999999999,
       "actions": [
-        "FlameMech, move D3\u2192F3, fire Flamethrower at G3",
-        "IgniteMech, move D2\u2192E5, repair"
+        "GuardMech, fire Shield Bash at E3",
+        "IceMech, move E8\u2192F6, fire Cryo-Launcher at F4",
+        "MirrorMech, move E6\u2192F4, fire Mirror Shot at F5"
       ]
     },
     {
-      "timestamp": "2026-04-29T19:37:05.021809",
-      "turn": 5,
-      "label": "solve",
-      "score": -304002.9983634949,
-      "actions": [
-        "IgniteMech, move E5\u2192C5, fire Ignite at C3",
-        "FlameMech, move F3\u2192D3, fire Flamethrower at C3"
-      ]
+      "timestamp": "2026-05-22T14:52:56.189707",
+      "turn": 4,
+      "label": "note",
+      "message": "Untouchable popup observed after Corporate HQ Region Secured on run 20260522_133722_695; Steam achievements sync/client cache still reports 39/70 immediately afterward, so tracker may lag."
     }
   ],
   "recorded_post_enemy_turns": [
     [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
       1,
       1
     ],
@@ -325,80 +584,71 @@
     [
       4,
       3
-    ],
-    [
-      5,
-      1
-    ],
-    [
-      5,
-      2
-    ],
-    [
-      5,
-      3
-    ],
-    [
-      5,
-      4
     ]
   ],
-  "tags": [],
+  "post_enemy_block": null,
+  "dirty_consent_used": [
+    "bd1f69d33c9b6899",
+    "69504f6ff15e7553"
+  ],
+  "tags": [
+    "achievement"
+  ],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "damage_amount",
+      "top_category": "death",
       "categories": [
-        "damage_amount",
-        "spawn",
-        "terrain"
+        "death"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "damage_amount|Prime_Flamethrower|attack",
+      "signature": "death|Brute_Mirrorshot|attack",
       "frequency": 0,
-      "asymmetry": [],
+      "asymmetry": [
+        "enemy_survived_unexpectedly"
+      ],
       "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
+      "proposed_tier": 2,
+      "confidence": 0.8,
       "context": {
-        "mech_uid": 0,
+        "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Prime_Flamethrower",
+        "action_index": 2,
+        "turn": 2,
+        "weapon": "Brute_Mirrorshot",
         "target": [
           4,
-          2
+          4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "push_dir",
+      "top_category": "terrain",
       "categories": [
-        "push_dir",
-        "status"
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "push_dir|Prime_Flamethrower|attack",
+      "signature": "terrain|Brute_Mirrorshot|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.4,
+      "confidence": 0.3,
       "context": {
-        "mech_uid": 0,
+        "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 0,
-        "turn": 2,
-        "weapon": "Prime_Flamethrower",
+        "turn": 1,
+        "weapon": "Brute_Mirrorshot",
         "target": [
-          3,
-          2
+          2,
+          4
         ]
       }
     },
@@ -410,515 +660,77 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Science_Swap|attack",
+      "signature": "status|Prime_ShieldBash|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 2,
-        "weapon": "Science_Swap",
-        "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Prime_Flamethrower|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
         "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 0,
         "turn": 4,
-        "weapon": "Prime_Flamethrower",
+        "weapon": "Prime_ShieldBash",
         "target": [
-          3,
+          5,
           4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "click_miss",
+      "top_category": "status",
       "categories": [
-        "click_miss"
+        "status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "click_miss|Unknown|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 2,
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "_REPAIR",
-        "target": [
-          2,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
+      "signature": "status|Prime_ShieldBash|attack",
       "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 3,
-        "weapon": "_REPAIR",
-        "target": [
-          7,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Ranged_Ignite|attack",
-      "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.4,
       "context": {
-        "mech_uid": 1,
+        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 1,
-        "turn": 3,
-        "weapon": "Ranged_Ignite",
+        "action_index": 0,
+        "turn": 2,
+        "weapon": "Prime_ShieldBash",
         "target": [
           3,
-          6
+          1
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "push_dir",
+      "top_category": "terrain",
       "categories": [
-        "push_dir"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "push_dir|Prime_Flamethrower|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "death",
-      "categories": [
-        "damage_amount",
-        "death",
-        "spawn",
         "terrain",
         "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "death|Prime_Flamethrower|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "mech_died_unexpectedly"
-      ],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          5,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount",
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Ranged_Ignite|attack",
+      "signature": "terrain|Brute_Mirrorshot|attack",
       "frequency": 1,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.4,
+      "confidence": 0.3,
       "context": {
         "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          3,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Unknown|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "damage_amount",
-      "categories": [
-        "damage_amount"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "damage_amount|Prime_Flamethrower|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 1,
         "turn": 3,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          7,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "_REPAIR",
-        "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Ranged_Ignite|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          3,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "spawn",
-      "categories": [
-        "spawn"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "spawn|Ranged_Ignite|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 1,
-        "weapon": "Ranged_Ignite",
-        "target": [
-          3,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|Unknown|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 1,
-        "weapon": "Unknown",
-        "target": [
-          255,
-          255
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
-      "frequency": 3,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 3,
-        "weapon": "_REPAIR",
-        "target": [
-          2,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "click_miss",
-      "categories": [
-        "click_miss"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "click_miss|_REPAIR|attack",
-      "frequency": 4,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 1,
-      "confidence": 0.8,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "_REPAIR",
+        "weapon": "Brute_Mirrorshot",
         "target": [
           3,
           3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Prime_Flamethrower|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 1,
-        "turn": 5,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          5,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "tile_status",
-      "categories": [
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "tile_status|Prime_Flamethrower|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 5,
-        "weapon": "Prime_Flamethrower",
-        "target": [
-          5,
-          5
         ]
       }
     }
@@ -926,352 +738,134 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "FlameMech",
+      "type": "GuardMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Survive",
-      "first_seen_turn": 4,
-      "attempts": 1,
-      "status": "resolved",
-      "result": null,
-      "research_id": "aef9fd36ccc0",
-      "last_kind": "mech"
+      "mission_id": "Mission_Armored_Train",
+      "first_seen_turn": 0,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Frozen Titans friendly mech weapon is already modeled and known; stale queue item during Untouchable run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
     },
     {
-      "type": "IgniteMech",
+      "type": "MirrorMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Survive",
-      "first_seen_turn": 4,
+      "mission_id": "Mission_Armored_Train",
+      "first_seen_turn": 0,
       "attempts": 0,
-      "status": "resolved",
-      "result": null
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Frozen Titans friendly mech weapon is already modeled and known; stale queue item during Untouchable run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
     },
     {
-      "type": "TeleMech",
+      "type": "IceMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Survive",
-      "first_seen_turn": 4,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "Hornet1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Terraform",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null,
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium"
-    },
-    {
-      "type": "Scorpion1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Terraform",
-      "first_seen_turn": 1,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 2,
-        "diff_actual": 1
-      },
-      "diff_field": "hp",
-      "diff_predicted": 2,
-      "diff_actual": 1,
-      "severity": "low"
-    },
-    {
-      "type": "Terraformer",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Terraform",
-      "first_seen_turn": 2,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null,
-      "diff_field": "pos",
-      "diff_predicted": [
-        4,
-        2
-      ],
-      "diff_actual": [
-        3,
-        2
-      ],
-      "severity": "medium"
-    },
-    {
-      "type": "Scorpion2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Terraform",
-      "first_seen_turn": 2,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null,
-      "diff_field": "status.web",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "medium"
-    },
-    {
-      "type": "Burrower1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Terraform",
-      "first_seen_turn": 4,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null,
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium"
-    },
-    {
-      "type": "Firefly1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Crack",
-      "first_seen_turn": 3,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 2,
-        "diff_actual": 1
-      },
-      "diff_field": "hp",
-      "diff_predicted": 2,
-      "diff_actual": 1,
-      "severity": "low"
-    },
-    {
-      "type": "Jelly_Armor1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Crack",
-      "first_seen_turn": 4,
-      "attempts": 1,
-      "status": "resolved",
-      "result": null,
-      "diff_field": "pos",
-      "diff_predicted": [
-        6,
-        2
-      ],
-      "diff_actual": [
-        6,
-        1
-      ],
-      "severity": "medium"
-    },
-    {
-      "type": "Jelly_Boss",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_JellyBoss",
-      "first_seen_turn": 0,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Psion Abomination",
-            "hp": 0,
-            "move": 3,
-            "class_icons": [
-              "flying",
-              "boss"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Psion Abomination",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Psion+Abomination",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Psion+Abomination&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "27e6ffaf14a4",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Scarab2",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Final",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 3,
-        "diff_actual": 2
-      },
-      "diff_field": "hp",
-      "diff_predicted": 3,
-      "diff_actual": 2,
-      "severity": "low"
-    },
-    {
-      "type": "Jelly_Lava1",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Final",
-      "first_seen_turn": 2,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "parsed": {
-          "name_tag": {
-            "name": "Psion Tyrant",
-            "hp": 0,
-            "move": 2,
-            "class_icons": [
-              "flying",
-              "boss"
-            ],
-            "confidence": 0.8
-          },
-          "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
-            "confidence": 1.0
-          }
-        },
-        "mismatches": [],
-        "source": "vision",
-        "community_queries": {
-          "target_name": "Psion Tyrant",
-          "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Psion+Tyrant",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Psion+Tyrant&restrict_sr=1"
-          }
-        }
-      },
-      "research_id": "3c7fb836d8d4",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Beetle1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Final",
-      "first_seen_turn": 3,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "auto_resolved",
-        "reason": "low_severity_known_type",
-        "diff_field": "hp",
-        "diff_predicted": 1,
-        "diff_actual": 2
-      },
-      "diff_field": "hp",
-      "diff_predicted": 1,
-      "diff_actual": 2,
-      "severity": "low"
-    },
-    {
-      "type": "Blobber1",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Final",
-      "first_seen_turn": 3,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "Blob1",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Final",
-      "first_seen_turn": 3,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "Crab1",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Final_Cave",
+      "mission_id": "Mission_Armored_Train",
       "first_seen_turn": 0,
       "attempts": 0,
-      "status": "resolved",
-      "result": null
-    },
-    {
-      "type": "BigBomb",
-      "terrain_id": null,
-      "kind": null,
-      "slot": null,
-      "mission_id": "Mission_Final_Cave",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "resolved",
-      "result": null
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Frozen Titans friendly mech weapon is already modeled and known; stale queue item during Untouchable run.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
     },
     {
       "type": "Scarab1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_Final_Cave",
-      "first_seen_turn": 1,
+      "mission_id": "Mission_Dam",
+      "first_seen_turn": 2,
       "attempts": 0,
-      "status": "resolved",
-      "result": null,
-      "diff_field": "missing_in_actual",
-      "diff_predicted": "present",
-      "diff_actual": "absent",
-      "severity": "medium"
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known Scarab1 in data/known_types; queue item came from a Brute_Mirrorshot death desync already soft-disabled for live solving, not missing visual research.",
+        "kind": "behavior_novelty",
+        "attempts": 0,
+        "diff_field": "alive",
+        "diff_predicted": false,
+        "diff_actual": true
+      },
+      "diff_field": "alive",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "high"
+    },
+    {
+      "type": "Scorpion1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_ForestFire",
+      "first_seen_turn": 4,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Scorpion",
+            "hp": 1,
+            "move": 3,
+            "class_icons": [],
+            "confidence": 1.0
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Scorpion",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Scorpion",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Scorpion&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "status.fire",
+      "diff_predicted": false,
+      "diff_actual": true,
+      "severity": "medium",
+      "research_id": "3651e4dd3f8e",
+      "last_kind": "enemy"
     }
   ],
-  "diagnosis_queue": []
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "313f905616e74dbd",
+    "classes": "ggbgggbggggfbggggbgfbggbggggfgfgggfgfgggmgggggmmmgggggmmmmgggmmm",
+    "mission_index": 4,
+    "turn": 4
+  },
+  "terrain_stage_change_pending": false
 }

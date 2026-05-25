@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-06T18:12:40.727084",
+  "label": "post_m14_region_secured",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        2,
+        2
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        5,
+        6
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Burnbug2",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 4
+    }
+  ]
+}

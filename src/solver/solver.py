@@ -141,6 +141,29 @@ class Solution:
 # ── Post-solve replay (verification snapshots) ──────────────────────────
 
 
+def _replay_annotations_for_plan(plan: list[dict]) -> list[dict]:
+    """Return metadata-only annotations for replay auditing."""
+    annotations: list[dict] = []
+    prev: dict | None = None
+    for idx, item in enumerate(plan):
+        move_to = item.get("move_to")
+        if (
+            prev is not None
+            and isinstance(move_to, list)
+            and move_to == prev.get("move_to")
+        ):
+            annotations.append({
+                "kind": "duplicate_sequential_move_to",
+                "action_index": idx,
+                "previous_action_index": idx - 1,
+                "move_to": move_to,
+                "mech_uid": item.get("mech_uid"),
+                "previous_mech_uid": prev.get("mech_uid"),
+            })
+        prev = item
+    return annotations
+
+
 def replay_solution(
     bridge_data: dict,
     solution: Solution,
@@ -187,6 +210,7 @@ def replay_solution(
             "weapon_id": a.weapon or "None",
             "target":    [int(target[0]), int(target[1])],
         })
+    replay_annotations = _replay_annotations_for_plan(plan)
 
     raw = itb_solver.replay_solution(_json.dumps(bridge_data), _json.dumps(plan))
     data = _json.loads(raw)
@@ -195,9 +219,35 @@ def replay_solution(
     # Board to score (its weight/threat/psion logic runs on Python types).
     final_board_data = data.get("final_board") or {}
     final_board = Board.from_bridge_data(final_board_data)
+    predicted_outcome = dict(data.get("predicted_outcome") or {})
+    predicted_outcome.setdefault(
+        "bigbomb_alive", bool(getattr(final_board, "bigbomb_alive", False))
+    )
+    mission_id = final_board_data.get("mission_id") or getattr(
+        final_board, "mission_id", ""
+    )
+    if mission_id == "Mission_Final_Cave":
+        pylon_tiles = [
+            final_board.tile(x, y)
+            for x in range(8) for y in range(8)
+            if final_board.tile(x, y).terrain == "building"
+            and final_board.tile(x, y).building_hp > 0
+        ]
+        predicted_outcome.setdefault("pylons_alive", len(pylon_tiles))
+        predicted_outcome.setdefault(
+            "pylon_hp_total",
+            sum(int(t.building_hp) for t in pylon_tiles),
+        )
     total_kills = sum(int(r.get("enemies_killed", 0)) for r in data.get("action_results", []))
+    total_mission_kills = int(
+        predicted_outcome.get("mission_kills_total_projected") or sum(
+            int(r.get("mission_kills", r.get("enemies_killed", 0)) or 0)
+            for r in data.get("action_results", [])
+        )
+    )
     score_breakdown = evaluate_breakdown(
         final_board, spawn_pts, kills=total_kills,
+        mission_kills=total_mission_kills,
         current_turn=current_turn,
         total_turns=total_turns,
         remaining_spawns=remaining_spawns,
@@ -207,8 +257,8 @@ def replay_solution(
     return {
         "action_results":   data.get("action_results") or [],
         "predicted_states": data.get("predicted_states") or [],
-        "predicted_outcome": data.get("predicted_outcome") or {},
+        "predicted_outcome": predicted_outcome,
+        "final_board":      final_board_data,
         "score_breakdown":  score_breakdown,
+        "replay_annotations": replay_annotations,
     }
-
-

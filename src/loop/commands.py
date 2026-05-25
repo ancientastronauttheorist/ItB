@@ -10,6 +10,7 @@ The decision log records every action for post-run analysis.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -22,11 +23,26 @@ from src.capture.save_parser import (
     load_game_state,
     load_active_mission,
     detect_game_phase,
+    _MODELED_UPGRADED_WEAPONS,
+    _modeled_upgrade_from_save_mods,
+    _strip_upgrade_suffix,
 )
 from src.model.board import Board
 from src.model.weapons import get_weapon_name
-from src.solver.solver import MechAction, replay_solution
+from src.solver.solver import MechAction, Solution, replay_solution
+from src.solver.action_classification import action_has_attack, is_repair_action
 from src.solver.evaluate import evaluate_threats
+from src.solver.plan_safety import (
+    FINAL_CAVE_EMERGENCY_PYLON_KINDS,
+    NON_OVERRIDABLE_KINDS,
+    OBJECTIVE_LOSS_DIRTY_KINDS,
+    audit_plan_safety,
+    final_bomb_dirty_consent_allowed,
+    final_cave_emergency_pylon_loss_allowed,
+    final_cave_resist_gamble_allowed,
+    plan_requires_safety_block,
+    safety_loss_profile,
+)
 from src.control.executor import (
     plan_single_mech,
     plan_end_turn,
@@ -47,6 +63,17 @@ from src.bridge.writer import (
 from src.loop.session import RunSession, SolverAction, DEFAULT_SESSION_FILE
 from src.loop.logger import DecisionLog
 from src.loop import weapon_penalty_log
+from src.strategy.achievement_sync import (
+    ACHIEVEMENTS_PATH,
+    load_steam_client_achievement_cache,
+    merge_steam_client_cache,
+    sync_achievement_details,
+)
+from src.strategy.run_planner import recommend_squad_for_run
+from src.strategy.setup_verifier import capture_and_check_setup
+
+BONUS_MECH_DAMAGE_ID = 4
+MECH_DAMAGE_OBJECTIVE_LIMIT = 4
 
 SNAPSHOT_DIR = Path(__file__).parent.parent.parent / "snapshots"
 SAVE_DIR = Path.home() / "Library" / "Application Support" / "IntoTheBreach"
@@ -63,7 +90,68 @@ def _get_logger(session: RunSession) -> DecisionLog:
     return DecisionLog(run_id)
 
 
+def _achievement_weight_overlay(
+    session: RunSession | None,
+    base_weights: dict | None,
+) -> tuple[dict | None, list[str]]:
+    """Apply narrow live-run scoring nudges for active achievement targets."""
+    targets = {
+        str(t).strip().lower()
+        for t in (getattr(session, "achievement_targets", None) or [])
+        if str(t).strip()
+    }
+    if not targets:
+        return base_weights, []
+
+    weights = dict(base_weights or {})
+    applied: list[str] = []
+
+    if "this is fine" in targets:
+        # The run goal is five enemies burning at once, not fast cleanup.
+        # Keep ordinary safety weights intact, but reward burning Vek enough
+        # that safe fire-spreading lines beat unnecessary kills.
+        weights["enemy_on_fire_bonus"] = max(
+            float(weights.get("enemy_on_fire_bonus", 0) or 0),
+            3500.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 0) or 0),
+            -500.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("this_is_fine")
+
+    if "healing" in targets:
+        # Hazardous Mechs' Healing achievement counts actual HP restored by
+        # Viscera Nanobots, so prefer safe kill lines that restore missing HP
+        # over equivalent full-health kills.
+        weights["viscera_nanobots_heal_bonus"] = max(
+            float(weights.get("viscera_nanobots_heal_bonus", 0) or 0),
+            9000.0,
+        )
+        applied.append("healing")
+
+    return weights, applied
+
+
 RECORDING_DIR = Path(__file__).parent.parent.parent / "recordings"
+_SAFE_PLAN_CANDIDATE_LIMIT = 10
+_SAFETY_WIDENING_TOP_K = 1000
+_HARD_STOP_STATUSES = {
+    "INVESTIGATE",
+    "INVESTIGATE_POST_ENEMY",
+    "POST_ENEMY_AUDIT_MISSING",
+    "POST_ENEMY_AUDIT_MISSED_WINDOW",
+    "SAFETY_BLOCKED",
+    "SAFETY_BLOCKED_RE_SOLVE",
+    "THREAT_AUDIT_BLOCKED",
+    "DIRTY_CONSENT_REQUIRED",
+    "DIRTY_CONSENT_REJECTED",
+    "TERMINAL_OR_MISSION_END",
+}
 
 
 def _atomic_json_write(filepath: Path, data: dict) -> None:
@@ -90,8 +178,426 @@ def _recording_dir(session: RunSession) -> Path:
     return run_dir
 
 
+def _active_post_enemy_block(session: RunSession) -> dict | None:
+    """Return a normalized unresolved post-enemy hard stop, if any."""
+    block = session.post_enemy_block
+    if not isinstance(block, dict):
+        return None
+    if os.environ.get("ITB_ALLOW_UNRESOLVED_POST_ENEMY") == "1":
+        return None
+    result = dict(block)
+    result.setdefault("status", "INVESTIGATE_POST_ENEMY")
+    result.setdefault("blocking", True)
+    result.setdefault("source", "session_post_enemy_block")
+    result.setdefault("next_step", (
+        "Resolve this post-enemy investigation before solving, executing, "
+        "or emitting another End Turn plan. Use `research_next`/diagnosis "
+        "or `resolve_post_enemy_block --reason ...` after the miss is understood."
+    ))
+    return result
+
+
+def _post_enemy_block_result(session: RunSession) -> dict | None:
+    block = _active_post_enemy_block(session)
+    if block is None:
+        return None
+    return {
+        "status": block.get("status", "INVESTIGATE_POST_ENEMY"),
+        "blocking": True,
+        "source": block.get("source", "session_post_enemy_block"),
+        "post_enemy_investigation": block,
+        "mission_index": block.get("mission_index"),
+        "turn": block.get("turn"),
+        "deltas": block.get("deltas", {}),
+        "next_step": block.get("next_step"),
+    }
+
+
+def _attach_post_enemy_block(result: dict, session: RunSession) -> None:
+    """Annotate read/status-style results without hiding their payload."""
+    block = _post_enemy_block_result(session)
+    if block is None:
+        return
+    result.setdefault("status", block["status"])
+    result.setdefault("blocking", True)
+    result.setdefault("post_enemy_investigation", block["post_enemy_investigation"])
+    result.setdefault("next_step", block["next_step"])
+
+
+def _install_post_enemy_block(
+    session: RunSession,
+    result: dict,
+    *,
+    record_path: Path | None = None,
+) -> dict:
+    """Persist a worse-than-predicted post-enemy audit as a hard stop."""
+    block_id = (
+        f"{session.run_id or 'default'}_m{int(result.get('mission_index', 0)):02d}"
+        f"_t{int(result.get('turn', 0)):02d}_post_enemy"
+    )
+    block = {
+        "id": block_id,
+        "status": result.get("status", "INVESTIGATE_POST_ENEMY"),
+        "blocking": True,
+        "run_id": session.run_id or "default",
+        "mission_index": result.get("mission_index", session.mission_index),
+        "turn": result.get("turn"),
+        "created_at": datetime.now().isoformat(),
+        "source": result.get("source", "record_post_enemy"),
+        "record_path": str(record_path) if record_path is not None else None,
+        "reason": result.get("reason"),
+        "deltas": result.get("deltas", {}),
+        "triggers": result.get("triggers", []),
+        "actual_outcome": result.get("actual_outcome"),
+        "predicted_outcome": result.get("predicted_outcome"),
+        "next_step": result.get("next_step") or (
+            "Investigate this enemy-phase prediction miss before solving, "
+            "executing, or emitting another End Turn plan. Clear only after "
+            "the simulator/process cause is understood."
+        ),
+    }
+    session.post_enemy_block = block
+    return block
+
+
+def _hard_stop_result(status: str, **extra) -> dict:
+    result = {
+        "status": status,
+        "blocking": True,
+        "next_step": (
+            "Stop live combat commands and resolve the hard stop before "
+            "continuing."
+        ),
+    }
+    result.update(extra)
+    return result
+
+
+def _is_hard_stop_status(status: object) -> bool:
+    return isinstance(status, str) and (
+        status in _HARD_STOP_STATUSES
+        or status.startswith("INVESTIGATE")
+        or status.startswith("SAFETY_BLOCKED")
+    )
+
+
+def _threat_audit_requires_block(
+    threat_audit: dict | None,
+    plan_safety: dict | None,
+    session: RunSession,
+) -> bool:
+    """Block End Turn when the pre-click audit still sees protected damage."""
+    if not isinstance(threat_audit, dict):
+        return False
+    if int(threat_audit.get("still_threatened_count") or 0) <= 0:
+        return False
+    safety = plan_safety if isinstance(plan_safety, dict) else {}
+    if final_cave_emergency_pylon_loss_allowed(safety):
+        current = safety.get("current") if isinstance(safety.get("current"), dict) else {}
+        predicted = (
+            safety.get("predicted")
+            if isinstance(safety.get("predicted"), dict)
+            else {}
+        )
+        cur_pylons = current.get("pylons_alive")
+        pred_pylons = predicted.get("pylons_alive")
+        pylon_losses = (
+            cur_pylons - pred_pylons
+            if isinstance(cur_pylons, int) and isinstance(pred_pylons, int)
+            else 0
+        )
+        if int(threat_audit.get("still_threatened_count") or 0) <= pylon_losses:
+            return False
+    return True
+
+
+def _end_turn_click_plan_result(*, bridge_ack: str | None = None) -> dict:
+    recalibrate()
+    batch = plan_end_turn()
+    codex_batch = [
+        c["codex_computer_use"]
+        for c in batch
+        if isinstance(c, dict) and c.get("codex_computer_use")
+    ]
+    result = {
+        "status": "PLAN",
+        "batch": batch,
+        "codex_computer_use_batch": codex_batch,
+        "next_step": (
+            "dispatch codex_computer_use_batch with Computer Use "
+            "(or legacy batch with screen-coordinate batch tools), "
+            "wait ~6s, then `read`"
+        ),
+    }
+    if bridge_ack is not None:
+        result["bridge_ack"] = bridge_ack
+    return result
+
+
+def _dirty_consent_id(
+    session: RunSession,
+    turn: int,
+    plan_safety: dict | None,
+    actions: list[SolverAction],
+    *,
+    candidate_rank: int | None = None,
+) -> str:
+    active = session.active_solution
+    payload = {
+        "run_id": session.run_id or "default",
+        "mission_index": session.mission_index,
+        "turn": turn,
+        "input_fingerprint": active.input_fingerprint if active else "",
+        "candidate_rank": candidate_rank,
+        "loss_profile": safety_loss_profile(plan_safety),
+        "actions": [a.to_dict() for a in actions],
+    }
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+_NO_FAILED_OBJECTIVE_LABEL_MARKERS = {
+    "there is no try",
+    "perfect strategy",
+    "perfect island",
+    "perfect battle",
+    "no failed objective",
+    "no failed objectives",
+    "objective perfect",
+}
+
+
+def _normalize_run_label(value: object) -> str:
+    return str(value).strip().lower().replace("_", " ").replace("-", " ")
+
+
+def _allow_kill_limit_objective_dirty_consent(session: RunSession) -> bool:
+    """Allow kill-count bonus failure only for explicitly non-perfect targets."""
+    targets = [
+        _normalize_run_label(t)
+        for t in (session.achievement_targets or [])
+        if str(t).strip()
+    ]
+    if not targets:
+        return False
+    labels = targets + [
+        _normalize_run_label(t)
+        for t in (session.tags or [])
+        if str(t).strip()
+    ]
+    for label in labels:
+        if "perfect" in label or "objective" in label:
+            return False
+        if any(marker in label for marker in _NO_FAILED_OBJECTIVE_LABEL_MARKERS):
+            return False
+    return True
+
+
+def _dirty_consent_gate(
+    session: RunSession,
+    *,
+    turn: int,
+    plan_safety: dict | None,
+    actions: list[SolverAction],
+    candidate_rank: int | None,
+    provided_id: str | None,
+    consume: bool = True,
+    allow_protected_objective_loss: bool = False,
+    allow_objective_loss: bool = False,
+) -> dict | None:
+    if not isinstance(plan_safety, dict) or not plan_safety.get("blocking"):
+        return None
+    expected = _dirty_consent_id(
+        session, turn, plan_safety, actions, candidate_rank=candidate_rank
+    )
+    profile = safety_loss_profile(plan_safety)
+    kinds = {
+        v.get("kind")
+        for v in plan_safety.get("violations", []) or []
+        if isinstance(v, dict)
+    }
+    debug_collapse = os.environ.get("ITB_ALLOW_TIMELINE_COLLAPSE_DEBUG") == "1"
+    allow_final_cave_pylon = final_cave_emergency_pylon_loss_allowed(plan_safety)
+    allow_final_cave_resist = final_cave_resist_gamble_allowed(plan_safety)
+    allow_final_bomb_dirty = final_bomb_dirty_consent_allowed(plan_safety)
+    allow_kill_limit_dirty = _allow_kill_limit_objective_dirty_consent(session)
+    non_overridable = sorted(
+        k for k in kinds
+        if k in NON_OVERRIDABLE_KINDS
+        and not (k == "grid_timeline_collapse" and debug_collapse)
+        and not (k == "grid_timeline_collapse" and allow_final_cave_resist)
+        and not (
+            allow_final_cave_pylon
+            and k in FINAL_CAVE_EMERGENCY_PYLON_KINDS
+        )
+        and not (
+            allow_final_cave_resist
+            and k in FINAL_CAVE_EMERGENCY_PYLON_KINDS
+        )
+        and not (
+            allow_final_bomb_dirty
+            and k in {
+                "objective_building_destroyed",
+                "objective_building_hp_loss",
+            }
+        )
+        and not (
+            allow_kill_limit_dirty
+            and k in {"kill_objective_failed", "kill_limit_objective_failed"}
+        )
+        and not (
+            allow_protected_objective_loss
+            and k == "protected_objective_unit_lost"
+        )
+        and not (
+            allow_objective_loss
+            and k in OBJECTIVE_LOSS_DIRTY_KINDS
+        )
+    )
+    if non_overridable:
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REJECTED",
+            dirty_consent_id=expected,
+            loss_profile=profile,
+            plan_safety=plan_safety,
+            reason=(
+                "dirty consent cannot override non-overridable loss kinds: "
+                + ", ".join(non_overridable)
+            ),
+        )
+    hard_target = (
+        "hard_victory" in {str(t).lower() for t in (session.tags or [])}
+        or "hard victory" in {
+            str(t).strip().lower() for t in (session.achievement_targets or [])
+        }
+    )
+    if (
+        hard_target
+        and "grid_timeline_collapse" in kinds
+        and not allow_final_cave_resist
+    ):
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REJECTED",
+            dirty_consent_id=expected,
+            loss_profile=profile,
+            plan_safety=plan_safety,
+            reason=(
+                "Hard Victory achievement runs cannot dirty-consent through "
+                "predicted timeline collapse."
+            ),
+        )
+    if provided_id != expected:
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REQUIRED",
+            dirty_consent_id=expected,
+            provided_dirty_consent_id=provided_id,
+            loss_profile=profile,
+            plan_safety=plan_safety,
+            actions=[a.description for a in actions],
+            next_step=(
+                "Review the exact loss profile and rerun with "
+                f"`--allow-dirty-plan --dirty-consent-id {expected}` only "
+                "if this specific line is accepted."
+            ),
+        )
+    if expected in session.dirty_consent_used:
+        return _hard_stop_result(
+            "DIRTY_CONSENT_REJECTED",
+            dirty_consent_id=expected,
+            loss_profile=profile,
+            reason="dirty consent token was already consumed",
+        )
+    if consume:
+        session.dirty_consent_used.append(expected)
+    return None
+
+
 # Difficulty label map (mirrors GameData.difficulty values)
 _DIFFICULTY_LABELS = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Unfair"}
+_POST_MISSION_SAVE_PHASES = {"between_missions", "mission_ending"}
+_COMBAT_BRIDGE_PHASES = {"combat_player", "combat_enemy"}
+def _save_pawn_for_uid(state: object, uid: int) -> object | None:
+    active_mission = getattr(state, "active_mission", None)
+    pawns = getattr(active_mission, "pawns", None)
+    if not isinstance(pawns, list):
+        return None
+    for pawn in pawns:
+        try:
+            pawn_id = int(getattr(pawn, "pawn_id", -1))
+        except (TypeError, ValueError):
+            continue
+        if pawn_id == uid:
+            return pawn
+    return None
+
+
+def _upgraded_weapon_from_save(
+    state: object,
+    uid: int,
+    slot: int,
+) -> str | None:
+    weapons = getattr(state, "weapons", []) or []
+    if isinstance(weapons, list):
+        loadout_idx = uid * 2 + slot
+        if loadout_idx < len(weapons):
+            weapon_id = weapons[loadout_idx]
+            if weapon_id in _MODELED_UPGRADED_WEAPONS:
+                return weapon_id
+
+    pawn = _save_pawn_for_uid(state, uid)
+    if pawn is None:
+        return None
+    if slot == 0:
+        return _modeled_upgrade_from_save_mods(
+            getattr(pawn, "primary_weapon", ""),
+            getattr(pawn, "primary_mod1", []),
+            getattr(pawn, "primary_mod2", []),
+        )
+    return _modeled_upgrade_from_save_mods(
+        getattr(pawn, "secondary_weapon", ""),
+        getattr(pawn, "secondary_mod1", []),
+        getattr(pawn, "secondary_mod2", []),
+    )
+
+
+def _bridge_is_stale_post_mission(
+    save_phase: str,
+    bridge_data: dict | None,
+) -> bool:
+    """Return true when saveData has left combat but bridge still has a board."""
+    if save_phase not in _POST_MISSION_SAVE_PHASES:
+        return False
+    if not isinstance(bridge_data, dict):
+        return False
+    try:
+        bridge_turn = int(bridge_data.get("turn", 0))
+    except (TypeError, ValueError):
+        bridge_turn = 0
+    if (
+        bridge_data.get("mission_id") in {"Mission_Final", "Mission_Final_Cave"}
+        and bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
+        and any(
+            bool(u.get("mech")) and bool(u.get("active"))
+            for u in bridge_data.get("units", []) or []
+            if isinstance(u, dict)
+        )
+    ):
+        return False
+    # Mission-start save lag: immediately after confirming deployment, saveData
+    # can still look between-missions while the live bridge has already entered
+    # the next combat. Do not discard a fresh turn-0/turn-1 active-mission bridge
+    # board as stale post-mission residue.
+    if (
+        bridge_data.get("in_active_mission") is True
+        and bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
+        and bridge_turn <= 1
+        and bridge_data.get("mission_id")
+    ):
+        return False
+    return (
+        bridge_data.get("phase") in _COMBAT_BRIDGE_PHASES
+        and bridge_turn > 0
+    )
 
 
 def _read_save_file_difficulty(profile: str = "Alpha") -> int | None:
@@ -112,6 +618,76 @@ def _read_save_file_difficulty(profile: str = "Alpha") -> int | None:
     if isinstance(diff, int):
         return diff
     return None
+
+
+def _enrich_bridge_mech_weapons_from_save(
+    bridge_data: dict | None,
+    profile: str = "Alpha",
+) -> list[dict]:
+    """Patch bridge mech weapon IDs with modeled upgraded loadout IDs.
+
+    The Lua bridge reports the pawn type's static ``SkillList``. That is
+    enough to fire by slot, but not enough for the solver when a powered
+    upgrade changes combat semantics while keeping the same slot. Use the
+    save-file loadout as a narrow overlay for upgraded weapons the Rust
+    simulator explicitly models.
+    """
+    if not isinstance(bridge_data, dict):
+        return []
+
+    state = load_game_state(profile)
+    if state is None:
+        return []
+
+    updates: list[dict] = []
+    for unit in bridge_data.get("units", []) or []:
+        if not isinstance(unit, dict) or not unit.get("mech"):
+            continue
+        try:
+            uid = int(unit.get("uid", -1))
+        except (TypeError, ValueError):
+            continue
+        if uid < 0:
+            continue
+
+        if unit.get("active", True):
+            pawn = _save_pawn_for_uid(state, uid)
+            if pawn is not None and getattr(pawn, "boosted", False):
+                unit["boosted"] = True
+                updates.append({
+                    "uid": uid,
+                    "field": "boosted",
+                    "value": True,
+                })
+
+        weapons = unit.get("weapons")
+        if not isinstance(weapons, list):
+            weapons = []
+            unit["weapons"] = weapons
+
+        for slot in (0, 1):
+            upgraded = _upgraded_weapon_from_save(state, uid, slot)
+            if not upgraded:
+                continue
+            base, _suffix = _strip_upgrade_suffix(upgraded)
+            while len(weapons) <= slot:
+                weapons.append("")
+            current = weapons[slot]
+            if current and current != base and current != upgraded:
+                continue
+            if current == upgraded:
+                continue
+            weapons[slot] = upgraded
+            updates.append({
+                "uid": uid,
+                "slot": slot,
+                "base": base,
+                "upgraded": upgraded,
+            })
+
+    if updates:
+        bridge_data["weapon_upgrade_overlays"] = updates
+    return updates
 
 
 def _visual_to_bridge(pos: str) -> tuple[int, int] | None:
@@ -990,29 +1566,1396 @@ def _auto_enqueue_mech_weapons(
 # --- Post-Enemy Analysis Helpers ---
 
 
-def _capture_board_summary(board: Board) -> dict:
+def _bridge_units_by_uid(bridge_data: dict | None) -> dict[int, dict]:
+    if not isinstance(bridge_data, dict):
+        return {}
+    units = bridge_data.get("units") or []
+    out: dict[int, dict] = {}
+    for u in units:
+        if not isinstance(u, dict):
+            continue
+        try:
+            out[int(u.get("uid"))] = u
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _environment_danger_info(board: Board,
+                             bridge_data: dict | None) -> dict[tuple[int, int], dict]:
+    """Return per-tile environment danger with lethality and flying immunity."""
+    danger: dict[tuple[int, int], dict] = {}
+    mission_id = ""
+    if isinstance(bridge_data, dict):
+        mission_id = str(bridge_data.get("mission_id") or "")
+    mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    final_cave_env = mission_id == "Mission_Final_Cave"
+    deadly_threat_env = mission_id in {
+        "Mission_Airstrike",
+        "Mission_Lightning",
+        "Mission_LightningStorm",
+    }
+    terrain_conversion_env = mission_id in {
+        "Mission_Tides",
+        "Mission_Cataclysm",
+        "Mission_Crack",
+    }
+    if isinstance(bridge_data, dict):
+        for dt in bridge_data.get("environment_danger_v2", []) or []:
+            if not isinstance(dt, (list, tuple)) or len(dt) < 4:
+                continue
+            try:
+                pos = (int(dt[0]), int(dt[1]))
+                flying_immune = bool(int(dt[4])) if len(dt) >= 5 else False
+                if bool(int(dt[3])):
+                    if final_cave_env or deadly_threat_env:
+                        flying_immune = False
+                    elif terrain_conversion_env:
+                        flying_immune = True
+                danger[pos] = {
+                    "damage": int(dt[2]),
+                    "lethal": bool(int(dt[3])),
+                    "flying_immune": flying_immune,
+                }
+            except (TypeError, ValueError):
+                continue
+
+    board_flying_immune = (
+        getattr(board, "environment_danger_flying_immune", set()) or set()
+    )
+    for pos, (damage, lethal) in board.environment_danger_v2.items():
+        board_info = {
+            "damage": int(damage),
+            "lethal": bool(lethal),
+            "flying_immune": bool(
+                bool(lethal)
+                and pos in board_flying_immune
+                and not final_cave_env
+                and not deadly_threat_env
+            ),
+        }
+        if pos in danger:
+            danger[pos].update(board_info)
+        else:
+            danger[pos] = board_info
+    for pos in board.environment_danger:
+        danger.setdefault(pos, {
+            "damage": 1,
+            "lethal": True,
+            "flying_immune": bool(
+                pos in board_flying_immune
+                and not final_cave_env
+                and not deadly_threat_env
+            ),
+        })
+    return danger
+
+
+def _type_matches_any(name: str, patterns: list[str]) -> bool:
+    return any(p and p in name for p in patterns)
+
+
+def _protected_objective_patterns(board: Board,
+                                  bridge_data: dict | None) -> list[str]:
+    patterns: list[str] = []
+
+    def add_many(values) -> None:
+        for s in values or []:
+            if isinstance(s, str) and s and s not in patterns:
+                patterns.append(s)
+
+    add_many(getattr(board, "protect_objective_unit_types", []) or [])
+
+    if isinstance(bridge_data, dict):
+        add_many(bridge_data.get("protect_objective_unit_types", []) or [])
+        add_many(bridge_data.get("bonus_objective_unit_types", []) or [])
+        mission_id = bridge_data.get("mission_id") or getattr(board, "mission_id", "")
+    else:
+        mission_id = getattr(board, "mission_id", "")
+
+    if not mission_id:
+        return patterns
+    try:
+        from src.solver.mission_unit_objectives import resolve_unit_objectives
+        add_many(resolve_unit_objectives(mission_id).get("protect", []))
+    except Exception:
+        pass
+    try:
+        from src.solver.mission_bonus_objectives import resolve_bonus_types
+        add_many(resolve_bonus_types(mission_id))
+    except Exception:
+        pass
+    return patterns
+
+
+def _destroy_objective_patterns(board: Board,
+                                bridge_data: dict | None) -> list[str]:
+    patterns: list[str] = []
+
+    def add_many(values) -> None:
+        for s in values or []:
+            if isinstance(s, str) and s and s not in patterns:
+                patterns.append(s)
+
+    add_many(getattr(board, "destroy_objective_unit_types", []) or [])
+
+    if isinstance(bridge_data, dict):
+        add_many(bridge_data.get("destroy_objective_unit_types", []) or [])
+        mission_id = bridge_data.get("mission_id") or getattr(board, "mission_id", "")
+    else:
+        mission_id = getattr(board, "mission_id", "")
+
+    if not mission_id:
+        return patterns
+    try:
+        from src.solver.mission_unit_objectives import resolve_unit_objectives
+        add_many(resolve_unit_objectives(mission_id).get("destroy", []))
+    except Exception:
+        pass
+    return patterns
+
+
+def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dict:
     """Extract a summary of the current board state for comparison."""
+    mission_id = (
+        bridge_data.get("mission_id")
+        if isinstance(bridge_data, dict) else None
+    ) or getattr(board, "mission_id", "")
+    turn = (
+        bridge_data.get("turn")
+        if isinstance(bridge_data, dict) else None
+    )
+    if not isinstance(turn, int):
+        turn = getattr(board, "current_turn", None)
+    total_turns = (
+        bridge_data.get("total_turns")
+        if isinstance(bridge_data, dict) else None
+    )
+    if not isinstance(total_turns, int):
+        total_turns = getattr(board, "total_turns", None)
+    is_final_cave = mission_id == "Mission_Final_Cave"
     buildings_alive = 0
     building_hp_total = 0
+    pylons_alive = 0
+    pylon_hp_total = 0
+    objective_buildings_alive = 0
+    objective_building_hp_total = 0
+    pods_present = 0
+    freeze_building_target = 0
+    freeze_buildings_alive = 0
+    freeze_buildings_frozen = 0
+    freeze_buildings_thawed = 0
+    freeze_buildings = []
+    terraform_grass_tiles = []
+    mission_mountain_tiles = []
+    try:
+        mission_mountain_target = int(
+            getattr(board, "mission_mountain_target", 0) or 0
+        )
+    except (TypeError, ValueError):
+        mission_mountain_target = 0
+    try:
+        mission_mountains_destroyed = int(
+            getattr(board, "mission_mountains_destroyed", 0) or 0
+        )
+    except (TypeError, ValueError):
+        mission_mountains_destroyed = 0
+    try:
+        freeze_building_target = int(
+            getattr(board, "freeze_building_target", 0) or 0
+        )
+    except (TypeError, ValueError):
+        freeze_building_target = 0
+    freeze_building_tiles = getattr(board, "freeze_building_tiles", set()) or set()
     for x in range(8):
         for y in range(8):
             t = board.tile(x, y)
+            if getattr(t, "has_pod", False):
+                pods_present += 1
             if t.terrain == "building" and t.building_hp > 0:
                 buildings_alive += 1
                 building_hp_total += t.building_hp
+                if is_final_cave:
+                    pylons_alive += 1
+                    pylon_hp_total += t.building_hp
+                if getattr(t, "unique_building", False):
+                    objective_buildings_alive += 1
+                    objective_building_hp_total += t.building_hp
+            if (x, y) in freeze_building_tiles:
+                alive = t.terrain == "building" and t.building_hp > 0
+                frozen = bool(getattr(t, "frozen", False))
+                if alive:
+                    freeze_buildings_alive += 1
+                    if frozen:
+                        freeze_buildings_frozen += 1
+                    else:
+                        freeze_buildings_thawed += 1
+                freeze_buildings.append({
+                    "pos": [x, y],
+                    "alive": alive,
+                    "frozen": frozen,
+                    "hp": max(0, int(getattr(t, "building_hp", 0) or 0)),
+                })
+            if mission_id == "Mission_Terraform" and getattr(t, "grass", False):
+                terraform_grass_tiles.append([x, y])
+            if mission_id == "Mission_Force" and t.terrain == "mountain":
+                mission_mountain_tiles.append({
+                    "pos": [x, y],
+                    "hp": max(0, int(getattr(t, "building_hp", 0) or 0)),
+                })
+
+    raw_units = _bridge_units_by_uid(bridge_data)
+    danger = _environment_danger_info(board, bridge_data)
+    destroy_patterns = _destroy_objective_patterns(board, bridge_data)
+    destroy_objective_units = []
+    if destroy_patterns:
+        for u in board.units:
+            if getattr(u, "is_extra_tile", False):
+                continue
+            if not _type_matches_any(u.type, destroy_patterns):
+                continue
+            destroy_objective_units.append({
+                "uid": u.uid,
+                "type": u.type,
+                "pos": [u.x, u.y],
+                "hp": max(0, u.hp),
+                "max_hp": u.max_hp,
+                "alive": u.hp > 0,
+                "team": u.team,
+            })
+    protect_patterns = _protected_objective_patterns(board, bridge_data)
+    protected_objective_units = []
+    if protect_patterns:
+        for u in board.units:
+            if getattr(u, "is_extra_tile", False):
+                continue
+            if not _type_matches_any(u.type, protect_patterns):
+                continue
+            protected_objective_units.append({
+                "uid": u.uid,
+                "type": u.type,
+                "pos": [u.x, u.y],
+                "hp": max(0, u.hp),
+                "max_hp": u.max_hp,
+                "alive": u.hp > 0,
+                "frozen": bool(getattr(u, "frozen", False)),
+                "team": u.team,
+            })
+    mechs_on_danger = []
+    mechs_disabled = []
+    mechs_webbed = []
+    mechs_infected = []
+    mechs_acid = []
+    mechs_fire = []
+    mite_status_tracked = any(
+        isinstance(raw, dict) and "infected" in raw
+        for raw in raw_units.values()
+    )
+    player_mechs = [
+        m for m in board.units
+        if m.is_player and m.is_mech and not getattr(m, "is_extra_tile", False)
+    ]
+    live_player_mechs = [m for m in player_mechs if m.hp > 0]
+    mech_damage_taken_total = sum(
+        max(0, int(getattr(m, "max_hp", 0)) - max(0, int(getattr(m, "hp", 0))))
+        for m in player_mechs
+    )
+    bonus_objective_ids = []
+    if isinstance(bridge_data, dict):
+        bonus_objective_ids = [
+            b for b in (bridge_data.get("bonus_objective_ids") or [])
+            if isinstance(b, int)
+        ]
+    mech_damage_objective_limit = (
+        MECH_DAMAGE_OBJECTIVE_LIMIT
+        if BONUS_MECH_DAMAGE_ID in bonus_objective_ids
+        else None
+    )
+    for m in live_player_mechs:
+        pos = (m.x, m.y)
+        danger_info = danger.get(pos)
+        if danger_info and danger_info.get("lethal"):
+            flying_spared = bool(m.flying and danger_info.get("flying_immune"))
+            if not flying_spared:
+                mechs_on_danger.append({
+                    "uid": m.uid,
+                    "type": m.type,
+                    "pos": [m.x, m.y],
+                    "damage": danger_info.get("damage", 1),
+                })
+
+        raw = raw_units.get(int(m.uid), {})
+        disabled_reasons = []
+        if getattr(m, "frozen", False):
+            disabled_reasons.append("frozen")
+        if raw.get("can_move", True) is False and not getattr(m, "web", False):
+            disabled_reasons.append("cannot_move")
+        if disabled_reasons:
+            mechs_disabled.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+                "reasons": disabled_reasons,
+            })
+        if getattr(m, "web", False):
+            mechs_webbed.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
+        if getattr(m, "infected", False):
+            mite_status_tracked = True
+            mechs_infected.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
+        if getattr(m, "acid", False):
+            mechs_acid.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
+        if getattr(m, "fire", False):
+            mechs_fire.append({
+                "uid": m.uid,
+                "type": m.type,
+                "pos": [m.x, m.y],
+            })
 
     return {
         "buildings_alive": buildings_alive,
         "building_hp_total": building_hp_total,
+        "pylons_alive": pylons_alive if is_final_cave else None,
+        "pylon_hp_total": pylon_hp_total if is_final_cave else None,
+        "objective_buildings_alive": objective_buildings_alive,
+        "objective_building_hp_total": objective_building_hp_total,
+        "pods_present": pods_present,
+        "freeze_building_target": (
+            freeze_building_target
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings_alive": (
+            freeze_buildings_alive
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings_frozen": (
+            freeze_buildings_frozen
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings_thawed": (
+            freeze_buildings_thawed
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else None
+        ),
+        "freeze_buildings": (
+            freeze_buildings
+            if mission_id == "Mission_FreezeBldg" and freeze_building_target > 0
+            else []
+        ),
         "grid_power": board.grid_power,
         "enemies_alive": len(board.enemies()),
         "enemy_hp_total": sum(e.hp for e in board.enemies()),
-        "mechs_alive": len([m for m in board.mechs() if m.hp > 0]),
+        "mechs_alive": len(live_player_mechs),
+        "mech_hp_total": sum(max(0, m.hp) for m in player_mechs),
+        "mech_damage_taken_total": mech_damage_taken_total,
+        "mech_damage_objective_limit": mech_damage_objective_limit,
+        "bigbomb_alive": bool(getattr(board, "bigbomb_alive", False)),
+        "terraform_grass_remaining": (
+            len(terraform_grass_tiles)
+            if mission_id == "Mission_Terraform"
+            else None
+        ),
+        "terraform_grass_tiles": (
+            terraform_grass_tiles
+            if mission_id == "Mission_Terraform"
+            else []
+        ),
         "mech_hp": [
-            {"uid": m.uid, "type": m.type, "hp": m.hp, "max_hp": m.max_hp}
-            for m in board.mechs()
+            {
+                "uid": m.uid,
+                "type": m.type,
+                "hp": max(0, m.hp),
+                "max_hp": m.max_hp,
+            }
+            for m in player_mechs
         ],
+        "mechs_acid": mechs_acid,
+        "mechs_fire": mechs_fire,
+        "mechs_on_danger": mechs_on_danger,
+        "mechs_disabled": mechs_disabled,
+        "mechs_webbed": mechs_webbed,
+        "mechs_infected": mechs_infected,
+        "mites_remaining": len(mechs_infected),
+        "mites_status_tracked": mite_status_tracked,
+        "mission_id": mission_id,
+        "mission_kill_target": getattr(board, "mission_kill_target", 0),
+        "mission_kill_limit": getattr(board, "mission_kill_limit", 0),
+        "mission_kills_done": getattr(board, "mission_kills_done", 0),
+        "mission_mountain_target": (
+            mission_mountain_target
+            if mission_id == "Mission_Force" and mission_mountain_target > 0
+            else 0
+        ),
+        "mission_mountains_destroyed": (
+            mission_mountains_destroyed
+            if mission_id == "Mission_Force"
+            else 0
+        ),
+        "mission_mountain_tiles": (
+            mission_mountain_tiles
+            if mission_id == "Mission_Force"
+            else []
+        ),
+        "turn": turn if isinstance(turn, int) else None,
+        "total_turns": total_turns if isinstance(total_turns, int) else None,
+        "destroy_objective_units": destroy_objective_units,
+        "destroy_objective_units_alive": sum(
+            1 for u in destroy_objective_units if u["alive"]
+        ),
+        "protected_objective_units": protected_objective_units,
+        "protected_objective_units_alive": sum(
+            1 for u in protected_objective_units if u["alive"]
+        ),
+        "protected_objective_units_frozen": sum(
+            1 for u in protected_objective_units
+            if u["alive"] and u["frozen"]
+        ),
     }
+
+
+def _active_region_from_bridge_data(bridge_data: dict | None) -> str | None:
+    """Return the active save-region key for the current mission if exposed."""
+    if not isinstance(bridge_data, dict):
+        return None
+    mission_seeds = bridge_data.get("mission_seeds") or {}
+    if not isinstance(mission_seeds, dict):
+        return None
+    for region_key, info in mission_seeds.items():
+        if isinstance(info, dict) and info.get("state") == 0:
+            return str(region_key)
+    return None
+
+
+def _first_resist_entry_for_turn(
+    log_path: Path,
+    run_id: str,
+    region: str | None,
+    turn: int,
+    *,
+    mission_id: str | None = None,
+    master_seed: int | None = None,
+    mission_slot: str | None = None,
+) -> dict | None:
+    """Return the first resist-probe entry for the current mission turn."""
+    if not log_path.exists():
+        return None
+    try:
+        with log_path.open() as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if obj.get("run_id") != run_id:
+                    continue
+                if obj.get("region") != region:
+                    continue
+                if obj.get("turn") == turn:
+                    if (
+                        mission_id is not None
+                        and "mission_id" in obj
+                        and obj.get("mission_id") != mission_id
+                    ):
+                        continue
+                    if (
+                        master_seed is not None
+                        and "master_seed" in obj
+                        and obj.get("master_seed") != master_seed
+                    ):
+                        continue
+                    if (
+                        mission_slot is not None
+                        and "mission_slot" in obj
+                        and obj.get("mission_slot") != mission_slot
+                    ):
+                        continue
+                    return obj
+    except OSError:
+        return None
+    return None
+
+
+def _current_building_hp_total(board: Board) -> int:
+    return sum(
+        board.tiles[x][y].building_hp
+        for x in range(8) for y in range(8)
+        if board.tiles[x][y].terrain == "building"
+        and board.tiles[x][y].building_hp > 0
+    )
+
+
+def _pending_grid_debt_from_turn_start(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict | None,
+) -> int:
+    """Detect delayed grid scalar updates after player building damage.
+
+    Some live reads show building HP already reduced while ``grid_power`` is
+    still at the turn-start value. The solver must account for that debt when
+    judging the post-enemy outcome, or it can understate a dirty plan's final
+    grid by one or more points.
+    """
+    if not isinstance(bridge_data, dict):
+        return 0
+    turn = bridge_data.get("turn")
+    if not isinstance(turn, int):
+        return 0
+    run_id = session.run_id or "default"
+    region = _active_region_from_bridge_data(bridge_data)
+    entry = _first_resist_entry_for_turn(
+        _recording_dir(session) / "resist_probe.jsonl",
+        run_id,
+        region,
+        turn,
+        mission_id=bridge_data.get("mission_id"),
+        master_seed=bridge_data.get("master_seed"),
+        mission_slot=(
+            bridge_data.get("mission_seeds", {})
+            .get(region, {})
+            .get("mission")
+            if region is not None
+            and isinstance(bridge_data.get("mission_seeds"), dict)
+            and isinstance(bridge_data.get("mission_seeds", {}).get(region), dict)
+            else None
+        ),
+    )
+    if not isinstance(entry, dict):
+        return 0
+    start_grid = entry.get("grid_power")
+    building_hp_map = entry.get("building_hp_map")
+    if not isinstance(start_grid, int) or not isinstance(building_hp_map, dict):
+        return 0
+    start_hp = 0
+    for hp in building_hp_map.values():
+        try:
+            start_hp += max(0, int(hp))
+        except (TypeError, ValueError):
+            pass
+    current_hp = _current_building_hp_total(board)
+    hp_lost = max(0, start_hp - current_hp)
+    grid_lost = max(0, start_grid - int(board.grid_power))
+    return max(0, hp_lost - grid_lost)
+
+
+def _annotate_pending_grid_debt(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict | None,
+) -> int:
+    debt = _pending_grid_debt_from_turn_start(session, board, bridge_data)
+    if isinstance(bridge_data, dict):
+        if debt > 0:
+            bridge_data["_pending_grid_debt"] = debt
+        else:
+            bridge_data.pop("_pending_grid_debt", None)
+    return debt
+
+
+def _summary_with_pending_grid_debt(summary: dict, debt: int) -> dict:
+    if debt <= 0:
+        return summary
+    out = dict(summary)
+    gp = out.get("grid_power")
+    if isinstance(gp, int):
+        out["visible_grid_power"] = gp
+        out["pending_grid_debt"] = debt
+        out["grid_power"] = max(0, gp - debt)
+    return out
+
+
+def _rust_result_to_solution(rust_result: dict | None,
+                             elapsed_seconds: float,
+                             active_mech_count: int) -> Solution | None:
+    """Convert a Rust solver JSON result into the Python solution shape."""
+    if not isinstance(rust_result, dict) or not rust_result.get("actions"):
+        return None
+
+    from src.model.weapons import weapon_name_to_id
+
+    rust_actions = []
+    for ra in rust_result["actions"]:
+        w_id = ra.get("weapon_id", "")
+        if not w_id:
+            w_id = weapon_name_to_id(ra.get("weapon", ""))
+        rust_actions.append(MechAction(
+            mech_uid=ra["mech_uid"],
+            mech_type=ra["mech_type"],
+            move_to=tuple(ra["move_to"]),
+            weapon=w_id,
+            target=tuple(ra["target"]),
+            description=ra["description"],
+        ))
+
+    stats = rust_result.get("stats") or {}
+    return Solution(
+        actions=rust_actions,
+        score=rust_result["score"],
+        elapsed_seconds=elapsed_seconds,
+        timed_out=stats.get("timed_out", False),
+        permutations_tried=stats.get("permutations_tried", 0),
+        total_permutations=stats.get("total_permutations", 0),
+        active_mech_count=active_mech_count,
+    )
+
+
+def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
+    """Convert a solver solution to the session's serializable action shape."""
+    return [
+        SolverAction(
+            mech_uid=a.mech_uid,
+            mech_type=a.mech_type,
+            move_to=a.move_to,
+            weapon=a.weapon,
+            target=a.target,
+            description=a.description,
+        )
+        for a in solution.actions
+    ]
+
+
+_ZERO_MECH_DAMAGE_ACHIEVEMENTS = {"perfect battle", "untouchable"}
+
+
+def _blocks_mech_hp_loss_for_perfect_battle(session: RunSession | None) -> bool:
+    """Return True when the active run treats any mech damage as a loss.
+
+    Normal ITB play can accept repairable mech damage, but Perfect Battle and
+    Untouchable are invalidated by any mech HP loss. Building damage is already
+    a global safety block; this flag promotes mech HP loss to the same level
+    only for runs that explicitly target a still-locked zero-mech-damage
+    achievement.
+    """
+    targets = {
+        str(target).strip().lower()
+        for target in (getattr(session, "achievement_targets", None) or [])
+    }
+    active_zero_damage_targets = targets & _ZERO_MECH_DAMAGE_ACHIEVEMENTS
+    if not active_zero_damage_targets:
+        return False
+
+    try:
+        payload = json.loads(ACHIEVEMENTS_PATH.read_text())
+    except Exception:
+        return True
+
+    groups = payload.get("achievements", {})
+    if not isinstance(groups, dict):
+        return True
+
+    completed_by_name: dict[str, bool] = {}
+    for achievements in groups.values():
+        if not isinstance(achievements, list):
+            continue
+        for achievement in achievements:
+            if not isinstance(achievement, dict):
+                continue
+            name = str(achievement.get("name", "")).strip().lower()
+            if name in active_zero_damage_targets:
+                completed_by_name[name] = bool(achievement.get("completed"))
+
+    for target in active_zero_damage_targets:
+        if target not in completed_by_name or not completed_by_name[target]:
+            return True
+    return False
+
+
+def _blocks_mech_status_loss_for_run(session: RunSession | None) -> bool:
+    """Hard/Hard Victory runs should not accept new fire/web status debt."""
+    if session is None:
+        return False
+    targets = {str(t).strip().lower() for t in (session.achievement_targets or [])}
+    tags = {str(t).strip().lower() for t in (session.tags or [])}
+    return (
+        int(getattr(session, "difficulty", 0) or 0) >= 2
+        or "hard victory" in targets
+        or "hard_victory" in tags
+    )
+
+
+def _evaluate_solution_safety(board: Board,
+                              bridge_data: dict,
+                              solution: Solution,
+                              spawns: list[tuple[int, int]],
+                              current_turn: int,
+                              total_turns: int,
+                              remaining_spawns: int,
+                              weights=None,
+                              *,
+                              block_mech_hp_loss: bool = False,
+                              block_mech_status_loss: bool = False) -> dict:
+    """Replay a candidate solution and audit irreversible-loss safety."""
+    enriched = replay_solution(
+        bridge_data, solution, spawns,
+        current_turn=current_turn,
+        total_turns=total_turns,
+        remaining_spawns=remaining_spawns,
+        weights=weights,
+    )
+    current_outcome = _capture_board_summary(board, bridge_data)
+    predicted_outcome = enriched["predicted_outcome"]
+    predicted_board_summary = dict(predicted_outcome)
+    final_board_data = enriched.get("final_board") or {}
+    if final_board_data:
+        final_board = Board.from_bridge_data(final_board_data)
+        predicted_board_summary = _capture_board_summary(
+            final_board, final_board_data
+        )
+        predicted_board_summary.update(predicted_outcome)
+    predicted_board_summary["pods_collected"] = sum(
+        int(r.get("pods_collected", 0) or 0)
+        for r in enriched.get("action_results", [])
+        if isinstance(r, dict)
+    )
+    planned_kills = sum(
+        int(r.get("mission_kills", r.get("enemies_killed", 0)) or 0)
+        for r in enriched.get("action_results", [])
+        if isinstance(r, dict)
+    )
+    projected_mission_kills = predicted_outcome.get("mission_kills_total_projected")
+    if isinstance(projected_mission_kills, int):
+        planned_kills = projected_mission_kills
+    current_kill_target = current_outcome.get("mission_kill_target")
+    current_kill_limit = current_outcome.get("mission_kill_limit")
+    current_kills_done = current_outcome.get("mission_kills_done")
+    if isinstance(current_kill_target, int) and current_kill_target > 0:
+        predicted_board_summary["mission_kill_target"] = current_kill_target
+        projected_kills_done = predicted_outcome.get("mission_kills_done_projected")
+        if isinstance(projected_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = projected_kills_done
+        elif isinstance(current_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = (
+                current_kills_done + planned_kills
+            )
+        predicted_board_summary["mission_kills_planned"] = planned_kills
+    if isinstance(current_kill_limit, int) and current_kill_limit > 0:
+        predicted_board_summary["mission_kill_limit"] = current_kill_limit
+        projected_kills_done = predicted_outcome.get("mission_kills_done_projected")
+        if isinstance(projected_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = projected_kills_done
+        elif isinstance(current_kills_done, int):
+            predicted_board_summary["mission_kills_done"] = (
+                current_kills_done + planned_kills
+            )
+        predicted_board_summary["mission_kills_planned"] = planned_kills
+    current_mountain_target = current_outcome.get("mission_mountain_target")
+    current_mountains_done = current_outcome.get("mission_mountains_destroyed")
+    if isinstance(current_mountain_target, int) and current_mountain_target > 0:
+        current_mountain_tiles = {
+            tuple(item.get("pos"))
+            for item in current_outcome.get("mission_mountain_tiles", [])
+            if isinstance(item, dict)
+            and isinstance(item.get("pos"), list)
+            and len(item.get("pos")) >= 2
+        }
+        predicted_mountain_tiles = {
+            tuple(item.get("pos")): int(item.get("hp", 0) or 0)
+            for item in predicted_board_summary.get("mission_mountain_tiles", [])
+            if isinstance(item, dict)
+            and isinstance(item.get("pos"), list)
+            and len(item.get("pos")) >= 2
+        }
+        newly_destroyed = sum(
+            1 for pos in current_mountain_tiles
+            if predicted_mountain_tiles.get(pos, 0) <= 0
+        )
+        predicted_board_summary["mission_mountain_target"] = current_mountain_target
+        if isinstance(current_mountains_done, int):
+            predicted_board_summary["mission_mountains_destroyed"] = (
+                current_mountains_done + newly_destroyed
+            )
+        predicted_board_summary["mission_mountains_planned"] = newly_destroyed
+    pending_debt = 0
+    if isinstance(bridge_data, dict):
+        try:
+            pending_debt = int(bridge_data.get("_pending_grid_debt") or 0)
+        except (TypeError, ValueError):
+            pending_debt = 0
+    if pending_debt > 0:
+        current_outcome = _summary_with_pending_grid_debt(
+            current_outcome, pending_debt
+        )
+        predicted_board_summary = _summary_with_pending_grid_debt(
+            predicted_board_summary, pending_debt
+        )
+    plan_safety = audit_plan_safety(
+        current_outcome,
+        predicted_board_summary,
+        block_mech_hp_loss=block_mech_hp_loss,
+        block_mech_status_loss=block_mech_status_loss,
+    )
+    return {
+        "enriched": enriched,
+        "current_outcome": current_outcome,
+        "predicted_outcome": predicted_outcome,
+        "predicted_board_summary": predicted_board_summary,
+        "plan_safety": plan_safety,
+    }
+
+
+def _dirty_candidate_blocking_signature(candidate_eval: dict) -> tuple:
+    """Stable identity for the irreversible loss class of a dirty candidate."""
+    profile = safety_loss_profile(candidate_eval.get("plan_safety"))
+    losses = profile.get("losses") or {}
+    blocking_losses = {
+        key: value
+        for key, value in losses.items()
+        if key != "mech_hp_total"
+    }
+    return (
+        profile.get("label"),
+        bool(profile.get("blocking")),
+        bool(profile.get("non_overridable")),
+        tuple(sorted(blocking_losses.items())),
+    )
+
+
+def _candidate_mech_hp_loss(candidate_eval: dict) -> int:
+    """Return non-fatal mech HP loss for tie-breaking dirty candidates."""
+    plan_safety = candidate_eval.get("plan_safety") or {}
+    current = plan_safety.get("current") or {}
+    predicted = plan_safety.get("predicted") or {}
+    cur_hp = current.get("mech_hp_total")
+    pred_hp = predicted.get("mech_hp_total")
+    if isinstance(cur_hp, int) and isinstance(pred_hp, int):
+        return max(0, cur_hp - pred_hp)
+    return 0
+
+
+def _select_safe_plan_candidate(candidate_evals: list[dict]) -> dict | None:
+    """Prefer clean candidates; when all are dirty, minimize same-class collateral."""
+    if not candidate_evals:
+        return None
+    for candidate in candidate_evals:
+        if not plan_requires_safety_block(candidate.get("plan_safety")):
+            return candidate
+
+    top_signature = _dirty_candidate_blocking_signature(candidate_evals[0])
+    same_blocking_class = [
+        candidate for candidate in candidate_evals
+        if _dirty_candidate_blocking_signature(candidate) == top_signature
+    ]
+    return min(
+        same_blocking_class or candidate_evals,
+        key=lambda candidate: (
+            _candidate_mech_hp_loss(candidate),
+            candidate.get("rank")
+            if isinstance(candidate.get("rank"), int)
+            else 2**31,
+        ),
+    )
+
+
+def _select_candidate_by_rank(
+    candidate_evals: list[dict],
+    requested_rank: int | None,
+) -> dict | None:
+    """Return the exact solver candidate rank requested by the operator."""
+    if requested_rank is None:
+        return None
+    for candidate in candidate_evals:
+        if candidate.get("rank") == requested_rank:
+            return candidate
+    return None
+
+
+def _candidate_safety_summary(candidate_eval: dict) -> dict:
+    """Compact candidate audit data for solve recordings."""
+    solution = candidate_eval.get("solution")
+    plan_safety = candidate_eval.get("plan_safety") or {}
+    loss_profile = safety_loss_profile(plan_safety)
+    violations = []
+    for v in plan_safety.get("violations", []) or []:
+        violations.append({
+            "kind": v.get("kind"),
+            "blocking": bool(v.get("blocking")),
+            "current": v.get("current"),
+            "predicted": v.get("predicted"),
+        })
+    return {
+        "rank": candidate_eval.get("rank"),
+        "source": candidate_eval.get("source"),
+        "score": solution.score if solution is not None else None,
+        "chain_score": candidate_eval.get("chain_score"),
+        "status": plan_safety.get("status"),
+        "blocking": bool(plan_safety.get("blocking")),
+        "loss_profile": loss_profile,
+        "violations": violations,
+    }
+
+
+def _candidate_dirty_frontier(
+    candidate_summaries: list[dict],
+    *,
+    limit: int = 8,
+) -> list[dict]:
+    """Return the top raw-score representative for each safety tradeoff."""
+    buckets: dict[tuple, dict] = {}
+    for summary in candidate_summaries:
+        profile = summary.get("loss_profile") or {}
+        label = profile.get("label") or "unknown"
+        signature = (
+            label,
+            bool(profile.get("blocking")),
+            bool(profile.get("non_overridable")),
+            tuple(sorted((profile.get("losses") or {}).items())),
+        )
+        bucket = buckets.setdefault(signature, {
+            "label": label,
+            "signature": signature,
+            "count": 0,
+            "best": None,
+        })
+        bucket["count"] += 1
+        best = bucket.get("best")
+        rank = summary.get("rank")
+        best_rank = best.get("rank") if isinstance(best, dict) else None
+        if (
+            best is None
+            or (isinstance(rank, int) and not isinstance(best_rank, int))
+            or (
+                isinstance(rank, int)
+                and isinstance(best_rank, int)
+                and rank < best_rank
+            )
+        ):
+            bucket["best"] = summary
+
+    frontier = []
+    for bucket in buckets.values():
+        best = bucket.get("best") or {}
+        profile = best.get("loss_profile") or {}
+        frontier.append({
+            "label": bucket.get("label"),
+            "loss_signature": list(bucket.get("signature", ())),
+            "count": bucket.get("count", 0),
+            "best_rank": best.get("rank"),
+            "best_source": best.get("source"),
+            "best_score": best.get("score"),
+            "chain_score": best.get("chain_score"),
+            "blocking": bool(best.get("blocking")),
+            "losses": profile.get("losses", {}),
+            "violations": best.get("violations", []),
+        })
+
+    def _sort_key(item: dict) -> tuple[int, int]:
+        rank = item.get("best_rank")
+        if isinstance(rank, int):
+            return (0, rank)
+        return (1, 10**9)
+
+    return sorted(frontier, key=_sort_key)[:limit]
+
+
+def _candidate_frontier_representatives(
+    candidate_evals: list[dict],
+    *,
+    limit: int = 5,
+) -> list[dict]:
+    """Choose one candidate eval per safety-tradeoff signature."""
+    buckets: dict[tuple, dict] = {}
+    for candidate in candidate_evals:
+        profile = safety_loss_profile(candidate.get("plan_safety"))
+        signature = (
+            profile.get("label", "unknown"),
+            bool(profile.get("blocking")),
+            bool(profile.get("non_overridable")),
+            tuple(sorted((profile.get("losses") or {}).items())),
+        )
+        current = buckets.get(signature)
+        rank = candidate.get("rank")
+        current_rank = current.get("rank") if isinstance(current, dict) else None
+        if (
+            current is None
+            or (isinstance(rank, int) and not isinstance(current_rank, int))
+            or (
+                isinstance(rank, int)
+                and isinstance(current_rank, int)
+                and rank < current_rank
+            )
+        ):
+            buckets[signature] = candidate
+
+    def _sort_key(candidate: dict) -> tuple[int, int]:
+        rank = candidate.get("rank")
+        if isinstance(rank, int):
+            return (0, rank)
+        return (1, 10**9)
+
+    return sorted(buckets.values(), key=_sort_key)[:limit]
+
+
+def _solution_plan_payload(solution: Solution) -> list[dict]:
+    """Serialize a Solution for Rust project_plan / score_plan calls."""
+    return [{
+        "mech_uid": a.mech_uid,
+        "mech_type": a.mech_type,
+        "move_to": list(a.move_to),
+        "weapon_id": a.weapon,
+        "target": list(a.target),
+    } for a in solution.actions]
+
+
+def _prepare_projected_bridge(
+    projected_bridge: dict,
+    source_bridge: dict,
+    eval_weights_dict: dict | None,
+) -> dict:
+    """Carry solve-only metadata across a projected board JSON payload."""
+    out = dict(projected_bridge)
+    projected_weights = out.get("eval_weights")
+    weights = {}
+    if isinstance(eval_weights_dict, dict):
+        weights.update(eval_weights_dict)
+    elif isinstance(source_bridge.get("eval_weights"), dict):
+        weights.update(source_bridge["eval_weights"])
+    if isinstance(projected_weights, dict):
+        weights.update(projected_weights)
+    if weights:
+        out["eval_weights"] = weights
+
+    for key in (
+        "disabled_actions",
+        "weapon_overrides",
+        "weapon_overrides_runtime",
+    ):
+        if key in source_bridge and key not in out:
+            out[key] = source_bridge[key]
+    return out
+
+
+def _active_player_action_count(board: Board) -> int:
+    return sum(
+        1 for u in board.mechs()
+        if u.active and u.hp > 0 and (u.is_mech or u.weapon)
+    )
+
+
+def _post_enemy_ready_for_audit(board: Board, bridge_data: dict | None) -> bool:
+    """True once the next player turn has fully activated controllable actors."""
+    if not isinstance(bridge_data, dict):
+        return False
+    if bridge_data.get("phase") != "combat_player":
+        return False
+    return _active_player_action_count(board) > 0
+
+
+def _projected_scenarios(
+    rust_module,
+    bridge_data: dict,
+    solution: Solution,
+    *,
+    max_scenarios: int = 3,
+) -> list[dict]:
+    import json as _json
+
+    plan_json = _json.dumps(_solution_plan_payload(solution))
+    if hasattr(rust_module, "project_plan_scenarios"):
+        raw = rust_module.project_plan_scenarios(
+            _json.dumps(bridge_data),
+            plan_json,
+            max_scenarios,
+        )
+        scenarios = _json.loads(raw).get("scenarios", [])
+        if isinstance(scenarios, list) and scenarios:
+            return [
+                s for s in scenarios
+                if isinstance(s, dict) and isinstance(s.get("board_json"), str)
+            ][:max_scenarios]
+
+    projected_raw = rust_module.project_plan(
+        _json.dumps(bridge_data),
+        plan_json,
+    )
+    projected = _json.loads(projected_raw)
+    projected["label"] = "heuristic_requeue"
+    return [projected]
+
+
+def _lookahead_result_sort_key(item: dict) -> tuple[int, int, float]:
+    """Sort key where lower means a weaker projected recovery."""
+    if item.get("status") != "OK":
+        return (0, 0, float("-inf"))
+    safety = item.get("next_plan_safety") or {}
+    profile = safety.get("loss_profile") or {}
+    non_overridable = bool(profile.get("non_overridable"))
+    blocking = bool(safety.get("blocking"))
+    score = item.get("next_score")
+    if not isinstance(score, (int, float)):
+        score = float("-inf")
+    return (1, 0 if non_overridable else (1 if blocking else 2), float(score))
+
+
+def _lookahead_robust_summary(item: dict) -> dict:
+    """Compact robust-score diagnostic for one lookahead frontier item."""
+    safety = item.get("next_plan_safety") or {}
+    profile = safety.get("loss_profile") or {}
+    if item.get("status") != "OK":
+        robust_status = "unresolved"
+    elif profile.get("non_overridable"):
+        robust_status = "objective_dirty"
+    elif safety.get("blocking"):
+        robust_status = "dirty"
+    else:
+        robust_status = "clean"
+
+    candidate_score = item.get("candidate_score")
+    next_score = item.get("next_score")
+    robust_score = None
+    if isinstance(candidate_score, (int, float)) and isinstance(next_score, (int, float)):
+        robust_score = float(candidate_score) + float(next_score)
+
+    return {
+        "candidate_label": item.get("candidate_label"),
+        "candidate_rank": item.get("candidate_rank"),
+        "candidate_source": item.get("candidate_source"),
+        "candidate_score": candidate_score,
+        "candidate_losses": item.get("candidate_losses", {}),
+        "scenario_count": item.get("scenario_count", 0),
+        "worst_scenario": item.get("worst_scenario"),
+        "next_score": next_score,
+        "next_loss_label": profile.get("label"),
+        "robust_status": robust_status,
+        "robust_score": robust_score,
+    }
+
+
+def _lookahead_robust_frontier(lookahead_frontier: list[dict]) -> list[dict]:
+    """Sort lookahead previews by robust recovery, best first."""
+    summaries = [_lookahead_robust_summary(item) for item in lookahead_frontier]
+
+    def _sort_key(item: dict) -> tuple[int, float]:
+        status_rank = {
+            "clean": 3,
+            "dirty": 2,
+            "objective_dirty": 1,
+            "unresolved": 0,
+        }.get(item.get("robust_status"), 0)
+        score = item.get("robust_score")
+        if not isinstance(score, (int, float)):
+            score = float("-inf")
+        return (status_rank, float(score))
+
+    return sorted(summaries, key=_sort_key, reverse=True)
+
+
+def _candidate_lookahead_preview(
+    rust_module,
+    bridge_data: dict,
+    candidate_eval: dict,
+    spawns: list[tuple[int, int]],
+    *,
+    eval_weights_dict: dict | None,
+    breakdown_weights,
+    time_limit: float,
+    block_mech_hp_loss: bool = False,
+    block_mech_status_loss: bool = False,
+) -> dict:
+    """Project a candidate once and solve the heuristic next-turn recovery."""
+    solution = candidate_eval.get("solution")
+    if solution is None:
+        return {"status": "NO_SOLUTION"}
+
+    base_summary = _candidate_safety_summary(candidate_eval)
+    label = (base_summary.get("loss_profile") or {}).get("label", "unknown")
+    preview = {
+        "scenario": "heuristic_requeue",
+        "candidate_rank": candidate_eval.get("rank"),
+        "candidate_source": candidate_eval.get("source"),
+        "candidate_score": solution.score,
+        "candidate_label": label,
+        "candidate_losses": (
+            base_summary.get("loss_profile") or {}
+        ).get("losses", {}),
+    }
+
+    try:
+        import json as _json
+        import time as _time
+
+        scenario_results = []
+        for scenario in _projected_scenarios(
+            rust_module,
+            bridge_data,
+            solution,
+            max_scenarios=3,
+        ):
+            scenario_label = scenario.get("label") or "heuristic_requeue"
+            projected_bridge = _json.loads(scenario.get("board_json") or "{}")
+            projected_bridge = _prepare_projected_bridge(
+                projected_bridge, bridge_data, eval_weights_dict,
+            )
+            projected_board = Board.from_bridge_data(projected_bridge)
+            scenario_preview = {
+                "scenario": scenario_label,
+                "projected_turn": scenario.get(
+                    "projected_turn", projected_bridge.get("turn")
+                ),
+                "projected_action_result": scenario.get("action_result", {}),
+            }
+
+            if _active_player_action_count(projected_board) <= 0:
+                scenario_preview["status"] = "NO_ACTIVE_NEXT_TURN"
+                scenario_results.append(scenario_preview)
+                continue
+
+            sub_time_limit = max(0.25, min(1.0, time_limit * 0.10))
+            start = _time.time()
+            sub_raw = rust_module.solve(
+                _json.dumps(projected_bridge),
+                sub_time_limit,
+            )
+            elapsed = _time.time() - start
+            sub_solution = _rust_result_to_solution(
+                _json.loads(sub_raw),
+                elapsed,
+                _active_player_action_count(projected_board),
+            )
+            if sub_solution is None:
+                scenario_preview["status"] = "NO_NEXT_PLAN"
+                scenario_preview["next_elapsed_seconds"] = elapsed
+                scenario_results.append(scenario_preview)
+                continue
+
+            next_eval = _evaluate_solution_safety(
+                projected_board,
+                projected_bridge,
+                sub_solution,
+                spawns,
+                current_turn=projected_bridge.get("turn", 0),
+                total_turns=projected_bridge.get("total_turns", 5),
+                remaining_spawns=projected_bridge.get(
+                    "remaining_spawns", 2**31 - 1
+                ),
+                weights=breakdown_weights,
+                block_mech_hp_loss=block_mech_hp_loss,
+                block_mech_status_loss=block_mech_status_loss,
+            )
+            next_safety = next_eval.get("plan_safety") or {}
+            scenario_preview.update({
+                "status": "OK",
+                "next_score": sub_solution.score,
+                "next_elapsed_seconds": elapsed,
+                "next_actions": [a.description for a in sub_solution.actions],
+                "next_plan_safety": {
+                    "status": next_safety.get("status"),
+                    "blocking": bool(next_safety.get("blocking")),
+                    "loss_profile": safety_loss_profile(next_safety),
+                    "violations": [
+                        {
+                            "kind": v.get("kind"),
+                            "current": v.get("current"),
+                            "predicted": v.get("predicted"),
+                            "blocking": bool(v.get("blocking")),
+                        }
+                        for v in next_safety.get("violations", []) or []
+                        if isinstance(v, dict)
+                    ],
+                },
+            })
+            scenario_results.append(scenario_preview)
+
+        if not scenario_results:
+            preview["status"] = "NO_SCENARIOS"
+            return preview
+
+        worst = sorted(scenario_results, key=_lookahead_result_sort_key)[0]
+        preview.update(
+            {
+                "status": worst.get("status"),
+                "scenario_count": len(scenario_results),
+                "scenario_results": scenario_results,
+                "worst_scenario": worst.get("scenario"),
+                "projected_turn": worst.get("projected_turn"),
+                "projected_action_result": worst.get("projected_action_result", {}),
+            }
+        )
+        if worst.get("status") == "OK":
+            preview["next_score"] = worst.get("next_score")
+            preview["next_actions"] = worst.get("next_actions", [])
+            preview["next_plan_safety"] = worst.get("next_plan_safety", {})
+        preview["robust_summary"] = _lookahead_robust_summary(preview)
+    except Exception as exc:  # pragma: no cover - defensive live-run guard
+        preview["status"] = "ERROR"
+        preview["error"] = str(exc)
+        preview["robust_summary"] = _lookahead_robust_summary(preview)
+    return preview
+
+
+def _is_harmless_active_state_diff(
+    diff,
+    allowed_uids: set[int] | None = None,
+) -> bool:
+    """Return true for harmless predicted-active -> actual-inactive drift."""
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    for ud in unit_diffs:
+        if ud.get("field") != "active":
+            return False
+        if allowed_uids is not None and ud.get("uid") not in allowed_uids:
+            return False
+        if ud.get("predicted") is not True or ud.get("actual") is not False:
+            return False
+    return True
+
+
+def _is_harmless_player_hp_gain_diff(diff) -> bool:
+    """Return true when live player HP is strictly better than predicted."""
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if not unit_diffs:
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    for ud in unit_diffs:
+        if ud.get("field") != "hp":
+            return False
+        utype = ud.get("type", "") or ""
+        if not (utype.endswith("Mech") or utype == "Disposal_Unit"):
+            return False
+        predicted = ud.get("predicted")
+        actual = ud.get("actual")
+        if not isinstance(predicted, (int, float)) or not isinstance(actual, (int, float)):
+            return False
+        if actual <= predicted:
+            return False
+    return True
+
+
+def _is_expected_skip_state_diff(diff, mech_uid: int) -> bool:
+    """Return true for the harmless active-flag drift after a no-attack skip."""
+    return _is_harmless_active_state_diff(diff, allowed_uids={mech_uid})
+
+
+def _repair_would_be_noop(board: Board | None, mech_uid: int) -> bool:
+    if board is None:
+        return False
+    mech = next((u for u in board.units if u.uid == mech_uid), None)
+    if mech is None:
+        return False
+    return (
+        mech.hp >= mech.max_hp
+        and not getattr(mech, "fire", False)
+        and not getattr(mech, "acid", False)
+        and not getattr(mech, "frozen", False)
+        and not getattr(mech, "infected", False)
+    )
 
 
 def _compute_deltas(predicted: dict, actual: dict) -> dict:
@@ -1025,29 +2968,63 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
         # (new spawns inflate actual count — that's expected, not a solver failure)
         "enemies_alive_diff": actual["enemies_alive"] - predicted["enemies_alive"],
     }
+    if (
+        "protected_objective_units_alive" in predicted
+        and "protected_objective_units_alive" in actual
+    ):
+        deltas["protected_objective_units_alive_diff"] = (
+            actual["protected_objective_units_alive"]
+            - predicted["protected_objective_units_alive"]
+        )
+    if (
+        "protected_objective_units_frozen" in predicted
+        and "protected_objective_units_frozen" in actual
+    ):
+        deltas["protected_objective_units_frozen_diff"] = (
+            actual["protected_objective_units_frozen"]
+            - predicted["protected_objective_units_frozen"]
+        )
 
-    # Per-mech HP comparison — match by UID for precision
+    # Per-mech HP comparison — match by UID for precision. Actual summaries can
+    # omit dead mechs in older recordings, so predicted-but-missing UIDs count
+    # as actual_hp=0 instead of silently disappearing from the diff.
     mech_deltas = []
     pred_mechs = {m["uid"]: m for m in predicted.get("mech_hp", [])}
+    actual_uids = set()
     for am in actual.get("mech_hp", []):
+        actual_uids.add(am["uid"])
         pm = pred_mechs.get(am["uid"])
         if pm:
+            predicted_hp = max(0, int(pm.get("hp", 0) or 0))
+            actual_hp = max(0, int(am.get("hp", 0) or 0))
             mech_deltas.append({
                 "uid": am["uid"],
                 "type": am["type"],
-                "predicted_hp": pm["hp"],
-                "actual_hp": am["hp"],
-                "diff": am["hp"] - pm["hp"],
+                "predicted_hp": predicted_hp,
+                "actual_hp": actual_hp,
+                "diff": actual_hp - predicted_hp,
             })
         else:
             # Mech in actual but not predicted (shouldn't happen normally)
+            actual_hp = max(0, int(am.get("hp", 0) or 0))
             mech_deltas.append({
                 "uid": am["uid"],
                 "type": am["type"],
                 "predicted_hp": 0,
-                "actual_hp": am["hp"],
-                "diff": am["hp"],
+                "actual_hp": actual_hp,
+                "diff": actual_hp,
             })
+    for uid, pm in pred_mechs.items():
+        if uid in actual_uids:
+            continue
+        predicted_hp = max(0, int(pm.get("hp", 0) or 0))
+        mech_deltas.append({
+            "uid": uid,
+            "type": pm.get("type", "?"),
+            "predicted_hp": predicted_hp,
+            "actual_hp": 0,
+            "diff": -predicted_hp,
+        })
     deltas["mech_hp_diff"] = mech_deltas
 
     # Human-readable unexpected events
@@ -1058,6 +3035,12 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     if deltas["grid_power_diff"] < 0:
         unexpected.append(
             f"Grid power dropped by {-deltas['grid_power_diff']} unexpectedly")
+    if deltas.get("protected_objective_units_alive_diff", 0) < 0:
+        unexpected.append(
+            "Lost protected objective unit(s) unexpectedly")
+    if deltas.get("protected_objective_units_frozen_diff", 0) < 0:
+        unexpected.append(
+            "Protected objective unit(s) unexpectedly unfroze")
     for md in mech_deltas:
         if md["diff"] < 0:
             unexpected.append(
@@ -1067,8 +3050,73 @@ def _compute_deltas(predicted: dict, actual: dict) -> dict:
     return deltas
 
 
+def _post_enemy_record_path(session: RunSession, solved_turn: int) -> Path:
+    run_dir = _recording_dir(session)
+    return run_dir / (
+        f"m{session.mission_index:02d}_turn_{solved_turn:02d}_post_enemy.json"
+    )
+
+
+def _bridge_turn_value(bridge_data: dict | None) -> int | None:
+    if not isinstance(bridge_data, dict):
+        return None
+    try:
+        turn = int(bridge_data.get("turn", 0) or 0)
+    except (TypeError, ValueError):
+        return None
+    return turn if turn > 0 else None
+
+
+def _post_enemy_expected_actual_turn(solved_turn: int) -> int:
+    return int(solved_turn) + 1
+
+
+def _post_enemy_missed_window_result(
+    session: RunSession,
+    solved_turn: int,
+    actual_turn: int,
+) -> dict:
+    expected_turn = _post_enemy_expected_actual_turn(solved_turn)
+    result = {
+        "status": "POST_ENEMY_AUDIT_MISSED_WINDOW",
+        "mission_index": session.mission_index,
+        "turn": solved_turn,
+        "blocking": True,
+        "source": "post_enemy_turn_window_guard",
+        "reason": "actual_turn_past_expected_post_enemy_window",
+        "expected_actual_turn": expected_turn,
+        "actual_turn": actual_turn,
+        "message": (
+            "Refusing to compare a stale solve prediction against a later "
+            "combat turn. The post-enemy audit window was missed."
+        ),
+        "next_step": (
+            "Snapshot and investigate why the exact post-enemy window was "
+            "missed. Do not use this late board as simulator evidence; clear "
+            "the block only after the process cause is understood."
+        ),
+    }
+    result["post_enemy_block"] = _install_post_enemy_block(session, result)
+    return result
+
+
+def _post_enemy_needs_investigation(deltas: dict) -> bool:
+    """True when actual enemy-phase damage is worse than the prediction."""
+    return any(
+        int(deltas.get(key, 0) or 0) < 0
+        for key in (
+            "grid_power_diff",
+            "buildings_alive_diff",
+            "building_hp_diff",
+            "protected_objective_units_alive_diff",
+            "protected_objective_units_frozen_diff",
+        )
+    )
+
+
 def _record_post_enemy(session: RunSession, board: Board,
-                       solved_turn: int) -> None:
+                       solved_turn: int,
+                       bridge_data: dict | None = None) -> dict | None:
     """Record post-enemy board state and compare with solver predictions.
 
     Idempotent: if ``(mission_index, solved_turn)`` is already in
@@ -1083,29 +3131,73 @@ def _record_post_enemy(session: RunSession, board: Board,
 
     # Dedup guard.
     key = [mi, solved_turn]
-    if key in session.recorded_post_enemy_turns:
-        return
+    if key in session.recorded_post_enemy_turns and _post_enemy_record_path(
+        session, solved_turn
+    ).exists():
+        block = _active_post_enemy_block(session)
+        if (
+            block is not None
+            and block.get("mission_index") == mi
+            and block.get("turn") == solved_turn
+        ):
+            return block
+        return {
+            "status": "POST_ENEMY_ALREADY_RECORDED",
+            "mission_index": mi,
+            "turn": solved_turn,
+            "blocking": False,
+        }
+
+    actual_turn = _bridge_turn_value(bridge_data)
+    expected_turn = _post_enemy_expected_actual_turn(solved_turn)
+    if actual_turn is not None and actual_turn > expected_turn:
+        return _post_enemy_missed_window_result(session, solved_turn, actual_turn)
 
     # Load the solve recording from the solved turn (try new naming, fallback to old)
     solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
     if not solve_file.exists():
         solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
     if not solve_file.exists():
-        return
-
-    session.recorded_post_enemy_turns.append(key)
+        result = {
+            "status": "POST_ENEMY_AUDIT_MISSING",
+            "mission_index": mi,
+            "turn": solved_turn,
+            "blocking": True,
+            "reason": "solve_record_missing",
+            "message": (
+                "Cannot compare the enemy phase because the solve record "
+                "for the just-finished turn is missing."
+            ),
+        }
+        _install_post_enemy_block(session, result)
+        return result
 
     with open(solve_file) as f:
         solve_record = json.load(f)
 
     solve_data = solve_record.get("data", {})
-    predicted = solve_data.get("predicted_outcome")
+    predicted = (
+        solve_data.get("predicted_board_summary")
+        or solve_data.get("predicted_outcome")
+    )
     if predicted is None:
         # Old-format recording without predictions — skip comparison
-        return
+        result = {
+            "status": "POST_ENEMY_AUDIT_MISSING",
+            "mission_index": mi,
+            "turn": solved_turn,
+            "blocking": True,
+            "reason": "prediction_missing",
+            "message": (
+                "Cannot compare the enemy phase because the solve record "
+                "has no predicted post-enemy board."
+            ),
+        }
+        _install_post_enemy_block(session, result)
+        return result
 
     # Capture actual board state
-    actual = _capture_board_summary(board)
+    actual = _capture_board_summary(board, bridge_data)
 
     # Compute deltas
     deltas = _compute_deltas(predicted, actual)
@@ -1116,6 +3208,8 @@ def _record_post_enemy(session: RunSession, board: Board,
         "predicted_outcome": predicted,
         "deltas": deltas,
     }, turn_override=solved_turn)
+    if key not in session.recorded_post_enemy_turns:
+        session.recorded_post_enemy_turns.append(key)
 
     # Detect triggers
     triggers = detect_triggers(actual, predicted, deltas, solve_data, board)
@@ -1159,8 +3253,312 @@ def _record_post_enemy(session: RunSession, board: Board,
     else:
         print(f"\nPost-enemy analysis: no triggers (predictions matched)")
 
+    investigation_required = _post_enemy_needs_investigation(deltas)
+    status = (
+        "INVESTIGATE_POST_ENEMY"
+        if investigation_required else "POST_ENEMY_RECORDED"
+    )
+    result = {
+        "status": status,
+        "mission_index": mi,
+        "turn": solved_turn,
+        "blocking": investigation_required,
+        "actual_outcome": actual,
+        "predicted_outcome": predicted,
+        "deltas": deltas,
+        "triggers": triggers,
+        "next_step": (
+            "Investigate the enemy-phase prediction miss before solving or "
+            "advancing another final-island turn."
+            if investigation_required
+            else "Post-enemy prediction audit recorded."
+        ),
+    }
+    if investigation_required:
+        result["post_enemy_block"] = _install_post_enemy_block(
+            session, result, record_path=_post_enemy_record_path(session, solved_turn)
+        )
+        print("\n" + "!" * 60)
+        print("! POST-ENEMY INVESTIGATION GATE")
+        print(
+            f"!   Turn {solved_turn}: grid Δ {deltas.get('grid_power_diff')}, "
+            f"building HP Δ {deltas.get('building_hp_diff')}, "
+            f"buildings Δ {deltas.get('buildings_alive_diff')}"
+        )
+        print("!   Actual enemy phase was worse than predicted.")
+        print("!" * 60)
+    return result
+
+
+def _load_solve_prediction_for_turn(
+    session: RunSession,
+    solved_turn: int,
+) -> dict | None:
+    """Load the saved post-enemy prediction for a solved turn."""
+    run_dir = _recording_dir(session)
+    mi = session.mission_index
+    solve_file = run_dir / f"m{mi:02d}_turn_{solved_turn:02d}_solve.json"
+    if not solve_file.exists():
+        solve_file = run_dir / f"turn_{solved_turn:02d}_solve.json"
+    if not solve_file.exists():
+        return None
+    try:
+        with solve_file.open() as f:
+            solve_record = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    solve_data = solve_record.get("data", {})
+    predicted = (
+        solve_data.get("predicted_board_summary")
+        or solve_data.get("predicted_outcome")
+    )
+    return predicted if isinstance(predicted, dict) else None
+
+
+def _final_post_enemy_audit_gate(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict | None,
+) -> dict | None:
+    """Backfill or block on missing final-island post-enemy audits.
+
+    Final missions can briefly report ``mission_ending`` from the save while
+    the bridge is still in live combat. If that anomaly cleared the active
+    solution before ``*_post_enemy.json`` was written, the next turn must not
+    solve ahead without reconstructing the audit from the current board.
+    """
+    if not isinstance(bridge_data, dict):
+        return None
+    mission_id = bridge_data.get("mission_id") or getattr(board, "mission_id", "")
+    if mission_id not in {"Mission_Final", "Mission_Final_Cave"}:
+        return None
+    try:
+        current_turn = int(bridge_data.get("turn", 0) or 0)
+    except (TypeError, ValueError):
+        return None
+    if current_turn <= 1:
+        return None
+
+    solved_turn = current_turn - 1
+    run_dir = _recording_dir(session)
+    solve_file = run_dir / (
+        f"m{session.mission_index:02d}_turn_{solved_turn:02d}_solve.json"
+    )
+    if not solve_file.exists():
+        return None
+    post_file = _post_enemy_record_path(session, solved_turn)
+    if post_file.exists():
+        if os.environ.get("ITB_ALLOW_UNRESOLVED_POST_ENEMY") == "1":
+            return None
+        try:
+            with post_file.open() as f:
+                record = json.load(f)
+            deltas = ((record.get("data") or {}).get("deltas") or {})
+        except (OSError, json.JSONDecodeError):
+            deltas = {}
+        if _post_enemy_needs_investigation(deltas):
+            return {
+                "status": "INVESTIGATE_POST_ENEMY",
+                "mission_index": session.mission_index,
+                "turn": solved_turn,
+                "blocking": True,
+                "source": "final_post_enemy_audit_gate",
+                "deltas": deltas,
+                "next_step": (
+                    "A recorded final-island post-enemy audit is still worse "
+                    "than prediction. Investigate before solving ahead, or set "
+                    "ITB_ALLOW_UNRESOLVED_POST_ENEMY=1 for an explicit debug bypass."
+                ),
+            }
+        return None
+
+    result = _record_post_enemy(
+        session, board, solved_turn, bridge_data=bridge_data
+    )
+    if not isinstance(result, dict):
+        return None
+    if result.get("blocking"):
+        result = dict(result)
+        result["status"] = result.get("status") or "POST_ENEMY_AUDIT_BLOCKED"
+        result["source"] = "final_post_enemy_audit_gate"
+        return result
+    return None
+
+
+def _post_enemy_settle_fingerprint(board: Board, bridge_data: dict) -> tuple:
+    """Fingerprint board values that can settle after enemy animations."""
+    building_hp = tuple(
+        sorted(
+            (x, y, board.tiles[x][y].building_hp)
+            for x in range(8) for y in range(8)
+            if board.tiles[x][y].terrain == "building"
+            and board.tiles[x][y].building_hp > 0
+        )
+    )
+    units = tuple(
+        sorted(
+            (
+                u.uid, u.type, u.team, u.x, u.y, u.hp, u.max_hp,
+                bool(u.active), bool(u.fire), bool(u.web), bool(u.frozen),
+                getattr(u, "target_x", -1), getattr(u, "target_y", -1),
+            )
+            for u in board.units
+        )
+    )
+    return (
+        bridge_data.get("phase"),
+        bridge_data.get("turn"),
+        bridge_data.get("active_mechs"),
+        board.grid_power,
+        building_hp,
+        units,
+    )
+
+
+def _actual_exceeds_prediction(actual: dict, predicted: dict | None) -> bool:
+    """True when an actual post-enemy read looks better than predicted."""
+    if not isinstance(predicted, dict):
+        return False
+    for key in ("grid_power", "buildings_alive", "building_hp_total"):
+        av = actual.get(key)
+        pv = predicted.get(key)
+        if isinstance(av, int) and isinstance(pv, int) and av > pv:
+            return True
+    return False
+
+
+def _pending_grid_loss_settlement(actual: dict, predicted: dict | None) -> bool:
+    """True when building loss is visible but grid loss may still be delayed."""
+    if not isinstance(predicted, dict):
+        return False
+    av_grid = actual.get("grid_power")
+    pv_grid = predicted.get("grid_power")
+    if not (isinstance(av_grid, int) and isinstance(pv_grid, int)):
+        return False
+    building_worse = False
+    for key in ("buildings_alive", "building_hp_total"):
+        av = actual.get(key)
+        pv = predicted.get(key)
+        if isinstance(av, int) and isinstance(pv, int) and av < pv:
+            building_worse = True
+            break
+    return building_worse and av_grid >= pv_grid
+
+
+def _settle_post_enemy_board(
+    session: RunSession,
+    board: Board,
+    bridge_data: dict,
+    solved_turn: int,
+    *,
+    max_wait: float = 3.0,
+    interval: float = 0.5,
+    read_fn=read_bridge_state,
+    refresh_fn=refresh_bridge_state,
+    sleep_fn=time.sleep,
+    now_fn=time.time,
+) -> tuple[Board, dict, dict | None]:
+    """Wait briefly for turn-boundary grid/building values to settle.
+
+    The Lua bridge can expose ``phase=combat_player`` before controllable
+    actors are READY and before scalar grid power catches up to building
+    damage. If we record post-enemy analysis in that window, a dirty or
+    unexpected grid loss can be misclassified as a Grid Defense resist. Polling
+    here is scoped to the just-finished solved turn and only delays post-enemy
+    reads by a few seconds.
+    """
+    predicted = _load_solve_prediction_for_turn(session, solved_turn)
+    expected_turn = _post_enemy_expected_actual_turn(solved_turn)
+    start = now_fn()
+    latest_board = board
+    latest_data = bridge_data
+    latest_fp = _post_enemy_settle_fingerprint(board, bridge_data)
+    samples = 1
+    aborted_reason: str | None = None
+    aborted_turn: int | None = None
+
+    while now_fn() - start < max_wait:
+        sleep_fn(interval)
+        try:
+            refresh_fn()
+            reread_board, reread_data = read_fn()
+        except Exception:
+            break
+        if reread_board is None or not isinstance(reread_data, dict):
+            break
+        reread_turn = _bridge_turn_value(reread_data)
+        if reread_turn is not None and reread_turn != expected_turn:
+            latest_board, latest_data = reread_board, reread_data
+            samples += 1
+            aborted_reason = "turn_window_changed"
+            aborted_turn = reread_turn
+            break
+
+        # A phase/mission transition beats settlement; return the freshest
+        # board and let normal phase handling decide what to do next.
+        if reread_data.get("phase") != bridge_data.get("phase"):
+            latest_board, latest_data = reread_board, reread_data
+            samples += 1
+            break
+
+        latest_board, latest_data = reread_board, reread_data
+        samples += 1
+        if not _post_enemy_ready_for_audit(reread_board, reread_data):
+            latest_fp = _post_enemy_settle_fingerprint(reread_board, reread_data)
+            continue
+        fp = _post_enemy_settle_fingerprint(reread_board, reread_data)
+        actual = _capture_board_summary(reread_board, reread_data)
+        favorable = _actual_exceeds_prediction(actual, predicted)
+        pending_grid_loss = _pending_grid_loss_settlement(actual, predicted)
+
+        # If the latest read no longer looks like a favorable surprise, two
+        # matching reads are enough. If it does look favorable, or building
+        # loss is visible while grid has not caught up, keep polling to the cap
+        # so delayed grid loss cannot masquerade as Grid Defense.
+        if fp == latest_fp and not favorable and not pending_grid_loss:
+            break
+        latest_fp = fp
+
+    elapsed = now_fn() - start
+    info = None
+    if samples > 1:
+        info = {
+            "samples": samples,
+            "elapsed_seconds": round(elapsed, 3),
+            "grid_power": latest_board.grid_power,
+        }
+        if aborted_reason:
+            info.update({
+                "aborted": True,
+                "reason": aborted_reason,
+                "expected_turn": expected_turn,
+                "actual_turn": aborted_turn,
+            })
+    return latest_board, latest_data, info
+
 
 # --- State Reading Commands ---
+
+
+def _unit_status_summary(unit) -> tuple[str, list[str]]:
+    """Human-readable action state plus live status flags for read output."""
+    if unit.hp <= 0:
+        base = "DEAD"
+    else:
+        base = "READY" if unit.active else "DONE"
+
+    flags: list[str] = []
+    if getattr(unit, "web", False):
+        flags.append("WEBBED")
+    if getattr(unit, "frozen", False):
+        flags.append("FROZEN")
+    if getattr(unit, "fire", False):
+        flags.append("FIRE")
+    if getattr(unit, "acid", False):
+        flags.append("ACID")
+    if getattr(unit, "shield", False):
+        flags.append("SHIELD")
+    return (f"{base} {'/'.join(flags)}" if flags else base, flags)
 
 
 def cmd_read(profile: str = "Alpha") -> dict:
@@ -1172,6 +3570,8 @@ def cmd_read(profile: str = "Alpha") -> dict:
     recalibrate()
 
     session = _load_session()
+    stale_bridge: dict | None = None
+    save_phase_from_stale_check: str | None = None
 
     # Try bridge first (direct Lua API access)
     if is_bridge_active():
@@ -1179,6 +3579,22 @@ def cmd_read(profile: str = "Alpha") -> dict:
         refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
+            save_phase = detect_game_phase(profile)
+            if _bridge_is_stale_post_mission(save_phase, bridge_data):
+                stale_bridge = {
+                    "source": "save_parser",
+                    "bridge_stale_ignored": True,
+                    "stale_bridge_phase": bridge_data.get("phase", "unknown"),
+                    "stale_bridge_turn": bridge_data.get("turn", 0),
+                    "note": (
+                        "Bridge still reports the previous combat board after "
+                        "mission end; using saveData phase."
+                    ),
+                }
+                save_phase_from_stale_check = save_phase
+            else:
+                save_phase_from_stale_check = save_phase
+        if board is not None and bridge_data is not None and stale_bridge is None:
             phase = bridge_data.get("phase", "unknown")
             old_phase = session.phase
             session.phase = phase
@@ -1189,6 +3605,12 @@ def cmd_read(profile: str = "Alpha") -> dict:
                 "turn": bridge_data.get("turn", 0),
                 "grid_power": f"{board.grid_power}/{board.grid_power_max}",
             }
+            if bridge_data.get("mech_stat_overlays"):
+                result["mech_stat_overlays"] = bridge_data["mech_stat_overlays"]
+            if bridge_data.get("pilot_calibration_requests"):
+                result["pilot_calibration_requests"] = (
+                    bridge_data["pilot_calibration_requests"]
+                )
 
             session.current_turn = bridge_data.get("turn", 0)
 
@@ -1199,6 +3621,32 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # overwriting the prior mission's recordings.
             if _auto_advance_mission(session, bridge_data):
                 session.save()
+
+            post_enemy_settle = None
+            if (session.active_solution is not None
+                    and bridge_data.get("turn", 0) == _post_enemy_expected_actual_turn(
+                        session.active_solution.turn
+                    )
+                    and _post_enemy_ready_for_audit(board, bridge_data)):
+                board, bridge_data, post_enemy_settle = _settle_post_enemy_board(
+                    session, board, bridge_data, session.active_solution.turn
+                )
+                phase = bridge_data.get("phase", "unknown")
+                session.phase = phase
+                session.current_turn = bridge_data.get("turn", 0)
+                result["phase"] = phase
+                result["turn"] = bridge_data.get("turn", 0)
+                result["grid_power"] = f"{board.grid_power}/{board.grid_power_max}"
+                if post_enemy_settle:
+                    result["post_enemy_settle"] = post_enemy_settle
+
+            post_enemy_gate = _final_post_enemy_audit_gate(
+                session, board, bridge_data
+            )
+            if post_enemy_gate:
+                result["status"] = post_enemy_gate.get("status")
+                result["post_enemy_investigation"] = post_enemy_gate
+                result["next_step"] = post_enemy_gate.get("next_step")
 
             # Mid-mission terrain stage-change detection. Some final missions
             # swap their arena partway through (volcano → caverns on
@@ -1233,13 +3681,16 @@ def cmd_read(profile: str = "Alpha") -> dict:
             if phase in ("combat_player", "combat_enemy"):
                 mechs = board.mechs()
                 active_mechs = [m for m in mechs if m.active and m.hp > 0]
-                result["mechs"] = [
-                    {"type": m.type, "pos": _bv(m.x, m.y),
-                     "hp": f"{m.hp}/{m.max_hp}",
-                     "weapon": get_weapon_name(m.weapon),
-                     "status": "READY" if m.active else "DONE"}
-                    for m in mechs
-                ]
+                result["mechs"] = []
+                for m in mechs:
+                    status, conditions = _unit_status_summary(m)
+                    entry = {"type": m.type, "pos": _bv(m.x, m.y),
+                             "hp": f"{m.hp}/{m.max_hp}",
+                             "weapon": get_weapon_name(m.weapon),
+                             "status": status}
+                    if conditions:
+                        entry["conditions"] = conditions
+                    result["mechs"].append(entry)
                 result["active_mechs"] = len(active_mechs)
 
                 enemies = board.enemies()
@@ -1496,30 +3947,57 @@ def cmd_read(profile: str = "Alpha") -> dict:
             # to verify, not cmd_verify, so the counter stays at 0).
             if (session.active_solution is not None
                     and bridge_data.get("turn", 0) > session.active_solution.turn
-                    and phase == "combat_player"):
-                _record_post_enemy(session, board, session.active_solution.turn)
+                    and _post_enemy_ready_for_audit(board, bridge_data)):
+                post_enemy_result = _record_post_enemy(
+                    session, board, session.active_solution.turn,
+                    bridge_data=bridge_data,
+                )
+                if (
+                    isinstance(post_enemy_result, dict)
+                    and post_enemy_result.get("blocking")
+                ):
+                    result["status"] = post_enemy_result.get("status")
+                    result["post_enemy_investigation"] = post_enemy_result
+                    result["next_step"] = post_enemy_result.get("next_step")
                 session.active_solution = None  # consumed — prevents re-trigger
             elif (session.active_solution is not None
                     and phase in ("between_missions", "mission_ending")):
-                # Mission ended — clear stale solution (no comparison possible)
+                # Mission ended. Try one final audit flush before clearing the
+                # solution; final-island save phases can say mission_ending
+                # while the bridge still has the live combat board.
+                post_enemy_result = _record_post_enemy(
+                    session, board, session.active_solution.turn,
+                    bridge_data=bridge_data,
+                )
+                if (
+                    isinstance(post_enemy_result, dict)
+                    and post_enemy_result.get("blocking")
+                ):
+                    result["status"] = post_enemy_result.get("status")
+                    result["post_enemy_investigation"] = post_enemy_result
+                    result["next_step"] = post_enemy_result.get("next_step")
                 session.active_solution = None
 
+            _attach_post_enemy_block(result, session)
             session.save()
             _print_result(result)
             return result
 
     # Fallback: detect phase from saveData.lua ONLY (no undoSave fallback)
-    phase = detect_game_phase(profile)
+    phase = save_phase_from_stale_check or detect_game_phase(profile)
 
     old_phase = session.phase
     session.phase = phase
 
     result = {"phase": phase}
+    if stale_bridge:
+        result.update(stale_bridge)
 
     if phase in ("combat_player", "combat_enemy"):
         state = load_game_state(profile)
         if state is None or state.active_mission is None:
             result["error"] = "Phase is combat but no mission data loaded"
+            _attach_post_enemy_block(result, session)
             session.save()
             _print_result(result)
             return result
@@ -1539,17 +4017,18 @@ def cmd_read(profile: str = "Alpha") -> dict:
         active_mechs = [mech for mech in mechs if mech.active and mech.hp > 0]
         result["mechs"] = []
         for mech in mechs:
-            status = "READY" if mech.active else "DONE"
-            if mech.hp <= 0:
-                status = "DEAD"
+            status, conditions = _unit_status_summary(mech)
             weapon_name = get_weapon_name(mech.weapon)
-            result["mechs"].append({
+            entry = {
                 "type": mech.type,
                 "pos": _bv(mech.x, mech.y),
                 "hp": f"{mech.hp}/{mech.max_hp}",
                 "weapon": weapon_name,
                 "status": status,
-            })
+            }
+            if conditions:
+                entry["conditions"] = conditions
+            result["mechs"].append(entry)
         result["active_mechs"] = len(active_mechs)
 
         # Enemies
@@ -1589,10 +4068,23 @@ def cmd_read(profile: str = "Alpha") -> dict:
         state = load_game_state(profile)
         if state:
             result["grid_power"] = f"{state.grid_power}/{state.grid_power_max}"
-        result["note"] = "Between missions (map/shop/island select). Use screenshot to determine exact screen."
+        if stale_bridge:
+            session.active_solution = None
+            session.actions_executed = 0
+            result["save_phase_note"] = (
+                "Between missions (map/shop/island select). Use screenshot "
+                "to determine exact screen."
+            )
+        else:
+            result["note"] = "Between missions (map/shop/island select). Use screenshot to determine exact screen."
 
     elif phase == "mission_ending":
-        result["note"] = "Mission is ending. Wait for reward screen."
+        if stale_bridge:
+            session.active_solution = None
+            session.actions_executed = 0
+            result["save_phase_note"] = "Mission is ending. Wait for reward screen."
+        else:
+            result["note"] = "Mission is ending. Wait for reward screen."
 
     elif phase == "no_save":
         result["note"] = "No save file found. Game may be on main menu or not running."
@@ -1602,6 +4094,7 @@ def cmd_read(profile: str = "Alpha") -> dict:
         logger = _get_logger(session)
         logger.log_phase_transition(old_phase, phase)
 
+    _attach_post_enemy_block(result, session)
     session.save()
     _print_result(result)
     return result
@@ -1624,19 +4117,85 @@ def _infer_webb_egg_adjacency(units: list) -> None:
     if not eggs:
         return
     by_pos = {(u.get("x"), u.get("y")): u for u in units}
+    by_uid = {u.get("uid"): u for u in units if u.get("uid") is not None}
+
+    def existing_source_still_holds(unit: dict) -> bool:
+        if not unit.get("web"):
+            return False
+        source_uid = unit.get("web_source_uid")
+        if not source_uid:
+            return False
+        source = by_uid.get(source_uid)
+        if not source or source.get("hp", 0) <= 0:
+            return False
+        if source.get("type") == "WebbEgg1":
+            return False
+        target = source.get("queued_target")
+        return (
+            isinstance(target, list)
+            and len(target) >= 2
+            and target[0] == unit.get("x")
+            and target[1] == unit.get("y")
+        )
+
     for egg in eggs:
         ex, ey = egg.get("x"), egg.get("y")
         for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
             neighbor = by_pos.get((ex + dx, ey + dy))
             if neighbor is None or neighbor.get("hp", 0) <= 0:
                 continue
-            # Adjacent egg is the AUTHORITATIVE webber — override any
-            # bridge-reported web_source_uid (Lua GetGrappler returns the
-            # wrong unit when a Scorpion is nearby alongside a WebbEgg,
-            # which lets the solver "break" the web by pushing the wrong
-            # enemy and incorrectly conclude the mech can move).
+            # Adjacent egg fills missing/stale web ownership, but do not steal
+            # a live Scorpion/Leaper-style grapple that is currently targeting
+            # this unit. Live m11t2 showed Pulse stayed webbed by Scorpion
+            # after an adjacent egg died.
+            if existing_source_still_holds(neighbor):
+                continue
             neighbor["web"] = True
             neighbor["web_source_uid"] = egg.get("uid", 0)
+
+
+WEB_SOURCE_WEAPONS = {
+    "ScorpionAtk1",
+    "ScorpionAtk2",
+    "ScorpionAtkB",
+    "LeaperAtk1",
+    "LeaperAtk2",
+    "MosquitoAtkB",
+}
+
+
+def _infer_grapple_probe_webs(units: list) -> None:
+    """Treat bridge `web_probes.IsGrappled` as authoritative WEB status."""
+    if not units:
+        return
+    web_sources_by_target = {}
+    for unit in units:
+        if unit.get("team") != 6 or unit.get("hp", 0) <= 0:
+            continue
+        weapons = unit.get("weapons") or []
+        if not weapons or weapons[0] not in WEB_SOURCE_WEAPONS:
+            continue
+        target = unit.get("queued_target")
+        if not isinstance(target, list) or len(target) < 2:
+            continue
+        web_sources_by_target.setdefault((target[0], target[1]), []).append(unit)
+
+    for unit in units:
+        probes = unit.get("web_probes")
+        if not (isinstance(probes, dict) and probes.get("IsGrappled") is True):
+            continue
+        unit["web"] = True
+        candidates = web_sources_by_target.get((unit.get("x"), unit.get("y")), [])
+        if candidates:
+            current_uid = unit.get("web_source_uid")
+            if current_uid and any(c.get("uid") == current_uid for c in candidates):
+                continue
+            unit["web_source_uid"] = candidates[0].get("uid", 0)
+
+
+def _infer_dynamic_webs(units: list) -> None:
+    _infer_grapple_probe_webs(units)
+    _infer_webb_egg_adjacency(units)
 
 
 def _check_wheel_sim_version() -> dict | None:
@@ -1677,7 +4236,7 @@ def _check_wheel_sim_version() -> dict | None:
 
 
 def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
-              beam: int = 0) -> dict:
+              beam: int = 0, candidate_rank: int | None = None) -> dict:
     """Run solver on current board, store solution in session.
 
     Args:
@@ -1687,6 +4246,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
               score). 1 uses solve_beam(depth=1) which is equivalent to
               solve_top_k with K=5 — takes the top raw-score plan without the
               two-stage clean-plan filter. Other values raise ValueError.
+        candidate_rank: when set, use solve_top_k and store exactly that
+              reviewed raw-score candidate rank. Intended for dirty-frontier
+              triage after explicit operator consent; still safety-audited.
 
     Returns the chosen solution with actions and score. When beam>=1 the
     recording stamps `beam_mode` and `chain_score` so downstream analysis
@@ -1694,6 +4256,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     """
     if beam not in (0, 1, 2):
         return {"error": f"invalid beam value {beam!r}; must be 0, 1, or 2"}
+    if candidate_rank is not None and candidate_rank < 0:
+        return {"error": "invalid candidate_rank; must be non-negative"}
     # Refuse to solve against a stale wheel after a Rust rebuild.
     wheel_err = _check_wheel_sim_version()
     if wheel_err is not None:
@@ -1702,6 +4266,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
     session = _load_session()
     logger = _get_logger(session)
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
+    block_mech_hp_loss = _blocks_mech_hp_loss_for_perfect_battle(session)
+    block_mech_status_loss = _blocks_mech_status_loss_for_run(session)
 
     # Try bridge first (richer data: status effects, per-enemy targets)
     board = None
@@ -1713,6 +4283,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         refresh_bridge_state()
         board, bridge_data = read_bridge_state()
         if board is not None and bridge_data is not None:
+            weapon_overlay_updates = _enrich_bridge_mech_weapons_from_save(
+                bridge_data, profile=profile,
+            )
+            if weapon_overlay_updates:
+                board = Board.from_bridge_data(bridge_data)
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
             # Extract environment danger tiles (tidal waves, air strikes, etc.)
@@ -1731,6 +4306,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         board = Board.from_mission(m, state.grid_power, state.grid_power_max)
         spawns = [(p.x, p.y) for p in m.spawn_points]
         current_turn = m.current_turn
+
+    post_enemy_gate = _final_post_enemy_audit_gate(
+        session, board, bridge_data
+    )
+    if post_enemy_gate:
+        _print_result(post_enemy_gate)
+        session.save()
+        return post_enemy_gate
 
     # Check for active mechs (includes friendly controllable units like ArchiveArtillery)
     active_mechs = [mech for mech in board.mechs()
@@ -1782,6 +4365,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         print(f"  Environment danger: {len(environment_danger)} tiles")
 
     solution = None
+    selected_candidate_eval = None
+    candidate_safety_summaries: list[dict] = []
+    dirty_frontier: list[dict] = []
+    lookahead_frontier: list[dict] = []
+    robust_frontier: list[dict] = []
+    selected_candidate_rank = None
+    selected_candidate_source = None
+    candidate_count = 0
+    beam_chain_score = None
 
     # Load evaluation weights from active weight file
     weight_version = "default"
@@ -1795,6 +4387,17 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             weight_version = weight_data.get("version", "unknown")
         except (json.JSONDecodeError, IOError):
             pass
+    eval_weights_dict, achievement_weight_overlays = _achievement_weight_overlay(
+        session, eval_weights_dict
+    )
+    if achievement_weight_overlays:
+        weight_version = f"{weight_version}+{'+'.join(achievement_weight_overlays)}"
+        print(f"  Achievement weight overlay: {', '.join(achievement_weight_overlays)}")
+    breakdown_weights = None
+    if eval_weights_dict:
+        from src.solver.evaluate import EvalWeights as _EW
+        breakdown_weights = _EW(**{k: v for k, v in eval_weights_dict.items()
+                                   if k in _EW.__dataclass_fields__})
 
     # Try Rust solver if bridge data available
     if bridge_data is not None:
@@ -1808,6 +4411,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 for u in bridge_data["units"]:
                     stats = get_pawn_stats(u.get("type", ""))
                     u["ranged"] = stats.ranged
+                    if stats.armor:
+                        u.setdefault("armor", True)
                     if not stats.pushable:
                         u["pushable"] = False
                     # Clamp u8 fields to prevent Rust deserializer overflow
@@ -1815,7 +4420,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         if k in u and isinstance(u[k], int) and u[k] > 255:
                             u[k] = 255
 
-                _infer_webb_egg_adjacency(bridge_data["units"])
+                _infer_dynamic_webs(bridge_data["units"])
             # Inject custom weights into bridge data for Rust solver
             if eval_weights_dict:
                 bridge_data["eval_weights"] = eval_weights_dict
@@ -1829,6 +4434,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                             td["freeze_mine"] = True
                         if board.tile(bx, by).old_earth_mine:
                             td["old_earth_mine"] = True
+                        if board.tile(bx, by).repair_platform:
+                            td["repair_platform"] = True
+                            td["item"] = "Item_Repair_Mine"
             # Inject pilot_value per mech unit so the Rust search scores
             # pilot loss correctly. Lua exposes pilot_id; Python computes
             # the multiplier via _compute_pilot_value so Rust doesn't need
@@ -1843,6 +4451,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         ud.get("type", ""),
                         ud.get("pilot_level", 0),
                     )
+            _annotate_pending_grid_debt(session, board, bridge_data)
             # Self-healing loop Tier 2: forward the session's current
             # blocklist so the Rust solver biases scoring away from
             # soft-disabled weapons. Expiry was pruned at the start of
@@ -1865,62 +4474,254 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 inject_into_bridge as _inject_bonus_obj,
             )
             _inject_bonus_obj(bridge_data)
+            from src.solver.mission_unit_objectives import (
+                inject_into_bridge as _inject_unit_obj,
+            )
+            _inject_unit_obj(bridge_data)
+
+            _record_turn_state(session, "solve_input", {
+                "schema_version": 1,
+                "simulator_version": _get_simulator_version(),
+                "solver_version": _get_solver_version(),
+                "time_limit": time_limit,
+                "beam_mode": beam,
+                "bridge_state": bridge_data,
+            }, turn_override=current_turn)
+
             rust_start = _time.time()
-            beam_chain_score = None  # only set on beam>=1 path
-            if beam == 0:
+            candidate_specs = []
+            if candidate_rank is not None:
+                top_k = max(candidate_rank + 1, 1)
+                rust_json = _rust.solve_top_k(
+                    _json.dumps(bridge_data), time_limit, top_k,
+                )
+                for idx, rust_result in enumerate(_json.loads(rust_json) or []):
+                    candidate_specs.append({
+                        "rank": idx,
+                        "source": "top_k_requested",
+                        "rust_result": rust_result,
+                    })
+            elif beam == 0:
                 rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
-                rust_result = _json.loads(rust_json)
+                candidate_specs.append({
+                    "rank": 0,
+                    "source": "top1",
+                    "rust_result": _json.loads(rust_json),
+                })
             else:
-                # solve_beam returns a JSON array of chain objects sorted
-                # by chain_score desc; we pick chains[0]. Empty array means
-                # no active mechs / no legal plans — normalize to the
-                # shape `solve` returns so the downstream code path stays
-                # single-branch.
+                # solve_beam returns chains sorted by chain_score. Solver 2.0
+                # audits the level-0 action plan from each chain before choosing.
                 chains_json = _rust.solve_beam(
                     _json.dumps(bridge_data), beam, 5, time_limit,
                 )
-                chains = _json.loads(chains_json)
-                if not chains:
-                    rust_result = {"actions": [], "score": float("-inf"),
-                                   "stats": {}, "applied_overrides": []}
-                else:
-                    top = chains[0]
-                    rust_result = top["level_0"]
-                    beam_chain_score = top["chain_score"]
+                for idx, chain in enumerate(_json.loads(chains_json) or []):
+                    candidate_specs.append({
+                        "rank": idx,
+                        "source": "beam",
+                        "rust_result": chain.get("level_0") or {},
+                        "chain_score": chain.get("chain_score"),
+                    })
             rust_elapsed = _time.time() - rust_start
+            candidate_count = len(candidate_specs)
 
-            if rust_result.get("actions"):
-                # Convert Rust result to Python Solution/MechAction objects
-                from src.solver.solver import Solution, MechAction
-                rust_actions = []
-                for ra in rust_result["actions"]:
-                    # Use weapon_id (internal ID like "Prime_Punchmech") for simulation,
-                    # not weapon (display name like "Titan Fist").
-                    # Fall back to display-name-to-ID lookup if weapon_id not present.
-                    w_id = ra.get("weapon_id", "")
-                    if not w_id:
-                        from src.model.weapons import weapon_name_to_id
-                        w_id = weapon_name_to_id(ra.get("weapon", ""))
-                    rust_actions.append(MechAction(
-                        mech_uid=ra["mech_uid"],
-                        mech_type=ra["mech_type"],
-                        move_to=tuple(ra["move_to"]),
-                        weapon=w_id,
-                        target=tuple(ra["target"]),
-                        description=ra["description"],
-                    ))
-                solution = Solution(
-                    actions=rust_actions,
-                    score=rust_result["score"],
-                    elapsed_seconds=rust_elapsed,
-                    timed_out=rust_result["stats"].get("timed_out", False),
-                    permutations_tried=rust_result["stats"].get("permutations_tried", 0),
-                    total_permutations=rust_result["stats"].get("total_permutations", 0),
-                    active_mech_count=len(active_mechs),
+            rem_spawns = (
+                bridge_data.get("remaining_spawns", 2**31 - 1)
+                if bridge_data else 2**31 - 1
+            )
+            total_turns = (
+                board.total_turns if hasattr(board, "total_turns") else 5
+            )
+            candidate_evals = []
+            frontier_candidate_evals = []
+            for spec in candidate_specs:
+                candidate_solution = _rust_result_to_solution(
+                    spec.get("rust_result"), rust_elapsed, len(active_mechs)
                 )
+                if candidate_solution is None:
+                    continue
+                candidate_eval = {
+                    "rank": spec.get("rank"),
+                    "source": spec.get("source"),
+                    "chain_score": spec.get("chain_score"),
+                    "solution": candidate_solution,
+                }
+                candidate_eval.update(_evaluate_solution_safety(
+                    board, bridge_data, candidate_solution, spawns,
+                    current_turn=current_turn,
+                    total_turns=total_turns,
+                    remaining_spawns=rem_spawns,
+                    weights=breakdown_weights,
+                    block_mech_hp_loss=block_mech_hp_loss,
+                    block_mech_status_loss=block_mech_status_loss,
+                ))
+                candidate_evals.append(candidate_eval)
+
+            if candidate_rank is not None:
+                selected_candidate_eval = _select_candidate_by_rank(
+                    candidate_evals, candidate_rank,
+                )
+                if selected_candidate_eval is None:
+                    result = {
+                        "error": "CANDIDATE_RANK_UNAVAILABLE",
+                        "requested_candidate_rank": candidate_rank,
+                        "candidate_count": candidate_count,
+                        "message": (
+                            "Requested solver candidate rank was not returned "
+                            "by solve_top_k for the current board."
+                        ),
+                    }
+                    _print_result(result)
+                    session.save()
+                    return result
+            else:
+                selected_candidate_eval = _select_safe_plan_candidate(candidate_evals)
+            if (candidate_rank is None
+                    and beam == 0
+                    and selected_candidate_eval is not None
+                    and plan_requires_safety_block(
+                        selected_candidate_eval.get("plan_safety")
+                    )):
+                # Emergency safety widening: the top-1 entry path can miss
+                # lower-ranked clean plans when the scorer strongly favors
+                # tactics that still concede grid. Keep both the active weight
+                # bundle and the current soft-disable mask intact so widened
+                # candidates are ranked under the same tactical assumptions as
+                # the live solve.
+                widening_attempts: list[dict] = []
+                widening_sources = [("top_k_safety", False)]
+                if session.disabled_actions:
+                    widening_sources.append(
+                        ("top_k_safety_no_soft_disable", True)
+                    )
+                for source, ignore_soft_disables in widening_sources:
+                    wide_bridge_data = dict(bridge_data)
+                    if ignore_soft_disables:
+                        wide_bridge_data["disabled_actions"] = []
+
+                    wide_raw = _rust.solve_top_k(
+                        _json.dumps(wide_bridge_data),
+                        time_limit,
+                        _SAFETY_WIDENING_TOP_K,
+                    )
+                    wide_specs = []
+                    for idx, rust_result in enumerate(_json.loads(wide_raw) or []):
+                        wide_specs.append({
+                            "rank": idx,
+                            "source": source,
+                            "rust_result": rust_result,
+                        })
+                    candidate_count = max(candidate_count, len(wide_specs))
+                    widening_attempts.append({
+                        "source": source,
+                        "candidate_count": len(wide_specs),
+                        "ignored_soft_disables": ignore_soft_disables,
+                    })
+
+                    wide_evals = []
+                    for spec in wide_specs:
+                        candidate_solution = _rust_result_to_solution(
+                            spec.get("rust_result"), rust_elapsed,
+                            len(active_mechs)
+                        )
+                        if candidate_solution is None:
+                            continue
+                        candidate_eval = {
+                            "rank": spec.get("rank"),
+                            "source": spec.get("source"),
+                            "chain_score": None,
+                            "solution": candidate_solution,
+                        }
+                        candidate_eval.update(_evaluate_solution_safety(
+                            board, bridge_data, candidate_solution, spawns,
+                            current_turn=current_turn,
+                            total_turns=total_turns,
+                            remaining_spawns=rem_spawns,
+                            weights=breakdown_weights,
+                            block_mech_hp_loss=block_mech_hp_loss,
+                            block_mech_status_loss=block_mech_status_loss,
+                        ))
+                        wide_evals.append(candidate_eval)
+                        if not plan_requires_safety_block(
+                            candidate_eval.get("plan_safety")
+                        ):
+                            break
+                    if wide_evals and not frontier_candidate_evals:
+                        frontier_candidate_evals = wide_evals
+
+                    clean_wide = next(
+                        (c for c in wide_evals
+                         if not plan_requires_safety_block(c.get("plan_safety"))),
+                        None,
+                    )
+                    if clean_wide is not None:
+                        selected_candidate_eval = clean_wide
+                        candidate_evals = wide_evals
+                        selected_candidate_eval["safety_widening"] = widening_attempts
+                        candidate_count = len(wide_specs)
+                        break
+                    least_bad_wide = _select_safe_plan_candidate(wide_evals)
+                    if (
+                        least_bad_wide is not None
+                        and plan_requires_safety_block(
+                            least_bad_wide.get("plan_safety")
+                        )
+                    ):
+                        selected_candidate_eval = least_bad_wide
+                        candidate_evals = wide_evals
+                        selected_candidate_eval["safety_widening"] = widening_attempts
+                        candidate_count = len(wide_specs)
+
+            summary_evals = frontier_candidate_evals or candidate_evals
+            candidate_safety_summaries = [
+                _candidate_safety_summary(c) for c in summary_evals
+            ]
+            dirty_frontier = _candidate_dirty_frontier(candidate_safety_summaries)
+            if (
+                selected_candidate_eval is not None
+                and plan_requires_safety_block(
+                    selected_candidate_eval.get("plan_safety")
+                )
+                and summary_evals
+            ):
+                lookahead_frontier = [
+                    _candidate_lookahead_preview(
+                        _rust,
+                        bridge_data,
+                        candidate_eval,
+                        spawns,
+                        eval_weights_dict=eval_weights_dict,
+                        breakdown_weights=breakdown_weights,
+                        time_limit=time_limit,
+                        block_mech_hp_loss=block_mech_hp_loss,
+                        block_mech_status_loss=block_mech_status_loss,
+                    )
+                    for candidate_eval in _candidate_frontier_representatives(
+                        summary_evals
+                    )
+                ]
+                robust_frontier = _lookahead_robust_frontier(lookahead_frontier)
+            if selected_candidate_eval is not None:
+                solution = selected_candidate_eval["solution"]
+                selected_candidate_rank = selected_candidate_eval.get("rank")
+                selected_candidate_source = selected_candidate_eval.get("source")
+                beam_chain_score = selected_candidate_eval.get("chain_score")
                 print(f"  Rust solver: {rust_elapsed:.2f}s, score={solution.score:.0f}, "
                       f"{solution.permutations_tried}/{solution.total_permutations} permutations"
                       f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
+                selected_candidate_blocked = plan_requires_safety_block(
+                    selected_candidate_eval.get("plan_safety")
+                )
+                if candidate_rank is not None:
+                    print(f"  Selected requested candidate #{selected_candidate_rank + 1} "
+                          f"of {candidate_count}")
+                elif (candidate_count > 1
+                        and selected_candidate_rank not in (None, 0)
+                        and not selected_candidate_blocked):
+                    print(f"  Selected safe candidate #{selected_candidate_rank + 1} "
+                          f"of {candidate_count}")
+                elif candidate_count > 1 and selected_candidate_blocked:
+                    print(f"  No clean candidate found among {candidate_count}; "
+                          "top candidate remains safety-blocked")
         except ImportError:
             print("  ERROR: Rust solver not available (itb_solver module not found)")
             print("  Build with: cd rust_solver && maturin develop --release")
@@ -1951,16 +4752,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     # Store solution in session — stamp the fingerprint of the roster
     # we solved against so cmd_auto_turn can detect stale cached
     # solutions if a future call sees a different roster.
-    solver_actions = []
-    for a in solution.actions:
-        solver_actions.append(SolverAction(
-            mech_uid=a.mech_uid,
-            mech_type=a.mech_type,
-            move_to=a.move_to,
-            weapon=a.weapon,
-            target=a.target,
-            description=a.description,
-        ))
+    solver_actions = _solver_actions_from_solution(solution)
     input_fp = _unit_roster_fingerprint(bridge_data)
     session.set_solution(solver_actions, solution.score, current_turn,
                          input_fingerprint=input_fp)
@@ -1980,6 +4772,8 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
     # Log
     threats = board.get_threatened_buildings()
+    from src.solver.threat_audit import capture_building_threats
+    initial_threats = capture_building_threats(board)
     logger.log_solver_output(
         solution.score,
         [a.description for a in solution.actions],
@@ -1991,20 +4785,51 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "actions": [a.description for a in solution.actions],
     })
 
-    # Replay solution for enriched recording data. Pass the active weights
-    # so score_breakdown in the recording reflects the values the solver
-    # actually searched under (not evaluate.py DEFAULT_WEIGHTS).
-    rem_spawns = bridge_data.get("remaining_spawns", 2**31 - 1) if bridge_data else 2**31 - 1
-    _breakdown_weights = None
-    if eval_weights_dict:
-        from src.solver.evaluate import EvalWeights as _EW
-        _breakdown_weights = _EW(**{k: v for k, v in eval_weights_dict.items()
-                                    if k in _EW.__dataclass_fields__})
-    enriched = replay_solution(bridge_data, solution, spawns,
-                               current_turn=current_turn,
-                               total_turns=board.total_turns if hasattr(board, 'total_turns') else 5,
-                               remaining_spawns=rem_spawns,
-                               weights=_breakdown_weights)
+    # Replay solution for enriched recording data. In Rust mode this was
+    # already done for candidate selection; keep the fallback for any future
+    # caller that constructs a solution without candidate metadata.
+    if selected_candidate_eval is None:
+        rem_spawns = (
+            bridge_data.get("remaining_spawns", 2**31 - 1)
+            if bridge_data else 2**31 - 1
+        )
+        total_turns = board.total_turns if hasattr(board, "total_turns") else 5
+        selected_candidate_eval = _evaluate_solution_safety(
+            board, bridge_data, solution, spawns,
+            current_turn=current_turn,
+            total_turns=total_turns,
+            remaining_spawns=rem_spawns,
+            weights=breakdown_weights,
+            block_mech_hp_loss=block_mech_hp_loss,
+            block_mech_status_loss=block_mech_status_loss,
+        )
+    enriched = selected_candidate_eval["enriched"]
+    current_outcome = selected_candidate_eval["current_outcome"]
+    predicted_outcome = selected_candidate_eval["predicted_outcome"]
+    predicted_board_summary = selected_candidate_eval["predicted_board_summary"]
+    plan_safety = selected_candidate_eval["plan_safety"]
+    result["plan_safety"] = plan_safety
+    result["candidate_count"] = candidate_count
+    result["selected_candidate_rank"] = selected_candidate_rank
+    result["selected_candidate_source"] = selected_candidate_source
+    if final_cave_resist_gamble_allowed(plan_safety):
+        result["final_cave_resist_gamble"] = True
+    if isinstance(plan_safety, dict) and plan_safety.get("blocking"):
+        result["dirty_consent_id"] = _dirty_consent_id(
+            session,
+            current_turn,
+            plan_safety,
+            solver_actions,
+            candidate_rank=selected_candidate_rank,
+        )
+    if dirty_frontier:
+        result["dirty_frontier"] = dirty_frontier
+    if lookahead_frontier:
+        result["lookahead_frontier"] = lookahead_frontier
+    if robust_frontier:
+        result["robust_frontier"] = robust_frontier
+    if selected_candidate_eval.get("safety_widening"):
+        result["safety_widening"] = selected_candidate_eval["safety_widening"]
 
     # Record solver output for replay/analysis (enriched format).
     # schema_version stamps the shape of this record so future beam
@@ -2026,6 +4851,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             "description": a.description,
         } for a in solution.actions],
         "threats": len(threats),
+        "initial_building_threats": initial_threats,
         "active_mechs": len(active_mechs),
         "spawn_points": spawns,
         "search_stats": {
@@ -2038,9 +4864,21 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "weight_version": weight_version,
         "beam_mode": beam,
         "beam_chain_score": beam_chain_score,
+        "candidate_count": candidate_count,
+        "selected_candidate_rank": selected_candidate_rank,
+        "selected_candidate_source": selected_candidate_source,
+        "candidate_safety": candidate_safety_summaries,
+        "dirty_frontier": dirty_frontier,
+        "lookahead_frontier": lookahead_frontier,
+        "robust_frontier": robust_frontier,
+        "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
-        "predicted_outcome": enriched["predicted_outcome"],
+        "replay_annotations": enriched.get("replay_annotations", []),
+        "current_outcome": current_outcome,
+        "predicted_outcome": predicted_outcome,
+        "predicted_board_summary": predicted_board_summary,
+        "plan_safety": plan_safety,
         "score_breakdown": enriched["score_breakdown"],
     }
     _record_turn_state(session, "solve", solve_data)
@@ -2049,6 +4887,53 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     print(f"\n=== SOLUTION (score: {solution.score:.0f}) ===")
     for i, a in enumerate(solution.actions):
         print(f"  Action {i}: {a.description}")
+    if plan_safety.get("blocking"):
+        print("\n! SAFETY BLOCK CANDIDATE — chosen plan predicts irreversible loss")
+        for v in plan_safety.get("violations", []):
+            print(f"!   {v.get('kind')}: {v.get('current')} -> {v.get('predicted')}")
+        if dirty_frontier:
+            print("! Dirty frontier:")
+            for item in dirty_frontier[:5]:
+                losses = item.get("losses") or {}
+                loss_text = ", ".join(
+                    f"{k} -{v}" for k, v in sorted(losses.items())
+                ) or "no quantified loss"
+                print(
+                    f"!   {item.get('label')}: best rank "
+                    f"{item.get('best_rank')} ({loss_text}); "
+                    f"{item.get('count')} candidate(s)"
+                )
+        if lookahead_frontier:
+            print("! Heuristic next-turn recovery preview:")
+            for item in lookahead_frontier[:5]:
+                status = item.get("status")
+                label = item.get("candidate_label")
+                rank = item.get("candidate_rank")
+                if status == "OK":
+                    safety = item.get("next_plan_safety") or {}
+                    profile = safety.get("loss_profile") or {}
+                    print(
+                        f"!   {label} rank {rank}: next {safety.get('status')} "
+                        f"score {item.get('next_score'):.0f}, "
+                        f"{profile.get('label')} "
+                        f"worst={item.get('worst_scenario')}"
+                    )
+                else:
+                    print(
+                        f"!   {label} rank {rank}: {status} "
+                        f"worst={item.get('worst_scenario')}"
+                    )
+        if robust_frontier:
+            print("! Robust frontier ranking:")
+            for item in robust_frontier[:5]:
+                score = item.get("robust_score")
+                score_text = f"{score:.0f}" if isinstance(score, (int, float)) else "n/a"
+                print(
+                    f"!   {item.get('candidate_label')} rank "
+                    f"{item.get('candidate_rank')}: "
+                    f"{item.get('robust_status')} robust={score_text} "
+                    f"worst={item.get('worst_scenario')}"
+                )
     print(f"\n{len(solution.actions)} actions to execute. "
           f"Use 'execute <index>' for each.")
 
@@ -2065,6 +4950,10 @@ def cmd_execute(action_index: int, profile: str = "Alpha") -> dict:
     """
     session = _load_session()
     logger = _get_logger(session)
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
 
     # Get action from stored solution
     action = session.get_action(action_index)
@@ -2417,6 +5306,16 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
     if diff.is_empty():
         result = {"status": "PASS", "action_index": action_index}
         print(f"VERIFY {action_index}: PASS")
+        _print_result(result)
+        return result
+
+    if _is_harmless_player_hp_gain_diff(diff):
+        result = {
+            "status": "PASS",
+            "action_index": action_index,
+            "note": "player HP gain drift ignored",
+        }
+        print(f"VERIFY {action_index}: PASS (player HP gain drift ignored)")
         _print_result(result)
         return result
 
@@ -2925,6 +5824,10 @@ def cmd_click_action(action_index: int) -> dict:
     from where the mech actually ended up.
     """
     session = _load_session()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
 
     if not session.active_solution:
         result = {"status": "ERROR", "error": "No active solution"}
@@ -3012,17 +5915,37 @@ def cmd_click_end_turn() -> dict:
     for the enemy phase to finish (~6s), then calls ``read`` to detect
     the new phase.
     """
+    session = _load_session()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
     recalibrate()
     batch = plan_end_turn()
+    codex_batch = [
+        c["codex_computer_use"]
+        for c in batch
+        if isinstance(c, dict) and c.get("codex_computer_use")
+    ]
     result = {
         "status": "PLAN",
         "batch": batch,
-        "next_step": "wait ~6s for enemy phase, then `read`",
+        "codex_computer_use_batch": codex_batch,
+        "next_step": (
+            "dispatch codex_computer_use_batch with Computer Use "
+            "(or legacy batch with screen-coordinate batch tools), wait ~6s "
+            "for enemy phase, then `read`"
+        ),
     }
     print(f"\n=== CLICK_END_TURN ===")
     for i, c in enumerate(batch):
-        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
-    print(f"Next: dispatch batch via computer_batch, wait ~6s, then `read`")
+        local = ""
+        if "window_x" in c and "window_y" in c:
+            local = f" | Codex window-local ({c['window_x']}, {c['window_y']})"
+        print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}){local} "
+              f"-- {c['description']}")
+    print("Next: dispatch codex_computer_use_batch with Computer Use "
+          "(or legacy batch via computer_batch), wait ~6s, then `read`")
     _print_result(result)
     return result
 
@@ -3030,10 +5953,8 @@ def cmd_click_end_turn() -> dict:
 def cmd_click_balanced_roll() -> dict:
     """Emit a click plan for the Balanced Roll button on squad-select.
 
-    Pure planner. Dispatch the batch via ``computer_batch`` before
-    clicking Start, so a Balanced Roll (no duplicate mech classes, max
-    4 weapons between them) is seeded instead of whatever squad is
-    currently shown.
+    Pure planner. Use it only when ``recommend_squad`` / ``new_run`` says
+    the setup is Balanced Roll (solver-eval or random-squad achievements).
     """
     recalibrate()
     batch = plan_balanced_roll()
@@ -3046,6 +5967,77 @@ def cmd_click_balanced_roll() -> dict:
     for i, c in enumerate(batch):
         print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) -- {c['description']}")
     print(f"Next: dispatch batch via computer_batch, then click Start")
+    _print_result(result)
+    return result
+
+
+def cmd_recommend_squad(
+    squad: str | None = None,
+    achievements: list[str] | None = None,
+    *,
+    tags: list[str] | None = None,
+    mode: str | None = None,
+) -> dict:
+    """Recommend the new-run squad/setup for the current run intent."""
+    rec = recommend_squad_for_run(
+        squad=squad,
+        achievements=achievements or [],
+        tags=tags or [],
+        mode=mode,
+    )
+    result = {"status": "OK", **rec.to_dict()}
+
+    print(f"\n=== RECOMMEND_SQUAD ===")
+    print(f"  mode:   {rec.mode}")
+    print(f"  squad:  {rec.squad}")
+    print(f"  reason: {rec.reason}")
+    if rec.requested_achievements:
+        print(f"  targets: {', '.join(rec.requested_achievements)}")
+    if rec.remaining_achievements:
+        print(f"  remaining in bucket: {', '.join(rec.remaining_achievements)}")
+    print(f"  setup:  {rec.ui_setup}")
+    for warning in rec.warnings:
+        print(f"  warning: {warning}")
+
+    _print_result(result)
+    return result
+
+
+def cmd_verify_setup_screen(
+    *,
+    expected_difficulty: int = 0,
+    require_all_advanced: bool = True,
+) -> dict:
+    """Verify the visible new-run difficulty setup before pressing Start."""
+    check = capture_and_check_setup(
+        expected_difficulty=expected_difficulty,
+        require_all_advanced=require_all_advanced,
+    )
+    result = check.to_dict()
+
+    print("\n=== VERIFY_SETUP_SCREEN ===")
+    actual = result.get("actual_difficulty")
+    actual_label = _DIFFICULTY_LABELS.get(actual, "unknown")
+    expected_label = _DIFFICULTY_LABELS.get(
+        expected_difficulty, str(expected_difficulty)
+    )
+    print(f"  status: {check.status}")
+    print(f"  difficulty: {actual_label} (expected {expected_label})")
+    print("  advanced content:")
+    for row in check.advanced:
+        state = "ON" if row["enabled"] else "OFF"
+        print(
+            f"    - {row['label']}: {state} "
+            f"(colorfulness={row['colorfulness']:.3f})"
+        )
+    if check.click_plan:
+        print("  suggested clicks:")
+        for i, click in enumerate(check.click_plan, start=1):
+            print(
+                f"    {i}. ({click['x']}, {click['y']}) "
+                f"{click['description']}"
+            )
+    print(f"  screenshot: {check.screenshot_path}")
     _print_result(result)
     return result
 
@@ -3194,6 +6186,7 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
         _print_result(result)
         return result
 
+    auto_resolved = orchestrator.drain_stale_behavior_novelty(session)
     plan = orchestrator.begin_research(session, board, ui=ui)
     if plan is None:
         session.save()
@@ -3203,10 +6196,14 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
             "pending": sum(1 for e in session.research_queue
                            if e.get("status") == "pending"),
         }
+        if auto_resolved:
+            result["auto_resolved"] = auto_resolved
         print(f"\n=== RESEARCH_NEXT ===")
         print(f"  No researchable entry on current board "
               f"(queue_len={result['queue_len']}, "
               f"pending={result['pending']})")
+        if auto_resolved:
+            print(f"  auto-resolved: {auto_resolved}")
         _print_result(result)
         return result
 
@@ -3215,6 +6212,8 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
         "status": "PLAN",
         **plan,
     }
+    if auto_resolved:
+        result["auto_resolved"] = auto_resolved
     target = plan["target"]
     print(f"\n=== RESEARCH_NEXT (research_id={plan['research_id']}) ===")
     print(f"  target: {target['type']} ({target['kind']}) at "
@@ -3223,6 +6222,48 @@ def cmd_research_next(profile: str = "Alpha") -> dict:
     print(f"  crops: {[c['name'] for c in plan['plan']['crops']]}")
     print(f"  next: dispatch plan.batch → zoom each crop → Vision → "
           f"cmd_research_submit {plan['research_id']}")
+    _print_result(result)
+    return result
+
+
+def cmd_research_resolve(
+    target: str,
+    *,
+    kind: str | None = None,
+    reason: str = "manual_resolved_known_type",
+    profile: str = "Alpha",
+) -> dict:
+    """Mark stale research entries for a known target as resolved."""
+    from src.research import orchestrator
+
+    session = _load_session()
+    try:
+        resolved = orchestrator.resolve_known_research_entries(
+            session, target, kind=kind, reason=reason,
+        )
+    except ValueError as e:
+        result = {"error": str(e), "target": target}
+        _print_result(result)
+        return result
+
+    result = {
+        "status": "OK",
+        "target": target,
+        "kind": kind,
+        "resolved_count": len(resolved),
+        "resolved": [
+            {
+                "type": e.get("type", ""),
+                "terrain_id": e.get("terrain_id"),
+                "kind": e.get("kind"),
+                "attempts": e.get("attempts", 0),
+                "reason": (e.get("result") or {}).get("reason"),
+            }
+            for e in resolved
+        ],
+    }
+    print(f"\n=== RESEARCH_RESOLVE {target} ===")
+    print(f"  resolved: {len(resolved)}")
     _print_result(result)
     return result
 
@@ -3850,7 +6891,14 @@ def cmd_end_turn() -> dict:
     """
     session = _load_session()
     logger = _get_logger(session)
-    logger.log_end_turn()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
+    logger.log_custom("End Turn Plan", (
+        "End Turn click plan requested. This records plan emission only; "
+        "the external Computer Use click is logged by the harness."
+    ))
 
     # Bridge mode: the Lua END_TURN handler SetActives all player pawns for
     # solver-state consistency but cannot actually advance the turn without
@@ -3872,16 +6920,28 @@ def cmd_end_turn() -> dict:
         if ack.startswith("NEEDS_MCP_CLICK"):
             recalibrate()
             batch = plan_end_turn()
+            codex_batch = [
+                c["codex_computer_use"]
+                for c in batch
+                if isinstance(c, dict) and c.get("codex_computer_use")
+            ]
             result = {
                 "status": "PLAN",
                 "bridge_ack": ack,
                 "batch": batch,
-                "next_step": "dispatch batch via computer_batch, "
-                             "wait ~6s, then `read`",
+                "codex_computer_use_batch": codex_batch,
+                "next_step": (
+                    "dispatch codex_computer_use_batch with Computer Use "
+                    "(or legacy batch with screen-coordinate batch tools), "
+                    "wait ~6s, then `read`"
+                ),
             }
             print("  -> bridge SetActive done; emitting MCP click plan")
             for i, c in enumerate(batch):
-                print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}) "
+                local = ""
+                if "window_x" in c and "window_y" in c:
+                    local = f" | Codex window-local ({c['window_x']}, {c['window_y']})"
+                print(f"  {i+1}. {c['type']} ({c['x']}, {c['y']}){local} "
                       f"-- {c['description']}")
         else:
             result = {"bridge": True, "ack": ack}
@@ -3941,25 +7001,82 @@ def cmd_status(profile: str = "Alpha") -> dict:
             threats = board.get_threatened_buildings()
             result["threatened_buildings"] = len(threats)
 
+    _attach_post_enemy_block(result, session)
     _print_result(result)
     return result
 
 
-def cmd_new_run(squad: str, achievements: list[str] = None,
-                difficulty: int = 0, tags: list[str] = None) -> dict:
+def cmd_resolve_post_enemy_block(reason: str) -> dict:
+    """Clear the persistent post-enemy hard stop after investigation."""
+    session = _load_session()
+    block = _active_post_enemy_block(session)
+    if block is None:
+        result = {
+            "status": "NO_BLOCK",
+            "message": "No unresolved post-enemy investigation block.",
+        }
+        _print_result(result)
+        return result
+    if not reason or not reason.strip():
+        result = {
+            "status": "ERROR",
+            "error": "A non-empty --reason is required to clear the block.",
+        }
+        _print_result(result)
+        return result
+    resolved = dict(session.post_enemy_block or block)
+    resolved["resolved_at"] = datetime.now().isoformat()
+    resolved["resolve_reason"] = reason.strip()
+    session.record_decision("resolve_post_enemy_block", {
+        "block": resolved,
+    })
+    session.post_enemy_block = None
+    session.save()
+    result = {
+        "status": "RESOLVED",
+        "resolved_block": resolved,
+        "next_step": (
+            "Run a fresh read/solve from the current board before continuing."
+        ),
+    }
+    _print_result(result)
+    return result
+
+
+def cmd_new_run(squad: str | None = None, achievements: list[str] = None,
+                difficulty: int = 0, tags: list[str] = None,
+                mode: str | None = None) -> dict:
     """Initialize a new run session.
 
     ``tags`` flags the run for downstream filtering. Use ``["audit"]`` for
     environment-audit playthroughs so the failures generated during the
     audit don't pollute the tuner training corpus.
     """
-    session = RunSession.new_run(squad, achievements, difficulty, tags=tags)
+    achievements = list(achievements or [])
+    tags = list(tags or [])
+    setup = recommend_squad_for_run(
+        squad=squad,
+        achievements=achievements,
+        tags=tags,
+        mode=mode,
+    )
+    session = RunSession.new_run(
+        setup.squad, achievements, difficulty, tags=tags,
+    )
     # Sync difficulty from save file when available — the --difficulty CLI
     # flag is a default for the metadata, but the save file is authoritative
     # once the game has written one (matches the cross-check in
     # cmd_auto_turn). Falls through silently if the save file isn't readable
     # (fresh install, no profile yet).
-    _live_diff = _read_save_file_difficulty()
+    # Only sync from an actual live saveData.lua phase. On the new-game setup
+    # screen there may be a stale undoSave.lua from the previous timeline; using
+    # that here silently rewrites explicit Normal/Hard evaluation runs back to
+    # the old save's difficulty.
+    _live_phase = detect_game_phase()
+    _live_diff = (
+        _read_save_file_difficulty()
+        if _live_phase != "no_save" else None
+    )
     if _live_diff is not None and _live_diff != session.difficulty:
         _ses_label = _DIFFICULTY_LABELS.get(
             session.difficulty, str(session.difficulty)
@@ -3971,6 +7088,19 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
             f"{_live_diff} ({_save_label})"
         )
         session.difficulty = _live_diff
+    if (
+        mode != "solver_eval"
+        and setup.squad == "Rusting Hulks"
+        and session.difficulty == 2
+        and ("achievement" in tags or "hard_victory" in tags or not achievements)
+        and not any(a.strip().lower() == "hard victory" for a in achievements)
+    ):
+        achievements.append("Hard Victory")
+        session.achievement_targets = achievements
+        if "hard_victory" not in tags:
+            tags.append("hard_victory")
+            session.tags = tags
+        print("[new_run] Hard Rusting Hulks target stamped: Hard Victory")
     # Fix B 2026-04-28 — explicit wipe of run-scoped soft-disable state.
     # ``new_run`` already produces a fresh session via the dataclass default
     # (disabled_actions=[]), but a future refactor that inherits prior
@@ -3993,7 +7123,9 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
 
     logger = DecisionLog(session.run_id)
     logger.log_custom("New Run", (
-        f"Squad: {squad}\n"
+        f"Squad: {setup.squad}\n"
+        f"Setup mode: {setup.mode}\n"
+        f"Setup reason: {setup.reason}\n"
         f"Achievements: {achievements or 'none'}\n"
         f"Difficulty: {session.difficulty}\n"
         f"Tags: {tags or 'none'}"
@@ -4001,17 +7133,23 @@ def cmd_new_run(squad: str, achievements: list[str] = None,
 
     result = {
         "run_id": session.run_id,
-        "squad": squad,
+        "squad": setup.squad,
+        "setup": setup.to_dict(),
         "difficulty": session.difficulty,
-        "achievements": achievements or [],
-        "tags": tags or [],
+        "achievements": achievements,
+        "tags": tags,
     }
     print(f"\nNew run initialized: {session.run_id}")
-    print(f"  Squad: {squad}")
+    print(f"  Mode: {setup.mode}")
+    print(f"  Squad: {setup.squad}")
+    print(f"  Setup: {setup.ui_setup}")
+    print(f"  Reason: {setup.reason}")
     if achievements:
         print(f"  Targeting: {', '.join(achievements)}")
     if tags:
         print(f"  Tags: {', '.join(tags)}")
+    for warning in setup.warnings:
+        print(f"  Warning: {warning}")
 
     _print_result(result)
     return result
@@ -4083,8 +7221,13 @@ def cmd_log(message: str) -> dict:
 # --- Helpers ---
 
 
-def cmd_achievements() -> dict:
-    """Query Steam for current Into the Breach achievement status."""
+def cmd_achievements(sync_local: bool = False) -> dict:
+    """Query Steam for current Into the Breach achievement status.
+
+    When ``sync_local`` is true, also updates
+    ``data/achievements_detailed.json`` so ``recommend_squad`` plans from the
+    latest Steam state.
+    """
     import urllib.request
     from pathlib import Path
 
@@ -4118,6 +7261,14 @@ def cmd_achievements() -> dict:
         return result
 
     achievements = data.get("playerstats", {}).get("achievements", [])
+    client_cache_summary = None
+    try:
+        client_cache = load_steam_client_achievement_cache(app_id)
+        achievements, client_cache_summary = merge_steam_client_cache(
+            achievements, client_cache
+        )
+    except Exception as e:
+        client_cache_summary = {"error": str(e)}
     unlocked = [a for a in achievements if a.get("achieved") == 1]
     locked = [a for a in achievements if a.get("achieved") == 0]
 
@@ -4127,11 +7278,39 @@ def cmd_achievements() -> dict:
         "locked": len(locked),
         "unlocked_list": [a.get("name", a["apiname"]) for a in unlocked],
     }
+    if client_cache_summary:
+        result["steam_client_cache"] = client_cache_summary
+
+    if sync_local:
+        try:
+            result["sync"] = sync_achievement_details(achievements)
+        except Exception as e:
+            result["sync_error"] = str(e)
 
     print(f"\n=== STEAM ACHIEVEMENTS: {len(unlocked)}/{len(achievements)} ===\n")
     for a in sorted(unlocked, key=lambda x: x.get("unlocktime", 0)):
         print(f"  ✅ {a.get('name', a['apiname'])}")
     print(f"\n  ❌ {len(locked)} remaining\n")
+    if sync_local:
+        sync = result.get("sync")
+        if sync:
+            print("  Local achievement metadata synced:")
+            print(f"    file: {sync['path']}")
+            print(f"    matched: {sync['matched']}/{sync['local_total']}")
+            print(f"    completed: {sync['local_completed']}/{sync['local_total']}")
+            print(f"    changed flags: {sync['status_changed']}")
+            cache = result.get("steam_client_cache") or {}
+            if cache and not cache.get("error"):
+                print(
+                    "    Steam client cache: "
+                    f"{cache.get('client_achieved', 0)}/"
+                    f"{cache.get('client_total', 0)}"
+                    f" (+{cache.get('local_flags_promoted', 0)} fresh)"
+                )
+            if sync.get("unmatched_local"):
+                print(f"    unmatched local names: {len(sync['unmatched_local'])}")
+        else:
+            print(f"  Local sync failed: {result.get('sync_error', 'unknown')}")
 
     _print_result(result)
     return result
@@ -4164,6 +7343,15 @@ def cmd_calibrate() -> dict:
         "row_step": [round(grid.row_dx, 2), round(grid.row_dy, 2)],
         "col_step": [round(grid.col_dx, 2), round(grid.col_dy, 2)],
     }
+    end_turn_plan = plan_end_turn()[0]
+    result["ui_positions"] = {
+        "end_turn": {
+            "x": end_turn_plan["x"],
+            "y": end_turn_plan["y"],
+            "window_x": end_turn_plan["window_x"],
+            "window_y": end_turn_plan["window_y"],
+        }
+    }
 
     print(f"\n=== CALIBRATION ===")
     print(f"Window: x={win.x} y={win.y} w={win.width} h={win.height}")
@@ -4177,7 +7365,8 @@ def cmd_calibrate() -> dict:
         print(f"  save({sx},{sy}) -> MCP ({px:.0f}, {py:.0f})")
 
     print(f"\nUI positions:")
-    print(f"  End Turn: ({win.x + 95}, {win.y + 78})")
+    print(f"  End Turn: ({end_turn_plan['x']}, {end_turn_plan['y']}) "
+          f"| window-local ({end_turn_plan['window_x']}, {end_turn_plan['window_y']})")
     print(f"  Portrait 0: ({win.x + 50}, {win.y + 135})")
     print(f"  Portrait 1: ({win.x + 50}, {win.y + 195})")
     print(f"  Portrait 2: ({win.x + 50}, {win.y + 245})")
@@ -4210,6 +7399,8 @@ def _load_board_from_recording(board_file: Path) -> tuple:
     bridge_data = board_record.get("data", {}).get("bridge_state")
     if bridge_data is None:
         raise ValueError("Recording has no bridge_state")
+    from src.bridge.reader import _mark_satellite_launch_danger_flying_immune
+    _mark_satellite_launch_danger_flying_immune(bridge_data)
 
     board = Board.from_bridge_data(bridge_data)
     spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
@@ -4238,9 +7429,11 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
         for u in bd["units"]:
             stats = get_pawn_stats(u.get("type", ""))
             u["ranged"] = stats.ranged
+            if stats.armor:
+                u.setdefault("armor", True)
             if not stats.pushable:
                 u["pushable"] = False
-        _infer_webb_egg_adjacency(bd["units"])
+        _infer_dynamic_webs(bd["units"])
 
     # Inject weights
     if weights:
@@ -4292,6 +7485,10 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
         inject_into_bridge as _inject_bonus_obj,
     )
     _inject_bonus_obj(bd)
+    from src.solver.mission_unit_objectives import (
+        inject_into_bridge as _inject_unit_obj,
+    )
+    _inject_unit_obj(bd)
 
     # Sim v28: stamp `is_infinite_spawn` on replayed/tuned bridge_data so
     # the Rust solver's future_factor floor (0.5) kicks in on boss /
@@ -4487,7 +7684,8 @@ def _re_solve_partial(
     mid_action_uid: int | None,
     time_limit: float,
     session: RunSession,
-) -> tuple[list, list, float]:
+    allow_dirty_plan: bool = False,
+) -> tuple[list, list, float, dict | None, dict | None]:
     """Re-solve from actual board state with partial mech states.
 
     Args:
@@ -4499,9 +7697,10 @@ def _re_solve_partial(
         session: Session for weight loading.
 
     Returns:
-        (actions, predicted_states, score) from the new solve.
-        actions is a list of MechAction. predicted_states is the dual-snapshot
-        list from replay_solution.
+        (actions, predicted_states, score, plan_safety, solve_data) from the
+        new solve. actions is a list of MechAction. predicted_states is the
+        dual-snapshot list from replay_solution. solve_data mirrors the normal
+        solve recording so post-enemy audit uses the re-solved prediction.
     """
     import json as _json
     import time as _time
@@ -4514,6 +7713,8 @@ def _re_solve_partial(
             uid = u.get("uid")
             stats = get_pawn_stats(u.get("type", ""))
             u["ranged"] = stats.ranged
+            if stats.armor:
+                u.setdefault("armor", True)
             if not stats.pushable:
                 u["pushable"] = False
             # Clamp u8 fields to prevent Rust deserializer overflow
@@ -4526,15 +7727,26 @@ def _re_solve_partial(
                 u["active"] = True
                 u["can_move"] = False
             # All others keep their current active/can_move state
-        _infer_webb_egg_adjacency(bridge_data["units"])
+        _infer_dynamic_webs(bridge_data["units"])
+
+    # Keep partial re-solves semantically aligned with the initial live solve:
+    # the Lua bridge reports base SkillList IDs, while powered upgrades such as
+    # Science_Repulse_A change prediction semantics.
+    _enrich_bridge_mech_weapons_from_save(bridge_data)
 
     # Load weights
     weights_path = Path(__file__).parent.parent.parent / "weights" / "active.json"
+    weights_payload = None
+    breakdown_weights = None
     if weights_path.exists():
         try:
             with open(weights_path) as wf:
                 weight_data = _json.load(wf)
-            bridge_data["eval_weights"] = weight_data.get("weights")
+            weights_payload = weight_data.get("weights")
+            bridge_data["eval_weights"] = weights_payload
+            if isinstance(weights_payload, dict):
+                from src.solver.evaluate import EvalWeights as _EW
+                breakdown_weights = _EW.from_dict(weights_payload)
         except (ValueError, OSError):
             pass
 
@@ -4547,6 +7759,9 @@ def _re_solve_partial(
                     td["freeze_mine"] = True
                 if board.tile(bx, by).old_earth_mine:
                     td["old_earth_mine"] = True
+                if board.tile(bx, by).repair_platform:
+                    td["repair_platform"] = True
+                    td["item"] = "Item_Repair_Mine"
 
     from src.model.board import _compute_pilot_value as _cpv
     for ud in bridge_data.get("units", []):
@@ -4556,6 +7771,7 @@ def _re_solve_partial(
                 ud.get("max_hp", 0), ud.get("type", ""),
                 ud.get("pilot_level", 0),
             )
+    _annotate_pending_grid_debt(session, board, bridge_data)
 
     # Forward the soft-disable blocklist on re-solves too, otherwise the
     # Rust solver could pick the disabled weapon again on the same turn
@@ -4575,6 +7791,10 @@ def _re_solve_partial(
         inject_into_bridge as _inject_bonus_obj,
     )
     _inject_bonus_obj(bridge_data)
+    from src.solver.mission_unit_objectives import (
+        inject_into_bridge as _inject_unit_obj,
+    )
+    _inject_unit_obj(bridge_data)
 
     try:
         import itb_solver as _rust
@@ -4612,14 +7832,137 @@ def _re_solve_partial(
 
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
+            total_turns = bridge_data.get("total_turns", 5)
+            remaining_spawns = bridge_data.get("remaining_spawns", 2**31 - 1)
             enriched = _replay(bridge_data, solution, spawns,
                                current_turn=current_turn,
-                               total_turns=bridge_data.get("total_turns", 5))
-            return actions, enriched.get("predicted_states", []), score
+                               total_turns=total_turns,
+                               remaining_spawns=remaining_spawns,
+                               weights=breakdown_weights)
+            current_outcome = _capture_board_summary(board, bridge_data)
+            predicted_board_summary = dict(enriched.get("predicted_outcome") or {})
+            final_board_data = enriched.get("final_board") or {}
+            if final_board_data:
+                final_board = Board.from_bridge_data(final_board_data)
+                predicted_board_summary = _capture_board_summary(
+                    final_board, final_board_data
+                )
+                predicted_board_summary.update(enriched.get("predicted_outcome") or {})
+            predicted_board_summary["pods_collected"] = sum(
+                int(r.get("pods_collected", 0) or 0)
+                for r in enriched.get("action_results", [])
+                if isinstance(r, dict)
+            )
+            try:
+                pending_debt = int(bridge_data.get("_pending_grid_debt") or 0)
+            except (TypeError, ValueError):
+                pending_debt = 0
+            if pending_debt > 0:
+                current_outcome = _summary_with_pending_grid_debt(
+                    current_outcome, pending_debt
+                )
+                predicted_board_summary = _summary_with_pending_grid_debt(
+                    predicted_board_summary, pending_debt
+                )
+            plan_safety = audit_plan_safety(
+                current_outcome,
+                predicted_board_summary,
+                block_mech_hp_loss=(
+                    _blocks_mech_hp_loss_for_perfect_battle(session)
+                ),
+                block_mech_status_loss=(
+                    _blocks_mech_status_loss_for_run(session)
+                ),
+            )
+            if plan_requires_safety_block(
+                plan_safety, allow_dirty_plan=allow_dirty_plan
+            ):
+                print("  RE-SOLVE SAFETY BLOCK — refusing partial plan")
+                for v in plan_safety.get("violations", []):
+                    if v.get("blocking"):
+                        print(
+                            f"  ! {v.get('kind')}: "
+                            f"{v.get('current')} -> {v.get('predicted')}"
+                        )
+            from src.model.weapons import get_weapon_name
+            from src.solver.verify import SOLVE_RECORD_SCHEMA_VERSION
+            threats_payload = rust_result.get("threats", [])
+            threat_count = (
+                len(threats_payload)
+                if isinstance(threats_payload, list)
+                else int(threats_payload or 0)
+            )
+            solve_data = {
+                "schema_version": SOLVE_RECORD_SCHEMA_VERSION,
+                "simulator_version": _get_simulator_version(),
+                "score": score,
+                "actions": [{
+                    "mech_uid": a.mech_uid,
+                    "mech_type": a.mech_type,
+                    "move_to": list(a.move_to) if a.move_to else None,
+                    "weapon": (
+                        get_weapon_name(a.weapon)
+                        if a.weapon and a.weapon != "_REPAIR"
+                        else a.weapon
+                    ),
+                    "weapon_id": a.weapon,
+                    "target": list(a.target),
+                    "description": a.description,
+                } for a in actions],
+                "threats": threat_count,
+                "initial_building_threats": rust_result.get(
+                    "initial_building_threats", []
+                ),
+                "active_mechs": len(actions),
+                "spawn_points": spawns,
+                "search_stats": {
+                    "elapsed_seconds": elapsed,
+                    "timed_out": rust_result.get("stats", {}).get(
+                        "timed_out", False
+                    ),
+                    "permutations_tried": rust_result.get("stats", {}).get(
+                        "permutations_tried", 0
+                    ),
+                    "total_permutations": rust_result.get("stats", {}).get(
+                        "total_permutations", 0
+                    ),
+                    "active_mech_count": len(actions),
+                },
+                "weight_version": _get_weight_version(),
+                "beam_mode": False,
+                "beam_chain_score": None,
+                "candidate_count": 1,
+                "selected_candidate_rank": 0,
+                "selected_candidate_source": "partial_re_solve",
+                "candidate_safety": [],
+                "dirty_frontier": [],
+                "lookahead_frontier": [],
+                "robust_frontier": [],
+                "safety_widening": [],
+                "action_results": enriched.get("action_results", []),
+                "predicted_states": enriched.get("predicted_states", []),
+                "replay_annotations": enriched.get("replay_annotations", []),
+                "current_outcome": current_outcome,
+                "predicted_outcome": enriched.get("predicted_outcome", {}),
+                "predicted_board_summary": predicted_board_summary,
+                "plan_safety": plan_safety,
+                "score_breakdown": enriched.get("score_breakdown", {}),
+                "partial_re_solve": {
+                    "done_uids": sorted(done_uids),
+                    "mid_action_uid": mid_action_uid,
+                },
+            }
+            return (
+                actions,
+                enriched.get("predicted_states", []),
+                score,
+                plan_safety,
+                solve_data,
+            )
     except Exception as e:
         print(f"  Re-solve error: {e}")
 
-    return [], [], float('-inf')
+    return [], [], float('-inf'), None, None
 
 
 def _resolve_weapon_slot_from_board(mech_uid: int, weapon_id: str, board: Board) -> int:
@@ -4659,6 +8002,26 @@ def _research_peek(session: RunSession, limit: int = 3) -> list[dict]:
             if len(out) >= limit:
                 break
     return out
+
+
+def cmd_research_peek(limit: int = 5) -> dict:
+    """Read-only view of the research queue head.
+
+    This intentionally does not replace ``research_next``; it exists so the
+    operator does not try the nonexistent ``research_queue_peek`` command.
+    """
+    session = _load_session()
+    result = {
+        "status": "OK",
+        "queue_len": len(session.research_queue),
+        "pending": sum(
+            1 for e in session.research_queue
+            if e.get("status", "pending") == "pending"
+        ),
+        "research_queue_peek": _research_peek(session, limit=max(1, limit)),
+    }
+    _print_result(result)
+    return result
 
 
 def _narrate_fuzzy(
@@ -4846,6 +8209,20 @@ def _maybe_flag_grid_drop(
         td for td in getattr(diff, "tile_diffs", []) or []
         if td.get("field") == "building_hp"
     ]
+    actual_building_losses = [
+        td for td in building_tile_diffs
+        if int(td.get("actual") or 0) < int(td.get("predicted") or 0)
+    ]
+    favorable_grid_resist = bool(
+        grid_scalar
+        and int(grid_scalar.get("actual") or 0) > int(grid_scalar.get("predicted") or 0)
+    )
+    if favorable_grid_resist and not actual_building_losses:
+        print(
+            "  [grid-defense] actual grid exceeded prediction; "
+            "treating as benign Grid Defense resist, no investigation gate"
+        )
+        return
 
     # Write a minimal snapshot: predicted state + actual state + context.
     snap_label = f"grid_drop_{run_id}_t{turn:02d}_a{context.get('action_index', '?')}"
@@ -4921,6 +8298,106 @@ def _maybe_flag_grid_drop(
     print(f"  [grid-drop] flagged for investigation → {snap_label}")
 
 
+def _maybe_flag_pod_state_diff(
+    investigations: list,
+    diff,
+    classification: dict,
+    predicted: dict,
+    actual_board,
+    context: dict,
+    run_id: str,
+    turn: int,
+    failure_db_id: str,
+) -> None:
+    """Snapshot + queue an investigation when a predicted pod disappears.
+
+    A missing pod can mean "recovered" or "destroyed" depending on mission
+    state, but for Perfect Island farming either is too important to let a
+    later threat-audit result hide it.
+    """
+    if "pod" not in classification.get("categories", ()):
+        return
+
+    pod_diffs = [
+        td for td in getattr(diff, "tile_diffs", []) or []
+        if (
+            td.get("field") == "has_pod"
+            and bool(td.get("predicted")) is True
+            and bool(td.get("actual")) is False
+        )
+    ]
+    if not pod_diffs:
+        return
+
+    snap_label = f"pod_state_{run_id}_t{turn:02d}_a{context.get('action_index', '?')}"
+    snap_dir = SNAPSHOT_DIR / snap_label
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with (snap_dir / "predicted.json").open("w") as f:
+            json.dump(predicted, f, indent=2, default=str)
+        with (snap_dir / "actual_board.json").open("w") as f:
+            json.dump(
+                {
+                    "grid_power": actual_board.grid_power,
+                    "grid_power_max": actual_board.grid_power_max,
+                    "units": [
+                        {
+                            "uid": u.uid, "type": u.type,
+                            "x": u.x, "y": u.y,
+                            "hp": u.hp, "max_hp": u.max_hp,
+                            "team": u.team, "is_mech": u.is_mech,
+                        }
+                        for u in actual_board.units
+                    ],
+                    "tiles": [
+                        [
+                            {
+                                "terrain": t.terrain,
+                                "building_hp": getattr(t, "building_hp", 0),
+                                "has_pod": getattr(t, "has_pod", False),
+                            }
+                            for t in row
+                        ]
+                        for row in actual_board.tiles
+                    ],
+                },
+                f, indent=2, default=str,
+            )
+        with (snap_dir / "context.json").open("w") as f:
+            json.dump({
+                "kind": "pod_state_diff",
+                "run_id": run_id,
+                "turn": turn,
+                "sub_action": context.get("sub_action"),
+                "action_index": context.get("action_index"),
+                "mech_uid": context.get("mech_uid"),
+                "weapon": context.get("weapon"),
+                "target": context.get("target"),
+                "pod_diffs": pod_diffs,
+                "failure_db_id": failure_db_id,
+                "classification": classification,
+            }, f, indent=2, default=str)
+    except OSError as e:
+        print(f"  [pod-state] snapshot write failed: {e}")
+
+    tile_labels = [
+        f"({td.get('x')},{td.get('y')})"
+        for td in pod_diffs
+    ]
+    investigations.append({
+        "kind": "pod_state_diff",
+        "reason": f"predicted pod missing after action at {', '.join(tile_labels)}",
+        "snapshot_path": str(snap_dir),
+        "failure_db_id": failure_db_id,
+        "turn": turn,
+        "action_index": context.get("action_index"),
+        "weapon": context.get("weapon"),
+        "mech_uid": context.get("mech_uid"),
+        "pod_diffs": pod_diffs,
+    })
+    print(f"  [pod-state] flagged for investigation → {snap_label}")
+
+
 def _log_sub_action_desync(
     session: RunSession,
     phase: str,
@@ -4981,6 +8458,11 @@ def _log_sub_action_desync(
     if fuzzy_signal is not None:
         desync_trigger["fuzzy_signal"] = fuzzy_signal
 
+    failure_id = (
+        f"{session.run_id or 'default'}_m{session.mission_index:02d}"
+        f"_t{solved_turn:02d}_per_sub_action_desync_{phase}_a{action_index}"
+    )
+
     append_to_failure_db(
         [desync_trigger],
         run_id=session.run_id or "default",
@@ -4996,6 +8478,23 @@ def _log_sub_action_desync(
             "tags": list(session.tags),
         },
     )
+    if os.environ.get("ITB_AUTO_DIAGNOSE") == "1":
+        enqueued = _enqueue_diagnosis(
+            session,
+            failure_id=failure_id,
+            diff_dict=diff_dict,
+            sim_version=_get_simulator_version(),
+            classification=classification,
+        )
+        if enqueued:
+            pending = sum(
+                1 for e in session.diagnosis_queue
+                if e.get("status") == "pending"
+            )
+            print(
+                f"  [auto-diagnose] enqueued {failure_id} — drain via "
+                f"`game_loop.py diagnose_next` (queue depth: {pending})"
+            )
     # Persist session so failure_events_this_run (appended at the hook
     # site just before this call) survives across CLI invocations.
     session.save()
@@ -5047,7 +8546,12 @@ def _check_winnability(turn: int, score: float,
 
 
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
-                  wait_for_turn: bool = True, max_wait: float = 45.0) -> dict:
+                  wait_for_turn: bool = True, max_wait: float = 45.0,
+                  allow_dirty_plan: bool = False,
+                  candidate_rank: int | None = None,
+                  dirty_consent_id: str | None = None,
+                  allow_protected_objective_loss: bool = False,
+                  allow_objective_loss: bool = False) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -5069,6 +8573,86 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     from src.solver.verify import diff_states, classify_diff
     from src.solver import fuzzy_detector
     from src.bridge.writer import _resolve_weapon_slot
+
+    def _is_transient_predicted_status_gain(diff) -> bool:
+        """True for status effects the sim predicts but bridge may settle late."""
+        if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+            return False
+        unit_diffs = getattr(diff, "unit_diffs", []) or []
+        if not unit_diffs:
+            return False
+        for ud in unit_diffs:
+            if not str(ud.get("field", "")).startswith("status."):
+                return False
+            if ud.get("predicted") is not True or ud.get("actual") is not False:
+                return False
+        return True
+
+    def _is_transient_teleporter_position_diff(diff, actual_data) -> bool:
+        """True for Mission_Teleporter pad swaps that can lag the command ACK."""
+        if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+            return False
+        if not isinstance(actual_data, dict):
+            return False
+        if actual_data.get("mission_id") != "Mission_Teleporter":
+            return False
+        pairs = actual_data.get("teleporter_pairs") or []
+        pad_tiles = {
+            (int(pair[i]), int(pair[i + 1]))
+            for pair in pairs
+            if isinstance(pair, (list, tuple)) and len(pair) >= 4
+            for i in (0, 2)
+        }
+        if not pad_tiles:
+            return False
+        unit_diffs = getattr(diff, "unit_diffs", []) or []
+        if not unit_diffs:
+            return False
+        for ud in unit_diffs:
+            if ud.get("field") != "pos":
+                return False
+            predicted_pos = ud.get("predicted")
+            actual_pos = ud.get("actual")
+            if not (
+                isinstance(predicted_pos, (list, tuple))
+                and isinstance(actual_pos, (list, tuple))
+                and len(predicted_pos) >= 2
+                and len(actual_pos) >= 2
+                and (int(predicted_pos[0]), int(predicted_pos[1])) in pad_tiles
+                and (int(actual_pos[0]), int(actual_pos[1])) in pad_tiles
+            ):
+                return False
+        return True
+
+    def _is_transient_verify_diff(diff, actual_data) -> bool:
+        return (
+            _is_transient_predicted_status_gain(diff)
+            or _is_transient_teleporter_position_diff(diff, actual_data)
+        )
+
+    def _settle_transient_verify_diff(predicted: dict, actual_board, actual_data, phase: str):
+        """Re-read briefly for bridge effects that apply after command ACK."""
+        diff = diff_states(predicted, actual_board)
+        if diff.is_empty() or not _is_transient_verify_diff(diff, actual_data):
+            return actual_board, actual_data, diff
+
+        best_board, best_data, best_diff = actual_board, actual_data, diff
+        for attempt in range(3):
+            time.sleep(0.35)
+            refresh_bridge_state()
+            reread_board, reread_data = read_bridge_state()
+            if not reread_board:
+                continue
+            reread_diff = diff_states(predicted, reread_board)
+            if reread_diff.is_empty():
+                print(f"  {phase.upper()} VERIFIED: PASS (bridge settled after {attempt + 1} reread)")
+                return reread_board, reread_data, reread_diff
+            if reread_diff.total_count() < best_diff.total_count():
+                best_board, best_data, best_diff = reread_board, reread_data, reread_diff
+        if best_diff.total_count() < diff.total_count():
+            print(f"  {phase.upper()} verify: transient diff partially settled "
+                  f"({diff.total_count()} -> {best_diff.total_count()})")
+        return best_board, best_data, best_diff
 
     if not is_bridge_active():
         result = {"error": "Bridge not active — auto_turn requires bridge"}
@@ -5128,16 +8712,79 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     else:
         read_result = cmd_read(profile=profile)
 
+    if _is_hard_stop_status(read_result.get("status")):
+        _print_result(read_result)
+        return read_result
+
     phase = read_result.get("phase")
     if phase != "combat_player":
         result = {"error": f"Not in combat_player phase: {phase}", "phase": phase}
         _print_result(result)
         return result
     if read_result.get("active_mechs", 1) == 0:
+        save_phase = detect_game_phase(profile)
+        bridge_snapshot = read_state() if is_bridge_active() else {}
+        bridge_mission_id = (
+            bridge_snapshot.get("mission_id")
+            if isinstance(bridge_snapshot, dict) else None
+        )
+        if (save_phase in _POST_MISSION_SAVE_PHASES
+                or bridge_mission_id in {"Mission_Final", "Mission_Final_Cave"}):
+            terminal_session = _load_session()
+            post_enemy_result = None
+            if terminal_session.active_solution is not None:
+                try:
+                    refresh_bridge_state()
+                    final_board, final_data = read_bridge_state()
+                    if final_board is not None:
+                        post_enemy_result = _record_post_enemy(
+                            terminal_session,
+                            final_board,
+                            terminal_session.active_solution.turn,
+                            bridge_data=final_data,
+                        )
+                except Exception as exc:
+                    post_enemy_result = {
+                        "status": "POST_ENEMY_AUDIT_MISSING",
+                        "blocking": True,
+                        "reason": "terminal_flush_error",
+                        "message": str(exc),
+                    }
+                if (
+                    isinstance(post_enemy_result, dict)
+                    and post_enemy_result.get("blocking")
+                ):
+                    result = dict(post_enemy_result)
+                    result.setdefault("next_step", (
+                        "Investigate the missing/worse post-enemy audit before "
+                        "continuing from this terminal-looking final state."
+                    ))
+                    _print_result(result)
+                    return result
+            terminal_session.active_solution = None
+            terminal_session.actions_executed = 0
+            terminal_session.save()
+            result = {
+                "status": "TERMINAL_OR_MISSION_END",
+                "phase": phase,
+                "save_phase": save_phase,
+                "bridge_mission_id": bridge_mission_id,
+                "active_mechs": 0,
+                "waited_seconds": max_wait if wait_for_turn else 0,
+                "next_step": (
+                    "Combat commands are paused because the bridge has no "
+                    "active mechs. Check the visible screen for Victory, "
+                    "Region Secured, rewards, or defeat before issuing more "
+                    "combat commands."
+                ),
+            }
+            _print_result(result)
+            return result
         result = {
             "error": "No active mechs after polling — animations still playing "
                      f"or all mechs dead. Waited {max_wait}s.",
             "phase": phase,
+            "save_phase": save_phase,
             "active_mechs": 0,
         }
         _print_result(result)
@@ -5216,7 +8863,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _diff_session.save()
 
     # 2. Solve
-    solve_result = cmd_solve(profile=profile, time_limit=time_limit)
+    solve_result = cmd_solve(
+        profile=profile,
+        time_limit=time_limit,
+        candidate_rank=candidate_rank,
+    )
     if "error" in solve_result:
         result = {"error": f"Solve: {solve_result['error']}", "turn": turn}
         _print_result(result)
@@ -5247,14 +8898,31 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     solve_file = run_dir / f"m{mi:02d}_turn_{turn:02d}_solve.json"
     predicted_states = []
     predicted_outcome: dict = {}
+    plan_safety: dict | None = None
+    solve_data: dict = {}
     if solve_file.exists():
         try:
             with open(solve_file) as f:
                 solve_record = json.load(f)
             predicted_states = predicted_states_from_solve_record(solve_record)
-            predicted_outcome = (solve_record.get("data") or {}).get("predicted_outcome") or {}
+            solve_data = solve_record.get("data") or {}
+            predicted_outcome = solve_data.get("predicted_outcome") or {}
+            plan_safety = solve_data.get("plan_safety")
         except (json.JSONDecodeError, OSError):
             pass
+
+    selected_candidate_rank = solve_result.get("selected_candidate_rank")
+    if not isinstance(selected_candidate_rank, int):
+        selected_candidate_rank = solve_data.get("selected_candidate_rank")
+    if not isinstance(selected_candidate_rank, int):
+        selected_candidate_rank = candidate_rank
+    selected_candidate_source = (
+        solve_result.get("selected_candidate_source")
+        or solve_data.get("selected_candidate_source")
+    )
+    candidate_count = solve_result.get("candidate_count")
+    if not isinstance(candidate_count, int):
+        candidate_count = solve_data.get("candidate_count")
 
     # Pre-turn-1 winnability check — if the solver scored catastrophically low
     # AND grid power is forecast to drop ≥2 on turn 1, the position is most
@@ -5267,6 +8935,100 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
     # Build action list from session solution
     actions = session.active_solution.actions if session.active_solution else []
+
+    allow_kill_limit_dirty = (
+        allow_dirty_plan
+        and _allow_kill_limit_objective_dirty_consent(session)
+    )
+    dirty_consent_validated = False
+    if allow_dirty_plan and isinstance(plan_safety, dict) and plan_safety.get("blocking"):
+        consent_error = _dirty_consent_gate(
+            session,
+            turn=turn,
+            plan_safety=plan_safety,
+            actions=actions,
+            candidate_rank=selected_candidate_rank,
+            provided_id=dirty_consent_id,
+            consume=False,
+            allow_protected_objective_loss=allow_protected_objective_loss,
+            allow_objective_loss=allow_objective_loss,
+        )
+        if consent_error is not None:
+            _print_result(consent_error)
+            return consent_error
+        dirty_consent_validated = True
+
+    if plan_requires_safety_block(plan_safety,
+                                  allow_dirty_plan=allow_dirty_plan,
+                                  allow_kill_limit_objective_dirty=allow_kill_limit_dirty,
+                                  allow_protected_objective_loss_dirty=allow_protected_objective_loss,
+                                  allow_objective_loss_dirty=allow_objective_loss):
+        consent_id = _dirty_consent_id(
+            session,
+            turn,
+            plan_safety,
+            actions,
+            candidate_rank=selected_candidate_rank,
+        ) if isinstance(plan_safety, dict) else None
+        result = {
+            "status": "SAFETY_BLOCKED",
+            "turn": turn,
+            "score": score,
+            "candidate_count": candidate_count,
+            "selected_candidate_rank": selected_candidate_rank,
+            "selected_candidate_source": selected_candidate_source,
+            "actions_planned": len(actions),
+            "actions": [a.description for a in actions],
+            "plan_safety": plan_safety,
+            "dirty_consent_id": consent_id,
+            "next_step": (
+                "Do not execute this plan normally. Run an emergency solve, "
+                "play manually, or rerun auto_turn with --allow-dirty-plan "
+                "and the exact dirty_consent_id only if the irreversible "
+                "loss is accepted."
+            ),
+        }
+        for key in (
+            "dirty_frontier",
+            "lookahead_frontier",
+            "robust_frontier",
+            "safety_widening",
+        ):
+            value = solve_result.get(key)
+            if value is None:
+                value = solve_data.get(key)
+            if value:
+                result[key] = value
+        if final_cave_resist_gamble_allowed(plan_safety):
+            result["final_cave_resist_gamble"] = True
+            result["next_step"] = (
+                "This is a last-turn final-cave resist gamble. Review the "
+                "dirty_frontier for the lowest pylon-loss candidate, then "
+                "rerun auto_turn with --candidate-rank, --allow-dirty-plan, "
+                "and the exact dirty_consent_id only if that resist line is "
+                "explicitly accepted."
+            )
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        print("\n! SAFETY BLOCK — refusing to execute predicted dirty plan")
+        for v in (plan_safety or {}).get("violations", []):
+            if v.get("blocking"):
+                print(f"!   {v.get('kind')}: {v.get('current')} -> {v.get('predicted')}")
+        _print_result(result)
+        return result
+
+    if dirty_consent_validated:
+        expected = _dirty_consent_id(
+            session,
+            turn,
+            plan_safety,
+            actions,
+            candidate_rank=selected_candidate_rank,
+        )
+        if expected not in session.dirty_consent_used:
+            session.dirty_consent_used.append(expected)
+        session.save()
+
     done_uids: set[int] = set()
     re_solve_count = 0
     actions_completed = 0
@@ -5289,8 +9051,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
         # Determine sub-action breakdown
         has_move = (action.move_to and action.move_to != (-1, -1))
-        is_repair = (action.weapon == "_REPAIR")
-        has_attack = (action.weapon and action.target[0] >= 0 and not is_repair)
+        is_repair = is_repair_action(action)
+        has_attack = action_has_attack(action)
+        final_phase = "attack" if has_attack else "repair" if is_repair else "skip"
 
         # Check if mech is actually moving (not staying in place)
         if has_move:
@@ -5323,78 +9086,139 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             actual_board, actual_data = read_bridge_state()
 
             if actual_board and pred_post_move:
-                diff = diff_states(pred_post_move, actual_board)
+                actual_board, actual_data, diff = _settle_transient_verify_diff(
+                    pred_post_move, actual_board, actual_data, "move"
+                )
                 if not diff.is_empty():
-                    classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
-                    fuzzy_signal = fuzzy_detector.evaluate(
-                        diff, classification,
-                        context={
-                            "mech_uid": mech_uid,
-                            "phase": "move",
-                            "sub_action": "move",
-                            "action_index": actions_completed,
-                            "turn": turn,
-                            "weapon": action.weapon,
-                            "target": list(action.target),
-                        },
-                        prior_events=(
-                            weapon_penalty_log.synthetic_prior_events()
-                            + session.failure_events_this_run
-                        ),
-                    )
-                    session.failure_events_this_run.append(fuzzy_signal)
-                    _maybe_soft_disable(session, fuzzy_signal, turn,
-                                        fired=soft_disables_fired_this_turn,
-                                        run_id=session.run_id)
-                    _enqueue_behavior_novelty(session, diff, turn)
-                    _log_sub_action_desync(
-                        session, "move", actions_completed, mech_uid,
-                        pred_post_move, actual_board, diff, classification, turn,
-                        fuzzy_signal=fuzzy_signal,
-                    )
-                    _maybe_flag_grid_drop(
-                        grid_drop_investigations, diff, classification,
-                        pred_post_move, actual_board,
-                        context={
-                            "mech_uid": mech_uid, "sub_action": "move",
-                            "action_index": actions_completed,
-                            "weapon": action.weapon,
-                            "target": list(action.target),
-                        },
-                        run_id=session.run_id or "default",
-                        turn=turn,
-                        failure_db_id=(
-                            f"{session.run_id or 'default'}_"
-                            f"m{session.mission_index:02d}_t{turn:02d}_"
-                            f"per_sub_action_desync_move_a{actions_completed}"
-                        ),
-                    )
-                    re_solve_count += 1
-                    # Re-solve: this mech has moved but not attacked
-                    if actual_data:
-                        new_actions, new_preds, new_score = _re_solve_partial(
-                            actual_board, actual_data, done_uids,
-                            mid_action_uid=mech_uid,
-                            time_limit=time_limit, session=session,
+                    if _is_harmless_active_state_diff(diff, allowed_uids=set(done_uids)):
+                        print("  MOVE VERIFIED: PASS (prior active-state drift ignored)")
+                    elif _is_harmless_player_hp_gain_diff(diff):
+                        print("  MOVE VERIFIED: PASS (player HP gain drift ignored)")
+                    else:
+                        classification = classify_diff(diff, mech_uid=mech_uid, phase="move")
+                        fuzzy_signal = fuzzy_detector.evaluate(
+                            diff, classification,
+                            context={
+                                "mech_uid": mech_uid,
+                                "phase": "move",
+                                "sub_action": "move",
+                                "action_index": actions_completed,
+                                "turn": turn,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            prior_events=(
+                                weapon_penalty_log.synthetic_prior_events()
+                                + session.failure_events_this_run
+                            ),
                         )
-                        if new_actions:
-                            print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
-                            # First action should be attack-only for mid_action mech
-                            solver_actions = []
-                            for a in new_actions:
-                                solver_actions.append(SolverAction(
-                                    mech_uid=a.mech_uid,
-                                    mech_type=a.mech_type,
-                                    move_to=a.move_to,
-                                    weapon=a.weapon,
-                                    target=a.target,
-                                    description=a.description,
-                                ))
-                            actions = solver_actions
-                            predicted_states = new_preds
-                            score = new_score
-                            action_idx = 0
-                            continue  # restart loop with new solution
+                        session.failure_events_this_run.append(fuzzy_signal)
+                        _maybe_soft_disable(session, fuzzy_signal, turn,
+                                            fired=soft_disables_fired_this_turn,
+                                            run_id=session.run_id)
+                        _enqueue_behavior_novelty(session, diff, turn)
+                        _log_sub_action_desync(
+                            session, "move", actions_completed, mech_uid,
+                            pred_post_move, actual_board, diff, classification, turn,
+                            fuzzy_signal=fuzzy_signal,
+                        )
+                        _maybe_flag_grid_drop(
+                            grid_drop_investigations, diff, classification,
+                            pred_post_move, actual_board,
+                            context={
+                                "mech_uid": mech_uid, "sub_action": "move",
+                                "action_index": actions_completed,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            run_id=session.run_id or "default",
+                            turn=turn,
+                            failure_db_id=(
+                                f"{session.run_id or 'default'}_"
+                                f"m{session.mission_index:02d}_t{turn:02d}_"
+                                f"per_sub_action_desync_move_a{actions_completed}"
+                            ),
+                        )
+                        _maybe_flag_pod_state_diff(
+                            grid_drop_investigations, diff, classification,
+                            pred_post_move, actual_board,
+                            context={
+                                "mech_uid": mech_uid, "sub_action": "move",
+                                "action_index": actions_completed,
+                                "weapon": action.weapon,
+                                "target": list(action.target),
+                            },
+                            run_id=session.run_id or "default",
+                            turn=turn,
+                            failure_db_id=(
+                                f"{session.run_id or 'default'}_"
+                                f"m{session.mission_index:02d}_t{turn:02d}_"
+                                f"per_sub_action_desync_move_a{actions_completed}"
+                            ),
+                        )
+                        re_solve_count += 1
+                        # Re-solve: this mech has moved but not attacked
+                        if actual_data:
+                            (
+                                new_actions,
+                                new_preds,
+                                new_score,
+                                new_safety,
+                                new_solve_data,
+                            ) = _re_solve_partial(
+                                actual_board, actual_data, done_uids,
+                                mid_action_uid=mech_uid,
+                                time_limit=time_limit, session=session,
+                                allow_dirty_plan=allow_dirty_plan,
+                            )
+                            # A top-level dirty-plan acceptance applies only
+                            # to the exact plan the operator reviewed. After a
+                            # desync, a partial re-solve is a new plan and
+                            # must stop on hard safety loss for a fresh call.
+                            if plan_requires_safety_block(new_safety):
+                                result = {
+                                    "status": "SAFETY_BLOCKED_RE_SOLVE",
+                                    "turn": turn,
+                                    "actions_completed": actions_completed,
+                                    "re_solves": re_solve_count,
+                                    "plan_safety": new_safety,
+                                    "actions": [a.description for a in new_actions],
+                                    "next_step": (
+                                        "Partial re-solve predicted a non-overridable "
+                                        "safety loss. Do not continue this turn "
+                                        "without a safer plan."
+                                    ),
+                                }
+                                _print_result(result)
+                                return result
+                            if new_actions:
+                                print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
+                                # First action should be attack-only for mid_action mech
+                                solver_actions = []
+                                for a in new_actions:
+                                    solver_actions.append(SolverAction(
+                                        mech_uid=a.mech_uid,
+                                        mech_type=a.mech_type,
+                                        move_to=a.move_to,
+                                        weapon=a.weapon,
+                                        target=a.target,
+                                        description=a.description,
+                                    ))
+                                actions = solver_actions
+                                predicted_states = new_preds
+                                score = new_score
+                                if new_solve_data:
+                                    solve_data = new_solve_data
+                                    predicted_outcome = (
+                                        solve_data.get("predicted_outcome") or {}
+                                    )
+                                    plan_safety = solve_data.get("plan_safety")
+                                    _record_turn_state(
+                                        session, "solve", solve_data,
+                                        turn_override=turn,
+                                    )
+                                action_idx = 0
+                                continue  # restart loop with new solution
                 else:
                     print(f"  MOVE VERIFIED: PASS")
 
@@ -5407,6 +9231,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             try:
                 ack = attack_mech(mech_uid, weapon_slot, action.target[0], action.target[1])
                 print(f"  ATTACK: {ack}")
+                if action.weapon == "Support_Wind":
+                    session.add_disabled_action(
+                        weapon_id="Support_Wind",
+                        cause="limited_use_spent",
+                        expires_turn=turn + 99,
+                        strategic_override=True,
+                    )
+                    session.save()
             except (TimeoutError, BridgeError) as e:
                 print(f"  ATTACK ERROR: {e}")
                 result = {"error": f"Attack {actions_completed}: {e}",
@@ -5417,8 +9249,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             if has_move:
                 pass  # move already done above
             try:
-                ack = repair_mech(mech_uid)
-                print(f"  REPAIR: {ack}")
+                if has_move:
+                    repair_board, _ = read_bridge_state()
+                else:
+                    refresh_bridge_state()
+                    repair_board, _ = read_bridge_state()
+                if _repair_would_be_noop(repair_board, mech_uid):
+                    ack = skip_mech(mech_uid)
+                    print(f"  SKIP (repair no-op): {ack}")
+                else:
+                    ack = repair_mech(mech_uid)
+                    print(f"  REPAIR: {ack}")
             except (TimeoutError, BridgeError) as e:
                 print(f"  REPAIR ERROR: {e}")
                 result = {"error": f"Repair {actions_completed}: {e}",
@@ -5444,100 +9285,276 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         actual_board, actual_data = read_bridge_state()
 
         if actual_board and pred_post_attack:
-            diff = diff_states(pred_post_attack, actual_board)
+            actual_board, actual_data, diff = _settle_transient_verify_diff(
+                pred_post_attack, actual_board, actual_data, final_phase
+            )
             if not diff.is_empty():
-                classification = classify_diff(diff, mech_uid=mech_uid, phase="attack")
-                fuzzy_signal = fuzzy_detector.evaluate(
-                    diff, classification,
-                    context={
-                        "mech_uid": mech_uid,
-                        "phase": "attack",
-                        "sub_action": "attack",
-                        "action_index": actions_completed,
-                        "turn": turn,
-                        "weapon": action.weapon,
-                        "target": list(action.target),
-                    },
-                    prior_events=session.failure_events_this_run,
-                )
-                session.failure_events_this_run.append(fuzzy_signal)
-                _maybe_soft_disable(session, fuzzy_signal, turn,
-                                    fired=soft_disables_fired_this_turn,
-                                    run_id=session.run_id)
-                _enqueue_behavior_novelty(session, diff, turn)
-                _log_sub_action_desync(
-                    session, "attack", actions_completed, mech_uid,
-                    pred_post_attack, actual_board, diff, classification, turn,
-                    fuzzy_signal=fuzzy_signal,
-                )
-                _maybe_flag_grid_drop(
-                    grid_drop_investigations, diff, classification,
-                    pred_post_attack, actual_board,
-                    context={
-                        "mech_uid": mech_uid, "sub_action": "attack",
-                        "action_index": actions_completed,
-                        "weapon": action.weapon,
-                        "target": list(action.target),
-                    },
-                    run_id=session.run_id or "default",
-                    turn=turn,
-                    failure_db_id=(
-                        f"{session.run_id or 'default'}_"
-                        f"m{session.mission_index:02d}_t{turn:02d}_"
-                        f"per_sub_action_desync_attack_a{actions_completed}"
-                    ),
-                )
-                # Skip re-solve if spawn-only on last action (new Vek emerged)
-                is_last_action = (action_idx >= len(actions) - 1)
-                spawn_new_only = (
-                    diff.unit_diffs
-                    and all(ud.get("field") == "missing_in_predicted"
-                            for ud in diff.unit_diffs)
-                    and not diff.tile_diffs
-                    and not diff.scalar_diffs
-                )
-                if spawn_new_only and is_last_action:
-                    print(f"  DESYNC action {actions_completed} attack: "
-                          f"{diff.total_count()} diffs [spawn-only on last action, skipping re-solve]")
-                    done_uids.add(mech_uid)
-                    actions_completed += 1
-                    action_idx += 1
-                    continue
-
-                re_solve_count += 1
-                # Re-solve for remaining mechs
-                done_uids.add(mech_uid)
-                remaining = len(actions) - action_idx - 1
-                if remaining > 0 and actual_data:
-                    new_actions, new_preds, new_score = _re_solve_partial(
-                        actual_board, actual_data, done_uids,
-                        mid_action_uid=None,
-                        time_limit=time_limit, session=session,
+                allowed_active_drift_uids = set(done_uids)
+                if final_phase == "skip":
+                    allowed_active_drift_uids.add(mech_uid)
+                if _is_harmless_active_state_diff(
+                    diff, allowed_uids=allowed_active_drift_uids
+                ):
+                    print(f"  {final_phase.upper()} VERIFIED: PASS "
+                          "(active-state drift ignored)")
+                elif _is_harmless_player_hp_gain_diff(diff):
+                    print(f"  {final_phase.upper()} VERIFIED: PASS "
+                          "(player HP gain drift ignored)")
+                else:
+                    classification = classify_diff(diff, mech_uid=mech_uid,
+                                                   phase=final_phase)
+                    fuzzy_signal = fuzzy_detector.evaluate(
+                        diff, classification,
+                        context={
+                            "mech_uid": mech_uid,
+                            "phase": final_phase,
+                            "sub_action": final_phase,
+                            "action_index": actions_completed,
+                            "turn": turn,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
+                        },
+                        prior_events=session.failure_events_this_run,
                     )
-                    if new_actions:
-                        print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
-                        solver_actions = []
-                        for a in new_actions:
-                            solver_actions.append(SolverAction(
-                                mech_uid=a.mech_uid,
-                                mech_type=a.mech_type,
-                                move_to=a.move_to,
-                                weapon=a.weapon,
-                                target=a.target,
-                                description=a.description,
-                            ))
-                        actions = solver_actions
-                        predicted_states = new_preds
-                        score = new_score
-                        action_idx = 0
+                    session.failure_events_this_run.append(fuzzy_signal)
+                    if final_phase != "skip":
+                        _maybe_soft_disable(session, fuzzy_signal, turn,
+                                            fired=soft_disables_fired_this_turn,
+                                            run_id=session.run_id)
+                    _enqueue_behavior_novelty(session, diff, turn)
+                    _log_sub_action_desync(
+                        session, final_phase, actions_completed, mech_uid,
+                        pred_post_attack, actual_board, diff, classification, turn,
+                        fuzzy_signal=fuzzy_signal,
+                    )
+                    _maybe_flag_grid_drop(
+                        grid_drop_investigations, diff, classification,
+                        pred_post_attack, actual_board,
+                        context={
+                            "mech_uid": mech_uid, "sub_action": final_phase,
+                            "action_index": actions_completed,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
+                        },
+                        run_id=session.run_id or "default",
+                        turn=turn,
+                        failure_db_id=(
+                            f"{session.run_id or 'default'}_"
+                            f"m{session.mission_index:02d}_t{turn:02d}_"
+                            f"per_sub_action_desync_{final_phase}_a{actions_completed}"
+                        ),
+                    )
+                    _maybe_flag_pod_state_diff(
+                        grid_drop_investigations, diff, classification,
+                        pred_post_attack, actual_board,
+                        context={
+                            "mech_uid": mech_uid, "sub_action": final_phase,
+                            "action_index": actions_completed,
+                            "weapon": action.weapon,
+                            "target": list(action.target),
+                        },
+                        run_id=session.run_id or "default",
+                        turn=turn,
+                        failure_db_id=(
+                            f"{session.run_id or 'default'}_"
+                            f"m{session.mission_index:02d}_t{turn:02d}_"
+                            f"per_sub_action_desync_{final_phase}_a{actions_completed}"
+                        ),
+                    )
+                    # Skip re-solve if spawn-only on last action (new Vek emerged)
+                    is_last_action = (action_idx >= len(actions) - 1)
+                    spawn_new_only = (
+                        diff.unit_diffs
+                        and all(ud.get("field") == "missing_in_predicted"
+                                for ud in diff.unit_diffs)
+                        and not diff.tile_diffs
+                        and not diff.scalar_diffs
+                    )
+                    if spawn_new_only and is_last_action:
+                        print(f"  DESYNC action {actions_completed} {final_phase}: "
+                              f"{diff.total_count()} diffs [spawn-only on last action, skipping re-solve]")
+                        done_uids.add(mech_uid)
                         actions_completed += 1
-                        continue  # restart loop with new solution
+                        action_idx += 1
+                        continue
+
+                    re_solve_count += 1
+                    # Re-solve for remaining mechs
+                    done_uids.add(mech_uid)
+                    remaining = len(actions) - action_idx - 1
+                    if remaining > 0 and actual_data:
+                        (
+                            new_actions,
+                            new_preds,
+                            new_score,
+                            new_safety,
+                            new_solve_data,
+                        ) = _re_solve_partial(
+                            actual_board, actual_data, done_uids,
+                            mid_action_uid=None,
+                            time_limit=time_limit, session=session,
+                            allow_dirty_plan=allow_dirty_plan,
+                        )
+                        # A top-level dirty-plan acceptance applies only to
+                        # the exact plan the operator reviewed. After a
+                        # desync, a partial re-solve is a new plan and must
+                        # stop on hard safety loss for a fresh call.
+                        if plan_requires_safety_block(new_safety):
+                            result = {
+                                "status": "SAFETY_BLOCKED_RE_SOLVE",
+                                "turn": turn,
+                                "actions_completed": actions_completed,
+                                "re_solves": re_solve_count,
+                                "plan_safety": new_safety,
+                                "actions": [a.description for a in new_actions],
+                                "next_step": (
+                                    "Partial re-solve predicted a non-overridable "
+                                    "safety loss. Do not continue this turn "
+                                    "without a safer plan."
+                                ),
+                            }
+                            _print_result(result)
+                            return result
+                        if new_actions:
+                            print(f"  RE-SOLVED: {len(new_actions)} actions, score={new_score:.0f}")
+                            solver_actions = []
+                            for a in new_actions:
+                                solver_actions.append(SolverAction(
+                                    mech_uid=a.mech_uid,
+                                    mech_type=a.mech_type,
+                                    move_to=a.move_to,
+                                    weapon=a.weapon,
+                                    target=a.target,
+                                    description=a.description,
+                                ))
+                            actions = solver_actions
+                            predicted_states = new_preds
+                            score = new_score
+                            if new_solve_data:
+                                solve_data = new_solve_data
+                                predicted_outcome = (
+                                    solve_data.get("predicted_outcome") or {}
+                                )
+                                plan_safety = solve_data.get("plan_safety")
+                                _record_turn_state(
+                                    session, "solve", solve_data,
+                                    turn_override=turn,
+                                )
+                            action_idx = 0
+                            actions_completed += 1
+                            continue  # restart loop with new solution
             else:
-                print(f"  ATTACK VERIFIED: PASS")
+                print(f"  {final_phase.upper()} VERIFIED: PASS")
 
         done_uids.add(mech_uid)
         actions_completed += 1
         action_idx += 1
+
+    threat_audit = None
+    try:
+        refresh_bridge_state()
+        audit_board, audit_data = read_bridge_state()
+        if audit_board is not None:
+            from src.solver.threat_audit import audit_threat_coverage
+            threat_audit = audit_threat_coverage(
+                solve_data.get("initial_building_threats") or [],
+                audit_board,
+            )
+            threat_audit["phase"] = (
+                audit_data.get("phase", "unknown")
+                if isinstance(audit_data, dict) else "unknown"
+            )
+            _record_turn_state(
+                session, "threat_audit", threat_audit,
+                turn_override=turn,
+            )
+            if threat_audit.get("entries"):
+                print("\nTHREAT COVERAGE AUDIT:")
+                for entry in threat_audit["entries"]:
+                    cov = entry.get("coverage") or {}
+                    attacker = entry.get("attacker") or {}
+                    print(
+                        f"  {entry.get('target_visual')}: "
+                        f"{attacker.get('type')} uid={attacker.get('uid')} "
+                        f"→ {cov.get('reason')}"
+                    )
+    except Exception as exc:
+        threat_audit = {
+            "status": "ERROR",
+            "error": str(exc),
+        }
+
+    fuzzy_detections = session.failure_events_this_run[pre_turn_event_count:]
+    solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
+
+    if grid_drop_investigations:
+        pending_plan = _end_turn_click_plan_result()
+        result = {
+            "status": "INVESTIGATE",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "investigations": grid_drop_investigations,
+            "pending_end_turn_batch": pending_plan["batch"],
+            "pending_end_turn_codex_computer_use_batch": pending_plan.get(
+                "codex_computer_use_batch", []
+            ),
+            "bridge_ack": None,
+            "next_step": (
+                "Resolve each investigation before dispatching the held "
+                "End Turn click. No bridge END_TURN side effect was sent."
+            ),
+            "fuzzy_detections": fuzzy_detections,
+            "soft_disabled": list(session.disabled_actions),
+            "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+            "unknowns_flagged": unknowns_flagged,
+            "solver_gap_events": solver_gap_events,
+            "research_queue_peek": _research_peek(session),
+        }
+        if threat_audit is not None:
+            result["threat_audit"] = threat_audit
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                       unknowns_flagged,
+                       research_peek=result["research_queue_peek"])
+        _print_result(result)
+        return result
+
+    if _threat_audit_requires_block(threat_audit, plan_safety, session):
+        pending_plan = _end_turn_click_plan_result()
+        result = {
+            "status": "THREAT_AUDIT_BLOCKED",
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "score": score,
+            "re_solves": re_solve_count,
+            "threat_audit": threat_audit,
+            "held_end_turn_batch": pending_plan["batch"],
+            "held_end_turn_codex_computer_use_batch": pending_plan.get(
+                "codex_computer_use_batch", []
+            ),
+            "plan_safety": plan_safety,
+            "next_step": (
+                "Threat audit still sees an unresolved building/pylon threat. "
+                "Do not click End Turn until "
+                "this is reviewed or resolved."
+            ),
+            "fuzzy_detections": fuzzy_detections,
+            "soft_disabled": list(session.disabled_actions),
+            "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
+            "unknowns_flagged": unknowns_flagged,
+            "solver_gap_events": solver_gap_events,
+            "research_queue_peek": _research_peek(session),
+        }
+        if winnability_warning:
+            result["winnability_warning"] = winnability_warning
+        _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
+                       unknowns_flagged,
+                       research_peek=result["research_queue_peek"])
+        _print_result(result)
+        return result
 
     # 4. End turn
     end_result = cmd_end_turn()
@@ -5547,43 +9564,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         _print_result(result)
         return result
 
-    fuzzy_detections = session.failure_events_this_run[pre_turn_event_count:]
-    solver_gap_events = sum(1 for s in fuzzy_detections if s.get("model_gap"))
-
     if end_result.get("status") == "PLAN":
-        # Grid-drop investigation gate — fire-now per CLAUDE.md rule 22. The
-        # bridge has already deactivated mechs via SetActive, but the MCP
-        # End Turn click is withheld: the caller must resolve every queued
-        # investigation (or choose to skip) before sending the batch.
-        if grid_drop_investigations:
-            result = {
-                "status": "INVESTIGATE",
-                "turn": turn,
-                "actions_completed": actions_completed,
-                "score": score,
-                "re_solves": re_solve_count,
-                "investigations": grid_drop_investigations,
-                "pending_end_turn_batch": end_result["batch"],
-                "bridge_ack": end_result.get("bridge_ack"),
-                "next_step": (
-                    "Resolve each investigation (see CLAUDE.md rule 22) "
-                    "before dispatching pending_end_turn_batch."
-                ),
-                "fuzzy_detections": fuzzy_detections,
-                "soft_disabled": list(session.disabled_actions),
-                "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
-                "unknowns_flagged": unknowns_flagged,
-                "solver_gap_events": solver_gap_events,
-                "research_queue_peek": _research_peek(session),
-            }
-            if winnability_warning:
-                result["winnability_warning"] = winnability_warning
-            _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
-                           unknowns_flagged,
-                           research_peek=result["research_queue_peek"])
-            _print_result(result)
-            return result
-
         result = {
             "status": "PLAN",
             "turn": turn,
@@ -5592,8 +9573,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "re_solves": re_solve_count,
             "bridge_ack": end_result.get("bridge_ack"),
             "batch": end_result["batch"],
-            "next_step": "dispatch batch via computer_batch, wait ~6s, "
-                         "then `read`",
+            "codex_computer_use_batch": end_result.get(
+                "codex_computer_use_batch", []
+            ),
+            "next_step": (
+                "dispatch codex_computer_use_batch with Computer Use "
+                "(or legacy batch with screen-coordinate batch tools), "
+                "wait ~6s, then `read`"
+            ),
             "fuzzy_detections": fuzzy_detections,
             "soft_disabled": list(session.disabled_actions),
             "soft_disables_fired_this_turn": soft_disables_fired_this_turn,
@@ -5601,6 +9588,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             "solver_gap_events": solver_gap_events,
             "research_queue_peek": _research_peek(session),
         }
+        if threat_audit is not None:
+            result["threat_audit"] = threat_audit
         if winnability_warning:
             result["winnability_warning"] = winnability_warning
         _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
@@ -5632,6 +9621,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "solver_gap_events": solver_gap_events,
         "research_queue_peek": _research_peek(session),
     }
+    if threat_audit is not None:
+        result["threat_audit"] = threat_audit
     if winnability_warning:
         result["winnability_warning"] = winnability_warning
     _narrate_fuzzy(fuzzy_detections, soft_disables_fired_this_turn,
@@ -5850,6 +9841,163 @@ def rank_deploy_tiles(board, deploy_zone: list) -> list[tuple[int, int]]:
     return [(d["x"], d["y"]) for d in recommend_deploy_tiles(board, deploy_zone)]
 
 
+def _visual_tile(x: int, y: int) -> str:
+    return f"{chr(72 - y)}{8 - x}"
+
+
+def _deployable_mechs(
+    board,
+    session: RunSession,
+    profile: str = "Alpha",
+) -> list[dict]:
+    """Return deployable mech uid/type pairs in prompt order.
+
+    During deployment the bridge may not list unplaced player pawns in
+    `units`; however their UIDs are stable through the run. Prefer live
+    bridge units when present, recover uid/type from the last active
+    solution, then supplement partial rosters from save-file current.mechs.
+    As a final fallback, use the standard player pawn IDs so the command
+    remains useful on the deployment screen.
+    """
+    live_by_uid = {
+        int(u.uid): {"uid": int(u.uid), "type": u.type}
+        for u in board.units
+        if u.is_mech and u.hp > 0
+    }
+
+    recovered: dict[int, str] = {}
+    if session.active_solution is not None:
+        for action in session.active_solution.actions:
+            recovered.setdefault(int(action.mech_uid), action.mech_type)
+
+    save_types: dict[int, str] = {}
+    state = load_game_state(profile)
+    if state is not None:
+        for uid, mech_type in enumerate(state.mechs[:3]):
+            save_types[uid] = mech_type
+
+    uid_order = sorted(set(live_by_uid) | set(recovered) | set(save_types))
+    if len(uid_order) < 3:
+        uid_order = sorted(set(uid_order) | {0, 1, 2})
+
+    merged: list[dict] = []
+    for uid in uid_order:
+        if uid in live_by_uid:
+            merged.append(live_by_uid[uid])
+        else:
+            merged.append({
+                "uid": uid,
+                "type": recovered.get(uid) or save_types.get(uid) or f"uid-{uid}",
+            })
+        if len(merged) >= 3:
+            break
+    return merged
+
+
+def cmd_deploy_recommended(profile: str = "Alpha") -> dict:
+    """Deploy three mechs to the ranked deployment tiles via bridge DEPLOY.
+
+    This handles the flaky manual deployment strip by sending `DEPLOY uid x y`
+    directly through the Lua bridge. It intentionally does not click Confirm;
+    the caller should verify the on-screen placement, then click the visible
+    CONFIRM button.
+    """
+    if not is_bridge_active():
+        result = {"error": "Bridge not active — deploy_recommended requires bridge"}
+        _print_result(result)
+        return result
+
+    refresh_bridge_state()
+    board, bridge_data = read_bridge_state()
+    if board is None or bridge_data is None:
+        result = {"error": "Failed to read bridge state"}
+        _print_result(result)
+        return result
+
+    deploy_zone = bridge_data.get("deployment_zone", [])
+    turn = bridge_data.get("turn", -1)
+    if turn != 0 or not deploy_zone:
+        result = {
+            "error": "Not on deployment screen or no deployment zone available",
+            "turn": turn,
+            "phase": bridge_data.get("phase", "unknown"),
+        }
+        _print_result(result)
+        return result
+
+    ranked = recommend_deploy_tiles(board, deploy_zone)
+    if not ranked:
+        ranked = [
+            {"x": int(t[0]), "y": int(t[1]), "hazard": None,
+             "hazard_warning": False}
+            for t in deploy_zone[:3]
+        ]
+
+    session = _load_session()
+    mechs = _deployable_mechs(board, session, profile=profile)
+    deployments = []
+
+    print(f"\n=== DEPLOY_RECOMMENDED ({len(deploy_zone)} tiles available) ===")
+    if not any(u.is_mech for u in board.units):
+        print("  NOTE: bridge did not list unplaced mechs; using recovered/stable UIDs")
+
+    for mech, tile in zip(mechs[:3], ranked[:3]):
+        uid = mech["uid"]
+        dx, dy = int(tile["x"]), int(tile["y"])
+        visual = _visual_tile(dx, dy)
+        print(f"  Deploying {mech['type']} (uid={uid}) to {visual} ({dx},{dy})")
+        try:
+            ack = deploy_mech(uid, dx, dy)
+        except (TimeoutError, BridgeError) as e:
+            result = {
+                "error": f"Deploy failed for uid={uid}: {e}",
+                "deployments": deployments,
+            }
+            _print_result(result)
+            return result
+
+        entry = {
+            "uid": uid,
+            "mech_type": mech["type"],
+            "bridge": [dx, dy],
+            "visual": visual,
+            "hazard": tile.get("hazard"),
+            "hazard_warning": bool(tile.get("hazard_warning")),
+            "ack": ack,
+        }
+        deployments.append(entry)
+        print(f"    ACK: {ack}")
+
+    time.sleep(0.5)
+    refresh_bridge_state()
+    check_board, check_data = read_bridge_state()
+    actual_by_uid = {}
+    if check_board is not None:
+        actual_by_uid = {
+            int(u.uid): (int(u.x), int(u.y))
+            for u in check_board.units
+            if u.is_mech and u.hp > 0
+        }
+
+    all_verified = True
+    for entry in deployments:
+        actual = actual_by_uid.get(entry["uid"])
+        entry["actual_bridge"] = list(actual) if actual else None
+        entry["verified"] = actual == tuple(entry["bridge"])
+        all_verified = all_verified and bool(entry["verified"])
+        status = "PASS" if entry["verified"] else f"MISS actual={actual}"
+        print(f"    VERIFY {entry['mech_type']} {entry['visual']}: {status}")
+
+    result = {
+        "status": "OK" if all_verified else "WARN",
+        "deployments": deployments,
+        "next_step": "click the visible CONFIRM button, then run `auto_turn --time-limit 10`",
+        "phase": (check_data or bridge_data).get("phase", "unknown"),
+    }
+    _print_result(result)
+    return result
+
+
 def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
                      max_turns: int = 20) -> dict:
     """Execute a complete mission via bridge: deploy -> combat turns -> mission end.
@@ -5948,6 +10096,21 @@ def cmd_auto_mission(profile: str = "Alpha", time_limit: float = 10.0,
             if "error" in turn_result:
                 result = {"error": turn_result["error"],
                           "turns_completed": turns_completed}
+                _print_result(result)
+                return result
+
+            status = turn_result.get("status")
+            if status != "ok":
+                result = {
+                    "status": "AUTO_MISSION_PAUSED",
+                    "turns_completed": turns_completed,
+                    "turn_result": turn_result,
+                    "next_step": (
+                        "auto_mission stops on any non-ok auto_turn result. "
+                        "Handle the UI click, safety block, investigation, "
+                        "or terminal screen manually before resuming."
+                    ),
+                }
                 _print_result(result)
                 return result
 
@@ -6722,7 +10885,7 @@ def _mission_end_auto_commit(
 
     # Push is best-effort — commit locally even if push fails.
     push_result = subprocess.run(
-        ["git", "-C", str(repo), "push", "origin", "main"],
+        ["git", "-C", str(repo), "push", "origin", "HEAD"],
         capture_output=True, text=True,
     )
     pushed = push_result.returncode == 0
@@ -6755,11 +10918,15 @@ def cmd_mission_end(
     runs where you don't want every mission cluttering main).
     """
     if outcome not in ("win", "loss"):
-        return {"error": f"outcome must be 'win' or 'loss', got {outcome!r}"}
+        result = {"error": f"outcome must be 'win' or 'loss', got {outcome!r}"}
+        _print_result(result)
+        return result
 
     session = RunSession.load()
     if not session.run_id:
-        return {"error": "No active run. Start one with `new_run`."}
+        result = {"error": "No active run. Start one with `new_run`."}
+        _print_result(result)
+        return result
 
     run_dir = _recording_dir(session)
     mi = session.mission_index

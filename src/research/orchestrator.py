@@ -132,28 +132,116 @@ def drain_stale_behavior_novelty(session: RunSession) -> list[str]:
     """
     from src.solver.unknown_detector import _load_known
 
-    known_pawn_types = _load_known().get("pawn_types", set())
+    known = _load_known()
+    known_pawn_types = known.get("pawn_types", set())
+    known_terrain = known.get("terrain_ids", set())
+    known_weapons = known.get("weapons", set())
+    known_weapons_norm = {w.replace("_", "") for w in known_weapons}
+    known_phases = known.get("phases", set())
 
     resolved: list[str] = []
     for entry in session.research_queue:
-        if entry.get("status") != "pending":
+        if entry.get("status") not in ("pending", "in_progress"):
             continue
-        if entry.get("kind") != "behavior_novelty":
-            continue
-        if entry.get("severity") != "low":
-            continue
+        kind = entry.get("kind")
         type_name = entry.get("type", "")
-        if not type_name or type_name not in known_pawn_types:
+
+        if kind == "behavior_novelty":
+            if entry.get("severity") != "low":
+                continue
+            if not type_name or type_name not in known_pawn_types:
+                continue
+            reason = "low_severity_known_type"
+        elif kind is None:
+            terrain_id = entry.get("terrain_id")
+            if type_name:
+                if type_name not in known_pawn_types:
+                    continue
+            elif terrain_id:
+                if terrain_id not in known_terrain:
+                    continue
+            else:
+                continue
+            reason = "known_novelty_after_baseline_reload"
+        elif kind == "enemy_weapon":
+            if not type_name:
+                continue
+            if (type_name not in known_weapons
+                    and type_name.replace("_", "") not in known_weapons_norm):
+                continue
+            reason = "known_weapon_after_baseline_reload"
+        elif kind == "screen":
+            if type_name not in known_phases:
+                continue
+            reason = "known_screen_after_baseline_reload"
+        else:
             continue
+
         entry["status"] = "done"
         entry["result"] = {
             "source": "auto_resolved",
-            "reason": "low_severity_known_type",
+            "reason": reason,
             "diff_field": entry.get("diff_field"),
             "diff_predicted": entry.get("diff_predicted"),
             "diff_actual": entry.get("diff_actual"),
         }
-        resolved.append(type_name)
+        resolved.append(type_name or entry.get("terrain_id", ""))
+
+    if resolved:
+        session.save()
+    return resolved
+
+
+def resolve_known_research_entries(
+    session: RunSession,
+    type_name: str,
+    *,
+    kind: str | None = None,
+    reason: str = "manual_resolved_known_type",
+) -> list[dict]:
+    """Manually resolve pending research entries for an already-known target.
+
+    This is the escape hatch for stale high-severity behavior entries whose
+    unit type has since been catalogued and whose evidence is preserved in the
+    diagnosis/failure corpus. It deliberately validates against
+    ``known_types.json`` so an unknown target cannot be papered over by typo.
+    """
+    from src.solver.unknown_detector import _load_known
+
+    known = _load_known()
+    known_pawn_types = known.get("pawn_types", set())
+    known_terrain = known.get("terrain_ids", set())
+    known_weapons = known.get("weapons", set())
+    known_weapons_norm = {w.replace("_", "") for w in known_weapons}
+    known_phases = known.get("phases", set())
+
+    if (type_name not in known_pawn_types
+            and type_name not in known_terrain
+            and type_name not in known_weapons
+            and type_name.replace("_", "") not in known_weapons_norm
+            and type_name not in known_phases):
+        raise ValueError(f"{type_name!r} is not present in known_types.json")
+
+    resolved: list[dict] = []
+    for entry in session.research_queue:
+        if entry.get("status") not in ("pending", "in_progress"):
+            continue
+        if kind is not None and entry.get("kind") != kind:
+            continue
+        if (entry.get("type") != type_name
+                and entry.get("terrain_id") != type_name):
+            continue
+        entry["status"] = "done"
+        entry["result"] = {
+            "source": "manual_resolved",
+            "reason": reason,
+            "kind": entry.get("kind"),
+            "attempts": entry.get("attempts", 0),
+            "diff_field": entry.get("diff_field"),
+            "diff_predicted": entry.get("diff_predicted"),
+            "diff_actual": entry.get("diff_actual"),
+        }
+        resolved.append(entry)
 
     if resolved:
         session.save()

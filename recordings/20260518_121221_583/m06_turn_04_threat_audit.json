@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-05-18T13:27:54.688583",
+  "run_id": "20260518_121221_583",
+  "mission_index": 6,
+  "turn": 4,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 2,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          0,
+          4
+        ],
+        "target_visual": "D8",
+        "target_hp": 1,
+        "attacker": {
+          "uid": 5592,
+          "type": "Leaper1",
+          "pos": [
+            1,
+            4
+          ],
+          "visual": "D7",
+          "hp": 1,
+          "max_hp": 1,
+          "weapon_id": "LeaperAtk1",
+          "target": [
+            0,
+            4
+          ],
+          "target_visual": "D8",
+          "queued_target": [
+            0,
+            4
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_killed",
+          "detail": "attacker is dead or absent"
+        }
+      },
+      {
+        "target": [
+          5,
+          2
+        ],
+        "target_visual": "F3",
+        "target_hp": 2,
+        "attacker": {
+          "uid": 5596,
+          "type": "Firefly1",
+          "pos": [
+            5,
+            1
+          ],
+          "visual": "G3",
+          "hp": 3,
+          "max_hp": 3,
+          "weapon_id": "FireflyAtk1",
+          "target": [
+            5,
+            2
+          ],
+          "target_visual": "F3",
+          "queued_target": [
+            5,
+            2
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "retargeted_nonbuilding",
+          "detail": "attacker target is no longer a live building"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}

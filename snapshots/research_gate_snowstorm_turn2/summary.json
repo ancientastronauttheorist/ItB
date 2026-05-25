@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-01T12:36:34.006713",
+  "label": "research_gate_snowstorm_turn2",
+  "turn": 2,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Beetle2",
+      "pos": [
+        6,
+        6
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Hornet2",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 4
+    }
+  ]
+}

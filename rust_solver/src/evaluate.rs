@@ -134,6 +134,7 @@ pub struct EvalWeights {
     pub chain_damage: f64,
     pub smoke_placed: f64,
     pub tiles_frozen: f64,
+    pub viscera_nanobots_heal_bonus: f64,
 
     // Mission-specific bonus objectives (0 default; turn-aware via `scaled`).
     // Old Earth Dam: +1 Rep + 14-tile flood that drowns grounded Vek for rest
@@ -164,11 +165,33 @@ pub struct EvalWeights {
     // Boss kill bonus (mission objective: destroy the Hornet Leader, etc.)
     pub boss_killed_bonus: f64,
 
-    // "Kill N enemies" bonus (BONUS_KILL_FIVE). Step function that fires
+    // Unit-based mission objectives. Some bonus objectives are pawns, not
+    // objective buildings: Mission_Hacking's Hacked_Building must die, and
+    // the Cannon Bot must survive while it is still reported as enemy-team.
+    pub mission_destroy_unit_bonus: f64,
+    pub mission_destroy_unit_alive_penalty: f64,
+    pub mission_destroy_unit_shield_penalty: f64,
+    pub mission_protect_unit_alive_bonus: f64,
+    pub mission_protect_unit_dead_penalty: f64,
+
+    // "Kill at least N enemies" bonus (BONUS_KILL_FIVE). Step function that fires
     // exactly once per mission — on the plan whose cumulative kills cross
     // board.mission_kill_target. See the scoring block below for the
     // pre-turn-below / post-turn-at-or-above check.
     pub mission_kill_bonus: f64,
+
+    // Mission_Repair "Use 3 repair platforms" bonus. Progress is carried on
+    // board.repair_platforms_used and increments when any unit triggers an
+    // Item_Repair_Mine tile.
+    pub mission_repair_bonus: f64,
+    // Mission_Terraform "Terraform the grassland back to desert" objective.
+    // Negative penalty per custom grassland tile still present after the plan.
+    // Grassland is a save/custom-sprite marker, not a distinct terrain id.
+    pub mission_terraform_grass_remaining: f64,
+    // Mission_FreezeBldg "Break 5 buildings out of the ice" objective.
+    // Progress is read from objective building tiles that are alive and no
+    // longer frozen after the plan.
+    pub mission_freeze_building_bonus: f64,
 
     // Context-aware building multiplier knobs
     pub bld_grid_floor: f64,
@@ -281,6 +304,7 @@ impl Default for EvalWeights {
             chain_damage: 0.0,
             smoke_placed: 0.0,
             tiles_frozen: 0.0,
+            viscera_nanobots_heal_bonus: 0.0,
             // Mission-specific bonuses (zero by default; set via active.json)
             dam_destroyed: 0.0,
             dam_damage_dealt: 0.0,
@@ -289,7 +313,15 @@ impl Default for EvalWeights {
             building_objective_bonus: 8000.0,
             grid_reward_building_bonus: 25000.0,
             boss_killed_bonus: 8000.0,
+            mission_destroy_unit_bonus: 15000.0,
+            mission_destroy_unit_alive_penalty: -6000.0,
+            mission_destroy_unit_shield_penalty: -3000.0,
+            mission_protect_unit_alive_bonus: 8000.0,
+            mission_protect_unit_dead_penalty: -15000.0,
             mission_kill_bonus: 15000.0,
+            mission_repair_bonus: 15000.0,
+            mission_terraform_grass_remaining: -2500.0,
+            mission_freeze_building_bonus: 120000.0,
             bld_grid_floor: 0.6,
             bld_grid_scale: 0.4,
             bld_phase_floor: 1.0,
@@ -368,6 +400,16 @@ fn dam_hp(board: &Board) -> i8 {
     0
 }
 
+fn type_matches_any(name: &str, patterns: &[String]) -> bool {
+    patterns.iter().any(|p| !p.is_empty() && name.contains(p.as_str()))
+}
+
+fn is_expendable_friendly_pawn(name: &str) -> bool {
+    // Mission_Trapped decoy buildings are player-controlled bombs. Their
+    // self-destruction is the intended mission mechanic, not an NPC casualty.
+    name == "Trapped_Building"
+}
+
 /// `kills` is passed explicitly because dead enemies are filtered from iteration.
 /// `spawn_points` are next turn's Vek spawn locations.
 /// `psion_before`: snapshot of Psion state before mech actions — used to detect kills.
@@ -376,6 +418,7 @@ pub fn evaluate(
     spawn_points: &[(u8, u8)],
     weights: &EvalWeights,
     kills: i32,
+    mission_kills: i32,
     building_bumps: i32,
     psion_before: &PsionState,
     initial_building_threats: u64,
@@ -509,8 +552,16 @@ pub fn evaluate(
     // protected" archetype enemies can ever be the bonus target) so a
     // mis-typed mission entry can't silently penalize unrelated kills.
     let bonus_active = !board.bonus_dont_kill_types.is_empty();
+    let destroy_unit_active = !board.destroy_objective_unit_types.is_empty();
+    let protect_unit_active = !board.protect_objective_unit_types.is_empty();
+    let mut destroy_unit_dead = 0i32;
+    let mut destroy_unit_alive = 0i32;
+    let mut destroy_unit_shielded = 0i32;
+    let mut protect_unit_alive = 0i32;
+    let mut protect_unit_dead = 0i32;
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
+        let name = u.type_name_str();
         if u.is_enemy() && u.alive() {
             // damage_value = -50 * (0.10 + 0.90 * ff) → final: -5
             score += u.hp as f64 * scaled(weights.enemy_hp_remaining, ff, 0.10, 0.90) * enemy_urgency;
@@ -533,7 +584,6 @@ pub fn evaluate(
         // dead protected-type enemies on the post-state board — solver
         // clones the initial board each plan, so dead-at-end = killed-this-turn.
         if u.is_enemy() && !u.alive() && bonus_active {
-            let name = u.type_name_str();
             // Each entry is matched as a substring (mirrors is_volatile_vek's
             // contains() pattern) so "Volatile_Vek" catches "Volatile_Vek1",
             // "Volatile_Vek2" etc. without needing to enumerate variants.
@@ -544,8 +594,30 @@ pub fn evaluate(
                 }
             }
         }
+        if destroy_unit_active && type_matches_any(name, &board.destroy_objective_unit_types) {
+            if u.alive() {
+                destroy_unit_alive += 1;
+                if u.shield() {
+                    destroy_unit_shielded += 1;
+                }
+            } else {
+                destroy_unit_dead += 1;
+            }
+        }
+        if protect_unit_active && type_matches_any(name, &board.protect_objective_unit_types) {
+            if u.alive() {
+                protect_unit_alive += 1;
+            } else {
+                protect_unit_dead += 1;
+            }
+        }
     }
     score += volatile_dead as f64 * weights.volatile_enemy_killed;
+    score += destroy_unit_dead as f64 * weights.mission_destroy_unit_bonus;
+    score += destroy_unit_alive as f64 * weights.mission_destroy_unit_alive_penalty;
+    score += destroy_unit_shielded as f64 * weights.mission_destroy_unit_shield_penalty;
+    score += protect_unit_alive as f64 * weights.mission_protect_unit_alive_bonus;
+    score += protect_unit_dead as f64 * weights.mission_protect_unit_dead_penalty;
 
     // ── Threats cleared: reward neutralizing building threats ─────────
     // Compare initial building_threats bitset against post-attack survival.
@@ -645,17 +717,121 @@ pub fn evaluate(
         score += weights.bigbomb_killed;
     }
 
-    // ── Mission bonus: "Kill N enemies" threshold cross ─────────────────
-    // Step function — fires exactly once per mission on the plan that
-    // pushes cumulative kills across the target. Pre-turn < target AND
-    // post-turn ≥ target is the cross condition. scaled() floor=0.25
-    // leaves a meaningful bonus even on the final turn since unlocking
-    // the rep star still matters.
+    // ── Mission bonus: "Kill at least N enemies" progress + threshold cross ───────
+    // Reward partial progress toward the cumulative target so early turns
+    // don't ignore the bonus until the exact threshold-cross turn. The full
+    // step reward still fires exactly once on the plan that reaches N kills.
     let kt = board.mission_kill_target as i32;
     if kt > 0 {
         let kd = board.mission_kills_done as i32;
-        if kd < kt && kd + kills >= kt {
+        let new_kills = mission_kills.max(0);
+        if kd < kt && new_kills > 0 {
+            let progress_kills = ((kd + new_kills).min(kt) - kd).max(0);
+            if progress_kills > 0 {
+                let progress_ratio = progress_kills as f64 / kt as f64;
+                score += scaled(weights.mission_kill_bonus, ff, 0.10, 0.40)
+                    * progress_ratio;
+            }
+        }
+        if kd < kt && kd + new_kills >= kt {
             score += scaled(weights.mission_kill_bonus, ff, 0.25, 0.75);
+        }
+    }
+
+    // ── Mission bonus: "Kill N or fewer enemies" cap ─────────────────────
+    // BONUS_PACIFIST fails immediately when cumulative kills exceed the cap.
+    // Use a large unscaled penalty so the solver treats over-cap kills like
+    // other irreversible objective failures, even early in the mission.
+    let kl = board.mission_kill_limit as i32;
+    if kl > 0 {
+        let kd = board.mission_kills_done as i32;
+        let new_kills = mission_kills.max(0);
+        if kd + new_kills > kl {
+            score -= weights.mission_kill_bonus * 20.0;
+        }
+    }
+
+    // ── Mission bonus: "Use 3 repair platforms" progress + completion ───
+    let rt = board.repair_platform_target as i32;
+    if rt > 0 {
+        let used = (board.repair_platforms_used as i32).clamp(0, rt);
+        if used > 0 {
+            score += scaled(weights.mission_repair_bonus, ff, 0.10, 0.40)
+                * (used as f64 / rt as f64);
+        }
+        if used >= rt {
+            score += scaled(weights.mission_repair_bonus, ff, 0.25, 0.75);
+        }
+    }
+
+    // ── Mission bonus: Knock Vek Mites off mechs ─────────────────────
+    // Mite objectives serialize as `bInfected` on player mechs. Remaining
+    // infections are a reputation risk; reward clearing them immediately so
+    // the solver spends repair/damage/status actions before the final turn.
+    let infected_mechs = board.units.iter()
+        .filter(|u| u.is_player() && u.is_mech() && u.hp > 0 && u.infected())
+        .count() as f64;
+    if infected_mechs > 0.0 {
+        score -= scaled(weights.mission_repair_bonus, ff, 0.25, 0.75) * infected_mechs;
+    }
+
+    // ── Mission bonus: Terraform remaining grassland ─────────────────
+    // Mission_Terraform grassland is serialized as custom `ground_grass.png`
+    // on otherwise ordinary terrain. Penalize every remaining grass marker so
+    // the Terraformer chooses unique sweeps instead of spending repeats solely
+    // for kills/threats.
+    if board.mission_id == "Mission_Terraform" {
+        let grass_remaining = board.tiles.iter().filter(|t| t.grass()).count();
+        if grass_remaining > 0 {
+            score += grass_remaining as f64 * weights.mission_terraform_grass_remaining;
+        }
+    }
+
+    // ── Mission bonus: Destroy 2 mountains ───────────────────────────
+    // Mission_Force tracks the visible counter as EVENT_MOUNTAIN_DESTROYED.
+    // Python/bridge pass the current solve-input mountain bitset; simulated
+    // boards count any of those tiles that became rubble as this-plan progress.
+    if board.mission_mountain_target > 0 {
+        let target = board.mission_mountain_target as i32;
+        let done = (board.projected_mountains_destroyed() as i32).min(target);
+        let remaining = (target - done).max(0) as f64;
+        if done > 0 {
+            score += scaled(weights.mission_kill_bonus, ff, 0.10, 0.50)
+                * (done as f64 / target as f64);
+        }
+        if remaining > 0.0 {
+            score -= scaled(weights.mission_kill_bonus, ff, 0.10, 0.50) * remaining;
+        }
+    }
+
+    // ── Mission bonus: Break frozen buildings out of the ice ───────────
+    // Mission_FreezeBldg stores the objective building list separately from
+    // ordinary building metadata. A building counts once it is still alive and
+    // its frozen flag has been removed. Existing progress contributes a
+    // constant across candidates; newly-thawed buildings improve the post-state
+    // score immediately, so search spends actions on them before the mission
+    // runs out of turns.
+    if board.mission_id == "Mission_FreezeBldg" && board.freeze_building_target > 0 {
+        let target = board.freeze_building_target as i32;
+        let mut thawed = 0i32;
+        let mut bits = board.freeze_building_tiles;
+        while bits != 0 {
+            let bit_idx = bits.trailing_zeros() as usize;
+            bits &= bits - 1;
+            let (x, y) = idx_to_xy(bit_idx);
+            let tile = board.tile(x, y);
+            if tile.terrain == Terrain::Building && tile.building_hp > 0 && !tile.frozen() {
+                thawed += 1;
+            }
+        }
+        let progress = thawed.clamp(0, target);
+        if progress > 0 {
+            score += weights.mission_freeze_building_bonus
+                * 0.50
+                * (progress as f64 / target as f64);
+        }
+        if progress >= target {
+            score += weights.mission_freeze_building_bonus;
         }
     }
 
@@ -674,6 +850,7 @@ pub fn evaluate(
     // bypasses flying, so a flying mech on such a tile IS killed by the simulator
     // (enemy.rs::apply_env_danger). Tidal Wave / Cataclysm / Seismic — flagged
     // env_danger_flying_immune — skip flyers; the simulator leaves them alive.
+    // Final Cave falling rocks are intentionally not flying-immune.
     // The flying skip here is correct for NON-lethal branches (wind/sand/snow
     // don't affect flying) AND for flying_immune-lethal branches; we explicitly
     // penalize flying mechs sitting on non-flying-immune kill_int=1 tiles as
@@ -685,6 +862,11 @@ pub fn evaluate(
             let u = &board.units[i];
             if !u.alive() { continue; }
             if !board.is_env_danger(u.x, u.y) { continue; }
+            if u.is_player() && !u.is_mech()
+                && is_expendable_friendly_pawn(u.type_name_str())
+            {
+                continue;
+            }
 
             let on_kill_tile = board.is_env_danger_kill(u.x, u.y);
             let on_flying_immune_kill = on_kill_tile
@@ -693,6 +875,7 @@ pub fn evaluate(
             if u.is_player() && on_kill_tile {
                 // Flying mech on Tidal/Cataclysm/Seismic tile survives —
                 // skip the defensive death penalty (the simulator agrees).
+                // Final Cave falling rocks do not set this bit.
                 if u.effectively_flying() && on_flying_immune_kill {
                     continue;
                 }
@@ -776,7 +959,7 @@ pub fn evaluate(
             // Non-mech player units (ArchiveArtillery, Filler_Pawn, etc.)
             // Killing them loses a body-blocker and often involves pushing
             // them into buildings. Penalize to prevent sacrifice.
-            if u.hp <= 0 {
+            if u.hp <= 0 && !is_expendable_friendly_pawn(u.type_name_str()) {
                 score += weights.friendly_npc_killed;
             }
             continue;
@@ -1022,7 +1205,7 @@ mod tests {
     fn test_empty_board_score() {
         let board = Board::default();
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((score - 35000.0).abs() < 0.01);
     }
 
@@ -1032,7 +1215,7 @@ mod tests {
         board.tile_mut(3, 3).terrain = Terrain::Building;
         board.tile_mut(3, 3).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         // 35000 grid + 10000 building + 2000 hp - 500 uncovered_building = 46500
         assert!((score - 46500.0).abs() < 0.01);
     }
@@ -1044,16 +1227,75 @@ mod tests {
         let mut b1 = Board::default();
         b1.current_turn = 1;
         b1.total_turns = 5;
-        let s0 = evaluate(&b1, &[], &w, 0, 0, &p, 0);
-        let s1 = evaluate(&b1, &[], &w, 2, 0, &p, 0);
+        let s0 = evaluate(&b1, &[], &w, 0, 0, 0, &p, 0);
+        let s1 = evaluate(&b1, &[], &w, 2, 2, 0, &p, 0);
         assert!((s1 - s0 - 1800.0).abs() < 1.0);
 
         let mut b5 = Board::default();
         b5.current_turn = 5;
         b5.total_turns = 5;
-        let s0 = evaluate(&b5, &[], &w, 0, 0, &p, 0);
-        let s1 = evaluate(&b5, &[], &w, 2, 0, &p, 0);
+        let s0 = evaluate(&b5, &[], &w, 0, 0, 0, &p, 0);
+        let s1 = evaluate(&b5, &[], &w, 2, 2, 0, &p, 0);
         assert!((s1 - s0 - 200.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_kill_progress_scores_below_threshold() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 1;
+        b.total_turns = 5;
+        b.mission_kill_target = 5;
+        b.mission_kills_done = 0;
+
+        let no_kills = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
+        let two_kills = evaluate(&b, &[], &w, 2, 2, 0, &p, 0);
+
+        // 2 base kills on turn 1 = 1800. Progress shaping adds
+        // 15000 * 0.50 * (2/5) = 3000 before the full threshold bonus.
+        assert!((two_kills - no_kills - 4800.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_kill_threshold_still_fires_once() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 1;
+        b.total_turns = 5;
+        b.mission_kill_target = 5;
+        b.mission_kills_done = 4;
+
+        let no_kills = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
+        let one_kill = evaluate(&b, &[], &w, 1, 1, 0, &p, 0);
+
+        // 1 base kill = 900, progress shaping = 1500, threshold bonus = 15000.
+        assert!((one_kill - no_kills - 17400.0).abs() < 1.0);
+
+        b.mission_kills_done = 5;
+        let achieved_no_kills = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
+        let achieved_one_kill = evaluate(&b, &[], &w, 1, 1, 0, &p, 0);
+        assert!((achieved_one_kill - achieved_no_kills - 900.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_kill_limit_penalizes_over_cap() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+        let mut b = Board::default();
+        b.current_turn = 3;
+        b.total_turns = 5;
+        b.mission_kill_limit = 4;
+        b.mission_kills_done = 3;
+
+        let one_kill = evaluate(&b, &[], &w, 1, 1, 0, &p, 0);
+        let two_kills = evaluate(&b, &[], &w, 2, 2, 0, &p, 0);
+
+        assert!(
+            one_kill - two_kills > 250_000.0,
+            "exceeding a kill-limit objective must dominate normal kill value"
+        );
     }
 
     #[test]
@@ -1063,7 +1305,7 @@ mod tests {
         board.tile_mut(0, 0).terrain = Terrain::Building;
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
-        let score = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000*bld_mult) + 1 HP(2000*bld_mult) - 2500 uncovered(500*5.0)
         // bld_mult = 0.6 + 0.4*(1/7) = 0.6571... → building: 6571 + 1314 = 7886, total: 25000 + 7886 - 2500 = 30386
         assert!((score - 30386.0).abs() < 1.0);
@@ -1081,8 +1323,8 @@ mod tests {
             flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::ACTIVE,
             ..Unit::default()
         });
-        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, 0, &no_psion(), 0);
-        let without_spawn = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, 0, 0, &no_psion(), 0);
+        let without_spawn = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((with_spawn - without_spawn).abs() < 1.0);
     }
 
@@ -1116,8 +1358,8 @@ mod tests {
         board.total_turns = 5;
         // Blast Psion was active before, now dead
         let p_blast = PsionState { blast: true, ..Default::default() };
-        let with_bonus = evaluate(&board, &[], &w, 0, 0, &p_blast, 0);
-        let without_bonus = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let with_bonus = evaluate(&board, &[], &w, 0, 0, 0, &p_blast, 0);
+        let without_bonus = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((with_bonus - without_bonus - 2000.0).abs() < 1.0);
     }
 
@@ -1132,9 +1374,9 @@ mod tests {
         b.current_turn = 1;
         b.total_turns = 5;
         b.remaining_spawns = 0;
-        let s0 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s0 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         b.remaining_spawns = 2;
-        let s2 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s2 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         let expected = 2.0 * w.remaining_spawn_penalty;
         assert!((s0 - s2 - expected).abs() < 1.0,
             "expected s0-s2 ~= {}, got {} (s0={}, s2={})",
@@ -1150,9 +1392,9 @@ mod tests {
         b.current_turn = 5;
         b.total_turns = 5;
         b.remaining_spawns = 0;
-        let s0 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s0 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         b.remaining_spawns = 3;
-        let s3 = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s3 = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         assert!((s0 - s3).abs() < 1.0,
             "final turn should zero the penalty, got delta={}", s0 - s3);
     }
@@ -1166,9 +1408,9 @@ mod tests {
         b.current_turn = 1;
         b.total_turns = 5;
         b.remaining_spawns = u32::MAX;
-        let s_sent = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s_sent = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         b.remaining_spawns = 0;
-        let s_zero = evaluate(&b, &[], &w, 0, 0, &p, 0);
+        let s_zero = evaluate(&b, &[], &w, 0, 0, 0, &p, 0);
         assert!((s_sent - s_zero).abs() < 1.0,
             "sentinel should match zero-spawn score, got delta={}", s_sent - s_zero);
     }
@@ -1180,8 +1422,8 @@ mod tests {
         board.current_turn = 1;
         board.total_turns = 5;
         let p_tyrant = PsionState { tyrant: true, ..Default::default() };
-        let with = evaluate(&board, &[], &w, 0, 0, &p_tyrant, 0);
-        let without = evaluate(&board, &[], &w, 0, 0, &no_psion(), 0);
+        let with = evaluate(&board, &[], &w, 0, 0, 0, &p_tyrant, 0);
+        let without = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((with - without - 2500.0).abs() < 1.0);
     }
 
@@ -1212,12 +1454,12 @@ mod tests {
         base.add_unit(volatile);
 
         // Branch A: no protected types this mission — penalty no-ops.
-        let s_no_bonus = evaluate(&base, &[], &w, 0, 0, &p, 0);
+        let s_no_bonus = evaluate(&base, &[], &w, 0, 0, 0, &p, 0);
 
         // Branch B: this mission DOES protect Volatiles — penalty fires.
         let mut with_bonus = base.clone();
         with_bonus.bonus_dont_kill_types.push("GlowingScorpion".to_string());
-        let s_with_bonus = evaluate(&with_bonus, &[], &w, 0, 0, &p, 0);
+        let s_with_bonus = evaluate(&with_bonus, &[], &w, 0, 0, 0, &p, 0);
 
         let delta = s_no_bonus - s_with_bonus;
         // Penalty default = -10000.0. The bonus-active branch must be
@@ -1239,11 +1481,11 @@ mod tests {
         u.set_type_name("Volatile_Vek");
         volatile_canonical.add_unit(u);
         volatile_canonical.bonus_dont_kill_types.push("Volatile_Vek".to_string());
-        let s_canonical = evaluate(&volatile_canonical, &[], &w, 0, 0, &p, 0);
+        let s_canonical = evaluate(&volatile_canonical, &[], &w, 0, 0, 0, &p, 0);
         let s_canonical_no_bonus = {
             let mut b = volatile_canonical.clone();
             b.bonus_dont_kill_types.clear();
-            evaluate(&b, &[], &w, 0, 0, &p, 0)
+            evaluate(&b, &[], &w, 0, 0, 0, &p, 0)
         };
         assert!((s_canonical_no_bonus - s_canonical - 10000.0).abs() < 1.0,
             "canonical Volatile_Vek should also fire when listed");
@@ -1262,11 +1504,107 @@ mod tests {
         u2.set_type_name("Scarab1");
         other.add_unit(u2);
         other.bonus_dont_kill_types.push("GlowingScorpion".to_string());
-        let s_unrelated = evaluate(&other, &[], &w, 0, 0, &p, 0);
+        let s_unrelated = evaluate(&other, &[], &w, 0, 0, 0, &p, 0);
         let mut other_clean = other.clone();
         other_clean.bonus_dont_kill_types.clear();
-        let s_unrelated_clean = evaluate(&other_clean, &[], &w, 0, 0, &p, 0);
+        let s_unrelated_clean = evaluate(&other_clean, &[], &w, 0, 0, 0, &p, 0);
         assert!((s_unrelated - s_unrelated_clean).abs() < 1.0,
             "non-matching enemy must not trigger penalty regardless of bonus list");
+    }
+
+    #[test]
+    fn test_mission_unit_objectives_score_destroy_and_protect() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut base = Board::default();
+        base.destroy_objective_unit_types.push("Hacked_Building".to_string());
+        base.protect_objective_unit_types.push("Snowtank1".to_string());
+
+        let mut facility = Unit {
+            uid: 1, x: 1, y: 4, hp: 1, max_hp: 1,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        facility.set_type_name("Hacked_Building");
+        facility.set_shield(true);
+        base.add_unit(facility);
+
+        let mut bot = Unit {
+            uid: 2, x: 3, y: 5, hp: 1, max_hp: 1,
+            team: Team::Enemy,
+            ..Unit::default()
+        };
+        bot.set_type_name("Snowtank1");
+        base.add_unit(bot);
+
+        let shielded_alive = evaluate(&base, &[], &w, 0, 0, 0, &p, 0);
+
+        let mut unshielded = base.clone();
+        unshielded.units[0].set_shield(false);
+        let unshielded_alive = evaluate(&unshielded, &[], &w, 0, 0, 0, &p, 0);
+        assert!((unshielded_alive - shielded_alive - 3000.0).abs() < 1.0);
+
+        let mut destroyed = unshielded.clone();
+        destroyed.units[0].hp = 0;
+        let destroyed_score = evaluate(&destroyed, &[], &w, 0, 0, 0, &p, 0);
+        assert!((destroyed_score - unshielded_alive - 21100.0).abs() < 1.0);
+
+        let mut bot_dead = destroyed.clone();
+        bot_dead.units[1].hp = 0;
+        let bot_dead_score = evaluate(&bot_dead, &[], &w, 0, 0, 0, &p, 0);
+        assert!((destroyed_score - bot_dead_score - 22900.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_terraform_remaining_grass_penalty() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut with_grass = Board::default();
+        with_grass.mission_id = "Mission_Terraform".to_string();
+        with_grass.tile_mut(3, 3).set_grass(true);
+        with_grass.tile_mut(4, 4).set_grass(true);
+
+        let mut cleared = with_grass.clone();
+        cleared.tile_mut(3, 3).set_grass(false);
+        cleared.tile_mut(4, 4).set_grass(false);
+
+        let s_with_grass = evaluate(&with_grass, &[], &w, 0, 0, 0, &p, 0);
+        let s_cleared = evaluate(&cleared, &[], &w, 0, 0, 0, &p, 0);
+
+        assert!((s_cleared - s_with_grass - 5000.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_mission_freeze_building_scores_thawed_objective_buildings() {
+        let w = EvalWeights::default();
+        let p = no_psion();
+
+        let mut frozen = Board::default();
+        frozen.mission_id = "Mission_FreezeBldg".to_string();
+        frozen.freeze_building_target = 5;
+        for x in 0u8..5 {
+            let idx = xy_to_idx(x, 0);
+            frozen.freeze_building_tiles |= 1u64 << idx;
+            frozen.tile_mut(x, 0).terrain = Terrain::Building;
+            frozen.tile_mut(x, 0).building_hp = 1;
+            frozen.tile_mut(x, 0).set_frozen(true);
+        }
+
+        let mut one_thawed = frozen.clone();
+        one_thawed.tile_mut(0, 0).set_frozen(false);
+
+        let mut all_thawed = frozen.clone();
+        for x in 0u8..5 {
+            all_thawed.tile_mut(x, 0).set_frozen(false);
+        }
+
+        let s_frozen = evaluate(&frozen, &[], &w, 0, 0, 0, &p, 0);
+        let s_one = evaluate(&one_thawed, &[], &w, 0, 0, 0, &p, 0);
+        let s_all = evaluate(&all_thawed, &[], &w, 0, 0, 0, &p, 0);
+
+        assert!((s_one - s_frozen - 12000.0).abs() < 1.0);
+        assert!((s_all - s_frozen - 180000.0).abs() < 1.0);
     }
 }

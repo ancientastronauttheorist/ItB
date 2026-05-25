@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-05-06T19:55:17.840863",
+  "label": "research_queue_peek_m19_t1_webbegg1",
+  "turn": 1,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        6
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Storm_Generator",
+      "pos": [
+        1,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Firefly2",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Spider1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "WebbEgg1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

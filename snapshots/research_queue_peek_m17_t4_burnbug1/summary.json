@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-05-06T19:06:36.092449",
+  "label": "research_queue_peek_m17_t4_burnbug1",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Burnbug2",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Moth2",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Blobber1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        7,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Bouncer1",
+      "pos": [
+        7,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 1
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-04-30T18:14:12.853749",
+  "label": "venting_center_complete",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "Disposal_Unit",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "FlameMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion2",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Jelly_Health1",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Firefly1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 2
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-04-30T22:20:34.646185",
+  "label": "lifeless_basin_secured_6_grid",
+  "turn": 4,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Spider2",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Jelly_Explode1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Hornet2",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Beetle2",
+      "pos": [
+        5,
+        2
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        3,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab2",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 4
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-06T14:46:22.098732",
+  "label": "archive_armored_train_region_secured",
+  "turn": 3,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 5
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Train_Armored",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Crab1",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Mosquito1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    }
+  ]
+}

@@ -810,8 +810,9 @@ BRIDGE_ACK = Path("/tmp/itb_ack.txt")
 BRIDGE_READY = Path("/tmp/itb_bridge_ready")
 
 TERRAIN_NAMES = {
-    0: "ground", 1: "building", 2: "rubble", 3: "mountain",
-    4: "water", 5: "lava", 6: "forest", 7: "sand", 8: "ice", 9: "chasm",
+    0: "ground", 1: "building", 2: "rubble", 3: "water",
+    4: "mountain", 5: "ice", 6: "forest", 7: "sand", 9: "chasm",
+    10: "acid",
 }
 
 
@@ -1233,9 +1234,9 @@ local TEAM_PLAYER = 1
 local TEAM_ENEMY  = 6
 
 local TERRAIN_NAMES = {
-    [0] = "ground", [1] = "building", [2] = "rubble", [3] = "mountain",
-    [4] = "water", [5] = "lava", [6] = "forest", [7] = "sand",
-    [8] = "ice", [9] = "chasm",
+    [0] = "ground", [1] = "building", [2] = "rubble", [3] = "water",
+    [4] = "mountain", [5] = "ice", [6] = "forest", [7] = "sand",
+    [9] = "chasm", [10] = "acid",
 }
 
 -- ============================================================

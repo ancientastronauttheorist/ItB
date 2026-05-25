@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-08T13:54:54.357321",
+  "label": "research_queue_before_end_turn_m01t01_rst",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        2,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "GlowingScorpion",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 1
+    }
+  ]
+}

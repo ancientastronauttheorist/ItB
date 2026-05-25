@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/15lf2fg",
+      "excerpt": "Reddit Daily Discussion: Blobber lists the name Blobber Leader and describes baiting its spawned blob by positioning mechs around an open tile.",
+      "confidence": 0.5
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/0/3461598818984123405/",
+      "excerpt": "Steam bug-report discussion names the Blobber Leader and discusses its explosive blob attack behavior, including the boss icon reference.",
+      "confidence": 0.5
+    }
+  ]
+}

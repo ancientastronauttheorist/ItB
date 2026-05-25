@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-05-06T18:43:24.092923",
+  "label": "research_queue_peek_m16_t2",
+  "turn": 2,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "Snowmine1",
+      "pos": [
+        6,
+        0
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowmine1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        3
+      ],
+      "hp": 6
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 7
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 5
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer2",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        7,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Bouncer2",
+      "pos": [
+        6,
+        1
+      ],
+      "hp": 4
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 3
+    }
+  ]
+}

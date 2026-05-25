@@ -1,0 +1,103 @@
+{
+  "timestamp": "2026-04-30T20:44:39.410899",
+  "run_id": "default",
+  "mission_index": 17,
+  "turn": 1,
+  "label": "post_enemy",
+  "data": {
+    "actual_outcome": {
+      "buildings_alive": 8,
+      "building_hp_total": 11,
+      "objective_buildings_alive": 1,
+      "objective_building_hp_total": 1,
+      "pods_present": 0,
+      "grid_power": 2,
+      "enemies_alive": 2,
+      "enemy_hp_total": 8,
+      "mechs_alive": 3,
+      "mech_hp_total": 11,
+      "mech_hp": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "hp": 5,
+          "max_hp": 3
+        },
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "hp": 4,
+          "max_hp": 3
+        },
+        {
+          "uid": 2,
+          "type": "TeleMech",
+          "hp": 2,
+          "max_hp": 2
+        }
+      ],
+      "mechs_on_danger": [],
+      "mechs_disabled": [],
+      "mechs_webbed": []
+    },
+    "predicted_outcome": {
+      "building_hp_total": 11,
+      "buildings_alive": 8,
+      "buildings_destroyed_by_enemies": 0,
+      "enemies_alive": 2,
+      "enemy_hp_total": 8,
+      "grid_power": 2,
+      "mech_hp": [
+        {
+          "hp": 5,
+          "max_hp": 3,
+          "type": "FlameMech",
+          "uid": 0
+        },
+        {
+          "hp": 4,
+          "max_hp": 3,
+          "type": "IgniteMech",
+          "uid": 1
+        },
+        {
+          "hp": 2,
+          "max_hp": 2,
+          "type": "TeleMech",
+          "uid": 2
+        }
+      ],
+      "mechs_alive": 3
+    },
+    "deltas": {
+      "buildings_alive_diff": 0,
+      "building_hp_diff": 0,
+      "grid_power_diff": 0,
+      "enemies_alive_diff": 0,
+      "mech_hp_diff": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "predicted_hp": 5,
+          "actual_hp": 5,
+          "diff": 0
+        },
+        {
+          "uid": 1,
+          "type": "IgniteMech",
+          "predicted_hp": 4,
+          "actual_hp": 4,
+          "diff": 0
+        },
+        {
+          "uid": 2,
+          "type": "TeleMech",
+          "predicted_hp": 2,
+          "actual_hp": 2,
+          "diff": 0
+        }
+      ],
+      "unexpected_events": []
+    }
+  }
+}

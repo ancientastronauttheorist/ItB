@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-08T15:11:14.470687",
+  "label": "research_gate_m04_turn03_leaper1",
+  "turn": 3,
+  "grid_power": 6,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        2,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Bouncer1",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Leaper1",
+      "pos": [
+        4,
+        6
+      ],
+      "hp": 1
+    }
+  ]
+}

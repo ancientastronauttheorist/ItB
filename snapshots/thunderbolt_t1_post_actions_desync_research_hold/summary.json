@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-17T15:10:41.785430",
+  "label": "thunderbolt_t1_post_actions_desync_research_hold",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "ElectricMech",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "WallMech",
+      "pos": [
+        3,
+        6
+      ],
+      "hp": 3
+    },
+    {
+      "type": "RockartMech",
+      "pos": [
+        3,
+        4
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scarab1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Scarab1",
+      "pos": [
+        6,
+        3
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Burrower2",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 5
+    }
+  ]
+}

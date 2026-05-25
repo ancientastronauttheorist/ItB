@@ -1,0 +1,190 @@
+{
+  "run_id": "20260508_122657_124",
+  "squad": "Rusting Hulks",
+  "achievement_targets": [
+    "Perfect Battle",
+    "Stormy Weather"
+  ],
+  "difficulty": 0,
+  "current_island": "",
+  "current_mission": "Mission_FreezeBots",
+  "islands_completed": [],
+  "mission_index": 1,
+  "last_mission_turn": 2,
+  "current_turn": 2,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "JetMech",
+        "move_to": [
+          5,
+          4
+        ],
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ],
+        "description": "JetMech, move C1\u2192D3"
+      },
+      {
+        "mech_uid": 98,
+        "mech_type": "Freeze_Tank",
+        "move_to": [
+          5,
+          5
+        ],
+        "weapon": "Pinnacle_FreezeTank",
+        "target": [
+          5,
+          4
+        ],
+        "description": "Freeze_Tank, move C4\u2192C3, fire Unknown at D3"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "RocketMech",
+        "move_to": [
+          5,
+          3
+        ],
+        "weapon": "_REPAIR",
+        "target": [
+          5,
+          3
+        ],
+        "description": "RocketMech, repair"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "PulseMech",
+        "move_to": [
+          2,
+          1
+        ],
+        "weapon": "_REPAIR",
+        "target": [
+          2,
+          1
+        ],
+        "description": "PulseMech, repair"
+      }
+    ],
+    "score": 116322.85714285706,
+    "turn": 2,
+    "input_fingerprint": "0:7,5:3|1:5,3:2|2:2,1:2|96:4,4:1|97:4,3:1|98:4,5:1"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "timestamp": "2026-05-08T12:34:09.728568",
+      "turn": 1,
+      "label": "solve",
+      "score": 127692.85714285713,
+      "actions": [
+        "Freeze_Tank, move B6\u2192C4, fire Unknown at D4",
+        "JetMech, move B5\u2192C1",
+        "PulseMech, fire Repulse at G6",
+        "RocketMech, move G4\u2192E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-08T12:37:12.686554",
+      "turn": 2,
+      "label": "solve",
+      "score": 116322.85714285706,
+      "actions": [
+        "JetMech, move C1\u2192D3",
+        "Freeze_Tank, move C4\u2192C3, fire Unknown at D3",
+        "RocketMech, repair",
+        "PulseMech, repair"
+      ]
+    }
+  ],
+  "recorded_post_enemy_turns": [
+    [
+      1,
+      1
+    ]
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "type": "JetMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_FreezeBots",
+      "first_seen_turn": 1,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known player mech type already present in data/known_types.json; stale mech_weapon queue entry after auto_turn peek.",
+        "kind": "mech_weapon",
+        "attempts": 1,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      },
+      "research_id": "62c4b4b339ef",
+      "last_kind": "mech"
+    },
+    {
+      "type": "RocketMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_FreezeBots",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known player mech type already present in data/known_types.json; stale mech_weapon queue entry after auto_turn peek.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "PulseMech",
+      "terrain_id": null,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_FreezeBots",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Known player mech type already present in data/known_types.json; stale mech_weapon queue entry after auto_turn peek.",
+        "kind": "mech_weapon",
+        "attempts": 0,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "8e4f9e9555c63dcb",
+    "classes": "ggggggggggbbmmggggbmmbggggmmbbfgfgggfgggggggggfgggfmmggggggmmggg",
+    "mission_index": 1,
+    "turn": 2
+  },
+  "terrain_stage_change_pending": false
+}

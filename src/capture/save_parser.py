@@ -27,11 +27,55 @@ TERRAIN_MAP = {
     2: "rubble",
     3: "water",
     4: "mountain",
-    5: "lava",
+    5: "ice",
     6: "forest",
     7: "sand",
-    8: "ice",
     9: "chasm",
+    10: "acid",
+}
+
+_MODELED_UPGRADED_WEAPONS = {
+    "Prime_Punchmech_A",
+    "Prime_Punchmech_B",
+    "Prime_Punchmech_AB",
+    "Prime_Lightning_A",
+    "Prime_Lightning_B",
+    "Prime_Lightning_AB",
+    "Prime_Lasermech_A",
+    "Prime_Lasermech_B",
+    "Prime_Lasermech_AB",
+    "Prime_Flamethrower_A",
+    "Prime_Flamethrower_B",
+    "Prime_Flamethrower_AB",
+    "Prime_TC_Punt_A",
+    "Prime_TC_Punt_B",
+    "Prime_TC_Punt_AB",
+    "Prime_Leap_A",
+    "Prime_Leap_B",
+    "Prime_Leap_AB",
+    "Brute_Jetmech_A",
+    "Brute_Jetmech_B",
+    "Brute_Jetmech_AB",
+    "Brute_Unstable_A",
+    "Brute_Unstable_B",
+    "Brute_Unstable_AB",
+    "Ranged_Ignite_A",
+    "Ranged_Artillerymech_A",
+    "Ranged_Rocket_A",
+    "Ranged_Rocket_B",
+    "Ranged_Rocket_AB",
+    "Ranged_Crack_A",
+    "Ranged_Crack_B",
+    "Ranged_Crack_AB",
+    "Science_Repulse_A",
+    "Science_Repulse_AB",
+    "Science_Swap_A",
+    "Science_Swap_B",
+    "Science_Swap_AB",
+    "Science_KO_Crack_A",
+    "Science_KO_Crack_B",
+    "Science_KO_Crack_AB",
+    "Passive_Leech_A",
 }
 
 
@@ -79,6 +123,7 @@ class Pawn:
     secondary_mod2: list = field(default_factory=list)
     secondary_powered: list = field(default_factory=list)
     secondary_damaged: bool = False
+    boosted: bool = False        # bBoosted — next ability gets +1 damage/heal
     # Attack intent
     target: Point | None = None      # piTarget - where they're aiming
     queued_shot: Point | None = None  # piQueuedShot - confirmed attack target
@@ -210,6 +255,7 @@ class GameState:
     difficulty: int = 0
     squad_name: str = ""
     mechs: list[str] = field(default_factory=list)
+    weapons: list[str] = field(default_factory=list)
     active_mission: MissionState | None = None
 
 
@@ -277,6 +323,122 @@ def parse_lua_value(text: str, pos: int = 0) -> tuple[Any, int]:
     return None, pos + 1
 
 
+def _lua_list(value: object) -> list:
+    if isinstance(value, list):
+        return list(value)
+    if isinstance(value, dict):
+        numeric_items = []
+        for key, item in value.items():
+            if isinstance(key, int):
+                numeric_items.append((key, item))
+            elif isinstance(key, str) and key.isdigit():
+                numeric_items.append((int(key), item))
+        if numeric_items:
+            return [item for _key, item in sorted(numeric_items)]
+    return []
+
+
+def _strip_upgrade_suffix(weapon_id: str) -> tuple[str, str]:
+    for suffix in ("_AB", "_A", "_B"):
+        if weapon_id.endswith(suffix):
+            return weapon_id[:-len(suffix)], suffix
+    return weapon_id, ""
+
+
+def _upgrade_group_fully_powered(mod_state: object) -> bool:
+    mod_list = _lua_list(mod_state)
+    if not mod_list:
+        return False
+    for value in mod_list:
+        try:
+            if int(value) <= 0:
+                return False
+        except (TypeError, ValueError):
+            return False
+    return True
+
+
+def _modeled_upgrade_from_save_mods(
+    base_weapon: str,
+    mod1_state: object,
+    mod2_state: object,
+) -> str | None:
+    if not base_weapon:
+        return None
+    if base_weapon in _MODELED_UPGRADED_WEAPONS:
+        return base_weapon
+    candidates: list[str] = []
+    powered_a = _upgrade_group_fully_powered(mod1_state)
+    powered_b = _upgrade_group_fully_powered(mod2_state)
+    if powered_a and powered_b:
+        candidates.append(f"{base_weapon}_AB")
+    if powered_a:
+        candidates.append(f"{base_weapon}_A")
+    if powered_b:
+        candidates.append(f"{base_weapon}_B")
+    for upgraded in candidates:
+        if upgraded in _MODELED_UPGRADED_WEAPONS:
+            return upgraded
+    return None
+
+
+def _weapon_with_modeled_upgrade(
+    base_weapon: str,
+    mod1_state: object,
+    mod2_state: object,
+) -> str:
+    return (
+        _modeled_upgrade_from_save_mods(base_weapon, mod1_state, mod2_state)
+        or base_weapon
+    )
+
+
+def _overlay_modeled_upgrade(
+    weapons: list[str],
+    uid: int,
+    slot: int,
+    base_weapon: str,
+    mod1_state: object,
+    mod2_state: object,
+) -> None:
+    upgraded = _modeled_upgrade_from_save_mods(base_weapon, mod1_state, mod2_state)
+    if not upgraded:
+        return
+    idx = uid * 2 + slot
+    while len(weapons) <= idx:
+        weapons.append("")
+    expected_base, _suffix = _strip_upgrade_suffix(upgraded)
+    current = weapons[idx]
+    if current in ("", expected_base, upgraded):
+        weapons[idx] = upgraded
+
+
+def _overlay_mission_pawn_weapons_from_loadout(
+    mission: "MissionState | None",
+    weapons: list[str],
+) -> None:
+    if mission is None:
+        return
+    for pawn in mission.pawns:
+        if not pawn.is_mech:
+            continue
+        try:
+            uid = int(pawn.pawn_id)
+        except (TypeError, ValueError):
+            continue
+        for slot, attr in ((0, "primary_weapon"), (1, "secondary_weapon")):
+            idx = uid * 2 + slot
+            if idx >= len(weapons):
+                continue
+            upgraded = weapons[idx]
+            if upgraded not in _MODELED_UPGRADED_WEAPONS:
+                continue
+            expected_base, _suffix = _strip_upgrade_suffix(upgraded)
+            current = getattr(pawn, attr, "")
+            if current in ("", expected_base, upgraded):
+                setattr(pawn, attr, upgraded)
+
+
 def parse_lua_table(text: str, pos: int = 0) -> tuple[dict | list, int]:
     """Parse a Lua table literal {...} into a Python dict or list."""
     if text[pos] != '{':
@@ -319,11 +481,6 @@ def parse_lua_table(text: str, pos: int = 0) -> tuple[dict | list, int]:
                 else:
                     pos += 1
 
-        # Bare value (array element)
-        elif text[pos] == '{' or text[pos] == '"' or text[pos:pos + 5] == 'Point':
-            val, pos = parse_lua_value(text, pos)
-            array_items.append(val)
-
         # key = value (without brackets)
         elif text[pos].isalpha() or text[pos] == '_':
             m = re.match(r'(\w+)\s*=\s*', text[pos:])
@@ -333,7 +490,22 @@ def parse_lua_table(text: str, pos: int = 0) -> tuple[dict | list, int]:
                 val, pos = parse_lua_value(text, pos)
                 result[key] = val
             else:
-                pos += 1
+                literal_starts = (
+                    text[pos:pos + 12] == 'CreateEffect'
+                    or text[pos:pos + 5] == 'Point'
+                    or text[pos:pos + 4] == 'true'
+                    or text[pos:pos + 5] == 'false'
+                    or text[pos:pos + 3] == 'nil'
+                )
+                if literal_starts:
+                    val, pos = parse_lua_value(text, pos)
+                    array_items.append(val)
+                else:
+                    pos += 1
+        # Bare value (array element)
+        elif text[pos] == '{' or text[pos] == '"' or text[pos] == '-' or text[pos].isdigit():
+            val, pos = parse_lua_value(text, pos)
+            array_items.append(val)
         else:
             pos += 1
 
@@ -397,6 +569,12 @@ def extract_mission_state(
 
         terrain_id = tile_data.get('terrain', 0)
         grapple_t = tile_data.get('grapple_targets', [])
+        pod_value = tile_data.get('pod', 0)
+        # Save files use numeric pod states. Live/uncollected pods are `1`;
+        # recovered pods persist as `3` alongside `podReward`, and should not
+        # be treated as a live pod by fallback parsing.
+        has_live_pod = pod_value if isinstance(pod_value, bool) else pod_value == 1
+
         tile = Tile(
             x=loc.x, y=loc.y,
             terrain=TERRAIN_MAP.get(terrain_id, "unknown"),
@@ -406,7 +584,7 @@ def extract_mission_state(
             health_max=tile_data.get('health_max', 0),
             health_min=tile_data.get('health_min', 0),
             on_fire=bool(tile_data.get('fire', 0)),
-            has_pod=bool(tile_data.get('pod', 0)),
+            has_pod=bool(has_live_pod),
             unique=tile_data.get('unique', ''),
             grappled=bool(tile_data.get('grappled', 0)),
             grapple_targets=grapple_t if isinstance(grapple_t, list) else [],
@@ -443,8 +621,12 @@ def extract_mission_state(
 
         # Extract list fields safely
         def _get_list(d, k):
-            v = d.get(k, [])
-            return list(v) if isinstance(v, (list, dict)) else []
+            return _lua_list(d.get(k, []))
+
+        primary_mod1 = _get_list(pd, 'primary_mod1')
+        primary_mod2 = _get_list(pd, 'primary_mod2')
+        secondary_mod1 = _get_list(pd, 'secondary_mod1')
+        secondary_mod2 = _get_list(pd, 'secondary_mod2')
 
         pawn = Pawn(
             pawn_id=pd.get('id', 0),
@@ -454,8 +636,16 @@ def extract_mission_state(
             max_health=pd.get('max_health', 0),
             team_id=pd.get('iTeamId', 0),
             is_mech=bool(pd.get('mech', False)),
-            primary_weapon=pd.get('primary', ''),
-            secondary_weapon=pd.get('secondary', ''),
+            primary_weapon=_weapon_with_modeled_upgrade(
+                pd.get('primary', ''),
+                primary_mod1,
+                primary_mod2,
+            ),
+            secondary_weapon=_weapon_with_modeled_upgrade(
+                pd.get('secondary', ''),
+                secondary_mod1,
+                secondary_mod2,
+            ),
             pilot_name=pilot.get('name', ''),
             pilot_id=pilot.get('id', ''),
             pilot_skill1=pilot.get('skill1', 0),
@@ -465,14 +655,15 @@ def extract_mission_state(
             # Reactor / upgrades
             move_power=_get_list(pd, 'movePower')[0] if _get_list(pd, 'movePower') else 0,
             health_power=_get_list(pd, 'healthPower')[0] if _get_list(pd, 'healthPower') else 0,
-            primary_mod1=_get_list(pd, 'primary_mod1'),
-            primary_mod2=_get_list(pd, 'primary_mod2'),
+            primary_mod1=primary_mod1,
+            primary_mod2=primary_mod2,
             primary_powered=_get_list(pd, 'primary_power'),
             primary_damaged=bool(pd.get('primary_damaged', False)),
-            secondary_mod1=_get_list(pd, 'secondary_mod1'),
-            secondary_mod2=_get_list(pd, 'secondary_mod2'),
+            secondary_mod1=secondary_mod1,
+            secondary_mod2=secondary_mod2,
             secondary_powered=_get_list(pd, 'secondary_power'),
             secondary_damaged=bool(pd.get('secondary_damaged', False)),
+            boosted=bool(pd.get('bBoosted', False)),
             # Attack intents
             target=target if isinstance(target, Point) and target.x >= 0 else None,
             queued_shot=queued if isinstance(queued, Point) and queued.x >= 0 else None,
@@ -597,8 +788,43 @@ def load_game_state(profile: str = "Alpha") -> GameState | None:
             mechs = current.get('mechs', [])
             if isinstance(mechs, list):
                 state.mechs = [m for m in mechs if isinstance(m, str)]
+            weapons = current.get('weapons', [])
+            if isinstance(weapons, list):
+                state.weapons = [w for w in weapons if isinstance(w, str)]
+
+        squad_data = data.get('SquadData', {})
+        if isinstance(squad_data, dict):
+            for key, pawn_data in squad_data.items():
+                if not isinstance(key, str) or not key.startswith('pawn'):
+                    continue
+                if not isinstance(pawn_data, dict):
+                    continue
+                try:
+                    uid = int(key[4:])
+                except ValueError:
+                    continue
+                _overlay_modeled_upgrade(
+                    state.weapons,
+                    uid,
+                    0,
+                    pawn_data.get('primary', ''),
+                    pawn_data.get('primary_mod1', []),
+                    pawn_data.get('primary_mod2', []),
+                )
+                _overlay_modeled_upgrade(
+                    state.weapons,
+                    uid,
+                    1,
+                    pawn_data.get('secondary', ''),
+                    pawn_data.get('secondary_mod1', []),
+                    pawn_data.get('secondary_mod2', []),
+                )
 
         state.active_mission = load_active_mission(profile)
+        _overlay_mission_pawn_weapons_from_loadout(
+            state.active_mission,
+            state.weapons,
+        )
         return state
 
     return None

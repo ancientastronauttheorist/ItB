@@ -111,7 +111,7 @@ EXPECTED_UNIT_KEYS = {
     "uid", "type", "pos", "hp", "max_hp", "alive", "active",
     "is_mech", "team", "status",
 }
-EXPECTED_STATUS_KEYS = {"fire", "acid", "frozen", "shield", "web"}
+EXPECTED_STATUS_KEYS = {"fire", "acid", "frozen", "shield", "web", "boosted"}
 
 EXPECTED_TILE_KEYS = {
     "x", "y", "terrain", "building_hp", "fire", "acid", "smoke", "has_pod",
@@ -160,6 +160,37 @@ def test_replay_solution_empty_plan_returns_baseline():
     assert data["predicted_states"] == []
     assert data["predicted_outcome"]["mechs_alive"] == 1
     assert data["predicted_outcome"]["enemies_alive"] == 0
+
+
+@pytest.mark.regression
+def test_replay_solution_preserves_boosted_status():
+    """Boosted must stay in replay snapshots for verify.py diff parity."""
+    import itb_solver
+
+    bridge = {
+        "tiles": [],
+        "units": [
+            {"uid": 0, "type": "JetMech", "x": 2, "y": 3,
+             "hp": 2, "max_hp": 2, "team": 1, "mech": True,
+             "flying": True, "move": 5, "active": True, "boosted": True,
+             "weapons": ["Brute_Jetmech"]},
+        ],
+        "grid_power": 7, "grid_power_max": 7,
+        "spawning_tiles": [], "environment_danger": [],
+        "remaining_spawns": 0, "turn": 1, "total_turns": 4,
+    }
+    plan = [{
+        "mech_uid": 0,
+        "move_to": [2, 3],
+        "weapon_id": "None",
+        "target": [255, 255],
+    }]
+
+    raw = itb_solver.replay_solution(json.dumps(bridge), json.dumps(plan))
+    data = json.loads(raw)
+    post_attack_units = data["predicted_states"][0]["post_attack"]["units"]
+    jet = next(u for u in post_attack_units if u["uid"] == 0)
+    assert jet["status"]["boosted"] is True
 
 
 @pytest.mark.regression

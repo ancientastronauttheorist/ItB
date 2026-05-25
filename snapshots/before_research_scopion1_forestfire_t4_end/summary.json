@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-22T14:26:39.317279",
+  "label": "before_research_scopion1_forestfire_t4_end",
+  "turn": 4,
+  "grid_power": 4,
+  "mechs": [
+    {
+      "type": "GuardMech",
+      "pos": [
+        6,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "MirrorMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "IceMech",
+      "pos": [
+        3,
+        1
+      ],
+      "hp": 2
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Scorpion2",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Scorpion1",
+      "pos": [
+        4,
+        3
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Burnbug1",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 3
+    }
+  ]
+}

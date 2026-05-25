@@ -9,9 +9,11 @@ from __future__ import annotations
 
 from src.strategy.mission_picker import (
     BONUS_ASSET,
+    BONUS_BLOCK,
     BONUS_GRID,
     BONUS_KILL_FIVE,
     BONUS_MECHS,
+    BONUS_PACIFIST,
     derive_squad_tags,
     score_island_map,
     score_mission,
@@ -90,6 +92,66 @@ def _tidal_mission() -> dict:
         "mission_id": "Mission_Battle",
         "bonus_objective_ids": [BONUS_GRID],
         "environment": "Env_TidalWaves",
+    }
+
+
+def _spawn_block_mission() -> dict:
+    """Mission with the block-emergence bonus."""
+    return {
+        "region_id": 5,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [BONUS_BLOCK],
+        "environment": "Env_Null",
+    }
+
+
+def _kill_limit_mission() -> dict:
+    """Mission with the kill-limit / pacifist-style bonus."""
+    return {
+        "region_id": 6,
+        "mission_id": "Mission_Generic",
+        "bonus_objective_ids": [BONUS_PACIFIST],
+        "environment": "Env_Null",
+    }
+
+
+def _forest_fire_counter_mission() -> dict:
+    """Archive custom objective: end with 8 spaces on fire."""
+    return {
+        "region_id": 10,
+        "mission_id": "Mission_ForestFire",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
+def _tank_objective_mission() -> dict:
+    """Archive custom objective: defend two fragile Old Earth tanks."""
+    return {
+        "region_id": 11,
+        "mission_id": "Mission_Tanks",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
+def _terraform_counter_mission() -> dict:
+    """R.S.T. custom objective: clear all grass with the Terraformer."""
+    return {
+        "region_id": 12,
+        "mission_id": "Mission_Terraform",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
+    }
+
+
+def _mite_counter_mission() -> dict:
+    """Mite custom objective: knock all mites off the mechs."""
+    return {
+        "region_id": 13,
+        "mission_id": "Mission_Holes",
+        "bonus_objective_ids": [],
+        "environment": "Env_Null",
     }
 
 
@@ -225,6 +287,100 @@ def test_tidal_no_flying_penalty_only_when_no_flying():
     for line in with_fly["rationale_lines"]:
         assert "no flying" not in line
     assert with_fly["score"] > no_fly["score"]
+
+
+def test_spawn_block_bonus_avoided_for_perfect_island_farming():
+    """Spawn-block objectives are risky unless the turn solver hard-gates them."""
+    ranked = score_island_map(
+        [_spawn_block_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    block = next(e for e in ranked if BONUS_BLOCK in e["bonus_objective_ids"])
+    assert block["score"] < 0
+    assert any("block-spawn" in line for line in block["rationale_lines"])
+
+
+def test_kill_limit_bonus_avoided_for_perfect_island_farming():
+    """Kill-limit objectives are risky unless lethal planning is hard-gated."""
+    ranked = score_island_map(
+        [_kill_limit_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    kill_limit = next(e for e in ranked if BONUS_PACIFIST in e["bonus_objective_ids"])
+    assert kill_limit["score"] < 0
+    rationale = " ".join(kill_limit["rationale_lines"])
+    assert "kill-limit" in rationale
+
+
+def test_forest_fire_counter_avoided_for_perfect_island_farming():
+    """Fire-tile counters are custom objectives, not BonusObjs ids."""
+    ranked = score_island_map(
+        [_forest_fire_counter_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    fire_counter = next(e for e in ranked if e["mission_id"] == "Mission_ForestFire")
+    assert fire_counter["score"] <= -50
+    assert "fire_tile_counter" in fire_counter["mission_tags"]
+    rationale = " ".join(fire_counter["rationale_lines"])
+    assert "fire-tile counter" in rationale
+    assert "hard veto" in rationale
+
+
+def test_tank_objective_avoided_for_perfect_island_farming():
+    """Tank defense is fragile until ally-objective safety is fully trusted."""
+    ranked = score_island_map(
+        [_tank_objective_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    tanks = next(e for e in ranked if e["mission_id"] == "Mission_Tanks")
+    assert tanks["score"] <= -20
+    assert "fragile_ally_objective" in tanks["mission_tags"]
+    rationale = " ".join(tanks["rationale_lines"])
+    assert "fragile ally" in rationale
+
+
+def test_terraform_counter_avoided_for_perfect_island_farming():
+    ranked = score_island_map(
+        [_terraform_counter_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    terraform = next(e for e in ranked if e["mission_id"] == "Mission_Terraform")
+    assert terraform["score"] <= -50
+    assert "terraform_grass_counter" in terraform["mission_tags"]
+    rationale = " ".join(terraform["rationale_lines"])
+    assert "terraform-grass counter" in rationale
+    assert "hard veto" in rationale
+
+
+def test_mite_counter_avoided_for_perfect_island_farming():
+    ranked = score_island_map(
+        [_mite_counter_mission(), _safe_battle_mission()],
+        RIFT_WALKERS_SQUAD,
+        grid_power=7,
+        mission_metadata={},
+    )
+    assert ranked[0]["mission_id"] == "Mission_Battle"
+    mites = next(e for e in ranked if e["mission_id"] == "Mission_Holes")
+    assert mites["score"] <= -50
+    assert "mite_counter" in mites["mission_tags"]
+    rationale = " ".join(mites["rationale_lines"])
+    assert "mite counter" in rationale
+    assert "hard veto" in rationale
 
 
 # ---------------------------------------------------------------------------

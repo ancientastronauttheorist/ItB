@@ -14,6 +14,8 @@ import pytest
 from src.loop import commands as cmd_mod
 from src.loop.commands import _unit_roster_fingerprint
 from src.loop.session import ActiveSolution, RunSession, SolverAction
+from src.model.board import Board
+from src.solver.verify import DiffResult
 
 
 # ---------------------------------------------------------------------------
@@ -69,6 +71,44 @@ def test_fingerprint_empty_for_missing_data():
     assert _unit_roster_fingerprint({"units": []}) == ""
 
 
+def test_pod_state_diff_queues_investigation(tmp_path, monkeypatch):
+    monkeypatch.setattr(cmd_mod, "SNAPSHOT_DIR", tmp_path)
+    diff = DiffResult(tile_diffs=[{
+        "x": 5,
+        "y": 4,
+        "field": "has_pod",
+        "predicted": True,
+        "actual": False,
+    }])
+    investigations = []
+
+    cmd_mod._maybe_flag_pod_state_diff(
+        investigations,
+        diff,
+        {"categories": ["pod"], "top_category": "pod"},
+        {"tiles": []},
+        Board(),
+        {
+            "sub_action": "attack",
+            "action_index": 2,
+            "mech_uid": 7,
+            "weapon": "Science_Swap",
+            "target": [5, 3],
+        },
+        run_id="run",
+        turn=2,
+        failure_db_id="failure",
+    )
+
+    assert len(investigations) == 1
+    inv = investigations[0]
+    assert inv["kind"] == "pod_state_diff"
+    assert inv["pod_diffs"][0]["field"] == "has_pod"
+    context = json.loads((Path(inv["snapshot_path"]) / "context.json").read_text())
+    assert context["kind"] == "pod_state_diff"
+    assert context["weapon"] == "Science_Swap"
+
+
 # ---------------------------------------------------------------------------
 # Session round-trip.
 # ---------------------------------------------------------------------------
@@ -106,6 +146,655 @@ def test_session_set_solution_records_fingerprint():
     # Round-trip via to_dict/from_dict.
     s2 = RunSession.from_dict(s.to_dict())
     assert s2.active_solution.input_fingerprint == "xyz"
+
+
+def test_dirty_consent_token_is_exact_and_single_use():
+    s = RunSession(run_id="r", difficulty=2, tags=["achievement"])
+    s.mission_index = 4
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "grid_damage",
+            "current": 5,
+            "predicted": 4,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=3)
+    missing = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=None,
+    )
+    assert missing["status"] == "DIRTY_CONSENT_REQUIRED"
+    assert missing["dirty_consent_id"] == token
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+    )
+    assert accepted is None
+    assert token in s.dirty_consent_used
+    assert not cmd_mod.plan_requires_safety_block(
+        safety,
+        allow_dirty_plan=True,
+        allow_kill_limit_objective_dirty=(
+            cmd_mod._allow_kill_limit_objective_dirty_consent(s)
+        ),
+    )
+
+    reused = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+    )
+    assert reused["status"] == "DIRTY_CONSENT_REJECTED"
+
+
+def test_dirty_consent_rejects_non_overridable_without_consuming_token():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.mission_index = 12
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "pylon_hp_loss",
+            "current": 2,
+            "predicted": 1,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=1)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=1,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "pylon_hp_loss" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_protected_objective_loss_with_stress_flag():
+    s = RunSession(run_id="r", difficulty=3, tags=["solver_eval"])
+    s.mission_index = 3
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "protected_objective_unit_lost",
+            "current": 2,
+            "predicted": 1,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=200)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=200,
+        provided_id=token,
+    )
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=200,
+        provided_id=token,
+        allow_protected_objective_loss=True,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_objective_loss_with_stress_flag():
+    s = RunSession(run_id="r", difficulty=3, tags=["solver_eval"])
+    s.mission_index = 3
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "objective_building_destroyed",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "objective_building_hp_loss",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "protected_objective_unit_lost",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+        ],
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=0)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+    )
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+        allow_objective_loss=True,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "objective_building_destroyed" in rejected["reason"]
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_dirty_consent_validation_can_delay_token_consumption():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.mission_index = 4
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "grid_damage",
+            "current": 5,
+            "predicted": 4,
+            "blocking": True,
+            "delta": -1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=3)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=3,
+        provided_id=token,
+        consume=False,
+    )
+
+    assert accepted is None
+    assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_kill_limit_failure_for_non_perfect_targets():
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=["achievement"],
+        achievement_targets=["Quantum Entanglement", "This is Fine"],
+    )
+    s.mission_index = 7
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_limit_objective_failed",
+            "current": 4,
+            "predicted": 6,
+            "blocking": True,
+            "delta": 2,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=23)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=23,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_kill_count_failure_for_non_perfect_targets():
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=["achievement"],
+        achievement_targets=["Healing"],
+    )
+    s.mission_index = 9
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_objective_failed",
+            "current": 2,
+            "predicted": 3,
+            "blocking": True,
+            "delta": 1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=8)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=8,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+@pytest.mark.parametrize(
+    ("targets", "tags"),
+    [
+        (["There is No Try"], ["achievement"]),
+        (["Perfect Strategy"], ["achievement"]),
+        (["Quantum Entanglement"], ["perfect_strategy"]),
+    ],
+)
+def test_dirty_consent_rejects_kill_limit_failure_for_perfect_targets(
+    targets, tags
+):
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=tags,
+        achievement_targets=targets,
+    )
+    s.mission_index = 7
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_limit_objective_failed",
+            "current": 4,
+            "predicted": 6,
+            "blocking": True,
+            "delta": 2,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=23)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=23,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "kill_limit_objective_failed" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_rejects_kill_count_failure_for_perfect_targets():
+    s = RunSession(
+        run_id="r",
+        difficulty=0,
+        tags=["achievement"],
+        achievement_targets=["Perfect Strategy"],
+    )
+    s.mission_index = 9
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [{
+            "kind": "kill_objective_failed",
+            "current": 2,
+            "predicted": 3,
+            "blocking": True,
+            "delta": 1,
+        }],
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=8)
+
+    rejected = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=8,
+        provided_id=token,
+    )
+
+    assert rejected["status"] == "DIRTY_CONSENT_REJECTED"
+    assert "kill_objective_failed" in rejected["reason"]
+    assert token not in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_final_cave_emergency_pylon_loss():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.mission_index = 24
+    s.set_solution([_make_action()], 7.0, 2, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "grid_damage",
+                "current": 6,
+                "predicted": 4,
+                "blocking": True,
+                "delta": -2,
+            },
+            {
+                "kind": "pylon_destroyed",
+                "current": 7,
+                "predicted": 6,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "pylon_hp_loss",
+                "current": 14,
+                "predicted": 12,
+                "blocking": True,
+                "delta": -2,
+            },
+        ],
+        "current": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 6,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+        },
+        "predicted": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 4,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+    token = cmd_mod._dirty_consent_id(s, 2, safety, actions, candidate_rank=0)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=2,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=0,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_final_bomb_bonus_building_loss():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement_hunt"])
+    s.mission_index = 5
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "grid_damage",
+                "current": 7,
+                "predicted": 6,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "objective_building_destroyed",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+            {
+                "kind": "objective_building_hp_loss",
+                "current": 1,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -1,
+            },
+        ],
+        "current": {
+            "mission_id": "Mission_Bomb",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 7,
+            "protected_objective_units_alive": 2,
+            "mechs_alive": 3,
+        },
+        "predicted": {
+            "mission_id": "Mission_Bomb",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 6,
+            "protected_objective_units_alive": 2,
+            "mechs_alive": 3,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=36)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=36,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_dirty_consent_accepts_final_cave_resist_gamble():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.mission_index = 24
+    s.set_solution([_make_action()], 7.0, 4, input_fingerprint="fp")
+    actions = s.active_solution.actions
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {
+                "kind": "grid_damage",
+                "current": 4,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -4,
+            },
+            {
+                "kind": "grid_timeline_collapse",
+                "current": 4,
+                "predicted": 0,
+                "blocking": True,
+                "delta": -4,
+            },
+            {
+                "kind": "pylon_destroyed",
+                "current": 6,
+                "predicted": 4,
+                "blocking": True,
+                "delta": -2,
+            },
+            {
+                "kind": "pylon_hp_loss",
+                "current": 12,
+                "predicted": 8,
+                "blocking": True,
+                "delta": -4,
+            },
+        ],
+        "current": {
+            "mission_id": "Mission_Final_Cave",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 4,
+            "pylons_alive": 6,
+            "pylon_hp_total": 12,
+            "mechs_alive": 3,
+            "mech_hp_total": 9,
+            "bigbomb_alive": True,
+        },
+        "predicted": {
+            "mission_id": "Mission_Final_Cave",
+            "turn": 4,
+            "total_turns": 4,
+            "grid_power": 0,
+            "pylons_alive": 4,
+            "pylon_hp_total": 8,
+            "mechs_alive": 3,
+            "mech_hp_total": 9,
+            "bigbomb_alive": True,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+    token = cmd_mod._dirty_consent_id(s, 4, safety, actions, candidate_rank=493)
+
+    accepted = cmd_mod._dirty_consent_gate(
+        s,
+        turn=4,
+        plan_safety=safety,
+        actions=actions,
+        candidate_rank=493,
+        provided_id=token,
+    )
+
+    assert accepted is None
+    assert token in s.dirty_consent_used
+
+
+def test_threat_audit_allows_expected_final_cave_emergency_pylon_loss():
+    s = RunSession(run_id="r", difficulty=2, tags=["hard_victory"])
+    s.current_mission = "Mission_Final_Cave"
+    safety = {
+        "status": "DIRTY",
+        "blocking": True,
+        "violations": [
+            {"kind": "grid_damage", "blocking": True},
+            {"kind": "pylon_destroyed", "blocking": True},
+            {"kind": "pylon_hp_loss", "blocking": True},
+        ],
+        "current": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 6,
+            "pylons_alive": 7,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+        },
+        "predicted": {
+            "mission_id": "Mission_Final_Cave",
+            "grid_power": 4,
+            "pylons_alive": 6,
+            "mechs_alive": 3,
+            "mech_hp_total": 10,
+            "bigbomb_alive": True,
+            "mechs_acid": [],
+            "mechs_fire": [],
+            "mechs_webbed": [],
+            "mechs_on_danger": [],
+            "mechs_disabled": [],
+        },
+    }
+
+    assert cmd_mod._threat_audit_requires_block(
+        {"still_threatened_count": 1}, safety, s
+    ) is False
+    assert cmd_mod._threat_audit_requires_block(
+        {"still_threatened_count": 2}, safety, s
+    ) is True
+
+
+def test_threat_audit_blocks_unresolved_building_threat_on_normal_grid():
+    s = RunSession(run_id="r", difficulty=0, tags=["achievement"])
+    s.current_mission = "Mission_Missiles"
+    safety = {
+        "status": "CLEAN",
+        "blocking": False,
+        "current": {"grid_power": 3},
+        "predicted": {"grid_power": 3},
+    }
+
+    assert cmd_mod._threat_audit_requires_block(
+        {"still_threatened_count": 1}, safety, s
+    ) is True
 
 
 # ---------------------------------------------------------------------------

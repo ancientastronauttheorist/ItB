@@ -28,6 +28,7 @@ use std::time::{Duration, Instant};
 use crate::board::Board;
 use crate::evaluate::EvalWeights;
 use crate::solver::{solve_turn_top_k, Solution};
+use crate::types::DisabledMask;
 use crate::turn_projection::project_plan;
 use crate::weapons::WeaponTable;
 
@@ -61,7 +62,7 @@ pub fn solve_beam(
     k_per_level: &[usize],
     time_limit_secs: f64,
     weights: &EvalWeights,
-    disabled_mask: u128,
+    disabled_mask: DisabledMask,
     weapons: &WeaponTable,
 ) -> Vec<BeamChain> {
     assert!(depth >= 1 && depth <= 2, "beam depth must be 1 or 2 for v1 (got {depth})");
@@ -196,8 +197,8 @@ mod tests {
         let (board, spawn_points) = mk_board_with_mech_and_enemy();
         let weights = eval_weights_default();
         let k = 3;
-        let beam = solve_beam(&board, &spawn_points, 1, &[k], 5.0, &weights, 0, &WEAPONS);
-        let top = solve_turn_top_k(&board, &spawn_points, 5.0, 99_999, &weights, 0, &WEAPONS, k);
+        let beam = solve_beam(&board, &spawn_points, 1, &[k], 5.0, &weights, [0; 2], &WEAPONS);
+        let top = solve_turn_top_k(&board, &spawn_points, 5.0, 99_999, &weights, [0; 2], &WEAPONS, k);
         assert_eq!(beam.len(), top.len());
         for (i, (b_chain, t_sol)) in beam.iter().zip(top.iter()).enumerate() {
             assert_eq!(b_chain.level_0.score, t_sol.score,
@@ -213,7 +214,7 @@ mod tests {
     fn test_beam_depth_2_chains_sorted_desc() {
         let (board, spawn_points) = mk_board_with_mech_and_enemy();
         let weights = eval_weights_default();
-        let beam = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, 0, &WEAPONS);
+        let beam = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, [0; 2], &WEAPONS);
         assert!(!beam.is_empty(), "depth-2 beam should return at least 1 chain on a playable board");
         for w in beam.windows(2) {
             assert!(w[0].chain_score >= w[1].chain_score,
@@ -232,7 +233,7 @@ mod tests {
         // because it accurately reflects the chain's quality).
         let (board, spawn_points) = mk_board_with_mech_and_enemy();
         let weights = eval_weights_default();
-        let beam = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, 0, &WEAPONS);
+        let beam = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, [0; 2], &WEAPONS);
         for c in &beam {
             match &c.level_1_best {
                 Some(s) => assert_eq!(c.chain_score, c.level_0.score + s.score),
@@ -247,8 +248,8 @@ mod tests {
         // (action sequences and chain_scores).
         let (board, spawn_points) = mk_board_with_mech_and_enemy();
         let weights = eval_weights_default();
-        let a = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, 0, &WEAPONS);
-        let b = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, 0, &WEAPONS);
+        let a = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, [0; 2], &WEAPONS);
+        let b = solve_beam(&board, &spawn_points, 2, &[3, 2], 10.0, &weights, [0; 2], &WEAPONS);
         assert_eq!(a.len(), b.len());
         for (ac, bc) in a.iter().zip(b.iter()) {
             assert_eq!(ac.chain_score, bc.chain_score);
@@ -277,7 +278,7 @@ mod tests {
         enemy.flags = UnitFlags::ACTIVE | UnitFlags::PUSHABLE;
         b.add_unit(enemy);
         let weights = eval_weights_default();
-        let beam = solve_beam(&b, &[], 2, &[3, 2], 2.0, &weights, 0, &WEAPONS);
+        let beam = solve_beam(&b, &[], 2, &[3, 2], 2.0, &weights, [0; 2], &WEAPONS);
         assert!(beam.is_empty(), "no-active-mechs board must yield empty beam");
     }
 
@@ -292,7 +293,7 @@ mod tests {
         board.current_turn = 5; // == total_turns, final turn
         board.total_turns = 5;
         let weights = eval_weights_default();
-        let beam = solve_beam(&board, &spawn_points, 2, &[3, 2], 5.0, &weights, 0, &WEAPONS);
+        let beam = solve_beam(&board, &spawn_points, 2, &[3, 2], 5.0, &weights, [0; 2], &WEAPONS);
         // Chain must not panic and must preserve level_0 score contract.
         for c in &beam {
             match &c.level_1_best {

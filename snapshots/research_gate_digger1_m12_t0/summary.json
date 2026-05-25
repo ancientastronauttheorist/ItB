@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-04-30T12:56:39.596787",
+  "label": "research_gate_digger1_m12_t0",
+  "turn": 4,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "FlameMech",
+      "pos": [
+        6,
+        5
+      ],
+      "hp": 2
+    },
+    {
+      "type": "IgniteMech",
+      "pos": [
+        2,
+        7
+      ],
+      "hp": 5
+    },
+    {
+      "type": "TeleMech",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Jelly_Regen1",
+      "pos": [
+        4,
+        1
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Hornet1",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 2
+    }
+  ]
+}

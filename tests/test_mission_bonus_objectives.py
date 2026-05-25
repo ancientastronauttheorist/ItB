@@ -31,6 +31,12 @@ def test_resolve_known_mission_returns_protected_types():
     )
 
 
+def test_resolve_live_volatile_mission_returns_protected_types():
+    types = resolve_bonus_types("Mission_Volatile")
+    assert "GlowingScorpion" in types
+    assert "Volatile_Vek" in types
+
+
 def test_resolve_unknown_mission_returns_empty():
     assert resolve_bonus_types("Mission_DoesNotExist") == []
 

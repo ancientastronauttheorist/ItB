@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Blobber&restrict_sr=1",
+      "excerpt": "r/IntoTheBreach search results include Alpha Blobber and Blobber daily discussions, corroborating that Alpha Blobbers spawn Alpha Blobs and that baiting placement is a known tactic.",
+      "confidence": 0.7
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Blobber",
+      "excerpt": "Steam discussion search found Blobber threads noting that Blobbers add extra moving parts by spawning blobs, and players discuss positioning/removing the Blobber to control spawned-unit disruption.",
+      "confidence": 0.65
+    }
+  ]
+}

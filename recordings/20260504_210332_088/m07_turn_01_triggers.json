@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-05T14:00:28.289095",
+  "run_id": "20260504_210332_088",
+  "mission_index": 7,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "self_damage_building",
+        "tier": 4,
+        "severity": "critical",
+        "details": "Action 2 (ArchiveArtillery) damaged 2 building HP, destroyed 1 buildings"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0
+    }
+  }
+}

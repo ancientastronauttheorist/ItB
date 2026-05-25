@@ -1,0 +1,224 @@
+{
+  "timestamp": "2026-04-30T00:17:25.803632",
+  "run_id": "default",
+  "mission_index": 7,
+  "turn": 3,
+  "label": "action_0_attack_verify",
+  "data": {
+    "action_index": 0,
+    "sub_action": "attack",
+    "mech_uid": 0,
+    "predicted": {
+      "action_index": 0,
+      "grid_power": 6,
+      "mech_uid": 0,
+      "snapshot_phase": "after_mech_action",
+      "tiles_changed": [
+        {
+          "acid": false,
+          "building_hp": 2,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "mountain",
+          "x": 4,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "building_hp": 2,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "building",
+          "x": 4,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": true,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 5,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "sand",
+          "x": 6,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": true,
+          "terrain": "ground",
+          "x": 6,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "building_hp": 0,
+          "fire": false,
+          "has_pod": false,
+          "smoke": false,
+          "terrain": "ground",
+          "x": 6,
+          "y": 4
+        }
+      ],
+      "units": [
+        {
+          "active": true,
+          "alive": true,
+          "hp": 3,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            5,
+            3
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "FlameMech",
+          "uid": 0
+        },
+        {
+          "active": true,
+          "alive": true,
+          "hp": 4,
+          "is_mech": true,
+          "max_hp": 3,
+          "pos": [
+            6,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "IgniteMech",
+          "uid": 1
+        },
+        {
+          "active": false,
+          "alive": false,
+          "hp": 0,
+          "is_mech": true,
+          "max_hp": 2,
+          "pos": [
+            2,
+            5
+          ],
+          "status": {
+            "acid": false,
+            "fire": false,
+            "frozen": false,
+            "shield": false,
+            "web": false
+          },
+          "team": 1,
+          "type": "TeleMech",
+          "uid": 2
+        }
+      ]
+    },
+    "diff": {
+      "unit_diffs": [
+        {
+          "uid": 0,
+          "type": "FlameMech",
+          "field": "active",
+          "predicted": true,
+          "actual": false
+        }
+      ],
+      "tile_diffs": [],
+      "scalar_diffs": [],
+      "total_count": 1
+    },
+    "classification": {
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false
+    },
+    "fuzzy_signal": {
+      "version": 1,
+      "top_category": "click_miss",
+      "categories": [
+        "click_miss"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "click_miss|Unknown|attack",
+      "frequency": 6,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 1,
+      "confidence": 0.8,
+      "context": {
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Unknown",
+        "target": [
+          255,
+          255
+        ]
+      }
+    }
+  }
+}

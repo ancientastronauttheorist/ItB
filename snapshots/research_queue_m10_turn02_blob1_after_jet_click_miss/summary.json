@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-05-08T19:03:23.323772",
+  "label": "research_queue_m10_turn02_blob1_after_jet_click_miss",
+  "turn": 2,
+  "grid_power": 7,
+  "mechs": [
+    {
+      "type": "JetMech",
+      "pos": [
+        5,
+        4
+      ],
+      "hp": 4
+    },
+    {
+      "type": "RocketMech",
+      "pos": [
+        1,
+        2
+      ],
+      "hp": 3
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        5,
+        1
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "StarfishBoss",
+      "pos": [
+        4,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "Blobber1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 3
+    },
+    {
+      "type": "Blob1",
+      "pos": [
+        1,
+        5
+      ],
+      "hp": 1
+    }
+  ]
+}

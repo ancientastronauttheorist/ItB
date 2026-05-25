@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-30T01:10:59.099128",
+  "run_id": "default",
+  "mission_index": 9,
+  "turn": 1,
+  "label": "triggers",
+  "data": {
+    "triggers": [
+      {
+        "trigger": "mech_damage_unexpected",
+        "tier": 1,
+        "severity": "high",
+        "details": "IgniteMech: predicted HP 5, actual 4 (-1)"
+      }
+    ],
+    "trigger_count": 1,
+    "severity_counts": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0
+    }
+  }
+}

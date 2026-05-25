@@ -1,0 +1,16 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit",
+      "url": "https://www.reddit.com/r/IntoTheBreach/search/?q=A.C.I.D.+Launcher&restrict_sr=1",
+      "excerpt": "Reddit search results include player discussion specifically naming the A.C.I.D. Launcher, including questions about using it to destroy glowing mountains. This corroborates the in-game name but gives limited mechanical detail from search snippets alone.",
+      "confidence": 0.45
+    },
+    {
+      "source": "steam_forum",
+      "url": "https://steamcommunity.com/app/590380/discussions/search/?q=A.C.I.D.+Launcher",
+      "excerpt": "Steam discussion search has multiple references to A.C.I.D. Launcher as a mission/objective unit: it can be smoked like Terraformer, it does not count as a building, and instant-kill effects such as acid launcher bypass shield/frozen-style protection in cited player reports.",
+      "confidence": 0.65
+    }
+  ]
+}

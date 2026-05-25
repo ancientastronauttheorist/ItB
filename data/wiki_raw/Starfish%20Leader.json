@@ -1,0 +1,22 @@
+{
+  "community_notes": [
+    {
+      "source": "reddit_ae_leaders",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/w3h1g2/advanced_edition_new_vek_psions_and_leaders/",
+      "excerpt": "Advanced Edition leader summary lists Starfish as 6 health, 3 move, 3x4 damage, damaging diagonally and pushing orthogonally.",
+      "confidence": 0.8
+    },
+    {
+      "source": "reddit_daily_discussion",
+      "url": "https://www.reddit.com/r/IntoTheBreach/comments/1bguw0b/into_the_breach_daily_discussion_starfish_248292/",
+      "excerpt": "The daily discussion records Starfish Leader at 6 HP, move 3, damage 3, with an effect that damages four oblique tiles and pushes four others.",
+      "confidence": 0.8
+    },
+    {
+      "source": "wiki",
+      "url": "https://intothebreach.fandom.com/wiki/Starfish_Leader",
+      "excerpt": "Fandom lists Starfish Leader as a 6 HP, 3 move boss with Scored Appendages: 3 damage to four corner/diagonal tiles and outward push on four adjacent tiles.",
+      "confidence": 0.9
+    }
+  ]
+}

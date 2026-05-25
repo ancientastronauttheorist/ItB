@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-04T23:48:35.328715",
+  "label": "research_gate_freeze_tank_m03_turn1",
+  "turn": 1,
+  "grid_power": 5,
+  "mechs": [
+    {
+      "type": "Freeze_Tank",
+      "pos": [
+        2,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "WallMech",
+      "pos": [
+        3,
+        5
+      ],
+      "hp": 5
+    },
+    {
+      "type": "ArtiMech",
+      "pos": [
+        3,
+        2
+      ],
+      "hp": 2
+    },
+    {
+      "type": "PulseMech",
+      "pos": [
+        1,
+        4
+      ],
+      "hp": 3
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Snowtank1",
+      "pos": [
+        4,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Snowlaser1",
+      "pos": [
+        5,
+        5
+      ],
+      "hp": 1
+    },
+    {
+      "type": "Moth1",
+      "pos": [
+        4,
+        4
+      ],
+      "hp": 3
+    }
+  ]
+}

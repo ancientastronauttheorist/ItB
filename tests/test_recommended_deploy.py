@@ -26,16 +26,37 @@ hazard while keeping the full zone list intact.
 from __future__ import annotations
 
 from src.loop.commands import (
+    _deployable_mechs,
     classify_deploy_hazard,
     rank_deploy_tiles,
     recommend_deploy_tiles,
 )
-from src.model.board import Board
+from src.loop.session import RunSession
+from src.model.board import Board, Unit
 
 
 def _empty_board() -> Board:
     """Plain 8x8 ground board with no units, no enemies, no buildings."""
     return Board()
+
+
+def _mech(uid: int, mech_type: str) -> Unit:
+    return Unit(
+        uid=uid,
+        type=mech_type,
+        x=0,
+        y=0,
+        hp=3,
+        max_hp=3,
+        team=1,
+        is_mech=True,
+        move_speed=3,
+        flying=False,
+        massive=True,
+        armor=False,
+        pushable=True,
+        weapon="",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -46,6 +67,30 @@ def _empty_board() -> Board:
 def test_classify_returns_none_for_plain_ground():
     board = _empty_board()
     assert classify_deploy_hazard(board, 4, 4) is None
+
+
+def test_deployable_mechs_supplements_partial_bridge_roster(monkeypatch):
+    board = _empty_board()
+    board.units.append(_mech(0, "FlameMech"))
+    board.units.append(_mech(1, "IgniteMech"))
+
+    class FakeState:
+        mechs = ["FlameMech", "IgniteMech", "TeleMech"]
+        weapons = []
+
+    monkeypatch.setattr(
+        "src.loop.commands.load_game_state",
+        lambda profile="Alpha": FakeState(),
+    )
+
+    mechs = _deployable_mechs(board, RunSession(), profile="Alpha")
+
+    assert [m["uid"] for m in mechs] == [0, 1, 2]
+    assert [m["type"] for m in mechs] == [
+        "FlameMech",
+        "IgniteMech",
+        "TeleMech",
+    ]
 
 
 def test_classify_returns_freeze_mine():
