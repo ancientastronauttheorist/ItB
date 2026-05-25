@@ -399,3 +399,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 386 | 681 | Live UI-coordinate searches should stay out of bulky data folders. | `docs/agent/live-runbook.md` |
 | 387 | 683 | Hold the Line HQ and boss deployments use the same read-only wait. | `docs/agent/live-runbook.md` |
 | 388 | 685 | Hold the Line has an explicit manual-geometry override. | `docs/agent/achievement-playbook.md` |
+| 389 | 687 | HQ leader survival is terminal, not a generic kill-counter miss. | `docs/agent/safety-gates.md` |
