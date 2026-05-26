@@ -333,6 +333,31 @@ def test_threat_audit_prior_moth_blocked_push_still_warns():
     assert audit["entries"][0]["coverage"]["reason"] == "still_threatened"
 
 
+def test_threat_audit_frozen_building_target_is_thaw_covered():
+    board = Board()
+    tile = board.tile(2, 3)
+    tile.terrain = "building"
+    tile.building_hp = 1
+    tile.frozen = True
+    board.units.append(_enemy(
+        uid=973,
+        pawn_type="Scarab1",
+        x=4,
+        y=3,
+        tx=2,
+        ty=3,
+        hp=2,
+    ))
+    board.units[-1].weapon = "ScarabAtk1"
+    initial = capture_building_threats(board)
+
+    audit = audit_threat_coverage(initial, board)
+
+    assert audit["status"] == "OK"
+    assert audit["still_threatened_count"] == 0
+    assert audit["entries"][0]["coverage"]["reason"] == "target_frozen_building"
+
+
 def test_threat_audit_still_threatened_warns():
     initial = capture_building_threats(_board())
 

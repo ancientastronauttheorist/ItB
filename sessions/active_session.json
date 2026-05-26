@@ -6,58 +6,58 @@
   "current_island": "",
   "current_mission": "",
   "islands_completed": [],
-  "mission_index": 15,
+  "mission_index": 16,
   "last_mission_turn": -1,
   "current_turn": 4,
   "phase": "unknown",
   "active_solution": {
     "actions": [
       {
+        "mech_uid": 0,
+        "mech_type": "GuardMech",
+        "move_to": [
+          3,
+          2
+        ],
+        "weapon": "_REPAIR",
+        "target": [
+          3,
+          2
+        ],
+        "description": "GuardMech, move G4\u2192F5, repair"
+      },
+      {
         "mech_uid": 1,
         "mech_type": "MirrorMech",
         "move_to": [
-          5,
-          1
+          3,
+          5
         ],
-        "weapon": "Unknown",
+        "weapon": "Brute_Mirrorshot_A",
         "target": [
-          255,
-          255
+          2,
+          5
         ],
-        "description": "MirrorMech, move F2\u2192G3"
+        "description": "MirrorMech, move B6\u2192C5, fire Mirror Shot at C6"
       },
       {
         "mech_uid": 2,
         "mech_type": "IceMech",
         "move_to": [
-          3,
-          4
+          4,
+          1
         ],
         "weapon": "Ranged_Ice",
         "target": [
-          3,
-          2
-        ],
-        "description": "IceMech, fire Cryo-Launcher at F5"
-      },
-      {
-        "mech_uid": 0,
-        "mech_type": "GuardMech",
-        "move_to": [
           4,
           4
         ],
-        "weapon": "Prime_ShieldBash_B",
-        "target": [
-          3,
-          4
-        ],
-        "description": "GuardMech, move E3\u2192D4, fire Shield Bash at D5"
+        "description": "IceMech, move G6\u2192G4, fire Cryo-Launcher at D4"
       }
     ],
-    "score": 109784.14286099162,
+    "score": 333708.5714285714,
     "turn": 4,
-    "input_fingerprint": "0:5,3:3|1:6,2:3|2:3,4:2|957:1,6:1|958:3,5:1|962:1,4:2|964:3,2:4|965:4,2:2"
+    "input_fingerprint": "0:4,1:2|1:2,6:3|2:2,1:2|971:2,5:2|973:4,3:2|974:4,4:5|975:4,2:3"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -1089,6 +1089,62 @@
         "IceMech, fire Cryo-Launcher at F5",
         "GuardMech, move E3\u2192D4, fire Shield Bash at D5"
       ]
+    },
+    {
+      "timestamp": "2026-05-26T11:57:50.359769",
+      "turn": 1,
+      "label": "solve",
+      "score": 132278.57142857142,
+      "actions": [
+        "GuardMech, move F5\u2192F4, fire Shield Bash at F3",
+        "MirrorMech, move C5\u2192B4, fire Mirror Shot at C4",
+        "IceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T11:58:31.809557",
+      "turn": 2,
+      "label": "solve",
+      "score": 174635.23809523825,
+      "actions": [
+        "GuardMech, move F4\u2192E3, fire Shield Bash at E4",
+        "MirrorMech, move B4\u2192B6, fire Mirror Shot at C6",
+        "IceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T11:59:09.095381",
+      "turn": 3,
+      "label": "solve",
+      "score": 195948.57142857142,
+      "actions": [
+        "GuardMech, move E3\u2192G4, fire Shield Bash at G5",
+        "MirrorMech",
+        "IceMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:00:47.920932",
+      "turn": 3,
+      "label": "note",
+      "message": "Reviewed THREAT_AUDIT_BLOCKED on Mission_FreezeBldg turn 3: Hornet1 at F5 targets E5, and bridge metadata shows E5 is a frozen objective building (2 HP, frozen=true). Solver projected grid/building HP unchanged and thaw progress +1, so held End Turn is accepted as a frozen-building thaw exception, not an unresolved damage threat."
+    },
+    {
+      "timestamp": "2026-05-26T12:01:14.179884",
+      "turn": 4,
+      "label": "solve",
+      "score": 333708.5714285714,
+      "actions": [
+        "GuardMech, move G4\u2192F5, repair",
+        "MirrorMech, move B6\u2192C5, fire Mirror Shot at C6",
+        "IceMech, move G6\u2192G4, fire Cryo-Launcher at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:01:50.936225",
+      "turn": 4,
+      "label": "note",
+      "message": "Reviewed final-turn THREAT_AUDIT_BLOCKED on Mission_FreezeBldg: Scarab1 at E4 targets E6, and bridge metadata shows E6 is a frozen objective building (1 HP, frozen=true). Solver projected grid/building HP unchanged, freeze thaw target 5/5, and kills 5/5, so held End Turn is accepted as a frozen-building thaw exception."
     }
   ],
   "recorded_post_enemy_turns": [
@@ -1242,6 +1298,18 @@
     ],
     [
       14,
+      3
+    ],
+    [
+      15,
+      1
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      15,
       3
     ]
   ],
@@ -1870,9 +1938,9 @@
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "00bf83dea52af7a1",
-    "classes": "gggggggggbgggrgigiggggiigbgbggiggbgiggbgigggggbiiggggggggigfgigg",
-    "mission_index": 14,
+    "hash": "8500402084070f61",
+    "classes": "mmmgggggmgggggggbfgbbgfbbggbbggbmggggggmmmggggmmmggggggmmggffggm",
+    "mission_index": 15,
     "turn": 4
   },
   "terrain_stage_change_pending": false

@@ -95,6 +95,12 @@ def _live_building(board: Board, x: int, y: int) -> bool:
     return tile.terrain == "building" and tile.building_hp > 0
 
 
+def _frozen_building(board: Board, x: int, y: int) -> bool:
+    if not _live_building(board, x, y):
+        return False
+    return bool(getattr(board.tile(x, y), "frozen", False))
+
+
 def _will_die_to_fire_before_attack(board: Board, attacker: Unit) -> bool:
     """True when the enemy-phase fire tick should kill this attacker first."""
     if not getattr(attacker, "fire", False) or attacker.hp > 1:
@@ -419,6 +425,8 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
     moved = [int(attacker.x), int(attacker.y)] != [int(old_pos[0]), int(old_pos[1])]
     current_target = [int(attacker.target_x), int(attacker.target_y)]
     if current_target == [tx, ty]:
+        if _frozen_building(board, tx, ty):
+            return "target_frozen_building", "target building is frozen and will thaw"
         if moved:
             return "still_threatened_after_move", "attacker moved but still targets the building"
         return "still_threatened", "attacker still targets the building"
