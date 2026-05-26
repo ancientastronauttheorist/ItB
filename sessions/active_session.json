@@ -4,60 +4,46 @@
   "achievement_targets": [],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "",
+  "current_mission": "Mission_Force",
   "islands_completed": [],
-  "mission_index": 16,
-  "last_mission_turn": -1,
+  "mission_index": 17,
+  "last_mission_turn": 4,
   "current_turn": 4,
   "phase": "unknown",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 0,
-        "mech_type": "GuardMech",
+        "mech_uid": 2,
+        "mech_type": "IceMech",
         "move_to": [
-          3,
-          2
+          5,
+          4
         ],
-        "weapon": "_REPAIR",
+        "weapon": "Ranged_Ice",
         "target": [
-          3,
+          5,
           2
         ],
-        "description": "GuardMech, move G4\u2192F5, repair"
+        "description": "IceMech, fire Cryo-Launcher at F3"
       },
       {
         "mech_uid": 1,
         "mech_type": "MirrorMech",
         "move_to": [
-          3,
-          5
+          7,
+          4
         ],
         "weapon": "Brute_Mirrorshot_A",
         "target": [
-          2,
-          5
-        ],
-        "description": "MirrorMech, move B6\u2192C5, fire Mirror Shot at C6"
-      },
-      {
-        "mech_uid": 2,
-        "mech_type": "IceMech",
-        "move_to": [
-          4,
-          1
-        ],
-        "weapon": "Ranged_Ice",
-        "target": [
-          4,
+          6,
           4
         ],
-        "description": "IceMech, move G6\u2192G4, fire Cryo-Launcher at D4"
+        "description": "MirrorMech, fire Mirror Shot at D2"
       }
     ],
-    "score": 333708.5714285714,
+    "score": 129520.0,
     "turn": 4,
-    "input_fingerprint": "0:4,1:2|1:2,6:3|2:2,1:2|971:2,5:2|973:4,3:2|974:4,4:5|975:4,2:3"
+    "input_fingerprint": "0:6,0:2|1015:1,6:5|1039:5,6:1|1041:5,2:3|1074:6,4:1|1:7,4:3|2:5,4:1|989:6,3:4|997:4,4:5"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -1145,6 +1131,277 @@
       "turn": 4,
       "label": "note",
       "message": "Reviewed final-turn THREAT_AUDIT_BLOCKED on Mission_FreezeBldg: Scarab1 at E4 targets E6, and bridge metadata shows E6 is a frozen objective building (1 HP, frozen=true). Solver projected grid/building HP unchanged, freeze thaw target 5/5, and kills 5/5, so held End Turn is accepted as a frozen-building thaw exception."
+    },
+    {
+      "timestamp": "2026-05-26T12:09:41.898946",
+      "turn": 1,
+      "label": "solve",
+      "score": 140057.14285714284,
+      "actions": [
+        "GuardMech, move F5\u2192G2, fire Shield Bash at F2",
+        "IceMech, move C5\u2192B4, fire Cryo-Launcher at F4",
+        "MirrorMech, move E6\u2192B6, fire Mirror Shot at B5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:10:23.333254",
+      "turn": 2,
+      "label": "solve",
+      "score": 141057.142857143,
+      "actions": [
+        "GuardMech, move G2\u2192D4, fire Shield Bash at E4",
+        "IceMech, move B3\u2192D2, fire Cryo-Launcher at A2",
+        "MirrorMech, fire Mirror Shot at B5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:10:52.306669",
+      "turn": 3,
+      "label": "solve",
+      "score": 141157.14285714284,
+      "actions": [
+        "GuardMech",
+        "MirrorMech",
+        "IceMech, move D2\u2192E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:11:29.865341",
+      "turn": 4,
+      "label": "solve",
+      "score": 148407.14285714284,
+      "actions": [
+        "GuardMech, move D4\u2192B4, fire Shield Bash at B3",
+        "IceMech, move E4\u2192E7, fire Cryo-Launcher at E3",
+        "MirrorMech, move B6\u2192C7, fire Mirror Shot at D7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:12:14.795407",
+      "turn": 4,
+      "label": "solve",
+      "score": 148407.14285714284,
+      "actions": [
+        "GuardMech, move D4\u2192B4, fire Shield Bash at B3",
+        "IceMech, move E4\u2192E7, fire Cryo-Launcher at E3",
+        "MirrorMech, move B6\u2192C7, fire Mirror Shot at D7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:12:30.977807",
+      "turn": 4,
+      "label": "note",
+      "message": "Dirty objective-loss review on Mission_StarfishBoss turn 4: no clean Starfish Leader kill found among 1000 candidates even with 30s solve. Accept rank 0 ca9de2819c8d933c because it preserves grid 6/7, all buildings including Corporate Tower, all mechs, and no pod state; only the optional destroy-leader reputation objective is lost, which is acceptable for Distant Friends timeline progress."
+    },
+    {
+      "timestamp": "2026-05-26T12:12:42.906338",
+      "turn": 4,
+      "label": "solve",
+      "score": 148407.14285714284,
+      "actions": [
+        "GuardMech, move D4\u2192B4, fire Shield Bash at B3",
+        "IceMech, move E4\u2192E7, fire Cryo-Launcher at E3",
+        "MirrorMech, move B6\u2192C7, fire Mirror Shot at D7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:23:46.202163",
+      "turn": 1,
+      "label": "solve",
+      "score": 128900.0,
+      "actions": [
+        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
+        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:25:56.704884",
+      "turn": 1,
+      "label": "solve",
+      "score": 128900.0,
+      "actions": [
+        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
+        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:26:03.535095",
+      "turn": 1,
+      "label": "solve",
+      "score": 128900.0,
+      "actions": [
+        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
+        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
+        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:45:54.088505",
+      "turn": 1,
+      "label": "solve",
+      "score": 128900.0,
+      "actions": [
+        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
+        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
+        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:47:35.045169",
+      "turn": 1,
+      "label": "solve",
+      "score": 128100.0,
+      "actions": [
+        "IceMech, fire Cryo-Launcher at B6",
+        "MirrorMech, move C6\u2192E5, fire Mirror Shot at E4",
+        "GuardMech, move D5\u2192E3, fire Shield Bash at F3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:48:21.805675",
+      "turn": 1,
+      "label": "solve",
+      "score": 112657.71428445406,
+      "actions": [
+        "GuardMech, move D5\u2192H3, fire Shield Bash at H2",
+        "IceMech, move E6\u2192F5, fire Cryo-Launcher at F3",
+        "MirrorMech, move C6\u2192E5, fire Mirror Shot at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:48:41.789259",
+      "turn": 1,
+      "label": "solve",
+      "score": 123900.0,
+      "actions": [
+        "GuardMech, move D5\u2192F4, fire Shield Bash at F3",
+        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
+        "MirrorMech, move C6\u2192D4, fire Mirror Shot at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:49:10.553944",
+      "turn": 1,
+      "label": "note",
+      "message": "Mission 17 turn 1: chose candidate rank 130 for Distant Friends setup. Immediate H2 break rank 1848 predicts grid/building loss and disabled Ice; rank 130 preserves grid/buildings and lookahead breaks H2 cleanly on turn 2."
+    },
+    {
+      "timestamp": "2026-05-26T12:49:20.922830",
+      "turn": 1,
+      "label": "solve",
+      "score": 123900.0,
+      "actions": [
+        "GuardMech, move D5\u2192F4, fire Shield Bash at F3",
+        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
+        "MirrorMech, move C6\u2192D4, fire Mirror Shot at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:50:27.570247",
+      "turn": 2,
+      "label": "solve",
+      "score": 124843.33333333344,
+      "actions": [
+        "IceMech, move E4\u2192D6, fire Cryo-Launcher at D2",
+        "MirrorMech, fire Mirror Shot at D5",
+        "GuardMech, fire Shield Bash at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:51:09.046816",
+      "turn": 2,
+      "label": "solve",
+      "score": 124843.33333333344,
+      "actions": [
+        "IceMech, move E4\u2192D6, fire Cryo-Launcher at D2",
+        "MirrorMech, fire Mirror Shot at D5",
+        "GuardMech, fire Shield Bash at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:54:05.127580",
+      "turn": 3,
+      "label": "solve",
+      "score": 146470.0,
+      "actions": [
+        "GuardMech, move F4\u2192H3, fire Shield Bash at H2",
+        "MirrorMech, move D4\u2192D1, fire Mirror Shot at E1",
+        "IceMech, move D6\u2192D3, fire Cryo-Launcher at B3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:58:20.246629",
+      "turn": 3,
+      "label": "solve",
+      "score": 146470.0,
+      "actions": [
+        "MirrorMech, move D4\u2192D1, fire Mirror Shot at E1",
+        "IceMech, move D6\u2192D3, fire Cryo-Launcher at B3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:58:30.152385",
+      "turn": 3,
+      "label": "solve",
+      "score": 146470.0,
+      "actions": [
+        "MirrorMech, move D4\u2192D1, fire Mirror Shot at E1",
+        "IceMech, move D6\u2192D3, fire Cryo-Launcher at B3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T12:59:44.148743",
+      "turn": 4,
+      "label": "solve",
+      "score": 143069.85713733945,
+      "actions": [
+        "IceMech, move D3\u2192G3, fire Cryo-Launcher at E3",
+        "MirrorMech, move D1\u2192C3, fire Mirror Shot at B3",
+        "GuardMech, move H3\u2192E3, fire Shield Bash at E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T13:00:11.913757",
+      "turn": 4,
+      "label": "solve",
+      "score": 150364.85713733945,
+      "actions": [
+        "GuardMech, move H3\u2192E3, fire Shield Bash at F3",
+        "MirrorMech, move D1\u2192E1, fire Mirror Shot at E2",
+        "IceMech, move D3\u2192B2, fire Cryo-Launcher at B8"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T13:04:48.838526",
+      "turn": 4,
+      "label": "solve",
+      "score": 142109.85713733945,
+      "actions": [
+        "IceMech, move D3\u2192B2, fire Cryo-Launcher at B7",
+        "MirrorMech, move D1\u2192C2, fire Mirror Shot at B2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T13:05:04.202099",
+      "turn": 4,
+      "label": "solve",
+      "score": 129520.0,
+      "actions": [
+        "IceMech, fire Cryo-Launcher at F3",
+        "MirrorMech, fire Mirror Shot at D2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T13:05:31.938052",
+      "turn": 4,
+      "label": "solve",
+      "score": 129520.0,
+      "actions": [
+        "IceMech, fire Cryo-Launcher at F3",
+        "MirrorMech, fire Mirror Shot at D2"
+      ]
     }
   ],
   "recorded_post_enemy_turns": [
@@ -1311,6 +1568,30 @@
     [
       15,
       3
+    ],
+    [
+      16,
+      1
+    ],
+    [
+      16,
+      2
+    ],
+    [
+      16,
+      3
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      17,
+      2
+    ],
+    [
+      17,
+      3
     ]
   ],
   "post_enemy_block": null,
@@ -1321,7 +1602,9 @@
     "50775dede698e64e",
     "a38205ae0632842b",
     "cf76b773e08f87db",
-    "74f651ece94e112f"
+    "74f651ece94e112f",
+    "ca9de2819c8d933c",
+    "d1de890c49aa1f10"
   ],
   "tags": [
     "achievement"
@@ -1761,6 +2044,33 @@
           2
         ]
       }
+    },
+    {
+      "version": 1,
+      "top_category": "status",
+      "categories": [
+        "status"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "status|Brute_Mirrorshot_A|attack",
+      "frequency": 1,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 1,
+        "turn": 2,
+        "weapon": "Brute_Mirrorshot_A",
+        "target": [
+          3,
+          4
+        ]
+      }
     }
   ],
   "disabled_actions": [],
@@ -1934,13 +2244,55 @@
       "severity": "medium",
       "research_id": "c955041817f4",
       "last_kind": "enemy"
+    },
+    {
+      "type": "Shaman2",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Force",
+      "first_seen_turn": 2,
+      "attempts": 1,
+      "status": "done",
+      "result": {
+        "parsed": {
+          "name_tag": {
+            "name": "Alpha Plasmodia",
+            "hp": 0,
+            "move": 2,
+            "class_icons": [],
+            "confidence": 0.8
+          },
+          "unit_status": {
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0,
+            "confidence": 1.0
+          }
+        },
+        "mismatches": [],
+        "source": "vision",
+        "community_queries": {
+          "target_name": "Alpha Plasmodia",
+          "queries": {
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Plasmodia",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Plasmodia&restrict_sr=1"
+          }
+        }
+      },
+      "diff_field": "status.frozen",
+      "diff_predicted": true,
+      "diff_actual": false,
+      "severity": "medium",
+      "research_id": "71242f2b897a",
+      "last_kind": "enemy"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "8500402084070f61",
-    "classes": "mmmgggggmgggggggbfgbbgfbbggbbggbmggggggmmmggggmmmggggggmmggffggm",
-    "mission_index": 15,
+    "hash": "ab2bf6b2ffa05669",
+    "classes": "ggmbbmgsggggggggsbbggggggggggbbggggggggggggggsggrbbgggggmmrggggg",
+    "mission_index": 17,
     "turn": 4
   },
   "terrain_stage_change_pending": false

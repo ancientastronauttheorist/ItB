@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-26T11:47:14.291979",
+    "last_steam_sync": "2026-05-26T13:08:34.344750",
     "last_steam_total": 70,
-    "last_steam_unlocked": 43
+    "last_steam_unlocked": 44
   },
   "achievements": {
     "rift_walkers": [
@@ -641,7 +641,7 @@
         "description": "Encounter a familiar face",
         "type": "single_run",
         "global_unlock_pct": 11.3,
-        "completed": false,
+        "completed": true,
         "strategy": "Look for faintly glowing damaged Mountain or Ice tiles at mission start. Destroy tile to spawn Beacon. Collect Beacon with mech. Very luck-dependent.",
         "setup": "Pinnacle island (more ice tiles) or Archive (mountains). Check every mission.",
         "pitfalls": "Extremely rare spawn. Purely luck-based. Just keep playing and checking."
