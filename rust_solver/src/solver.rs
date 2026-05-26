@@ -572,6 +572,26 @@ fn attack_origin_after_move(board: &Board, mech_idx: usize, move_to: (u8, u8)) -
     move_to
 }
 
+fn weapon_can_damage_terrain(weapon_id: WId, wdef: &WeaponDef) -> bool {
+    if weapon_id == WId::None || weapon_id == WId::Repair {
+        return false;
+    }
+    wdef.damage > 0 || wdef.damage_outer > 0 || wdef.fire()
+}
+
+fn tile_weapon_terrain_effect(tile: &Tile, weapon_id: WId, wdef: &WeaponDef) -> bool {
+    if !weapon_can_damage_terrain(weapon_id, wdef) {
+        return false;
+    }
+    match tile.terrain {
+        Terrain::Mountain => tile.building_hp > 0,
+        Terrain::Ice => true,
+        Terrain::Ground => tile.cracked(),
+        Terrain::Forest | Terrain::Sand => wdef.fire(),
+        _ => false,
+    }
+}
+
 /// Check if a weapon action would have any effect on the board.
 /// Returns false when firing at empty space where no unit can be hit or pushed —
 /// the solver should prefer move-only/skip in that case. Conservative: returns
@@ -617,6 +637,9 @@ fn weapon_action_has_effect(
             // damages every tile it passes through.
             if unit_at(target.0, target.1) { return true; }
             let target_tile = board.tile(target.0, target.1);
+            if tile_weapon_terrain_effect(target_tile, weapon_id, wdef) {
+                return true;
+            }
             if wdef.chain() && wdef.building_immune() && target_tile.is_building() {
                 return true;
             }
@@ -632,6 +655,11 @@ fn weapon_action_has_effect(
                     let py = my as i8 + dy * i;
                     if !in_bounds(px, py) { break; }
                     if unit_at(px as u8, py as u8) { return true; }
+                    if tile_weapon_terrain_effect(
+                        board.tile(px as u8, py as u8), weapon_id, wdef
+                    ) {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -648,6 +676,9 @@ fn weapon_action_has_effect(
                 if !in_bounds(px, py) { break; }
                 if unit_at(px as u8, py as u8) { return true; }
                 let tile = board.tile(px as u8, py as u8);
+                if tile_weapon_terrain_effect(tile, weapon_id, wdef) {
+                    return true;
+                }
                 if tile.terrain == Terrain::Mountain || tile.is_building() { break; }
             }
             false
@@ -676,6 +707,9 @@ fn weapon_action_has_effect(
                     }
                 }
                 return false;
+            }
+            if tile_weapon_terrain_effect(board.tile(target.0, target.1), weapon_id, wdef) {
+                return true;
             }
             if wdef.shield() {
                 if shieldable_at(target.0, target.1) {
@@ -993,6 +1027,107 @@ fn direct_weapon_damage_would_kill(unit: &Unit, wdef: &WeaponDef) -> bool {
     damage >= unit.hp
 }
 
+fn mission_mountain_tile_score(board: &Board, x: u8, y: u8) -> i32 {
+    if board.mission_mountain_target == 0 {
+        return 0;
+    }
+    let tile = board.tile(x, y);
+    if tile.terrain != Terrain::Mountain || tile.building_hp == 0 {
+        return 0;
+    }
+    if tile.building_hp == 1 { 900 } else { 220 }
+}
+
+fn first_projectile_terrain_effect_score(
+    board: &Board,
+    origin: (u8, u8),
+    target: (u8, u8),
+    weapon_id: WId,
+    wdef: &WeaponDef,
+) -> i32 {
+    let dx = (target.0 as i8 - origin.0 as i8).signum();
+    let dy = (target.1 as i8 - origin.1 as i8).signum();
+    if dx == 0 && dy == 0 {
+        return 0;
+    }
+    for i in 1..8i8 {
+        let px = origin.0 as i8 + dx * i;
+        let py = origin.1 as i8 + dy * i;
+        if !in_bounds(px, py) { break; }
+        let ux = px as u8;
+        let uy = py as u8;
+        if board.unit_at(ux, uy).is_some() {
+            return 0;
+        }
+        let tile = board.tile(ux, uy);
+        if tile_weapon_terrain_effect(tile, weapon_id, wdef) {
+            return mission_mountain_tile_score(board, ux, uy);
+        }
+        if tile.terrain == Terrain::Mountain || tile.is_building() {
+            break;
+        }
+    }
+    0
+}
+
+fn mission_mountain_action_score(
+    board: &Board,
+    origin: (u8, u8),
+    weapon_id: WId,
+    target: (u8, u8),
+    weapons: &WeaponTable,
+) -> i32 {
+    if board.mission_mountain_target == 0
+        || weapon_id == WId::None
+        || weapon_id == WId::Repair
+        || target.0 >= 8
+    {
+        return 0;
+    }
+    let wdef = &weapons[weapon_id as usize];
+    match wdef.weapon_type {
+        WeaponType::Projectile | WeaponType::Laser | WeaponType::Pull => {
+            first_projectile_terrain_effect_score(board, origin, target, weapon_id, wdef)
+        }
+        WeaponType::Melee | WeaponType::Artillery => {
+            if tile_weapon_terrain_effect(board.tile(target.0, target.1), weapon_id, wdef) {
+                mission_mountain_tile_score(board, target.0, target.1)
+            } else {
+                0
+            }
+        }
+        WeaponType::SelfAoe => {
+            if target != origin {
+                return 0;
+            }
+            DIRS.iter().map(|&(dx, dy)| {
+                let x = origin.0 as i8 + dx;
+                let y = origin.1 as i8 + dy;
+                if in_bounds(x, y) {
+                    mission_mountain_tile_score(board, x as u8, y as u8)
+                } else {
+                    0
+                }
+            }).sum()
+        }
+        WeaponType::Leap => {
+            if !wdef.aoe_adjacent() {
+                return 0;
+            }
+            DIRS.iter().map(|&(dx, dy)| {
+                let x = target.0 as i8 + dx;
+                let y = target.1 as i8 + dy;
+                if in_bounds(x, y) {
+                    mission_mountain_tile_score(board, x as u8, y as u8)
+                } else {
+                    0
+                }
+            }).sum()
+        }
+        _ => 0,
+    }
+}
+
 fn prune_actions(
     board: &Board,
     mech_idx: usize,
@@ -1032,6 +1167,13 @@ fn prune_actions(
             // When a push is blocked by a building, both the unit and building take
             // 1 bump damage — losing grid power. Apply -300 per building at risk.
             let wdef = &weapons[weapon_id as usize];
+            s += mission_mountain_action_score(
+                board,
+                attack_origin,
+                weapon_id,
+                target,
+                weapons,
+            );
             s += aerial_bombs_transit_smoke_score(
                 board,
                 attack_origin,
@@ -1889,6 +2031,106 @@ mod top_k_tests {
         assert!(
             actions.iter().any(|a| a.1 == WId::Repair),
             "Vek Mites must make Repair a legal action even at full HP"
+        );
+    }
+
+    #[test]
+    fn shield_bash_can_target_mountain_terrain() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 21,
+            x: 4,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::PrimeShieldBash as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.tile_mut(4, 3).terrain = Terrain::Mountain;
+        board.tile_mut(4, 3).building_hp = 1;
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (4, 4) && a.1 == WId::PrimeShieldBash && a.2 == (4, 3)
+            }),
+            "Spartan Shield should treat damaging a mountain as a real action"
+        );
+    }
+
+    #[test]
+    fn mirror_shot_can_target_direction_to_first_mountain() {
+        let mut board = Board::default();
+        let idx = board.add_unit(Unit {
+            uid: 22,
+            x: 4,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteMirrorshot as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.tile_mut(4, 2).terrain = Terrain::Mountain;
+        board.tile_mut(4, 2).building_hp = 1;
+
+        let actions = enumerate_actions(&board, idx, &WEAPONS);
+
+        assert!(
+            actions.iter().any(|a| {
+                a.0 == (4, 4) && a.1 == WId::BruteMirrorshot && a.2 == (4, 3)
+            }),
+            "Mirror Shot should keep a direction click when the first blocker is a mountain"
+        );
+    }
+
+    #[test]
+    fn mission_force_pruning_keeps_damaged_mountain_shot() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Force".to_string();
+        board.mission_mountain_target = 2;
+        let idx = board.add_unit(Unit {
+            uid: 23,
+            x: 4,
+            y: 4,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::BruteMirrorshot as u16),
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            move_speed: 0,
+            ..Default::default()
+        });
+        board.tile_mut(4, 2).terrain = Terrain::Mountain;
+        board.tile_mut(4, 2).building_hp = 1;
+
+        let mut actions = vec![
+            ((4, 4), WId::None, (255, 255)),
+            ((4, 4), WId::BruteMirrorshot, (4, 3)),
+            ((4, 4), WId::BruteMirrorshot, (5, 4)),
+        ];
+
+        prune_actions(
+            &board,
+            idx,
+            &mut actions,
+            0,
+            0,
+            0,
+            1,
+            &WEAPONS,
+        );
+
+        assert_eq!(
+            actions,
+            vec![((4, 4), WId::BruteMirrorshot, (4, 3))],
+            "Mission_Force pruning should keep the damaged-mountain shot"
         );
     }
 
