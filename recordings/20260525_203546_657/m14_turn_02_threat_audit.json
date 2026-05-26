@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-05-26T11:36:48.161921",
+  "run_id": "20260525_203546_657",
+  "mission_index": 14,
+  "turn": 2,
+  "label": "threat_audit",
+  "data": {
+    "status": "OK",
+    "initial_threat_count": 1,
+    "still_threatened_count": 0,
+    "entries": [
+      {
+        "target": [
+          1,
+          5
+        ],
+        "target_visual": "C7",
+        "target_hp": 1,
+        "attacker": {
+          "uid": 962,
+          "type": "Hornet1",
+          "pos": [
+            1,
+            4
+          ],
+          "visual": "D7",
+          "hp": 2,
+          "max_hp": 2,
+          "weapon_id": "HornetAtk1",
+          "target": [
+            1,
+            5
+          ],
+          "target_visual": "C7",
+          "queued_target": [
+            1,
+            5
+          ],
+          "has_queued_attack": true
+        },
+        "coverage": {
+          "reason": "attacker_frozen",
+          "detail": "attacker is frozen"
+        }
+      }
+    ],
+    "phase": "combat_player"
+  }
+}
