@@ -1,0 +1,18 @@
+{
+  "run_id": "20260527_141021_642",
+  "squad": "Balanced Roll",
+  "difficulty": 0,
+  "achievement_targets": [
+    "Change the Odds"
+  ],
+  "tags": [],
+  "solver_version": "rust-0.1.0-53036fe",
+  "weight_version": "v011",
+  "updated": "2026-05-27T14:49:14.081863",
+  "created": "2026-05-27T14:10:21.658312",
+  "missions": [],
+  "outcome": "win",
+  "outcome_mission": 0,
+  "outcome_recorded_at": "2026-05-27T14:49:14.065060",
+  "outcome_notes": "Region Secured; Protect Coal Plant objective failed; continuing Change the Odds grid-defense run"
+}

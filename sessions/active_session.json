@@ -1,51 +1,65 @@
 {
-  "run_id": "20260526_204256_831",
-  "squad": "Custom Squad",
+  "run_id": "20260527_141021_642",
+  "squad": "Balanced Roll",
   "achievement_targets": [
-    "Mech Specialist"
+    "Change the Odds"
   ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Final_Cave",
+  "current_mission": "",
   "islands_completed": [],
-  "mission_index": 12,
-  "last_mission_turn": 8,
-  "current_turn": 8,
+  "mission_index": 1,
+  "last_mission_turn": -1,
+  "current_turn": 4,
   "phase": "combat_player",
   "active_solution": {
     "actions": [
       {
-        "mech_uid": 1,
-        "mech_type": "IceMech",
+        "mech_uid": 0,
+        "mech_type": "JetMech",
         "move_to": [
-          3,
-          6
+          5,
+          3
         ],
-        "weapon": "Ranged_Ice",
+        "weapon": "Brute_Jetmech",
         "target": [
           3,
           3
         ],
-        "description": "IceMech, move B1\u2192B5, fire Cryo-Launcher at E5"
+        "description": "JetMech, move C2\u2192E3, fire Aerial Bombs at E5"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "DStrikeMech",
+        "move_to": [
+          4,
+          7
+        ],
+        "weapon": "Ranged_Defensestrike",
+        "target": [
+          4,
+          5
+        ],
+        "description": "DStrikeMech, move C4\u2192A4, fire Cluster Artillery at C4"
       },
       {
         "mech_uid": 2,
-        "mech_type": "IceMech",
+        "mech_type": "ExchangeMech",
         "move_to": [
-          6,
-          4
+          2,
+          0
         ],
-        "weapon": "Ranged_Ice",
+        "weapon": "Unknown",
         "target": [
-          4,
-          4
+          255,
+          255
         ],
-        "description": "IceMech, move D5\u2192D2, fire Cryo-Launcher at D4"
+        "description": "ExchangeMech, move G6\u2192H6"
       }
     ],
-    "score": -69967.14464528218,
-    "turn": 8,
-    "input_fingerprint": "0:2,3:0|1:7,6:1|2704:5,7:3|2723:4,4:4|2725:4,1:2|2726:5,4:2|2728:1,6:2|2729:4,7:1|2730:3,3:3|2731:3,2:3|2:3,4:1"
+    "score": 162722.85714285713,
+    "turn": 3,
+    "input_fingerprint": "0:6,5:2|101:1,1:4|104:4,4:1|105:4,3:3|106:6,3:3|1:4,5:2|2:2,1:2"
   },
   "actions_executed": 0,
   "buildings_lost": 0,
@@ -54,1373 +68,62 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-05-26T20:55:44.246506",
+      "timestamp": "2026-05-27T14:30:14.304147",
       "turn": 1,
       "label": "solve",
-      "score": 119007.14285714284,
+      "score": 166192.85714285713,
       "actions": [
-        "IceMech, move C6\u2192E6, fire Cryo-Launcher at E3",
-        "IceMech, move D5\u2192C4, fire Cryo-Launcher at E4",
-        "IceMech, move F6\u2192D6"
+        "JetMech, move E5\u2192G3, fire Aerial Bombs at E3",
+        "DStrikeMech, move C5\u2192C3, fire Cluster Artillery at E3",
+        "ExchangeMech, move G5\u2192F7"
       ]
     },
     {
-      "timestamp": "2026-05-26T20:57:15.846610",
+      "timestamp": "2026-05-27T14:31:59.343708",
       "turn": 2,
       "label": "solve",
-      "score": 112127.14285714278,
+      "score": 158676.1904761906,
       "actions": [
-        "IceMech, fire Cryo-Launcher at E2",
-        "IceMech, move C4\u2192B4",
-        "IceMech"
+        "JetMech, move E3\u2192E2, fire Aerial Bombs at C2",
+        "DStrikeMech, move C3\u2192C4, fire Cluster Artillery at C2",
+        "ExchangeMech, move F7\u2192G6"
       ]
     },
     {
-      "timestamp": "2026-05-26T20:58:10.924403",
+      "timestamp": "2026-05-27T14:32:54.040027",
       "turn": 3,
       "label": "solve",
-      "score": 124237.14285714286,
-      "actions": [
-        "IceMech, move E6\u2192F8, fire Cryo-Launcher at F2",
-        "IceMech",
-        "IceMech, move D6\u2192C4, fire Cryo-Launcher at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T20:59:10.427720",
-      "turn": 4,
-      "label": "solve",
-      "score": 104292.14285714286,
-      "actions": [
-        "IceMech, move F8\u2192C8, fire Cryo-Launcher at C3",
-        "IceMech, move B4\u2192D5",
-        "IceMech, move C4\u2192D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:03:56.307999",
-      "turn": 1,
-      "label": "solve",
-      "score": 100957.14285714286,
-      "actions": [
-        "IceMech, move D5\u2192E7",
-        "IceMech, move B5\u2192D6",
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at C4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:05:38.457262",
-      "turn": 2,
-      "label": "solve",
-      "score": 100793.80952380944,
-      "actions": [
-        "IceMech, fire Cryo-Launcher at E2",
-        "IceMech, fire Cryo-Launcher at D3",
-        "IceMech, move E4\u2192F6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:06:49.220833",
-      "turn": 3,
-      "label": "solve",
-      "score": 121637.14285714286,
-      "actions": [
-        "IceMech, move E7\u2192G6, fire Cryo-Launcher at G2",
-        "IceMech, move D5\u2192E3, fire Cryo-Launcher at E5",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:07:57.130039",
-      "turn": 4,
-      "label": "solve",
-      "score": 109107.14285714286,
-      "actions": [
-        "IceMech, move G6\u2192E7, fire Cryo-Launcher at E4",
-        "IceMech, move E3\u2192E6",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:08:43.434372",
-      "turn": 4,
-      "label": "solve",
-      "score": 109107.14285714286,
-      "actions": [
-        "IceMech, move G6\u2192E7, fire Cryo-Launcher at E4",
-        "IceMech, move E3\u2192E6",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:11:21.292998",
-      "turn": 1,
-      "label": "solve",
-      "score": 94992.85714285713,
-      "actions": [
-        "IceMech, move E5\u2192E8, fire Cryo-Launcher at E4",
-        "IceMech, move F6\u2192E7",
-        "IceMech, move G5\u2192F6, fire Cryo-Launcher at F4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:12:52.386671",
-      "turn": 2,
-      "label": "solve",
-      "score": 24552.85714285713,
-      "actions": [
-        "IceMech, move E8\u2192D8, fire Cryo-Launcher at D2",
-        "IceMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:13:16.685987",
-      "turn": 2,
-      "label": "solve",
-      "score": 24552.85714285713,
-      "actions": [
-        "IceMech, move E8\u2192D8, fire Cryo-Launcher at D2",
-        "IceMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:13:37.230476",
-      "turn": 2,
-      "label": "solve",
-      "score": 24552.85714285713,
-      "actions": [
-        "IceMech, move E8\u2192D8, fire Cryo-Launcher at D2",
-        "IceMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:14:27.977290",
-      "turn": 3,
-      "label": "solve",
-      "score": 101157.85714285713,
-      "actions": [
-        "IceMech, move D8\u2192E8, fire Cryo-Launcher at E2",
-        "IceMech",
-        "IceMech, move F3\u2192F6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:16:46.003091",
-      "turn": 1,
-      "label": "solve",
-      "score": 143592.85714285713,
-      "actions": [
-        "IceMech, move E5\u2192F3",
-        "IceMech, move C5\u2192E6",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:17:27.444457",
-      "turn": 2,
-      "label": "solve",
-      "score": 150712.85714285713,
-      "actions": [
-        "IceMech, fire Cryo-Launcher at F6",
-        "IceMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:22:31.812326",
-      "turn": 3,
-      "label": "solve",
-      "score": 139242.85714285713,
-      "actions": [
-        "IceMech, move F3\u2192G5, fire Cryo-Launcher at E5",
-        "IceMech",
-        "IceMech, move C6\u2192D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:27:22.040407",
-      "turn": 1,
-      "label": "solve",
-      "score": 107042.85714285713,
-      "actions": [
-        "IceMech, move B5\u2192C3, fire Cryo-Launcher at F3",
-        "IceMech, move G5\u2192E4",
-        "IceMech, move G7\u2192E8"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:28:09.769997",
-      "turn": 2,
-      "label": "solve",
-      "score": 109056.1904761904,
-      "actions": [
-        "IceMech, move C3\u2192C2, fire Cryo-Launcher at F2",
-        "IceMech",
-        "IceMech, move E8\u2192D8"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:29:05.113505",
-      "turn": 3,
-      "label": "solve",
-      "score": 122552.85714285713,
-      "actions": [
-        "IceMech, move C2\u2192D4, fire Cryo-Launcher at F4",
-        "IceMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:29:50.796137",
-      "turn": 4,
-      "label": "solve",
-      "score": 115322.85714285713,
-      "actions": [
-        "IceMech, move D4\u2192G4, fire Cryo-Launcher at C4",
-        "IceMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:30:16.392863",
-      "turn": 4,
-      "label": "solve",
-      "score": 115322.85714285713,
-      "actions": [
-        "IceMech, move D4\u2192G4, fire Cryo-Launcher at C4",
-        "IceMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:36:25.741369",
-      "turn": 1,
-      "label": "solve",
-      "score": 115550.0,
-      "actions": [
-        "IceMech, repair",
-        "IceMech, move C6\u2192E6, fire Cryo-Launcher at E2",
-        "IceMech, move B5\u2192C7, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:37:01.519473",
-      "turn": 1,
-      "label": "solve",
-      "score": 115550.0,
-      "actions": [
-        "IceMech, repair",
-        "IceMech, move C6\u2192E6, fire Cryo-Launcher at E2",
-        "IceMech, move B5\u2192C7, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:38:30.279277",
-      "turn": 2,
-      "label": "solve",
-      "score": 111216.66666666658,
-      "actions": [
-        "IceMech, move D5\u2192B4",
-        "IceMech, repair",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:40:22.632549",
-      "turn": 3,
-      "label": "solve",
-      "score": 134110.57142560824,
-      "actions": [
-        "IceMech, move B4\u2192C2, fire Cryo-Launcher at G2",
-        "IceMech, move E6\u2192H6, fire Cryo-Launcher at F6",
-        "IceMech, move C7\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:41:44.846699",
-      "turn": 3,
-      "label": "solve",
-      "score": 134110.57142560824,
-      "actions": [
-        "IceMech, move B4\u2192C2, fire Cryo-Launcher at G2",
-        "IceMech, move E6\u2192H6, fire Cryo-Launcher at F6",
-        "IceMech, move C7\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:42:08.644286",
-      "turn": 3,
-      "label": "solve",
-      "score": 134110.57142560824,
-      "actions": [
-        "IceMech, move B4\u2192C2, fire Cryo-Launcher at G2",
-        "IceMech, move E6\u2192H6, fire Cryo-Launcher at F6",
-        "IceMech, move C7\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:42:38.078196",
-      "turn": 3,
-      "label": "solve",
-      "score": 134110.57142560824,
-      "actions": [
-        "IceMech, move B4\u2192C2, fire Cryo-Launcher at G2",
-        "IceMech, move E6\u2192D6, fire Cryo-Launcher at F6",
-        "IceMech, move C7\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:42:45.116208",
-      "turn": 3,
-      "label": "solve",
-      "score": 134110.57142560824,
-      "actions": [
-        "IceMech, move B4\u2192C2, fire Cryo-Launcher at G2",
-        "IceMech, move E6\u2192C6, fire Cryo-Launcher at F6",
-        "IceMech, move C7\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:43:05.051760",
-      "turn": 3,
-      "label": "solve",
-      "score": 134110.57142560824,
-      "actions": [
-        "IceMech, move B4\u2192C2, fire Cryo-Launcher at G2",
-        "IceMech, move E6\u2192H6, fire Cryo-Launcher at F6",
-        "IceMech, move C7\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:43:44.946455",
-      "turn": 3,
-      "label": "note",
-      "message": "Archive Mission_Airstrike turn 3: accepted reviewed dirty token 9feb4f0f0f3637de; remaining THREAT_AUDIT_BLOCKED target is ordinary C4 building by Bouncer1 at C3, matching the predicted single grid/building HP loss; objective clinic, mechs, and timeline survive."
-    },
-    {
-      "timestamp": "2026-05-26T21:44:30.282644",
-      "turn": 4,
-      "label": "solve",
-      "score": 119768.4285788536,
-      "actions": [
-        "IceMech, move C2\u2192D4, fire Cryo-Launcher at D7",
-        "IceMech, repair",
-        "IceMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:44:43.503902",
-      "turn": 4,
-      "label": "solve",
-      "score": 119768.4285788536,
-      "actions": [
-        "IceMech, move C2\u2192D4, fire Cryo-Launcher at D7",
-        "IceMech, repair",
-        "IceMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:45:05.936816",
-      "turn": 4,
-      "label": "note",
-      "message": "Archive Mission_Airstrike turn 4: accepted reviewed dirty token f414779528bffd5c; remaining THREAT_AUDIT_BLOCKED target is ordinary C5 building by Bouncer1 at D5, matching the predicted single grid/building HP loss; clinic objective, mechs, and timeline survive."
-    },
-    {
-      "timestamp": "2026-05-26T21:51:19.005121",
-      "turn": 1,
-      "label": "solve",
-      "score": 179478.57142857142,
-      "actions": [
-        "ArchiveArtillery, move D7\u2192C7, fire Old Earth Artillery at C5",
-        "IceMech, move C5\u2192C3, fire Cryo-Launcher at F3",
-        "IceMech, move D6\u2192D2, fire Cryo-Launcher at D7",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:52:32.089290",
-      "turn": 2,
-      "label": "solve",
-      "score": 167361.90476190488,
-      "actions": [
-        "ArchiveArtillery",
-        "IceMech, fire Cryo-Launcher at F3",
-        "IceMech, fire Cryo-Launcher at D7",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:53:27.581674",
-      "turn": 3,
-      "label": "solve",
-      "score": 169398.57142857142,
-      "actions": [
-        "ArchiveArtillery, move C7\u2192C8, fire Old Earth Artillery at C6",
-        "IceMech, fire Cryo-Launcher at F3",
-        "IceMech, move D2\u2192F2, fire Cryo-Launcher at C2",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:54:25.575062",
-      "turn": 4,
-      "label": "solve",
-      "score": 161058.57142857142,
-      "actions": [
-        "IceMech, fire Cryo-Launcher at F3",
-        "IceMech, move F2\u2192F6",
-        "IceMech, move F5\u2192E7, fire Cryo-Launcher at E2",
-        "ArchiveArtillery, move C8\u2192C7, fire Old Earth Artillery at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:58:03.338316",
-      "turn": 1,
-      "label": "solve",
-      "score": 127190.57143855095,
-      "actions": [
-        "IceMech, move D5\u2192D7, fire Cryo-Launcher at D4",
-        "IceMech",
-        "IceMech, move E6\u2192E2, fire Cryo-Launcher at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:58:29.204976",
-      "turn": 1,
-      "label": "solve",
-      "score": 127190.57143855095,
-      "actions": [
-        "IceMech, move D5\u2192D7, fire Cryo-Launcher at D4",
-        "IceMech",
-        "IceMech, move E6\u2192E2, fire Cryo-Launcher at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T21:59:03.146491",
-      "turn": 1,
-      "label": "note",
-      "message": "Archive Mission_ForestFire turn 1: accepted reviewed dirty token 359f98ea678a7dcc; remaining THREAT_AUDIT_BLOCKED target is ordinary C4 building by Bouncer1 at C3, matching the predicted single grid/building HP loss; no mission-critical objective or mech risk."
-    },
-    {
-      "timestamp": "2026-05-26T21:59:53.071357",
-      "turn": 2,
-      "label": "solve",
-      "score": 120298.09523809518,
-      "actions": [
-        "IceMech, fire Cryo-Launcher at D2",
-        "IceMech, move B5\u2192C2",
-        "IceMech, fire Cryo-Launcher at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:01:07.164840",
-      "turn": 3,
-      "label": "solve",
-      "score": 122411.42857142857,
-      "actions": [
-        "IceMech, move D7\u2192G6, fire Cryo-Launcher at B6",
-        "IceMech",
-        "IceMech, fire Cryo-Launcher at C2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:02:23.295775",
-      "turn": 4,
-      "label": "solve",
-      "score": 110141.42857142857,
-      "actions": [
-        "IceMech, move G6\u2192E7, fire Cryo-Launcher at C7",
-        "IceMech, move C2\u2192D5",
-        "IceMech, move E2\u2192D3, fire Cryo-Launcher at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:02:54.599577",
-      "turn": 4,
-      "label": "solve",
-      "score": 110141.42857142857,
-      "actions": [
-        "IceMech, move G6\u2192E7, fire Cryo-Launcher at C7",
-        "IceMech, move C2\u2192D5",
-        "IceMech, move E2\u2192D3, fire Cryo-Launcher at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:06:31.733717",
-      "turn": 1,
-      "label": "solve",
-      "score": 144764.28571428568,
-      "actions": [
-        "IceMech, move F5\u2192F2, fire Cryo-Launcher at F6",
-        "IceMech",
-        "IceMech, move G6\u2192F8"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:07:13.974785",
-      "turn": 2,
-      "label": "solve",
-      "score": 130717.61904761913,
-      "actions": [
-        "IceMech, fire Cryo-Launcher at F8",
-        "IceMech",
-        "IceMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:08:20.521635",
-      "turn": 3,
-      "label": "solve",
-      "score": 154384.28571428568,
-      "actions": [
-        "IceMech, move G2\u2192G6, repair",
-        "IceMech, move E6\u2192F3, fire Cryo-Launcher at F5",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:09:13.383472",
-      "turn": 4,
-      "label": "solve",
-      "score": 143349.28571428568,
-      "actions": [
-        "IceMech, move G6\u2192H5, fire Cryo-Launcher at C5",
-        "IceMech, move F3\u2192E6, repair",
-        "IceMech, move F8\u2192G6, fire Cryo-Launcher at G2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:11:20.015351",
-      "turn": 1,
-      "label": "solve",
-      "score": 178210.85712793894,
-      "actions": [
-        "IceMech, move C5\u2192B7, fire Cryo-Launcher at B2",
-        "IceMech",
-        "IceMech, fire Cryo-Launcher at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:12:09.701241",
-      "turn": 1,
-      "label": "solve",
-      "score": 178210.85712793894,
-      "actions": [
-        "IceMech, move C5\u2192B7, fire Cryo-Launcher at B2",
-        "IceMech",
-        "IceMech, fire Cryo-Launcher at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:12:29.828970",
-      "turn": 1,
-      "label": "note",
-      "message": "Archive HQ turn 1 dirty consent: no clean candidate among 1000 at 10s/30s; accepting exact rank 0 token d7316edec534e18d predicting grid 6->4, one ordinary building destroyed, Corporate Tower/mechs/timeline alive, turn 2 lookahead clean for Mech Specialist route."
-    },
-    {
-      "timestamp": "2026-05-26T22:12:41.630365",
-      "turn": 1,
-      "label": "solve",
-      "score": 178210.85712793894,
-      "actions": [
-        "IceMech, move C5\u2192B7, fire Cryo-Launcher at B2",
-        "IceMech",
-        "IceMech, fire Cryo-Launcher at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:13:34.453715",
-      "turn": 2,
-      "label": "solve",
-      "score": 191347.61904761926,
-      "actions": [
-        "IceMech, move B7\u2192C7, fire Cryo-Launcher at C3",
-        "IceMech",
-        "IceMech, move F5\u2192E2, fire Cryo-Launcher at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:14:26.012629",
-      "turn": 3,
-      "label": "solve",
-      "score": 186514.2857142857,
-      "actions": [
-        "IceMech",
-        "IceMech",
-        "IceMech, fire Cryo-Launcher at E6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T22:17:06.307765",
-      "turn": 4,
-      "label": "solve",
-      "score": 181879.2857142857,
-      "actions": [
-        "IceMech, move C7\u2192F7, fire Cryo-Launcher at F3",
-        "IceMech",
-        "IceMech, move E2\u2192E6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T10:52:54.916060",
-      "turn": 4,
-      "label": "solve",
-      "score": 181879.2857142857,
-      "actions": [
-        "IceMech, move C7\u2192F7, fire Cryo-Launcher at F3",
-        "IceMech",
-        "IceMech, move E2\u2192E6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T10:53:12.701125",
-      "turn": 4,
-      "label": "note",
-      "message": "Archive HQ turn 4: user correctly identified Firefly Leader as a fail-able bonus/objective for Mech Specialist rather than a timeline-critical condition. Accepting exact rank 0 token b2085aabb12b505d with --allow-objective-loss: leaves FireflyBoss alive, predicts grid 4/7, Corporate Tower intact, all mechs alive, no building threats."
-    },
-    {
-      "timestamp": "2026-05-27T10:53:33.049435",
-      "turn": 4,
-      "label": "solve",
-      "score": 181879.2857142857,
-      "actions": [
-        "IceMech, move C7\u2192F7, fire Cryo-Launcher at F3",
-        "IceMech",
-        "IceMech, move E2\u2192E6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:31:29.833846",
-      "turn": 1,
-      "label": "solve",
-      "score": 129100.57142560824,
-      "actions": [
-        "IceMech, move C7\u2192C4, fire Cryo-Launcher at C2",
-        "IceMech, move B7\u2192E6",
-        "IceMech, move F5\u2192E3, fire Cryo-Launcher at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:33:21.753665",
-      "turn": 1,
-      "label": "solve",
-      "score": 129100.57142560824,
-      "actions": [
-        "IceMech, move C7\u2192C4, fire Cryo-Launcher at C2",
-        "IceMech, move B7\u2192E6",
-        "IceMech, move F5\u2192E3, fire Cryo-Launcher at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:33:57.041376",
-      "turn": 1,
-      "label": "solve",
-      "score": 129100.57142560824,
-      "actions": [
-        "IceMech, move C7\u2192C4, fire Cryo-Launcher at C2",
-        "IceMech, move B7\u2192E6",
-        "IceMech, move F5\u2192E3, fire Cryo-Launcher at C3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:36:16.525534",
-      "turn": 1,
-      "label": "note",
-      "message": "Reviewed THREAT_AUDIT_BLOCKED after Turn 1 dirty-consent line: remaining D2 threat is the intentionally accepted 1-grid Scorpion1 hit from token 57ddfc8d945b8bc9; all mech actions verified and mechs survive."
-    },
-    {
-      "timestamp": "2026-05-27T12:36:57.778209",
-      "turn": 2,
-      "label": "solve",
-      "score": 127187.14285714297,
-      "actions": [
-        "IceMech, move C4\u2192F5, fire Cryo-Launcher at F3",
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:37:27.762026",
-      "turn": 2,
-      "label": "solve",
-      "score": 127187.14285714297,
-      "actions": [
-        "IceMech, move C4\u2192F5, fire Cryo-Launcher at F3",
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:37:40.521939",
-      "turn": 2,
-      "label": "solve",
-      "score": 127187.14285714297,
-      "actions": [
-        "IceMech, move C4\u2192F5, fire Cryo-Launcher at F3",
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:38:09.547867",
-      "turn": 2,
-      "label": "solve",
-      "score": 127360.47619047631,
-      "actions": [
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
-        "IceMech, move E3\u2192F1, fire Cryo-Launcher at F6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:38:24.778422",
-      "turn": 2,
-      "label": "solve",
-      "score": 127360.47619047631,
-      "actions": [
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
-        "IceMech, move E3\u2192F1, fire Cryo-Launcher at F6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:39:14.202631",
-      "turn": 3,
-      "label": "solve",
-      "score": 139267.14285714284,
-      "actions": [
-        "IceMech, move F5\u2192G2, fire Cryo-Launcher at B2",
-        "IceMech, repair",
-        "IceMech, move F1\u2192G4, fire Cryo-Launcher at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:40:12.062760",
-      "turn": 4,
-      "label": "solve",
-      "score": 127352.14285714284,
-      "actions": [
-        "IceMech, move G2\u2192F5, fire Cryo-Launcher at F2",
-        "IceMech, fire Cryo-Launcher at B4",
-        "IceMech, move G4\u2192D5, fire Cryo-Launcher at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:43:53.195205",
-      "turn": 1,
-      "label": "solve",
-      "score": -141203.43032850538,
-      "actions": [
-        "IceMech, move E5\u2192G4, fire Cryo-Launcher at C4",
-        "IceMech, move D6\u2192B7, fire Cryo-Launcher at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:44:09.741553",
-      "turn": 1,
-      "label": "solve",
-      "score": -148202.28749585152,
-      "actions": [
-        "IceMech, move E5\u2192E2, fire Cryo-Launcher at A2",
-        "IceMech, move D6\u2192B7, fire Cryo-Launcher at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:44:20.165818",
-      "turn": 1,
-      "label": "solve",
-      "score": -148202.28749585152,
-      "actions": [
-        "IceMech, move E5\u2192E2, fire Cryo-Launcher at A2",
-        "IceMech, move D6\u2192B7, fire Cryo-Launcher at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:55:25.140549",
-      "turn": 1,
-      "label": "solve",
-      "score": -141203.43032850538,
-      "actions": [
-        "IceMech, move E5\u2192G4, fire Cryo-Launcher at C4",
-        "IceMech, move D6\u2192B7, fire Cryo-Launcher at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:55:36.811956",
-      "turn": 1,
-      "label": "solve",
-      "score": -141203.43032850538,
-      "actions": [
-        "IceMech, move E5\u2192G4, fire Cryo-Launcher at C4",
-        "IceMech, move D6\u2192B7, fire Cryo-Launcher at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T12:56:04.553399",
-      "turn": 1,
-      "label": "note",
-      "message": "Reviewed THREAT_AUDIT_BLOCKED in Mission_Final_Cave Turn 1: remaining A2 Firefly -> B2 pylon hit is part of accepted final-cave emergency pylon_loss line, token 773aeada1061ebeb; bomb and active mechs survive, predicted grid remains 4/7."
-    },
-    {
-      "timestamp": "2026-05-27T12:57:52.889345",
-      "turn": 2,
-      "label": "solve",
-      "score": -116168.28748546328,
-      "actions": [
-        "IceMech, move G4\u2192H4, fire Cryo-Launcher at D4",
-        "IceMech, move B7\u2192D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:02:54.352320",
-      "turn": 2,
-      "label": "solve",
-      "score": -116168.28748546328,
-      "actions": [
-        "IceMech, move G4\u2192H4, fire Cryo-Launcher at D4",
-        "IceMech, move B7\u2192D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:03:03.239157",
-      "turn": 2,
-      "label": "solve",
-      "score": -117161.71607385363,
-      "actions": [
-        "IceMech, move G4\u2192H4, fire Cryo-Launcher at D4",
-        "IceMech, move B7\u2192A6, fire Cryo-Launcher at A3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:03:15.117192",
-      "turn": 2,
-      "label": "solve",
-      "score": -117161.71607385363,
-      "actions": [
-        "IceMech, move G4\u2192H4, fire Cryo-Launcher at D4",
-        "IceMech, move B7\u2192A6, fire Cryo-Launcher at A3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:03:59.318913",
-      "turn": 3,
-      "label": "solve",
-      "score": -85572.28748546328,
-      "actions": [
-        "IceMech, move H4\u2192F3, fire Cryo-Launcher at H3",
-        "IceMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:04:59.724662",
-      "turn": 3,
-      "label": "solve",
-      "score": -87795.71607385363,
-      "actions": [
-        "IceMech, move H4\u2192E3, fire Cryo-Launcher at G3",
-        "IceMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:05:09.064803",
-      "turn": 3,
-      "label": "solve",
-      "score": -87795.71607385363,
-      "actions": [
-        "IceMech, move H4\u2192E3, fire Cryo-Launcher at G3",
-        "IceMech, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:09:26.262965",
-      "turn": 4,
-      "label": "solve",
-      "score": -81930.71607385363,
-      "actions": [
-        "IceMech, repair",
-        "IceMech, move A6\u2192B7, fire Cryo-Launcher at B4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:10:28.639157",
-      "turn": 5,
-      "label": "solve",
-      "score": -65615.71607385363,
-      "actions": [
-        "IceMech, move E3\u2192E2, fire Cryo-Launcher at E4",
-        "IceMech, move B7\u2192A6, fire Cryo-Launcher at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:13:00.458899",
-      "turn": 5,
-      "label": "note",
-      "message": "Reviewed turn 5 THREAT_AUDIT_BLOCKED: Hornet1 at D6 still targets D7 after Cryo shot; both active Ice Mechs have spent actions/self-frozen, bomb alive, grid 5/7. Accepting one final-cave building hit to continue Mech Specialist attempt."
-    },
-    {
-      "timestamp": "2026-05-27T13:18:34.601537",
-      "turn": 6,
-      "label": "resolve_post_enemy_block",
-      "block": {
-        "id": "20260526_204256_831_m12_t05_post_enemy",
-        "status": "INVESTIGATE_POST_ENEMY",
-        "blocking": true,
-        "run_id": "20260526_204256_831",
-        "mission_index": 12,
-        "turn": 5,
-        "created_at": "2026-05-27T13:15:04.885099",
-        "source": "record_post_enemy",
-        "record_path": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260526_204256_831/m12_turn_05_post_enemy.json",
-        "reason": null,
-        "deltas": {
-          "buildings_alive_diff": 0,
-          "building_hp_diff": -1,
-          "grid_power_diff": -1,
-          "enemies_alive_diff": 1,
-          "protected_objective_units_alive_diff": 0,
-          "protected_objective_units_frozen_diff": 0,
-          "mech_hp_diff": [
-            {
-              "uid": 0,
-              "type": "IceMech",
-              "predicted_hp": 0,
-              "actual_hp": 0,
-              "diff": 0
-            },
-            {
-              "uid": 1,
-              "type": "IceMech",
-              "predicted_hp": 1,
-              "actual_hp": 1,
-              "diff": 0
-            },
-            {
-              "uid": 2,
-              "type": "IceMech",
-              "predicted_hp": 1,
-              "actual_hp": 1,
-              "diff": 0
-            }
-          ],
-          "unexpected_events": [
-            "Grid power dropped by 1 unexpectedly"
-          ]
-        },
-        "triggers": [
-          {
-            "trigger": "grid_power_drop_unexpected",
-            "tier": 1,
-            "severity": "high",
-            "details": "Predicted grid 5, actual 4 (-1)"
-          },
-          {
-            "trigger": "mech_on_danger",
-            "tier": 4,
-            "severity": "critical",
-            "details": "IceMech moved to danger tile (6,3)"
-          },
-          {
-            "trigger": "mech_on_danger",
-            "tier": 4,
-            "severity": "critical",
-            "details": "IceMech moved to danger tile (2,7)"
-          },
-          {
-            "trigger": "mech_destroyed",
-            "tier": 6,
-            "severity": "critical",
-            "details": "IceMech destroyed (HP=0)"
-          }
-        ],
-        "actual_outcome": {
-          "buildings_alive": 7,
-          "building_hp_total": 12,
-          "pylons_alive": 7,
-          "pylon_hp_total": 12,
-          "objective_buildings_alive": 0,
-          "objective_building_hp_total": 0,
-          "pods_present": 0,
-          "freeze_building_target": null,
-          "freeze_buildings_alive": null,
-          "freeze_buildings_frozen": null,
-          "freeze_buildings_thawed": null,
-          "freeze_buildings": [],
-          "grid_power": 4,
-          "enemies_alive": 8,
-          "enemy_hp_total": 23,
-          "mechs_alive": 2,
-          "mech_hp_total": 2,
-          "mech_damage_taken_total": 6,
-          "mech_damage_objective_limit": null,
-          "bigbomb_alive": true,
-          "terraform_grass_remaining": null,
-          "terraform_grass_tiles": [],
-          "mech_hp": [
-            {
-              "uid": 0,
-              "type": "IceMech",
-              "hp": 0,
-              "max_hp": 4
-            },
-            {
-              "uid": 1,
-              "type": "IceMech",
-              "hp": 1,
-              "max_hp": 2
-            },
-            {
-              "uid": 2,
-              "type": "IceMech",
-              "hp": 1,
-              "max_hp": 2
-            }
-          ],
-          "mechs_acid": [],
-          "mechs_fire": [],
-          "mechs_on_danger": [
-            {
-              "uid": 1,
-              "type": "IceMech",
-              "pos": [
-                6,
-                3
-              ],
-              "damage": 1
-            },
-            {
-              "uid": 2,
-              "type": "IceMech",
-              "pos": [
-                2,
-                7
-              ],
-              "damage": 1
-            }
-          ],
-          "mechs_disabled": [],
-          "mechs_webbed": [],
-          "mechs_infected": [],
-          "mites_remaining": 0,
-          "mites_status_tracked": true,
-          "mission_id": "Mission_Final_Cave",
-          "mission_kill_target": 0,
-          "mission_kill_limit": 0,
-          "mission_kills_done": 0,
-          "mission_mountain_target": 0,
-          "mission_mountains_destroyed": 0,
-          "mission_mountain_tiles": [],
-          "turn": 6,
-          "total_turns": 6,
-          "destroy_objective_units": [],
-          "destroy_objective_units_alive": 0,
-          "protected_objective_units": [],
-          "protected_objective_units_alive": 0,
-          "protected_objective_units_frozen": 0
-        },
-        "predicted_outcome": {
-          "buildings_alive": 7,
-          "building_hp_total": 13,
-          "pylons_alive": 7,
-          "pylon_hp_total": 13,
-          "objective_buildings_alive": 0,
-          "objective_building_hp_total": 0,
-          "pods_present": 0,
-          "freeze_building_target": null,
-          "freeze_buildings_alive": null,
-          "freeze_buildings_frozen": null,
-          "freeze_buildings_thawed": null,
-          "freeze_buildings": [],
-          "grid_power": 5,
-          "enemies_alive": 7,
-          "enemy_hp_total": 20,
-          "mechs_alive": 2,
-          "mech_hp_total": 2,
-          "mech_damage_taken_total": 2,
-          "mech_damage_objective_limit": null,
-          "bigbomb_alive": true,
-          "terraform_grass_remaining": null,
-          "terraform_grass_tiles": [],
-          "mech_hp": [
-            {
-              "hp": 0,
-              "max_hp": 4,
-              "type": "IceMech",
-              "uid": 0
-            },
-            {
-              "hp": 1,
-              "max_hp": 2,
-              "type": "IceMech",
-              "uid": 1
-            },
-            {
-              "hp": 1,
-              "max_hp": 2,
-              "type": "IceMech",
-              "uid": 2
-            }
-          ],
-          "mechs_acid": [],
-          "mechs_fire": [],
-          "mechs_on_danger": [],
-          "mechs_disabled": [],
-          "mechs_webbed": [],
-          "mechs_infected": [],
-          "mites_remaining": 0,
-          "mites_status_tracked": false,
-          "mission_id": "Mission_Final_Cave",
-          "mission_kill_target": 0,
-          "mission_kill_limit": 0,
-          "mission_kills_done": 0,
-          "mission_mountain_target": 0,
-          "mission_mountains_destroyed": 0,
-          "mission_mountain_tiles": [],
-          "turn": 5,
-          "total_turns": 6,
-          "destroy_objective_units": [],
-          "destroy_objective_units_alive": 0,
-          "protected_objective_units": [],
-          "protected_objective_units_alive": 0,
-          "protected_objective_units_frozen": 0,
-          "buildings_destroyed_by_enemies": 0,
-          "enemies_killed_by_enemy_phase": 0,
-          "enemies_killed_by_player": 0,
-          "enemies_killed_by_spawn_block": 0,
-          "enemies_killed_total_projected": 0,
-          "mission_kills_by_enemy_phase": 0,
-          "mission_kills_by_player": 0,
-          "mission_kills_by_spawn_block": 0,
-          "mission_kills_done_projected": 0,
-          "mission_kills_total_projected": 0,
-          "mission_mountains_destroyed_projected": 0,
-          "pods_collected": 0
-        },
-        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
-        "resolved_at": "2026-05-27T13:18:34.601529",
-        "resolve_reason": "Turn 5 final-cave discrepancy was reviewed before End Turn: Hornet1 at D6/C5 remained unfrozen after Cryo, both active Ice Mechs had already spent actions/self-frozen, and we intentionally accepted the single D7 building/grid hit with grid buffer 5/7 to continue the Mech Specialist final. Research queue for IceMech and Hornet1 was resolved before continuing."
-      }
-    },
-    {
-      "timestamp": "2026-05-27T13:19:02.143125",
-      "turn": 6,
-      "label": "solve",
-      "score": -82702.14464528218,
-      "actions": [
-        "IceMech, move E2\u2192C2, fire Cryo-Launcher at C6",
-        "IceMech, move A6\u2192C7, fire Cryo-Launcher at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:21:42.253256",
-      "turn": 7,
-      "label": "solve",
-      "score": -73392.14464528218,
-      "actions": [
-        "IceMech, move C2\u2192B1, fire Cryo-Launcher at B7",
-        "IceMech, move C7\u2192D5, fire Cryo-Launcher at D3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-27T13:50:16.809080",
-      "turn": 8,
-      "label": "solve",
-      "score": -69967.14464528218,
-      "actions": [
-        "IceMech, move B1\u2192B5, fire Cryo-Launcher at E5",
-        "IceMech, move D5\u2192D2, fire Cryo-Launcher at D4"
+      "score": 162722.85714285713,
+      "actions": [
+        "JetMech, move C2\u2192E3, fire Aerial Bombs at E5",
+        "DStrikeMech, move C4\u2192A4, fire Cluster Artillery at C4",
+        "ExchangeMech, move G6\u2192H6"
       ]
     }
   ],
   "recorded_post_enemy_turns": [
     [
-      1,
+      0,
       1
     ],
     [
-      1,
+      0,
       2
-    ],
-    [
-      1,
-      3
-    ],
-    [
-      2,
-      1
-    ],
-    [
-      2,
-      2
-    ],
-    [
-      2,
-      3
-    ],
-    [
-      3,
-      1
-    ],
-    [
-      3,
-      2
-    ],
-    [
-      4,
-      1
-    ],
-    [
-      4,
-      2
-    ],
-    [
-      5,
-      1
-    ],
-    [
-      5,
-      2
-    ],
-    [
-      5,
-      3
-    ],
-    [
-      6,
-      1
-    ],
-    [
-      6,
-      2
-    ],
-    [
-      6,
-      3
-    ],
-    [
-      7,
-      1
-    ],
-    [
-      7,
-      2
-    ],
-    [
-      7,
-      3
-    ],
-    [
-      8,
-      1
-    ],
-    [
-      8,
-      2
-    ],
-    [
-      8,
-      3
-    ],
-    [
-      9,
-      1
-    ],
-    [
-      9,
-      2
-    ],
-    [
-      9,
-      3
-    ],
-    [
-      10,
-      1
-    ],
-    [
-      10,
-      2
-    ],
-    [
-      10,
-      3
-    ],
-    [
-      11,
-      1
-    ],
-    [
-      11,
-      2
-    ],
-    [
-      11,
-      3
-    ],
-    [
-      12,
-      1
-    ],
-    [
-      12,
-      2
-    ],
-    [
-      12,
-      3
-    ],
-    [
-      12,
-      4
-    ],
-    [
-      12,
-      5
-    ],
-    [
-      12,
-      6
-    ],
-    [
-      12,
-      7
     ]
   ],
   "post_enemy_block": null,
-  "dirty_consent_used": [
-    "57d45cc8303f012f",
-    "43816b07219b22a0",
-    "0aea6f819f239e04",
-    "fc580279581acb45",
-    "9feb4f0f0f3637de",
-    "f414779528bffd5c",
-    "359f98ea678a7dcc",
-    "2f5c865e1dbbd0e7",
-    "d7316edec534e18d",
-    "b2085aabb12b505d",
-    "57ddfc8d945b8bc9",
-    "f6e78196317f6566",
-    "9c86de8cc2310c8d",
-    "773aeada1061ebeb",
-    "9b236f96dea830ac",
-    "8bfda4a28bad9dba"
-  ],
-  "tags": [
-    "achievement",
-    "custom_squad",
-    "mech_specialist"
-  ],
+  "dirty_consent_used": [],
+  "tags": [],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "damage_amount",
       "categories": [
-        "status",
-        "terrain"
+        "damage_amount"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
+      "signature": "damage_amount|Brute_Jetmech|move",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
@@ -1428,137 +131,54 @@
       "confidence": 0.4,
       "context": {
         "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
+        "phase": "move",
+        "sub_action": "move",
         "action_index": 0,
-        "turn": 2,
-        "weapon": "Ranged_Ice",
+        "turn": 1,
+        "weapon": "Brute_Jetmech",
         "target": [
           5,
-          2
+          3
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "damage_amount",
       "categories": [
-        "status",
-        "terrain"
+        "damage_amount"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Ranged_Ice",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status",
-        "terrain"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
-      "frequency": 2,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "Ranged_Ice",
-        "target": [
-          4,
-          6
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
-      "frequency": 3,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 5,
-        "weapon": "Ranged_Ice",
-        "target": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
+      "signature": "damage_amount|Unknown|move",
       "frequency": 4,
       "asymmetry": [],
       "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
+      "proposed_tier": 2,
+      "confidence": 0.9,
       "context": {
         "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 6,
-        "weapon": "Ranged_Ice",
+        "phase": "move",
+        "sub_action": "move",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Unknown",
         "target": [
-          3,
-          5
+          255,
+          255
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "damage_amount",
       "categories": [
-        "status"
+        "damage_amount"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
-      "frequency": 5,
+      "signature": "damage_amount|Ranged_Defensestrike|attack",
+      "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
@@ -1567,12 +187,12 @@
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
-        "turn": 8,
-        "weapon": "Ranged_Ice",
+        "action_index": 1,
+        "turn": 3,
+        "weapon": "Ranged_Defensestrike",
         "target": [
-          3,
-          3
+          4,
+          5
         ]
       }
     }
@@ -1580,136 +200,173 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "IceMech",
+      "type": "Science_TC_SwapOther",
+      "terrain_id": null,
+      "kind": "enemy_weapon",
+      "slot": null,
+      "mission_id": "Mission_Repair",
+      "first_seen_turn": 0,
+      "attempts": 4,
+      "status": "done",
+      "result": {
+        "source": "manual_resolved",
+        "reason": "Force Swap catalogued as conservative no-op WId coverage until two-click bridge execution is implemented",
+        "kind": "enemy_weapon",
+        "attempts": 4,
+        "diff_field": null,
+        "diff_predicted": null,
+        "diff_actual": null
+      }
+    },
+    {
+      "type": "JetMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_Filler",
+      "mission_id": "Mission_Repair",
       "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Ice Mech",
-            "hp": 1,
-            "move": 3,
-            "class_icons": [],
-            "confidence": 1.0
+            "name": "Jet Mech",
+            "hp": 0,
+            "move": 4,
+            "class_icons": [
+              "brute",
+              "flying"
+            ],
+            "confidence": 0.8
           },
           "unit_status": {
             "kind": "mech",
-            "pilot_name": null,
+            "pilot_name": "Leo Ferry",
             "weapon_slot_count": 1,
-            "confidence": 0.8
+            "confidence": 1.0
           }
         },
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Ice Mech",
+          "target_name": "Jet Mech",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Ice+Mech",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Ice+Mech&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Jet+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Jet+Mech&restrict_sr=1"
           }
         }
       },
-      "research_id": "b4418ab86093",
+      "research_id": "711c8c0e206d",
       "last_kind": "mech"
     },
     {
-      "type": "Hornet1",
+      "type": "DStrikeMech",
       "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Final_Cave",
-      "first_seen_turn": 5,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Repair",
+      "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Hornet",
-            "hp": 2,
-            "move": 5,
+            "name": "Siege Mech",
+            "hp": 0,
+            "move": 3,
             "class_icons": [
-              "flying"
+              "ranged"
             ],
-            "confidence": 1.0
+            "confidence": 0.8
           },
           "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
+            "kind": "mech",
+            "pilot_name": "Anton Rim",
+            "weapon_slot_count": 1,
             "confidence": 1.0
           }
         },
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Hornet",
+          "target_name": "Siege Mech",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Hornet",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Hornet&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Siege+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Siege+Mech&restrict_sr=1"
           }
         }
       },
-      "diff_field": "status.frozen",
-      "diff_predicted": true,
-      "diff_actual": false,
-      "severity": "medium",
-      "research_id": "5403e5140e24",
-      "last_kind": "enemy"
+      "research_id": "ed52319c4de9",
+      "last_kind": "mech"
     },
     {
-      "type": "BigBomb",
+      "type": "ExchangeMech",
       "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Final_Cave",
-      "first_seen_turn": 8,
+      "kind": "mech_weapon",
+      "slot": 1,
+      "mission_id": "Mission_Repair",
+      "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Renfield Bomb",
-            "hp": 3,
-            "move": null,
-            "class_icons": [],
-            "confidence": 0.9
+            "name": "Exchange Mech",
+            "hp": 0,
+            "move": 3,
+            "class_icons": [
+              "science"
+            ],
+            "confidence": 0.8
           },
           "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
+            "kind": "mech",
+            "pilot_name": "Celestine",
+            "weapon_slot_count": 1,
             "confidence": 1.0
           }
         },
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Renfield Bomb",
+          "target_name": "Exchange Mech",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Renfield+Bomb",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Renfield+Bomb&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Exchange+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Exchange+Mech&restrict_sr=1"
           }
         }
       },
-      "diff_field": "status.web",
-      "diff_predicted": true,
-      "diff_actual": false,
-      "severity": "medium",
-      "research_id": "8fb36fce7ee3",
-      "last_kind": "enemy"
+      "research_id": "94e2f4f68e57",
+      "last_kind": "mech"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Repair",
+      "first_seen_turn": 3,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 2,
+        "diff_actual": 1
+      },
+      "diff_field": "hp",
+      "diff_predicted": 2,
+      "diff_actual": 1,
+      "severity": "low"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "486dadf4dd3d3a8b",
-    "classes": "wwgmmwwwmggbbggwwwgwggbwgbgggggwgwggggggggggggbgggbwggbgggmwgggw",
-    "mission_index": 12,
-    "turn": 8
+    "hash": "3b709829a7484f8a",
+    "classes": "wwggggwgwgggwgbgggwgbgbgggrgbgwgggbgwgggggwgggbwmgggggwwmmgggwww",
+    "mission_index": 0,
+    "turn": 4
   },
   "terrain_stage_change_pending": false
 }
