@@ -459,14 +459,64 @@ fn apply_landing_effects(board: &mut Board, unit_idx: usize, result: &mut Action
 
 // ── Web break ────────────────────────────────────────────────────────────────
 
-/// Clear the WEB flag on any unit whose web_source_uid matches `src_uid`.
-/// Restores move_speed to base_move so the unit can move this turn.
+fn queued_web_source_for_unit(board: &Board, unit_idx: usize, excluded_uid: u16) -> u16 {
+    let (ux, uy, current_uid) = {
+        let unit = &board.units[unit_idx];
+        (unit.x, unit.y, unit.web_source_uid)
+    };
+    let mut fallback_uid = 0;
+    for src_idx in 0..board.unit_count as usize {
+        let src = &board.units[src_idx];
+        if src.uid == excluded_uid || src.team != Team::Enemy || src.hp <= 0 {
+            continue;
+        }
+        if src.queued_target_x != ux as i8 || src.queued_target_y != uy as i8 {
+            continue;
+        }
+        if !WEAPONS
+            .get(src.weapon.0 as usize)
+            .map(|w| w.web())
+            .unwrap_or(false)
+        {
+            continue;
+        }
+        if src.uid == current_uid {
+            return src.uid;
+        }
+        if fallback_uid == 0 {
+            fallback_uid = src.uid;
+        }
+    }
+    fallback_uid
+}
+
+fn reattach_or_clear_unit_web(board: &mut Board, unit_idx: usize, broken_src_uid: u16) {
+    let replacement_uid = queued_web_source_for_unit(board, unit_idx, broken_src_uid);
+    if replacement_uid == 0 {
+        clear_unit_web(board, unit_idx);
+        return;
+    }
+
+    let logical_uid = board.units[unit_idx].uid;
+    for i in 0..board.unit_count as usize {
+        if board.units[i].uid != logical_uid || !board.units[i].web() {
+            continue;
+        }
+        board.units[i].set_web(true);
+        board.units[i].web_source_uid = replacement_uid;
+        board.units[i].move_speed = 0;
+    }
+}
+
+/// Clear or reassign WEB on any unit whose web_source_uid matches `src_uid`.
 /// Called when an enemy is pushed or killed (both events break ITB grapples).
+/// If another live queued web source still targets the same unit, live keeps
+/// the unit webbed and transfers ownership to that source.
 fn break_web_from(board: &mut Board, src_uid: u16) {
     if src_uid == 0 { return; }
     for i in 0..board.unit_count as usize {
         if board.units[i].web() && board.units[i].web_source_uid == src_uid {
-            clear_unit_web(board, i);
+            reattach_or_clear_unit_web(board, i, src_uid);
         }
     }
 }
@@ -7177,6 +7227,38 @@ mod tests {
 
         assert!(!board.units[jet].web(), "dead egg should release adjacent web");
         assert_eq!(board.units[jet].web_source_uid, 0);
+    }
+
+    #[test]
+    fn test_killing_one_of_two_web_sources_preserves_grapple() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 6, 3, 3, WId::PrimePunchmech);
+        let first = add_enemy_type(&mut board, 244, 6, 2, 1, "Scorpion1");
+        let second = add_enemy_type(&mut board, 250, 7, 3, 3, "Scorpion1");
+
+        board.units[mech].set_web(true);
+        board.units[mech].web_source_uid = board.units[first].uid;
+        board.units[mech].move_speed = 0;
+        for idx in [first, second] {
+            board.units[idx].weapon = crate::board::WeaponId(WId::ScorpionAtk1 as u16);
+            board.units[idx].queued_target_x = board.units[mech].x as i8;
+            board.units[idx].queued_target_y = board.units[mech].y as i8;
+        }
+
+        let mut result = ActionResult::default();
+        let first_pos = (board.units[first].x, board.units[first].y);
+        apply_damage(
+            &mut board, first_pos.0, first_pos.1, 1,
+            &mut result, DamageSource::Weapon,
+        );
+
+        assert!(board.units[first].hp <= 0);
+        assert!(
+            board.units[mech].web(),
+            "a second live queued web source should keep the mech webbed"
+        );
+        assert_eq!(board.units[mech].web_source_uid, board.units[second].uid);
+        assert_eq!(board.units[mech].move_speed, 0);
     }
 
     #[test]

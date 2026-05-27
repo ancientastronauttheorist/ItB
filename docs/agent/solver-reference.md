@@ -57,7 +57,7 @@ The solver enforces these; use them when reviewing solver output or writing test
 - **Smoke:** prevents attack AND repair. Cancels Vek attacks when on smoke tile at execution.
 - **Shield:** blocks one instance of damage + negative effects. Removed by direct damage.
 - **Armor:** −1 weapon damage (floor 0). No effect on push/fire/bump.
-- **Webbed:** can't move, can still attack. Breaks only when the unit actually changes tiles, or when the webber moves/dies. A blocked push/bump leaves the unit webbed.
+- **Webbed:** can't move, can still attack. Breaks only when the unit actually changes tiles, or when the webber moves/dies. A blocked push/bump leaves the unit webbed. If multiple live queued web sources target the same unit, killing/pushing one source transfers ownership to another source rather than freeing the unit.
 
 **Terrain HP:**
 - **Mountain:** 2 HP (2=full, 1=damaged, 0=rubble/walkable). Any weapon damage reduces by 1.

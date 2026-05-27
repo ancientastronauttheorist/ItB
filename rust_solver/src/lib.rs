@@ -1653,7 +1653,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and Spartan Shield damage upgrades, so powered Brute_Mirrorshot_A/B/AB and
 //   Prime_ShieldBash_B/AB solve with live damage. Pre-v232 corpus archived as
 //   `failure_db_snapshot_sim_v231.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 232;
+// v233 - Breaking one web source now reattaches a webbed unit to another live
+//   queued web source targeting the same tile instead of clearing WEB outright.
+//   Fixes Random Squad Change the Odds run 20260527_152006_916 Mission_Mines
+//   turn 4, where Combat Mech killed the F2 Scorpion but remained webbed by
+//   the E1 Scorpion. Pre-v233 corpus archived as
+//   `failure_db_snapshot_sim_v232.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 233;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
