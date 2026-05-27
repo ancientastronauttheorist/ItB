@@ -1758,6 +1758,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
     pylon_hp_total = 0
     objective_buildings_alive = 0
     objective_building_hp_total = 0
+    objective_building_positions = set()
     pods_present = 0
     freeze_building_target = 0
     freeze_buildings_alive = 0
@@ -1799,6 +1800,7 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 if getattr(t, "unique_building", False):
                     objective_buildings_alive += 1
                     objective_building_hp_total += t.building_hp
+                    objective_building_positions.add((x, y))
             if (x, y) in freeze_building_tiles:
                 alive = t.terrain == "building" and t.building_hp > 0
                 frozen = bool(getattr(t, "frozen", False))
@@ -1858,6 +1860,27 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
                 "alive": u.hp > 0,
                 "frozen": bool(getattr(u, "frozen", False)),
                 "team": u.team,
+            })
+    objective_building_targets = []
+    if objective_building_positions:
+        for u in board.units:
+            if (
+                not getattr(u, "is_enemy", False)
+                or getattr(u, "hp", 0) <= 0
+                or getattr(u, "is_extra_tile", False)
+            ):
+                continue
+            target = (
+                getattr(u, "queued_target_x", -1),
+                getattr(u, "queued_target_y", -1),
+            )
+            if target not in objective_building_positions:
+                continue
+            objective_building_targets.append({
+                "uid": u.uid,
+                "type": u.type,
+                "pos": [u.x, u.y],
+                "target": [target[0], target[1]],
             })
     mechs_on_danger = []
     mechs_disabled = []
@@ -1948,6 +1971,8 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "pylon_hp_total": pylon_hp_total if is_final_cave else None,
         "objective_buildings_alive": objective_buildings_alive,
         "objective_building_hp_total": objective_building_hp_total,
+        "objective_buildings_targeted": len(objective_building_targets),
+        "objective_building_targets": objective_building_targets,
         "pods_present": pods_present,
         "freeze_building_target": (
             freeze_building_target

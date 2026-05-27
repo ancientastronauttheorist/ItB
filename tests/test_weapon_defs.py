@@ -37,6 +37,7 @@ def test_arachnophiles_catalog_entries_match_observed_lua_ids():
         "Brute_TC_Ricochet",
         "Ranged_Arachnoid",
         "Science_MassShift",
+        "Science_TC_SwapOther",
         "DeployUnit_AracnoidAtk",
     } <= set(known["observed_weapons"])
     assert {"DeployUnit_Aracnoid", "DeployUnit_AracnoidB"} <= set(
@@ -67,11 +68,18 @@ def test_arachnophiles_catalog_entries_match_observed_lua_ids():
     assert shift.push == "forward"
     assert shift.targets_allies is True
 
+    force_swap = get_weapon_def("Science_TC_SwapOther")
+    assert force_swap is not None
+    assert force_swap.name == "Force Swap"
+    assert force_swap.weapon_type == "passive"
+
     assert get_pawn_stats("BulkMech").default_weapon == "Brute_TC_Ricochet"
     assert get_pawn_stats("BulkMech").class_type == "Brute"
     assert get_pawn_stats("ScorpioMech").default_weapon == "Ranged_Arachnoid"
     assert get_pawn_stats("ScorpioMech").class_type == "Ranged"
     assert get_pawn_stats("FourwayMech").default_weapon == "Science_MassShift"
     assert get_pawn_stats("FourwayMech").move_speed == 4
+    assert get_pawn_stats("ExchangeMech").default_weapon == "Science_TC_SwapOther"
+    assert get_pawn_stats("ExchangeMech").class_type == "Science"
     assert get_pawn_stats("DeployUnit_Aracnoid").default_weapon == "DeployUnit_AracnoidAtk"
     assert get_pawn_stats("DeployUnit_Aracnoid").move_speed == 3

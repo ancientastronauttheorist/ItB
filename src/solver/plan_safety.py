@@ -20,6 +20,7 @@ BLOCKING_KINDS = {
     "pylon_hp_loss",
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
     "pod_lost",
     "pod_unrecovered_final",
     "mech_lost",
@@ -48,6 +49,7 @@ NON_OVERRIDABLE_KINDS = {
     "bigbomb_lost",
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
     "pod_unrecovered_final",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
@@ -64,6 +66,7 @@ NON_OVERRIDABLE_KINDS = {
 OBJECTIVE_LOSS_DIRTY_KINDS = {
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
     "pod_unrecovered_final",
     "protected_objective_unit_lost",
     "protected_objective_unit_unfrozen",
@@ -105,6 +108,7 @@ FINAL_BOMB_DIRTY_ALLOWED_KINDS = {
     "building_hp_loss",
     "objective_building_destroyed",
     "objective_building_hp_loss",
+    "objective_building_targeted_final",
 }
 
 
@@ -116,6 +120,7 @@ LOSS_KINDS = {
     "pylon_hp_loss": "pylon_hp_total",
     "objective_building_destroyed": "objective_buildings_alive",
     "objective_building_hp_loss": "objective_building_hp_total",
+    "objective_building_targeted_final": "objective_buildings_targeted",
     "pod_lost": "pods_present",
     "pod_unrecovered_final": "pods_present",
     "mech_lost": "mechs_alive",
@@ -284,15 +289,36 @@ def audit_plan_safety(current: dict[str, Any],
     pred_turn = _int_or_none(predicted.get("turn"))
     cur_total_turns = _int_or_none(current.get("total_turns"))
     pred_total_turns = _int_or_none(predicted.get("total_turns"))
-    final_turn = (
-        cur_turn is not None
-        and cur_total_turns is not None
-        and cur_turn >= cur_total_turns
-    ) or (
-        pred_turn is not None
-        and pred_total_turns is not None
-        and pred_turn >= pred_total_turns
-    )
+    # Bridge turn counters are effectively "turns elapsed" for ordinary
+    # missions: a player turn with UI text "Victory in 1 turn" arrives as
+    # turn == total_turns - 1. Treat that as final because there is no later
+    # player phase to recover pods, counters, or asset threats.
+    if cur_turn is not None and cur_total_turns is not None:
+        final_turn = cur_turn >= max(0, cur_total_turns - 1)
+    elif pred_turn is not None and pred_total_turns is not None:
+        final_turn = pred_turn >= pred_total_turns
+    else:
+        final_turn = False
+
+    cur_obj_targeted = _int_or_none(current.get("objective_buildings_targeted"))
+    pred_obj_targeted = _int_or_none(predicted.get("objective_buildings_targeted"))
+    if cur_obj_targeted is not None and pred_obj_targeted is not None:
+        compared.append("objective_buildings_targeted")
+        if final_turn and pred_obj_targeted > 0:
+            violations.append(_violation(
+                "objective_building_targeted_final",
+                cur_obj_targeted,
+                pred_obj_targeted,
+                "Predicted final-turn outcome leaves an objective building under queued attack.",
+                {
+                    "current_targets": _list_or_empty(
+                        current.get("objective_building_targets")
+                    ),
+                    "predicted_targets": _list_or_empty(
+                        predicted.get("objective_building_targets")
+                    ),
+                },
+            ))
 
     cur_pods = _int_or_none(current.get("pods_present"))
     pred_pods = _int_or_none(predicted.get("pods_present"))
@@ -711,6 +737,10 @@ def audit_plan_safety(current: dict[str, Any],
             "pylon_hp_total": cur_pylon_hp,
             "objective_buildings_alive": cur_obj_alive,
             "objective_building_hp_total": cur_obj_hp,
+            "objective_buildings_targeted": cur_obj_targeted,
+            "objective_building_targets": _list_or_empty(
+                current.get("objective_building_targets")
+            ),
             "pods_present": cur_pods,
             "mechs_alive": cur_mechs,
             "mech_hp_total": cur_mech_hp,
@@ -749,6 +779,10 @@ def audit_plan_safety(current: dict[str, Any],
             "pylon_hp_total": pred_pylon_hp,
             "objective_buildings_alive": pred_obj_alive,
             "objective_building_hp_total": pred_obj_hp,
+            "objective_buildings_targeted": pred_obj_targeted,
+            "objective_building_targets": _list_or_empty(
+                predicted.get("objective_building_targets")
+            ),
             "pods_present": pred_pods,
             "mechs_alive": pred_mechs,
             "mech_hp_total": pred_mech_hp,

@@ -205,11 +205,65 @@ def test_final_bomb_turn_rejects_bomb_loss():
     assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
 
 
+def test_final_turn_objective_building_target_blocks_without_hp_loss():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Repair",
+            turn=3,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Repair",
+            turn=4,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+            objective_building_targets=[{
+                "uid": 106,
+                "type": "Moth1",
+                "pos": [6, 2],
+                "target": [4, 2],
+            }],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "objective_building_targeted_final"
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
+def test_nonfinal_objective_building_target_is_not_terminal():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Repair",
+            turn=2,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=0,
+        ),
+        _summary(
+            mission_id="Mission_Repair",
+            turn=3,
+            total_turns=4,
+            objective_buildings_alive=1,
+            objective_building_hp_total=1,
+            objective_buildings_targeted=1,
+        ),
+    )
+
+    assert audit["status"] == "CLEAN"
+
+
 def test_final_cave_resist_gamble_rejects_before_last_turn():
     audit = audit_plan_safety(
         _summary(
             mission_id="Mission_Final_Cave",
-            turn=3,
+            turn=2,
             total_turns=4,
             grid=4,
             buildings=6,
@@ -222,7 +276,7 @@ def test_final_cave_resist_gamble_rejects_before_last_turn():
         ),
         _summary(
             mission_id="Mission_Final_Cave",
-            turn=3,
+            turn=2,
             total_turns=4,
             grid=0,
             buildings=4,
@@ -719,13 +773,13 @@ def test_terraform_grass_objective_allows_incomplete_nonfinal_progress():
     audit = audit_plan_safety(
         _summary(
             mission_id="Mission_Terraform",
-            turn=3,
+            turn=2,
             total_turns=4,
             terraform_grass_remaining=2,
         ),
         _summary(
             mission_id="Mission_Terraform",
-            turn=3,
+            turn=2,
             total_turns=4,
             terraform_grass_remaining=1,
         ),
@@ -1024,6 +1078,27 @@ def test_final_turn_live_pod_blocks_until_recovered():
     ) is False
     assert audit["violations"][0]["kind"] == "pod_unrecovered_final"
     assert safety_loss_profile(audit)["label"] == "objective_loss"
+
+
+def test_victory_in_one_live_pod_blocks_until_recovered():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Satellite",
+            turn=3,
+            total_turns=4,
+            pods_present=1,
+        ),
+        _summary(
+            mission_id="Mission_Satellite",
+            turn=3,
+            total_turns=4,
+            pods_present=1,
+            pods_collected=0,
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert audit["violations"][0]["kind"] == "pod_unrecovered_final"
 
 
 def test_nonfinal_live_pod_can_remain_on_board():

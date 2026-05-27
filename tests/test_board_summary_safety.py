@@ -514,6 +514,43 @@ def test_summary_treats_missing_hp_unique_building_as_destroyed_projection():
     assert summary["objective_building_hp_total"] == 0
 
 
+def test_summary_counts_enemy_targets_on_objective_buildings():
+    data = _bridge_with_mech()
+    data["tiles"].append({
+        "x": 4,
+        "y": 2,
+        "terrain": "building",
+        "building_hp": 1,
+        "unique_building": True,
+        "objective_name": "Str_Power",
+    })
+    data["units"].append({
+        "uid": 106,
+        "type": "Moth1",
+        "x": 6,
+        "y": 2,
+        "hp": 3,
+        "max_hp": 3,
+        "team": 6,
+        "mech": False,
+        "move": 3,
+        "weapons": ["MothAtk1"],
+        "queued_target": [4, 2],
+        "has_queued_attack": True,
+    })
+    board = Board.from_bridge_data(data)
+
+    summary = _capture_board_summary(board, data)
+
+    assert summary["objective_buildings_targeted"] == 1
+    assert summary["objective_building_targets"] == [{
+        "uid": 106,
+        "type": "Moth1",
+        "pos": [6, 2],
+        "target": [4, 2],
+    }]
+
+
 def test_bridge_terrain_id_overrides_stale_lava_name_for_ice():
     data = _bridge_with_mech()
     data["tiles"].append({

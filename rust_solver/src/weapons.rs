@@ -593,9 +593,16 @@ pub enum WId {
     PrimeShieldBashB = 204,
     /// Spartan Shield with Gain Shield and +1 Damage powered.
     PrimeShieldBashAB = 205,
+    /// Bombermechs — Exchange Mech's Force Swap.
+    /// Conservatively modeled as no-op until bridge execution supports the
+    /// weapon's two-click first-unit/second-unit target pair.
+    ScienceTcSwapOther = 206,
+    ScienceTcSwapOtherA = 207,
+    ScienceTcSwapOtherB = 208,
+    ScienceTcSwapOtherAB = 209,
 }
 
-pub const WEAPON_COUNT: usize = 206;
+pub const WEAPON_COUNT: usize = 210;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -909,6 +916,18 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 191: VIP_Truck_Move — "Floor It!" movement skill. Target enumeration and
     // simulation are bespoke because the pawn's normal MoveSpeed is 0.
     w[191] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, range_max: 3, limited: 2, flags: C, ..DEF };
+
+    // 206-209: Science_TC_SwapOther — Force Swap. This is a two-click
+    // Bombermechs weapon: first choose an adjacent non-stable unit, then swap
+    // it with any other non-stable unit. The live bridge currently carries a
+    // single target coordinate for normal FireWeapon execution, so exposing a
+    // real simulated swap here would let the solver select actions the bridge
+    // cannot execute. Keep it catalogued but inert until the action schema and
+    // bridge grow a true second-target path.
+    w[206] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    w[207] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    w[208] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
+    w[209] = WeaponDef { weapon_type: WeaponType::Passive, damage: 0, flags: C, ..DEF };
 
     // -- Enemy Weapons --
     // 47: ScorpionAtk1
@@ -1626,6 +1645,10 @@ pub fn wid_from_str(s: &str) -> WId {
         "Science_MassShift_A" => WId::ScienceMassShiftA,
         "Science_MassShift_B" => WId::ScienceMassShiftB,
         "Science_MassShift_AB" => WId::ScienceMassShiftAB,
+        "Science_TC_SwapOther" => WId::ScienceTcSwapOther,
+        "Science_TC_SwapOther_A" => WId::ScienceTcSwapOtherA,
+        "Science_TC_SwapOther_B" => WId::ScienceTcSwapOtherB,
+        "Science_TC_SwapOther_AB" => WId::ScienceTcSwapOtherAB,
         "Missiles_Shield" => WId::MissilesShield,
         "Missiles_OneDmg" => WId::MissilesOneDmg,
         "ScorpionAtk1" => WId::ScorpionAtk1,
@@ -1843,6 +1866,10 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::ScienceMassShiftA => "Science_MassShift_A",
         WId::ScienceMassShiftB => "Science_MassShift_B",
         WId::ScienceMassShiftAB => "Science_MassShift_AB",
+        WId::ScienceTcSwapOther => "Science_TC_SwapOther",
+        WId::ScienceTcSwapOtherA => "Science_TC_SwapOther_A",
+        WId::ScienceTcSwapOtherB => "Science_TC_SwapOther_B",
+        WId::ScienceTcSwapOtherAB => "Science_TC_SwapOther_AB",
         WId::ScorpionAtk1 => "ScorpionAtk1",
         WId::ScorpionAtk2 => "ScorpionAtk2",
         WId::HornetAtk1 => "HornetAtk1",
@@ -2120,6 +2147,8 @@ pub fn weapon_name(id: WId) -> &'static str {
             | WId::ScienceKoCrackB | WId::ScienceKoCrackAB => "Seismic Capacitor",
         WId::ScienceMassShift | WId::ScienceMassShiftA
             | WId::ScienceMassShiftB | WId::ScienceMassShiftAB => "Area Shift",
+        WId::ScienceTcSwapOther | WId::ScienceTcSwapOtherA
+            | WId::ScienceTcSwapOtherB | WId::ScienceTcSwapOtherAB => "Force Swap",
         WId::Repair => "Repair",
         WId::ScorpionAtk1 => "Scorpion Strike",
         WId::ScorpionAtk2 => "Alpha Scorpion Strike",
@@ -2257,8 +2286,12 @@ mod tests {
         assert_eq!(wid_from_str("Ranged_Arachnoid_B"), WId::RangedArachnoidB);
         assert_eq!(wid_from_str("DeployUnit_AracnoidAtk"), WId::DeployUnitAracnoidAtk);
         assert_eq!(wid_from_str("Science_MassShift_AB"), WId::ScienceMassShiftAB);
+        assert_eq!(wid_from_str("Science_TC_SwapOther"), WId::ScienceTcSwapOther);
+        assert_eq!(wid_from_str("Science_TC_SwapOther_AB"), WId::ScienceTcSwapOtherAB);
         assert_eq!(wid_to_str(WId::RangedArachnoidAB), "Ranged_Arachnoid_AB");
+        assert_eq!(wid_to_str(WId::ScienceTcSwapOther), "Science_TC_SwapOther");
         assert_eq!(weapon_name(WId::ScienceMassShift), "Area Shift");
+        assert_eq!(weapon_name(WId::ScienceTcSwapOther), "Force Swap");
     }
 
     #[test]
@@ -2719,6 +2752,7 @@ mod tests {
             ("Science_Swap_A", WId::ScienceSwapA),
             ("Science_Swap_B", WId::ScienceSwapB),
             ("Science_Swap_AB", WId::ScienceSwapAB),
+            ("Science_TC_SwapOther", WId::ScienceTcSwapOther),
             ("ScorpionAtk1", WId::ScorpionAtk1),
             ("FireflyAtk1", WId::FireflyAtk1),
         ];

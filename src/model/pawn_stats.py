@@ -60,6 +60,7 @@ MECH_STATS = {
     "BulkMech":      PawnStats(move_speed=3, massive=True, class_type="Brute", default_weapon="Brute_TC_Ricochet"),
     "ScorpioMech":   PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_Arachnoid"),
     "FourwayMech":   PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_MassShift"),
+    "ExchangeMech":  PawnStats(move_speed=3, massive=True, class_type="Science", default_weapon="Science_TC_SwapOther"),
     "HydroMech":     PawnStats(move_speed=4, massive=True, class_type="Science", default_weapon="Science_Hydro"),
     "BottleMech":    PawnStats(move_speed=3, massive=True, class_type="Ranged", default_weapon="Ranged_RocketShower"),
 }
