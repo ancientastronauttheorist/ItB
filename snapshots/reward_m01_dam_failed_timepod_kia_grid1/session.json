@@ -156,12 +156,6 @@
         "JetMech, repair",
         "ExchangeMech, move C4\u2192D3"
       ]
-    },
-    {
-      "timestamp": "2026-05-27T15:12:59.344193",
-      "turn": 4,
-      "label": "note",
-      "message": "STOP SIGN: Mission_Dam reward screen shows Region Secured, Destroy the Dam failed, Time Pod protected, grid at 1/7, and DStrike pilot KIA. Snapshot reward_m01_dam_failed_timepod_kia_grid1 captured before Continue; stopping per reward/KIA protocol."
     }
   ],
   "recorded_post_enemy_turns": [
