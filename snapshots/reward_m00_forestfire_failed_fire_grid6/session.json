@@ -110,12 +110,6 @@
         "JetMech",
         "RockartMech, fire Rock Launcher at E3"
       ]
-    },
-    {
-      "timestamp": "2026-05-27T15:26:12.705074",
-      "turn": 4,
-      "label": "note",
-      "message": "STOP SIGN: Mission_ForestFire reward screen shows Region Secured with End with 8 spaces on fire failed at 4/8; Emergency Batteries protected, Time Pod protected, no KIA visible, grid at 6/7. Snapshot reward_m00_forestfire_failed_fire_grid6 captured before Continue; pausing per failed-objective reward protocol."
     }
   ],
   "recorded_post_enemy_turns": [
