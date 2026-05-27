@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-43 of 70 Steam-cache confirmed. **Hold the Line** unlocked in Blitzkrieg Normal run `20260524_195401_412` after a manual four-block spawn cluster on Detritus Corporate HQ. 27 remaining; sorted by global unlock % (easiest first).
+46 of 70 Steam-cache confirmed. **Mech Specialist** and **Flight Specialist** unlocked together in Custom Squad Easy run `20260526_204256_831` with 3x Ice Mech. 24 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line** by blocking D3, C3, C2, and C1 in one enemy emergence phase. Hazardous Mechs Easy run `20260522_193613_471` previously closed **Healing** and **Overkill** and reached a 4-island victory.
+Current milestone: Custom Squad run `20260526_204256_831` closed **Mech Specialist** and **Flight Specialist** after a two-island 3x Ice Mech final victory. The route accepted optional bonus misses, used repeated Cryo freezes to preserve the Renfield Bomb, and recovered through a Computer Use outage with bridge actions plus calibrated End Turn clicks.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -45,8 +45,8 @@ Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line**
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire [Steel Judoka]
 - [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn [Blitzkrieg] — completed in run `20260524_195401_412` on Detritus Corporate HQ
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack [Hazardous Mechs] — completed in run `20260522_193613_471`; `Brute_Unstable_AB` dealt 8 damage in Volcanic Hive
-- [ ] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod)
-- [ ] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad
+- [x] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod) — completed in Frozen Titans run `20260525_203546_657`
+- [x] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad — completed with 3x Ice Mech in run `20260526_204256_831`
 - [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
 - [ ] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle [Steel Judoka]
@@ -62,7 +62,7 @@ Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line**
 - [ ] Powered Blast (8.8%) — Pierce Walking Bomb with AP Cannon to kill Enemy [Bombermechs]
 - [ ] On the Backburner (8.2%) — 4 damage with Reverse Thrusters [Mist Eaters]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission [Cataclysm] — Steam-confirmed on 2026-05-21 during run `20260521_120049_468`
-- [ ] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom
+- [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs in Custom — completed alongside Mech Specialist with 3x Ice Mech in run `20260526_204256_831`
 - [ ] Lucky Start (7.3%) — Beat game without spending Reputation [Random]
 - [ ] Complete Victory (7.2%) — Beat game with all 10 primary Squads [cumulative]
 - [ ] Stay With Me! (7.2%) — Heal 12 damage over single Island [Mist Eaters]
@@ -79,7 +79,7 @@ Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line**
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (43, from Steam sync)
+### Already Completed (46, from Steam sync)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -118,10 +118,13 @@ Current milestone: Blitzkrieg run `20260524_195401_412` closed **Hold the Line**
 - [x] Unwitting Allies (14.2%) — 4 enemies die from enemy fire  [Steel Judoka]
 - [x] Hold the Line (14.0%) — Block 4 emerging Vek in single turn  [Blitzkrieg]
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
+- [x] Distant Friends (11.3%) — Encounter a familiar face  [Frozen Titans]
+- [x] Mech Specialist (11.1%) — Beat game with 3 of the same Mech  [Custom Squad]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]
 - [x] Unstable Ground (7.9%) — Crack 10 tiles in one mission  [Cataclysm]
+- [x] Flight Specialist (7.8%) — Beat game with 3 flying Mechs  [Custom Squad]
 - [x] Squads Victory — Beat game with 4 different Squads
 
 

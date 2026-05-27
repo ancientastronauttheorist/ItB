@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-26T18:09:18.422944",
+    "last_steam_sync": "2026-05-27T13:56:47.310597",
     "last_steam_total": 70,
-    "last_steam_unlocked": 44
+    "last_steam_unlocked": 46
   },
   "achievements": {
     "rift_walkers": [
@@ -305,10 +305,10 @@
         "description": "Beat the game with 3 of the same Mech in a Custom squad",
         "type": "single_run",
         "global_unlock_pct": 11.1,
-        "completed": false,
-        "strategy": "3x Combat Mech is effective (high damage, good all-around). Collect supporting weapons from shops/pods. 2-island run recommended.",
-        "setup": "Custom squad: 3 identical mechs. Easy difficulty. 2-island run.",
-        "pitfalls": "Limited versatility. Need to compensate with found weapons."
+        "completed": true,
+        "strategy": "Completed with 3x Ice Mech on Easy, which also satisfies Flight Specialist because Ice Mechs fly. Bethany/Mafan shielded Cryo is the cleanest opener, but the route can still win if the shielded pilot is disabled before final-cave completion.",
+        "setup": "Custom squad: 3 identical mechs. Proven setup: 3x Ice Mech, Easy difficulty, Advanced Edition ON, 2-island run.",
+        "pitfalls": "Low damage and repeated Cryo self-freeze create action-economy debt. Optional bonuses and leader kills are expendable, but final-cave Renfield Bomb survival and grid > 0 are not."
       },
       {
         "name": "Class Specialist",
@@ -325,10 +325,10 @@
         "description": "Beat the game with 3 flying Mechs in a Custom squad",
         "type": "single_run",
         "global_unlock_pct": 7.8,
-        "completed": false,
-        "strategy": "Flying mechs: Jet Mech, Defense Mech, Ice Mech, Nano Mech, Swap Mech, Thruster Mech, Drill Mech, Control Mech. Ice Mech with Bethany/Mafan is strong. Avoid final mission freeze trap.",
-        "setup": "Custom squad: 3 flying mechs. Bethany on Ice Mech.",
-        "pitfalls": "Flying mechs tend to be fragile. Final mission lava is not a problem (flying ignores lava)."
+        "completed": true,
+        "strategy": "Completed with 3x Ice Mech in the same run as Mech Specialist. Triple Ice is both three identical mechs and three flying mechs, so it double-dips both Custom Squad achievements.",
+        "setup": "Custom squad: 3 flying mechs. Proven setup: 3x Ice Mech on Easy with Bethany or Mafan preferred on one Ice Mech.",
+        "pitfalls": "Flying avoids lava, but triple Ice has low damage and can self-freeze. Watch final-cave action economy, research gates, and Renfield Bomb protection."
       }
     ],
     "bombermechs": [

@@ -346,18 +346,20 @@ evaluation weights when targeting that achievement.
 ### Distant Friends (11.3%)
 - **Requirement:** Encounter a familiar face (find an FTL pilot in a time pod).
 - **Squad:** Any
-- **Strategy:** FTL pilots (Kazaaakpleth, Ariadne, Mafan) appear randomly in Time Pods. The FTL game must be owned on Steam. Keep opening time pods across runs and eventually an FTL pilot appears.
-- **Bot approach:** Prioritize collecting time pods in every mission. This is RNG-dependent. No special solver changes beyond time pod collection priority.
-- **Ideal setup:** Any, collect time pods every run. Requires FTL to be owned on the same Steam account. [needs-verification: confirm FTL ownership]
-- **Estimated difficulty for bot:** Medium (RNG-dependent)
+- **Status:** Complete. Frozen Titans Easy run `20260525_203546_657` collected the hidden H2 beacon on R.S.T. `Mission_Force` and protected the Strange Pod.
+- **Strategy:** FTL pilots (Kazaaakpleth, Ariadne, Mafan) appear through the Strange Pod event. Break marked mountain/ice tiles with a small glint, then move onto the revealed beacon before mission end.
+- **Bot approach:** The bridge can report the glint tile as ordinary rubble/ice, so screenshot/visual authority matters. If the user or screenshot sees the beacon, interrupt the solver line for the pickup and accept optional bonus loss if needed.
+- **Ideal setup:** Any squad with enough terrain-breaking and pickup mobility; Frozen Titans worked because Cryo control bought time.
+- **Estimated difficulty for bot:** Complete; retain as a regression guard for visual secret-object pickup.
 
 ### Mech Specialist (11.1%)
 - **Requirement:** Beat the game with 3 of the same Mech in a Custom squad.
 - **Squad:** Custom (required -- 3x same mech)
-- **Strategy:** Choose 3 copies of the same mech. The easiest choice is 3x Combat Mech (Titan Fist is versatile), 3x Judo Mech (armor + throw), or 3x Leap Mech (high damage + movement). Having 3 identical weapons simplifies the solver.
-- **Bot approach:** Build a custom squad of 3x the same mech. The solver only needs to handle one weapon type. Recommended: 3x Combat Mech (good damage, Dash upgrade gives mobility) or 3x Judo Mech (armor, repositioning).
-- **Ideal setup:** Normal difficulty, 2-island run. 3x Combat Mech recommended for simplicity.
-- **Estimated difficulty for bot:** Medium-Hard
+- **Status:** Complete. Custom Squad Easy run `20260526_204256_831` used 3x Ice Mech and unlocked Mech Specialist on 2026-05-27.
+- **Strategy:** 3x Ice Mech is proven and can also unlock Flight Specialist because Ice Mechs fly. Bethany or Mafan on one Ice Mech improves early action economy by preventing self-freeze, but the route can still win if that pilot is disabled before final-cave completion.
+- **Bot approach:** Build a custom squad of 3x Ice Mech, play Easy, clear two islands, then go final. Preserve timeline/grid and the Renfield Bomb; optional bonuses and leader kills are expendable. Resolve Cryo status desyncs and research gates rather than hand-waving them, because repeated self-freeze changes action economy.
+- **Ideal setup:** Easy, Advanced Edition ON, 2-island run, 3x Ice Mech. Upgrade movement/HP when available, buy grid first, and avoid mission choices that require high damage output.
+- **Estimated difficulty for bot:** Complete; retain as a regression guard for Custom Squad setup, Cryo status handling, and final-cave dirty-policy triage.
 
 ### Lightning War (10.5%)
 - **Requirement:** Finish the first 2 Corporate Islands in under 30 minutes with the Blitzkrieg squad.
@@ -480,10 +482,11 @@ evaluation weights when targeting that achievement.
 ### Flight Specialist (7.8%)
 - **Requirement:** Beat the game with 3 flying Mechs in a Custom squad.
 - **Squad:** Custom (required -- 3 flying mechs)
-- **Strategy:** Flying mechs include: Jet Mech (Rusting Hulks), Defense Mech (Zenith Guard), Swap Mech (Flame Behemoths), Ice Mech (Frozen Titans), Nano Mech (Hazardous Mechs), Thruster Mech (Mist Eaters), Control Mech (Mist Eaters), Napalm Mech (Heat Sinkers). Choose 3 that have complementary abilities.
-- **Bot approach:** Recommended: Jet Mech (damage + smoke) + Swap Mech (repositioning) + Nano Mech (A.C.I.D. + healing passive). Or Control Mech + Ice Mech + Jet Mech for crowd control. [needs-verification: confirm all flying mechs available]
-- **Ideal setup:** Normal difficulty, 2-island run with Custom squad of 3 flyers.
-- **Estimated difficulty for bot:** Hard
+- **Status:** Complete. The same 3x Ice Mech Custom Squad run `20260526_204256_831` unlocked Flight Specialist on 2026-05-27.
+- **Strategy:** 3x Ice Mech is the shortest proven route because it is both three identical mechs and three flying mechs. Mixed flyers remain viable for future Custom Squad experiments, but no longer need achievement targeting.
+- **Bot approach:** For regression, ensure Custom Squad setup preserves three flying chassis and that Steam sync marks both Custom achievements after a final victory.
+- **Ideal setup:** Completed with Easy, Advanced Edition ON, 2-island 3x Ice Mech.
+- **Estimated difficulty for bot:** Complete.
 
 ### Lucky Start (7.3%)
 - **Requirement:** Beat the game (any length) without spending any Reputation with a Random squad.

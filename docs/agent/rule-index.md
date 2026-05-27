@@ -402,3 +402,6 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 389 | 687 | HQ leader survival is an objective-loss tradeoff, not automatic timeline loss. | `docs/agent/safety-gates.md` |
 | 390 | 689 | Distant Friends beacon pickup is visual-authoritative. | `docs/agent/achievement-playbook.md` |
 | 391 | 691 | Resume before End Turn must re-read the bridge. | `docs/agent/safety-gates.md` |
+| 392 | 693 | Mech Specialist tolerates failed leader bonuses. | `docs/agent/achievement-playbook.md` |
+| 393 | 695 | Triple Ice can close Mech Specialist and Flight Specialist together. | `docs/agent/achievement-playbook.md` |
+| 394 | 697 | Computer Use fallback End Turn clicks need refocus and fresh reads. | `docs/agent/live-runbook.md` |
