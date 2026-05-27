@@ -1659,7 +1659,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   turn 4, where Combat Mech killed the F2 Scorpion but remained webbed by
 //   the E1 Scorpion. Pre-v233 corpus archived as
 //   `failure_db_snapshot_sim_v232.jsonl`.
-pub const SIMULATOR_VERSION: u32 = 233;
+// v234 - Plain Titan Fist killed-target pushes can corpse-bump a live blocker,
+//   matching Dash Punch corpse-bump policy. Fixes Random Squad Change the Odds
+//   run 20260527_152006_916 Corporate HQ turn 1, where a killed Blob corpse
+//   bumped Boulder Mech at A6. Pre-v234 corpus archived as
+//   `failure_db_snapshot_sim_v233.jsonl`.
+pub const SIMULATOR_VERSION: u32 = 234;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

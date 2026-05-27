@@ -2589,7 +2589,7 @@ pub fn simulate_weapon_with(
     let leech_uncapped_before = result.leech_uncapped_kills;
 
     match wdef.weapon_type {
-        WeaponType::Melee => sim_melee(board, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
+        WeaponType::Melee => sim_melee(board, weapon_id, wdef, ax, ay, target_x, target_y, attack_dir, &mut result),
         WeaponType::Projectile => {
             sim_projectile(board, ax, ay, weapon_id, wdef, attack_dir, &mut result)
         },
@@ -3067,7 +3067,7 @@ fn create_adjacent_cracks(board: &mut Board, x: u8, y: u8, result: &mut ActionRe
 
 // ── Melee ────────────────────────────────────────────────────────────────────
 
-fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
+fn sim_melee(board: &mut Board, weapon_id: WId, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8, attack_dir: Option<usize>, result: &mut ActionResult) {
     // path_size>1 melee (Prime_Spear: Lua scripts/weapons_prime.lua:792-846).
     // Lua SkillEffect damages every tile from attacker+1 .. attacker+distance
     // in order, with only the FURTHEST tile receiving Push and weapon status
@@ -3212,7 +3212,9 @@ fn sim_melee(board: &mut Board, wdef: &WeaponDef, ax: u8, ay: u8, tx: u8, ty: u8
 
         match wdef.push {
             PushDir::Forward => {
-                if wdef.burns_fire_targets() {
+                if matches!(weapon_id, WId::PrimePunchmech) {
+                    apply_push_with_policy(board, tx, ty, dir, result, DASH_PUNCH_PUSH_POLICY);
+                } else if wdef.burns_fire_targets() {
                     apply_push_with_policy(board, tx, ty, dir, result, FLAMETHROWER_PUSH_POLICY);
                 } else {
                     apply_push(board, tx, ty, dir, result);
@@ -6586,6 +6588,23 @@ mod tests {
         assert_eq!(
             board.units[arti_idx].hp, 1,
             "Dead Dash Punch target should still bump the live blocker behind it"
+        );
+        assert_eq!(result.mech_damage_taken, 1);
+    }
+
+    #[test]
+    fn test_titan_fist_plain_dead_target_bumps_live_blocker() {
+        let mut board = make_test_board();
+        let mech_idx = add_mech(&mut board, 0, 2, 5, 3, WId::PrimePunchmech);
+        let blob_idx = add_enemy(&mut board, 1, 2, 6, 2);
+        let rock_idx = add_mech(&mut board, 2, 2, 7, 2, WId::RangedRockthrow);
+
+        let result = simulate_weapon(&mut board, mech_idx, WId::PrimePunchmech, 2, 6);
+
+        assert!(board.units[blob_idx].hp <= 0, "Plain Titan Fist target dies");
+        assert_eq!(
+            board.units[rock_idx].hp, 1,
+            "Plain Titan Fist killed-target corpse should bump the live blocker behind it"
         );
         assert_eq!(result.mech_damage_taken, 1);
     }

@@ -1177,7 +1177,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # Fixes Random Squad Change the Odds run 20260527_152006_916 Mission_Mines turn
 # 4, where Combat Mech killed the F2 Scorpion but remained webbed by E1.
 # Pre-v233 corpus archived as failure_db_snapshot_sim_v232.jsonl.
-SIMULATOR_VERSION = 233
+# v234 - Plain Titan Fist killed-target pushes can corpse-bump a live blocker,
+# matching Dash Punch corpse-bump policy. Fixes Random Squad Change the Odds
+# run 20260527_152006_916 Corporate HQ turn 1, where a killed Blob corpse
+# bumped Boulder Mech at A6.
+# Pre-v234 corpus archived as failure_db_snapshot_sim_v233.jsonl.
+SIMULATOR_VERSION = 234
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
