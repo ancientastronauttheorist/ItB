@@ -156,7 +156,7 @@ Stop before further combat commands or End Turn clicks when any of these appear:
 - `INVESTIGATE` or `INVESTIGATE_POST_ENEMY`.
 - `THREAT_AUDIT_BLOCKED`.
 - A persistent `post_enemy_block`.
-- `SAFETY_BLOCKED` without reviewed dirty consent.
+- `SAFETY_BLOCKED` that has not had its dirty frontier reviewed.
 - A post-action desync that leaves the board uncertain.
 - Visible reward text showing KIA, failed objective, Region Secured mismatch, or
   another terminal outcome that contradicts the solver.
@@ -168,12 +168,20 @@ types with `research_resolve`, and repeat until no work remains.
 Diagnosis protocol: drain between turns, one entry per call unless the user asks
 to clear the queue. Run dry-run before applying an agent proposal. If a concrete
 diagnosis fix applies, verify it, rebuild Rust if needed, run focused proof and
-regression when possible, then commit and push only the relevant files.
+regression when possible, then stage only the relevant fix/regression/doc files,
+commit, and push before resuming achievement play. Do not leave verified
+solver/simulator fixes sitting uncommitted through the next mission unless the
+user explicitly asks you to pause.
 
-Dirty-plan protocol: inspect the dirty frontier first. A plain
-`--allow-dirty-plan` is insufficient; rerun only with the exact single-use
-`--dirty-consent-id` for the reviewed line. Timeline collapse is not
-dirty-consentable except the documented final-cave resist emergency.
+Dirty-plan protocol: inspect the dirty frontier first. The user has granted
+standing consent to run reviewed dirty lines when there is no desync,
+investigation gate, unresolved research, threat-audit block, persistent
+post-enemy block, or board uncertainty. A plain `--allow-dirty-plan` is
+insufficient; rerun only with the exact single-use `--dirty-consent-id` for the
+reviewed line, plus any required broad dirty flag for that exact loss class.
+Timeline collapse is not covered by standing consent. The documented
+final-cave resist emergency needs explicit live user authorization for the exact
+resist line before spending the token.
 
 ## Achievement Setup
 

@@ -1,50 +1,18 @@
 {
-  "run_id": "20260525_203546_657",
-  "squad": "Frozen Titans",
-  "achievement_targets": [],
+  "run_id": "20260526_180954_139",
+  "squad": "Custom Squad",
+  "achievement_targets": [
+    "Mech Specialist"
+  ],
   "difficulty": 0,
   "current_island": "",
-  "current_mission": "Mission_Force",
+  "current_mission": "Mission_Final_Cave",
   "islands_completed": [],
-  "mission_index": 17,
+  "mission_index": 12,
   "last_mission_turn": 4,
   "current_turn": 4,
-  "phase": "unknown",
-  "active_solution": {
-    "actions": [
-      {
-        "mech_uid": 2,
-        "mech_type": "IceMech",
-        "move_to": [
-          5,
-          4
-        ],
-        "weapon": "Ranged_Ice",
-        "target": [
-          5,
-          2
-        ],
-        "description": "IceMech, fire Cryo-Launcher at F3"
-      },
-      {
-        "mech_uid": 1,
-        "mech_type": "MirrorMech",
-        "move_to": [
-          7,
-          4
-        ],
-        "weapon": "Brute_Mirrorshot_A",
-        "target": [
-          6,
-          4
-        ],
-        "description": "MirrorMech, fire Mirror Shot at D2"
-      }
-    ],
-    "score": 129520.0,
-    "turn": 4,
-    "input_fingerprint": "0:6,0:2|1015:1,6:5|1039:5,6:1|1041:5,2:3|1074:6,4:1|1:7,4:3|2:5,4:1|989:6,3:4|997:4,4:5"
-  },
+  "phase": "combat_player",
+  "active_solution": null,
   "actions_executed": 0,
   "buildings_lost": 0,
   "mechs_destroyed": 0,
@@ -52,1356 +20,1126 @@
   "turns_played": 0,
   "decisions": [
     {
-      "timestamp": "2026-05-25T20:39:13.715028",
-      "turn": 1,
-      "label": "solve",
-      "score": 143316.28572784152,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, move E5\u2192D3, fire Shield Bash at C3",
-        "IceMech, move B5\u2192B6, fire Cryo-Launcher at B3",
-        "MirrorMech, fire Mirror Shot at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:39:30.981388",
-      "turn": 1,
-      "label": "solve",
-      "score": 138416.28572784152,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, move E5\u2192F1",
-        "IceMech, move B5\u2192B6, fire Cryo-Launcher at B3",
-        "MirrorMech, fire Mirror Shot at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:39:52.926556",
-      "turn": 1,
-      "label": "solve",
-      "score": 143316.28572784152,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, move E5\u2192D3, fire Shield Bash at C3",
-        "IceMech, move B5\u2192B6, fire Cryo-Launcher at B3",
-        "MirrorMech, fire Mirror Shot at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:40:02.313876",
-      "turn": 1,
-      "label": "note",
-      "message": "Reviewed Mission_AcidTank turn 1 dirty frontier: no clean candidate in top-k. Accepting candidate rank 0 with dirty_consent_id 006da83124a3fdbe because it only predicts ordinary grid/building HP loss 5/7 to 4/7, preserves mechs/objectives/pods, and avoids the rank 72 mech HP loss."
-    },
-    {
-      "timestamp": "2026-05-25T20:40:10.105313",
-      "turn": 1,
-      "label": "solve",
-      "score": 143316.28572784152,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, move E5\u2192D3, fire Shield Bash at C3",
-        "IceMech, move B5\u2192B6, fire Cryo-Launcher at B3",
-        "MirrorMech, fire Mirror Shot at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:41:19.779369",
-      "turn": 1,
-      "label": "note",
-      "message": "Threat audit after accepted Mission_AcidTank turn 1 dirty line matches the reviewed loss: Bouncer1 at C3 still targets ordinary C4 building only; Scorpion threat is frozen, mechs/objectives/pods preserved. Dispatching held End Turn under rule 188."
-    },
-    {
-      "timestamp": "2026-05-25T20:41:55.240960",
-      "turn": 2,
-      "label": "solve",
-      "score": 137313.8095238097,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, move D3\u2192E2, fire Shield Bash at E3",
-        "IceMech, move A6\u2192B6, fire Cryo-Launcher at B2",
-        "MirrorMech, fire Mirror Shot at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:42:37.103856",
-      "turn": 3,
-      "label": "solve",
-      "score": 140327.14285714284,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, move E2\u2192D2, repair",
-        "MirrorMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:43:28.942989",
-      "turn": 4,
-      "label": "solve",
-      "score": 93006.57159280777,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, repair",
-        "MirrorMech",
-        "IceMech, move A6\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:43:50.975229",
-      "turn": 4,
-      "label": "solve",
-      "score": 93006.57159280777,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, repair",
-        "MirrorMech",
-        "IceMech, move A6\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:45:27.716204",
-      "turn": 4,
-      "label": "note",
-      "message": "Reviewed Mission_AcidTank final turn dirty frontier: accepting rank 0 with dirty_consent_id 6a4585ea30b70e82. It predicts ordinary grid 5/7 to 3/7, building HP 12 to 10, IceMech frozen/disabled at battle end, with all mechs alive and no pods/protected objectives; final-turn mission survival outweighs abandoning the first island."
-    },
-    {
-      "timestamp": "2026-05-25T20:45:35.928020",
-      "turn": 4,
-      "label": "solve",
-      "score": 93006.57159280777,
-      "actions": [
-        "Acid_Tank",
-        "GuardMech, repair",
-        "MirrorMech",
-        "IceMech, move A6\u2192B5, fire Cryo-Launcher at E5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:46:03.369724",
-      "turn": 4,
-      "label": "note",
-      "message": "Threat audit after accepted Mission_AcidTank final dirty line matches reviewed final-turn losses: Mosquito1 hits ordinary D4 and Bouncer1 hits ordinary C4, while Scorpion1 at E5 is frozen before D5. Grid predicted to remain positive and no pods/protected objectives/mech deaths are involved; dispatching End Turn."
-    },
-    {
-      "timestamp": "2026-05-25T20:48:23.081138",
-      "turn": 1,
-      "label": "solve",
-      "score": 127785.71428571429,
-      "actions": [
-        "GuardMech, move C6\u2192B2, fire Shield Bash at C2",
-        "IceMech, fire Cryo-Launcher at D2",
-        "MirrorMech, fire Mirror Shot at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:49:14.016755",
-      "turn": 2,
-      "label": "solve",
-      "score": 109812.38095238093,
-      "actions": [
-        "GuardMech, move B2\u2192E1, fire Shield Bash at E2",
-        "MirrorMech, move B5\u2192B2, fire Mirror Shot at C2",
-        "IceMech, fire Cryo-Launcher at D2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:50:38.767270",
-      "turn": 3,
-      "label": "solve",
-      "score": 145320.7142857143,
-      "actions": [
-        "GuardMech, move E1\u2192F4, fire Shield Bash at F5",
-        "IceMech, move D5\u2192E5, fire Cryo-Launcher at E2",
-        "MirrorMech, move B2\u2192B5, fire Mirror Shot at C5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:51:26.274384",
-      "turn": 4,
-      "label": "solve",
-      "score": 143635.7142857143,
-      "actions": [
-        "GuardMech, move F4\u2192E3, fire Shield Bash at D3",
-        "IceMech, move E5\u2192E6, fire Cryo-Launcher at E4",
-        "MirrorMech, move B5\u2192C6, fire Mirror Shot at D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:54:04.310544",
-      "turn": 4,
-      "label": "note",
-      "message": "Inspected m02 turn 4 Ranged_Ice terrain fuzzy before End Turn: only diff was bridge (2,3) predicted water vs actual ice on Ice Mech frozen tile; no unit/grid/objective diffs, auto_turn re-solved after the mismatch and final threat audit was OK, so this is accepted as a benign final-turn terrain side effect."
-    },
-    {
-      "timestamp": "2026-05-25T20:56:17.530367",
-      "turn": 1,
-      "label": "solve",
-      "score": 142114.28571428574,
-      "actions": [
-        "MirrorMech",
-        "IceMech, move G6\u2192G4, fire Cryo-Launcher at G2",
-        "GuardMech, move C5\u2192F5, fire Shield Bash at G5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:56:54.318413",
-      "turn": 2,
-      "label": "solve",
-      "score": 131700.95238095248,
-      "actions": [
-        "GuardMech, repair",
-        "MirrorMech",
-        "IceMech, move G4\u2192F3, fire Cryo-Launcher at F5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:57:39.151542",
-      "turn": 3,
-      "label": "solve",
-      "score": 149474.28571428574,
-      "actions": [
-        "MirrorMech, move E7\u2192F7, fire Mirror Shot at F6",
-        "IceMech, move F3\u2192F5, fire Cryo-Launcher at F8",
-        "GuardMech, move F4\u2192F3, fire Shield Bash at F2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T20:58:28.194114",
-      "turn": 4,
-      "label": "solve",
-      "score": 142329.28571428574,
-      "actions": [
-        "GuardMech, fire Shield Bash at F3",
-        "IceMech, move F5\u2192H5, fire Cryo-Launcher at C5",
-        "MirrorMech, move F7\u2192H6, fire Mirror Shot at H5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:00:33.312821",
-      "turn": 1,
-      "label": "solve",
-      "score": 125664.28571428571,
-      "actions": [
-        "GuardMech, move C5\u2192D3, fire Shield Bash at C3",
-        "IceMech, fire Cryo-Launcher at D2",
-        "MirrorMech, move B5\u2192C5, fire Mirror Shot at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:01:11.415173",
-      "turn": 2,
-      "label": "solve",
-      "score": 135147.6190476192,
-      "actions": [
-        "MirrorMech, move C5\u2192C4, fire Mirror Shot at D4",
-        "IceMech, move E6\u2192C6, fire Cryo-Launcher at C2",
-        "GuardMech, move D3\u2192C5, fire Shield Bash at C6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:01:47.093914",
-      "turn": 3,
-      "label": "solve",
-      "score": 138894.2857142857,
-      "actions": [
-        "GuardMech, move C5\u2192E5, fire Shield Bash at F5",
-        "MirrorMech, move C4\u2192E3",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:02:37.228544",
-      "turn": 4,
-      "label": "solve",
-      "score": 129019.28571428571,
-      "actions": [
-        "GuardMech, move E6\u2192C5, fire Shield Bash at C6",
-        "MirrorMech, move E3\u2192D4, fire Mirror Shot at E4",
-        "IceMech, move A6\u2192B5, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:03:11.775414",
-      "turn": 4,
-      "label": "solve",
-      "score": 129479.28571428571,
-      "actions": [
-        "MirrorMech, move E3\u2192C4, fire Mirror Shot at C3",
-        "GuardMech, move C5\u2192D4, fire Shield Bash at E4",
-        "IceMech, move A6\u2192C5, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:03:27.827980",
-      "turn": 4,
-      "label": "note",
-      "message": "Reviewed Nanite Farms turn 4 safety block from fresh read/solve: earlier partial re-solve had blocking Ice ACID, but fresh top_k_safety candidate #75 avoids ACID/grid/objective/pod loss and only predicts non-blocking 2 mech HP damage under the mission limit; proceeding from fresh board via auto_turn."
-    },
-    {
-      "timestamp": "2026-05-25T21:03:36.170465",
-      "turn": 4,
-      "label": "solve",
-      "score": 129479.28571428571,
-      "actions": [
-        "MirrorMech, move E3\u2192C4, fire Mirror Shot at C3",
-        "GuardMech, move C5\u2192D4, fire Shield Bash at E4",
-        "IceMech, move A6\u2192C5, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:04:10.329726",
-      "turn": 4,
-      "label": "solve",
-      "score": 133049.2857142857,
-      "actions": [
-        "GuardMech, fire Shield Bash at C6",
-        "MirrorMech, move C4\u2192E5, fire Mirror Shot at E4",
-        "IceMech, move A6\u2192B5, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:06:09.684684",
-      "turn": 4,
-      "label": "solve",
-      "score": 133049.2857142857,
-      "actions": [
-        "GuardMech, fire Shield Bash at C6",
-        "MirrorMech, move C4\u2192E5, fire Mirror Shot at E4",
-        "IceMech, move A6\u2192B5, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:06:31.137597",
-      "turn": 4,
-      "label": "solve",
-      "score": 123974.28571428571,
-      "actions": [
-        "MirrorMech, move C4\u2192E5, fire Mirror Shot at E4",
-        "IceMech, move A6\u2192D6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:06:41.749396",
-      "turn": 4,
-      "label": "solve",
-      "score": 123974.28571428571,
-      "actions": [
-        "MirrorMech, move C4\u2192E5, fire Mirror Shot at E4",
-        "IceMech, move A6\u2192D6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:07:06.626343",
-      "turn": 4,
-      "label": "solve",
-      "score": 123974.28571428571,
-      "actions": [
-        "MirrorMech, fire Mirror Shot at E4",
-        "IceMech, move A6\u2192D6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:07:17.077554",
-      "turn": 4,
-      "label": "solve",
-      "score": 123974.28571428571,
-      "actions": [
-        "MirrorMech, fire Mirror Shot at E4",
-        "IceMech, move A6\u2192D6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:07:40.504723",
-      "turn": 4,
-      "label": "solve",
-      "score": 123974.28571428571,
-      "actions": [
-        "IceMech, move A6\u2192D6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:07:50.441205",
-      "turn": 4,
-      "label": "solve",
-      "score": 123974.28571428571,
-      "actions": [
-        "IceMech, move A6\u2192D6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:08:08.445102",
-      "turn": 4,
-      "label": "note",
-      "message": "Nanite Farms final turn recovered through repeated fresh reads after status/predicted-ACID false positives. Actual bridge state repeatedly had mechs_acid empty; final auto_turn completed remaining actions, fuzzy status on Ice repair move only, threat audit OK, no research queue, proceeding to End Turn."
-    },
-    {
-      "timestamp": "2026-05-25T21:11:48.538146",
-      "turn": 1,
-      "label": "solve",
-      "score": 148900.0,
-      "actions": [
-        "IceMech, move F6\u2192F3, fire Cryo-Launcher at C3",
-        "GuardMech, move G5\u2192F4, fire Shield Bash at F3",
-        "MirrorMech, move C5\u2192C4, fire Mirror Shot at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:12:26.371103",
-      "turn": 2,
-      "label": "solve",
-      "score": 139653.3333333335,
-      "actions": [
-        "GuardMech, move F4\u2192D3, fire Shield Bash at E3",
-        "IceMech, fire Cryo-Launcher at D3",
-        "MirrorMech, move C4\u2192D6, fire Mirror Shot at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:13:07.455744",
-      "turn": 3,
-      "label": "solve",
-      "score": 143280.0,
-      "actions": [
-        "GuardMech, move D2\u2192C2, repair",
-        "MirrorMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:13:49.931734",
-      "turn": 4,
-      "label": "solve",
-      "score": 150550.0,
-      "actions": [
-        "GuardMech, move C2\u2192D4, fire Shield Bash at D5",
-        "IceMech, move F3\u2192G3, fire Cryo-Launcher at E3",
-        "MirrorMech, move D6\u2192G6, fire Mirror Shot at G5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:14:28.987440",
-      "turn": 4,
-      "label": "solve",
-      "score": 150550.0,
-      "actions": [
-        "GuardMech, move C2\u2192D4, fire Shield Bash at D5",
-        "IceMech, move F3\u2192G3, fire Cryo-Launcher at E3",
-        "MirrorMech, move D6\u2192G6, fire Mirror Shot at G5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:15:39.369008",
-      "turn": 4,
-      "label": "note",
-      "message": "HQ final turn is non-consentable objective-loss block: CrabBoss still alive at 6/6 on final turn, solver found no clean candidate among 1000/beam candidates. Root cause for run quality: froze/control-routed the boss without enough accumulated damage or upgraded damage; do not spend objective-loss dirty token in normal Distant Friends hunt."
-    },
-    {
-      "timestamp": "2026-05-25T21:19:07.774565",
-      "turn": 4,
-      "label": "note",
-      "message": "User corrected HQ final-turn decision: Distant Friends cannot spawn until Island 2+, so do not abandon solely because the first-island Crab Leader bonus is lost. Objective-loss dirty line is acceptable here only to preserve the timeline and reach Island 2 for Distant Friends scanning; tower/grid remain the priority."
-    },
-    {
-      "timestamp": "2026-05-25T21:20:15.516688",
-      "turn": 4,
-      "label": "note",
-      "message": "User corrected first-island HQ objective handling: Distant Friends cannot spawn until Island 2+, so do not abandon solely for first-island Crab Leader bonus failure. Reviewed dirty HQ final line preserves grid, tower, and mechs, and only leaves CrabBoss alive; proceeding with exact objective-loss consent to reach Island 2."
-    },
-    {
-      "timestamp": "2026-05-25T21:22:39.287177",
-      "turn": 1,
-      "label": "solve",
-      "score": 136440.0,
-      "actions": [
-        "GuardMech, move F5\u2192G5, repair",
-        "MirrorMech, move C5\u2192C3",
-        "IceMech, move G6\u2192F6, repair"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:23:36.285752",
-      "turn": 2,
-      "label": "solve",
-      "score": 135873.33333333346,
-      "actions": [
-        "MirrorMech, move C3\u2192B2, fire Mirror Shot at C2",
-        "GuardMech, move G5\u2192E2, fire Shield Bash at D2",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:24:27.203596",
-      "turn": 3,
-      "label": "solve",
-      "score": 139240.0,
-      "actions": [
-        "GuardMech, move E2\u2192D2, fire Shield Bash at C2",
-        "MirrorMech, repair",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:25:22.157314",
-      "turn": 4,
-      "label": "solve",
-      "score": 140220.0,
-      "actions": [
-        "GuardMech, move D2\u2192D3, fire Shield Bash at E3",
-        "MirrorMech, fire Mirror Shot at C2",
-        "IceMech, move F6\u2192F5, fire Cryo-Launcher at F2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:46:39.489419",
-      "turn": 4,
-      "label": "note",
-      "message": "Investigated Mission_Airstrike turn 4 status desync before selecting next mission. Root cause: simulator kept IceMech and its tile on fire after Cryo-Launcher self-freeze from a burning tile; live game extinguished both. Patched Rust self-freeze tile cleanup, bumped SIMULATOR_VERSION 230->231, archived failure_db_snapshot_sim_v230, rebuilt/installed wheel, focused Rust test passed, focused replay proof now predicts fire cleared. Broad regression was attempted with a clean target but stopped after several minutes during Rust corpus to keep live run moving."
-    },
-    {
-      "timestamp": "2026-05-25T21:47:52.061863",
-      "turn": 4,
-      "label": "note",
-      "message": "Next accessible frontier after Mission_Airstrike appears to be Safeguard Valley / Mission_Dam with Destroy the Dam and Block Vek Spawning 3 times. Mission picker scores block-spawn/mite-style objectives poorly for perfect-island farming, but active target is Distant Friends and this red frontier has mountain/dam terrain; accept spawn-block bonus as secondary if needed to preserve timeline and scan for the strange marker."
-    },
-    {
-      "timestamp": "2026-05-25T21:49:29.626571",
-      "turn": 1,
-      "label": "solve",
-      "score": 109200.0,
-      "actions": [
-        "MirrorMech, move G5\u2192E4, fire Mirror Shot at D4",
-        "IceMech, move C6\u2192E7, fire Cryo-Launcher at E2",
-        "GuardMech, move D5\u2192D7, fire Shield Bash at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:50:34.104894",
-      "turn": 2,
-      "label": "solve",
-      "score": 157676.66666666686,
-      "actions": [
-        "GuardMech, move D7\u2192D5, fire Shield Bash at C5",
-        "MirrorMech, move E4\u2192D4, fire Mirror Shot at E4",
-        "IceMech, move E7\u2192D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:51:34.094858",
-      "turn": 3,
-      "label": "solve",
-      "score": 155100.0,
-      "actions": [
-        "GuardMech",
-        "IceMech, move D7\u2192B7, fire Cryo-Launcher at B2",
-        "MirrorMech, move D4\u2192D7, fire Mirror Shot at C7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:53:30.504456",
-      "turn": 4,
-      "label": "solve",
-      "score": 132582.71429041453,
-      "actions": [
-        "MirrorMech, move D7\u2192D6, fire Mirror Shot at D5",
-        "IceMech, move A7\u2192D7, fire Cryo-Launcher at D3",
-        "GuardMech, move D4\u2192F1, fire Shield Bash at F2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:54:02.854343",
-      "turn": 4,
-      "label": "note",
-      "message": "Mission_Dam turn 4 Distant scan clean; safety block reviewed; accepted rank 0 dirty line because it is the only 1-grid loss candidate and alternatives lose 2 grid; no pod present and predicted grid remains 6/7."
-    },
-    {
-      "timestamp": "2026-05-25T21:54:14.596614",
-      "turn": 4,
-      "label": "solve",
-      "score": 132582.71429041453,
-      "actions": [
-        "MirrorMech, move D7\u2192D6, fire Mirror Shot at D5",
-        "IceMech, move A7\u2192D7, fire Cryo-Launcher at D3",
-        "GuardMech, move D4\u2192F1, fire Shield Bash at F2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:54:47.392506",
-      "turn": 4,
-      "label": "solve",
-      "score": 132675.0,
-      "actions": [
-        "IceMech, move A7\u2192D7, fire Cryo-Launcher at D3",
-        "GuardMech, move D4\u2192F1, fire Shield Bash at F2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:54:55.857899",
-      "turn": 4,
-      "label": "note",
-      "message": "Mission_Dam turn 4 partial re-solve reviewed; accepted rank 0 remaining line because the only blocking loss is IceMech self-freeze on the final turn, while alternatives lose 2 grid."
-    },
-    {
-      "timestamp": "2026-05-25T21:55:07.200936",
-      "turn": 4,
-      "label": "solve",
-      "score": 132675.0,
-      "actions": [
-        "IceMech, move A7\u2192D7, fire Cryo-Launcher at D3",
-        "GuardMech, move D4\u2192F1, fire Shield Bash at F2"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T21:59:47.080316",
-      "turn": 1,
-      "label": "solve",
-      "score": 171771.42857142858,
-      "actions": [
-        "GuardMech, move D6\u2192D3, fire Shield Bash at D4",
-        "ArchiveArtillery, move C5\u2192C4, fire Old Earth Artillery at F4",
-        "MirrorMech, move F5\u2192G4, fire Mirror Shot at F4",
-        "IceMech, move G6\u2192D6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:02:10.768708",
-      "turn": 2,
-      "label": "solve",
-      "score": 171984.76190476204,
-      "actions": [
-        "ArchiveArtillery, move C4\u2192C5, fire Old Earth Artillery at C3",
-        "GuardMech, move D3\u2192E4, fire Shield Bash at E3",
-        "MirrorMech, move G4\u2192F3, fire Mirror Shot at E3",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:04:26.895723",
-      "turn": 3,
-      "label": "solve",
-      "score": 165431.42857142858,
-      "actions": [
-        "ArchiveArtillery",
-        "GuardMech, move F3\u2192E3, repair",
-        "MirrorMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:05:30.013566",
-      "turn": 4,
-      "label": "solve",
-      "score": 171301.42857142858,
-      "actions": [
-        "ArchiveArtillery",
-        "GuardMech, fire Shield Bash at D3",
-        "MirrorMech, fire Mirror Shot at F4",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:10:03.420947",
-      "turn": 1,
-      "label": "note",
-      "message": "Mission_Tides turn 1 found normal Time Pod at B3; no cracked Distant marker visible. Treating pod recovery as priority and noting Island 2 likely spent its pod roll."
-    },
-    {
-      "timestamp": "2026-05-25T22:10:15.977301",
-      "turn": 1,
-      "label": "solve",
-      "score": 118200.0,
-      "actions": [
-        "GuardMech, fire Shield Bash at C4",
-        "MirrorMech, move F5\u2192D4, fire Mirror Shot at C4",
-        "IceMech, move E6\u2192B6"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:11:37.990936",
-      "turn": 2,
-      "label": "solve",
-      "score": 139540.0,
-      "actions": [
-        "GuardMech, fire Shield Bash at C6",
-        "MirrorMech, move D4\u2192B3, fire Mirror Shot at C3",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:12:49.375545",
-      "turn": 3,
-      "label": "solve",
-      "score": 146720.0,
-      "actions": [
-        "GuardMech, move C5\u2192C4, fire Shield Bash at B4",
-        "MirrorMech, fire Mirror Shot at C3",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:15:38.229508",
-      "turn": 3,
-      "label": "note",
-      "message": "Island 2 produced a normal Time Pod in Mission_Tides and no Distant marker across scanned normal missions; proceeding toward Corporate HQ to advance the Distant hunt to Island 3."
-    },
-    {
-      "timestamp": "2026-05-25T22:17:08.620494",
-      "turn": 1,
-      "label": "solve",
-      "score": 165450.57141964778,
-      "actions": [
-        "GuardMech, fire Shield Bash at D4",
-        "MirrorMech, move F5\u2192F4, fire Mirror Shot at E4",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:17:20.797893",
-      "turn": 1,
-      "label": "note",
-      "message": "Corporate HQ turn 1 dirty frontier reviewed; accepting rank 0 because all 1000 candidates lose exactly 1 grid/building HP and rank 0 avoids additional mech-disabled collateral; predicted grid remains 6/7 and objectives survive."
-    },
-    {
-      "timestamp": "2026-05-25T22:18:19.355758",
-      "turn": 1,
-      "label": "note",
-      "message": "Corporate HQ turn 1 reviewed dirty frontier: accepting exact rank-0 line a38205ae0632842b because no clean candidate exists, grid remains 6/7, no objective/building destruction, and no mech disable."
-    },
-    {
-      "timestamp": "2026-05-25T22:18:29.854975",
-      "turn": 1,
-      "label": "solve",
-      "score": 165450.57141964778,
-      "actions": [
-        "GuardMech, fire Shield Bash at D4",
-        "MirrorMech, move F5\u2192F4, fire Mirror Shot at E4",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:19:33.422420",
-      "turn": 2,
-      "label": "solve",
-      "score": 152227.14285714296,
-      "actions": [
-        "GuardMech, move D5\u2192D1",
-        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E3",
-        "MirrorMech, move F4\u2192F7, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:20:18.836346",
-      "turn": 3,
-      "label": "solve",
-      "score": 147187.14285714284,
-      "actions": [
-        "GuardMech, move D1\u2192C1, repair",
-        "MirrorMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:21:04.255791",
-      "turn": 4,
-      "label": "solve",
-      "score": 154467.14285714284,
-      "actions": [
-        "GuardMech, move C1\u2192C2, fire Shield Bash at C3",
-        "IceMech, move D7\u2192F8, fire Cryo-Launcher at F2",
-        "MirrorMech, move F7\u2192G8, fire Mirror Shot at F8"
-      ]
-    },
-    {
-      "timestamp": "2026-05-25T22:26:07.223444",
-      "turn": 4,
-      "label": "note",
-      "message": "Island 2 Corporate HQ secured with both objectives; left shop/map state visible as rep 0, grid 7/7, grid defense 31%, cores 2. Selecting Pinnacle for Island 3 because Distant Friends can roll on Islands 2-4 and Pinnacle offers many ice/mountain tiles to inspect."
-    },
-    {
-      "timestamp": "2026-05-25T22:28:10.042262",
-      "turn": 4,
-      "label": "note",
-      "message": "Island 3 opening mission selected: Cryogenic Labs. It is a normal Pinnacle mission with Ice Storm, Defensive Shields, and many ice/mountain tiles, making it a good Distant Friends marker scan despite the spawn-block objective."
-    },
-    {
-      "timestamp": "2026-05-25T22:29:33.488041",
+      "timestamp": "2026-05-26T18:10:51.338602",
       "turn": 0,
       "label": "note",
-      "message": "Mission_SnowStorm opening scan found a normal Time Pod at B4 (bridge 4,6) and no cracked Distant marker/custom item in /tmp/itb_state.json. Treating as regular pod recovery and likely Island 3 pod-roll spent."
+      "message": "Setup verified from settings.lua: difficulty 0 Easy and all Advanced Edition flags enabled; visible custom squad is triple Combat Mech with Bethany Jones. verify_setup could not pass because the active UI is Customize Squad rather than the difficulty panel."
     },
     {
-      "timestamp": "2026-05-25T22:29:53.319759",
+      "timestamp": "2026-05-26T18:13:27.565861",
       "turn": 1,
       "label": "solve",
-      "score": 120450.0,
+      "score": 143350.0,
       "actions": [
-        "GuardMech, move E5\u2192E3, fire Shield Bash at E4",
-        "MirrorMech, move B5\u2192B4, fire Mirror Shot at C4",
-        "IceMech, fire Cryo-Launcher at D4"
+        "PunchMech, move E5\u2192E6",
+        "PunchMech, fire Titan Fist at D5",
+        "PunchMech, move D6\u2192D4, fire Titan Fist at E4"
       ]
     },
     {
-      "timestamp": "2026-05-25T22:30:57.668427",
+      "timestamp": "2026-05-26T18:15:15.889464",
       "turn": 2,
       "label": "solve",
-      "score": 132200.00000000015,
+      "score": 156593.33333333346,
       "actions": [
-        "GuardMech, move E3\u2192E7, fire Shield Bash at D7",
-        "IceMech, move D6\u2192D3, fire Cryo-Launcher at D5",
-        "MirrorMech, move B4\u2192B3, fire Mirror Shot at C3"
+        "PunchMech, move E6\u2192E7",
+        "PunchMech, fire Titan Fist at D3",
+        "PunchMech, move C5\u2192C4, fire Titan Fist at C3"
       ]
     },
     {
-      "timestamp": "2026-05-25T22:31:50.342350",
+      "timestamp": "2026-05-26T18:15:49.291743",
       "turn": 3,
       "label": "solve",
-      "score": 132660.0,
+      "score": 149980.0,
       "actions": [
-        "MirrorMech, move B3\u2192B2, fire Mirror Shot at C2",
-        "IceMech, move E3\u2192C3, fire Cryo-Launcher at G3",
-        "GuardMech, move E7\u2192E3, fire Shield Bash at E2"
+        "PunchMech",
+        "PunchMech",
+        "PunchMech"
       ]
     },
     {
-      "timestamp": "2026-05-25T22:32:50.783283",
+      "timestamp": "2026-05-26T18:16:23.724227",
       "turn": 4,
       "label": "solve",
-      "score": 117540.0,
+      "score": 124665.85730028152,
       "actions": [
-        "MirrorMech, fire Mirror Shot at C2",
-        "GuardMech, move E3\u2192F1, fire Shield Bash at F2",
-        "IceMech"
+        "PunchMech, move C4\u2192E3, fire Titan Fist at D3",
+        "PunchMech, move E7\u2192D5, fire Titan Fist at D4",
+        "PunchMech, move D3\u2192G3, fire Titan Fist at G4"
       ]
     },
     {
-      "timestamp": "2026-05-25T22:35:19.002177",
+      "timestamp": "2026-05-26T18:16:39.302795",
       "turn": 4,
       "label": "note",
-      "message": "Mission_SnowStorm / Cryogenic Labs secured. Opening scan had normal Time Pod at B4, no Distant marker; pod recovered and yielded one Reactor Core. Island 3 normal pod roll likely spent, so prioritize safe/fast island completion toward Island 4."
+      "message": "Turn 4 dirty frontier reviewed for Cryogenic Labs. No clean candidate among 1000. Accepting rank 0 because it preserves the Power Generator and all buildings, predicts exactly 2 grid damage which still satisfies the less than 3 grid damage objective, and keeps grid above zero for Mech Specialist run."
     },
     {
-      "timestamp": "2026-05-25T22:36:54.875347",
+      "timestamp": "2026-05-26T18:16:48.737394",
+      "turn": 4,
+      "label": "solve",
+      "score": 124665.85730028152,
+      "actions": [
+        "PunchMech, move C4\u2192E3, fire Titan Fist at D3",
+        "PunchMech, move E7\u2192D5, fire Titan Fist at D4",
+        "PunchMech, move D3\u2192G3, fire Titan Fist at G4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:17:39.367933",
       "turn": 4,
       "label": "note",
-      "message": "Spent three reactor cores after Cryogenic Labs: Aegis/GuardMech installed 2 cores for Spartan Shield +1 Damage; MirrorMech installed 1 core for Janus Cannon +1 Damage. Cores remaining 0."
+      "message": "Threat audit reviewed after dirty Turn 4. Remaining threat is Bouncer1 at B2 targeting ordinary building B3 for the consented 2 grid and 2 building HP loss. Power Generator objective, Time Pod reward state, all mechs, and timeline survival match reviewed plan_safety, so dispatching held End Turn under rule 188."
     },
     {
-      "timestamp": "2026-05-25T22:37:38.263276",
-      "turn": 4,
-      "label": "note",
-      "message": "Island 3 next mission selected: Lifeless Basin. Objectives: take less than 3 grid damage and protect the Coal Plant; normal map with mountains/ice, no train/fragile escort."
-    },
-    {
-      "timestamp": "2026-05-25T22:39:39.580476",
+      "timestamp": "2026-05-26T18:22:10.667108",
       "turn": 1,
       "label": "solve",
-      "score": 142400.0,
+      "score": 154664.28571428574,
       "actions": [
-        "GuardMech, fire Shield Bash at F4",
-        "MirrorMech, move D5\u2192E5, fire Mirror Shot at E4",
-        "IceMech, move E7\u2192F6, repair"
+        "PunchMech, move E6\u2192E5, fire Titan Fist at D5",
+        "PunchMech, move C5\u2192B3, fire Titan Fist at C3",
+        "PunchMech, move G5\u2192G4, fire Titan Fist at F4"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:12:02.545201",
-      "turn": 2,
-      "label": "note",
-      "message": "Distant Friends live run paused after v231 Mirror Shot upgrade overlay miss killed IceMech; source and installed solver are now v232 with powered Janus Cannon coverage, continuing only from fresh bridge reads and solves."
-    },
-    {
-      "timestamp": "2026-05-26T11:13:40.649513",
-      "turn": 2,
-      "label": "solve",
-      "score": -6536.668454806,
-      "actions": [
-        "GuardMech, move F5\u2192D5, fire Shield Bash at D4",
-        "MirrorMech, move E5\u2192E4, fire Mirror Shot at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T11:13:49.801177",
+      "timestamp": "2026-05-26T18:25:36.545434",
       "turn": 2,
       "label": "solve",
-      "score": -6536.668454806,
+      "score": 155767.6190476192,
       "actions": [
-        "GuardMech, move F5\u2192D5, fire Shield Bash at D4",
-        "MirrorMech, move E5\u2192E4, fire Mirror Shot at D4"
+        "PunchMech, move E5\u2192D5",
+        "PunchMech, move G4\u2192E3, fire Titan Fist at E4",
+        "PunchMech, move B3\u2192C3, fire Titan Fist at D3"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:14:50.425811",
+      "timestamp": "2026-05-26T18:26:58.510956",
       "turn": 3,
       "label": "solve",
-      "score": 95689.99821186066,
+      "score": 150274.28571428574,
       "actions": [
-        "MirrorMech, fire Mirror Shot at E3",
-        "GuardMech, move D5\u2192E3, fire Shield Bash at E2"
+        "PunchMech, move E3\u2192F3, repair",
+        "PunchMech, move D5\u2192E3, fire Titan Fist at E2",
+        "PunchMech, move C3\u2192D1, fire Titan Fist at E1"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:15:47.156514",
+      "timestamp": "2026-05-26T18:27:40.125616",
       "turn": 4,
       "label": "solve",
-      "score": 22019.998211860657,
+      "score": 147224.28571428574,
       "actions": [
-        "GuardMech, fire Shield Bash at E2",
-        "MirrorMech, move E4\u2192F6, fire Mirror Shot at F7"
+        "PunchMech, fire Titan Fist at D2",
+        "PunchMech, move E3\u2192D5",
+        "PunchMech, move F3\u2192E5"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:20:23.056996",
-      "turn": 4,
-      "label": "note",
-      "message": "Turn 4 final End Turn accepted after status-only Brute_Mirrorshot_A diff: Cannon-Bot thawed live instead of remaining frozen in sim, but it has no queued attack, threat audit is OK, grid/objectives are safe, and research queue is drained."
-    },
-    {
-      "timestamp": "2026-05-26T11:31:24.026365",
+      "timestamp": "2026-05-26T18:31:12.244529",
       "turn": 1,
       "label": "solve",
-      "score": 126936.285713877,
+      "score": 174292.85714285713,
       "actions": [
-        "GuardMech, move C5\u2192F4, fire Shield Bash at E4",
-        "MirrorMech, move D6\u2192D4, fire Mirror Shot at D5",
-        "IceMech, move E7\u2192D5"
+        "PunchMech, move F5\u2192F4, fire Titan Fist at E4",
+        "PunchMech, move C5\u2192C7, fire Titan Fist at D7",
+        "PunchMech, move E7\u2192F5, fire Titan Fist at G5"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:32:28.012701",
-      "turn": 1,
-      "label": "solve",
-      "score": 126936.285713877,
-      "actions": [
-        "GuardMech, move C5\u2192F4, fire Shield Bash at E4",
-        "MirrorMech, move D6\u2192D4, fire Mirror Shot at D5",
-        "IceMech, move E7\u2192D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T11:33:44.255846",
-      "turn": 1,
-      "label": "solve",
-      "score": 126936.285713877,
-      "actions": [
-        "GuardMech, move C5\u2192F4, fire Shield Bash at E4",
-        "MirrorMech, move D6\u2192D4, fire Mirror Shot at D5",
-        "IceMech, move E7\u2192D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T11:34:49.399828",
-      "turn": 1,
-      "label": "note",
-      "message": "m14 t01 dirty frontier reviewed: select rank 390 with consent cf76b773e08f87db; accepts exactly 1 grid/building HP loss, preserves pod at G3, protected Cannon Bot, destroy objective, and all mech HP; alternatives lose mech HP too."
-    },
-    {
-      "timestamp": "2026-05-26T11:35:05.663104",
-      "turn": 1,
-      "label": "solve",
-      "score": 126936.285713877,
-      "actions": [
-        "GuardMech, move C5\u2192F4, fire Shield Bash at E4",
-        "MirrorMech, move D6\u2192D4, fire Mirror Shot at D5",
-        "IceMech, move E7\u2192D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T11:36:36.186884",
+      "timestamp": "2026-05-26T18:32:03.504440",
       "turn": 2,
       "label": "solve",
-      "score": 123806.66666666683,
+      "score": 166656.19047619068,
       "actions": [
-        "GuardMech, move F4\u2192E3, fire Shield Bash at F3",
-        "MirrorMech, move D4\u2192F4, fire Mirror Shot at F3",
-        "IceMech, fire Cryo-Launcher at D7"
+        "PunchMech, fire Titan Fist at G4",
+        "PunchMech, move C7\u2192C6, fire Titan Fist at C5",
+        "PunchMech, move F5\u2192E7, repair"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:37:24.985713",
+      "timestamp": "2026-05-26T18:32:49.906438",
       "turn": 3,
       "label": "solve",
-      "score": 125820.0,
+      "score": 174512.85714285713,
       "actions": [
-        "GuardMech, fire Shield Bash at E2",
-        "MirrorMech, move F4\u2192F2, fire Mirror Shot at E2",
-        "IceMech, fire Cryo-Launcher at D8"
+        "PunchMech, fire Titan Fist at E4",
+        "PunchMech, fire Titan Fist at C5",
+        "PunchMech, repair"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:38:23.929779",
+      "timestamp": "2026-05-26T18:33:34.077031",
       "turn": 4,
       "label": "solve",
-      "score": 125875.0,
+      "score": 160717.85714285713,
       "actions": [
-        "GuardMech, move E3\u2192E4, fire Shield Bash at F4",
-        "MirrorMech, move F2\u2192F3, fire Mirror Shot at F2",
-        "IceMech, move D5\u2192C6, fire Cryo-Launcher at F6"
+        "PunchMech, fire Titan Fist at F3",
+        "PunchMech, move C6\u2192D7",
+        "PunchMech"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:41:12.710359",
-      "turn": 4,
-      "label": "solve",
-      "score": 114005.0,
-      "actions": [
-        "GuardMech, move E3\u2192C6, fire Shield Bash at C5",
-        "MirrorMech, move F2\u2192G3",
-        "IceMech, fire Cryo-Launcher at F5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T11:43:42.068671",
-      "turn": 4,
-      "label": "solve",
-      "score": 109784.14286099162,
-      "actions": [
-        "MirrorMech, move F2\u2192G3",
-        "IceMech, fire Cryo-Launcher at F5",
-        "GuardMech, move E3\u2192D4, fire Shield Bash at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T11:44:17.192458",
-      "turn": 4,
-      "label": "note",
-      "message": "m14 t04 Distant Friends priority override: selected rank 1690 consent 74f651ece94e112f after 5000 top-K sweep found no pod-collecting line that destroys Hacking Facility; rank 1690 collects pod at G3, preserves Cannon Bot, preserves all mechs at full HP with no status/disable, accepts 1 ordinary grid/building loss and failed Destroy Hacking Facility bonus."
-    },
-    {
-      "timestamp": "2026-05-26T11:44:38.536060",
-      "turn": 4,
-      "label": "solve",
-      "score": 109784.14286099162,
-      "actions": [
-        "MirrorMech, move F2\u2192G3",
-        "IceMech, fire Cryo-Launcher at F5",
-        "GuardMech, move E3\u2192D4, fire Shield Bash at D5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T11:57:50.359769",
+      "timestamp": "2026-05-26T18:36:03.878623",
       "turn": 1,
       "label": "solve",
-      "score": 132278.57142857142,
+      "score": 130957.14285714284,
       "actions": [
-        "GuardMech, move F5\u2192F4, fire Shield Bash at F3",
-        "MirrorMech, move C5\u2192B4, fire Mirror Shot at C4",
-        "IceMech"
+        "PunchMech, move D5\u2192C4, fire Titan Fist at D4",
+        "PunchMech, move F5\u2192D5",
+        "PunchMech, move C6\u2192D6, fire Titan Fist at D5"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:58:31.809557",
+      "timestamp": "2026-05-26T18:37:05.286795",
       "turn": 2,
       "label": "solve",
-      "score": 174635.23809523825,
+      "score": 151767.14285714296,
       "actions": [
-        "GuardMech, move F4\u2192E3, fire Shield Bash at E4",
-        "MirrorMech, move B4\u2192B6, fire Mirror Shot at C6",
-        "IceMech"
+        "PunchMech, fire Titan Fist at C3",
+        "PunchMech, move D6\u2192F7, fire Titan Fist at F6",
+        "PunchMech, move D5\u2192D6, fire Titan Fist at C6"
       ]
     },
     {
-      "timestamp": "2026-05-26T11:59:09.095381",
-      "turn": 3,
-      "label": "solve",
-      "score": 195948.57142857142,
-      "actions": [
-        "GuardMech, move E3\u2192G4, fire Shield Bash at G5",
-        "MirrorMech",
-        "IceMech"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:00:47.920932",
-      "turn": 3,
-      "label": "note",
-      "message": "Reviewed THREAT_AUDIT_BLOCKED on Mission_FreezeBldg turn 3: Hornet1 at F5 targets E5, and bridge metadata shows E5 is a frozen objective building (2 HP, frozen=true). Solver projected grid/building HP unchanged and thaw progress +1, so held End Turn is accepted as a frozen-building thaw exception, not an unresolved damage threat."
-    },
-    {
-      "timestamp": "2026-05-26T12:01:14.179884",
-      "turn": 4,
-      "label": "solve",
-      "score": 333708.5714285714,
-      "actions": [
-        "GuardMech, move G4\u2192F5, repair",
-        "MirrorMech, move B6\u2192C5, fire Mirror Shot at C6",
-        "IceMech, move G6\u2192G4, fire Cryo-Launcher at D4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:01:50.936225",
-      "turn": 4,
-      "label": "note",
-      "message": "Reviewed final-turn THREAT_AUDIT_BLOCKED on Mission_FreezeBldg: Scarab1 at E4 targets E6, and bridge metadata shows E6 is a frozen objective building (1 HP, frozen=true). Solver projected grid/building HP unchanged, freeze thaw target 5/5, and kills 5/5, so held End Turn is accepted as a frozen-building thaw exception."
-    },
-    {
-      "timestamp": "2026-05-26T12:09:41.898946",
-      "turn": 1,
-      "label": "solve",
-      "score": 140057.14285714284,
-      "actions": [
-        "GuardMech, move F5\u2192G2, fire Shield Bash at F2",
-        "IceMech, move C5\u2192B4, fire Cryo-Launcher at F4",
-        "MirrorMech, move E6\u2192B6, fire Mirror Shot at B5"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:10:23.333254",
+      "timestamp": "2026-05-26T18:37:28.281066",
       "turn": 2,
       "label": "solve",
-      "score": 141057.142857143,
+      "score": 150137.14285714296,
       "actions": [
-        "GuardMech, move G2\u2192D4, fire Shield Bash at E4",
-        "IceMech, move B3\u2192D2, fire Cryo-Launcher at A2",
-        "MirrorMech, fire Mirror Shot at B5"
+        "PunchMech, move D6\u2192F7, fire Titan Fist at F6",
+        "PunchMech, move D5\u2192D6, fire Titan Fist at C6"
       ]
     },
     {
-      "timestamp": "2026-05-26T12:10:52.306669",
-      "turn": 3,
-      "label": "solve",
-      "score": 141157.14285714284,
-      "actions": [
-        "GuardMech",
-        "MirrorMech",
-        "IceMech, move D2\u2192E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:11:29.865341",
-      "turn": 4,
-      "label": "solve",
-      "score": 148407.14285714284,
-      "actions": [
-        "GuardMech, move D4\u2192B4, fire Shield Bash at B3",
-        "IceMech, move E4\u2192E7, fire Cryo-Launcher at E3",
-        "MirrorMech, move B6\u2192C7, fire Mirror Shot at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:12:14.795407",
-      "turn": 4,
-      "label": "solve",
-      "score": 148407.14285714284,
-      "actions": [
-        "GuardMech, move D4\u2192B4, fire Shield Bash at B3",
-        "IceMech, move E4\u2192E7, fire Cryo-Launcher at E3",
-        "MirrorMech, move B6\u2192C7, fire Mirror Shot at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:12:30.977807",
-      "turn": 4,
-      "label": "note",
-      "message": "Dirty objective-loss review on Mission_StarfishBoss turn 4: no clean Starfish Leader kill found among 1000 candidates even with 30s solve. Accept rank 0 ca9de2819c8d933c because it preserves grid 6/7, all buildings including Corporate Tower, all mechs, and no pod state; only the optional destroy-leader reputation objective is lost, which is acceptable for Distant Friends timeline progress."
-    },
-    {
-      "timestamp": "2026-05-26T12:12:42.906338",
-      "turn": 4,
-      "label": "solve",
-      "score": 148407.14285714284,
-      "actions": [
-        "GuardMech, move D4\u2192B4, fire Shield Bash at B3",
-        "IceMech, move E4\u2192E7, fire Cryo-Launcher at E3",
-        "MirrorMech, move B6\u2192C7, fire Mirror Shot at D7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:23:46.202163",
-      "turn": 1,
-      "label": "solve",
-      "score": 128900.0,
-      "actions": [
-        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
-        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
-        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:25:56.704884",
-      "turn": 1,
-      "label": "solve",
-      "score": 128900.0,
-      "actions": [
-        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
-        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
-        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:26:03.535095",
-      "turn": 1,
-      "label": "solve",
-      "score": 128900.0,
-      "actions": [
-        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
-        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
-        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:45:54.088505",
-      "turn": 1,
-      "label": "solve",
-      "score": 128900.0,
-      "actions": [
-        "GuardMech, move D5\u2192E3, fire Shield Bash at F3",
-        "IceMech, move E6\u2192E7, fire Cryo-Launcher at E2",
-        "MirrorMech, move C6\u2192D7, fire Mirror Shot at E7"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:47:35.045169",
-      "turn": 1,
-      "label": "solve",
-      "score": 128100.0,
-      "actions": [
-        "IceMech, fire Cryo-Launcher at B6",
-        "MirrorMech, move C6\u2192E5, fire Mirror Shot at E4",
-        "GuardMech, move D5\u2192E3, fire Shield Bash at F3"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:48:21.805675",
-      "turn": 1,
-      "label": "solve",
-      "score": 112657.71428445406,
-      "actions": [
-        "GuardMech, move D5\u2192H3, fire Shield Bash at H2",
-        "IceMech, move E6\u2192F5, fire Cryo-Launcher at F3",
-        "MirrorMech, move C6\u2192E5, fire Mirror Shot at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:48:41.789259",
-      "turn": 1,
-      "label": "solve",
-      "score": 123900.0,
-      "actions": [
-        "GuardMech, move D5\u2192F4, fire Shield Bash at F3",
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
-        "MirrorMech, move C6\u2192D4, fire Mirror Shot at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:49:10.553944",
-      "turn": 1,
-      "label": "note",
-      "message": "Mission 17 turn 1: chose candidate rank 130 for Distant Friends setup. Immediate H2 break rank 1848 predicts grid/building loss and disabled Ice; rank 130 preserves grid/buildings and lookahead breaks H2 cleanly on turn 2."
-    },
-    {
-      "timestamp": "2026-05-26T12:49:20.922830",
-      "turn": 1,
-      "label": "solve",
-      "score": 123900.0,
-      "actions": [
-        "GuardMech, move D5\u2192F4, fire Shield Bash at F3",
-        "IceMech, move E6\u2192E4, fire Cryo-Launcher at E2",
-        "MirrorMech, move C6\u2192D4, fire Mirror Shot at E4"
-      ]
-    },
-    {
-      "timestamp": "2026-05-26T12:50:27.570247",
+      "timestamp": "2026-05-26T18:37:38.893423",
       "turn": 2,
       "label": "solve",
-      "score": 124843.33333333344,
+      "score": 150137.14285714296,
       "actions": [
-        "IceMech, move E4\u2192D6, fire Cryo-Launcher at D2",
-        "MirrorMech, fire Mirror Shot at D5",
-        "GuardMech, fire Shield Bash at G4"
+        "PunchMech, move D6\u2192F7, fire Titan Fist at F6",
+        "PunchMech, move D5\u2192D6, fire Titan Fist at C6"
       ]
     },
     {
-      "timestamp": "2026-05-26T12:51:09.046816",
+      "timestamp": "2026-05-26T18:38:42.730747",
+      "turn": 3,
+      "label": "solve",
+      "score": 113133.42858481407,
+      "actions": [
+        "PunchMech",
+        "PunchMech, fire Titan Fist at C3",
+        "PunchMech, move F7\u2192E7, fire Titan Fist at D7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:39:48.374281",
+      "turn": 3,
+      "label": "solve",
+      "score": 112093.42858481407,
+      "actions": [
+        "PunchMech, move D6\u2192C6",
+        "PunchMech, move C4\u2192C5",
+        "PunchMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:41:45.995881",
+      "turn": 3,
+      "label": "solve",
+      "score": 112093.42858481407,
+      "actions": [
+        "PunchMech, move D6\u2192C6",
+        "PunchMech, move C4\u2192C5",
+        "PunchMech, move F7\u2192E7"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:43:56.086233",
+      "turn": 3,
+      "label": "note",
+      "message": "Manual safety recovery on Mission_Factory turn 3: solver safety-blocked on objective loss; taking exact bridge action uid0 D6->D5 punch E5 to remove the only objective-building threat before returning to auto_turn."
+    },
+    {
+      "timestamp": "2026-05-26T18:44:36.771212",
+      "turn": 3,
+      "label": "solve",
+      "score": 153487.14285714284,
+      "actions": [
+        "PunchMech, move C4\u2192C5",
+        "PunchMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:45:28.746146",
+      "turn": 4,
+      "label": "solve",
+      "score": 159532.14285714284,
+      "actions": [
+        "PunchMech, move D5\u2192C6, fire Titan Fist at B6",
+        "PunchMech, fire Titan Fist at C4",
+        "PunchMech, fire Titan Fist at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:46:03.346967",
+      "turn": 4,
+      "label": "solve",
+      "score": 155932.14285714284,
+      "actions": [
+        "PunchMech, fire Titan Fist at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:46:18.196971",
+      "turn": 4,
+      "label": "solve",
+      "score": 155932.14285714284,
+      "actions": [
+        "PunchMech, fire Titan Fist at F6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:48:59.380309",
+      "turn": 1,
+      "label": "solve",
+      "score": 131650.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at F4",
+        "PunchMech, move B6\u2192C4, fire Titan Fist at D4",
+        "PunchMech, move C5\u2192D4, fire Titan Fist at E4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:55:02.209285",
+      "turn": 3,
+      "label": "note",
+      "message": "Process miss on Mission_HornetBoss turn 1: after compaction the handoff said the held End Turn click was still pending, but the live screen was already a new player turn with ACTION AVAILABLE labels and Victory in 3 turns; my extra calibrated End Turn skipped HQ turn 2, missed the exact post-enemy audit window, and caused grid to fall 7/7 -> 4/7. Snapshot m05_post_enemy_audit_missed_window_hq captured the actual board; docs/agent/safety-gates.md now requires a fresh read before any resume/handoff End Turn click."
+    },
+    {
+      "timestamp": "2026-05-26T18:55:07.358920",
+      "turn": 3,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260526_180954_139_m05_t01_post_enemy",
+        "status": "POST_ENEMY_AUDIT_MISSED_WINDOW",
+        "blocking": true,
+        "run_id": "20260526_180954_139",
+        "mission_index": 5,
+        "turn": 1,
+        "created_at": "2026-05-26T18:51:03.268764",
+        "source": "post_enemy_turn_window_guard",
+        "record_path": null,
+        "reason": "actual_turn_past_expected_post_enemy_window",
+        "deltas": {},
+        "triggers": [],
+        "actual_outcome": null,
+        "predicted_outcome": null,
+        "next_step": "Snapshot and investigate why the exact post-enemy window was missed. Do not use this late board as simulator evidence; clear the block only after the process cause is understood.",
+        "resolved_at": "2026-05-26T18:55:07.358912",
+        "resolve_reason": "Process cause understood: compaction/handoff state was stale. A previous End Turn had already advanced Mission_HornetBoss from turn 1 to turn 2 player phase, but the resume summary said the click was pending. The extra calibrated End Turn clicked on a live READY player turn skipped HQ turn 2, so the turn-1 post-enemy audit window was missed; this late turn-3 board is not simulator evidence. Snapshot m05_post_enemy_audit_missed_window_hq and decision log record the miss; safety-gates rule 391 now requires a fresh read before any resume-held End Turn click. Continuing from the actual turn-3 board at grid 4/7."
+      }
+    },
+    {
+      "timestamp": "2026-05-26T18:55:24.733626",
+      "turn": 3,
+      "label": "solve",
+      "score": 95117.0000954696,
+      "actions": [
+        "PunchMech, fire Titan Fist at D5",
+        "PunchMech, move C4\u2192C6, fire Titan Fist at D6",
+        "PunchMech, move F5\u2192E6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:55:54.113644",
+      "turn": 3,
+      "label": "solve",
+      "score": 95117.0000954696,
+      "actions": [
+        "PunchMech, fire Titan Fist at D5",
+        "PunchMech, move C4\u2192C6, fire Titan Fist at D6",
+        "PunchMech, move F5\u2192E6, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:56:48.821899",
+      "turn": 3,
+      "label": "solve",
+      "score": 137340.0,
+      "actions": [
+        "PunchMech, move F5\u2192E3, fire Titan Fist at D3",
+        "PunchMech, move C4\u2192D5, fire Titan Fist at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:57:05.786318",
+      "turn": 3,
+      "label": "note",
+      "message": "Mission_HornetBoss turn 3 desync understood: uid0 Titan Fist at D5 killed Leaper1 and live also applied 1 bump damage to HornetBoss at D6, leaving boss 2 HP while Rust predicted 3. This was favorable and no grid/objective state worsened. Fresh read plus solve from actual board found a clean two-action recovery via the no-soft-disable emergency pass; proceeding only from that fresh solve."
+    },
+    {
+      "timestamp": "2026-05-26T18:57:13.099060",
+      "turn": 3,
+      "label": "solve",
+      "score": 137340.0,
+      "actions": [
+        "PunchMech, move F5\u2192E3, fire Titan Fist at D3",
+        "PunchMech, move C4\u2192D5, fire Titan Fist at D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T18:58:03.557960",
+      "turn": 4,
+      "label": "solve",
+      "score": 111055.00000000001,
+      "actions": [
+        "PunchMech, move D4\u2192D2, fire Titan Fist at E2",
+        "PunchMech, move D5\u2192D6",
+        "PunchMech, move E3\u2192D5, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:04:27.468860",
+      "turn": 1,
+      "label": "solve",
+      "score": 130900.0,
+      "actions": [
+        "PunchMech, move F6\u2192E6, fire Titan Fist at E5",
+        "PunchMech, move E4\u2192D2, fire Titan Fist at C2",
+        "ArchiveArtillery, fire Old Earth Artillery at D5",
+        "PunchMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:05:38.286346",
       "turn": 2,
       "label": "solve",
-      "score": 124843.33333333344,
+      "score": 128086.66666666682,
       "actions": [
-        "IceMech, move E4\u2192D6, fire Cryo-Launcher at D2",
-        "MirrorMech, fire Mirror Shot at D5",
-        "GuardMech, fire Shield Bash at G4"
+        "ArchiveArtillery",
+        "PunchMech, move D2\u2192C1, fire Titan Fist at C2",
+        "PunchMech",
+        "PunchMech"
       ]
     },
     {
-      "timestamp": "2026-05-26T12:54:05.127580",
+      "timestamp": "2026-05-26T19:06:46.598155",
       "turn": 3,
       "label": "solve",
-      "score": 146470.0,
+      "score": 133340.0,
       "actions": [
-        "GuardMech, move F4\u2192H3, fire Shield Bash at H2",
-        "MirrorMech, move D4\u2192D1, fire Mirror Shot at E1",
-        "IceMech, move D6\u2192D3, fire Cryo-Launcher at B3"
+        "ArchiveArtillery",
+        "PunchMech, fire Titan Fist at C2",
+        "PunchMech, fire Titan Fist at E6",
+        "PunchMech, move F6\u2192F3, fire Titan Fist at E3"
       ]
     },
     {
-      "timestamp": "2026-05-26T12:58:20.246629",
+      "timestamp": "2026-05-26T19:08:09.692566",
+      "turn": 4,
+      "label": "solve",
+      "score": 129745.0,
+      "actions": [
+        "ArchiveArtillery",
+        "PunchMech, move C1\u2192B3, fire Titan Fist at C3",
+        "PunchMech, move F3\u2192G3, fire Titan Fist at G2",
+        "PunchMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:13:25.770680",
+      "turn": 1,
+      "label": "solve",
+      "score": 129950.0,
+      "actions": [
+        "PunchMech, move E5\u2192F3",
+        "PunchMech, move B5\u2192C4, fire Titan Fist at C3",
+        "PunchMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:14:17.801028",
+      "turn": 2,
+      "label": "solve",
+      "score": 140413.33333333343,
+      "actions": [
+        "PunchMech, move F3\u2192E2",
+        "PunchMech, fire Titan Fist at C3",
+        "PunchMech, move F6\u2192F3, fire Titan Fist at E3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:18:16.845316",
+      "turn": 2,
+      "label": "note",
+      "message": "Mission_Tanks turn 2: research gate for Archive_Tank resolved from live UI; one tank objective already dropped to 1/2 after Prime_Punchmech killed/pushed Hornet near tank, likely same killed-unit bump/blocker mismatch seen at HQ. Reset Turn UI was visible but did not activate from calibrated clicks, so continuing because grid/buildings/mechs are safe and tank objective is optional."
+    },
+    {
+      "timestamp": "2026-05-26T19:20:11.582715",
+      "turn": 3,
+      "label": "resolve_post_enemy_block",
+      "block": {
+        "id": "20260526_180954_139_m07_t02_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "blocking": true,
+        "run_id": "20260526_180954_139",
+        "mission_index": 7,
+        "turn": 2,
+        "created_at": "2026-05-26T19:18:51.503388",
+        "source": "record_post_enemy",
+        "record_path": "/Users/aircow/Documents/code/codex/intoTheBreach/recordings/20260526_180954_139/m07_turn_02_post_enemy.json",
+        "reason": null,
+        "deltas": {
+          "buildings_alive_diff": 0,
+          "building_hp_diff": 0,
+          "grid_power_diff": 0,
+          "enemies_alive_diff": 0,
+          "protected_objective_units_alive_diff": -1,
+          "protected_objective_units_frozen_diff": 0,
+          "mech_hp_diff": [
+            {
+              "uid": 0,
+              "type": "PunchMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            },
+            {
+              "uid": 1,
+              "type": "PunchMech",
+              "predicted_hp": 3,
+              "actual_hp": 3,
+              "diff": 0
+            },
+            {
+              "uid": 2,
+              "type": "PunchMech",
+              "predicted_hp": 2,
+              "actual_hp": 2,
+              "diff": 0
+            }
+          ],
+          "unexpected_events": [
+            "Lost protected objective unit(s) unexpectedly"
+          ]
+        },
+        "triggers": [],
+        "actual_outcome": {
+          "buildings_alive": 7,
+          "building_hp_total": 10,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "grid_power": 7,
+          "enemies_alive": 0,
+          "enemy_hp_total": 0,
+          "mechs_alive": 3,
+          "mech_hp_total": 7,
+          "mech_damage_taken_total": 2,
+          "mech_damage_objective_limit": null,
+          "bigbomb_alive": false,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mech_hp": [
+            {
+              "uid": 0,
+              "type": "PunchMech",
+              "hp": 2,
+              "max_hp": 3
+            },
+            {
+              "uid": 1,
+              "type": "PunchMech",
+              "hp": 3,
+              "max_hp": 3
+            },
+            {
+              "uid": 2,
+              "type": "PunchMech",
+              "hp": 2,
+              "max_hp": 3
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "mission_id": "Mission_Tanks",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 0,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 3,
+          "total_turns": 4,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units": [
+            {
+              "uid": 2032,
+              "type": "Archive_Tank",
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 1,
+              "max_hp": 1,
+              "alive": true,
+              "frozen": false,
+              "team": 1
+            }
+          ],
+          "protected_objective_units_alive": 1,
+          "protected_objective_units_frozen": 0
+        },
+        "predicted_outcome": {
+          "buildings_alive": 7,
+          "building_hp_total": 10,
+          "pylons_alive": null,
+          "pylon_hp_total": null,
+          "objective_buildings_alive": 0,
+          "objective_building_hp_total": 0,
+          "pods_present": 0,
+          "freeze_building_target": null,
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "freeze_buildings": [],
+          "grid_power": 7,
+          "enemies_alive": 0,
+          "enemy_hp_total": 0,
+          "mechs_alive": 3,
+          "mech_hp_total": 7,
+          "mech_damage_taken_total": 2,
+          "mech_damage_objective_limit": null,
+          "bigbomb_alive": false,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "mech_hp": [
+            {
+              "hp": 2,
+              "max_hp": 3,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "hp": 3,
+              "max_hp": 3,
+              "type": "PunchMech",
+              "uid": 1
+            },
+            {
+              "hp": 2,
+              "max_hp": 3,
+              "type": "PunchMech",
+              "uid": 2
+            }
+          ],
+          "mechs_acid": [],
+          "mechs_fire": [],
+          "mechs_on_danger": [],
+          "mechs_disabled": [],
+          "mechs_webbed": [],
+          "mechs_infected": [],
+          "mites_remaining": 0,
+          "mites_status_tracked": false,
+          "mission_id": "Mission_Tanks",
+          "mission_kill_target": 0,
+          "mission_kill_limit": 0,
+          "mission_kills_done": 2,
+          "mission_mountain_target": 0,
+          "mission_mountains_destroyed": 0,
+          "mission_mountain_tiles": [],
+          "turn": 2,
+          "total_turns": 4,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "protected_objective_units": [
+            {
+              "uid": 2031,
+              "type": "Archive_Tank",
+              "pos": [
+                5,
+                4
+              ],
+              "hp": 1,
+              "max_hp": 1,
+              "alive": true,
+              "frozen": false,
+              "team": 1
+            },
+            {
+              "uid": 2032,
+              "type": "Archive_Tank",
+              "pos": [
+                5,
+                1
+              ],
+              "hp": 1,
+              "max_hp": 1,
+              "alive": true,
+              "frozen": false,
+              "team": 1
+            }
+          ],
+          "protected_objective_units_alive": 2,
+          "protected_objective_units_frozen": 0,
+          "buildings_destroyed_by_enemies": 0,
+          "enemies_killed_by_enemy_phase": 0,
+          "enemies_killed_by_player": 2,
+          "enemies_killed_by_spawn_block": 0,
+          "enemies_killed_total_projected": 2,
+          "mission_kills_by_enemy_phase": 0,
+          "mission_kills_by_player": 2,
+          "mission_kills_by_spawn_block": 0,
+          "mission_kills_done_projected": 2,
+          "mission_kills_total_projected": 2,
+          "mission_mountains_destroyed_projected": 0,
+          "pods_collected": 0
+        },
+        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
+        "resolved_at": "2026-05-26T19:20:11.582706",
+        "resolve_reason": "Mission_Tanks turn 2 block reviewed: action_2_attack_verify already showed Archive_Tank uid 2031 at bridge (5,4) missing immediately after Prime_Punchmech killed Hornet1 at (5,3), consistent with the known live behavior where a killed pushed unit still bumps/damages the blocker; post_enemy only surfaced the same optional protected-unit loss. Grid/buildings/mechs remain safe, one tank objective star was already visibly lost, and no enemies/threats remain."
+      }
+    },
+    {
+      "timestamp": "2026-05-26T19:20:31.161114",
       "turn": 3,
       "label": "solve",
-      "score": 146470.0,
+      "score": 133180.0,
       "actions": [
-        "MirrorMech, move D4\u2192D1, fire Mirror Shot at E1",
-        "IceMech, move D6\u2192D3, fire Cryo-Launcher at B3"
+        "PunchMech, repair",
+        "PunchMech",
+        "PunchMech, move F3\u2192F2, repair",
+        "Archive_Tank, move G3\u2192E4, fire Stock Cannon at E3"
       ]
     },
     {
-      "timestamp": "2026-05-26T12:58:30.152385",
+      "timestamp": "2026-05-26T19:21:33.549542",
+      "turn": 4,
+      "label": "solve",
+      "score": 127900.0,
+      "actions": [
+        "PunchMech, move E1\u2192C2",
+        "PunchMech, fire Titan Fist at F3",
+        "PunchMech, fire Titan Fist at B4",
+        "Archive_Tank, move E4\u2192F6, fire Stock Cannon at G6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:24:16.870572",
+      "turn": 1,
+      "label": "solve",
+      "score": 127750.0,
+      "actions": [
+        "PunchMech, move E5\u2192D3, fire Titan Fist at E3",
+        "PunchMech, move D6\u2192D4, fire Titan Fist at D3",
+        "PunchMech, move G5\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:25:11.983422",
+      "turn": 2,
+      "label": "solve",
+      "score": 137106.66666666677,
+      "actions": [
+        "PunchMech, fire Titan Fist at E2",
+        "PunchMech, move D4\u2192E5, fire Titan Fist at F5",
+        "PunchMech, move D5\u2192F5, fire Titan Fist at G5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:26:07.436870",
       "turn": 3,
       "label": "solve",
-      "score": 146470.0,
+      "score": 139280.0,
       "actions": [
-        "MirrorMech, move D4\u2192D1, fire Mirror Shot at E1",
-        "IceMech, move D6\u2192D3, fire Cryo-Launcher at B3"
+        "PunchMech, move D2\u2192C2, repair",
+        "PunchMech, move E5\u2192D4, fire Titan Fist at D3",
+        "PunchMech, repair"
       ]
     },
     {
-      "timestamp": "2026-05-26T12:59:44.148743",
+      "timestamp": "2026-05-26T19:27:13.223522",
       "turn": 4,
       "label": "solve",
-      "score": 143069.85713733945,
+      "score": 135955.0,
       "actions": [
-        "IceMech, move D3\u2192G3, fire Cryo-Launcher at E3",
-        "MirrorMech, move D1\u2192C3, fire Mirror Shot at B3",
-        "GuardMech, move H3\u2192E3, fire Shield Bash at E2"
+        "PunchMech, fire Titan Fist at D3",
+        "PunchMech, move C2\u2192D3, fire Titan Fist at E3",
+        "PunchMech, move F5\u2192D5"
       ]
     },
     {
-      "timestamp": "2026-05-26T13:00:11.913757",
-      "turn": 4,
+      "timestamp": "2026-05-26T19:30:04.480432",
+      "turn": 1,
       "label": "solve",
-      "score": 150364.85713733945,
+      "score": 180550.0,
       "actions": [
-        "GuardMech, move H3\u2192E3, fire Shield Bash at F3",
-        "MirrorMech, move D1\u2192E1, fire Mirror Shot at E2",
-        "IceMech, move D3\u2192B2, fire Cryo-Launcher at B8"
+        "PunchMech, move D5\u2192C3",
+        "PunchMech, move B5\u2192C4, fire Titan Fist at D4",
+        "PunchMech, move F5\u2192D6"
       ]
     },
     {
-      "timestamp": "2026-05-26T13:04:48.838526",
-      "turn": 4,
+      "timestamp": "2026-05-26T19:32:24.831338",
+      "turn": 1,
+      "label": "note",
+      "message": "Mission_Airstrike turn 1: after auto_turn/re-solve, fresh read showed Burnbug1 at E4 still targeting ordinary building F4. Target is not Str_Battery objective (objective_name Str_Battery is at bridge (2,5)/visual C6) and not the time pod; grid is 7/7. Reset Turn UI visibly available but only hovered under Computer Use clicks, so accepting this reviewed ordinary-building risk to continue."
+    },
+    {
+      "timestamp": "2026-05-26T19:33:06.443749",
+      "turn": 2,
       "label": "solve",
-      "score": 142109.85713733945,
+      "score": 167586.6666666668,
       "actions": [
-        "IceMech, move D3\u2192B2, fire Cryo-Launcher at B7",
-        "MirrorMech, move D1\u2192C2, fire Mirror Shot at B2"
+        "PunchMech",
+        "PunchMech, move C4\u2192C1",
+        "PunchMech, move D6\u2192E6"
       ]
     },
     {
-      "timestamp": "2026-05-26T13:05:04.202099",
-      "turn": 4,
+      "timestamp": "2026-05-26T19:34:22.713308",
+      "turn": 3,
       "label": "solve",
-      "score": 129520.0,
+      "score": 173800.0,
       "actions": [
-        "IceMech, fire Cryo-Launcher at F3",
-        "MirrorMech, fire Mirror Shot at D2"
+        "PunchMech, move C3\u2192D3, repair",
+        "PunchMech, move C1\u2192E1, repair",
+        "PunchMech, move E6\u2192D4"
       ]
     },
     {
-      "timestamp": "2026-05-26T13:05:31.938052",
+      "timestamp": "2026-05-26T19:35:41.986781",
       "turn": 4,
       "label": "solve",
-      "score": 129520.0,
+      "score": 172820.0,
       "actions": [
-        "IceMech, fire Cryo-Launcher at F3",
-        "MirrorMech, fire Mirror Shot at D2"
+        "PunchMech, move E1\u2192C2, fire Titan Fist at C3",
+        "PunchMech, move D3\u2192E3, fire Titan Fist at E2",
+        "PunchMech, move D4\u2192C5, fire Titan Fist at C4"
       ]
+    },
+    {
+      "timestamp": "2026-05-26T19:36:23.553957",
+      "turn": 4,
+      "label": "solve",
+      "score": 171570.0,
+      "actions": [
+        "PunchMech, move D3\u2192E3, fire Titan Fist at E2",
+        "PunchMech, move D4\u2192C5, fire Titan Fist at C4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:40:32.613380",
+      "turn": 1,
+      "label": "solve",
+      "score": 108850.0,
+      "actions": [
+        "PunchMech, fire Titan Fist at D4",
+        "PunchMech, move B5\u2192D4, fire Titan Fist at D3",
+        "PunchMech, move D7\u2192D6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:43:39.045914",
+      "turn": 2,
+      "label": "solve",
+      "score": 152053.9047589418,
+      "actions": [
+        "PunchMech, fire Titan Fist at E4",
+        "PunchMech, move D5\u2192E4, fire Titan Fist at F4",
+        "PunchMech, move D6\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:44:00.120511",
+      "turn": 2,
+      "label": "note",
+      "message": "Mission_BouncerBoss turn 2: reviewed dirty frontier after no clean candidate among 1000. Accepting candidate rank 4 with dirty token 949b3ff04a5d2e41: predicts exactly one ordinary grid/building HP loss, no mech HP/status debt, Corporate Tower preserved, Bouncer Leader destroyed. Standing dirty consent applies; no desync, research, investigation, threat-audit block, post-enemy block, or board uncertainty present."
+    },
+    {
+      "timestamp": "2026-05-26T19:44:08.177845",
+      "turn": 2,
+      "label": "solve",
+      "score": 152053.9047589418,
+      "actions": [
+        "PunchMech, fire Titan Fist at E4",
+        "PunchMech, move D5\u2192E4, fire Titan Fist at F4",
+        "PunchMech, move D6\u2192D5"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:44:57.051431",
+      "turn": 3,
+      "label": "solve",
+      "score": 132437.14285714284,
+      "actions": [
+        "PunchMech, fire Titan Fist at F4",
+        "PunchMech",
+        "PunchMech, move D5\u2192C3, fire Titan Fist at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:45:44.802661",
+      "turn": 4,
+      "label": "solve",
+      "score": 132237.14285714284,
+      "actions": [
+        "PunchMech, repair",
+        "PunchMech",
+        "PunchMech"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:50:00.745761",
+      "turn": 1,
+      "label": "solve",
+      "score": 147250.57142560824,
+      "actions": [
+        "PunchMech, move F5\u2192G4, fire Titan Fist at G3",
+        "PunchMech, move E6\u2192C5, fire Titan Fist at C6",
+        "PunchMech, move D5\u2192E3, fire Titan Fist at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:50:21.486948",
+      "turn": 1,
+      "label": "note",
+      "message": "Mission_Final turn 1: reviewed dirty frontier after no clean candidate among 1000. Accepting candidate rank 0 with dirty token 5616bca28420635e: predicts one grid/building HP loss, kills all three current attackers, moves the E6 mech off lethal environment danger, and preserves all mechs with no HP/status/danger debt. Standing dirty consent applies; no desync, research, investigation, threat-audit block, post-enemy block, or board uncertainty present."
+    },
+    {
+      "timestamp": "2026-05-26T19:50:30.367090",
+      "turn": 1,
+      "label": "solve",
+      "score": 147250.57142560824,
+      "actions": [
+        "PunchMech, move F5\u2192G4, fire Titan Fist at G3",
+        "PunchMech, move E6\u2192C5, fire Titan Fist at C6",
+        "PunchMech, move D5\u2192E3, fire Titan Fist at D3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:51:35.946200",
+      "turn": 2,
+      "label": "solve",
+      "score": 130743.80952380963,
+      "actions": [
+        "PunchMech, move G4\u2192F2, fire Titan Fist at F3",
+        "PunchMech, move C5\u2192D4",
+        "PunchMech, move E3\u2192E2"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:53:34.159938",
+      "turn": 3,
+      "label": "solve",
+      "score": 132477.14285714284,
+      "actions": [
+        "PunchMech, fire Titan Fist at G2",
+        "PunchMech, move D4\u2192D3, fire Titan Fist at C3",
+        "PunchMech, move E2\u2192C3, fire Titan Fist at B3"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:55:55.057496",
+      "turn": 4,
+      "label": "solve",
+      "score": 110737.00001168251,
+      "actions": [
+        "PunchMech, move F2\u2192E3, fire Titan Fist at E2",
+        "PunchMech, repair",
+        "PunchMech, move C3\u2192E2, fire Titan Fist at E1"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:56:10.532921",
+      "turn": 4,
+      "label": "solve",
+      "score": 102502.00001168251,
+      "actions": [
+        "PunchMech, move F2\u2192E1, fire Titan Fist at E2",
+        "PunchMech, repair",
+        "PunchMech, move C3\u2192D4, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:56:30.210866",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission_Final turn 4: reviewed dirty frontier after no clean candidate among 1000. Choosing candidate rank 203 with dirty token d9b35843d2869b24 over rank 0 because both lose one grid/building, but rank 203 clears current fire, predicts no added mech fire, no mech HP loss, no danger debt, and all mechs alive. Standing dirty consent applies; no desync, research, investigation, threat-audit block, post-enemy block, or board uncertainty present."
+    },
+    {
+      "timestamp": "2026-05-26T19:56:41.830262",
+      "turn": 4,
+      "label": "solve",
+      "score": 102502.00001168251,
+      "actions": [
+        "PunchMech, move F2\u2192E1, fire Titan Fist at E2",
+        "PunchMech, repair",
+        "PunchMech, move C3\u2192D4, repair"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:57:12.170770",
+      "turn": 4,
+      "label": "note",
+      "message": "Mission_Final turn 4: after accepted dirty candidate rank 203, threat audit held End Turn with one still-threatened ordinary C2 building by Hornet1. This matches the reviewed predicted loss exactly: one building destroyed, one building HP, one grid power; no objective, pod, mech death, fire, or danger debt. Snapshot m11_final_surface_t4_rank203_accepted_c2_threat captured before dispatching held End Turn."
+    },
+    {
+      "timestamp": "2026-05-26T19:58:40.983125",
+      "turn": 1,
+      "label": "solve",
+      "score": 130494.85715896741,
+      "actions": [
+        "PunchMech, move E5\u2192C4, fire Titan Fist at D4",
+        "PunchMech, move E6\u2192F4, fire Titan Fist at G4",
+        "PunchMech, fire Titan Fist at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T19:58:56.673313",
+      "turn": 1,
+      "label": "note",
+      "message": "Mission_Final_Cave turn 1: reviewed dirty frontier after no clean candidate among 1000. Accepting candidate rank 0 with dirty token 89e64669a1c6e5a4: predicts exactly one pylon HP and one grid loss, no pylon destroyed, Renfield Bomb alive, all mechs alive with no HP/status/danger debt, and grid remains 4. Standing final-cave dirty consent applies; no desync, research, investigation, threat-audit block, post-enemy block, or board uncertainty present."
+    },
+    {
+      "timestamp": "2026-05-26T19:59:05.751076",
+      "turn": 1,
+      "label": "solve",
+      "score": 130494.85715896741,
+      "actions": [
+        "PunchMech, move E5\u2192C4, fire Titan Fist at D4",
+        "PunchMech, move E6\u2192F4, fire Titan Fist at G4",
+        "PunchMech, fire Titan Fist at D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:00:36.268164",
+      "turn": 2,
+      "label": "solve",
+      "score": 125334.76190476204,
+      "actions": [
+        "PunchMech, move C4\u2192C3, fire Titan Fist at B3",
+        "PunchMech, move D5\u2192F5, fire Titan Fist at F4",
+        "PunchMech, move F3\u2192E5, fire Titan Fist at E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:03:54.502266",
+      "turn": 3,
+      "label": "solve",
+      "score": 40176.57168681282,
+      "actions": [
+        "PunchMech, fire Titan Fist at B3",
+        "PunchMech, move E5\u2192E6, repair",
+        "PunchMech, move F5\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:04:05.928713",
+      "turn": 3,
+      "label": "note",
+      "message": "Final cave turn 3: accepting emergency dirty rank 0 token d03bb3ee48ca82f4 after no clean candidate among 1000; predicted grid 4->2, one pylon/building destroyed, BigBomb alive, all mechs alive, no status or danger debt, robust preview clean next turn."
+    },
+    {
+      "timestamp": "2026-05-26T20:04:12.109145",
+      "turn": 3,
+      "label": "solve",
+      "score": 40176.57168681282,
+      "actions": [
+        "PunchMech, fire Titan Fist at B3",
+        "PunchMech, move E5\u2192E6, repair",
+        "PunchMech, move F5\u2192D4"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:04:51.771725",
+      "turn": 3,
+      "label": "solve",
+      "score": -84752.71351385117,
+      "actions": [
+        "PunchMech, fire Titan Fist at C2",
+        "PunchMech, move E5\u2192D4, repair",
+        "PunchMech, move F5\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:05:00.097793",
+      "turn": 3,
+      "label": "note",
+      "message": "Final cave turn 3: rank 0 dirty token d03bb3ee48ca82f4 rejected because final-cave pylon exception disallows predicted mech HP drop. Switching to reviewed rank 759 token 6d4e5fa23c7357a2: grid 4->1, one pylon/building destroyed, BigBomb alive, all mechs alive with no HP/status/danger debt, robust preview clean next turn."
+    },
+    {
+      "timestamp": "2026-05-26T20:05:08.606779",
+      "turn": 3,
+      "label": "solve",
+      "score": -84752.71351385117,
+      "actions": [
+        "PunchMech, fire Titan Fist at C2",
+        "PunchMech, move E5\u2192D4, repair",
+        "PunchMech, move F5\u2192E6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:05:43.590251",
+      "turn": 3,
+      "label": "note",
+      "message": "Final cave turn 3 threat audit reviewed after rank 759: still-threatened E3 by Scorpion2 and B2 by Hornet match accepted dirty pylon/building loss (3 HP/grid, one pylon destroyed), with BigBomb alive and no mech/status/danger debt. Snapshot m12_final_cave_t3_rank759_accepted_e3_b2_threats saved; dispatching held End Turn."
+    },
+    {
+      "timestamp": "2026-05-26T20:06:44.878708",
+      "turn": 4,
+      "label": "solve",
+      "score": -731446.9991688728,
+      "actions": [
+        "PunchMech, move C3\u2192C2, fire Titan Fist at D2",
+        "PunchMech, repair",
+        "PunchMech, move E6\u2192B6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:07:03.434825",
+      "turn": 4,
+      "label": "note",
+      "message": "Final cave turn 4: accepting documented resist-gamble rank 0 token 8bd398c02bf2bfc9 after no clean candidate among 1000. Predicted grid 2->0/timeline collapse, two pylons destroyed, BigBomb alive, all mechs alive with no HP/status/danger debt; final turn equals total_turns."
+    },
+    {
+      "timestamp": "2026-05-26T20:07:12.432715",
+      "turn": 4,
+      "label": "solve",
+      "score": -731446.9991688728,
+      "actions": [
+        "PunchMech, move C3\u2192C2, fire Titan Fist at D2",
+        "PunchMech, repair",
+        "PunchMech, move E6\u2192B6"
+      ]
+    },
+    {
+      "timestamp": "2026-05-26T20:07:41.573245",
+      "turn": 4,
+      "label": "note",
+      "message": "Final cave turn 4 threat audit reviewed after resist gamble: only G2 by Scorpion2 remains threatened; D3 attacker is killed. Pending loss is no worse than accepted timeline-collapse resist token 8bd398c02bf2bfc9, BigBomb alive and all mechs safe. Snapshot m12_final_cave_t4_resist_gamble_g2_threat saved; dispatching held End Turn."
+    },
+    {
+      "timestamp": "2026-05-26T20:09:11.944323",
+      "turn": 4,
+      "label": "note",
+      "message": "Run ended: Timeline Lost on Mission_Final_Cave after final-turn resist gamble token 8bd398c02bf2bfc9. Visible terminal screen shows Timeline Lost; Mech Specialist not earned on run 20260526_180954_139. Process note: standing dirty consent should not be treated as enough for predicted grid_timeline_collapse final-cave resist gambles."
     }
   ],
   "recorded_post_enemy_turns": [
@@ -1430,6 +1168,18 @@
       3
     ],
     [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
       4,
       1
     ],
@@ -1440,14 +1190,6 @@
     [
       4,
       3
-    ],
-    [
-      5,
-      1
-    ],
-    [
-      5,
-      2
     ],
     [
       5,
@@ -1510,6 +1252,10 @@
       2
     ],
     [
+      10,
+      3
+    ],
+    [
       11,
       1
     ],
@@ -1531,95 +1277,90 @@
     ],
     [
       12,
-      3
-    ],
-    [
-      13,
-      1
-    ],
-    [
-      13,
-      2
-    ],
-    [
-      13,
-      3
-    ],
-    [
-      14,
-      1
-    ],
-    [
-      14,
-      2
-    ],
-    [
-      14,
-      3
-    ],
-    [
-      15,
-      1
-    ],
-    [
-      15,
-      2
-    ],
-    [
-      15,
-      3
-    ],
-    [
-      16,
-      1
-    ],
-    [
-      16,
-      2
-    ],
-    [
-      16,
-      3
-    ],
-    [
-      17,
-      1
-    ],
-    [
-      17,
-      2
-    ],
-    [
-      17,
       3
     ]
   ],
   "post_enemy_block": null,
   "dirty_consent_used": [
-    "006da83124a3fdbe",
-    "6a4585ea30b70e82",
-    "e39be246df645856",
-    "50775dede698e64e",
-    "a38205ae0632842b",
-    "cf76b773e08f87db",
-    "74f651ece94e112f",
-    "ca9de2819c8d933c",
-    "d1de890c49aa1f10"
+    "7f5cf7957134fc10",
+    "4a062b180c7acc81",
+    "949b3ff04a5d2e41",
+    "5616bca28420635e",
+    "d9b35843d2869b24",
+    "89e64669a1c6e5a4",
+    "6d4e5fa23c7357a2",
+    "8bd398c02bf2bfc9"
   ],
   "tags": [
-    "achievement"
+    "achievement",
+    "custom_squad"
   ],
   "failure_events_this_run": [
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "terrain",
       "categories": [
-        "status"
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Prime_ShieldBash|attack",
+      "signature": "terrain|Prime_Punchmech|attack",
       "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.3,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 1,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech|attack",
+      "frequency": 0,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 4,
+      "confidence": 0.4,
+      "context": {
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 2,
+        "turn": 1,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech|attack",
+      "frequency": 1,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
@@ -1628,12 +1369,12 @@
         "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
+        "action_index": 2,
         "turn": 2,
-        "weapon": "Prime_ShieldBash",
+        "weapon": "Prime_Punchmech",
         "target": [
-          6,
-          3
+          5,
+          4
         ]
       }
     },
@@ -1645,19 +1386,19 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "terrain|Ranged_Ice|attack",
-      "frequency": 0,
+      "signature": "terrain|Prime_Punchmech|attack",
+      "frequency": 1,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.3,
       "context": {
-        "mech_uid": 2,
+        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "Ranged_Ice",
+        "action_index": 0,
+        "turn": 3,
+        "weapon": "Prime_Punchmech",
         "target": [
           4,
           3
@@ -1666,52 +1407,25 @@
     },
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "damage_amount",
       "categories": [
-        "status"
+        "damage_amount"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Prime_ShieldBash|move",
-      "frequency": 0,
+      "signature": "damage_amount|Prime_Punchmech|attack",
+      "frequency": 2,
       "asymmetry": [],
       "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 0,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Prime_ShieldBash",
-        "target": [
-          2,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Brute_Mirrorshot|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
+      "proposed_tier": 2,
+      "confidence": 0.8,
       "context": {
         "mech_uid": 1,
-        "phase": "move",
-        "sub_action": "move",
+        "phase": "attack",
+        "sub_action": "attack",
         "action_index": 0,
-        "turn": 4,
-        "weapon": "Brute_Mirrorshot",
+        "turn": 2,
+        "weapon": "Prime_Punchmech",
         "target": [
           5,
           5
@@ -1720,161 +1434,52 @@
     },
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "terrain",
       "categories": [
-        "status"
+        "terrain"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Prime_ShieldBash|attack",
-      "frequency": 1,
+      "signature": "terrain|Prime_Punchmech|attack",
+      "frequency": 2,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
-      "confidence": 0.4,
+      "confidence": 0.3,
       "context": {
-        "mech_uid": 0,
+        "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
+        "action_index": 1,
         "turn": 4,
-        "weapon": "Prime_ShieldBash",
+        "weapon": "Prime_Punchmech",
         "target": [
-          2,
+          4,
           5
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "status",
+      "top_category": "damage_amount",
       "categories": [
-        "status"
+        "damage_amount"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "status|Brute_Mirrorshot|move",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Brute_Mirrorshot",
-        "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Brute_Mirrorshot|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Brute_Mirrorshot",
-        "target": [
-          4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|_REPAIR|move",
+      "signature": "damage_amount|Prime_Punchmech|attack",
       "frequency": 3,
       "asymmetry": [],
       "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
+      "proposed_tier": 2,
+      "confidence": 0.9,
       "context": {
-        "mech_uid": 2,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "_REPAIR",
-        "target": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status",
-        "tile_status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Ranged_Ice|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 2,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 2,
-        "turn": 4,
-        "weapon": "Ranged_Ice",
-        "target": [
-          6,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "grid_power",
-      "categories": [
-        "grid_power"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "grid_power|Brute_Mirrorshot|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
+        "mech_uid": 0,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 0,
-        "turn": 4,
-        "weapon": "Brute_Mirrorshot",
+        "turn": 3,
+        "weapon": "Prime_Punchmech",
         "target": [
           3,
           4
@@ -1889,76 +1494,22 @@
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "spawn|Prime_ShieldBash|attack",
+      "signature": "spawn|Prime_Punchmech|attack",
       "frequency": 0,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
       "confidence": 0.3,
       "context": {
-        "mech_uid": 0,
+        "mech_uid": 2,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
-        "turn": 1,
-        "weapon": "Prime_ShieldBash",
-        "target": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Archive_ArtShot|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 764,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 0,
+        "action_index": 2,
         "turn": 2,
-        "weapon": "Archive_ArtShot",
+        "weapon": "Prime_Punchmech",
         "target": [
           5,
-          5
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "pod",
-      "categories": [
-        "pod"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "pod|Brute_Mirrorshot|move",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.3,
-      "context": {
-        "mech_uid": 1,
-        "phase": "move",
-        "sub_action": "move",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Brute_Mirrorshot",
-        "target": [
-          5,
-          5
+          3
         ]
       }
     },
@@ -1966,12 +1517,13 @@
       "version": 1,
       "top_category": "terrain",
       "categories": [
-        "terrain"
+        "terrain",
+        "tile_status"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "terrain|Brute_Mirrorshot|attack",
-      "frequency": 0,
+      "signature": "terrain|Prime_Punchmech|attack",
+      "frequency": 3,
       "asymmetry": [],
       "topology": null,
       "proposed_tier": 4,
@@ -1980,95 +1532,66 @@
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
-        "action_index": 0,
-        "turn": 4,
-        "weapon": "Brute_Mirrorshot",
+        "action_index": 1,
+        "turn": 1,
+        "weapon": "Prime_Punchmech",
         "target": [
-          6,
-          5
+          5,
+          4
         ]
       }
     },
     {
       "version": 1,
-      "top_category": "death",
+      "top_category": "damage_amount",
       "categories": [
-        "death"
+        "damage_amount"
       ],
       "subcategory": null,
       "model_gap": false,
-      "signature": "death|Brute_Mirrorshot|attack",
-      "frequency": 0,
-      "asymmetry": [
-        "mech_died_unexpectedly"
-      ],
+      "signature": "damage_amount|Prime_Punchmech|attack",
+      "frequency": 4,
+      "asymmetry": [],
       "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
+      "proposed_tier": 2,
+      "confidence": 0.9,
       "context": {
         "mech_uid": 1,
         "phase": "attack",
         "sub_action": "attack",
         "action_index": 1,
         "turn": 1,
-        "weapon": "Brute_Mirrorshot",
+        "weapon": "Prime_Punchmech",
         "target": [
           4,
-          3
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Brute_Mirrorshot_A|attack",
-      "frequency": 0,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 4,
-        "weapon": "Brute_Mirrorshot_A",
-        "target": [
-          1,
-          2
-        ]
-      }
-    },
-    {
-      "version": 1,
-      "top_category": "status",
-      "categories": [
-        "status"
-      ],
-      "subcategory": null,
-      "model_gap": false,
-      "signature": "status|Brute_Mirrorshot_A|attack",
-      "frequency": 1,
-      "asymmetry": [],
-      "topology": null,
-      "proposed_tier": 4,
-      "confidence": 0.4,
-      "context": {
-        "mech_uid": 1,
-        "phase": "attack",
-        "sub_action": "attack",
-        "action_index": 1,
-        "turn": 2,
-        "weapon": "Brute_Mirrorshot_A",
-        "target": [
-          3,
           4
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "top_category": "damage_amount",
+      "categories": [
+        "damage_amount"
+      ],
+      "subcategory": null,
+      "model_gap": false,
+      "signature": "damage_amount|Prime_Punchmech|attack",
+      "frequency": 5,
+      "asymmetry": [],
+      "topology": null,
+      "proposed_tier": 2,
+      "confidence": 0.9,
+      "context": {
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "action_index": 0,
+        "turn": 4,
+        "weapon": "Prime_Punchmech",
+        "target": [
+          5,
+          5
         ]
       }
     }
@@ -2076,191 +1599,124 @@
   "disabled_actions": [],
   "research_queue": [
     {
-      "type": "GuardMech",
+      "type": "PunchMech",
       "terrain_id": null,
       "kind": "mech_weapon",
       "slot": 1,
-      "mission_id": "Mission_AcidTank",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Known Frozen Titans own mech already catalogued this session; clearing repeated new-run own-mech queue before End Turn.",
-        "kind": "mech_weapon",
-        "attempts": 0,
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "MirrorMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "Mission_AcidTank",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Known Frozen Titans own mech already catalogued this session; clearing repeated new-run own-mech queue before End Turn.",
-        "kind": "mech_weapon",
-        "attempts": 0,
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "IceMech",
-      "terrain_id": null,
-      "kind": "mech_weapon",
-      "slot": 1,
-      "mission_id": "Mission_AcidTank",
-      "first_seen_turn": 0,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Known Frozen Titans own mech already catalogued this session; clearing repeated new-run own-mech queue before End Turn.",
-        "kind": "mech_weapon",
-        "attempts": 0,
-        "diff_field": null,
-        "diff_predicted": null,
-        "diff_actual": null
-      }
-    },
-    {
-      "type": "Scorpion1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
       "mission_id": "Mission_Survive",
-      "first_seen_turn": 2,
-      "attempts": 0,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Scorpion1 is already present in data/known_types.json and this is a stale known enemy queue item after turn 2; clearing before End Turn.",
-        "kind": "behavior_novelty",
-        "attempts": 0,
-        "diff_field": "status.web",
-        "diff_predicted": true,
-        "diff_actual": false
-      },
-      "diff_field": "status.web",
-      "diff_predicted": true,
-      "diff_actual": false,
-      "severity": "medium"
-    },
-    {
-      "type": "SpiderlingEgg1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Artillery",
-      "first_seen_turn": 1,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Already modeled and present in data/known_types.json plus Rust egg hatch/spawn coverage; current board has no capturable egg after re-solve.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "missing_in_predicted",
-        "diff_predicted": "absent",
-        "diff_actual": "present"
-      },
-      "diff_field": "missing_in_predicted",
-      "diff_predicted": "absent",
-      "diff_actual": "present",
-      "severity": "medium"
-    },
-    {
-      "type": "Firefly1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_Artillery",
-      "first_seen_turn": 2,
-      "attempts": 1,
-      "status": "done",
-      "result": {
-        "source": "manual_resolved",
-        "reason": "Already known in data/known_types.json; live target coordinate after the verified turn actions is now a building, so the pending Firefly1 capture is stale.",
-        "kind": "behavior_novelty",
-        "attempts": 1,
-        "diff_field": "status.fire",
-        "diff_predicted": false,
-        "diff_actual": true
-      },
-      "diff_field": "status.fire",
-      "diff_predicted": false,
-      "diff_actual": true,
-      "severity": "medium",
-      "research_id": "ac89f1516f6d",
-      "last_kind": "enemy"
-    },
-    {
-      "type": "Snowtank1",
-      "terrain_id": null,
-      "kind": "behavior_novelty",
-      "slot": null,
-      "mission_id": "Mission_SnowBattle",
-      "first_seen_turn": 4,
+      "first_seen_turn": 0,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Cannon-Bot",
-            "hp": 0,
+            "name": "Combat Mech",
+            "hp": 3,
             "move": 3,
             "class_icons": [],
-            "confidence": 0.8
+            "confidence": 1.0
           },
           "unit_status": {
-            "kind": "enemy",
-            "pilot_name": null,
-            "weapon_slot_count": 0,
+            "kind": "mech",
+            "pilot_name": "Bethany Jones",
+            "weapon_slot_count": 1,
             "confidence": 1.0
           }
         },
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Cannon-Bot",
+          "target_name": "Combat Mech",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Cannon-Bot",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Cannon-Bot&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Combat+Mech",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Combat+Mech&restrict_sr=1"
           }
         }
       },
-      "diff_field": "status.frozen",
-      "diff_predicted": true,
-      "diff_actual": false,
-      "severity": "medium",
-      "research_id": "c955041817f4",
-      "last_kind": "enemy"
+      "research_id": "1ad62877dc7b",
+      "last_kind": "mech"
     },
     {
-      "type": "Shaman2",
+      "type": "Jelly_Regen1",
       "terrain_id": null,
       "kind": "behavior_novelty",
       "slot": null,
-      "mission_id": "Mission_Force",
+      "mission_id": "Mission_SnowStorm",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 2,
+        "diff_actual": 1
+      },
+      "diff_field": "hp",
+      "diff_predicted": 2,
+      "diff_actual": 1,
+      "severity": "low"
+    },
+    {
+      "type": "Bouncer1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Factory",
+      "first_seen_turn": 2,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 3,
+        "diff_actual": 2
+      },
+      "diff_field": "hp",
+      "diff_predicted": 3,
+      "diff_actual": 2,
+      "severity": "low"
+    },
+    {
+      "type": "HornetBoss",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_HornetBoss",
+      "first_seen_turn": 3,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 3,
+        "diff_actual": 2
+      },
+      "diff_field": "hp",
+      "diff_predicted": 3,
+      "diff_actual": 2,
+      "severity": "low"
+    },
+    {
+      "type": "Archive_Tank",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Tanks",
       "first_seen_turn": 2,
       "attempts": 1,
       "status": "done",
       "result": {
         "parsed": {
           "name_tag": {
-            "name": "Alpha Plasmodia",
+            "name": "Archive Tank",
             "hp": 0,
-            "move": 2,
-            "class_icons": [],
+            "move": 4,
+            "class_icons": [
+              "grid_power"
+            ],
             "confidence": 0.8
           },
           "unit_status": {
@@ -2273,26 +1729,68 @@
         "mismatches": [],
         "source": "vision",
         "community_queries": {
-          "target_name": "Alpha Plasmodia",
+          "target_name": "Archive Tank",
           "queries": {
-            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Alpha+Plasmodia",
-            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Alpha+Plasmodia&restrict_sr=1"
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Archive+Tank",
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Archive+Tank&restrict_sr=1"
           }
         }
       },
-      "diff_field": "status.frozen",
-      "diff_predicted": true,
-      "diff_actual": false,
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "diff_actual": "absent",
       "severity": "medium",
-      "research_id": "71242f2b897a",
+      "research_id": "69a84245660d",
       "last_kind": "enemy"
+    },
+    {
+      "type": "Burnbug1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Airstrike",
+      "first_seen_turn": 1,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 3,
+        "diff_actual": 2
+      },
+      "diff_field": "hp",
+      "diff_predicted": 3,
+      "diff_actual": 2,
+      "severity": "low"
+    },
+    {
+      "type": "Dung1",
+      "terrain_id": null,
+      "kind": "behavior_novelty",
+      "slot": null,
+      "mission_id": "Mission_Airstrike",
+      "first_seen_turn": 4,
+      "attempts": 0,
+      "status": "done",
+      "result": {
+        "source": "auto_resolved",
+        "reason": "low_severity_known_type",
+        "diff_field": "hp",
+        "diff_predicted": 3,
+        "diff_actual": 2
+      },
+      "diff_field": "hp",
+      "diff_predicted": 3,
+      "diff_actual": 2,
+      "severity": "low"
     }
   ],
   "diagnosis_queue": [],
   "last_terrain_fingerprint": {
-    "hash": "ab2bf6b2ffa05669",
-    "classes": "ggmbbmgsggggggggsbbggggggggggbbggggggggggggggsggrbbgggggmmrggggg",
-    "mission_index": 17,
+    "hash": "854862890c81e09e",
+    "classes": "wwwggggmwmwggbgmgbwggggggbwgwgwmggwggwmwggwrbggggbwwwgbgggwwwwgg",
+    "mission_index": 12,
     "turn": 4
   },
   "terrain_stage_change_pending": false

@@ -1138,7 +1138,41 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # where NanoMech pushed Hornet1 into dead Scarab1's tile and live left Hornet1
 # alive at 1 HP.
 # Pre-v224 corpus archived as failure_db_snapshot_sim_v223.jsonl.
-SIMULATOR_VERSION = 224
+# v225: Spawn blocking records every occupied emergence tile before resolving
+# shield/frozen/damage, and terminal scoring credits blockers destroyed by
+# emergence damage. This lets RockThrown blockers count toward Hold the Line.
+# Pre-v225 corpus archived as failure_db_snapshot_sim_v224.jsonl.
+# v226: Spider Psion death eggs use live-style adjacent fallback if a pushed
+# corpse retargets the egg to water/chasm/lava or another unspawnable tile.
+# Fixes Blitzkrieg run 20260524_112729_036 Mission_AcidStorm turn 3, where live
+# spawned SpiderlingEgg1 uid 530 after Rock Accelerator pushed a killed Scorpion
+# corpse onto water.
+# Pre-v226 corpus archived as failure_db_snapshot_sim_v225.jsonl.
+# v227: AE Totem/Spore attacks fire at the queued-time projectile endpoint and
+# then self-destruct, instead of re-tracing through post-player blockers or
+# falling back to generic unmapped Vek behavior. Fixes Blitzkrieg run
+# 20260524_112729_036 Mission_Barrels turn 3, where TotemAtk1 destroyed the G6
+# building after WallMech moved onto G5.
+# Pre-v227 corpus archived as failure_db_snapshot_sim_v226.jsonl.
+# v228 - Killing a Blast Psion clears the explode-on-death aura before later
+# Chain Whip hits in the same target-first chain resolve.
+# Pre-v228 corpus archived as failure_db_snapshot_sim_v227.jsonl.
+# v229 - Destroyed objective building ruins (terrain=Building, HP 0) block
+# Brute_Grapple/Pull target scans instead of letting Hook target a pawn behind
+# the ruin.
+# Pre-v229 corpus archived as failure_db_snapshot_sim_v228.jsonl.
+# v230 - Pull replay/execution also stops when an old/invalid target names a
+# pawn behind a destroyed objective building ruin, so the simulator does not
+# pull through the first projectile blocker.
+# Pre-v230 corpus archived as failure_db_snapshot_sim_v229.jsonl.
+# v231 - Cryo-Launcher self-freeze now applies freeze tile cleanup at the
+# shooter's tile, clearing carried fire and extinguishing burning ground.
+# Pre-v231 corpus archived as failure_db_snapshot_sim_v230.jsonl.
+# v232 - Save-file upgraded overlays now model Janus Cannon damage upgrades and
+# Spartan Shield damage upgrades, so powered Brute_Mirrorshot_A/B/AB and
+# Prime_ShieldBash_B/AB solve with live damage. Pre-v232 corpus archived as
+# failure_db_snapshot_sim_v231.jsonl.
+SIMULATOR_VERSION = 232
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

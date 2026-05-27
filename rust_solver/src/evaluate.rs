@@ -29,7 +29,7 @@ use crate::board::*;
 /// many turns (see feedback_grid_management.md, Corp HQ M05 defeat
 /// 2026-04-28). 0.5 keeps kills meaningful without overweighting future
 /// vs. present on a mission with no real "final" turn.
-fn future_factor(current_turn: u8, total_turns: u8, remaining_spawns: u32, infinite_spawn: bool) -> f64 {
+pub(crate) fn future_factor(current_turn: u8, total_turns: u8, remaining_spawns: u32, infinite_spawn: bool) -> f64 {
     if remaining_spawns == 0 { return 0.0; }
     if total_turns <= 1 {
         return if infinite_spawn { 0.5 } else { 0.0 };
@@ -41,6 +41,32 @@ fn future_factor(current_turn: u8, total_turns: u8, remaining_spawns: u32, infin
     let max_remaining = (total_turns - 1) as f64;
     let raw = (remaining / max_remaining).clamp(0.0, 1.0);
     if infinite_spawn { raw.max(0.5) } else { raw }
+}
+
+pub(crate) fn occupied_spawn_count(board: &Board, spawn_points: &[(u8, u8)]) -> i32 {
+    spawn_points
+        .iter()
+        .filter(|&&(sx, sy)| board.unit_at(sx, sy).is_some())
+        .count() as i32
+}
+
+pub(crate) fn consumed_spawn_block_bonus(
+    board: &Board,
+    spawn_points: &[(u8, u8)],
+    weights: &EvalWeights,
+    spawn_blocks_resolved: i32,
+) -> f64 {
+    let consumed_blocks = (spawn_blocks_resolved - occupied_spawn_count(board, spawn_points)).max(0);
+    if consumed_blocks == 0 {
+        return 0.0;
+    }
+    let ff = future_factor(
+        board.current_turn,
+        board.total_turns,
+        board.remaining_spawns,
+        board.infinite_spawn,
+    );
+    weights.spawn_blocked * ff * consumed_blocks as f64
 }
 
 /// Scale a weight: base * (floor + scale * future_factor).
@@ -1061,11 +1087,7 @@ pub fn evaluate(
     }
 
     // ── Spawns blocked: SCALED (zero on final turn — no next-turn spawns) ─
-    for &(sx, sy) in spawn_points {
-        if board.unit_at(sx, sy).is_some() {
-            score += weights.spawn_blocked * ff;
-        }
-    }
+    score += occupied_spawn_count(board, spawn_points) as f64 * weights.spawn_blocked * ff;
 
     // ── Remaining spawn danger: flat penalty per queued Vek ─────────────
     // `apply_spawn_blocking` charges damage to mechs sitting on spawn tiles,
@@ -1306,9 +1328,10 @@ mod tests {
         board.tile_mut(0, 0).building_hp = 1;
         let w = EvalWeights::default();
         let score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
-        // grid_power=1 * 5000 * 5.0(critical) + 1 building(10000*bld_mult) + 1 HP(2000*bld_mult) - 2500 uncovered(500*5.0)
-        // bld_mult = 0.6 + 0.4*(1/7) = 0.6571... → building: 6571 + 1314 = 7886, total: 25000 + 7886 - 2500 = 30386
-        assert!((score - 30386.0).abs() < 1.0);
+        // grid=1: +5000 linear, -60000 crisis penalty, -28800 capacity loss.
+        // bld_mult = 0.6 + 0.4*(1/7) = 0.6571... -> building+HP ~= 7886.
+        // No mech covers the building, so coverage contributes -500*5 = -2500.
+        assert!((score - -78414.0).abs() < 1.0);
     }
 
     #[test]
@@ -1326,6 +1349,37 @@ mod tests {
         let with_spawn = evaluate(&board, &[(3, 3)], &w, 0, 0, 0, &no_psion(), 0);
         let without_spawn = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
         assert!((with_spawn - without_spawn).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_consumed_spawn_block_bonus_credits_destroyed_rock() {
+        use crate::enemy::apply_spawn_blocking;
+
+        let w = EvalWeights::default();
+        let mut board = Board::default();
+        board.current_turn = 1;
+        board.total_turns = 5;
+        board.remaining_spawns = 1;
+        let rock = board.add_unit(Unit {
+            uid: 42,
+            x: 3,
+            y: 3,
+            hp: 1,
+            max_hp: 1,
+            team: Team::Neutral,
+            flags: UnitFlags::PUSHABLE,
+            ..Unit::default()
+        });
+        board.units[rock].set_type_name("RockThrown");
+
+        let spawn_result = apply_spawn_blocking(&mut board, &[(3, 3)]);
+        let post_spawn_score = evaluate(&board, &[(3, 3)], &w, 0, 0, 0, &no_psion(), 0);
+        let credited_score = post_spawn_score
+            + consumed_spawn_block_bonus(&board, &[(3, 3)], &w, spawn_result.spawns_blocked);
+        let no_spawn_score = evaluate(&board, &[], &w, 0, 0, 0, &no_psion(), 0);
+
+        assert_eq!(spawn_result.spawns_blocked, 1);
+        assert!((credited_score - no_spawn_score - w.spawn_blocked).abs() < 1.0);
     }
 
     #[test]

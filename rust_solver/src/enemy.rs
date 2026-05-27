@@ -76,6 +76,29 @@ pub(crate) fn spawn_enemy(
     true
 }
 
+/// Spawn a Spider Psion death egg, falling back to the engine's adjacent
+/// `sPawn` order when the death tile is no longer spawnable.
+pub(crate) fn spawn_spider_psion_death_egg(board: &mut Board, x: u8, y: u8) -> bool {
+    if spawn_enemy(board, x, y, "SpiderlingEgg1", 1) {
+        return true;
+    }
+
+    // Same order used by live WebbEgg hatch fallback: bridge (x, y-1) first,
+    // then (x+1, y), (x, y+1), (x-1, y).
+    let fallback_dirs: [(i8, i8); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+    for &(dx, dy) in &fallback_dirs {
+        let nx = x as i8 + dx;
+        let ny = y as i8 + dy;
+        if !in_bounds(nx, ny) {
+            continue;
+        }
+        if spawn_enemy(board, nx as u8, ny as u8, "SpiderlingEgg1", 1) {
+            return true;
+        }
+    }
+    false
+}
+
 fn apply_mosquito_boss_attack(board: &mut Board, x: u8, y: u8, result: &mut ActionResult) {
     {
         let tile = board.tile_mut(x, y);
@@ -157,8 +180,10 @@ fn queued_origin_for_attack(enemy: &Unit, fallback: (u8, u8)) -> (u8, u8) {
         && enemy.queued_origin_y >= 0
     {
         (enemy.queued_origin_x as u8, enemy.queued_origin_y as u8)
-    } else {
+    } else if in_bounds(fallback.0 as i8, fallback.1 as i8) {
         fallback
+    } else {
+        (enemy.x, enemy.y)
     }
 }
 
@@ -343,6 +368,7 @@ pub fn apply_spawn_blocking(
         if let Some(idx) = board.unit_at(sx, sy) {
             let unit = &mut board.units[idx];
             if unit.hp <= 0 { continue; }
+            result.spawns_blocked += 1;
             if unit.shield() {
                 unit.set_shield(false);
                 continue;
@@ -1094,6 +1120,37 @@ pub fn simulate_enemy_attacks(
         // unconditionally. No damage is applied (wdef.damage=0), no push.
         if enemy_wid == WId::BossHeal {
             apply_weapon_status(board, ex, ey, wdef);
+            continue;
+        }
+
+        if matches!(enemy_wid, WId::TotemAtk1 | WId::TotemAtk2 | WId::TotemAtkB) {
+            if in_bounds(qtx, qty) {
+                let tx = qtx as u8;
+                let ty = qty as u8;
+                let occupied_at_impact = board.unit_at(tx, ty).is_some();
+                let d = enemy_hit_damage(board, tx, ty, damage, vh);
+                apply_damage(board, tx, ty, d, &mut result, DamageSource::Weapon);
+                apply_weapon_status_with_impact_occupancy(
+                    board, tx, ty, wdef, occupied_at_impact,
+                );
+                if let Some(dir) = projectile_dir_from_queued(
+                    queued_origin.0,
+                    queued_origin.1,
+                    qtx,
+                    qty,
+                ) {
+                    apply_push(board, tx, ty, dir, &mut result);
+                }
+            }
+
+            let sx = queued_origin.0 as i8;
+            let sy = queued_origin.1 as i8;
+            let (sx, sy) = if in_bounds(sx, sy) {
+                (queued_origin.0, queued_origin.1)
+            } else {
+                (ex, ey)
+            };
+            apply_damage(board, sx, sy, 100, &mut result, DamageSource::Weapon);
             continue;
         }
 
@@ -2444,6 +2501,42 @@ mod tests {
     }
 
     #[test]
+    fn test_totem_projectile_hits_fixed_endpoint_after_blocker_moves_in() {
+        let mut board = Board::default();
+        board.grid_power = 2;
+        board.grid_power_max = 2;
+        board.tile_mut(2, 1).terrain = Terrain::Building;
+        board.tile_mut(2, 1).building_hp = 1;
+
+        let totem_idx = add_enemy_with_type(&mut board, 711, 4, 1, 1, "Totem1", 2, 1);
+        board.units[totem_idx].weapon = WeaponId(WId::TotemAtk1 as u16);
+        board.units[totem_idx].flags.insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.units[totem_idx].flags.insert(UnitFlags::QUEUED_ORIGIN_SET);
+        board.units[totem_idx].queued_origin_x = 4;
+        board.units[totem_idx].queued_origin_y = 1;
+
+        let wall_idx = board.add_unit(Unit {
+            uid: 1,
+            x: 3,
+            y: 1,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            flags: UnitFlags::IS_MECH | UnitFlags::PUSHABLE | UnitFlags::MASSIVE,
+            ..Default::default()
+        });
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(2, 1).building_hp, 0, "Totem projectile should hit the queued endpoint");
+        assert_eq!(board.grid_power, 1, "fixed endpoint building loss should drop grid");
+        assert_eq!(board.units[wall_idx].hp, 3, "new blocker on the adjacent tile should not be hit");
+        assert_eq!((board.units[wall_idx].x, board.units[wall_idx].y), (3, 1));
+        assert!(board.units[totem_idx].hp <= 0, "Totem should self-destruct after firing");
+    }
+
+    #[test]
     fn test_snowtank_mark_i_projectile_hits_line_target_and_sets_fire() {
         let mut board = Board::default();
         let pulse_idx = add_mech_unit(&mut board, 2, 2, 1, 3);
@@ -2738,6 +2831,9 @@ mod tests {
         assert_eq!(enemy_weapon_for_type("BlobberBoss"), WId::BlobberAtkB);
         assert_eq!(enemy_weapon_for_type("Crab1"), WId::CrabAtk1);
         assert_eq!(enemy_weapon_for_type("CrabBoss"), WId::CrabAtkB);
+        assert_eq!(enemy_weapon_for_type("Totem1"), WId::TotemAtk1);
+        assert_eq!(enemy_weapon_for_type("Totem2"), WId::TotemAtk2);
+        assert_eq!(enemy_weapon_for_type("TotemB"), WId::TotemAtkB);
         assert_eq!(enemy_weapon_for_type("Unknown"), WId::None);
     }
 

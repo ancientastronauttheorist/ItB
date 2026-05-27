@@ -889,11 +889,13 @@ mod tests {
         // is ~60GB/s, so 1.3kB copies are sub-nanosecond.
         // Sim v21: bonus_dont_kill_types: Vec<String> added 24 bytes
         // (Vec header). Empty Vec doesn't allocate, so Clone is still
-        // a memcpy on the common path; only missions with a populated
-        // protected-list pay the heap-clone cost (1× per solve).
+        // a memcpy on the common path; only missions with populated
+        // objective/projection lists pay heap-clone costs (1× per branch).
+        // Sim v32+ added grid-defense expectation, unit-objective Vecs, and
+        // the Spider Psion egg queue; 1.6kB is still comfortably cheap.
         let size = std::mem::size_of::<Board>();
         println!("Board size: {} bytes", size);
-        assert!(size <= 1320, "Board too large: {} bytes", size);
+        assert!(size <= 1700, "Board too large: {} bytes", size);
     }
 
     #[test]

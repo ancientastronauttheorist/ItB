@@ -10,15 +10,30 @@
       "last_run_id": "20260423_131700_144",
       "weapon_id": "Brute_Jetmech"
     },
+    "damage_amount|Brute_Mirrorshot|attack": {
+      "count": 3,
+      "last_run_id": "20260525_145507_262",
+      "weapon_id": "Brute_Mirrorshot"
+    },
     "damage_amount|Brute_Tankmech|attack": {
       "count": 2,
       "last_run_id": "20260510_213059_819",
       "weapon_id": "Brute_Tankmech"
     },
+    "damage_amount|Brute_Unstable|attack": {
+      "count": 6,
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Brute_Unstable"
+    },
     "damage_amount|Prime_Flamethrower|attack": {
       "count": 1,
       "last_run_id": "20260428_165811_685",
       "weapon_id": "Prime_Flamethrower"
+    },
+    "damage_amount|Prime_Leap|attack": {
+      "count": 3,
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Prime_Leap"
     },
     "damage_amount|Prime_Lightning|move": {
       "count": 1,
@@ -26,8 +41,8 @@
       "weapon_id": "Prime_Lightning"
     },
     "damage_amount|Prime_Punchmech|attack": {
-      "count": 2,
-      "last_run_id": "20260424_174047_323",
+      "count": 6,
+      "last_run_id": "20260526_180954_139",
       "weapon_id": "Prime_Punchmech"
     },
     "damage_amount|Prime_Shift|move": {
@@ -91,8 +106,8 @@
       "weapon_id": "Brute_Beetle"
     },
     "death|Brute_Grapple|attack": {
-      "count": 1,
-      "last_run_id": "20260422_171013_371",
+      "count": 6,
+      "last_run_id": "20260524_154211_411",
       "weapon_id": "Brute_Grapple"
     },
     "death|Brute_Jetmech|attack": {
@@ -115,6 +130,11 @@
       "last_run_id": "20260510_213059_819",
       "weapon_id": "Brute_Tankmech"
     },
+    "death|Brute_Unstable|attack": {
+      "count": 1,
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Brute_Unstable"
+    },
     "death|Deploy_TankShot|attack": {
       "count": 1,
       "last_run_id": "20260517_105759_344",
@@ -130,14 +150,19 @@
       "last_run_id": "20260518_103538_582",
       "weapon_id": "Prime_Flamethrower"
     },
+    "death|Prime_Leap|attack": {
+      "count": 4,
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Prime_Leap"
+    },
     "death|Prime_Lightning_A|attack": {
       "count": 1,
       "last_run_id": "20260517_105759_344",
       "weapon_id": "Prime_Lightning_A"
     },
     "death|Prime_Lightning|attack": {
-      "count": 3,
-      "last_run_id": "20260517_105759_344",
+      "count": 4,
+      "last_run_id": "20260524_154211_411",
       "weapon_id": "Prime_Lightning"
     },
     "death|Prime_Punchmech_A|attack": {
@@ -196,9 +221,14 @@
       "weapon_id": "Ranged_Rocket"
     },
     "death|Ranged_Rockthrow|attack": {
-      "count": 1,
-      "last_run_id": "20260517_105759_344",
+      "count": 3,
+      "last_run_id": "20260524_112729_036",
       "weapon_id": "Ranged_Rockthrow"
+    },
+    "death|Science_AcidShot|attack": {
+      "count": 3,
+      "last_run_id": "20260522_193613_471",
+      "weapon_id": "Science_AcidShot"
     },
     "death|Science_Gravwell|attack": {
       "count": 4,

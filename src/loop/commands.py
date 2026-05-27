@@ -134,6 +134,24 @@ def _achievement_weight_overlay(
         )
         applied.append("healing")
 
+    if "hold the line" in targets:
+        # The Blitzkrieg achievement needs four simultaneous spawn blocks.
+        # Strongly prefer safe blocks over routine kills so earlier blocked
+        # emergence tiles can accumulate into the four-marker setup.
+        weights["spawn_blocked"] = max(
+            float(weights.get("spawn_blocked", 0) or 0),
+            8000.0,
+        )
+        weights["enemy_killed"] = min(
+            float(weights.get("enemy_killed", 900) or 900),
+            250.0,
+        )
+        weights["enemy_hp_remaining"] = max(
+            float(weights.get("enemy_hp_remaining", -100) or -100),
+            -25.0,
+        )
+        applied.append("hold_the_line")
+
     return weights, applied
 
 

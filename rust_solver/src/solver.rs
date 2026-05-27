@@ -345,7 +345,11 @@ pub(crate) fn get_weapon_targets(
                     let tile = board.tile(ux, uy);
                     let has_unit = board.unit_at(ux, uy).is_some();
                     let is_mountain = tile.terrain == Terrain::Mountain;
-                    let is_building = tile.is_building();
+                    // Destroyed unique/objective buildings can remain encoded
+                    // as terrain=Building with HP 0. Live Grappling Hook still
+                    // treats that ruin as the first projectile blocker, so do
+                    // not enumerate units behind it.
+                    let is_building = tile.terrain == Terrain::Building;
                     if has_unit || is_mountain || is_building {
                         // First blocker — this is the sole valid target in
                         // this direction. Push it even if non-pushable
@@ -1400,7 +1404,7 @@ fn search_recursive(
             &b_eval, spawn_points, weights,
             projected_kills, projected_mission_kills,
             bumps_so_far, psion_before, building_threats,
-        );
+        ) + consumed_spawn_block_bonus(&b_eval, spawn_points, weights, spawn_block_result.spawns_blocked);
         // Tier 2 soft-disable bias: penalize any candidate plan that
         // relies on a weapon in the session's disabled_actions list.
         // Subtracted at terminal evaluation so the search retains its
@@ -2598,13 +2602,13 @@ mod top_k_tests {
             ..Default::default()
         });
         {
-            let tile = board.tile_mut(4, 3);
+            let tile = board.tile_mut(5, 3);
             tile.terrain = Terrain::Building;
             tile.building_hp = 1;
         }
         board.add_unit(Unit {
             uid: 231,
-            x: 4,
+            x: 5,
             y: 2,
             hp: 3,
             max_hp: 3,
@@ -2617,7 +2621,7 @@ mod top_k_tests {
 
         assert!(
             actions.iter().any(|a| {
-                a.0 == (5, 1) && a.1 == WId::RangedIgnite && a.2 == (4, 3)
+                a.0 == (5, 1) && a.1 == WId::RangedIgnite && a.2 == (5, 3)
             }),
             "Vulcan Artillery should be able to target a live building when the zero-damage center shot pushes adjacent attackers"
         );

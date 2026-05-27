@@ -577,9 +577,25 @@ pub enum WId {
     BruteUnstableB = 196,
     /// Unstable Cannon with both damage upgrades powered.
     BruteUnstableAB = 197,
+    /// AE Shaman Totem / Spore secretion: fixed-impact projectile, then self-death.
+    TotemAtk1 = 198,
+    /// Alpha Totem secretion: fixed-impact projectile, then self-death.
+    TotemAtk2 = 199,
+    /// Leader-spawned Totem secretion: fixed-impact projectile, then self-death.
+    TotemAtkB = 200,
+    /// Janus Cannon with one +1 Damage upgrade powered.
+    BruteMirrorshotA = 201,
+    /// Janus Cannon with the alternate +1 Damage upgrade powered.
+    BruteMirrorshotB = 202,
+    /// Janus Cannon with both +1 Damage upgrades powered.
+    BruteMirrorshotAB = 203,
+    /// Spartan Shield with +1 Damage powered.
+    PrimeShieldBashB = 204,
+    /// Spartan Shield with Gain Shield and +1 Damage powered.
+    PrimeShieldBashAB = 205,
 }
 
-pub const WEAPON_COUNT: usize = 198;
+pub const WEAPON_COUNT: usize = 206;
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -620,6 +636,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 4: Prime_ShieldBash — Spartan Shield.
     // Bashes the adjacent target for 2 damage and flips its queued attack.
     w[4] = WeaponDef { weapon_type: WeaponType::Melee, damage: 2, push: PushDir::Flip, flags: C, ..DEF };
+    // 204-205: Spartan Shield damage upgrade. The A/AB shield-self benefit is
+    // conservative in the sim today; the damage upgrade is mission-critical.
+    w[204] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Flip, flags: C, ..DEF };
+    w[205] = WeaponDef { weapon_type: WeaponType::Melee, damage: 3, push: PushDir::Flip, flags: C, ..DEF };
     // 5: Prime_Shift — Vice Fist (grab and toss target to tile behind attacker)
     w[5] = WeaponDef { weapon_type: WeaponType::Melee, damage: 1, push: PushDir::Throw, flags: f(WeaponFlags::TARGETS_ALLIES.bits()), ..DEF };
     // 6: Prime_Flamethrower — Flamethrower.
@@ -698,6 +718,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     w[142] = WeaponDef { weapon_type: WeaponType::Leap, damage: 2, range_min: 2, range_max: 3, flags: f_nc(WeaponFlags::SMOKE.bits()), ..DEF };
     // 18: Brute_Mirrorshot — Mirror Shot
     w[18] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
+    // 201-203: Janus Cannon damage upgrades. Both arms use the same Damage.
+    w[201] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
+    w[202] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
+    w[203] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, range_max: 0, flags: f(WeaponFlags::AOE_BEHIND.bits()), ..DEF };
     // 19: Brute_Beetle — Ramming Engines
     w[19] = WeaponDef { weapon_type: WeaponType::Charge, damage: 2, push: PushDir::Forward, self_damage: 1, range_max: 0,
         flags: f(WeaponFlags::CHARGE.bits() | WeaponFlags::FLYING_CHARGE.bits()), ..DEF };
@@ -725,6 +749,13 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
     w[197] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 4, push: PushDir::Forward, self_damage: 2, range_max: 0,
         flags: f(WeaponFlags::PUSH_SELF.bits()), ..DEF };
+    // 198-200: AE Shaman Totem / Spore secretion. Lua queues a projectile at
+    // GetProjectileEnd(p1,p2), then queues DAMAGE_DEATH at p1. The fixed
+    // impact + self-death semantics are handled in enemy.rs; keep the def as
+    // a projectile for targeting/scoring metadata.
+    w[198] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[199] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 3, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
+    w[200] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Forward, range_max: 0, flags: C, ..DEF };
     // 22: Brute_PhaseShot — Phase Cannon
     w[22] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 1, push: PushDir::Forward, range_max: 0,
         flags: f(WeaponFlags::PHASE.bits()), ..DEF };
@@ -1473,6 +1504,8 @@ pub fn wid_from_str(s: &str) -> WId {
         "Prime_Lasermech_B" => WId::PrimeLasermechB,
         "Prime_Lasermech_AB" => WId::PrimeLasermechAB,
         "Prime_ShieldBash" => WId::PrimeShieldBash,
+        "Prime_ShieldBash_B" => WId::PrimeShieldBashB,
+        "Prime_ShieldBash_AB" => WId::PrimeShieldBashAB,
         "Prime_Shift" => WId::PrimeShift,
         "Prime_Flamethrower" => WId::PrimeFlamethrower,
         "Prime_Flamethrower_A" => WId::PrimeFlamethrowerA,
@@ -1504,6 +1537,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Jetmech_B" => WId::BruteJetmechB,
         "Brute_Jetmech_AB" => WId::BruteJetmechAB,
         "Brute_Mirrorshot" => WId::BruteMirrorshot,
+        "Brute_Mirrorshot_A" => WId::BruteMirrorshotA,
+        "Brute_Mirrorshot_B" => WId::BruteMirrorshotB,
+        "Brute_Mirrorshot_AB" => WId::BruteMirrorshotAB,
         "Brute_Beetle" => WId::BruteBeetle,
         "Brute_Grapple" => WId::BruteGrapple,
         "Brute_Unstable" => WId::BruteUnstable,
@@ -1654,6 +1690,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "PlasmodiaAtk2" => WId::PlasmodiaAtk2,
         "FireflyAtkB" => WId::FireflyAtkB,
         "ScorpionAtkB" => WId::ScorpionAtkB,
+        "TotemAtk1" => WId::TotemAtk1,
+        "TotemAtk2" => WId::TotemAtk2,
+        "TotemAtkB" => WId::TotemAtkB,
         "BouncerAtkB" => WId::BouncerAtkB,
         "Armored_Train_Move" => WId::ArmoredTrainMove,
         "VIP_Truck_Move" => WId::VipTruckMove,
@@ -1705,6 +1744,8 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PrimeLasermechB => "Prime_Lasermech_B",
         WId::PrimeLasermechAB => "Prime_Lasermech_AB",
         WId::PrimeShieldBash => "Prime_ShieldBash",
+        WId::PrimeShieldBashB => "Prime_ShieldBash_B",
+        WId::PrimeShieldBashAB => "Prime_ShieldBash_AB",
         WId::PrimeShift => "Prime_Shift",
         WId::PrimeFlamethrower => "Prime_Flamethrower",
         WId::PrimeFlamethrowerA => "Prime_Flamethrower_A",
@@ -1732,6 +1773,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteJetmechB => "Brute_Jetmech_B",
         WId::BruteJetmechAB => "Brute_Jetmech_AB",
         WId::BruteMirrorshot => "Brute_Mirrorshot",
+        WId::BruteMirrorshotA => "Brute_Mirrorshot_A",
+        WId::BruteMirrorshotB => "Brute_Mirrorshot_B",
+        WId::BruteMirrorshotAB => "Brute_Mirrorshot_AB",
         WId::BruteBeetle => "Brute_Beetle",
         WId::BruteGrapple => "Brute_Grapple",
         WId::BruteUnstable => "Brute_Unstable",
@@ -1856,6 +1900,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::PlasmodiaAtk2 => "PlasmodiaAtk2",
         WId::FireflyAtkB => "FireflyAtkB",
         WId::ScorpionAtkB => "ScorpionAtkB",
+        WId::TotemAtk1 => "TotemAtk1",
+        WId::TotemAtk2 => "TotemAtk2",
+        WId::TotemAtkB => "TotemAtkB",
         WId::BeetleAtkB => "BeetleAtkB",
         WId::Repair => "_REPAIR",
         WId::SupportRepair => "Support_Repair",
@@ -1936,6 +1983,9 @@ pub fn enemy_weapon_for_type(type_name: &str) -> WId {
         "TumblebugBoss" => WId::TumblebugAtk2,
         "Plasmodia1" => WId::PlasmodiaAtk1,
         "Plasmodia2" => WId::PlasmodiaAtk2,
+        "Totem1" => WId::TotemAtk1,
+        "Totem2" => WId::TotemAtk2,
+        "TotemB" => WId::TotemAtkB,
         // Pinnacle bots
         "Snowtank1" => WId::SnowtankAtk1,
         "Snowtank2" => WId::SnowtankAtk2,
@@ -2002,7 +2052,7 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimePunchmech | WId::PrimePunchmechA | WId::PrimePunchmechB | WId::PrimePunchmechAB => "Titan Fist",
         WId::PrimeLightning | WId::PrimeLightningA | WId::PrimeLightningB | WId::PrimeLightningAB => "Chain Whip",
         WId::PrimeLasermech | WId::PrimeLasermechA | WId::PrimeLasermechB | WId::PrimeLasermechAB => "Burst Beam",
-        WId::PrimeShieldBash => "Shield Bash",
+        WId::PrimeShieldBash | WId::PrimeShieldBashB | WId::PrimeShieldBashAB => "Shield Bash",
         WId::PrimeShift => "Vice Fist",
         WId::PrimeFlamethrower | WId::PrimeFlamethrowerA
             | WId::PrimeFlamethrowerB | WId::PrimeFlamethrowerAB => "Flamethrower",
@@ -2019,7 +2069,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PrimeSmash => "Ground Smash",
         WId::BruteTankmech => "Taurus Cannon",
         WId::BruteJetmech | WId::BruteJetmechA | WId::BruteJetmechB | WId::BruteJetmechAB => "Aerial Bombs",
-        WId::BruteMirrorshot => "Mirror Shot",
+        WId::BruteMirrorshot | WId::BruteMirrorshotA
+            | WId::BruteMirrorshotB | WId::BruteMirrorshotAB => "Mirror Shot",
         WId::BruteBeetle => "Ramming Engines",
         WId::BruteGrapple => "Grappling Hook",
         WId::BruteUnstable | WId::BruteUnstableA
@@ -2129,6 +2180,9 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::PlasmodiaAtk2 => "Alpha Plasmodia Spore",
         WId::FireflyAtkB => "Firefly Boss Shot",
         WId::ScorpionAtkB => "Massive Spinneret",
+        WId::TotemAtk1 => "Scarred Secretion",
+        WId::TotemAtk2 => "Hemorrhaged Secretion",
+        WId::TotemAtkB => "Extravasating Secretion",
         WId::BouncerAtkB => "Sweeping Horns",
         WId::ArmoredTrainMove => "Armored Charge",
         WId::VipTruckMove => "Floor It!",
@@ -2248,7 +2302,7 @@ mod tests {
 
         let tri = weapon_def(WId::RangedCrack);
         assert_eq!(tri.weapon_type, WeaponType::Artillery);
-        assert_eq!(tri.range_min, 1);
+        assert_eq!(tri.range_min, 2);
         assert_eq!(tri.push, PushDir::Forward);
         assert!(is_tri_rocket(WId::RangedCrackAB));
         assert!(weapon_def(WId::RangedCrackB).building_immune());
@@ -2365,6 +2419,46 @@ mod tests {
         assert_eq!(wid_from_str("Brute_Jetmech_AB"), WId::BruteJetmechAB);
         assert_eq!(wid_to_str(WId::BruteJetmechB), "Brute_Jetmech_B");
         assert_eq!(weapon_name(WId::BruteJetmechAB), "Aerial Bombs");
+    }
+
+    #[test]
+    fn test_janus_cannon_damage_upgrades() {
+        let a = weapon_def(WId::BruteMirrorshotA);
+        assert_eq!(a.weapon_type, WeaponType::Projectile);
+        assert_eq!(a.damage, 2);
+        assert_eq!(a.push, PushDir::Forward);
+        assert!(a.aoe_behind());
+
+        let b = weapon_def(WId::BruteMirrorshotB);
+        assert_eq!(b.damage, 2);
+        assert!(b.aoe_behind());
+
+        let both = weapon_def(WId::BruteMirrorshotAB);
+        assert_eq!(both.damage, 3);
+        assert!(both.aoe_behind());
+
+        assert_eq!(wid_from_str("Brute_Mirrorshot_A"), WId::BruteMirrorshotA);
+        assert_eq!(wid_from_str("Brute_Mirrorshot_B"), WId::BruteMirrorshotB);
+        assert_eq!(wid_from_str("Brute_Mirrorshot_AB"), WId::BruteMirrorshotAB);
+        assert_eq!(wid_to_str(WId::BruteMirrorshotA), "Brute_Mirrorshot_A");
+        assert_eq!(weapon_name(WId::BruteMirrorshotAB), "Mirror Shot");
+    }
+
+    #[test]
+    fn test_spartan_shield_damage_upgrades() {
+        let damage = weapon_def(WId::PrimeShieldBashB);
+        assert_eq!(damage.weapon_type, WeaponType::Melee);
+        assert_eq!(damage.damage, 3);
+        assert_eq!(damage.push, PushDir::Flip);
+
+        let both = weapon_def(WId::PrimeShieldBashAB);
+        assert_eq!(both.damage, 3);
+        assert_eq!(both.push, PushDir::Flip);
+
+        assert_eq!(wid_from_str("Prime_ShieldBash_B"), WId::PrimeShieldBashB);
+        assert_eq!(wid_from_str("Prime_ShieldBash_AB"), WId::PrimeShieldBashAB);
+        assert_eq!(wid_to_str(WId::PrimeShieldBashAB), "Prime_ShieldBash_AB");
+        assert_eq!(weapon_name(WId::PrimeShieldBashB), "Shield Bash");
     }
 
     #[test]
@@ -2570,6 +2664,9 @@ mod tests {
         assert_eq!(wid_from_str("Deploy_TankShot2"), WId::DeployTankShot2);
         assert_eq!(wid_from_str("Trapped_Explode"), WId::TrappedExplode);
         assert_eq!(wid_from_str("BouncerAtkB"), WId::BouncerAtkB);
+        assert_eq!(wid_from_str("TotemAtk1"), WId::TotemAtk1);
+        assert_eq!(wid_from_str("TotemAtk2"), WId::TotemAtk2);
+        assert_eq!(wid_from_str("TotemAtkB"), WId::TotemAtkB);
         assert_eq!(wid_from_str("Armored_Train_Move"), WId::ArmoredTrainMove);
         assert_eq!(wid_from_str("ScarabAtkB"), WId::ScarabAtkB);
         assert_eq!(wid_from_str("unknown_weapon"), WId::None);
@@ -2610,6 +2707,9 @@ mod tests {
             ("Missiles_Shield", WId::MissilesShield),
             ("Missiles_OneDmg", WId::MissilesOneDmg),
             ("BouncerAtkB", WId::BouncerAtkB),
+            ("TotemAtk1", WId::TotemAtk1),
+            ("TotemAtk2", WId::TotemAtk2),
+            ("TotemAtkB", WId::TotemAtkB),
             ("Armored_Train_Move", WId::ArmoredTrainMove),
             ("VIP_Truck_Move", WId::VipTruckMove),
             ("ScarabAtkB", WId::ScarabAtkB),

@@ -169,6 +169,18 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="gain shield when bashing",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Prime_ShieldBash_B": WeaponDef(
+        name="Spartan Shield", weapon_type="melee",
+        damage=3, push="flip",
+        upgrade_a="gain shield when bashing",
+        upgrade_b="+1 damage (total 3)",
+    ),
+    "Prime_ShieldBash_AB": WeaponDef(
+        name="Spartan Shield", weapon_type="melee",
+        damage=3, push="flip",
+        upgrade_a="gain shield when bashing",
+        upgrade_b="+1 damage (total 3)",
+    ),
     "Prime_Shift": WeaponDef(
         name="Vice Fist", weapon_type="melee",
         damage=1, push="throw", targets_allies=True,
@@ -320,6 +332,24 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
     "Brute_Mirrorshot": WeaponDef(
         name="Mirror Shot", weapon_type="projectile",
         damage=1, push="forward", range_max=0, aoe_behind=True,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Brute_Mirrorshot_A": WeaponDef(
+        name="Mirror Shot", weapon_type="projectile",
+        damage=2, push="forward", range_max=0, aoe_behind=True,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Brute_Mirrorshot_B": WeaponDef(
+        name="Mirror Shot", weapon_type="projectile",
+        damage=2, push="forward", range_max=0, aoe_behind=True,
+        upgrade_a="+1 damage (total 2)",
+        upgrade_b="+1 damage (total 2)",
+    ),
+    "Brute_Mirrorshot_AB": WeaponDef(
+        name="Mirror Shot", weapon_type="projectile",
+        damage=3, push="forward", range_max=0, aoe_behind=True,
         upgrade_a="+1 damage (total 2)",
         upgrade_b="+1 damage (total 2)",
     ),

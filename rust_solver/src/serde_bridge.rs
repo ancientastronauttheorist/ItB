@@ -299,6 +299,7 @@ pub struct JsonUnit {
     pub base_move: Option<u8>,
     pub weapons: Option<Vec<String>>,
     pub queued_target: Option<Vec<i8>>,
+    pub queued_origin: Option<Vec<i8>>,
     pub weapon_damage: Option<u16>,
     pub weapon_target_behind: Option<bool>,
     pub weapon_push: Option<u8>,
@@ -350,6 +351,70 @@ fn known_minor_type(type_name: &str) -> bool {
             | "BombRock"
             | "BonusDebris"
     )
+}
+
+fn is_totem_attack(wid: WeaponId) -> bool {
+    wid == WeaponId(WId::TotemAtk1 as u16)
+        || wid == WeaponId(WId::TotemAtk2 as u16)
+        || wid == WeaponId(WId::TotemAtkB as u16)
+}
+
+fn fixed_projectile_end(board: &Board, ox: u8, oy: u8, qtx: i8, qty: i8) -> Option<(u8, u8)> {
+    if qtx < 0 || qty < 0 {
+        return None;
+    }
+    let dx = (qtx - ox as i8).signum();
+    let dy = (qty - oy as i8).signum();
+    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) {
+        return None;
+    }
+
+    let mut last_valid = None;
+    for step in 1..8i8 {
+        let nx = ox as i8 + dx * step;
+        let ny = oy as i8 + dy * step;
+        if !in_bounds(nx, ny) {
+            break;
+        }
+        let nxu = nx as u8;
+        let nyu = ny as u8;
+        let tile = board.tile(nxu, nyu);
+        if tile.terrain == Terrain::Mountain {
+            return Some((nxu, nyu));
+        }
+        if tile.terrain == Terrain::Building && tile.building_hp > 0 {
+            return Some((nxu, nyu));
+        }
+        if board.unit_at(nxu, nyu).is_some() {
+            return Some((nxu, nyu));
+        }
+        last_valid = Some((nxu, nyu));
+    }
+    last_valid
+}
+
+fn rewrite_totem_fixed_projectile_targets(board: &mut Board) {
+    for idx in 0..board.unit_count as usize {
+        let unit = board.units[idx];
+        if !is_totem_attack(unit.weapon) || unit.queued_target_x < 0 || unit.queued_target_y < 0 {
+            continue;
+        }
+        let (ox, oy) = if unit.queued_origin_x >= 0 && unit.queued_origin_y >= 0 {
+            (unit.queued_origin_x as u8, unit.queued_origin_y as u8)
+        } else {
+            (unit.x, unit.y)
+        };
+        if let Some((tx, ty)) = fixed_projectile_end(
+            board,
+            ox,
+            oy,
+            unit.queued_target_x,
+            unit.queued_target_y,
+        ) {
+            board.units[idx].queued_target_x = tx as i8;
+            board.units[idx].queued_target_y = ty as i8;
+        }
+    }
 }
 
 fn engine_dir_to_solver_dir(dir: i8) -> Option<i8> {
@@ -688,6 +753,13 @@ pub fn board_from_json(json_str: &str)
             } else {
                 (-1, -1)
             };
+            let (qox, qoy) = if let Some(qo) = &ju.queued_origin {
+                if qo.len() >= 2 { (qo[0], qo[1]) } else { (-1, -1) }
+            } else if qtx >= 0 && qty >= 0 {
+                (ju.x as i8, ju.y as i8)
+            } else {
+                (-1, -1)
+            };
             if qtx >= 0 && qty >= 0 {
                 flags |= UnitFlags::QUEUED_ORIGIN_SET;
             }
@@ -709,8 +781,8 @@ pub fn board_from_json(json_str: &str)
                 weapon2,
                 queued_target_x: qtx,
                 queued_target_y: qty,
-                queued_origin_x: if qtx >= 0 && qty >= 0 { ju.x as i8 } else { -1 },
-                queued_origin_y: if qtx >= 0 && qty >= 0 { ju.y as i8 } else { -1 },
+                queued_origin_x: if qtx >= 0 && qty >= 0 { qox } else { -1 },
+                queued_origin_y: if qtx >= 0 && qty >= 0 { qoy } else { -1 },
                 weapon_damage: ju.weapon_damage.unwrap_or(0).min(u8::MAX as u16) as u8,
                 weapon_push: ju.weapon_push.unwrap_or(0),
                 weapon_target_behind: ju.weapon_target_behind.unwrap_or(false),
@@ -727,6 +799,8 @@ pub fn board_from_json(json_str: &str)
             board.add_unit(unit);
         }
     }
+
+    rewrite_totem_fixed_projectile_targets(&mut board);
 
     // Fill missing/stale web ownership from alive queued web attacks. Older
     // bridge fallback code cleared Mosquito Leader grapples because
@@ -1171,6 +1245,41 @@ mod tests {
 
         assert!(board.units[0].minor(), "Totem2 old recordings should infer Minor=true");
         assert!(!board.units[1].minor(), "ordinary Leaper1 is not a Minor Vek");
+    }
+
+    #[test]
+    fn test_totem_queued_target_rewritten_to_fixed_projectile_endpoint() {
+        let input = r#"{
+            "tiles": [
+                {"x": 2, "y": 1, "terrain": "building", "building_hp": 1}
+            ],
+            "units": [
+                {
+                    "uid": 711,
+                    "type": "Totem1",
+                    "x": 4,
+                    "y": 1,
+                    "hp": 1,
+                    "max_hp": 1,
+                    "team": 6,
+                    "ranged": 1,
+                    "weapons": ["TotemAtk1"],
+                    "has_queued_attack": true,
+                    "queued_origin": [4, 1],
+                    "queued_target": [3, 1],
+                    "weapon_damage": 1
+                }
+            ],
+            "grid_power": 2,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, _spawns, _danger, _weights, _disabled, _overrides) =
+            board_from_json(input).expect("bridge json parses");
+
+        assert_eq!(board.units[0].weapon, WeaponId(WId::TotemAtk1 as u16));
+        assert_eq!((board.units[0].queued_origin_x, board.units[0].queued_origin_y), (4, 1));
+        assert_eq!((board.units[0].queued_target_x, board.units[0].queued_target_y), (2, 1));
     }
 
     #[test]

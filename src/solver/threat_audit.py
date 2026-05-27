@@ -14,6 +14,15 @@ from src.model.pawn_stats import get_pawn_stats
 from src.model.weapons import get_weapon_def
 
 
+DIRS: tuple[tuple[int, int], ...] = ((0, 1), (1, 0), (0, -1), (-1, 0))
+ENGINE_DIR_TO_SOLVER_DIR = {
+    0: 2,
+    1: 1,
+    2: 0,
+    3: 3,
+}
+
+
 def _visual(x: int, y: int) -> str:
     return f"{chr(72 - y)}{8 - x}"
 
@@ -184,6 +193,91 @@ def _will_die_to_lethal_environment_before_attack(board: Board, attacker: Unit) 
 
 def _sign(n: int) -> int:
     return 1 if n > 0 else -1 if n < 0 else 0
+
+
+def _active_conveyor_mission(board: Board) -> bool:
+    return getattr(board, "mission_id", "") in {"Mission_Belt", "Mission_BeltRandom"}
+
+
+def _conveyor_delta(board: Board, unit: Unit) -> tuple[int, int] | None:
+    if not _active_conveyor_mission(board):
+        return None
+    if not board.in_bounds(int(unit.x), int(unit.y)):
+        return None
+    raw_dir = int(getattr(board.tile(int(unit.x), int(unit.y)), "conveyor", -1))
+    solver_dir = ENGINE_DIR_TO_SOLVER_DIR.get(raw_dir)
+    if solver_dir is None:
+        return None
+    return DIRS[solver_dir]
+
+
+def _unit_can_conveyor_move_to(board: Board, unit: Unit, x: int, y: int) -> bool:
+    if not board.in_bounds(x, y):
+        return False
+    if board.unit_at(x, y) is not None or board.wreck_at(x, y):
+        return False
+    return board.tile(x, y).terrain not in {"mountain", "building"}
+
+
+def _first_projectile_building_on_line(
+    board: Board,
+    x: int,
+    y: int,
+    dx: int,
+    dy: int,
+) -> tuple[int, int] | None:
+    x += dx
+    y += dy
+    while board.in_bounds(x, y):
+        if board.unit_at(x, y) is not None or board.wreck_at(x, y):
+            return None
+        tile = board.tile(x, y)
+        if tile.terrain == "building" and tile.building_hp > 0:
+            return x, y
+        if tile.terrain == "mountain":
+            return None
+        x += dx
+        y += dy
+    return None
+
+
+def _projected_attack_building_after_conveyor(
+    threat: dict[str, Any],
+    board: Board,
+    attacker: Unit,
+) -> tuple[bool, tuple[int, int] | None, tuple[int, int] | None]:
+    conveyor_delta = _conveyor_delta(board, attacker)
+    if conveyor_delta is None:
+        return False, None, None
+
+    nx = int(attacker.x) + conveyor_delta[0]
+    ny = int(attacker.y) + conveyor_delta[1]
+    if not _unit_can_conveyor_move_to(board, attacker, nx, ny):
+        return False, None, None
+
+    attacker_info = threat.get("attacker") or {}
+    old_pos = attacker_info.get("pos") or [-1, -1]
+    old_target = attacker_info.get("target") or [-1, -1]
+    dx = _sign(int(old_target[0]) - int(old_pos[0]))
+    dy = _sign(int(old_target[1]) - int(old_pos[1]))
+    if (dx != 0) == (dy != 0):
+        return False, (nx, ny), None
+
+    wdef = get_weapon_def(attacker.weapon)
+    if wdef is None:
+        return False, (nx, ny), None
+
+    projected_building: tuple[int, int] | None = None
+    if wdef.weapon_type == "projectile":
+        projected_building = _first_projectile_building_on_line(board, nx, ny, dx, dy)
+    elif wdef.weapon_type == "melee":
+        tx, ty = nx + dx, ny + dy
+        if _live_building(board, tx, ty):
+            projected_building = (tx, ty)
+    else:
+        return False, (nx, ny), None
+
+    return True, (nx, ny), projected_building
 
 
 def _ordered_prior_enemies(board: Board, attacker: Unit) -> list[Unit]:
@@ -420,6 +514,31 @@ def _coverage_reason(threat: dict[str, Any], board: Board) -> tuple[str, str]:
     moved_by_prior, moved_detail = _will_be_moved_by_prior_attack_before_attack(board, attacker)
     if moved_by_prior:
         return "attacker_will_be_moved_by_prior_attack", moved_detail
+
+    conveyor_projected, conveyor_pos, conveyor_building = (
+        _projected_attack_building_after_conveyor(threat, board, attacker)
+    )
+    if conveyor_projected:
+        assert conveyor_pos is not None
+        if conveyor_building is None:
+            return (
+                "attacker_will_be_moved_by_conveyor",
+                "conveyor moves attacker to "
+                f"{_visual(conveyor_pos[0], conveyor_pos[1])} before attacks",
+            )
+        if _frozen_building(board, conveyor_building[0], conveyor_building[1]):
+            return (
+                "target_frozen_building_after_conveyor",
+                "conveyor moves attacker to "
+                f"{_visual(conveyor_pos[0], conveyor_pos[1])}, but target "
+                f"{_visual(conveyor_building[0], conveyor_building[1])} is frozen",
+            )
+        return (
+            "still_threatened_after_conveyor",
+            "conveyor moves attacker to "
+            f"{_visual(conveyor_pos[0], conveyor_pos[1])}, still hitting "
+            f"{_visual(conveyor_building[0], conveyor_building[1])}",
+        )
 
     old_pos = attacker_info.get("pos") or [-1, -1]
     moved = [int(attacker.x), int(attacker.y)] != [int(old_pos[0]), int(old_pos[1])]
