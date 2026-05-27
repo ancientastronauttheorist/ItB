@@ -6,9 +6,9 @@
     "coins_per_achievement": 1,
     "coins_used_for": "Unlocking new squads",
     "notes": "All achievements except 'Hard Victory' can be earned on Easy difficulty.",
-    "last_steam_sync": "2026-05-27T13:56:47.310597",
+    "last_steam_sync": "2026-05-27T16:37:57.949597",
     "last_steam_total": 70,
-    "last_steam_unlocked": 46
+    "last_steam_unlocked": 47
   },
   "achievements": {
     "rift_walkers": [
@@ -293,10 +293,10 @@
         "description": "Raise Grid Defense to 30% or more with a Random squad",
         "type": "single_run",
         "global_unlock_pct": 10.4,
-        "completed": false,
-        "strategy": "Prioritize reputation for grid defense at shop (not grid power). Perfect Islands yield extra defense. Pilot +3 Grid Defense perks stack. Need ~30% total.",
-        "setup": "Random squad. Focus all resources on grid defense. Corporate islands with good reputation.",
-        "pitfalls": "Grid defense is percentage chance, not guaranteed. Takes many investments to reach 30%."
+        "completed": true,
+        "strategy": "Fill the grid, then buy or earn extra Grid Power while full. Starting from 15% Grid Defense on Easy/Normal/Hard, the first five overpowers add +2% each and later overpowers add +1%, so 10 total overpowered Grid Power reaches 30% without pilot bonuses.",
+        "setup": "Random squad, preferably Easy Balanced Roll. Save reputation, buy Grid Power to full before other shop items, then sell spare weapons/pilots if needed and buy Overpower Grid until the visible defense reaches 30%.",
+        "pitfalls": "Unfair starts Grid Defense at 0% and is much harder. Grid Defense is the percentage chance, not Grid Power. Do not leave the shop before the visible Grid Defense reaches 30% or the achievement pops."
       }
     ],
     "custom_squad": [

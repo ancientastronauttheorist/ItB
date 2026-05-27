@@ -2,9 +2,9 @@
 
 ## Achievement Checklist
 
-46 of 70 Steam-cache confirmed. **Mech Specialist** and **Flight Specialist** unlocked together in Custom Squad Easy run `20260526_204256_831` with 3x Ice Mech. 24 remaining; sorted by global unlock % (easiest first).
+47 of 70 Steam-cache confirmed. **Change the Odds** unlocked in Random Squad Easy run `20260527_152006_916` after the Archive HQ shop reached 30% Grid Defense. 23 remaining; sorted by global unlock % (easiest first).
 
-Current milestone: Custom Squad run `20260526_204256_831` closed **Mech Specialist** and **Flight Specialist** after a two-island 3x Ice Mech final victory. The route accepted optional bonus misses, used repeated Cryo freezes to preserve the Renfield Bomb, and recovered through a Computer Use outage with bridge actions plus calibrated End Turn clicks.
+Current milestone: Random Squad run `20260527_152006_916` closed **Change the Odds** by saving reputation, filling Grid Power, and buying/selling through enough overpowered grid purchases to raise Grid Defense from 15% to 30%. The run accepted reviewed non-desync losses, but stopped for two concrete desync fixes before resuming.
 
 ### Tier 1: Green Zone (>40% — should happen naturally with competent play)
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island with Rift Walkers
@@ -48,7 +48,7 @@ Current milestone: Custom Squad run `20260526_204256_831` closed **Mech Speciali
 - [x] Distant Friends (11.3%) — Encounter a familiar face (FTL pilot in time pod) — completed in Frozen Titans run `20260525_203546_657`
 - [x] Mech Specialist (11.1%) — Beat game with 3 of same Mech in Custom squad — completed with 3x Ice Mech in run `20260526_204256_831`
 - [ ] Lightning War (10.5%) — First 2 islands in under 30 min [Blitzkrieg]
-- [ ] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad]
+- [x] Change the Odds (10.4%) — Grid Defense to 30%+ [Random squad] — completed in run `20260527_152006_916` after Archive HQ shop overpowers reached 30%
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle [Steel Judoka]
 
 ### Tier 4: Red Zone (<10% — hardest achievements, endgame goals)
@@ -79,7 +79,7 @@ Current milestone: Custom Squad run `20260526_204256_831` closed **Mech Speciali
 - [ ] Maximum Firepower (4.5%) — 8 damage with single Quick-Fire Rockets [Heat Sinkers]
 - [ ] Miner Inconvenience (4.0%) — Destroy 20 mountains in one game [Cataclysm]
 
-### Already Completed (46, from Steam sync)
+### Already Completed (47, from Steam sync)
 - [x] Watery Grave (68.1%) — Drown 3 enemies in water in a single battle  [Rift Walkers]
 - [x] Island Secure (75.1%) — Complete 1st Corporate Island  [Rift Walkers]
 - [x] Field Promotion (73.2%) — Have a Pilot reach maximum level
@@ -120,6 +120,7 @@ Current milestone: Custom Squad run `20260526_204256_831` closed **Mech Speciali
 - [x] Overkill (12.6%) — 8 damage to a unit with single attack  [Hazardous Mechs]
 - [x] Distant Friends (11.3%) — Encounter a familiar face  [Frozen Titans]
 - [x] Mech Specialist (11.1%) — Beat game with 3 of the same Mech  [Custom Squad]
+- [x] Change the Odds (10.4%) — Grid Defense to 30%+  [Random Squad]
 - [x] Unbreakable (10.2%) — Mech Armor absorbs 5 damage in one battle  [Steel Judoka]
 - [x] Trusted Equipment (9.7%) — 3 islands without equipping new Pilots/weapons
 - [x] Hard Victory (9.0%) — Beat game on Hard  [Rusting Hulks]

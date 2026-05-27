@@ -373,10 +373,10 @@ evaluation weights when targeting that achievement.
 ### Change the Odds (10.4%)
 - **Requirement:** Raise Grid Defense to 30% or more with a Random squad.
 - **Squad:** Random (required)
-- **Strategy:** Grid Defense starts at 15% and increases by spending reputation on Grid Defense upgrades in shops. Each upgrade adds 5% or so. Need to accumulate enough upgrades across an island to reach 30%.
-- **Bot approach:** Run-level planner should always buy Grid Defense upgrades in shops when using Random squad. Track Grid Defense percentage and prioritize reaching 30%.
-- **Ideal setup:** Normal difficulty, 3-4 island run with Random squad to have enough shop visits.
-- **Estimated difficulty for bot:** Medium
+- **Strategy:** On Easy/Normal/Hard, Grid Defense starts at 15%. Keep the grid full, then earn or buy extra Grid Power while full. The first five overpowered grid buys add +2% each (15 -> 25), then later buys add +1% each, so a no-bonus pilot setup needs 10 total overpowered Grid Power to reach 30%. Unfair starts at 0%, so avoid it unless pilot perks already provide Grid Defense.
+- **Bot approach:** In Random Squad runs, buy Grid Power to full before weapons/cores, then spend saved reputation on Overpower Grid in the post-island store. Selling spare weapons or pilots is acceptable once the achievement is the target; buy after each sale until the visible Grid Defense reaches 30%.
+- **Ideal setup:** Easy, Advanced Edition ON, Balanced Roll with a competent combat kit. One high-reputation island can be enough if the grid is full and extra rewards/store sales fund the overpowers.
+- **Estimated difficulty for bot:** Complete; retain as a shop-routing and Random Squad setup regression guard.
 
 ### Unbreakable (10.2%)
 - **Requirement:** Have Mech Armor absorb 5 damage in a single battle with the Steel Judoka squad.

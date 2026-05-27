@@ -405,3 +405,4 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 392 | 693 | Mech Specialist tolerates failed leader bonuses. | `docs/agent/achievement-playbook.md` |
 | 393 | 695 | Triple Ice can close Mech Specialist and Flight Specialist together. | `docs/agent/achievement-playbook.md` |
 | 394 | 697 | Computer Use fallback End Turn clicks need refocus and fresh reads. | `docs/agent/live-runbook.md` |
+| 395 | 699 | Change the Odds is post-island shop math, not a victory requirement. | `docs/agent/achievement-playbook.md` |
