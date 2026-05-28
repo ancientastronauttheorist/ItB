@@ -51,6 +51,9 @@ from src.loop.commands import (
     cmd_deploy_recommended,
     cmd_recommend_squad,
     cmd_recommend_mission,
+    cmd_bridge_speed,
+    cmd_lightning_preflight,
+    cmd_lightning_loop,
     cmd_verify_setup_screen,
     cmd_research_attach_community,
     cmd_research_next,
@@ -429,6 +432,37 @@ def main():
              "grid_power} (or a bare island_map list). When the bridge "
              "isn't on the corp map screen, use this to score offline.",
     )
+    p_rec_mission.add_argument(
+        "--routing",
+        choices=["default", "lightning_war"],
+        default="default",
+        help="Mission routing profile. lightning_war favors fast Blitzkrieg "
+             "missions over reputation.",
+    )
+
+    # bridge_speed
+    p_bridge_speed = sub.add_parser(
+        "bridge_speed",
+        help="Set Lua bridge execution speed mode",
+    )
+    p_bridge_speed.add_argument(
+        "mode",
+        nargs="?",
+        choices=["fast", "visual"],
+        default="fast",
+    )
+
+    # lightning_preflight
+    p_lightning_preflight = sub.add_parser(
+        "lightning_preflight",
+        help="Check Lightning War speed-run blockers before starting",
+    )
+    p_lightning_preflight.add_argument("--profile", default="Alpha")
+    p_lightning_preflight.add_argument(
+        "--set-bridge-fast",
+        action="store_true",
+        help="Also request fast mode from the Lua bridge if it is active",
+    )
 
     # verify_setup
     p_verify_setup = sub.add_parser(
@@ -539,6 +573,26 @@ def main():
                                 help="Solver time limit per turn (default: 10s)")
     p_auto_mission.add_argument("--max-turns", type=int, default=20,
                                 help="Safety limit on turns (default: 20)")
+
+    # lightning_loop
+    p_lightning_loop = sub.add_parser(
+        "lightning_loop",
+        help="Lightning War combat loop: auto_turn + local End Turn clicks",
+    )
+    p_lightning_loop.add_argument("--profile", default="Alpha")
+    p_lightning_loop.add_argument("--time-limit", type=float, default=2.0,
+                                  help="Solver time limit per turn (default: 2s)")
+    p_lightning_loop.add_argument("--max-turns", type=int, default=6,
+                                  help="Safety limit on chained turns (default: 6)")
+    p_lightning_loop.add_argument("--max-wait", type=float, default=45.0,
+                                  help="Enemy/player transition wait (default: 45s)")
+    p_lightning_loop.add_argument("--no-click", action="store_true",
+                                  help="Stop after the first End Turn plan instead "
+                                       "of clicking locally")
+    p_lightning_loop.add_argument("--no-bridge-fast", action="store_true",
+                                  help="Do not request bridge fast mode at start")
+    p_lightning_loop.add_argument("--allow-hold-the-line", action="store_true",
+                                  help="Bypass the Hold the Line target guard")
 
     # analyze
     p_analyze = sub.add_parser("analyze",
@@ -652,6 +706,14 @@ def main():
         cmd_recommend_mission(
             profile=args.profile,
             island_map_json=args.island_map_json,
+            routing=args.routing,
+        )
+    elif args.command == "bridge_speed":
+        cmd_bridge_speed(args.mode)
+    elif args.command == "lightning_preflight":
+        cmd_lightning_preflight(
+            profile=args.profile,
+            set_fast_bridge=args.set_bridge_fast,
         )
     elif args.command == "verify_setup":
         cmd_verify_setup_screen(
@@ -724,6 +786,16 @@ def main():
     elif args.command == "auto_mission":
         cmd_auto_mission(profile=args.profile, time_limit=args.time_limit,
                          max_turns=args.max_turns)
+    elif args.command == "lightning_loop":
+        cmd_lightning_loop(
+            profile=args.profile,
+            time_limit=args.time_limit,
+            max_turns=args.max_turns,
+            max_wait=args.max_wait,
+            click_end_turn=not args.no_click,
+            set_fast_bridge=not args.no_bridge_fast,
+            allow_hold_the_line=args.allow_hold_the_line,
+        )
     elif args.command == "analyze":
         cmd_analyze(min_samples=args.min_samples)
     elif args.command == "validate":

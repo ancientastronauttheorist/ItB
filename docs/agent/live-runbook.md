@@ -66,6 +66,9 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 
 **Full-mission automation:**
 - `auto_mission [--max-turns N]` — Full mission: auto-deploy → combat loop → mission end. Final turn is force-flushed to failure_db on exit. Falls back to the agent for reward/shop/map screens.
+- `lightning_loop [--time-limit 2] [--max-turns N]` — Lightning War hot path: repeatedly runs `auto_turn`, uses the calibrated local End Turn click, and immediately lets the next `auto_turn` wait through enemy animations. It refuses unresolved research queues, persistent post-enemy blocks, Hold the Line targeting, and all normal safety/investigation gates. Use from a clean unpaused player-turn state; pause only for route decisions, rewards/shops, dirty review, research, or unexpected visuals.
+- `lightning_preflight [--set-bridge-fast]` — Read-only speed-run blocker check except for the optional bridge fast-mode request. Checks Blitzkrieg/Easy targeting, pending research/diagnosis, persistent post-enemy blocks, timer setting, and settings speed.
+- `bridge_speed [fast|visual]` — Requests the Lua bridge animation/execution mode. For timed attempts, prefer `fast`.
 
 **Analysis & tuning:**
 - `replay <run_id> <turn> [--time-limit N]` — Reconstruct Board from a recorded JSON and re-run the solver. Compares new solution with original.
@@ -75,10 +78,11 @@ All commands are `game_loop.py <name> [args]`. Each is stateless: read state, co
 
 **Run management:**
 - `new_run [squad|auto] [--achieve X Y] [--difficulty N] [--mode achievement_hunt|solver_eval|random_squad|custom] [--tags audit ...]` — Initialize new session. Omit the squad or pass `auto` to let `recommend_squad` choose the achievement-aware setup. Use `--tags audit` / `--mode solver_eval` for environment-audit playthroughs (those failures stay out of the tuner corpus).
-- `recommend_mission` has no achievement-target flag; do not invent `--target` / `--tags` arguments mid-run. If a mission-pick command shape is uncertain, inspect the parser/help in a standalone command first, then call only supported flags. Regression anchor: Rusting Hulks There Is No Try run `20260519_133059_179`, Archive island 2 selection, where `recommend_mission --target there_is_no_try` failed during map triage.
+- `recommend_mission` has no achievement-target flag; do not invent `--target` / `--tags` arguments mid-run. It does support `--routing lightning_war` for Blitzkrieg speed routing. If a mission-pick command shape is uncertain, inspect the parser/help in a standalone command first, then call only supported flags. Regression anchor: Rusting Hulks There Is No Try run `20260519_133059_179`, Archive island 2 selection, where `recommend_mission --target there_is_no_try` failed during map triage.
 - On mission-preview screens, `Escape` opens the pause menu instead of safely closing the preview. To back out of a rejected preview, click clearly empty water / non-region map space and verify the preview closed before selecting another region. Regression anchor: Rusting Hulks There Is No Try run `20260519_133059_179`, Archive island 2 mission scouting, where `Escape` opened the menu over Storage Vaults.
 - `snapshot <label>` — Save current state for regression.
 - `log <message>` — Append reasoning to the decision log.
+- `island_select.py --lightning-war [--completed archive]` — Non-session helper for Lightning War island coordinates. It prints Archive first, then R.S.T. after Archive is listed as completed.
 - When a `game_loop.py log` message contains shell metacharacters such as `;`,
   `&`, `|`, `(`, `)`, `<`, `>`, or quotes, wrap the whole message in single
   quotes (escaping internal single quotes) or avoid those characters. Do not

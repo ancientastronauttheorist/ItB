@@ -155,6 +155,26 @@ def _mite_counter_mission() -> dict:
     }
 
 
+def _sandstorm_mission() -> dict:
+    """R.S.T. Sandstorm mission: fast 4-turn environment."""
+    return {
+        "region_id": 14,
+        "mission_id": "Mission_Sandstorm",
+        "bonus_objective_ids": [],
+        "environment": "Env_Sandstorm",
+    }
+
+
+def _satellite_mission() -> dict:
+    """Archive Satellite Launches: slow for Lightning War attempts."""
+    return {
+        "region_id": 15,
+        "mission_id": "Mission_Satellite",
+        "bonus_objective_ids": [BONUS_ASSET],
+        "environment": "Env_Null",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Squad tag derivation
 # ---------------------------------------------------------------------------
@@ -203,6 +223,32 @@ def test_train_no_defender_loses_to_safe_battle():
     # Sanity check the rationale surfaces the actual penalty.
     train_rationale = " ".join(ranked[1]["rationale_lines"])
     assert "no train_defender" in train_rationale
+
+
+def test_lightning_war_routing_prefers_fast_train_even_without_defender():
+    """Lightning War values short missions over normal reputation routing."""
+    island = [_safe_battle_mission(), _train_high_threat()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_war",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Train"
+    assert "Lightning War" in " ".join(ranked[0]["rationale_lines"])
+
+
+def test_lightning_war_routing_penalizes_satellite_over_sandstorm():
+    island = [_satellite_mission(), _sandstorm_mission()]
+    ranked = score_island_map(
+        island,
+        LIGHTNING_GRAV_SQUAD,
+        grid_power=7,
+        routing="lightning_war",
+    )
+    assert ranked[0]["mission_id"] == "Mission_Sandstorm"
+    satellite = next(e for e in ranked if e["mission_id"] == "Mission_Satellite")
+    assert "slow/fragile objective" in " ".join(satellite["rationale_lines"])
 
 
 def test_train_with_defender_outranks_safe_battle():

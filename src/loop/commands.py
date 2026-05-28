@@ -6088,6 +6088,7 @@ def cmd_verify_setup_screen(
 def cmd_recommend_mission(
     profile: str = "Alpha",
     island_map_json: str | None = None,
+    routing: str = "default",
 ) -> dict:
     """Recommend a mission from the current island slate.
 
@@ -6160,13 +6161,19 @@ def cmd_recommend_mission(
         _print_result(result)
         return result
 
-    ranked = score_island_map(island_map, units, grid_power)
+    try:
+        ranked = score_island_map(island_map, units, grid_power, routing=routing)
+    except ValueError as e:
+        result = {"status": "ERROR", "error": str(e)}
+        _print_result(result)
+        return result
     top3 = ranked[:3]
 
     print(f"\n=== RECOMMEND_MISSION ===")
     print(f"Squad weapons:   "
           f"{[w for u in units if u.get('mech') for w in u.get('weapons', [])]}")
     print(f"Grid power:      {grid_power}")
+    print(f"Routing:         {routing}")
     print(f"Available:       {len(island_map)} mission(s)")
     print()
     for rank, m in enumerate(top3, start=1):
@@ -6180,8 +6187,333 @@ def cmd_recommend_mission(
     result = {
         "status": "OK",
         "grid_power": grid_power,
+        "routing": routing,
         "ranked": ranked,
         "top3": top3,
+    }
+    _print_result(result)
+    return result
+
+
+def _read_settings_lua(path: Path | None = None) -> dict:
+    """Read simple scalar keys from Into the Breach's settings.lua."""
+    settings_path = path or (SAVE_DIR / "settings.lua")
+    values: dict = {}
+    try:
+        text = settings_path.read_text()
+    except OSError:
+        return values
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line.startswith("[\"") or "\"]" not in line or "=" not in line:
+            continue
+        key = line.split("\"]", 1)[0][2:]
+        raw_value = line.split("=", 1)[1].strip().rstrip(",").strip()
+        if raw_value.startswith('"') and raw_value.endswith('"'):
+            values[key] = raw_value[1:-1]
+            continue
+        try:
+            values[key] = int(raw_value)
+        except ValueError:
+            values[key] = raw_value
+    return values
+
+
+def _pending_research_entries(session: RunSession) -> list[dict]:
+    return [
+        e for e in (session.research_queue or [])
+        if e.get("status") not in ("done",)
+    ]
+
+
+def _pending_diagnosis_entries(session: RunSession) -> list[dict]:
+    return [
+        e for e in (session.diagnosis_queue or [])
+        if e.get("status") not in ("done",)
+    ]
+
+
+def _target_names(session: RunSession) -> set[str]:
+    return {
+        str(t).strip().lower()
+        for t in (session.achievement_targets or [])
+        if str(t).strip()
+    }
+
+
+def cmd_bridge_speed(mode: str = "fast") -> dict:
+    """Set the Lua bridge animation/execution mode."""
+    if mode not in ("fast", "visual"):
+        result = {"status": "ERROR", "error": "mode must be fast or visual"}
+        _print_result(result)
+        return result
+    if not is_bridge_active():
+        result = {"status": "NO_BRIDGE", "mode": mode}
+        _print_result(result)
+        return result
+    try:
+        ack = set_bridge_speed(mode)
+    except (TimeoutError, BridgeError) as e:
+        result = {"status": "ERROR", "error": str(e), "mode": mode}
+        _print_result(result)
+        return result
+    result = {"status": "OK", "mode": mode, "ack": ack}
+    _print_result(result)
+    return result
+
+
+def cmd_lightning_preflight(
+    profile: str = "Alpha",
+    set_fast_bridge: bool = False,
+) -> dict:
+    """Check the known Lightning War speed blockers before a fresh attempt."""
+    session = _load_session()
+    settings = _read_settings_lua()
+    live_difficulty = _read_save_file_difficulty(profile)
+    targets = _target_names(session)
+    issues: list[str] = []
+    warnings: list[str] = []
+
+    if session.squad and session.squad.strip().lower() != "blitzkrieg":
+        issues.append(f"active session squad is {session.squad!r}, not Blitzkrieg")
+    if int(session.difficulty or 0) != 0:
+        issues.append(f"active session difficulty is {session.difficulty}, not Easy/0")
+    if live_difficulty is not None and live_difficulty != 0:
+        issues.append(f"save-file difficulty is {live_difficulty}, not Easy/0")
+    if targets and "lightning war" not in targets:
+        warnings.append(
+            "active achievement targets do not include Lightning War"
+        )
+    if "hold the line" in targets:
+        issues.append("Hold the Line target is active; do not use the speed loop")
+
+    pending_research = _pending_research_entries(session)
+    if pending_research:
+        issues.append(f"{len(pending_research)} unresolved research queue item(s)")
+    pending_diagnosis = _pending_diagnosis_entries(session)
+    if pending_diagnosis:
+        warnings.append(f"{len(pending_diagnosis)} pending diagnosis item(s)")
+
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        issues.append("persistent post-enemy block is active")
+
+    if settings.get("timer_ui") != 1:
+        warnings.append("settings.lua timer_ui is not enabled")
+    if settings and "speed" not in settings:
+        warnings.append("settings.lua has no speed key")
+    if not settings:
+        warnings.append("settings.lua could not be read")
+
+    bridge_speed = None
+    if set_fast_bridge:
+        bridge_speed = cmd_bridge_speed("fast")
+        if bridge_speed.get("status") not in ("OK", "NO_BRIDGE"):
+            warnings.append(f"bridge fast-mode request failed: {bridge_speed}")
+
+    status = "FAIL" if issues else "WARN" if warnings else "PASS"
+
+    print("\n=== LIGHTNING WAR PREFLIGHT ===")
+    print(f"Status:          {status}")
+    print(f"Squad:           {session.squad or '(unknown)'}")
+    print(f"Difficulty:      {session.difficulty}")
+    print(f"Save difficulty: {live_difficulty if live_difficulty is not None else '(unknown)'}")
+    print(f"Targets:         {session.achievement_targets}")
+    print(f"Timer UI:        {settings.get('timer_ui', '(unknown)')}")
+    print(f"Settings speed:  {settings.get('speed', '(unknown)')}")
+    if issues:
+        print("Issues:")
+        for issue in issues:
+            print(f"  - {issue}")
+    if warnings:
+        print("Warnings:")
+        for warning in warnings:
+            print(f"  - {warning}")
+
+    result = {
+        "status": status,
+        "issues": issues,
+        "warnings": warnings,
+        "session": {
+            "run_id": session.run_id,
+            "squad": session.squad,
+            "difficulty": session.difficulty,
+            "save_difficulty": live_difficulty,
+            "achievement_targets": session.achievement_targets,
+        },
+        "settings": {
+            "timer_ui": settings.get("timer_ui"),
+            "speed": settings.get("speed"),
+            "new_missions": settings.get("new_missions"),
+            "new_enemies": settings.get("new_enemies"),
+            "new_equip": settings.get("new_equip"),
+        },
+        "pending_research_count": len(pending_research),
+        "pending_diagnosis_count": len(pending_diagnosis),
+        "bridge_speed": bridge_speed,
+        "next_step": (
+            "Start/continue only after FAIL issues are cleared. During the "
+            "attempt, use recommend_mission --routing lightning_war and "
+            "lightning_loop from clean player-turn combat."
+        ),
+    }
+    _print_result(result)
+    return result
+
+
+def _click_end_turn_from_plan_result(
+    plan_result: dict,
+    *,
+    dry_run: bool = False,
+) -> dict:
+    batch = (
+        plan_result.get("batch")
+        or plan_result.get("pending_end_turn_batch")
+        or plan_result.get("held_end_turn_batch")
+        or []
+    )
+    click = next(
+        (
+            c for c in batch
+            if isinstance(c, dict)
+            and c.get("type") == "left_click"
+            and "x" in c
+            and "y" in c
+        ),
+        None,
+    )
+    if click is None:
+        return {
+            "status": "ERROR",
+            "error": "no left_click with screen coordinates in End Turn plan",
+        }
+    from src.control.mac_click import click_screen_point
+    return click_screen_point(
+        int(click["x"]),
+        int(click["y"]),
+        description=click.get("description", "Click End Turn"),
+        dry_run=dry_run,
+    )
+
+
+def cmd_lightning_loop(
+    profile: str = "Alpha",
+    time_limit: float = 2.0,
+    max_turns: int = 6,
+    max_wait: float = 45.0,
+    click_end_turn: bool = True,
+    set_fast_bridge: bool = True,
+    allow_hold_the_line: bool = False,
+) -> dict:
+    """Run clean combat turns for Lightning War and click End Turn locally."""
+    if not is_bridge_active():
+        result = {"status": "ERROR", "error": "Bridge not active"}
+        _print_result(result)
+        return result
+
+    session = _load_session()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
+
+    targets = _target_names(session)
+    if "hold the line" in targets and not allow_hold_the_line:
+        result = {
+            "status": "LIGHTNING_LOOP_BLOCKED",
+            "reason": "hold_the_line_active",
+            "next_step": (
+                "Hold the Line needs spawn-banking triage after each enemy "
+                "phase; use ordinary auto_turn instead."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    pending_research = _pending_research_entries(session)
+    if pending_research:
+        result = {
+            "status": "RESEARCH_REQUIRED",
+            "pending_research_count": len(pending_research),
+            "research_queue_peek": _research_peek(session),
+            "next_step": "Resolve pending research before a timed Lightning War loop.",
+        }
+        _print_result(result)
+        return result
+
+    bridge_speed = None
+    if set_fast_bridge:
+        bridge_speed = cmd_bridge_speed("fast")
+
+    print("\n=== LIGHTNING LOOP START ===")
+    print(f"time_limit={time_limit}s  max_wait={max_wait}s  max_turns={max_turns}")
+    print(f"auto_click_end_turn={click_end_turn}")
+
+    started_at = time.monotonic()
+    turn_records: list[dict] = []
+    end_turn_clicks = 0
+    stopped_reason = "max_turns_reached"
+    last_turn_result: dict | None = None
+
+    for loop_index in range(max_turns):
+        turn_result = cmd_auto_turn(
+            profile=profile,
+            time_limit=time_limit,
+            wait_for_turn=True,
+            max_wait=max_wait,
+        )
+        last_turn_result = turn_result
+        record = {
+            "loop_index": loop_index,
+            "status": turn_result.get("status"),
+            "error": turn_result.get("error"),
+            "turn": turn_result.get("turn"),
+            "actions_completed": turn_result.get("actions_completed"),
+            "score": turn_result.get("score"),
+        }
+        turn_records.append(record)
+
+        if turn_result.get("error"):
+            stopped_reason = "error"
+            break
+
+        status = turn_result.get("status")
+        if _is_hard_stop_status(status):
+            stopped_reason = str(status)
+            break
+
+        if status == "PLAN":
+            if not click_end_turn:
+                stopped_reason = "end_turn_plan_ready_no_click"
+                break
+            click_result = _click_end_turn_from_plan_result(turn_result)
+            record["end_turn_click"] = click_result
+            if click_result.get("status") != "OK":
+                stopped_reason = "end_turn_click_failed"
+                break
+            end_turn_clicks += 1
+            continue
+
+        if status == "ok":
+            continue
+
+        stopped_reason = f"unexpected_status:{status}"
+        break
+
+    result = {
+        "status": "LIGHTNING_LOOP_STOPPED",
+        "reason": stopped_reason,
+        "turns_attempted": len(turn_records),
+        "end_turn_clicks": end_turn_clicks,
+        "wall_seconds": round(time.monotonic() - started_at, 2),
+        "turns": turn_records,
+        "bridge_speed": bridge_speed,
+        "last_turn_result": last_turn_result,
+        "next_step": (
+            "If the reason is a safety/research/investigation gate, pause "
+            "and clear it before continuing. If this stopped at mission end, "
+            "handle reward/map routing manually."
+        ),
     }
     _print_result(result)
     return result

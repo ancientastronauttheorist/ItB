@@ -443,11 +443,93 @@ def _bonus_value(bonus_id: int, grid_power: int) -> tuple[int, str]:
     return 1, f"bonus#{bonus_id}"
 
 
+def _apply_lightning_war_routing(
+    entry: dict[str, Any],
+    mission_tags: set[str],
+    score: int,
+    rationale: list[str],
+) -> int:
+    """Bias mission choice for Blitzkrieg's under-30-minute achievement.
+
+    Lightning War does not care about perfect islands or bonus objectives.
+    The route picker should therefore prefer short, low-friction missions
+    over reputation. These modifiers are deliberately large enough to beat
+    the normal Perfect-Island farming penalties when a mission is known fast.
+    """
+    mission_id = entry.get("mission_id", "")
+    bonus_ids = entry.get("bonus_objective_ids", []) or []
+    delta = 0
+
+    if "train" in mission_tags:
+        delta += 35
+        rationale.append("+35 Lightning War: 4-turn train mission")
+    if "env_tidal" in mission_tags:
+        delta += 25
+        rationale.append("+25 Lightning War: fast Tidal Waves mission")
+    if "env_cataclysm" in mission_tags:
+        delta += 25
+        rationale.append("+25 Lightning War: fast Cataclysm/Seismic mission")
+    if "defensive_smoke" in mission_tags or mission_id == "Mission_Sandstorm":
+        delta += 25
+        rationale.append("+25 Lightning War: fast Sandstorm mission")
+    if mission_id == "Mission_Battle":
+        delta += 8
+        rationale.append("+8  Lightning War: plain battle has low UI friction")
+
+    slow_mission_ids = {
+        "Mission_Dam",
+        "Mission_ForestFire",
+        "Mission_FreezeBldg",
+        "Mission_Holes",
+        "Mission_Mines",
+        "Mission_Power",
+        "Mission_Satellite",
+        "Mission_Solar",
+        "Mission_Tanks",
+        "Mission_Teleporter",
+        "Mission_Terraform",
+        "Mission_Volatile",
+        "Mission_Wind",
+    }
+    if mission_id in slow_mission_ids:
+        delta -= 28
+        rationale.append(f"-28 Lightning War: slow/fragile objective ({mission_id})")
+
+    slow_tags = {
+        "fire_tile_counter",
+        "fragile_ally_objective",
+        "mite_counter",
+        "protect_specific_building",
+        "terraform_grass_counter",
+        "volatile_vek",
+    }
+    fired_slow_tags = sorted(mission_tags & slow_tags)
+    if fired_slow_tags:
+        delta -= 12
+        rationale.append(
+            "-12 Lightning War: objective/review friction "
+            f"({', '.join(fired_slow_tags)})"
+        )
+
+    if BONUS_ASSET in bonus_ids:
+        delta -= 8
+        rationale.append("-8  Lightning War: asset/pod reward adds UI time")
+    if BONUS_KILL_FIVE in bonus_ids:
+        delta -= 5
+        rationale.append("-5  Lightning War: kill-count bonus invites overplay")
+    if BONUS_PACIFIST in bonus_ids:
+        delta -= 5
+        rationale.append("-5  Lightning War: kill-limit bonus invites review")
+
+    return score + delta
+
+
 def score_mission(
     entry: dict[str, Any],
     squad_tags: set[str],
     grid_power: int,
     mission_metadata: dict[str, dict[str, Any]] | None = None,
+    routing: str = "default",
 ) -> dict[str, Any]:
     """Score one ``island_map`` entry against the squad.
 
@@ -612,6 +694,13 @@ def score_mission(
         score += 1
         rationale.append("+1  marked EASY by engine")
 
+    if routing == "lightning_war":
+        score = _apply_lightning_war_routing(
+            entry, mission_tags, score, rationale
+        )
+    elif routing != "default":
+        raise ValueError(f"unknown mission routing mode: {routing}")
+
     out = dict(entry)
     out["score"] = score
     out["mission_tags"] = sorted(mission_tags)
@@ -624,6 +713,7 @@ def score_island_map(
     squad_units: list[dict[str, Any]],
     grid_power: int,
     mission_metadata: dict[str, dict[str, Any]] | None = None,
+    routing: str = "default",
 ) -> list[dict[str, Any]]:
     """Score every entry of an island_map; return descending by score.
 
@@ -637,7 +727,7 @@ def score_island_map(
         return []
     squad_tags = derive_squad_tags(squad_units)
     scored = [
-        score_mission(e, squad_tags, grid_power, mission_metadata)
+        score_mission(e, squad_tags, grid_power, mission_metadata, routing)
         for e in island_map
     ]
     scored.sort(key=lambda e: e["score"], reverse=True)
