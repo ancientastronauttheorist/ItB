@@ -7222,6 +7222,11 @@ _LIGHTNING_UI_BUTTON_CROPS = {
         "center": (666, 518),
         "size": (300, 100),
     },
+    "perfect_reward_choice": {
+        "control": "perfect_reward_grid",
+        "center": (817, 470),
+        "size": (170, 110),
+    },
     "perfect_island_panel": {
         "control": "panel_continue",
         "center": (846, 550),
@@ -7234,6 +7239,7 @@ _LIGHTNING_AUTO_HANDLE_UIS = {
     "bottom_continue_panel",
     "pod_open_panel",
     "promotion_panel",
+    "perfect_reward_choice",
     "perfect_island_panel",
     "mission_preview_panel",
 }
@@ -7251,6 +7257,7 @@ _LIGHTNING_PAUSE_BLOCKING_UIS = {
     "bottom_continue_panel",
     "pod_open_panel",
     "promotion_panel",
+    "perfect_reward_choice",
     "perfect_island_panel",
 }
 
@@ -7267,6 +7274,10 @@ def _lightning_preferred_visible_control(
     """Prefer controls that landed reliably in timed Lightning UI smoke tests."""
     if visible_name == "reward_panel" and control:
         return "bottom_continue"
+    if visible_name == "perfect_island_panel" and control:
+        return "panel_continue"
+    if visible_name == "perfect_reward_choice" and control:
+        return "perfect_reward_grid"
     return control
 
 
@@ -7693,17 +7704,57 @@ def _classify_lightning_ui_image(image_path: str | Path) -> dict:
             "scores": scores,
         }
 
+    # Perfect Island has two distinct states: a dialogue with a wide Continue
+    # button, then a reward picker. The broad bottom-panel crops can score
+    # higher on the dialogue art, so recognize these before generic reward
+    # continuations.
+    if dark_overlay >= 0.60:
+        reward_choice = scores.get("perfect_reward_choice", {})
+        if _lightning_score_is_actionable(
+            reward_choice,
+            min_score=0.55,
+            min_bright=350,
+            min_border=350,
+        ):
+            spec = _LIGHTNING_UI_BUTTON_CROPS["perfect_reward_choice"]
+            return {
+                "status": "OK",
+                "visible_ui": "perfect_reward_choice",
+                "recommended_control": spec["control"],
+                "confidence": reward_choice["score"],
+                "dark_overlay_fraction": dark_overlay,
+                "scores": scores,
+            }
+        perfect = scores.get("perfect_island_panel", {})
+        strongest_generic_continue = max(
+            float(scores.get(name, {}).get("score") or 0.0)
+            for name in ("bottom_continue_panel", "reward_panel", "promotion_panel")
+        )
+        if _lightning_score_is_actionable(
+            perfect,
+            min_score=0.40,
+            min_bright=350,
+            min_border=350,
+        ) and strongest_generic_continue < 1.0:
+            spec = _LIGHTNING_UI_BUTTON_CROPS["perfect_island_panel"]
+            return {
+                "status": "OK",
+                "visible_ui": "perfect_island_panel",
+                "recommended_control": spec["control"],
+                "confidence": perfect["score"],
+                "dark_overlay_fraction": dark_overlay,
+                "scores": scores,
+            }
+
     # Post-mission reward chains often draw several overlapping blue panels.
-    # Prefer the concrete bottom button/open-door controls over broad modal
-    # crops so Region Secured and Pod Recovered contents do not look like
-    # promotion or Perfect Island panels.
+    # Prefer concrete bottom button/open-door controls over broad modal crops
+    # so Region Secured and Pod Recovered contents do not look like promotions.
     if dark_overlay >= 0.60:
         for name in (
             "pod_open_panel",
             "bottom_continue_panel",
             "reward_panel",
             "promotion_panel",
-            "perfect_island_panel",
         ):
             score = scores.get(name, {})
             threshold = 0.60 if name == "pod_open_panel" else 0.70

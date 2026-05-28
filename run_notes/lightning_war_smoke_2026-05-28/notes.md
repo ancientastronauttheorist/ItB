@@ -124,3 +124,12 @@
 - Built a stale-research classifier for the Lightning conductor. Current-board research still blocks, but deferrable behavior/novelty entries from a previous mission can wait if the live board proves the target is absent.
 - Reduced Lightning loop player-turn polling from the ordinary 1.5s cadence to 0.35s and surfaced `wait_entry_seconds` in turn telemetry. This should save small slices after every enemy phase without changing normal `auto_turn` behavior.
 - Verification: Python Lightning/mission-picker/parity tests pass, Rust library tests pass with `DYLD_FRAMEWORK_PATH` set, and the rebuilt PyO3 wheel is installed.
+| 15:48:42 | fresh_island_orientation |  | micro_peek | [screenshot](screenshots/054_fresh_island_orientation.png) | Orient before fresh island smoke after commit/push |
+| 16:04:02 | fresh_archive_map_ready | 0:01:01 | micro_peek | [screenshot](screenshots/055_fresh_archive_map_ready.png) | After first segment stopped: visible Archive map, bridge deployment state stale |
+
+## Fresh Archive Smoke Summary
+
+- Fresh Archive smoke completed at `0:16:04` after manual Perfect Island recovery. This is just over the 15-minute island target, but the clean mission samples are now promising: mission 2 was `2:40`, mission 3 was `2:57` despite a resolved stale `RockThrown` research gate, and the Armored Train mission was `2:31`.
+- The first mission was contaminated by a bad `bottom_continue` calibration (`y=676` clicked below the Region Secured button). The reliable Region Secured/Continue target is `y=653`.
+- HQ combat itself was reasonable (`111.03s` wall across 4 turns), but post-HQ UI lost the most time. Perfect Island dialogue needs `panel_continue`, and the reward-choice screen should pick `+2 Grid` directly instead of being mistaken for a promotion modal.
+- Route selection should use the save region name as a guard when the bridge has no screen coordinates. In this slate, `region5` mapped to `The Pasture` and `Mission_Armored_Train`, so the correct visual click was around window `(935, 430)`.

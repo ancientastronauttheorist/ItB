@@ -276,7 +276,7 @@ def test_lightning_ui_clicks_ceo_continue_alias_dry_run():
     assert result["status"] == "DRY_RUN"
     assert result["control"] == "bottom_continue"
     assert result["window_x"] == 1005
-    assert result["window_y"] == 676
+    assert result["window_y"] == 653
 
 
 def test_lightning_ui_clicks_pod_open_alias_dry_run():
@@ -998,6 +998,80 @@ def test_lightning_ui_classifier_prefers_bottom_continue_over_modal_overlap(tmp_
 
     assert result["visible_ui"] == "bottom_continue_panel"
     assert result["recommended_control"] == "bottom_continue"
+
+
+def test_lightning_ui_classifier_prefers_perfect_island_continue(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (10, 12, 18))
+    draw = ImageDraw.Draw(image)
+
+    def draw_button(cx: int, cy: int, w: int, h: int) -> None:
+        x = cx * scale
+        y = cy * scale
+        half_w = w * scale // 2
+        half_h = h * scale // 2
+        draw.rectangle(
+            [x - half_w, y - half_h, x + half_w, y + half_h],
+            fill=(18, 25, 38),
+            outline=(85, 110, 165),
+            width=8 * scale,
+        )
+        draw.rectangle(
+            [x - 90 * scale, y - 16 * scale, x + 90 * scale, y + 16 * scale],
+            fill=(240, 240, 240),
+        )
+
+    draw.rectangle(
+        [
+            (900 * scale, 625 * scale),
+            (1110 * scale, 680 * scale),
+        ],
+        fill=(18, 25, 38),
+        outline=(70, 90, 125),
+        width=2 * scale,
+    )
+    draw_button(846, 550, 360, 130)
+    path = tmp_path / "perfect_island_continue.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "perfect_island_panel"
+    assert result["recommended_control"] == "panel_continue"
+
+
+def test_lightning_ui_classifier_selects_perfect_reward_grid(tmp_path):
+    from PIL import Image, ImageDraw
+
+    scale = 2
+    image = Image.new("RGB", (1280 * scale, 748 * scale), (10, 12, 18))
+    draw = ImageDraw.Draw(image)
+
+    x = 817 * scale
+    y = 470 * scale
+    draw.rectangle(
+        [x - 85 * scale, y - 55 * scale, x + 85 * scale, y + 55 * scale],
+        fill=(18, 25, 38),
+        outline=(85, 110, 165),
+        width=8 * scale,
+    )
+    draw.rectangle(
+        [x - 45 * scale, y - 22 * scale, x + 45 * scale, y + 22 * scale],
+        fill=(235, 240, 245),
+    )
+    draw.rectangle(
+        [x + 50 * scale, y - 35 * scale, x + 62 * scale, y + 35 * scale],
+        fill=(80, 190, 230),
+    )
+    path = tmp_path / "perfect_reward_grid.png"
+    image.save(path)
+
+    result = commands._classify_lightning_ui_image(path)
+
+    assert result["visible_ui"] == "perfect_reward_choice"
+    assert result["recommended_control"] == "perfect_reward_grid"
 
 
 def test_lightning_dialogue_box_score_requires_visible_dialogue(tmp_path):

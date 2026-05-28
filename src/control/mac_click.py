@@ -59,7 +59,7 @@ KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
     "bottom_continue": KnownWindowControl(
         name="bottom_continue",
         window_x=1005,
-        window_y=676,
+        window_y=653,
         description="Bottom-right Continue panel",
         settle_seconds=0.65,
     ),
