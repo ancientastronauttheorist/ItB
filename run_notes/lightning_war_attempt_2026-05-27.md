@@ -79,12 +79,24 @@ enemy settle, solver execution, End Turn, and reward/map clicks.
 - Before start: clear/review research queue, verify no pending behavior novelty
   can interrupt combat, and keep Options at timer on / fast enemy movement.
   New helper: `python3 game_loop.py lightning_preflight --set-bridge-fast`.
+- Use `python3 game_loop.py lightning_attempt --time-limit 2` as the default
+  post-route conductor: it handles bridge deployment, clicks the calibrated
+  CONFIRM button, and chains combat through `lightning_loop`. It stops on
+  route/reward/unknown screens instead of guessing. Use
+  `python3 game_loop.py lightning_ui pause`, `... reward_continue`, or
+  `... modal_understood` / `... panel_continue` for calibrated
+  between-screen clicks.
 - First island: select Archive deliberately, then choose the first acceptable
   fast/low-friction mission. Do not compare more than one alternative.
   Helper: `python3 island_select.py --lightning-war`, then after Archive
   `python3 island_select.py --lightning-war --completed archive`.
 - Map UI: one region click, one preview-board Start Mission click, immediate
   `deploy_recommended`, confirm, then immediate `auto_turn`.
+- Smoke test note: after HQ reward flow, promotion and Perfect Island panels
+  can sit on top of an island map that the bridge already exposes. If
+  `lightning_attempt --dry-run` returns `ROUTE_READY` while a visible panel is
+  still open, clear the panel with `lightning_ui modal_understood` or
+  `lightning_ui panel_continue` before trusting the route recommendation.
 - Combat loop: `auto_turn --time-limit 2` is enough for simple Easy turns and
   saves solver clock. Prefer `python3 game_loop.py lightning_loop --time-limit 2`
   from clean player-turn combat so End Turn gets clicked locally and the next

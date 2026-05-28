@@ -7,8 +7,235 @@ the bridge or Computer Use planners.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import subprocess
 import time
+
+
+@dataclass(frozen=True)
+class KnownWindowControl:
+    """A trusted window-local control that can be clicked without scouting."""
+
+    name: str
+    window_x: int
+    window_y: int
+    description: str
+    settle_seconds: float = 0.15
+    hold_seconds: float = 0.3
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "window_x": self.window_x,
+            "window_y": self.window_y,
+            "description": self.description,
+            "settle_seconds": self.settle_seconds,
+            "hold_seconds": self.hold_seconds,
+        }
+
+
+KNOWN_WINDOW_CONTROLS: dict[str, KnownWindowControl] = {
+    "pause": KnownWindowControl(
+        name="pause",
+        window_x=38,
+        window_y=58,
+        description="Pause / open game menu",
+        settle_seconds=0.2,
+    ),
+    "menu_continue": KnownWindowControl(
+        name="menu_continue",
+        window_x=491,
+        window_y=251,
+        description="Pause menu Continue",
+        settle_seconds=0.2,
+    ),
+    "reward_continue": KnownWindowControl(
+        name="reward_continue",
+        window_x=1001,
+        window_y=653,
+        description="Reward / Region Secured Continue",
+        settle_seconds=0.35,
+    ),
+    "bottom_continue": KnownWindowControl(
+        name="bottom_continue",
+        window_x=1005,
+        window_y=676,
+        description="Bottom-right Continue panel",
+        settle_seconds=0.35,
+    ),
+    "dialogue_textbox": KnownWindowControl(
+        name="dialogue_textbox",
+        window_x=520,
+        window_y=205,
+        description="Advisor dialogue text box dismiss",
+        settle_seconds=0.25,
+    ),
+    "mission_preview_board": KnownWindowControl(
+        name="mission_preview_board",
+        window_x=815,
+        window_y=468,
+        description="Large mission preview board / start mission",
+        settle_seconds=0.8,
+    ),
+    "deploy_confirm": KnownWindowControl(
+        name="deploy_confirm",
+        window_x=106,
+        window_y=164,
+        description="Deployment Confirm",
+        settle_seconds=0.5,
+    ),
+    "modal_understood": KnownWindowControl(
+        name="modal_understood",
+        window_x=666,
+        window_y=518,
+        description="Modal / promotion Understood",
+        settle_seconds=0.25,
+    ),
+    "panel_continue": KnownWindowControl(
+        name="panel_continue",
+        window_x=846,
+        window_y=550,
+        description="Dialogue / reward panel Continue",
+        settle_seconds=0.35,
+    ),
+    "perfect_reward_weapon": KnownWindowControl(
+        name="perfect_reward_weapon",
+        window_x=456,
+        window_y=480,
+        description="Perfect Island left reward card",
+        settle_seconds=0.25,
+    ),
+    "perfect_reward_pilot": KnownWindowControl(
+        name="perfect_reward_pilot",
+        window_x=637,
+        window_y=480,
+        description="Perfect Island middle reward card",
+        settle_seconds=0.25,
+    ),
+    "perfect_reward_grid": KnownWindowControl(
+        name="perfect_reward_grid",
+        window_x=817,
+        window_y=480,
+        description="Perfect Island +2 Grid reward card",
+        settle_seconds=0.35,
+    ),
+    "spend_reputation": KnownWindowControl(
+        name="spend_reputation",
+        window_x=641,
+        window_y=650,
+        description="Island complete Spend Reputation",
+        settle_seconds=0.35,
+    ),
+    "leave_island": KnownWindowControl(
+        name="leave_island",
+        window_x=641,
+        window_y=704,
+        description="Island complete Leave Island",
+        settle_seconds=0.6,
+    ),
+    "leave_confirm_yes": KnownWindowControl(
+        name="leave_confirm_yes",
+        window_x=568,
+        window_y=444,
+        description="Leave Island confirmation Yes",
+        settle_seconds=0.6,
+    ),
+    "leave_confirm_no": KnownWindowControl(
+        name="leave_confirm_no",
+        window_x=713,
+        window_y=444,
+        description="Leave Island confirmation No",
+        settle_seconds=0.25,
+    ),
+    "island_archive": KnownWindowControl(
+        name="island_archive",
+        window_x=215,
+        window_y=288,
+        description="Island select Archive",
+        settle_seconds=0.6,
+    ),
+    "island_rst": KnownWindowControl(
+        name="island_rst",
+        window_x=345,
+        window_y=508,
+        description="Island select R.S.T.",
+        settle_seconds=0.6,
+    ),
+    "island_pinnacle": KnownWindowControl(
+        name="island_pinnacle",
+        window_x=635,
+        window_y=368,
+        description="Island select Pinnacle",
+        settle_seconds=0.6,
+    ),
+    "island_detritus": KnownWindowControl(
+        name="island_detritus",
+        window_x=845,
+        window_y=548,
+        description="Island select Detritus",
+        settle_seconds=0.6,
+    ),
+    "end_turn": KnownWindowControl(
+        name="end_turn",
+        window_x=126,
+        window_y=120,
+        description="Click End Turn",
+        settle_seconds=0.15,
+    ),
+}
+
+_CONTROL_ALIASES = {
+    "continue": "menu_continue",
+    "resume": "menu_continue",
+    "unpause": "menu_continue",
+    "reward": "reward_continue",
+    "region_secured_continue": "reward_continue",
+    "ceo_continue": "bottom_continue",
+    "island_intro_continue": "bottom_continue",
+    "bottom_right_continue": "bottom_continue",
+    "dialogue": "dialogue_textbox",
+    "dialogue_continue": "dialogue_textbox",
+    "textbox": "dialogue_textbox",
+    "start_mission": "mission_preview_board",
+    "mission_start": "mission_preview_board",
+    "preview_board": "mission_preview_board",
+    "confirm": "deploy_confirm",
+    "confirm_deploy": "deploy_confirm",
+    "deployment_confirm": "deploy_confirm",
+    "understood": "modal_understood",
+    "promotion_understood": "modal_understood",
+    "modal_continue": "modal_understood",
+    "perfect_continue": "panel_continue",
+    "perfect_reward_continue": "panel_continue",
+    "reward_grid": "perfect_reward_grid",
+    "grid_reward": "perfect_reward_grid",
+    "perfect_grid": "perfect_reward_grid",
+    "shop": "spend_reputation",
+    "store": "spend_reputation",
+    "leave": "leave_island",
+    "next_island": "leave_island",
+    "leave_yes": "leave_confirm_yes",
+    "confirm_leave": "leave_confirm_yes",
+    "leave_no": "leave_confirm_no",
+    "archive": "island_archive",
+    "rst": "island_rst",
+    "r.s.t.": "island_rst",
+    "r.s.t": "island_rst",
+    "pinnacle": "island_pinnacle",
+    "detritus": "island_detritus",
+    "turn": "end_turn",
+    "end": "end_turn",
+}
+
+
+def _normalize_control_name(name: str) -> str:
+    normalized = str(name or "").strip().lower().replace("-", "_").replace(" ", "_")
+    return _CONTROL_ALIASES.get(normalized, normalized)
+
+
+def list_known_window_controls() -> dict[str, dict]:
+    """Return calibrated controls keyed by canonical name."""
+    return {name: control.to_dict() for name, control in KNOWN_WINDOW_CONTROLS.items()}
 
 
 def _pyautogui_click(x: int, y: int, *, hold_seconds: float = 0.3) -> dict:
@@ -191,3 +418,111 @@ def click_window_point(
     result["window_y"] = y
     result["window_bounds"] = bounds
     return result
+
+
+def click_known_window_control(
+    name: str,
+    *,
+    app_name: str = "Into the Breach",
+    dry_run: bool = False,
+    settle_seconds: float | None = None,
+    hold_seconds: float | None = None,
+) -> dict:
+    """Click one of the calibrated, trusted game-window controls."""
+    key = _normalize_control_name(name)
+    control = KNOWN_WINDOW_CONTROLS.get(key)
+    if control is None:
+        return {
+            "status": "ERROR",
+            "error": f"unknown control: {name}",
+            "known_controls": sorted(KNOWN_WINDOW_CONTROLS),
+        }
+    result = click_window_point(
+        control.window_x,
+        control.window_y,
+        description=control.description,
+        app_name=app_name,
+        dry_run=dry_run,
+        settle_seconds=(
+            control.settle_seconds
+            if settle_seconds is None else float(settle_seconds)
+        ),
+        hold_seconds=(
+            control.hold_seconds
+            if hold_seconds is None else float(hold_seconds)
+        ),
+    )
+    result["control"] = control.name
+    return result
+
+
+def click_known_window_sequence(
+    names: list[str],
+    *,
+    app_name: str = "Into the Breach",
+    dry_run: bool = False,
+) -> dict:
+    """Click several calibrated controls using one window-bounds lookup."""
+    requested = [str(name).strip() for name in names if str(name).strip()]
+    if not requested:
+        return {"status": "ERROR", "error": "no controls requested"}
+
+    controls: list[KnownWindowControl] = []
+    for name in requested:
+        key = _normalize_control_name(name)
+        control = KNOWN_WINDOW_CONTROLS.get(key)
+        if control is None:
+            return {
+                "status": "ERROR",
+                "error": f"unknown control: {name}",
+                "known_controls": sorted(KNOWN_WINDOW_CONTROLS),
+            }
+        controls.append(control)
+
+    if dry_run:
+        return {
+            "status": "DRY_RUN",
+            "sequence": [control.to_dict() for control in controls],
+        }
+
+    bounds = _get_window_bounds(app_name)
+    if bounds is None:
+        return {
+            "status": "ERROR",
+            "error": "could not read app window bounds",
+            "controls": [control.name for control in controls],
+        }
+
+    results = []
+    for control in controls:
+        screen_x = int(bounds["x"] + control.window_x)
+        screen_y = int(bounds["y"] + control.window_y)
+        result = click_screen_point(
+            screen_x,
+            screen_y,
+            description=control.description,
+            app_name=app_name,
+            dry_run=False,
+            settle_seconds=control.settle_seconds,
+            hold_seconds=control.hold_seconds,
+        )
+        result["control"] = control.name
+        result["window_x"] = control.window_x
+        result["window_y"] = control.window_y
+        result["window_bounds"] = bounds
+        results.append(result)
+        if result.get("status") != "OK":
+            return {
+                "status": "ERROR",
+                "error": result.get("error", "click failed"),
+                "controls": [control.name for control in controls],
+                "completed": results,
+                "window_bounds": bounds,
+            }
+
+    return {
+        "status": "OK",
+        "controls": [control.name for control in controls],
+        "completed": results,
+        "window_bounds": bounds,
+    }

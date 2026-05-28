@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
@@ -6387,6 +6388,672 @@ def cmd_lightning_preflight(
     return result
 
 
+def _parse_session_run_wall_seconds(session: RunSession) -> float | None:
+    """Conservative wall-clock elapsed estimate from the session run id."""
+    run_id = str(session.run_id or "")
+    # Run ids are ``YYYYMMDD_HHMMSS_mmm``; the timestamp prefix is 15 chars.
+    if len(run_id) < 15:
+        return None
+    try:
+        started = datetime.strptime(run_id[:15], "%Y%m%d_%H%M%S")
+    except ValueError:
+        return None
+    elapsed = (datetime.now() - started).total_seconds()
+    return max(0.0, elapsed)
+
+
+def _lightning_budget_summary(
+    session: RunSession,
+    *,
+    max_wall_seconds: float | None = None,
+) -> dict:
+    wall_seconds = _parse_session_run_wall_seconds(session)
+    summary = {
+        "wall_seconds": round(wall_seconds, 1) if wall_seconds is not None else None,
+        "max_wall_seconds": max_wall_seconds,
+        "mission_index": session.mission_index,
+        "current_mission": session.current_mission,
+        "islands_completed": session.islands_completed,
+    }
+    if wall_seconds is None or max_wall_seconds is None:
+        summary["status"] = "UNKNOWN" if wall_seconds is None else "OK"
+        return summary
+    summary["status"] = "EXCEEDED" if wall_seconds > max_wall_seconds else "OK"
+    summary["remaining_wall_seconds"] = round(max_wall_seconds - wall_seconds, 1)
+    return summary
+
+
+def _lightning_live_snapshot() -> dict:
+    """Read a compact bridge snapshot without doing full cmd_read side effects."""
+    if not is_bridge_active():
+        return {"status": "NO_BRIDGE"}
+    try:
+        refresh_bridge_state()
+        board, bridge_data = read_bridge_state()
+    except (TimeoutError, BridgeError) as e:
+        return {"status": "ERROR", "error": str(e)}
+    if not isinstance(bridge_data, dict):
+        return {"status": "ERROR", "error": "bridge read returned no data"}
+
+    units = bridge_data.get("units") or []
+    active_mechs = sum(
+        1 for unit in units
+        if unit.get("mech") and unit.get("active") and int(unit.get("hp") or 0) > 0
+    )
+    mech_count = sum(
+        1 for unit in units
+        if unit.get("mech") and int(unit.get("hp") or 0) > 0
+    )
+    deploy_zone = bridge_data.get("deployment_zone") or []
+    island_map = bridge_data.get("island_map") or []
+    snapshot = {
+        "status": "OK",
+        "phase": bridge_data.get("phase", "unknown"),
+        "turn": bridge_data.get("turn", 0),
+        "mission_id": bridge_data.get("mission_id", ""),
+        "active_mechs": active_mechs,
+        "mech_count": mech_count,
+        "deployment_zone_count": len(deploy_zone),
+        "island_map_count": len(island_map),
+        "island_map_debug": bridge_data.get("island_map_debug"),
+        "in_active_mission": bridge_data.get("in_active_mission"),
+    }
+    if board is not None:
+        snapshot["grid_power"] = f"{board.grid_power}/{board.grid_power_max}"
+    return snapshot
+
+
+_LIGHTNING_UI_BUTTON_CROPS = {
+    "reward_panel": {
+        "control": "reward_continue",
+        "center": (1001, 653),
+        "size": (300, 90),
+    },
+    "promotion_panel": {
+        "control": "modal_understood",
+        "center": (666, 518),
+        "size": (300, 100),
+    },
+    "perfect_island_panel": {
+        "control": "panel_continue",
+        "center": (846, 550),
+        "size": (360, 130),
+    },
+}
+
+
+def _lightning_button_like_score(image, *, center: tuple[int, int],
+                                 size: tuple[int, int]) -> dict:
+    """Return a conservative score for a visible ITB button crop."""
+    width, height = image.size
+    cx, cy = center
+    sw, sh = size
+    left = max(0, int(cx - sw / 2))
+    top = max(0, int(cy - sh / 2))
+    right = min(width, int(cx + sw / 2))
+    bottom = min(height, int(cy + sh / 2))
+    if right <= left or bottom <= top:
+        return {"score": 0.0, "bright": 0, "border": 0, "pixels": 0}
+    crop = image.crop((left, top, right, bottom)).convert("RGB")
+    pixels = list(crop.getdata())
+    total = len(pixels) or 1
+    bright = 0
+    border = 0
+    for r, g, b in pixels:
+        if r >= 185 and g >= 185 and b >= 185:
+            bright += 1
+        if 45 <= r <= 145 and 60 <= g <= 160 and 85 <= b <= 210 and b >= r + 20:
+            border += 1
+    bright_frac = bright / total
+    border_frac = border / total
+    score = (bright_frac * 10.0) + (border_frac * 4.0)
+    return {
+        "score": round(score, 4),
+        "bright": bright,
+        "border": border,
+        "pixels": total,
+        "crop": [left, top, right, bottom],
+    }
+
+
+def _classify_lightning_ui_image(image_path: str | Path) -> dict:
+    """Classify obvious non-combat panels from a window screenshot."""
+    try:
+        from PIL import Image
+    except Exception as exc:
+        return {"status": "UNAVAILABLE", "error": f"PIL unavailable: {exc}"}
+    try:
+        image = Image.open(image_path)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"failed to open screenshot: {exc}"}
+
+    scores: dict[str, dict] = {}
+    for name, spec in _LIGHTNING_UI_BUTTON_CROPS.items():
+        scores[name] = _lightning_button_like_score(
+            image,
+            center=spec["center"],
+            size=spec["size"],
+        )
+    best_name = max(scores, key=lambda name: scores[name]["score"])
+    best = scores[best_name]
+    if best["score"] >= 0.34 and best["bright"] >= 120 and best["border"] >= 120:
+        spec = _LIGHTNING_UI_BUTTON_CROPS[best_name]
+        return {
+            "status": "OK",
+            "visible_ui": best_name,
+            "recommended_control": spec["control"],
+            "confidence": best["score"],
+            "scores": scores,
+        }
+    return {
+        "status": "OK",
+        "visible_ui": "island_map_or_unknown",
+        "recommended_control": None,
+        "confidence": best["score"],
+        "scores": scores,
+    }
+
+
+def _lightning_visible_ui_snapshot() -> dict:
+    """Capture and classify visible non-combat UI panels."""
+    from src.capture.window import take_screenshot
+
+    tmp_path = Path(tempfile.gettempdir()) / f"itb_lightning_ui_{os.getpid()}.png"
+    try:
+        take_screenshot(tmp_path)
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"screenshot failed: {exc}"}
+    result = _classify_lightning_ui_image(tmp_path)
+    result["screenshot_path"] = str(tmp_path)
+    return result
+
+
+def cmd_lightning_ui(
+    control: str | None = None,
+    *,
+    dry_run: bool = False,
+    list_controls: bool = False,
+) -> dict:
+    """Click a calibrated Lightning War hot-path UI control locally."""
+    from src.control.mac_click import (
+        click_known_window_control,
+        click_known_window_sequence,
+        list_known_window_controls,
+    )
+
+    if control and _lightning_capture_slug(control) == "classify":
+        result = _lightning_visible_ui_snapshot()
+        print("\n=== LIGHTNING UI CLASSIFY ===")
+        print(f"  status:     {result.get('status')}")
+        print(f"  visible_ui: {result.get('visible_ui')}")
+        print(f"  control:    {result.get('recommended_control')}")
+        print(f"  confidence: {result.get('confidence')}")
+        _print_result(result)
+        return result
+
+    controls = list_known_window_controls()
+    if list_controls or not control:
+        result = {
+            "status": "OK",
+            "controls": controls,
+            "next_step": "Call lightning_ui <control> to click one of these controls.",
+        }
+        print("\n=== LIGHTNING UI CONTROLS ===")
+        for name, spec in controls.items():
+            print(
+                f"  {name:16s} window=({spec['window_x']}, {spec['window_y']}) "
+                f"{spec['description']}"
+            )
+        _print_result(result)
+        return result
+
+    sequence = [
+        part.strip()
+        for chunk in str(control).split(",")
+        for part in chunk.split("+")
+        if part.strip()
+    ]
+    if len(sequence) > 1:
+        result = click_known_window_sequence(sequence, dry_run=dry_run)
+        print("\n=== LIGHTNING UI SEQUENCE ===")
+        print(f"  controls: {' -> '.join(sequence)}")
+        print(f"  status:   {result.get('status')}")
+        if result.get("status") == "ERROR":
+            print(f"  error:    {result.get('error')}")
+        _print_result(result)
+        return result
+
+    result = click_known_window_control(control, dry_run=dry_run)
+    print("\n=== LIGHTNING UI CLICK ===")
+    print(f"  control: {control}")
+    print(f"  status:  {result.get('status')}")
+    if result.get("status") == "ERROR":
+        print(f"  error:   {result.get('error')}")
+    elif "window_x" in result and "window_y" in result:
+        print(
+            f"  window:  ({result['window_x']}, {result['window_y']}) "
+            f"{result.get('description', '')}"
+        )
+    _print_result(result)
+    return result
+
+
+def _lightning_capture_slug(label: str) -> str:
+    slug = "".join(
+        ch.lower() if ch.isalnum() else "_"
+        for ch in str(label or "").strip()
+    ).strip("_")
+    while "__" in slug:
+        slug = slug.replace("__", "_")
+    return slug or "capture"
+
+
+def _lightning_capture_next_index(screenshots_dir: Path) -> int:
+    existing = []
+    if screenshots_dir.exists():
+        for path in screenshots_dir.glob("*.png"):
+            prefix = path.name.split("_", 1)[0]
+            if prefix.isdigit():
+                existing.append(int(prefix))
+    return (max(existing) + 1) if existing else 1
+
+
+def cmd_lightning_capture(
+    label: str,
+    *,
+    note: str = "",
+    game_timer: str | None = None,
+    clock_state: str = "unknown",
+    out_dir: str | None = None,
+    dry_run: bool = False,
+) -> dict:
+    """Capture the ITB window and append a Lightning War timing note."""
+    if not str(label or "").strip():
+        result = {"status": "ERROR", "error": "label is required"}
+        _print_result(result)
+        return result
+
+    base_dir = (
+        Path(out_dir)
+        if out_dir
+        else Path("run_notes") / f"lightning_war_smoke_{datetime.now():%Y-%m-%d}"
+    )
+    screenshots_dir = base_dir / "screenshots"
+    index = _lightning_capture_next_index(screenshots_dir)
+    slug = _lightning_capture_slug(label)
+    screenshot_path = screenshots_dir / f"{index:03d}_{slug}.png"
+    notes_path = base_dir / "notes.md"
+
+    if dry_run:
+        result = {
+            "status": "DRY_RUN",
+            "screenshot_path": str(screenshot_path),
+            "notes_path": str(notes_path),
+            "label": label,
+            "game_timer": game_timer,
+            "clock_state": clock_state,
+            "note": note,
+        }
+        _print_result(result)
+        return result
+
+    from src.control.mac_click import _get_window_bounds
+
+    bounds = _get_window_bounds("Into the Breach")
+    if bounds is None:
+        result = {"status": "ERROR", "error": "could not read game window bounds"}
+        _print_result(result)
+        return result
+
+    screenshots_dir.mkdir(parents=True, exist_ok=True)
+    rect = f"{bounds['x']},{bounds['y']},{bounds['width']},{bounds['height']}"
+    try:
+        proc = subprocess.run(
+            ["screencapture", "-x", "-R", rect, str(screenshot_path)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except subprocess.TimeoutExpired as exc:
+        result = {"status": "ERROR", "error": f"screencapture timed out: {exc}"}
+        _print_result(result)
+        return result
+    if proc.returncode != 0:
+        result = {
+            "status": "ERROR",
+            "error": proc.stderr.strip() or proc.stdout.strip() or "capture failed",
+        }
+        _print_result(result)
+        return result
+
+    rel_screenshot = screenshot_path.relative_to(base_dir)
+    note_line = (
+        f"| {datetime.now():%H:%M:%S} | {label} | "
+        f"{game_timer or ''} | {clock_state} | "
+        f"[screenshot]({rel_screenshot}) | {note} |\n"
+    )
+    if not notes_path.exists():
+        notes_path.parent.mkdir(parents=True, exist_ok=True)
+        notes_path.write_text(
+            "# Lightning War Smoke Notes - 2026-05-28\n\n"
+            "| Wall time | Label | Game timer | Clock state | Evidence | Note |\n"
+            "| --- | --- | --- | --- | --- | --- |\n"
+        )
+    with notes_path.open("a") as fh:
+        fh.write(note_line)
+
+    result = {
+        "status": "OK",
+        "screenshot_path": str(screenshot_path),
+        "notes_path": str(notes_path),
+        "label": label,
+        "game_timer": game_timer,
+        "clock_state": clock_state,
+        "note": note,
+        "window_bounds": bounds,
+    }
+    print("\n=== LIGHTNING CAPTURE ===")
+    print(f"  label:      {label}")
+    print(f"  timer:      {game_timer or '(not supplied)'}")
+    print(f"  clock:      {clock_state}")
+    print(f"  screenshot: {screenshot_path}")
+    print(f"  notes:      {notes_path}")
+    _print_result(result)
+    return result
+
+
+def cmd_lightning_attempt(
+    profile: str = "Alpha",
+    time_limit: float = 2.0,
+    max_turns: int = 6,
+    max_wait: float = 45.0,
+    click_ui: bool = True,
+    set_fast_bridge: bool = True,
+    run_preflight: bool = True,
+    dry_run: bool = False,
+    max_wall_seconds: float | None = None,
+    allow_hold_the_line: bool = False,
+) -> dict:
+    """Run the next safe Lightning War automation step.
+
+    This is intentionally a conductor, not a blind run bot: it automates
+    calibrated deployment/combat hot paths and stops when route or reward UI
+    still needs a visual choice.
+    """
+    session = _load_session()
+    block = _post_enemy_block_result(session)
+    if block is not None:
+        _print_result(block)
+        return block
+
+    budget = _lightning_budget_summary(
+        session,
+        max_wall_seconds=max_wall_seconds,
+    )
+    if budget.get("status") == "EXCEEDED":
+        result = {
+            "status": "LIGHTNING_ATTEMPT_BUDGET_EXCEEDED",
+            "budget": budget,
+            "next_step": (
+                "Start a fresh Lightning War timeline unless the visible "
+                "in-game timer is still safely under 30 minutes."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    preflight = None
+    if run_preflight:
+        preflight = cmd_lightning_preflight(
+            profile=profile,
+            set_fast_bridge=set_fast_bridge,
+        )
+        if preflight.get("status") == "FAIL":
+            result = {
+                "status": "LIGHTNING_ATTEMPT_BLOCKED",
+                "reason": "preflight_failed",
+                "preflight": preflight,
+                "budget": budget,
+            }
+            _print_result(result)
+            return result
+
+    snapshot = _lightning_live_snapshot()
+    if snapshot.get("status") != "OK":
+        result = {
+            "status": "LIGHTNING_ATTEMPT_BLOCKED",
+            "reason": "bridge_snapshot_unavailable",
+            "snapshot": snapshot,
+            "budget": budget,
+            "preflight": preflight,
+        }
+        _print_result(result)
+        return result
+
+    phase = snapshot.get("phase")
+    turn = int(snapshot.get("turn") or 0)
+    has_deploy_zone = int(snapshot.get("deployment_zone_count") or 0) > 0
+    active_mechs = int(snapshot.get("active_mechs") or 0)
+    mech_count = int(snapshot.get("mech_count") or 0)
+    action_record: dict = {}
+
+    print("\n=== LIGHTNING ATTEMPT STEP ===")
+    print(f"phase={phase} turn={turn} deploy_zone={has_deploy_zone}")
+
+    if turn == 0 and has_deploy_zone and mech_count == 0:
+        action_record["action"] = "deploy_then_combat"
+        if dry_run:
+            result = {
+                "status": "LIGHTNING_ATTEMPT_DRY_RUN",
+                "planned_action": action_record,
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+            }
+            _print_result(result)
+            return result
+
+        deploy = cmd_deploy_recommended(profile=profile)
+        action_record["deploy"] = deploy
+        if deploy.get("status") not in ("OK", "WARN"):
+            result = {
+                "status": "LIGHTNING_ATTEMPT_STOPPED",
+                "reason": "deployment_failed",
+                "action": action_record,
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+            }
+            _print_result(result)
+            return result
+
+        if click_ui:
+            from src.control.mac_click import click_known_window_control
+            confirm = click_known_window_control("deploy_confirm")
+            action_record["deploy_confirm"] = confirm
+            if confirm.get("status") != "OK":
+                result = {
+                    "status": "LIGHTNING_ATTEMPT_STOPPED",
+                    "reason": "deploy_confirm_click_failed",
+                    "action": action_record,
+                    "snapshot": snapshot,
+                    "budget": budget,
+                    "preflight": preflight,
+                }
+                _print_result(result)
+                return result
+        else:
+            result = {
+                "status": "LIGHTNING_ATTEMPT_UI_READY",
+                "reason": "deploy_confirm_click_needed",
+                "action": action_record,
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+                "next_step": "Click CONFIRM, then rerun lightning_attempt.",
+            }
+            _print_result(result)
+            return result
+
+        loop = cmd_lightning_loop(
+            profile=profile,
+            time_limit=time_limit,
+            max_turns=max_turns,
+            max_wait=max_wait,
+            click_end_turn=click_ui,
+            set_fast_bridge=False,
+            allow_hold_the_line=allow_hold_the_line,
+        )
+        action_record["combat_loop"] = loop
+        result = {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "combat_loop_returned",
+            "action": action_record,
+            "snapshot": snapshot,
+            "budget": budget,
+            "preflight": preflight,
+            "next_step": (
+                "If combat ended, handle reward/map routing; if a gate fired, "
+                "pause and clear the gate."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    if phase == "combat_enemy":
+        result = {
+            "status": "LIGHTNING_ATTEMPT_WAITING",
+            "reason": "enemy_or_deployment_animation",
+            "snapshot": snapshot,
+            "budget": budget,
+            "preflight": preflight,
+            "next_step": (
+                "Poll read/lightning_attempt again after the enemy/deployment "
+                "animation reaches an active player turn. Do not start the "
+                "combat loop while phase is combat_enemy."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    if phase == "combat_player" and active_mechs <= 0:
+        result = {
+            "status": "LIGHTNING_ATTEMPT_WAITING",
+            "reason": "no_active_mechs_yet",
+            "snapshot": snapshot,
+            "budget": budget,
+            "preflight": preflight,
+            "next_step": (
+                "Poll read/lightning_attempt again after turn-start animation "
+                "or enemy cleanup finishes. Do not solve until active_mechs > 0."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    if phase == "combat_player" and active_mechs > 0:
+        action_record["action"] = "combat_loop"
+        if dry_run:
+            result = {
+                "status": "LIGHTNING_ATTEMPT_DRY_RUN",
+                "planned_action": action_record,
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+            }
+            _print_result(result)
+            return result
+        loop = cmd_lightning_loop(
+            profile=profile,
+            time_limit=time_limit,
+            max_turns=max_turns,
+            max_wait=max_wait,
+            click_end_turn=click_ui,
+            set_fast_bridge=False,
+            allow_hold_the_line=allow_hold_the_line,
+        )
+        action_record["combat_loop"] = loop
+        result = {
+            "status": "LIGHTNING_ATTEMPT_STOPPED",
+            "reason": "combat_loop_returned",
+            "action": action_record,
+            "snapshot": snapshot,
+            "budget": budget,
+            "preflight": preflight,
+        }
+        _print_result(result)
+        return result
+
+    if int(snapshot.get("island_map_count") or 0) > 0:
+        visible_ui = _lightning_visible_ui_snapshot()
+        snapshot["visible_ui"] = visible_ui
+        if (
+            visible_ui.get("status") == "OK"
+            and visible_ui.get("recommended_control")
+            and visible_ui.get("visible_ui") in {
+                "reward_panel",
+                "promotion_panel",
+                "perfect_island_panel",
+            }
+        ):
+            result = {
+                "status": "LIGHTNING_ATTEMPT_PANEL_READY",
+                "snapshot": snapshot,
+                "budget": budget,
+                "preflight": preflight,
+                "visible_ui": visible_ui,
+                "recommended_control": visible_ui.get("recommended_control"),
+                "next_step": (
+                    "A visible panel is covering the island map. Clear it "
+                    "with lightning_ui "
+                    f"{visible_ui.get('recommended_control')}, then rerun "
+                    "lightning_attempt --dry-run before routing."
+                ),
+            }
+            _print_result(result)
+            return result
+        recommendation = cmd_recommend_mission(
+            profile=profile,
+            routing="lightning_war",
+        )
+        result = {
+            "status": "LIGHTNING_ATTEMPT_ROUTE_READY",
+            "snapshot": snapshot,
+            "budget": budget,
+            "preflight": preflight,
+            "recommendation": recommendation,
+            "next_step": (
+                "Pause for route thinking if the timer is running, select the "
+                "top recommended red region visually, click its preview board "
+                "to start, then rerun lightning_attempt for deployment."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    result = {
+        "status": "LIGHTNING_ATTEMPT_NEEDS_UI",
+        "snapshot": snapshot,
+        "budget": budget,
+        "preflight": preflight,
+        "known_ui": [
+            "pause",
+            "menu_continue",
+            "reward_continue",
+            "deploy_confirm",
+            "modal_understood",
+            "panel_continue",
+            "end_turn",
+        ],
+        "next_step": (
+            "Use lightning_ui for a calibrated visible button, or inspect the "
+            "screen before clicking any uncalibrated route/shop/start target."
+        ),
+    }
+    _print_result(result)
+    return result
+
+
 def _click_end_turn_from_plan_result(
     plan_result: dict,
     *,
@@ -6502,6 +7169,26 @@ def _observe_end_turn_after_click(
     }
 
 
+def _lightning_observed_terminal_transition(observed: dict) -> bool:
+    """True when the End Turn observer saw a mission/reward-screen phase."""
+    samples = observed.get("samples") if isinstance(observed, dict) else None
+    if not isinstance(samples, list) or not samples:
+        return False
+    last = samples[-1]
+    if not isinstance(last, dict):
+        return False
+    return last.get("phase") in ("unknown", "between_missions", "mission_ending")
+
+
+def _lightning_auto_turn_error_is_terminal(turn_result: dict) -> bool:
+    """Classify final-turn reward transitions that auto_turn reports as phase errors."""
+    phase = turn_result.get("phase")
+    error = str(turn_result.get("error") or "")
+    if phase not in ("unknown", "between_missions", "mission_ending"):
+        return False
+    return error.startswith("Not in combat_player phase:")
+
+
 def cmd_lightning_loop(
     profile: str = "Alpha",
     time_limit: float = 2.0,
@@ -6580,7 +7267,11 @@ def cmd_lightning_loop(
         turn_records.append(record)
 
         if turn_result.get("error"):
-            stopped_reason = "error"
+            if _lightning_auto_turn_error_is_terminal(turn_result):
+                stopped_reason = "terminal_or_mission_end"
+                record["terminal_transition"] = True
+            else:
+                stopped_reason = "error"
             break
 
         status = turn_result.get("status")
@@ -6602,6 +7293,9 @@ def cmd_lightning_loop(
             record["end_turn_observed"] = observed
             if observed.get("status") != "OK":
                 stopped_reason = "end_turn_click_not_observed"
+                break
+            if _lightning_observed_terminal_transition(observed):
+                stopped_reason = "terminal_or_mission_end"
                 break
             continue
 

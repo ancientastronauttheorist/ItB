@@ -53,6 +53,9 @@ from src.loop.commands import (
     cmd_recommend_mission,
     cmd_bridge_speed,
     cmd_lightning_preflight,
+    cmd_lightning_ui,
+    cmd_lightning_capture,
+    cmd_lightning_attempt,
     cmd_lightning_loop,
     cmd_verify_setup_screen,
     cmd_research_attach_community,
@@ -464,6 +467,39 @@ def main():
         help="Also request fast mode from the Lua bridge if it is active",
     )
 
+    # lightning_ui
+    p_lightning_ui = sub.add_parser(
+        "lightning_ui",
+        help="Click a calibrated Lightning War hot-path UI button",
+    )
+    p_lightning_ui.add_argument(
+        "control",
+        nargs="?",
+        default=None,
+        help="Known control name, such as pause, menu_continue, "
+             "reward_continue, deploy_confirm, modal_understood, "
+             "panel_continue, or end_turn. Use comma or + for a fast sequence.",
+    )
+    p_lightning_ui.add_argument("--dry-run", action="store_true")
+    p_lightning_ui.add_argument("--list", action="store_true",
+                                help="List calibrated controls")
+
+    # lightning_capture
+    p_lightning_capture = sub.add_parser(
+        "lightning_capture",
+        help="Capture the game window and append a Lightning War timing note",
+    )
+    p_lightning_capture.add_argument("label", help="Short screenshot label")
+    p_lightning_capture.add_argument("--note", default="")
+    p_lightning_capture.add_argument("--game-timer", default=None)
+    p_lightning_capture.add_argument(
+        "--clock-state",
+        default="unknown",
+        choices=["ticks", "paused", "unknown", "safe", "unsafe"],
+    )
+    p_lightning_capture.add_argument("--out-dir", default=None)
+    p_lightning_capture.add_argument("--dry-run", action="store_true")
+
     # verify_setup
     p_verify_setup = sub.add_parser(
         "verify_setup",
@@ -594,6 +630,40 @@ def main():
     p_lightning_loop.add_argument("--allow-hold-the-line", action="store_true",
                                   help="Bypass the Hold the Line target guard")
 
+    # lightning_attempt
+    p_lightning_attempt = sub.add_parser(
+        "lightning_attempt",
+        help="Run the next safe Lightning War deployment/combat automation step",
+    )
+    p_lightning_attempt.add_argument("--profile", default="Alpha")
+    p_lightning_attempt.add_argument("--time-limit", type=float, default=2.0,
+                                     help="Solver time limit per turn")
+    p_lightning_attempt.add_argument("--max-turns", type=int, default=6)
+    p_lightning_attempt.add_argument("--max-wait", type=float, default=45.0)
+    p_lightning_attempt.add_argument(
+        "--no-click",
+        action="store_true",
+        help="Do not locally click calibrated UI buttons",
+    )
+    p_lightning_attempt.add_argument(
+        "--no-bridge-fast",
+        action="store_true",
+        help="Do not request bridge fast mode during preflight",
+    )
+    p_lightning_attempt.add_argument(
+        "--no-preflight",
+        action="store_true",
+        help="Skip Lightning War preflight checks",
+    )
+    p_lightning_attempt.add_argument("--dry-run", action="store_true")
+    p_lightning_attempt.add_argument(
+        "--max-wall-seconds",
+        type=float,
+        default=None,
+        help="Optional conservative wall-clock budget guard",
+    )
+    p_lightning_attempt.add_argument("--allow-hold-the-line", action="store_true")
+
     # analyze
     p_analyze = sub.add_parser("analyze",
                                help="Analyze failure database for patterns")
@@ -715,6 +785,21 @@ def main():
             profile=args.profile,
             set_fast_bridge=args.set_bridge_fast,
         )
+    elif args.command == "lightning_ui":
+        cmd_lightning_ui(
+            args.control,
+            dry_run=args.dry_run,
+            list_controls=args.list,
+        )
+    elif args.command == "lightning_capture":
+        cmd_lightning_capture(
+            args.label,
+            note=args.note,
+            game_timer=args.game_timer,
+            clock_state=args.clock_state,
+            out_dir=args.out_dir,
+            dry_run=args.dry_run,
+        )
     elif args.command == "verify_setup":
         cmd_verify_setup_screen(
             expected_difficulty=args.difficulty,
@@ -794,6 +879,19 @@ def main():
             max_wait=args.max_wait,
             click_end_turn=not args.no_click,
             set_fast_bridge=not args.no_bridge_fast,
+            allow_hold_the_line=args.allow_hold_the_line,
+        )
+    elif args.command == "lightning_attempt":
+        cmd_lightning_attempt(
+            profile=args.profile,
+            time_limit=args.time_limit,
+            max_turns=args.max_turns,
+            max_wait=args.max_wait,
+            click_ui=not args.no_click,
+            set_fast_bridge=not args.no_bridge_fast,
+            run_preflight=not args.no_preflight,
+            dry_run=args.dry_run,
+            max_wall_seconds=args.max_wall_seconds,
             allow_hold_the_line=args.allow_hold_the_line,
         )
     elif args.command == "analyze":
