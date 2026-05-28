@@ -55,6 +55,7 @@ from src.loop.commands import (
     cmd_lightning_preflight,
     cmd_lightning_ui,
     cmd_lightning_capture,
+    cmd_lightning_peek,
     cmd_lightning_attempt,
     cmd_lightning_segment,
     cmd_lightning_loop,
@@ -502,6 +503,28 @@ def main():
     )
     p_lightning_capture.add_argument("--out-dir", default=None)
     p_lightning_capture.add_argument("--dry-run", action="store_true")
+
+    # lightning_peek
+    p_lightning_peek = sub.add_parser(
+        "lightning_peek",
+        help="Briefly unpause, screenshot, and return to pause for Lightning War",
+    )
+    p_lightning_peek.add_argument("label", nargs="?", default="peek")
+    p_lightning_peek.add_argument("--note", default="")
+    p_lightning_peek.add_argument("--game-timer", default=None)
+    p_lightning_peek.add_argument("--out-dir", default=None)
+    p_lightning_peek.add_argument("--dry-run", action="store_true")
+    p_lightning_peek.add_argument("--settle-seconds", type=float, default=0.05)
+    p_lightning_peek.add_argument("--pause-settle-seconds", type=float, default=0.08)
+    p_lightning_peek.add_argument("--hold-seconds", type=float, default=0.06)
+    p_lightning_peek.add_argument("--capture-timeout", type=float, default=2.0)
+    p_lightning_peek.add_argument(
+        "--allow-live-start",
+        dest="require_paused",
+        action="store_false",
+        help="Allow capture from a non-paused screen, then try to pause",
+    )
+    p_lightning_peek.set_defaults(require_paused=True)
 
     # verify_setup
     p_verify_setup = sub.add_parser(
@@ -956,6 +979,19 @@ def main():
             clock_state=args.clock_state,
             out_dir=args.out_dir,
             dry_run=args.dry_run,
+        )
+    elif args.command == "lightning_peek":
+        cmd_lightning_peek(
+            args.label,
+            note=args.note,
+            game_timer=args.game_timer,
+            out_dir=args.out_dir,
+            dry_run=args.dry_run,
+            settle_seconds=args.settle_seconds,
+            pause_settle_seconds=args.pause_settle_seconds,
+            hold_seconds=args.hold_seconds,
+            capture_timeout=args.capture_timeout,
+            require_paused=args.require_paused,
         )
     elif args.command == "verify_setup":
         cmd_verify_setup_screen(

@@ -403,6 +403,182 @@ def test_lightning_ui_handle_screen_clicks_visible_panel(monkeypatch):
     assert calls == [("modal_understood", {"dry_run": False})]
 
 
+def test_lightning_peek_dry_run_plans_micro_burst(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "pause_menu",
+            "recommended_control": "menu_continue",
+        },
+    )
+
+    result = commands.cmd_lightning_peek(
+        "turn3",
+        out_dir=str(tmp_path),
+        dry_run=True,
+    )
+
+    assert result["status"] == "DRY_RUN"
+    assert result["planned_controls"] == ["menu_continue", "screenshot", "pause"]
+    assert result["screenshot_path"].endswith("_turn3.png")
+
+
+def test_lightning_peek_refuses_when_not_paused(monkeypatch):
+    monkeypatch.setattr(
+        commands,
+        "_lightning_visible_ui_snapshot",
+        lambda: {
+            "status": "OK",
+            "visible_ui": "island_map_or_unknown",
+            "recommended_control": None,
+        },
+    )
+
+    result = commands.cmd_lightning_peek("not_paused")
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "not_in_pause_menu"
+
+
+def test_lightning_peek_captures_between_continue_and_pause(monkeypatch, tmp_path):
+    clicks = []
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        "src.control.mac_click._get_window_bounds",
+        lambda app_name: {"x": 10, "y": 20, "width": 1280, "height": 748},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: clicks.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_capture_window_screenshot",
+        lambda path, **kwargs: {"status": "OK", "screenshot_path": str(path)},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {"status": "OK", "visible_ui": "island_map_or_unknown"},
+    )
+
+    result = commands.cmd_lightning_peek(
+        "evidence",
+        out_dir=str(tmp_path),
+        note="micro peek test",
+    )
+
+    assert result["status"] == "OK"
+    assert clicks == ["menu_continue", "pause"]
+    assert result["evidence_ui"]["visible_ui"] == "island_map_or_unknown"
+    assert result["note_written"] is True
+    assert (tmp_path / "notes.md").exists()
+
+
+def test_lightning_peek_pauses_even_when_capture_fails(monkeypatch, tmp_path):
+    clicks = []
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        "src.control.mac_click._get_window_bounds",
+        lambda app_name: {"x": 10, "y": 20, "width": 1280, "height": 748},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: clicks.append(control)
+        or {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_capture_window_screenshot",
+        lambda path, **kwargs: {"status": "ERROR", "error": "boom"},
+    )
+
+    result = commands.cmd_lightning_peek("capture_fail", out_dir=str(tmp_path))
+
+    assert result["status"] == "ERROR"
+    assert result["reason"] == "screenshot_failed"
+    assert clicks == ["menu_continue", "pause"]
+    assert result["note_written"] is False
+
+
+def test_lightning_peek_blocks_when_pause_not_verified(monkeypatch, tmp_path):
+    visible_states = iter(
+        [
+            {
+                "status": "OK",
+                "visible_ui": "pause_menu",
+                "recommended_control": "menu_continue",
+            },
+            {
+                "status": "OK",
+                "visible_ui": "island_map_or_unknown",
+                "recommended_control": None,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(commands, "_lightning_visible_ui_snapshot", lambda: next(visible_states))
+    monkeypatch.setattr(
+        "src.control.mac_click._get_window_bounds",
+        lambda app_name: {"x": 10, "y": 20, "width": 1280, "height": 748},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_click_control_with_bounds",
+        lambda control, **kwargs: {"status": "OK", "control": control},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_lightning_capture_window_screenshot",
+        lambda path, **kwargs: {"status": "OK", "screenshot_path": str(path)},
+    )
+    monkeypatch.setattr(
+        commands,
+        "_classify_lightning_ui_image",
+        lambda path: {"status": "OK", "visible_ui": "island_map_or_unknown"},
+    )
+
+    result = commands.cmd_lightning_peek("not_repaused", out_dir=str(tmp_path))
+
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "pause_not_verified_after_peek"
+
+
 def test_lightning_attempt_pause_on_stop_attaches_guard(monkeypatch):
     session = RunSession(
         run_id="lw",

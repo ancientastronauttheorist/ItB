@@ -7840,6 +7840,292 @@ def cmd_lightning_capture(
     return result
 
 
+def _lightning_run_notes_base(out_dir: str | None = None) -> Path:
+    return (
+        Path(out_dir)
+        if out_dir
+        else Path("run_notes") / f"lightning_war_smoke_{datetime.now():%Y-%m-%d}"
+    )
+
+
+def _lightning_screenshot_paths(
+    label: str,
+    *,
+    out_dir: str | None = None,
+) -> tuple[Path, Path]:
+    base_dir = _lightning_run_notes_base(out_dir)
+    screenshots_dir = base_dir / "screenshots"
+    index = _lightning_capture_next_index(screenshots_dir)
+    slug = _lightning_capture_slug(label)
+    return screenshots_dir / f"{index:03d}_{slug}.png", base_dir / "notes.md"
+
+
+def _lightning_append_capture_note(
+    notes_path: Path,
+    screenshot_path: Path,
+    *,
+    label: str,
+    game_timer: str | None = None,
+    clock_state: str = "unknown",
+    note: str = "",
+) -> None:
+    base_dir = notes_path.parent
+    rel_screenshot = screenshot_path.relative_to(base_dir)
+    note_line = (
+        f"| {datetime.now():%H:%M:%S} | {label} | "
+        f"{game_timer or ''} | {clock_state} | "
+        f"[screenshot]({rel_screenshot}) | {note} |\n"
+    )
+    if not notes_path.exists():
+        notes_path.parent.mkdir(parents=True, exist_ok=True)
+        notes_path.write_text(
+            f"# Lightning War Smoke Notes - {datetime.now():%Y-%m-%d}\n\n"
+            "| Wall time | Label | Game timer | Clock state | Evidence | Note |\n"
+            "| --- | --- | --- | --- | --- | --- |\n"
+        )
+    with notes_path.open("a") as fh:
+        fh.write(note_line)
+
+
+def _lightning_capture_window_screenshot(
+    screenshot_path: Path,
+    *,
+    bounds: dict,
+    timeout: float = 2.0,
+) -> dict:
+    screenshot_path.parent.mkdir(parents=True, exist_ok=True)
+    rect = f"{bounds['x']},{bounds['y']},{bounds['width']},{bounds['height']}"
+    try:
+        proc = subprocess.run(
+            ["screencapture", "-x", "-R", rect, str(screenshot_path)],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return {"status": "ERROR", "error": f"screencapture timed out: {exc}"}
+    if proc.returncode != 0:
+        return {
+            "status": "ERROR",
+            "error": proc.stderr.strip() or proc.stdout.strip() or "capture failed",
+        }
+    return {"status": "OK", "screenshot_path": str(screenshot_path), "rect": rect}
+
+
+def _lightning_click_control_with_bounds(
+    control_name: str,
+    *,
+    bounds: dict,
+    dry_run: bool = False,
+    settle_seconds: float = 0.05,
+    hold_seconds: float = 0.06,
+) -> dict:
+    from src.control.mac_click import KNOWN_WINDOW_CONTROLS, click_screen_point
+
+    control = KNOWN_WINDOW_CONTROLS.get(control_name)
+    if control is None:
+        return {"status": "ERROR", "error": f"unknown control: {control_name}"}
+    screen_x = int(bounds["x"] + control.window_x)
+    screen_y = int(bounds["y"] + control.window_y)
+    result = click_screen_point(
+        screen_x,
+        screen_y,
+        description=control.description,
+        dry_run=dry_run,
+        settle_seconds=settle_seconds,
+        hold_seconds=hold_seconds,
+    )
+    result["control"] = control.name
+    result["window_x"] = control.window_x
+    result["window_y"] = control.window_y
+    result["window_bounds"] = bounds
+    return result
+
+
+def cmd_lightning_peek(
+    label: str = "peek",
+    *,
+    note: str = "",
+    game_timer: str | None = None,
+    out_dir: str | None = None,
+    dry_run: bool = False,
+    settle_seconds: float = 0.05,
+    pause_settle_seconds: float = 0.08,
+    hold_seconds: float = 0.06,
+    capture_timeout: float = 2.0,
+    require_paused: bool = True,
+) -> dict:
+    """Briefly unpause for a screenshot, then immediately return to pause."""
+    if not str(label or "").strip():
+        result = {"status": "ERROR", "error": "label is required"}
+        _print_result(result)
+        return result
+
+    initial_ui = _lightning_visible_ui_snapshot()
+    if initial_ui.get("status") != "OK":
+        result = {
+            "status": "ERROR",
+            "reason": "initial_screen_classification_failed",
+            "initial_ui": initial_ui,
+        }
+        _print_result(result)
+        return result
+
+    initially_paused = initial_ui.get("visible_ui") == "pause_menu"
+    if require_paused and not initially_paused:
+        result = {
+            "status": "BLOCKED",
+            "reason": "not_in_pause_menu",
+            "initial_ui": initial_ui,
+            "next_step": (
+                "Run lightning_ui ensure_pause first, then use lightning_peek "
+                "from the pause resting state."
+            ),
+        }
+        _print_result(result)
+        return result
+
+    from src.control.mac_click import _get_window_bounds
+
+    screenshot_path, notes_path = _lightning_screenshot_paths(label, out_dir=out_dir)
+    bounds = None if dry_run else _get_window_bounds("Into the Breach")
+    if bounds is None and not dry_run:
+        result = {
+            "status": "ERROR",
+            "reason": "window_bounds_unavailable",
+            "initial_ui": initial_ui,
+            "screenshot_path": str(screenshot_path),
+            "notes_path": str(notes_path),
+        }
+        _print_result(result)
+        return result
+    if dry_run:
+        result = {
+            "status": "DRY_RUN",
+            "label": label,
+            "initial_ui": initial_ui,
+            "screenshot_path": str(screenshot_path),
+            "notes_path": str(notes_path),
+            "planned_controls": (
+                ["menu_continue", "screenshot", "pause"]
+                if initially_paused else ["screenshot", "pause"]
+            ),
+            "settle_seconds": settle_seconds,
+            "pause_settle_seconds": pause_settle_seconds,
+            "hold_seconds": hold_seconds,
+            "capture_timeout": capture_timeout,
+            "require_paused": require_paused,
+        }
+        _print_result(result)
+        return result
+
+    live_started = time.monotonic()
+    resume_click: dict | None = None
+    capture_result: dict | None = None
+    pause_click: dict | None = None
+    evidence_ui: dict | None = None
+    pause_verify: dict | None = None
+    capture_note_written = False
+    resumed = False
+
+    try:
+        if initially_paused:
+            resume_click = _lightning_click_control_with_bounds(
+                "menu_continue",
+                bounds=bounds,
+                settle_seconds=settle_seconds,
+                hold_seconds=hold_seconds,
+            )
+            if resume_click.get("status") != "OK":
+                result = {
+                    "status": "ERROR",
+                    "reason": "resume_click_failed",
+                    "initial_ui": initial_ui,
+                    "resume_click": resume_click,
+                    "screenshot_path": str(screenshot_path),
+                    "notes_path": str(notes_path),
+                }
+                _print_result(result)
+                return result
+            resumed = True
+
+        capture_result = _lightning_capture_window_screenshot(
+            screenshot_path,
+            bounds=bounds,
+            timeout=capture_timeout,
+        )
+    finally:
+        if resumed or not require_paused:
+            pause_click = _lightning_click_control_with_bounds(
+                "pause",
+                bounds=bounds,
+                settle_seconds=pause_settle_seconds,
+                hold_seconds=hold_seconds,
+            )
+
+    live_seconds = round(time.monotonic() - live_started, 3)
+    if isinstance(capture_result, dict) and capture_result.get("status") == "OK":
+        evidence_ui = _classify_lightning_ui_image(screenshot_path)
+        _lightning_append_capture_note(
+            notes_path,
+            screenshot_path,
+            label=label,
+            game_timer=game_timer,
+            clock_state="micro_peek",
+            note=note,
+        )
+        capture_note_written = True
+
+    if pause_click is not None and pause_click.get("status") == "OK":
+        pause_verify = _lightning_visible_ui_snapshot()
+
+    status = "OK"
+    reason = "micro_peek_captured_and_paused"
+    if not isinstance(capture_result, dict) or capture_result.get("status") != "OK":
+        status = "ERROR"
+        reason = "screenshot_failed"
+    elif pause_click is None or pause_click.get("status") != "OK":
+        status = "ERROR"
+        reason = "pause_click_failed_after_peek"
+    elif not (
+        isinstance(pause_verify, dict)
+        and pause_verify.get("status") == "OK"
+        and pause_verify.get("visible_ui") == "pause_menu"
+    ):
+        status = "BLOCKED"
+        reason = "pause_not_verified_after_peek"
+
+    result = {
+        "status": status,
+        "reason": reason,
+        "label": label,
+        "screenshot_path": str(screenshot_path),
+        "notes_path": str(notes_path),
+        "note_written": capture_note_written,
+        "live_burst_seconds": live_seconds,
+        "initial_ui": initial_ui,
+        "evidence_ui": evidence_ui,
+        "pause_verify": pause_verify,
+        "resume_click": resume_click,
+        "capture_result": capture_result,
+        "pause_click": pause_click,
+        "next_step": (
+            "Stay in pause and inspect the screenshot/evidence_ui before "
+            "choosing any combat or UI action. lightning_peek never clicks "
+            "End Turn."
+        ),
+    }
+
+    print("\n=== LIGHTNING PEEK ===")
+    print(f"  label:      {label}")
+    print(f"  live burst: {live_seconds}s")
+    print(f"  screenshot: {screenshot_path}")
+    print(f"  notes:      {notes_path}")
+    print(f"  result:     {status} ({reason})")
+    _print_result(result)
+    return result
+
+
 def cmd_lightning_attempt(
     profile: str = "Alpha",
     time_limit: float = 2.0,
